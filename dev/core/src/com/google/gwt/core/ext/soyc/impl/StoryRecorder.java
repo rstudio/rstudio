@@ -29,12 +29,11 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.js.ast.JsFunction;
-import com.google.gwt.dev.util.HtmlTextOutput;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
+import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,6 +66,8 @@ public class StoryRecorder {
     }
   }
 
+  private static final int MAX_STRING_BUILDER_SIZE = 65536;
+
   /**
    * Used to record dependencies of a program.
    */
@@ -75,35 +76,35 @@ public class StoryRecorder {
     new StoryRecorder().recordStoriesImpl(logger, out, sourceInfoMaps, js);
   }
 
+  private StringBuilder builder;
+
   private int curHighestFragment = 0;
 
-  private HtmlTextOutput htmlOut;
+  private OutputStream gzipStream;
+  
   private String[] js;
 
   /**
    * Used by {@link #popAndRecord(Stack)} to determine start and end ranges.
    */
   private int lastEnd = 0;
+
   /**
    * This is a class field for convenience, but it should be deleted at the end
    * of the constructor.
    */
   private transient Map<Correlation, Member> membersByCorrelation = new IdentityHashMap<Correlation, Member>();
-  private PrintWriter pw;
-
+  
   /**
    * This is a class field for convenience, but it should be deleted at the end
    * of the constructor.
    */
   private transient Map<SourceInfo, StoryImpl> storyCache = new IdentityHashMap<SourceInfo, StoryImpl>();
-
   private Map<Story, Integer> storyIds = new HashMap<Story, Integer>();
-
-  private OutputStreamWriter writer;
 
   private StoryRecorder() {
   }
-
+  
   protected void recordStoriesImpl(TreeLogger logger, OutputStream out,
       List<Map<Range, SourceInfo>> sourceInfoMaps, String[] js) {
 
@@ -112,25 +113,8 @@ public class StoryRecorder {
     this.js = js;
 
     try {
-      writer = new OutputStreamWriter(new GZIPOutputStream(out), "UTF-8");
-      pw = new PrintWriter(writer);
-      htmlOut = new HtmlTextOutput(pw, false);
-
-      String curLine = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-      htmlOut.printRaw(curLine);
-      htmlOut.newline();
-
-      curLine = "<soyc>";
-      htmlOut.printRaw(curLine);
-      htmlOut.newline();
-      htmlOut.indentIn();
-      htmlOut.indentIn();
-
-      curLine = "<stories>";
-      htmlOut.printRaw(curLine);
-      htmlOut.newline();
-      htmlOut.indentIn();
-      htmlOut.indentIn();
+      builder = new StringBuilder(MAX_STRING_BUILDER_SIZE * 2);
+      gzipStream = new GZIPOutputStream(out);
 
       /*
        * Don't retain beyond the constructor to avoid lingering references to
@@ -145,12 +129,19 @@ public class StoryRecorder {
           Member.SOURCE_NAME_COMPARATOR);
       Set<SourceInfo> sourceInfoSeen = new HashSet<SourceInfo>();
 
+      builder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<soyc>\n<stories>\n");
+
       int fragment = 0;
       for (Map<Range, SourceInfo> sourceInfoMap : sourceInfoMaps) {
         lastEnd = 0;
         analyzeFragment(memberFactory, classesMutable, functionsMutable,
             sourceInfoMap, sourceInfoSeen, fragment++);
+        
+        // Flush output to improve memory locality
+        flushOutput();
       }
+
+      builder.append("</stories>\n</soyc>\n");
 
       /*
        * Clear the member fields that we don't need anymore to allow GC of the
@@ -159,33 +150,20 @@ public class StoryRecorder {
       membersByCorrelation = null;
       storyCache = null;
 
-      htmlOut.indentOut();
-      htmlOut.indentOut();
-      curLine = "</stories>";
-      htmlOut.printRaw(curLine);
-      htmlOut.newline();
-
-      htmlOut.indentOut();
-      htmlOut.indentOut();
-      curLine = "</soyc>";
-      htmlOut.printRaw(curLine);
-      htmlOut.newline();
-
-      Utility.close(writer);
-      pw.close();
+      Util.writeUtf8(builder, gzipStream);
+      Utility.close(gzipStream);
 
       logger.log(TreeLogger.INFO, "Done");
-
     } catch (Throwable e) {
-      logger.log(TreeLogger.ERROR, "Could not open dependency file.", e);
+      logger.log(TreeLogger.ERROR, "Could not write dependency file.", e);
     }
   }
-
+  
   private void analyzeFragment(MemberFactory memberFactory,
       TreeSet<ClassMember> classesMutable,
       TreeSet<FunctionMember> functionsMutable,
       Map<Range, SourceInfo> sourceInfoMap, Set<SourceInfo> sourceInfoSeen,
-      int fragment) {
+      int fragment) throws IOException {
     /*
      * We want to iterate over the Ranges so that enclosing Ranges come before
      * their enclosed Ranges...
@@ -215,7 +193,10 @@ public class StoryRecorder {
       // Possibly create and record Members
       if (!sourceInfoSeen.contains(info)) {
         sourceInfoSeen.add(info);
-        for (Correlation c : info.getPrimaryCorrelations()) {
+        for (Correlation c : info.getPrimaryCorrelationsArray()) {
+          if (c == null) {
+            continue;
+          }
           if (membersByCorrelation.containsKey(c)) {
             continue;
           }
@@ -255,17 +236,6 @@ public class StoryRecorder {
         }
       }
 
-      /*
-       * Record dependencies as observed in the structure of the JS output. This
-       * an an ad-hoc approach that just looks at which SourceInfos are used
-       * within the Range of another SourceInfo.
-       */
-      Set<Correlation> correlationsInScope = new HashSet<Correlation>();
-      for (RangeInfo outer : dependencyScope) {
-        SourceInfo outerInfo = outer.info;
-        correlationsInScope.addAll(outerInfo.getPrimaryCorrelations());
-      }
-
       dependencyScope.push(new RangeInfo(range, info));
     }
 
@@ -283,8 +253,7 @@ public class StoryRecorder {
     assert dependencyOrder[0].getEnd() == lastEnd;
   }
 
-  private void emitStory(StoryImpl story, Range range) {
-
+  private void emitStory(StoryImpl story, Range range) throws IOException {
     int storyNum;
     if (storyIds.containsKey(story)) {
       storyNum = storyIds.get(story);
@@ -293,109 +262,65 @@ public class StoryRecorder {
       storyIds.put(story, storyNum);
     }
 
-    String curLine = "<story id=\"story" + Integer.toString(storyNum) + "\"";
+    builder.append("<story id=\"story");
+    builder.append(storyNum);
     if (story.getLiteralTypeName() != null) {
-      curLine = curLine + " literal=\"" + story.getLiteralTypeName() + "\"";
+      builder.append("\" literal=\"");
+      builder.append(story.getLiteralTypeName());
     }
-    curLine = curLine + ">";
-    htmlOut.printRaw(curLine);
-    htmlOut.newline();
+    builder.append("\">\n");
 
     Set<Origin> origins = story.getSourceOrigin();
     if (origins.size() > 0) {
-      htmlOut.indentIn();
-      htmlOut.indentIn();
-
-      curLine = "<origins>";
-      htmlOut.printRaw(curLine);
-      htmlOut.newline();
-
-      htmlOut.indentIn();
-      htmlOut.indentIn();
-    }
-    for (Origin origin : origins) {
-      curLine = "<origin lineNumber=\""
-          + Integer.toString(origin.getLineNumber()) + "\" location=\""
-          + origin.getLocation() + "\"/>";
-      htmlOut.printRaw(curLine);
-      htmlOut.newline();
-    }
-    if (origins.size() > 0) {
-      htmlOut.indentOut();
-      htmlOut.indentOut();
-
-      curLine = "</origins>";
-      htmlOut.printRaw(curLine);
-      htmlOut.newline();
-
-      htmlOut.indentOut();
-      htmlOut.indentOut();
+      builder.append("<origins>\n");
+      for (Origin origin : origins) {
+        builder.append("<origin lineNumber=\"");
+        builder.append(origin.getLineNumber());
+        builder.append("\" location=\"");
+        builder.append(origin.getLocation());
+        builder.append("\"/>\n");
+        
+        flushOutput();
+      }
+      builder.append("</origins>\n");
     }
 
     Set<Member> correlations = story.getMembers();
     if (correlations.size() > 0) {
-      htmlOut.indentIn();
-      htmlOut.indentIn();
-
-      curLine = "<correlations>";
-      htmlOut.printRaw(curLine);
-      htmlOut.newline();
-
-      htmlOut.indentIn();
-      htmlOut.indentIn();
-    }
-    for (Member correlation : correlations) {
-      curLine = "<by idref=\"" + correlation.getSourceName() + "\"/>";
-      htmlOut.printRaw(curLine);
-      htmlOut.newline();
-    }
-    if (correlations.size() > 0) {
-      htmlOut.indentOut();
-      htmlOut.indentOut();
-
-      curLine = "</correlations>";
-      htmlOut.printRaw(curLine);
-      htmlOut.newline();
-
-      htmlOut.indentOut();
-      htmlOut.indentOut();
+      builder.append("<correlations>\n");
+      for (Member correlation : correlations) {
+        builder.append("<by idref=\"");
+        builder.append(correlation.getSourceName());
+        builder.append("\"/>\n");
+        
+        flushOutput();
+      }
+      builder.append("</correlations>\n");
     }
 
-    htmlOut.indentIn();
-    htmlOut.indentIn();
+    builder.append("<js fragment=\"");
+    builder.append(curHighestFragment);
+    builder.append("\"/>\n<storyref idref=\"story");
+    builder.append(storyNum);
 
-    curLine = "<js fragment=\"" + curHighestFragment + "\"/>";
-    htmlOut.printRaw(curLine);
-    htmlOut.newline();
-
-    String jsCode = js[curHighestFragment].substring(range.getStart(),
-        range.getEnd());
-    jsCode = escapeXml(jsCode);
-    if ((jsCode.length() == 0) || (jsCode.compareTo("\n") == 0)) {
-      curLine = "<storyref idref=\"story" + Integer.toString(storyNum) + "\"/>";
+    int start = range.getStart();
+    int end = range.getEnd();
+    String jsCode = js[curHighestFragment];
+    if ((start == end) || ((end == start + 1) && jsCode.charAt(start) == '\n')) {
+      builder.append("\"/>\n</story>\n");
     } else {
-      curLine = "<storyref idref=\"story" + Integer.toString(storyNum) + "\">"
-          + jsCode + "</storyref>";
+      builder.append("\">");
+      Util.escapeXml(jsCode, start, end, false, builder);
+      builder.append("</storyref>\n</story>\n");
     }
-
-    htmlOut.printRaw(curLine);
-    htmlOut.newline();
-
-    htmlOut.indentOut();
-    htmlOut.indentOut();
-
-    curLine = "</story>";
-    htmlOut.printRaw(curLine);
-    htmlOut.newline();
   }
 
-  private String escapeXml(String unescaped) {
-    String escaped = unescaped.replaceAll("\\&", "&amp;");
-    escaped = escaped.replaceAll("\\<", "&lt;");
-    escaped = escaped.replaceAll("\\>", "&gt;");
-    escaped = escaped.replaceAll("\\\"", "&quot;");
-    // escaped = escaped.replaceAll("\\'", "&apos;");
-    return escaped;
+  private void flushOutput() throws IOException {
+    // Flush output to improve memory locality
+    if (builder.length() > MAX_STRING_BUILDER_SIZE) {
+      Util.writeUtf8(builder, gzipStream);
+      builder.setLength(0);
+    }
   }
 
   /**
@@ -403,7 +328,8 @@ public class StoryRecorder {
    * the right length, possibly sub-dividing the super-enclosing Range in the
    * process.
    */
-  private void popAndRecord(Stack<RangeInfo> dependencyScope, int fragment) {
+  private void popAndRecord(Stack<RangeInfo> dependencyScope, int fragment)
+      throws IOException {
     RangeInfo rangeInfo = dependencyScope.pop();
     Range toStore = rangeInfo.range;
 
@@ -416,7 +342,7 @@ public class StoryRecorder {
       assert !dependencyScope.isEmpty();
 
       SourceInfo gapInfo = dependencyScope.peek().info;
-      recordStory(gapInfo, fragment, newRange.length(), newRange);
+      recordStory(gapInfo, fragment, newRange.length(), newRange, builder);
 
       lastEnd += newRange.length();
     }
@@ -429,13 +355,13 @@ public class StoryRecorder {
     if (lastEnd < toStore.getEnd()) {
       Range newRange = new Range(Math.max(lastEnd, toStore.getStart()),
           toStore.getEnd());
-      recordStory(rangeInfo.info, fragment, newRange.length(), newRange);
+      recordStory(rangeInfo.info, fragment, newRange.length(), newRange, builder);
       lastEnd += newRange.length();
     }
   }
 
   private void recordStory(SourceInfo info, int fragment, int length,
-      Range range) {
+      Range range, StringBuilder builder) throws IOException {
     assert info != null;
     assert storyCache != null;
 
@@ -445,20 +371,19 @@ public class StoryRecorder {
 
     StoryImpl theStory;
     if (!storyCache.containsKey(info)) {
-
       SortedSet<Member> members = new TreeSet<Member>(
           Member.TYPE_AND_SOURCE_NAME_COMPARATOR);
+      Set<Origin> origins = new HashSet<Origin>();
 
       for (Correlation c : info.getAllCorrelations()) {
         Member m = membersByCorrelation.get(c);
         if (m != null) {
           members.add(m);
         }
-      }
-
-      SortedSet<Origin> origins = new TreeSet<Origin>();
-      for (Correlation c : info.getAllCorrelations(Axis.ORIGIN)) {
-        origins.add(new OriginImpl(c.getOrigin()));
+        
+        if (c.getAxis() == Axis.ORIGIN) {
+          origins.add(new OriginImpl(c.getOrigin()));
+        }
       }
 
       String literalType = null;
@@ -477,4 +402,5 @@ public class StoryRecorder {
 
     emitStory(theStory, range);
   }
+
 }

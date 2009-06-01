@@ -307,12 +307,65 @@ public final class Util {
    * Escapes '&', '<', '>', '"', and '\'' to their XML entity equivalents.
    */
   public static String escapeXml(String unescaped) {
-    String escaped = unescaped.replaceAll("\\&", "&amp;");
-    escaped = escaped.replaceAll("\\<", "&lt;");
-    escaped = escaped.replaceAll("\\>", "&gt;");
-    escaped = escaped.replaceAll("\\\"", "&quot;");
-    escaped = escaped.replaceAll("\\'", "&apos;");
-    return escaped;
+    StringBuilder builder = new StringBuilder();
+    escapeXml(unescaped, 0, unescaped.length(), true, builder);
+    return builder.toString();
+  }
+  
+  /**
+   * Escapes '&', '<', '>', '"', and optionally ''' to their XML entity
+   * equivalents. The portion of the input string between start (inclusive) and
+   * end (exclusive) is scanned.  The output is appended to the given
+   * StringBuilder.
+   * 
+   * @param code the input String
+   * @param start the first character position to scan.
+   * @param end the character position following the last character to scan.
+   * @param quoteApostrophe if true, the &apos; character is quoted as
+   *     &amp;apos;
+   * @param builder a StringBuilder to be appended with the output.
+   */
+  public static void escapeXml(String code, int start, int end,
+      boolean quoteApostrophe, StringBuilder builder) {
+    int lastIndex = 0;
+    int len = end - start;
+    char[] c = new char[len];
+    
+    code.getChars(start, end, c, 0);
+    for (int i = 0; i < len; i++) {
+      switch (c[i]) {
+        case '&':
+          builder.append(c, lastIndex, i - lastIndex);
+          builder.append("&amp;");
+          lastIndex = i + 1;
+          break;
+        case '>':
+          builder.append(c, lastIndex, i - lastIndex);
+          builder.append("&gt;");
+          lastIndex = i + 1;
+          break;
+        case '<':
+          builder.append(c, lastIndex, i - lastIndex);
+          builder.append("&lt;");
+          lastIndex = i + 1;
+          break;
+        case '\"':
+          builder.append(c, lastIndex, i - lastIndex);
+          builder.append("&quot;");
+          lastIndex = i + 1;
+          break;
+        case '\'':
+          if (quoteApostrophe) {
+            builder.append(c, lastIndex, i - lastIndex);
+            builder.append("&apos;");
+            lastIndex = i + 1;
+          }
+          break;
+        default:
+          break;
+      }
+    }
+    builder.append(c, lastIndex, len - lastIndex);
   }
 
   public static URL findSourceInClassPath(ClassLoader cl, String sourceTypeName) {
@@ -1210,6 +1263,72 @@ public final class Util {
       Utility.close(writer);
       Utility.close(stream);
     }
+  }
+  
+  /**
+   * Writes the contents of a StringBuilder to an OutputStream, encoding
+   * each character using the UTF-* encoding.  Unicode characters between
+   * U+0000 and U+10FFFF are supported.
+   */
+  public static void writeUtf8(StringBuilder builder, OutputStream out)
+      throws IOException {
+    // Rolling our own converter avoids the following:
+    //
+    // o Instantiating the entire builder as a String
+    // o Creating CharEncoders and NIO buffer
+    // o Passing through an OutputStreamWriter
+
+    int buflen = 1024;
+    char[] inBuf = new char[buflen];
+    byte[] outBuf = new byte[4 * buflen];
+    
+    int length = builder.length();
+    int start = 0;
+
+    while (start < length) {
+      int end = Math.min(start + buflen, length);
+      builder.getChars(start, end, inBuf, 0);
+
+      int index = 0;
+      int len = end - start;
+      for (int i = 0; i < len; i++) {
+        int c = inBuf[i] & 0xffff;
+        if (c < 0x80) {
+          outBuf[index++] = (byte) c;
+        } else if (c < 0x800) {
+          int y = c >> 8;
+          int x = c & 0xff;
+          outBuf[index++] = (byte) (0xc0 | (y << 2) | (x >> 6)); // 110yyyxx
+          outBuf[index++] = (byte) (0x80 | (x & 0x3f));          // 10xxxxxx
+        } else if (c < 0xD800 || c > 0xDFFF) {
+          int y = (c >> 8) & 0xff;
+          int x = c & 0xff;
+          outBuf[index++] = (byte) (0xe0 | (y >> 4));            // 1110yyyy
+          outBuf[index++] = (byte) (0x80 | ((y << 2) & 0x3c) | (x >> 6)); // 10yyyyxx
+          outBuf[index++] = (byte) (0x80 | (x & 0x3f));          // 10xxxxxx
+        } else {
+          // Ignore if no second character (which is not be legal unicode)
+          if (i + 1 < len) {
+            int hi = c & 0x3ff;
+            int lo = inBuf[i + 1] & 0x3ff;
+
+            int full = 0x10000 + ((hi << 10) | lo);
+            int z = (full >> 16) & 0xff;
+            int y = (full >> 8) & 0xff;
+            int x = full & 0xff;
+
+            outBuf[index++] = (byte) (0xf0 | (z >> 5));
+            outBuf[index++] = (byte) (0x80 | ((z << 4) & 0x30) | (y >> 4));
+            outBuf[index++] = (byte) (0x80 | ((y << 2) & 0x3c) | (x >> 6));
+            outBuf[index++] = (byte) (0x80 | (x & 0x3f));
+            
+            i++; // char has been consumed
+          }
+        }
+      }
+      out.write(outBuf, 0, index);
+      start = end;
+    } 
   }
 
   // /**

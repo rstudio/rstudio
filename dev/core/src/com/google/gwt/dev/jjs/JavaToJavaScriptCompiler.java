@@ -183,6 +183,7 @@ public class JavaToJavaScriptCompiler {
   public static PermutationResult compilePermutation(TreeLogger logger,
       UnifiedAst unifiedAst, Map<String, String> rebindAnswers,
       PropertyOracle[] propertyOracles, int permutationId) throws UnableToCompleteException {
+    long permStart = System.currentTimeMillis();
     try {
       if (JProgram.isTracingEnabled()) {
         System.out.println("------------------------------------------------------------");
@@ -323,10 +324,13 @@ public class JavaToJavaScriptCompiler {
       PermutationResult toReturn = new PermutationResultImpl(js,
           makeSymbolMap(symbolTable));
 
-      if (sourceInfoMaps != null) {
+      if (sourceInfoMaps != null) {        
+        long soycStart = System.currentTimeMillis();
+        System.out.println("Computing SOYC output");
         // Free up memory.
         symbolTable = null;
 
+        long start = System.currentTimeMillis();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         // get method dependencies
         StoryRecorder.recordStories(logger, baos, sourceInfoMaps, js);
@@ -334,20 +338,34 @@ public class JavaToJavaScriptCompiler {
             + ".xml.gz", baos.toByteArray());
         // Free up memory.
         js = null;
+        System.out.println("Record stories: "
+            + (System.currentTimeMillis() - start) + " ms");
 
+        start = System.currentTimeMillis();
         baos.reset();
         DependencyRecorder.recordDependencies(logger, baos, jprogram);
         SoycArtifact dependencies = new SoycArtifact("dependencies"
             + permutationId + ".xml.gz", baos.toByteArray());
+        System.out.println("Record dependencies: "
+            + (System.currentTimeMillis() - start) + " ms");
 
+        start = System.currentTimeMillis();
         baos.reset();
         SplitPointRecorder.recordSplitPoints(jprogram, baos, logger);
         SoycArtifact splitPoints = new SoycArtifact("splitPoints"
             + permutationId + ".xml.gz", baos.toByteArray());
+        System.out.println("Record split points: "
+            + (System.currentTimeMillis() - start) + " ms");
 
         toReturn.getArtifacts().add(
             new StandardCompilationAnalysis(dependencies, stories, splitPoints));
+        
+        System.out.println("Completed SOYC phase in "
+            + (System.currentTimeMillis() - soycStart) + " ms");
       }
+      
+      System.out.println("Permutation took "
+          + (System.currentTimeMillis() - permStart) + " ms");
       return toReturn;
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);

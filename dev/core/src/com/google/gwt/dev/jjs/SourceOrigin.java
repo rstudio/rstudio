@@ -166,6 +166,10 @@ public class SourceOrigin implements SourceInfo {
   public Set<Correlation> getPrimaryCorrelations() {
     return Collections.emptySet();
   }
+  
+  public Correlation[] getPrimaryCorrelationsArray() {
+    return new Correlation[0];
+  }
 
   public int getStartLine() {
     return startLine;

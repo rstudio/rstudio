@@ -19,12 +19,10 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
-import com.google.gwt.dev.util.HtmlTextOutput;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.zip.GZIPOutputStream;
 
@@ -42,10 +40,7 @@ public class DependencyRecorder implements
     new DependencyRecorder().recordDependenciesImpl(logger, out, jprogram);
   }
 
-  private HtmlTextOutput htmlOut;
-  private PrintWriter pw;
-
-  private OutputStreamWriter writer;
+  private StringBuilder builder;
 
   private DependencyRecorder() {
   }
@@ -74,22 +69,29 @@ public class DependencyRecorder implements
     dependencyAnalyzer.setDependencyRecorder(this);
 
     try {
-      writer = new OutputStreamWriter(new GZIPOutputStream(out), "UTF-8");
-      pw = new PrintWriter(writer);
-      htmlOut = new HtmlTextOutput(pw, false);
+      OutputStreamWriter writer
+         = new OutputStreamWriter(new GZIPOutputStream(out), "UTF-8");
+      
+      StringBuilder localBuilder = new StringBuilder();
+      this.builder = localBuilder;
+
+      printPre();
+      for (JMethod method : jprogram.getAllEntryMethods()) {
+        dependencyAnalyzer.traverseFrom(method);
+        if (localBuilder.length() > 8 * 1024) {
+          writer.write(localBuilder.toString());
+          localBuilder.setLength(0);
+        }
+      }
+      printPost();
+
+      writer.write(localBuilder.toString());
+      Utility.close(writer);
+
+      logger.log(TreeLogger.INFO, "Done");
     } catch (Throwable e) {
-      logger.log(TreeLogger.ERROR, "Could not open dependency file.", e);
+      logger.log(TreeLogger.ERROR, "Could not write dependency file.", e);
     }
-
-    printPre();
-    for (JMethod method : jprogram.getAllEntryMethods()) {
-      dependencyAnalyzer.traverseFrom(method);
-    }
-    printPost();
-    pw.close();
-    Utility.close(writer);
-
-    logger.log(TreeLogger.INFO, "Done");
   }
 
   /**
@@ -99,55 +101,45 @@ public class DependencyRecorder implements
    * @param dependencyChain
    */
   private void printMethodDependency(ArrayList<JMethod> dependencyChain) {
-    String curLine;
-    for (int i = dependencyChain.size() - 1; i >= 0; i--) {
-      JMethod curMethod = dependencyChain.get(i);
-      String sFullMethodString = curMethod.getName();
-      if (curMethod.getEnclosingType() != null) {
-        sFullMethodString = curMethod.getEnclosingType().getName() + "::"
-            + curMethod.getName();
-      }
-      if (i == dependencyChain.size() - 1) {
-        curLine = "<method name=\"" + sFullMethodString + "\">";
-        htmlOut.printRaw(curLine);
-        htmlOut.newline();
-        htmlOut.indentIn();
-        htmlOut.indentIn();
-      } else {
-        curLine = "<called by=\"" + sFullMethodString + "\"/>";
-        htmlOut.printRaw(curLine);
-        htmlOut.newline();
-      }
+    int size = dependencyChain.size();
+    if (size == 0) {
+      return;
     }
-    htmlOut.indentOut();
-    htmlOut.indentOut();
-    curLine = "</method>";
-    htmlOut.printRaw(curLine);
-    htmlOut.newline();
+    
+    JMethod curMethod = dependencyChain.get(size - 1);
+    builder.append("<method name=\"");
+    if (curMethod.getEnclosingType() != null) {
+      builder.append(curMethod.getEnclosingType().getName());
+      builder.append("::");
+    }
+    builder.append(curMethod.getName());
+    builder.append("\">\n");
+
+    for (int i = size - 2; i >= 0; i--) {
+      curMethod = dependencyChain.get(i);
+      builder.append("<called by=\"");
+      if (curMethod.getEnclosingType() != null) {
+        builder.append(curMethod.getEnclosingType().getName());
+        builder.append("::");
+      }
+      builder.append(curMethod.getName());
+      builder.append("\"/>\n");
+    }
+    builder.append("</method>\n");
   }
 
   /**
    * Prints the closing lines necessary for the dependencies file.
    */
   private void printPost() {
-    String curLine = "</soyc-dependencies>";
-    htmlOut.indentOut();
-    htmlOut.indentOut();
-    htmlOut.printRaw(curLine);
-    htmlOut.newline();
+    builder.append("</soyc-dependencies>\n");
   }
 
   /**
    * Prints the preamble necessary for the dependencies file.
    */
   private void printPre() {
-    String curLine = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-    htmlOut.printRaw(curLine);
-    htmlOut.newline();
-    curLine = "<soyc-dependencies>";
-    htmlOut.printRaw(curLine);
-    htmlOut.newline();
-    htmlOut.indentIn();
-    htmlOut.indentIn();
+    builder.append(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<soyc-dependencies>\n");
   }
 }

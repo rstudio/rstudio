@@ -19,8 +19,8 @@ import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.core.ext.soyc.Story;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Comparator;
+import java.util.Set;
 import java.util.SortedSet;
 
 /**
@@ -43,14 +43,14 @@ public class StoryImpl implements Story, Serializable {
   private final int length;
   private final String literalDescription;
   private final SortedSet<Member> members;
-  private final SortedSet<Origin> origins;
+  private final Set<Origin> origins;
 
   /**
    * Standard constructor. This constructor will create unmodifiable versions of
    * the collections passed into it.
    */
   public StoryImpl(int id, SortedSet<Member> members, 
-      SortedSet<Origin> origins, String literalDescription, int fragment,
+      Set<Origin> origins, String literalDescription, int fragment,
       int length) {
     assert members != null;
     assert origins != null;
@@ -63,8 +63,8 @@ public class StoryImpl implements Story, Serializable {
     this.length = length;
     this.literalDescription = literalDescription == null ? null
         : literalDescription.intern();
-    this.members = Collections.unmodifiableSortedSet(members);
-    this.origins = Collections.unmodifiableSortedSet(origins);
+    this.members = members;
+    this.origins = origins;
   }
 
   /**
@@ -116,7 +116,7 @@ public class StoryImpl implements Story, Serializable {
     return members;
   }
 
-  public SortedSet<Origin> getSourceOrigin() {
+  public Set<Origin> getSourceOrigin() {
     return origins;
   }
 

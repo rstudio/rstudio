@@ -64,6 +64,13 @@ public interface SourceInfo extends Serializable {
    * has been set.
    */
   Set<Correlation> getPrimaryCorrelations();
+  
+  /**
+   * Returns the first Correlations added along each Axis on which a Correlation
+   * has been set.  Some entries may be null and should be ignored.  The
+   * returned array must not be modified.
+   */
+  Correlation[] getPrimaryCorrelationsArray();
 
   int getStartLine();
 

@@ -54,8 +54,8 @@ public final class Range {
     }
   };
 
-  private final int end;
-  private final int start;
+  final int end;
+  final int start;
 
   /**
    * Constructor.

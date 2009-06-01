@@ -196,7 +196,7 @@ public class CompilePerms {
       List<FileBackedObject<PermutationResult>> resultFiles)
       throws UnableToCompleteException {
     final TreeLogger branch = logger.branch(TreeLogger.INFO, "Compiling "
-        + perms.length + " permutations");
+        + perms.length + " permutation" + (perms.length > 1 ? "s" : ""));
     PermutationWorkerFactory.compilePermutations(logger, precompilation, perms,
         localWorkers, resultFiles);
     branch.log(TreeLogger.INFO, "Permutation compile succeeded");

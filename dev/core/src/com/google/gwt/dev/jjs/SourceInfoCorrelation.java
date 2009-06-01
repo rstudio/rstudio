@@ -36,9 +36,11 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
    * Micro-opt for {@link #makeChild(Class, String)}.
    */
   private static final SourceInfo[] EMPTY_SOURCEINFO_ARRAY = new SourceInfo[0];
+  
+  private static final int numCorrelationAxes = Axis.values().length;
 
   private static int numCorrelationAxes() {
-    return Axis.values().length;
+    return numCorrelationAxes;
   }
 
   /**
@@ -164,6 +166,10 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
       }
     }
     return toReturn;
+  }
+  
+  public Correlation[] getPrimaryCorrelationsArray() {
+    return primaryCorrelations;
   }
 
   public int getStartLine() {

@@ -31,6 +31,7 @@
 package com.google.gwt.core.ext.soyc;
 
 import java.io.Serializable;
+import java.util.Set;
 import java.util.SortedSet;
 
 /**
@@ -82,6 +83,5 @@ public interface Story extends Serializable {
    * string literals) that appear in multiple locations in the source may be
    * merged by the compiler into a single Story.
    */
-  SortedSet<Origin> getSourceOrigin();
-
+  Set<Origin> getSourceOrigin();
 }
