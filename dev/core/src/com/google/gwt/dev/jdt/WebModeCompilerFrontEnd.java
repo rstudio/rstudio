@@ -192,6 +192,7 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
       } catch (UnableToCompleteException e) {
         FindDeferredBindingSitesVisitor.reportRebindProblem(site,
             "Failed to resolve '" + reqType + "' via deferred binding");
+        rebindAnswers.put(reqType, new String[0]);
       }
     }
 
