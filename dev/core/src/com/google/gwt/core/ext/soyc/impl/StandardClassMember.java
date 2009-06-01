@@ -34,22 +34,26 @@ import java.util.TreeSet;
  */
 public class StandardClassMember extends AbstractMemberWithDependencies
     implements ClassMember {
+  private final MemberFactory factory;
   private final SortedSet<FieldMember> fields = new TreeSet<FieldMember>(
       Member.SOURCE_NAME_COMPARATOR);
   private final SortedSet<FieldMember> fieldsView = Collections.unmodifiableSortedSet(fields);
   private final SortedSet<MethodMember> methods = new TreeSet<MethodMember>(
       Member.SOURCE_NAME_COMPARATOR);
   private final SortedSet<MethodMember> methodsView = Collections.unmodifiableSortedSet(methods);
-  private final SortedSet<ClassMember> overridesView;
+  private SortedSet<ClassMember> overridesView; // Initialized lazily
   private final String packageName;
   private final String sourceName;
-
+  private final JDeclaredType type;
+  
   /**
    * Constructed by {@link MemberFactory#get(JReferenceType)}.
    */
   public StandardClassMember(MemberFactory factory, JDeclaredType type) {
     super(type.getSourceInfo());
-
+    this.factory = factory;
+    this.type = type;
+    
     int index = type.getName().lastIndexOf('.');
     if (index < 0) {
       packageName = "";
@@ -57,7 +61,52 @@ public class StandardClassMember extends AbstractMemberWithDependencies
       packageName = type.getName().substring(0, index).intern();
     }
     sourceName = type.getName().intern();
+  }
 
+  public void addField(FieldMember field) {
+    fields.add(field);
+  }
+
+  public void addMethod(MethodMember method) {
+    methods.add(method);
+  }
+
+  public SortedSet<FieldMember> getFields() {
+    return fieldsView;
+  }
+
+  public SortedSet<MethodMember> getMethods() {
+    return methodsView;
+  }
+
+  public SortedSet<ClassMember> getOverrides() {
+    synchronized (StandardClassMember.class) {
+      if (overridesView == null) {
+        computeOverrides();
+      }
+      return overridesView;
+    }
+  }
+
+  public String getPackage() {
+    return packageName;
+  }
+
+  @Override
+  public String getSourceName() {
+    return sourceName;
+  }
+
+  /**
+   * For debugging use only.
+   */
+  @Override
+  public String toString() {
+    return "ClassMember " + getSourceName();
+  }
+
+  /** Compute overrides on demand. */
+  private void computeOverrides() {
     Set<JDeclaredType> seen = new HashSet<JDeclaredType>();
     Set<JDeclaredType> toTraverse = new HashSet<JDeclaredType>();
     toTraverse.add(type);
@@ -82,42 +131,5 @@ public class StandardClassMember extends AbstractMemberWithDependencies
       toTraverse.removeAll(seen);
     }
     overridesView = Collections.unmodifiableSortedSet(overrides);
-  }
-
-  public void addField(FieldMember field) {
-    fields.add(field);
-  }
-
-  public void addMethod(MethodMember method) {
-    methods.add(method);
-  }
-
-  public SortedSet<FieldMember> getFields() {
-    return fieldsView;
-  }
-
-  public SortedSet<MethodMember> getMethods() {
-    return methodsView;
-  }
-
-  public SortedSet<ClassMember> getOverrides() {
-    return overridesView;
-  }
-
-  public String getPackage() {
-    return packageName;
-  }
-
-  @Override
-  public String getSourceName() {
-    return sourceName;
-  }
-
-  /**
-   * For debugging use only.
-   */
-  @Override
-  public String toString() {
-    return "ClassMember " + getSourceName();
   }
 }
