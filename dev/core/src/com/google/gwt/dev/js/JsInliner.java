@@ -63,6 +63,7 @@ import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -727,6 +728,13 @@ public class JsInliner {
     private final JsProgram program;
 
     /**
+     * A map containing the next integer to try as an identifier suffix for
+     * a given JsScope.
+     */
+    private IdentityHashMap<JsScope,HashMap<String,Integer>> startIdentForScope
+        = new IdentityHashMap<JsScope, HashMap<String,Integer>>();
+
+    /**
      * Not a stack because program fragments aren't nested.
      */
     private JsFunction programFunction;
@@ -961,11 +969,20 @@ public class JsInliner {
          * function so we'll use a counter for disambiguation.
          */
         String ident;
-        int count = 0;
+        String base = f.getName() + "_" + name.getIdent();
         JsScope scope = functionStack.peek().getScope();
+        HashMap<String,Integer> startIdent = startIdentForScope.get(scope);
+        if (startIdent == null) {
+          startIdent = new HashMap<String,Integer>();
+          startIdentForScope.put(scope, startIdent);
+        }
+        
+        Integer s = startIdent.get(base);
+        int suffix = (s == null) ? 0 : s.intValue();
         do {
-          ident = f.getName() + "_" + name.getIdent() + "_" + count++;
+          ident = base + "_" + suffix++;
         } while (scope.findExistingName(ident) != null);
+        startIdent.put(base, suffix);
 
         JsName newName = scope.declareName(ident, name.getShortIdent());
         v.setReplacementName(name, newName);

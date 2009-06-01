@@ -20,7 +20,9 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.js.ast.JsScope;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -40,6 +42,13 @@ public class JsPrettyNamer {
   private Set<String> childIdents = null;
 
   private final JsProgram program;
+  
+  /**
+   * A map containing the next integer to try as an identifier suffix for
+   * a given JsScope.
+   */
+  private IdentityHashMap<JsScope,HashMap<String,Integer>> startIdentForScope =
+    new IdentityHashMap<JsScope, HashMap<String,Integer>>();
 
   public JsPrettyNamer(JsProgram program) {
     this.program = program;
@@ -66,6 +75,12 @@ public class JsPrettyNamer {
   }
 
   private void visit(JsScope scope) {
+    HashMap<String,Integer> startIdent = startIdentForScope.get(scope);
+    if (startIdent == null) {
+      startIdent = new HashMap<String,Integer>();
+      startIdentForScope.put(scope, startIdent);
+    }
+    
     // Save off the childIdents which is currently being computed for my parent.
     Set<String> myChildIdents = childIdents;
 
@@ -95,13 +110,17 @@ public class JsPrettyNamer {
 
       String newIdent = name.getShortIdent();
       if (!isLegal(scope, childIdents, newIdent)) {
-        String checkIdent = newIdent;
-        for (int i = 0; true; ++i) {
-          checkIdent = newIdent + "_" + i;
-          if (isLegal(scope, childIdents, checkIdent)) {
-            break;
-          }
-        }
+        String checkIdent;
+        
+        // Start searching using a suffix hint stored in the scope.
+        // We still do a search in case there is a collision with
+        // a user-provided identifier
+        Integer s = startIdent.get(newIdent);
+        int suffix = (s == null) ? 0 : s.intValue();
+        do {
+          checkIdent = newIdent + "_" + suffix++;
+        } while (!isLegal(scope, childIdents, checkIdent));
+        startIdent.put(newIdent, suffix);
         name.setShortIdent(checkIdent);
       } else {
         // nothing to do; the short name is already good
