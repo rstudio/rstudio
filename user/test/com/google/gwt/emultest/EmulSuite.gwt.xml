@@ -16,10 +16,4 @@
   <inherits name='com.google.gwt.junit.JUnit' />
   <inherits name='org.apache.commons.Collections' />
   <source path='java' />
-
-  <!--
-    Specify some tighter compiler settings so that those compiler paths
-    are tested by the normal GWT regression suite
-  -->
-  <set-configuration-property name='compiler.max.vars.per.var' value='10' />
 </module>

@@ -19,10 +19,8 @@ import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsVisitable;
-import com.google.gwt.dev.util.AbstractTextOutput;
+import com.google.gwt.dev.util.TextOutput;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -33,35 +31,10 @@ import java.util.Map;
  * locations of SourceInfo objects in the output.
  */
 public class JsReportGenerationVisitor extends JsSourceGenerationVisitor {
-  /**
-   * A TextOutput that can return the total number of characters that have been
-   * printed.
-   */
-  public static class CountingTextOutput extends AbstractTextOutput {
-    private final StringWriter sw = new StringWriter();
-    private final PrintWriter out = new PrintWriter(sw);
-
-    public CountingTextOutput(boolean compact) {
-      super(compact);
-      setPrintWriter(out);
-    }
-
-    public int getCount() {
-      out.flush();
-      return sw.getBuffer().length();
-    }
-
-    @Override
-    public String toString() {
-      out.flush();
-      return sw.toString();
-    }
-  }
-
   private final Map<Range, SourceInfo> sourceInfoMap = new HashMap<Range, SourceInfo>();
-  private final CountingTextOutput out;
+  private final TextOutput out;
 
-  public JsReportGenerationVisitor(CountingTextOutput out) {
+  public JsReportGenerationVisitor(TextOutput out) {
     super(out);
     this.out = out;
   }
@@ -73,11 +46,11 @@ public class JsReportGenerationVisitor extends JsSourceGenerationVisitor {
   @Override
   protected <T extends JsVisitable<T>> T doAccept(T node) {
     boolean addEntry = node instanceof HasSourceInfo;
-    int start = addEntry ? out.getCount() : 0;
+    int start = addEntry ? out.getPosition() : 0;
     T toReturn = super.doAccept(node);
     if (addEntry) {
       SourceInfo info = ((HasSourceInfo) node).getSourceInfo();
-      sourceInfoMap.put(new Range(start, out.getCount()), info);
+      sourceInfoMap.put(new Range(start, out.getPosition()), info);
     }
     return toReturn;
   }

@@ -30,6 +30,10 @@ public class TextOutputVisitor extends JVisitor implements TextOutput {
     this.textOutput = textOutput;
   }
 
+  public int getPosition() {
+    return textOutput.getPosition();
+  }
+
   public void indentIn() {
     textOutput.indentIn();
   }

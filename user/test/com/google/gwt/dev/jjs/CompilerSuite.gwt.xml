@@ -13,9 +13,18 @@
 <!-- limitations under the License.                                         -->
 
 <module>
+	<inherits name="com.google.gwt.core.Core"/>
+    
 	<source path='test' />
 	<generate-with class="com.google.gwt.dev.jjs.UnstableGenerator">
 		<when-type-assignable
 			class="com.google.gwt.dev.jjs.test.UnstableGeneratorTest.UnstableResult" />
 	</generate-with>
+
+	<!--
+	  Specify some tighter compiler settings so that those compiler paths
+	  are tested by the normal GWT regression suite.
+	-->
+	<set-configuration-property name='compiler.max.vars.per.var' value='10' />
+	<set-configuration-property name='iframe.linker.script.chunk.size' value='100'/>
 </module>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,31 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.util;
+package com.google.gwt.core.ext.linker;
 
 /**
- * Interface used for printing text output.
+ * Describes the source-code positions of top-level statements in a string of
+ * JavaScript.
  */
-public interface TextOutput {
-  int getPosition();
+public interface StatementRanges {
+  /**
+   * The end of the ith statement.
+   */
+  int end(int i);
 
-  void indentIn();
+  /**
+   * The number of statements in the associated JavaScript.
+   */
+  int numStatements();
 
-  void indentOut();
-
-  void newline();
-
-  void newlineOpt();
-
-  void print(char c);
-
-  void print(char[] s);
-
-  void print(String s);
-
-  void printOpt(char c);
-
-  void printOpt(char[] s);
-
-  void printOpt(String s);
+  /**
+   * The start of the ith statement.
+   */
+  int start(int i);
 }

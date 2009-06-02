@@ -19,18 +19,23 @@ import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.CompilationResult;
+import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.impl.HostedModeLinker;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.util.DefaultTextOutput;
+import com.google.gwt.dev.util.Util;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.SortedSet;
 
 /**
  * Implements the canonical GWT bootstrap sequence that loads the GWT module in
@@ -38,6 +43,62 @@ import java.net.URLConnection;
  */
 @LinkerOrder(Order.PRIMARY)
 public class IFrameLinker extends SelectionScriptLinker {
+  /**
+   * This string is inserted between script chunks. It is made default access
+   * for testing.
+   */
+  static final String SCRIPT_CHUNK_SEPARATOR = "--></script>\n<script><!--\n";
+
+  /**
+   * A configuration property indicating how large each script tag should be.
+   */
+  private static final String CHUNK_SIZE_PROPERTY = "iframe.linker.script.chunk.size";
+
+  /**
+   * Split a JavaScript string into multiple chunks, at statement boundaries.
+   * Insert and end-script tag and a start-script tag in between each chunk.
+   * This method is made default access for testing.
+   */
+  static String splitPrimaryJavaScript(StatementRanges ranges, String js,
+      int charsPerChunk) {
+    if (charsPerChunk < 0) {
+      return js;
+    }
+
+    StringBuilder sb = new StringBuilder();
+    int bytesInCurrentTag = 0;
+
+    for (int i = 0; i < ranges.numStatements(); i++) {
+      int start = ranges.start(i);
+      int end = ranges.end(i);
+      int length = end - start;
+      if (bytesInCurrentTag > 0
+          && bytesInCurrentTag + length > charsPerChunk) {
+        if (lastChar(sb) != '\n') {
+          sb.append('\n');
+        }
+        sb.append(SCRIPT_CHUNK_SEPARATOR);
+        bytesInCurrentTag = 0;
+      }
+      if (bytesInCurrentTag > 0) {
+        char lastChar = lastChar(sb);
+        if (lastChar != '\n' && lastChar != ';' && lastChar != '}') {
+          /*
+           * Make sure this statement has a separator from the last one.
+           */
+          sb.append(";");
+        }
+      }
+      sb.append(js, start, end);
+      bytesInCurrentTag += length;
+    }
+    return sb.toString();
+  }
+
+  private static char lastChar(StringBuilder sb) {
+    return sb.charAt(sb.length() - 1);
+  }
+
   @Override
   public String getDescription() {
     return "Standard";
@@ -87,6 +148,26 @@ public class IFrameLinker extends SelectionScriptLinker {
     return toReturn;
   }
 
+  /**
+   * This implementation divides the code of the initial fragment into multiple
+   * script tags. These chunked script tags loads faster on Firefox even when
+   * the data is cached. Additionally, having the script tags separated means
+   * that the early ones can be evaluated before the later ones have finished
+   * downloading. As a result of this parallelism, the overall time to get the
+   * JavaScript downloaded and evaluated can lower.
+   */
+  @Override
+  protected byte[] generatePrimaryFragment(TreeLogger logger,
+      LinkerContext context, CompilationResult result, String[] js)
+      throws UnableToCompleteException {
+    StringBuffer b = new StringBuffer();
+    b.append(getModulePrefix(logger, context, result.getStrongName(), js.length));
+    b.append(splitPrimaryJavaScript(result.getStatementRanges()[0], js[0],
+        charsPerChunk(context, logger)));
+    b.append(getModuleSuffix(logger, context));
+    return Util.getBytes(b.toString());
+  }
+
   @Override
   protected String getCompilationExtension(TreeLogger logger,
       LinkerContext context) {
@@ -132,11 +213,33 @@ public class IFrameLinker extends SelectionScriptLinker {
 
     return out.toString();
   }
-  
+
   @Override
   protected String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) {
     return "com/google/gwt/core/linker/IFrameTemplate.js";
+  }
+
+  protected String modifyPrimaryJavaScript(String js) {
+    return js;
+  }
+
+  /**
+   * Extract via {@link #CHUNK_SIZE_PROPERTY} the number of characters to be
+   * included in each script tag.
+   */
+  private int charsPerChunk(LinkerContext context, TreeLogger logger)
+      throws UnableToCompleteException {
+    SortedSet<ConfigurationProperty> configProps = context.getConfigurationProperties();
+    for (ConfigurationProperty prop : configProps) {
+      if (prop.getName().equals(CHUNK_SIZE_PROPERTY)) {
+        return Integer.parseInt(prop.getValues().get(0));
+      }
+    }
+
+    logger.log(TreeLogger.ERROR, "Unable to find configuration property "
+        + CHUNK_SIZE_PROPERTY);
+    throw new UnableToCompleteException();
   }
 
   /**

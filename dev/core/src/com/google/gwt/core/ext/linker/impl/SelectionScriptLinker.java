@@ -117,8 +117,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       throws UnableToCompleteException {
     String[] js = result.getJavaScript();
     byte[][] bytes = new byte[js.length][];
-    bytes[0] = generatePrimaryFragment(logger, context, js[0],
-        result.getStrongName(), js.length);
+    bytes[0] = generatePrimaryFragment(logger, context, result, js);
     for (int i = 1; i < js.length; i++) {
       bytes[i] = Util.getBytes(js[i]);
     }
@@ -157,6 +156,21 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
     return emitString(logger, selectionScript, context.getModuleName()
         + ".nocache.js", lastModified);
+  }
+
+  /**
+   * Generate the primary fragment. The default implementation is based on
+   * {@link #getModulePrefix(TreeLogger, LinkerContext, String, int)} and
+   * {@link #getModuleSuffix(TreeLogger, LinkerContext)}.
+   */
+  protected byte[] generatePrimaryFragment(TreeLogger logger,
+      LinkerContext context, CompilationResult result, String[] js)
+      throws UnableToCompleteException {
+    StringBuffer b = new StringBuffer();
+    b.append(getModulePrefix(logger, context, result.getStrongName(), js.length));
+    b.append(js[0]);
+    b.append(getModuleSuffix(logger, context));
+    return Util.getBytes(b.toString());
   }
 
   protected String generatePropertyProvider(SelectionProperty prop) {
@@ -385,14 +399,4 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
   protected abstract String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
-
-  private byte[] generatePrimaryFragment(TreeLogger logger,
-      LinkerContext context, String js, String strongName, int numFragments)
-      throws UnableToCompleteException {
-    StringBuffer b = new StringBuffer();
-    b.append(getModulePrefix(logger, context, strongName, numFragments));
-    b.append(js);
-    b.append(getModuleSuffix(logger, context));
-    return Util.getBytes(b.toString());
-  }
 }

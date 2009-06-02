@@ -1502,7 +1502,8 @@ public class GenerateJavaScriptAST {
       JsFunction nullFunc = new JsFunction(sourceInfo, topScope,
           nullMethodName, true);
       nullFunc.setBody(new JsBlock(sourceInfo));
-      globalStatements.add(nullFunc.makeStmt());
+      // Add it first, so that script-tag chunking in IFrameLinker works
+      globalStatements.add(0, nullFunc.makeStmt());
     }
 
     private void generateSeedFuncAndPrototype(JClassType x,

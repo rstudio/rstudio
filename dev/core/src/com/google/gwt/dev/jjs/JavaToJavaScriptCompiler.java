@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
@@ -95,7 +96,6 @@ import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
-import com.google.gwt.dev.js.JsReportGenerationVisitor.CountingTextOutput;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
@@ -137,8 +137,10 @@ public class JavaToJavaScriptCompiler {
     private final ArtifactSet artifacts = new ArtifactSet();
     private final byte[][] js;
     private final byte[] serializedSymbolMap;
+    private final StatementRanges[] statementRanges;
 
-    public PermutationResultImpl(String[] js, SymbolData[] symbolMap) {
+    public PermutationResultImpl(String[] js, SymbolData[] symbolMap,
+        StatementRanges[] statementRanges) {
       byte[][] bytes = new byte[js.length][];
       for (int i = 0; i < js.length; ++i) {
         bytes[i] = Util.getBytes(js[i]);
@@ -152,6 +154,7 @@ public class JavaToJavaScriptCompiler {
         throw new RuntimeException("Should never happen with in-memory stream",
             e);
       }
+      this.statementRanges = statementRanges;
     }
 
     public ArtifactSet getArtifacts() {
@@ -164,6 +167,10 @@ public class JavaToJavaScriptCompiler {
 
     public byte[] getSerializedSymbolMap() {
       return serializedSymbolMap;
+    }
+
+    public StatementRanges[] getStatementRanges() {
+      return statementRanges;
     }
   }
 
@@ -303,28 +310,28 @@ public class JavaToJavaScriptCompiler {
       List<Map<Range, SourceInfo>> sourceInfoMaps = options.isSoycEnabled()
           ? new ArrayList<Map<Range, SourceInfo>>(jsProgram.getFragmentCount())
           : null;
-
+      StatementRanges[] ranges = new StatementRanges[js.length];
       for (int i = 0; i < js.length; i++) {
+        DefaultTextOutput out = new DefaultTextOutput(
+            options.getOutput().shouldMinimize());
+        JsSourceGenerationVisitor v;
         if (sourceInfoMaps != null) {
-          CountingTextOutput out = new CountingTextOutput(
-              options.getOutput().shouldMinimize());
-          JsReportGenerationVisitor v = new JsReportGenerationVisitor(out);
-          v.accept(jsProgram.getFragmentBlock(i));
-          js[i] = out.toString();
-          sourceInfoMaps.add(v.getSourceInfoMap());
+          v = new JsReportGenerationVisitor(out);
         } else {
-          DefaultTextOutput out = new DefaultTextOutput(
-              options.getOutput().shouldMinimize());
-          JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
-          v.accept(jsProgram.getFragmentBlock(i));
-          js[i] = out.toString();
+          v = new JsSourceGenerationVisitor(out);
         }
+        v.accept(jsProgram.getFragmentBlock(i));
+        js[i] = out.toString();
+        if (sourceInfoMaps != null) {
+          sourceInfoMaps.add(((JsReportGenerationVisitor) v).getSourceInfoMap());
+        }
+        ranges[i] = v.getStatementRanges();
       }
 
       PermutationResult toReturn = new PermutationResultImpl(js,
-          makeSymbolMap(symbolTable));
+          makeSymbolMap(symbolTable), ranges);
 
-      if (sourceInfoMaps != null) {        
+      if (sourceInfoMaps != null) {
         long soycStart = System.currentTimeMillis();
         System.out.println("Computing SOYC output");
         // Free up memory.

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.core.ext.linker.StatementRanges;
+import com.google.gwt.core.ext.linker.impl.StandardStatementRanges;
 import com.google.gwt.dev.js.ast.HasName;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
@@ -69,8 +71,11 @@ import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.util.TextOutput;
+import com.google.gwt.dev.util.collect.HashSet;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -120,10 +125,24 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   private static final Pattern VALID_NAME_PATTERN = Pattern.compile("[a-zA-Z_$][\\w$]*");
 
   protected boolean needSemi = true;
+
+  /**
+   * "Global" blocks are either the global block of a fragment, or a block
+   * nested directly within some other global block. This definition matters
+   * because the statements designated by statementEnds and statementStarts are
+   * those that appear directly within these global blocks.
+   */
+  private Set<JsBlock> globalBlocks = new HashSet<JsBlock>();
   private final TextOutput p;
+  private ArrayList<Integer> statementEnds = new ArrayList<Integer>();
+  private ArrayList<Integer> statementStarts = new ArrayList<Integer>();
 
   public JsToStringGenerationVisitor(TextOutput out) {
     this.p = out;
+  }
+
+  public StatementRanges getStatementRanges() {
+    return new StandardStatementRanges(statementStarts, statementEnds);
   }
 
   @Override
@@ -816,6 +835,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
     int count = 0;
     for (Iterator<JsStatement> iter = x.getStatements().iterator(); iter.hasNext(); ++count) {
+      boolean isGlobal = x.isGlobalBlock() || globalBlocks.contains(x);
+
       if (truncate && count > JSBLOCK_LINES_TO_PRINT) {
         p.print("[...]");
         _newlineOpt();
@@ -823,7 +844,22 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       }
       JsStatement stmt = iter.next();
       needSemi = true;
+      boolean shouldRecordPositions = isGlobal && !(stmt instanceof JsBlock);
+      boolean stmtIsGlobalBlock = false;
+      if (isGlobal) {
+        if (stmt instanceof JsBlock) {
+          // A block inside a global block is still considered global
+          stmtIsGlobalBlock = true;
+          globalBlocks.add((JsBlock) stmt);
+        }
+      }
+      if (shouldRecordPositions) {
+        statementStarts.add(p.getPosition());
+      }
       accept(stmt);
+      if (stmtIsGlobalBlock) {
+        globalBlocks.remove(stmt);
+      }
       if (needSemi) {
         /*
          * Special treatment of function decls: If they are the only item in a
@@ -852,6 +888,10 @@ public class JsToStringGenerationVisitor extends JsVisitor {
           }
           _newlineOpt();
         }
+      }
+      if (shouldRecordPositions) {
+        assert (statementStarts.size() == statementEnds.size() + 1);
+        statementEnds.add(p.getPosition());
       }
     }
 

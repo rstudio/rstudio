@@ -16,6 +16,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.StatementRanges;
 
 import java.io.Serializable;
 
@@ -38,4 +39,9 @@ public interface PermutationResult extends Serializable {
    * The symbol map for the permutation.
    */
   byte[] getSerializedSymbolMap();
+
+  /**
+   * The statement ranges for the code returned by {@link #getJs()}.
+   */
+  StatementRanges[] getStatementRanges();
 }

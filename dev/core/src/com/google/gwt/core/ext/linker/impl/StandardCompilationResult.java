@@ -17,6 +17,7 @@ package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.SelectionProperty;
+import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.dev.util.DiskCache;
 
@@ -74,12 +75,14 @@ public class StandardCompilationResult extends CompilationResult {
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
 
+  private final StatementRanges[] statementRanges;
+
   private final String strongName;
 
   private final long symbolToken;
 
   public StandardCompilationResult(String strongName, byte[][] js,
-      byte[] serializedSymbolMap) {
+      byte[] serializedSymbolMap, StatementRanges[] statementRanges) {
     super(StandardLinkerContext.class);
     this.strongName = strongName;
     jsToken = new long[js.length];
@@ -87,6 +90,7 @@ public class StandardCompilationResult extends CompilationResult {
       jsToken[i] = diskCache.writeByteArray(js[i]);
     }
     symbolToken = diskCache.writeByteArray(serializedSymbolMap);
+    this.statementRanges = statementRanges;
   }
 
   /**
@@ -112,6 +116,11 @@ public class StandardCompilationResult extends CompilationResult {
   @Override
   public SortedSet<SortedMap<SelectionProperty, String>> getPropertyMap() {
     return Collections.unmodifiableSortedSet(propertyValues);
+  }
+
+  @Override
+  public StatementRanges[] getStatementRanges() {
+    return statementRanges;
   }
 
   @Override

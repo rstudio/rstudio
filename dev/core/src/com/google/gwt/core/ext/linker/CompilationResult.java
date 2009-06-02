@@ -50,6 +50,12 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
   public abstract SortedSet<SortedMap<SelectionProperty, String>> getPropertyMap();
 
   /**
+   * Returns the statement ranges for the JavaScript returned by
+   * {@link #getJavaScript()}.
+   */
+  public abstract StatementRanges[] getStatementRanges();
+
+  /**
    * Return a string that uniquely identifies this compilation result. Typically
    * this is a cryptographic hash of the compiled data.
    */

@@ -28,9 +28,14 @@ public abstract class AbstractTextOutput implements TextOutput {
   private char[][] indents = new char[][] {new char[0]};
   private boolean justNewlined;
   private PrintWriter out;
+  private int position = 0;
 
   protected AbstractTextOutput(boolean compact) {
     this.compact = compact;
+  }
+
+  public int getPosition() {
+    return position;
   }
 
   public void indentIn() {
@@ -55,14 +60,16 @@ public abstract class AbstractTextOutput implements TextOutput {
     if (compact) {
       out.print('\n');
     } else {
-      out.println();
+      out.print('\n');
     }
+    position++;
     justNewlined = true;
   }
 
   public void newlineOpt() {
     if (!compact) {
-      out.println();
+      out.print('\n');
+      position++;
       justNewlined = true;
     }
   }
@@ -70,18 +77,19 @@ public abstract class AbstractTextOutput implements TextOutput {
   public void print(char c) {
     maybeIndent();
     out.print(c);
+    position++;
     justNewlined = false;
   }
 
   public void print(char[] s) {
     maybeIndent();
-    out.print(s);
+    printAndCount(s);
     justNewlined = false;
   }
 
   public void print(String s) {
     maybeIndent();
-    out.print(s);
+    printAndCount(s.toCharArray());
     justNewlined = false;
   }
 
@@ -89,20 +97,21 @@ public abstract class AbstractTextOutput implements TextOutput {
     if (!compact) {
       maybeIndent();
       out.print(c);
+      position += 1;
     }
   }
 
   public void printOpt(char[] s) {
     if (!compact) {
       maybeIndent();
-      out.print(s);
+      printAndCount(s);
     }
   }
 
   public void printOpt(String s) {
     if (!compact) {
       maybeIndent();
-      out.print(s);
+      printAndCount(s.toCharArray());
     }
   }
 
@@ -112,8 +121,13 @@ public abstract class AbstractTextOutput implements TextOutput {
 
   private void maybeIndent() {
     if (justNewlined && !compact) {
-      out.print(indents[identLevel]);
+      printAndCount(indents[identLevel]);
       justNewlined = false;
     }
+  }
+
+  private void printAndCount(char[] chars) {
+    position += chars.length;
+    out.print(chars);
   }
 }
