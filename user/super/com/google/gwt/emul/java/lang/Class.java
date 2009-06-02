@@ -114,8 +114,13 @@ public final class Class<T> {
     if (clazz.isClassMetadataEnabled()) {
       clazz.typeName = packageName + className;
     } else {
+      /*
+       * The initial "" + in the below code is to prevent clazz.hashCode() from
+       * being autoboxed. The class literal creation code is run very early
+       * during application start up, before class Integer has been initialized.
+       */
       clazz.typeName = "Class$"
-          + (seedName != null ? seedName : clazz.hashCode());
+          + (seedName != null ? seedName : "" + clazz.hashCode());
     }
   }
 
