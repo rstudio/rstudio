@@ -105,7 +105,9 @@ public class StandardClassMember extends AbstractMemberWithDependencies
     return "ClassMember " + getSourceName();
   }
 
-  /** Compute overrides on demand. */
+  /**
+   * Compute overrides on demand.
+   */
   private void computeOverrides() {
     Set<JDeclaredType> seen = new HashSet<JDeclaredType>();
     Set<JDeclaredType> toTraverse = new HashSet<JDeclaredType>();
