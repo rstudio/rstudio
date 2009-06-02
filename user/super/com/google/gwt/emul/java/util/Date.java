@@ -15,12 +15,21 @@
  */
 package java.util;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 import java.io.Serializable;
 
 /**
  * Represents a date and time.
  */
 public class Date implements Cloneable, Comparable<Date>, Serializable {
+
+  /**
+   * JavaScript Date instance.
+   */
+  @SuppressWarnings("unused") // used from JSNI
+  private JavaScriptObject jsdate;
+  
   /**
    * Used only by toString().
    */
@@ -88,6 +97,16 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
     return isNaN(d) ? -1 : d;
   }-*/;
 
+  /**
+   * Throw an exception if jsdate is not an object.
+   * 
+   * @param val
+   */
+  @SuppressWarnings("unused") // called by JSNI
+  private static void throwJsDateException(String val) {
+    throw new IllegalStateException("jsdate is " + val);
+  }
+
   private static native double utc0(int year, int month, int date, int hrs,
       int min, int sec) /*-{
     return Date.UTC(year + 1900, month, date, hrs, min, sec);
@@ -147,27 +166,33 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
   }
 
   public native int getDate() /*-{
-    return this.jsdate.getDate();
+    this.@java.util.Date::checkJsDate()();
+    return this.@java.util.Date::jsdate.getDate();
   }-*/;
 
   public native int getDay() /*-{
-    return this.jsdate.getDay();
+    this.@java.util.Date::checkJsDate()();
+    return this.@java.util.Date::jsdate.getDay();
   }-*/;
 
   public native int getHours() /*-{
-    return this.jsdate.getHours();
+    this.@java.util.Date::checkJsDate()();
+    return this.@java.util.Date::jsdate.getHours();
   }-*/;
 
   public native int getMinutes() /*-{
-    return this.jsdate.getMinutes();
+    this.@java.util.Date::checkJsDate()();
+    return this.@java.util.Date::jsdate.getMinutes();
   }-*/;
 
   public native int getMonth() /*-{
-    return this.jsdate.getMonth();
+    this.@java.util.Date::checkJsDate()();
+    return this.@java.util.Date::jsdate.getMonth();
   }-*/;
 
   public native int getSeconds() /*-{
-    return this.jsdate.getSeconds();
+    this.@java.util.Date::checkJsDate()();
+    return this.@java.util.Date::jsdate.getSeconds();
   }-*/;
 
   public long getTime() {
@@ -175,11 +200,13 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
   }
 
   public native int getTimezoneOffset() /*-{
-    return this.jsdate.getTimezoneOffset();
+    this.@java.util.Date::checkJsDate()();
+    return this.@java.util.Date::jsdate.getTimezoneOffset();
   }-*/;
 
   public native int getYear() /*-{
-    return this.jsdate.getFullYear()-1900;
+    this.@java.util.Date::checkJsDate()();
+    return this.@java.util.Date::jsdate.getFullYear()-1900;
   }-*/;
 
   @Override
@@ -188,23 +215,28 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
   }
 
   public native void setDate(int date) /*-{
-    this.jsdate.setDate(date);
+    this.@java.util.Date::checkJsDate()();
+    this.@java.util.Date::jsdate.setDate(date);
   }-*/;
 
   public native void setHours(int hours) /*-{
-    this.jsdate.setHours(hours);
+    this.@java.util.Date::checkJsDate()();
+    this.@java.util.Date::jsdate.setHours(hours);
   }-*/;
 
   public native void setMinutes(int minutes) /*-{
-    this.jsdate.setMinutes(minutes);
+    this.@java.util.Date::checkJsDate()();
+    this.@java.util.Date::jsdate.setMinutes(minutes);
   }-*/;
 
   public native void setMonth(int month) /*-{
-    this.jsdate.setMonth(month);
+    this.@java.util.Date::checkJsDate()();
+    this.@java.util.Date::jsdate.setMonth(month);
   }-*/;
 
   public native void setSeconds(int seconds) /*-{
-    this.jsdate.setSeconds(seconds);
+    this.@java.util.Date::checkJsDate()();
+    this.@java.util.Date::jsdate.setSeconds(seconds);
   }-*/;
 
   public void setTime(long time) {
@@ -212,14 +244,16 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
   }
 
   public native void setYear(int year) /*-{
-    this.jsdate.setFullYear(year + 1900);
+    this.@java.util.Date::checkJsDate()();
+    this.@java.util.Date::jsdate.setFullYear(year + 1900);
   }-*/;
 
   public native String toGMTString() /*-{
-    var d = this.jsdate;
+    this.@java.util.Date::checkJsDate()();
+    var d = this.@java.util.Date::jsdate;
     var padTwo = @java.util.Date::padTwo(I);
     var month =
-        @java.util.Date::monthToString(I)(this.jsdate.getUTCMonth());
+        @java.util.Date::monthToString(I)(this.@java.util.Date::jsdate.getUTCMonth());
   
     return d.getUTCDate() + " " +
         month + " " +
@@ -231,17 +265,19 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
   }-*/;
 
   public native String toLocaleString() /*-{
-    return this.jsdate.toLocaleString();
+    this.@java.util.Date::checkJsDate()();
+    return this.@java.util.Date::jsdate.toLocaleString();
   }-*/;
 
   @Override
   public native String toString() /*-{
-    var d = this.jsdate;
+    this.@java.util.Date::checkJsDate()();
+    var d = this.@java.util.Date::jsdate;
     var padTwo = @java.util.Date::padTwo(I);
     var day =
-        @java.util.Date::dayToString(I)(this.jsdate.getDay());
+        @java.util.Date::dayToString(I)(d.getDay());
     var month =
-        @java.util.Date::monthToString(I)(this.jsdate.getMonth());
+        @java.util.Date::monthToString(I)(d.getMonth());
 
     // Compute timezone offset. The value that getTimezoneOffset returns is
     // backwards for the transformation that we want.
@@ -259,26 +295,41 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
         + " " + d.getFullYear();
   }-*/;
 
+  /**
+   *  Check that jsdate is valid and throw an exception if not.
+   */
+  @SuppressWarnings("unused") // called by JSNI
+  private native void checkJsDate() /*-{
+    if (!this.@java.util.Date::jsdate
+        || typeof this.@java.util.Date::jsdate != "object") {
+      @java.util.Date::throwJsDateException(Ljava/lang/String;)(""
+          + this.@java.util.Date::jsdate);
+    }
+  }-*/;
+
   private native double getTime0() /*-{
-    return this.jsdate.getTime();
+    this.@java.util.Date::checkJsDate()();
+    return this.@java.util.Date::jsdate.getTime();
   }-*/;
 
   private native void init() /*-{
-    this.jsdate = new Date();
+    this.@java.util.Date::jsdate = new Date();
   }-*/;
 
   private native void init(double date) /*-{
-    this.jsdate = new Date(date);
+    this.@java.util.Date::jsdate = new Date(date);
   }-*/;
 
   private native void init(int year, int month, int date, int hrs, int min,
       int sec) /*-{
-    this.jsdate = new Date();
-    this.jsdate.setFullYear(year + 1900, month, date);
-    this.jsdate.setHours(hrs, min, sec, 0);
+    this.@java.util.Date::jsdate = new Date();
+    this.@java.util.Date::checkJsDate()();
+    this.@java.util.Date::jsdate.setFullYear(year + 1900, month, date);
+    this.@java.util.Date::jsdate.setHours(hrs, min, sec, 0);
   }-*/;
 
   private native void setTime0(double time) /*-{
-    this.jsdate.setTime(time);
+    this.@java.util.Date::checkJsDate()();
+    this.@java.util.Date::jsdate.setTime(time);
   }-*/;
 }
