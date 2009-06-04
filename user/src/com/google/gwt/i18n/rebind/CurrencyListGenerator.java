@@ -363,7 +363,7 @@ public class CurrencyListGenerator extends Generator {
 
     String packageName = targetClass.getPackage().getName();
     String className = targetClass.getName().replace('.', '_') + "_"
-        + locale.getCanonicalForm().getAsString();
+        + locale.getAsString();
     PrintWriter pw = context.tryCreate(logger, packageName, className);
     if (pw != null) {
       ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
