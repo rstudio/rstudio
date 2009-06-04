@@ -238,6 +238,10 @@ abstract class DOMImpl {
     return elem.tagName;
   }-*/;
 
+  public native boolean hasAttribute(Element elem, String name) /*-{
+    return elem.hasAttribute(name);
+  }-*/;
+
   public native String imgGetSrc(Element img) /*-{
     return img.src;
   }-*/;
@@ -330,9 +334,5 @@ abstract class DOMImpl {
 
   public native String toString(Element elem) /*-{
     return elem.outerHTML;
-  }-*/;
-
-  public native boolean hasAttribute(Element elem, String name) /*-{
-    return elem.hasAttribute(name);
   }-*/;
 }
