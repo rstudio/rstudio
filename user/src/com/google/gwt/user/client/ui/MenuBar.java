@@ -536,6 +536,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
             break;
           case KeyCodes.KEY_ESCAPE:
             closeAllParents();
+            // Ensure the popup is closed even if it has not been enetered
+            // with the mouse or key navigation
+            if (parentMenu == null && popup != null) {
+              popup.hide();
+            }
             eatEvent(event);
             break;
           case KeyCodes.KEY_ENTER:
