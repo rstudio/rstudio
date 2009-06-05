@@ -12,14 +12,8 @@ public class CheckForUpdatesTest extends TestCase {
     GwtVersion v1 = new GwtVersion(null);
     assertEquals(0, v1.compareTo(v1));
 
-    v1 = new GwtVersion("1");
-    assertEquals(0, v1.compareTo(v1));
-    GwtVersion v2 = new GwtVersion("2");
-    assertTrue(v1.compareTo(v2) < 0);
-    assertTrue(v2.compareTo(v1) > 0);
-
     v1 = new GwtVersion("1.2.3");
-    v2 = new GwtVersion(null);
+    GwtVersion v2 = new GwtVersion(null);
     assertTrue(v1.compareTo(v2) > 0);
     assertTrue(v2.compareTo(v1) < 0);
 
