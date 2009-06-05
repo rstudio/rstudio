@@ -61,8 +61,8 @@ public class JClassLiteral extends JLiteral {
       JDeclaredType arrayType = program.getIndexedType("Array");
       call.addArg(new JNameOf(info, program, arrayType));
 
-    } else if (type instanceof JDeclaredType) {
-      // Add the name of the seed function for non-array reference types
+    } else if (type instanceof JClassType) {
+      // Add the name of the seed function for concrete types
       call.addArg(new JNameOf(info, program, type));
 
     } else if (type instanceof JPrimitiveType) {
@@ -118,6 +118,8 @@ public class JClassLiteral extends JLiteral {
     } else {
       assert (type instanceof JInterfaceType || type instanceof JPrimitiveType);
     }
+    assert call.getArgs().size() == method.getParams().size() : "Argument / param mismatch "
+        + call.toString() + " versus " + method.toString();
     return call;
   }
 
