@@ -159,6 +159,8 @@ public class JsStaticEval {
         trySimplifyComma(arg1, arg2, ctx);
       } else if (op == JsBinaryOperator.EQ) {
         trySimplifyEq(x, arg1, arg2, ctx);
+      } else if (op == JsBinaryOperator.NEQ) {
+        trySimplifyNe(x, arg1, arg2, ctx);
       }
     }
 
@@ -482,6 +484,22 @@ public class JsStaticEval {
       return original;
     }
 
+    private JsExpression simplifyNe(JsExpression original, JsExpression arg1,
+        JsExpression arg2) {
+      assert (original != null);
+
+      if (arg1 instanceof JsNullLiteral) {
+        return simplifyNullNe(original, arg2);
+      }
+
+      if (arg2 instanceof JsNullLiteral) {
+        return simplifyNullNe(original, arg1);
+      }
+
+      // no simplification made
+      return original;
+    }
+
     /**
      * Simplify exp == null.
      */
@@ -499,9 +517,34 @@ public class JsStaticEval {
       return original;
     }
 
+    /**
+     * Simplify exp != null.
+     */
+    private JsExpression simplifyNullNe(JsExpression original, JsExpression exp) {
+      assert (original != null);
+
+      if (exp instanceof JsValueLiteral) {
+        // "undefined" is not a JsValueLiteral, so the only way
+        // the result can be false is if exp is itself a JsNullLiteral
+        boolean result = !(exp instanceof JsNullLiteral);
+        return program.getBooleanLiteral(result);
+      }
+
+      // no simplification made
+      return original;
+    }
+
     private void trySimplifyEq(JsExpression original, JsExpression arg1,
         JsExpression arg2, JsContext<JsExpression> ctx) {
       JsExpression updated = simplifyEq(original, arg1, arg2);
+      if (updated != original) {
+        ctx.replaceMe(updated);
+      }
+    }
+
+    private void trySimplifyNe(JsExpression original, JsExpression arg1,
+        JsExpression arg2, JsContext<JsExpression> ctx) {
+      JsExpression updated = simplifyNe(original, arg1, arg2);
       if (updated != original) {
         ctx.replaceMe(updated);
       }
