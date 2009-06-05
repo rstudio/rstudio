@@ -28,7 +28,7 @@ public class GWTMain {
     if (aboutText != null) {
       System.err.println(aboutText);
     } else {
-      System.err.println(About.GWT_VERSION);
+      System.err.println(About.getGwtVersion());
     }
     System.err.println("Available main classes:");
     System.err.println(addSpaces(HostedMode.class.getName(),

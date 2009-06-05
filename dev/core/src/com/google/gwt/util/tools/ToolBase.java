@@ -85,7 +85,7 @@ public abstract class ToolBase {
   }
 
   protected void printHelp() {
-    System.err.println(About.GWT_VERSION);
+    System.err.println(About.getGwtVersion());
 
     ArgHandler nullHandler = null;
     int widest = 0;

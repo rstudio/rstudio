@@ -37,10 +37,10 @@ class GWTDummyBridge extends GWTBridge {
   }
 
   /**
-   * @return the current version of GWT ({@link About#GWT_VERSION_NUM})
+   * @return the current version of GWT ({@link About#getGwtVersionNum()})
    */
   public String getVersion() {
-    return About.GWT_VERSION_NUM;
+    return About.getGwtVersionNum();
   }
 
   /**

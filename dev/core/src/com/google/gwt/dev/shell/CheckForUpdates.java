@@ -61,12 +61,16 @@ public class CheckForUpdates {
    */
   public static class GwtVersion implements Comparable<GwtVersion> {
 
-    private final int[] version = new int[3];
+    /**
+     *  Always a 3 element array. 
+     */
+    private final int[] version;
 
     /**
      * Create a version that avoids any nagging -- "0.0.999".
      */
     public GwtVersion() {
+      version = new int[3];
       version[2] = 999;
     }
 
@@ -78,29 +82,7 @@ public class CheckForUpdates {
      * @throws NumberFormatException
      */
     public GwtVersion(String versionString) throws NumberFormatException {
-      if (versionString == null) {
-        return;
-      }
-      int part = 0;
-      int v = 0;
-      int len = versionString.length();
-      for (int i = 0; i < len; ++i) {
-        char ch = versionString.charAt(i);
-        if (ch == '.') {
-          if (part >= version.length) {
-            throw new NumberFormatException();
-          }
-          version[part++] = v;
-          v = 0;
-        } else if (Character.isDigit(ch)) {
-          int digit = Character.digit(ch, 10);
-          if (digit < 0) {
-            throw new NumberFormatException();
-          }
-          v = v * 10 + digit;
-        }
-      }
-      version[part++] = v;
+     version = About.parseGwtVersionString(versionString);
     }
 
     public int compareTo(GwtVersion o) {
@@ -357,7 +339,7 @@ public class CheckForUpdates {
     this.logger = logger;
     this.entryPoint = entryPoint;
     try {
-      myVersion = new GwtVersion(About.GWT_VERSION_NUM);
+      myVersion = new GwtVersion(About.getGwtVersionNum());
     } catch (NumberFormatException e) {
       // if our build version number is bogus, use one that avoids nagging
       myVersion = new GwtVersion();
@@ -445,8 +427,8 @@ public class CheckForUpdates {
 
       // See if new version is available.
       //
-      String url = queryURL + "?v=" + About.GWT_VERSION_NUM + "&id="
-          + firstLaunch + "&r=" + About.GWT_SVNREV;
+      String url = queryURL + "?v=" + About.getGwtVersionNum() + "&id="
+          + firstLaunch + "&r=" + About.getGwtSvnRev();
       if (entryPoint != null) {
         url += "&e=" + entryPoint;
       }

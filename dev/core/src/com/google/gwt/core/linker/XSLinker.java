@@ -67,7 +67,7 @@ public class XSLinker extends SelectionScriptLinker {
 
     // Setup the well-known variables.
     //
-    out.print("var $gwt_version = \"" + About.GWT_VERSION_NUM + "\";");
+    out.print("var $gwt_version = \"" + About.getGwtVersionNum() + "\";");
     out.newlineOpt();
     out.print("var $wnd = window;");
     out.newlineOpt();

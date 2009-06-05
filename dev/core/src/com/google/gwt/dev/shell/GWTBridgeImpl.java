@@ -42,11 +42,11 @@ public class GWTBridgeImpl extends GWTBridge {
           + "' (did you forget to inherit a required module?)";
       throw new RuntimeException(msg, e);
     }
-  };
+  }
 
   @Override
   public String getVersion() {
-    return About.GWT_VERSION_NUM;
+    return About.getGwtVersionNum();
   }
 
   /**

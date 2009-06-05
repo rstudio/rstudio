@@ -81,7 +81,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     // Emit the module's JS a closure.
     out.print("(function () {");
     out.newlineOpt();
-    out.print("var $gwt_version = \"" + About.GWT_VERSION_NUM + "\";");
+    out.print("var $gwt_version = \"" + About.getGwtVersionNum() + "\";");
     out.newlineOpt();
     out.print("var $wnd = window;");
     out.newlineOpt();

@@ -219,12 +219,13 @@ public final class WebAppCreator {
 
     // Public builds generate a DTD reference.
     String gwtModuleDtd = "";
-    if (!About.GWT_VERSION_NUM.endsWith(".999")
-        && !About.GWT_VERSION_NUM.startsWith("0.0")) {
+    int gwtVersion[] = About.getGwtVersionArray();
+    if (gwtVersion[2] == 999
+        && !(gwtVersion[0] == 0 && gwtVersion[1] == 0)) {
       gwtModuleDtd = "\n<!DOCTYPE module PUBLIC \"-//Google Inc.//DTD Google Web Toolkit "
-          + About.GWT_VERSION_NUM
+          + About.getGwtVersionNum()
           + "//EN\" \"http://google-web-toolkit.googlecode.com/svn/tags/"
-          + About.GWT_VERSION_NUM + "/distro-source/core/src/gwt-module.dtd\">";
+          + About.getGwtVersionNum() + "/distro-source/core/src/gwt-module.dtd\">";
     }
 
     // Figure out what platform we're on
@@ -256,7 +257,7 @@ public final class WebAppCreator {
     replacements.put("@gwtUserPath", gwtUserPath);
     replacements.put("@gwtDevPath", gwtDevPath);
     replacements.put("@gwtOophmPath", gwtOophmPath);
-    replacements.put("@gwtVersion", About.GWT_VERSION_NUM);
+    replacements.put("@gwtVersion", About.getGwtVersionNum());
     replacements.put("@gwtModuleDtd", gwtModuleDtd);
     replacements.put("@shellClass", HostedMode.class.getName());
     replacements.put("@compileClass", Compiler.class.getName());

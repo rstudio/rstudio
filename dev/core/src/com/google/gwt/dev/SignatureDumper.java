@@ -42,7 +42,7 @@ class SignatureDumper {
       PrintWriter out = new PrintWriter(osw);
       out.println("# Contains all signatures dumped from the GWT compiler");
       out.println("FileVersion 1");
-      out.println("GwtVersion " + About.GWT_VERSION_NUM);
+      out.println("GwtVersion " + About.getGwtVersionNum());
       out.print(dumpAllSignatures(typeOracle));
       out.close();
       logger.log(TreeLogger.INFO, "Signatures dumped into " + outFile, null);
