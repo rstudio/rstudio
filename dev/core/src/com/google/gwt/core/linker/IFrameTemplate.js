@@ -309,6 +309,9 @@ function __MODULE_FUNC__() {
       type: 'moduleRequested'
     });
 
+    // to avoid http://support.microsoft.com/kb/927917 only mutate closed containers - therefore we create a closed container which can be mutated within xhr.onreadystatechange  
+    document.write("<div id='__MODULE_NAME__.container' style='position:absolute; width:0; height:0; border:none'></div>");
+
     // Fetch the contents via XHR.
     var xhr = newXhr();
     xhr.open('GET', base + initialHtml);
@@ -322,14 +325,14 @@ function __MODULE_FUNC__() {
         scriptFrame.id = '__MODULE_NAME__';
         scriptFrame.style.cssText = 'position:absolute; width:0; height:0; border:none';
         scriptFrame.tabIndex = -1;
-        document.body.appendChild(scriptFrame);
+        document.getElementById("__MODULE_NAME__.container").appendChild(scriptFrame);
 
-        // Expose the module function via an expando on the iframe's window.
+        // Expose the module function via the iframe's window.name property
         // (this is needed for the compiled script to call back into
         //  onScriptLoad()).
         var win = scriptFrame.contentWindow;
         if (isHostedMode()) {
-          win.__gwt_module = '__MODULE_FUNC__';
+          win.name = '__MODULE_FUNC__';
         }
 
         // Inject the fetched script into the script frame.
