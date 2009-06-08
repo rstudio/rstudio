@@ -178,7 +178,6 @@ public class CookieTest extends GWTTestCase {
     } catch (IllegalArgumentException e) {
       // Success.
     }
-
   }
 
   /**
