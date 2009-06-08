@@ -117,8 +117,7 @@ public class Settings {
     }
 
     if (settings.resources.get() == null) {
-      throw new ArgumentListException("Missing option -resources: "
-          + Settings.settingsHelp());
+      throw new ArgumentListException("The -resources option is required");
     }
 
     if (remainingArguments.isEmpty()) {

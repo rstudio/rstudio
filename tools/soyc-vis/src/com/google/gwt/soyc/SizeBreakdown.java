@@ -87,4 +87,9 @@ public class SizeBreakdown {
   public String getId() {
     return id;
   }
+  
+  @Override
+  public String toString() {
+    return getId();
+  }
 }

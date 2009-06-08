@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
@@ -615,29 +614,36 @@ public class MakeTopLevelHtmlForPerm {
 
     int numSplitPoints = GlobalInformation.splitPointToLocation.size();
 
-    int outerHeight = 25 * (numSplitPoints + 2);
+    int numRows = 2;
+    if (numSplitPoints > 0) {
+      // add one for the leftovers fragment
+      numRows += numSplitPoints + 1;
+    }
+    int outerHeight = 25 * numRows;
     outFile.println("<div style=\"width:100%; margin:20px 0 20px 0; background-color:white;position:relative;height:"
         + outerHeight + "\">");
     float maxSize = GlobalInformation.totalCodeBreakdown.sizeAllCode;
 
     int yOffset = 0;
-    for (int i = FRAGMENT_NUMBER_TOTAL_PROGRAM; i <= numSplitPoints; i++) {
-      String drillDownFileName, splitPointDescription;
-      if (i == FRAGMENT_NUMBER_TOTAL_PROGRAM) {
-        drillDownFileName = shellFileName(GlobalInformation.totalCodeBreakdown);
-        splitPointDescription = "Total program";
-      } else {
-        String splitPointName = i == FRAGMENT_NUMBER_INITIAL_DOWNLOAD
-            ? "initialDownload" : GlobalInformation.splitPointToLocation.get(i);
-        if (i == FRAGMENT_NUMBER_INITIAL_DOWNLOAD) {
-          drillDownFileName = shellFileName(GlobalInformation.initialCodeBreakdown);
-        } else {
-          drillDownFileName = "splitPoint-" + filename(splitPointName)
-              + "-Classes.html";
-        }
-        splitPointDescription = i == FRAGMENT_NUMBER_INITIAL_DOWNLOAD
-            ? "Initial download" : ("Code exclusive to " + splitPointName);
+    for (int i = FRAGMENT_NUMBER_TOTAL_PROGRAM; i <= numSplitPoints + 1; i++) {
+      if (i == 1 && numSplitPoints == 0) {
+        // don't show the leftovers fragment if the split points aren't known
+        continue;
       }
+
+      SizeBreakdown breakdown;
+      if (i == FRAGMENT_NUMBER_TOTAL_PROGRAM) {
+        breakdown = GlobalInformation.totalCodeBreakdown;
+      } else if (i == numSplitPoints + 1) {
+        breakdown = GlobalInformation.leftoversBreakdown;
+      } else if (i == FRAGMENT_NUMBER_INITIAL_DOWNLOAD) {
+        breakdown = GlobalInformation.initialCodeBreakdown;
+      } else {
+        breakdown = GlobalInformation.exclusiveCodeBreakdown(i);
+      }
+
+      String drillDownFileName = shellFileName(breakdown);
+      String splitPointDescription = breakdown.getDescription();
 
       float size;
       if (i >= 0) {
@@ -1253,139 +1259,6 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("</body>");
       outFile.println("</html>");
       outFile.close();
-    }
-  }
-
-  /**
-   * Makes html file for fragment classes. TODO(kprobst): update this once we
-   * have SOYC updated to supply enough information
-   * 
-   * TODO(spoon) instead of this listing, make a size breakdown for each
-   * exclusive fragment
-   */
-  public void makeSplitPointClassesHtmls() throws IOException {
-
-    // for the initial fragment and the fragments in the load order, we can
-    // print this immediately
-    // For those fragments *not* in the initial load order, we just collect and
-    // then print at the end
-    TreeSet<String> sortedClassesAndMethodsAllOtherFragments = new TreeSet<String>();
-
-    for (Integer fragmentName : GlobalInformation.fragmentToStories.keySet()) {
-      if (fragmentName == FRAGMENT_NUMBER_INITIAL_DOWNLOAD) {
-        /*
-         * For the initial download, a size breakdown is availale to replace the
-         * split point class listing
-         */
-        continue;
-      }
-
-      if (!GlobalInformation.splitPointToLocation.containsKey(fragmentName)) {
-        // get the stories from ALL the fragments
-        for (String storyName : GlobalInformation.fragmentToStories.get(fragmentName)) {
-          if ((!GlobalInformation.totalCodeBreakdown.nameToLitColl.get("string").storyToLocations.containsKey(storyName))
-              && (GlobalInformation.storiesToCorrClassesAndMethods.containsKey(storyName))) {
-            for (String className : GlobalInformation.storiesToCorrClassesAndMethods.get(storyName)) {
-              sortedClassesAndMethodsAllOtherFragments.add(className);
-            }
-          }
-        }
-      } else {
-        String curSplitPointLocation;
-
-        if (fragmentName == FRAGMENT_NUMBER_INITIAL_DOWNLOAD) {
-          curSplitPointLocation = "initialDownload";
-        } else {
-          curSplitPointLocation = GlobalInformation.splitPointToLocation.get(fragmentName);
-        }
-
-        String outFileName = "splitPoint-" + filename(curSplitPointLocation)
-            + "-Classes.html";
-
-        final PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
-
-        outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-        outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-        outFile.println("<html>");
-        outFile.println("<head>");
-        outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-        outFile.println("<title>Classes and methods in exclusives fragment for runAsync split point \""
-            + curSplitPointLocation + "\" </title>");
-        outFile.println("</head>");
-
-        outFile.println("<style type=\"text/css\">");
-        outFile.println("body {background-color: #728FCE}");
-        outFile.println("h2 {background-color: transparent}");
-        outFile.println("p {background-color: fuchsia}");
-        outFile.println(".tablediv {");
-        outFile.println("display:  table;");
-        outFile.println("width:100%;");
-        outFile.println("background-color:#eee;");
-        outFile.println("border:1px solid  #666666;");
-        outFile.println("border-spacing:5px;");
-        outFile.println("border-collapse:separate;");
-        outFile.println("}");
-        outFile.println(".celldiv {");
-        outFile.println("float:left;");
-        outFile.println("display:  table-cell;");
-        outFile.println("width:49.5%;");
-        outFile.println("font-size: 14px;");
-        outFile.println("background-color:white;");
-        outFile.println("}");
-        outFile.println(".rowdiv  {");
-        outFile.println("display:  table-row;");
-        outFile.println("width:100%;");
-        outFile.println("}");
-        outFile.println("</style>");
-
-        outFile.println("<body>");
-        outFile.println("<center>");
-        outFile.println("<h2>Classes and methods in exclusives fragment for runAsync split point \""
-            + curSplitPointLocation + "\"</h2>");
-        outFile.println("</center>");
-        outFile.println("<hr>");
-
-        outFile.println("<div style=\"width:90%; height:80%; overflow-y:auto; overflow-x:auto; top: 30px; left:60px; position:relative; background-color:white\"");
-        outFile.println("<div  class=\"tablediv\">");
-
-        TreeSet<String> sortedClassesAndMethods = new TreeSet<String>();
-        for (String storyName : GlobalInformation.fragmentToStories.get(fragmentName)) {
-          if ((!GlobalInformation.totalCodeBreakdown.nameToLitColl.get("string").storyToLocations.containsKey(storyName))
-              && (GlobalInformation.storiesToCorrClassesAndMethods.containsKey(storyName))) {
-            for (String className : GlobalInformation.storiesToCorrClassesAndMethods.get(storyName)) {
-              sortedClassesAndMethods.add(className);
-            }
-          }
-        }
-        for (String classOrMethod : sortedClassesAndMethods) {
-
-          // if it's a method
-          if ((GlobalInformation.displayDependencies == true)
-              && (classOrMethod.contains("(")) && (classOrMethod.contains(")"))) {
-            // get the package
-            String packageName = classOrMethod;
-            packageName = packageName.replaceAll("\\.\\p{Upper}.*", "");
-
-            String noParamMethod = classOrMethod;
-            noParamMethod = noParamMethod.replaceAll("\\(.*", "");
-
-            outFile.println("<div  class=\"rowdiv\"><a href=\"methodDependencies-"
-                + filename(packageName)
-                + ".html#"
-                + noParamMethod
-                + "\">"
-                + classOrMethod + "</a></div>");
-          } else {
-            outFile.println("<div  class=\"rowdiv\">" + classOrMethod
-                + "</div>");
-          }
-        }
-
-        outFile.println("</div>");
-        outFile.println("</body>");
-        outFile.println("</html>");
-        outFile.close();
-      }
     }
   }
 }

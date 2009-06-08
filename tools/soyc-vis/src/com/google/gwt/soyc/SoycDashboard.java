@@ -161,20 +161,6 @@ public class SoycDashboard {
   }
 
   /*
-   * unescape the JS snippets - in the XML file they are XML encoded for correct
-   * display, but this will mess up the byte counts
-   */
-  public static String unEscapeXml(String escaped) {
-    String unescaped = escaped.replaceAll("&amp;", "\\&");
-    unescaped = unescaped.replaceAll("&lt;", "\\<");
-    unescaped = unescaped.replaceAll("&gt;", "\\>");
-    unescaped = unescaped.replaceAll("&quot;", "\\\"");
-    // escaped = escaped.replaceAll("\\n", "");
-    unescaped = unescaped.replaceAll("&apos;", "\\'");
-    return unescaped;
-  }
-
-  /*
    * cleans up the RPC code categories
    */
   private static void foldInRPCHeuristic(
@@ -218,7 +204,6 @@ public class SoycDashboard {
     makeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(breakdown);
     makeTopLevelHtmlForPerm.makeLiteralsClassesTableHtmls(breakdown);
     makeTopLevelHtmlForPerm.makeStringLiteralsClassesTableHtmls(breakdown);
-    makeTopLevelHtmlForPerm.makeSplitPointClassesHtmls();
     makeTopLevelHtmlForPerm.makeBreakdownShell(breakdown);
     makeTopLevelHtmlForPerm.makeTopLevelShell();
   }
@@ -394,6 +379,12 @@ public class SoycDashboard {
         breakdowns.add(GlobalInformation.totalCodeBreakdown);
         if (curFragment == 0) {
           breakdowns.add(GlobalInformation.initialCodeBreakdown);
+        }
+        if (curFragment == (GlobalInformation.numSplitPoints+1)) {
+          breakdowns.add(GlobalInformation.leftoversBreakdown);
+        }
+        if (curFragment >= 1 && curFragment <= GlobalInformation.numSplitPoints) {
+          breakdowns.add(GlobalInformation.exclusiveCodeBreakdown(curFragment));
         }
         return breakdowns;
       }

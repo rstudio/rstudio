@@ -16,8 +16,10 @@
 
 package com.google.gwt.soyc;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -26,6 +28,7 @@ import java.util.TreeSet;
  * Information global to the entire SOYC report generator.
  */
 public class GlobalInformation {
+  private static final SizeBreakdown[] EMPTY_SIZE_BREAKDOWN = new SizeBreakdown[0];
 
   public static String backupLocation = "(Source location not known)";
   
@@ -52,11 +55,24 @@ public class GlobalInformation {
 
   public static SizeBreakdown initialCodeBreakdown = new SizeBreakdown(
       "Initially downloaded code", "initial");
+  public static SizeBreakdown leftoversBreakdown = new SizeBreakdown(
+      "Leftovers code, neither initial nor exclusive to any split point",
+      "leftovers");
   public static SizeBreakdown totalCodeBreakdown = new SizeBreakdown(
       "Total program", "total");
+  private static Map<Integer, SizeBreakdown> exclusiveCodeBreakdowns = new HashMap<Integer, SizeBreakdown>();
 
   public static SizeBreakdown[] allSizeBreakdowns() {
-    return new SizeBreakdown[] {totalCodeBreakdown, initialCodeBreakdown};
+    List<SizeBreakdown> breakdowns = new ArrayList<SizeBreakdown>();
+    breakdowns.add(totalCodeBreakdown);
+    breakdowns.add(initialCodeBreakdown);
+    if (numSplitPoints > 0) {
+      breakdowns.add(leftoversBreakdown);
+      for (int sp = 1; sp <= numSplitPoints; sp++) {
+        breakdowns.add(exclusiveCodeBreakdown(sp));
+      }
+    }
+    return breakdowns.toArray(EMPTY_SIZE_BREAKDOWN);
   }
 
   public static void computePackageSizes() {
@@ -67,8 +83,18 @@ public class GlobalInformation {
 
   public static void computePartialPackageSizes() {
     for (SizeBreakdown breakdown : allSizeBreakdowns()) {
-      computePartialPackageSizes(breakdown.packageToPartialSize, breakdown.classToPartialSize);
+      computePartialPackageSizes(breakdown.packageToPartialSize,
+          breakdown.classToPartialSize);
     }
+  }
+
+  public static SizeBreakdown exclusiveCodeBreakdown(int sp) {
+    assert sp >= 1 && sp <= numSplitPoints;
+    if (!exclusiveCodeBreakdowns.containsKey(sp)) {
+      exclusiveCodeBreakdowns.put(sp, new SizeBreakdown("split point " + sp
+          + ": " + splitPointToLocation.get(sp), "sp" + sp));
+    }
+    return exclusiveCodeBreakdowns.get(sp);
   }
 
   private static void computePackageSizes(Map<String, Integer> packageToSize,
