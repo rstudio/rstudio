@@ -23,7 +23,7 @@ function __MODULE_FUNC__() {
   ,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null
 
   // These variables gate calling gwtOnLoad; all must be true to start
-  ,scriptsDone, loadDone, bodyDone
+  ,injectedScriptsDone, gwtCodeEvaluated, bodyDone, scriptRequestCompleted, gwtFrameCreated
 
   // If non-empty, an alternate base url for this module
   ,base = ''
@@ -45,8 +45,11 @@ function __MODULE_FUNC__() {
   ,onLoadErrorFunc, propertyErrorFunc
 
   // The frame that will contain the compiled script (created in
-  // fetchCompiledScript())
+  // maybeCreateGwtFrame())
   ,scriptFrame
+  
+  // Holds the compiled script retreived via XHR until the body is loaded
+  ,compiledScript = ""
 
   ; // end of global vars
 
@@ -83,12 +86,12 @@ function __MODULE_FUNC__() {
     return result;
   }
 
-  // Called by onScriptLoad(), onInjectionDone(), and onload(). It causes
-  // the specified module to be cranked up.
+  // Called by onScriptLoad(), onScriptInjectionDone(), maybeCreateGwtFrame(), 
+  // and onBodyDone(). It causes the specified module to be cranked up.
   //
   var moduleStarted = false;
   function maybeStartModule() {
-    if (bodyDone && scriptsDone && loadDone && !moduleStarted) {
+    if (bodyDone && injectedScriptsDone && gwtCodeEvaluated && gwtFrameCreated && !moduleStarted) {
       moduleStarted = true;
 
       var frameWnd = scriptFrame.contentWindow;
@@ -297,8 +300,8 @@ function __MODULE_FUNC__() {
     }
   }
 
-  // Fetches the compiled script via XHR, dropping it into 'scriptFrame' via
-  // document.write().
+  // Fetches the compiled script via XHR, saving it to 'compiledScript'
+  // to be added to the page later.
   //
   function fetchCompiledScript() {
     $stats && $stats({
@@ -309,44 +312,53 @@ function __MODULE_FUNC__() {
       type: 'moduleRequested'
     });
 
-    // to avoid http://support.microsoft.com/kb/927917 only mutate closed containers - therefore we create a closed container which can be mutated within xhr.onreadystatechange  
-    document.write("<div id='__MODULE_NAME__.container' style='position:absolute; width:0; height:0; border:none'></div>");
-
     // Fetch the contents via XHR.
     var xhr = newXhr();
     xhr.open('GET', base + initialHtml);
     xhr.onreadystatechange = function() {
       // 4 == DONE
       if (xhr.readyState == 4) {
-        // Create the script frame, making sure it's invisible, but not
-        // "display:none", which keeps some browsers from running code in it.
-        scriptFrame = document.createElement('iframe');
-        scriptFrame.src = 'javascript:""';
-        scriptFrame.id = '__MODULE_NAME__';
-        scriptFrame.style.cssText = 'position:absolute; width:0; height:0; border:none';
-        scriptFrame.tabIndex = -1;
-        document.getElementById("__MODULE_NAME__.container").appendChild(scriptFrame);
-
-        // Expose the module function via the iframe's window.name property
-        // (this is needed for the compiled script to call back into
-        //  onScriptLoad()).
-        var win = scriptFrame.contentWindow;
-        if (isHostedMode()) {
-          win.name = '__MODULE_FUNC__';
-        }
-
-        // Inject the fetched script into the script frame.
-        // (this script will call onScriptLoad())
-        var doc = win.document;
-        doc.open();
-        doc.write(xhr.responseText);
-        doc.close();
-
-        // Make sure we don't leak the xhr object.
+        compiledScript = xhr.responseText;
         xhr = null;
+        scriptRequestCompleted = true;
+        maybeCreateGwtFrame();
       }
     };
     xhr.send(null);
+  }
+
+  // This is gated by bodyDone because we can't add elements to the
+  // page until the body is ready. It's also gated by 'scriptRequestCompleted'
+  // so it will not fire until the XHR returns, in case onBodyDone happens 
+  // first.
+  function maybeCreateGwtFrame() {
+    if (bodyDone && scriptRequestCompleted && !gwtFrameCreated) {
+      // Create the script frame, making sure it's invisible, but not
+      // "display:none", which keeps some browsers from running code in it.
+      scriptFrame = document.createElement('iframe');
+      scriptFrame.src = 'javascript:""';
+      scriptFrame.id = '__MODULE_NAME__';
+      scriptFrame.style.cssText = 'position:absolute; width:0; height:0; border:none';
+      scriptFrame.tabIndex = -1;
+      document.body.appendChild(scriptFrame);
+
+      // Expose the module function via the iframe's window.name property
+      // (this is needed for the compiled script to call back into
+      //  onScriptLoad()).
+      var win = scriptFrame.contentWindow;
+      if (isHostedMode()) {
+        win.name = '__MODULE_NAME__';
+      }
+
+      // Inject the fetched script into the script frame.
+      // (this script will call onScriptLoad())
+      var doc = win.document;
+      doc.open();
+      doc.write(compiledScript);
+      doc.close();
+      gwtFrameCreated = true;
+      maybeStartModule();
+    }
   }
 
   // --------------- PROPERTY PROVIDERS --------------- 
@@ -361,15 +373,15 @@ function __MODULE_FUNC__() {
   __MODULE_FUNC__.onScriptLoad = function() {
     // Mark this module's script as done loading and (possibly) start the
     // module.
-    loadDone = true;
+    gwtCodeEvaluated = true;
     maybeStartModule();
   }
 
   // Called when the script injection is complete.
   //
-  __MODULE_FUNC__.onInjectionDone = function() {
+  __MODULE_FUNC__.onScriptInjectionDone = function() {
     // Mark this module's script injection done and (possibly) start the module.
-    scriptsDone = true;
+    injectedScriptsDone = true;
     $stats && $stats({
       moduleName:'__MODULE_NAME__', 
       subSystem:'startup', 
@@ -431,6 +443,7 @@ function __MODULE_FUNC__() {
   function onBodyDone() {
     if (!bodyDone) {
       bodyDone = true;
+      maybeCreateGwtFrame();
 // __MODULE_STYLES_BEGIN__
      // Style resources are injected here to prevent operation aborted errors on ie
 // __MODULE_STYLES_END__
@@ -482,7 +495,7 @@ function __MODULE_FUNC__() {
   // The 'defer' attribute here is a workaround for strange IE behavior where
   // <script> tags that are doc.writ()en execute *immediately*, rather than
   // in document-order, as they should. It has no effect on other browsers.
-  $doc.write('<script defer="defer">__MODULE_FUNC__.onInjectionDone(\'__MODULE_NAME__\')</script>');
+  $doc.write('<script defer="defer">__MODULE_FUNC__.onScriptInjectionDone(\'__MODULE_NAME__\')</script>');
 }
 
 __MODULE_FUNC__();
