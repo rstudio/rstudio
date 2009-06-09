@@ -350,14 +350,17 @@ function __MODULE_FUNC__() {
         win.name = '__MODULE_NAME__';
       }
 
+      // Set this *before* calling doc.write(), because the linux hosted-mode
+      // browser sometimes doesn't properly return from doc.write() if there are
+      // a large number of script blocks (even though it works fine). Go figure.
+      gwtFrameCreated = true;
+
       // Inject the fetched script into the script frame.
       // (this script will call onScriptLoad())
       var doc = win.document;
       doc.open();
       doc.write(compiledScript);
       doc.close();
-      gwtFrameCreated = true;
-      maybeStartModule();
     }
   }
 

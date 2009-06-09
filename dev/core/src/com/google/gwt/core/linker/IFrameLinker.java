@@ -208,7 +208,7 @@ public class IFrameLinker extends SelectionScriptLinker {
     out.print("if ($wnd." + context.getModuleFunctionName() + ") $wnd."
         + context.getModuleFunctionName() + ".onScriptLoad();");
     out.newline();
-    out.print("--></script></body></html>");
+    out.print("--></script>");
     out.newlineOpt();
 
     return out.toString();
@@ -249,11 +249,10 @@ public class IFrameLinker extends SelectionScriptLinker {
   private String getModulePrefix(LinkerContext context, String strongName,
       boolean supportRunAsync) {
     DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
-    out.print("<html>");
     out.newlineOpt();
 
     // Setup the well-known variables.
-    out.print("<head><script>");
+    out.print("<script>");
     out.newlineOpt();
     out.print("var $gwt_version = \"" + About.getGwtVersionNum() + "\";");
     out.newlineOpt();
@@ -306,9 +305,8 @@ public class IFrameLinker extends SelectionScriptLinker {
         + "',subSystem:'startup',evtGroup:'moduleStartup'"
         + ",millis:(new Date()).getTime(),type:'moduleEvalStart'});");
     out.newlineOpt();
-    out.print("</script></head>");
+    out.print("</script>");
     out.newlineOpt();
-    out.print("<body>");
     out.newlineOpt();
 
     // Begin a script block inside the body. It's commented out so that the
