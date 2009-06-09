@@ -103,7 +103,7 @@ public class ImageResourceTest extends GWTTestCase {
     });
 
     RootPanel.get().add(i);
-    delayTestFinish(500);
+    delayTestFinish(1000);
   }
 
   public void testPacking() {
