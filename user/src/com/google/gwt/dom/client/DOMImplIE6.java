@@ -45,7 +45,7 @@ class DOMImplIE6 extends DOMImplTrident {
 
   public native boolean hasAttribute(Element elem, String name) /*-{
     var node = elem.getAttributeNode(name);
-    return node && node.specified;
+    return !!(node && node.specified);
   }-*/;
 
   /*
