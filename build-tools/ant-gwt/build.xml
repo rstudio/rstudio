@@ -24,10 +24,12 @@
 
   <target name="build" depends="compile" description="Packages this project into a jar">
     <mkdir dir="${gwt.build.lib}" />
-    <gwt.jar destfile="${gwt.build.lib}/${ant.project.name}.jar">
-      <fileset dir="src" />
+    <!-- we can't use the gwt.jar macro, as it needs the gwt-ant.jar being packaged here -->
+    <jar destfile="${gwt.build.lib}/${ant.project.name}.jar" duplicate="fail" filesonly="true" 
+         index="true" update="true">
       <fileset dir="${javac.out}" />
-    </gwt.jar>
+      <fileset dir="src" />
+    </jar>
   </target>
 
   <target name="test" depends="build, compile.tests" description="Run unit tests for this project.">

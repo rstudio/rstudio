@@ -1,4 +1,10 @@
 <project name="common">
+  <!-- it's okay for this not to exist, but it gives a place to store
+       "your" property settings, if any, persistently.  For example, you
+       might use it to set gwt.junit.testcase.includes to a narrower subset
+       of test cases to exercise. -->
+  <property file="local.ant.properties" />
+
   <!-- gwt.build.iscasesensitivefs is true if the filesystem of the
     build machine is case-sensitive, false otherwise.  Update with
     new lines for any supported platforms with case-insensitive
@@ -135,9 +141,22 @@
     <javac srcdir="src" destdir="${javac.out}" debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" target="${javac.target}" nowarn="${javac.nowarn}" encoding="${javac.encoding}" />
   </presetdef>
 
-  <presetdef name="gwt.jar">
-    <jar destfile="${project.lib}" update="true" duplicate="preserve" index="true" />
-  </presetdef>
+  <macrodef name="gwt.jar">
+    <attribute name="destfile" default="${project.lib}"/>
+    <attribute name="duplicate" default="fail"/>
+    <attribute name="update" default="true"/>
+    <element name="jarcontents" implicit="true"/>
+    <sequential>
+      <taskdef name="jar.bydate"
+          classname="com.google.gwt.ant.taskdefs.LatestTimeJar"
+          classpath="${gwt.build.lib}/ant-gwt.jar" />
+
+      <jar.bydate destfile="@{destfile}" duplicate="@{duplicate}" filesonly="false"
+          index="true" update="@{update}">
+        <jarcontents/>
+      </jar.bydate>
+    </sequential>
+  </macrodef>
 
   <macrodef name="gwt.junit">
     <!-- TODO: make this more generic / refactor so it can be used from dev/core -->

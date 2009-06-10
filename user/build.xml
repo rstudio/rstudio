@@ -2,8 +2,16 @@
   <property name="gwt.root" location=".." />
   <property name="project.tail" value="user" />
   <property name="test.args" value="" />
-  <property name="gwt.junit.emmatestcase.includes" value="**/*Suite.class,com/google/gwt/dev/jjs/test/*Test.class"/>
+
   <import file="${gwt.root}/common.ant.xml" />
+
+  <property name="gwt.junit.emmatestcase.includes" value="**/*Suite.class,com/google/gwt/dev/jjs/test/*Test.class"/>
+
+  <!-- 
+    Whether I18NSuite should test e.g. Foo$InnerMsgs_fr.properties (if the
+    value is "dollar") or Foo_Inner_fr.properties (for "bar")
+   -->
+  <property name="gwt.i18n.test.InnerClassChar" value="dollar"/>
 
   <!--
     Default hosted mode test cases
@@ -26,6 +34,14 @@
   -->
   <fileset id="default.web.tests" dir="${javac.junit.out}"
          includes="${gwt.junit.testcase.includes}" />
+
+  <!--
+    Classpaths added for test cases
+  -->
+  <path id="test.extraclasspath">
+    <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+    <pathelement location="test_i18n_${gwt.i18n.test.InnerClassChar}" />
+  </path>
 
   <!-- Platform shouldn't matter here, just picking one -->
   <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
@@ -91,20 +107,28 @@
     </gwt.checkstyle>
   </target>
 
-  <target name="remoteweb-test" description="Run a remoteweb test at the given host and path" if="gwt.remote.browsers">
+  <target name="remoteweb-test" depends="test.remoteweb">
+    <echo message="DEPRECATED: remoteweb-test has been renamed test.remoteweb"/>
+  </target>
+
+  <target name="test.remoteweb" description="Run a remoteweb test at the given host and path" if="gwt.remote.browsers">
     <echo message="Performing remote browser testing at ${gwt.remote.browsers}" />
     <gwt.junit test.args="${test.args} -out www -remoteweb ${gwt.remote.browsers}" test.out="${junit.out}/remoteweb" test.cases="default.web.tests" >
       <extraclasspaths>
-        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+        <path refid="test.extraclasspath" />
       </extraclasspaths>
     </gwt.junit>
   </target>
 
-  <target name="selenium-test" description="Run a remote test using Selenium RC test at the given host and path" if="gwt.selenium.hosts">
+  <target name="selenium-test" depends="test.selenium">
+    <echo message="DEPRECATED: selenium-test has been renamed test.selenium"/>
+  </target>
+
+  <target name="test.selenium" description="Run a remote test using Selenium RC test at the given host and path" if="gwt.selenium.hosts">
     <echo message="Performing remote browser testing using Selenium RC at ${gwt.selenium.hosts}" />
     <gwt.junit test.args="${test.args} -out www -selenium ${gwt.selenium.hosts}" test.out="${junit.out}/selenium" test.cases="default.web.tests" >
       <extraclasspaths>
-        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+        <path refid="test.extraclasspath" />
       </extraclasspaths>
     </gwt.junit>
   </target>
@@ -112,7 +136,7 @@
   <target name="test.hosted.emma" depends="compile, compile.tests" description="Run all hosted-mode tests in emma mode.">
     <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode-emma" test.cases="default.hosted.emma.tests" >
       <extraclasspaths>
-        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+        <path refid="test.extraclasspath" />
         <pathelement location="${gwt.tools.redist}/emma/emma.jar" />
       </extraclasspaths>
     </gwt.junit>
@@ -121,7 +145,7 @@
   <target name="test.hosted" depends="compile, compile.tests" description="Run only hosted-mode tests for this project.">
     <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.tests" >
       <extraclasspaths>
-        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+        <path refid="test.extraclasspath" />
       </extraclasspaths>
     </gwt.junit>
   </target>
@@ -129,7 +153,7 @@
   <target name="test.noserver" depends="compile, compile.tests" description="Run noserver hosted-mode tests for this project.">
     <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-noserver-mode" test.cases="default.noserver.tests">
       <extraclasspaths>
-        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+        <path refid="test.extraclasspath" />
       </extraclasspaths>
     </gwt.junit>
   </target>
@@ -137,7 +161,7 @@
   <target name="test.web" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
     <gwt.junit test.args="${test.args} -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="default.web.tests">
       <extraclasspaths>
-        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+        <path refid="test.extraclasspath" />
       </extraclasspaths>
     </gwt.junit>
   </target>
@@ -145,7 +169,7 @@
   <target name="test.web.disableClassMetadata" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
     <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode-disableClassMetadata" test.cases="default.web.tests" >
       <extraclasspaths>
-        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+        <path refid="test.extraclasspath" />
       </extraclasspaths>
     </gwt.junit>
   </target>
@@ -153,7 +177,7 @@
   <target name="test.web.draft" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
     <gwt.junit test.args="${test.args} -draftCompile -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode-draft" test.cases="default.web.tests" >
       <extraclasspaths>
-        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+        <path refid="test.extraclasspath" />
       </extraclasspaths>
     </gwt.junit>
   </target>
@@ -168,9 +192,9 @@
     <limit failonerror="true" hours="3">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
       <!-- selenium-test is a no-op unless gwt.selenium.hosts is defined -->
-      <antcall target="selenium-test"/>
+      <antcall target="test.selenium"/>
       <!-- remoteweb-test is a no-op unless gwt.remote.browsers is defined -->
-      <antcall target="remoteweb-test"/>
+      <antcall target="test.remoteweb"/>
       <antcall target="test.hosted"/>
       <antcall target="test.hosted.emma"/>
       <antcall target="test.noserver"/>
