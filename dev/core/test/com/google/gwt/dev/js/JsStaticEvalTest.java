@@ -29,20 +29,36 @@ import java.util.List;
 
 public class JsStaticEvalTest extends TestCase {
 
+  public void testIfWithEmptyThen() throws Exception {
+    assertEquals("a();", optimize("if (a()) { }"));
+  }
+
+  public void testIfWithEmptyThenAndElse() throws Exception {
+    assertEquals("if(!a()){b()}", optimize("if (a()) { } else { b(); }"));
+  }
+
+  public void testIfWithEmptyThenAndEmptyElse() throws Exception {
+    assertEquals("a();", optimize("if (a()) { } else { }"));
+  }
+
+  public void testIfWithThenAndEmptyElse() throws Exception {
+    assertEquals("if(a()){b()}", optimize("if (a()) { b() } else { }"));
+  }
+
   public void testLiteralEqNull() throws Exception {
-    assertTrue(optimize("alert('test' == null)").equals("alert(false);"));
+    assertEquals("alert(false);", optimize("alert('test' == null)"));
   }
 
   public void testLiteralNeNull() throws Exception {
-    assertTrue(optimize("alert('test' != null)").equals("alert(true);"));
+    assertEquals("alert(true);", optimize("alert('test' != null)"));
   }
 
   public void testNullEqNull() throws Exception {
-    assertTrue(optimize("alert(null == null)").equals("alert(true);"));
+    assertEquals("alert(true);", optimize("alert(null == null)"));
   }
 
   public void testNullNeNull() throws Exception {
-    assertTrue(optimize("alert(null != null)").equals("alert(false);"));
+    assertEquals("alert(false);", optimize("alert(null != null)"));
   }
 
   private String optimize(String js) throws Exception {

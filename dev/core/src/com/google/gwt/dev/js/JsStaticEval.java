@@ -35,6 +35,7 @@ import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsValueLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
@@ -348,8 +349,37 @@ public class JsStaticEval {
           block.getStatements().add(decls);
         }
         ctx.replaceMe(accept(block));
-      } else if (isEmpty(thenStmt) && isEmpty(elseStmt)) {
-        ctx.replaceMe(expr.makeStmt());
+      } else {
+        boolean thenIsEmpty = isEmpty(thenStmt);
+        boolean elseIsEmpty = isEmpty(elseStmt);
+        
+        if (thenIsEmpty && elseIsEmpty) {
+          ctx.replaceMe(expr.makeStmt());
+        } else if (thenIsEmpty && !elseIsEmpty) {
+          /*
+           * If the then block is blank, but the else statement has statements,
+           * invert the test
+           */
+          sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
+              "Simplified if with empty then statement");
+
+          JsUnaryOperation negatedOperation = new JsPrefixOperation(sourceInfo,
+              JsUnaryOperator.NOT, x.getIfExpr());
+          JsIf newIf = new JsIf(sourceInfo, negatedOperation, elseStmt, null);
+
+          ctx.replaceMe(accept(newIf));
+        } else if (elseIsEmpty && elseStmt != null) {
+          /*
+           * If the else statement is present but has no effective statements,
+           * prune it
+           */
+          sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
+              "Pruned empty else statement");
+
+          JsIf newIf = new JsIf(sourceInfo, x.getIfExpr(), thenStmt, null);
+
+          ctx.replaceMe(accept(newIf));
+        }
       }
     }
 
