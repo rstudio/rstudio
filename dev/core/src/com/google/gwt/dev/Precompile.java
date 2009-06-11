@@ -180,6 +180,10 @@ public class Precompile {
       return jjsOptions.isEnableAssertions();
     }
 
+    public boolean isOptimizePrecompile() {
+      return jjsOptions.isOptimizePrecompile();
+    }
+
     public boolean isRunAsyncEnabled() {
       return jjsOptions.isRunAsyncEnabled();
     }
@@ -234,6 +238,10 @@ public class Precompile {
 
     public void setMaxPermsPerPrecompile(int maxPermsPerPrecompile) {
       this.maxPermsPerPrecompile = maxPermsPerPrecompile;
+    }
+
+    public void setOptimizePrecompile(boolean optimize) {
+      jjsOptions.setOptimizePrecompile(optimize);
     }
 
     public void setOutput(JsOutputOption output) {
@@ -427,6 +435,8 @@ public class Precompile {
           module, compilationState, generatorArtifacts,
           new PropertyPermutations(module.getProperties()), genDir,
           generatorResourcesDir);
+      // Never optimize on a validation run.
+      jjsOptions.setOptimizePrecompile(false);
       JavaToJavaScriptCompiler.precompile(logger, module, rpo, declEntryPts,
           additionalRootTypes, jjsOptions, true);
       return true;
@@ -500,6 +510,8 @@ public class Precompile {
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
     boolean originalCompilationStateRetained = options.isCompilationStateRetained();
+    // Avoid early optimizations since permutation compiles will run separately.
+    options.setOptimizePrecompile(false);
 
     for (String moduleName : options.getModuleNames()) {
       File compilerWorkDir = options.getCompilerWorkDir(moduleName);

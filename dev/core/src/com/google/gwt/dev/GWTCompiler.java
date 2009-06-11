@@ -181,6 +181,8 @@ public class GWTCompiler {
           logger = logger.branch(TreeLogger.INFO, "Compiling module "
               + moduleName);
 
+          // Optimize early since permutation compiles will run in process.
+          options.setOptimizePrecompile(true);
           Precompilation precompilation = Precompile.precompile(logger,
               options, module, options.getGenDir(), compilerWorkDir,
               options.getDumpSignatureFile());

@@ -517,17 +517,31 @@ public class JavaToJavaScriptCompiler {
       JavaScriptObjectNormalizer.exec(jprogram);
 
       /*
-       * (4) Minimally optimize the normalized Java AST for the common AST. By
-       * doing a few optimizations early in the multiple permutation scenario,
-       * we can save some work. However, we don't do full optimizations because
-       * our optimizer is currently superlinear, which can lead to net losses
-       * for big apps. We can't fully optimize because we don't yet know the
-       * deferred binding decisions.
+       * 4) Possibly optimize some.
        * 
-       * Don't bother optimizing early if there's only one permutation.
+       * Don't optimizing early if this is a draft compile, or if there's only
+       * one permutation.
        */
-      if (!singlePermutation) {
-        optimizeLoop(jprogram, false);
+      if (!options.isDraftCompile() && !singlePermutation) {
+        if (options.isOptimizePrecompile()) {
+          /*
+           * Go ahead and optimize early, so that each permutation will run
+           * faster. This code path is used by the Compiler entry point. We
+           * assume that we will not be able to perfectly parallelize the
+           * permutation compiles, so let's optimize as much as possible the
+           * common AST. In some cases, this might also have the side benefit of
+           * reducing the total permutation count.
+           */
+          optimize(options, jprogram);
+        } else {
+          /*
+           * Do only minimal early optimizations. This code path is used by the
+           * Precompile entry point. The external system might be able to
+           * perfectly parallelize the permutation compiles, so let's avoid
+           * doing potentially superlinear optimizations on the unified AST.
+           */
+          optimizeLoop(jprogram, false);
+        }
       }
 
       Set<String> rebindRequests = new HashSet<String>();

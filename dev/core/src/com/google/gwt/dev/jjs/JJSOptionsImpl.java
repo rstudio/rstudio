@@ -28,6 +28,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean disableClassMetadata = false;
   private boolean draftCompile = false;
   private boolean enableAssertions;
+  private boolean optimizePrecompile = false;
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
   private boolean runAsyncEnabled = true;
   private boolean soycEnabled = false;
@@ -79,6 +80,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     return enableAssertions;
   }
 
+  public boolean isOptimizePrecompile() {
+    return optimizePrecompile;
+  }
+
   public boolean isRunAsyncEnabled() {
     return runAsyncEnabled;
   }
@@ -109,6 +114,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void setEnableAssertions(boolean enableAssertions) {
     this.enableAssertions = enableAssertions;
+  }
+
+  public void setOptimizePrecompile(boolean optimize) {
+    optimizePrecompile = optimize;
   }
 
   public void setOutput(JsOutputOption output) {

@@ -188,6 +188,8 @@ public class Compiler {
           TreeLogger branch = logger.branch(TreeLogger.INFO,
               "Compiling module " + moduleName);
 
+          // Optimize early since permutation compiles will run in process.
+          options.setOptimizePrecompile(true);
           Precompilation precompilation = Precompile.precompile(branch,
               options, module, options.getGenDir(), compilerWorkDir,
               options.getDumpSignatureFile());
