@@ -347,7 +347,7 @@ function __MODULE_FUNC__() {
       //  onScriptLoad()).
       var win = scriptFrame.contentWindow;
       if (isHostedMode()) {
-        win.name = '__MODULE_NAME__';
+        win.name = '__MODULE_FUNC__';
       }
 
       // Set this *before* calling doc.write(), because the linux hosted-mode
