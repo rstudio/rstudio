@@ -313,81 +313,55 @@ public class JsStaticEval {
     public void endVisit(JsIf x, JsContext<JsStatement> ctx) {
       evalBooleanContext.remove(x.getIfExpr());
 
-      JsExpression expr = x.getIfExpr();
-      JsStatement thenStmt = x.getThenStmt();
-      JsStatement elseStmt = x.getElseStmt();
-      if (expr instanceof CanBooleanEval) {
-        SourceInfo sourceInfo;
-        CanBooleanEval cond = (CanBooleanEval) expr;
-        JsStatement onlyStmtToExecute;
-        JsStatement removed;
-        if (cond.isBooleanTrue()) {
-          onlyStmtToExecute = thenStmt;
-          removed = elseStmt;
-          sourceInfo = makeSourceInfo(x, "Simplified always-true condition");
-        } else if (cond.isBooleanFalse()) {
-          onlyStmtToExecute = elseStmt;
-          removed = thenStmt;
-          sourceInfo = makeSourceInfo(x, "Simplified always-false condition");
-        } else {
+      JsExpression condExpr = x.getIfExpr();
+      if (condExpr instanceof CanBooleanEval) {
+        if (tryStaticEvalIf(x, (CanBooleanEval) condExpr, ctx)) {
           return;
         }
-        JsBlock block = new JsBlock(sourceInfo);
-        block.getStatements().add(expr.makeStmt());
+      }
 
-        if (onlyStmtToExecute != null) {
-          // We'll see this if the expression is always false and no else
-          block.getStatements().add(onlyStmtToExecute);
-        }
+      JsStatement thenStmt = x.getThenStmt();
+      JsStatement elseStmt = x.getElseStmt();
+      boolean thenIsEmpty = isEmpty(thenStmt);
+      boolean elseIsEmpty = isEmpty(elseStmt);
+      JsExpression thenExpr = extractExpression(thenStmt);
+      JsExpression elseExpr = extractExpression(elseStmt);
 
-        JsStatement decls = ensureDeclarations(removed);
-        if (decls != null) {
-          block.getStatements().add(decls);
-        }
-        ctx.replaceMe(accept(block));
-      } else {
-        boolean thenIsEmpty = isEmpty(thenStmt);
-        boolean elseIsEmpty = isEmpty(elseStmt);
-        JsExpression thenExpr = extractExpression(thenStmt);
-        JsExpression elseExpr = extractExpression(elseStmt);
-
-        if (thenIsEmpty && elseIsEmpty) {
-          // Convert "if (a()) {}" => "a()".
-          ctx.replaceMe(expr.makeStmt());
-        } else if (thenExpr != null && elseExpr != null) {
-          // Convert "if (a()) {b()} else {c()}" => "a()?b():c()".
-          JsConditional cond = new JsConditional(makeSourceInfo(x,
-              "Replaced if statement with conditional"), x.getIfExpr(),
-              thenExpr, elseExpr);
-          ctx.replaceMe(accept(cond.makeStmt()));
-        } else if (thenIsEmpty && elseExpr != null) {
-          // Convert "if (a()) {} else {b()}" => a()||b().
-          JsBinaryOperation op = new JsBinaryOperation(makeSourceInfo(x,
-              "Replaced if statement with ||"), JsBinaryOperator.OR,
-              x.getIfExpr(), elseExpr);
-          ctx.replaceMe(accept(op.makeStmt()));
-        } else if (thenIsEmpty && !elseIsEmpty) {
-          // Convert "if (a()) {} else {stuff}" => "if (!a()) {stuff}".
-          JsUnaryOperation negatedOperation = new JsPrefixOperation(
-              makeSourceInfo(x, "Simplified if with empty then statement"),
-              JsUnaryOperator.NOT, x.getIfExpr());
-          JsIf newIf = new JsIf(makeSourceInfo(x,
-              "Simplified if with empty then statement"), negatedOperation,
-              elseStmt, null);
-          ctx.replaceMe(accept(newIf));
-        } else if (elseIsEmpty && thenExpr != null) {
-          // Convert "if (a()) {b()}" => "a()&&b()".
-          JsBinaryOperation op = new JsBinaryOperation(makeSourceInfo(x,
-              "Replaced if statement with &&"), JsBinaryOperator.AND,
-              x.getIfExpr(), thenExpr);
-          ctx.replaceMe(accept(op.makeStmt()));
-        } else if (elseIsEmpty && elseStmt != null) {
-          // Convert "if (a()) {b()} else {}" => "if (a()) {b()}".
-          JsIf newIf = new JsIf(
-              makeSourceInfo(x, "Pruned empty else statement"), x.getIfExpr(),
-              thenStmt, null);
-          ctx.replaceMe(accept(newIf));
-        }
+      if (thenIsEmpty && elseIsEmpty) {
+        // Convert "if (a()) {}" => "a()".
+        ctx.replaceMe(condExpr.makeStmt());
+      } else if (thenExpr != null && elseExpr != null) {
+        // Convert "if (a()) {b()} else {c()}" => "a()?b():c()".
+        JsConditional cond = new JsConditional(makeSourceInfo(x,
+            "Replaced if statement with conditional"), x.getIfExpr(), thenExpr,
+            elseExpr);
+        ctx.replaceMe(accept(cond.makeStmt()));
+      } else if (thenIsEmpty && elseExpr != null) {
+        // Convert "if (a()) {} else {b()}" => a()||b().
+        JsBinaryOperation op = new JsBinaryOperation(makeSourceInfo(x,
+            "Replaced if statement with ||"), JsBinaryOperator.OR,
+            x.getIfExpr(), elseExpr);
+        ctx.replaceMe(accept(op.makeStmt()));
+      } else if (thenIsEmpty && !elseIsEmpty) {
+        // Convert "if (a()) {} else {stuff}" => "if (!a()) {stuff}".
+        JsUnaryOperation negatedOperation = new JsPrefixOperation(
+            makeSourceInfo(x, "Simplified if with empty then statement"),
+            JsUnaryOperator.NOT, x.getIfExpr());
+        JsIf newIf = new JsIf(makeSourceInfo(x,
+            "Simplified if with empty then statement"), negatedOperation,
+            elseStmt, null);
+        ctx.replaceMe(accept(newIf));
+      } else if (elseIsEmpty && thenExpr != null) {
+        // Convert "if (a()) {b()}" => "a()&&b()".
+        JsBinaryOperation op = new JsBinaryOperation(makeSourceInfo(x,
+            "Replaced if statement with &&"), JsBinaryOperator.AND,
+            x.getIfExpr(), thenExpr);
+        ctx.replaceMe(accept(op.makeStmt()));
+      } else if (elseIsEmpty && elseStmt != null) {
+        // Convert "if (a()) {b()} else {}" => "if (a()) {b()}".
+        JsIf newIf = new JsIf(makeSourceInfo(x, "Pruned empty else statement"),
+            x.getIfExpr(), thenStmt, null);
+        ctx.replaceMe(accept(newIf));
       }
     }
 
@@ -589,6 +563,41 @@ public class JsStaticEval {
       JsExpression updated = simplifyNe(original, arg1, arg2);
       if (updated != original) {
         ctx.replaceMe(updated);
+      }
+    }
+
+    private boolean tryStaticEvalIf(JsIf x, CanBooleanEval cond,
+        JsContext<JsStatement> ctx) {
+      JsStatement thenStmt = x.getThenStmt();
+      JsStatement elseStmt = x.getElseStmt();
+      if (cond.isBooleanTrue()) {
+        JsBlock block = new JsBlock(makeSourceInfo(x,
+            "Simplified always-true condition"));
+        block.getStatements().add(x.getIfExpr().makeStmt());
+        if (thenStmt != null) {
+          block.getStatements().add(thenStmt);
+        }
+        JsStatement decls = ensureDeclarations(elseStmt);
+        if (decls != null) {
+          block.getStatements().add(decls);
+        }
+        ctx.replaceMe(accept(block));
+        return true;
+      } else if (cond.isBooleanFalse()) {
+        JsBlock block = new JsBlock(makeSourceInfo(x,
+            "Simplified always-false condition"));
+        block.getStatements().add(x.getIfExpr().makeStmt());
+        if (elseStmt != null) {
+          block.getStatements().add(elseStmt);
+        }
+        JsStatement decls = ensureDeclarations(thenStmt);
+        if (decls != null) {
+          block.getStatements().add(decls);
+        }
+        ctx.replaceMe(accept(block));
+        return true;
+      } else {
+        return false;
       }
     }
   }
