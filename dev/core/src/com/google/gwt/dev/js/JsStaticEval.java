@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.CanBooleanEval;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -222,17 +223,14 @@ public class JsStaticEval {
       if (condExpr instanceof CanBooleanEval) {
         CanBooleanEval condEval = (CanBooleanEval) condExpr;
         if (condEval.isBooleanTrue()) {
-          // e.g. (true() ? then : else) -> true() && then
-          JsBinaryOperation binOp = new JsBinaryOperation(
-              x.getSourceInfo().makeChild(StaticEvalVisitor.class,
-                  "Simplified always-true condition"), JsBinaryOperator.AND,
+          JsBinaryOperation binOp = new JsBinaryOperation(makeSourceInfo(x,
+              "Simplified always-true condition"), JsBinaryOperator.AND,
               condExpr, thenExpr);
           ctx.replaceMe(accept(binOp));
         } else if (condEval.isBooleanFalse()) {
           // e.g. (false() ? then : else) -> false() || else
-          JsBinaryOperation binOp = new JsBinaryOperation(
-              x.getSourceInfo().makeChild(StaticEvalVisitor.class,
-                  "Simplified always-false condition"), JsBinaryOperator.OR,
+          JsBinaryOperation binOp = new JsBinaryOperation(makeSourceInfo(x,
+              "Simplified always-false condition"), JsBinaryOperator.OR,
               condExpr, elseExpr);
           ctx.replaceMe(accept(binOp));
         }
@@ -256,8 +254,8 @@ public class JsStaticEval {
           FindBreakContinueStatementsVisitor visitor = new FindBreakContinueStatementsVisitor();
           visitor.accept(x.getBody());
           if (!visitor.hasBreakContinueStatements()) {
-            JsBlock block = new JsBlock(x.getSourceInfo().makeChild(
-                StaticEvalVisitor.class, "Simplified always-false condition"));
+            JsBlock block = new JsBlock(makeSourceInfo(x,
+                "Simplified always-false condition"));
             block.getStatements().add(x.getBody());
             block.getStatements().add(expr.makeStmt());
             ctx.replaceMe(accept(block));
@@ -290,8 +288,8 @@ public class JsStaticEval {
 
         // If false, replace with initializers and condition.
         if (cond.isBooleanFalse()) {
-          JsBlock block = new JsBlock(x.getSourceInfo().makeChild(
-              StaticEvalVisitor.class, "Simplified always-false condition"));
+          JsBlock block = new JsBlock(makeSourceInfo(x,
+              "Simplified always-false condition"));
           if (x.getInitExpr() != null) {
             block.getStatements().add(x.getInitExpr().makeStmt());
           }
@@ -318,21 +316,19 @@ public class JsStaticEval {
       JsExpression expr = x.getIfExpr();
       JsStatement thenStmt = x.getThenStmt();
       JsStatement elseStmt = x.getElseStmt();
-      SourceInfo sourceInfo;
       if (expr instanceof CanBooleanEval) {
+        SourceInfo sourceInfo;
         CanBooleanEval cond = (CanBooleanEval) expr;
         JsStatement onlyStmtToExecute;
         JsStatement removed;
         if (cond.isBooleanTrue()) {
           onlyStmtToExecute = thenStmt;
           removed = elseStmt;
-          sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
-              "Simplified always-true condition");
+          sourceInfo = makeSourceInfo(x, "Simplified always-true condition");
         } else if (cond.isBooleanFalse()) {
           onlyStmtToExecute = elseStmt;
           removed = thenStmt;
-          sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
-              "Simplified always-false condition");
+          sourceInfo = makeSourceInfo(x, "Simplified always-false condition");
         } else {
           return;
         }
@@ -360,42 +356,36 @@ public class JsStaticEval {
           ctx.replaceMe(expr.makeStmt());
         } else if (thenExpr != null && elseExpr != null) {
           // Convert "if (a()) {b()} else {c()}" => "a()?b():c()".
-          sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
-              "Replaced if statement with conditional");
-
-          JsConditional cond = new JsConditional(sourceInfo, x.getIfExpr(),
+          JsConditional cond = new JsConditional(makeSourceInfo(x,
+              "Replaced if statement with conditional"), x.getIfExpr(),
               thenExpr, elseExpr);
           ctx.replaceMe(accept(cond.makeStmt()));
         } else if (thenIsEmpty && elseExpr != null) {
           // Convert "if (a()) {} else {b()}" => a()||b().
-          sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
-              "Replaced if statement with ||");
-
-          JsBinaryOperation op = new JsBinaryOperation(sourceInfo,
-              JsBinaryOperator.OR, x.getIfExpr(), elseExpr);
+          JsBinaryOperation op = new JsBinaryOperation(makeSourceInfo(x,
+              "Replaced if statement with ||"), JsBinaryOperator.OR,
+              x.getIfExpr(), elseExpr);
           ctx.replaceMe(accept(op.makeStmt()));
         } else if (thenIsEmpty && !elseIsEmpty) {
           // Convert "if (a()) {} else {stuff}" => "if (!a()) {stuff}".
-          sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
-              "Simplified if with empty then statement");
-
-          JsUnaryOperation negatedOperation = new JsPrefixOperation(sourceInfo,
+          JsUnaryOperation negatedOperation = new JsPrefixOperation(
+              makeSourceInfo(x, "Simplified if with empty then statement"),
               JsUnaryOperator.NOT, x.getIfExpr());
-          JsIf newIf = new JsIf(sourceInfo, negatedOperation, elseStmt, null);
+          JsIf newIf = new JsIf(makeSourceInfo(x,
+              "Simplified if with empty then statement"), negatedOperation,
+              elseStmt, null);
           ctx.replaceMe(accept(newIf));
         } else if (elseIsEmpty && thenExpr != null) {
           // Convert "if (a()) {b()}" => "a()&&b()".
-          sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
-              "Replaced if statement with &&");
-
-          JsBinaryOperation op = new JsBinaryOperation(sourceInfo,
-              JsBinaryOperator.AND, x.getIfExpr(), thenExpr);
+          JsBinaryOperation op = new JsBinaryOperation(makeSourceInfo(x,
+              "Replaced if statement with &&"), JsBinaryOperator.AND,
+              x.getIfExpr(), thenExpr);
           ctx.replaceMe(accept(op.makeStmt()));
         } else if (elseIsEmpty && elseStmt != null) {
           // Convert "if (a()) {b()} else {}" => "if (a()) {b()}".
-          sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
-              "Pruned empty else statement");
-          JsIf newIf = new JsIf(sourceInfo, x.getIfExpr(), thenStmt, null);
+          JsIf newIf = new JsIf(
+              makeSourceInfo(x, "Pruned empty else statement"), x.getIfExpr(),
+              thenStmt, null);
           ctx.replaceMe(accept(newIf));
         }
       }
@@ -435,8 +425,8 @@ public class JsStaticEval {
 
         // If false, replace with condition.
         if (cond.isBooleanFalse()) {
-          JsBlock block = new JsBlock(x.getSourceInfo().makeChild(
-              StaticEvalVisitor.class, "Simplified always-false condition"));
+          JsBlock block = new JsBlock(makeSourceInfo(x,
+              "Simplified always-false condition"));
           block.getStatements().add(expr.makeStmt());
           JsStatement decls = ensureDeclarations(x.getBody());
           if (decls != null) {
@@ -509,11 +499,15 @@ public class JsStaticEval {
       } else if (stmts.size() == 1) {
         return stmts.get(0);
       } else {
-        JsBlock jsBlock = new JsBlock(stmt.getSourceInfo().makeChild(
-            StaticEvalVisitor.class, "Ensuring declarations"));
+        JsBlock jsBlock = new JsBlock(makeSourceInfo(stmt,
+            "Ensuring declarations"));
         jsBlock.getStatements().addAll(stmts);
         return jsBlock;
       }
+    }
+
+    private SourceInfo makeSourceInfo(HasSourceInfo x, String m) {
+      return x.getSourceInfo().makeChild(StaticEvalVisitor.class, m);
     }
 
     private JsExpression simplifyEq(JsExpression original, JsExpression arg1,
