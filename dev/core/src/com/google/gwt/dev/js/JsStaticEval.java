@@ -352,32 +352,50 @@ public class JsStaticEval {
       } else {
         boolean thenIsEmpty = isEmpty(thenStmt);
         boolean elseIsEmpty = isEmpty(elseStmt);
-        
+        JsExpression thenExpr = extractExpression(thenStmt);
+        JsExpression elseExpr = extractExpression(elseStmt);
+
         if (thenIsEmpty && elseIsEmpty) {
+          // Convert "if (a()) {}" => "a()".
           ctx.replaceMe(expr.makeStmt());
+        } else if (thenExpr != null && elseExpr != null) {
+          // Convert "if (a()) {b()} else {c()}" => "a()?b():c()".
+          sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
+              "Replaced if statement with conditional");
+
+          JsConditional cond = new JsConditional(sourceInfo, x.getIfExpr(),
+              thenExpr, elseExpr);
+          ctx.replaceMe(accept(cond.makeStmt()));
+        } else if (thenIsEmpty && elseExpr != null) {
+          // Convert "if (a()) {} else {b()}" => a()||b().
+          sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
+              "Replaced if statement with ||");
+
+          JsBinaryOperation op = new JsBinaryOperation(sourceInfo,
+              JsBinaryOperator.OR, x.getIfExpr(), elseExpr);
+          ctx.replaceMe(accept(op.makeStmt()));
         } else if (thenIsEmpty && !elseIsEmpty) {
-          /*
-           * If the then block is blank, but the else statement has statements,
-           * invert the test
-           */
+          // Convert "if (a()) {} else {stuff}" => "if (!a()) {stuff}".
           sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
               "Simplified if with empty then statement");
 
           JsUnaryOperation negatedOperation = new JsPrefixOperation(sourceInfo,
               JsUnaryOperator.NOT, x.getIfExpr());
           JsIf newIf = new JsIf(sourceInfo, negatedOperation, elseStmt, null);
-
           ctx.replaceMe(accept(newIf));
+        } else if (elseIsEmpty && thenExpr != null) {
+          // Convert "if (a()) {b()}" => "a()&&b()".
+          sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
+              "Replaced if statement with &&");
+
+          JsBinaryOperation op = new JsBinaryOperation(sourceInfo,
+              JsBinaryOperator.AND, x.getIfExpr(), thenExpr);
+          ctx.replaceMe(accept(op.makeStmt()));
         } else if (elseIsEmpty && elseStmt != null) {
-          /*
-           * If the else statement is present but has no effective statements,
-           * prune it
-           */
+          // Convert "if (a()) {b()} else {}" => "if (a()) {b()}".
           sourceInfo = x.getSourceInfo().makeChild(StaticEvalVisitor.class,
               "Pruned empty else statement");
-
           JsIf newIf = new JsIf(sourceInfo, x.getIfExpr(), thenStmt, null);
-
           ctx.replaceMe(accept(newIf));
         }
       }
@@ -583,6 +601,26 @@ public class JsStaticEval {
 
   public static boolean exec(JsProgram program) {
     return (new JsStaticEval(program)).execImpl();
+  }
+
+  /**
+   * Attempts to extract a single expression from a given statement and returns
+   * it. If no such expression exists, returns <code>null</code>.
+   */
+  protected static JsExpression extractExpression(JsStatement stmt) {
+    if (stmt == null) {
+      return null;
+    }
+
+    if (stmt instanceof JsExprStmt) {
+      return ((JsExprStmt) stmt).getExpression();
+    }
+
+    if (stmt instanceof JsBlock && ((JsBlock) stmt).getStatements().size() == 1) {
+      return extractExpression(((JsBlock) stmt).getStatements().get(0));
+    }
+
+    return null;
   }
 
   protected static boolean isEmpty(JsStatement stmt) {

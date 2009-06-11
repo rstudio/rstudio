@@ -33,8 +33,13 @@ public class JsStaticEvalTest extends TestCase {
     assertEquals("a();", optimize("if (a()) { }"));
   }
 
+  public void testIfWithEmptyThenAndElseExpression() throws Exception {
+    assertEquals("a()||b();", optimize("if (a()) { } else { b(); }"));
+  }
+
   public void testIfWithEmptyThenAndElse() throws Exception {
-    assertEquals("if(!a()){b()}", optimize("if (a()) { } else { b(); }"));
+    assertEquals("if(!a()){throw 1}",
+        optimize("if (a()) { } else { throw 1; }"));
   }
 
   public void testIfWithEmptyThenAndEmptyElse() throws Exception {
@@ -42,7 +47,21 @@ public class JsStaticEvalTest extends TestCase {
   }
 
   public void testIfWithThenAndEmptyElse() throws Exception {
-    assertEquals("if(a()){b()}", optimize("if (a()) { b() } else { }"));
+    assertEquals("if(a()){throw 1}", optimize("if (a()) { throw 1; } else { }"));
+  }
+
+  public void testIfWithThenExpressionAndEmptyElse() throws Exception {
+    assertEquals("a()&&b();", optimize("if (a()) { b() } else { }"));
+  }
+
+  public void testIfWithThenExpressionAndElseExpression() throws Exception {
+    assertEquals("a()?b():c();", optimize("if (a()) { b() } else { c(); }"));
+  }
+
+  public void testIfWithThenExpressionAndElseStatement() throws Exception {
+    // This can't be optimized further
+    assertEquals("if(a()){b()}else{throw 1}",
+        optimize("if (a()) { b() } else { throw 1; }"));
   }
 
   public void testLiteralEqNull() throws Exception {
@@ -66,13 +85,13 @@ public class JsStaticEvalTest extends TestCase {
     List<JsStatement> expected = JsParser.parse(SourceOrigin.UNKNOWN,
         program.getScope(), new StringReader(js));
     program.getGlobalBlock().getStatements().addAll(expected);
-    
+
     // Run the static evaluation over this new program
     JsStaticEval.exec(program);
 
     TextOutput text = new DefaultTextOutput(true);
     JsVisitor generator = new JsSourceGenerationVisitor(text);
-    
+
     generator.accept(program);
     return text.toString();
   }
