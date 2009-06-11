@@ -3,6 +3,14 @@
   <property name="project.tail" value="samples/${sample.root}" />
   <import file="${gwt.root}/common.ant.xml" />
 
+  <!-- 
+    Number of localworkers for sample compilation.  This depends on your
+    hardware, so it's a good candidate to specify in local.ant.properties
+    if this default isn't good for you.  Ideally, it should approximate
+    the number of CPU cores in your machine.
+  -->
+  <property name="gwt.samples.localworkers" value="2" />
+
   <property name="sample.lower" value="${sample.root}" />
   <property name="sample.upper" value="${sample.module}" />
 
@@ -47,9 +55,11 @@
       <targetfiles path="${sample.build}/war/${sample.lower}/${sample.lower}.nocache.js" />
       <sequential>
         <mkdir dir="${sample.build}/war" />
-        <gwt.timer name="${sample.upper}">
+        <gwt.timer name="${sample.upper} with ${gwt.samples.localworkers} localWorkers">
           <java dir="${sample.build}" classname="com.google.gwt.dev.Compiler" classpath="src:${sample.build}/war/WEB-INF/classes:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
             <jvmarg value="-Xmx256M"/>
+            <arg value="-localWorkers" />
+            <arg value="${gwt.samples.localworkers}" />
             <arg value="-war" />
             <arg file="${sample.build}/war" />
             <arg value="com.google.gwt.sample.${sample.lower}.${sample.upper}" />
