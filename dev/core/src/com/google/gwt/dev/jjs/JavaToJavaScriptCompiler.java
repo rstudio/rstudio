@@ -366,11 +366,11 @@ public class JavaToJavaScriptCompiler {
 
         toReturn.getArtifacts().add(
             new StandardCompilationAnalysis(dependencies, stories, splitPoints));
-        
+
         System.out.println("Completed SOYC phase in "
             + (System.currentTimeMillis() - soycStart) + " ms");
       }
-      
+
       System.out.println("Permutation took "
           + (System.currentTimeMillis() - permStart) + " ms");
       return toReturn;
@@ -542,6 +542,10 @@ public class JavaToJavaScriptCompiler {
     }
   }
 
+  /**
+   * Perform the minimal amount of optimization to make sure the compile
+   * succeeds.
+   */
   protected static void draftOptimize(JProgram jprogram) {
     /*
      * Record the beginning of optimizations; this turns on certain checks that
@@ -550,14 +554,25 @@ public class JavaToJavaScriptCompiler {
      */
     jprogram.beginOptimizations();
 
-    optimizeLoop(jprogram, false);
+    PerfLogger.start("draft optimize");
 
-    /*
-     * Ensure that references to dead clinits are removed. Otherwise, the
-     * application won't run reliably.
-     */
+    PerfLogger.start("Finalizer");
+    Finalizer.exec(jprogram);
+    PerfLogger.end();
+
+    PerfLogger.start("MakeCallsStatic");
+    MakeCallsStatic.exec(jprogram);
+    PerfLogger.end();
+
+    PerfLogger.start("recomputeAfterOptimizations");
     jprogram.typeOracle.recomputeAfterOptimizations();
+    PerfLogger.end();
+
+    PerfLogger.start("DeadCodeElimination");
     DeadCodeElimination.exec(jprogram);
+    PerfLogger.end();
+
+    PerfLogger.end();
   }
 
   protected static void optimize(JJSOptions options, JProgram jprogram)
