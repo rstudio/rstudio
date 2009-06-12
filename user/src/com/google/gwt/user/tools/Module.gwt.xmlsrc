@@ -14,4 +14,8 @@
 
   <!-- Specify the app entry point class.                         -->
   <entry-point class='@clientPackage.@moduleShortName'/>
+
+  <!-- Specify the paths for translatable code                    -->
+  <source path='client'/>
+
 </module>
