@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.resource.ResourceOracle;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -31,13 +32,13 @@ import java.util.Set;
 /**
  * Keeps track of types/resources previously created to avoid warnings about
  * trying to generate the same file multiple times during a single generator
- * run.  This is needed when one generator calls other generators multiple
- * times (such as for runtime locale support).
+ * run. This is needed when one generator calls other generators multiple times
+ * (such as for runtime locale support).
  */
 class CachedGeneratorContext implements GeneratorContext {
   private final GeneratorContext context;
-  private Set<String> generatedTypes = new HashSet<String>();
   private Set<String> generatedResources = new HashSet<String>();
+  private Set<String> generatedTypes = new HashSet<String>();
 
   CachedGeneratorContext(GeneratorContext context) {
     this.context = context;
@@ -52,13 +53,17 @@ class CachedGeneratorContext implements GeneratorContext {
     context.commitArtifact(logger, artifact);
   }
 
-  public GeneratedResource commitResource(TreeLogger logger,
-      OutputStream os) throws UnableToCompleteException {
+  public GeneratedResource commitResource(TreeLogger logger, OutputStream os)
+      throws UnableToCompleteException {
     return context.commitResource(logger, os);
   }
 
   public PropertyOracle getPropertyOracle() {
     return context.getPropertyOracle();
+  }
+
+  public ResourceOracle getResourcesOracle() {
+    return context.getResourcesOracle();
   }
 
   public TypeOracle getTypeOracle() {
@@ -75,8 +80,8 @@ class CachedGeneratorContext implements GeneratorContext {
     return context.tryCreate(logger, packageName, simpleName);
   }
 
-  public OutputStream tryCreateResource(TreeLogger logger,
-      String partialPath) throws UnableToCompleteException {
+  public OutputStream tryCreateResource(TreeLogger logger, String partialPath)
+      throws UnableToCompleteException {
     if (generatedResources.contains(partialPath)) {
       return null;
     }

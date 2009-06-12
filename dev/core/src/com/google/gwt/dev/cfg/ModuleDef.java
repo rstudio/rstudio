@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.resource.impl.DefaultFilters;
 import com.google.gwt.dev.resource.impl.PathPrefix;
 import com.google.gwt.dev.resource.impl.PathPrefixSet;
@@ -48,6 +49,7 @@ import java.util.Map.Entry;
  * Represents a module specification. In principle, this could be built without
  * XML for unit tests.
  */
+@SuppressWarnings("deprecation")
 public class ModuleDef implements PublicOracle {
 
   private static final Comparator<Map.Entry<String, ?>> REV_NAME_CMP = new Comparator<Map.Entry<String, ?>>() {
@@ -81,6 +83,8 @@ public class ModuleDef implements PublicOracle {
   private CompilationState lazyCompilationState;
 
   private ResourceOracleImpl lazyPublicOracle;
+
+  private ResourceOracleImpl lazyResourcesOracle;
 
   private ResourceOracleImpl lazySourceOracle;
 
@@ -277,6 +281,21 @@ public class ModuleDef implements PublicOracle {
     return properties;
   }
 
+  public ResourceOracle getResourcesOracle() {
+    if (lazyResourcesOracle == null) {
+      lazyResourcesOracle = new ResourceOracleImpl(TreeLogger.NULL);
+      PathPrefixSet pathPrefixes = lazySourceOracle.getPathPrefixes();
+      PathPrefixSet newPathPrefixes = new PathPrefixSet();
+      for (PathPrefix pathPrefix : pathPrefixes.values()) {
+        newPathPrefixes.add(new PathPrefix(pathPrefix.getPrefix(), null,
+            pathPrefix.shouldReroot()));
+      }
+      lazyResourcesOracle.setPathPrefixes(newPathPrefixes);
+      lazyResourcesOracle.refresh(TreeLogger.NULL);
+    }
+    return lazyResourcesOracle;
+  }
+
   /**
    * Gets a reference to the internal rules for this module def.
    */
@@ -342,6 +361,10 @@ public class ModuleDef implements PublicOracle {
     // Refresh resource oracles.
     lazyPublicOracle.refresh(logger);
     lazySourceOracle.refresh(logger);
+
+    if (lazyResourcesOracle != null) {
+      lazyResourcesOracle.refresh(logger);
+    }
 
     // Update the compilation state to reflect the resource oracle changes.
     if (lazyCompilationState != null) {

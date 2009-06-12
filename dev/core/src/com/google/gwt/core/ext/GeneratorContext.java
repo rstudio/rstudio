@@ -18,6 +18,7 @@ package com.google.gwt.core.ext;
 import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.resource.ResourceOracle;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -68,6 +69,17 @@ public interface GeneratorContext {
    * use the property oracle to query deferred binding properties.
    */
   PropertyOracle getPropertyOracle();
+
+  /**
+   * Returns a resource oracle containing all resources that are mapped into the
+   * module's source (or super-source) paths. Conceptually, this resource oracle
+   * exposes resources which are "siblings" to GWT-compatible Java classes. For
+   * example, if the module includes <code>com.google.gwt.core.client</code>
+   * as a source package, then a resource at
+   * <code>com/google/gwt/core/client/Foo.properties</code> would be exposed
+   * by this resource oracle.
+   */
+  ResourceOracle getResourcesOracle();
 
   /**
    * Gets the type oracle for the current generator context. Generators can use

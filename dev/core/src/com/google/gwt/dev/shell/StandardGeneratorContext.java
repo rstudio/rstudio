@@ -26,10 +26,11 @@ import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.linker.impl.StandardGeneratedResource;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.cfg.PublicOracle;
+import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.impl.FileCompilationUnit;
+import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashSet;
@@ -257,6 +258,8 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private final File generatorResourcesDir;
 
+  private final ModuleDef module;
+
   private ArtifactSet newlyGeneratedArtifacts = new ArtifactSet();
 
   private final Set<String> newlyGeneratedTypeNames = new HashSet<String>();
@@ -265,8 +268,6 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private transient PropertyOracle propOracle;
 
-  private final PublicOracle publicOracle;
-
   private final Map<PrintWriter, Generated> uncommittedGeneratedCupsByPrintWriter = new IdentityHashMap<PrintWriter, Generated>();
 
   /**
@@ -274,10 +275,10 @@ public class StandardGeneratorContext implements GeneratorContext {
    * available in the supplied type oracle although it isn't strictly required.
    */
   public StandardGeneratorContext(CompilationState compilationState,
-      PublicOracle publicOracle, File genDir, File generatorResourcesDir,
+      ModuleDef module, File genDir, File generatorResourcesDir,
       ArtifactSet allGeneratedArtifacts) {
     this.compilationState = compilationState;
-    this.publicOracle = publicOracle;
+    this.module = module;
     this.genDir = genDir;
     this.generatorResourcesDir = generatorResourcesDir;
     this.allGeneratedArtifacts = allGeneratedArtifacts;
@@ -416,6 +417,10 @@ public class StandardGeneratorContext implements GeneratorContext {
     return propOracle;
   }
 
+  public ResourceOracle getResourcesOracle() {
+    return module.getResourcesOracle();
+  }
+
   public final TypeOracle getTypeOracle() {
     return compilationState.getTypeOracle();
   }
@@ -520,7 +525,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     // Check for public path collision.
-    if (publicOracle.findPublicFile(partialPath) != null) {
+    if (module.findPublicFile(partialPath) != null) {
       logger.log(TreeLogger.WARN, "Cannot create resource '" + partialPath
           + "' because it already exists on the public path", null);
       return null;

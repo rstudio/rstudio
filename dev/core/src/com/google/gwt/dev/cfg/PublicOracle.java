@@ -19,7 +19,10 @@ import com.google.gwt.dev.resource.Resource;
 
 /**
  * Abstracts the process of querying for public files.
+ * 
+ * @deprecated with no replacement, just use {@link ModuleDef} directly
  */
+@Deprecated
 public interface PublicOracle {
 
   /**

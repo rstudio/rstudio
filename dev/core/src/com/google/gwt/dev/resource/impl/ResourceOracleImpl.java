@@ -307,6 +307,10 @@ public class ResourceOracleImpl implements ResourceOracle {
     return exposedPathNames;
   }
 
+  public PathPrefixSet getPathPrefixes() {
+    return pathPrefixSet;
+  }
+
   public Map<String, Resource> getResourceMap() {
     return exposedResourceMap;
   }

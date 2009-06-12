@@ -26,7 +26,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.GeneratedResource;
-import com.google.gwt.dev.cfg.PublicOracle;
+import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
@@ -67,28 +67,10 @@ public class StandardGeneratorContextTest extends TestCase {
     }
   }
 
-  private static class MockPropertyOracle implements PropertyOracle {
-    public String getPropertyValue(TreeLogger logger, String propertyName)
-        throws BadPropertyValueException {
-      return "";
+  private static class MockModuleDef extends ModuleDef {
+    public MockModuleDef() {
+      super("mock");
     }
-
-    public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
-        throws BadPropertyValueException {
-      return new String[] {};
-    }
-
-    public ConfigurationProperty getConfigurationProperty(String name) {
-      return null;
-    }
-
-    public SelectionProperty getSelectionProperty(TreeLogger logger,
-        String name) {
-      return null;
-    }
-  }
-
-  private static class MockPublicOracle implements PublicOracle {
 
     public Resource findPublicFile(String partialPath) {
       if ("onPublicPath.txt".equals(partialPath)) {
@@ -132,16 +114,33 @@ public class StandardGeneratorContextTest extends TestCase {
     public String[] getAllPublicFiles() {
       return new String[] {"onPublicPath.txt"};
     }
+  }
 
+  private static class MockPropertyOracle implements PropertyOracle {
+    public ConfigurationProperty getConfigurationProperty(String name) {
+      return null;
+    }
+
+    public String getPropertyValue(TreeLogger logger, String propertyName)
+        throws BadPropertyValueException {
+      return "";
+    }
+
+    public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
+        throws BadPropertyValueException {
+      return new String[] {};
+    }
+
+    public SelectionProperty getSelectionProperty(TreeLogger logger, String name) {
+      return null;
+    }
   }
 
   private final ArtifactSet artifactSet = new ArtifactSet();
-
   private final StandardGeneratorContext genCtx;
   private final CompilationState mockCompilationState = new MockCompilationState();
   private final TreeLogger mockLogger = TreeLogger.NULL;
   private final PropertyOracle mockPropOracle = new MockPropertyOracle();
-  private final PublicOracle mockPublicOracle = new MockPublicOracle();
   private int tempFileCounter;
   private final File tempGenDir;
   private final File tempOutDir;
@@ -155,7 +154,7 @@ public class StandardGeneratorContextTest extends TestCase {
     tempGenDir = createTempDir("gwt-gen-");
     tempOutDir = createTempDir("gwt-out-");
     genCtx = new StandardGeneratorContext(mockCompilationState,
-        mockPublicOracle, tempGenDir, tempOutDir, artifactSet);
+        new MockModuleDef(), tempGenDir, tempOutDir, artifactSet);
     genCtx.setPropertyOracle(mockPropOracle);
     genCtx.setCurrentGenerator(Generator.class);
   }
