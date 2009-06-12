@@ -58,10 +58,16 @@ public class IFrameLinker extends SelectionScriptLinker {
    * Split a JavaScript string into multiple chunks, at statement boundaries.
    * Insert and end-script tag and a start-script tag in between each chunk.
    * This method is made default access for testing.
+   * 
+   * @param ranges Describes where the statements are located within the
+   *          JavaScript code. If <code>null</code>, then return <code>js</code>
+   *          unchanged.
+   * @param js The JavaScript code to be split up.
+   * @param charsPerChunk The number of characters to be put in each script tag
    */
   static String splitPrimaryJavaScript(StatementRanges ranges, String js,
       int charsPerChunk) {
-    if (charsPerChunk < 0) {
+    if (charsPerChunk < 0 || ranges == null) {
       return js;
     }
 
@@ -72,8 +78,7 @@ public class IFrameLinker extends SelectionScriptLinker {
       int start = ranges.start(i);
       int end = ranges.end(i);
       int length = end - start;
-      if (bytesInCurrentTag > 0
-          && bytesInCurrentTag + length > charsPerChunk) {
+      if (bytesInCurrentTag > 0 && bytesInCurrentTag + length > charsPerChunk) {
         if (lastChar(sb) != '\n') {
           sb.append('\n');
         }

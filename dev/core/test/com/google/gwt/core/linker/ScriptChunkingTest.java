@@ -118,4 +118,23 @@ public class ScriptChunkingTest extends TestCase {
         builder.getJavaScript(), -1);
     assertEquals(builder.getJavaScript(), split);
   }
+
+  /**
+   * Test with statement ranges not present, which should disable the chunking.
+   */
+  public void testNullStatementRanges() {
+    ScriptWithRangesBuilder builder = new ScriptWithRangesBuilder();
+    builder.addNonStatement("{");
+    builder.addNonStatement("{");
+    builder.addStatement("x=1;");
+    builder.addStatement("function x(){x = 2}\n");
+    builder.addStatement("x=3");
+    builder.addNonStatement("}\n{");
+    builder.addStatement("x=5");
+    builder.addNonStatement("}");
+
+    String split = IFrameLinker.splitPrimaryJavaScript(null,
+        builder.getJavaScript(), 5);
+    assertEquals(builder.getJavaScript(), split);
+  }
 }

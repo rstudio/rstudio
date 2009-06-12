@@ -51,9 +51,12 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
 
   /**
    * Returns the statement ranges for the JavaScript returned by
-   * {@link #getJavaScript()}.
+   * {@link #getJavaScript()}. Some subclasses return <code>null</code>, in
+   * which case there is no statement range information available.
    */
-  public abstract StatementRanges[] getStatementRanges();
+  public StatementRanges[] getStatementRanges() {
+    return null;
+  }
 
   /**
    * Return a string that uniquely identifies this compilation result. Typically
