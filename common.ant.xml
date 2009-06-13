@@ -303,12 +303,12 @@
   <!-- Default implementations of the required targets; projects should
   override the ones that matter -->
   <target name="all" depends="verify" />
-  <target name="verify" depends="checkstyle, test" description="Verify this project" />
-  <target name="checkstyle" description="Static analysis of source" />
-  <target name="test" depends="build" description="Test this project" />
-  <target name="build" description="Build and (maybe) package this project" />
+  <target name="verify" depends="checkstyle, test" description="Runs tests and checkstyle static analysis" />
+  <target name="checkstyle" />
+  <target name="test" depends="build" />
+  <target name="build" />
 
-  <target name="clean" description="Cleans this project's intermediate and output files">
+  <target name="clean">
     <delete dir="${project.build}" />
   </target>
 
