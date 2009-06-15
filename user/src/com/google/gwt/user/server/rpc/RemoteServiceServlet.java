@@ -177,6 +177,9 @@ public class RemoteServiceServlet extends HttpServlet implements
    */
   public String processCall(String payload) throws SerializationException {
     try {
+      if (getPermutationStrongName() == null) {
+        throw new SecurityException("Blocked request without GWT permutation header(XSRF attack?)");
+      }
       RPCRequest rpcRequest = RPC.decodeRequest(payload, this.getClass(), this);
       onAfterRequestDeserialized(rpcRequest);
       return RPC.invokeAndEncodeResponse(this, rpcRequest.getMethod(),

@@ -373,6 +373,10 @@ public final class ServerSerializationStreamReader extends
     }
   }
 
+  public int getNumberOfTokens() {
+    return tokenList.size();
+  }
+
   public SerializationPolicy getSerializationPolicy() {
     return serializationPolicy;
   }

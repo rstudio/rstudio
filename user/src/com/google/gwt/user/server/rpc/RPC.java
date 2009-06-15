@@ -269,6 +269,9 @@ public final class RPC {
       String serviceMethodName = streamReader.readString();
 
       int paramCount = streamReader.readInt();
+      if (paramCount > streamReader.getNumberOfTokens()) {
+        throw new IncompatibleRemoteServiceException("Invalid number of parameters");
+      }
       Class<?>[] parameterTypes = new Class[paramCount];
 
       for (int i = 0; i < parameterTypes.length; i++) {
