@@ -27,9 +27,12 @@ import java.util.TreeSet;
  */
 public class BindingProperty extends Property {
 
+  private static final String EMPTY = "";
+  
   private SortedSet<String> allowedValues;
   private final SortedSet<String> definedValues = new TreeSet<String>();
   private PropertyProvider provider;
+  private String fallback;
 
   {
     /*
@@ -41,6 +44,7 @@ public class BindingProperty extends Property {
 
   public BindingProperty(String name) {
     super(name);
+    fallback = EMPTY;
   }
 
   public void addDefinedValue(String newValue) {
@@ -61,6 +65,9 @@ public class BindingProperty extends Property {
     return definedValues.toArray(new String[definedValues.size()]);
   }
 
+  public String getFallback() {
+    return fallback;
+  }
   public PropertyProvider getProvider() {
     return provider;
   }
@@ -93,6 +100,10 @@ public class BindingProperty extends Property {
     }
 
     allowedValues = temp;
+  }
+
+  public void setFallback(String token) {
+    fallback = token;
   }
 
   public void setProvider(PropertyProvider provider) {

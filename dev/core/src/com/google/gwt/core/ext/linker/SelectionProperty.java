@@ -22,6 +22,9 @@ import java.util.SortedSet;
  * may not have a single value applied across all permutations.
  * 
  * SelectionProperty implementations must support object identity comparisons.
+ * 
+ * @see com.google.gwt.core.ext.SelectionProperty A similarly-named interface used
+ * in generators.
  */
 public interface SelectionProperty {
   /**

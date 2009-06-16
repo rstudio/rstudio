@@ -107,6 +107,10 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __set_property_2_value = null;
 
+    protected final String __set_property_fallback_1_name = null;
+
+    protected final String __set_property_fallback_2_value = null;
+
     protected final String __source_1_path = "";
 
     protected final String __source_2_includes = "";
@@ -494,6 +498,25 @@ public class ModuleDefSchema extends Schema {
       prop.setAllowedValues(stringValues);
 
       // No children.
+      return null;
+    }
+
+    protected Schema __set_property_fallback_begin(BindingProperty prop,
+        PropertyValue value) throws UnableToCompleteException {
+      boolean error = true;
+      for (String possibleValue : prop.getAllowedValues()) {
+        if (possibleValue.equals(value.token)) {
+          error = false;
+          break;
+        }
+      }
+      if (error) {
+        logger.log(TreeLogger.ERROR, "The fallback value '" + value.token
+            + "' was not previously defined for property '"
+            + prop.getName() + "'");
+        throw new UnableToCompleteException();
+      }
+      prop.setFallback(value.token);
       return null;
     }
 

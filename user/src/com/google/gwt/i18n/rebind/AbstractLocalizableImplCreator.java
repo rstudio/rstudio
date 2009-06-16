@@ -17,7 +17,9 @@ package com.google.gwt.i18n.rebind;
 
 import static com.google.gwt.i18n.rebind.AnnotationUtil.getClassAnnotation;
 
+import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -150,6 +152,20 @@ abstract class AbstractLocalizableImplCreator extends
       if (genLocales.length != 0) {
         // verify the current locale is in the list
         for (String genLocale : genLocales) {
+          if (GwtLocale.DEFAULT_LOCALE.equals(genLocale)) {
+            // Locale "default" gets special handling because of property
+            // fallbacks; "default" might be mapped to any real locale.
+            try {
+              SelectionProperty localeProp = 
+                  context.getPropertyOracle().getSelectionProperty(logger, "locale");
+              String defaultLocale = localeProp.getFallbackValue();
+              if (defaultLocale.length() > 0) {
+                genLocale = defaultLocale;
+              }
+            } catch (BadPropertyValueException e) {
+              throw error(logger, "Could not get 'locale' property");
+            }
+          }
           if (genLocale.equals(locale.toString())) {
             found = true;
             break;

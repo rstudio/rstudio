@@ -28,6 +28,8 @@ import java.util.TreeSet;
  * {@link BindingProperty}.
  */
 public class StandardSelectionProperty implements SelectionProperty {
+  private static final String FALLBACK_TOKEN = "/*-FALLBACK-*/";
+
   private final String activeValue;
   private final String name;
   private final String provider;
@@ -40,7 +42,9 @@ public class StandardSelectionProperty implements SelectionProperty {
       activeValue = null;
     }
     name = p.getName();
-    provider = p.getProvider() == null ? null : p.getProvider().getBody();
+    String fallback = p.getFallback();
+    provider = p.getProvider() == null ? null : 
+        p.getProvider().getBody().replace(FALLBACK_TOKEN, fallback);
     values = Collections.unmodifiableSortedSet(new TreeSet<String>(
         Arrays.asList(p.getDefinedValues())));
   }

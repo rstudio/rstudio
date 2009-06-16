@@ -23,6 +23,7 @@
     <![CDATA[
       try {
       var locale;
+      var defaultLocale = "/*-FALLBACK-*/" || 'default';
 
       // Look for the locale as a url argument
       if (locale == null) {
@@ -48,22 +49,23 @@
         // Look for an override computed by other means in the selection script
         locale = $wnd['__gwt_Locale'];
       } else {
-        $wnd['__gwt_Locale'] = locale || 'default';
+        $wnd['__gwt_Locale'] = locale || defaultLocale;
       }
       
       if (locale == null) {
-        return "default";
+        return defaultLocale;
       }
 
       while (!__gwt_isKnownPropertyValue("locale",  locale)) {
         var lastIndex = locale.lastIndexOf("_");
         if (lastIndex == -1) {
-              locale = "default";
+          locale = defaultLocale;
           break;
         } else {
           locale = locale.substring(0,lastIndex);
         }
       }
+
       return locale;
     } catch(e){
       alert("Unexpected exception in locale detection, using default: " + e);
@@ -91,4 +93,16 @@
    -->
   <define-configuration-property name="runtime.locales" is-multi-valued="true"/>
   <set-configuration-property name="runtime.locales" value=""/>
+
+  <!--
+      A "real" locale to be served by default (i.e. if the browser either
+      doesn't have a requested locale, or it cannot be satisfied with any
+      of the available locales).  The non-internationalized value "default"
+      is actually deficient for any actual locale, so users should set this
+      when then either <extend-property> or <define-property> user.agents for
+      their available translations.  You should still have a locale named
+      "default" (because various tools expect that to be valid), but it will
+      be generated as the locale specified here.
+  -->
+  <set-property-fallback name="locale" value="default"/>
 </module>

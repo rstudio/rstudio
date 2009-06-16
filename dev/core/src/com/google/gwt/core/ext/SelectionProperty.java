@@ -19,7 +19,10 @@ package com.google.gwt.core.ext;
 import java.util.SortedSet;
 
 /**
- * A named deferred binding (property, value) pair.
+ * A named deferred binding (property, value) pair for use in generators.
+ * 
+ * @see com.google.gwt.core.ext.linker.SelectionProperty A similarly-named
+ * analog for linkers.
  */
 public interface SelectionProperty {
   
@@ -38,9 +41,15 @@ public interface SelectionProperty {
   String getCurrentValue();
 
   /**
+   * Gets the fallback value for the property
+   * @return the fallback, or ""
+   */
+  String getFallbackValue(); 
+
+  /**
    * Returns the possible values for the property in sorted order.
    * 
    * @return a SortedSet of Strings containing the possible property values.
    */
-  SortedSet<String> getPossibleValues(); 
+  SortedSet<String> getPossibleValues();
 }

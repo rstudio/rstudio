@@ -119,6 +119,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       final BindingProperty cprop = (BindingProperty) prop;
       final String name = cprop.getName();
       final String value = computePropertyValue(logger, propertyName, cprop);
+      final String fallback = cprop.getFallback();
       final SortedSet<String> possibleValues = new TreeSet<String>();
       for (String v : cprop.getDefinedValues()) {
         possibleValues.add(v);
@@ -127,6 +128,10 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
         
         public String getCurrentValue() {
           return value;
+        }
+
+        public String getFallbackValue() {
+          return fallback;
         }
 
         public String getName() {

@@ -138,6 +138,7 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
     for (int i = 0; i < orderedProps.length; i++) {
       final BindingProperty prop = orderedProps[i];
       final String name = prop.getName();
+      final String fallback = prop.getFallback();
       if (name.equals(propertyName)) {
         final String value = orderedPropValues[i];
         String[] values = prop.getDefinedValues();
@@ -149,6 +150,10 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
         return new com.google.gwt.core.ext.SelectionProperty() {
           public String getCurrentValue() {
             return value;
+          }
+
+          public String getFallbackValue() {
+            return fallback;
           }
 
           public String getName() {
