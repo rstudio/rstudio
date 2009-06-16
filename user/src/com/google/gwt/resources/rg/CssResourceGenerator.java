@@ -968,6 +968,13 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
 
   private static final String[] DEFAULT_EXTENSIONS = new String[] {".css"};
 
+  /**
+   * These constants are used to cache obfuscated class names.
+   */
+  private static final String KEY_BY_CLASS_AND_METHOD = "classAndMethod";
+  private static final String KEY_HAS_CACHED_DATA = "hasCachedData";
+  private static final String KEY_SHARED_METHODS = "sharedMethods";
+
   public static void main(String[] args) {
     for (int i = 0; i < 1000; i++) {
       System.out.println(makeIdent(i));
@@ -1318,11 +1325,9 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
     stringType = typeOracle.findType(String.class.getName());
     assert stringType != null;
 
-    replacementsByClassAndMethod = new IdentityHashMap<JClassType, Map<JMethod, String>>();
-    replacementsForSharedMethods = new IdentityHashMap<JMethod, String>();
     stylesheetMap = new IdentityHashMap<JMethod, CssStylesheet>();
 
-    computeObfuscatedNames(logger);
+    initReplacements(logger, context);
   }
 
   @Override
@@ -1506,6 +1511,33 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
     return false;
   }
 
+  /**
+   * This method will initialize the maps that contain the obfuscated class
+   * names.
+   */
+  @SuppressWarnings("unchecked")
+  private void initReplacements(TreeLogger logger, ResourceContext context) {
+    if (context.getCachedData(KEY_HAS_CACHED_DATA, Boolean.class) == Boolean.TRUE) {
+      replacementsByClassAndMethod = context.getCachedData(
+          KEY_BY_CLASS_AND_METHOD, Map.class);
+      replacementsForSharedMethods = context.getCachedData(KEY_SHARED_METHODS,
+          Map.class);
+      logger.log(TreeLogger.DEBUG, "Using cached replacements maps");
+
+    } else {
+      context.putCachedData(KEY_HAS_CACHED_DATA, Boolean.TRUE);
+
+      replacementsByClassAndMethod = new IdentityHashMap<JClassType, Map<JMethod, String>>();
+      context.putCachedData(KEY_BY_CLASS_AND_METHOD,
+          replacementsByClassAndMethod);
+
+      replacementsForSharedMethods = new IdentityHashMap<JMethod, String>();
+      context.putCachedData(KEY_SHARED_METHODS, replacementsForSharedMethods);
+
+      computeObfuscatedNames(logger);
+    }
+  }
+
   private boolean isStrict(TreeLogger logger, ResourceContext context,
       JMethod method) {
     Strict strictAnnotation = method.getAnnotation(Strict.class);
@@ -1634,7 +1666,8 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
       Map<JMethod, String> classReplacements) {
 
     String replacement = classReplacements.get(toImplement);
-    assert replacement != null;
+    assert replacement != null : "Missing replacement for "
+        + toImplement.getName();
 
     sw.println(toImplement.getReadableDeclaration(false, true, true, true, true)
         + "{");

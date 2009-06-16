@@ -19,12 +19,17 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.resources.ext.ResourceContext;
+import com.google.gwt.resources.ext.ResourceGenerator;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Defines base methods for ResourceContext implementations.
@@ -36,6 +41,17 @@ public abstract class AbstractResourceContext implements ResourceContext {
    */
   protected static final int MAX_INLINE_SIZE = 2 << 15;
 
+  /**
+   * Maps ResourceContext caches to their associated TypeOracles. This is a weak
+   * map and will not prevent TypeOracles from being gc'ed.
+   */
+  private static final Map<TypeOracle, Map<String, Object>> CACHES = new WeakHashMap<TypeOracle, Map<String, Object>>();
+
+  /**
+   * The key we use to store the expected TypeOracle reload count.
+   */
+  private static final String TYPE_ORACLE_RELOAD_COUNT_KEY = ":ReloadCount";
+
   protected static String toBase64(byte[] data) {
     // This is bad, but I am lazy and don't want to write _another_ encoder
     sun.misc.BASE64Encoder enc = new sun.misc.BASE64Encoder();
@@ -43,7 +59,24 @@ public abstract class AbstractResourceContext implements ResourceContext {
     return base64Contents;
   }
 
+  private static Map<String, Object> getCache(TypeOracle oracle) {
+    Map<String, Object> toReturn = CACHES.get(oracle);
+    if (toReturn != null) {
+      long expectedCount = (Long) toReturn.get(TYPE_ORACLE_RELOAD_COUNT_KEY);
+      if (oracle.getReloadCount() == expectedCount) {
+        return toReturn;
+      }
+    }
+
+    toReturn = new HashMap<String, Object>();
+    toReturn.put(TYPE_ORACLE_RELOAD_COUNT_KEY, (Object) oracle.getReloadCount());
+    CACHES.put(oracle, toReturn);
+    return toReturn;
+  }
+
   private final TreeLogger logger;
+  private final Map<String, Object> cache;
+  private String currentResourceGeneratorType;
   private final GeneratorContext context;
   private final JClassType resourceBundleType;
   private String simpleSourceName;
@@ -53,6 +86,7 @@ public abstract class AbstractResourceContext implements ResourceContext {
     this.logger = logger;
     this.context = context;
     this.resourceBundleType = resourceBundleType;
+    this.cache = getCache(context.getTypeOracle());
   }
 
   public String deploy(URL resource, boolean xhrCompatible)
@@ -67,6 +101,10 @@ public abstract class AbstractResourceContext implements ResourceContext {
           "Unable to determine mime type of resource", e);
       throw new UnableToCompleteException();
     }
+  }
+
+  public <T> T getCachedData(String key, Class<T> clazz) {
+    return clazz.cast(cache.get(currentResourceGeneratorType + ":" + key));
   }
 
   public JClassType getClientBundleType() {
@@ -85,12 +123,21 @@ public abstract class AbstractResourceContext implements ResourceContext {
     return simpleSourceName;
   }
 
+  public <T> boolean putCachedData(String key, T value) {
+    key = currentResourceGeneratorType + ":" + key;
+    return value != cache.put(key, value);
+  }
+
   protected GeneratorContext getContext() {
     return context;
   }
 
   protected TreeLogger getLogger() {
     return logger;
+  }
+
+  void setCurrentResourceGenerator(ResourceGenerator rg) {
+    currentResourceGeneratorType = rg.getClass().getName();
   }
 
   void setSimpleSourceName(String name) {

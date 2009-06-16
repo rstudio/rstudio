@@ -72,6 +72,19 @@ public interface ResourceContext {
       throws UnableToCompleteException;
 
   /**
+   * Retrieve data from the ResourceContext.
+   * 
+   * @param <T> the type of data to retrieve
+   * @param key the key value passed to {@link #getCachedData}
+   * @param clazz the type to which the cached value must be assignable
+   * @return the value previously passed to {@link #putCachedData} or
+   *         <code>null</code> if the data was not found
+   * @throws ClassCastException if the cached data is not assignable to the
+   *           specified type
+   */
+  <T> T getCachedData(String key, Class<T> clazz);
+
+  /**
    * Return the interface type of the resource bundle being generated.
    */
   JClassType getClientBundleType();
@@ -95,6 +108,20 @@ public interface ResourceContext {
    *           {@link ResourceGenerator#prepare} methods.
    */
   String getImplementationSimpleSourceName() throws IllegalStateException;
+
+  /**
+   * Store data in the ResourceContext. ResourceGenerators may reduce the amount
+   * of recomputation performed by caching data the ResourceContext. This cache
+   * will be invalidated when the compiler's TypeOracle is refreshed or
+   * replaced. Each ResourceGenerator has an isolated view of the cache.
+   * 
+   * @param <T> the type of data being stored
+   * @param key a string key to locate the data
+   * @param value the value to store
+   * @return <code>true</code> if the cache did not previously contain the
+   *         key-value pair
+   */
+  <T> boolean putCachedData(String key, T value);
 
   /**
    * Indicates if the runtime context supports data: urls. When data URLs are
