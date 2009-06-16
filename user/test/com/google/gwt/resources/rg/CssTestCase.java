@@ -55,18 +55,18 @@ class CssTestCase extends TestCase {
     }
 
     @Override
-    protected void doAcceptWithInsertRemove(List<? extends CssNode> list) {
-      for (CssNode node : list) {
-        doAccept(node);
-      }
-    }
-
-    @Override
     protected <T extends CssNode> T doAccept(T node) {
       assertFalse("Found repeated node " + node.toString(),
           seen.containsKey(node));
       seen.put(node, null);
       return super.doAccept(node);
+    }
+
+    @Override
+    protected void doAcceptWithInsertRemove(List<? extends CssNode> list) {
+      for (CssNode node : list) {
+        doAccept(node);
+      }
     }
   }
 
@@ -84,6 +84,14 @@ class CssTestCase extends TestCase {
       return null;
     }
 
+    public <T> T getCachedData(String key, Class<T> clazz) {
+      return null;
+    }
+
+    public JClassType getClientBundleType() {
+      return null;
+    }
+
     public GeneratorContext getGeneratorContext() {
       return null;
     }
@@ -93,8 +101,8 @@ class CssTestCase extends TestCase {
       return null;
     }
 
-    public JClassType getClientBundleType() {
-      return null;
+    public <T> boolean putCachedData(String key, T value) {
+      return false;
     }
 
     public boolean supportsDataUrls() {
