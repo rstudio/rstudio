@@ -557,6 +557,33 @@ public class CompilerTest extends GWTTestCase {
     assertFalse(e);
   }
 
+  /**
+   * Test that code considered unreachable by the JDT does not crash the GWT
+   * compiler.
+   */
+  public void testDeadCode2() {
+    class SillyList {
+    }
+
+    final SillyList outerLocalVariable = new SillyList();
+
+    new SillyList() {
+      private void pretendToUse(SillyList x) {
+      }
+
+      void blah() {
+        if (true) {
+          throw new RuntimeException();
+        }
+        /*
+         * This code is unreachable, and so outerLocalVariable is never actually
+         * read by reachable code.
+         */
+        pretendToUse(outerLocalVariable);
+      }
+    };
+  }
+
   public void testDeadTypes() {
     if (false) {
       new Object() {

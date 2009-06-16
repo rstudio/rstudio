@@ -728,15 +728,7 @@ public class GenerateJavaAST {
         }
 
         // user code (finally!)
-        if (x.statements != null) {
-          for (int i = 0, n = x.statements.length; i < n; ++i) {
-            Statement origStmt = x.statements[i];
-            JStatement jstmt = dispProcessStatement(origStmt);
-            if (jstmt != null) {
-              block.addStmt(jstmt);
-            }
-          }
-        }
+        block.addStmts(processStatements(x.statements));
 
         currentMethodScope = null;
         currentMethod = null;
@@ -1473,14 +1465,8 @@ public class GenerateJavaAST {
         currentMethodBody = (JMethodBody) method.getBody();
         currentMethodScope = x.scope;
 
-        if (x.statements != null) {
-          for (int i = 0, n = x.statements.length; i < n; ++i) {
-            Statement origStmt = x.statements[i];
-            JStatement jstmt = dispProcessStatement(origStmt);
-            if (jstmt != null) {
-              currentMethodBody.getBlock().addStmt(jstmt);
-            }
-          }
+        if (currentMethodBody != null) {
+          currentMethodBody.getBlock().addStmts(processStatements(x.statements));
         }
         currentMethodScope = null;
         currentMethodBody = null;
@@ -1510,14 +1496,7 @@ public class GenerateJavaAST {
 
       SourceInfo info = makeSourceInfo(x);
       JBlock block = new JBlock(info);
-      if (x.statements != null) {
-        for (int i = 0, n = x.statements.length; i < n; ++i) {
-          JStatement jstmt = dispProcessStatement(x.statements[i]);
-          if (jstmt != null) {
-            block.addStmt(jstmt);
-          }
-        }
-      }
+      block.addStmts(processStatements(x.statements));
       return block;
     }
 
@@ -1767,7 +1746,15 @@ public class GenerateJavaAST {
             program.getIndexedMethod("Enum.ordinal"));
       }
       JBlock block = new JBlock(info);
-      block.addStmts(processStatements(x.statements));
+      // Don't use processStatements here, because it stops at control breaks
+      if (x.statements != null) {
+        for (Statement stmt : x.statements) {
+          JStatement jstmt = dispProcessStatement(stmt);
+          if (jstmt != null) {
+            block.addStmt(jstmt);
+          }
+        }
+      }
       return new JSwitchStatement(info, expression, block);
     }
 
@@ -1824,13 +1811,22 @@ public class GenerateJavaAST {
     List<JStatement> processStatements(Statement[] statements) {
       List<JStatement> jstatements = new ArrayList<JStatement>();
       if (statements != null) {
-        for (int i = 0, n = statements.length; i < n; ++i) {
-          JStatement jstmt = dispProcessStatement(statements[i]);
+        for (Statement stmt : statements) {
+          JStatement jstmt = dispProcessStatement(stmt);
           if (jstmt != null) {
             jstatements.add(jstmt);
+            if (jstmt.unconditionalControlBreak()) {
+              /*
+               * Stop processing statements, because the remaining ones are
+               * unreachable. The JDT compiler might not have fully fleshed out
+               * the unreachable statements.
+               */
+              break;
+            }
           }
         }
       }
+
       return jstatements;
     }
 

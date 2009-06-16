@@ -61,8 +61,22 @@ public class JIfStatement extends JStatement {
 
   @Override
   public boolean unconditionalControlBreak() {
-    if (thenStmt != null && thenStmt.unconditionalControlBreak()
-        && elseStmt != null && elseStmt.unconditionalControlBreak()) {
+    boolean thenBreaks = thenStmt != null
+        && thenStmt.unconditionalControlBreak();
+    if (thenBreaks && ifExpr == JBooleanLiteral.get(true)) {
+      // if(true) { /* unconditional break */ }
+      return true;
+    }
+
+    boolean elseBreaks = elseStmt != null
+        && elseStmt.unconditionalControlBreak();
+    if (elseBreaks && ifExpr == JBooleanLiteral.get(false)) {
+      // if(false) { } else { /* unconditional break */ }
+      return true;
+    }
+
+    if (thenBreaks && elseBreaks) {
+      // both branches have an unconditional break
       return true;
     }
     return false;
