@@ -35,7 +35,7 @@
     <gwt.ant dir="distro-source" target="${build.host.platform}" />
   </target>
 
-  <target name="dist-dev" depends="buildonly, tools" description="Make this platform's distribution, minus doc and samples">
+  <target name="dist-dev" depends="buildonly" description="Make this platform's distribution, minus doc and samples">
     <gwt.ant dir="distro-source" target="${build.host.platform}" />
   </target>
 
@@ -93,7 +93,7 @@
     <call-subproject subproject="samples" subtarget="checkstyle" />
   </target>
 
-  <target name="test" depends="dist-one" description="Runs all the GWT tests">
+  <target name="test" depends="dist-dev" description="Runs all the GWT tests">
     <call-subproject subproject="buildtools" subtarget="test" />
     <call-subproject subproject="dev" subtarget="test" />
     <call-subproject subproject="user" subtarget="test" />

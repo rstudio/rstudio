@@ -116,8 +116,12 @@ public class LatestTimeJar extends Jar {
     @Override
     public void addToZip(ZipOutputStream out, String path) throws IOException {
       FileInputStream inStream = new FileInputStream(tmpFile);
-      doZipFile(inStream, out, path, timestamp, archive, mode);
-      tmpFile.delete();
+      try {
+        doZipFile(inStream, out, path, timestamp, archive, mode);
+        tmpFile.delete();
+      } finally {
+        inStream.close();
+      }
     }
   }
 

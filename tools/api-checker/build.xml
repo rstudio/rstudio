@@ -7,7 +7,7 @@
         <property name="tools.build" value="${gwt.build.out}/${project.tail}" />
 
   <!-- Platform shouldn't matter here, just picking one -->
-  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-${build.host.platform}.jar" />
   <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
 
   <target name="compile" description="Compile all class files">
