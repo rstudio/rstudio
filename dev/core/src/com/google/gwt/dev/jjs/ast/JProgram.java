@@ -24,6 +24,10 @@ import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
+import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
+import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs.RunAsyncReplacement;
+import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.collect.Maps;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -223,7 +227,12 @@ public class JProgram extends JNode {
 
   private Map<JReferenceType, Integer> queryIds;
 
-  private Map<Integer, String> splitPointMap = new TreeMap<Integer, String>();
+  /**
+   * Filled in by ReplaceRunAsync, once the numbers are known.
+   */
+  private Map<Integer, RunAsyncReplacement> runAsyncReplacements = Maps.create();
+
+  private List<Integer> splitPointInitialSequence = Lists.create();
 
   private final Map<JMethod, JMethod> staticToInstanceMap = new IdentityHashMap<JMethod, JMethod>();
 
@@ -838,8 +847,12 @@ public class JProgram extends JNode {
     return integer.intValue();
   }
 
-  public Map<Integer, String> getSplitPointMap() {
-    return splitPointMap;
+  public Map<Integer, RunAsyncReplacement> getRunAsyncReplacements() {
+    return runAsyncReplacements;
+  }
+
+  public List<Integer> getSplitPointInitialSequence() {
+    return splitPointInitialSequence;
   }
 
   public JMethod getStaticImpl(JMethod method) {
@@ -1032,8 +1045,14 @@ public class JProgram extends JNode {
     this.queryIds = queryIds;
   }
 
-  public void setSplitPointMap(Map<Integer, String> splitPointMap) {
-    this.splitPointMap = splitPointMap;
+  public void setRunAsyncReplacements(Map<Integer, RunAsyncReplacement> map) {
+    assert runAsyncReplacements.isEmpty();
+    runAsyncReplacements = map;
+  }
+
+  public void setSplitPointInitialSequence(List<Integer> list) {
+    assert splitPointInitialSequence.isEmpty();
+    splitPointInitialSequence.addAll(list);
   }
 
   /**

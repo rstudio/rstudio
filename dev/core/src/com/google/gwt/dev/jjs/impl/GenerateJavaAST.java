@@ -32,7 +32,6 @@ import com.google.gwt.dev.jjs.ast.JBreakStatement;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
-import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
@@ -193,8 +192,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.TreeSet;
 
 /**
  * This is the big kahuna where most of the nitty gritty of creating our AST
@@ -2680,7 +2677,7 @@ public class GenerateJavaAST {
         }
       }
 
-      private HasEnclosingType parseJsniRef(SourceInfo info, String ident) {
+      private HasEnclosingType findJsniRefTarget(final SourceInfo info, String ident) {
         JsniRef parsed = JsniRef.parse(ident);
         if (parsed == null) {
           reportJsniError(info, methodDecl,
@@ -2688,109 +2685,14 @@ public class GenerateJavaAST {
           return null;
         }
 
-        String className = parsed.className();
-        JType type = null;
-        if (!className.equals("null")) {
-          type = program.getTypeFromJsniRef(className);
-          if (type == null) {
-            reportJsniError(info, methodDecl,
-                "Unresolvable native reference to type '" + className + "'");
-            return null;
-          }
-        }
+        JProgram prog = program;
 
-        if (!parsed.isMethod()) {
-          // look for a field
-          String fieldName = parsed.memberName();
-          if (type == null) {
-            if (fieldName.equals("nullField")) {
-              return program.getNullField();
-            }
-
-          } else if (fieldName.equals("class")) {
-            JClassLiteral lit = program.getLiteralClass(type);
-            return lit.getField();
-
-          } else if (type instanceof JPrimitiveType) {
-            reportJsniError(info, methodDecl,
-                "May not refer to fields on primitive types");
-            return null;
-
-          } else if (type instanceof JArrayType) {
-            reportJsniError(info, methodDecl,
-                "May not refer to fields on array types");
-            return null;
-
-          } else {
-            for (JField field : ((JDeclaredType) type).getFields()) {
-              if (field.getName().equals(fieldName)) {
-                return field;
+        return JsniRefLookup.findJsniRefTarget(parsed, prog,
+            new JsniRefLookup.ErrorReporter() {
+              public void reportError(String error) {
+                reportJsniError(info, methodDecl, error);
               }
-            }
-          }
-
-          reportJsniError(info, methodDecl,
-              "Unresolvable native reference to field '" + fieldName
-                  + "' in type '" + className + "'");
-          return null;
-
-        } else if (type instanceof JPrimitiveType) {
-          reportJsniError(info, methodDecl,
-              "May not refer to methods on primitive types");
-          return null;
-
-        } else {
-          // look for a method
-          TreeSet<String> almostMatches = new TreeSet<String>();
-          String methodName = parsed.memberName();
-          String jsniSig = parsed.memberSignature();
-          if (type == null) {
-            if (jsniSig.equals("nullMethod()")) {
-              return program.getNullMethod();
-            }
-          } else {
-            Queue<JDeclaredType> workList = new LinkedList<JDeclaredType>();
-            workList.add((JDeclaredType) type);
-            while (!workList.isEmpty()) {
-              JDeclaredType cur = workList.poll();
-              for (JMethod method : cur.getMethods()) {
-                if (method.getName().equals(methodName)) {
-                  String sig = JProgram.getJsniSig(method);
-                  if (sig.equals(jsniSig)) {
-                    return method;
-                  } else if (sig.startsWith(jsniSig) && jsniSig.endsWith(")")) {
-                    return method;
-                  } else {
-                    almostMatches.add(sig);
-                  }
-                }
-              }
-              if (cur.getSuperClass() != null) {
-                workList.add(cur.getSuperClass());
-              }
-              workList.addAll(cur.getImplements());
-            }
-          }
-
-          if (almostMatches.isEmpty()) {
-            reportJsniError(info, methodDecl,
-                "Unresolvable native reference to method '" + methodName
-                    + "' in type '" + className + "'");
-            return null;
-          } else {
-            StringBuilder suggestList = new StringBuilder();
-            String comma = "";
-            for (String almost : almostMatches) {
-              suggestList.append(comma + "'" + almost + "'");
-              comma = ", ";
-            }
-            reportJsniError(info, methodDecl,
-                "Unresolvable native reference to method '" + methodName
-                    + "' in type '" + className + "' (did you mean "
-                    + suggestList.toString() + "?)");
-            return null;
-          }
-        }
+            });
       }
 
       private void processField(JsNameRef nameRef, SourceInfo info,
@@ -2887,7 +2789,7 @@ public class GenerateJavaAST {
         String ident = nameRef.getIdent();
         HasEnclosingType node = program.jsniMap.get(ident);
         if (node == null) {
-          node = parseJsniRef(info, ident);
+          node = findJsniRefTarget(info, ident);
           if (node == null) {
             return; // already reported error
           }
@@ -3004,5 +2906,4 @@ public class GenerateJavaAST {
     }
     return false;
   }
-
 }

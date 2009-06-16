@@ -26,20 +26,61 @@ import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Replaces calls to
- * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback)}"
+ * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback)}
  * by calls to a fragment loader.
  */
 public class ReplaceRunAsyncs {
+  /**
+   * Information about the replacement of one runAsync call by a call to a
+   * generated code-loading method.
+   */
+  public static class RunAsyncReplacement implements Serializable {
+    private final int number;
+    private final JMethod enclosingMethod;
+    private final JMethod loadMethod;
+
+    RunAsyncReplacement(int number, JMethod enclosingMethod, JMethod loadMethod) {
+      this.number = number;
+      this.enclosingMethod = enclosingMethod;
+      this.loadMethod = loadMethod;
+    }
+
+    @Override
+    public String toString() {
+      return "#" + number + ": " + enclosingMethod.toString();
+    }
+
+    /**
+     * The index of this runAsync, numbered from 1 to n.
+     */
+    public int getNumber() {
+      return number;
+    }
+
+    /**
+     * Can be null if the enclosing method cannot be designated with a JSNI
+     * reference.
+     */
+    public JMethod getEnclosingMethod() {
+      return enclosingMethod;
+    }
+
+    /**
+     * The load method to request loading the code for this method.
+     */
+    public JMethod getLoadMethod() {
+      return loadMethod;
+    }
+  }
+
   private class AsyncCreateVisitor extends JModVisitor {
     private JMethod currentMethod;
-    private Map<Integer, String> splitPointMap = new TreeMap<Integer, String>();
-    private Map<String, Integer> methodCount = new HashMap<String, Integer>();
     private int entryCount = 1;
 
     @Override
@@ -50,23 +91,11 @@ public class ReplaceRunAsyncs {
         JExpression asyncCallback = x.getArgs().get(0);
 
         int entryNumber = entryCount++;
-        logger.log(TreeLogger.DEBUG, "Assigning split point #" + entryNumber
-            + " in method " + fullMethodDescription(currentMethod));
-
-        String methodDescription = fullMethodDescription(currentMethod);
-        if (methodCount.containsKey(methodDescription)) {
-          methodCount.put(methodDescription,
-              methodCount.get(methodDescription) + 1);
-          methodDescription += "#"
-              + Integer.toString(methodCount.get(methodDescription));
-        } else {
-          methodCount.put(methodDescription, 1);
-        }
-        splitPointMap.put(entryNumber, methodDescription);
-
         JClassType loader = getFragmentLoader(entryNumber);
         JMethod loadMethod = getRunAsyncMethod(loader);
         assert loadMethod != null;
+        runAsyncReplacements.put(entryNumber, new RunAsyncReplacement(
+            entryNumber, currentMethod, loadMethod));
 
         JMethodCall methodCall = new JMethodCall(x.getSourceInfo(), null,
             loadMethod);
@@ -85,30 +114,24 @@ public class ReplaceRunAsyncs {
     }
   }
 
-  public static int exec(TreeLogger logger, JProgram program) {
-    return new ReplaceRunAsyncs(logger, program).execImpl();
-  }
-
-  private static String fullMethodDescription(JMethod method) {
-    return (method.getEnclosingType().getName() + "." + JProgram.getJsniSig(method));
-  }
-
-  private final TreeLogger logger;
-  private JProgram program;
-
-  private ReplaceRunAsyncs(TreeLogger logger, JProgram program) {
-    this.logger = logger.branch(TreeLogger.TRACE,
+  public static void exec(TreeLogger logger, JProgram program) {
+    logger.log(TreeLogger.TRACE,
         "Replacing GWT.runAsync with island loader calls");
+    new ReplaceRunAsyncs(program).execImpl();
+  }
+
+  private JProgram program;
+  private Map<Integer, RunAsyncReplacement> runAsyncReplacements = new HashMap<Integer, RunAsyncReplacement>();
+
+  private ReplaceRunAsyncs(JProgram program) {
     this.program = program;
   }
 
-  private int execImpl() {
+  private void execImpl() {
     AsyncCreateVisitor visitor = new AsyncCreateVisitor();
     visitor.accept(program);
     setNumEntriesInAsyncFragmentLoader(visitor.entryCount);
-    program.setSplitPointMap(visitor.splitPointMap);
-
-    return visitor.entryCount;
+    program.setRunAsyncReplacements(runAsyncReplacements);
   }
 
   private JClassType getFragmentLoader(int fragmentNumber) {

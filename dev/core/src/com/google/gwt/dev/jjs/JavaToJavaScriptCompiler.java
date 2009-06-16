@@ -120,7 +120,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,8 +127,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * Compiles the Java <code>JProgram</code> representation into its
- * corresponding JavaScript source.
+ * Compiles the Java <code>JProgram</code> representation into its corresponding
+ * JavaScript source.
  */
 public class JavaToJavaScriptCompiler {
 
@@ -182,14 +181,16 @@ public class JavaToJavaScriptCompiler {
    *          {@link #precompile(TreeLogger, WebModeCompilerFrontEnd, String[], JJSOptions, boolean)}
    * @param rebindAnswers the set of rebind answers to resolve all outstanding
    *          rebind decisions
-   * @param propertyOracles All property oracles corresponding to this permutation.
+   * @param propertyOracles All property oracles corresponding to this
+   *          permutation.
    * @return the output JavaScript
    * @throws UnableToCompleteException if an error other than
    *           {@link OutOfMemoryError} occurs
    */
   public static PermutationResult compilePermutation(TreeLogger logger,
       UnifiedAst unifiedAst, Map<String, String> rebindAnswers,
-      PropertyOracle[] propertyOracles, int permutationId) throws UnableToCompleteException {
+      PropertyOracle[] propertyOracles, int permutationId)
+      throws UnableToCompleteException {
     long permStart = System.currentTimeMillis();
     try {
       if (JProgram.isTracingEnabled()) {
@@ -212,13 +213,6 @@ public class JavaToJavaScriptCompiler {
         draftOptimize(jprogram);
       } else {
         optimize(options, jprogram);
-      }
-
-      // (4.5) Choose an initial load order sequence for runAsync's
-      LinkedHashSet<Integer> initialLoadSequence = new LinkedHashSet<Integer>();
-      if (options.isAggressivelyOptimize() && options.isRunAsyncEnabled()) {
-        initialLoadSequence = CodeSplitter.pickInitialLoadSequence(logger,
-            jprogram);
       }
 
       // (5) "Normalize" the high-level Java tree into a lower-level tree more
@@ -293,8 +287,7 @@ public class JavaToJavaScriptCompiler {
 
       // (10.5) Split up the program into fragments
       if (options.isAggressivelyOptimize() && options.isRunAsyncEnabled()) {
-        CodeSplitter.exec(logger, jprogram, jsProgram, postStringInterningMap,
-            initialLoadSequence);
+        CodeSplitter.exec(logger, jprogram, jsProgram, postStringInterningMap);
       }
 
       // (11) Perform any post-obfuscation normalizations.
@@ -331,45 +324,8 @@ public class JavaToJavaScriptCompiler {
       PermutationResult toReturn = new PermutationResultImpl(js,
           makeSymbolMap(symbolTable), ranges);
 
-      if (sourceInfoMaps != null) {
-        long soycStart = System.currentTimeMillis();
-        System.out.println("Computing SOYC output");
-        // Free up memory.
-        symbolTable = null;
-
-        long start = System.currentTimeMillis();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        // get method dependencies
-        StoryRecorder.recordStories(logger, baos, sourceInfoMaps, js);
-        SoycArtifact stories = new SoycArtifact("stories" + permutationId
-            + ".xml.gz", baos.toByteArray());
-        // Free up memory.
-        js = null;
-        System.out.println("Record stories: "
-            + (System.currentTimeMillis() - start) + " ms");
-
-        start = System.currentTimeMillis();
-        baos.reset();
-        DependencyRecorder.recordDependencies(logger, baos, jprogram);
-        SoycArtifact dependencies = new SoycArtifact("dependencies"
-            + permutationId + ".xml.gz", baos.toByteArray());
-        System.out.println("Record dependencies: "
-            + (System.currentTimeMillis() - start) + " ms");
-
-        start = System.currentTimeMillis();
-        baos.reset();
-        SplitPointRecorder.recordSplitPoints(jprogram, baos, logger);
-        SoycArtifact splitPoints = new SoycArtifact("splitPoints"
-            + permutationId + ".xml.gz", baos.toByteArray());
-        System.out.println("Record split points: "
-            + (System.currentTimeMillis() - start) + " ms");
-
-        toReturn.getArtifacts().add(
-            new StandardCompilationAnalysis(dependencies, stories, splitPoints));
-
-        System.out.println("Completed SOYC phase in "
-            + (System.currentTimeMillis() - soycStart) + " ms");
-      }
+      toReturn.getArtifacts().add(
+          makeSoycArtifact(logger, permutationId, jprogram, js, sourceInfoMaps));
 
       System.out.println("Permutation took "
           + (System.currentTimeMillis() - permStart) + " ms");
@@ -508,6 +464,8 @@ public class JavaToJavaScriptCompiler {
       // Fix up GWT.runAsync()
       if (options.isAggressivelyOptimize() && options.isRunAsyncEnabled()) {
         ReplaceRunAsyncs.exec(logger, jprogram);
+        CodeSplitter.pickInitialLoadSequence(logger, jprogram,
+            module.getProperties());
       }
 
       // Resolve entry points, rebinding non-static entry points.
@@ -906,6 +864,43 @@ public class JavaToJavaScriptCompiler {
       logger.log(TreeLogger.ERROR, "Unexpected internal compiler error", e);
       return new UnableToCompleteException();
     }
+  }
+
+  private static StandardCompilationAnalysis makeSoycArtifact(
+      TreeLogger logger, int permutationId, JProgram jprogram, String[] js,
+      List<Map<Range, SourceInfo>> sourceInfoMaps) {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+    PerfLogger.start("Computing SOYC output");
+
+    PerfLogger.start("Record split points");
+    SplitPointRecorder.recordSplitPoints(jprogram, baos, logger);
+    SoycArtifact splitPoints = new SoycArtifact("splitPoints" + permutationId
+        + ".xml.gz", baos.toByteArray());
+    PerfLogger.end();
+
+    SoycArtifact stories = null;
+    SoycArtifact dependencies = null;
+
+    if (sourceInfoMaps != null) {
+      PerfLogger.start("Record stories");
+      baos.reset();
+      StoryRecorder.recordStories(logger, baos, sourceInfoMaps, js);
+      stories = new SoycArtifact("stories" + permutationId + ".xml.gz",
+          baos.toByteArray());
+      PerfLogger.end();
+
+      PerfLogger.start("Record dependencies");
+      baos.reset();
+      DependencyRecorder.recordDependencies(logger, baos, jprogram);
+      dependencies = new SoycArtifact("dependencies" + permutationId
+          + ".xml.gz", baos.toByteArray());
+      PerfLogger.end();
+    }
+
+    PerfLogger.end();
+
+    return new StandardCompilationAnalysis(dependencies, stories, splitPoints);
   }
 
   /**

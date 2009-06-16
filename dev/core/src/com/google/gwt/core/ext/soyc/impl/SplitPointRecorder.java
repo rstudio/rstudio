@@ -16,8 +16,11 @@
 package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs.RunAsyncReplacement;
 import com.google.gwt.dev.util.HtmlTextOutput;
+import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.OutputStream;
@@ -30,18 +33,13 @@ import java.util.zip.GZIPOutputStream;
  * Records split points to a file for SOYC reports.
  */
 public class SplitPointRecorder {
-
   /**
    * Used to record (runAsync) split points of a program.
-   * 
-   * @param jprogram
-   * @param out
-   * @param logger
    */
   public static void recordSplitPoints(JProgram jprogram, OutputStream out,
       TreeLogger logger) {
 
-    logger = logger.branch(TreeLogger.INFO,
+    logger = logger.branch(TreeLogger.TRACE,
         "Creating Split Point Map file for SOYC");
 
     try {
@@ -59,19 +57,22 @@ public class SplitPointRecorder {
       htmlOut.indentIn();
       htmlOut.indentIn();
 
-      Map<Integer, String> splitPointMap = jprogram.getSplitPointMap();
+      Map<Integer, String> splitPointMap = splitPointNames(jprogram);
       if (splitPointMap.size() > 0) {
         curLine = "<splitpoints>";
         htmlOut.printRaw(curLine);
         htmlOut.newline();
         htmlOut.indentIn();
         htmlOut.indentIn();
-        for (Map.Entry<Integer, String> entry : splitPointMap.entrySet()) {
-          Integer splitPointCount = entry.getKey();
-          curLine = "<splitpoint id=\"" + splitPointCount + "\" location=\""
-              + entry.getValue() + "\"/>";
+        for (int sp = 1; sp <= splitPointMap.size(); sp++) {
+          String location = splitPointMap.get(sp);
+          assert location != null;
+          curLine = "<splitpoint id=\"" + sp + "\" location=\"" + location
+              + "\"/>";
           htmlOut.printRaw(curLine);
           htmlOut.newline();
+          logger.log(TreeLogger.TRACE, "Assigning split point #" + sp
+              + " in method " + location);
         }
         htmlOut.indentOut();
         htmlOut.indentOut();
@@ -94,6 +95,33 @@ public class SplitPointRecorder {
     } catch (Throwable e) {
       logger.log(TreeLogger.ERROR, "Could not open dependency file.", e);
     }
+  }
+
+  private static String fullMethodDescription(JMethod method) {
+    return (method.getEnclosingType().getName() + "." + JProgram.getJsniSig(method));
+  }
+
+  /**
+   * Choose human-readable names for the split points.
+   */
+  private static Map<Integer, String> splitPointNames(JProgram program) {
+    Map<Integer, String> names = new HashMap<Integer, String>();
+    Map<String, Integer> counts = new HashMap<String, Integer>();
+    for (RunAsyncReplacement replacement : program.getRunAsyncReplacements().values()) {
+      int entryNumber = replacement.getNumber();
+      String methodDescription = fullMethodDescription(replacement.getEnclosingMethod());
+      if (counts.containsKey(methodDescription)) {
+        counts.put(methodDescription, counts.get(methodDescription) + 1);
+        methodDescription += "#"
+            + Integer.toString(counts.get(methodDescription));
+      } else {
+        counts.put(methodDescription, 1);
+      }
+
+      names.put(entryNumber, methodDescription);
+    }
+
+    return names;
   }
 
   private SplitPointRecorder() {

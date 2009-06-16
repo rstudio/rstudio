@@ -414,6 +414,17 @@ public class AsyncFragmentLoader {
       }
       remainingInitialFragments.push(leftoversFragment());
     }
+    
+    if (initialFragmentErrorHandlers.isEmpty()
+        && waitingForInitialFragmentsErrorHandlers.isEmpty()
+        && remainingInitialFragments.length() > 1) {
+      /*
+       * No further requests are pending, and more than the leftovers fragment
+       * is left outstanding. Stop loading stuff for now.
+       */
+      initialFragmentsLoading = false;
+      return;
+    }
 
     if (remainingInitialFragments.length() > 0) {
       // start loading the next initial fragment

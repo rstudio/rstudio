@@ -16,8 +16,14 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.cfg.ConfigurationProperty;
+import com.google.gwt.dev.cfg.Properties;
+import com.google.gwt.dev.cfg.Property;
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -34,6 +40,7 @@ import com.google.gwt.dev.jjs.impl.FragmentExtractor.CfaLivenessPredicate;
 import com.google.gwt.dev.jjs.impl.FragmentExtractor.LivenessPredicate;
 import com.google.gwt.dev.jjs.impl.FragmentExtractor.NothingAlivePredicate;
 import com.google.gwt.dev.jjs.impl.FragmentExtractor.StatementLogger;
+import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs.RunAsyncReplacement;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
@@ -42,6 +49,7 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
+import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.HashSet;
@@ -53,8 +61,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * <p>
@@ -185,8 +191,7 @@ public class CodeSplitter {
     }
   }
 
-  private static final Pattern LOADER_CLASS_PATTERN = Pattern.compile(FragmentLoaderCreator.ASYNC_LOADER_PACKAGE
-      + "." + FragmentLoaderCreator.ASYNC_LOADER_CLASS_PREFIX + "([0-9]+)");
+  private static final String PROP_INITIAL_SEQUENCE = "compiler.splitpoint.initial.sequence";
 
   /**
    * A Java property that causes the fragment map to be logged.
@@ -204,14 +209,13 @@ public class CodeSplitter {
   }
 
   public static void exec(TreeLogger logger, JProgram jprogram,
-      JsProgram jsprogram, JavaToJavaScriptMap map,
-      LinkedHashSet<Integer> initialLoadSequence) {
+      JsProgram jsprogram, JavaToJavaScriptMap map) {
     if (jprogram.entryMethods.size() == 1) {
       // Don't do anything if there is no call to runAsync
       return;
     }
 
-    new CodeSplitter(logger, jprogram, jsprogram, map, initialLoadSequence).execImpl();
+    new CodeSplitter(logger, jprogram, jsprogram, map).execImpl();
   }
 
   public static int getExclusiveFragmentNumber(int splitPoint,
@@ -242,37 +246,47 @@ public class CodeSplitter {
    * other split points. As a side effect, modifies
    * {@link com.google.gwt.core.client.impl.AsyncFragmentLoader#initialLoadSequence}
    * in the program being compiled.
+   * 
+   * @throws UnableToCompleteException If the module specifies a bad load order
    */
-  public static LinkedHashSet<Integer> pickInitialLoadSequence(
-      TreeLogger logger, JProgram program) {
+  public static void pickInitialLoadSequence(TreeLogger logger,
+      JProgram program, Properties properties) throws UnableToCompleteException {
+    TreeLogger branch = logger.branch(TreeLogger.TRACE,
+        "Looking up initial load sequence for split points");
+    Map<JMethod, List<Integer>> reversedRunAsyncMap = reverse(program.getRunAsyncReplacements());
+
     LinkedHashSet<Integer> initialLoadSequence = new LinkedHashSet<Integer>();
-    int numSplitPoints = program.entryMethods.size() - 1;
 
-    if (numSplitPoints != 0) {
-      Map<Integer, JMethod> splitPointToMethod = findRunAsyncMethods(program);
-      assert (splitPointToMethod.size() == numSplitPoints);
-
-      ControlFlowAnalyzer cfa = computeInitiallyLive(program);
-
-      while (true) {
-        Set<Integer> nextSplitPoints = splitPointsReachable(cfa,
-            splitPointToMethod, numSplitPoints);
-        nextSplitPoints.removeAll(initialLoadSequence);
-
-        if (nextSplitPoints.size() != 1) {
-          break;
-        }
-
-        int nextSplitPoint = nextSplitPoints.iterator().next();
-        initialLoadSequence.add(nextSplitPoint);
-        CodeSplitter.traverseEntry(program, cfa, nextSplitPoint);
+    ConfigurationProperty prop;
+    {
+      Property p = properties.find(PROP_INITIAL_SEQUENCE);
+      if (p == null) {
+        throw new InternalCompilerException(
+            "Could not find configuration property " + PROP_INITIAL_SEQUENCE);
       }
-
-      logInitialLoadSequence(logger, initialLoadSequence);
-      installInitialLoadSequenceField(program, initialLoadSequence);
+      if (!(p instanceof ConfigurationProperty)) {
+        throw new InternalCompilerException(PROP_INITIAL_SEQUENCE
+            + " is not a configuration property");
+      }
+      prop = (ConfigurationProperty) p;
     }
 
-    return initialLoadSequence;
+    for (String refString : prop.getValues()) {
+      int splitPoint = findSplitPoint(refString, program, branch,
+          reversedRunAsyncMap);
+      if (initialLoadSequence.contains(splitPoint)) {
+        branch.log(TreeLogger.ERROR, "Split point specified more than once: "
+            + refString);
+      }
+      initialLoadSequence.add(splitPoint);
+    }
+
+    // TODO(spoon) create an artifact in the aux dir describing the choice, so
+    // that SOYC can use it
+    logInitialLoadSequence(logger, initialLoadSequence);
+    installInitialLoadSequenceField(program, initialLoadSequence);
+    program.setSplitPointInitialSequence(new ArrayList<Integer>(
+        initialLoadSequence));
   }
 
   /**
@@ -324,30 +338,60 @@ public class CodeSplitter {
   }
 
   /**
-   * Maps each split point number to its corresponding generated
-   * <code>runAsync</code> method. If that method has been discarded, then map
-   * the split point number to <code>null</code>.
+   * Find a split point as designated in the {@link #PROP_INITIAL_SEQUENCE}
+   * configuration property.
+   * 
+   * TODO(spoon) accept a labeled runAsync call, once runAsyncs can be labeled
    */
-  private static Map<Integer, JMethod> findRunAsyncMethods(JProgram program)
-      throws NumberFormatException {
-    Map<Integer, JMethod> splitPointToLoadMethod = new HashMap<Integer, JMethod>();
-    // These methods aren't indexed, so scan the whole program
-
-    for (JDeclaredType type : program.getDeclaredTypes()) {
-      Matcher matcher = LOADER_CLASS_PATTERN.matcher(type.getName());
-      if (matcher.matches()) {
-        int sp = Integer.parseInt(matcher.group(1));
-        JMethod loadMethod = null;
-        for (JMethod meth : type.getMethods()) {
-          if (meth.getName().equals(
-              FragmentLoaderCreator.LOADER_METHOD_RUN_ASYNC)) {
-            loadMethod = meth;
-          }
-        }
-        splitPointToLoadMethod.put(sp, loadMethod);
+  private static int findSplitPoint(String refString, JProgram program,
+      TreeLogger branch, Map<JMethod, List<Integer>> reversedRunAsyncMap)
+      throws UnableToCompleteException {
+    if (refString.startsWith("@")) {
+      JsniRef jsniRef = JsniRef.parse(refString);
+      if (jsniRef == null) {
+        branch.log(TreeLogger.ERROR, "Badly formatted JSNI reference in "
+            + PROP_INITIAL_SEQUENCE + ": " + refString);
+        throw new UnableToCompleteException();
       }
+      final String lookupErrorHolder[] = new String[1];
+      HasEnclosingType referent = JsniRefLookup.findJsniRefTarget(jsniRef,
+          program, new JsniRefLookup.ErrorReporter() {
+            public void reportError(String error) {
+              lookupErrorHolder[0] = error;
+            }
+          });
+      if (referent == null) {
+        TreeLogger resolveLogger = branch.branch(TreeLogger.ERROR,
+            "Could not resolve JSNI reference: " + jsniRef);
+        resolveLogger.log(TreeLogger.ERROR, lookupErrorHolder[0]);
+        throw new UnableToCompleteException();
+      }
+
+      if (!(referent instanceof JMethod)) {
+        branch.log(TreeLogger.ERROR, "Not a method: " + referent);
+        throw new UnableToCompleteException();
+      }
+
+      JMethod method = (JMethod) referent;
+      List<Integer> splitPoints = reversedRunAsyncMap.get(method);
+      if (splitPoints == null) {
+        branch.log(TreeLogger.ERROR,
+            "Method does not enclose a runAsync call: " + jsniRef);
+        throw new UnableToCompleteException();
+      }
+      if (splitPoints.size() != 1) {
+        branch.log(TreeLogger.ERROR,
+            "Method includes multiple runAsync calls, "
+                + "so it's ambiguous which one is meant: " + jsniRef);
+        throw new UnableToCompleteException();
+      }
+
+      return splitPoints.get(0);
     }
-    return splitPointToLoadMethod;
+
+    branch.log(TreeLogger.ERROR, "Unrecognized designation of a split point: "
+        + refString);
+    throw new UnableToCompleteException();
   }
 
   private static String fullNameString(JField field) {
@@ -403,24 +447,22 @@ public class CodeSplitter {
   }
 
   /**
-   * Find all split points reachable in the specified ControlFlowAnalyzer.
-   * 
-   * @param cfa the control-flow analyzer to search
-   * @param splitPointToMethod a map from split points to methods, computed with
-   *          {@link #findRunAsyncMethods(JProgram)}.
-   * @param numSplitPoints the number of split points in the program
+   * Reverses a runAsync map, returning a map from methods to the split point
+   * numbers invoked from within that method.
    */
-  private static Set<Integer> splitPointsReachable(ControlFlowAnalyzer cfa,
-      Map<Integer, JMethod> splitPointToMethod, int numSplitPoints) {
-    Set<Integer> nextSplitPoints = new HashSet<Integer>();
-
-    for (int sp = 1; sp <= numSplitPoints; sp++) {
-      if (cfa.getLiveFieldsAndMethods().contains(splitPointToMethod.get(sp))) {
-        nextSplitPoints.add(sp);
+  private static Map<JMethod, List<Integer>> reverse(
+      Map<Integer, RunAsyncReplacement> runAsyncMap) {
+    Map<JMethod, List<Integer>> revmap = new HashMap<JMethod, List<Integer>>();
+    for (RunAsyncReplacement replacement : runAsyncMap.values()) {
+      JMethod method = replacement.getEnclosingMethod();
+      List<Integer> list = revmap.get(method);
+      if (list == null) {
+        list = new ArrayList<Integer>();
+        revmap.put(method, list);
       }
+      list.add(replacement.getNumber());
     }
-
-    return nextSplitPoints;
+    return revmap;
   }
 
   /**
@@ -488,14 +530,14 @@ public class CodeSplitter {
   private final int numEntries;
 
   private CodeSplitter(TreeLogger logger, JProgram jprogram,
-      JsProgram jsprogram, JavaToJavaScriptMap map,
-      LinkedHashSet<Integer> initialLoadSequence) {
+      JsProgram jsprogram, JavaToJavaScriptMap map) {
     this.logger = logger.branch(TreeLogger.TRACE,
         "Splitting JavaScript for incremental download");
     this.jprogram = jprogram;
     this.jsprogram = jsprogram;
     this.map = map;
-    this.initialLoadSequence = initialLoadSequence;
+    this.initialLoadSequence = new LinkedHashSet<Integer>(
+        jprogram.getSplitPointInitialSequence());
 
     numEntries = jprogram.entryMethods.size();
     logging = Boolean.getBoolean(PROP_LOG_FRAGMENT_MAP);
