@@ -178,7 +178,8 @@
       <mkdir dir="@{test.reports}" />
 
       <echo message="${javac.out} ${javac.junit.out}" />
-      <junit dir="@{test.out}" fork="yes" printsummary="yes" failureproperty="junit.failure" >
+      <junit dir="@{test.out}" fork="yes" printsummary="yes"
+             failureproperty="junit.failure" tempdir="@{test.out}" >
         <jvmarg line="${junit.platform.args}" />
         <jvmarg line="-Xmx768m" />
         <sysproperty key="gwt.args" value="${junit.notheadless.arg} @{test.args}" />
