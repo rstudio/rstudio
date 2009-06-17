@@ -341,8 +341,12 @@ public final class ResourceGeneratorUtil {
       }
     }
 
-    if (error && reportErrors) {
-      throw new UnableToCompleteException();
+    if (error) {
+      if (reportErrors) {
+        throw new UnableToCompleteException();
+      } else {
+        return null;
+      }
     }
 
     return toReturn;
