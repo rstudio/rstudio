@@ -130,6 +130,10 @@ public final class ResourceGeneratorUtil {
    * This method is sensitive to the <code>locale</code> deferred-binding
    * property and will attempt to use a best-match lookup by removing locale
    * components.
+   * <p>
+   * Loading through a ClassLoader with this method is much slower than the
+   * other <code>findResources</code> methods which make use of the compiler's
+   * ResourceOracle.
    * 
    * @param logger a TreeLogger that will be used to report errors or warnings
    * @param context the ResourceContext in which the ResourceGenerator is
@@ -141,15 +145,11 @@ public final class ResourceGeneratorUtil {
    *          specified, using the name of the method and each of supplied
    *          extensions in the order in which they are specified
    * @return URLs for each {@link Source} annotation value defined on the
-   *         method, or an empty array if no sources could be found.
+   *         method.
    * @throws UnableToCompleteException if ore or more of the sources could not
    *           be found. The error will be reported via the <code>logger</code>
    *           provided to this method
-   * @deprecated Loading through a ClassLoader with this method is much slower
-   *             than the other <code>findResources</code> methods which make
-   *             use of the compiler's ResourceOracle.
    */
-  @Deprecated
   public static URL[] findResources(TreeLogger logger, ClassLoader classLoader,
       ResourceContext context, JMethod method, String[] defaultSuffixes)
       throws UnableToCompleteException {
@@ -167,15 +167,17 @@ public final class ResourceGeneratorUtil {
    * components.
    * <p>
    * The compiler's ResourceOracle will be used to resolve resource locations.
-   * If it is necessary to alter the manner in which resources are resolved, use
-   * the overload that accepts an arbitrary ClassLoader.
+   * If the desired resource cannot be found in the ResourceOracle, this method
+   * will fall back to using the current thread's context ClassLoader. If it is
+   * necessary to alter the way in which resources are located, use the overload
+   * that accepts a ClassLoader.
    * 
    * @param logger a TreeLogger that will be used to report errors or warnings
    * @param context the ResourceContext in which the ResourceGenerator is
    *          operating
    * @param method the method to examine for {@link Source} annotations
    * @return URLs for each {@link Source} annotation value defined on the
-   *         method, or an empty array if no sources could be found.
+   *         method.
    * @throws UnableToCompleteException if ore or more of the sources could not
    *           be found. The error will be reported via the <code>logger</code>
    *           provided to this method
@@ -195,8 +197,10 @@ public final class ResourceGeneratorUtil {
    * components.
    * <p>
    * The compiler's ResourceOracle will be used to resolve resource locations.
-   * If it is necessary to alter the manner in which resources are resolved, use
-   * the overload that accepts an arbitrary ClassLoader.
+   * If the desired resource cannot be found in the ResourceOracle, this method
+   * will fall back to using the current thread's context ClassLoader. If it is
+   * necessary to alter the way in which resources are located, use the overload
+   * that accepts a ClassLoader.
    * 
    * @param logger a TreeLogger that will be used to report errors or warnings
    * @param context the ResourceContext in which the ResourceGenerator is
@@ -207,7 +211,7 @@ public final class ResourceGeneratorUtil {
    *          specified, using the name of the method and each of supplied
    *          extensions in the order in which they are specified
    * @return URLs for each {@link Source} annotation value defined on the
-   *         method, or an empty array if no sources could be found.
+   *         method.
    * @throws UnableToCompleteException if ore or more of the sources could not
    *           be found. The error will be reported via the <code>logger</code>
    *           provided to this method
@@ -215,9 +219,16 @@ public final class ResourceGeneratorUtil {
   public static URL[] findResources(TreeLogger logger, ResourceContext context,
       JMethod method, String[] defaultSuffixes)
       throws UnableToCompleteException {
-    return findResources(logger, new ResourceOracleLocator(
-        context.getGeneratorContext().getResourcesOracle()), context, method,
-        defaultSuffixes);
+    try {
+      return findResources(logger, new ResourceOracleLocator(
+          context.getGeneratorContext().getResourcesOracle()), context, method,
+          defaultSuffixes);
+
+    } catch (UnableToCompleteException e) {
+      return findResources(logger,
+          Thread.currentThread().getContextClassLoader(), context, method,
+          defaultSuffixes);
+    }
   }
 
   /**

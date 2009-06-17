@@ -23,8 +23,6 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class TextResourceTest extends GWTTestCase {
 
-  private static final String HELLO = "Hello World!";
-
   static interface Resources extends ClientBundleWithLookup {
     @Source("com/google/gwt/resources/client/hello.txt")
     TextResource helloWorldAbsolute();
@@ -32,9 +30,14 @@ public class TextResourceTest extends GWTTestCase {
     @Source("hello.txt")
     ExternalTextResource helloWorldExternal();
 
+    @Source("com/google/gwt/resources/server/outside_resource_oracle.txt")
+    TextResource helloWorldOutsideResourceOracle();
+
     @Source("hello.txt")
     TextResource helloWorldRelative();
   }
+
+  private static final String HELLO = "Hello World!";
 
   @Override
   public String getModuleName() {
@@ -75,6 +78,11 @@ public class TextResourceTest extends GWTTestCase {
     assertEquals("helloWorldExternal", r.helloWorldExternal().getName());
 
     ResourcePrototype[] resources = r.getResources();
-    assertEquals(3, resources.length);
+    assertEquals(4, resources.length);
+  }
+
+  public void testOutsideResourceOracle() {
+    Resources r = GWT.create(Resources.class);
+    assertTrue(r.helloWorldOutsideResourceOracle().getText().startsWith(HELLO));
   }
 }

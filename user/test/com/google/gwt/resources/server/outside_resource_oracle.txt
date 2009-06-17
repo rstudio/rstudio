@@ -1,0 +1,4 @@
+Hello World!
+
+This file should be placed outside of the test module's source and public path
+to test fallback from ResourceOracle to the ClassLoader.
