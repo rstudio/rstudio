@@ -16,7 +16,9 @@
 <!-- The module root element -->
 <!ELEMENT module (inherits | source | public | super-source | entry-point | 
   stylesheet | script | servlet | replace-with | generate-with |
-  define-property | extend-property | set-property | set-configuration-property |
+  define-property | extend-property | set-property |
+  clear-configuration-property | define-configuration-property |
+  extend-configuration-property | set-configuration-property |
   property-provider | define-linker | add-linker)*>
 <!ATTLIST module
 	rename-to CDATA #IMPLIED
@@ -108,6 +110,12 @@
 	name CDATA #REQUIRED
 	values CDATA #REQUIRED
 >
+<!-- Define a configuration property -->
+<!ELEMENT define-configuration-property EMPTY>
+<!ATTLIST define-configuration-property
+	name CDATA #REQUIRED
+	is-multi-valued CDATA #REQUIRED
+>
 <!-- Set the value of a previously-defined property -->
 <!ELEMENT set-property EMPTY>
 <!ATTLIST set-property
@@ -125,6 +133,17 @@
 <!ATTLIST extend-property
 	name CDATA #REQUIRED
 	values CDATA #REQUIRED
+>
+<!-- Add additional allowable values to a configuration property -->
+<!ELEMENT extend-configuration-property EMPTY>
+<!ATTLIST extend-configuration-property
+	name CDATA #REQUIRED
+	value CDATA #REQUIRED
+>
+<!-- Remove all allowable values from a configuration property -->
+<!ELEMENT clear-configuration-property EMPTY>
+<!ATTLIST clear-configuration-property
+	name CDATA #REQUIRED
 >
 <!-- Define a JavaScript fragment that will return the value for the named property at runtime -->
 <!ELEMENT property-provider (#PCDATA)>
