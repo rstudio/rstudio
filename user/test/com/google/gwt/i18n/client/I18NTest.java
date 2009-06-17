@@ -148,6 +148,13 @@ public class I18NTest extends GWTTestCase {
     // No piglatin version exists for grey
     assertEquals("ĝréý", colors.grey());
     assertEquals("ackblay", colors.black());
+    assertEquals("ueblay", colors.blue());
+  }
+
+  public void testColorsAndShapes() {
+    ColorsAndShapes s = GWT.create(ColorsAndShapes.class);
+    assertEquals("ueblay", s.blue());
+    assertEquals("ĝréý", s.grey());
   }
 
   public void testConstantBooleans() {
@@ -561,6 +568,7 @@ public class I18NTest extends GWTTestCase {
     // test converge
     assertEquals("any primary color", s.shapeColor());
     assertEquals("trees", s.green());
+    assertEquals("Îñţérñåţîöñåļîžåţîöñ", s.internationalization());
   }
 
   public void testTestMessages() {

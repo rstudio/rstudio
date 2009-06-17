@@ -15,18 +15,20 @@
  */
 package com.google.gwt.i18n.rebind;
 
+import static com.google.gwt.i18n.rebind.AnnotationUtil.getClassAnnotation;
+
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.rebind.AnnotationsResource.AnnotationsError;
 import com.google.gwt.i18n.shared.GwtLocale;
+import com.google.gwt.i18n.shared.GwtLocaleFactory;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,108 +37,63 @@ import java.util.Set;
  * Creates resources.
  */
 public abstract class ResourceFactory {
-  static class SimplePathTree extends AbstractPathTree {
-    String path;
 
-    SimplePathTree(String path) {
-      this.path = path;
-    }
-
-    @Override
-    public AbstractPathTree getChild(int i) {
-      throw new UnsupportedOperationException(
-          "Simple paths have no children, therefore cannot get child: " + i);
-    }
-
-    @Override
-    public String getPath() {
-      return path;
-    }
-
-    @Override
-    public int numChildren() {
-      return 0;
-    }
-  }
-
-  private abstract static class AbstractPathTree {
-    abstract AbstractPathTree getChild(int i);
+  /**
+   * Pair of JClassType and GwtLocale.
+   */
+  private static class ClassLocale {
     
-    JClassType getJClassType(JClassType clazz) {
+    private final JClassType clazz;
+    private final GwtLocale locale;
+    
+    public ClassLocale(JClassType clazz, GwtLocale locale) {
+      assert clazz != null;
+      assert locale != null;
+      this.clazz = clazz;
+      this.locale = locale;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+      ClassLocale other = (ClassLocale) obj;
+      return clazz.equals(other.clazz) && locale.equals(other.locale); 
+    }
+
+    public JClassType getJClass() {
       return clazz;
     }
 
-    abstract String getPath();
-
-    abstract int numChildren();
-  }
-
-  private static class ClassPathTree extends AbstractPathTree {
-    Class<?> javaInterface;
-
-    ClassPathTree(Class<?> javaInterface) {
-      this.javaInterface = javaInterface;
+    public GwtLocale getLocale() {
+      return locale;
     }
 
     @Override
-    AbstractPathTree getChild(int i) {
-      // we expect to do this at most once, so no caching is used.
-      return new ClassPathTree(javaInterface.getInterfaces()[i]);
-    }
-
-    @Override
-    String getPath() {
-      return javaInterface.getName();
-    }
-
-    @Override
-    int numChildren() {
-      return javaInterface.getInterfaces().length;
-    }
-  }
-
-  private static class JClassTypePathTree extends AbstractPathTree {
-    JClassType javaInterface;
-
-    JClassTypePathTree(JClassType javaInterface) {
-      this.javaInterface = javaInterface;
-    }
-
-    @Override
-    AbstractPathTree getChild(int i) {
-      // we expect to do this at most once, so no caching is used.
-      return new JClassTypePathTree(javaInterface.getImplementedInterfaces()[i]);
-    }
-
-    @Override
-    JClassType getJClassType(JClassType clazz) {
-      return javaInterface;
+    public int hashCode() {
+      return clazz.hashCode() + locale.hashCode() * 53;
     }
     
-    /**
-     * Path is equivalent to javaInterface.getQualifiedName() except for inner
-     * classes.
-     * 
-     * @see com.google.gwt.i18n.rebind.ResourceFactory.AbstractPathTree#getPath()
-     */
     @Override
-    String getPath() {
-      String name = getResourceName(javaInterface);
-      String packageName = javaInterface.getPackage().getName();
-      return packageName + "." + name;
-    }
-
-    @Override
-    int numChildren() {
-      return javaInterface.getImplementedInterfaces().length;
+    public String toString() {
+      return clazz.getQualifiedSourceName() + "/" + locale.toString();
     }
   }
 
+  /**
+   * Separator between class name and locale in resource files.  Should not
+   * appear in valid localizable class names.
+   */
   public static final char LOCALE_SEPARATOR = '_';
 
-  private static Map<String, ResourceList> cache = new HashMap<String, ResourceList>();
-
+  private static Map<ClassLocale, ResourceList> cache = new HashMap<
+      ClassLocale, ResourceList>();
   private static List<ResourceFactory> loaders = new ArrayList<ResourceFactory>();
+
   static {
     loaders.add(new LocalizedPropertiesResource.Factory());
   }
@@ -148,59 +105,56 @@ public abstract class ResourceFactory {
     cache.clear();
   }
 
-  public static ResourceList getBundle(Class<?> clazz, GwtLocale locale,
-      boolean isConstants) {
-    assert locale != null;
-    return getBundle(TreeLogger.NULL, clazz, locale, isConstants);
-  }
-
-  public static ResourceList getBundle(String path, GwtLocale locale,
-      boolean isConstants) {
-    assert locale != null;
-    return getBundle(TreeLogger.NULL, path, locale, isConstants);
-  }
-
   /**
-   * Gets the resource associated with the given interface.
    * 
-   * @param javaInterface interface
-   * @param locale locale name
-   * @return the resource
+   * @param logger
+   * @param topClass
+   * @param bundleLocale
+   * @param isConstants
+   * @return resource list
    */
-  public static ResourceList getBundle(TreeLogger logger, Class<?> javaInterface,
-      GwtLocale locale, boolean isConstants) {
-    if (javaInterface.isInterface() == false) {
-      throw new IllegalArgumentException(javaInterface
-          + " should be an interface.");
+  public static ResourceList getBundle(TreeLogger logger, JClassType topClass,
+      GwtLocale bundleLocale, boolean isConstants) {
+    List<GwtLocale> locales = bundleLocale.getCompleteSearchList();
+    List<JClassType> classes = new ArrayList<JClassType>();
+    Set<JClassType> seenClasses = new IdentityHashSet<JClassType>();
+    Map<ClassLocale, AnnotationsResource> annotations = new HashMap<ClassLocale,
+        AnnotationsResource>();
+    GwtLocaleFactory factory = LocaleUtils.getLocaleFactory();
+    GwtLocale defaultLocale = factory.getDefault();
+    walkInheritanceTree(logger, topClass, factory, defaultLocale, classes,
+        annotations, seenClasses, isConstants);
+    // TODO(jat): handle explicit subinterface with other locales -- ie:
+    //   public interface Foo_es_MX extends Foo { ... }
+    ResourceList allResources = new ResourceList();
+    for (GwtLocale locale : locales) {
+      for (JClassType clazz : classes) {
+        ClassLocale key = new ClassLocale(clazz, locale);
+        ResourceList resources;
+        if (cache.containsKey(key)) {
+          resources = cache.get(key);
+        } else {
+          cache.put(key, null);
+          resources = new ResourceList();
+          addFileResources(clazz, locale, resources);
+          AnnotationsResource annotationsResource = annotations.get(key);
+          if (annotationsResource != null) {
+            resources.add(annotationsResource);
+          }
+          cache.put(key, resources);
+        }
+        if (resources != null) {
+          allResources.addAll(resources);
+        }
+      }
     }
-    ClassPathTree path = new ClassPathTree(javaInterface);
-    return getBundleAux(logger, path, null, locale, true, isConstants);
-  }
-
-  /**
-   * Gets the resource associated with the given interface.
-   * 
-   * @param javaInterface interface
-   * @param locale locale name
-   * @return the resource
-   */
-  public static ResourceList getBundle(TreeLogger logger,
-      JClassType javaInterface, GwtLocale locale, boolean isConstants) {
-    return getBundleAux(logger, new JClassTypePathTree(javaInterface),
-        javaInterface, locale, true, isConstants);
-  }
-
-  /**
-   * Gets the resource associated with the given path.
-   * 
-   * @param path the path
-   * @param locale locale name
-   * @return the resource
-   */
-  public static ResourceList getBundle(TreeLogger logger, String path,
-      GwtLocale locale, boolean isConstants) {
-    return getBundleAux(logger, new SimplePathTree(path), null, locale, true,
-        isConstants);
+    String className = topClass.getQualifiedSourceName();
+    TreeLogger branch = logger.branch(TreeLogger.SPAM,
+        "Resource search order for " + className + ", locale " + bundleLocale);
+    for (AbstractResource resource : allResources) {
+      branch.log(TreeLogger.SPAM, resource.toString());
+    }
+    return allResources;
   }
 
   public static String getResourceName(JClassType targetClass) {
@@ -211,74 +165,17 @@ public abstract class ResourceFactory {
     return name;
   }
 
-  private static void addAlternativeParents(TreeLogger logger,
-      ResourceFactory.AbstractPathTree tree, JClassType clazz, GwtLocale locale,
-      boolean useAlternativeParents, boolean isConstants,
-      ResourceList resources, Set<String> seenPaths) {
-    if (tree != null) {
-      for (int i = 0; i < tree.numChildren(); i++) {
-        ResourceFactory.AbstractPathTree child = tree.getChild(i);
-        addResources(logger, child, child.getJClassType(clazz),
-            locale, useAlternativeParents, isConstants, resources, seenPaths);
-      }
-    }
-  }
-
-  private static void addPrimaryParent(TreeLogger logger,
-      ResourceFactory.AbstractPathTree tree, JClassType clazz, GwtLocale locale,
-      boolean isConstants, ResourceList resources, Set<String> seenPaths) {
-    for (GwtLocale search : locale.getCompleteSearchList()) {
-      // This relies on addResources exiting if it has seen a given path
-      // (derived from the locale) to avoid infinite loops, since the search
-      // list includes this locale as well as aliases which will refer back
-      // to this locale.
-      addResources(logger, tree, clazz, search, false, isConstants, resources,
-          seenPaths);
-    }
-  }
-
-  private static void addResources(TreeLogger logger,
-      ResourceFactory.AbstractPathTree tree, JClassType clazz, GwtLocale locale,
-      boolean useAlternateParents, boolean isConstants,
-      ResourceList resources, Set<String> seenPaths) {
-    String targetPath = tree.getPath();
+  private static void addFileResources(JClassType clazz, GwtLocale locale,
+      ResourceList resources) {
+    // TODO: handle classes in the default package?
+    String targetPath = clazz.getPackage().getName() + '.'
+        + getResourceName(clazz);
     String localizedPath = targetPath;
     if (!locale.isDefault()) {
       localizedPath = targetPath + LOCALE_SEPARATOR + locale.getAsString();
     }
-    if (seenPaths.contains(localizedPath)) {
-      return;
-    }
-    seenPaths.add(localizedPath);
-    ClassLoader loader = AbstractResource.class.getClassLoader();
-    Map<String, JClassType> matchingClasses = null;
-    if (clazz != null) {
-      try {
-        matchingClasses = LocalizableLinkageCreator.findDerivedClasses(logger,
-            clazz);
-        /* 
-         * In this case, we specifically want to be able to look at the interface
-         * instead of just implementations.
-         */
-        String defLocaleValue = DefaultLocale.DEFAULT_LOCALE;
-        DefaultLocale defLocale = clazz.getAnnotation(DefaultLocale.class);
-        if (defLocale != null) {
-          defLocaleValue = defLocale.value();
-          if (!GwtLocale.DEFAULT_LOCALE.equals(defLocaleValue)) {
-            matchingClasses.put(defLocaleValue, clazz);
-          }
-        }
-        matchingClasses.put(GwtLocale.DEFAULT_LOCALE, clazz);
-      } catch (UnableToCompleteException e) {
-        // ignore error, fall through
-      }
-    }
-    if (matchingClasses == null) {
-      // empty map
-      matchingClasses = new HashMap<String, JClassType>();
-    }
-
     // Check for file-based resources.
+    ClassLoader loader = ResourceFactory.class.getClassLoader();
     String partialPath = localizedPath.replace('.', '/');
     for (int i = 0; i < loaders.size(); i++) {
       ResourceFactory element = loaders.get(i);
@@ -297,56 +194,59 @@ public abstract class ResourceFactory {
         resources.add(found);
       }
     }
-
-    // Check for annotations
-    JClassType currentClass = matchingClasses.get(locale.toString());
-    if (currentClass != null) {
-      AnnotationsResource resource;
-      try {
-        resource = new AnnotationsResource(logger, currentClass, locale,
-            isConstants);
-        if (resource.notEmpty()) {
-          resource.setPath(currentClass.getQualifiedSourceName());
-          resources.add(resource);
-        }
-      } catch (AnnotationsError e) {
-        logger.log(TreeLogger.ERROR, e.getMessage(), e);
-      }
-    }
-    
-    // Add our parent, if any
-    addPrimaryParent(logger, tree, clazz, locale, isConstants, resources,
-        seenPaths);
-
-    // Add our alternate parents
-    if (useAlternateParents) {
-      addAlternativeParents(logger, tree, clazz, locale, useAlternateParents,
-          isConstants, resources, seenPaths);
-    }
   }
 
-  private static ResourceList getBundleAux(TreeLogger logger,
-      ResourceFactory.AbstractPathTree tree, JClassType clazz, GwtLocale locale,
-      boolean required, boolean isConstants) {
-    String cacheKey = tree.getPath() + "_" + locale.getAsString();
-    if (cache.containsKey(cacheKey)) {
-      return cache.get(cacheKey);
+  private static void walkInheritanceTree(TreeLogger logger, JClassType clazz,
+      GwtLocaleFactory factory, GwtLocale defaultLocale,
+      List<JClassType> classes,
+      Map<ClassLocale, AnnotationsResource> annotations,
+      Set<JClassType> seenClasses, boolean isConstants) {
+    if (seenClasses.contains(clazz)) {
+      return;
     }
-    Set<String> seenPaths = new HashSet<String>();
-    final ResourceList resources = new ResourceList();
-    addResources(logger, tree, clazz, locale, true, isConstants, resources,
-        seenPaths);
-    String className = tree.getPath();
-    if (clazz != null) {
-      className = clazz.getQualifiedSourceName();
+    seenClasses.add(clazz);
+    classes.add(clazz);
+    AnnotationsResource resource;
+    try {
+      resource = new AnnotationsResource(logger, clazz, defaultLocale,
+          isConstants);
+      if (resource.notEmpty()) {
+        resource.setPath(clazz.getQualifiedSourceName());
+        ClassLocale key = new ClassLocale(clazz, defaultLocale);
+        annotations.put(key, resource);
+        String defLocaleValue = null;
+        
+        // If the class has an embedded locale in it, use that for the default
+        String className = clazz.getSimpleSourceName();
+        int underscore = className.indexOf('_');
+        if (underscore >= 0) {
+          defLocaleValue = className.substring(underscore + 1);
+        }
+        
+        // If there is an annotation declaring the default locale, use that
+        DefaultLocale defLocaleAnnot = getClassAnnotation(clazz,
+            DefaultLocale.class);
+        if (defLocaleAnnot != null) {
+          defLocaleValue = defLocaleAnnot.value();
+        }
+        GwtLocale defLocale = LocaleUtils.getLocaleFactory().fromString(
+            defLocaleValue);
+        if (!defLocale.isDefault()) {
+          key = new ClassLocale(clazz, defLocale);
+          annotations.put(key, resource);
+        }
+      }
+    } catch (AnnotationsError e) {
+      logger.log(TreeLogger.ERROR, e.getMessage(), e);
     }
-    TreeLogger branch = logger.branch(TreeLogger.SPAM, "Resource search order for "
-        + className + ", locale " + locale);
-    for (AbstractResource resource : resources) {
-      branch.log(TreeLogger.SPAM, resource.toString());
+    if (clazz.getSuperclass() != null) {
+      walkInheritanceTree(logger, clazz.getSuperclass(), factory, defaultLocale,
+          classes, annotations, seenClasses, isConstants);
     }
-    cache.put(cacheKey, resources);
-    return resources;
+    for (JClassType intf : clazz.getImplementedInterfaces()) {
+      walkInheritanceTree(logger, intf, factory, defaultLocale, classes,
+          annotations, seenClasses, isConstants);
+    }   
   }
 
   abstract String getExt();

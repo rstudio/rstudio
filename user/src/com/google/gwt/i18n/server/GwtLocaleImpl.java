@@ -440,7 +440,9 @@ public class GwtLocaleImpl implements GwtLocale {
         }
         thisGroup = nextGroup;
       }
-      cachedSearchList.add(defLocale);
+      if (!isDefault()) {
+        cachedSearchList.add(defLocale);
+      }
     }
     return cachedSearchList;
   }

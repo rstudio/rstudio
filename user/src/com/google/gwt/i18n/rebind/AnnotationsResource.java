@@ -76,6 +76,7 @@ public class AnnotationsResource extends AbstractResource {
    * Class for argument information, used for export.
    */
   public static class ArgumentInfo {
+
     public String example;
     public boolean isPluralCount;
     public String name;
@@ -91,6 +92,10 @@ public class AnnotationsResource extends AbstractResource {
    * Class to keep annotation information about a particular method.
    */
   private static class MethodEntry {
+
+    // Strings used in toString for formatting.
+    private static final String DETAILS_PREFIX = " (";
+    private static final String DETAILS_SEPARATOR = ", ";
 
     public ArrayList<ArgumentInfo> arguments;
     public String description;
@@ -114,13 +119,36 @@ public class AnnotationsResource extends AbstractResource {
     public void addPluralText(String form, String pluralFormText) {
       pluralText.put(form, pluralFormText);
     }
+
+    @Override
+    public String toString() {
+      StringBuilder buf = new StringBuilder();
+      buf.append(text);
+      String prefix = DETAILS_PREFIX;
+      if (meaning != null) {
+        buf.append(prefix).append("meaning=").append(meaning);
+        prefix = DETAILS_SEPARATOR;
+      }
+      if (description != null) {
+        buf.append(prefix).append("desc=").append(description);
+        prefix = DETAILS_SEPARATOR;
+      }
+      if (DETAILS_SEPARATOR == prefix) {
+        buf.append(')');
+      }
+      return buf.toString();
+    }
   }
 
   /**
    * Returns the key for a given method.
-   * 
+   *
    * If null is returned, an error message has already been logged.
-   * 
+   *
+   * @param logger 
+   * @param keyGenerator 
+   * @param method 
+   * @param isConstants 
    * @return null if unable to get or compute the key for this method, otherwise
    *         the key is returned
    */
@@ -140,6 +168,10 @@ public class AnnotationsResource extends AbstractResource {
     Meaning meaning = method.getAnnotation(Meaning.class);
     if (meaning != null) {
       meaningString = meaning.value();
+    }
+    if (keyGenerator == null) {
+      // Gracefully handle the case of an invalid KeyGenerator classname
+      return null;
     }
     String keyStr = keyGenerator.generateKey(
         method.getEnclosingType().getQualifiedSourceName(), method.getName(),
@@ -165,7 +197,9 @@ public class AnnotationsResource extends AbstractResource {
   /**
    * Returns a suitable key generator for the specified class.
    * 
-   * @throws AnnotationsError
+   * @param targetClass 
+   * @return KeyGenerator instance, guaranteed to not be null 
+   * @throws AnnotationsError if a specified KeyGenerator cannot be created
    */
   public static KeyGenerator getKeyGenerator(JClassType targetClass)
       throws AnnotationsError {

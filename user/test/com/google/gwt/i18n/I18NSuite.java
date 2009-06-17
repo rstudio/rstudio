@@ -37,7 +37,6 @@ import com.google.gwt.i18n.client.NumberParse_fr_Test;
 import com.google.gwt.i18n.client.RuntimeLocalesTest;
 import com.google.gwt.i18n.client.TimeZoneInfoTest;
 import com.google.gwt.i18n.client.TimeZoneTest;
-import com.google.gwt.i18n.rebind.AbstractResourceTest;
 import com.google.gwt.i18n.rebind.MessageFormatParserTest;
 import com.google.gwt.i18n.server.GwtLocaleTest;
 import com.google.gwt.i18n.server.RegionInheritanceTest;
@@ -53,7 +52,6 @@ public class I18NSuite {
     GWTTestSuite suite = new GWTTestSuite("All I18N tests");
 
     // $JUnit-BEGIN$
-    suite.addTestSuite(AbstractResourceTest.class);
     suite.addTestSuite(ArabicPluralsTest.class);
     suite.addTestSuite(AnnotationsTest.class);
     suite.addTestSuite(ConstantMapTest.class);
