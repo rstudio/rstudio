@@ -154,7 +154,7 @@ public final class ResourceGeneratorUtil {
       ResourceContext context, JMethod method, String[] defaultSuffixes)
       throws UnableToCompleteException {
     return findResources(logger, new ClassLoaderLocator(classLoader), context,
-        method, defaultSuffixes);
+        method, defaultSuffixes, true);
   }
 
   /**
@@ -219,16 +219,25 @@ public final class ResourceGeneratorUtil {
   public static URL[] findResources(TreeLogger logger, ResourceContext context,
       JMethod method, String[] defaultSuffixes)
       throws UnableToCompleteException {
-    try {
-      return findResources(logger, new ResourceOracleLocator(
-          context.getGeneratorContext().getResourcesOracle()), context, method,
-          defaultSuffixes);
 
-    } catch (UnableToCompleteException e) {
-      return findResources(logger,
-          Thread.currentThread().getContextClassLoader(), context, method,
-          defaultSuffixes);
+    // Try to find the resources with ResourceOracle
+    Locator locator = new ResourceOracleLocator(
+        context.getGeneratorContext().getResourcesOracle());
+
+    // Don't report errors since we have a fallback mechanism
+    URL[] toReturn = findResources(logger, locator, context, method,
+        defaultSuffixes, false);
+
+    if (toReturn == null) {
+      // Since not all resources were found, try with ClassLoader
+      locator = new ClassLoaderLocator(
+          Thread.currentThread().getContextClassLoader());
+
+      // Do report hard failures
+      toReturn = findResources(logger, locator, context, method,
+          defaultSuffixes, true);
     }
+    return toReturn;
   }
 
   /**
@@ -248,9 +257,16 @@ public final class ResourceGeneratorUtil {
     }
   }
 
+  /**
+   * Main implementation of findResources.
+   * 
+   * @param reportErrors controls whether or not the inability to locate any
+   *          given resource should be a hard error (throw an UnableToComplete)
+   *          or a soft error (return null).
+   */
   private static URL[] findResources(TreeLogger logger, Locator locator,
-      ResourceContext context, JMethod method, String[] defaultSuffixes)
-      throws UnableToCompleteException {
+      ResourceContext context, JMethod method, String[] defaultSuffixes,
+      boolean reportErrors) throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.DEBUG, "Finding resources");
 
     String locale;
@@ -264,7 +280,10 @@ public final class ResourceGeneratorUtil {
 
     checkForDeprecatedAnnotations(logger, method);
 
+    boolean error = false;
     Source resourceAnnotation = method.getAnnotation(Source.class);
+    URL[] toReturn;
+
     if (resourceAnnotation == null) {
       if (defaultSuffixes != null) {
         for (String extension : defaultSuffixes) {
@@ -274,43 +293,55 @@ public final class ResourceGeneratorUtil {
                   + extension), locale);
 
           if (resourceUrl != null) {
+            // Early out because we found a hit
             return new URL[] {resourceUrl};
           }
         }
       }
-      logger.log(TreeLogger.SPAM,
-          "No annotation and no hits with default extensions");
-      return new URL[0];
+
+      if (reportErrors) {
+        logger.log(TreeLogger.ERROR, "No " + Source.class.getName()
+            + " annotation and no resources found with default extensions");
+      }
+      toReturn = null;
+      error = true;
+
+    } else {
+      // The user has put an @Source annotation on the accessor method
+      String[] resources = resourceAnnotation.value();
+
+      toReturn = new URL[resources.length];
+
+      int tagIndex = 0;
+      for (String resource : resources) {
+        // Try to find the resource relative to the package.
+        URL resourceURL = tryFindResource(locator, getPathRelativeToPackage(
+            method.getEnclosingType().getPackage(), resource), locale);
+
+        // If we didn't find the resource relative to the package, assume it is
+        // absolute.
+        if (resourceURL == null) {
+          resourceURL = tryFindResource(locator, resource, locale);
+        }
+
+        if (resourceURL == null) {
+          error = true;
+          if (reportErrors) {
+            logger.log(TreeLogger.ERROR, "Resource " + resource
+                + " not found. Is the name specified as Class.getResource()"
+                + " would expect?");
+          } else {
+            // Speculative attempts should not emit errors
+            logger.log(TreeLogger.DEBUG, "Stopping because " + resource
+                + " not found");
+          }
+        }
+
+        toReturn[tagIndex++] = resourceURL;
+      }
     }
 
-    String[] resources = resourceAnnotation.value();
-
-    URL[] toReturn = new URL[resources.length];
-
-    boolean error = false;
-    int tagIndex = 0;
-    for (String resource : resources) {
-      // Try to find the resource relative to the package.
-      URL resourceURL = tryFindResource(locator, getPathRelativeToPackage(
-          method.getEnclosingType().getPackage(), resource), locale);
-
-      // If we didn't find the resource relative to the package, assume it is
-      // absolute.
-      if (resourceURL == null) {
-        resourceURL = tryFindResource(locator, resource, locale);
-      }
-
-      if (resourceURL == null) {
-        logger.log(TreeLogger.ERROR, "Resource " + resource
-            + " not found on classpath. Is the name specified as "
-            + "Class.getResource() would expect?");
-        error = true;
-      }
-
-      toReturn[tagIndex++] = resourceURL;
-    }
-
-    if (error) {
+    if (error && reportErrors) {
       throw new UnableToCompleteException();
     }
 
