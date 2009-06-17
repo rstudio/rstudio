@@ -23,6 +23,21 @@ import com.google.gwt.junit.client.GWTTestCase;
  * LongLibTest.
  */
 public class NativeLongTest extends GWTTestCase {
+  /**
+   * A class that wraps an int. See {@link NativeLongTest#testImplicitCastToLong()}.
+   */
+  private static class IntegerWrapper {
+    private final int i;
+
+    public IntegerWrapper(int i) {
+      this.i = i;
+    }
+
+    public long longValue() {
+      return i; // implicit cast to long
+    }
+  }
+
   private static class RequestIdFactory {
     static RequestIdFactory instance = new RequestIdFactory();
 
@@ -122,6 +137,10 @@ public class NativeLongTest extends GWTTestCase {
     l += 5;
     assertEquals(15, l);
     assertTrue(15 == l);
+
+    // Issue 3710
+    IntegerWrapper wrap = new IntegerWrapper(20);
+    assertEquals(400L, wrap.longValue() * wrap.longValue());
   }
 
   public void testInlinedIntInitializer() {

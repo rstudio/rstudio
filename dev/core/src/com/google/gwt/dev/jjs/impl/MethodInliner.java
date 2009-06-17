@@ -32,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JThisRef;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
@@ -221,6 +222,7 @@ public class MethodInliner {
           if (expr != null) {
             if (!ignoringReturnValue || expr.hasSideEffects()) {
               JExpression clone = cloner.cloneExpression(expr);
+              clone = maybeCast(clone, body.getMethod().getType());
               multi.exprs.add(clone);
             }
           }
@@ -451,13 +453,7 @@ public class MethodInliner {
       JExpression arg = methodCall.getArgs().get(paramIndex);
       JExpression clone = cloner.cloneExpression(arg);
 
-      /*
-       * Insert an implicit cast if the types differ; it might get optimized out
-       * later, but in some cases it will force correct math evaluation.
-       */
-      if (clone.getType() != x.getType()) {
-        clone = new JCastOperation(clone.getSourceInfo(), x.getType(), clone);
-      }
+      clone = maybeCast(clone, x.getType());
       ctx.replaceMe(clone);
     }
   }
@@ -491,6 +487,17 @@ public class MethodInliner {
 
   public static boolean exec(JProgram program) {
     return new MethodInliner(program).execImpl();
+  }
+
+  /**
+   * Insert an implicit cast if the types differ; it might get optimized out
+   * later, but in some cases it will force correct math evaluation.
+   */
+  private static JExpression maybeCast(JExpression exp, JType targetType) {
+    if (exp.getType() != targetType) {
+      exp = new JCastOperation(exp.getSourceInfo(), targetType, exp);
+    }
+    return exp;
   }
 
   private JMethod currentMethod;
