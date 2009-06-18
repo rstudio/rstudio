@@ -728,11 +728,10 @@ public class JsInliner {
     private final JsProgram program;
 
     /**
-     * A map containing the next integer to try as an identifier suffix for
-     * a given JsScope.
+     * A map containing the next integer to try as an identifier suffix for a
+     * given JsScope.
      */
-    private IdentityHashMap<JsScope,HashMap<String,Integer>> startIdentForScope
-        = new IdentityHashMap<JsScope, HashMap<String,Integer>>();
+    private IdentityHashMap<JsScope, HashMap<String, Integer>> startIdentForScope = new IdentityHashMap<JsScope, HashMap<String, Integer>>();
 
     /**
      * Not a stack because program fragments aren't nested.
@@ -851,6 +850,7 @@ public class JsInliner {
       if (functionStack.isEmpty()) {
         return;
       }
+      JsFunction callerFunction = functionStack.peek();
 
       /*
        * We only want to look at invocations of things that we statically know
@@ -866,6 +866,15 @@ public class JsInliner {
 
       // Don't inline blacklisted functions
       if (blacklist.contains(f)) {
+        return;
+      }
+
+      /*
+       * The current function has been mutated so as to be self-recursive. Ban
+       * it from any future inlining to prevent infinite expansion.
+       */
+      if (f == callerFunction) {
+        blacklist.add(f);
         return;
       }
 
@@ -954,7 +963,7 @@ public class JsInliner {
       }
 
       // Confirm that the expression conforms to the desired heuristics
-      if (!isInlinable(program, functionStack.peek(), x, f, op)) {
+      if (!isInlinable(program, callerFunction, f, x.getArguments(), op)) {
         return;
       }
 
@@ -970,13 +979,13 @@ public class JsInliner {
          */
         String ident;
         String base = f.getName() + "_" + name.getIdent();
-        JsScope scope = functionStack.peek().getScope();
-        HashMap<String,Integer> startIdent = startIdentForScope.get(scope);
+        JsScope scope = callerFunction.getScope();
+        HashMap<String, Integer> startIdent = startIdentForScope.get(scope);
         if (startIdent == null) {
-          startIdent = new HashMap<String,Integer>();
+          startIdent = new HashMap<String, Integer>();
           startIdentForScope.put(scope, startIdent);
         }
-        
+
         Integer s = startIdent.get(base);
         int suffix = (s == null) ? 0 : s.intValue();
         do {
@@ -1004,8 +1013,7 @@ public class JsInliner {
         return;
       }
 
-      if (functionStack.peek() == programFunction
-          && localVariableNames.size() > 0) {
+      if (callerFunction == programFunction && localVariableNames.size() > 0) {
         // Don't add additional variables to the top-level program.
         return;
       }
@@ -1023,7 +1031,6 @@ public class JsInliner {
        * total number of passes required to finalize the AST.
        */
       op = accept(op);
-
       ctx.replaceMe(op);
     }
 
@@ -1704,8 +1711,7 @@ public class JsInliner {
    * Determine if a statement can be inlined into a call site.
    */
   private static boolean isInlinable(JsProgram program, JsFunction caller,
-      JsInvocation invocation, JsFunction callee, JsNode<?> toInline) {
-    List<JsExpression> arguments = invocation.getArguments();
+      JsFunction callee, List<JsExpression> arguments, JsNode<?> toInline) {
 
     /*
      * This will happen with varargs-style JavaScript functions that rely on the

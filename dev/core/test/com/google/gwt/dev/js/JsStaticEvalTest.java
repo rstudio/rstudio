@@ -15,19 +15,10 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.jjs.SourceOrigin;
-import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.dev.util.DefaultTextOutput;
-import com.google.gwt.dev.util.TextOutput;
-
-import junit.framework.TestCase;
-
-import java.io.StringReader;
-import java.util.List;
-
-public class JsStaticEvalTest extends TestCase {
+/**
+ * Tests the JsStaticEval optimizer.
+ */
+public class JsStaticEvalTest extends OptimizerTestBase {
 
   public void testIfWithEmptyThen() throws Exception {
     assertEquals("a();", optimize("if (a()) { }"));
@@ -81,18 +72,6 @@ public class JsStaticEvalTest extends TestCase {
   }
 
   private String optimize(String js) throws Exception {
-    JsProgram program = new JsProgram();
-    List<JsStatement> expected = JsParser.parse(SourceOrigin.UNKNOWN,
-        program.getScope(), new StringReader(js));
-    program.getGlobalBlock().getStatements().addAll(expected);
-
-    // Run the static evaluation over this new program
-    JsStaticEval.exec(program);
-
-    TextOutput text = new DefaultTextOutput(true);
-    JsVisitor generator = new JsSourceGenerationVisitor(text);
-
-    generator.accept(program);
-    return text.toString();
+    return optimize(js, JsStaticEval.class);
   }
 }
