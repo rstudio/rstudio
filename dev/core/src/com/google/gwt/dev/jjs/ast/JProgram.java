@@ -24,7 +24,6 @@ import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
-import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs.RunAsyncReplacement;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
@@ -45,7 +44,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**

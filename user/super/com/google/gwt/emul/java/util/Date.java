@@ -25,12 +25,6 @@ import java.io.Serializable;
 public class Date implements Cloneable, Comparable<Date>, Serializable {
 
   /**
-   * JavaScript Date instance.
-   */
-  @SuppressWarnings("unused") // used from JSNI
-  private JavaScriptObject jsdate;
-  
-  /**
    * Used only by toString().
    */
   private static final String[] DAYS = {
@@ -112,6 +106,12 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
     return Date.UTC(year + 1900, month, date, hrs, min, sec);
   }-*/;
 
+  /**
+   * JavaScript Date instance.
+   */
+  @SuppressWarnings("unused") // used from JSNI
+  private JavaScriptObject jsdate;
+  
   public Date() {
     init();
   }

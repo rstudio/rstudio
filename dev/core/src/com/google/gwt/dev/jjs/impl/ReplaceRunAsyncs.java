@@ -41,26 +41,14 @@ public class ReplaceRunAsyncs {
    * generated code-loading method.
    */
   public static class RunAsyncReplacement implements Serializable {
-    private final int number;
     private final JMethod enclosingMethod;
     private final JMethod loadMethod;
+    private final int number;
 
     RunAsyncReplacement(int number, JMethod enclosingMethod, JMethod loadMethod) {
       this.number = number;
       this.enclosingMethod = enclosingMethod;
       this.loadMethod = loadMethod;
-    }
-
-    @Override
-    public String toString() {
-      return "#" + number + ": " + enclosingMethod.toString();
-    }
-
-    /**
-     * The index of this runAsync, numbered from 1 to n.
-     */
-    public int getNumber() {
-      return number;
     }
 
     /**
@@ -76,6 +64,18 @@ public class ReplaceRunAsyncs {
      */
     public JMethod getLoadMethod() {
       return loadMethod;
+    }
+
+    /**
+     * The index of this runAsync, numbered from 1 to n.
+     */
+    public int getNumber() {
+      return number;
+    }
+
+    @Override
+    public String toString() {
+      return "#" + number + ": " + enclosingMethod.toString();
     }
   }
 

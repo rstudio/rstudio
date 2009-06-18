@@ -34,6 +34,10 @@ import java.util.TreeSet;
  * A utility class that can look up a {@link JsniRef} in a {@link JProgram}.
  */
 public class JsniRefLookup {
+
+  /**
+   * A callback used to indicate the reason for a failed JSNI lookup.
+   */
   public interface ErrorReporter {
     void reportError(String error);
   }
