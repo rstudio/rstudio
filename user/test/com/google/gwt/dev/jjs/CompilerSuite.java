@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs;
 
+import com.google.gwt.dev.jjs.scriptonly.ScriptOnlyTest;
 import com.google.gwt.dev.jjs.test.AnnotationsTest;
 import com.google.gwt.dev.jjs.test.AutoboxTest;
 import com.google.gwt.dev.jjs.test.BlankInterfaceTest;
@@ -84,6 +85,7 @@ public class CompilerSuite {
     suite.addTestSuite(ObjectIdentityTest.class);
     suite.addTestSuite(RunAsyncFailureTest.class);
     suite.addTestSuite(RunAsyncTest.class);
+    suite.addTestSuite(ScriptOnlyTest.class);
     suite.addTestSuite(SingleJsoImplTest.class);
     suite.addTestSuite(TypeHierarchyTest.class);
     suite.addTestSuite(UnstableGeneratorTest.class);

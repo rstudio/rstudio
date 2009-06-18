@@ -40,6 +40,7 @@
   -->
   <path id="test.extraclasspath">
     <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+    <pathelement location="test-super" />
     <pathelement location="test_i18n_${gwt.i18n.test.InnerClassChar}" />
   </path>
 
