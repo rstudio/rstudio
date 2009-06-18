@@ -7,8 +7,17 @@
   <property name="target" value="build" />
 
   <!-- 
-     Convenience for the descending calls we make.  Use gwt.ant to
-     call into another directory, and this to call in the same build.xml
+     Convenience for the lateral calls we make.  Use gwt.ant to
+     descend into another directory, and this to call in the same build.xml.
+     NOTE THE USE OF $TARGET, here and in common's gwt.ant.  This has the
+     effect of dividing rules into subdirectory rules (using gwt.ant and
+     sensitive to $target) and action rules (using call-subproject and
+     setting $target)... but it is Bad for a subdirectory rule to depend
+     on another one, as they are both sensitive to $target, but you probably
+     mean that subdirB needed subdirA to be _built_, not $target'ed (tested,
+     etc.)
+
+     In other words, DO NOT USE DEPENDS=... IN A TARGET WITH GWT.ANT.    
     -->
   <macrodef name="call-subproject">
     <attribute name="subproject" />
@@ -23,68 +32,84 @@
   <property name="gwt.apicheck.config" 
     location="tools/api-checker/config/gwt16_20userApi.conf"/>
 
-  <target name="buildonly" depends="dev-one, user, servlet, jni-one" 
-          description="Minimal one-platform devel build, without distro packaging">
+  <target name="buildonly"
+          description="[action] Minimal one-platform devel build, without distro packaging">
+    <call-subproject subproject="dev-one" subtarget="build" />
+    <call-subproject subproject="user" subtarget="build" />
+    <call-subproject subproject="servlet" subtarget="build" />
+    <call-subproject subproject="jni-one" subtarget="build" />
   </target>
 
-  <target name="dist" depends="build, doc" description="Make all the distributions">
+  <target name="dist" depends="build, doc" description="[action] Make all the distributions">
     <gwt.ant dir="distro-source" />
   </target>
 
-  <target name="dist-one" depends="buildonly, tools, samples, doc" description="Make only this platform's distribution">
+  <target name="dist-one" depends="buildonly, tools, samples, doc" description="[action] Make only this platform's distribution">
     <gwt.ant dir="distro-source" target="${build.host.platform}" />
   </target>
 
-  <target name="dist-dev" depends="buildonly" description="Make this platform's distribution, minus doc and samples">
+  <target name="dist-dev" depends="buildonly" description="[action] Make this platform's distribution, minus doc and samples">
     <gwt.ant dir="distro-source" target="${build.host.platform}" />
   </target>
 
-  <target name="dev" depends="buildtools" description="Builds (or runs ${target} if set) all the dev libraries">
+  <target name="dev" description="[subdir] Builds (or runs ${target} if set) all the dev libraries">
+    <call-subproject subproject="buildtools" subtarget="build" />
     <gwt.ant dir="dev" />
   </target>
 
-  <target name="dev-one" depends="buildtools" description="Builds only the dev library for this platform">
+  <target name="dev-one" description="[subdir] Builds only the dev library for this platform">
+    <call-subproject subproject="buildtools" subtarget="build" />
     <gwt.ant dir="dev" target="${build.host.platform}"/>
     <gwt.ant dir="dev" target="oophm"/>
   </target>
 
-  <target name="user" depends="buildtools, dev-one" description="Builds (or runs ${target} if set) only the user library">
+  <target name="user" description="[subdir] Builds (or runs ${target} if set) only the user library">
+    <call-subproject subproject="dev-one" subtarget="build"/>
     <gwt.ant dir="user" />
   </target>
 
-  <target name="tools" depends="buildtools, user" description="Builds (or runs ${target} if set) only the tools">
+  <target name="tools" description="[subdir] Builds (or runs ${target} if set) only the tools">
+    <call-subproject subproject="user" subtarget="build"/>
     <gwt.ant dir="tools" />
   </target>
 
-  <target name="servlet" depends="buildtools, user" description="Builds (or runs ${target} if set) only the servlet jar">
+  <target name="servlet" description="[subdir] Builds (or runs ${target} if set) only the servlet jar">
+    <call-subproject subproject="user" subtarget="build" />
     <gwt.ant dir="servlet" />
   </target>
 
-  <target name="jni" description="Builds (or runs ${target} if set) jni for all platforms">
+  <target name="jni" description="[subdir] Builds (or runs ${target} if set) jni for all platforms">
     <gwt.ant dir="jni" />
   </target>
 
-  <target name="jni-one" description="Builds jni for only this platform">
+  <target name="jni-one" description="[subdir] Builds jni for only this platform">
     <gwt.ant dir="jni" target="${build.host.platform}" />
   </target>
 
-  <target name="doc" depends="buildtools, user" description="Builds (or runs ${target} if set) the doc">
+  <target name="doc" description="[subdir] Builds (or runs ${target} if set) the doc">
+    <call-subproject subproject="user" subtarget="build" />
     <gwt.ant dir="doc" />
   </target>
 
-  <target name="samples" depends="dev-one, user" description="Builds (or runs ${target} if set) the samples">
+  <target name="samples" description="[subdir] Builds (or runs ${target} if set) the samples">
+    <call-subproject subproject="user" subtarget="build" />
     <gwt.ant dir="samples" />
   </target>
 
-  <target name="buildtools" description="Build (or runs ${target} if set) the build tools">
+  <target name="buildtools" description="[subdir] Build (or runs ${target} if set) the build tools">
     <gwt.ant dir="build-tools" />
   </target>
 
-  <target name="build" description="Builds GWT, including samples, but without distro packaging"
-          depends="dev, user, servlet, tools, jni, samples">
+  <target name="build" description="[action] Builds GWT, including samples, but without distro packaging">
+     <call-subproject subproject="dev" subtarget="build"/>
+     <call-subproject subproject="user" subtarget="build"/>
+     <call-subproject subproject="servlet" subtarget="build"/>
+     <call-subproject subproject="tools" subtarget="build"/>
+     <call-subproject subproject="jni" subtarget="build"/>
+     <call-subproject subproject="samples" subtarget="build"/>
   </target>
 
-  <target name="checkstyle" description="Does static analysis of GWT source">
+  <target name="checkstyle" description="[action] Does static analysis of GWT source">
     <call-subproject subproject="buildtools" subtarget="checkstyle" />
     <call-subproject subproject="dev" subtarget="checkstyle" />
     <call-subproject subproject="user" subtarget="checkstyle" />
@@ -93,7 +118,7 @@
     <call-subproject subproject="samples" subtarget="checkstyle" />
   </target>
 
-  <target name="test" depends="dist-dev" description="Runs all the GWT tests">
+  <target name="test" depends="dist-dev" description="[action] Runs all the GWT tests">
     <call-subproject subproject="buildtools" subtarget="test" />
     <call-subproject subproject="dev" subtarget="test" />
     <call-subproject subproject="user" subtarget="test" />
@@ -101,15 +126,15 @@
     <call-subproject subproject="tools" subtarget="test" />
   </target>
 
-  <target name="clean" description="Cleans the entire GWT build">
+  <target name="clean" description="[action] Cleans the entire GWT build">
     <delete dir="${gwt.build}" />
   </target>
 
-  <target name ="presubmit" description="Runs checkstyle,apichecker, and all tests" depends="test,apicheck-nobuild,checkstyle">		
+  <target name ="presubmit" description="[action] Runs checkstyle,apichecker, and all tests" depends="test,apicheck-nobuild,checkstyle">		
   </target>
 	
   <target name="apicheck-nobuild" 
-    description="Checks API compatibility to prior GWT revision">
+    description="[action] Checks API compatibility to prior GWT revision">
     <copy tofile="${gwt.build.out}/userApi.conf" filtering="false"
           file="${gwt.apicheck.config}"
           overwrite="true">
@@ -134,6 +159,6 @@
   </target>
   
   <target name="apicheck" depends="build,apicheck-nobuild" 
-          description="Builds GWT and checks API compatiblity to prior release"/>
+          description="[action] Builds GWT and checks API compatiblity to prior release"/>
  
 </project>
