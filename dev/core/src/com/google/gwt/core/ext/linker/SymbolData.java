@@ -116,6 +116,11 @@ public interface SymbolData extends Serializable {
   String getSymbolName();
 
   /**
+   * Returns the typeId or <code>0</code> if the type does not have a typeId.
+   */
+  int getTypeId();
+
+  /**
    * Returns <code>true</code> if the symbol represents a class.
    */
   boolean isClass();

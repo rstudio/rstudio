@@ -26,6 +26,7 @@ import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
+import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JAssertStatement;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
@@ -163,6 +164,13 @@ public class GenerateJavaScriptAST {
     private final Map<String, String> fileNameToUriString = new HashMap<String, String>();
 
     private final Stack<JsScope> scopeStack = new Stack<JsScope>();
+
+    @Override
+    public void endVisit(JArrayType x, Context ctx) {
+      JsName name = topScope.declareName(x.getName());
+      names.put(x, name);
+      recordSymbol(x, name);
+    }
 
     @Override
     public void endVisit(JClassType x, Context ctx) {
@@ -404,8 +412,10 @@ public class GenerateJavaScriptAST {
     }
 
     private void recordSymbol(JReferenceType x, JsName jsName) {
+      int typeId = program.getTypeId(x);
       StandardSymbolData symbolData = StandardSymbolData.forClass(x.getName(),
-          makeUriString(x), x.getSourceInfo().getStartLine());
+          x.getSourceInfo().getFileName(), x.getSourceInfo().getStartLine(),
+          typeId);
       assert !symbolTable.containsKey(symbolData);
       symbolTable.put(symbolData, jsName);
     }

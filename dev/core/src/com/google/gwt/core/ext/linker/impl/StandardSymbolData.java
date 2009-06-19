@@ -31,14 +31,15 @@ import java.net.URISyntaxException;
 public class StandardSymbolData implements SymbolData {
 
   public static StandardSymbolData forClass(String className, String uriString,
-      int lineNumber) {
-    return new StandardSymbolData(className, null, null, uriString, lineNumber);
+      int lineNumber, int typeId) {
+    return new StandardSymbolData(className, null, null, uriString, lineNumber,
+        typeId);
   }
 
   public static StandardSymbolData forMember(String className,
       String memberName, String methodSig, String uriString, int lineNumber) {
     return new StandardSymbolData(className, memberName, methodSig, uriString,
-        lineNumber);
+        lineNumber, 0);
   }
 
   public static String toUriString(String fileName) {
@@ -60,9 +61,10 @@ public class StandardSymbolData implements SymbolData {
   private int sourceLine;
   private String sourceUri;
   private String symbolName;
+  private int typeId;
 
   private StandardSymbolData(String className, String memberName,
-      String methodSig, String sourceUri, int sourceLine) {
+      String methodSig, String sourceUri, int sourceLine, int typeId) {
     assert className != null && className.length() > 0 : "className";
     assert memberName != null || methodSig == null : "methodSig without memberName";
     assert sourceLine >= -1 : "sourceLine: " + sourceLine;
@@ -72,6 +74,7 @@ public class StandardSymbolData implements SymbolData {
     this.methodSig = methodSig;
     this.sourceUri = sourceUri;
     this.sourceLine = sourceLine;
+    this.typeId = typeId;
   }
 
   public String getClassName() {
@@ -102,6 +105,10 @@ public class StandardSymbolData implements SymbolData {
 
   public String getSymbolName() {
     return symbolName;
+  }
+
+  public int getTypeId() {
+    return typeId;
   }
 
   public boolean isClass() {
@@ -144,6 +151,7 @@ public class StandardSymbolData implements SymbolData {
     sourceLine = in.readInt();
     sourceUri = (String) in.readObject();
     symbolName = in.readUTF();
+    typeId = in.readInt();
   }
 
   /**
@@ -170,5 +178,6 @@ public class StandardSymbolData implements SymbolData {
     out.writeInt(sourceLine);
     out.writeObject(sourceUri);
     out.writeUTF(symbolName);
+    out.writeInt(typeId);
   }
 }
