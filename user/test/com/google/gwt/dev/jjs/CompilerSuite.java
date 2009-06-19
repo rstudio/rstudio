@@ -27,6 +27,7 @@ import com.google.gwt.dev.jjs.test.EnhancedForLoopTest;
 import com.google.gwt.dev.jjs.test.EnumsTest;
 import com.google.gwt.dev.jjs.test.GenericCastTest;
 import com.google.gwt.dev.jjs.test.HostedTest;
+import com.google.gwt.dev.jjs.test.InitialLoadSequenceTest;
 import com.google.gwt.dev.jjs.test.InnerClassTest;
 import com.google.gwt.dev.jjs.test.InnerOuterSuperTest;
 import com.google.gwt.dev.jjs.test.JStaticEvalTest;
@@ -70,6 +71,7 @@ public class CompilerSuite {
     suite.addTestSuite(EnumsTest.class);
     suite.addTestSuite(GenericCastTest.class);
     suite.addTestSuite(HostedTest.class);
+    suite.addTestSuite(InitialLoadSequenceTest.class);
     suite.addTestSuite(InnerClassTest.class);
     suite.addTestSuite(InnerOuterSuperTest.class);
     suite.addTestSuite(JsniConstructorTest.class);
