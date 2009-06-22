@@ -722,6 +722,14 @@ public class JsInliner {
    */
   private static class InliningVisitor extends JsModVisitor {
     private final Set<JsFunction> blacklist = new HashSet<JsFunction>();
+    /**
+     * This reflects the functions that are currently being inlined to prevent
+     * infinite expansion.
+     */
+    private final Stack<JsFunction> inlining = new Stack<JsFunction>();
+    /**
+     * This reflects which function the visitor is currently visiting.
+     */
     private final Stack<JsFunction> functionStack = new Stack<JsFunction>();
     private final InvocationCountingVisitor invocationCountingVisitor = new InvocationCountingVisitor();
     private final Stack<List<JsName>> newLocalVariableStack = new Stack<List<JsName>>();
@@ -859,13 +867,13 @@ public class JsInliner {
        * when trying operate on references to external functions, or functions
        * as arguments to another function.
        */
-      JsFunction f = isFunction(x.getQualifier());
-      if (f == null) {
+      JsFunction invokedFunction = isFunction(x.getQualifier());
+      if (invokedFunction == null) {
         return;
       }
 
       // Don't inline blacklisted functions
-      if (blacklist.contains(f)) {
+      if (blacklist.contains(invokedFunction)) {
         return;
       }
 
@@ -873,165 +881,38 @@ public class JsInliner {
        * The current function has been mutated so as to be self-recursive. Ban
        * it from any future inlining to prevent infinite expansion.
        */
-      if (f == callerFunction) {
-        blacklist.add(f);
+      if (invokedFunction == callerFunction) {
+        blacklist.add(invokedFunction);
         return;
       }
 
-      List<JsStatement> statements;
-      if (f.getBody() != null) {
-        statements = new ArrayList<JsStatement>(f.getBody().getStatements());
-      } else {
+      /*
+       * We are already in the middle of attempting to inline a call to this
+       * function. This check prevents infinite expansion across
+       * mutually-recursive, inlinable functions. Any invocation skipped by this
+       * logic will be re-visited in the <code>op = accept(op)</code> call in
+       * the outermost JsInvocation.
+       */
+      if (inlining.contains(invokedFunction)) {
+        return;
+      }
+
+      inlining.push(invokedFunction);
+      JsExpression op = process(x, callerFunction, invokedFunction);
+
+      if (x != op) {
         /*
-         * Will see this with certain classes whose clinits are folded into the
-         * main JsProgram body.
+         * See if any further inlining can be performed in the current context.
+         * By attempting to maximize the level of inlining now, we can reduce
+         * the total number of passes required to finalize the AST.
          */
-        statements = Collections.emptyList();
+        op = accept(op);
+        ctx.replaceMe(op);
       }
 
-      List<JsExpression> hoisted = new ArrayList<JsExpression>(
-          statements.size());
-      List<JsName> localVariableNames = new ArrayList<JsName>();
-      boolean sawReturnStatement = false;
-
-      for (JsStatement statement : statements) {
-        if (sawReturnStatement) {
-          /*
-           * We've already seen a return statement, but there are still more
-           * statements. The target is unsafe to inline, so bail. Note: in most
-           * cases JsStaticEval will have removed any statements following a
-           * return statement.
-           * 
-           * The reason we have to bail is that the return statement's
-           * expression MUST be the last thing evaluated.
-           * 
-           * TODO(bobv): maybe it could still be inlined with smart
-           * transformation?
-           */
-          return;
-        }
-
-        /*
-         * Create replacement expressions to use in place of the original
-         * statements. It is important that the replacement is newly-minted and
-         * therefore not referenced by any other AST nodes. Consider the case of
-         * a common, delegating function. If the hoisted expressions were not
-         * distinct objects, it would not be possible to substitute different
-         * JsNameRefs at different call sites.
-         */
-        JsExpression h = hoistedExpression(program, statement,
-            localVariableNames);
-        if (h == null) {
-          return;
-        }
-
-        if (isReturnStatement(statement)) {
-          sawReturnStatement = true;
-          hoisted.add(h);
-        } else if (hasSideEffects(Collections.singletonList(h))) {
-          hoisted.add(h);
-        }
+      if (inlining.pop() != invokedFunction) {
+        throw new RuntimeException("Unexpected function popped");
       }
-
-      /*
-       * If the inlined method has no return statement, synthesize an undefined
-       * reference. It will be reclaimed if the method call is from a
-       * JsExprStmt.
-       */
-      if (!sawReturnStatement) {
-        hoisted.add(program.getUndefinedLiteral());
-      }
-
-      assert (hoisted.size() > 0);
-
-      /*
-       * Build up the new comma expression from right-to-left; building the
-       * rightmost comma expressions first. Bootstrapping with i.previous()
-       * ensures that this logic will function correctly in the case of a single
-       * expression.
-       */
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-          InliningVisitor.class, "Inlined invocation");
-      ListIterator<JsExpression> i = hoisted.listIterator(hoisted.size());
-      JsExpression op = i.previous();
-      while (i.hasPrevious()) {
-        JsBinaryOperation outerOp = new JsBinaryOperation(sourceInfo,
-            JsBinaryOperator.COMMA);
-        outerOp.setArg1(i.previous());
-        outerOp.setArg2(op);
-        op = outerOp;
-      }
-
-      // Confirm that the expression conforms to the desired heuristics
-      if (!isInlinable(program, callerFunction, f, x.getArguments(), op)) {
-        return;
-      }
-
-      // Perform the name replacement
-      NameRefReplacerVisitor v = new NameRefReplacerVisitor(x, f);
-      for (ListIterator<JsName> nameIterator = localVariableNames.listIterator(); nameIterator.hasNext();) {
-        JsName name = nameIterator.next();
-
-        /*
-         * Find an unused identifier in the caller's scope. It's possible that
-         * the same function has been inlined in multiple places within the
-         * function so we'll use a counter for disambiguation.
-         */
-        String ident;
-        String base = f.getName() + "_" + name.getIdent();
-        JsScope scope = callerFunction.getScope();
-        HashMap<String, Integer> startIdent = startIdentForScope.get(scope);
-        if (startIdent == null) {
-          startIdent = new HashMap<String, Integer>();
-          startIdentForScope.put(scope, startIdent);
-        }
-
-        Integer s = startIdent.get(base);
-        int suffix = (s == null) ? 0 : s.intValue();
-        do {
-          ident = base + "_" + suffix++;
-        } while (scope.findExistingName(ident) != null);
-        startIdent.put(base, suffix);
-
-        JsName newName = scope.declareName(ident, name.getShortIdent());
-        v.setReplacementName(name, newName);
-        nameIterator.set(newName);
-      }
-      op = v.accept(op);
-
-      // Normalize any nested comma expressions that we may have generated.
-      op = (new CommaNormalizer(localVariableNames)).accept(op);
-
-      /*
-       * Compare the relative complexity of the original invocation versus the
-       * inlined form.
-       */
-      int originalComplexity = complexity(x);
-      int inlinedComplexity = complexity(op);
-      double ratio = ((double) inlinedComplexity) / originalComplexity;
-      if (ratio > MAX_COMPLEXITY_INCREASE && isInvokedMoreThanOnce(f)) {
-        return;
-      }
-
-      if (callerFunction == programFunction && localVariableNames.size() > 0) {
-        // Don't add additional variables to the top-level program.
-        return;
-      }
-
-      // We've committed to the inlining, ensure the vars are created
-      newLocalVariableStack.peek().addAll(localVariableNames);
-
-      // update invocation counts according to this inlining
-      invocationCountingVisitor.removeCountsFor(x);
-      invocationCountingVisitor.accept(op);
-
-      /*
-       * See if any further inlining can be performed in the current context. By
-       * attempting to maximize the level of inlining now, we can reduce the
-       * total number of passes required to finalize the AST.
-       */
-      op = accept(op);
-      ctx.replaceMe(op);
     }
 
     @Override
@@ -1110,6 +991,166 @@ public class JsInliner {
     private boolean isInvokedMoreThanOnce(JsFunction f) {
       Integer count = invocationCountingVisitor.invocationCount(f);
       return count == null || count > 1;
+    }
+
+    /**
+     * Determine if <code>invokedFunction</code> can be inlined into
+     * <code>callerFunction</code> at callsite <code>x</code>.
+     * 
+     * @return An expression equivalent to <code>x</code>
+     */
+    private JsExpression process(JsInvocation x, JsFunction callerFunction,
+        JsFunction invokedFunction) {
+      List<JsStatement> statements;
+      if (invokedFunction.getBody() != null) {
+        statements = new ArrayList<JsStatement>(
+            invokedFunction.getBody().getStatements());
+      } else {
+        /*
+         * Will see this with certain classes whose clinits are folded into the
+         * main JsProgram body.
+         */
+        statements = Collections.emptyList();
+      }
+
+      List<JsExpression> hoisted = new ArrayList<JsExpression>(
+          statements.size());
+      List<JsName> localVariableNames = new ArrayList<JsName>();
+      boolean sawReturnStatement = false;
+
+      for (JsStatement statement : statements) {
+        if (sawReturnStatement) {
+          /*
+           * We've already seen a return statement, but there are still more
+           * statements. The target is unsafe to inline, so bail. Note: in most
+           * cases JsStaticEval will have removed any statements following a
+           * return statement.
+           * 
+           * The reason we have to bail is that the return statement's
+           * expression MUST be the last thing evaluated.
+           * 
+           * TODO(bobv): maybe it could still be inlined with smart
+           * transformation?
+           */
+          return x;
+        }
+
+        /*
+         * Create replacement expressions to use in place of the original
+         * statements. It is important that the replacement is newly-minted and
+         * therefore not referenced by any other AST nodes. Consider the case of
+         * a common, delegating function. If the hoisted expressions were not
+         * distinct objects, it would not be possible to substitute different
+         * JsNameRefs at different call sites.
+         */
+        JsExpression h = hoistedExpression(program, statement,
+            localVariableNames);
+        if (h == null) {
+          return x;
+        }
+
+        if (isReturnStatement(statement)) {
+          sawReturnStatement = true;
+          hoisted.add(h);
+        } else if (hasSideEffects(Collections.singletonList(h))) {
+          hoisted.add(h);
+        }
+      }
+
+      /*
+       * If the inlined method has no return statement, synthesize an undefined
+       * reference. It will be reclaimed if the method call is from a
+       * JsExprStmt.
+       */
+      if (!sawReturnStatement) {
+        hoisted.add(program.getUndefinedLiteral());
+      }
+
+      assert (hoisted.size() > 0);
+
+      /*
+       * Build up the new comma expression from right-to-left; building the
+       * rightmost comma expressions first. Bootstrapping with i.previous()
+       * ensures that this logic will function correctly in the case of a single
+       * expression.
+       */
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
+          InliningVisitor.class, "Inlined invocation");
+      ListIterator<JsExpression> i = hoisted.listIterator(hoisted.size());
+      JsExpression op = i.previous();
+      while (i.hasPrevious()) {
+        JsBinaryOperation outerOp = new JsBinaryOperation(sourceInfo,
+            JsBinaryOperator.COMMA);
+        outerOp.setArg1(i.previous());
+        outerOp.setArg2(op);
+        op = outerOp;
+      }
+
+      // Confirm that the expression conforms to the desired heuristics
+      if (!isInlinable(program, callerFunction, invokedFunction,
+          x.getArguments(), op)) {
+        return x;
+      }
+
+      // Perform the name replacement
+      NameRefReplacerVisitor v = new NameRefReplacerVisitor(x, invokedFunction);
+      for (ListIterator<JsName> nameIterator = localVariableNames.listIterator(); nameIterator.hasNext();) {
+        JsName name = nameIterator.next();
+
+        /*
+         * Find an unused identifier in the caller's scope. It's possible that
+         * the same function has been inlined in multiple places within the
+         * function so we'll use a counter for disambiguation.
+         */
+        String ident;
+        String base = invokedFunction.getName() + "_" + name.getIdent();
+        JsScope scope = callerFunction.getScope();
+        HashMap<String, Integer> startIdent = startIdentForScope.get(scope);
+        if (startIdent == null) {
+          startIdent = new HashMap<String, Integer>();
+          startIdentForScope.put(scope, startIdent);
+        }
+
+        Integer s = startIdent.get(base);
+        int suffix = (s == null) ? 0 : s.intValue();
+        do {
+          ident = base + "_" + suffix++;
+        } while (scope.findExistingName(ident) != null);
+        startIdent.put(base, suffix);
+
+        JsName newName = scope.declareName(ident, name.getShortIdent());
+        v.setReplacementName(name, newName);
+        nameIterator.set(newName);
+      }
+      op = v.accept(op);
+
+      // Normalize any nested comma expressions that we may have generated.
+      op = (new CommaNormalizer(localVariableNames)).accept(op);
+
+      /*
+       * Compare the relative complexity of the original invocation versus the
+       * inlined form.
+       */
+      int originalComplexity = complexity(x);
+      int inlinedComplexity = complexity(op);
+      double ratio = ((double) inlinedComplexity) / originalComplexity;
+      if (ratio > MAX_COMPLEXITY_INCREASE
+          && isInvokedMoreThanOnce(invokedFunction)) {
+        return x;
+      }
+
+      if (callerFunction == programFunction && localVariableNames.size() > 0) {
+        // Don't add additional variables to the top-level program.
+        return x;
+      }
+
+      // We've committed to the inlining, ensure the vars are created
+      newLocalVariableStack.peek().addAll(localVariableNames);
+
+      // update invocation counts according to this inlining
+      invocationCountingVisitor.removeCountsFor(x);
+      invocationCountingVisitor.accept(op);
+      return op;
     }
   }
 

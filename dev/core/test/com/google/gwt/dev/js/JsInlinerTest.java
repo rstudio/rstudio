@@ -27,27 +27,50 @@ import com.google.gwt.dev.js.ast.JsProgram;
  */
 public class JsInlinerTest extends OptimizerTestBase {
 
-  public void testSelfRecursion() throws Exception {
-    String input = "function a1() { return blah && b1() }"
-        + "function b1() { return bar && a1()}" + "function c() { a1() } c()";
-    input = optimize(input, JsSymbolResolver.class, FixStaticRefsVisitor.class,
-        JsInliner.class, JsUnusedFunctionRemover.class);
-
-    String expected = "function a1() { return blah && bar && a1() }"
-        + "function c() { a1() } c()";
-    expected = optimize(expected);
-    assertEquals(expected, input);
-  }
-
   private static class FixStaticRefsVisitor extends JsModVisitor {
+    public static void exec(JsProgram program) {
+      (new FixStaticRefsVisitor()).accept(program);
+    }
+
     @Override
     public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
       JsName name = x.getName();
       name.setStaticRef(x);
     }
+  }
 
-    public static void exec(JsProgram program) {
-      (new FixStaticRefsVisitor()).accept(program);
-    }
+  /**
+   * A test for mutually-recursive functions. Setup:
+   * 
+   * <pre>
+   * a -> b, c
+   * b -> a, c
+   * c -> a, c
+   * </pre>
+   */
+  public void testMutualRecursion() throws Exception {
+    String input = "function a1() { return ex ? b1() : c1() }"
+        + "function b1() { return ex2 ? a1(): c1(); }"
+        + "function c1() { return ex2? a1():c1(); } c1()";
+    String expected = "function a1() { return ex ? (ex2 ? a1() : c1()) : c1() }"
+        + "function c1() { return ex2 ? a1() :c1(); } c1()";
+    compare(expected, input);
+  }
+
+  public void testSelfRecursion() throws Exception {
+    String input = "function a1() { return blah && b1() }"
+        + "function b1() { return bar && a1()}" + "function c() { a1() } c()";
+
+    String expected = "function a1() { return blah && bar && a1() }"
+        + "function c() { a1() } c()";
+
+    compare(expected, input);
+  }
+
+  private void compare(String expected, String input) throws Exception {
+    input = optimize(input, JsSymbolResolver.class, FixStaticRefsVisitor.class,
+        JsInliner.class, JsUnusedFunctionRemover.class);
+    expected = optimize(expected);
+    assertEquals(expected, input);
   }
 }
