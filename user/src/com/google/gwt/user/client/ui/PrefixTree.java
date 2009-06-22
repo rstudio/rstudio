@@ -41,6 +41,8 @@ class PrefixTree extends AbstractCollection<String> {
    */
   private static class PrefixTreeIterator implements Iterator<String> {
 
+    @SuppressWarnings("unused")
+    // Called from JSNI.
     private JavaScriptObject stack;
 
     /**
@@ -99,7 +101,7 @@ class PrefixTree extends AbstractCollection<String> {
      */
     private native void addTree(PrefixTree tree, String prefix) /*-{
       var suffixes = [];
-      for (suffix in tree.@com.google.gwt.user.client.ui.PrefixTree::suffixes) {
+      for (var suffix in tree.@com.google.gwt.user.client.ui.PrefixTree::suffixes) {
         suffixes.push(suffix);
       }
 
@@ -162,7 +164,7 @@ class PrefixTree extends AbstractCollection<String> {
 
        // Put all subframes on the stack, and return to top of loop.
        } else {
-         for (key in frame.subtrees) {
+         for (var key in frame.subtrees) {
            var target = frame.prefix + unsafe(key);
            var subtree = frame.subtrees[key];
 
@@ -411,7 +413,7 @@ class PrefixTree extends AbstractCollection<String> {
     // The answer can only exist in this tree's suffixes or subtree keys.
     } else {
      // Check local suffixes.
-     for (suffix in suffixes) {
+     for (var suffix in suffixes) {
        var target = prefix + @com.google.gwt.user.client.ui.PrefixTree::unsafe(Ljava/lang/String;)(suffix);
        if (target.indexOf(search) == 0) {
          output.@java.util.Collection::add(Ljava/lang/Object;)(target);

@@ -42,7 +42,7 @@ public class OptionElement extends Element {
    * control is not within the context of a form.
    */
   public final native FormElement getForm() /*-{
-    return form;
+    return this.form;
   }-*/;
 
   /**

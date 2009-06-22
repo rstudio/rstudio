@@ -92,7 +92,7 @@ public class TableSectionElement extends Element {
    * HTMLTheadElement for details.
    */
   public final native String getVAlign() /*-{
-    return this.valign;
+    return this.vAlign;
   }-*/;
 
   /**
@@ -140,6 +140,6 @@ public class TableSectionElement extends Element {
    * HTMLTheadElement for details.
    */
   public final native void setVAlign(String vAlign) /*-{
-    this.valign = valign;
+    this.vAlign = vAlign;
   }-*/;
 }
