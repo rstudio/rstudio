@@ -605,8 +605,8 @@ public abstract class AbstractClientBundleGenerator extends Generator {
     sw.indent();
     for (List<JMethod> list : taskList.values()) {
       for (JMethod m : list) {
-        sw.println("case '" + m.getName() + "': return this.@"
-            + createdClassName + "::" + (m.getName() + "()()") + ";");
+        sw.println("case '" + m.getName() + "': return this."
+            + m.getJsniSignature() + "();");
       }
     }
     sw.outdent();

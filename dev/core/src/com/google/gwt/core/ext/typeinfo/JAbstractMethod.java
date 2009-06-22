@@ -92,6 +92,13 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
    */
   public abstract JClassType getEnclosingType();
 
+  /**
+   * Returns a string contating a JSNI reference to the method.
+   * 
+   * @return <code>@package.Class::method(Lpackage/Param;...)</code>
+   */
+  public abstract String getJsniSignature();
+
   @Deprecated
   public final String[][] getMetaData(String tagName) {
     return TypeOracle.NO_STRING_ARR_ARR;

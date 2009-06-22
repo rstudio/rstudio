@@ -30,7 +30,7 @@ public class JMethod extends JAbstractMethod {
   public JMethod(JClassType enclosingType, String name) {
     this(enclosingType, name, null, null);
   }
-  
+
   public JMethod(JClassType enclosingType, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
       JTypeParameter[] jtypeParameters) {
@@ -48,6 +48,19 @@ public class JMethod extends JAbstractMethod {
   @Override
   public JClassType getEnclosingType() {
     return enclosingType;
+  }
+
+  public String getJsniSignature() {
+    StringBuilder sb = new StringBuilder("@");
+    sb.append(getEnclosingType().getQualifiedSourceName());
+    sb.append("::");
+    sb.append(getName());
+    sb.append("(");
+    for (JParameter param : getParameters()) {
+      sb.append(param.getType().getJNISignature());
+    }
+    sb.append(")");
+    return sb.toString();
   }
 
   @Override
