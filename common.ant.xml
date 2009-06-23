@@ -272,15 +272,16 @@
   </macrodef>
 
   <macrodef name="gwt.checkstyle">
+    <attribute name="outputdirectory" default="${project.build}"/>
     <element name="sourcepath" implicit="yes" optional="true" />
     <sequential>
       <taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar;${gwt.build.lib}/gwt-customchecks.jar" />
-      <checkstyle config="${gwt.root}/eclipse/settings/code-style/gwt-checkstyle.xml" maxErrors="0">
-      	<formatter type="xml" toFile="${project.build}/checkstyle_log.xml"/>
+      <checkstyle config="${gwt.root}/eclipse/settings/code-style/gwt-checkstyle.xml" maxErrors="0" failOnViolation="false" failureProperty="gwt.checkstyle.failed">
+      	<formatter type="xml" toFile="@{outputdirectory}/checkstyle_log.xml"/>
         <property key="checkstyle.header.file" file="${gwt.root}/eclipse/settings/code-style/google.header" />
         <sourcepath />
       </checkstyle>
-     <echo message="Checkstyle messages are reported in checkstyle_log.xml located at ${project.build}" />
+      <fail message="Checkstyle errors exist, and are reported in checkstyle_log.xml located at @{outputdirectory}" if="gwt.checkstyle.failed" />
     </sequential>
   </macrodef>
 

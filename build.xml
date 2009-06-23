@@ -130,7 +130,7 @@
     <delete dir="${gwt.build}" />
   </target>
 
-  <target name ="presubmit" description="[action] Runs checkstyle,apichecker, and all tests" depends="test,apicheck-nobuild,checkstyle">		
+  <target name ="presubmit" description="[action] Runs checkstyle,apichecker, and all tests" depends="dist-dev,apicheck-nobuild,checkstyle,test">		
   </target>
 	
   <target name="apicheck-nobuild" 
