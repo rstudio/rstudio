@@ -167,7 +167,7 @@ class HistoryImplIE6 extends HistoryImpl {
           // if someone entered or linked to a bad url.
           historyImplRef.@com.google.gwt.user.client.impl.HistoryImplIE6::reloadWindow()();
         }
-  
+
         var historyToken = @com.google.gwt.user.client.impl.HistoryImpl::getToken()();
         if (historyToken && (token != historyToken)) {
           historyImplRef.@com.google.gwt.user.client.impl.HistoryImplIE6::reloadWindow()();
@@ -199,7 +199,13 @@ class HistoryImplIE6 extends HistoryImpl {
     Location.reload();
   }
 
-  private native void updateHash(String token) /*-{
+  private void updateHash(String token) {
+    if (HistoryImpl.updateHashOnIE6) {
+      updateHashInternal(token);
+    }
+  }
+
+  private native void updateHashInternal(String token) /*-{
     $wnd.location.hash = this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(token);
   }-*/;
 }
