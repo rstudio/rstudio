@@ -337,10 +337,9 @@ public class GwtLocaleImpl implements GwtLocale {
   }
 
   /**
-   * Returns this locale in canonical form:
+   * Returns this locale in canonical form.  Changes for canonical form are:
    * <ul>
    *  <li>Deprecated language/region tags are replaced with official versions
-   *  <li>
    * </ul>
    * 
    * @return GwtLocale instance 

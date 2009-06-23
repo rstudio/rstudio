@@ -141,7 +141,7 @@ public class JavaScriptObject {
   }
 
   /**
-   * Call the toSource() on the JSO
+   * Call the toSource() on the JSO.
    */
   public native String toSource() /*-{
     this.toSource ? this.toSource() : "NO SOURCE";

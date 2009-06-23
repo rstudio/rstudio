@@ -40,6 +40,10 @@ public class HistoryImpl implements HasValueChangeHandlers<String>,
 
   static boolean updateHashOnIE6 = true;
 
+  public static native String getToken() /*-{
+    return $wnd.__gwt_historyToken || "";
+  }-*/;
+
   /**
    * Sets whether the IE6 history implementation will update the URL hash when
    * creating a new item. This should be used only for applications with large
@@ -49,10 +53,6 @@ public class HistoryImpl implements HasValueChangeHandlers<String>,
   public static void setUpdateHashOnIE6(boolean updateHash) {
     HistoryImpl.updateHashOnIE6 = updateHash;
   }
-
-  public static native String getToken() /*-{
-    return $wnd.__gwt_historyToken || "";
-  }-*/;
 
   protected static native void setToken(String token) /*-{
     $wnd.__gwt_historyToken = token;

@@ -282,7 +282,7 @@ public class TimeZone {
 
   /**
    * Check whether the given date and time falls within a daylight savings time
-   * period
+   * period.
    * 
    * @param date and time to check.
    * @return true if daylight savings time is in effect.

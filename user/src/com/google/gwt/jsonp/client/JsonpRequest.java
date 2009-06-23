@@ -67,7 +67,7 @@ public class JsonpRequest<T> {
   private final AsyncCallback<T> callback;
 
   /**
-   * Whether the result is expected to be an integer or not
+   * Whether the result is expected to be an integer or not.
    */
   @SuppressWarnings("unused") // used by JSNI
   private final boolean expectInteger;
