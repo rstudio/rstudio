@@ -36,6 +36,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -294,13 +295,27 @@ abstract class OophmHostedModeBase extends HostedModeBase {
      * TODO(jat): properly support launching arbitrary browsers; waiting on
      * Freeland's work with BrowserScanner and the trunk merge to get it.
      */
-    String separator;
-    if (url.contains("?")) {
-      separator = "&";
-    } else {
-      separator = "?";
+    try {
+      URL parsedUrl = new URL(url);
+      String path = parsedUrl.getPath();
+      String query = parsedUrl.getQuery();
+      String hash = parsedUrl.getRef();
+      String hostedParam =  "gwt.hosted=" + listener.getEndpointIdentifier();
+      if (query == null) {
+        query = hostedParam;
+      } else {
+        query += '&' + hostedParam;
+      }
+      path += '?' + query;
+      if (hash != null) {
+        path += '#' + hash;
+      }
+      url = new URL(parsedUrl.getProtocol(), parsedUrl.getHost(),
+          parsedUrl.getPort(), path).toExternalForm();
+    } catch (MalformedURLException e) {
+      getTopLogger().log(TreeLogger.ERROR, "Invalid URL " + url, e);
+      throw new UnableToCompleteException();
     }
-    url += separator + "gwt.hosted=" + listener.getEndpointIdentifier();
     TreeLogger branch = getTopLogger().branch(TreeLogger.INFO,
         "Launching firefox with " + url, null);
     try {
