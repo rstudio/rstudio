@@ -30,6 +30,7 @@ public class SqlDateTest extends GWTTestCase {
   /**
    * Sets module name so that javascript compiler can operate.
    */
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -116,5 +117,18 @@ public class SqlDateTest extends GWTTestCase {
 
     Date d2 = Date.valueOf(d.toString());
     assertEquals(d, d2);
+    
+    // validate that leading zero's don't trigger octal eval
+    d = Date.valueOf("2009-08-08");
+    assertEquals(109, d.getYear());
+    assertEquals(7, d.getMonth());
+    assertEquals(8, d.getDate());
+    
+    // validate 0x isn't a valid prefix
+    try {
+      d = Date.valueOf("2009-0xA-0xB");
+      fail("Should have thrown IllegalArgumentException");
+    } catch (IllegalArgumentException expected) {
+    }
   }
 }

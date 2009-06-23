@@ -28,10 +28,10 @@ public class Date extends java.util.Date {
 
     try {
       // Years are relative to 1900
-      int y = Integer.decode(split[0]) - 1900;
+      int y = Integer.parseInt(split[0]) - 1900;
       // Months are internally 0-based
-      int m = Integer.decode(split[1]) - 1;
-      int d = Integer.decode(split[2]);
+      int m = Integer.parseInt(split[1]) - 1;
+      int d = Integer.parseInt(split[2]);
 
       return new Date(y, m, d);
     } catch (NumberFormatException e) {
