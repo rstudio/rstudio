@@ -42,31 +42,75 @@ public class TextBoxImplIE6 extends TextBoxImpl {
       var tr = elem.document.selection.createRange();
       if (tr.parentElement() !== elem)
         return 0;
-      return tr.text.length;
+      var trLength = tr.text.length;
+
+      // Subtract characters from the end to account for trimmed newlines.
+      var offset = 0;
+      var tr2 = tr.duplicate();
+      tr2.moveEnd('character', -1);
+      var tr2Length = tr2.text.length;
+      while (tr2Length == trLength && tr2.parentElement() == elem && tr.compareEndPoints('StartToEnd', tr2) <= 0) {
+        offset += 2;
+        tr2.moveEnd('character', -1);
+        tr2Length = tr2.text.length;
+      }
+      return trLength + offset;
     }
     catch (e) {
       return 0;
     }
   }-*/;
 
+  /**
+   * The text reported in the text range does not include newline characters at
+   * the end of the selection. So, we need to create 2 ranges and subtract a
+   * character from one until the lengths are different. At that point, we know
+   * exactly how many \r\n were truncated from the selection.
+   */
   @Override
   public native int getTextAreaCursorPos(Element elem) /*-{
     try {
       var tr = elem.document.selection.createRange();
+      if (tr.parentElement() !== elem)
+        return -1;
       var tr2 = tr.duplicate();
       tr2.moveToElementText(elem);
-      tr.setEndPoint('EndToStart', tr2);
-      return tr.text.length;
+      tr2.setEndPoint('EndToStart', tr);
+      var tr2Length = tr2.text.length; 
+
+      // Subtract characters from the end to account for trimmed newlines.
+      var offset = 0;
+      var tr3 = tr2.duplicate();
+      tr3.moveEnd('character', -1);
+      var tr3Length = tr3.text.length;
+      while (tr3Length == tr2Length && tr3.parentElement() == elem) {
+        offset += 2;
+        tr3.moveEnd('character', -1);
+        tr3Length = tr3.text.length;
+      }
+      return tr2Length + offset;
     }
     catch (e) {
       return 0;
     }
   }-*/;
 
+  /**
+   * Moving the start 1 character will move across a \r\n, but \r\n counts as
+   * two characters, so we need to offset the position accordingly.
+   */
   @Override
   public native void setSelectionRange(Element elem, int pos, int length) /*-{
     try {
       var tr = elem.createTextRange();
+      var newlinesWithin = elem.value.substr(pos, length).match(/(\r\n)/gi);
+      if (newlinesWithin != null) {
+        length -= newlinesWithin.length;
+      }
+      var newlinesBefore = elem.value.substring(0, pos).match(/(\r\n)/gi);
+      if (newlinesBefore != null) {
+        pos -= newlinesBefore.length;
+      }
       tr.collapse(true);
       tr.moveStart('character', pos);
       tr.moveEnd('character', length);

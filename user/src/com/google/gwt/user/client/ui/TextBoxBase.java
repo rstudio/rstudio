@@ -294,6 +294,15 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
     impl.setSelectionRange(getElement(), pos, length);
   }
 
+  /**
+   * Sets this object's text.  Note that some browsers will manipulate the text
+   * before adding it to the widget.  For example, most browsers will strip all
+   * <code>\r</code> from the text, except IE which will add a <code>\r</code>
+   * before each <code>\n</code>.  Use {@link #getText()} to get the text
+   * directly from the widget.
+   * 
+   * @param text the object's new text
+   */
   public void setText(String text) {
     DOM.setElementProperty(getElement(), "value", text != null ? text : "");
   }

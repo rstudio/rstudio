@@ -21,9 +21,50 @@ package com.google.gwt.user.client.ui;
  */
 public class TextAreaTest extends TextBoxBaseTestBase {
 
+  /**
+   * Most browsers strip \r from newlines, but IE adds them in. IE's TextRange
+   * also truncates the \r\n from the end of the selected range. This test is
+   * designed to work on all browsers and verifies that the newlines are
+   * accounted for in all browsers.
+   */
+  public void testNewline() {
+    testNewline("Hello World\r\n\r\n\r\n\r\n\r\n", 15, 6, 15);
+    testNewline("Hello\r\n\r\n\r\n\r\nWorld, My name is John.", 7, 3, 15);
+    testNewline("\r\n\r\n\r\n\r\n\r\nHello World", 4, 4, 13);
+    testNewline("\r\n\r\n\r\n\r\n\r\n", 2, 2, 4);
+  }
+
   @Override
   protected TextBoxBase createTextBoxBase() {
     return new TextArea();
   }
 
+  /**
+   * Test the handling of newline characters.
+   * 
+   * @param text the text to test
+   * @param cursorPos the cursor position within the newlines
+   * @param startRange the start of a range that includes newlines
+   * @param endRange the end of a range that includes newlines
+   */
+  private void testNewline(String text, int cursorPos, int startRange,
+      int endRange) {
+    TextBoxBase box = createTextBoxBase();
+    box.setText(text);
+    RootPanel.get().add(box);
+
+    // Browsers will manipulate the text when attached to the DOM, so we need
+    // to get the new value.
+    text = box.getText();
+
+    // Position the cursor in the newlines
+    box.setCursorPos(cursorPos);
+    assertEquals(cursorPos, box.getCursorPos());
+
+    // Select newlines
+    box.setSelectionRange(startRange, endRange - startRange);
+    assertEquals(text.substring(startRange, endRange), box.getSelectedText());
+
+    RootPanel.get().remove(box);
+  }
 }
