@@ -215,6 +215,11 @@ public class RichTextArea extends FocusWidget implements HasHTML,
     void leftIndent();
 
     /**
+     * Redo an action that was just undone.
+     */
+    void redo();
+
+    /**
      * Removes all formatting on the selected text.
      */
     void removeFormat();
@@ -233,6 +238,11 @@ public class RichTextArea extends FocusWidget implements HasHTML,
      * Toggles strikethrough.
      */
     void toggleStrikethrough();
+
+    /**
+     * Undo the last action.
+     */
+    void undo();
   }
 
   /**
@@ -307,6 +317,11 @@ public class RichTextArea extends FocusWidget implements HasHTML,
      * Center justification.
      */
     public static final Justification CENTER = new Justification("Center");
+
+    /**
+     * Full justification.
+     */
+    public static final Justification FULL = new Justification("Full");
 
     /**
      * Left justification.

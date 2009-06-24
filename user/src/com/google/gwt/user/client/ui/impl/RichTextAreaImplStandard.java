@@ -138,6 +138,10 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     execCommand("Outdent", null);
   }
 
+  public void redo() {
+    execCommand("Redo", "false");
+  }
+
   public void removeFormat() {
     execCommand("RemoveFormat", null);
   }
@@ -191,6 +195,8 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
   public void setJustification(Justification justification) {
     if (justification == Justification.CENTER) {
       execCommand("JustifyCenter", null);
+    } else if (justification == Justification.FULL) {
+      execCommand("JustifyFull", null);
     } else if (justification == Justification.LEFT) {
       execCommand("JustifyLeft", null);
     } else if (justification == Justification.RIGHT) {
@@ -229,6 +235,10 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
 
   public void toggleUnderline() {
     execCommand("Underline", "False");
+  }
+
+  public void undo() {
+    execCommand("Undo", "false");
   }
 
   @Override
