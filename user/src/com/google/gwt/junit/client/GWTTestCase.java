@@ -118,7 +118,8 @@ public abstract class GWTTestCase extends TestCase {
    * return the name of a module that will cause the source for that subclass to
    * be included.
    * 
-   * @return the fully qualified name of a module
+   * @return the fully qualified name of a module, or <code>null</code> to run
+   *         as a non-GWT test case
    */
   public abstract String getModuleName();
 
@@ -220,7 +221,14 @@ public abstract class GWTTestCase extends TestCase {
       throw new IllegalArgumentException("GWTTestCases require a name; \"" + this.toString() 
           + "\" has none.  Perhaps you used TestSuite.addTest() instead of addTestClass()?");
     }
-    JUnitShell.runTest(getModuleName(), this, testResult);
+
+    String moduleName = getModuleName();
+    if (moduleName != null) {
+      JUnitShell.runTest(moduleName, this, testResult);
+    } else {
+      // Run as a non-GWT test
+      super.runTest();
+    }
   }
 
   /**

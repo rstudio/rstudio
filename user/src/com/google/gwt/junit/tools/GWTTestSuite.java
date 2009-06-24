@@ -76,22 +76,29 @@ public class GWTTestSuite extends TestSuite {
       } else {
         return getModuleSuiteFor(suite.testAt(0));
       }
-    } else if (test instanceof GWTTestCase) {
-      GWTTestCase gwtTest = (GWTTestCase) test;
-      TestSuite suite = moduleSuites.get(gwtTest.getModuleName());
-      if (suite == null) {
-        suite = new TestSuite(gwtTest.getModuleName() + ".gwt.xml");
-        moduleSuites.put(gwtTest.getModuleName(), suite);
-        super.addTest(suite);
-      }
-      return suite;
-    } else {
-      if (nonGWTTestSuite == null) {
-        nonGWTTestSuite = new TestSuite("Non-GWT");
-        super.addTest(nonGWTTestSuite);
-      }
-      return nonGWTTestSuite;
     }
+
+    if (test instanceof GWTTestCase) {
+      GWTTestCase gwtTest = (GWTTestCase) test;
+      String moduleName = gwtTest.getModuleName();
+      if (moduleName != null) {
+        TestSuite suite = moduleSuites.get(moduleName);
+        if (suite == null) {
+          suite = new TestSuite(moduleName + ".gwt.xml");
+          moduleSuites.put(moduleName, suite);
+          super.addTest(suite);
+        }
+        return suite;
+      } else {
+        // Fall-through to group with non-GWT tests.
+      }
+    }
+
+    if (nonGWTTestSuite == null) {
+      nonGWTTestSuite = new TestSuite("Non-GWT");
+      super.addTest(nonGWTTestSuite);
+    }
+    return nonGWTTestSuite;
   }
 
   /**
