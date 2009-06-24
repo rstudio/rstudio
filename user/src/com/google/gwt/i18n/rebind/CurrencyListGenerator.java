@@ -134,6 +134,9 @@ public class CurrencyListGenerator extends Generator {
         currencyObsolete = Integer.valueOf(currencySplit[3]) != 0;
       }
       int currencyFlags = currencyFractionDigits;
+      if (currencyObsolete) {
+        currencyFlags |= CurrencyData.DEPRECATED_FLAG;
+      }
       String currencyPortableSymbol = "";
       if (extraData != null) {
         // CurrencyExtra contains up to 3 fields separated by |
@@ -631,9 +634,6 @@ public class CurrencyListGenerator extends Generator {
     boolean needHeader = true;
     for (String currencyCode : currencies) {
       CurrencyInfo currencyInfo = allCurrencyData.get(currencyCode);
-      if (currencyInfo.isObsolete()) {
-        continue;
-      }
       if (needHeader) {
         needHeader = false;
         writer.println();
@@ -680,9 +680,6 @@ public class CurrencyListGenerator extends Generator {
     boolean needHeader = true;
     for (String currencyCode : currencies) {
       CurrencyInfo currencyInfo = allCurrencyData.get(currencyCode);
-      if (currencyInfo.isObsolete()) {
-        continue;
-      }
       String displayName = currencyInfo.getDisplayName();
       if (displayName != null && !currencyCode.equals(displayName)) {
         if (needHeader) {

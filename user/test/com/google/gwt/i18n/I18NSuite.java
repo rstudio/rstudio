@@ -37,6 +37,7 @@ import com.google.gwt.i18n.client.NumberParse_fr_Test;
 import com.google.gwt.i18n.client.RuntimeLocalesTest;
 import com.google.gwt.i18n.client.TimeZoneInfoTest;
 import com.google.gwt.i18n.client.TimeZoneTest;
+import com.google.gwt.i18n.client.impl.CurrencyTest;
 import com.google.gwt.i18n.rebind.MessageFormatParserTest;
 import com.google.gwt.i18n.server.GwtLocaleTest;
 import com.google.gwt.i18n.server.RegionInheritanceTest;
@@ -55,6 +56,7 @@ public class I18NSuite {
     suite.addTestSuite(ArabicPluralsTest.class);
     suite.addTestSuite(AnnotationsTest.class);
     suite.addTestSuite(ConstantMapTest.class);
+    suite.addTestSuite(CurrencyTest.class);
     suite.addTestSuite(DateTimeFormat_de_Test.class);
     suite.addTestSuite(DateTimeFormat_en_Test.class);
     suite.addTestSuite(DateTimeParse_en_Test.class);

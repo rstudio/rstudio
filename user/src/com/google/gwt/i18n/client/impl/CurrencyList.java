@@ -44,6 +44,12 @@ public class CurrencyList implements Iterable<CurrencyData> {
     return CurrencyListInstance.instance;
   }
 
+  // This helper method exists because we can't call JSO instance methods
+  // directly from JSNI.
+  protected static boolean isDeprecated(CurrencyData currencyData) {
+    return currencyData.isDeprecated();
+  }
+
   /**
    * JS Object which contains a map of currency codes to CurrencyData
    * objects.  Each currency code is prefixed with a ':' to allow
@@ -60,7 +66,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
    * no prefix is added to currency codes in this map.
    */
   protected JavaScriptObject namesMap;
-  
+
   /**
    * Return the default currency data for this locale.
    * 
@@ -72,11 +78,23 @@ public class CurrencyList implements Iterable<CurrencyData> {
 
   /**
    * Returns an iterator for the list of currencies.
+   * 
+   * Deprecated currencies will not be included.
    */
   public final Iterator<CurrencyData> iterator() {
+    return iterator(false);
+  }
+  
+  /**
+   * Returns an iterator for the list of currencies, optionally including
+   * deprecated ones. 
+   * 
+   * @param includeDeprecated true if deprecated currencies should be included
+   */
+  public final Iterator<CurrencyData> iterator(boolean includeDeprecated) {
     ensureCurrencyMap();
     ArrayList<String> keys = new ArrayList<String>();
-    loadCurrencyKeys(keys);
+    loadCurrencyKeys(keys, includeDeprecated);
     final Iterator<String> it = keys.iterator();
     return new Iterator<CurrencyData>() {
 
@@ -93,7 +111,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
       }
     };
   }
-  
+
   /**
    * Lookup a currency based on the ISO4217 currency code.
    * 
@@ -133,7 +151,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
       loadNamesMap();
     }
   }
-  
+
   /**
    * Directly reference an entry in the currency map JSO.
    * 
@@ -217,11 +235,15 @@ public class CurrencyList implements Iterable<CurrencyData> {
   /**
    * Add currency codes contained in the map to an ArrayList.
    */
-  private native void loadCurrencyKeys(ArrayList<String> keys) /*-{
+  private native void loadCurrencyKeys(ArrayList<String> keys,
+      boolean includeDeprecated) /*-{
     var map = this.@com.google.gwt.i18n.client.impl.CurrencyList::dataMap;
     for (var key in map) {
       if (map.hasOwnProperty(key)) {
-        keys.@java.util.ArrayList::add(Ljava/lang/Object;)(key);
+        if (includeDeprecated
+            || !@com.google.gwt.i18n.client.impl.CurrencyList::isDeprecated(Lcom/google/gwt/i18n/client/impl/CurrencyData;)(map[key])) {
+          keys.@java.util.ArrayList::add(Ljava/lang/Object;)(key);
+        }
       }
     }
   }-*/;

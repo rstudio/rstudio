@@ -43,9 +43,11 @@ public final class CurrencyData extends JavaScriptObject {
   public static final int PRECISION_MASK = 7;
   public static final int SPACE_FORCED_FLAG = 32;
   public static final int SPACING_FIXED_FLAG = 64;
+  public static final int DEPRECATED_FLAG = 128;
 
   protected CurrencyData() {
   }
+
   /**
    * @return the ISO4217 code for this currency
    */
@@ -74,6 +76,10 @@ public final class CurrencyData extends JavaScriptObject {
     return this[3] || this[1];
   }-*/;
 
+  public boolean isDeprecated() {
+    return (getFlagsAndPrecision() & DEPRECATED_FLAG) != 0;
+  }
+  
   public boolean isSpaceForced() {
     return (getFlagsAndPrecision() & SPACE_FORCED_FLAG) != 0;
   }
