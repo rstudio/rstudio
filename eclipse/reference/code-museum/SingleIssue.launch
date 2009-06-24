@@ -18,7 +18,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.gwt.dev.HostedMode"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-startupUrl DefaultMuseum.html&#10;com.google.gwt.museum.DefaultMuseum"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-startupUrl SingleIssue.html&#10;com.google.gwt.museum.SingleIssue"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="code-museum"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-ea&#13;&#10;-Xmx256M&#10;-Dgwt.devjar=${gwt_devjar}&quot;"/>
 </launchConfiguration>

@@ -1,4 +1,4 @@
-<module>
+<module rename-to="defaultmuseum">
     
     <!-- Inherit the core Web Toolkit stuff.                  -->
     <inherits name='com.google.gwt.museum.Museum'/>

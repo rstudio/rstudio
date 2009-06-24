@@ -1,4 +1,4 @@
-<module>
+<module rename-to="singleissue">
     
     <!-- Inherit the core Web Toolkit stuff.                  -->
     <inherits name='com.google.gwt.user.User'/>

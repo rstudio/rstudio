@@ -16,6 +16,7 @@
 package com.google.gwt.museum.client.common;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.user.client.Window;
@@ -49,10 +50,11 @@ public abstract class AbstractIssue implements EntryPoint {
       cssName = "Default";
     }
 
+    String baseUrl = GWT.getModuleBaseURL();
     LinkElement issueLinkElement = Document.get().createLinkElement();
     issueLinkElement.setRel("stylesheet");
     issueLinkElement.setType("text/css");
-    issueLinkElement.setHref("issues/" + cssName + ".css");
+    issueLinkElement.setHref(baseUrl + "issues/" + cssName + ".css");
     return issueLinkElement;
   }
 
