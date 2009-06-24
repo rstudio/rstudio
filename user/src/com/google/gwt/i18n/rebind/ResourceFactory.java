@@ -19,6 +19,7 @@ import static com.google.gwt.i18n.rebind.AnnotationUtil.getClassAnnotation;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
@@ -42,10 +43,10 @@ public abstract class ResourceFactory {
    * Pair of JClassType and GwtLocale.
    */
   private static class ClassLocale {
-    
+
     private final JClassType clazz;
     private final GwtLocale locale;
-    
+
     public ClassLocale(JClassType clazz, GwtLocale locale) {
       assert clazz != null;
       assert locale != null;
@@ -62,7 +63,7 @@ public abstract class ResourceFactory {
         return false;
       }
       ClassLocale other = (ClassLocale) obj;
-      return clazz.equals(other.clazz) && locale.equals(other.locale); 
+      return clazz.equals(other.clazz) && locale.equals(other.locale);
     }
 
     public JClassType getJClass() {
@@ -77,7 +78,7 @@ public abstract class ResourceFactory {
     public int hashCode() {
       return clazz.hashCode() + locale.hashCode() * 53;
     }
-    
+
     @Override
     public String toString() {
       return clazz.getQualifiedSourceName() + "/" + locale.toString();
@@ -85,13 +86,12 @@ public abstract class ResourceFactory {
   }
 
   /**
-   * Separator between class name and locale in resource files.  Should not
+   * Separator between class name and locale in resource files. Should not
    * appear in valid localizable class names.
    */
   public static final char LOCALE_SEPARATOR = '_';
 
-  private static Map<ClassLocale, ResourceList> cache = new HashMap<
-      ClassLocale, ResourceList>();
+  private static Map<ClassLocale, ResourceList> cache = new HashMap<ClassLocale, ResourceList>();
   private static List<ResourceFactory> loaders = new ArrayList<ResourceFactory>();
 
   static {
@@ -114,18 +114,18 @@ public abstract class ResourceFactory {
    * @return resource list
    */
   public static ResourceList getBundle(TreeLogger logger, JClassType topClass,
-      GwtLocale bundleLocale, boolean isConstants) {
+      GwtLocale bundleLocale, boolean isConstants,
+      Map<String, Resource> resourceMap) {
     List<GwtLocale> locales = bundleLocale.getCompleteSearchList();
     List<JClassType> classes = new ArrayList<JClassType>();
     Set<JClassType> seenClasses = new IdentityHashSet<JClassType>();
-    Map<ClassLocale, AnnotationsResource> annotations = new HashMap<ClassLocale,
-        AnnotationsResource>();
+    Map<ClassLocale, AnnotationsResource> annotations = new HashMap<ClassLocale, AnnotationsResource>();
     GwtLocaleFactory factory = LocaleUtils.getLocaleFactory();
     GwtLocale defaultLocale = factory.getDefault();
     walkInheritanceTree(logger, topClass, factory, defaultLocale, classes,
         annotations, seenClasses, isConstants);
     // TODO(jat): handle explicit subinterface with other locales -- ie:
-    //   public interface Foo_es_MX extends Foo { ... }
+    // public interface Foo_es_MX extends Foo { ... }
     ResourceList allResources = new ResourceList();
     for (GwtLocale locale : locales) {
       for (JClassType clazz : classes) {
@@ -136,7 +136,7 @@ public abstract class ResourceFactory {
         } else {
           cache.put(key, null);
           resources = new ResourceList();
-          addFileResources(clazz, locale, resources);
+          addFileResources(clazz, locale, resourceMap, resources);
           AnnotationsResource annotationsResource = annotations.get(key);
           if (annotationsResource != null) {
             resources.add(annotationsResource);
@@ -166,7 +166,7 @@ public abstract class ResourceFactory {
   }
 
   private static void addFileResources(JClassType clazz, GwtLocale locale,
-      ResourceList resources) {
+      Map<String, Resource> resourceMap, ResourceList resources) {
     // TODO: handle classes in the default package?
     String targetPath = clazz.getPackage().getName() + '.'
         + getResourceName(clazz);
@@ -175,21 +175,20 @@ public abstract class ResourceFactory {
       localizedPath = targetPath + LOCALE_SEPARATOR + locale.getAsString();
     }
     // Check for file-based resources.
-    ClassLoader loader = ResourceFactory.class.getClassLoader();
     String partialPath = localizedPath.replace('.', '/');
     for (int i = 0; i < loaders.size(); i++) {
       ResourceFactory element = loaders.get(i);
       String ext = "." + element.getExt();
       String path = partialPath + ext;
-      InputStream m = loader.getResourceAsStream(path);
-      if (m == null && partialPath.contains("$")) {
+      Resource resource = resourceMap.get(path);
+      if (resource == null && partialPath.contains("$")) {
         // Also look for A_B for inner classes, as $ in path names
         // can cause issues for some build tools.
         path = partialPath.replace('$', '_') + ext;
-        m = loader.getResourceAsStream(path);
+        resource = resourceMap.get(path);
       }
-      if (m != null) {
-        AbstractResource found = element.load(m, locale);
+      if (resource != null) {
+        AbstractResource found = element.load(resource.openContents(), locale);
         found.setPath(path);
         resources.add(found);
       }
@@ -215,14 +214,14 @@ public abstract class ResourceFactory {
         ClassLocale key = new ClassLocale(clazz, defaultLocale);
         annotations.put(key, resource);
         String defLocaleValue = null;
-        
+
         // If the class has an embedded locale in it, use that for the default
         String className = clazz.getSimpleSourceName();
         int underscore = className.indexOf('_');
         if (underscore >= 0) {
           defLocaleValue = className.substring(underscore + 1);
         }
-        
+
         // If there is an annotation declaring the default locale, use that
         DefaultLocale defLocaleAnnot = getClassAnnotation(clazz,
             DefaultLocale.class);
@@ -240,13 +239,13 @@ public abstract class ResourceFactory {
       logger.log(TreeLogger.ERROR, e.getMessage(), e);
     }
     if (clazz.getSuperclass() != null) {
-      walkInheritanceTree(logger, clazz.getSuperclass(), factory, defaultLocale,
-          classes, annotations, seenClasses, isConstants);
+      walkInheritanceTree(logger, clazz.getSuperclass(), factory,
+          defaultLocale, classes, annotations, seenClasses, isConstants);
     }
     for (JClassType intf : clazz.getImplementedInterfaces()) {
       walkInheritanceTree(logger, intf, factory, defaultLocale, classes,
           annotations, seenClasses, isConstants);
-    }   
+    }
   }
 
   abstract String getExt();
