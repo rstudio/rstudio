@@ -49,7 +49,7 @@ public abstract class GWTTestCase extends TestCase {
    * could go wrong if you run code there, trying to run a JSNI method could
    * generate an {@link UnsatisfiedLinkError}, and trying to call
    * {@link com.google.gwt.core.client.GWT#create(Class)} could throw an
-   * {@link UnsupportedOperationException}.Instead, override
+   * {@link UnsupportedOperationException}. Instead, override
    * {@link #gwtSetUp()} and perform any initialization code there.
    */
   public GWTTestCase() {
