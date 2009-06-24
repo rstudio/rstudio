@@ -62,7 +62,7 @@ public class RadioButton extends CheckBox {
     setStyleName("gwt-RadioButton");
     
     sinkEvents(Event.ONCLICK);
-    sinkEvents(Event.ONMOUSEOUT);
+    sinkEvents(Event.ONMOUSEUP);
     sinkEvents(Event.ONBLUR);
     sinkEvents(Event.ONKEYDOWN);
   }
