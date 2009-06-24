@@ -169,8 +169,6 @@ public class GWTRunnerGenerator extends Generator {
     sw.println();
     sw.println("protected final GWTTestCase createNewTestCase(String testClass) {");
     sw.indent();
-    sw.println("try {");
-    sw.indent();
     boolean isFirst = true;
     for (String className : testClasses) {
       if (isFirst) {
@@ -183,11 +181,6 @@ public class GWTRunnerGenerator extends Generator {
       sw.indentln("return GWT.create(" + className + ".class);");
       sw.println("}");
     }
-    sw.outdent();
-    sw.println("} catch (Throwable t) {");
-    sw.indentln("// Crash in a useful manner");
-    sw.indentln("GWT.log(\"Unable to construct TestCase: \" + testClass, t);");
-    sw.println("}");
     sw.println("return null;");
     sw.outdent();
     sw.println("}");

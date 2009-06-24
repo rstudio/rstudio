@@ -176,10 +176,16 @@ public abstract class GWTRunner implements EntryPoint {
 
   private void runTest() {
     // Dynamically create a new test case.
-    GWTTestCase testCase = createNewTestCase(currentTest.getTestClass());
+    GWTTestCase testCase = null;
+    Throwable caught = null;
+    try {
+      testCase = createNewTestCase(currentTest.getTestClass());
+    } catch (Throwable e) {
+      caught = e;
+    }
     if (testCase == null) {
       RuntimeException ex = new RuntimeException(currentTest
-          + ": could not instantiate the requested class");
+          + ": could not instantiate the requested class", caught);
       JUnitResult result = new JUnitResult();
       result.setExceptionWrapper(new ExceptionWrapper(ex));
       reportResultsAndGetNextMethod(result);
