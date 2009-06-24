@@ -88,6 +88,10 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     execCommand("InsertHorizontalRule", null);
   }
 
+  public void insertHTML(String html) {
+    execCommand("InsertHTML", html);
+  }
+
   public void insertImage(String url) {
     execCommand("InsertImage", url);
   }

@@ -186,6 +186,13 @@ public class RichTextArea extends FocusWidget implements HasHTML,
     void insertHorizontalRule();
 
     /**
+     * Inserts generic html.
+     * 
+     * @param html the HTML to insert
+     */
+    void insertHTML(String html);
+
+    /**
      * Inserts an image element.
      * 
      * @param url the url of the image to be inserted

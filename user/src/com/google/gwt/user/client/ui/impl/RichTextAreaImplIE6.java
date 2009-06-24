@@ -61,6 +61,26 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
   }-*/;
 
   @Override
+  public native void insertHTML(String html) /*-{
+    try {
+      var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+      var doc = elem.contentWindow.document;
+      doc.body.focus();
+      var tr = doc.selection.createRange();
+      if (tr == null) {
+        return;
+      }
+      if (!@com.google.gwt.user.client.DOM::isOrHasChild(Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/Element;)(doc.body, tr.parentElement())) {
+        return;
+      }
+      tr.pasteHTML(html);
+    }
+    catch (e) {
+      return;
+    }
+  }-*/;
+
+  @Override
   protected native String getTextImpl() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     return elem.contentWindow.document.body.innerText;
