@@ -543,7 +543,7 @@ public class Style extends JavaScriptObject {
   private static final String STYLE_WIDTH = "width";
   private static final String STYLE_VISIBILITY = "visibility";
   private static final String STYLE_TOP = "top";
-  private static final String STYLE_LIST_DECORATION = "listDecoration";
+  private static final String STYLE_TEXT_DECORATION = "textDecoration";
   private static final String STYLE_RIGHT = "right";
   private static final String STYLE_POSITION = "position";
   private static final String STYLE_PADDING_TOP = "paddingTop";
@@ -819,7 +819,7 @@ public class Style extends JavaScriptObject {
    * Clears the text-decoration CSS property.
    */
   public final void clearTextDecoration() {
-    clearProperty(STYLE_LIST_DECORATION);
+    clearProperty(STYLE_TEXT_DECORATION);
   }
 
   /**
@@ -1065,7 +1065,7 @@ public class Style extends JavaScriptObject {
    * Gets the text-decoration CSS property.
    */
   public final String getTextDecoration() {
-    return getProperty(STYLE_LIST_DECORATION);
+    return getProperty(STYLE_TEXT_DECORATION);
   }
 
   /**
@@ -1335,7 +1335,7 @@ public class Style extends JavaScriptObject {
    * Sets the text-decoration CSS property.
    */
   public final void setTextDecoration(TextDecoration value) {
-    setProperty(STYLE_LIST_DECORATION, value.getCssName());
+    setProperty(STYLE_TEXT_DECORATION, value.getCssName());
   }
 
   /**
