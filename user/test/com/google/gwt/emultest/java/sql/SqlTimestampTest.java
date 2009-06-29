@@ -22,7 +22,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 
 /**
- * Tests {@link java.sql.Timestame}. We assume that the underlying
+ * Tests {@link java.sql.Timestamp}. We assume that the underlying
  * {@link java.util.Date} implementation is correct and concentrate only on the
  * differences between the two.
  */
@@ -32,6 +32,7 @@ public class SqlTimestampTest extends GWTTestCase {
   /**
    * Sets module name so that javascript compiler can operate.
    */
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -45,7 +46,11 @@ public class SqlTimestampTest extends GWTTestCase {
     Date d = new Date(now);
 
     Timestamp t = new Timestamp(d.getTime());
-    t.setNanos(1);
+    if (now % 1000 == 0) {
+      t.setNanos(1000001);
+    } else {
+      t.setNanos(1);
+    }
 
     // Timestamps are stored at second-level precision
     Date d2 = new Date(t.getTime());
