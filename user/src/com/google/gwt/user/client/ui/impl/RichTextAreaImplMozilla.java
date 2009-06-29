@@ -36,14 +36,26 @@ public class RichTextAreaImplMozilla extends RichTextAreaImplStandard {
       // Send notification that the iframe has finished loading.
       _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
 
-      // Don't set designMode until the RTA actually gets focused. This is
+      // Don't set designMode until the RTA is targeted by an event. This is
       // necessary because editing won't work on Mozilla if the iframe is
-      // *hidden, but attached*. Waiting for focus gets around this issue.
+      // *hidden, but attached*. Waiting for an event gets around this issue.
       //
-      // Note: This onfocus will not conflict with the addEventListener('focus',
-      // ...) // in RichTextAreaImplStandard.
+      // Note: These events will not conflict with the
+      // addEventListener('oneventtype', ...) in RichTextAreaImplStandard.
       iframe.contentWindow.onfocus = function() {
         iframe.contentWindow.onfocus = null;
+        iframe.contentWindow.onmouseover = null;
+        iframe.contentWindow.document.designMode = 'On';
+      };
+      
+      // Issue 1441: we also need to catch the onmouseover event because focus
+      // occurs after mouse down, so the cursor will not appear until the user
+      // clicks twice, making the RichTextArea look uneditable. Catching the
+      // mouseover event allows us to set design mode earlier. The focus event
+      // is still needed to handle tab selection.
+      iframe.contentWindow.onmouseover = function() {
+        iframe.contentWindow.onfocus = null;
+        iframe.contentWindow.onmouseover = null;
         iframe.contentWindow.document.designMode = 'On';
       };
     };
