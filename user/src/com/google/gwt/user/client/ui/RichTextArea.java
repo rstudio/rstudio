@@ -43,10 +43,19 @@ public class RichTextArea extends FocusWidget implements HasHTML,
     SourcesMouseEvents, HasAllMouseHandlers {
 
   /**
+   * <p>
    * This interface is used to access basic formatting options, when available.
    * If the implementation supports basic formatting, then
    * {@link RichTextArea#getBasicFormatter()} will return an instance of this
    * class.
+   * </p>
+   * <p>
+   * The formatter will format the user selected text in the
+   * {@link RichTextArea}.  As a result, it will only work reliably if the
+   * {@link RichTextArea} is attached, visible to on the page, and has been
+   * focused at least once.  If you just want to initialize the content of
+   * the {@link RichTextArea}, use {@link RichTextArea#setHTML(String)} instead. 
+   * </p>
    */
   public interface BasicFormatter {
 
@@ -166,10 +175,19 @@ public class RichTextArea extends FocusWidget implements HasHTML,
   }
 
   /**
+   * <p>
    * This interface is used to access full formatting options, when available.
    * If the implementation supports full formatting, then
    * {@link RichTextArea#getExtendedFormatter()} will return an instance of this
    * class.
+   * </p>
+   * <p>
+   * The formatter will format the user selected text in the
+   * {@link RichTextArea}.  As a result, it will only work reliably if the
+   * {@link RichTextArea} is attached, visible to on the page, and has been
+   * focused at least once.  If you just want to initialize the content of
+   * the {@link RichTextArea}, use {@link RichTextArea#setHTML(String)} instead. 
+   * </p>
    */
   public interface ExtendedFormatter extends BasicFormatter {
 
@@ -363,7 +381,9 @@ public class RichTextArea extends FocusWidget implements HasHTML,
   }
 
   /**
-   * Gets the basic rich text formatting interface.
+   * Gets the basic rich text formatting interface.  Note that formatting can
+   * only be done when the {@link RichTextArea} is attached, visible on the
+   * page, and has been focused by the user.
    * 
    * @return <code>null</code> if basic formatting is not supported
    */
@@ -375,7 +395,9 @@ public class RichTextArea extends FocusWidget implements HasHTML,
   }
 
   /**
-   * Gets the full rich text formatting interface.
+   * Gets the full rich text formatting interface.  Note that formatting can
+   * only be done when the {@link RichTextArea} is attached, visible on the
+   * page, and has been focused by the user.
    * 
    * @return <code>null</code> if full formatting is not supported
    */

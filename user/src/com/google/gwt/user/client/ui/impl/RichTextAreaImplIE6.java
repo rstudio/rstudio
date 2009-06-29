@@ -142,9 +142,4 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
       elem.contentWindow.onblur = null;
     }
   }-*/;
-  
-  @Override
-  boolean isRichEditingActive(Element elem) {
-    return true;
-  }
 }

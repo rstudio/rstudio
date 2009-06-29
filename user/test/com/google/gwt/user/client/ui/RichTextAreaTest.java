@@ -15,8 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.RichTextArea.BasicFormatter;
 
 /**
  * Tests the {@link RichTextArea} widget.
@@ -63,6 +65,87 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea richTextArea = new RichTextArea();
     RootPanel.get().add(richTextArea);
     RootPanel.get().remove(richTextArea);
+  }
+
+  public void testFormatAfterAttach() {
+    final RichTextArea area = new RichTextArea();
+    BasicFormatter formatter = area.getBasicFormatter();
+    RootPanel.get().add(area);
+    if (formatter != null) {
+      try {
+        formatter.toggleBold();
+        if (!GWT.isScript()) {
+          fail("Expected AssertionError");
+        }
+      } catch (AssertionError e) {
+        // Expected because the iframe is not initialized
+        return;
+      }
+      if (!GWT.isScript()) {
+        fail("Expected AssertionError");
+      }
+    }
+  }
+
+  public void testFormatAfterInitialize() {
+    final RichTextArea area = new RichTextArea();
+    RootPanel.get().add(area);
+
+    // This has to be done on a timer because the rta can take some time to
+    // finish initializing (on some browsers).
+    this.delayTestFinish(1000);
+    new Timer() {
+      @Override
+      public void run() {
+        BasicFormatter formatter = area.getBasicFormatter();
+        if (formatter != null) {
+          formatter.toggleBold();
+        }
+        RootPanel.get().remove(area);
+        finishTest();
+      }
+    }.schedule(500);
+  }
+
+  public void testFormatBeforeAttach() {
+    final RichTextArea area = new RichTextArea();
+    BasicFormatter formatter = area.getBasicFormatter();
+    if (formatter != null) {
+      try {
+        formatter.toggleBold();
+        if (!GWT.isScript()) {
+          fail("Expected AssertionError");
+        }
+      } catch (AssertionError e) {
+        // expected
+        return;
+      }
+      if (!GWT.isScript()) {
+        fail("Expected AssertionError");
+      }
+    }
+  }
+
+  public void testFormatWhenHidden() {
+    final RichTextArea area = new RichTextArea();
+    RootPanel.get().add(area);
+
+    // This has to be done on a timer because the rta can take some time to
+    // finish initializing (on some browsers).
+    this.delayTestFinish(1000);
+    new Timer() {
+      @Override
+      public void run() {
+        area.setVisible(false);
+        BasicFormatter formatter = area.getBasicFormatter();
+        if (formatter != null) {
+          // This won't work on some browsers, but it should return quietly.
+          formatter.toggleBold();
+        }
+        RootPanel.get().remove(area);
+        finishTest();
+      }
+    }.schedule(500);
   }
 
   /**
