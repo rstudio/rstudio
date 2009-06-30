@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.client.impl;
 
+import com.google.gwt.core.client.GWT;
+
 /**
  * Private implementation class for GWT core. This API is should not be
  * considered public or stable.
@@ -65,6 +67,29 @@ public final class Impl {
   public static native String getModuleName() /*-{
     return $moduleName;
   }-*/;
+
+  /**
+   * Returns the obfuscated name of members in the compiled output. This is a
+   * thin wrapper around JNameOf AST nodes and is therefore meaningless to
+   * implement in hosted mode.
+   * 
+   * @param jsniIdent a string literal specifying a type, field, or method. Raw
+   *          type names may also be used to obtain the name of the type's seed
+   *          function.
+   * @return the name by which the named member can be accessed at runtime, or
+   *         <code>null</code> if the requested member has been pruned from the
+   *         output.
+   * @see com.google.gwt.core.client.ArtificialRescue
+   */
+  public static String getNameOf(String jsniIdent) {
+    /*
+     * In web mode, the compiler directly replaces calls to this method with a
+     * string literal expression.
+     */
+    assert !GWT.isScript() : "ReplaceRebinds failed to replace this method";
+    throw new UnsupportedOperationException(
+        "Impl.getNameOf() is unimplemented in hosted mode");
+  }
 
   public static native String getPermutationStrongName() /*-{
     return $strongName;

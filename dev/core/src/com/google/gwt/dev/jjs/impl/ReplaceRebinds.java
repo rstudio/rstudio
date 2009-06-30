@@ -20,15 +20,21 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.HasEnclosingType;
+import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JStringLiteral;
+import com.google.gwt.dev.util.JsniRef;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,30 +46,85 @@ public class ReplaceRebinds {
 
   private class RebindVisitor extends JModVisitor {
 
+    private final JMethod nameOfMethod;
     private final JMethod rebindCreateMethod;
 
-    public RebindVisitor(JMethod rebindCreateMethod) {
+    public RebindVisitor(JMethod nameOfMethod, JMethod rebindCreateMethod) {
+      this.nameOfMethod = nameOfMethod;
       this.rebindCreateMethod = rebindCreateMethod;
     }
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
-      if (method == rebindCreateMethod) {
-        assert (x.getArgs().size() == 1);
-        JExpression arg = x.getArgs().get(0);
-        assert (arg instanceof JClassLiteral);
-        JClassLiteral classLiteral = (JClassLiteral) arg;
-        JReferenceType sourceType = (JReferenceType) classLiteral.getRefType();
-        List<JClassType> allRebindResults = getAllPossibleRebindResults(sourceType);
-        JGwtCreate gwtCreate = new JGwtCreate(x.getSourceInfo(), sourceType,
-            allRebindResults, program.getTypeJavaLangObject());
-        if (allRebindResults.size() == 1) {
-          // Just replace with the instantiation expression.
-          ctx.replaceMe(gwtCreate.getInstantiationExpressions().get(0));
-        } else {
-          ctx.replaceMe(gwtCreate);
+      if (method == nameOfMethod) {
+        replaceImplNameOf(x, ctx);
+
+      } else if (method == rebindCreateMethod) {
+        replaceGwtCreate(x, ctx);
+      }
+    }
+
+    private void replaceGwtCreate(JMethodCall x, Context ctx) {
+      assert (x.getArgs().size() == 1);
+      JExpression arg = x.getArgs().get(0);
+      assert (arg instanceof JClassLiteral);
+      JClassLiteral classLiteral = (JClassLiteral) arg;
+      JReferenceType sourceType = (JReferenceType) classLiteral.getRefType();
+      List<JClassType> allRebindResults = getAllPossibleRebindResults(sourceType);
+      JGwtCreate gwtCreate = new JGwtCreate(x.getSourceInfo(), sourceType,
+          allRebindResults, program.getTypeJavaLangObject());
+      if (allRebindResults.size() == 1) {
+        // Just replace with the instantiation expression.
+        ctx.replaceMe(gwtCreate.getInstantiationExpressions().get(0));
+      } else {
+        ctx.replaceMe(gwtCreate);
+      }
+    }
+
+    private void replaceImplNameOf(JMethodCall x, Context ctx) {
+      JExpression arg0 = x.getArgs().get(0);
+      assert arg0 instanceof JStringLiteral;
+      String stringLiteral = ((JStringLiteral) arg0).getValue();
+
+      HasName named = null;
+
+      JDeclaredType refType;
+      JsniRef ref = JsniRef.parse(stringLiteral);
+
+      if (ref != null) {
+        final List<String> errors = new ArrayList<String>();
+        HasEnclosingType node = JsniRefLookup.findJsniRefTarget(ref, program,
+            new JsniRefLookup.ErrorReporter() {
+              public void reportError(String error) {
+                errors.add(error);
+              }
+            });
+
+        if (!errors.isEmpty()) {
+          for (String error : errors) {
+            logger.log(TreeLogger.ERROR, error);
+          }
         }
+
+        if (node instanceof HasName) {
+          named = (HasName) node;
+        }
+
+      } else {
+        // See if it's just @foo.Bar, which would result in the class seed
+        refType = program.getFromTypeMap(stringLiteral.charAt(0) == '@'
+            ? stringLiteral.substring(1) : stringLiteral);
+        if (refType != null) {
+          named = refType;
+        }
+      }
+
+      if (named == null) {
+        // Not found, must be null
+        ctx.replaceMe(program.getLiteralNull());
+      } else {
+        ctx.replaceMe(new JNameOf(x.getSourceInfo(), program, named));
       }
     }
   }
@@ -108,6 +169,7 @@ public class ReplaceRebinds {
 
   private boolean execImpl() {
     RebindVisitor rebinder = new RebindVisitor(
+        program.getIndexedMethod("Impl.getNameOf"),
         program.getIndexedMethod("GWT.create"));
     rebinder.accept(program);
     return rebinder.didChange();
