@@ -37,6 +37,20 @@ class DOMImplMozilla extends DOMImplStandard {
   }-*/;
 
   @Override
+  public native EventTarget eventGetRelatedTarget(NativeEvent evt) /*-{
+    // Hack around Mozilla bug 497780 (relatedTarget sometimes returns XUL
+    // elements). Trying to access relatedTarget.nodeName will throw an
+    // exception if it's a XUL element.
+    var relatedTarget = evt.relatedTarget;
+    try {
+      var nodeName = relatedTarget.nodeName;
+      return relatedTarget;
+    } catch (e) {
+      return null;
+    }
+  }-*/;
+
+  @Override
   public int getAbsoluteLeft(Element elem) {
     return getAbsoluteLeftImpl(elem.getOwnerDocument().getViewportElement(),
         elem);
