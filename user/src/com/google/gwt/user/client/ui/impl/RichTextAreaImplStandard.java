@@ -25,8 +25,10 @@ import com.google.gwt.user.client.ui.RichTextArea.Justification;
 /**
  * Basic rich text platform implementation.
  */
+@SuppressWarnings("deprecation")
 public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implements
-    RichTextArea.BasicFormatter, RichTextArea.ExtendedFormatter {
+    RichTextArea.BasicFormatter, RichTextArea.ExtendedFormatter,
+    RichTextArea.Formatter {
 
   /**
    * The message displayed when the formatter is used before the RichTextArea
@@ -117,18 +119,8 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     execCommand("InsertUnorderedList", null);
   }
 
-  @Override
-  public boolean isBasicEditingSupported() {
-    return true;
-  }
-
   public boolean isBold() {
     return queryCommandState("Bold");
-  }
-
-  @Override
-  public boolean isExtendedEditingSupported() {
-    return true;
   }
 
   public boolean isItalic() {

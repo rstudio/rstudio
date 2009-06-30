@@ -56,7 +56,10 @@ public class RichTextArea extends FocusWidget implements HasHTML,
    * focused at least once.  If you just want to initialize the content of
    * the {@link RichTextArea}, use {@link RichTextArea#setHTML(String)} instead. 
    * </p>
+   * 
+   * @deprecated use {@link Formatter} instead
    */
+  @Deprecated
   public interface BasicFormatter {
 
     /**
@@ -188,7 +191,10 @@ public class RichTextArea extends FocusWidget implements HasHTML,
    * focused at least once.  If you just want to initialize the content of
    * the {@link RichTextArea}, use {@link RichTextArea#setHTML(String)} instead. 
    * </p>
+   * 
+   * @deprecated use {@link Formatter} instead
    */
+  @Deprecated
   public interface ExtendedFormatter extends BasicFormatter {
 
     /**
@@ -264,6 +270,215 @@ public class RichTextArea extends FocusWidget implements HasHTML,
      */
     void toggleStrikethrough();
 
+    /**
+     * Undo the last action.
+     */
+    void undo();
+  }
+
+  /**
+   * <p>
+   * This interface is used to access full formatting options, when available.
+   * If the implementation supports full formatting, then
+   * {@link RichTextArea#getFormatter()} will return an instance of this
+   * class.
+   * </p>
+   * <p>
+   * The formatter will format the user selected text in the
+   * {@link RichTextArea}.  As a result, it will only work reliably if the
+   * {@link RichTextArea} is attached, visible to on the page, and has been
+   * focused at least once.  If you just want to initialize the content of
+   * the {@link RichTextArea}, use {@link RichTextArea#setHTML(String)} instead. 
+   * </p>
+   */
+  public interface Formatter extends ExtendedFormatter {
+    /**
+     * Creates a link to the supplied URL.
+     * 
+     * @param url the URL to be linked to
+     */
+    void createLink(String url);
+  
+    /**
+     * Gets the background color.
+     * 
+     * @return the background color
+     */
+    String getBackColor();
+  
+    /**
+     * Gets the foreground color.
+     * 
+     * @return the foreground color
+     */
+    String getForeColor();
+  
+    /**
+     * Inserts a horizontal rule.
+     */
+    void insertHorizontalRule();
+  
+    /**
+     * Inserts generic html.
+     * 
+     * @param html the HTML to insert
+     */
+    void insertHTML(String html);
+  
+    /**
+     * Inserts an image element.
+     * 
+     * @param url the url of the image to be inserted
+     */
+    void insertImage(String url);
+  
+    /**
+     * Starts an numbered list. Indentation will create nested items.
+     */
+    void insertOrderedList();
+  
+    /**
+     * Starts an bulleted list. Indentation will create nested items.
+     */
+    void insertUnorderedList();
+  
+    /**
+     * Is the current region bold?
+     * 
+     * @return true if the current region is bold
+     */
+    boolean isBold();
+  
+    /**
+     * Is the current region italic?
+     * 
+     * @return true if the current region is italic
+     */
+    boolean isItalic();
+  
+    /**
+     * Is the current region strikethrough?
+     * 
+     * @return true if the current region is strikethrough
+     */
+    boolean isStrikethrough();
+  
+    /**
+     * Is the current region subscript?
+     * 
+     * @return true if the current region is subscript
+     */
+    boolean isSubscript();
+  
+    /**
+     * Is the current region superscript?
+     * 
+     * @return true if the current region is superscript
+     */
+    boolean isSuperscript();
+  
+    /**
+     * Is the current region underlined?
+     * 
+     * @return true if the current region is underlined
+     */
+    boolean isUnderlined();
+  
+    /**
+     * Left indent.
+     */
+    void leftIndent();
+  
+    /**
+     * Redo an action that was just undone.
+     */
+    void redo();
+  
+    /**
+     * Removes all formatting on the selected text.
+     */
+    void removeFormat();
+  
+    /**
+     * Removes any link from the selected text.
+     */
+    void removeLink();
+    
+    /**
+     * Right indent.
+     */
+    void rightIndent();
+  
+    /**
+     * Selects all the text.
+     */
+    void selectAll();
+  
+    /**
+     * Sets the background color.
+     * 
+     * @param color the new background color
+     */
+    void setBackColor(String color);
+  
+    /**
+     * Sets the font name.
+     * 
+     * @param name the new font name
+     */
+    void setFontName(String name);
+  
+    /**
+     * Sets the font size.
+     * 
+     * @param fontSize the new font size
+     */
+    void setFontSize(FontSize fontSize);
+  
+    /**
+     * Sets the foreground color.
+     * 
+     * @param color the new foreground color
+     */
+    void setForeColor(String color);
+  
+    /**
+     * Sets the justification.
+     * 
+     * @param justification the new justification
+     */
+    void setJustification(Justification justification);
+  
+    /**
+     * Toggles bold.
+     */
+    void toggleBold();
+  
+    /**
+     * Toggles italic.
+     */
+    void toggleItalic();
+  
+    /**
+     * Toggles strikethrough.
+     */
+    void toggleStrikethrough();
+  
+    /**
+     * Toggles subscript.
+     */
+    void toggleSubscript();
+  
+    /**
+     * Toggles superscript.
+     */
+    void toggleSuperscript();
+  
+    /**
+     * Toggles underline.
+     */
+    void toggleUnderline();
+  
     /**
      * Undo the last action.
      */
@@ -386,12 +601,11 @@ public class RichTextArea extends FocusWidget implements HasHTML,
    * page, and has been focused by the user.
    * 
    * @return <code>null</code> if basic formatting is not supported
+   * @deprecated use {@link #getFormatter()} instead
    */
+  @Deprecated
   public BasicFormatter getBasicFormatter() {
-    if ((impl instanceof BasicFormatter) && (impl.isBasicEditingSupported())) {
-      return (BasicFormatter) impl;
-    }
-    return null;
+    return getFormatter();
   }
 
   /**
@@ -400,11 +614,23 @@ public class RichTextArea extends FocusWidget implements HasHTML,
    * page, and has been focused by the user.
    * 
    * @return <code>null</code> if full formatting is not supported
+   * @deprecated use {@link #getFormatter()} instead
    */
+  @Deprecated
   public ExtendedFormatter getExtendedFormatter() {
-    if ((impl instanceof ExtendedFormatter)
-        && (impl.isExtendedEditingSupported())) {
-      return (ExtendedFormatter) impl;
+    return getFormatter();
+  }
+
+  /**
+   * Gets the rich text formatting interface. Note that formatting can only be
+   * done when the {@link RichTextArea} is attached, visible on the page, and
+   * has been focused by the user.
+   * 
+   * @return <code>null</code> if full formatting is not supported
+   */
+  public Formatter getFormatter() {
+    if (impl instanceof Formatter) {
+      return (Formatter) impl;
     }
     return null;
   }

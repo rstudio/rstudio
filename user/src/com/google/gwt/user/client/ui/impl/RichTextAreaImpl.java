@@ -51,14 +51,6 @@ public class RichTextAreaImpl {
     onElementInitialized();
   }
 
-  public boolean isBasicEditingSupported() {
-    return false;
-  }
-
-  public boolean isExtendedEditingSupported() {
-    return false;
-  }
-
   public native void setFocus(boolean focused) /*-{
     if (focused) {
       this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.focus();
