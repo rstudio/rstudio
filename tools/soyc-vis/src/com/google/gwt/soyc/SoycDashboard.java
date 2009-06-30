@@ -380,7 +380,7 @@ public class SoycDashboard {
         if (curFragment == 0) {
           breakdowns.add(GlobalInformation.initialCodeBreakdown);
         }
-        if (curFragment == (GlobalInformation.numSplitPoints+1)) {
+        if (curFragment == (GlobalInformation.numSplitPoints + 1)) {
           breakdowns.add(GlobalInformation.leftoversBreakdown);
         }
         if (curFragment >= 1 && curFragment <= GlobalInformation.numSplitPoints) {
