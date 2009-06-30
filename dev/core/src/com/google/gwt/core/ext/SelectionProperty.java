@@ -41,7 +41,7 @@ public interface SelectionProperty {
   String getCurrentValue();
 
   /**
-   * Gets the fallback value for the property
+   * Gets the fallback value for the property.
    * @return the fallback, or ""
    */
   String getFallbackValue(); 

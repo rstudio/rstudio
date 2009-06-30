@@ -42,7 +42,6 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     System.out.println(code);
   }
 
-
   /**
    * Special serialization treatment.
    */
