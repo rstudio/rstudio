@@ -89,7 +89,8 @@ public class JUnitMessageQueue {
 
   /**
    * Gets a human-readable string.
-   * @return Fetches a human-readable representation of the current test object 
+   * 
+   * @return Fetches a human-readable representation of the current test object
    */
   public String getCurrentTestName() {
     if (currentTest == null) {
@@ -147,7 +148,7 @@ public class JUnitMessageQueue {
 
   /**
    * Returns a human-formatted message identifying what clients have connected
-   * but have not yet reported results for this test.  It is used in a timeout
+   * but have not yet reported results for this test. It is used in a timeout
    * condition, to identify what we're still waiting on.
    * 
    * @return human readable message
@@ -157,7 +158,7 @@ public class JUnitMessageQueue {
       StringBuilder buf = new StringBuilder();
       int itemCount = 0;
       for (ClientStatus clientStatus : clientStatuses.values()) {
-        if (clientStatus.hasRequestedCurrentTest 
+        if (clientStatus.hasRequestedCurrentTest
             && clientStatus.currentTestResults == null) {
           if (itemCount > 0) {
             buf.append(", ");
@@ -171,8 +172,8 @@ public class JUnitMessageQueue {
         if (itemCount > 0) {
           buf.append('\n');
         }
-        buf.append(difference + 
-            " other client(s) haven't responded back to JUnitShell since the start of the test.");
+        buf.append(difference
+            + " other client(s) haven't responded back to JUnitShell since the start of the test.");
       }
       return buf.toString();
     }
