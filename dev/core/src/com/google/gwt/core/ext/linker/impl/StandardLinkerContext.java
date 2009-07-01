@@ -649,7 +649,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   private void writeArtifactToFile(TreeLogger logger, EmittedArtifact artifact,
       File outFile, Set<String> createdDirs) throws UnableToCompleteException {
     if (!outFile.exists()
-        || (outFile.lastModified() <= artifact.getLastModified())) {
+        || (outFile.lastModified() < artifact.getLastModified())) {
       if (!mkdirs(outFile.getParentFile(), createdDirs)) {
         logger.log(TreeLogger.ERROR, "Unable to create directory for file '"
             + outFile.getAbsolutePath() + "'");
