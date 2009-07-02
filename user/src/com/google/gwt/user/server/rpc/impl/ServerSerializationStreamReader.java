@@ -18,6 +18,7 @@ package com.google.gwt.user.server.rpc.impl;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamReader;
+import com.google.gwt.user.server.Base64Utils;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.SerializationPolicyProvider;
@@ -601,6 +602,18 @@ public final class ServerSerializationStreamReader extends
     if (serializationPolicy.shouldDeserializeFields(superClass)) {
       deserializeImpl(SerializabilityUtil.hasCustomFieldSerializer(superClass),
           superClass, instance);
+    }
+
+    /*
+     * Iterate through all ServerDataSerializers, in name order, allowing each
+     * to perform custom deserialization.
+     */
+    for (ServerDataSerializer serializer : ServerDataSerializer.getSerializers()) {
+      if (serializer.shouldSerialize(instanceClass)) {
+        String encodedData = readString();
+        byte[] serializedData = Base64Utils.fromBase64(encodedData);
+        serializer.deserializeServerData(serializedData, instance);
+      }
     }
   }
 

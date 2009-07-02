@@ -17,6 +17,7 @@ package com.google.gwt.user.server.rpc.impl;
 
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamWriter;
+import com.google.gwt.user.server.Base64Utils;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 
 import java.lang.reflect.Field;
@@ -656,6 +657,18 @@ public final class ServerSerializationStreamWriter extends
     Class<?> superClass = instanceClass.getSuperclass();
     if (serializationPolicy.shouldSerializeFields(superClass)) {
       serializeImpl(instance, superClass);
+    }
+
+    /*
+     * Iterate through all ServerDataSerializers, in name order, allowing each
+     * to perform custom serialization.
+     */
+    for (ServerDataSerializer serializer : ServerDataSerializer.getSerializers()) {
+      if (serializer.shouldSerialize(instanceClass)) {
+        byte[] serializedData = serializer.serializeServerData(instance);
+        String encodedData = Base64Utils.toBase64(serializedData);
+        writeString(encodedData);
+      }
     }
   }
 

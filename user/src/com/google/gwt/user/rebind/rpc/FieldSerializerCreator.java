@@ -16,6 +16,7 @@
 package com.google.gwt.user.rebind.rpc;
 
 import com.google.gwt.core.client.UnsafeNativeLong;
+import com.google.gwt.core.client.WeakMapping;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
@@ -46,6 +47,8 @@ import java.io.PrintWriter;
  * fully qualified type names everywhere
  */
 public class FieldSerializerCreator {
+  
+  private final static String WEAK_MAPPING_CLASS_NAME = WeakMapping.class.getName();
 
   private final JClassType serializableClass;
 
@@ -348,6 +351,13 @@ public class FieldSerializerCreator {
       writeEnumDeserializationStatements(serializableClass.isEnum());
     } else {
       writeClassDeserializationStatements();
+      
+      for (ClientDataSerializer serializer : ClientDataSerializer.getSerializers()) {
+        if (serializer.shouldSerialize(serializableClass)) {
+          sourceWriter.println(WEAK_MAPPING_CLASS_NAME + ".set(instance, "
+              + "\"" + serializer.getName() + "\", streamReader.readString());");
+        }
+      }
     }
     sourceWriter.outdent();
     sourceWriter.println("}");
@@ -455,6 +465,14 @@ public class FieldSerializerCreator {
       writeEnumSerializationStatements(serializableClass.isEnum());
     } else {
       writeClassSerializationStatements();
+
+      for (ClientDataSerializer serializer : ClientDataSerializer.getSerializers()) {
+        if (serializer.shouldSerialize(serializableClass)) {
+          sourceWriter.println("streamWriter.writeString((String) "
+              + WEAK_MAPPING_CLASS_NAME + ".get(instance, \""
+              + serializer.getName() + "\"));");
+        }
+      }
     }
 
     sourceWriter.outdent();
