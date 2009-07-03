@@ -15,7 +15,6 @@
  */
 package java.lang;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.impl.Impl;
 
 /**
@@ -24,15 +23,6 @@ import com.google.gwt.core.client.impl.Impl;
  * limitations. The methods documented here are the only ones available.
  */
 public class Object {
-
-  /**
-   * Used by {@link com.google.gwt.core.client.WeakMapping} in web mode
-   * to store an expando containing a String -> Object mapping.
-   * 
-   * @skip
-   */
-  @SuppressWarnings("unused")
-  private transient JavaScriptObject expando;
 
   /**
    * magic magic magic.

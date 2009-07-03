@@ -1949,7 +1949,6 @@ public class GenerateJavaScriptAST {
     specialObfuscatedIdents.put("finalize", "fZ");
 
     // Object fields
-    specialObfuscatedIdents.put("expando", "eX");
     specialObfuscatedIdents.put("typeId", "tI");
     specialObfuscatedIdents.put("typeMarker", "tM");
 

@@ -36,7 +36,6 @@ import com.google.gwt.user.client.rpc.ValueTypesTest;
 import com.google.gwt.user.client.rpc.ValueTypesTestWithTypeObfuscation;
 import com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilderTest;
 import com.google.gwt.user.rebind.rpc.TypeHierarchyUtilsTest;
-import com.google.gwt.user.server.Base64Test;
 import com.google.gwt.user.server.rpc.RPCRequestTest;
 import com.google.gwt.user.server.rpc.RPCServletUtilsTest;
 import com.google.gwt.user.server.rpc.RPCTest;
@@ -76,7 +75,6 @@ public class RPCSuite {
     suite.addTestSuite(RPCRequestTest.class);
     suite.addTestSuite(FailedRequestTest.class);
     suite.addTestSuite(FailingRequestBuilderTest.class);
-    suite.addTestSuite(Base64Test.class);
 
     // GWTTestCases
     suite.addTestSuite(ValueTypesTest.class);
