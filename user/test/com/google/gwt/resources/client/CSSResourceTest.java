@@ -35,10 +35,19 @@ public class CSSResourceTest extends GWTTestCase {
   }
 
   interface CssWithDefines extends CssResource {
+    String colorString();
+
     double lengthFloat();
 
     int lengthInt();
 
+    String lengthString();
+
+    int overrideInt();
+    
+    @ClassName("overrideInt")
+    String overrideIntClass();
+    
     double percentFloat();
 
     int percentInt();
@@ -258,6 +267,14 @@ public class CSSResourceTest extends GWTTestCase {
 
     assertEquals(50, defines.percentInt());
     assertEquals(50.5, defines.percentFloat());
+
+    assertEquals("100px", defines.lengthString());
+    assertEquals("#f00", defines.colorString());
+    
+    assertEquals(10, defines.overrideInt());
+    assertNotNull(defines.overrideIntClass());
+    assertFalse("10px".equals(defines.overrideIntClass()));
+    assertFalse("10".equals(defines.overrideIntClass()));
   }
 
   public void testMultipleBundles() {

@@ -23,3 +23,23 @@
  
  @def lengthInt 50px;
  @def lengthFloat 1.5px;
+ 
+ @def lengthString 100px;
+ @def colorString #f00;
+ 
+ /* Uncomment this, and you should get an error about a @def shadowing a name */
+ /*
+ .colorString {
+   background-color: #f00;
+ }
+ */
+ 
+ /* Shouldn't get an error here because the method to access the style name 
+  * is annotated with @ClassName() 
+  */
+  @def overrideInt 10px;
+ .overrideInt {
+   width: 10px;
+ }
+ 
+ 

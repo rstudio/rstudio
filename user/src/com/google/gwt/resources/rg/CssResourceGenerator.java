@@ -115,6 +115,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
      */
     private final Map<String, Map<JMethod, String>> classReplacementsWithPrefix;
     private final Pattern classSelectorPattern = Pattern.compile("\\.([^ :>+#.]*)");
+    private final Set<String> cssDefs = new HashSet<String>();
     private final Set<String> externalClasses;
     private final TreeLogger logger;
     private final Set<JMethod> missingClasses;
@@ -134,6 +135,11 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
       assert classReplacementsWithPrefix.containsKey("");
       missingClasses = new HashSet<JMethod>(
           classReplacementsWithPrefix.get("").keySet());
+    }
+
+    @Override
+    public void endVisit(CssDef x, Context ctx) {
+      cssDefs.add(x.getKey());
     }
 
     @Override
@@ -193,6 +199,19 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
     @Override
     public void endVisit(CssStylesheet x, Context ctx) {
       boolean stop = false;
+
+      // Skip names corresponding to @def entries. They too can be declared as
+      // String accessors.
+      List<JMethod> toRemove = new ArrayList<JMethod>();
+      for (JMethod method : missingClasses) {
+        if (cssDefs.contains(method.getName())) {
+          toRemove.add(method);
+        }
+      }
+      for (JMethod method : toRemove) {
+        missingClasses.remove(method);
+      }
+
       if (!missingClasses.isEmpty()) {
         stop = true;
         TreeLogger errorLogger = logger.branch(TreeLogger.INFO,
@@ -228,6 +247,15 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
 
     public Map<JMethod, String> getReplacements() {
       return actualReplacements;
+    }
+  }
+
+  static class DefsCollector extends CssVisitor {
+    private final Set<String> defs = new HashSet<String>();
+
+    @Override
+    public void endVisit(CssDef x, Context ctx) {
+      defs.add(x.getKey());
     }
   }
 
@@ -1212,8 +1240,8 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
   private boolean prettyOutput;
   private Map<JClassType, Map<JMethod, String>> replacementsByClassAndMethod;
   private Map<JMethod, String> replacementsForSharedMethods;
-  private Map<JMethod, CssStylesheet> stylesheetMap;
   private JClassType stringType;
+  private Map<JMethod, CssStylesheet> stylesheetMap;
 
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context,
@@ -1701,34 +1729,39 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
 
     NumberValue numberValue = def.getValues().get(0).isNumberValue();
 
-    if (numberValue == null) {
-      logger.log(TreeLogger.ERROR, "The define named " + name
-          + " does not define a numeric value");
-      throw new UnableToCompleteException();
+    String returnExpr = "";
+    JClassType classReturnType = toImplement.getReturnType().isClass();
+    if (classReturnType != null
+        && "java.lang.String".equals(classReturnType.getQualifiedSourceName())) {
+      returnExpr = "\"" + Generator.escape(def.getValues().get(0).toString())
+          + "\"";
+    } else {
+      JPrimitiveType returnType = toImplement.getReturnType().isPrimitive();
+      if (returnType == null) {
+        logger.log(TreeLogger.ERROR, toImplement.getName()
+            + ": Return type must be primitive type or String for "
+            + "@def accessors");
+        throw new UnableToCompleteException();
+      }
+      if (returnType == JPrimitiveType.INT || returnType == JPrimitiveType.LONG) {
+        returnExpr = "" + Math.round(numberValue.getValue());
+      } else if (returnType == JPrimitiveType.FLOAT) {
+        returnExpr = numberValue.getValue() + "F";
+      } else if (returnType == JPrimitiveType.DOUBLE) {
+        returnExpr = "" + numberValue.getValue();
+      } else {
+        logger.log(TreeLogger.ERROR, returnType.getQualifiedSourceName()
+            + " is not a valid primitive return type for @def accessors");
+        throw new UnableToCompleteException();
+      }
     }
-
-    JPrimitiveType returnType = toImplement.getReturnType().isPrimitive();
-    assert returnType != null;
-
     sw.print(toImplement.getReadableDeclaration(false, false, false, false,
         true));
     sw.println(" {");
     sw.indent();
-    if (returnType == JPrimitiveType.INT || returnType == JPrimitiveType.LONG) {
-      sw.println("return " + Math.round(numberValue.getValue()) + ";");
-    } else if (returnType == JPrimitiveType.FLOAT) {
-      sw.println("return " + numberValue.getValue() + "F;");
-    } else if (returnType == JPrimitiveType.DOUBLE) {
-      sw.println("return " + numberValue.getValue() + ";");
-    } else {
-      logger.log(TreeLogger.ERROR, returnType.getQualifiedSourceName()
-          + " is not a valid return type for @def accessors");
-      throw new UnableToCompleteException();
-    }
+    sw.println("return " + returnExpr + ";");
     sw.outdent();
     sw.println("}");
-
-    numberValue.getValue();
   }
 
   /**
@@ -1738,20 +1771,31 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
       CssStylesheet sheet, JMethod[] methods,
       Map<JMethod, String> obfuscatedClassNames)
       throws UnableToCompleteException {
+
+    // Get list of @defs
+    DefsCollector collector = new DefsCollector();
+    collector.accept(sheet);
+
     for (JMethod toImplement : methods) {
       String name = toImplement.getName();
       if ("getName".equals(name) || "getText".equals(name)) {
         continue;
       }
 
-      if (toImplement.getReturnType().equals(stringType)
-          && toImplement.getParameters().length == 0) {
-        writeClassAssignment(sw, toImplement, obfuscatedClassNames);
+      // Bomb out if there is a collision between @def and a style name
+      if (collector.defs.contains(name)
+          && obfuscatedClassNames.containsKey(toImplement)) {
+        logger.log(TreeLogger.ERROR, "@def shadows CSS class name: " + name
+            + ". Fix by renaming the @def name or the CSS class name.");
+        throw new UnableToCompleteException();
+      }
 
-      } else if (toImplement.getReturnType().isPrimitive() != null
+      if (collector.defs.contains(toImplement.getName())
           && toImplement.getParameters().length == 0) {
         writeDefAssignment(logger, sw, toImplement, sheet);
-
+      } else if (toImplement.getReturnType().equals(stringType)
+          && toImplement.getParameters().length == 0) {
+        writeClassAssignment(sw, toImplement, obfuscatedClassNames);
       } else {
         logger.log(TreeLogger.ERROR, "Don't know how to implement method "
             + toImplement.getName());

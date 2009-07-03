@@ -32,9 +32,10 @@ import java.lang.annotation.Target;
  * <li>{@code String someClassName();} will allow the css class
  * <code>.someClassName</code> to be obfuscated at runtime. The function will
  * return the obfuscated class name.</li>
- * <li>{@code <primitive numeric type> someDefName();} will allow access to the
- * values defined by {@literal @def} rules within the CSS file. The defined
- * value must be a raw number, a CSS length, or a percentage value.
+ * <li>{@code <primitive numeric type or String> someDefName();} will allow 
+ * access to the values defined by {@literal @def} rules within the CSS file. 
+ * The defined value must be a raw number, a CSS length, or a percentage value 
+ * if it is to be returned as a numeric type.
  * </ul>
  * 
  * <p>
