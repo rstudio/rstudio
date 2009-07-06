@@ -73,6 +73,34 @@ alphabetically.
 Window->Preferences->Java->Compiler
 Set the compiler compliance level to 1.5.
 
+------- Compiler errors & warnings --------
+Window->Preferences->Java->Compiler->Errors/Warnings
+
+The following warnings are suggested.
+
+Code Style:
+- Method with a constructor name
+
+Potential programming problems:
+- Assignment has no effect
+- Accidental boolean assignment
+- 'finally' does not complete normally
+- Using a char array in string concatentation
+- Hidden catch block
+- Inexact type match for vararg arguments
+
+Name shadowing and conflicts: all except "Local variable" hiding
+
+Deprecated and restricted API: all
+
+Unnecessary code: all except "Unnecessary 'else' statement"
+
+Generic types: all except "Generic type parameter declared with final type bound"
+
+Annotations:
+- Annotation is used as super interface
+- Enable @SuppressWarnings annotations
+
 == Checkstyle ==
 
 Checkstyle is used to enforce good programming style.
