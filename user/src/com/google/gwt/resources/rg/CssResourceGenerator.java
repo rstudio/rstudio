@@ -946,10 +946,18 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
           String functionName = def.getValues().get(0).isIdentValue().getIdent();
 
           // Find the method
-          JMethod method = context.getClientBundleType().findMethod(
-              functionName, new JType[0]);
+          JMethod methods[] = context.getClientBundleType().getOverridableMethods();
+          boolean foundMethod = false;
+          if (methods != null) {
+            for (JMethod method : methods) {
+              if (method.getName().equals(functionName)) {
+                foundMethod = true;
+                break;
+              }
+            }
+          }
 
-          if (method == null) {
+          if (!foundMethod) {
             logger.log(TreeLogger.ERROR, "Unable to find DataResource method "
                 + functionName + " in "
                 + context.getClientBundleType().getQualifiedSourceName());

@@ -28,6 +28,13 @@ import com.google.gwt.resources.client.CssResource.Strict;
  */
 public class CSSResourceTest extends GWTTestCase {
 
+  interface ChildResources extends Resources {
+    ChildResources INSTANCE = GWT.create(ChildResources.class);
+
+    @Source("16x16.png")
+    ImageResource spriteMethod();
+  }
+
   interface ConcatenatedResources extends ClientBundle {
     @Source(value = {"concatenatedA.css", "concatenatedB.css"})
     @Strict
@@ -44,10 +51,10 @@ public class CSSResourceTest extends GWTTestCase {
     String lengthString();
 
     int overrideInt();
-    
+
     @ClassName("overrideInt")
     String overrideIntClass();
-    
+
     double percentFloat();
 
     int percentInt();
@@ -168,6 +175,14 @@ public class CSSResourceTest extends GWTTestCase {
     System.out.println(s);
   }
 
+  public void testChildResources() {
+    Resources parentResource = GWT.create(Resources.class);
+    ChildResources childResource = GWT.create(ChildResources.class);
+
+    assertEquals(parentResource.dataMethod().getName(),
+        childResource.dataMethod().getName());
+  }
+
   public void testConcatenatedResource() {
     ConcatenatedResources r = GWT.create(ConcatenatedResources.class);
     String text = r.css().getText();
@@ -270,7 +285,7 @@ public class CSSResourceTest extends GWTTestCase {
 
     assertEquals("100px", defines.lengthString());
     assertEquals("#f00", defines.colorString());
-    
+
     assertEquals(10, defines.overrideInt());
     assertNotNull(defines.overrideIntClass());
     assertFalse("10px".equals(defines.overrideIntClass()));
