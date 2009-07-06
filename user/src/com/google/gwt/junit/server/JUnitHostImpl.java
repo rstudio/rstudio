@@ -24,8 +24,8 @@ import com.google.gwt.junit.client.impl.JUnitHost;
 import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.StackTraceWrapper;
 import com.google.gwt.user.client.rpc.InvocationException;
+import com.google.gwt.user.server.rpc.HybridServiceServlet;
 import com.google.gwt.user.server.rpc.RPCServletUtils;
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -40,7 +40,7 @@ import javax.servlet.http.HttpServletResponse;
  * communication between the unit test code running in a browser and the real
  * test process.
  */
-public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
+public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
 
   /**
    * A hook into GWTUnitTestShell, the underlying unit test process.

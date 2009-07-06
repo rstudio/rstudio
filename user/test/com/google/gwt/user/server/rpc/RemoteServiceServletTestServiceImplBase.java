@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletRequest;
  * RPC-over-HTTP.
  */
 public class RemoteServiceServletTestServiceImplBase extends
-    RemoteServiceServlet implements RemoteServiceServletTestService {
+    HybridServiceServlet implements RemoteServiceServletTestService {
 
   public void test() {
   }

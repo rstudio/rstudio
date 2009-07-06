@@ -160,14 +160,20 @@ public class RPCServletUtils {
   }
 
   /**
-   * Returns <code>true</code> if the request accepts gzip encoding and the
-   * the response content's estimated UTF-8 byte length exceeds 256 bytes.
+   * Sets the correct header to indicate that a response is gzipped.
+   */
+  public static void setGzipEncodingHeader(HttpServletResponse response) {
+    response.setHeader(CONTENT_ENCODING, CONTENT_ENCODING_GZIP);
+  }
+
+  /**
+   * Returns <code>true</code> if the request accepts gzip encoding and the the
+   * response content's estimated UTF-8 byte length exceeds 256 bytes.
    * 
    * @param request the request associated with the response content
    * @param responseContent a string that will be
-   * @return <code>true</code> if the request accepts gzip encoding and the
-   *         the response content's estimated UTF-8 byte length exceeds 256
-   *         bytes
+   * @return <code>true</code> if the request accepts gzip encoding and the the
+   *         response content's estimated UTF-8 byte length exceeds 256 bytes
    */
   public static boolean shouldGzipResponseContent(HttpServletRequest request,
       String responseContent) {
@@ -177,14 +183,14 @@ public class RPCServletUtils {
 
   /**
    * Write the response content into the {@link HttpServletResponse}. If
-   * <code>gzipResponse</code> is <code>true</code>, the response content
-   * will be gzipped prior to being written into the response.
+   * <code>gzipResponse</code> is <code>true</code>, the response content will
+   * be gzipped prior to being written into the response.
    * 
    * @param servletContext servlet context for this response
    * @param response response instance
    * @param responseContent a string containing the response content
-   * @param gzipResponse if <code>true</code> the response content will be
-   *          gzip encoded before being written into the response
+   * @param gzipResponse if <code>true</code> the response content will be gzip
+   *          encoded before being written into the response
    * @throws IOException if reading, writing, or closing the response's output
    *           stream fails
    */
@@ -205,7 +211,7 @@ public class RPCServletUtils {
         gzipOutputStream.write(responseBytes);
         gzipOutputStream.finish();
         gzipOutputStream.flush();
-        response.setHeader(CONTENT_ENCODING, CONTENT_ENCODING_GZIP);
+        setGzipEncodingHeader(response);
         responseBytes = output.toByteArray();
       } catch (IOException e) {
         caught = e;

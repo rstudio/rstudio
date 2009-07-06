@@ -26,10 +26,10 @@ import javax.servlet.ServletContext;
 
 /**
  * Servlet used by the
- * {@link com.google.gwt.user.client.rpc.CustomFieldSerializerTest CustomFieldSerializerTest}
- * unit test.
+ * {@link com.google.gwt.user.client.rpc.CustomFieldSerializerTest
+ * CustomFieldSerializerTest} unit test.
  */
-public class CustomFieldSerializerTestServiceImpl extends RemoteServiceServlet
+public class CustomFieldSerializerTestServiceImpl extends HybridServiceServlet
     implements CustomFieldSerializerTestService {
 
   /**

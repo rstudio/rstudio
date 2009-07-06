@@ -1,0 +1,25 @@
+<module>
+  <inherits name="com.google.gwt.core.Core" />
+  <inherits name="com.google.gwt.user.RemoteService" />
+
+  <source path="client" />
+  <super-source path="super" />
+
+  <define-linker name="clientOracleLinker"
+    class="com.google.gwt.rpc.linker.ClientOracleLinker" />
+  <add-linker name="clientOracleLinker" />
+
+  <define-property name="gwt.rpc.hijackLegacyInterface" values="true,false" />
+  <set-property name="gwt.rpc.hijackLegacyInterface" value="false" />
+
+  <generate-with class="com.google.gwt.rpc.rebind.RpcServiceGenerator">
+    <any>
+      <when-type-assignable class="com.google.gwt.rpc.client.RpcService" />
+      <all>
+        <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService" />
+        <when-property-is name="gwt.rpc.hijackLegacyInterface"
+          value="true" />
+      </all>
+    </any>
+  </generate-with>
+</module>

@@ -105,6 +105,14 @@ public class TestSetFactory {
    * A single-use marker type to independently check type parameter exposure in
    * various collections.
    */
+  public static enum MarkerTypeEnum {
+    A, B, C;
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
   public static final class MarkerTypeHashMap extends MarkerBase {
 
     public MarkerTypeHashMap(String value) {
@@ -297,16 +305,16 @@ public class TestSetFactory {
     }
 
     @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    @Override
     public boolean equals(Object ob) {
       if (!(ob instanceof ReverseSorter)) {
         return false;
       }
       return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
     }
   }
 
@@ -354,6 +362,11 @@ public class TestSetFactory {
     return new Double[] {
         new Double(Double.MAX_VALUE), new Double(Double.MIN_VALUE),
         new Double(Double.MAX_VALUE), new Double(Double.MIN_VALUE)};
+  }
+
+  public static Enum<?>[] createEnumArray() {
+    return new Enum<?>[] {
+        MarkerTypeEnum.A, MarkerTypeEnum.B, MarkerTypeEnum.C, MarkerTypeEnum.A,};
   }
 
   public static Float[] createFloatArray() {
@@ -521,7 +534,8 @@ public class TestSetFactory {
     if (defaultComparator) {
       set = new TreeSet<MarkerTypeTreeSet>();
     } else {
-      set = new TreeSet<MarkerTypeTreeSet>(new ReverseSorter<MarkerTypeTreeSet>());
+      set = new TreeSet<MarkerTypeTreeSet>(
+          new ReverseSorter<MarkerTypeTreeSet>());
     }
     set.add(new MarkerTypeTreeSet("foo"));
     set.add(new MarkerTypeTreeSet("bar"));

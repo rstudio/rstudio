@@ -20,7 +20,7 @@ import com.google.gwt.user.client.rpc.EnumsTestService;
 /**
  * Simple remote service used to echo enumerated types.
  */
-public class EnumsTestServiceImpl extends RemoteServiceServlet implements
+public class EnumsTestServiceImpl extends HybridServiceServlet implements
     EnumsTestService {
 
   public Basic echo(Basic value) {
@@ -29,9 +29,10 @@ public class EnumsTestServiceImpl extends RemoteServiceServlet implements
 
   public Complex echo(Complex value) throws EnumStateModificationException {
     if ("client".equals(value.value)) {
-      throw new EnumStateModificationException("Client-side enumeration state made it to the server");
+      throw new EnumStateModificationException(
+          "Client-side enumeration state made it to the server");
     }
-    
+
     return value;
   }
 

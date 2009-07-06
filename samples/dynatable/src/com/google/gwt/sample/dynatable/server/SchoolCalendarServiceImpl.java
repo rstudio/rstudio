@@ -21,7 +21,7 @@ import com.google.gwt.sample.dynatable.client.Schedule;
 import com.google.gwt.sample.dynatable.client.SchoolCalendarService;
 import com.google.gwt.sample.dynatable.client.Student;
 import com.google.gwt.sample.dynatable.client.TimeSlot;
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.google.gwt.user.server.rpc.HybridServiceServlet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +31,7 @@ import java.util.Random;
 /**
  * The implemenation of the RPC service which runs on the server.
  */
-public class SchoolCalendarServiceImpl extends RemoteServiceServlet implements
+public class SchoolCalendarServiceImpl extends HybridServiceServlet implements
     SchoolCalendarService {
 
   private static final String[] FIRST_NAMES = new String[] {

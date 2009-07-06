@@ -31,7 +31,7 @@ import java.util.zip.CRC32;
 /**
  * Serialization utility class used by the server-side RPC code.
  */
-class SerializabilityUtil {
+public class SerializabilityUtil {
 
   public static final String DEFAULT_ENCODING = "UTF-8";
 
@@ -223,7 +223,7 @@ class SerializabilityUtil {
   private static Class<?> computeHasCustomFieldSerializer(Class<?> instanceType) {
     assert (instanceType != null);
     String qualifiedTypeName = instanceType.getName();
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    ClassLoader classLoader = SerializabilityUtil.class.getClassLoader();
     String simpleSerializerName = qualifiedTypeName + "_CustomFieldSerializer";
     Class<?> customSerializer = getCustomFieldSerializer(classLoader,
         simpleSerializerName);

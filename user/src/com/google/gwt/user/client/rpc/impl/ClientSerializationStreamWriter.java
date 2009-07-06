@@ -34,6 +34,37 @@ public final class ClientSerializationStreamWriter extends
   @SuppressWarnings("unused")
   private static JavaScriptObject regex = getQuotingRegex();
 
+  /**
+   * Quote characters in a user-supplied string to make sure they are safe to
+   * send to the server.
+   * 
+   * @param str string to quote
+   * @return quoted string
+   */
+  public static native String quoteString(String str) /*-{
+    var regex = @com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter::regex;
+    var idx = 0;
+    var out = "";
+    var result;
+    while ((result = regex.exec(str)) != null) {
+       out += str.substring(idx, result.index);
+       idx = result.index + 1;
+       var ch = result[0].charCodeAt(0);
+       if (ch == 0) {
+         out += "\\0";
+       } else if (ch == 92) { // backslash
+         out += "\\\\";
+       } else if (ch == 124) { // vertical bar
+         // 124 = "|" = AbstractSerializationStream.RPC_SEPARATOR_CHAR
+         out += "\\!";
+       } else {
+         var hex = ch.toString(16);
+         out += "\\u0000".substring(0, 6 - hex.length) + hex;
+       }
+    }
+    return out + str.substring(idx);
+  }-*/;
+
   private static void append(StringBuffer sb, String token) {
     assert (token != null);
     sb.append(token);
@@ -75,40 +106,6 @@ public final class ClientSerializationStreamWriter extends
   // Keep synchronized with LongLib
   private static native double[] makeLongComponents0(long value) /*-{
     return value;
-  }-*/;
-
-  /**
-   * Quote characters in a user-supplied string to make sure they are safe to
-   * send to the server.
-   * 
-   * See {@link ServerSerializationStreamReader#deserializeStringTable} for the
-   * corresponding dequoting.
-   * 
-   * @param str string to quote
-   * @return quoted string
-   */
-  private static native String quoteString(String str) /*-{
-    var regex = @com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter::regex;
-    var idx = 0;
-    var out = "";
-    var result;
-    while ((result = regex.exec(str)) != null) {
-       out += str.substring(idx, result.index);
-       idx = result.index + 1;
-       var ch = result[0].charCodeAt(0);
-       if (ch == 0) {
-         out += "\\0";
-       } else if (ch == 92) { // backslash
-         out += "\\\\";
-       } else if (ch == 124) { // vertical bar
-         // 124 = "|" = AbstractSerializationStream.RPC_SEPARATOR_CHAR
-         out += "\\!";
-       } else {
-         var hex = ch.toString(16);
-         out += "\\u0000".substring(0, 6 - hex.length) + hex;
-       }
-    }
-    return out + str.substring(idx);
   }-*/;
 
   private StringBuffer encodeBuffer;

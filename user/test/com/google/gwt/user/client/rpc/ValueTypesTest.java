@@ -22,7 +22,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  * TODO: document me.
  */
 public class ValueTypesTest extends GWTTestCase {
-  
+
   private static final int TEST_DELAY = 5000;
 
   private ValueTypesTestServiceAsync primitiveTypeTestService;
@@ -41,8 +41,8 @@ public class ValueTypesTest extends GWTTestCase {
       }
 
       public void onSuccess(Object result) {
-        assertNotNull(result);
-        assertFalse(((Boolean) result).booleanValue());
+        assertNotNull("Was null", result);
+        assertFalse("Should have been false", ((Boolean) result).booleanValue());
         finishTest();
       }
     });

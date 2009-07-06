@@ -76,6 +76,8 @@ public interface CollectionsTestService extends RemoteService {
 
   Double[] echo(Double[] value) throws CollectionsTestServiceException;
 
+  Enum<?>[] echo(Enum<?>[] value) throws CollectionsTestServiceException;
+
   float[] echo(float[] value) throws CollectionsTestServiceException;
 
   Float[] echo(Float[] value) throws CollectionsTestServiceException;

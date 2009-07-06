@@ -31,11 +31,10 @@ import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClas
 import javax.servlet.ServletContext;
 
 /**
- * Servlet used by the
- * {@link com.google.gwt.user.client.rpc.InheritanceTest InheritanceTest} unit
- * test.
+ * Servlet used by the {@link com.google.gwt.user.client.rpc.InheritanceTest
+ * InheritanceTest} unit test.
  */
-public class InheritanceTestServiceImpl extends RemoteServiceServlet implements
+public class InheritanceTestServiceImpl extends HybridServiceServlet implements
     InheritanceTestServiceSubtype {
 
   /**

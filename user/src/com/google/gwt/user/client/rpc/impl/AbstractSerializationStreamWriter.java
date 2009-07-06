@@ -48,7 +48,7 @@ public abstract class AbstractSerializationStreamWriter extends
    * </blockquote>
    */
   // Keep synchronized with LongLib
-  protected static double[] makeLongComponents(int highBits, int lowBits) {
+  public static double[] makeLongComponents(int highBits, int lowBits) {
     double high = highBits * TWO_PWR_32_DBL;
     double low = lowBits;
     if (lowBits < 0) {

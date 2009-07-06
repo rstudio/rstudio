@@ -41,7 +41,7 @@ public class EnumsTest extends GWTTestCase {
       throw new RuntimeException(caught);
     }
   }
-  
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.RPCSuite";
@@ -58,42 +58,46 @@ public class EnumsTest extends GWTTestCase {
       }
 
       public void onSuccess(Basic result) {
+        assertNotNull("Was null", result);
         assertEquals(Basic.A, result);
         finishTest();
-      }});
+      }
+    });
   }
-  
+
   /**
    * Test that complex enums with state and non-default constructors can be used
    * over RPC and that the client state does not change.
    */
   public void testComplexEnums() {
     delayTestFinish(TEST_DELAY);
-    
+
     Complex a = Complex.A;
     a.value = "client";
-    
+
     getService().echo(Complex.A, new AsyncCallback<Complex>() {
       public void onFailure(Throwable caught) {
         rethrowException(caught);
       }
 
       public void onSuccess(Complex result) {
+        assertNotNull("Was null", result);
         assertEquals(Complex.A, result);
-        
+
         // Ensure that the server's changes did not impact us.
         assertEquals("client", result.value);
-        
+
         finishTest();
-      }});
+      }
+    });
   }
-  
+
   /**
    * Test that null can be used as an enumeration.
    */
   public void testNull() {
     delayTestFinish(TEST_DELAY);
-    
+
     getService().echo((Basic) null, new AsyncCallback<Basic>() {
       public void onFailure(Throwable caught) {
         rethrowException(caught);
@@ -102,23 +106,26 @@ public class EnumsTest extends GWTTestCase {
       public void onSuccess(Basic result) {
         assertNull(result);
         finishTest();
-      }});
+      }
+    });
   }
-  
+
   /**
    * Test that enums with subclasses can be passed over RPC.
    */
   public void testSubclassingEnums() {
     delayTestFinish(TEST_DELAY);
-    
+
     getService().echo(Subclassing.A, new AsyncCallback<Subclassing>() {
       public void onFailure(Throwable caught) {
         rethrowException(caught);
       }
 
       public void onSuccess(Subclassing result) {
+        assertNotNull("Was null", result);
         assertEquals(Subclassing.A, result);
         finishTest();
-      }});
+      }
+    });
   }
 }

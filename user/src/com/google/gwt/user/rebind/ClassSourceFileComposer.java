@@ -48,9 +48,10 @@ class ClassSourceFileComposer implements SourceWriter {
   private final PrintWriter printWriter;
 
   ClassSourceFileComposer(GeneratorContext ctx, PrintWriter printWriter,
-      String targetPackageName, String targetClassShortName,
-      String superClassName, String[] interfaceNames, String[] imports,
-      JavaSourceCategory category, String classJavaDocComment) {
+      String targetPackageName, String[] annotationDeclarations,
+      String targetClassShortName, String superClassName,
+      String[] interfaceNames, String[] imports, JavaSourceCategory category,
+      String classJavaDocComment) {
     this.ctx = ctx;
     this.printWriter = printWriter;
     if (targetPackageName == null) {
@@ -61,7 +62,7 @@ class ClassSourceFileComposer implements SourceWriter {
     if (targetPackageName.length() > 0) {
       println("package " + targetPackageName + ";");
     }
-    
+
     if (imports != null && imports.length > 0) {
       println();
       for (int i = 0, n = imports.length; i < n; ++i) {
@@ -75,6 +76,9 @@ class ClassSourceFileComposer implements SourceWriter {
     } else {
       // beginJavaDocComment adds its own leading newline, make up for it here.
       println();
+    }
+    for (String annotation : annotationDeclarations) {
+      println(annotation);
     }
     if (category == JavaSourceCategory.CLASS) {
       emitClassDecl(targetClassShortName, superClassName, interfaceNames);

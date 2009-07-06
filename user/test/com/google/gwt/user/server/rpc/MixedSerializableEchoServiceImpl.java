@@ -22,7 +22,7 @@ import com.google.gwt.user.client.rpc.MixedSerializableEchoService;
  * Servlet used by the
  * {@link com.google.gwt.user.client.rpc.RunTimeSerializationErrorsTest}.
  */
-public class MixedSerializableEchoServiceImpl extends RemoteServiceServlet
+public class MixedSerializableEchoServiceImpl extends HybridServiceServlet
     implements MixedSerializableEchoService {
   public MixedSerializable echoVoid(MixedSerializable mixed) {
     return mixed;

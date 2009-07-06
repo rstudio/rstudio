@@ -26,7 +26,6 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -37,23 +36,84 @@ import javax.servlet.http.HttpServletResponse;
  * automatically deserializes incoming requests from the client and serializes
  * outgoing responses for client/server RPCs.
  */
-public class RemoteServiceServlet extends HttpServlet implements
-    SerializationPolicyProvider {
+public class RemoteServiceServlet extends AbstractRemoteServiceServlet
+    implements SerializationPolicyProvider {
 
   /**
-   * Used by {@link #getPermutationStrongName()}.
+   * Used by HybridServiceServlet.
    */
-  /*
-   * NB: Keep in sync with RemoteServiceProxy.
-   */
-  protected static final String STRONG_NAME_HEADER = "X-GWT-Permutation";
+  static SerializationPolicy loadSerializationPolicy(HttpServlet servlet,
+      HttpServletRequest request, String moduleBaseURL, String strongName) {
+    // The request can tell you the path of the web app relative to the
+    // container root.
+    String contextPath = request.getContextPath();
 
-  // ThreadLocal is not serializable, so mark these fields as transient and
-  // recreate them upon deserialization.
-  
-  private transient ThreadLocal<HttpServletRequest> perThreadRequest;
+    String modulePath = null;
+    if (moduleBaseURL != null) {
+      try {
+        modulePath = new URL(moduleBaseURL).getPath();
+      } catch (MalformedURLException ex) {
+        // log the information, we will default
+        servlet.log("Malformed moduleBaseURL: " + moduleBaseURL, ex);
+      }
+    }
 
-  private transient ThreadLocal<HttpServletResponse> perThreadResponse;
+    SerializationPolicy serializationPolicy = null;
+
+    /*
+     * Check that the module path must be in the same web app as the servlet
+     * itself. If you need to implement a scheme different than this, override
+     * this method.
+     */
+    if (modulePath == null || !modulePath.startsWith(contextPath)) {
+      String message = "ERROR: The module path requested, "
+          + modulePath
+          + ", is not in the same web application as this servlet, "
+          + contextPath
+          + ".  Your module may not be properly configured or your client and server code maybe out of date.";
+      servlet.log(message, null);
+    } else {
+      // Strip off the context path from the module base URL. It should be a
+      // strict prefix.
+      String contextRelativePath = modulePath.substring(contextPath.length());
+
+      String serializationPolicyFilePath = SerializationPolicyLoader.getSerializationPolicyFileName(contextRelativePath
+          + strongName);
+
+      // Open the RPC resource file read its contents.
+      InputStream is = servlet.getServletContext().getResourceAsStream(
+          serializationPolicyFilePath);
+      try {
+        if (is != null) {
+          try {
+            serializationPolicy = SerializationPolicyLoader.loadFromStream(is,
+                null);
+          } catch (ParseException e) {
+            servlet.log("ERROR: Failed to parse the policy file '"
+                + serializationPolicyFilePath + "'", e);
+          } catch (IOException e) {
+            servlet.log("ERROR: Could not read the policy file '"
+                + serializationPolicyFilePath + "'", e);
+          }
+        } else {
+          String message = "ERROR: The serialization policy file '"
+              + serializationPolicyFilePath
+              + "' was not found; did you forget to include it in this deployment?";
+          servlet.log(message, null);
+        }
+      } finally {
+        if (is != null) {
+          try {
+            is.close();
+          } catch (IOException e) {
+            // Ignore this error
+          }
+        }
+      }
+    }
+
+    return serializationPolicy;
+  }
 
   /**
    * A cache of moduleBaseURL and serialization policy strong name to
@@ -65,60 +125,6 @@ public class RemoteServiceServlet extends HttpServlet implements
    * The default constructor.
    */
   public RemoteServiceServlet() {
-  }
-
-  /**
-   * Standard HttpServlet method: handle the POST.
-   * 
-   * This doPost method swallows ALL exceptions, logs them in the
-   * ServletContext, and returns a GENERIC_FAILURE_MSG response with status code
-   * 500.
-   */
-  @Override
-  public final void doPost(HttpServletRequest request,
-      HttpServletResponse response) {
-    // Ensure the thread-local data fields have been initialized
-    
-    try {
-      // Store the request & response objects in thread-local storage.
-      //
-      synchronized (this) {
-        validateThreadLocalData();
-        perThreadRequest.set(request);
-        perThreadResponse.set(response);
-      }
-
-      // Read the request fully.
-      //
-      String requestPayload = readContent(request);
-
-      // Let subclasses see the serialized request.
-      //
-      onBeforeRequestDeserialized(requestPayload);
-
-      // Invoke the core dispatching logic, which returns the serialized
-      // result.
-      //
-      String responsePayload = processCall(requestPayload);
-
-      // Let subclasses see the serialized response.
-      //
-      onAfterResponseSerialized(responsePayload);
-
-      // Write the response.
-      //
-      writeResponse(request, response, responsePayload);
-      return;
-    } catch (Throwable e) {
-      // Give a subclass a chance to either handle the exception or rethrow it
-      //
-      doUnexpectedFailure(e);
-    } finally {
-      // null the thread-locals to avoid holding request/response
-      //
-      perThreadRequest.set(null);
-      perThreadResponse.set(null);
-    }
   }
 
   public final SerializationPolicy getSerializationPolicy(String moduleBaseURL,
@@ -178,7 +184,8 @@ public class RemoteServiceServlet extends HttpServlet implements
   public String processCall(String payload) throws SerializationException {
     try {
       if (getPermutationStrongName() == null) {
-        throw new SecurityException("Blocked request without GWT permutation header(XSRF attack?)");
+        throw new SecurityException(
+            "Blocked request with GWT permutation header (XSRF attack?)");
       }
       RPCRequest rpcRequest = RPC.decodeRequest(payload, this.getClass(), this);
       onAfterRequestDeserialized(rpcRequest);
@@ -191,6 +198,42 @@ public class RemoteServiceServlet extends HttpServlet implements
           ex);
       return RPC.encodeResponseForFailure(null, ex);
     }
+  }
+
+  /**
+   * Standard HttpServlet method: handle the POST.
+   * 
+   * This doPost method swallows ALL exceptions, logs them in the
+   * ServletContext, and returns a GENERIC_FAILURE_MSG response with status code
+   * 500.
+   * 
+   * @throws ServletException
+   * @throws SerializationException
+   */
+  @Override
+  public final void processPost(HttpServletRequest request,
+      HttpServletResponse response) throws IOException, ServletException,
+      SerializationException {
+    // Read the request fully.
+    //
+    String requestPayload = readContent(request);
+
+    // Let subclasses see the serialized request.
+    //
+    onBeforeRequestDeserialized(requestPayload);
+
+    // Invoke the core dispatching logic, which returns the serialized
+    // result.
+    //
+    String responsePayload = processCall(requestPayload);
+
+    // Let subclasses see the serialized response.
+    //
+    onAfterResponseSerialized(responsePayload);
+
+    // Write the response.
+    //
+    writeResponse(request, response, responsePayload);
   }
 
   /**
@@ -209,143 +252,7 @@ public class RemoteServiceServlet extends HttpServlet implements
    */
   protected SerializationPolicy doGetSerializationPolicy(
       HttpServletRequest request, String moduleBaseURL, String strongName) {
-    // The request can tell you the path of the web app relative to the
-    // container root.
-    String contextPath = request.getContextPath();
-
-    String modulePath = null;
-    if (moduleBaseURL != null) {
-      try {
-        modulePath = new URL(moduleBaseURL).getPath();
-      } catch (MalformedURLException ex) {
-        // log the information, we will default
-        log("Malformed moduleBaseURL: " + moduleBaseURL, ex);
-      }
-    }
-
-    SerializationPolicy serializationPolicy = null;
-
-    /*
-     * Check that the module path must be in the same web app as the servlet
-     * itself. If you need to implement a scheme different than this, override
-     * this method.
-     */
-    if (modulePath == null || !modulePath.startsWith(contextPath)) {
-      String message = "ERROR: The module path requested, "
-          + modulePath
-          + ", is not in the same web application as this servlet, "
-          + contextPath
-          + ".  Your module may not be properly configured or your client and server code maybe out of date.";
-      log(message, null);
-    } else {
-      // Strip off the context path from the module base URL. It should be a
-      // strict prefix.
-      String contextRelativePath = modulePath.substring(contextPath.length());
-
-      String serializationPolicyFilePath = SerializationPolicyLoader.getSerializationPolicyFileName(contextRelativePath
-          + strongName);
-
-      // Open the RPC resource file read its contents.
-      InputStream is = getServletContext().getResourceAsStream(
-          serializationPolicyFilePath);
-      try {
-        if (is != null) {
-          try {
-            serializationPolicy = SerializationPolicyLoader.loadFromStream(is,
-                null);
-          } catch (ParseException e) {
-            log("ERROR: Failed to parse the policy file '"
-                + serializationPolicyFilePath + "'", e);
-          } catch (IOException e) {
-            log("ERROR: Could not read the policy file '"
-                + serializationPolicyFilePath + "'", e);
-          }
-        } else {
-          String message = "ERROR: The serialization policy file '"
-              + serializationPolicyFilePath
-              + "' was not found; did you forget to include it in this deployment?";
-          log(message, null);
-        }
-      } finally {
-        if (is != null) {
-          try {
-            is.close();
-          } catch (IOException e) {
-            // Ignore this error
-          }
-        }
-      }
-    }
-
-    return serializationPolicy;
-  }
-
-  /**
-   * Override this method to control what should happen when an exception
-   * escapes the {@link #processCall(String)} method. The default implementation
-   * will log the failure and send a generic failure response to the client.
-   * <p>
-   * An "expected failure" is an exception thrown by a service method that is
-   * declared in the signature of the service method. These exceptions are
-   * serialized back to the client, and are not passed to this method. This
-   * method is called only for exceptions or errors that are not part of the
-   * service method's signature, or that result from SecurityExceptions,
-   * SerializationExceptions, or other failures within the RPC framework.
-   * <p>
-   * Note that if the desired behavior is to both send the GENERIC_FAILURE_MSG
-   * response AND to rethrow the exception, then this method should first send
-   * the GENERIC_FAILURE_MSG response itself (using getThreadLocalResponse), and
-   * then rethrow the exception. Rethrowing the exception will cause it to
-   * escape into the servlet container.
-   * 
-   * @param e the exception which was thrown
-   */
-  protected void doUnexpectedFailure(Throwable e) {
-    ServletContext servletContext = getServletContext();
-    RPCServletUtils.writeResponseForUnexpectedFailure(servletContext,
-        getThreadLocalResponse(), e);
-  }
-
-  /**
-   * Returns the strong name of the permutation, as reported by the client that
-   * issued the request, or <code>null</code> if it could not be determined.
-   * This information is encoded in the {@value #STRONG_NAME_HEADER} HTTP
-   * header.
-   */
-  protected final String getPermutationStrongName() {
-    return getThreadLocalRequest().getHeader(STRONG_NAME_HEADER);
-  }
-  
-  /**
-   * Gets the <code>HttpServletRequest</code> object for the current call. It is
-   * stored thread-locally so that simultaneous invocations can have different
-   * request objects.
-   */
-  protected final HttpServletRequest getThreadLocalRequest() {
-    synchronized (this) {
-      validateThreadLocalData();
-      return perThreadRequest.get();
-    }
-  }
-
-  /**
-   * Gets the <code>HttpServletResponse</code> object for the current call. It
-   * is stored thread-locally so that simultaneous invocations can have
-   * different response objects.
-   */
-  protected final HttpServletResponse getThreadLocalResponse() {
-    synchronized (this) {
-      validateThreadLocalData();
-      return perThreadResponse.get();
-    }
-  }
-
-  /**
-   * Override this method to examine the deserialized version of the request
-   * before the call to the servlet method is made. The default implementation
-   * does nothing and need not be called by subclasses.
-   */
-  protected void onAfterRequestDeserialized(RPCRequest rpcRequest) {
+    return loadSerializationPolicy(this, request, moduleBaseURL, strongName);
   }
 
   /**
@@ -362,21 +269,6 @@ public class RemoteServiceServlet extends HttpServlet implements
    * does nothing and need not be called by subclasses.
    */
   protected void onBeforeRequestDeserialized(String serializedRequest) {
-  }
-
-  /**
-   * Override this method in order to control the parsing of the incoming
-   * request. For example, you may want to bypass the check of the Content-Type
-   * and character encoding headers in the request, as some proxies re-write the
-   * request headers. Note that bypassing these checks may expose the servlet to
-   * some cross-site vulnerabilities.
-   * 
-   * @param request the incoming request
-   * @return the content of the incoming request encoded as a string.
-   */
-  protected String readContent(HttpServletRequest request)
-      throws ServletException, IOException {
-    return RPCServletUtils.readContentAsUtf8(request, true);
   }
 
   /**
@@ -412,22 +304,6 @@ public class RemoteServiceServlet extends HttpServlet implements
     synchronized (serializationPolicyCache) {
       serializationPolicyCache.put(moduleBaseURL + strongName,
           serializationPolicy);
-    }
-  }
-
-  /**
-   * Initializes the perThreadRequest and perThreadResponse fields if they are
-   * null. This will occur the first time they are accessed after an instance of
-   * this class is constructed or deserialized.  This method should be called
-   * from within a 'synchronized(this) {}' block in order to ensure that
-   * only one thread creates the objects.
-   */
-  private void validateThreadLocalData() {
-    if (perThreadRequest == null) {
-      perThreadRequest = new ThreadLocal<HttpServletRequest>();
-    }
-    if (perThreadResponse == null) {
-      perThreadResponse = new ThreadLocal<HttpServletResponse>();
     }
   }
 

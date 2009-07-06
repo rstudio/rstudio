@@ -16,6 +16,7 @@
 package com.google.gwt.user.rebind.rpc;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.GeneratorContext;
@@ -40,6 +41,7 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 import com.google.gwt.user.client.rpc.SerializationException;
+import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter;
 import com.google.gwt.user.client.rpc.impl.FailedRequest;
 import com.google.gwt.user.client.rpc.impl.FailingRequestBuilder;
@@ -68,7 +70,7 @@ import java.util.Set;
  * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService} interface
  * as well as the necessary type and field serializers.
  */
-class ProxyCreator {
+public class ProxyCreator {
 
   private static final Map<JPrimitiveType, ResponseReader> JPRIMITIVETYPE_TO_RESPONSEREADER = new HashMap<JPrimitiveType, ResponseReader>();
 
@@ -165,14 +167,14 @@ class ProxyCreator {
     return serializableTypes;
   }
 
+  protected JClassType serviceIntf;
+
   private boolean elideTypeNames;
 
   /**
    * The possibly obfuscated type signatures used to represent a type.
    */
   private Map<JType, String> typeStrings;
-
-  private JClassType serviceIntf;
 
   {
     JPRIMITIVETYPE_TO_RESPONSEREADER.put(JPrimitiveType.BOOLEAN,
@@ -233,9 +235,10 @@ class ProxyCreator {
         serviceIntf, serviceAsync);
 
     final PropertyOracle propertyOracle = context.getPropertyOracle();
-    
+
     // Load the blacklist/whitelist
-    TypeFilter blacklistTypeFilter = new BlacklistTypeFilter(logger, propertyOracle);
+    TypeFilter blacklistTypeFilter = new BlacklistTypeFilter(logger,
+        propertyOracle);
 
     // Determine the set of serializable types
     SerializableTypeOracleBuilder typesSentFromBrowserBuilder = new SerializableTypeOracleBuilder(
@@ -245,21 +248,12 @@ class ProxyCreator {
         logger, propertyOracle, typeOracle);
     typesSentToBrowserBuilder.setTypeFilter(blacklistTypeFilter);
 
-    try {
-      addRequiredRoots(logger, typeOracle, typesSentFromBrowserBuilder);
-      addRequiredRoots(logger, typeOracle, typesSentToBrowserBuilder);
-
-      addRemoteServiceRootTypes(logger, typeOracle,
-          typesSentFromBrowserBuilder, typesSentToBrowserBuilder, serviceIntf);
-    } catch (NotFoundException e) {
-      logger.log(TreeLogger.ERROR, "", e);
-      throw new UnableToCompleteException();
-    }
+    addRoots(logger, typeOracle, typesSentFromBrowserBuilder,
+        typesSentToBrowserBuilder);
 
     try {
-      ConfigurationProperty prop
-          = context.getPropertyOracle().getConfigurationProperty(
-              TypeSerializerCreator.GWT_ELIDE_TYPE_NAMES_FROM_RPC);
+      ConfigurationProperty prop = context.getPropertyOracle().getConfigurationProperty(
+          TypeSerializerCreator.GWT_ELIDE_TYPE_NAMES_FROM_RPC);
       elideTypeNames = Boolean.parseBoolean(prop.getValues().get(0));
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "Configuration property "
@@ -275,7 +269,7 @@ class ProxyCreator {
         serviceIntf.getQualifiedSourceName() + ".rpc.log");
     PrintWriter writer = null;
     SerializableTypeOracle typesSentFromBrowser;
-    SerializableTypeOracle typesSentToBrowser;    
+    SerializableTypeOracle typesSentToBrowser;
     try {
       writer = new PrintWriter(pathInfo);
 
@@ -293,7 +287,7 @@ class ProxyCreator {
       writer.write("===================================\n\n");
       writer.flush();
       typesSentToBrowser = typesSentToBrowserBuilder.build(logger);
-      
+
       if (pathInfo != null) {
         context.commitResource(logger, pathInfo).setPrivate(true);
       }
@@ -303,13 +297,8 @@ class ProxyCreator {
       }
     }
 
-    TypeSerializerCreator tsc = new TypeSerializerCreator(logger,
-        typesSentFromBrowser, typesSentToBrowser, context,
-        SerializationUtils.getTypeSerializerQualifiedName(serviceIntf));
-    tsc.realize(logger);
-
-    typeStrings = new HashMap<JType, String>(tsc.getTypeStrings());
-    typeStrings.put(serviceIntf, TypeNameObfuscator.SERVICE_INTERFACE_ID);
+    generateTypeHandlers(logger, context, typesSentFromBrowser,
+        typesSentToBrowser);
 
     String serializationPolicyStrongName = writeSerializationPolicyFile(logger,
         context, typesSentFromBrowser, typesSentToBrowser);
@@ -334,12 +323,39 @@ class ProxyCreator {
     return getProxyQualifiedName();
   }
 
+  protected void addRoots(TreeLogger logger, TypeOracle typeOracle,
+      SerializableTypeOracleBuilder typesSentFromBrowserBuilder,
+      SerializableTypeOracleBuilder typesSentToBrowserBuilder)
+      throws UnableToCompleteException {
+    try {
+      addRequiredRoots(logger, typeOracle, typesSentFromBrowserBuilder);
+      addRequiredRoots(logger, typeOracle, typesSentToBrowserBuilder);
+
+      addRemoteServiceRootTypes(logger, typeOracle,
+          typesSentFromBrowserBuilder, typesSentToBrowserBuilder, serviceIntf);
+    } catch (NotFoundException e) {
+      logger.log(TreeLogger.ERROR,
+          "Unable to find type referenced from remote service", e);
+      throw new UnableToCompleteException();
+    }
+  }
+
+  protected String computeTypeNameExpression(JType paramType) {
+    String typeName;
+    if (typeStrings.containsKey(paramType)) {
+      typeName = typeStrings.get(paramType);
+    } else {
+      typeName = TypeOracleMediator.computeBinaryClassName(paramType);
+    }
+    return typeName == null ? null : ('"' + typeName + '"');
+  }
+
   /**
    * Generate the proxy constructor and delegate to the superclass constructor
    * using the default address for the
    * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService}.
    */
-  private void generateProxyContructor(SourceWriter srcWriter) {
+  protected void generateProxyContructor(SourceWriter srcWriter) {
     srcWriter.println("public " + getProxySimpleName() + "() {");
     srcWriter.indent();
     srcWriter.println("super(GWT.getModuleBaseURL(),");
@@ -355,7 +371,7 @@ class ProxyCreator {
   /**
    * Generate any fields required by the proxy.
    */
-  private void generateProxyFields(SourceWriter srcWriter,
+  protected void generateProxyFields(SourceWriter srcWriter,
       SerializableTypeOracle serializableTypeOracle,
       String serializationPolicyStrongName, String remoteServiceInterfaceName) {
     // Initialize a field with binary name of the remote service interface
@@ -372,7 +388,7 @@ class ProxyCreator {
   /**
    * Generates the client's asynchronous proxy method.
    */
-  private void generateProxyMethod(SourceWriter w,
+  protected void generateProxyMethod(SourceWriter w,
       SerializableTypeOracle serializableTypeOracle, JMethod syncMethod,
       JMethod asyncMethod) {
 
@@ -386,7 +402,6 @@ class ProxyCreator {
     w.print(asyncMethod.getName() + "(");
 
     boolean needsComma = false;
-    boolean needsTryCatchBlock = false;
     NameFactory nameFactory = new NameFactory();
     JParameter[] asyncParams = asyncMethod.getParameters();
     for (int i = 0; i < asyncParams.length; ++i) {
@@ -404,12 +419,6 @@ class ProxyCreator {
        */
       JType paramType = param.getType();
       paramType = paramType.getErasedType();
-      if (i < asyncParams.length - 1
-          && paramType.isPrimitive() == null
-          && !paramType.getQualifiedSourceName().equals(
-              String.class.getCanonicalName())) {
-        needsTryCatchBlock = true;
-      }
 
       w.print(paramType.getQualifiedSourceName());
       w.print(" ");
@@ -431,16 +440,15 @@ class ProxyCreator {
         + "timeStat(\"" + statsMethodExpr + "\", " + requestIdName
         + ", \"begin\"));");
 
-    w.print(ClientSerializationStreamWriter.class.getSimpleName());
+    w.print(SerializationStreamWriter.class.getSimpleName());
     w.print(" ");
     String streamWriterName = nameFactory.createName("streamWriter");
     w.println(streamWriterName + " = createStreamWriter();");
     w.println("// createStreamWriter() prepared the stream");
+    w.println("try {");
+    w.indent();
+
     w.println(streamWriterName + ".writeString(REMOTE_SERVICE_INTERFACE_NAME);");
-    if (needsTryCatchBlock) {
-      w.println("try {");
-      w.indent();
-    }
 
     // Write the method name
     w.println(streamWriterName + ".writeString(\"" + syncMethod.getName()
@@ -451,15 +459,10 @@ class ProxyCreator {
     w.println(streamWriterName + ".writeInt(" + syncParams.length + ");");
     for (JParameter param : syncParams) {
       JType paramType = param.getType().getErasedType();
-      String typeName;
-      if (typeStrings.containsKey(paramType)) {
-        typeName = typeStrings.get(paramType);
-      } else {
-        typeName = TypeOracleMediator.computeBinaryClassName(paramType);
-      }
-      assert typeName != null : "Could not compute a type name for "
+      String typeNameExpression = computeTypeNameExpression(paramType);
+      assert typeNameExpression != null : "Could not compute a type name for "
           + paramType.getQualifiedSourceName();
-      w.println(streamWriterName + ".writeString(\"" + typeName + "\");");
+      w.println(streamWriterName + ".writeString(" + typeNameExpression + ");");
     }
 
     // Encode all of the arguments to the asynchronous method, but exclude the
@@ -506,39 +509,38 @@ class ProxyCreator {
         + "\", " + requestIdName + ", " + payloadName + ", " + callbackName
         + ");");
 
-    if (needsTryCatchBlock) {
-      w.outdent();
-      w.print("} catch (SerializationException ");
-      String exceptionName = nameFactory.createName("ex");
-      w.println(exceptionName + ") {");
-      w.indent();
-      if (!asyncReturnType.getQualifiedSourceName().equals(
-          RequestBuilder.class.getName())) {
-        /*
-         * If the method returns void or Request, signal the serialization error
-         * immediately. If the method returns RequestBuilder, the error will be
-         * signaled whenever RequestBuilder.send() is invoked.
-         */
-        w.println(callbackName + ".onFailure(" + exceptionName + ");");
-      }
-      if (asyncReturnType.getQualifiedSourceName().equals(
-          RequestBuilder.class.getName())) {
-        w.println("return new " + FailingRequestBuilder.class.getName() + "("
-            + exceptionName + ", " + callbackName + ");");
-      } else if (asyncReturnType.getQualifiedSourceName().equals(
-          Request.class.getName())) {
-        w.println("return new " + FailedRequest.class.getName() + "();");
-      } else {
-        assert asyncReturnType == JPrimitiveType.VOID;
-      }
-      w.outdent();
-      w.println("}");
+    w.outdent();
+    w.print("} catch (SerializationException ");
+    String exceptionName = nameFactory.createName("ex");
+    w.println(exceptionName + ") {");
+    w.indent();
+    if (!asyncReturnType.getQualifiedSourceName().equals(
+        RequestBuilder.class.getName())) {
+      /*
+       * If the method returns void or Request, signal the serialization error
+       * immediately. If the method returns RequestBuilder, the error will be
+       * signaled whenever RequestBuilder.send() is invoked.
+       */
+      w.println(callbackName + ".onFailure(" + exceptionName + ");");
     }
+    if (asyncReturnType.getQualifiedSourceName().equals(
+        RequestBuilder.class.getName())) {
+      w.println("return new " + FailingRequestBuilder.class.getName() + "("
+          + exceptionName + ", " + callbackName + ");");
+    } else if (asyncReturnType.getQualifiedSourceName().equals(
+        Request.class.getName())) {
+      w.println("return new " + FailedRequest.class.getName() + "();");
+    } else {
+      assert asyncReturnType == JPrimitiveType.VOID;
+    }
+    w.outdent();
+    w.println("}");
+
     w.outdent();
     w.println("}");
   }
 
-  private void generateProxyMethods(SourceWriter w,
+  protected void generateProxyMethods(SourceWriter w,
       SerializableTypeOracle serializableTypeOracle,
       Map<JMethod, JMethod> syncMethToAsyncMethMap) {
     JMethod[] syncMethods = serviceIntf.getOverridableMethods();
@@ -566,30 +568,46 @@ class ProxyCreator {
     }
   }
 
-  private void generateStreamWriterOverride(SourceWriter srcWriter) {
+  protected void generateStreamWriterOverride(SourceWriter srcWriter) {
     srcWriter.println("@Override");
-    srcWriter.println("public ClientSerializationStreamWriter createStreamWriter() {");
+    srcWriter.println("public SerializationStreamWriter createStreamWriter() {");
     srcWriter.indent();
-    srcWriter.println("ClientSerializationStreamWriter toReturn = super.createStreamWriter();");
+    /*
+     * Need an explicit cast since we've widened the declaration of the method
+     * in RemoteServiceProxy.
+     */
+    srcWriter.println("ClientSerializationStreamWriter toReturn =");
+    srcWriter.indentln("(ClientSerializationStreamWriter) super.createStreamWriter();");
     srcWriter.println("toReturn.addFlags(ClientSerializationStreamWriter.FLAG_ELIDE_TYPE_NAMES);");
     srcWriter.println("return toReturn;");
     srcWriter.outdent();
     srcWriter.println("}");
   }
 
-  private String getProxyQualifiedName() {
-    String[] name = Shared.synthesizeTopLevelClassName(serviceIntf,
-        PROXY_SUFFIX);
-    return name[0].length() == 0 ? name[1] : name[0] + "." + name[1];
+  protected void generateTypeHandlers(TreeLogger logger,
+      GeneratorContext context, SerializableTypeOracle typesSentFromBrowser,
+      SerializableTypeOracle typesSentToBrowser)
+      throws UnableToCompleteException {
+    TypeSerializerCreator tsc = new TypeSerializerCreator(logger,
+        typesSentFromBrowser, typesSentToBrowser, context,
+        SerializationUtils.getTypeSerializerQualifiedName(serviceIntf));
+    tsc.realize(logger);
+
+    typeStrings = new HashMap<JType, String>(tsc.getTypeStrings());
+    typeStrings.put(serviceIntf, TypeNameObfuscator.SERVICE_INTERFACE_ID);
   }
 
-  private String getProxySimpleName() {
+  protected String getProxySimpleName() {
     String[] name = Shared.synthesizeTopLevelClassName(serviceIntf,
         PROXY_SUFFIX);
     return name[1];
   }
 
-  private String getRemoteServiceRelativePath() {
+  protected Class<? extends RemoteServiceProxy> getProxySupertype() {
+    return RemoteServiceProxy.class;
+  }
+
+  protected String getRemoteServiceRelativePath() {
     RemoteServiceRelativePath moduleRelativeURL = serviceIntf.getAnnotation(RemoteServiceRelativePath.class);
     if (moduleRelativeURL != null) {
       return "\"" + moduleRelativeURL.value() + "\"";
@@ -598,48 +616,11 @@ class ProxyCreator {
     return null;
   }
 
-  private ResponseReader getResponseReaderFor(JType returnType) {
-    if (returnType.isPrimitive() != null) {
-      return JPRIMITIVETYPE_TO_RESPONSEREADER.get(returnType.isPrimitive());
-    }
-
-    if (returnType.getQualifiedSourceName().equals(
-        String.class.getCanonicalName())) {
-      return ResponseReader.STRING;
-    }
-
-    return ResponseReader.OBJECT;
+  protected Class<? extends SerializationStreamWriter> getStreamWriterClass() {
+    return ClientSerializationStreamWriter.class;
   }
 
-  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx,
-      JClassType serviceAsync) {
-    JPackage serviceIntfPkg = serviceAsync.getPackage();
-    String packageName = serviceIntfPkg == null ? "" : serviceIntfPkg.getName();
-    PrintWriter printWriter = ctx.tryCreate(logger, packageName,
-        getProxySimpleName());
-    if (printWriter == null) {
-      return null;
-    }
-
-    ClassSourceFileComposerFactory composerFactory = new ClassSourceFileComposerFactory(
-        packageName, getProxySimpleName());
-
-    String[] imports = new String[] {
-        RemoteServiceProxy.class.getCanonicalName(),
-        ClientSerializationStreamWriter.class.getCanonicalName(),
-        GWT.class.getCanonicalName(), ResponseReader.class.getCanonicalName(),
-        SerializationException.class.getCanonicalName()};
-    for (String imp : imports) {
-      composerFactory.addImport(imp);
-    }
-
-    composerFactory.setSuperclass(RemoteServiceProxy.class.getSimpleName());
-    composerFactory.addImplementedInterface(serviceAsync.getErasedType().getQualifiedSourceName());
-
-    return composerFactory.createSourceWriter(ctx, printWriter);
-  }
-
-  private String writeSerializationPolicyFile(TreeLogger logger,
+  protected String writeSerializationPolicyFile(TreeLogger logger,
       GeneratorContext ctx, SerializableTypeOracle serializationSto,
       SerializableTypeOracle deserializationSto)
       throws UnableToCompleteException {
@@ -712,5 +693,54 @@ class ProxyCreator {
       logger.log(TreeLogger.ERROR, null, e);
       throw new UnableToCompleteException();
     }
+  }
+
+  private String getProxyQualifiedName() {
+    String[] name = Shared.synthesizeTopLevelClassName(serviceIntf,
+        PROXY_SUFFIX);
+    return name[0].length() == 0 ? name[1] : name[0] + "." + name[1];
+  }
+
+  private ResponseReader getResponseReaderFor(JType returnType) {
+    if (returnType.isPrimitive() != null) {
+      return JPRIMITIVETYPE_TO_RESPONSEREADER.get(returnType.isPrimitive());
+    }
+
+    if (returnType.getQualifiedSourceName().equals(
+        String.class.getCanonicalName())) {
+      return ResponseReader.STRING;
+    }
+
+    return ResponseReader.OBJECT;
+  }
+
+  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx,
+      JClassType serviceAsync) {
+    JPackage serviceIntfPkg = serviceAsync.getPackage();
+    String packageName = serviceIntfPkg == null ? "" : serviceIntfPkg.getName();
+    PrintWriter printWriter = ctx.tryCreate(logger, packageName,
+        getProxySimpleName());
+    if (printWriter == null) {
+      return null;
+    }
+
+    ClassSourceFileComposerFactory composerFactory = new ClassSourceFileComposerFactory(
+        packageName, getProxySimpleName());
+
+    String[] imports = new String[] {
+        getProxySupertype().getCanonicalName(),
+        getStreamWriterClass().getCanonicalName(),
+        SerializationStreamWriter.class.getCanonicalName(),
+        GWT.class.getCanonicalName(), ResponseReader.class.getCanonicalName(),
+        SerializationException.class.getCanonicalName(),
+        Impl.class.getCanonicalName()};
+    for (String imp : imports) {
+      composerFactory.addImport(imp);
+    }
+
+    composerFactory.setSuperclass(getProxySupertype().getSimpleName());
+    composerFactory.addImplementedInterface(serviceAsync.getErasedType().getQualifiedSourceName());
+
+    return composerFactory.createSourceWriter(ctx, printWriter);
   }
 }

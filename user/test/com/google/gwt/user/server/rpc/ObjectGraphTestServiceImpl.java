@@ -24,7 +24,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
 /**
  * TODO: document me.
  */
-public class ObjectGraphTestServiceImpl extends RemoteServiceServlet implements
+public class ObjectGraphTestServiceImpl extends HybridServiceServlet implements
     ObjectGraphTestService {
 
   public SerializableDoublyLinkedNode echo_AcyclicGraph(

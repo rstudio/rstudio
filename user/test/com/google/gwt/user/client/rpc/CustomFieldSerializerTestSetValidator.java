@@ -19,24 +19,30 @@ import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory.Serial
 
 /**
  * Data validator used by the
- * {@link com.google.gwt.user.client.rpc.CustomFieldSerializerTest CustomFieldSerializerTest}
- * unit test.
+ * {@link com.google.gwt.user.client.rpc.CustomFieldSerializerTest
+ * CustomFieldSerializerTest} unit test.
  */
 public class CustomFieldSerializerTestSetValidator {
   public static boolean isValid(ManuallySerializedClass manuallySerializedClass) {
     if (manuallySerializedClass == null) {
       return false;
     }
-    
+
     StackTraceElement ste = manuallySerializedClass.getStackTraceElement();
 
-    return manuallySerializedClass.getA() == 4
+    boolean toReturn = manuallySerializedClass.getA() == 4
         && manuallySerializedClass.getB() == 5
         && manuallySerializedClass.getC() == 6
         && manuallySerializedClass.getString().equals("bye")
         && ste.getClassName().equals("HighClass")
         && ste.getMethodName().equals("highClassMethod")
         && ste.getFileName().equals("HighClass.java");
+
+    // Let the custom serializer restore this state
+    manuallySerializedClass.setStackTraceElement(new StackTraceElement(
+        "Should", "Not", "See", -1));
+
+    return toReturn;
   }
 
   // Must be a non-null array with two == elements

@@ -37,7 +37,7 @@ import java.util.zip.CRC32;
 /**
  * Utilities used for implementing serialization.
  */
-class SerializationUtils {
+public class SerializationUtils {
   static final Comparator<JField> FIELD_COMPARATOR = new Comparator<JField>() {
     public int compare(JField f1, JField f2) {
       return f1.getName().compareTo(f2.getName());
@@ -60,6 +60,31 @@ class SerializationUtils {
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Short");
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.String");
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Throwable");
+  }
+
+  /**
+   * Returns the set of fields that are serializable for a given class type.
+   * This method does not consider any superclass fields.
+   * 
+   * @param classType the class for which we want serializable fields
+   * @return array of fields that meet the serialization criteria.
+   */
+  public static JField[] getSerializableFields(TypeOracle typeOracle,
+      JClassType classType) {
+    assert (classType != null);
+
+    List<JField> fields = new ArrayList<JField>();
+    JField[] declFields = classType.getFields();
+    assert (declFields != null);
+    for (JField field : declFields) {
+      if (SerializableTypeOracleBuilder.shouldConsiderForSerialization(
+          TreeLogger.NULL, true, field)) {
+        fields.add(field);
+      }
+    }
+
+    Collections.sort(fields, FIELD_COMPARATOR);
+    return fields.toArray(new JField[fields.size()]);
   }
 
   /**
@@ -98,31 +123,6 @@ class SerializationUtils {
     } else {
       return name[1];
     }
-  }
-
-  /**
-   * Returns the set of fields that are serializable for a given class type.
-   * This method does not consider any superclass fields.
-   * 
-   * @param classType the class for which we want serializable fields
-   * @return array of fields that meet the serialization criteria.
-   */
-  static JField[] getSerializableFields(TypeOracle typeOracle,
-      JClassType classType) {
-    assert (classType != null);
-
-    List<JField> fields = new ArrayList<JField>();
-    JField[] declFields = classType.getFields();
-    assert (declFields != null);
-    for (JField field : declFields) {
-      if (SerializableTypeOracleBuilder.shouldConsiderForSerialization(
-          TreeLogger.NULL, true, field)) {
-        fields.add(field);
-      }
-    }
-
-    Collections.sort(fields, FIELD_COMPARATOR);
-    return fields.toArray(new JField[fields.size()]);
   }
 
   /**

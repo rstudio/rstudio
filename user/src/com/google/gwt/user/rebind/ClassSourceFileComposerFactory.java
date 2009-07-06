@@ -18,8 +18,10 @@ package com.google.gwt.user.rebind;
 import com.google.gwt.core.ext.GeneratorContext;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,6 +60,8 @@ public class ClassSourceFileComposerFactory {
     }
   }
 
+  private List<String> annotations = new ArrayList<String>();
+
   private JavaSourceCategory classCategory = JavaSourceCategory.CLASS;
 
   private String classComment;
@@ -75,6 +79,10 @@ public class ClassSourceFileComposerFactory {
   public ClassSourceFileComposerFactory(String packageName, String className) {
     this.packageName = packageName;
     this.className = className;
+  }
+
+  public void addAnnotationDeclaration(String declaration) {
+    annotations.add(declaration);
   }
 
   public void addImplementedInterface(String intfName) {
@@ -96,8 +104,9 @@ public class ClassSourceFileComposerFactory {
   public SourceWriter createSourceWriter(GeneratorContext ctx,
       PrintWriter printWriter) {
     return new ClassSourceFileComposer(ctx, printWriter, getCreatedPackage(),
-        getCreatedClassShortName(), getSuperclassName(), getInterfaceNames(),
-        getImports(), classCategory, classComment);
+        getAnnotationDeclarations(), getCreatedClassShortName(),
+        getSuperclassName(), getInterfaceNames(), getImports(), classCategory,
+        classComment);
   }
 
   /**
@@ -112,8 +121,13 @@ public class ClassSourceFileComposerFactory {
    */
   public SourceWriter createSourceWriter(PrintWriter printWriter) {
     return new ClassSourceFileComposer(null, printWriter, getCreatedPackage(),
-        getCreatedClassShortName(), getSuperclassName(), getInterfaceNames(),
-        getImports(), classCategory, classComment);
+        getAnnotationDeclarations(), getCreatedClassShortName(),
+        getSuperclassName(), getInterfaceNames(), getImports(), classCategory,
+        classComment);
+  }
+
+  public String[] getAnnotationDeclarations() {
+    return annotations.toArray(new String[annotations.size()]);
   }
 
   public String getCreatedClassName() {

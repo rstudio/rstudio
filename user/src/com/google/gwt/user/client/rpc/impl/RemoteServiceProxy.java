@@ -18,12 +18,15 @@ package com.google.gwt.user.client.rpc.impl;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamFactory;
+import com.google.gwt.user.client.rpc.SerializationStreamReader;
+import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
 
@@ -181,7 +184,7 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    *         SerializationStreamReader} that is ready for reading
    * @throws SerializationException
    */
-  public ClientSerializationStreamReader createStreamReader(String encoded)
+  public SerializationStreamReader createStreamReader(String encoded)
       throws SerializationException {
     ClientSerializationStreamReader clientSerializationStreamReader = new ClientSerializationStreamReader(
         serializer);
@@ -202,7 +205,7 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    *         it and it has already had had the name of the remote service
    *         interface written as well
    */
-  public ClientSerializationStreamWriter createStreamWriter() {
+  public SerializationStreamWriter createStreamWriter() {
     ClientSerializationStreamWriter clientSerializationStreamWriter = new ClientSerializationStreamWriter(
         serializer, moduleBaseURL, serializationPolicyName);
     clientSerializationStreamWriter.prepareToWrite();
@@ -225,6 +228,13 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    */
   public void setServiceEntryPoint(String url) {
     this.remoteServiceURL = url;
+  }
+
+  protected <T> RequestCallback doCreateRequestCallback(
+      ResponseReader responseReader, String methodName, int invocationCount,
+      AsyncCallback<T> callback) {
+    return new RequestCallbackAdapter<T>(this, methodName, invocationCount,
+        callback, responseReader);
   }
 
   /**
@@ -308,8 +318,8 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
       throw new NoServiceEntryPointSpecifiedException();
     }
 
-    RequestCallbackAdapter<T> responseHandler = new RequestCallbackAdapter<T>(
-        this, methodName, invocationCount, callback, responseReader);
+    RequestCallback responseHandler = doCreateRequestCallback(responseReader,
+        methodName, invocationCount, callback);
 
     ensureRpcRequestBuilder();
 

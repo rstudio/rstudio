@@ -36,7 +36,15 @@ public class RpcRequestBuilder {
    * Used by {@link #doFinish}.
    */
   /*
-   * NB: Keep in sync with RemoteServiceServlet.
+   * NB: Also used by RpcServlet.
+   */
+  public static final String MODULE_BASE_HEADER = "X-GWT-Module-Base";
+
+  /**
+   * Used by {@link #doFinish}.
+   */
+  /*
+   * NB: Also used by AbstractRemoteServiceServlet.
    */
   public static final String STRONG_NAME_HEADER = "X-GWT-Permutation";
 
@@ -157,6 +165,7 @@ public class RpcRequestBuilder {
    */
   protected void doFinish(RequestBuilder rb) {
     rb.setHeader(STRONG_NAME_HEADER, GWT.getPermutationStrongName());
+    rb.setHeader(MODULE_BASE_HEADER, GWT.getModuleBaseURL());
   }
 
   /**

@@ -19,9 +19,9 @@ import com.google.gwt.user.client.rpc.UnicodeEscapingService;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 
 /**
- * Implementation of the {@link UnicodeEscapingService} interface. 
+ * Implementation of the {@link UnicodeEscapingService} interface.
  */
-public class UnicodeEscapingServiceImpl extends RemoteServiceServlet implements
+public class UnicodeEscapingServiceImpl extends HybridServiceServlet implements
     UnicodeEscapingService {
 
   /**
@@ -32,7 +32,8 @@ public class UnicodeEscapingServiceImpl extends RemoteServiceServlet implements
   }
 
   /**
-   * @see UnicodeEscapingService#verifyStringContainingCharacterRange(int, int, String)
+   * @see UnicodeEscapingService#verifyStringContainingCharacterRange(int, int,
+   *      String)
    */
   public boolean verifyStringContainingCharacterRange(int start, int end,
       String str) throws InvalidCharacterException {

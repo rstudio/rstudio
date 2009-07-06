@@ -48,12 +48,16 @@ public class ServiceInterfaceProxyGenerator extends Generator {
       throw new UnableToCompleteException();
     }
 
-    ProxyCreator proxyCreator = new ProxyCreator(remoteService);
+    ProxyCreator proxyCreator = createProxyCreator(remoteService);
 
     TreeLogger proxyLogger = logger.branch(TreeLogger.DEBUG,
         "Generating client proxy for remote service interface '"
             + remoteService.getQualifiedSourceName() + "'", null);
 
     return proxyCreator.create(proxyLogger, ctx);
+  }
+
+  protected ProxyCreator createProxyCreator(JClassType remoteService) {
+    return new ProxyCreator(remoteService);
   }
 }

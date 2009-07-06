@@ -45,7 +45,7 @@ import java.util.Vector;
 /**
  * TODO: document me.
  */
-public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
+public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     CollectionsTestService {
 
   private static String toString(Object[] values) {
@@ -146,6 +146,17 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
 
   public Double[] echo(Double[] actual) throws CollectionsTestServiceException {
     Double[] expected = TestSetFactory.createDoubleArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + Arrays.toString(expected) + " actual: " + Arrays.toString(actual));
+    }
+
+    return actual;
+  }
+
+  public Enum<?>[] echo(Enum<?>[] actual)
+      throws CollectionsTestServiceException {
+    Enum<?>[] expected = TestSetFactory.createEnumArray();
     if (!TestSetValidator.equals(expected, actual)) {
       throw new CollectionsTestServiceException("expected: "
           + Arrays.toString(expected) + " actual: " + Arrays.toString(actual));

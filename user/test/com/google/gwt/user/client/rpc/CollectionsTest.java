@@ -208,6 +208,24 @@ public class CollectionsTest extends GWTTestCase {
     });
   }
 
+  public void testEnumArray() {
+    delayTestFinish(TEST_DELAY);
+
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final Enum<?>[] expected = TestSetFactory.createEnumArray();
+    service.echo(expected, new AsyncCallback<Enum<?>[]>() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Enum<?>[] result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.equals(expected, result));
+        finishTest();
+      }
+    });
+  }
+
   public void testFloatArray() {
     delayTestFinish(TEST_DELAY);
 
@@ -618,7 +636,7 @@ public class CollectionsTest extends GWTTestCase {
 
   public void testTreeSet() {
     delayTestFinish(TEST_DELAY);
-    
+
     CollectionsTestServiceAsync service = getServiceAsync();
     for (boolean option : new boolean[] {true, false}) {
       final TreeSet<MarkerTypeTreeSet> expected = TestSetFactory.createTreeSet(option);

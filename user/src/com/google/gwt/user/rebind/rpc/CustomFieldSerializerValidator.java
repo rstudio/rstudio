@@ -30,20 +30,87 @@ import java.util.List;
 /**
  * Checks that a custom serializer is valid.
  */
-class CustomFieldSerializerValidator {
+public class CustomFieldSerializerValidator {
   private static final String NO_DESERIALIZE_METHOD = "Custom Field Serializer ''{0}'' does not define a deserialize method: ''public static void deserialize({1} reader,{2} instance)''";
   private static final String NO_INSTANTIATE_METHOD = "Custom Field Serializer ''{0}'' does not define an instantiate method: ''public static {1} instantiate({2} reader)''; but ''{1}'' is not default instantiable";
   private static final String NO_SERIALIZE_METHOD = "Custom Field Serializer ''{0}'' does not define a serialize method: ''public static void serialize({1} writer,{2} instance)''";
   private static final String TOO_MANY_METHODS = "Custom Field Serializer ''{0}'' defines too many methods named ''{1}''; please define only one method with that name";
+
+  public static JMethod getDeserializationMethod(JClassType serializer,
+      JClassType serializee) {
+    return getMethod("deserialize", SerializationStreamReader.class.getName(),
+        serializer, serializee);
+  }
+
+  public static JMethod getInstantiationMethod(JClassType serializer,
+      JClassType serializee) {
+    JMethod[] overloads = serializer.getOverloads("instantiate");
+    for (JMethod overload : overloads) {
+      JParameter[] parameters = overload.getParameters();
+
+      if (parameters.length != 1) {
+        // Different overload
+        continue;
+      }
+
+      if (!parameters[0].getType().getQualifiedSourceName().equals(
+          SerializationStreamReader.class.getName())) {
+        // First param is not a stream class
+        continue;
+      }
+
+      if (!isValidCustomFieldSerializerMethod(overload)) {
+        continue;
+      }
+
+      JType type = overload.getReturnType();
+      if (type.isPrimitive() != null) {
+        // Primitives are auto serialized so this can't be the right method
+        continue;
+      }
+
+      // TODO: if isArray answered yes to isClass this cast would not be
+      // necessary
+      JClassType clazz = (JClassType) type;
+      if (clazz.isAssignableFrom(serializee)) {
+        return overload;
+      }
+    }
+
+    return null;
+  }
+
+  public static JMethod getSerializationMethod(JClassType serializer,
+      JClassType serializee) {
+    return getMethod("serialize", SerializationStreamWriter.class.getName(),
+        serializer, serializee);
+  }
+
+  public static boolean hasDeserializationMethod(JClassType serializer,
+      JClassType serializee) {
+    return getDeserializationMethod(serializer, serializee) != null;
+  }
+
+  public static boolean hasInstantiationMethod(JClassType serializer,
+      JClassType serializee) {
+    return getInstantiationMethod(serializer, serializee) != null;
+  }
+
+  public static boolean hasSerializationMethod(JClassType serializer,
+      JClassType serializee) {
+    return getSerializationMethod(serializer, serializee) != null;
+  }
 
   /**
    * Returns a list of error messages associated with the custom field
    * serializer.
    * 
    * @param streamReaderClass
-   *          {@link com.google.gwt.user.client.rpc.SerializationStreamReader SerializationStreamReader}
+   *          {@link com.google.gwt.user.client.rpc.SerializationStreamReader
+   *          SerializationStreamReader}
    * @param streamWriterClass
-   *          {@link com.google.gwt.user.client.rpc.SerializationStreamWriter SerializationStreamWriter}
+   *          {@link com.google.gwt.user.client.rpc.SerializationStreamWriter
+   *          SerializationStreamWriter}
    * @param serializer the class which performs the serialization
    * @param serializee the class being serialized
    * @return list of error messages, if any, associated with the custom field
@@ -96,71 +163,6 @@ class CustomFieldSerializerValidator {
     }
 
     return reasons;
-  }
-
-  static JMethod getDeserializationMethod(JClassType serializer,
-      JClassType serializee) {
-    return getMethod("deserialize", SerializationStreamReader.class.getName(),
-        serializer, serializee);
-  }
-
-  static JMethod getInstantiationMethod(JClassType serializer,
-      JClassType serializee) {
-    JMethod[] overloads = serializer.getOverloads("instantiate");
-    for (JMethod overload : overloads) {
-      JParameter[] parameters = overload.getParameters();
-
-      if (parameters.length != 1) {
-        // Different overload
-        continue;
-      }
-
-      if (!parameters[0].getType().getQualifiedSourceName().equals(
-          SerializationStreamReader.class.getName())) {
-        // First param is not a stream class
-        continue;
-      }
-
-      if (!isValidCustomFieldSerializerMethod(overload)) {
-        continue;
-      }
-
-      JType type = overload.getReturnType();
-      if (type.isPrimitive() != null) {
-        // Primitives are auto serialized so this can't be the right method
-        continue;
-      }
-
-      // TODO: if isArray answered yes to isClass this cast would not be
-      // necessary
-      JClassType clazz = (JClassType) type;
-      if (clazz.isAssignableFrom(serializee)) {
-        return overload;
-      }
-    }
-
-    return null;
-  }
-
-  static JMethod getSerializationMethod(JClassType serializer,
-      JClassType serializee) {
-    return getMethod("serialize", SerializationStreamWriter.class.getName(),
-        serializer, serializee);
-  }
-
-  static boolean hasDeserializationMethod(JClassType serializer,
-      JClassType serializee) {
-    return getDeserializationMethod(serializer, serializee) != null;
-  }
-
-  static boolean hasInstantiationMethod(JClassType serializer,
-      JClassType serializee) {
-    return getInstantiationMethod(serializer, serializee) != null;
-  }
-
-  static boolean hasSerializationMethod(JClassType serializer,
-      JClassType serializee) {
-    return getSerializationMethod(serializer, serializee) != null;
   }
 
   private static void checkTooMany(String methodName, JClassType serializer,

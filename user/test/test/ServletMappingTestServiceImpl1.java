@@ -15,12 +15,12 @@
  */
 package test;
 
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.google.gwt.user.server.rpc.HybridServiceServlet;
 
 /**
  * TODO: document me.
  */
-public class ServletMappingTestServiceImpl1 extends RemoteServiceServlet
+public class ServletMappingTestServiceImpl1 extends HybridServiceServlet
     implements ServletMappingTestService {
 
   public int which() {

@@ -18,12 +18,12 @@ package com.google.gwt.user.server.rpc;
 import com.google.gwt.user.client.rpc.ValueTypesTestService;
 
 /**
- * Server-side code for ValueTypesTest.  Mostly just echoes back the values
- * received from the client, but some methods verify the value received to
- * make sure it isn't mangled on the way to the server and then unmangled
- * on the way back to the client.
+ * Server-side code for ValueTypesTest. Mostly just echoes back the values
+ * received from the client, but some methods verify the value received to make
+ * sure it isn't mangled on the way to the server and then unmangled on the way
+ * back to the client.
  */
-public class ValueTypesTestServiceImpl extends RemoteServiceServlet implements
+public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     ValueTypesTestService {
 
   public byte echo(byte value) {

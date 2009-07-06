@@ -47,7 +47,7 @@ public class InheritanceTest extends GWTTestCase {
       public void foo() {
         // purposely empty
       }
-    }, new AsyncCallback() {
+    }, new AsyncCallback<Object>() {
       public void onFailure(Throwable caught) {
         finishTest();
       }
@@ -62,23 +62,25 @@ public class InheritanceTest extends GWTTestCase {
    * Tests that a shadowed field is properly serialized.
    * 
    * Checks for <a href="bug
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=161">BUG 161</a>
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=161">BUG
+   * 161</a>
    */
   public void testFieldShadowing() {
     delayTestFinish(TEST_DELAY);
 
     InheritanceTestServiceAsync service = getServiceAsync();
-    service.echo(InheritanceTestSetFactory.createCircle(), new AsyncCallback() {
-      public void onFailure(Throwable caught) {
-        TestSetValidator.rethrowException(caught);
-      }
+    service.echo(InheritanceTestSetFactory.createCircle(),
+        new AsyncCallback<Object>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
 
-      public void onSuccess(Object result) {
-        Circle circle = (Circle) result;
-        assertNotNull(circle.getName());
-        finishTest();
-      }
-    });
+          public void onSuccess(Object result) {
+            Circle circle = (Circle) result;
+            assertNotNull(circle.getName());
+            finishTest();
+          }
+        });
   }
 
   /**
@@ -89,7 +91,7 @@ public class InheritanceTest extends GWTTestCase {
 
     InheritanceTestServiceAsync service = getServiceAsync();
     service.echo(new InheritanceTestSetFactory.JavaSerializableClass(3),
-        new AsyncCallback() {
+        new AsyncCallback<Object>() {
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
@@ -109,7 +111,7 @@ public class InheritanceTest extends GWTTestCase {
 
     InheritanceTestServiceAsync service = getServiceAsync();
     service.echo(InheritanceTestSetFactory.createNonStaticInnerClass(),
-        new AsyncCallback() {
+        new AsyncCallback<Object>() {
           public void onFailure(Throwable caught) {
             finishTest();
           }
@@ -124,7 +126,7 @@ public class InheritanceTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
 
     InheritanceTestServiceAsync service = getServiceAsync();
-    service.getUnserializableClass(new AsyncCallback() {
+    service.getUnserializableClass(new AsyncCallback<Object>() {
       public void onFailure(Throwable caught) {
         finishTest();
       }
@@ -143,7 +145,7 @@ public class InheritanceTest extends GWTTestCase {
 
     InheritanceTestServiceAsync service = getServiceAsync();
     service.echo(InheritanceTestSetFactory.createSerializableClass(),
-        new AsyncCallback() {
+        new AsyncCallback<Object>() {
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
@@ -164,7 +166,7 @@ public class InheritanceTest extends GWTTestCase {
 
     InheritanceTestServiceAsync service = getServiceAsync();
     service.echo(InheritanceTestSetFactory.createSerializableSubclass(),
-        new AsyncCallback() {
+        new AsyncCallback<Object>() {
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
@@ -194,10 +196,11 @@ public class InheritanceTest extends GWTTestCase {
       public void foo() {
         // purposely empty
       }
-    }, new AsyncCallback() {
+    }, new AsyncCallback<Object>() {
       public void onFailure(Throwable caught) {
         assertTrue(
-            "onFailure: got something other than a SerializationException",
+            "onFailure: got something other than a SerializationException ("
+                + caught.getClass().getName() + ")",
             caught instanceof SerializationException);
         serializationExceptionCaught[0] = true;
       }
@@ -217,7 +220,7 @@ public class InheritanceTest extends GWTTestCase {
     InheritanceTestServiceAsync service = getServiceAsync();
     service.echo(
         InheritanceTestSetFactory.createSerializableClassWithTransientField(),
-        new AsyncCallback() {
+        new AsyncCallback<Object>() {
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }

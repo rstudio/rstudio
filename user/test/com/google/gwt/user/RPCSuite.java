@@ -17,6 +17,15 @@ package com.google.gwt.user;
 
 import com.google.gwt.dev.BootStrapPlatform;
 import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.rpc.client.RpcCollectionsTest;
+import com.google.gwt.rpc.client.RpcCustomFieldSerializerTest;
+import com.google.gwt.rpc.client.RpcEnumsTest;
+import com.google.gwt.rpc.client.RpcInheritanceTest;
+import com.google.gwt.rpc.client.RpcObjectGraphTest;
+import com.google.gwt.rpc.client.RpcRemoteServiceServletTest;
+import com.google.gwt.rpc.client.RpcRunTimeSerializationErrorsTest;
+import com.google.gwt.rpc.client.RpcUnicodeEscapingTest;
+import com.google.gwt.rpc.client.RpcValueTypesTest;
 import com.google.gwt.user.client.rpc.CollectionsTest;
 import com.google.gwt.user.client.rpc.CollectionsTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTest;
@@ -98,6 +107,17 @@ public class RPCSuite {
     suite.addTestSuite(ObjectGraphTestWithTypeObfuscation.class);
     suite.addTestSuite(com.google.gwt.user.client.rpc.RemoteServiceServletTestWithTypeObfuscation.class);
     suite.addTestSuite(UnicodeEscapingTestWithTypeObfuscation.class);
+
+    // Client-side test cases for deRPC system
+    suite.addTestSuite(RpcValueTypesTest.class);
+    suite.addTestSuite(RpcEnumsTest.class);
+    suite.addTestSuite(RpcInheritanceTest.class);
+    suite.addTestSuite(RpcCollectionsTest.class);
+    suite.addTestSuite(RpcCustomFieldSerializerTest.class);
+    suite.addTestSuite(RpcObjectGraphTest.class);
+    suite.addTestSuite(RpcRemoteServiceServletTest.class);
+    suite.addTestSuite(RpcUnicodeEscapingTest.class);
+    suite.addTestSuite(RpcRunTimeSerializationErrorsTest.class);
     return suite;
   }
 }

@@ -63,6 +63,8 @@ public interface CollectionsTestServiceAsync {
 
   void echo(Double[] value, AsyncCallback<Double[]> callback);
 
+  void echo(Enum<?>[] value, AsyncCallback<Enum<?>[]> callback);
+
   void echo(float[] value, AsyncCallback<float[]> callback);
 
   void echo(Float[] value, AsyncCallback<Float[]> callback);
@@ -98,13 +100,13 @@ public interface CollectionsTestServiceAsync {
   void echo(String[][] value, AsyncCallback<String[][]> callback);
 
   void echo(Time[] value, AsyncCallback<Time[]> callback);
-  
+
   void echo(TreeMap<String, MarkerTypeTreeMap> value, boolean option,
       AsyncCallback<TreeMap<String, MarkerTypeTreeMap>> callback);
 
   void echo(TreeSet<MarkerTypeTreeSet> value, boolean option,
       AsyncCallback<TreeSet<MarkerTypeTreeSet>> callback);
-  
+
   void echo(Timestamp[] value, AsyncCallback<Timestamp[]> callback);
 
   void echo(Vector<MarkerTypeVector> value,

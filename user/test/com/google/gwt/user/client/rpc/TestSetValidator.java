@@ -15,6 +15,11 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertSame;
+
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
@@ -368,7 +373,8 @@ public class TestSetValidator {
     }
     // entrySet returns entries in the sorted order
     List<MarkerTypeTreeSet> actualList = new ArrayList<MarkerTypeTreeSet>(set);
-    List<MarkerTypeTreeSet> expectedList = new ArrayList<MarkerTypeTreeSet>(expected);
+    List<MarkerTypeTreeSet> expectedList = new ArrayList<MarkerTypeTreeSet>(
+        expected);
     for (int index = 0; index < size; index++) {
       if (!equalsWithNullCheck(expectedList.get(index), actualList.get(index))) {
         return false;
@@ -376,7 +382,7 @@ public class TestSetValidator {
     }
     return true;
   }
-  
+
   public static boolean isValid(Vector expected, Vector actual) {
     if (actual == null) {
       return false;
@@ -439,6 +445,7 @@ public class TestSetValidator {
   public static boolean isValidComplexCyclicGraph(
       SerializableDoublyLinkedNode actual) {
 
+    assertNotNull(actual);
     if (actual == null) {
       return false;
     }
@@ -446,6 +453,7 @@ public class TestSetValidator {
     int i = 0;
     SerializableDoublyLinkedNode currNode = actual;
     for (; i < 5; ++i) {
+      assertEquals("n" + Integer.toString(i), currNode.getData());
       if (!currNode.getData().equals("n" + Integer.toString(i))) {
         return false;
       }
@@ -453,14 +461,18 @@ public class TestSetValidator {
       SerializableDoublyLinkedNode nextNode = currNode.getRightChild();
       SerializableDoublyLinkedNode prevNode = currNode.getLeftChild();
 
+      assertNotNull("next node", nextNode);
+      assertNotNull("prev node", prevNode);
       if (nextNode == null || prevNode == null) {
         return false;
       }
 
+      assertSame("A", currNode, nextNode.getLeftChild());
       if (nextNode.getLeftChild() != currNode) {
         return false;
       }
 
+      assertSame("B", currNode, prevNode.getRightChild());
       if (prevNode.getRightChild() != currNode) {
         return false;
       }
@@ -471,6 +483,7 @@ public class TestSetValidator {
       }
     }
 
+    assertFalse("i = " + i, i >= 4);
     if (i >= 4) {
       return false;
     }
@@ -506,8 +519,8 @@ public class TestSetValidator {
   }
 
   /**
-   * Wrap an exception in RuntimeException if necessary so it doesn't have to be listed in
-   * throws clauses.
+   * Wrap an exception in RuntimeException if necessary so it doesn't have to be
+   * listed in throws clauses.
    * 
    * @param caught exception to wrap
    */
@@ -518,6 +531,7 @@ public class TestSetValidator {
       throw new RuntimeException(caught);
     }
   }
+
   private static boolean equalsWithNullCheck(Object a, Object b) {
     return a == b || (a != null && a.equals(b));
   }

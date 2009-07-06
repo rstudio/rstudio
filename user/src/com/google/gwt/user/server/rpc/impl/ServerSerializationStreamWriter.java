@@ -363,7 +363,7 @@ public final class ServerSerializationStreamWriter extends
    * Assumptions: We are targeting a version of JavaScript that that is later
    * than 1.3 that supports unicode strings.
    */
-  private static String escapeString(String toEscape) {
+  public static String escapeString(String toEscape) {
     // make output big enough to escape every character (plus the quotes)
     char[] input = toEscape.toCharArray();
     CharVector charVector = new CharVector(input.length * 2 + 2, input.length);

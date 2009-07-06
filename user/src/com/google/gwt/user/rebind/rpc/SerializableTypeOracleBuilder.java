@@ -296,7 +296,7 @@ public class SerializableTypeOracleBuilder {
    * @return the custom field serializer for a type or <code>null</code> if
    *         there is not one
    */
-  static JClassType findCustomFieldSerializer(TypeOracle typeOracle, JType type) {
+  public static JClassType findCustomFieldSerializer(TypeOracle typeOracle, JType type) {
     JClassType classOrInterface = type.isClassOrInterface();
     if (classOrInterface == null) {
       return null;
