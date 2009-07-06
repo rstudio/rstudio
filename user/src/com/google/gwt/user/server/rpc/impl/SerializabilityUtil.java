@@ -250,6 +250,13 @@ class SerializabilityUtil {
   }
 
   private static boolean fieldQualifiesForSerialization(Field field) {
+    // Check if the field will be handled by a ServerDataSerializer; if so, skip it here.
+    for (ServerDataSerializer serializer : ServerDataSerializer.getSerializers()) {
+      if (serializer.shouldSkipField(field)) {
+        return false;
+      }
+    }
+    
     if (Throwable.class == field.getDeclaringClass()) {
       /**
        * Only serialize Throwable's detailMessage field; all others are ignored.
@@ -311,7 +318,7 @@ class SerializabilityUtil {
 
   private static boolean isNotStaticTransientOrFinal(Field field) {
     /*
-     * Only serialize fields that are not static, transient and final.
+     * Only serialize fields that are not static, transient or final.
      */
     int fieldModifiers = field.getModifiers();
     return !Modifier.isStatic(fieldModifiers)
