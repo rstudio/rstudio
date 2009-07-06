@@ -82,6 +82,7 @@ import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
+import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
@@ -115,6 +116,7 @@ import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -292,8 +294,15 @@ public class JavaToJavaScriptCompiler {
           stringLiteralMap);
 
       // (10.5) Split up the program into fragments
+      SoycArtifact dependencies = null;
       if (options.isAggressivelyOptimize() && options.isRunAsyncEnabled()) {
-        CodeSplitter.exec(logger, jprogram, jsProgram, postStringInterningMap);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        CodeSplitter.exec(logger, jprogram, jsProgram, postStringInterningMap,
+            chooseDependencyRecorder(options.isSoycEnabled(), baos));
+        if (baos.size() > 0) {
+          dependencies = new SoycArtifact("dependencies" + permutationId
+              + ".xml.gz", baos.toByteArray());
+        }
       }
 
       // (11) Perform any post-obfuscation normalizations.
@@ -331,7 +340,7 @@ public class JavaToJavaScriptCompiler {
           makeSymbolMap(symbolTable), ranges, permutationId);
 
       toReturn.getArtifacts().add(
-          makeSoycArtifact(logger, permutationId, jprogram, js, sourceInfoMaps));
+          makeSoycArtifact(logger, permutationId, jprogram, js, sourceInfoMaps, dependencies));
 
       System.out.println("Permutation took "
           + (System.currentTimeMillis() - permStart) + " ms");
@@ -697,6 +706,15 @@ public class JavaToJavaScriptCompiler {
     }
   }
 
+  private static MultipleDependencyGraphRecorder chooseDependencyRecorder(
+      boolean soycEnabled, OutputStream out) throws IOException {
+    MultipleDependencyGraphRecorder dependencyRecorder = CodeSplitter.NULL_RECORDER;
+    if (soycEnabled) {
+      dependencyRecorder = new DependencyRecorder(out);
+    }
+    return dependencyRecorder;
+  }
+
   private static JMethodCall createReboundModuleLoad(TreeLogger logger,
       JDeclaredType reboundEntryType, String originalMainClassName)
       throws UnableToCompleteException {
@@ -874,7 +892,7 @@ public class JavaToJavaScriptCompiler {
 
   private static StandardCompilationAnalysis makeSoycArtifact(
       TreeLogger logger, int permutationId, JProgram jprogram, String[] js,
-      List<Map<Range, SourceInfo>> sourceInfoMaps) {
+      List<Map<Range, SourceInfo>> sourceInfoMaps, SoycArtifact dependencies) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
     PerfLogger.start("Computing SOYC output");
@@ -886,7 +904,6 @@ public class JavaToJavaScriptCompiler {
     PerfLogger.end();
 
     SoycArtifact stories = null;
-    SoycArtifact dependencies = null;
 
     if (sourceInfoMaps != null) {
       PerfLogger.start("Record stories");
@@ -894,13 +911,6 @@ public class JavaToJavaScriptCompiler {
       StoryRecorder.recordStories(logger, baos, sourceInfoMaps, js);
       stories = new SoycArtifact("stories" + permutationId + ".xml.gz",
           baos.toByteArray());
-      PerfLogger.end();
-
-      PerfLogger.start("Record dependencies");
-      baos.reset();
-      DependencyRecorder.recordDependencies(logger, baos, jprogram);
-      dependencies = new SoycArtifact("dependencies" + permutationId
-          + ".xml.gz", baos.toByteArray());
       PerfLogger.end();
     }
 

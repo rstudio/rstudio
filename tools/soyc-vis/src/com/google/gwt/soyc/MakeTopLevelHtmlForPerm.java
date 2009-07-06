@@ -30,16 +30,49 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A utility to make the top level HTTML file for one permutation.
  */
 public class MakeTopLevelHtmlForPerm {
+  public class DependencyLinkerForExclusiveFragment implements DependencyLinker {
+    public String dependencyLinkForClass(String className) {
+      return null;
+    }
+  }
+
+  public class DependencyLinkerForInitialCode implements DependencyLinker {
+    public String dependencyLinkForClass(String className) {
+      String packageName = GlobalInformation.classToPackage.get(className);
+      assert packageName != null;
+      return dependenciesFileName("initial", packageName) + "#" + className;
+    }
+  }
+
+  public class DependencyLinkerForLeftoversFragment implements DependencyLinker {
+    public String dependencyLinkForClass(String className) {
+      return leftoversStatusFileName(className);
+    }
+  }
+
+  public class DependencyLinkerForTotalBreakdown implements DependencyLinker {
+    public String dependencyLinkForClass(String className) {
+      return splitStatusFileName(className);
+    }
+  }
+
+  interface DependencyLinker {
+    String dependencyLinkForClass(String className);
+  }
+
   /**
    * By a convention shared with the compiler, the initial download is fragment
    * number 0.
@@ -51,6 +84,14 @@ public class MakeTopLevelHtmlForPerm {
    * number -1.
    */
   private static final int FRAGMENT_NUMBER_TOTAL_PROGRAM = -1;
+
+  /**
+   * A pattern describing the name of dependency graphs for code fragments
+   * corresponding to a specific split point. These can be either exclusive
+   * fragments or fragments of code for split points in the initial load
+   * sequence.
+   */
+  private static final Pattern PATTERN_SP_INT = Pattern.compile("sp([0-9]+)");
 
   public static void copyFileOrDirectory(File srcPath, File dstPath,
       String classPath, String inputFileName, boolean isDirectory)
@@ -130,15 +171,18 @@ public class MakeTopLevelHtmlForPerm {
     return escaped;
   }
 
+  private static void addCenteredHeader(final PrintWriter outFile, String header) {
+    outFile.println("<hr>");
+    outFile.println("<b>" + header + "</b>");
+    outFile.println("<hr>");
+  }
+
   /**
    * Adds a header line indicating which breakdown is being analyzed.
    */
   private static void addHeaderWithBreakdownContext(SizeBreakdown breakdown,
       final PrintWriter outFile) {
-    outFile.println("<hr>");
-    outFile.println("<b>(Analyzing code subset: " + breakdown.getDescription()
-        + ")</b>");
-    outFile.println("<hr>");
+    addCenteredHeader(outFile, headerLineForBreakdown(breakdown));
   }
 
   private static String classesInPackageFileName(SizeBreakdown breakdown,
@@ -165,6 +209,40 @@ public class MakeTopLevelHtmlForPerm {
   private static File getOutFile(String localFileName) {
     File outDir = new File(GlobalInformation.settings.out.get());
     return new File(outDir, localFileName);
+  }
+
+  private static String headerLineForBreakdown(SizeBreakdown breakdown) {
+    return "(Analyzing code subset: " + breakdown.getDescription() + ")";
+  }
+
+  /**
+   * Describe the code covered by the dependency graph with the supplied name.
+   */
+  private static String inferDepGraphDescription(String depGraphName) {
+    if (depGraphName.equals("initial")) {
+      return "Initially Live Code";
+    }
+
+    if (depGraphName.equals("total")) {
+      return "All Code";
+    }
+
+    Matcher matcher = PATTERN_SP_INT.matcher(depGraphName);
+    if (matcher.matches()) {
+      int splitPoint = Integer.valueOf(matcher.group(1));
+      if (isInitialSplitPoint(splitPoint)) {
+        return "Code Becoming Live at Split Point " + splitPoint;
+      } else {
+        return "Code not Exclusive to Split Point " + splitPoint;
+      }
+    }
+
+    throw new RuntimeException("Unexpected dependency graph name: "
+        + depGraphName);
+  }
+
+  private static boolean isInitialSplitPoint(int splitPoint) {
+    return GlobalInformation.splitPointInitialLoadSequence.contains(splitPoint);
   }
 
   private static String makeCodeTypeHtml(SizeBreakdown breakdown,
@@ -455,99 +533,21 @@ public class MakeTopLevelHtmlForPerm {
         yOffset = yOffset + 25;
       }
 
-      outFile.println("</div>");
-      outFile.println("</body>");
-      outFile.println("</html>");
+      addStandardHtmlEnding(outFile);
       outFile.close();
     }
   }
 
-  public void makeDependenciesHtml(Map<String, ArrayList<String>> dependencies)
-      throws IOException {
+  public void makeDependenciesHtml(
+      Map<String, Map<String, String>> allDependencies) throws IOException {
+    for (String depGraphName : allDependencies.keySet()) {
+      makeDependenciesHtml(depGraphName, allDependencies.get(depGraphName));
+    }
+  }
 
-    String origOutFileName = "methodDependencies-";
-    PrintWriter outFile = null;
-    String curPackageName = "";
-    String curClassName = "";
-
-    for (String method : dependencies.keySet()) {
-      // this key set is already in alphabetical order
-      // get the package of this method, i.e., everything up to .[A-Z]
-
-      String packageName = method;
-      packageName = packageName.replaceAll("\\.\\p{Upper}.*", "");
-
-      String className = method;
-      className = className.replaceAll("::.*", "");
-
-      if ((curPackageName.compareTo("") == 0)
-          || (curPackageName.compareTo(packageName) != 0)) {
-
-        curPackageName = packageName;
-        if (outFile != null) {
-          // finish up the current file
-          outFile.println("</table>");
-          outFile.println("<center>");
-
-          outFile.println("</div>");
-          outFile.println("</body>");
-          outFile.println("</html>");
-          outFile.close();
-        }
-
-        String outFileName = origOutFileName + filename(curPackageName)
-            + ".html";
-        outFile = new PrintWriter(getOutFile(outFileName));
-
-        outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-        outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-        outFile.println("<html>");
-        outFile.println("<head>");
-        outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-        outFile.println("<title>Method Dependencies</title>");
-        outFile.println("</head>");
-
-        outFile.println("<style type=\"text/css\">");
-        outFile.println("body {background-color: #728FCE}");
-        outFile.println("h2 {background-color: transparent}");
-        outFile.println("p {background-color: fuchsia}");
-        outFile.println("</style>");
-
-        outFile.println("<body>");
-        outFile.println("<center>");
-        outFile.println("<h2>Method Dependencies for package " + curPackageName
-            + "</h2>");
-        outFile.println("</center>");
-        outFile.println("<hr>");
-
-        outFile.println("<center>");
-        outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
-      }
-      outFile.println("<tr>");
-      if (curClassName.compareTo(className) != 0) {
-        outFile.println("<td width=\"80%\"><a name=\"" + className + "\">"
-            + "<a name=\"" + method + "\">" + method
-            + "</a></a><font color=\"green\"> called by</font></td>");
-        curClassName = className;
-      } else {
-        outFile.println("<td width=\"80%\"><a name=\"" + method + "\">"
-            + method + "</a><font color=\"green\"> called by</font></td>");
-      }
-      outFile.println("</tr>");
-
-      for (int i = 0; i < dependencies.get(method).size(); i++) {
-        String depMethod = dependencies.get(method).get(i);
-
-        outFile.println("<tr>");
-        outFile.println("<td width=\"20%\"></td>");
-        if (i != dependencies.get(method).size() - 1) {
-          outFile.println("<td width=\"60%\">" + depMethod
-              + "<font color=\"green\"> called by</font></td>");
-        } else {
-          outFile.println("<td width=\"60%\">" + depMethod + "</td>");
-        }
-        outFile.println("</tr>");
-      }
+  public void makeLeftoverStatusPages() throws IOException {
+    for (String className : GlobalInformation.classToPackage.keySet()) {
+      makeLeftoversStatusPage(className);
     }
   }
 
@@ -656,9 +656,7 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("</table>");
       outFile.println("<center>");
 
-      outFile.println("</div>");
-      outFile.println("</body>");
-      outFile.println("</html>");
+      addStandardHtmlEnding(outFile);
       outFile.close();
     }
   }
@@ -666,8 +664,8 @@ public class MakeTopLevelHtmlForPerm {
   /**
    * Make size breakdowns for each package for one code collection.
    */
-  public void makePackageClassesHtmls(SizeBreakdown breakdown)
-      throws IOException {
+  public void makePackageClassesHtmls(SizeBreakdown breakdown,
+      DependencyLinker depLinker) throws IOException {
     for (String packageName : GlobalInformation.packageToClasses.keySet()) {
 
       TreeMap<Float, String> sortedClasses = new TreeMap<Float, String>(
@@ -778,10 +776,17 @@ public class MakeTopLevelHtmlForPerm {
         outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
             + "px; left:5px;\">%.1f</div>\n", size);
         if (GlobalInformation.displayDependencies == true) {
-          outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
-              + "px; left:70px;\"><a href=\"methodDependencies-"
-              + filename(packageName) + ".html#" + className + "\">"
-              + className + "</a></div>");
+          String dependencyLink = depLinker.dependencyLinkForClass(className);
+          outFile.print("<div class=\"barlabel\" style=\"top:" + yOffsetText
+              + "px; left:70px;\">");
+          if (dependencyLink != null) {
+            outFile.print("<a href=\"" + dependencyLink + "\">");
+          }
+          outFile.print(className);
+          if (dependencyLink != null) {
+            outFile.print("</a>");
+          }
+          outFile.println("</div>");
         } else {
           outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
               + "px; left:70px;\">" + className + "</div>");
@@ -795,10 +800,14 @@ public class MakeTopLevelHtmlForPerm {
         yOffset = yOffset + 25;
       }
 
-      outFile.println("</div>");
-      outFile.println("</body>");
-      outFile.println("</html>");
+      addStandardHtmlEnding(outFile);
       outFile.close();
+    }
+  }
+
+  public void makeSplitStatusPages() throws IOException {
+    for (String className : GlobalInformation.classToPackage.keySet()) {
+      makeSplitStatusPage(className);
     }
   }
 
@@ -811,25 +820,10 @@ public class MakeTopLevelHtmlForPerm {
       final PrintWriter outFile = new PrintWriter(getOutFile(breakdown.getId()
           + "_" + outFileName));
 
-      outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-      outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-      outFile.println("<html>");
-      outFile.println("<head>");
-      outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-      outFile.println("<title>Literals of type \"" + literalType + "\"</title>");
-      outFile.println("</head>");
+      String title = "Literals of type \"" + literalType + "\"";
+      String header = headerLineForBreakdown(breakdown);
 
-      outFile.println("<style type=\"text/css\">");
-      outFile.println("body {background-color: #728FCE}");
-      outFile.println("h2 {background-color: transparent}");
-      outFile.println("p {background-color: fuchsia}");
-      outFile.println("</style>");
-
-      outFile.println("<body>");
-      outFile.println("<center>");
-      outFile.println("<h2>Literals of type \"" + literalType + "\"</h2>");
-      addHeaderWithBreakdownContext(breakdown, outFile);
-      outFile.println("</center>");
+      addStandardHtmlProlog(outFile, title, header);
 
       if (literalType.compareTo("otherStrings") == 0) {
         outFile.println("<center>");
@@ -877,12 +871,12 @@ public class MakeTopLevelHtmlForPerm {
 
                 if ((location.indexOf("Line 0") == -1)
                     && (location.compareTo(GlobalInformation.backupLocation) != 0)) { // i.e.,
-                                                                                      // if
-                                                                                      // we
-                                                                                      // actually
-                                                                                      // know
-                                                                                      // the
-                                                                                      // location
+                  // if
+                  // we
+                  // actually
+                  // know
+                  // the
+                  // location
                   if (ct > 0) {
                     outFile.println("<tr>");
                     outFile.println("<td width=\"40%\"> </td>");
@@ -927,9 +921,7 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<center>");
       }
 
-      outFile.println("</div>");
-      outFile.println("</body>");
-      outFile.println("</html>");
+      addStandardHtmlEnding(outFile);
       outFile.close();
     }
   }
@@ -996,7 +988,7 @@ public class MakeTopLevelHtmlForPerm {
       } else if (i == FRAGMENT_NUMBER_INITIAL_DOWNLOAD) {
         breakdown = GlobalInformation.initialCodeBreakdown;
       } else {
-        breakdown = GlobalInformation.exclusiveCodeBreakdown(i);
+        breakdown = GlobalInformation.splitPointCodeBreakdown(i);
       }
 
       String drillDownFileName = shellFileName(breakdown);
@@ -1037,6 +1029,147 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("</div>");
     outFile.println("</body></html>");
     outFile.close();
+  }
+
+  private void addLefttoversStatus(String className, String packageName,
+      PrintWriter out) {
+    out.println("<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\""
+        + dependenciesFileName("total", packageName) + "#" + className
+        + "\">See why it's live</a></td></tr>");
+    for (int sp = 1; sp <= GlobalInformation.numSplitPoints; sp++) {
+      out.println("<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\""
+          + dependenciesFileName("sp" + sp, packageName) + "#" + className
+          + "\">See why it's not exclusive to s.p. #" + sp + " ("
+          + GlobalInformation.splitPointToLocation.get(sp) + ")</a></td></tr>");
+    }
+  }
+
+  private void addStandardHtmlEnding(final PrintWriter out) {
+    out.println("</div>");
+    out.println("</body>");
+    out.println("</html>");
+  }
+
+  private void addStandardHtmlProlog(final PrintWriter out, String title,
+      String header) {
+    out.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+    out.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+    out.println("<html>");
+    out.println("<head>");
+    out.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+    out.println("<title>" + title + "</title>");
+    out.println("</head>");
+
+    out.println("<style type=\"text/css\">");
+    out.println("body {background-color: #728FCE}");
+    out.println("h2 {background-color: transparent}");
+    out.println("p {background-color: fuchsia}");
+    out.println("</style>");
+
+    out.println("<body>");
+    out.println("<center>");
+    out.println("<h2>" + title + "</h2>");
+    if (header != null) {
+      addCenteredHeader(out, header);
+    }
+    out.println("</center>");
+  }
+
+  private String dependenciesFileName(String depGraphName, String packageName) {
+    return "methodDependencies-" + depGraphName + "-" + filename(packageName)
+        + ".html";
+  }
+
+  private String leftoversStatusFileName(String className) {
+    return "leftoverStatus-" + filename(className);
+  }
+
+  private void makeDependenciesHtml(String depGraphName,
+      Map<String, String> dependencies) throws FileNotFoundException {
+    String depGraphDescription = inferDepGraphDescription(depGraphName);
+    PrintWriter outFile = null;
+    String curPackageName = "";
+    String curClassName = "";
+
+    for (String method : dependencies.keySet()) {
+      // this key set is already in alphabetical order
+      // get the package of this method, i.e., everything up to .[A-Z]
+
+      String packageName = method;
+      packageName = packageName.replaceAll("\\.\\p{Upper}.*", "");
+
+      String className = method;
+      className = className.replaceAll("::.*", "");
+
+      if ((curPackageName.compareTo("") == 0)
+          || (curPackageName.compareTo(packageName) != 0)) {
+
+        curPackageName = packageName;
+        if (outFile != null) {
+          // finish up the current file
+          outFile.println("</table>");
+          outFile.println("<center>");
+
+          addStandardHtmlEnding(outFile);
+          outFile.close();
+        }
+
+        String outFileName = dependenciesFileName(depGraphName, curPackageName);
+        outFile = new PrintWriter(getOutFile(outFileName));
+
+        String packageDescription = packageName.length() == 0
+            ? "the default package" : packageName;
+        addStandardHtmlProlog(outFile, "Method Dependencies for "
+            + depGraphDescription, "Showing Package: " + packageDescription);
+        outFile.println("<center>");
+        outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
+      }
+      outFile.println("<tr>");
+      if (curClassName.compareTo(className) != 0) {
+        outFile.println("<td width=\"80%\"><a name=\"" + className + "\">"
+            + "<a name=\"" + method + "\">" + method
+            + "</a></a><font color=\"green\"> called by</font></td>");
+        curClassName = className;
+      } else {
+        outFile.println("<td width=\"80%\"><a name=\"" + method + "\">"
+            + method + "</a><font color=\"green\"> called by</font></td>");
+      }
+      outFile.println("</tr>");
+
+      String depMethod = dependencies.get(method);
+      while (depMethod != null) {
+        String nextDep = dependencies.get(depMethod);
+        outFile.println("<tr>");
+        outFile.println("<td width=\"20%\"></td>");
+        if (nextDep != null) {
+          outFile.println("<td width=\"60%\">" + depMethod
+              + "<font color=\"green\"> called by</font></td>");
+        } else {
+          outFile.println("<td width=\"60%\">" + depMethod + "</td>");
+        }
+        outFile.println("</tr>");
+        depMethod = nextDep;
+      }
+    }
+  }
+
+  private void makeLeftoversStatusPage(String className) throws IOException {
+    String packageName = GlobalInformation.classToPackage.get(className);
+    PrintWriter out = new PrintWriter(
+        getOutFile(leftoversStatusFileName(className)));
+
+    addStandardHtmlProlog(out, "Leftovers page for " + className, null);
+
+    out.println("<center>");
+    out.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
+
+    out.println("<tr><td>This class has some leftover code, neither initial nor exclusive to any split point:</td></tr>");
+    addLefttoversStatus(className, packageName, out);
+    out.println("</table>");
+
+    addStandardHtmlEnding(out);
+
+    out.close();
   }
 
   private String makeLiteralsHtml(SizeBreakdown breakdown,
@@ -1189,6 +1322,36 @@ public class MakeTopLevelHtmlForPerm {
     return outFileName;
   }
 
+  private void makeSplitStatusPage(String className) throws IOException {
+    String packageName = GlobalInformation.classToPackage.get(className);
+    PrintWriter out = new PrintWriter(
+        getOutFile(splitStatusFileName(className)));
+
+    addStandardHtmlProlog(out, "Split point status for " + className, null);
+
+    out.println("<center>");
+    out.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
+
+    if (GlobalInformation.initialCodeBreakdown.classToSize.containsKey(className)) {
+      out.println("<tr><td>Some code is initial (<a href=\""
+          + dependenciesFileName("initial", packageName) + "#" + className
+          + "\">see why</a>)</td></tr>");
+    }
+    for (int sp : splitPointsWithClass(className)) {
+      out.println("<tr><td>Some code downloads with s.p. #" + sp + " ("
+          + GlobalInformation.splitPointToLocation.get(sp) + ")</td></tr>");
+    }
+    if (GlobalInformation.leftoversBreakdown.classToSize.containsKey(className)) {
+      out.println("<tr><td>Some code is left over:</td></tr>");
+      addLefttoversStatus(className, packageName, out);
+    }
+    out.println("</table>");
+
+    addStandardHtmlEnding(out);
+
+    out.close();
+  }
+
   private String makeStringLiteralsHtml(SizeBreakdown breakdown,
       Map<String, LiteralsCollection> nameToLitColl) throws IOException {
     String outFileName = breakdown.getId() + "_stringLiteralsBreakdown.html";
@@ -1270,5 +1433,23 @@ public class MakeTopLevelHtmlForPerm {
     outFile.close();
 
     return outFileName;
+  }
+
+  /**
+   * Find which split points include code belonging to <code>className</code>.
+   */
+  private Iterable<Integer> splitPointsWithClass(String className) {
+    List<Integer> sps = new ArrayList<Integer>();
+    for (int sp = 1; sp <= GlobalInformation.numSplitPoints; sp++) {
+      Map<String, Integer> classToSize = GlobalInformation.splitPointCodeBreakdown(sp).classToSize;
+      if (classToSize.containsKey(className)) {
+        sps.add(sp);
+      }
+    }
+    return sps;
+  }
+
+  private String splitStatusFileName(String className) {
+    return "splitStatus-" + filename(className);
   }
 }

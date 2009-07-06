@@ -74,7 +74,6 @@ public class ControlFlowAnalyzer {
    * See {@link ControlFlowAnalyzer#setDependencyRecorder(DependencyRecorder)}.
    */
   public interface DependencyRecorder {
-
     /**
      * Used to record the dependencies of a specific method.
      */

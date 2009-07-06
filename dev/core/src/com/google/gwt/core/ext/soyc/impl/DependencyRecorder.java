@@ -16,51 +16,91 @@
 package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.impl.CodeSplitter;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
+import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.util.tools.Utility;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.zip.GZIPOutputStream;
 
 /**
  * The control-flow dependency recorder for SOYC.
  */
-public class DependencyRecorder implements
-    ControlFlowAnalyzer.DependencyRecorder {
-
+public class DependencyRecorder implements MultipleDependencyGraphRecorder {
   /**
-   * Used to record dependencies of a program.
+   * DependencyRecorder is not allowed to throw checked exceptions, because if
+   * it did then {@link CodeSplitter} and {@link ControlFlowAnalyzer} would
+   * throw exceptions all over the place. Instead, this class throws
+   * NestedIOExceptions that wrap them.
    */
-  public static void recordDependencies(TreeLogger logger, OutputStream out,
-      JProgram jprogram) {
-    new DependencyRecorder().recordDependenciesImpl(logger, out, jprogram);
+  public static class NestedIOException extends RuntimeException {
+    public NestedIOException(IOException e) {
+      super(e);
+    }
   }
 
-  private StringBuilder builder;
+  private final StringBuilder builder = new StringBuilder();
+  private OutputStreamWriter writer;
 
-  private DependencyRecorder() {
+  public DependencyRecorder(OutputStream out) throws IOException {
+    try {
+      this.writer = new OutputStreamWriter(new GZIPOutputStream(out), "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new InternalCompilerException("UTF-8 is an unsupported encoding", e);
+    }
+  }
+
+  public void close() {
+    printPost();
+    flushOutput();
+    try {
+      writer.close();
+    } catch (IOException e) {
+      throw new NestedIOException(e);
+    }
+  }
+
+  public void endDependencyGraph() {
+    builder.append("</table>");
+    flushOutput();
   }
 
   /**
    * Used to record the dependencies of a specific method.
-   * 
-   * @param liveMethod
-   * @param dependencyChain
    */
   public void methodIsLiveBecause(JMethod liveMethod,
       ArrayList<JMethod> dependencyChain) {
     printMethodDependency(dependencyChain);
   }
 
+  public void open() {
+    printPre();
+  }
+
+  public void startDependencyGraph(String identifier, String extnds) {
+    builder.append("<table name=\"");
+    builder.append(identifier);
+    builder.append("\"");
+    if (extnds != null) {
+      builder.append(" extends=\"");
+      builder.append(extnds);
+      builder.append("\"");
+    }
+    builder.append(">\n");
+  }
+
   /**
    * Used to record dependencies of a program.
    */
-  protected void recordDependenciesImpl(TreeLogger logger, OutputStream out,
-      JProgram jprogram) {
+  protected void recordDependenciesImpl(TreeLogger logger, JProgram jprogram) {
 
     logger = logger.branch(TreeLogger.INFO,
         "Creating Dependencies file for SOYC");
@@ -69,23 +109,14 @@ public class DependencyRecorder implements
     dependencyAnalyzer.setDependencyRecorder(this);
 
     try {
-      OutputStreamWriter writer
-         = new OutputStreamWriter(new GZIPOutputStream(out), "UTF-8");
-      
-      StringBuilder localBuilder = new StringBuilder();
-      this.builder = localBuilder;
-
       printPre();
       for (JMethod method : jprogram.getAllEntryMethods()) {
         dependencyAnalyzer.traverseFrom(method);
-        if (localBuilder.length() > 8 * 1024) {
-          writer.write(localBuilder.toString());
-          localBuilder.setLength(0);
-        }
+        maybeFlushOutput();
       }
       printPost();
 
-      writer.write(localBuilder.toString());
+      writer.write(builder.toString());
       Utility.close(writer);
 
       logger.log(TreeLogger.INFO, "Done");
@@ -94,18 +125,33 @@ public class DependencyRecorder implements
     }
   }
 
+  private void flushOutput() {
+    try {
+      writer.write(builder.toString());
+    } catch (IOException e) {
+      throw new NestedIOException(e);
+    }
+    builder.setLength(0);
+  }
+
+  private void maybeFlushOutput() throws IOException {
+    if (builder.length() > 8 * 1024) {
+      flushOutput();
+    }
+  }
+
   /**
-   * Prints the control-flow dependencies to a file in a specific format.
-   * 
-   * @param liveMethod
-   * @param dependencyChain
+   * Records one dependency chain to a file. More specifically, it records the
+   * last link of the dependency chain. The full dependency chain can be
+   * recovered by code that reads the entire dependencies file, because it can
+   * do repeated lookups into the dependencies table to follow the chain.
    */
   private void printMethodDependency(ArrayList<JMethod> dependencyChain) {
     int size = dependencyChain.size();
-    if (size == 0) {
+    if (size < 2) {
       return;
     }
-    
+
     JMethod curMethod = dependencyChain.get(size - 1);
     builder.append("<method name=\"");
     if (curMethod.getEnclosingType() != null) {
@@ -115,16 +161,14 @@ public class DependencyRecorder implements
     builder.append(curMethod.getName());
     builder.append("\">\n");
 
-    for (int i = size - 2; i >= 0; i--) {
-      curMethod = dependencyChain.get(i);
-      builder.append("<called by=\"");
-      if (curMethod.getEnclosingType() != null) {
-        builder.append(curMethod.getEnclosingType().getName());
-        builder.append("::");
-      }
-      builder.append(curMethod.getName());
-      builder.append("\"/>\n");
+    JMethod depMethod = dependencyChain.get(size - 2);
+    builder.append("<called by=\"");
+    if (depMethod.getEnclosingType() != null) {
+      builder.append(depMethod.getEnclosingType().getName());
+      builder.append("::");
     }
+    builder.append(depMethod.getName());
+    builder.append("\"/>\n");
     builder.append("</method>\n");
   }
 
@@ -139,7 +183,6 @@ public class DependencyRecorder implements
    * Prints the preamble necessary for the dependencies file.
    */
   private void printPre() {
-    builder.append(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<soyc-dependencies>\n");
+    builder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<soyc-dependencies>\n");
   }
 }

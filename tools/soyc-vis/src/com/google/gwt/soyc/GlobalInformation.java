@@ -46,6 +46,8 @@ public class GlobalInformation {
   public static Map<String, TreeSet<String>> packageToClasses = new TreeMap<String, TreeSet<String>>();
 
   public static HashMap<Integer, String> splitPointToLocation = new HashMap<Integer, String>();
+  public static ArrayList<Integer> splitPointInitialLoadSequence = new ArrayList<Integer>();
+
   public static HashMap<String, HashSet<String>> storiesToCorrClasses = new HashMap<String, HashSet<String>>();
   public static HashMap<String, HashSet<String>> storiesToCorrClassesAndMethods = new HashMap<String, HashSet<String>>();
 
@@ -56,8 +58,7 @@ public class GlobalInformation {
   public static SizeBreakdown initialCodeBreakdown = new SizeBreakdown(
       "Initially downloaded code", "initial");
   public static SizeBreakdown leftoversBreakdown = new SizeBreakdown(
-      "Leftovers code, neither initial nor exclusive to any split point",
-      "leftovers");
+      "Leftovers code, code not in any other category", "leftovers");
   public static SizeBreakdown totalCodeBreakdown = new SizeBreakdown(
       "Total program", "total");
   private static Map<Integer, SizeBreakdown> exclusiveCodeBreakdowns = new HashMap<Integer, SizeBreakdown>();
@@ -69,7 +70,7 @@ public class GlobalInformation {
     if (numSplitPoints > 0) {
       breakdowns.add(leftoversBreakdown);
       for (int sp = 1; sp <= numSplitPoints; sp++) {
-        breakdowns.add(exclusiveCodeBreakdown(sp));
+        breakdowns.add(splitPointCodeBreakdown(sp));
       }
     }
     return breakdowns.toArray(EMPTY_SIZE_BREAKDOWN);
@@ -88,7 +89,7 @@ public class GlobalInformation {
     }
   }
 
-  public static SizeBreakdown exclusiveCodeBreakdown(int sp) {
+  public static SizeBreakdown splitPointCodeBreakdown(int sp) {
     assert sp >= 1 && sp <= numSplitPoints;
     if (!exclusiveCodeBreakdowns.containsKey(sp)) {
       exclusiveCodeBreakdowns.put(sp, new SizeBreakdown("split point " + sp

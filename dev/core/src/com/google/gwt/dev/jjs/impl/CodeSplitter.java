@@ -36,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer.DependencyRecorder;
 import com.google.gwt.dev.jjs.impl.FragmentExtractor.CfaLivenessPredicate;
 import com.google.gwt.dev.jjs.impl.FragmentExtractor.LivenessPredicate;
 import com.google.gwt.dev.jjs.impl.FragmentExtractor.NothingAlivePredicate;
@@ -95,6 +96,31 @@ import java.util.concurrent.ArrayBlockingQueue;
  * </p>
  */
 public class CodeSplitter {
+  /**
+   * A dependency recorder that can record multiple dependency graphs. It has
+   * methods for starting and finishing new dependency graphs.
+   */
+  public interface MultipleDependencyGraphRecorder extends DependencyRecorder {
+    /**
+     * Stop recording dependencies.
+     */
+    void close();
+
+    /**
+     * Stop recording the current dependency graph.
+     */
+    void endDependencyGraph();
+
+    void open();
+
+    /**
+     * Start a new dependency graph. It can be an extension of a previously
+     * recorded dependency graph, in which case the dependencies in the previous
+     * graph will not be repeated.
+     */
+    void startDependencyGraph(String name, String extnds);
+  }
+
   /**
    * A statement logger that immediately prints out everything live that it
    * sees.
@@ -191,6 +217,27 @@ public class CodeSplitter {
     }
   }
 
+  /**
+   * A {@link MultipleDependencyGraphRecorder} that does nothing.
+   */
+  public static final MultipleDependencyGraphRecorder NULL_RECORDER = new MultipleDependencyGraphRecorder() {
+    public void close() {
+    }
+
+    public void endDependencyGraph() {
+    }
+
+    public void methodIsLiveBecause(JMethod liveMethod,
+        ArrayList<JMethod> dependencyChain) {
+    }
+
+    public void open() {
+    }
+
+    public void startDependencyGraph(String name, String extnds) {
+    }
+  };
+
   private static final String PROP_INITIAL_SEQUENCE = "compiler.splitpoint.initial.sequence";
 
   /**
@@ -198,24 +245,21 @@ public class CodeSplitter {
    */
   private static String PROP_LOG_FRAGMENT_MAP = "gwt.jjs.logFragmentMap";
 
-  /**
-   * Compute the set of initially live code for this program. Such code must be
-   * included in the initial download of the program.
-   */
   public static ControlFlowAnalyzer computeInitiallyLive(JProgram jprogram) {
-    ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(jprogram);
-    traverseEntry(jprogram, cfa, 0);
-    return cfa;
+    return computeInitiallyLive(jprogram, NULL_RECORDER);
   }
 
   public static void exec(TreeLogger logger, JProgram jprogram,
-      JsProgram jsprogram, JavaToJavaScriptMap map) {
+      JsProgram jsprogram, JavaToJavaScriptMap map,
+      MultipleDependencyGraphRecorder dependencyRecorder) {
     if (jprogram.entryMethods.size() == 1) {
       // Don't do anything if there is no call to runAsync
       return;
     }
 
-    new CodeSplitter(logger, jprogram, jsprogram, map).execImpl();
+    dependencyRecorder.open();
+    new CodeSplitter(logger, jprogram, jsprogram, map, dependencyRecorder).execImpl();
+    dependencyRecorder.close();
   }
 
   public static int getExclusiveFragmentNumber(int splitPoint,
@@ -338,6 +382,22 @@ public class CodeSplitter {
   }
 
   /**
+   * Compute the set of initially live code for this program. Such code must be
+   * included in the initial download of the program.
+   */
+  private static ControlFlowAnalyzer computeInitiallyLive(JProgram jprogram,
+      MultipleDependencyGraphRecorder dependencyRecorder) {
+    dependencyRecorder.startDependencyGraph("initial", null);
+
+    ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(jprogram);
+    cfa.setDependencyRecorder(dependencyRecorder);
+    traverseEntry(jprogram, cfa, 0);
+
+    dependencyRecorder.endDependencyGraph();
+    return cfa;
+  }
+
+  /**
    * Find a split point as designated in the {@link #PROP_INITIAL_SEQUENCE}
    * configuration property.
    * 
@@ -425,6 +485,10 @@ public class CodeSplitter {
         program, info, program.getTypeArray(JPrimitiveType.INT, 1), intExprs);
   }
 
+  private static <T> T last(T[] array) {
+    return array[array.length - 1];
+  }
+
   private static void logInitialLoadSequence(TreeLogger logger,
       LinkedHashSet<Integer> initialLoadSequence) {
     StringBuffer message = new StringBuffer();
@@ -507,6 +571,8 @@ public class CodeSplitter {
     }
   }
 
+  private final MultipleDependencyGraphRecorder dependencyRecorder;
+
   private final Map<JField, JClassLiteral> fieldToLiteralOfClass;
   private final FragmentExtractor fragmentExtractor;
   private final LinkedHashSet<Integer> initialLoadSequence;
@@ -530,12 +596,14 @@ public class CodeSplitter {
   private final int numEntries;
 
   private CodeSplitter(TreeLogger logger, JProgram jprogram,
-      JsProgram jsprogram, JavaToJavaScriptMap map) {
+      JsProgram jsprogram, JavaToJavaScriptMap map,
+      MultipleDependencyGraphRecorder dependencyRecorder) {
     this.logger = logger.branch(TreeLogger.TRACE,
         "Splitting JavaScript for incremental download");
     this.jprogram = jprogram;
     this.jsprogram = jsprogram;
     this.map = map;
+    this.dependencyRecorder = dependencyRecorder;
     this.initialLoadSequence = new LinkedHashSet<Integer>(
         jprogram.getSplitPointInitialSequence());
 
@@ -544,7 +612,7 @@ public class CodeSplitter {
     fieldToLiteralOfClass = buildFieldToClassLiteralMap(jprogram);
     fragmentExtractor = new FragmentExtractor(jprogram, jsprogram, map);
 
-    initiallyLive = computeInitiallyLive(jprogram);
+    initiallyLive = computeInitiallyLive(jprogram, dependencyRecorder);
 
     methodsInJavaScript = fragmentExtractor.findAllMethodsInJavaScript();
   }
@@ -582,6 +650,8 @@ public class CodeSplitter {
    * initial load sequence, add a <code>null</code> to the list.
    */
   private List<ControlFlowAnalyzer> computeAllButOneCfas() {
+    String dependencyGraphNameAfterInitialSequence = dependencyGraphNameAfterInitialSequence();
+
     List<ControlFlowAnalyzer> allButOnes = new ArrayList<ControlFlowAnalyzer>(
         numEntries - 1);
 
@@ -590,12 +660,16 @@ public class CodeSplitter {
         allButOnes.add(null);
         continue;
       }
+      dependencyRecorder.startDependencyGraph("sp" + entry,
+          dependencyGraphNameAfterInitialSequence);
       ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(
           liveAfterInitialSequence);
+      cfa.setDependencyRecorder(dependencyRecorder);
       traverseAllButEntry(cfa, entry);
       // Traverse leftoversFragmentHasLoaded, because it should not
       // go into any of the exclusive fragments.
       cfa.traverseFromLeftoversFragmentHasLoaded();
+      dependencyRecorder.endDependencyGraph();
       allButOnes.add(cfa);
     }
 
@@ -606,12 +680,27 @@ public class CodeSplitter {
    * Compute a CFA that covers the entire live code of the program.
    */
   private ControlFlowAnalyzer computeCompleteCfa() {
+    dependencyRecorder.startDependencyGraph("total", null);
     ControlFlowAnalyzer everything = new ControlFlowAnalyzer(jprogram);
+    everything.setDependencyRecorder(dependencyRecorder);
     for (int entry = 0; entry < numEntries; entry++) {
       traverseEntry(everything, entry);
     }
     everything.traverseFromLeftoversFragmentHasLoaded();
+    dependencyRecorder.endDependencyGraph();
     return everything;
+  }
+
+  /**
+   * The name of the dependency graph that corresponds to
+   * {@link #liveAfterInitialSequence}.
+   */
+  private String dependencyGraphNameAfterInitialSequence() {
+    if (initialLoadSequence.isEmpty()) {
+      return "initial";
+    } else {
+      return "sp" + last(initialLoadSequence.toArray());
+    }
   }
 
   /**
@@ -648,13 +737,19 @@ public class CodeSplitter {
      * sequence.
      */
     liveAfterInitialSequence = new ControlFlowAnalyzer(initiallyLive);
+    String extendsCfa = "initial";
     for (int sp : initialLoadSequence) {
       LivenessPredicate alreadyLoaded = new CfaLivenessPredicate(
           liveAfterInitialSequence);
+      String depGraphName = "sp" + sp;
+      dependencyRecorder.startDependencyGraph(depGraphName, extendsCfa);
+      extendsCfa = depGraphName;
 
       ControlFlowAnalyzer liveAfterSp = new ControlFlowAnalyzer(
           liveAfterInitialSequence);
       traverseEntry(liveAfterSp, sp);
+      dependencyRecorder.endDependencyGraph();
+
       LivenessPredicate liveNow = new CfaLivenessPredicate(liveAfterSp);
 
       List<JsStatement> statsToAppend = fragmentExtractor.createCallsToEntryMethods(sp);

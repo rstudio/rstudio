@@ -16,6 +16,8 @@
 
 package com.google.gwt.soyc;
 
+import com.google.gwt.soyc.MakeTopLevelHtmlForPerm.DependencyLinker;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -34,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -44,6 +47,11 @@ import javax.xml.parsers.SAXParserFactory;
  * The command-line entry point for creating a SOYC report.
  */
 public class SoycDashboard {
+  private static class FormatException extends RuntimeException {
+    public FormatException(String message) {
+      super(message);
+    }
+  }
 
   public static void main(String[] args) {
     try {
@@ -62,7 +70,7 @@ public class SoycDashboard {
         /**
          * handle dependencies
          */
-        Map<String, ArrayList<String>> dependencies = new TreeMap<String, ArrayList<String>>();
+        Map<String, Map<String, String>> dependencies = new TreeMap<String, Map<String, String>>();
         DefaultHandler depHandler = parseXMLDocumentDependencies(dependencies);
 
         // start parsing
@@ -133,8 +141,12 @@ public class SoycDashboard {
       }
 
       // generate all the html files
+      makeTopLevelHtmlForPerm.makeSplitStatusPages();
+      makeTopLevelHtmlForPerm.makeLeftoverStatusPages();
       for (SizeBreakdown breakdown : GlobalInformation.allSizeBreakdowns()) {
-        makeHTMLFiles(makeTopLevelHtmlForPerm, breakdown);
+        DependencyLinker linker = chooseDependencyLinker(
+            makeTopLevelHtmlForPerm, breakdown);
+        makeHTMLFiles(makeTopLevelHtmlForPerm, breakdown, linker);
       }
 
       System.out.println("Finished creating reports. To see the dashboard, open SoycDashboard-index.html in your browser.");
@@ -157,6 +169,19 @@ public class SoycDashboard {
       System.err.println("Options:");
       System.err.println(Settings.settingsHelp());
       System.exit(1);
+    }
+  }
+
+  private static DependencyLinker chooseDependencyLinker(
+      MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm, SizeBreakdown breakdown) {
+    if (breakdown == GlobalInformation.totalCodeBreakdown) {
+      return makeTopLevelHtmlForPerm.new DependencyLinkerForTotalBreakdown();
+    } else if (breakdown == GlobalInformation.initialCodeBreakdown) {
+      return makeTopLevelHtmlForPerm.new DependencyLinkerForInitialCode();
+    } else if (breakdown == GlobalInformation.leftoversBreakdown) {
+      return makeTopLevelHtmlForPerm.new DependencyLinkerForLeftoversFragment();
+    } else {
+      return makeTopLevelHtmlForPerm.new DependencyLinkerForExclusiveFragment();
     }
   }
 
@@ -195,12 +220,12 @@ public class SoycDashboard {
   }
 
   /**
-   * generates all the HTML files
+   * generates all the HTML files for one size breakdown
    */
   private static void makeHTMLFiles(
-      MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm, SizeBreakdown breakdown)
-      throws IOException {
-    makeTopLevelHtmlForPerm.makePackageClassesHtmls(breakdown);
+      MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm, SizeBreakdown breakdown,
+      DependencyLinker depLinker) throws IOException {
+    makeTopLevelHtmlForPerm.makePackageClassesHtmls(breakdown, depLinker);
     makeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(breakdown);
     makeTopLevelHtmlForPerm.makeLiteralsClassesTableHtmls(breakdown);
     makeTopLevelHtmlForPerm.makeStringLiteralsClassesTableHtmls(breakdown);
@@ -384,7 +409,7 @@ public class SoycDashboard {
           breakdowns.add(GlobalInformation.leftoversBreakdown);
         }
         if (curFragment >= 1 && curFragment <= GlobalInformation.numSplitPoints) {
-          breakdowns.add(GlobalInformation.exclusiveCodeBreakdown(curFragment));
+          breakdowns.add(GlobalInformation.splitPointCodeBreakdown(curFragment));
         }
         return breakdowns;
       }
@@ -718,44 +743,58 @@ public class SoycDashboard {
   }
 
   private static DefaultHandler parseXMLDocumentDependencies(
-      final Map<String, ArrayList<String>> dependencies) {
-
+      final Map<String, Map<String, String>> allDependencies) {
     DefaultHandler handler = new DefaultHandler() {
 
       // may want to create a class for this later
       String curMethod;
+      Map<String, String> dependencies = new TreeMap<String, String>();
+      String graphExtends = null;
       StringBuilder valueBuilder = new StringBuilder();
 
-      /**
-       * This method deals with the beginning of the XML element. It analyzes
-       * the XML node and adds its information to the relevant literal or code
-       * collection for later analysis.
-       * 
-       * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String,
-       *      java.lang.String, java.lang.String, org.xml.sax.Attributes)
-       */
+      @Override
+      public void endElement(String uri, String localName, String qName) {
+        if (localName.compareTo("table") == 0) {
+          if (graphExtends != null) {
+            // Add in elements from the extended graph
+            for (Entry<String, String> entry : allDependencies.get(graphExtends).entrySet()) {
+              dependencies.put(entry.getKey(), entry.getValue());
+            }
+          }
+        }
+      }
+
       @Override
       public void startElement(String nsUri, String strippedName,
           String tagName, Attributes attributes) {
 
         valueBuilder.delete(0, valueBuilder.length());
 
-        if ((strippedName.compareTo("method") == 0)
+        if (strippedName.compareTo("table") == 0
+            && (attributes.getValue("name") != null)) {
+          String name = attributes.getValue("name");
+          dependencies = new TreeMap<String, String>();
+          allDependencies.put(name, dependencies);
+          if (attributes.getValue("extends") != null) {
+            graphExtends = attributes.getValue("extends");
+            if (!allDependencies.containsKey(graphExtends)) {
+              throw new FormatException("Graph " + name
+                  + " extends an unknown graph " + graphExtends);
+            }
+          } else {
+            graphExtends = null;
+          }
+        } else if ((strippedName.compareTo("method") == 0)
             && (attributes.getValue("name") != null)) {
           curMethod = attributes.getValue("name");
         } else if ((strippedName.compareTo("called") == 0)
             && (attributes.getValue("by") != null)) {
           String curDepMethod = attributes.getValue("by");
           if (!dependencies.containsKey(curMethod)) {
-            ArrayList<String> insertArray = new ArrayList<String>();
-            insertArray.add(curDepMethod);
-            dependencies.put(curMethod, insertArray);
-          } else {
-            dependencies.get(curMethod).add(curDepMethod);
+            dependencies.put(curMethod, curDepMethod);
           }
         }
       }
-
     };
     return handler;
   }
@@ -764,19 +803,25 @@ public class SoycDashboard {
 
     DefaultHandler handler = new DefaultHandler() {
 
-      /**
-       * This method deals with the beginning of the XML element. It analyzes
-       * the XML node and adds its information to the relevant literal or code
-       * collection for later analysis.
-       * 
-       * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String,
-       *      java.lang.String, java.lang.String, org.xml.sax.Attributes)
-       */
+      private boolean inInitialLoadSequence = false;
+
+      @Override
+      public void endElement(String uri, String localName, String qName) {
+        if (localName.compareTo("initialesq") == 0) {
+          inInitialLoadSequence = false;
+        }
+      }
+
       @Override
       public void startElement(String nsUri, String strippedName,
           String tagName, Attributes attributes) {
         if (strippedName.compareTo("splitpoint") == 0) {
           parseSplitPoint(attributes);
+        } else if (strippedName.compareTo("initialseq") == 0) {
+          inInitialLoadSequence = true;
+        } else if (inInitialLoadSequence
+            && strippedName.compareTo("splitpointref") == 0) {
+          GlobalInformation.splitPointInitialLoadSequence.add(parseSplitPointReference(attributes));
         }
       }
 
@@ -797,6 +842,14 @@ public class SoycDashboard {
             GlobalInformation.numSplitPoints++;
           }
         }
+      }
+
+      private Integer parseSplitPointReference(Attributes attributes) {
+        String spString = attributes.getValue("id");
+        if (spString == null) {
+          throw new FormatException("Could not parse split point reference");
+        }
+        return Integer.valueOf(spString);
       }
 
     };

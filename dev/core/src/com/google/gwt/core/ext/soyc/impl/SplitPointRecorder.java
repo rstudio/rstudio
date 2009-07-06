@@ -80,6 +80,24 @@ public class SplitPointRecorder {
         htmlOut.printRaw(curLine);
         htmlOut.newline();
       }
+      
+      if (!jprogram.getSplitPointInitialSequence().isEmpty()) {
+        curLine = "<initialseq>";
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
+        htmlOut.indentIn();
+
+        for (int sp : jprogram.getSplitPointInitialSequence()) {
+          curLine = "<splitpointref id=\"" + sp + "\"/>";
+          htmlOut.printRaw(curLine);
+          htmlOut.newline();
+        }
+        
+        htmlOut.indentOut();
+        curLine = "</initialseq>";
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
+      }
 
       htmlOut.indentOut();
       htmlOut.indentOut();
