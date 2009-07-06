@@ -48,7 +48,7 @@ import java.io.PrintWriter;
  */
 public class FieldSerializerCreator {
   
-  private final static String WEAK_MAPPING_CLASS_NAME = WeakMapping.class.getName();
+  private static final String WEAK_MAPPING_CLASS_NAME = WeakMapping.class.getName();
 
   private final JClassType serializableClass;
 
