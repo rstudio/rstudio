@@ -71,7 +71,7 @@ public class SqlTimestampTest extends GWTTestCase {
     }
 
     Timestamp t2 = new Timestamp(d.getTime());
-    t2.setNanos(2);
+    t2.setNanos(t.getNanos() + 1);
 
     assertFalse("t.equals(t2)", t.equals(t2));
     assertEquals("hashcode2", t.hashCode(), t2.hashCode());
