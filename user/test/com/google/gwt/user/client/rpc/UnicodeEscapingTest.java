@@ -19,11 +19,14 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.UnicodeEscapingService.InvalidCharacterException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Test that any valid string can be sent via RPC in both directions.
  * 
- * TODO(jat): make unpaired surrogates work properly if it is possible to do
- * so on all browsers, then add them to this test.
+ * TODO(jat): make unpaired surrogates work properly if it is possible to do so
+ * on all browsers, then add them to this test.
  */
 public class UnicodeEscapingTest extends GWTTestCase {
 
@@ -32,8 +35,8 @@ public class UnicodeEscapingTest extends GWTTestCase {
 
   /**
    * When doing the non-BMP test, we don't test every block of characters
-   * because it takes too long - this is the increment to use.  It is not a
-   * power of two so we alter the alignment of the block of characters we skip.
+   * because it takes too long - this is the increment to use. It is not a power
+   * of two so we alter the alignment of the block of characters we skip.
    */
   private static final int NON_BMP_TEST_INCREMENT = 8192 + 64;
 
@@ -60,28 +63,6 @@ public class UnicodeEscapingTest extends GWTTestCase {
     return buf.toString();
   }
 
-  /*
-   * Copied from HistoryTest.
-   */
-  private static native boolean isSafari2() /*-{
-    var exp = / AppleWebKit\/([\d]+)/;
-    var result = exp.exec(navigator.userAgent);
-    if (result) {
-      // The standard history implementation works fine on WebKit >= 522
-      // (Safari 3 beta).
-      if (parseInt(result[1]) >= 522) {
-        return false;
-      }
-    }
-  
-    // The standard history implementation works just fine on the iPhone, which
-    // unfortunately reports itself as WebKit/420+.
-    if (navigator.userAgent.indexOf('iPhone') != -1) {
-      return false;
-    }
-  
-    return true;
-  }-*/;
   /**
    * Verifies that the supplied string includes the requested code points.
    * 
@@ -98,8 +79,8 @@ public class UnicodeEscapingTest extends GWTTestCase {
     }
     int expectedLen = end - start;
     int strLen = str.codePointCount(0, str.length());
-    for (int i = 0, codePoint = start; i < strLen;
-        i = Character.offsetByCodePoints(str, i, 1)) {
+    for (int i = 0, codePoint = start; i < strLen; i = Character.offsetByCodePoints(
+        str, i, 1)) {
       int strCodePoint = str.codePointAt(i);
       if (strCodePoint != codePoint) {
         throw new InvalidCharacterException(i, codePoint, strCodePoint);
@@ -109,14 +90,16 @@ public class UnicodeEscapingTest extends GWTTestCase {
     if (strLen < expectedLen) {
       throw new InvalidCharacterException(strLen, start + strLen, -1);
     } else if (expectedLen != strLen) {
-      throw new RuntimeException("Too many characters returned on block from U+"
-          + Integer.toHexString(start) + " to U+" + Integer.toHexString(end)
-          + ": expected=" + expectedLen + ", actual=" + strLen);
+      throw new RuntimeException(
+          "Too many characters returned on block from U+"
+              + Integer.toHexString(start) + " to U+"
+              + Integer.toHexString(end) + ": expected=" + expectedLen
+              + ", actual=" + strLen);
     }
   }
+
   private static UnicodeEscapingServiceAsync getService() {
-    UnicodeEscapingServiceAsync service = GWT.create(
-        UnicodeEscapingService.class);
+    UnicodeEscapingServiceAsync service = GWT.create(UnicodeEscapingService.class);
     ServiceDefTarget target = (ServiceDefTarget) service;
     target.setServiceEntryPoint(GWT.getModuleBaseURL() + "unicodeEscape");
     return service;
@@ -136,30 +119,41 @@ public class UnicodeEscapingTest extends GWTTestCase {
    * properly handles all BMP characters.
    * 
    * Unpaired or improperly paired surrogates are not tested here, as some
-   * browsers refuse to accept them.  Properly paired surrogates are tested
-   * in the non-BMP test.
-   *  
+   * browsers refuse to accept them. Properly paired surrogates are tested in
+   * the non-BMP test.
+   * 
    * Note that this does not test all possible combinations, which might be an
    * issue, particularly with combining marks, though they should be logically
    * equivalent in that case.
    * 
    * @throws InvalidCharacterException
    */
-  public void testClientToServerBMP() throws InvalidCharacterException {
+  public void testClientToServerBMPHigh() throws InvalidCharacterException {
     delayTestFinish(TEST_FINISH_DELAY_MS);
-    if (isSafari2()) {
-      // Safari2 can't be fixed for many characters, including null
-      // We only guarantee that basic ISO-Latin characters are unmolested.
-      clientToServerVerifyRange(0x0001, 0x0300, CHARACTER_BLOCK_SIZE,
-          CHARACTER_BLOCK_SIZE);
-    } else {
-      clientToServerVerifyRange(Character.MIN_CODE_POINT,
-          Character.MIN_SURROGATE, CHARACTER_BLOCK_SIZE,
-          CHARACTER_BLOCK_SIZE);
-      clientToServerVerifyRange(Character.MAX_SURROGATE + 1,
-          Character.MIN_SUPPLEMENTARY_CODE_POINT, CHARACTER_BLOCK_SIZE,
-          CHARACTER_BLOCK_SIZE);
-    }
+    clientToServerVerifyRange(Character.MAX_SURROGATE + 1,
+        Character.MIN_SUPPLEMENTARY_CODE_POINT, CHARACTER_BLOCK_SIZE,
+        CHARACTER_BLOCK_SIZE);
+  }
+
+  /**
+   * Generate strings containing ranges of characters and sends them to the
+   * server for verification. This ensures that client->server string escaping
+   * properly handles all BMP characters.
+   * 
+   * Unpaired or improperly paired surrogates are not tested here, as some
+   * browsers refuse to accept them. Properly paired surrogates are tested in
+   * the non-BMP test.
+   * 
+   * Note that this does not test all possible combinations, which might be an
+   * issue, particularly with combining marks, though they should be logically
+   * equivalent in that case.
+   * 
+   * @throws InvalidCharacterException
+   */
+  public void testClientToServerBMPLow() throws InvalidCharacterException {
+    delayTestFinish(TEST_FINISH_DELAY_MS);
+    clientToServerVerifyRange(Character.MIN_CODE_POINT,
+        Character.MIN_SURROGATE, CHARACTER_BLOCK_SIZE, CHARACTER_BLOCK_SIZE);
   }
 
   /**
@@ -181,9 +175,9 @@ public class UnicodeEscapingTest extends GWTTestCase {
   }
 
   /**
-   * Requests strings of CHARACTER_RANGE_SIZE from the server and validates
-   * that the returned string length matches CHARACTER_RANGE_SIZE and that all
-   * of the characters remain intact.
+   * Requests strings of CHARACTER_RANGE_SIZE from the server and validates that
+   * the returned string length matches CHARACTER_RANGE_SIZE and that all of the
+   * characters remain intact.
    * 
    * Note that this does not test all possible combinations, which might be an
    * issue, particularly with combining marks, though they should be logically
@@ -199,7 +193,7 @@ public class UnicodeEscapingTest extends GWTTestCase {
   /**
    * Requests strings of CHARACTER_RANGE_SIZE from the server and validates that
    * the returned string length matches CHARACTER_RANGE_SIZE and that all of the
-   * characters remain intact.  Note that this test verifies non-BMP characters
+   * characters remain intact. Note that this test verifies non-BMP characters
    * (ie, those which are represented as pairs of surrogates).
    * 
    * Note that this does not test all possible combinations, which might be an
@@ -220,53 +214,78 @@ public class UnicodeEscapingTest extends GWTTestCase {
     getService().verifyStringContainingCharacterRange(current, blockEnd,
         getStringContainingCharacterRange(start, blockEnd),
         new AsyncCallback<Boolean>() {
-      public void onFailure(Throwable caught) {
-        TestSetValidator.rethrowException(caught);
-      }
+          List<Throwable> fails = new ArrayList<Throwable>();
 
-      public void onSuccess(Boolean ignored) {
-        current += step;
-        if (current < end) {
-          delayTestFinish(TEST_FINISH_DELAY_MS);
-          int blockEnd = Math.min(end, current + size);
-          try {
-            getService().verifyStringContainingCharacterRange(current, blockEnd,
-                getStringContainingCharacterRange(current, blockEnd), this);
-          } catch (InvalidCharacterException e) {
-            TestSetValidator.rethrowException(e);
+          public void onFailure(Throwable caught) {
+            fails.add(caught);
+            onSuccess(false);
           }
-        } else {
-          finishTest();
-        }
-      }
-    });
+
+          public void onSuccess(Boolean ignored) {
+            current += step;
+            if (current < end) {
+              delayTestFinish(TEST_FINISH_DELAY_MS);
+              int blockEnd = Math.min(end, current + size);
+              try {
+                getService().verifyStringContainingCharacterRange(current,
+                    blockEnd,
+                    getStringContainingCharacterRange(current, blockEnd), this);
+              } catch (InvalidCharacterException e) {
+                fails.add(e);
+              }
+            } else if (!fails.isEmpty()) {
+              StringBuilder msg = new StringBuilder();
+              for (Throwable t : fails) {
+                msg.append(t.getMessage()).append("\n");
+              }
+              TestSetValidator.rethrowException(new RuntimeException(
+                  msg.toString()));
+            } else {
+              finishTest();
+            }
+          }
+        });
   }
 
   private void serverToClientVerify(final int start, final int end,
       final int size, final int step) {
     current = start;
-    getService().getStringContainingCharacterRange(start, Math.min(end,
-        current + size), new AsyncCallback<String>() {
-      public void onFailure(Throwable caught) {
-        TestSetValidator.rethrowException(caught);
-      }
+    getService().getStringContainingCharacterRange(start,
+        Math.min(end, current + size), new AsyncCallback<String>() {
+          List<Throwable> fails = new ArrayList<Throwable>();
 
-      public void onSuccess(String str) {
-        try {
-          verifyStringContainingCharacterRange(current, Math.min(end,
-              current + size), str);
-        } catch (InvalidCharacterException e) {
-          TestSetValidator.rethrowException(e);
-        }
-        current += step;
-        if (current < end) {
-          delayTestFinish(TEST_FINISH_DELAY_MS);
-          getService().getStringContainingCharacterRange(current,
-              Math.min(end, current + size), this);
-        } else {
-          finishTest();
-        }
-      }
-    });
+          public void onFailure(Throwable caught) {
+            fails.add(caught);
+            nextBatch();
+          }
+
+          public void onSuccess(String str) {
+            try {
+              verifyStringContainingCharacterRange(current, Math.min(end,
+                  current + size), str);
+            } catch (InvalidCharacterException e) {
+              fails.add(e);
+            }
+            nextBatch();
+          }
+
+          private void nextBatch() {
+            current += step;
+            if (current < end) {
+              delayTestFinish(TEST_FINISH_DELAY_MS);
+              getService().getStringContainingCharacterRange(current,
+                  Math.min(end, current + size), this);
+            } else if (!fails.isEmpty()) {
+              StringBuilder msg = new StringBuilder();
+              for (Throwable t : fails) {
+                msg.append(t.getMessage()).append("\n");
+              }
+              TestSetValidator.rethrowException(new RuntimeException(
+                  msg.toString()));
+            } else {
+              finishTest();
+            }
+          }
+        });
   }
 }
