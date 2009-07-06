@@ -42,6 +42,11 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
   public abstract String[] getJavaScript();
 
   /**
+   * Returns the permutation ID
+   */
+  public abstract int getPermutationId();
+  
+  /**
    * Provides values for {@link SelectionProperty} instances that are not
    * explicitly set during the compilation phase. This method will return
    * multiple mappings, one for each permutation that resulted in the

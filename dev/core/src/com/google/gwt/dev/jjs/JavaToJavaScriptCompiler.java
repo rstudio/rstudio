@@ -137,9 +137,10 @@ public class JavaToJavaScriptCompiler {
     private final byte[][] js;
     private final byte[] serializedSymbolMap;
     private final StatementRanges[] statementRanges;
-
+    private final int permutationId;
+    
     public PermutationResultImpl(String[] js, SymbolData[] symbolMap,
-        StatementRanges[] statementRanges) {
+        StatementRanges[] statementRanges, int permutationId) {
       byte[][] bytes = new byte[js.length][];
       for (int i = 0; i < js.length; ++i) {
         bytes[i] = Util.getBytes(js[i]);
@@ -154,6 +155,7 @@ public class JavaToJavaScriptCompiler {
             e);
       }
       this.statementRanges = statementRanges;
+      this.permutationId = permutationId;
     }
 
     public ArtifactSet getArtifacts() {
@@ -162,6 +164,10 @@ public class JavaToJavaScriptCompiler {
 
     public byte[][] getJs() {
       return js;
+    }
+    
+    public int getPermutationId() {
+      return permutationId;
     }
 
     public byte[] getSerializedSymbolMap() {
@@ -322,7 +328,7 @@ public class JavaToJavaScriptCompiler {
       }
 
       PermutationResult toReturn = new PermutationResultImpl(js,
-          makeSymbolMap(symbolTable), ranges);
+          makeSymbolMap(symbolTable), ranges, permutationId);
 
       toReturn.getArtifacts().add(
           makeSoycArtifact(logger, permutationId, jprogram, js, sourceInfoMaps));

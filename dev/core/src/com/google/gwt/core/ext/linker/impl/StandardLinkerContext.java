@@ -351,7 +351,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     if (result == null) {
       result = new StandardCompilationResult(strongName, js,
           permutationResult.getSerializedSymbolMap(),
-          permutationResult.getStatementRanges());
+          permutationResult.getStatementRanges(), permutationResult.getPermutationId());
       resultsByStrongName.put(result.getStrongName(), result);
       artifacts.add(result);
 

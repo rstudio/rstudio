@@ -36,6 +36,11 @@ public interface PermutationResult extends Serializable {
   byte[][] getJs();
 
   /**
+   * The ID of the permutation.
+   */
+  int getPermutationId();
+  
+  /**
    * The symbol map for the permutation.
    */
   byte[] getSerializedSymbolMap();

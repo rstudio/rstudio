@@ -71,6 +71,8 @@ public class StandardCompilationResult extends CompilationResult {
   private static final DiskCache diskCache = new DiskCache();
 
   private final long jsToken[];
+  
+  private final int permutationId;
 
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
@@ -82,7 +84,7 @@ public class StandardCompilationResult extends CompilationResult {
   private final long symbolToken;
 
   public StandardCompilationResult(String strongName, byte[][] js,
-      byte[] serializedSymbolMap, StatementRanges[] statementRanges) {
+      byte[] serializedSymbolMap, StatementRanges[] statementRanges, int permutationId) {
     super(StandardLinkerContext.class);
     this.strongName = strongName;
     jsToken = new long[js.length];
@@ -91,6 +93,7 @@ public class StandardCompilationResult extends CompilationResult {
     }
     symbolToken = diskCache.writeByteArray(serializedSymbolMap);
     this.statementRanges = statementRanges;
+    this.permutationId = permutationId;
   }
 
   /**
@@ -113,6 +116,11 @@ public class StandardCompilationResult extends CompilationResult {
     return js;
   }
 
+  @Override
+  public int getPermutationId() {
+    return permutationId;
+  }
+  
   @Override
   public SortedSet<SortedMap<SelectionProperty, String>> getPropertyMap() {
     return Collections.unmodifiableSortedSet(propertyValues);

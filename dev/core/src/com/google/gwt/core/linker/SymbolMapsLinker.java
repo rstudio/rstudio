@@ -89,6 +89,9 @@ public class SymbolMapsLinker extends AbstractLinker {
    */
   protected void doWriteSymbolMap(TreeLogger logger, CompilationResult result,
       PrintWriter pw) throws UnableToCompleteException {
+    
+    pw.println("# { " + result.getPermutationId() + " }");
+    
     for (SortedMap<SelectionProperty, String> map : result.getPropertyMap()) {
       pw.print("# { ");
 
