@@ -202,6 +202,7 @@ public class CompilationUnitInvalidator {
         CompilationUnitDeclaration jdtCud = unit.getJdtCud();
         JSORestrictionsChecker.check(state.jsoState, jdtCud);
         JsniChecker.check(jdtCud);
+        ArtificialRescueChecker.check(unit);
         BinaryTypeReferenceRestrictionsChecker.check(jdtCud,
             validBinaryTypeNames);
       }

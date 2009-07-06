@@ -156,32 +156,13 @@ public abstract class AbstractCompiler {
       // Examine the cud for magic types.
       //
       String[] typeNames = doFindAdditionalTypesUsingJsni(logger, unit);
-
-      // Accept each new compilation unit.
-      //
-      for (int i = 0; i < typeNames.length; i++) {
-        String typeName = typeNames[i];
-        final String msg = "Need additional type '" + typeName + "'";
-        logger.log(TreeLogger.SPAM, msg, null);
-
-        resolvePossiblyNestedType(typeName);
-      }
+      addAdditionalTypes(logger, typeNames);
 
       typeNames = doFindAdditionalTypesUsingRebinds(logger, unit);
+      addAdditionalTypes(logger, typeNames);
 
-      // Accept each new compilation unit, and check for instantiability
-      //
-      for (int i = 0; i < typeNames.length; i++) {
-        String typeName = typeNames[i];
-        final String msg = "Need additional type '" + typeName + "'";
-        logger.log(TreeLogger.SPAM, msg, null);
-
-        // This causes the compiler to find the additional type, possibly
-        // winding its back to ask for the compilation unit from the source
-        // oracle.
-        //
-        resolvePossiblyNestedType(typeName);
-      }
+      typeNames = doFindAdditionalTypesUsingArtificialRescues(logger, unit);
+      addAdditionalTypes(logger, typeNames);
 
       doCompilationUnitDeclarationValidation(unit, logger);
 
@@ -192,6 +173,21 @@ public abstract class AbstractCompiler {
       }
 
       jdtProcessNanos += System.nanoTime() - processBeginNanos;
+    }
+
+    /**
+     * Helper method for process() that receives the types found by magic. This
+     * causes the compiler to find the additional type, possibly winding its
+     * back to ask for the compilation unit from the source oracle.
+     */
+    private void addAdditionalTypes(TreeLogger logger, String[] typeNames) {
+      for (int i = 0; i < typeNames.length; i++) {
+        String typeName = typeNames[i];
+        final String msg = "Need additional type '" + typeName + "'";
+        logger.log(TreeLogger.SPAM, msg, null);
+
+        resolvePossiblyNestedType(typeName);
+      }
     }
 
     private void compile(ICompilationUnit[] units,
@@ -503,6 +499,13 @@ public abstract class AbstractCompiler {
   protected void doCompilationUnitDeclarationValidation(
       CompilationUnitDeclaration cud, TreeLogger logger) {
     // Do nothing by default.
+  }
+
+  @SuppressWarnings("unused")
+  // overrider may use unused parameter
+  protected String[] doFindAdditionalTypesUsingArtificialRescues(
+      TreeLogger logger, CompilationUnitDeclaration cud) {
+    return Empty.STRINGS;
   }
 
   @SuppressWarnings("unused")

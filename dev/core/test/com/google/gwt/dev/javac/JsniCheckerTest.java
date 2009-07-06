@@ -15,20 +15,10 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.util.UnitTestTreeLogger;
-
-import junit.framework.TestCase;
-
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * Test access to longs from JSNI.
  */
-public class JsniCheckerTest extends TestCase {
+public class JsniCheckerTest extends CheckerTestCase {
 
   /**
    * JSNI references to anonymous inner classes is deprecated.
@@ -402,81 +392,5 @@ public class JsniCheckerTest extends TestCase {
           2,
           "Referencing field 'Extra.Inner.x': type 'long' is not safe to access in JSNI code");
     }
-  }
-
-  private void addLongCheckingCups(Set<CompilationUnit> units) {
-    StringBuilder code = new StringBuilder();
-    code.append("package com.google.gwt.core.client;\n");
-    code.append("public @interface UnsafeNativeLong {\n");
-    code.append("}\n");
-    units.add(new MockCompilationUnit(
-        "com.google.gwt.core.client.UnsafeNativeLong", code.toString()));
-  }
-
-  private TypeOracle buildOracle(CharSequence buggyCode,
-      CharSequence extraCode, UnitTestTreeLogger logger) {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addLongCheckingCups(units);
-    units.add(new MockCompilationUnit("Buggy", buggyCode.toString()));
-    if (extraCode != null) {
-      units.add(new MockCompilationUnit("Extra", extraCode.toString()));
-    }
-    return TypeOracleTestingUtils.buildStandardTypeOracleWith(logger,
-        units.toArray(new CompilationUnit[units.size()]));
-  }
-
-  private void shouldGenerate(CharSequence buggyCode, CharSequence extraCode,
-      int line, Type logLevel, String logHeader, String message) {
-    UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    b.setLowestLogLevel(logLevel);
-    if (message != null) {
-      b.expect(logLevel, logHeader + " in '/mock/Buggy'", null);
-      final String fullMessage = "Line " + line + ": " + message;
-      b.expect(logLevel, fullMessage, null);
-    }
-    UnitTestTreeLogger logger = b.createLogger();
-    TypeOracle oracle = buildOracle(buggyCode, extraCode, logger);
-    logger.assertCorrectLogEntries();
-    if (message != null && logLevel == TreeLogger.ERROR) {
-      assertNull("Buggy compilation unit not removed from type oracle",
-          oracle.findType("Buggy"));
-    } else {
-      assertNotNull("Buggy compilation unit removed with only a warning",
-          oracle.findType("Buggy"));
-    }
-  }
-
-  private void shouldGenerateError(CharSequence buggyCode,
-      CharSequence extraCode, int line, String message) {
-    shouldGenerate(buggyCode, extraCode, line, TreeLogger.ERROR, "Errors",
-        message);
-  }
-
-  private void shouldGenerateError(CharSequence buggyCode, int line,
-      String message) {
-    shouldGenerateError(buggyCode, null, line, message);
-  }
-
-  private void shouldGenerateNoError(CharSequence code) {
-    shouldGenerateNoError(code, null);
-  }
-
-  private void shouldGenerateNoError(CharSequence code, CharSequence extraCode) {
-    shouldGenerateError(code, extraCode, -1, null);
-  }
-
-  private void shouldGenerateNoWarning(CharSequence code) {
-    shouldGenerateWarning(code, -1, null);
-  }
-
-  private void shouldGenerateWarning(CharSequence buggyCode,
-      CharSequence extraCode, int line, String message) {
-    shouldGenerate(buggyCode, extraCode, line, TreeLogger.WARN, "Warnings",
-        message);
-  }
-
-  private void shouldGenerateWarning(CharSequence buggyCode, int line,
-      String message) {
-    shouldGenerateWarning(buggyCode, null, line, message);
   }
 }

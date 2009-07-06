@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.ArtificialRescueChecker;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
@@ -142,6 +143,14 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
      * Anything that makes it here was already checked by AstCompiler while
      * building TypeOracle; no need to rerun checks.
      */
+  }
+
+  @Override
+  protected String[] doFindAdditionalTypesUsingArtificialRescues(
+      TreeLogger logger, CompilationUnitDeclaration cud) {
+    List<String> types = ArtificialRescueChecker.collectReferencedTypes(cud);
+    return types.isEmpty() ? Empty.STRINGS
+        : types.toArray(new String[types.size()]);
   }
 
   /**

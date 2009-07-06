@@ -547,6 +547,19 @@ public class ControlFlowAnalyzer {
 
         if (doVisit) {
           accept(type);
+
+          if (type instanceof JDeclaredType) {
+            for (JNode artificial : ((JDeclaredType) type).getArtificialRescues()) {
+              if (artificial instanceof JReferenceType) {
+                rescue((JReferenceType) artificial, true, true);
+                rescue(program.getLiteralClass((JReferenceType) artificial).getField());
+              } else if (artificial instanceof JVariable) {
+                rescue((JVariable) artificial);
+              } else if (artificial instanceof JMethod) {
+                rescue((JMethod) artificial);
+              }
+            }
+          }
         }
       }
     }

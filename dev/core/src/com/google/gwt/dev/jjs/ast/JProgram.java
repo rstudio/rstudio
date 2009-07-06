@@ -1055,9 +1055,9 @@ public class JProgram extends JNode {
   }
 
   /**
-   * If <code>method</code> is a static impl method, returns the instance
-   * method that <code>method</code> is the implementation of. Otherwise,
-   * returns <code>null</code>.
+   * If <code>method</code> is a static impl method, returns the instance method
+   * that <code>method</code> is the implementation of. Otherwise, returns
+   * <code>null</code>.
    */
   public JMethod staticImplFor(JMethod method) {
     return staticToInstanceMap.get(method);

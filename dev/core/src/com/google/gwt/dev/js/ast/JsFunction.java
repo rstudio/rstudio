@@ -35,6 +35,7 @@ public final class JsFunction extends JsLiteral implements HasName {
   protected JsBlock body;
   protected final List<JsParameter> params = new ArrayList<JsParameter>();
   protected final JsScope scope;
+  private boolean artificiallyRescued;
   private boolean executeOnce;
   private boolean fromJava;
   private JsFunction impliedExecute;
@@ -105,6 +106,10 @@ public final class JsFunction extends JsLiteral implements HasName {
     return name != null;
   }
 
+  public boolean isArtificiallyRescued() {
+    return artificiallyRescued;
+  }
+
   public boolean isBooleanFalse() {
     return false;
   }
@@ -123,6 +128,10 @@ public final class JsFunction extends JsLiteral implements HasName {
 
   public boolean isFromJava() {
     return fromJava;
+  }
+
+  public void setArtificiallyRescued(boolean rescued) {
+    this.artificiallyRescued = rescued;
   }
 
   public void setBody(JsBlock body) {

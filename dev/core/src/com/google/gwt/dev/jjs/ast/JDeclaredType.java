@@ -31,6 +31,12 @@ import java.util.List;
 public abstract class JDeclaredType extends JReferenceType {
 
   /**
+   * The other nodes that this node should implicitly rescue. Special
+   * serialization treatment.
+   */
+  protected transient List<JNode> artificialRescues = Lists.create();
+
+  /**
    * This type's fields. Special serialization treatment.
    */
   protected transient List<JField> fields = Lists.create();
@@ -58,6 +64,10 @@ public abstract class JDeclaredType extends JReferenceType {
 
   public JDeclaredType(SourceInfo info, String name) {
     super(info, name);
+  }
+
+  public void addArtificialRescue(JNode node) {
+    artificialRescues = Lists.add(artificialRescues, node);
   }
 
   /**
@@ -91,9 +101,9 @@ public abstract class JDeclaredType extends JReferenceType {
    * statically know the clinit method has already run when:
    * <ol>
    * <li><code>this == targetType</code></li>
-   * <li><code>this</code> is a subclass of <code>targetType</code>,
-   * because my clinit would have already run this <code>targetType</code>'s
-   * clinit; see JLS 12.4</li>
+   * <li><code>this</code> is a subclass of <code>targetType</code>, because my
+   * clinit would have already run this <code>targetType</code>'s clinit; see
+   * JLS 12.4</li>
    * </ol>
    */
   public boolean checkClinitTo(JDeclaredType targetType) {
@@ -116,6 +126,10 @@ public abstract class JDeclaredType extends JReferenceType {
       checkType = checkType.getSuperClass();
     }
     return true;
+  }
+
+  public List<JNode> getArtificialRescues() {
+    return artificialRescues;
   }
 
   /**
@@ -168,8 +182,7 @@ public abstract class JDeclaredType extends JReferenceType {
   }
 
   /**
-   * Returns <code>true</code> when this class's clinit must be run
-   * dynamically.
+   * Returns <code>true</code> when this class's clinit must be run dynamically.
    */
   public boolean hasClinit() {
     return hasClinit;
@@ -231,9 +244,10 @@ public abstract class JDeclaredType extends JReferenceType {
       ClassNotFoundException {
     fields = (List<JField>) stream.readObject();
     methods = (List<JMethod>) stream.readObject();
+    artificialRescues = (List<JNode>) stream.readObject();
   }
 
-  /**
+/**
    * See {@link #writeMethodBodies(ObjectOutputStream).
    * 
    * @see #writeMethodBodies(ObjectOutputStream)
@@ -265,6 +279,7 @@ public abstract class JDeclaredType extends JReferenceType {
   void writeMembers(ObjectOutputStream stream) throws IOException {
     stream.writeObject(fields);
     stream.writeObject(methods);
+    stream.writeObject(artificialRescues);
   }
 
   /**

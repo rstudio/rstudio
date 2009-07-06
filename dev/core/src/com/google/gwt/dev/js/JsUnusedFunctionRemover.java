@@ -43,7 +43,7 @@ public class JsUnusedFunctionRemover {
     @Override
     public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
       // Anonymous function, ignore it
-      if (x.getName() != null) {
+      if (x.getName() != null && !x.isArtificiallyRescued()) {
         toRemove.put(x.getName(), x);
       }
     }

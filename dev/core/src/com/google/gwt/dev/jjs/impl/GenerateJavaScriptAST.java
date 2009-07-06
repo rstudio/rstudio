@@ -60,6 +60,7 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
+import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
@@ -133,6 +134,7 @@ import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -250,6 +252,12 @@ public class GenerateJavaScriptAST {
        */
       nullMethodName = topScope.declareName(nullMethod.getName());
       names.put(nullMethod, nullMethodName);
+
+      /*
+       * Make sure we record all of the program's array types since
+       * JProgram.traverse() doesn't iterate over them.
+       */
+      accept(new ArrayList<JArrayType>(program.getAllArrayTypes()));
     }
 
     @Override
@@ -643,6 +651,16 @@ public class GenerateJavaScriptAST {
 
       if (!vars.isEmpty()) {
         globalStmts.add(vars);
+      }
+
+      for (JNode node : x.getArtificialRescues()) {
+        if (node instanceof JMethod) {
+          JsName jsName = names.get(node);
+          if (jsName != null) {
+            JsFunction func = (JsFunction) jsName.getStaticRef();
+            func.setArtificiallyRescued(true);
+          }
+        }
       }
     }
 

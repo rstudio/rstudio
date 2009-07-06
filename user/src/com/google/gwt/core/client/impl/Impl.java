@@ -79,7 +79,7 @@ public final class Impl {
    * @return the name by which the named member can be accessed at runtime, or
    *         <code>null</code> if the requested member has been pruned from the
    *         output.
-   * @see com.google.gwt.core.client.ArtificialRescue
+   * @see com.google.gwt.core.client.impl.ArtificialRescue
    */
   public static String getNameOf(String jsniIdent) {
     /*
