@@ -76,6 +76,7 @@ import com.google.gwt.dev.util.collect.HashSet;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -583,16 +584,22 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       _rparen();
     }
 
-    _lparen();
-    boolean sep = false;
-    for (Object element : x.getArguments()) {
-      JsExpression arg = (JsExpression) element;
-      sep = _sepCommaOptSpace(sep);
-      _parenPushIfCommaExpr(arg);
-      accept(arg);
-      _parenPopIfCommaExpr(arg);
+    /*
+     * If a constructor call has no arguments, it may simply be
+     * replaced with "new Constructor" with no parentheses.
+     */
+    List<JsExpression> args = x.getArguments();
+    if (args.size() > 0) {
+      _lparen();
+      boolean sep = false;
+      for (JsExpression arg : args) {
+        sep = _sepCommaOptSpace(sep);
+        _parenPushIfCommaExpr(arg);
+        accept(arg);
+        _parenPopIfCommaExpr(arg);
+      }
+      _rparen();
     }
-    _rparen();
 
     return false;
   }
