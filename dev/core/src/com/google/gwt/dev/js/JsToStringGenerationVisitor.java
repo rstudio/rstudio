@@ -562,6 +562,13 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     if (q != null) {
       _parenPush(x, q, false);
       accept(q);
+      if (q instanceof JsNumberLiteral) {
+        /**
+         * Fix for Issue #3796. "42.foo" is not allowed, but
+         * "42 .foo" is.
+         */
+        _space();
+      }
       _parenPop(x, q, false);
       _dot();
     }

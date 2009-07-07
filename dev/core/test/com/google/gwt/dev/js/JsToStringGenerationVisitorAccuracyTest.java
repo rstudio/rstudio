@@ -100,6 +100,10 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
     doTest("new (new (new MyClass()))");
   }
 
+  public void testNumberLiteralNameRef() throws Exception {
+    doTest("(42).nameRef");
+  }
+  
   public void testObjectDeclarationArrayAccess() throws Exception {
     doTest("({ a : 'b'})['a']");
   }
