@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -138,7 +138,7 @@ public class CwAbsolutePanel extends ContentWidget {
   @Override
   public Widget onInitialize() {
     // Create a new panel
-    widgetMap = new HashMap<String, Widget>();
+    widgetMap = new LinkedHashMap<String, Widget>();
     absolutePanel = new AbsolutePanel();
     absolutePanel.setSize("250px", "250px");
     absolutePanel.ensureDebugId("cwAbsolutePanel");
