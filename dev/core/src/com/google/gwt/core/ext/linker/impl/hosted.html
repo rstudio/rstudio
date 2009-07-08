@@ -4,21 +4,11 @@ var $wnd = parent;
 var $doc = $wnd.document;
 var $moduleName, $moduleBase
 ,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;
-
-// The module to be loaded can be specified either through the url query
-// parameter (as done by the legacy HostedModeTemplate.js), or by specifying
-// window.name (as done by IFrameTemplate.js). When the former approach
-// is removed, we can drop the window.location.search part of this logic.
-var moduleFuncName = window.location.search.substring(1);
-if (!moduleFuncName || !$wnd[moduleFuncName]) {
-  moduleFuncName = window.name;
-}
-
-var moduleFunc = $wnd[moduleFuncName];
-var moduleName = moduleFunc ? moduleFunc.moduleName : "unknown";
-
 // Lightweight metrics
 if ($stats) {
+  var moduleFuncName = location.search.substr(1);
+  var moduleFunc = $wnd[moduleFuncName];
+  var moduleName = moduleFunc ? moduleFunc.moduleName : "unknown";
   $stats({moduleName:moduleName,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
 }
 
@@ -255,5 +245,6 @@ if (!$legacyHosted) {
   }
 }
 
-setTimeout($wnd[moduleFuncName].onScriptLoad, 1);
+query = window.location.search.substring(1);
+if (query && $wnd[query]) setTimeout($wnd[query].onScriptLoad, 1);
 --></script></body></html>
