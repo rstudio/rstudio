@@ -120,6 +120,25 @@ public class HTMLPanelTest extends GWTTestCase {
   }
 
   /**
+   * Tests arbitrary root tag
+   */
+  public void testCustomRootTag() {
+    HTMLPanel hp = new HTMLPanel("table", "<tr><td>Hello <span id='labelHere'></span></td></tr>");
+    InlineLabel label = new InlineLabel("World");
+    hp.addAndReplaceElement(label, "labelHere");
+    
+    Element parent = label.getElement().getParentElement();
+    assertEquals("td", parent.getTagName().toLowerCase());
+
+    parent = parent.getParentElement();
+    assertEquals("tr", parent.getTagName().toLowerCase());
+
+    parent = parent.getParentElement();
+    assertEquals("table", parent.getTagName().toLowerCase());
+    assertEquals(hp.getElement(), parent);
+  }
+  
+  /**
    * Ensure that {@link HTMLPanel#getElementById(String)} behaves properly in
    * both attached and unattached states.
    */
