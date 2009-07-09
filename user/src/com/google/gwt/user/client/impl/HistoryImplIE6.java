@@ -199,13 +199,7 @@ class HistoryImplIE6 extends HistoryImpl {
     Location.reload();
   }
 
-  private void updateHash(String token) {
-    if (HistoryImpl.updateHashOnIE6) {
-      updateHashInternal(token);
-    }
-  }
-
-  private native void updateHashInternal(String token) /*-{
+  private native void updateHash(String token) /*-{
     $wnd.location.hash = this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(token);
   }-*/;
 }

@@ -38,8 +38,6 @@ import com.google.gwt.event.shared.HasHandlers;
 public class HistoryImpl implements HasValueChangeHandlers<String>,
     HasHandlers {
 
-  static boolean updateHashOnIE6 = true;
-
   public static native String getToken() /*-{
     return $wnd.__gwt_historyToken || "";
   }-*/;
@@ -49,9 +47,12 @@ public class HistoryImpl implements HasValueChangeHandlers<String>,
    * creating a new item. This should be used only for applications with large
    * DOM structures that are suffering from performance problems when creating
    * a new history item on IE6 and 7.
+   *
+   * @deprecated This is no longer necessary, as the underlying performance
+   * problem has been solved. It is now a no-op.
    */
+  @Deprecated
   public static void setUpdateHashOnIE6(boolean updateHash) {
-    HistoryImpl.updateHashOnIE6 = updateHash;
   }
 
   protected static native void setToken(String token) /*-{
