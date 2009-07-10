@@ -1,4 +1,4 @@
-Eclipse 3.3.X instructions
+Eclipse 3.X instructions
 
 These instructions are intended for contributors to the GWT source
 code repository that want to run the Eclipse IDE. It describes how to
@@ -105,7 +105,7 @@ Annotations:
 
 Checkstyle is used to enforce good programming style.
 
-1. Install Checkstyle
+1. Install Checkstyle version 4.4.2 (newer versions will not work)
 
 The Eclipse Checkstyle plugin can be found at:
   http://eclipse-cs.sourceforge.net/
