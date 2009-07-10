@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -117,28 +117,6 @@ public class HTMLPanelTest extends GWTTestCase {
 
     Node next = button.getElement().getNextSibling();
     assertEquals("bar", next.getNodeValue());
-  }
-
-  /**
-   * Tests arbitrary root tag
-   */
-  public void testCustomRootTag() {
-    HTMLPanel hp = new HTMLPanel("table", "<tr><td>Hello <span id='labelHere'></span></td></tr>");
-    InlineLabel label = new InlineLabel("World");
-    hp.addAndReplaceElement(label, "labelHere");
-
-    Element parent = label.getElement().getParentElement();
-    assertEquals("td", parent.getTagName().toLowerCase());
-
-    parent = parent.getParentElement();
-    assertEquals("tr", parent.getTagName().toLowerCase());
-
-    while (parent != null && parent != hp.getElement()) {
-      parent = parent.getParentElement();
-    }
-
-    assertNotNull(parent);
-    assertEquals("table", parent.getTagName().toLowerCase());
   }
 
   /**
