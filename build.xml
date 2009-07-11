@@ -118,7 +118,8 @@
     <call-subproject subproject="samples" subtarget="checkstyle" />
   </target>
 
-  <target name="test" depends="dist-dev" description="[action] Runs all the GWT tests">
+  <target name="test" depends="dist-dev,apicheck,checkstyle" 
+          description="[action] Runs all the GWT tests, including checkstyle and apicheck">
     <call-subproject subproject="buildtools" subtarget="test" />
     <call-subproject subproject="dev" subtarget="test" />
     <call-subproject subproject="user" subtarget="test" />
@@ -130,7 +131,8 @@
     <delete dir="${gwt.build}" />
   </target>
 
-  <target name ="presubmit" description="[action] Runs checkstyle,apichecker, and all tests" depends="dist-dev,apicheck-nobuild,checkstyle,test">		
+  <target name ="presubmit" description="[action] Deprecated for test, which now does checkstyle and apicheck"
+          depends="test">		
   </target>
 	
   <target name="apicheck-nobuild" 
@@ -158,7 +160,7 @@
     </java>
   </target>
   
-  <target name="apicheck" depends="build,apicheck-nobuild" 
+  <target name="apicheck" depends="buildonly,tools,apicheck-nobuild" 
           description="[action] Builds GWT and checks API compatiblity to prior release"/>
  
 </project>
