@@ -76,6 +76,16 @@ public class GWTShellTest extends ArgProcessorTestBase {
     assertEquals("foo", options.getStartupURLs().get(1));
   }
 
+  public void testAssertionsArgs() {
+    // Assertion is enabled by default in web mode, i.e. -ea flag.
+    assertProcessSuccess(argProcessor, "-ea");
+    assertTrue(options.isEnableAssertions());
+    assertProcessSuccess(argProcessor, "-da");
+    assertFalse(options.isEnableAssertions());   
+    assertProcessSuccess(argProcessor, "-ea");
+    assertTrue(options.isEnableAssertions());
+  }
+
   public void testDefaultArgs() {
     assertProcessSuccess(argProcessor);
 

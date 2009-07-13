@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -52,26 +52,26 @@ import java.util.regex.Pattern;
 /**
  * This class is responsible for hosting JUnit test case execution. There are
  * three main pieces to the JUnit system.
- * 
+ *
  * <ul>
  * <li>Test environment</li>
  * <li>Client classes</li>
  * <li>Server classes</li>
  * </ul>
- * 
+ *
  * <p>
  * The test environment consists of this class and the non-translatable version
  * of {@link com.google.gwt.junit.client.GWTTestCase}. These two classes
  * integrate directly into the real JUnit test process.
  * </p>
- * 
+ *
  * <p>
  * The client classes consist of the translatable version of {@link
  * com.google.gwt.junit.client.GWTTestCase}, translatable JUnit classes, and the
  * user's own {@link com.google.gwt.junit.client.GWTTestCase}-derived class.
  * The client communicates to the server via RPC.
  * </p>
- * 
+ *
  * <p>
  * The server consists of {@link com.google.gwt.junit.server.JUnitHostImpl}, an
  * RPC servlet which communicates back to the test environment through a
@@ -351,7 +351,7 @@ public class JUnitShell extends GWTShell {
   /**
    * Called by {@link com.google.gwt.junit.server.JUnitHostImpl} to get an
    * interface into the test process.
-   * 
+   *
    * @return The {@link JUnitMessageQueue} interface that belongs to the
    *         singleton {@link JUnitShell}, or <code>null</code> if no such
    *         singleton exists.
@@ -522,6 +522,9 @@ public class JUnitShell extends GWTShell {
     if (System.getProperty(PROP_JUNIT_HYBRID_MODE) != null) {
       runStyle = new RunStyleLocalWeb(this);
     }
+    // If no explicit disable argument presented,
+    // Enables assertions by default in all tests
+    options.setEnableAssertions(true);
   }
 
   @Override
