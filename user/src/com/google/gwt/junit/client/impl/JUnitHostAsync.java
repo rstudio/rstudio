@@ -18,8 +18,6 @@ package com.google.gwt.junit.client.impl;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import java.util.HashMap;
-
 /**
  * The asynchronous version of {@link JUnitHost}.
  */
@@ -31,16 +29,17 @@ public interface JUnitHostAsync {
    * @param callBack the object that will receive the name of the next method to
    *          run
    */
-  void getFirstMethod(AsyncCallback<TestInfo[]> callBack);
+  void getFirstMethod(AsyncCallback<TestInfo> callBack);
 
   /**
    * Reports results for the last method run and gets the name of next method to
    * run.
    * 
-   * @param results the results of the tests
+   * @param testInfo the testInfo the result is for
+   * @param result the result of the test
    * @param callBack the object that will receive the name of the next method to
    *          run
    */
-  void reportResultsAndGetNextMethod(HashMap<TestInfo, JUnitResult> results,
-      AsyncCallback<TestInfo[]> callBack);
+  void reportResultsAndGetNextMethod(TestInfo testInfo, JUnitResult result,
+      AsyncCallback<TestInfo> callBack);
 }
