@@ -250,7 +250,7 @@ public class ModuleDefSchema extends Schema {
             + LinkerOrder.class.getName() + " annotation", null);
         throw new UnableToCompleteException();
       }
-      moduleDef.defineLinker(name.name, linker);
+      moduleDef.defineLinker(logger, name.name, linker);
       return null;
     }
 
