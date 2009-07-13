@@ -210,13 +210,6 @@ public class RichTextArea extends FocusWidget implements HasHTML,
     void insertHorizontalRule();
 
     /**
-     * Inserts generic html.
-     * 
-     * @param html the HTML to insert
-     */
-    void insertHTML(String html);
-
-    /**
      * Inserts an image element.
      * 
      * @param url the url of the image to be inserted
@@ -246,11 +239,6 @@ public class RichTextArea extends FocusWidget implements HasHTML,
     void leftIndent();
 
     /**
-     * Redo an action that was just undone.
-     */
-    void redo();
-
-    /**
      * Removes all formatting on the selected text.
      */
     void removeFormat();
@@ -269,11 +257,6 @@ public class RichTextArea extends FocusWidget implements HasHTML,
      * Toggles strikethrough.
      */
     void toggleStrikethrough();
-
-    /**
-     * Undo the last action.
-     */
-    void undo();
   }
 
   /**
