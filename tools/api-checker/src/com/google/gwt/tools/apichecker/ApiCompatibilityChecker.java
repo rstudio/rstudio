@@ -455,66 +455,70 @@ public class ApiCompatibilityChecker extends ToolBase {
   public static void main(String args[]) {
     try {
       ApiCompatibilityChecker checker = new ApiCompatibilityChecker();
-      if (checker.processArgs(args)) {
-        ApiContainer newApi = null, existingApi = null;
+      if (!checker.processArgs(args)) {
+        // if we couldn't parse arguments, return non-zero so the build breaks
+        System.exit(1);
+      }
 
-        AbstractTreeLogger logger = new PrintWriterTreeLogger();
-        logger.setMaxDetail(checker.type);
-        logger.log(TreeLogger.INFO, "gwtDevJar = " + checker.gwtDevJar
-            + ", userJar = " + checker.gwtUserJar + ", refjars = "
-            + Arrays.toString(checker.refJars) + ", logLevel = " + checker.type
-            + ", printAllApi = " + checker.printAllApi, null);
+      ApiContainer newApi = null, existingApi = null;
 
-        Set<String> excludedPackages = checker.getSetOfExcludedPackages(checker.configProperties);
-        if (PROCESS_NEW_API) {
-          Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-          units.addAll(new SourceFileCompilationUnits(
-              checker.configProperties.getProperty("dirRoot_new"),
-              checker.getConfigPropertyAsSet("sourceFiles_new"),
-              checker.getConfigPropertyAsSet("excludedFiles_new"), logger).getCompilationUnits());
-          units.addAll(checker.getGwtCompilationUnits(logger));
-          newApi = new ApiContainer(
-              checker.configProperties.getProperty("name_new"), units,
-              excludedPackages, logger);
-          if (checker.printAllApi) {
-            logger.log(TreeLogger.INFO, newApi.getApiAsString());
-          }
-        }
-        if (PROCESS_EXISTING_API) {
-          Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-          if (checker.refJars == null) {
-            units.addAll(new SourceFileCompilationUnits(
-                checker.configProperties.getProperty("dirRoot_old"),
-                checker.getConfigPropertyAsSet("sourceFiles_old"),
-                checker.getConfigPropertyAsSet("excludedFiles_old"), logger).getCompilationUnits());
-          } else {
-            units.addAll(new JarFileCompilationUnits(checker.refJars,
-                checker.getConfigPropertyAsSet("sourceFiles_old"),
-                checker.getConfigPropertyAsSet("excludedFiles_old"), logger).getCompilationUnits());
-          }
-          units.addAll(checker.getGwtCompilationUnits(logger));
-          existingApi = new ApiContainer(
-              checker.configProperties.getProperty("name_old"), units,
-              excludedPackages, logger);
-          if (checker.printAllApi) {
-            logger.log(TreeLogger.INFO, existingApi.getApiAsString());
-          }
-        }
+      AbstractTreeLogger logger = new PrintWriterTreeLogger();
+      logger.setMaxDetail(checker.type);
+      logger.log(TreeLogger.INFO, "gwtDevJar = " + checker.gwtDevJar
+          + ", userJar = " + checker.gwtUserJar + ", refjars = "
+          + Arrays.toString(checker.refJars) + ", logLevel = " + checker.type
+          + ", printAllApi = " + checker.printAllApi, null);
 
-        if (PROCESS_NEW_API && PROCESS_EXISTING_API) {
-          Collection<ApiChange> apiDifferences = getApiDiff(newApi,
-              existingApi, checker.whiteList);
-          for (ApiChange apiChange : apiDifferences) {
-            System.out.println(apiChange);
-          }
-          if (apiDifferences.size() == 0) {
-            System.out.println("API compatibility check SUCCESSFUL");
-          } else {
-            System.out.println("API compatibility check FAILED");
-          }
-          System.exit(apiDifferences.size() == 0 ? 0 : 1);
+      Set<String> excludedPackages = checker.getSetOfExcludedPackages(checker.configProperties);
+      if (PROCESS_NEW_API) {
+        Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+        units.addAll(new SourceFileCompilationUnits(
+            checker.configProperties.getProperty("dirRoot_new"),
+            checker.getConfigPropertyAsSet("sourceFiles_new"),
+            checker.getConfigPropertyAsSet("excludedFiles_new"), logger).getCompilationUnits());
+        units.addAll(checker.getGwtCompilationUnits(logger));
+        newApi = new ApiContainer(
+            checker.configProperties.getProperty("name_new"), units,
+            excludedPackages, logger);
+        if (checker.printAllApi) {
+          logger.log(TreeLogger.INFO, newApi.getApiAsString());
         }
       }
+      if (PROCESS_EXISTING_API) {
+        Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+        if (checker.refJars == null) {
+          units.addAll(new SourceFileCompilationUnits(
+              checker.configProperties.getProperty("dirRoot_old"),
+              checker.getConfigPropertyAsSet("sourceFiles_old"),
+              checker.getConfigPropertyAsSet("excludedFiles_old"), logger).getCompilationUnits());
+        } else {
+          units.addAll(new JarFileCompilationUnits(checker.refJars,
+              checker.getConfigPropertyAsSet("sourceFiles_old"),
+              checker.getConfigPropertyAsSet("excludedFiles_old"), logger).getCompilationUnits());
+        }
+        units.addAll(checker.getGwtCompilationUnits(logger));
+        existingApi = new ApiContainer(
+            checker.configProperties.getProperty("name_old"), units,
+            excludedPackages, logger);
+        if (checker.printAllApi) {
+          logger.log(TreeLogger.INFO, existingApi.getApiAsString());
+        }
+      }
+
+      if (PROCESS_NEW_API && PROCESS_EXISTING_API) {
+        Collection<ApiChange> apiDifferences = getApiDiff(newApi,
+            existingApi, checker.whiteList);
+        for (ApiChange apiChange : apiDifferences) {
+          System.out.println(apiChange);
+        }
+        if (apiDifferences.size() == 0) {
+          System.out.println("API compatibility check SUCCESSFUL");
+        } else {
+          System.out.println("API compatibility check FAILED");
+        }
+        System.exit(apiDifferences.size() == 0 ? 0 : 1);
+      }
+
     } catch (Throwable t) {
       // intercepting all exceptions in main, because I have to exit with -1 so
       // that the build breaks.
@@ -658,7 +662,7 @@ public class ApiCompatibilityChecker extends ToolBase {
 
       @Override
       public boolean setString(String str) {
-        String refJarStrings[] = str.split(":");
+        String refJarStrings[] = str.split(System.getProperty("path.separator"));
         refJars = new JarFile[refJarStrings.length];
         int count = 0;
         for (String refJarString : refJarStrings) {

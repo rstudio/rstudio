@@ -152,7 +152,7 @@
         <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
       </classpath>
       <arg value="-refJar"/>
-      <arg value="${gwt.root}/tools/api-checker/reference/gwt-dev-modified.jar:${gwt.root}/tools/api-checker/reference/gwt-user-modified.jar"/>
+      <arg path="${gwt.root}/tools/api-checker/reference/gwt-dev-modified.jar:${gwt.root}/tools/api-checker/reference/gwt-user-modified.jar"/>
       <arg value="-configFile"/>
       <arg file="${gwt.build.out}/userApi.conf"/>
       <arg value="-logLevel"/>
