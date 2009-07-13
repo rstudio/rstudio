@@ -23,10 +23,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
- * A message queue to pass data between {@link JUnitShell} and {@link
- * com.google.gwt.junit.server.JUnitHostImpl} in a thread-safe manner.
+ * A message queue to pass data between {@link JUnitShell} and
+ * {@link com.google.gwt.junit.server.JUnitHostImpl} in a thread-safe manner.
  * 
  * <p>
  * The public methods are called by the servlet to find out what test to execute
@@ -45,8 +46,10 @@ public class JUnitMessageQueue {
    */
   public static class ClientStatus {
     public final String clientId;
-
-    public JUnitResult currentTestResults = null;
+    /**
+     * Stores the testResults for the current block of tests.
+     */
+    public Map<TestInfo, JUnitResult> currentTestBlockResults = null;
     public boolean hasRequestedCurrentTest = false;
     public boolean isNew = true;
 
@@ -68,7 +71,7 @@ public class JUnitMessageQueue {
   /**
    * The current test to execute.
    */
-  private TestInfo currentTest;
+  private TestInfo[] currentBlock;
 
   /**
    * The number of TestCase clients executing in parallel.
@@ -88,14 +91,14 @@ public class JUnitMessageQueue {
   }
 
   /**
-   * Called by the servlet to query for for the next method to test.
+   * Called by the servlet to query for for the next block to test.
    * 
    * @param timeout how long to wait for an answer
-   * @return the next test to run, or <code>null</code> if
-   *         <code>timeout</code> is exceeded or the next test does not match
+   * @return the next test to run, or <code>null</code> if <code>timeout</code>
+   *         is exceeded or the next test does not match
    *         <code>testClassName</code>
    */
-  public TestInfo getNextTestInfo(String clientId, long timeout)
+  public TestInfo[] getNextTestBlock(String clientId, long timeout)
       throws TimeoutException {
     synchronized (clientStatusesLock) {
       ClientStatus clientStatus = clientStatuses.get(clientId);
@@ -106,7 +109,7 @@ public class JUnitMessageQueue {
 
       long startTime = System.currentTimeMillis();
       long stopTime = startTime + timeout;
-      while (clientStatus.currentTestResults != null) {
+      while (clientStatus.currentTestBlockResults != null) {
         long timeToWait = stopTime - System.currentTimeMillis();
         if (timeToWait < 1) {
           double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
@@ -130,20 +133,27 @@ public class JUnitMessageQueue {
 
       // Record that this client has retrieved the current test.
       clientStatus.hasRequestedCurrentTest = true;
-      return currentTest;
+      return currentBlock;
     }
+  }
+
+  public void reportFatalLaunch(String clientId, JUnitResult result) {
+    // Fatal launch error, cause this client to fail the whole block.
+    Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
+    for (TestInfo testInfo : currentBlock) {
+      results.put(testInfo, result);
+    }
+    reportResults(clientId, results);
   }
 
   /**
    * Called by the servlet to report the results of the last test to run.
    * 
-   * @param testInfo the testInfo the result is for
-   * @param results the result of running the test
+   * @param results the result of running the test block
    */
-  public void reportResults(String clientId, TestInfo testInfo,
-      JUnitResult results) {
+  public void reportResults(String clientId, Map<TestInfo, JUnitResult> results) {
     synchronized (clientStatusesLock) {
-      if (testInfo != null && !testInfo.equals(currentTest)) {
+      if (results != null && !resultsMatchCurrentBlock(results)) {
         // A client is reporting results for the wrong test.
         return;
       }
@@ -157,7 +167,7 @@ public class JUnitMessageQueue {
         clientStatus = new ClientStatus(clientId);
         clientStatuses.put(clientId, clientStatus);
       }
-      clientStatus.currentTestResults = results;
+      clientStatus.currentTestBlockResults = results;
       clientStatusesLock.notifyAll();
     }
   }
@@ -168,10 +178,10 @@ public class JUnitMessageQueue {
    * @return Fetches a human-readable representation of the current test object
    */
   String getCurrentTestName() {
-    if (currentTest == null) {
+    if (currentBlock == null) {
       return "(no test)";
     }
-    return currentTest.toString();
+    return currentBlock[0].toString();
   }
 
   /**
@@ -212,11 +222,24 @@ public class JUnitMessageQueue {
    * 
    * @return A map of results from all clients.
    */
-  Map<String, JUnitResult> getResults() {
+  Map<TestInfo, Map<String, JUnitResult>> getResults() {
     synchronized (clientStatusesLock) {
-      Map<String, JUnitResult> result = new HashMap<String, JUnitResult>();
+      /*
+       * All this overly complicated piece of code does is transform mappings
+       * keyed by clientId into mappings keyed by TestInfo.
+       */
+      Map<TestInfo, Map<String, JUnitResult>> result = new HashMap<TestInfo, Map<String, JUnitResult>>();
       for (ClientStatus clientStatus : clientStatuses.values()) {
-        result.put(clientStatus.clientId, clientStatus.currentTestResults);
+        for (Entry<TestInfo, JUnitResult> entry : clientStatus.currentTestBlockResults.entrySet()) {
+          TestInfo testInfo = entry.getKey();
+          JUnitResult clientResultForThisTest = entry.getValue();
+          Map<String, JUnitResult> targetMap = result.get(testInfo);
+          if (targetMap == null) {
+            targetMap = new HashMap<String, JUnitResult>();
+            result.put(testInfo, targetMap);
+          }
+          targetMap.put(clientStatus.clientId, clientResultForThisTest);
+        }
       }
       return result;
     }
@@ -272,7 +295,7 @@ public class JUnitMessageQueue {
       int itemCount = 0;
       for (ClientStatus clientStatus : clientStatuses.values()) {
         if (clientStatus.hasRequestedCurrentTest
-            && clientStatus.currentTestResults == null) {
+            && clientStatus.currentTestBlockResults == null) {
           if (itemCount > 0) {
             buf.append(", ");
           }
@@ -304,7 +327,7 @@ public class JUnitMessageQueue {
         return false;
       }
       for (ClientStatus clientStatus : clientStatuses.values()) {
-        if (clientStatus.currentTestResults == null) {
+        if (clientStatus.currentTestBlockResults == null) {
           return false;
         }
       }
@@ -315,12 +338,12 @@ public class JUnitMessageQueue {
   /**
    * Called by the shell to set the next test to run.
    */
-  void setNextTest(TestInfo testInfo) {
+  void setNextTestBlock(TestInfo[] testBlock) {
     synchronized (clientStatusesLock) {
-      this.currentTest = testInfo;
+      this.currentBlock = testBlock;
       for (ClientStatus clientStatus : clientStatuses.values()) {
         clientStatus.hasRequestedCurrentTest = false;
-        clientStatus.currentTestResults = null;
+        clientStatus.currentTestBlockResults = null;
       }
       clientStatusesLock.notifyAll();
     }
@@ -333,5 +356,15 @@ public class JUnitMessageQueue {
       } catch (InterruptedException e) {
       }
     }
+  }
+
+  private boolean resultsMatchCurrentBlock(Map<TestInfo, JUnitResult> results) {
+    assert results.size() == currentBlock.length;
+    for (TestInfo testInfo : currentBlock) {
+      if (!results.containsKey(testInfo)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

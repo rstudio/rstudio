@@ -19,10 +19,14 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
+
+import java.util.HashMap;
 
 /**
  * The entry point class for GWTTestCases.
@@ -37,7 +41,7 @@ public abstract class GWTRunner implements EntryPoint {
    * The RPC callback object for {@link GWTRunner#junitHost}. When
    * {@link #onSuccess(Object)} is called, it's time to run the next test case.
    */
-  private final class JUnitHostListener implements AsyncCallback<TestInfo> {
+  private final class JUnitHostListener implements AsyncCallback<TestInfo[]> {
 
     /**
      * A call to junitHost failed.
@@ -55,9 +59,11 @@ public abstract class GWTRunner implements EntryPoint {
     /**
      * A call to junitHost succeeded; run the next test case.
      */
-    public void onSuccess(TestInfo nextTest) {
-      currentTest = nextTest;
-      if (currentTest != null) {
+    public void onSuccess(TestInfo[] nextTestBlock) {
+      currentBlock = nextTestBlock;
+      currentBlockIndex = 0;
+      currentResults.clear();
+      if (currentBlock != null) {
         doRunTest();
       }
     }
@@ -82,9 +88,20 @@ public abstract class GWTRunner implements EntryPoint {
     return sInstance;
   }
 
-  private JUnitResult currentResult;
+  /**
+   * The current block of tests to execute.
+   */
+  private TestInfo currentBlock[];
 
-  private TestInfo currentTest;
+  /**
+   * Active test within current block of tests.
+   */
+  private int currentBlockIndex = 0;
+
+  /**
+   * Results for all test cases in the current block.
+   */
+  private HashMap<TestInfo, JUnitResult> currentResults = new HashMap<TestInfo, JUnitResult>();
 
   /**
    * The remote service to communicate with.
@@ -116,8 +133,8 @@ public abstract class GWTRunner implements EntryPoint {
   }
 
   public void onModuleLoad() {
-    currentTest = checkForQueryParamTestToRun();
-    if (currentTest != null) {
+    currentBlock = checkForQueryParamTestToRun();
+    if (currentBlock != null) {
       /*
        * Just run a single test with no server-side interaction.
        */
@@ -137,8 +154,19 @@ public abstract class GWTRunner implements EntryPoint {
       // That's it, we're done
       return;
     }
-    currentResult = result;
-    syncToServer();
+    TestInfo currentTest = getCurrentTest();
+    currentResults.put(currentTest, result);
+    ++currentBlockIndex;
+    if (currentBlockIndex < currentBlock.length) {
+      // Run the next test after a short delay.
+      DeferredCommand.addCommand(new Command() {
+        public void execute() {
+          doRunTest();
+        }
+      });
+    } else {
+      syncToServer();
+    }
   }
 
   /**
@@ -147,19 +175,21 @@ public abstract class GWTRunner implements EntryPoint {
    */
   protected abstract GWTTestCase createNewTestCase(String testClass);
 
-  private TestInfo checkForQueryParamTestToRun() {
+  private TestInfo[] checkForQueryParamTestToRun() {
     String testClass = Window.Location.getParameter(TESTCLASS_QUERY_PARAM);
     String testMethod = Window.Location.getParameter(TESTFUNC_QUERY_PARAM);
     if (testClass == null || testMethod == null) {
       return null;
     }
-    return new TestInfo(GWT.getModuleName(), testClass, testMethod);
+    // TODO: support blocks of tests?
+    return new TestInfo[] {new TestInfo(GWT.getModuleName(), testClass,
+        testMethod)};
   }
 
   private void doRunTest() {
     // Make sure the module matches.
     String currentModule = GWT.getModuleName();
-    String newModule = currentTest.getTestModule();
+    String newModule = getCurrentTest().getTestModule();
     if (currentModule.equals(newModule)) {
       // The module is correct.
       runTest();
@@ -174,8 +204,13 @@ public abstract class GWTRunner implements EntryPoint {
     }
   }
 
+  private TestInfo getCurrentTest() {
+    return currentBlock[currentBlockIndex];
+  }
+
   private void runTest() {
     // Dynamically create a new test case.
+    TestInfo currentTest = getCurrentTest();
     GWTTestCase testCase = null;
     Throwable caught = null;
     try {
@@ -197,11 +232,10 @@ public abstract class GWTRunner implements EntryPoint {
   }
 
   private void syncToServer() {
-    if (currentTest == null) {
+    if (currentBlock == null) {
       junitHost.getFirstMethod(junitHostListener);
     } else {
-      junitHost.reportResultsAndGetNextMethod(currentTest, currentResult,
-          junitHostListener);
+      junitHost.reportResultsAndGetNextMethod(currentResults, junitHostListener);
     }
   }
 

@@ -160,7 +160,7 @@
 
   <macrodef name="gwt.junit">
     <!-- TODO: make this more generic / refactor so it can be used from dev/core -->
-    <attribute name="test.args" default="" />
+    <attribute name="test.args" default="-batch module" />
     <attribute name="test.out" default="" />
     <attribute name="test.reports" default="@{test.out}/reports" />
     <attribute name="test.cases" default="" />
