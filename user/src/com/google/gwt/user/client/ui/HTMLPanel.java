@@ -40,29 +40,16 @@ public class HTMLPanel extends ComplexPanel {
   }
 
   /**
-   * Creates an HTML panel with the specified HTML contents inside a DIV
-   * element. Any element within this HTML that has a specified id can contain a
-   * child widget.
+   * Creates an HTML panel with the specified HTML contents. Any element within
+   * this HTML that has a specified id can contain a child widget.
    * 
    * @param html the panel's HTML
    */
   public HTMLPanel(String html) {
-    this("div", html);
-  }
-
-  /**
-   * Creates an HTML panel whose root element has the given tag, and with the
-   * specified HTML contents. Any element within this HTML that has a specified
-   * id can contain a child widget.
-   * 
-   * @param tag the tag of the root element
-   * @param html the panel's HTML
-   */
-  public HTMLPanel(String tag, String html) {
-    setElement(DOM.createElement(tag));
+    setElement(DOM.createDiv());
     DOM.setInnerHTML(getElement(), html);
   }
-  
+
   /**
    * Adds a child widget to the panel, contained within the HTML element
    * specified by a given id.
