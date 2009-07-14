@@ -246,9 +246,10 @@ import java.util.Date;
  * 
  * <h3>Parsing Dates and Times</h3>
  * <p>
- * This implementation can parse partial date/time. Current date will be used to
- * fill in an unspecified date part. 00:00:00 will be used to fill in an
- * unspecified time.
+ * The pattern does not need to specify every field.  If the year, month, or
+ * day is missing from the pattern, the corresponding value will be taken from
+ * the current date.  If the hour, minute, or second is missing, the value
+ * defaults to zero.
  * </p>
  * 
  * <p>
