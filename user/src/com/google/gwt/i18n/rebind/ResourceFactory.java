@@ -111,6 +111,9 @@ public abstract class ResourceFactory {
    * @param topClass
    * @param bundleLocale
    * @param isConstants
+   * @param resourceMap a map of available {@link Resource Resources} by partial
+   *          path; obtain this by calling
+   *          {@link com.google.gwt.core.ext.GeneratorContext#getResourcesOracle()}.{@link com.google.gwt.dev.resource.ResourceOracle#getResourceMap() getResourceMap()}
    * @return resource list
    */
   public static ResourceList getBundle(TreeLogger logger, JClassType topClass,
