@@ -30,7 +30,7 @@ public final class ArgHandlerEnableAssertions extends ArgHandlerFlag {
 
   @Override
   public String getPurpose() {
-    return "Debugging: enables checking assertion statements in the compiled output.";
+    return "Debugging: causes the compiled output to check assert statements.";
   }
 
   @Override
