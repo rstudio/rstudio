@@ -415,7 +415,7 @@ public class DOMTest extends GWTTestCase {
     assertEndsWith("b2.gif", DOM.getImgSrc(images[0]));
     assertEndsWith("a2.gif", DOM.getImgSrc(images[1]));
     assertEndsWith("a2.gif", DOM.getImgSrc(images[2]));
-    delayTestFinish(2000);
+    delayTestFinish(3000);
     new Timer() {
       @Override
       public void run() {
@@ -424,7 +424,7 @@ public class DOMTest extends GWTTestCase {
         assertEndsWith("a2.gif", DOM.getElementProperty(images[2], "src"));
         finishTest();
       }
-    }.schedule(1000);
+    }.schedule(2000);
   }
 
   /**

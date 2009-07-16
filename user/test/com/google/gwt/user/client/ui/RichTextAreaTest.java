@@ -106,7 +106,7 @@ public class RichTextAreaTest extends GWTTestCase {
 
     // This has to be done on a timer because the rta can take some time to
     // finish initializing (on some browsers).
-    this.delayTestFinish(1000);
+    this.delayTestFinish(3000);
     new Timer() {
       @Override
       public void run() {
@@ -116,7 +116,7 @@ public class RichTextAreaTest extends GWTTestCase {
         RootPanel.get().remove(rta);
         finishTest();
       }
-    }.schedule(500);
+    }.schedule(2000);
   }
 
   /**
