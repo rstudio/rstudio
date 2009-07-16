@@ -817,7 +817,7 @@ public class ControlFlowAnalyzer {
 
   public void traverseFromLeftoversFragmentHasLoaded() {
     if (program.entryMethods.size() > 1) {
-      traverseFrom(program.getIndexedMethod("AsyncFragmentLoader.leftoversFragmentHasLoaded"));
+      traverseFrom(program.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded"));
     }
   }
 

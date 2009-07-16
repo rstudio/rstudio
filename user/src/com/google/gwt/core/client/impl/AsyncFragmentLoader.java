@@ -16,7 +16,6 @@
 package com.google.gwt.core.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.xhr.client.ReadyStateChangeHandler;
 import com.google.gwt.xhr.client.XMLHttpRequest;
 
@@ -73,6 +72,26 @@ public class AsyncFragmentLoader {
   }
 
   /**
+   * A strategy for loading code fragments.
+   */
+  public interface LoadingStrategy {
+    void startLoadingFragment(int fragment, LoadErrorHandler loadErrorHandler);
+  }
+
+  /**
+   * A strategy for logging progress.
+   */
+  public interface Logger {
+    /**
+     * Log an event. The <code>fragment</code> and <code>size</code> are boxed
+     * so that they can be optional. A value of <code>null</code> for either one
+     * means that they are not specified.
+     */
+    void logEventProgress(String eventGroup, String type, Integer fragment,
+        Integer size);
+  }
+
+  /**
    * Labels used for runAsync lightweight metrics.
    */
   public static class LwmLabels {
@@ -84,6 +103,40 @@ public class AsyncFragmentLoader {
 
     private static String downloadGroup(int splitPoint) {
       return "download" + splitPoint;
+    }
+  }
+
+  /**
+   * A trivial queue of int's that should compile much better than a
+   * LinkedList&lt;Integer&gt;. It assumes that there will be a maximum number
+   * of items passed through the queue for its entire life.
+   */
+  private static class BoundedIntQueue {
+    private final int[] array;
+    private int read = 0;
+    private int write = 0;
+
+    public BoundedIntQueue(int maxPuts) {
+      array = new int[maxPuts];
+    }
+    
+    public void add(int x) {
+      assert (write < array.length);
+      array[write++] = x;
+    }
+    
+    public int peek() {
+      assert read < write;
+      return array[read];
+    }
+    
+    public int remove() {
+      assert read < write;
+      return array[read++];
+    }
+    
+    public int size() {
+      return write - read;
     }
   }
 
@@ -106,8 +159,7 @@ public class AsyncFragmentLoader {
   /**
    * Handles a failure to download a fragment in the initial sequence.
    */
-  private static class InitialFragmentDownloadFailed implements
-      LoadErrorHandler {
+  private class InitialFragmentDownloadFailed implements LoadErrorHandler {
     public void loadFailed(Throwable reason) {
       initialFragmentsLoading = false;
 
@@ -120,10 +172,10 @@ public class AsyncFragmentLoader {
       List<LoadErrorHandler> handlersToRun = new ArrayList<LoadErrorHandler>();
 
       // add handlers that are waiting pending the initials download
-      assert waitingForInitialFragments.length() == waitingForInitialFragmentsErrorHandlers.size();
-      while (waitingForInitialFragments.length() > 0) {
+      assert waitingForInitialFragments.size() == waitingForInitialFragmentsErrorHandlers.size();
+      while (waitingForInitialFragments.size() > 0) {
         handlersToRun.add(waitingForInitialFragmentsErrorHandlers.remove());
-        waitingForInitialFragments.shift();
+        waitingForInitialFragments.remove();
       }
 
       // add handlers for pending initial fragment downloads
@@ -150,6 +202,122 @@ public class AsyncFragmentLoader {
     }
   }
 
+  /**
+   * The standard logger used in a web browser. It uses the lightweight metrics
+   * system.
+   */
+  private static class StandardLogger implements Logger {
+    /**
+     * Always use this as {@link isStatsAvailable} &amp;&amp;
+     * {@link #stats(JavaScriptObject)}.
+     */
+    private static native boolean stats(JavaScriptObject data) /*-{
+      return $stats(data);
+    }-*/;
+
+    public void logEventProgress(String eventGroup, String type,
+        Integer fragment, Integer size) {
+      @SuppressWarnings("unused")
+      boolean toss = isStatsAvailable()
+          && stats(createStatsEvent(eventGroup, type, fragment, size));
+    }
+
+    private native JavaScriptObject createStatsEvent(String eventGroup,
+        String type, Integer fragment, Integer size) /*-{
+      var evt = {
+       moduleName: @com.google.gwt.core.client.GWT::getModuleName()(), 
+        subSystem: 'runAsync',
+        evtGroup: eventGroup,
+        millis: (new Date()).getTime(),
+        type: type
+      };
+      if (fragment != null) {
+        evt.fragment = fragment.@java.lang.Integer::intValue()();
+      }
+      if (size != null) {
+        evt.size = size.@java.lang.Integer::intValue()();
+      }
+      return evt;
+    }-*/;
+
+    private native boolean isStatsAvailable() /*-{
+      return !!$stats;
+    }-*/;
+  }
+
+  /**
+   * The standard loading strategy used in a web browser.
+   */
+  private static class XhrLoadingStrategy implements LoadingStrategy {
+    public void startLoadingFragment(int fragment,
+        final LoadErrorHandler loadErrorHandler) {
+      String fragmentUrl = gwtStartLoadingFragment(fragment, loadErrorHandler);
+
+      if (fragmentUrl == null) {
+        // The download has already started; nothing more to do
+        return;
+      }
+
+      // use XHR to download it
+
+      final XMLHttpRequest xhr = XMLHttpRequest.create();
+
+      xhr.open(HTTP_GET, fragmentUrl);
+
+      xhr.setOnReadyStateChange(new ReadyStateChangeHandler() {
+        public void onReadyStateChange(XMLHttpRequest ignored) {
+          if (xhr.getReadyState() == XMLHttpRequest.DONE) {
+            xhr.clearOnReadyStateChange();
+            if ((xhr.getStatus() == HTTP_STATUS_OK || xhr.getStatus() == HTTP_STATUS_NON_HTTP)
+                && xhr.getResponseText() != null
+                && xhr.getResponseText().length() != 0) {
+              try {
+                gwtInstallCode(xhr.getResponseText());
+              } catch (RuntimeException e) {
+                loadErrorHandler.loadFailed(e);
+              }
+            } else {
+              loadErrorHandler.loadFailed(new HttpDownloadFailure(
+                  xhr.getStatus()));
+            }
+          }
+        }
+      });
+
+      xhr.send();
+    }
+
+    /**
+     * Call the linker-supplied <code>__gwtInstallCode</code> method. See the
+     * {@link AsyncFragmentLoader class comment} for more details.
+     */
+    private native void gwtInstallCode(String text) /*-{
+      __gwtInstallCode(text);
+    }-*/;
+ 
+    /**
+     * Call the linker-supplied __gwtStartLoadingFragment function. It should
+     * either start the download and return null or undefined, or it should return
+     * a URL that should be downloaded to get the code. If it starts the download
+     * itself, it can synchronously load it, e.g. from cache, if that makes sense.
+     */
+    private native String gwtStartLoadingFragment(int fragment,
+        LoadErrorHandler loadErrorHandler) /*-{
+      function loadFailed(e) {
+        loadErrorHandler.@com.google.gwt.core.client.impl.AsyncFragmentLoader$LoadErrorHandler::loadFailed(Ljava/lang/Throwable;)(e);
+      }
+      return __gwtStartLoadingFragment(fragment, loadFailed);
+    }-*/;
+  }
+
+  /**
+   * The standard instance of AsyncFragmentLoader used in a web browser. The
+   * parameters to this call are filled in by
+   * {@link com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs}.
+   */
+  public static AsyncFragmentLoader BROWSER_LOADER = new AsyncFragmentLoader(1,
+      new int[] {}, new XhrLoadingStrategy(), new StandardLogger());
+
   private static final String HTTP_GET = "GET";
 
   /**
@@ -162,63 +330,87 @@ public class AsyncFragmentLoader {
   private static final int HTTP_STATUS_OK = 200;
 
   /**
+   * A helper static method that invokes
+   * BROWSER_LOADER.leftoversFragmentHasLoaded(). Such a call is generated by
+   * the compiler, as it is much simpler if there is a static method to wrap up
+   * the call.
+   */
+  public static void browserLoaderLeftoversFragmentHasLoaded() {
+    BROWSER_LOADER.leftoversFragmentHasLoaded();
+  }
+
+  /**
    * Error handlers for failure to download an initial fragment.
    * 
    * TODO(spoon) make it a lightweight integer map
    */
-  private static Map<Integer, LoadErrorHandler> initialFragmentErrorHandlers = new HashMap<Integer, LoadErrorHandler>();
+  private Map<Integer, LoadErrorHandler> initialFragmentErrorHandlers = new HashMap<Integer, LoadErrorHandler>();
 
   /**
    * Indicates that the next fragment in {@link #remainingInitialFragments} is
    * currently downloading.
    */
-  private static boolean initialFragmentsLoading = false;
+  private boolean initialFragmentsLoading = false;
 
   /**
    * The sequence of fragments to load initially, before anything else can be
    * loaded. This array will hold the initial sequence of bases followed by the
    * leftovers fragment. It is filled in by
-   * {@link com.google.gwt.dev.jjs.impl.CodeSplitter}.  It does *not* include
-   * the leftovers fragment, which must be loaded once all of these are finished.
+   * {@link com.google.gwt.dev.jjs.impl.CodeSplitter} modifying the initializer
+   * to {@link #INSTANCE}. The list does <em>not</em> include the leftovers
+   * fragment, which must be loaded once all of these are finished.
    */
-  private static int[] initialLoadSequence = new int[] { };
+  private final int[] initialLoadSequence;
+
+  private LoadingStrategy loadingStrategy = new XhrLoadingStrategy();
+
+  private final Logger logger;
 
   /**
-   * The total number of split points in the program, counting the initial entry
-   * as an honorary split point. This is changed to the correct value by
-   * {@link com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs}.
+   * The total number of entry points in the program, which is the number of
+   * split points plus one for the main entry point of the program.
    */
-  private static int numEntries = 1;
+  private final int numEntries;
 
   /**
    * Base fragments that remain to be downloaded. It is lazily initialized in
-   * the first call to {@link #startLoadingNextInitial()}.  It does include
-   * the leftovers fragment.
+   * the first call to {@link #startLoadingNextInitial()}. It does include the
+   * leftovers fragment.
    */
-  private static JsArrayInteger remainingInitialFragments = null;
+  private BoundedIntQueue remainingInitialFragments = null;
 
   /**
    * Split points that have been reached, but that cannot be downloaded until
-   * the initial fragments finish downloading.
+   * the initial fragments finish downloading. TODO(spoon) use something lighter
+   * than a LinkedList
    */
-  private static JsArrayInteger waitingForInitialFragments = createJsArrayInteger();
+  private final BoundedIntQueue waitingForInitialFragments;
 
   /**
    * Error handlers for the above queue.
    * 
    * TODO(spoon) change this to a lightweight JS collection
    */
-  private static Queue<LoadErrorHandler> waitingForInitialFragmentsErrorHandlers = new LinkedList<LoadErrorHandler>();
+  private Queue<LoadErrorHandler> waitingForInitialFragmentsErrorHandlers = new LinkedList<LoadErrorHandler>();
+
+  public AsyncFragmentLoader(int numEntries, int[] initialLoadSequence,
+      LoadingStrategy loadingStrategy, Logger logger) {
+    this.numEntries = numEntries;
+    this.initialLoadSequence = initialLoadSequence;
+    this.loadingStrategy = loadingStrategy;
+    this.logger = logger;
+    waitingForInitialFragments = new BoundedIntQueue(numEntries + 1);
+  }
 
   /**
    * Inform the loader that a fragment has now finished loading.
    */
-  public static void fragmentHasLoaded(int fragment) {
+  public void fragmentHasLoaded(int fragment) {
     logFragmentLoaded(fragment);
 
     if (isInitial(fragment)) {
-      assert (fragment == remainingInitialFragments.get(0));
-      remainingInitialFragments.shift();
+      assert (fragment == remainingInitialFragments.peek());
+      remainingInitialFragments.remove();
       initialFragmentErrorHandlers.remove(fragment);
 
       startLoadingNextInitial();
@@ -230,7 +422,8 @@ public class AsyncFragmentLoader {
    * 
    * @param splitPoint the split point whose code needs to be loaded
    */
-  public static void inject(int splitPoint, LoadErrorHandler loadErrorHandler) {
+  public void inject(int splitPoint, LoadErrorHandler loadErrorHandler) {
+
     if (haveInitialFragmentsLoaded()) {
       /*
        * The initial fragments has loaded. Immediately start loading the
@@ -255,8 +448,8 @@ public class AsyncFragmentLoader {
        * initial fragments have all been loaded.
        */
 
-      assert (waitingForInitialFragments.length() == waitingForInitialFragmentsErrorHandlers.size());
-      waitingForInitialFragments.push(splitPoint);
+      assert (waitingForInitialFragments.size() == waitingForInitialFragmentsErrorHandlers.size());
+      waitingForInitialFragments.add(splitPoint);
       waitingForInitialFragmentsErrorHandlers.add(loadErrorHandler);
     }
 
@@ -266,70 +459,28 @@ public class AsyncFragmentLoader {
     if (!initialFragmentsLoading) {
       startLoadingNextInitial();
     }
-
-    return;
   }
-  
-  public static void leftoversFragmentHasLoaded() {
+
+  public void leftoversFragmentHasLoaded() {
     fragmentHasLoaded(leftoversFragment());
   }
 
   /**
-   * Log an event with the lightweight metrics framework.
+   * Log an event with the {@Logger} this instance was provided.
    */
-  public static void logEventProgress(String eventGroup, String type) {
+  public void logEventProgress(String eventGroup, String type) {
     logEventProgress(eventGroup, type, null, null);
   }
-
-  private static native JsArrayInteger createJsArrayInteger() /*-{
-    return [];
-  }-*/;
-
-  private static native JavaScriptObject createStatsEvent(String eventGroup,
-      String type, Integer fragment, Integer size) /*-{
-    var evt = {
-     moduleName: @com.google.gwt.core.client.GWT::getModuleName()(), 
-      subSystem: 'runAsync',
-      evtGroup: eventGroup,
-      millis: (new Date()).getTime(),
-      type: type
-    };
-    if (fragment != null) {
-      evt.fragment = fragment.@java.lang.Integer::intValue()();
-    }
-    if (size != null) {
-      evt.size = size.@java.lang.Integer::intValue()();
-    }
-    return evt;
-  }-*/;
-
-  private static native void gwtInstallCode(String text) /*-{
-    __gwtInstallCode(text);
-  }-*/;
-
-  /**
-   * Call the linker-supplied __gwtStartLoadingFragment function. It should
-   * either start the download and return null or undefined, or it should return
-   * a URL that should be downloaded to get the code. If it starts the download
-   * itself, it can synchronously load it, e.g. from cache, if that makes sense.
-   */
-  private static native String gwtStartLoadingFragment(int fragment,
-      LoadErrorHandler loadErrorHandler) /*-{
-    function loadFailed(e) {
-      loadErrorHandler.@com.google.gwt.core.client.impl.AsyncFragmentLoader$LoadErrorHandler::loadFailed(Ljava/lang/Throwable;)(e);
-    }
-    return __gwtStartLoadingFragment(fragment, loadFailed);
-  }-*/;
 
   /**
    * Return whether all initial fragments have completed loading.
    */
-  private static boolean haveInitialFragmentsLoaded() {
+  private boolean haveInitialFragmentsLoaded() {
     return remainingInitialFragments != null
-        && remainingInitialFragments.length() == 0;
+        && remainingInitialFragments.size() == 0;
   }
 
-  private static boolean isInitial(int splitPoint) {
+  private boolean isInitial(int splitPoint) {
     if (splitPoint == leftoversFragment()) {
       return true;
     }
@@ -341,83 +492,49 @@ public class AsyncFragmentLoader {
     return false;
   }
 
-  private static native boolean isStatsAvailable() /*-{
-    return !!$stats;
-  }-*/;
-
-  private static int leftoversFragment() {
+  private int leftoversFragment() {
     return numEntries;
   }
 
   /**
-   * Log an event with the lightweight metrics framework. The
+   * Log event progress via the {@link Logger} this instance was provided. The
    * <code>fragment</code> and <code>size</code> objects are allowed to be
    * <code>null</code>.
    */
-  private static void logEventProgress(String eventGroup, String type,
+  private void logEventProgress(String eventGroup, String type,
       Integer fragment, Integer size) {
-    @SuppressWarnings("unused")
-    boolean toss = isStatsAvailable()
-        && stats(createStatsEvent(eventGroup, type, fragment, size));
+    logger.logEventProgress(eventGroup, type, fragment, size);
   }
 
-  private static void logFragmentLoaded(int fragment) {
+  private void logFragmentLoaded(int fragment) {
     String logGroup = (fragment == leftoversFragment())
         ? LwmLabels.LEFTOVERS_DOWNLOAD : LwmLabels.downloadGroup(fragment);
     logEventProgress(logGroup, LwmLabels.END, fragment, null);
   }
 
-  private static void startLoadingFragment(int fragment,
+  private void startLoadingFragment(int fragment,
       final LoadErrorHandler loadErrorHandler) {
-    String fragmentUrl = gwtStartLoadingFragment(fragment, loadErrorHandler);
-
-    if (fragmentUrl != null) {
-      // use XHR
-      final XMLHttpRequest xhr = XMLHttpRequest.create();
-
-      xhr.open(HTTP_GET, fragmentUrl);
-
-      xhr.setOnReadyStateChange(new ReadyStateChangeHandler() {
-        public void onReadyStateChange(XMLHttpRequest xhr) {
-          if (xhr.getReadyState() == XMLHttpRequest.DONE) {
-            xhr.clearOnReadyStateChange();
-            if ((xhr.getStatus() == HTTP_STATUS_OK || xhr.getStatus() == HTTP_STATUS_NON_HTTP)
-                && xhr.getResponseText() != null
-                && xhr.getResponseText().length() != 0) {
-              try {
-                gwtInstallCode(xhr.getResponseText());
-              } catch (RuntimeException e) {
-                loadErrorHandler.loadFailed(e);
-              }
-            } else {
-              loadErrorHandler.loadFailed(new HttpDownloadFailure(
-                  xhr.getStatus()));
-            }
-          }
-        }
-      });
-
-      xhr.send();
-    }
+    loadingStrategy.startLoadingFragment(fragment, loadErrorHandler);
   }
 
   /**
    * Start downloading the next fragment in the initial sequence, if there are
    * any left.
    */
-  private static void startLoadingNextInitial() {
+  private void startLoadingNextInitial() {
     if (remainingInitialFragments == null) {
       // first call, so initialize remainingInitialFragments
-      remainingInitialFragments = createJsArrayInteger();
+      remainingInitialFragments = new BoundedIntQueue(
+          initialLoadSequence.length + 1);
       for (int sp : initialLoadSequence) {
-        remainingInitialFragments.push(sp);
+        remainingInitialFragments.add(sp);
       }
-      remainingInitialFragments.push(leftoversFragment());
+      remainingInitialFragments.add(leftoversFragment());
     }
-    
+
     if (initialFragmentErrorHandlers.isEmpty()
         && waitingForInitialFragmentsErrorHandlers.isEmpty()
-        && remainingInitialFragments.length() > 1) {
+        && remainingInitialFragments.size() > 1) {
       /*
        * No further requests are pending, and more than the leftovers fragment
        * is left outstanding. Stop loading stuff for now.
@@ -426,12 +543,12 @@ public class AsyncFragmentLoader {
       return;
     }
 
-    if (remainingInitialFragments.length() > 0) {
+    if (remainingInitialFragments.size() > 0) {
       // start loading the next initial fragment
       initialFragmentsLoading = true;
-      int nextSplitPoint = remainingInitialFragments.get(0);
-      logEventProgress(LwmLabels.downloadGroup(nextSplitPoint), LwmLabels.BEGIN,
-          nextSplitPoint, null);
+      int nextSplitPoint = remainingInitialFragments.peek();
+      logEventProgress(LwmLabels.downloadGroup(nextSplitPoint),
+          LwmLabels.BEGIN, nextSplitPoint, null);
       startLoadingFragment(nextSplitPoint, new InitialFragmentDownloadFailed());
       return;
     }
@@ -439,20 +556,12 @@ public class AsyncFragmentLoader {
     // all initials are finished
     initialFragmentsLoading = false;
     assert (haveInitialFragmentsLoaded());
-    
+
     // start loading any pending fragments
-    assert (waitingForInitialFragments.length() == waitingForInitialFragmentsErrorHandlers.size());
-    while (waitingForInitialFragments.length() > 0) {
-      startLoadingFragment(waitingForInitialFragments.shift(),
+    assert (waitingForInitialFragments.size() == waitingForInitialFragmentsErrorHandlers.size());
+    while (waitingForInitialFragments.size() > 0) {
+      startLoadingFragment(waitingForInitialFragments.remove(),
           waitingForInitialFragmentsErrorHandlers.remove());
     }
   }
-
-  /**
-   * Always use this as {@link isStatsAvailable} &amp;&amp;
-   * {@link #stats(JavaScriptObject)}.
-   */
-  private static native boolean stats(JavaScriptObject data) /*-{
-    return $stats(data);
-  }-*/;
 }

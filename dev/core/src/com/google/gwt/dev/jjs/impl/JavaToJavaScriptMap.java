@@ -26,17 +26,18 @@ import com.google.gwt.dev.js.ast.JsStatement;
  */
 public interface JavaToJavaScriptMap {
   /**
-   * Return the JavaScript name corresponding to a Java type.
-   */
-  JsName nameForType(JReferenceType type);
-  
-  /**
    * Return the JavaScript name corresponding to a Java method.
    */
   JsName nameForMethod(JMethod method);
 
   /**
-   * If <code>name</code> is the name of a <code>var<code> that corresponds to a Java
+   * Return the JavaScript name corresponding to a Java type.
+   */
+  JsName nameForType(JReferenceType type);
+
+  /**
+   * If <code>name</code> is the name of a
+   * <code>var<code> that corresponds to a Java
    * static field, then return that field. Otherwise, return null.
    */
   JField nameToField(JsName name);
@@ -52,16 +53,16 @@ public interface JavaToJavaScriptMap {
    * string literal, then return the string it interns. Otherwise, return null.
    */
   String stringLiteralForName(JsName var);
-  
+
   /**
-   * If <code>stat</code> is used to set up the definition of some class,
-   * return that class. Otherwise, return null.
+   * If <code>stat</code> is used to set up the definition of some class, return
+   * that class. Otherwise, return null.
    */
   JReferenceType typeForStatement(JsStatement stat);
-  
+
   /**
-   * If <code>stat</code> is used to set up a vtable entry for a method,
-   * then return that method.  Otherwise return null.
+   * If <code>stat</code> is used to set up a vtable entry for a method, then
+   * return that method. Otherwise return null.
    */
   JMethod vtableInitToMethod(JsStatement stat);
 }

@@ -24,11 +24,13 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
+import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
@@ -468,9 +470,24 @@ public class CodeSplitter {
     return (value == null) ? 0 : value;
   }
 
+  /**
+   * Installs the initial load sequence into the
+   * AsyncFragmentLoader.BROWSER_LOADER. The initializer looks like this:
+   * 
+   * <pre>
+       public static AsyncFragmentLoader BROWSER_LOADER = new AsyncFragmentLoader(1,
+         new int[] {}, new StandardLoadingStrategy(), new StandardLogger());
+     </pre>
+   * 
+   * The second argument (<code>new int[]</code>) gets replaced by an array
+   * corresponding to <code>initialLoadSequence</code>.
+   */
   private static void installInitialLoadSequenceField(JProgram program,
       LinkedHashSet<Integer> initialLoadSequence) {
-    JField initLoadSeqField = program.getIndexedField("AsyncFragmentLoader.initialLoadSequence");
+    JMethodCall constructorCall = ReplaceRunAsyncs.getBrowserLoaderConstructor(program);
+    assert constructorCall.getArgs().get(1).getType() instanceof JArrayType;
+    assert ((JArrayType) constructorCall.getArgs().get(1).getType()).getElementType() == JPrimitiveType.INT;
+
     SourceInfo info = program.createSourceInfoSynthetic(ReplaceRunAsyncs.class,
         "array with initial load sequence");
     List<JExpression> intExprs = new ArrayList<JExpression>();
@@ -481,8 +498,8 @@ public class CodeSplitter {
      * Note: the following field is known to have a manually installed
      * initializer, of new int[0].
      */
-    initLoadSeqField.getDeclarationStatement().initializer = JNewArray.createInitializers(
-        program, info, program.getTypeArray(JPrimitiveType.INT, 1), intExprs);
+    constructorCall.setArg(1, JNewArray.createInitializers(program, info,
+        program.getTypeArray(JPrimitiveType.INT, 1), intExprs));
   }
 
   private static <T> T last(T[] array) {

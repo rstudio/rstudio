@@ -1147,7 +1147,7 @@ public class GenerateJavaScriptAST {
       List<JsFunction> nonInitialEntries = Arrays.asList(entryFunctions).subList(
           x.getEntryCount(0), entryFunctions.length);
       if (!nonInitialEntries.isEmpty()) {
-        JMethod loadedMethod = program.getIndexedMethod("AsyncFragmentLoader.leftoversFragmentHasLoaded");
+        JMethod loadedMethod = program.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
         JsName loadedMethodName = names.get(loadedMethod);
         SourceInfo sourceInfo = jsProgram.getSourceInfo().makeChild(
             GenerateJavaScriptAST.class, "call to leftoversFragmentHasLoaded ");

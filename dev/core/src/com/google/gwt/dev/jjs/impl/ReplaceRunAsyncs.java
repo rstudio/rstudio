@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 
@@ -120,6 +121,17 @@ public class ReplaceRunAsyncs {
     new ReplaceRunAsyncs(program).execImpl();
   }
 
+  /**
+   * Extract the initializer of AsyncFragmentLoader.BROWSER_LOADER. A couple of
+   * parts of the compiler modify this constructor call.
+   */
+  static JMethodCall getBrowserLoaderConstructor(JProgram program) {
+    JField field = program.getIndexedField("AsyncFragmentLoader.BROWSER_LOADER");
+    JMethodCall constructorCall = (JMethodCall) field.getDeclarationStatement().getInitializer();
+    assert constructorCall.getArgs().size() == 4;
+    return constructorCall;
+  }
+
   private JProgram program;
   private Map<Integer, RunAsyncReplacement> runAsyncReplacements = new HashMap<Integer, RunAsyncReplacement>();
 
@@ -173,7 +185,8 @@ public class ReplaceRunAsyncs {
   }
 
   private void setNumEntriesInAsyncFragmentLoader(int entryCount) {
-    JField field = program.getIndexedField("AsyncFragmentLoader.numEntries");
-    field.getDeclarationStatement().initializer = program.getLiteralInt(entryCount);
+    JMethodCall constructorCall = getBrowserLoaderConstructor(program);
+    assert constructorCall.getArgs().get(0).getType() == JPrimitiveType.INT;
+    constructorCall.setArg(0, program.getLiteralInt(entryCount));
   }
 }

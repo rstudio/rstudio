@@ -207,10 +207,11 @@ public class FragmentExtractor {
    * {@link com.google.gwt.core.client.impl.AsyncFragmentLoader#leftoversFragmentHasLoaded()}.
    */
   public List<JsStatement> createCallToLeftoversFragmentHasLoaded() {
-    JMethod loadedMethod = jprogram.getIndexedMethod("AsyncFragmentLoader.leftoversFragmentHasLoaded");
+    JMethod loadedMethod = jprogram.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
     JsName loadedMethodName = map.nameForMethod(loadedMethod);
     SourceInfo sourceInfo = jsprogram.getSourceInfo().makeChild(
-        FragmentExtractor.class, "call to leftoversFragmentHasLoaded ");
+        FragmentExtractor.class,
+        "call to browserLoaderLeftoversFragmentHasLoaded ");
     JsInvocation call = new JsInvocation(sourceInfo);
     call.setQualifier(loadedMethodName.makeRef(sourceInfo));
     List<JsStatement> newStats = Collections.<JsStatement> singletonList(call.makeStmt());
@@ -220,9 +221,9 @@ public class FragmentExtractor {
   /**
    * Assume that all code described by <code>alreadyLoadedPredicate</code> has
    * been downloaded. Extract enough JavaScript statements that the code
-   * described by <code>livenessPredicate</code> can also run. The caller
-   * should ensure that <code>livenessPredicate</code> includes strictly more
-   * live code than <code>alreadyLoadedPredicate</code>.
+   * described by <code>livenessPredicate</code> can also run. The caller should
+   * ensure that <code>livenessPredicate</code> includes strictly more live code
+   * than <code>alreadyLoadedPredicate</code>.
    */
   public List<JsStatement> extractStatements(
       LivenessPredicate livenessPredicate,
@@ -301,7 +302,7 @@ public class FragmentExtractor {
       entryMethodNames.add(name);
     }
 
-    JMethod leftoverFragmentLoaded = jprogram.getIndexedMethod("AsyncFragmentLoader.leftoversFragmentHasLoaded");
+    JMethod leftoverFragmentLoaded = jprogram.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
     if (leftoverFragmentLoaded != null) {
       JsName name = map.nameForMethod(leftoverFragmentLoaded);
       assert name != null;
