@@ -1257,12 +1257,18 @@ public class DOM {
    *          event.
    */
   static void dispatchEvent(Event evt, Element elem, EventListener listener) {
+    // Preserve the current event in case we are in a reentrant event dispatch.
+    Event prevCurrentEvent = currentEvent;
+    currentEvent = evt;
+
     UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
     if (handler != null) {
       dispatchEventAndCatch(evt, elem, listener, handler);
     } else {
       dispatchEventImpl(evt, elem, listener);
     }
+
+    currentEvent = prevCurrentEvent;
   }
 
   /**
@@ -1312,14 +1318,7 @@ public class DOM {
       }
     }
 
-    // Preserve the current event in case we are in a reentrant event dispatch.
-    Event prevCurrentEvent = currentEvent;
-    currentEvent = evt;
-    try {
-      // Pass the event to the listener.
-      listener.onBrowserEvent(evt);
-    } finally {
-      currentEvent = prevCurrentEvent;
-    }
+    // Pass the event to the listener.
+    listener.onBrowserEvent(evt);
   }
 }

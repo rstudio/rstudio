@@ -15,14 +15,23 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Tests standard DOM operations in the {@link DOM} class.
@@ -64,6 +73,45 @@ public class DOMTest extends GWTTestCase {
     DOM.removeElementAttribute(div, "class");
     cssClass = DOM.getElementAttribute(div, "class");
     assertEquals("", cssClass);
+  }
+
+  /**
+   * Tests that {@link DOM#eventGetCurrentEvent()} returns the event to the
+   * {@link UncaughtExceptionHandler}.
+   */
+  public void testEventGetCurrentEventOnException() {
+    Button button = new Button("test", new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        // Intentionally trigger an error
+        throw new IllegalArgumentException();
+      }
+    });
+    RootPanel.get().add(button);
+
+    // Verify the exception is captured
+    final List<String> ret = new ArrayList<String>();
+    GWT.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+      public void onUncaughtException(Throwable e) {
+        Event event = DOM.eventGetCurrentEvent();
+        if (event == null) {
+          ret.add("Event is null");
+          return;
+        }
+        if (event.getTypeInt() != Event.ONCLICK) {
+          ret.add("Event is not a click event");
+          return;
+        }
+        ret.add("Success");
+      }
+    });
+    NativeEvent clickEvent = Document.get().createClickEvent(0, 0, 0, 0, 0,
+        false, false, false, false);
+    button.getElement().dispatchEvent(clickEvent);
+
+    assertEquals(1, ret.size());
+    assertEquals("Success", ret.get(0));
+    RootPanel.get().remove(button);
+    GWT.setUncaughtExceptionHandler(null);
   }
 
   /**
