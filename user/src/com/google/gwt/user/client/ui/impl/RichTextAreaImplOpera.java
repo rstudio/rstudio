@@ -28,7 +28,7 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
   }
 
   @Override
-  public native void setFocus(boolean focused) /*-{
+  protected native void setFocusImpl(boolean focused) /*-{
     // Opera needs the *iframe* focused, not its window.
     if (focused) {
       this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.focus();
