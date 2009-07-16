@@ -93,7 +93,7 @@ public class AnchorElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-rel">W3C HTML Specification</a>
    */
   public final native String getRel() /*-{
-     return this.name;
+     return this.rel;
    }-*/;
 
   /**
@@ -165,7 +165,7 @@ public class AnchorElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-rel">W3C HTML Specification</a>
    */
   public final native void setRel(String name) /*-{
-     this.name = name;
+     this.rel = rel;
    }-*/;
 
   /**
