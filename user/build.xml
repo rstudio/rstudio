@@ -6,6 +6,7 @@
   <import file="${gwt.root}/common.ant.xml" />
 
   <property name="gwt.junit.emmatestcase.includes" value="**/*Suite.class,com/google/gwt/dev/jjs/test/*Test.class"/>
+  <property name="test.timeout" value="3" />
 
   <!-- 
     Whether I18NSuite should test e.g. Foo$InnerMsgs_fr.properties (if the
@@ -190,7 +191,7 @@
       Run hosted and web mode tests for the platform on which this build
       is executing
     -->
-    <limit failonerror="true" hours="3">
+    <limit failonerror="true" hours="${test.timeout}">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
       <!-- selenium-test is a no-op unless gwt.selenium.hosts is defined -->
       <antcall target="test.selenium"/>
