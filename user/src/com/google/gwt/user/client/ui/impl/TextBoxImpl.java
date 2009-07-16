@@ -44,6 +44,10 @@ public class TextBoxImpl {
     return getCursorPos(elem);
   }
 
+  public int getTextAreaSelectionLength(Element elem) {
+    return getSelectionLength(elem);
+  }
+
   public native void setSelectionRange(Element elem, int pos, int length) /*-{
     try {
       elem.setSelectionRange(pos, pos + length);

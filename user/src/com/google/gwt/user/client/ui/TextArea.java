@@ -103,7 +103,7 @@ public class TextArea extends TextBoxBase implements HasDirection {
 
   @Override
   public int getSelectionLength() {
-    return getImpl().getSelectionLength(getElement());
+    return getImpl().getTextAreaSelectionLength(getElement());
   }
 
   /**

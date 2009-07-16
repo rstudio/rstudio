@@ -42,19 +42,7 @@ public class TextBoxImplIE6 extends TextBoxImpl {
       var tr = elem.document.selection.createRange();
       if (tr.parentElement() !== elem)
         return 0;
-      var trLength = tr.text.length;
-
-      // Subtract characters from the end to account for trimmed newlines.
-      var offset = 0;
-      var tr2 = tr.duplicate();
-      tr2.moveEnd('character', -1);
-      var tr2Length = tr2.text.length;
-      while (tr2Length == trLength && tr2.parentElement() == elem && tr.compareEndPoints('StartToEnd', tr2) <= 0) {
-        offset += 2;
-        tr2.moveEnd('character', -1);
-        tr2Length = tr2.text.length;
-      }
-      return trLength + offset;
+      return tr.text.length;
     }
     catch (e) {
       return 0;
@@ -89,6 +77,31 @@ public class TextBoxImplIE6 extends TextBoxImpl {
         tr3Length = tr3.text.length;
       }
       return tr2Length + offset;
+    }
+    catch (e) {
+      return 0;
+    }
+  }-*/;
+
+  @Override
+  public native int getTextAreaSelectionLength(Element elem) /*-{
+    try {
+      var tr = elem.document.selection.createRange();
+      if (tr.parentElement() !== elem)
+        return 0;
+      var trLength = tr.text.length;
+
+      // Subtract characters from the end to account for trimmed newlines.
+      var offset = 0;
+      var tr2 = tr.duplicate();
+      tr2.moveEnd('character', -1);
+      var tr2Length = tr2.text.length;
+      while (tr2Length == trLength && tr2.parentElement() == elem && tr.compareEndPoints('StartToEnd', tr2) <= 0) {
+        offset += 2;
+        tr2.moveEnd('character', -1);
+        tr2Length = tr2.text.length;
+      }
+      return trLength + offset;
     }
     catch (e) {
       return 0;
