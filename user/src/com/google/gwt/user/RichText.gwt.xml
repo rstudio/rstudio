@@ -34,15 +34,10 @@
     class="com.google.gwt.user.client.ui.impl.RichTextAreaImplMozilla">
     <when-type-is
       class="com.google.gwt.user.client.ui.impl.RichTextAreaImpl" />
-    <when-property-is name="user.agent" value="gecko1_8" />
-  </replace-with>
-
-  <!-- Old Mozilla-specific implementation -->
-  <replace-with
-    class="com.google.gwt.user.client.ui.impl.RichTextAreaImplOldMozilla">
-    <when-type-is
-      class="com.google.gwt.user.client.ui.impl.RichTextAreaImpl" />
-    <when-property-is name="user.agent" value="gecko" />
+    <any>
+      <when-property-is name="user.agent" value="gecko1_8" />
+      <when-property-is name="user.agent" value="gecko" />
+    </any>
   </replace-with>
 
   <!-- Safari-specific implementation -->
