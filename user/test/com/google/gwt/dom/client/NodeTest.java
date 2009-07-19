@@ -29,7 +29,7 @@ public class NodeTest extends GWTTestCase {
   }
 
   /**
-   * appendChild, insertBefore, removeChild, replaceChild
+   * appendChild, insertBefore, removeChild, replaceChild.
    */
   public void testAppendRemoveReplace() {
     Document doc = Document.get();
@@ -87,7 +87,7 @@ public class NodeTest extends GWTTestCase {
   }
 
   /**
-   * setAttribute, getAttribute, hasAttributes, hasAttribute
+   * setAttribute, getAttribute, hasAttributes, hasAttribute.
    */
   public void testAttributes() {
     Document doc = Document.get();
@@ -98,7 +98,7 @@ public class NodeTest extends GWTTestCase {
   }
 
   /**
-   * childNodes, hasChildNodes
+   * childNodes, hasChildNodes.
    */
   public void testChildNodeList() {
     Document doc = Document.get();
@@ -191,7 +191,7 @@ public class NodeTest extends GWTTestCase {
   }
 
   /**
-   * nodeName, nodeValue
+   * nodeName, nodeValue.
    */
   public void testNodeNameAndValue() {
     Document doc = Document.get();
@@ -230,7 +230,7 @@ public class NodeTest extends GWTTestCase {
   }
 
   /**
-   * nodeType
+   * nodeType.
    */
   public void testNodeType() {
     Document doc = Document.get();
@@ -243,7 +243,7 @@ public class NodeTest extends GWTTestCase {
   }
 
   /**
-   * ownerDocument
+   * ownerDocument.
    */
   public void testOwnerDocument() {
     Document doc = Document.get();
@@ -266,7 +266,7 @@ public class NodeTest extends GWTTestCase {
   }
 
   /**
-   * getParentNode, firstChild, lastChild, nextSibling, previousSibling
+   * getParentNode, firstChild, lastChild, nextSibling, previousSibling.
    */
   public void testParentAndSiblings() {
     Document doc = Document.get();

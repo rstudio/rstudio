@@ -120,7 +120,7 @@ public class DocumentTest extends GWTTestCase {
   }
 
   /**
-   * getElementById, getElementsByTagName
+   * getElementById, getElementsByTagName.
    */
   public void testGetElements() {
     Document doc = Document.get();
@@ -140,7 +140,7 @@ public class DocumentTest extends GWTTestCase {
   }
 
   /**
-   * domain, referrer, title, url
+   * domain, referrer, title, url.
    */
   public void testProperties() {
     Document doc = Document.get();

@@ -42,7 +42,7 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
   public abstract String[] getJavaScript();
 
   /**
-   * Returns the permutation ID
+   * Returns the permutation ID.
    */
   public abstract int getPermutationId();
   

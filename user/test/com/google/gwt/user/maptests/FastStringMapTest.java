@@ -20,7 +20,7 @@ import org.apache.commons.collections.TestMap;
 import java.util.Map;
 
 /**
- * Test class for <code>FastStringMap</code>
+ * Test class for <code>FastStringMap</code>.
  */
 public class FastStringMapTest extends TestMap {
 

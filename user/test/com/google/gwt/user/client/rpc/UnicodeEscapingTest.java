@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class UnicodeEscapingTest extends GWTTestCase {
 
-  /** the size of a block of characters to test */
+  /** the size of a block of characters to test. */
   private static final int CHARACTER_BLOCK_SIZE = 64;
 
   /**
@@ -40,7 +40,7 @@ public class UnicodeEscapingTest extends GWTTestCase {
    */
   private static final int NON_BMP_TEST_INCREMENT = 8192 + 64;
 
-  /** the time to wait for the test of a block of characters */
+  /** the time to wait for the test of a block of characters. */
   private static final int TEST_FINISH_DELAY_MS = 500000;
 
   /**
@@ -105,7 +105,7 @@ public class UnicodeEscapingTest extends GWTTestCase {
     return service;
   }
 
-  /** start of current block being tested */
+  /** start of current block being tested. */
   private int current;
 
   @Override

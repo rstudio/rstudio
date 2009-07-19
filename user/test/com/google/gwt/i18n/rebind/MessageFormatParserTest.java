@@ -24,7 +24,7 @@ import java.text.ParseException;
 import java.util.List;
 
 /**
- * Test for {@link MessageFormatParser}
+ * Test for {@link MessageFormatParser}.
  */
 public class MessageFormatParserTest extends TestCase {
 

@@ -28,7 +28,7 @@ public class MapTests extends GWTTestCase {
   }
 
   /**
-   * getAreas
+   * getAreas.
    */
   public void testGetArea() {
     Document doc = Document.get();

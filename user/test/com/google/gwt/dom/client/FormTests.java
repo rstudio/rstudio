@@ -28,7 +28,7 @@ public class FormTests extends GWTTestCase {
   }
 
   /**
-   * getElements
+   * getElements.
    */
   public void testGetElements() {
     Document doc = Document.get();

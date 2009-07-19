@@ -16,7 +16,7 @@
 package com.google.gwt.emultest.java.lang;
 
 /**
- * Interface to contain constants shared between StringTest.java and String.java
+ * Interface to contain constants shared between StringTest.java and String.java.
  */
 public class C {
   public static String FLOAT_STRING = "123.4599";

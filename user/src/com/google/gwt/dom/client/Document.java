@@ -1024,7 +1024,7 @@ public class Document extends Node {
   }-*/;
 
   /**
-   * Enables or disables scrolling of the document
+   * Enables or disables scrolling of the document.
    * 
    * @param enable whether scrolling should be enabled or disabled
    */

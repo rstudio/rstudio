@@ -105,12 +105,6 @@ public class CustomFieldSerializerValidator {
    * Returns a list of error messages associated with the custom field
    * serializer.
    * 
-   * @param streamReaderClass
-   *          {@link com.google.gwt.user.client.rpc.SerializationStreamReader
-   *          SerializationStreamReader}
-   * @param streamWriterClass
-   *          {@link com.google.gwt.user.client.rpc.SerializationStreamWriter
-   *          SerializationStreamWriter}
    * @param serializer the class which performs the serialization
    * @param serializee the class being serialized
    * @return list of error messages, if any, associated with the custom field

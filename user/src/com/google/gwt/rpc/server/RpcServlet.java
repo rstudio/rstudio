@@ -288,7 +288,6 @@ public class RpcServlet extends AbstractRemoteServiceServlet {
    * 
    * @param request the request being served
    * @param response the response that will be written into
-   * @param responsePayload the payload that is about to be sent to the client
    * @return <code>true</code> if responsePayload should be GZIP compressed,
    *         otherwise <code>false</code>.
    */

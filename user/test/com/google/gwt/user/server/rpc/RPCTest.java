@@ -191,7 +191,7 @@ public class RPCTest extends TestCase {
   }
 
   /**
-   * Tests for method {@link RPC#decodeRequest(String)}
+   * Tests for method {@link RPC#decodeRequest(String)}.
    * 
    * <p/>
    * Cases:
@@ -223,7 +223,7 @@ public class RPCTest extends TestCase {
   }
 
   /**
-   * Tests for method {@link RPC#decodeRequest(String, Class)}
+   * Tests for method {@link RPC#decodeRequest(String, Class)}.
    * 
    * <p/>
    * Cases:
@@ -411,7 +411,7 @@ public class RPCTest extends TestCase {
   }
 
   /**
-   * Tests for {@link RPC#encodeResponseForSuccess(Method, Object)}
+   * Tests for {@link RPC#encodeResponseForSuccess(Method, Object)}.
    * 
    * Cases:
    * <ol>
@@ -456,7 +456,7 @@ public class RPCTest extends TestCase {
   }
 
   /**
-   * Tests for {@link RPC#invokeAndEncodeResponse(Object, Method, Object[])}
+   * Tests for {@link RPC#invokeAndEncodeResponse(Object, Method, Object[])}.
    * 
    * Cases:
    * <ol>

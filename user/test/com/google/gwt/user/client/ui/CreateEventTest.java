@@ -212,7 +212,7 @@ public class CreateEventTest extends GWTTestCase {
   }
 
   /**
-   * Tests NativeEvent.stopPropagation()
+   * Tests NativeEvent.stopPropagation().
    */
   public void testStopPropagation() {
     NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(

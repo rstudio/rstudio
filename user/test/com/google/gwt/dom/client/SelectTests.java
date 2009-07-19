@@ -28,7 +28,7 @@ public class SelectTests extends GWTTestCase {
   }
 
   /**
-   * add, remove
+   * add, remove.
    */
   public void testAddRemove() {
     Document doc = Document.get();
@@ -63,7 +63,7 @@ public class SelectTests extends GWTTestCase {
   }
 
   /**
-   * selectedIndex, option.selected
+   * selectedIndex, option.selected.
    */
   public void testSelection() {
     Document doc = Document.get();
@@ -96,7 +96,7 @@ public class SelectTests extends GWTTestCase {
   }
 
   /**
-   * multiple
+   * multiple.
    */
   public void testMultipleSelection() {
     Document doc = Document.get();

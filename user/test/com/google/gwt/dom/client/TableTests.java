@@ -30,7 +30,7 @@ public class TableTests extends GWTTestCase {
   }
 
   /**
-   * insertRow, getRows, rowIndex
+   * insertRow, getRows, rowIndex.
    */
   public void testInsertRow() {
     Document doc = Document.get();
@@ -58,7 +58,7 @@ public class TableTests extends GWTTestCase {
   }
 
   /**
-   * insertCell, getCells, cellIndex
+   * insertCell, getCells, cellIndex.
    */
   public void testInsertCell() {
     Document doc = Document.get();
@@ -90,7 +90,7 @@ public class TableTests extends GWTTestCase {
 
   /**
    * createTHead, thead, tfoot, createTFoot, tBodies, section.insertRow,
-   * section.rows, deleteTHead, deleteTFoot
+   * section.rows, deleteTHead, deleteTFoot.
    */
   public void testSections() {
     TableElement table = Document.get().createTableElement();

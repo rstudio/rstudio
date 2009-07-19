@@ -25,7 +25,7 @@ import java.util.Stack;
 public class StackProfile extends WidgetProfile {
 
   /**
-   * Sets module name so that javascript compiler can operate
+   * Sets module name so that javascript compiler can operate.
    */
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
