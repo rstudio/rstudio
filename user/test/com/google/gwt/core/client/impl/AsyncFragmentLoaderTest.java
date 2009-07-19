@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/** Tests the fragment loader. */
 public class AsyncFragmentLoaderTest extends TestCase {
   private static class MockErrorHandler implements LoadErrorHandler {
     private boolean wasCalled = false;
