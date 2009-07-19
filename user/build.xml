@@ -153,7 +153,7 @@
   </target>
 
   <target name="test.noserver" depends="compile, compile.tests" description="Run noserver hosted-mode tests for this project.">
-    <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-noserver-mode" test.cases="default.noserver.tests">
+    <gwt.junit test.args="${test.args} -noserver" test.out="${junit.out}/${build.host.platform}-noserver-mode" test.cases="default.noserver.tests">
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
