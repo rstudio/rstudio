@@ -90,7 +90,7 @@ public class GWTShell extends SwtHostedModeBase {
   /**
    * Concrete class to implement all shell options.
    */
-  static class ShellOptionsImpl extends HostedModeBaseOptionsImpl implements
+  protected static class ShellOptionsImpl extends HostedModeBaseOptionsImpl implements
       HostedModeBaseOptions, WorkDirs, LegacyCompilerOptions {
     private int localWorkers;
     private File outDir;
