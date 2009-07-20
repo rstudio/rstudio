@@ -15,12 +15,49 @@
  */
 package com.google.gwt.dev.jjs.test.singlejso;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * Tests SingleJso semantics in non-trivial type hierarchies.
  */
 public class TypeHierarchyTest extends GWTTestCase {
+
+  /**
+   * The bottom type for a non-trivial diamond-shaped inheritance pattern.
+   */
+  static class DiamondImpl extends JavaScriptObject implements IDiamond2A,
+      IDiamond2B {
+    public static native DiamondImpl create() /*-{
+      return {size : 42};
+    }-*/;
+
+    protected DiamondImpl() {
+    }
+
+    public final native int size() /*-{
+      return this.size;
+    }-*/;
+  }
+
+  /**
+   * The root type for a non-trivial diamond-shaped inheritance pattern.
+   */
+  interface IDiamond1 {
+    int size();
+  }
+
+  /**
+   * The left type for a non-trivial diamond-shaped inheritance pattern.
+   */
+  interface IDiamond2A extends IDiamond1 {
+  }
+
+  /**
+   * The right type for a non-trivial diamond-shaped inheritance pattern.
+   */
+  interface IDiamond2B extends IDiamond1 {
+  }
 
   @Override
   public String getModuleName() {
@@ -60,4 +97,14 @@ public class TypeHierarchyTest extends GWTTestCase {
     assertEquals("B2", b2.whoAmI());
   }
 
+  public void testDiamond() {
+    IDiamond1 d1 = DiamondImpl.create();
+    assertEquals(42, d1.size());
+
+    IDiamond2A d2a = DiamondImpl.create();
+    assertEquals(42, d2a.size());
+
+    IDiamond2B d2b = DiamondImpl.create();
+    assertEquals(42, d2b.size());
+  }
 }

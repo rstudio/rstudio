@@ -488,6 +488,36 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
+   * Returns true if the given type and it's super-interfaces define no methods.
+   */
+  public boolean isTagInterface(JInterfaceType type) {
+    Set<JInterfaceType> seen = new IdentityHashSet<JInterfaceType>();
+    List<JInterfaceType> q = new LinkedList<JInterfaceType>();
+    seen.add(type);
+    q.add(type);
+
+    while (!q.isEmpty()) {
+      JInterfaceType intf = q.remove(0);
+
+      List<JMethod> methods = intf.getMethods();
+      int size = methods.size();
+      if (size == 0
+          || (size == 1 && methods.get(0).getName().equals("$clinit"))) {
+        // OK, add any super-interfaces;
+        for (JInterfaceType superIntf : intf.getImplements()) {
+          if (seen.add(superIntf)) {
+            q.add(superIntf);
+          }
+        }
+      } else {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
    * This method should be called after altering the types that are live in the
    * associated JProgram.
    */
@@ -683,14 +713,12 @@ public class JTypeOracle implements Serializable {
         }
         JInterfaceType intr = (JInterfaceType) refType;
 
-        if (intr.getMethods().size() <= 1) {
+        if (isTagInterface(intr)) {
           /*
            * Record a tag interface as being implemented by JSO, since they
            * don't actually have any methods and we want to avoid spurious
            * messages about multiple JSO types implementing a common interface.
            */
-          assert intr.getMethods().size() == 0
-              || intr.getMethods().get(0).getName().equals("$clinit");
           jsoSingleImpls.put(intr, program.getJavaScriptObject());
 
           /*
