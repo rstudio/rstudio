@@ -302,12 +302,20 @@ public class RpcProxyCreator extends ProxyCreator {
         serializationSto.getSerializableTypes());
     Collections.addAll(serializableTypes,
         deserializationSto.getSerializableTypes());
+    for (JMethod m : serviceIntf.getOverridableMethods()) {
+      // Pick up any primitive return types, which get sent boxed
+      assert serializableTypes.contains(m.getReturnType())
+          || m.getReturnType().isPrimitive() != null : "Missing non-primitive return type "
+          + m.getReturnType().getQualifiedSourceName();
+      serializableTypes.add(m.getReturnType());
+    }
 
     StringBuilder sb = new StringBuilder("@ArtificialRescue({");
     for (JType serializableType : serializableTypes) {
 
       JArrayType serializableArray = serializableType.isArray();
       JClassType serializableClass = serializableType.isClass();
+      JPrimitiveType serializablePrimitive = serializableType.isPrimitive();
       if (serializableArray != null) {
         sb.append("\n@Rescue(className = \"");
         if (serializableArray.getLeafType() instanceof JPrimitiveType) {
@@ -319,8 +327,15 @@ public class RpcProxyCreator extends ProxyCreator {
           sb.append(serializableArray.getQualifiedSourceName());
         }
         sb.append("\",\n instantiable = true),");
+
       } else if (serializableClass != null) {
         writeSingleRescue(typeOracle, deserializationSto, sb, serializableClass);
+
+      } else if (serializablePrimitive != null) {
+        JClassType boxedClass = typeOracle.findType(serializablePrimitive.getQualifiedBoxedSourceName());
+        assert boxedClass != null : "No boxed version of "
+            + serializablePrimitive.getQualifiedSourceName();
+        writeSingleRescue(typeOracle, deserializationSto, sb, boxedClass);
       }
     }
     sb.append("})");

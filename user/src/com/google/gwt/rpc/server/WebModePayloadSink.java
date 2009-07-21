@@ -555,8 +555,7 @@ public class WebModePayloadSink extends CommandSink {
        * Set the typeIds and queryIds to exact values, or fall back to acting
        * like a plain Object[] array.
        */
-      int typeId = clientOracle.getTypeId(Array.newInstance(
-          x.getComponentType(), 0).getClass());
+      int typeId = clientOracle.getTypeId(targetClass);
       if (typeId == 0) {
         typeId = clientOracle.getTypeId(Object[].class);
       }

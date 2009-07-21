@@ -381,9 +381,15 @@ public final class WebModeClientOracle extends ClientOracle implements
         leafType = leafType.getComponentType();
       } while (leafType.isArray());
 
-      if (leafType.getPackage() == null) {
+      Class<?> enclosing = leafType.getEnclosingClass();
+      if (enclosing != null) {
+        // com.foo.Enclosing$Name[]
+        return canonicalName(enclosing) + "$" + clazz.getSimpleName();
+      } else if (leafType.getPackage() == null) {
+        // Name0[
         return clazz.getSimpleName();
       } else {
+        // com.foo.Name[]
         return leafType.getPackage().getName() + "." + clazz.getSimpleName();
       }
     } else {
