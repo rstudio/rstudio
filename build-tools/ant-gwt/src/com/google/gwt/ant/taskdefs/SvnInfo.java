@@ -62,21 +62,26 @@ public class SvnInfo extends Task {
   static final String URL_REGEX = "\\w+://\\S*";
 
   /**
-   * A pattern that matches the URL line in svn info output.
+   * A pattern that matches the URL line in svn info output.  Note that it
+   * <i>also</i> matches Repository Root; to support i18n subversion clients,
+   * we're positionally dependent that URL will be the first match, and
+   * Repository Root the second.
    */
-  private static final Pattern BRANCH_PATTERN = Pattern.compile("\\s*URL:\\s*("
+  private static final Pattern BRANCH_PATTERN = Pattern.compile("[^:]*:\\s*("
       + URL_REGEX + ")\\s*");
 
   /**
-   * A pattern that matches the Revision line in svn info output.
+   * A pattern that matches the Revision line in svn info output.  <i>Also</i>
+   * matches Last Changed Rev; we're positionally dependent (revision is
+   * earlier) to support internationalized svn client output.
    */
-  private static final Pattern REVISION_PATTERN = Pattern.compile("\\s*Revision:\\s*(\\d+)\\s*");
+  private static final Pattern REVISION_PATTERN = Pattern.compile("[^:]*:\\s*(\\d+)\\s*");
 
   /**
    * A pattern that matches the Repository Root line in svn info output.
    */
-  private static final Pattern ROOT_PATTERN = Pattern.compile("\\s*Repository Root:\\s*("
-      + URL_REGEX + ")\\s*");
+  private static final Pattern ROOT_PATTERN = Pattern.compile("[^:]*:\\s*("
+      + URL_REGEX + "/svn)\\s*");
 
   /**
    * Returns true if this git working copy matches the specified svn revision,
@@ -206,9 +211,13 @@ public class SvnInfo extends Task {
         if ((m = ROOT_PATTERN.matcher(line)) != null && m.matches()) {
           rootUrl = m.group(1);
         } else if ((m = BRANCH_PATTERN.matcher(line)) != null && m.matches()) {
-          branchUrl = m.group(1);
+          if (branchUrl == null) {
+            branchUrl = m.group(1);
+          } // else skip the 2nd and later matches
         } else if ((m = REVISION_PATTERN.matcher(line)) != null && m.matches()) {
-          revision = m.group(1);
+          if (revision == null) {
+            revision = m.group(1);
+          } // else skip the 2nd and later matches
         }
       }
     } catch (IOException e) {
@@ -301,27 +310,40 @@ public class SvnInfo extends Task {
       throw new BuildException(workdir + " is not a directory");
     }
 
-    Info info;
-    if (looksLikeSvn(workDirFile)) {
-      info = parseInfo(getSvnInfo(workDirFile));
-
-      // Use svnversion to get a more exact revision string.
-      info.revision = getSvnVersion(workDirFile);
-    } else if (looksLikeGit(workDirFile)) {
-      info = parseInfo(getGitSvnInfo(workDirFile));
-
-      // Add a 'M' tag if this working copy is not pristine.
-      if (!doesGitWorkingCopyMatchSvnRevision(workDirFile, info.revision)) {
-        info.revision += "M";
+    if (getProject().getProperty(outprop) == null) {
+      Info info;
+      if (looksLikeSvn(workDirFile)) {
+        info = parseInfo(getSvnInfo(workDirFile));
+  
+        // Use svnversion to get a more exact revision string.
+        info.revision = getSvnVersion(workDirFile);
+      } else if (looksLikeGit(workDirFile)) {
+        info = parseInfo(getGitSvnInfo(workDirFile));
+  
+        // Add a 'M' tag if this working copy is not pristine.
+        if (!doesGitWorkingCopyMatchSvnRevision(workDirFile, info.revision)) {
+          info.revision += "M";
+        }
+      } else {
+        info = new Info("unknown", "unknown");
       }
+      getProject().setNewProperty(outprop, info.branch + "@" + info.revision);
     } else {
-      info = new Info("unknown", "unknown");
+      String propval = getProject().getProperty(outprop);
+      if (!propval.matches("[^@]+@[0-9]+")) {
+        throw new BuildException(
+          "predefined " + outprop +
+              "should look like branch-spec@revison-number");
+      }
     }
-
-    getProject().setNewProperty(outprop, info.branch + "@" + info.revision);
     if (fileprop != null) {
+      String outpropval = getProject().getProperty(outprop);
+      int atIndex = outpropval.indexOf('@');
+      String branch = outpropval.substring(0, atIndex);
+      String revision = outpropval.substring(atIndex + 1);
+      
       getProject().setNewProperty(fileprop,
-          info.branch.replace('/', '-') + "-" + info.revision.replace(':', '-'));
+          branch.replace('/', '-') + "-" + revision.replace(':', '-'));
     }
   }
 
