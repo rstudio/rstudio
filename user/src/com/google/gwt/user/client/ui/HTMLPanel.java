@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -40,16 +42,54 @@ public class HTMLPanel extends ComplexPanel {
   }
 
   /**
-   * Creates an HTML panel with the specified HTML contents. Any element within
-   * this HTML that has a specified id can contain a child widget.
+   * Creates an HTML panel with the specified HTML contents inside a DIV
+   * element. Any element within this HTML that has a specified id can contain a
+   * child widget.
    * 
    * @param html the panel's HTML
    */
   public HTMLPanel(String html) {
-    setElement(DOM.createDiv());
-    DOM.setInnerHTML(getElement(), html);
+    /*
+     * Normally would call this("div", html), but that method
+     * has some slightly expensive IE defensiveness that we just
+     * don't need for a div
+     */
+    setElement(Document.get().createDivElement());
+    getElement().setInnerHTML(html);
   }
 
+  /**
+   * Creates an HTML panel whose root element has the given tag, and with the
+   * specified HTML contents. Any element within this HTML that has a specified
+   * id can contain a child widget.
+   * 
+   * @param tag the tag of the root element
+   * @param html the panel's HTML
+   */
+  public HTMLPanel(String tag, String html) {
+    /*
+     * IE has very arbitrary rules about what will and will not accept
+     * innerHTML. <table> and <tbody> simply won't, the property is read only.
+     * <p> will explode if you incorrectly try to put another <p> inside of it.
+     * And who knows what else.
+     * 
+     * However, if you cram a complete, possibly incorrect structure inside a
+     * div, IE will swallow it gladly. So that's what we do here in the name of
+     * IE robustification.
+     */
+    StringBuilder b = new StringBuilder();
+    b.append('<').append(tag).append('>').append(html);
+    b.append("</").append(tag).append('>');
+    
+    // We could use the static hiddenDiv, but that thing is attached
+    // to the document. The caller might not want that.
+    
+    DivElement scratchDiv = Document.get().createDivElement();
+    scratchDiv.setInnerHTML(b.toString());
+    setElement(scratchDiv.getFirstChildElement());
+    getElement().removeFromParent();
+  }
+  
   /**
    * Adds a child widget to the panel, contained within the HTML element
    * specified by a given id.
