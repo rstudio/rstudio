@@ -198,7 +198,7 @@ public class ElementTest extends GWTTestCase {
         assertEquals(absLeft, elem.getAbsoluteLeft());
         assertEquals(absTop, elem.getAbsoluteTop());
 
-        if (isIE() && !doc.isCSS1Compat()) {
+        if (isIE6or7() && !doc.isCSS1Compat()) {
           // In IE/quirk, the interior decorations are considered part of the
           // width/height, so there's no need to account for them here.
           assertEquals(absLeft + width, elem.getAbsoluteRight());
@@ -228,6 +228,11 @@ public class ElementTest extends GWTTestCase {
     div.getStyle().setLeft(1000, Unit.PX);
     div.getStyle().setTop(1000, Unit.PX);
 
+    DivElement fixedDiv = doc.createDivElement();
+    body.appendChild(fixedDiv);
+    fixedDiv.setInnerText("foo");
+    fixedDiv.getStyle().setPosition(Position.FIXED);
+
     // Get the absolute position of the element when the body is unscrolled.
     int absLeft = div.getAbsoluteLeft();
     int absTop = div.getAbsoluteTop();
@@ -245,6 +250,15 @@ public class ElementTest extends GWTTestCase {
     // getAbsoluteLeft/Top() yet again for FF2.
     assertTrue(Math.abs(absLeft - div.getAbsoluteLeft()) <= 1);
     assertTrue(Math.abs(absTop - div.getAbsoluteTop()) <= 1);
+
+    // Ensure that the 'position:fixed' div's absolute position includes the
+    // body's scroll position.
+    //
+    // Don't do this on IE6/7 or old Gecko, which don't support position:fixed.
+    if (!isIE6or7() && !isOldGecko()) {
+      assertTrue(fixedDiv.getAbsoluteLeft() >= body.getScrollLeft());
+      assertTrue(fixedDiv.getAbsoluteTop() >= body.getScrollTop());
+    }
   }
 
   /**
@@ -581,8 +595,34 @@ public class ElementTest extends GWTTestCase {
     return {};
   }-*/;
 
-  private native boolean isIE() /*-{
+  // Stolen from UserAgent.gwt.xml.
+  private native boolean isIE6or7() /*-{
     var ua = navigator.userAgent.toLowerCase();
-    return ua.indexOf("msie") != -1;
+    if (ua.indexOf("msie") != -1) {
+      if (document.documentMode >= 8) {
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }-*/;
+
+  // Stolen from UserAgent.gwt.xml.
+  private native boolean isOldGecko() /*-{
+    var makeVersion = function(result) {
+      return (parseInt(result[1]) * 1000) + parseInt(result[2]);
+    };
+
+    var ua = navigator.userAgent.toLowerCase();
+    if (ua.indexOf("gecko") != -1) {
+      var result = /rv:([0-9]+)\.([0-9]+)/.exec(ua);
+      if (result && result.length == 3) {
+        if (makeVersion(result) >= 1008) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }-*/;
 }

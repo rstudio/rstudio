@@ -83,9 +83,14 @@ class DOMImplSafari extends DOMImplStandard {
         curr = curr.parentNode;
       }
     }
-    
+
     while (elem) {
       left += elem.offsetLeft;
+
+      if (doc.defaultView.getComputedStyle(elem, '')['position'] == 'fixed') {
+        left += doc.body.scrollLeft;
+        return left;
+      }
 
       // Safari 3 does not include borders with offsetLeft, so we need to add
       // the borders of the parent manually.
@@ -105,7 +110,7 @@ class DOMImplSafari extends DOMImplStandard {
     }
     return left;
   }-*/;
-  
+
   @Override
   public native int getAbsoluteTop(Element elem) /*-{
     // Unattached elements and elements (or their ancestors) with style
@@ -124,9 +129,14 @@ class DOMImplSafari extends DOMImplStandard {
         curr = curr.parentNode;
       }
     }
-    
+
     while (elem) {
       top += elem.offsetTop;
+
+      if (doc.defaultView.getComputedStyle(elem, '')['position'] == 'fixed') {
+        top += doc.body.scrollTop;
+        return top;
+      }
 
       // Safari 3 does not include borders with offsetTop, so we need to add the
       // borders of the parent manually.
