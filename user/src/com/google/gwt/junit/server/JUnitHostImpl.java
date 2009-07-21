@@ -30,6 +30,7 @@ import com.google.gwt.user.server.rpc.RPCServletUtils;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.HashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -80,20 +81,22 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
     fld.set(obj, value);
   }
 
-  public TestInfo getFirstMethod() throws TimeoutException {
-    return getHost().getNextTestInfo(getClientId(getThreadLocalRequest()),
+  public TestInfo[] getFirstMethod() throws TimeoutException {
+    return getHost().getNextTestBlock(getClientId(getThreadLocalRequest()),
         TIME_TO_WAIT_FOR_TESTNAME);
   }
 
-  public TestInfo reportResultsAndGetNextMethod(TestInfo testInfo,
-      JUnitResult result) throws TimeoutException {
-    initResult(getThreadLocalRequest(), result);
-    ExceptionWrapper ew = result.getExceptionWrapper();
-    result.setException(deserialize(ew));
+  public TestInfo[] reportResultsAndGetNextMethod(
+      HashMap<TestInfo, JUnitResult> results) throws TimeoutException {
+    for (JUnitResult result : results.values()) {
+      initResult(getThreadLocalRequest(), result);
+      ExceptionWrapper ew = result.getExceptionWrapper();
+      result.setException(deserialize(ew));
+    }
     JUnitMessageQueue host = getHost();
     String clientId = getClientId(getThreadLocalRequest());
-    host.reportResults(clientId, testInfo, result);
-    return host.getNextTestInfo(clientId, TIME_TO_WAIT_FOR_TESTNAME);
+    host.reportResults(clientId, results);
+    return host.getNextTestBlock(clientId, TIME_TO_WAIT_FOR_TESTNAME);
   }
 
   @Override
@@ -105,7 +108,7 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
       JUnitResult result = new JUnitResult();
       initResult(request, result);
       result.setException(new JUnitFatalLaunchException(requestPayload));
-      getHost().reportResults(getClientId(request), null, result);
+      getHost().reportFatalLaunch(getClientId(request), result);
     } else {
       super.service(request, response);
     }

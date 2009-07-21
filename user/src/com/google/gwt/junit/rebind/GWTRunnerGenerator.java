@@ -27,6 +27,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.impl.GWTRunner;
+import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -38,7 +39,6 @@ import java.util.TreeSet;
  * This class generates a stub class for classes that derive from GWTTestCase.
  * This stub class provides the necessary bridge between our Hosted or Hybrid
  * mode classes and the JUnit system.
- * 
  */
 public class GWTRunnerGenerator extends Generator {
 
@@ -77,9 +77,8 @@ public class GWTRunnerGenerator extends Generator {
 
     String moduleName;
     try {
-      ConfigurationProperty prop
-          = context.getPropertyOracle().getConfigurationProperty(
-              "junit.moduleName");
+      ConfigurationProperty prop = context.getPropertyOracle().getConfigurationProperty(
+          "junit.moduleName");
       moduleName = prop.getValues().get(0);
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR,
@@ -97,9 +96,20 @@ public class GWTRunnerGenerator extends Generator {
         generatedClass, GWT_RUNNER_NAME);
 
     if (sourceWriter != null) {
-      JClassType[] allTestTypes = getAllPossibleTestTypes(context.getTypeOracle());
-      Set<String> testClasses = getTestTypesForModule(logger, moduleName,
-          allTestTypes);
+      // Check the global set of active tests for this module.
+      Set<TestInfo> moduleTests = GWTTestCase.ALL_GWT_TESTS.get(moduleName);
+      Set<String> testClasses;
+      if (moduleTests == null || moduleTests.isEmpty()) {
+        // Fall back to pulling in all types in the module.
+        JClassType[] allTestTypes = getAllPossibleTestTypes(context.getTypeOracle());
+        testClasses = getTestTypesForModule(logger, moduleName, allTestTypes);
+      } else {
+        // Must use sorted set to prevent nondeterminism.
+        testClasses = new TreeSet<String>();
+        for (TestInfo testInfo : moduleTests) {
+          testClasses.add(testInfo.getTestClass());
+        }
+      }
       writeCreateNewTestCaseMethod(testClasses, sourceWriter);
       sourceWriter.commit(logger);
     }

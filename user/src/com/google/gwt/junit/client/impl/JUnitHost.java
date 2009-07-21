@@ -19,6 +19,8 @@ import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.rpc.RemoteService;
 
+import java.util.HashMap;
+
 /**
  * An interface for {@link com.google.gwt.junit.client.GWTTestCase} to
  * communicate with the test process through RPC.
@@ -85,17 +87,16 @@ public interface JUnitHost extends RemoteService {
    * @return the next test to run
    * @throws TimeoutException if the wait for the next method times out.
    */
-  TestInfo getFirstMethod() throws TimeoutException;
+  TestInfo[] getFirstMethod() throws TimeoutException;
 
   /**
    * Reports results for the last method run and gets the name of next method to
    * run.
    * 
-   * @param testInfo the testInfo the result is for
-   * @param result the results of executing the test
+   * @param results the results of executing the test
    * @return the next test to run
    * @throws TimeoutException if the wait for the next method times out.
    */
-  TestInfo reportResultsAndGetNextMethod(TestInfo testInfo, JUnitResult result)
-      throws TimeoutException;
+  TestInfo[] reportResultsAndGetNextMethod(
+      HashMap<TestInfo, JUnitResult> results) throws TimeoutException;
 }

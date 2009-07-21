@@ -44,6 +44,7 @@ import junit.framework.TestCase;
 import junit.framework.TestResult;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -66,10 +67,10 @@ import java.util.regex.Pattern;
  * </p>
  * 
  * <p>
- * The client classes consist of the translatable version of {@link
- * com.google.gwt.junit.client.GWTTestCase}, translatable JUnit classes, and the
- * user's own {@link com.google.gwt.junit.client.GWTTestCase}-derived class.
- * The client communicates to the server via RPC.
+ * The client classes consist of the translatable version of
+ * {@link com.google.gwt.junit.client.GWTTestCase}, translatable JUnit classes,
+ * and the user's own {@link com.google.gwt.junit.client.GWTTestCase}-derived
+ * class. The client communicates to the server via RPC.
  * </p>
  * 
  * <p>
@@ -238,6 +239,37 @@ public class JUnitShell extends GWTShell {
         }
       });
 
+      // TODO: currently, only two values but soon may have multiple values.
+      registerHandler(new ArgHandlerString() {
+        @Override
+        public String getPurpose() {
+          return "Configure batch execution of tests";
+        }
+
+        @Override
+        public String getTag() {
+          return "-batch";
+        }
+
+        @Override
+        public String[] getTagArgs() {
+          return new String[] {"module"};
+        }
+
+        @Override
+        public boolean isUndocumented() {
+          return true;
+        }
+
+        @Override
+        public boolean setString(String str) {
+          if (str.equals("module")) {
+            batchingStrategy = new ModuleBatchingStrategy();
+          }
+          return true;
+        }
+      });
+
       registerHandler(new ArgHandler() {
         @Override
         public String[] getDefaultArgs() {
@@ -337,8 +369,8 @@ public class JUnitShell extends GWTShell {
 
   /**
    * The amount of time to wait for all clients to complete a single test
-   * method, in milliseconds, measured from when the <i>last</i> client 
-   * connects (and thus starts the test).  5 minutes.
+   * method, in milliseconds, measured from when the <i>last</i> client connects
+   * (and thus starts the test). 5 minutes.
    */
   private static final long TEST_METHOD_TIMEOUT_MILLIS = 300000;
 
@@ -365,8 +397,8 @@ public class JUnitShell extends GWTShell {
 
   /**
    * Entry point for {@link com.google.gwt.junit.client.GWTTestCase}. Gets or
-   * creates the singleton {@link JUnitShell} and invokes its {@link
-   * #runTestImpl(String, TestCase, TestResult, Strategy)}.
+   * creates the singleton {@link JUnitShell} and invokes its
+   * {@link #runTestImpl(String, TestCase, TestResult, Strategy)}.
    */
   public static void runTest(String moduleName, TestCase testCase,
       TestResult testResult) throws UnableToCompleteException {
@@ -445,6 +477,11 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
+   * Determines how to batch up tests for execution.
+   */
+  private BatchingStrategy batchingStrategy = new NoBatchingStrategy();
+
+  /**
    * When headless, all logging goes to the console.
    */
   private PrintWriterTreeLogger consoleLogger;
@@ -509,6 +546,8 @@ public class JUnitShell extends GWTShell {
    * testBeginTimeout interval is done.
    */
   private long testMethodTimeout;
+
+  private Map<TestInfo, Map<String, JUnitResult>> cachedResults = new HashMap<TestInfo, Map<String, JUnitResult>>();
 
   /**
    * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
@@ -637,6 +676,49 @@ public class JUnitShell extends GWTShell {
     super.compile(getTopLogger(), module);
   }
 
+  private void processTestResult(TestInfo testInfo, TestCase testCase,
+      TestResult testResult, Strategy strategy) {
+
+    Map<String, JUnitResult> results = cachedResults.get(testInfo);
+    assert results != null;
+
+    boolean parallelTesting = numClients > 1;
+
+    for (Entry<String, JUnitResult> entry : results.entrySet()) {
+      String clientId = entry.getKey();
+      JUnitResult result = entry.getValue();
+      assert (result != null);
+      Throwable exception = result.getException();
+      // In the case that we're running multiple clients at once, we need to
+      // let the user know the browser in which the failure happened
+      if (parallelTesting && exception != null) {
+        String msg = "Remote test failed at " + clientId;
+        if (exception instanceof AssertionFailedError) {
+          AssertionFailedError newException = new AssertionFailedError(msg
+              + "\n" + exception.getMessage());
+          newException.setStackTrace(exception.getStackTrace());
+          newException.initCause(exception.getCause());
+          exception = newException;
+        } else {
+          exception = new RuntimeException(msg, exception);
+        }
+      }
+
+      // A "successful" failure.
+      if (exception instanceof AssertionFailedError) {
+        testResult.addFailure(testCase, (AssertionFailedError) exception);
+      } else if (exception != null) {
+        // A real failure
+        if (exception instanceof JUnitFatalLaunchException) {
+          lastLaunchFailed = true;
+        }
+        testResult.addError(testCase, exception);
+      }
+
+      strategy.processResult(testCase, result);
+    }
+  }
+
   /**
    * Runs a particular test case.
    */
@@ -682,8 +764,19 @@ public class JUnitShell extends GWTShell {
       return;
     }
 
-    messageQueue.setNextTest(new TestInfo(currentModule.getName(),
-        testCase.getClass().getName(), testCase.getName()));
+    TestInfo testInfo = new TestInfo(currentModule.getName(),
+        testCase.getClass().getName(), testCase.getName());
+    if (cachedResults.containsKey(testInfo)) {
+      // Already have a result.
+      processTestResult(testInfo, testCase, testResult, strategy);
+      return;
+    }
+
+    /*
+     * Need to process test. Set up synchronization.
+     */
+    TestInfo[] testBlock = batchingStrategy.getTestBlock(testInfo);
+    messageQueue.setNextTestBlock(testBlock);
 
     try {
       if (firstLaunch) {
@@ -710,43 +803,9 @@ public class JUnitShell extends GWTShell {
     }
 
     assert (messageQueue.hasResult());
-    Map<String, JUnitResult> results = messageQueue.getResults();
-
-    boolean parallelTesting = numClients > 1;
-
-    for (Entry<String, JUnitResult> entry : results.entrySet()) {
-      String clientId = entry.getKey();
-      JUnitResult result = entry.getValue();
-      assert (result != null);
-      Throwable exception = result.getException();
-      // In the case that we're running multiple clients at once, we need to
-      // let the user know the browser in which the failure happened
-      if (parallelTesting && exception != null) {
-        String msg = "Remote test failed at " + clientId;
-        if (exception instanceof AssertionFailedError) {
-          AssertionFailedError newException = new AssertionFailedError(msg
-              + "\n" + exception.getMessage());
-          newException.setStackTrace(exception.getStackTrace());
-          newException.initCause(exception.getCause());
-          exception = newException;
-        } else {
-          exception = new RuntimeException(msg, exception);
-        }
-      }
-
-      // A "successful" failure
-      if (exception instanceof AssertionFailedError) {
-        testResult.addFailure(testCase, (AssertionFailedError) exception);
-      } else if (exception != null) {
-        // A real failure
-        if (exception instanceof JUnitFatalLaunchException) {
-          lastLaunchFailed = true;
-        }
-        testResult.addError(testCase, exception);
-      }
-
-      strategy.processResult(testCase, result);
-    }
+    cachedResults = messageQueue.getResults();
+    assert cachedResults.containsKey(testInfo);
+    processTestResult(testInfo, testCase, testResult, strategy);
   }
 
   /**

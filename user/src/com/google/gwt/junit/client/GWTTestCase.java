@@ -16,9 +16,15 @@
 package com.google.gwt.junit.client;
 
 import com.google.gwt.junit.JUnitShell;
+import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 
 import junit.framework.TestCase;
 import junit.framework.TestResult;
+
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Acts as a bridge between the JUnit environment and the GWT environment. We
@@ -35,6 +41,12 @@ import junit.framework.TestResult;
  * </p>
  */
 public abstract class GWTTestCase extends TestCase {
+
+  /**
+   * Records all live GWTTestCases by module name so we can optimize run they
+   * are compiled and run.
+   */
+  public static final Map<String, Set<TestInfo>> ALL_GWT_TESTS = new HashMap<String, Set<TestInfo>>();
 
   /*
    * Object that collects the results of this test case execution.
@@ -133,6 +145,22 @@ public abstract class GWTTestCase extends TestCase {
     super.run(result);
   }
 
+  @Override
+  public void setName(String name) {
+    super.setName(name);
+
+    // Once the name is set, we can add ourselves to the global set.
+    String moduleName = getModuleName();
+    Set<TestInfo> testsInThisModule = ALL_GWT_TESTS.get(moduleName);
+    if (testsInThisModule == null) {
+      // Preserve the order.
+      testsInThisModule = new LinkedHashSet<TestInfo>();
+      ALL_GWT_TESTS.put(moduleName, testsInThisModule);
+    }
+    testsInThisModule.add(new TestInfo(moduleName + ".JUnit",
+        getClass().getName(), getName()));
+  }
+
   /**
    * Put the current test in asynchronous mode. If the test method completes
    * normally, this test will not immediately succeed. Instead, a <i>delay
@@ -218,8 +246,10 @@ public abstract class GWTTestCase extends TestCase {
   @Override
   protected void runTest() throws Throwable {
     if (this.getName() == null) {
-      throw new IllegalArgumentException("GWTTestCases require a name; \"" + this.toString() 
-          + "\" has none.  Perhaps you used TestSuite.addTest() instead of addTestClass()?");
+      throw new IllegalArgumentException(
+          "GWTTestCases require a name; \""
+              + this.toString()
+              + "\" has none.  Perhaps you used TestSuite.addTest() instead of addTestClass()?");
     }
 
     String moduleName = getModuleName();
