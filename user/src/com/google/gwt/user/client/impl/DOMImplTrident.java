@@ -212,5 +212,7 @@ public abstract class DOMImplTrident extends DOMImpl {
         @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
     if (chMask & 0x40000) elem.oncontextmenu = (bits & 0x40000) ? 
         @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+    if (chMask & 0x80000) elem.onpaste       = (bits & 0x80000) ? 
+        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
   }-*/;
 }

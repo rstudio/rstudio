@@ -300,6 +300,17 @@ public class Event extends NativeEvent {
   public static final int ONMOUSEWHEEL = 0x20000;
 
   /**
+   * Fired when the user pastes text into an input element.
+   * 
+   * <p>
+   * Note: This event is <em>not</em> supported on Firefox 2 and earlier, or
+   * Opera 10 and earlier. Be aware that it will not fire on these browser
+   * versions.
+   * </p>
+   */
+  public static final int ONPASTE = 0x80000;
+
+  /**
    * Fired when a scrollable element's scroll offset changes.
    */
   public static final int ONSCROLL = 0x04000;

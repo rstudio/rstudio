@@ -66,5 +66,7 @@ public class DOMImplOpera extends DOMImplStandard {
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     elem.oncontextmenu = (bits & 0x40000) ?
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
+    elem.onpaste       = (bits & 0x80000) ?
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
   }-*/;
 }
