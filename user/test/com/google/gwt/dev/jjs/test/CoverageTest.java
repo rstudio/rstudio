@@ -22,9 +22,8 @@ import com.google.gwt.junit.client.GWTTestCase;
  * possible in the Java to JavaScript compiler. This test is not at all intended
  * to execute correctly.
  */
+@SuppressWarnings("hiding")
 public class CoverageTest extends CoverageBase {
-
-  private static final double EPSILON = 0.000001;
 
   /**
    * TODO: document me.
@@ -197,8 +196,7 @@ public class CoverageTest extends CoverageBase {
         assert i == 3 : 1.2f;
         fail();
       } catch (AssertionError e) {
-        double val = Double.parseDouble(e.getMessage());
-        assertTrue(Math.abs(1.2f - val) < EPSILON);
+        assertEquals("1.2", e.getMessage());
       }
 
       try {
@@ -516,7 +514,6 @@ public class CoverageTest extends CoverageBase {
       o = new CoverageTest().new Inner();
     }
 
-    @SuppressWarnings("static-access")
     private void testQualifiedNameReference() {
       // QualifiedNameReference
       CoverageTest m = new CoverageTest();
@@ -536,7 +533,6 @@ public class CoverageTest extends CoverageBase {
       assertEquals("D", 4, new CoverageTest().getNext().y);
     }
 
-    @SuppressWarnings("static-access")
     private void testReferenceCalls() {
       // MessageSend, QualifiedSuperReference, QualifiedThisReference,
       // SuperReference, ThisReference
@@ -561,7 +557,6 @@ public class CoverageTest extends CoverageBase {
       CoverageTest.super.sfoo();
     }
 
-    @SuppressWarnings("static-access")
     private Inner testReferences() {
       // FieldReference, QualifiedSuperReference, QualifiedThisReference,
       // SuperReference, ThisReference
@@ -603,7 +598,6 @@ public class CoverageTest extends CoverageBase {
       fail();
     }
 
-    @SuppressWarnings("static-access")
     private void testSynchronizedStatement() {
       // SynchronizedStatement
       synchronized (inner) {

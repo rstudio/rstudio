@@ -202,22 +202,24 @@ public class HandlerManagerTest extends HandlerTestBase {
     };
     manager.addHandler(MouseDownEvent.getType(), one);
 
-    if (HandlerManagerTest.class.desiredAssertionStatus()) {
+    if (!GWT.isScript()) {
       try {
         manager.fireEvent(new MouseDownEvent() {
         });
         fail("Should have thrown on remove");
       } catch (AssertionError e) { /* pass */
       }
-    } else {
-      manager.fireEvent(new MouseDownEvent() {
-      });
-      assertFired(one);
-      reset();
-      manager.fireEvent(new MouseDownEvent() {
-      });
-      assertFired(one, mouse1);
+      return;
     }
+
+    // Web mode, no asserts, so remove will quietly succeed.
+    manager.fireEvent(new MouseDownEvent() {
+    });
+    assertFired(one);
+    reset();
+    manager.fireEvent(new MouseDownEvent() {
+    });
+    assertFired(one, mouse1);
   }
 
   public void testMultiFiring() {
