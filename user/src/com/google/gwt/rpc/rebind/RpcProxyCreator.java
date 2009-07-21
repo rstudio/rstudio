@@ -304,10 +304,10 @@ public class RpcProxyCreator extends ProxyCreator {
         deserializationSto.getSerializableTypes());
     for (JMethod m : serviceIntf.getOverridableMethods()) {
       // Pick up any primitive return types, which get sent boxed
-      assert serializableTypes.contains(m.getReturnType())
-          || m.getReturnType().isPrimitive() != null : "Missing non-primitive return type "
-          + m.getReturnType().getQualifiedSourceName();
-      serializableTypes.add(m.getReturnType());
+      JPrimitiveType mustBox = m.getReturnType().isPrimitive();
+      if (mustBox != null) {
+        serializableTypes.add(m.getReturnType());
+      }
     }
 
     StringBuilder sb = new StringBuilder("@ArtificialRescue({");
