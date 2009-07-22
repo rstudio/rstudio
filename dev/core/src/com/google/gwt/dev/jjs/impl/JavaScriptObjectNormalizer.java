@@ -120,7 +120,7 @@ public class JavaScriptObjectNormalizer {
         JMethod jsoMethod = findJsoMethod(x.getTarget());
         assert jsoMethod != null;
 
-        if (dualImpl.contains(targetClass)) {
+        if (dualImpls.contains(targetClass)) {
           /*
            * This is the special-case code to handle interfaces.
            */
@@ -175,13 +175,24 @@ public class JavaScriptObjectNormalizer {
       return true;
     }
 
+    private JMethod findConcreteImplementation(JMethod method,
+        JClassType concreteType) {
+      for (JMethod m : concreteType.getMethods()) {
+        if (program.typeOracle.getAllOverrides(m).contains(method)) {
+          if (!m.isAbstract()) {
+            return m;
+          }
+        }
+      }
+      return null;
+    }
+
     private JMethod findJsoMethod(JMethod interfaceMethod) {
       JClassType jsoClass = jsoSingleImpls.get(interfaceMethod.getEnclosingType());
       assert program.isJavaScriptObject(jsoClass);
       assert jsoClass != null;
 
-      JMethod toReturn = program.typeOracle.findConcreteImplementation(
-          interfaceMethod, jsoClass);
+      JMethod toReturn = findConcreteImplementation(interfaceMethod, jsoClass);
       assert toReturn != null;
       assert !toReturn.isAbstract();
       assert jsoClass.isFinal() || toReturn.isFinal();
@@ -226,8 +237,8 @@ public class JavaScriptObjectNormalizer {
       if (program.isJavaScriptObject(type)) {
         return program.getJavaScriptObject();
 
-      } else if (jsoSingleImpls.containsKey(type) && !dualImpl.contains(type)) {
-        // Narrow to JSO when possible
+      } else if (jsoSingleImpls.containsKey(type) && !dualImpls.contains(type)) {
+        // Optimization: narrow to JSO if it's not a dual impl.
         return program.getJavaScriptObject();
 
       } else if (type instanceof JArrayType) {
@@ -249,7 +260,7 @@ public class JavaScriptObjectNormalizer {
   /**
    * Interfaces implemented both by a JSO type and a regular Java type.
    */
-  private final Set<JInterfaceType> dualImpl;
+  private final Set<JInterfaceType> dualImpls;
 
   /**
    * Maps SingleJsoImpl interfaces onto the single JSO implementation.
@@ -260,7 +271,7 @@ public class JavaScriptObjectNormalizer {
 
   private JavaScriptObjectNormalizer(JProgram program) {
     this.program = program;
-    dualImpl = program.typeOracle.getInterfacesWithJavaAndJsoImpls();
+    dualImpls = program.typeOracle.getInterfacesWithJavaAndJsoImpls();
     jsoSingleImpls = program.typeOracle.getSingleJsoImpls();
   }
 

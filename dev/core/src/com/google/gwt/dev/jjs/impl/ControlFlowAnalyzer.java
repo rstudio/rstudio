@@ -174,21 +174,6 @@ public class ControlFlowAnalyzer {
       JType targetType = x.getCastType();
       if (program.isJavaScriptObject(targetType)) {
         rescue((JReferenceType) targetType, true, true);
-      } else {
-        /*
-         * If there's a cast to a SingleJso interface, rescue the implementing
-         * JSO type. If the JSO type isn't rescued (and there's no other regular
-         * Java type implementing the interface), then the cast operation will
-         * be replaced with a throwCCEUnlessNull() call, since there's no type
-         * left in the type system that implements the interface. If there is an
-         * implementing Java type, then a dynamicCast() will be emitted which
-         * will throw a CCE if it hits a JSO type.
-         */
-        JClassType maybeSingleJso = program.typeOracle.getSingleJsoImpls().get(
-            targetType);
-        if (maybeSingleJso != null) {
-          rescue(maybeSingleJso, true, true);
-        }
       }
 
       return true;
