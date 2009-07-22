@@ -205,32 +205,85 @@ public class JTypeOracle implements Serializable {
     return instantiatedTypes.contains(type);
   }
 
+  /**
+   * A map of all interfaces to the set of classes that could theoretically
+   * implement them.
+   */
   private final Map<JInterfaceType, Set<JClassType>> couldBeImplementedMap = new IdentityHashMap<JInterfaceType, Set<JClassType>>();
 
+  /**
+   * A map of all classes to the set of interfaces that they could theoretically
+   * implement.
+   */
   private final Map<JClassType, Set<JInterfaceType>> couldImplementMap = new IdentityHashMap<JClassType, Set<JInterfaceType>>();
 
+  /**
+   * The set of all interfaces that are initially implemented by both a Java and
+   * Overlay type.
+   */
   private final Set<JInterfaceType> dualImpls = new IdentityHashSet<JInterfaceType>();
 
+  /**
+   * A map of all classes to the set of interfaces they directly implement,
+   * possibly through inheritance.
+   */
   private final Map<JClassType, Set<JInterfaceType>> implementsMap = new IdentityHashMap<JClassType, Set<JInterfaceType>>();
 
   private Set<JReferenceType> instantiatedTypes = null;
 
+  /**
+   * A map of all interfaces to the set of classes that directly implement them,
+   * possibly through inheritance.
+   */
   private final Map<JInterfaceType, Set<JClassType>> isImplementedMap = new IdentityHashMap<JInterfaceType, Set<JClassType>>();
 
+  /**
+   * Caches the {@link Object} class.
+   */
   private JClassType javaLangObject = null;
 
+  /**
+   * A map of all interfaces that are implemented by overlay types to the
+   * overlay type that initially implements it.
+   */
   private final Map<JInterfaceType, JClassType> jsoSingleImpls = new IdentityHashMap<JInterfaceType, JClassType>();
 
+  /**
+   * The associated {@link JProgram}.
+   */
   private final JProgram program;
 
+  /**
+   * A map of all classes to the set of classes that extend them, directly or
+   * indirectly.
+   */
   private final Map<JClassType, Set<JClassType>> subClassMap = new IdentityHashMap<JClassType, Set<JClassType>>();
 
+  /**
+   * A map of all interfaces to the set of interfaces that extend them, directly
+   * or indirectly.
+   */
   private final Map<JInterfaceType, Set<JInterfaceType>> subInterfaceMap = new IdentityHashMap<JInterfaceType, Set<JInterfaceType>>();
 
+  /**
+   * A map of all classes to the set of classes they extend, directly or
+   * indirectly.
+   */
   private final Map<JClassType, Set<JClassType>> superClassMap = new IdentityHashMap<JClassType, Set<JClassType>>();
 
+  /**
+   * A map of all interfaces to the set of interfaces they extend, directly or
+   * indirectly.
+   */
   private final Map<JInterfaceType, Set<JInterfaceType>> superInterfaceMap = new IdentityHashMap<JInterfaceType, Set<JInterfaceType>>();
 
+  /**
+   * A map of all methods with virtual overrides, onto the collection of
+   * overridden methods. Each key method's collections is a map of the set of
+   * subclasses who inherit the key method mapped onto the set of interface
+   * methods the key method virtually implements. For a definition of a virtual
+   * override, see {@link #getAllVirtualOverrides(JMethod)}.
+   */
   private final Map<JMethod, Map<JClassType, Set<JMethod>>> virtualUpRefMap = new IdentityHashMap<JMethod, Map<JClassType, Set<JMethod>>>();
 
   public JTypeOracle(JProgram program) {
@@ -459,10 +512,26 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * References to any methods which this method does not directly override
-   * within the class in which it is declared; however, some instantiable
-   * subclass will cause the implementation of this method to effectively
-   * override methods with identical signatures declared in unrelated classes.
+   * Returns the set of methods the given method virtually overrides. A virtual
+   * override is an association between a concrete method and an unrelated
+   * interface method with the exact same name and signature. The association
+   * occurs if and only if some subclass extends the concrete method's
+   * containing class and implements the interface method's containing
+   * interface. Example:
+   * 
+   * <pre>
+   * interface IFoo {
+   *   foo();
+   * }
+   * class Unrelated {
+   *   foo() { ... }
+   * }
+   * class Foo extends Unrelated implements IFoo {
+   * }
+   * </pre>
+   * 
+   * In this case, <code>Unrelated.foo()</code> virtually implements
+   * <code>IFoo.foo()</code> in subclass <code>Foo</code>.
    */
   public Set<JMethod> getAllVirtualOverrides(JMethod method) {
     Set<JMethod> results = new IdentityHashSet<JMethod>();
@@ -687,7 +756,8 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * Returns true if qType is a superinterface of type, directly or indirectly.
+   * Returns true if type extends the interface represented by qType, either
+   * directly or indirectly.
    */
   private boolean extendsInterface(JInterfaceType type, JInterfaceType qType) {
     return get(superInterfaceMap, type).contains(qType);
@@ -739,8 +809,8 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * Returns true if qType is an implemented interface of type, directly or
-   * indirectly.
+   * Returns true if type implements the interface represented by qType, either
+   * directly or indirectly.
    */
   private boolean implementsInterface(JClassType type, JInterfaceType qType) {
     return get(implementsMap, type).contains(qType);
