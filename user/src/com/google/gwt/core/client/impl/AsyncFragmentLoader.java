@@ -108,8 +108,9 @@ public class AsyncFragmentLoader {
 
   /**
    * A trivial queue of int's that should compile much better than a
-   * LinkedList&lt;Integer&gt;. It assumes that there will be a maximum number
-   * of items passed through the queue for its entire life.
+   * LinkedList&lt;Integer&gt;. It assumes that it has a bound on the number of
+   * items added to the queue. Removing items does not free up more space, but
+   * calling <code>clear()</code> does.
    */
   private static class BoundedIntQueue {
     private final int[] array;
@@ -119,22 +120,31 @@ public class AsyncFragmentLoader {
     public BoundedIntQueue(int maxPuts) {
       array = new int[maxPuts];
     }
-    
+
     public void add(int x) {
       assert (write < array.length);
       array[write++] = x;
     }
-    
+
+    /**
+     * Removes all elements, and also makes all space in the queue available
+     * again.
+     */
+    public void clear() {
+      read = 0;
+      write = 0;
+    }
+
     public int peek() {
       assert read < write;
       return array[read];
     }
-    
+
     public int remove() {
       assert read < write;
       return array[read++];
     }
-    
+
     public int size() {
       return write - read;
     }
@@ -177,6 +187,12 @@ public class AsyncFragmentLoader {
         handlersToRun.add(waitingForInitialFragmentsErrorHandlers.remove());
         waitingForInitialFragments.remove();
       }
+
+      /*
+       * Call clear() here so that waitingForInitialFragments makes all of its
+       * space available for later requests.
+       */
+      waitingForInitialFragments.clear();
 
       // add handlers for pending initial fragment downloads
       handlersToRun.addAll(initialFragmentErrorHandlers.values());
