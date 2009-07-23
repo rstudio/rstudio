@@ -182,7 +182,7 @@
              failureproperty="junit.failure" tempdir="@{test.out}" >
         <jvmarg line="${junit.platform.args}" />
         <jvmarg line="-Xmx768m" />
-        <sysproperty key="gwt.args" value="${junit.notheadless.arg} @{test.args} -batch module" />
+        <sysproperty key="gwt.args" value="${junit.notheadless.arg} @{test.args}" />
         <sysproperty key="java.awt.headless" value="${junit.headless}" />
         <sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
         <classpath>
