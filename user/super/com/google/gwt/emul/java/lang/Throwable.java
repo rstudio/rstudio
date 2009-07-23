@@ -15,7 +15,6 @@
  */
 package java.lang;
 
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.impl.StackTraceCreator;
 
 import java.io.PrintStream;
@@ -70,12 +69,7 @@ public class Throwable implements Serializable {
    * @return this
    */
   public Throwable fillInStackTrace() {
-    JsArrayString stack = StackTraceCreator.createStackTrace();
-    stackTrace = new StackTraceElement[stack.length()];
-    for (int i = 0, j = stackTrace.length; i < j; i++) {
-      stackTrace[i] = new StackTraceElement("Unknown", stack.get(i),
-          "Unknown source", 0);
-    }
+    StackTraceCreator.fillInStackTrace(this);
     return this;
   }
 

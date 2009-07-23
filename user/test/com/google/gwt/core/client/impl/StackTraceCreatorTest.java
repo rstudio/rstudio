@@ -26,6 +26,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class StackTraceCreatorTest extends GWTTestCase {
   public static void testJavaScriptException() {
+    JsArrayString start = StackTraceCreator.createStackTrace();
     Throwable t = null;
     try {
       throwNative();
@@ -52,6 +53,9 @@ public class StackTraceCreatorTest extends GWTTestCase {
     }
 
     checkStack(myName, t);
+
+    JsArrayString end = StackTraceCreator.createStackTrace();
+    assertEquals(start, end);
   }
 
   /**
@@ -63,12 +67,19 @@ public class StackTraceCreatorTest extends GWTTestCase {
       return;
     }
 
+    JsArrayString start = StackTraceCreator.createStackTrace();
+
     JsArrayString stack = countDown(5);
     assertNotNull(stack);
     assertTrue(stack.length() > 0);
+
+    JsArrayString end = StackTraceCreator.createStackTrace();
+    assertEquals(start, end);
   }
 
   public static void testStackTraces() {
+    JsArrayString start = StackTraceCreator.createStackTrace();
+
     Throwable t;
     try {
       throw new RuntimeException();
@@ -84,6 +95,9 @@ public class StackTraceCreatorTest extends GWTTestCase {
     }
 
     checkStack(myName, t);
+
+    JsArrayString end = StackTraceCreator.createStackTrace();
+    assertEquals(start, end);
   }
 
   private static void checkStack(String myName, Throwable t) {
@@ -114,6 +128,13 @@ public class StackTraceCreatorTest extends GWTTestCase {
 
     assertTrue("Did not find " + myName + " in the stack " + observedStack,
         found);
+  }
+
+  private static void assertEquals(JsArrayString start, JsArrayString end) {
+    assertEquals("length", start.length(), end.length());
+    for (int i = 0, j = start.length(); i < j; i++) {
+      assertEquals("frame " + i, start.get(i), end.get(i));
+    }
   }
 
   private static JsArrayString countDown(int count) {

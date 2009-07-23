@@ -133,6 +133,7 @@ import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
+import com.google.gwt.dev.util.collect.Maps;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -360,6 +361,11 @@ public class GenerateJavaScriptAST {
       jsFunction.getSourceInfo().addCorrelation(
           program.getCorrelator().by(globalName));
       push(jsFunction.getScope());
+
+      if (program.getIndexedMethods().contains(x)) {
+        indexedFunctions = Maps.put(indexedFunctions,
+            x.getEnclosingType().getShortName() + "." + x.getName(), jsFunction);
+      }
       return true;
     }
 
@@ -1885,6 +1891,8 @@ public class GenerateJavaScriptAST {
    */
   private final JsScope interfaceScope;
 
+  private Map<String, JsFunction> indexedFunctions = Maps.create();
+
   private final JsProgram jsProgram;
 
   /**
@@ -2113,6 +2121,8 @@ public class GenerateJavaScriptAST {
         }
       }
     }
+
+    jsProgram.setIndexedFunctions(indexedFunctions);
 
     // TODO(spoon): Instead of gathering the information here, get it via
     // SourceInfo

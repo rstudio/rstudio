@@ -35,6 +35,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -691,6 +692,10 @@ public class JProgram extends JNode {
           + string);
     }
     return method;
+  }
+
+  public Collection<JMethod> getIndexedMethods() {
+    return Collections.unmodifiableCollection(indexedMethods.values());
   }
 
   public JDeclaredType getIndexedType(String string) {
