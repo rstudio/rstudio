@@ -18,8 +18,8 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBlock;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
-import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JLocal;
@@ -63,17 +63,17 @@ public class CatchBlockNormalizer {
       }
 
       SourceInfo catchInfo = x.getCatchBlocks().get(0).getSourceInfo();
-
-      JLocal exObj = popTempLocal();
-      JLocalRef exRef = new JLocalRef(catchInfo, exObj);
+      JLocal exVar = popTempLocal();
       JBlock newCatchBlock = new JBlock(catchInfo);
-      // $e = Exceptions.caught($e)
-      JMethod caughtMethod = program.getIndexedMethod("Exceptions.caught");
-      JMethodCall call = new JMethodCall(catchInfo, null, caughtMethod);
-      call.addArg(exRef);
-      JExpressionStatement asg = program.createAssignmentStmt(catchInfo, exRef,
-          call);
-      newCatchBlock.addStmt(asg);
+
+      {
+        // $e = Exceptions.caught($e)
+        JMethod caughtMethod = program.getIndexedMethod("Exceptions.caught");
+        JMethodCall call = new JMethodCall(catchInfo, null, caughtMethod);
+        call.addArg(new JLocalRef(catchInfo, exVar));
+        newCatchBlock.addStmt(program.createAssignmentStmt(catchInfo,
+            new JLocalRef(catchInfo, exVar), call));
+      }
 
       /*
        * Build up a series of if, else if statements to test the type of the
@@ -82,18 +82,21 @@ public class CatchBlockNormalizer {
        * Go backwards so we can nest the else statements in the correct order!
        */
       // rethrow the current exception if no one caught it
-      JStatement cur = new JThrowStatement(catchInfo, exRef);
+      JStatement cur = new JThrowStatement(catchInfo, new JLocalRef(catchInfo,
+          exVar));
       for (int i = x.getCatchBlocks().size() - 1; i >= 0; --i) {
         JBlock block = x.getCatchBlocks().get(i);
         JLocalRef arg = x.getCatchArgs().get(i);
         catchInfo = block.getSourceInfo();
         JReferenceType argType = (JReferenceType) arg.getType();
-        // if ($e instanceof ArgType) { userVar = $e; <user code> }
-        JExpression ifTest = new JInstanceOf(catchInfo, argType, exRef);
-        asg = program.createAssignmentStmt(catchInfo, arg, exRef);
+        // if ($e instanceof ArgType) { var userVar = $e; <user code> }
+        JExpression ifTest = new JInstanceOf(catchInfo, argType, new JLocalRef(
+            catchInfo, exVar));
+        JDeclarationStatement declaration = new JDeclarationStatement(
+            catchInfo, arg, new JLocalRef(catchInfo, exVar));
         if (!block.getStatements().isEmpty()) {
           // Only bother adding the assignment if the block is non-empty
-          block.addStmt(0, asg);
+          block.addStmt(0, declaration);
         }
         // nest the previous as an else for me
         cur = new JIfStatement(catchInfo, ifTest, block, cur);
@@ -101,7 +104,7 @@ public class CatchBlockNormalizer {
 
       newCatchBlock.addStmt(cur);
       x.getCatchArgs().clear();
-      x.getCatchArgs().add(exRef);
+      x.getCatchArgs().add(new JLocalRef(newCatchBlock.getSourceInfo(), exVar));
       x.getCatchBlocks().clear();
       x.getCatchBlocks().add(newCatchBlock);
     }
