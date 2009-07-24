@@ -684,7 +684,12 @@ public class JsStackEmulator {
      * Strips off the final name segment.
      */
     private String baseName(String fileName) {
+      // Try the system path separator
       int lastIndex = fileName.lastIndexOf(File.separator);
+      if (lastIndex == -1) {
+        // Otherwise, try URL path separator
+        lastIndex = fileName.lastIndexOf('/');
+      }
       if (lastIndex != -1) {
         return fileName.substring(lastIndex + 1);
       } else {
