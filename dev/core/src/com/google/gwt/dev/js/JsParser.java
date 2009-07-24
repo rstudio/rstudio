@@ -346,6 +346,8 @@ public class JsParser {
    */
   private JsNameRef mapAsPropertyNameRef(Node nameRefNode)
       throws JsParserException {
+    // Javac 1.6.0_01 doesn't like the cast below if this is parameterized
+    @SuppressWarnings("unchecked")
     JsNode unknown = map(nameRefNode);
     // This is weird, but for "a.b", the rhino AST calls "b" a string literal.
     // However, since we know it's for a PROPGET, we can unstringliteralize it.
@@ -563,6 +565,8 @@ public class JsParser {
   }
 
   private JsExpression mapExpression(Node exprNode) throws JsParserException {
+    // Javac 1.6.0_01 doesn't like the cast below if this is parameterized
+    @SuppressWarnings("unchecked")
     JsNode unknown = map(exprNode);
     if (unknown instanceof JsExpression) {
       return (JsExpression) unknown;
@@ -623,7 +627,8 @@ public class JsParser {
       JsFor toFor = new JsFor(makeSourceInfo(forNode));
 
       // The first item is either an expression or a JsVars.
-      //
+      // Javac 1.6.0_01 doesn't like the cast below if this is parameterized
+      @SuppressWarnings("unchecked")
       JsNode initThingy = map(fromInit);
       if (initThingy != null) {
         if (initThingy instanceof JsVars) {
@@ -839,6 +844,8 @@ public class JsParser {
 
   private JsExpression mapOptionalExpression(Node exprNode)
       throws JsParserException {
+    // Javac 1.6.0_01 doesn't like the cast below if this is parameterized
+    @SuppressWarnings("unchecked")
     JsNode unknown = map(exprNode);
     if (unknown != null) {
       if (unknown instanceof JsExpression) {
@@ -984,6 +991,8 @@ public class JsParser {
   }
 
   private JsStatement mapStatement(Node nodeStmt) throws JsParserException {
+    // Javac 1.6.0_01 doesn't like the cast below if this is parameterized
+    @SuppressWarnings("unchecked")
     JsNode unknown = map(nodeStmt);
     if (unknown != null) {
       if (unknown instanceof JsStatement) {
