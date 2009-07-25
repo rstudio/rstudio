@@ -370,9 +370,9 @@ public class JUnitShell extends GWTShell {
   /**
    * The amount of time to wait for all clients to complete a single test
    * method, in milliseconds, measured from when the <i>last</i> client connects
-   * (and thus starts the test). 5 minutes.
+   * (and thus starts the test). 25 minutes.
    */
-  private static final long TEST_METHOD_TIMEOUT_MILLIS = 300000;
+  private static final long TEST_METHOD_TIMEOUT_MILLIS = 4 * 300000;
 
   /**
    * Singleton object for hosting unit tests. All test case instances executed
