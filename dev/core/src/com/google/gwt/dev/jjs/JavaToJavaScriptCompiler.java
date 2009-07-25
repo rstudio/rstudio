@@ -92,7 +92,6 @@ import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsReportGenerationVisitor;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
-import com.google.gwt.dev.js.JsStackEmulator;
 import com.google.gwt.dev.js.JsStaticEval;
 import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
@@ -141,7 +140,7 @@ public class JavaToJavaScriptCompiler {
     private final byte[] serializedSymbolMap;
     private final StatementRanges[] statementRanges;
     private final int permutationId;
-
+    
     public PermutationResultImpl(String[] js, SymbolData[] symbolMap,
         StatementRanges[] statementRanges, int permutationId) {
       byte[][] bytes = new byte[js.length][];
@@ -168,7 +167,7 @@ public class JavaToJavaScriptCompiler {
     public byte[][] getJs() {
       return js;
     }
-
+    
     public int getPermutationId() {
       return permutationId;
     }
@@ -271,18 +270,6 @@ public class JavaToJavaScriptCompiler {
         } while (didChange);
       }
 
-      /*
-       * Creates new variables, must run before namer
-       * 
-       * TODO(bobv): This is a temporary hack to conditionally map in this pass.
-       * Once deferred-binding properties can specify a subset of the
-       * permutation matrix, revisit this if statement.
-       */
-      if (jprogram.getDeclaredTypes().contains(
-          jprogram.getFromTypeMap("com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated"))) {
-        JsStackEmulator.exec(jsProgram, propertyOracles);
-      }
-
       // (10) Obfuscate
       final Map<JsName, String> stringLiteralMap;
       switch (options.getOutput()) {
@@ -323,6 +310,7 @@ public class JavaToJavaScriptCompiler {
       // Work around an IE7 bug,
       // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
       JsIEBlockSizeVisitor.exec(jsProgram);
+
       JsBreakUpLargeVarStatements.exec(jsProgram, propertyOracles);
 
       // (12) Generate the final output text.
@@ -352,8 +340,7 @@ public class JavaToJavaScriptCompiler {
           makeSymbolMap(symbolTable), ranges, permutationId);
 
       toReturn.getArtifacts().add(
-          makeSoycArtifact(logger, permutationId, jprogram, js, sourceInfoMaps,
-              dependencies));
+          makeSoycArtifact(logger, permutationId, jprogram, js, sourceInfoMaps, dependencies));
 
       System.out.println("Permutation took "
           + (System.currentTimeMillis() - permStart) + " ms");

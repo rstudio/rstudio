@@ -29,7 +29,6 @@ import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
-import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFor;
 import com.google.gwt.dev.js.ast.JsForIn;
@@ -151,12 +150,8 @@ public class JsParser {
 
   private SourceInfo makeSourceInfo(Node node) {
     SourceInfo parent = sourceInfoStack.peek();
-    int lineno = node.getLineno();
-    if (lineno == -1) {
-      // Rhino only reports line numbers for statement nodes, not expressions
-      return parent;
-    }
-    SourceInfo toReturn = program.createSourceInfo(lineno, parent.getFileName());
+    SourceInfo toReturn = program.createSourceInfo(node.getLineno(),
+        parent.getFileName());
     toReturn.copyMissingCorrelationsFrom(parent);
     return toReturn;
   }
@@ -178,7 +173,7 @@ public class JsParser {
         return null;
 
       case TokenStream.EXPRSTMT:
-        return mapExprStmt(node);
+        return mapExpression(node.getFirstChild()).makeStmt();
 
       case TokenStream.REGEXP:
         return mapRegExp(node);
@@ -351,8 +346,6 @@ public class JsParser {
    */
   private JsNameRef mapAsPropertyNameRef(Node nameRefNode)
       throws JsParserException {
-    // Javac 1.6.0_01 doesn't like the cast below if this is parameterized
-    @SuppressWarnings("unchecked")
     JsNode unknown = map(nameRefNode);
     // This is weird, but for "a.b", the rhino AST calls "b" a string literal.
     // However, since we know it's for a PROPGET, we can unstringliteralize it.
@@ -423,11 +416,8 @@ public class JsParser {
   }
 
   private JsBlock mapBlock(Node nodeStmts) throws JsParserException {
-    SourceInfo info = makeSourceInfo(nodeStmts);
-    JsBlock block = new JsBlock(info);
-    pushSourceInfo(info);
+    JsBlock block = new JsBlock(makeSourceInfo(nodeStmts));
     mapStatements(block.getStatements(), nodeStmts);
-    popSourceInfo();
     return block;
   }
 
@@ -523,9 +513,6 @@ public class JsParser {
       fromTestExpr = ifNode.getFirstChild().getNext();
     }
 
-    SourceInfo info = makeSourceInfo(ifNode);
-    pushSourceInfo(info);
-
     // Map the test expression.
     //
     JsExpression toTestExpr = mapExpression(fromTestExpr);
@@ -534,14 +521,12 @@ public class JsParser {
     //
     JsStatement toBody = mapStatement(fromBody);
 
-    popSourceInfo();
-
     // Create and attach the "while" or "do" statement we're mapping to.
     //
     if (isWhile) {
-      return new JsWhile(info, toTestExpr, toBody);
+      return new JsWhile(makeSourceInfo(ifNode), toTestExpr, toBody);
     } else {
-      return new JsDoWhile(info, toTestExpr, toBody);
+      return new JsDoWhile(makeSourceInfo(ifNode), toTestExpr, toBody);
     }
   }
 
@@ -578,21 +563,12 @@ public class JsParser {
   }
 
   private JsExpression mapExpression(Node exprNode) throws JsParserException {
-    // Javac 1.6.0_01 doesn't like the cast below if this is parameterized
-    @SuppressWarnings("unchecked")
     JsNode unknown = map(exprNode);
     if (unknown instanceof JsExpression) {
       return (JsExpression) unknown;
     } else {
       throw createParserException("Expecting an expression", exprNode);
     }
-  }
-
-  private JsExprStmt mapExprStmt(Node node) throws JsParserException {
-    pushSourceInfo(makeSourceInfo(node));
-    JsExpression expr = mapExpression(node.getFirstChild());
-    popSourceInfo();
-    return expr.makeStmt();
   }
 
   private JsStatement mapForStatement(Node forNode) throws JsParserException {
@@ -647,8 +623,7 @@ public class JsParser {
       JsFor toFor = new JsFor(makeSourceInfo(forNode));
 
       // The first item is either an expression or a JsVars.
-      // Javac 1.6.0_01 doesn't like the cast below if this is parameterized
-      @SuppressWarnings("unchecked")
+      //
       JsNode initThingy = map(fromInit);
       if (initThingy != null) {
         if (initThingy instanceof JsVars) {
@@ -864,8 +839,6 @@ public class JsParser {
 
   private JsExpression mapOptionalExpression(Node exprNode)
       throws JsParserException {
-    // Javac 1.6.0_01 doesn't like the cast below if this is parameterized
-    @SuppressWarnings("unchecked")
     JsNode unknown = map(exprNode);
     if (unknown != null) {
       if (unknown instanceof JsExpression) {
@@ -955,16 +928,13 @@ public class JsParser {
   }
 
   private JsReturn mapReturn(Node returnNode) throws JsParserException {
-    SourceInfo info = makeSourceInfo(returnNode);
-    JsReturn toReturn = new JsReturn(info);
-    pushSourceInfo(info);
+    JsReturn toReturn = new JsReturn(makeSourceInfo(returnNode));
     Node from = returnNode.getFirstChild();
     if (from != null) {
       JsExpression to = mapExpression(from);
       toReturn.setExpr(to);
     }
 
-    popSourceInfo();
     return toReturn;
   }
 
@@ -1014,8 +984,6 @@ public class JsParser {
   }
 
   private JsStatement mapStatement(Node nodeStmt) throws JsParserException {
-    // Javac 1.6.0_01 doesn't like the cast below if this is parameterized
-    @SuppressWarnings("unchecked")
     JsNode unknown = map(nodeStmt);
     if (unknown != null) {
       if (unknown instanceof JsStatement) {
@@ -1055,9 +1023,7 @@ public class JsParser {
   }
 
   private JsSwitch mapSwitchStatement(Node switchNode) throws JsParserException {
-    SourceInfo info = makeSourceInfo(switchNode);
-    JsSwitch toSwitch = new JsSwitch(info);
-    pushSourceInfo(info);
+    JsSwitch toSwitch = new JsSwitch(makeSourceInfo(switchNode));
 
     // The switch expression.
     //
@@ -1103,20 +1069,15 @@ public class JsParser {
       fromMember = fromMember.getNext();
     }
 
-    popSourceInfo();
     return toSwitch;
   }
 
   private JsThrow mapThrowStatement(Node throwNode) throws JsParserException {
-    SourceInfo info = makeSourceInfo(throwNode);
-    pushSourceInfo(info);
-
     // Create, map, and attach.
     //
     Node fromExpr = throwNode.getFirstChild();
-    JsThrow toThrow = new JsThrow(info, mapExpression(fromExpr));
-
-    popSourceInfo();
+    JsThrow toThrow = new JsThrow(makeSourceInfo(throwNode),
+        mapExpression(fromExpr));
     return toThrow;
   }
 
@@ -1210,9 +1171,7 @@ public class JsParser {
   }
 
   private JsVars mapVar(Node varNode) throws JsParserException {
-    SourceInfo info = makeSourceInfo(varNode);
-    pushSourceInfo(info);
-    JsVars toVars = new JsVars(info);
+    JsVars toVars = new JsVars(makeSourceInfo(varNode));
     Node fromVar = varNode.getFirstChild();
     while (fromVar != null) {
       // Use a conservative name allocation strategy that allocates all names
@@ -1233,7 +1192,6 @@ public class JsParser {
       fromVar = fromVar.getNext();
     }
 
-    popSourceInfo();
     return toVars;
   }
 
@@ -1253,24 +1211,8 @@ public class JsParser {
     sourceInfoStack.pop();
   }
 
-  private void popSourceInfo() {
-    sourceInfoStack.pop();
-  }
-
   private void pushScope(JsScope scope, SourceInfo sourceInfo) {
     scopeStack.push(scope);
-    sourceInfoStack.push(sourceInfo);
-  }
-
-  /**
-   * This should be called when processing any Rhino statement Node that has
-   * line number data so that enclosed expressions will have a useful source
-   * location.
-   * 
-   * @see Node#hasLineno
-   */
-  private void pushSourceInfo(SourceInfo sourceInfo) {
-    assert sourceInfo.getStartLine() >= 0 : "Bad SourceInfo line number";
     sourceInfoStack.push(sourceInfo);
   }
 }
