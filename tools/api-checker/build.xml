@@ -10,6 +10,10 @@
   <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-${build.host.platform}.jar" />
   <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
 
+  <fileset id="default.tests" dir="${javac.junit.out}">
+    <include name="**/*Test.class" />
+  </fileset>
+
   <target name="compile" description="Compile all class files">
     <mkdir dir="${javac.out}" />
     <gwt.javac>
@@ -20,7 +24,7 @@
     </gwt.javac>
   </target>
 
-  <target name="compile.tests" description="Compiles the test code for this project">
+  <target name="compile.tests" depends="compile.emma" description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" destdir="${javac.junit.out}">
       <classpath>
@@ -42,33 +46,12 @@
   </target>
 
   <target name="test" depends="build, compile.tests" description="Run unit tests for this project.">
-    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
-      <classpath>
-        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-        <pathelement location="${gwt.tools.antlib}/ant-junit-1.6.5.jar" />
-      </classpath>
-    </taskdef>
-  
-    <echo message="Writing test results to ${junit.out}/reports" />
-    <mkdir dir="${junit.out}/reports" />
-  
-    <junit dir="${junit.out}" fork="yes" printsummary="yes" haltonfailure="true">
-      <sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
-      <classpath>
-        <pathelement location="test" />
-        <pathelement location="${javac.junit.out}" />
+    <gwt.junit test.out="${junit.out}" test.cases="default.tests" >
+      <extraclasspaths>
         <pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
         <pathelement location="${gwt.dev.jar}" />
-        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-      </classpath>
-  
-      <formatter type="plain" />
-      <formatter type="xml" />
-      <batchtest todir="${junit.out}/reports">
-                          <fileset dir="${javac.junit.out}"
-                            includes="**/*Test.class"/> 
-      </batchtest>
-    </junit>
+      </extraclasspaths>
+    </gwt.junit>
   </target>
 
   <target name="checkstyle" description="Static analysis of source">
