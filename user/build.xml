@@ -3,14 +3,10 @@
   <property name="project.tail" value="user" />
   <property name="test.args" value="" />
 
-  <!-- BrowserManagerServer_Stub compiled using rmic, which doesn't generate full source code -->
-  <property name="emma.filter.exclude" value="*BrowserManagerServer_Stub*" />
-
   <import file="${gwt.root}/common.ant.xml" />
 
   <property name="gwt.junit.emmatestcase.includes" value="**/*Suite.class,com/google/gwt/dev/jjs/test/*Test.class"/>
   <property name="test.timeout" value="3" />
-  <property name="emma.merged.out" value="${junit.out}/emma-coverage" />
 
   <!-- 
     Whether I18NSuite should test e.g. Foo$InnerMsgs_fr.properties (if the
@@ -79,7 +75,7 @@
     <gwt.ant dir="../dev/core" target="compile.tests" />
   </target>
 
-  <target name="compile.tests" depends="compile.dev.core.tests, compile.emma" description="Compiles the test code for this project">
+  <target name="compile.tests" depends="compile.dev.core.tests" description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**" destdir="${javac.junit.out}">
       <classpath>
@@ -190,7 +186,6 @@
 
   <target name="test" depends="compile, compile.tests" description="Run hosted-mode, web-mode, remoteweb, and selenium tests for this project.">
     <property.ensure name="distro.built" location="${gwt.dev.staging.jar}" message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
-    <property name="emma.compiled" value="true" />
 
     <!--
       Run hosted and web mode tests for the platform on which this build
@@ -210,28 +205,6 @@
       <antcall target="test.web.draft"/>
     </parallel>
     </limit>
-  </target>
-
-  <target name="emma.merge" description="Merges coverage data for the entire project" if="emma.enabled">
-    <delete dir="${emma.merged.out}" />
-    <mkdir dir="${emma.merged.out}" />
-    <emma>
-      <merge outfile="${emma.merged.out}/merged.emma" >
-        <fileset dir="${junit.out}" >
-          <include name="**/*.emma" />
-          <exclude name="${emma.merged.out}/merged.emma" />
-        </fileset>
-      </merge>
-    </emma>
-    <emma enabled="${emma.enabled}">
-      <report sourcepath="${project.classpath.src}">
-        <fileset file="${javac.emma.out}/metadata.emma" />
-        <fileset file="${emma.merged.out}/merged.emma" />
-        <txt outfile="${emma.merged.out}/coverage.txt" />
-        <html outfile="${emma.merged.out}/coverage.html" />
-        <xml outfile="${emma.merged.out}/coverage.xml" />
-      </report>
-    </emma>
   </target>
 
   <target name="clean" description="Cleans this project's intermediate and output files">
