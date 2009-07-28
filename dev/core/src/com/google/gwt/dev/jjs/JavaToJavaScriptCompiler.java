@@ -90,6 +90,7 @@ import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsReportGenerationVisitor;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
+import com.google.gwt.dev.js.JsStackEmulator;
 import com.google.gwt.dev.js.JsStaticEval;
 import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
@@ -266,6 +267,18 @@ public class JavaToJavaScriptCompiler {
         } while (didChange);
       }
 
+      /*
+       * Creates new variables, must run before code splitter and namer.
+       * 
+       * TODO(bobv): This is a temporary hack to conditionally map in this pass.
+       * Once deferred-binding properties can specify a subset of the
+       * permutation matrix, revisit this if statement.
+       */
+      if (jprogram.getDeclaredTypes().contains(
+          jprogram.getFromTypeMap("com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated"))) {
+        JsStackEmulator.exec(jsProgram, propertyOracles);
+      }
+
       // (10) Split up the program into fragments
       SoycArtifact dependencies = null;
       if (options.isAggressivelyOptimize() && options.isRunAsyncEnabled()) {
@@ -301,7 +314,6 @@ public class JavaToJavaScriptCompiler {
       // Work around an IE7 bug,
       // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
       JsIEBlockSizeVisitor.exec(jsProgram);
-
       JsBreakUpLargeVarStatements.exec(jsProgram, propertyOracles);
 
       // (12) Generate the final output text.

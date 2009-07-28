@@ -31,6 +31,19 @@
     <when-type-assignable class="com.google.gwt.junit.client.GWTTestCase"/>
   </generate-with>
 
+  <!-- TODO(bobv): This is temporary until subset-of-permutation-matrix work is done. -->
+  <!-- We want to provide good stack traces on browsers that don't provide good native stack traces. -->
+  <set-configuration-property name="compiler.emulatedStack.recordFileNames" value="true" />
+  <replace-with
+    class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated">
+    <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
+    <none>
+      <when-property-is name="user.agent" value="gecko" />
+      <when-property-is name="user.agent" value="gecko1_8" />
+      <when-property-is name="user.agent" value="opera" />
+    </none>
+  </replace-with>
+
   <servlet path='/junithost' class='com.google.gwt.junit.server.JUnitHostImpl'/>
 
   <inherits name="com.google.gwt.benchmarks.Benchmarks"/>

@@ -18,7 +18,7 @@ package java.lang;
 import java.io.Serializable;
 
 /**
- * Included for hosted mode source compatibility. Not yet implemented.
+ * Included for hosted mode source compatibility. Partially implemented
  * 
  * @skip
  */
@@ -35,8 +35,8 @@ public final class StackTraceElement implements Serializable {
   public StackTraceElement() {
   }
 
-  public StackTraceElement(String className, String methodName, String fileName,
-      int lineNumber) {
+  public StackTraceElement(String className, String methodName,
+      String fileName, int lineNumber) {
     this.className = className;
     this.methodName = methodName;
     this.fileName = fileName;
@@ -57,5 +57,10 @@ public final class StackTraceElement implements Serializable {
 
   public String getMethodName() {
     return methodName;
+  }
+
+  public String toString() {
+    return className + "." + methodName + "(" + fileName + ":" + lineNumber
+        + ")";
   }
 }
