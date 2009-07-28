@@ -37,16 +37,8 @@ public class WeakMapping {
    * @param key a String key.
    * @return an Object associated with that key on the given instance, or null.
    */
-  public static void set(Object instance, String key, Object value) {
-    assert !(instance instanceof String) : "Cannot use Strings with WeakMapping";
-    setNative(instance, key, value);
-  }
-  
-  private static native void setNative(Object instance, String key, Object value) /*-{
-    if (!instance.@java.lang.Object::expando) {
-      instance.@java.lang.Object::expando = {};
-    }
-    instance.@java.lang.Object::expando[':' + key] = value;
+  public static native Object get(Object instance, String key) /*-{
+    return instance.@java.lang.Object::expando[':' + key];
   }-*/;
 
   /**
@@ -59,7 +51,15 @@ public class WeakMapping {
    * @param value the Object to associate with the key on the given source
    *          Object.
    */
-  public static native Object get(Object instance, String key) /*-{
-       return instance.@java.lang.Object::expando[':' + key];
-     }-*/;
+  public static void set(Object instance, String key, Object value) {
+    assert !(instance instanceof String) : "Cannot use Strings with WeakMapping";
+    setNative(instance, key, value);
+  }
+
+  private static native void setNative(Object instance, String key, Object value) /*-{
+    if (!instance.@java.lang.Object::expando) {
+      instance.@java.lang.Object::expando = {};
+    }
+    instance.@java.lang.Object::expando[':' + key] = value;
+  }-*/;
 }
