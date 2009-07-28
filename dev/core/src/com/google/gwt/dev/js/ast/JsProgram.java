@@ -209,9 +209,7 @@ public final class JsProgram extends JsNode<JsProgram> {
   }
 
   /**
-   * Note: This is currently assumed not to be called after
-   * GenerateJavaScriptAST has finished. If it ever is, then GWT.runAsync needs
-   * to be updated to account for such string literals.
+   * Creates or retrieves a JsStringLiteral from an interned object pool.
    */
   public JsStringLiteral getStringLiteral(SourceInfo sourceInfo, String value) {
     JsStringLiteral lit = stringLiteralMap.get(value);

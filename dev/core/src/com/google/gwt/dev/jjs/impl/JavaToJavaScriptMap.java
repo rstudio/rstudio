@@ -49,12 +49,6 @@ public interface JavaToJavaScriptMap {
   JMethod nameToMethod(JsName name);
 
   /**
-   * If <code>var</code> is the name of the variable used to hold an interned
-   * string literal, then return the string it interns. Otherwise, return null.
-   */
-  String stringLiteralForName(JsName var);
-
-  /**
    * If <code>stat</code> is used to set up the definition of some class, return
    * that class. Otherwise, return null.
    */

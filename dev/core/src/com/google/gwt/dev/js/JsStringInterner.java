@@ -16,6 +16,7 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -25,32 +26,47 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Interns all String literals in a JsProgram. Each unique String will be
- * assigned to a variable in the program's main block and instances of a
- * JsStringLiteral replaced with a JsNameRef. This optimization is complete in a
- * single pass, although it may be performed multiple times without duplicating
- * the intern pool.
+ * assigned to a variable in an appropriate program fragment and the
+ * JsStringLiteral will be replaced with a JsNameRef. This optimization is
+ * complete in a single pass, although it may be performed multiple times
+ * without duplicating the intern pool.
  */
 public class JsStringInterner {
-
   /**
    * Replaces JsStringLiterals with JsNameRefs, creating new JsName allocations
    * on the fly.
    */
   private static class StringVisitor extends JsModVisitor {
+    /**
+     * The current fragment being visited.
+     */
+    private int currentFragment = 0;
+
+    /**
+     * This map records which program fragment the variable for this JsName
+     * should be created in.
+     */
+    private final SortedMap<JsStringLiteral, Integer> fragmentAssignment = new TreeMap<JsStringLiteral, Integer>(
+        LITERAL_COMPARATOR);
+
     /**
      * A counter used for assigning ids to Strings. Even though it's unlikely
      * that someone would actually have two billion strings in their
@@ -59,7 +75,13 @@ public class JsStringInterner {
     private long lastId = 0;
 
     /**
-     * Records the scope in which the interned identifiers should be unique.
+     * Only used to get fragment load order so strings used in multiple
+     * fragments need only be downloaded once.
+     */
+    private final JProgram program;
+
+    /**
+     * Records the scope in which the interned identifiers are declared.
      */
     private final JsScope scope;
 
@@ -68,11 +90,7 @@ public class JsStringInterner {
      * lexicographical ordering of the string constant.
      */
     private final SortedMap<JsStringLiteral, JsName> toCreate = new TreeMap<JsStringLiteral, JsName>(
-        new Comparator<JsStringLiteral>() {
-          public int compare(JsStringLiteral o1, JsStringLiteral o2) {
-            return o1.getValue().compareTo(o2.getValue());
-          }
-        });
+        LITERAL_COMPARATOR);
 
     /**
      * Constructor.
@@ -80,8 +98,14 @@ public class JsStringInterner {
      * @param scope specifies the scope in which the interned strings should be
      *          created.
      */
-    public StringVisitor(JsScope scope) {
+    public StringVisitor(JProgram program, JsScope scope) {
+      this.program = program;
       this.scope = scope;
+    }
+
+    @Override
+    public void endVisit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
+      currentFragment++;
     }
 
     /**
@@ -133,6 +157,24 @@ public class JsStringInterner {
         toCreate.put(x, name);
       }
 
+      Integer currentAssignment = fragmentAssignment.get(x);
+      if (currentAssignment == null) {
+        // Assign the JsName to the current program fragment
+        fragmentAssignment.put(x, currentFragment);
+
+      } else if (currentAssignment != currentFragment) {
+        // See if we need to move the assignment to a common ancestor
+        assert program != null : "JsStringInterner cannot be used with "
+            + "fragmented JsProgram without an accompanying JProgram";
+
+        int newAssignment = program.lastFragmentLoadingBefore(currentFragment,
+            currentAssignment);
+        if (newAssignment != currentAssignment) {
+          // Assign the JsName to the common ancestor
+          fragmentAssignment.put(x, newAssignment);
+        }
+      }
+
       ctx.replaceMe(name.makeRef(x.getSourceInfo().makeChild(
           JsStringInterner.class, "Interned reference")));
 
@@ -149,7 +191,43 @@ public class JsStringInterner {
     }
   }
 
+  private static final Comparator<JsStringLiteral> LITERAL_COMPARATOR = new Comparator<JsStringLiteral>() {
+    public int compare(JsStringLiteral o1, JsStringLiteral o2) {
+      return o1.getValue().compareTo(o2.getValue());
+    }
+  };
+
   public static final String PREFIX = "$intern_";
+
+  /**
+   * Apply interning of String literals to a JsProgram. The symbol names for the
+   * interned strings will be defined within the program's top scope and the
+   * symbol declarations will be added as the first statement in the program's
+   * global block.
+   * 
+   * @param jprogram the JProgram that has fragment dependency data for
+   *          <code>program</code>
+   * @param program the JsProgram
+   */
+  public static void exec(JProgram jprogram, JsProgram program) {
+    StringVisitor v = new StringVisitor(jprogram, program.getScope());
+    v.accept(program);
+
+    Map<Integer, SortedSet<JsStringLiteral>> bins = new HashMap<Integer, SortedSet<JsStringLiteral>>();
+    for (int i = 0, j = program.getFragmentCount(); i < j; i++) {
+      bins.put(i, new TreeSet<JsStringLiteral>(LITERAL_COMPARATOR));
+    }
+    for (Map.Entry<JsStringLiteral, Integer> entry : v.fragmentAssignment.entrySet()) {
+      SortedSet<JsStringLiteral> set = bins.get(entry.getValue());
+      assert set != null;
+      set.add(entry.getKey());
+    }
+
+    for (Map.Entry<Integer, SortedSet<JsStringLiteral>> entry : bins.entrySet()) {
+      createVars(program, program.getFragmentBlock(entry.getKey()),
+          entry.getValue(), v.toCreate);
+    }
+  }
 
   /**
    * Intern String literals that occur within a JsBlock. The symbol declarations
@@ -160,50 +238,29 @@ public class JsStringInterner {
    * @return <code>true</code> if any changes were made to the block
    */
   public static boolean exec(JsProgram program, JsBlock block, JsScope scope) {
-    StringVisitor v = new StringVisitor(scope);
+    StringVisitor v = new StringVisitor(null, scope);
     v.accept(block);
 
-    createVars(program, block, v.toCreate);
+    createVars(program, block, v.toCreate.keySet(), v.toCreate);
 
     return v.didChange();
   }
 
   /**
-   * Apply interning of String literals to a JsProgram. The symbol names for the
-   * interned strings will be defined within the program's top scope and the
-   * symbol declarations will be added as the first statement in the program's
-   * global block.
-   * 
-   * @param program the JsProgram
-   * @return a map from each created JsName to the string it is a literal for.
+   * Create variable declarations in <code>block</code> for literal strings
+   * <code>toCreate</code> using the variable map <code>names</code>.
    */
-  public static Map<JsName, String> exec(JsProgram program) {
-    StringVisitor v = new StringVisitor(program.getScope());
-    for (int i = 0; i < program.getFragmentCount(); i++) {
-      v.accept(program.getFragmentBlock(i));
-    }
-
-    Map<JsName, String> map = new HashMap<JsName, String>();
-    for (JsStringLiteral stringLit : v.toCreate.keySet()) {
-      map.put(v.toCreate.get(stringLit), stringLit.getValue());
-    }
-
-    createVars(program, program.getGlobalBlock(), v.toCreate);
-
-    return map;
-  }
-
   private static void createVars(JsProgram program, JsBlock block,
-      SortedMap<JsStringLiteral, JsName> toCreate) {
+      Collection<JsStringLiteral> toCreate, Map<JsStringLiteral, JsName> names) {
     if (toCreate.size() > 0) {
       // Create the pool of variable names.
       JsVars vars = new JsVars(program.createSourceInfoSynthetic(
           JsStringInterner.class, "Interned string pool"));
       SourceInfo sourceInfo = program.createSourceInfoSynthetic(
           JsStringInterner.class, "Interned string assignment");
-      for (Map.Entry<JsStringLiteral, JsName> entry : toCreate.entrySet()) {
-        JsVar var = new JsVar(sourceInfo, entry.getValue());
-        var.setInitExpr(entry.getKey());
+      for (JsStringLiteral literal : toCreate) {
+        JsVar var = new JsVar(sourceInfo, names.get(literal));
+        var.setInitExpr(literal);
         vars.add(var);
       }
       block.getStatements().add(0, vars);

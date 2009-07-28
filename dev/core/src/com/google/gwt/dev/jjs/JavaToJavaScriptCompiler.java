@@ -42,14 +42,12 @@ import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
-import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
@@ -99,7 +97,6 @@ import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.AbstractTextOutput;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Empty;
@@ -120,7 +117,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -140,7 +136,7 @@ public class JavaToJavaScriptCompiler {
     private final byte[] serializedSymbolMap;
     private final StatementRanges[] statementRanges;
     private final int permutationId;
-    
+
     public PermutationResultImpl(String[] js, SymbolData[] symbolMap,
         StatementRanges[] statementRanges, int permutationId) {
       byte[][] bytes = new byte[js.length][];
@@ -167,7 +163,7 @@ public class JavaToJavaScriptCompiler {
     public byte[][] getJs() {
       return js;
     }
-    
+
     public int getPermutationId() {
       return permutationId;
     }
@@ -270,39 +266,34 @@ public class JavaToJavaScriptCompiler {
         } while (didChange);
       }
 
-      // (10) Obfuscate
-      final Map<JsName, String> stringLiteralMap;
-      switch (options.getOutput()) {
-        case OBFUSCATED:
-          stringLiteralMap = JsStringInterner.exec(jsProgram);
-          JsObfuscateNamer.exec(jsProgram);
-          break;
-        case PRETTY:
-          // We don't intern strings in pretty mode to improve readability
-          stringLiteralMap = new HashMap<JsName, String>();
-          JsPrettyNamer.exec(jsProgram);
-          break;
-        case DETAILED:
-          stringLiteralMap = JsStringInterner.exec(jsProgram);
-          JsVerboseNamer.exec(jsProgram);
-          break;
-        default:
-          throw new InternalCompilerException("Unknown output mode");
-      }
-
-      JavaToJavaScriptMap postStringInterningMap = addStringLiteralMap(map,
-          stringLiteralMap);
-
-      // (10.5) Split up the program into fragments
+      // (10) Split up the program into fragments
       SoycArtifact dependencies = null;
       if (options.isAggressivelyOptimize() && options.isRunAsyncEnabled()) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        CodeSplitter.exec(logger, jprogram, jsProgram, postStringInterningMap,
+        CodeSplitter.exec(logger, jprogram, jsProgram, map,
             chooseDependencyRecorder(options.isSoycEnabled(), baos));
         if (baos.size() > 0) {
           dependencies = new SoycArtifact("dependencies" + permutationId
               + ".xml.gz", baos.toByteArray());
         }
+      }
+
+      // (10.5) Obfuscate
+      switch (options.getOutput()) {
+        case OBFUSCATED:
+          JsStringInterner.exec(jprogram, jsProgram);
+          JsObfuscateNamer.exec(jsProgram);
+          break;
+        case PRETTY:
+          // We don't intern strings in pretty mode to improve readability
+          JsPrettyNamer.exec(jsProgram);
+          break;
+        case DETAILED:
+          JsStringInterner.exec(jprogram, jsProgram);
+          JsVerboseNamer.exec(jsProgram);
+          break;
+        default:
+          throw new InternalCompilerException("Unknown output mode");
       }
 
       // (11) Perform any post-obfuscation normalizations.
@@ -340,7 +331,8 @@ public class JavaToJavaScriptCompiler {
           makeSymbolMap(symbolTable), ranges, permutationId);
 
       toReturn.getArtifacts().add(
-          makeSoycArtifact(logger, permutationId, jprogram, js, sourceInfoMaps, dependencies));
+          makeSoycArtifact(logger, permutationId, jprogram, js, sourceInfoMaps,
+              dependencies));
 
       System.out.println("Permutation took "
           + (System.currentTimeMillis() - permStart) + " ms");
@@ -620,40 +612,6 @@ public class JavaToJavaScriptCompiler {
 
     PerfLogger.end();
     return didChange;
-  }
-
-  private static JavaToJavaScriptMap addStringLiteralMap(
-      final JavaToJavaScriptMap map, final Map<JsName, String> stringLiteralMap) {
-    JavaToJavaScriptMap postStringInterningMap = new JavaToJavaScriptMap() {
-      public JsName nameForMethod(JMethod method) {
-        return map.nameForMethod(method);
-      }
-
-      public JsName nameForType(JReferenceType type) {
-        return map.nameForType(type);
-      }
-
-      public JField nameToField(JsName name) {
-        return map.nameToField(name);
-      }
-
-      public JMethod nameToMethod(JsName name) {
-        return map.nameToMethod(name);
-      }
-
-      public String stringLiteralForName(JsName name) {
-        return stringLiteralMap.get(name);
-      }
-
-      public JReferenceType typeForStatement(JsStatement stat) {
-        return map.typeForStatement(stat);
-      }
-
-      public JMethod vtableInitToMethod(JsStatement stat) {
-        return map.vtableInitToMethod(stat);
-      }
-    };
-    return postStringInterningMap;
   }
 
   private static void checkForErrors(TreeLogger logger,

@@ -150,10 +150,6 @@ public class CodeSplitter {
             if (field != null) {
               System.out.println(fullNameString(field));
             }
-            String string = map.stringLiteralForName(var.getName());
-            if (string != null) {
-              System.out.println("STRING " + var.getName());
-            }
           }
         }
       }

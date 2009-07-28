@@ -33,6 +33,7 @@ public class JavaCompilationSuite {
     suite.addTestSuite(GWTProblemTest.class);
     suite.addTestSuite(JdtBehaviorTest.class);
     suite.addTestSuite(JdtCompilerTest.class);
+    suite.addTestSuite(JProgramLastFragmentLoadingBeforeTest.class);
     suite.addTestSuite(JSORestrictionsTest.class);
     suite.addTestSuite(JsniCheckerTest.class);
     suite.addTestSuite(TypeOracleMediatorTest.class);

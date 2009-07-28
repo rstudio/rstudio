@@ -98,8 +98,8 @@ public class FragmentExtractor {
    * 
    * <li>Instance methods depend on their enclosing type.</li>
    * 
-   * <li>Static fields that are initialized to strings depend on the string
-   * they are initialized to.</li>
+   * <li>Static fields that are initialized to strings depend on the string they
+   * are initialized to.</li>
    * </ul>
    */
   public static interface LivenessPredicate {
@@ -115,8 +115,8 @@ public class FragmentExtractor {
      * Whether miscellelaneous statements should be considered live.
      * Miscellaneous statements are any that the fragment extractor does not
      * recognize as being in any particular category. This method should almost
-     * always return <code>true</code>, but does return <code>false</code>
-     * for {@link NothingAlivePredicate}.
+     * always return <code>true</code>, but does return <code>false</code> for
+     * {@link NothingAlivePredicate}.
      */
     boolean miscellaneousStatementsAreLive();
   }
@@ -149,7 +149,8 @@ public class FragmentExtractor {
   /**
    * A logger for statements that the fragment extractor encounters. Install one
    * using
-   * {@link FragmentExtractor#setStatementLogger(com.google.gwt.fragserv.FragmentExtractor.StatementLogger)}.
+   * {@link FragmentExtractor#setStatementLogger(com.google.gwt.fragserv.FragmentExtractor.StatementLogger)}
+   * .
    */
   public static interface StatementLogger {
     void logStatement(JsStatement stat, boolean isIncluded);
@@ -204,7 +205,8 @@ public class FragmentExtractor {
 
   /**
    * Create a call to
-   * {@link com.google.gwt.core.client.impl.AsyncFragmentLoader#leftoversFragmentHasLoaded()}.
+   * {@link com.google.gwt.core.client.impl.AsyncFragmentLoader#leftoversFragmentHasLoaded()}
+   * .
    */
   public List<JsStatement> createCallToLeftoversFragmentHasLoaded() {
     JMethod loadedMethod = jprogram.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded");
@@ -315,16 +317,12 @@ public class FragmentExtractor {
    * individual vars that could be removed. If it does, then
    * {@link #removeSomeVars(JsVars, LivenessPredicate, LivenessPredicate)} is
    * sensible for this statement and should be used instead of
-   * {@link #isLive(JsStatement, com.google.gwt.fragserv.FragmentExtractor.LivenessPredicate)}.
+   * {@link #isLive(JsStatement, com.google.gwt.fragserv.FragmentExtractor.LivenessPredicate)}
+   * .
    */
   private boolean containsRemovableVars(JsStatement stat) {
     if (stat instanceof JsVars) {
       for (JsVar var : (JsVars) stat) {
-        String lit = map.stringLiteralForName(var.getName());
-        if (lit != null) {
-          // It's an intern variable for a string literal
-          return true;
-        }
 
         JField field = map.nameToField(var.getName());
         if (field != null) {
@@ -396,12 +394,6 @@ public class FragmentExtractor {
    * {@link #containsRemovableVars(JsStatement)}.
    */
   private boolean isLive(JsVar var, LivenessPredicate livenessPredicate) {
-    String lit = map.stringLiteralForName(var.getName());
-    if (lit != null) {
-      // It's an intern variable for a string literal
-      return livenessPredicate.isLive(lit);
-    }
-
     JField field = map.nameToField(var.getName());
     if (field != null) {
       // It's a field
@@ -414,9 +406,9 @@ public class FragmentExtractor {
 
   /**
    * Return the Java method corresponding to <code>stat</code>, or
-   * <code>null</code> if there isn't one. It recognizes JavaScript of the
-   * form <code>function foo(...) { ...}</code>, where <code>foo</code> is
-   * the name of the JavaScript translation of a Java method.
+   * <code>null</code> if there isn't one. It recognizes JavaScript of the form
+   * <code>function foo(...) { ...}</code>, where <code>foo</code> is the name
+   * of the JavaScript translation of a Java method.
    */
   private JMethod methodFor(JsStatement stat) {
     if (stat instanceof JsExprStmt) {
@@ -472,8 +464,8 @@ public class FragmentExtractor {
   /**
    * Compute a statement that can be used to set up for installing instance
    * methods into a vtable. It will be of the form
-   * <code>_ = foo.prototype</code>, where <code>foo</code> is the
-   * constructor function for <code>vtableType</code>.
+   * <code>_ = foo.prototype</code>, where <code>foo</code> is the constructor
+   * function for <code>vtableType</code>.
    */
   private JsStatement vtableStatFor(JReferenceType vtableType) {
     JsNameRef prototypeField = new JsNameRef(

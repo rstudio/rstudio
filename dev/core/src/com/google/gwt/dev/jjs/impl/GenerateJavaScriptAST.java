@@ -2133,14 +2133,6 @@ public class GenerateJavaScriptAST {
         return nameToMethodMap.get(name);
       }
 
-      public String stringLiteralForName(JsName var) {
-        /*
-         * This method will be supplied non-trivially elsewhere.
-         * GenerateJavaScriptAST doesn't have the information to implement it.
-         */
-        return null;
-      }
-
       public JReferenceType typeForStatement(JsStatement stat) {
         return typeForStatMap.get(stat);
       }
