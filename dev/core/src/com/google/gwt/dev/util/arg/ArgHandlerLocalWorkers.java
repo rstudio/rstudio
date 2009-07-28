@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.dev.OptionLocalWorkers;
 import com.google.gwt.util.tools.ArgHandlerInt;
 
 /**

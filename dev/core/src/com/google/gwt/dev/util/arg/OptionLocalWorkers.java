@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev;
+package com.google.gwt.dev.util.arg;
 
 /**
  * Controls the number of local PermutationWorkers to be used.

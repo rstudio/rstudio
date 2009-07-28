@@ -17,6 +17,7 @@ package com.google.gwt.dev;
 
 import com.google.gwt.dev.Link.LegacyLinkOptions;
 import com.google.gwt.dev.Precompile.PrecompileOptions;
+import com.google.gwt.dev.util.arg.OptionLocalWorkers;
 
 /**
  * The complete set of options for the GWT compiler.

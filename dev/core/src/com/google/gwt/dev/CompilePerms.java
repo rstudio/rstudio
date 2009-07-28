@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
+import com.google.gwt.dev.util.arg.OptionLocalWorkers;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.io.File;
