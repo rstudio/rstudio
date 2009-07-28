@@ -387,6 +387,13 @@ public class Event extends NativeEvent {
    * {@link NativePreviewEvent} that was added is the first to be fired.
    * </p>
    * 
+   * <p>
+   * Please note that nondeterministic behavior will result if more than one GWT
+   * application registers preview handlers. See <a href=
+   * 'http://code.google.com/p/google-web-toolkit/issues/detail?id=3892'>issue
+   * 3892</a> for details.
+   * </p>
+   *
    * @param handler the {@link NativePreviewHandler}
    * @return {@link HandlerRegistration} used to remove this handler
    */
