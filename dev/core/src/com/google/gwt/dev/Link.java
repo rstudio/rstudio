@@ -27,6 +27,7 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
 import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.Util;

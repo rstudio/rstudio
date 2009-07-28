@@ -28,7 +28,6 @@ import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.core.ext.soyc.impl.DependencyRecorder;
 import com.google.gwt.core.ext.soyc.impl.SplitPointRecorder;
 import com.google.gwt.core.ext.soyc.impl.StoryRecorder;
-import com.google.gwt.dev.PermutationResult;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
