@@ -772,34 +772,6 @@ public class ControlFlowAnalyzer {
     rescuer.rescue(method);
   }
 
-  /**
-   * Trace all code needed by class literal constructor expressions except for
-   * the string literals they include. At the time of writing, these would
-   * include the factory methods for class literals.
-   */
-  public void traverseFromClassLiteralFactories() {
-    class ReplaceStringLiterals extends JModVisitor {
-      @Override
-      public void endVisit(JStringLiteral stringLiteral, Context ctx) {
-        ctx.replaceMe(program.getLiteralNull());
-      }
-    }
-
-    final JModVisitor stringLiteralReplacer = new ReplaceStringLiterals();
-    final CloneExpressionVisitor cloner = new CloneExpressionVisitor(program);
-
-    class ClassLitTraverser extends JVisitor {
-      @Override
-      public void endVisit(JClassLiteral classLiteral, Context ctx) {
-        JExpression initializer = classLiteral.getField().getInitializer();
-        JExpression initializerWithoutStrings = stringLiteralReplacer.accept(cloner.cloneExpression(initializer));
-        rescuer.accept(initializerWithoutStrings);
-      }
-    }
-
-    (new ClassLitTraverser()).accept(program);
-  }
-
   public void traverseFromLeftoversFragmentHasLoaded() {
     if (program.entryMethods.size() > 1) {
       traverseFrom(program.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded"));

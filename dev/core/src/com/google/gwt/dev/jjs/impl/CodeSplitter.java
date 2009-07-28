@@ -551,14 +551,6 @@ public class CodeSplitter {
     for (JMethod entryMethod : jprogram.entryMethods.get(splitPoint)) {
       cfa.traverseFrom(entryMethod);
     }
-    if (splitPoint == 0) {
-      /*
-       * Include class literal factories for simplicity. It is possible to move
-       * them out, if they are only needed by one fragment, but they are tiny,
-       * so it does not seem worth the complexity in the compiler.
-       */
-      cfa.traverseFromClassLiteralFactories();
-    }
   }
 
   private static <T> Set<T> union(Set<? extends T> set1, Set<? extends T> set2) {
