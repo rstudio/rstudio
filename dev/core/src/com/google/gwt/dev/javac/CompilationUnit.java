@@ -20,7 +20,6 @@ import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.commons.EmptyVisitor;
 import com.google.gwt.dev.jdt.TypeRefVisitor;
-import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashMap;
@@ -48,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Encapsulates the state of a single active compilation unit in a particular
@@ -117,7 +117,7 @@ public abstract class CompilationUnit {
          * javac weirdness issue where javac refers a class but does not
          * generate it.
          */
-        if (CompilingClassLoader.isClassnameGenerated(lookupName)
+        if (isClassnameGenerated(lookupName)
             && !allGeneratedClasses.contains(lookupName)) {
           allGeneratedClasses.add(lookupName);
         }
@@ -262,6 +262,27 @@ public abstract class CompilationUnit {
       map.put(typeDecl.binding, newClass);
       return true;
     }
+  }
+
+  private static final Pattern GENERATED_CLASSNAME_PATTERN = Pattern.compile(".+\\$\\d.*");
+
+  /**
+   * Checks if the class names is generated. Accepts any classes whose names
+   * match .+$\d.* (handling named classes within anonymous classes and multiple
+   * named classes of the same name in a class, but in different methods).
+   * Checks if the class or any of its enclosing classes are anonymous or
+   * synthetic.
+   * <p>
+   * If new compilers have different conventions for anonymous and synthetic
+   * classes, this code needs to be updated.
+   * </p>
+   * 
+   * @param className name of the class to be checked.
+   * @return true iff class or any of its enclosing classes are anonymous or
+   *         synthetic.
+   */
+  public static boolean isClassnameGenerated(String className) {
+    return GENERATED_CLASSNAME_PATTERN.matcher(className).matches();
   }
 
   private static Set<String> computeFileNameRefs(
@@ -561,6 +582,6 @@ public abstract class CompilationUnit {
     if (!cc.getRealClassType().isLocalType()) {
       return false;
     }
-    return CompilingClassLoader.isClassnameGenerated(cc.getBinaryName());
+    return isClassnameGenerated(cc.getBinaryName());
   }
 }

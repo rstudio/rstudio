@@ -1,4 +1,4 @@
-package com.google.gwt.dev.shell;
+package com.google.gwt.dev.javac;
 
 import junit.framework.TestCase;
 
@@ -16,12 +16,12 @@ public class GeneratedClassnameTest extends TestCase {
 
     for (String name : namesToAccept) {
       assertTrue("className = " + name + " should have been accepted",
-          CompilingClassLoader.isClassnameGenerated(name));
+          CompilationUnit.isClassnameGenerated(name));
     }
 
     for (String name : namesToReject) {
       assertFalse("className = " + name + " should not have been accepted",
-          CompilingClassLoader.isClassnameGenerated(name));
+          CompilationUnit.isClassnameGenerated(name));
     }
   }
 }

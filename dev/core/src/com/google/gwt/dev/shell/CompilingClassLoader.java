@@ -62,7 +62,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.Stack;
 import java.util.TreeMap;
-import java.util.regex.Pattern;
 
 /**
  * An isolated {@link ClassLoader} for running all user code. All user files are
@@ -451,8 +450,6 @@ public final class CompilingClassLoader extends ClassLoader implements
 
   private static EmmaStrategy emmaStrategy;
 
-  private static final Pattern GENERATED_CLASSNAME_PATTERN = Pattern.compile(".+\\$\\d.*");
-
   /**
    * Caches the byte code for {@link JavaScriptHost}.
    */
@@ -477,25 +474,6 @@ public final class CompilingClassLoader extends ClassLoader implements
     } catch (ClassNotFoundException ignored) {
     }
     emmaStrategy = EmmaStrategy.get(emmaAvailable);
-  }
-
-  /**
-   * Checks if the class names is generated. Accepts any classes whose names
-   * match .+$\d.* (handling named classes within anonymous classes and multiple
-   * named classes of the same name in a class, but in different methods).
-   * Checks if the class or any of its enclosing classes are anonymous or
-   * synthetic.
-   * <p>
-   * If new compilers have different conventions for anonymous and synthetic
-   * classes, this code needs to be updated.
-   * </p>
-   * 
-   * @param className name of the class to be checked.
-   * @return true iff class or any of its enclosing classes are anonymous or
-   *         synthetic.
-   */
-  public static boolean isClassnameGenerated(String className) {
-    return GENERATED_CLASSNAME_PATTERN.matcher(className).matches();
   }
 
   private static void classDump(String name, byte[] bytes) {
@@ -1024,7 +1002,7 @@ public final class CompilingClassLoader extends ClassLoader implements
        * compiler.
        */
       if (typeHasCompilationUnit(lookupClassName)
-          && isClassnameGenerated(className)) {
+          && CompilationUnit.isClassnameGenerated(className)) {
         /*
          * modification time = 0 ensures that whatever is on the disk is always
          * loaded.
