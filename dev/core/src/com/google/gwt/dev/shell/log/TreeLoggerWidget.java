@@ -13,11 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.util.log;
+package com.google.gwt.dev.shell.log;
 
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.dev.shell.BrowserWidget;
-import com.google.gwt.dev.util.log.TreeItemLogger.LogEvent;
+import com.google.gwt.dev.shell.log.TreeItemLogger.LogEvent;
+import com.google.gwt.dev.util.log.AbstractTreeLogger;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;

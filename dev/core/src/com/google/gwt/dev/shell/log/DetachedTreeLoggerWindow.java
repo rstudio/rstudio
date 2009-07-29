@@ -13,9 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.util.log;
+package com.google.gwt.dev.shell.log;
 
 import com.google.gwt.dev.shell.LowLevel;
+import com.google.gwt.dev.util.log.AbstractTreeLogger;
 
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;

@@ -23,9 +23,9 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.shell.log.ServletContextTreeLogger;
 import com.google.gwt.dev.util.HttpHeaders;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.log.ServletContextTreeLogger;
 import com.google.gwt.util.tools.Utility;
 
 import org.apache.commons.collections.map.AbstractReferenceMap;

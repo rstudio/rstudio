@@ -13,11 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.util.log;
+package com.google.gwt.dev.shell.log;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.dev.util.log.SwingTreeLogger.LogEvent;
+import com.google.gwt.dev.shell.log.SwingTreeLogger.LogEvent;
+import com.google.gwt.dev.util.log.AbstractTreeLogger;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

@@ -17,8 +17,8 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.shell.log.DetachedTreeLoggerWindow;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
-import com.google.gwt.dev.util.log.DetachedTreeLoggerWindow;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 /**

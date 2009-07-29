@@ -18,9 +18,9 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.shell.BrowserWindowController.WebServerRestart;
+import com.google.gwt.dev.shell.log.TreeLoggerWidget;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
-import com.google.gwt.dev.util.log.TreeLoggerWidget;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;

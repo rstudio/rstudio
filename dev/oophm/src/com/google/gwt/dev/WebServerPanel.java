@@ -16,7 +16,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.util.log.SwingLoggerPanel;
+import com.google.gwt.dev.shell.log.SwingLoggerPanel;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
