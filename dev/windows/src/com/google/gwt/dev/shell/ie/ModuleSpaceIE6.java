@@ -20,10 +20,10 @@ import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.DispatchIdOracle;
 import com.google.gwt.dev.shell.JsValue;
+import com.google.gwt.dev.shell.Jsni;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.ie.IDispatchImpl.HResultException;
-import com.google.gwt.dev.util.Jsni;
 
 import org.eclipse.swt.internal.ole.win32.IDispatch;
 import org.eclipse.swt.ole.win32.OleAutomation;

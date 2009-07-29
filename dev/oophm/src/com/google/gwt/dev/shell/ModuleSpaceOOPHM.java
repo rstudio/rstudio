@@ -18,7 +18,6 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.shell.JsValue.DispatchObject;
-import com.google.gwt.dev.util.Jsni;
 
 import java.util.List;
 import java.util.Set;

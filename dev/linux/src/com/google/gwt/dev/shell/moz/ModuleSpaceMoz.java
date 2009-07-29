@@ -21,9 +21,9 @@ import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.DispatchIdOracle;
 import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.JsValueGlue;
+import com.google.gwt.dev.shell.Jsni;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
-import com.google.gwt.dev.util.Jsni;
 
 import java.util.List;
 

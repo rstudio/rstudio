@@ -25,7 +25,6 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.Empty;
-import com.google.gwt.dev.util.Jsni;
 
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
@@ -155,6 +154,10 @@ public class JsniCollector {
     }
   }
 
+  public static final String JSNI_BLOCK_END = "}-*/";
+
+  public static final String JSNI_BLOCK_START = "/*-{";
+
   public static void collectJsniMethods(TreeLogger logger,
       Collection<CompilationUnit> units, JsProgram program) {
     for (CompilationUnit unit : units) {
@@ -217,19 +220,19 @@ public class JsniCollector {
     int bodyEnd = method.bodyEnd;
     String js = source.substring(bodyStart, bodyEnd + 1);
 
-    int jsniStart = js.indexOf(Jsni.JSNI_BLOCK_START);
+    int jsniStart = js.indexOf(JSNI_BLOCK_START);
     if (jsniStart == -1) {
       return null;
     }
 
-    int jsniEnd = js.indexOf(Jsni.JSNI_BLOCK_END, jsniStart);
+    int jsniEnd = js.indexOf(JSNI_BLOCK_END, jsniStart);
     if (jsniEnd == -1) {
       // Suspicious, but maybe this is just a weird comment, so let it slide.
       //
       return null;
     }
 
-    int srcStart = bodyStart + jsniStart + Jsni.JSNI_BLOCK_START.length();
+    int srcStart = bodyStart + jsniStart + JSNI_BLOCK_START.length();
     int srcEnd = bodyStart + jsniEnd;
     return new Interval(srcStart, srcEnd);
   }

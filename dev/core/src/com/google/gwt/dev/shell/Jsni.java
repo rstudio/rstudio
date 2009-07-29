@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.util;
+package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.JsniMethod;
@@ -23,8 +23,8 @@ import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
-import com.google.gwt.dev.shell.DispatchIdOracle;
-import com.google.gwt.dev.shell.JavaScriptHost;
+import com.google.gwt.dev.util.DefaultTextOutput;
+import com.google.gwt.dev.util.TextOutput;
 
 /**
  * Helper methods working with JSNI.
@@ -93,10 +93,6 @@ public class Jsni {
   }
 
   public static final String JAVASCRIPTHOST_NAME = JavaScriptHost.class.getName();
-
-  public static final String JSNI_BLOCK_END = "}-*/";
-
-  public static final String JSNI_BLOCK_START = "/*-{";
 
   /**
    * Gets the body of a JSNI method, with Java refs escaped for hosted mode

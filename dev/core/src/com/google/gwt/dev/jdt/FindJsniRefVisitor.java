@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jdt;
 
+import com.google.gwt.dev.javac.JsniCollector;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.JsParser;
@@ -29,7 +30,6 @@ import com.google.gwt.dev.js.rhino.Context;
 import com.google.gwt.dev.js.rhino.ErrorReporter;
 import com.google.gwt.dev.js.rhino.EvaluatorException;
 import com.google.gwt.dev.js.rhino.TokenStream;
-import com.google.gwt.dev.util.Jsni;
 
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
@@ -175,13 +175,13 @@ public class FindJsniRefVisitor extends ASTVisitor {
     char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
     String jsniCode = String.valueOf(source, methodDeclaration.bodyStart,
         methodDeclaration.bodyEnd - methodDeclaration.bodyStart + 1);
-    int startPos = jsniCode.indexOf(Jsni.JSNI_BLOCK_START);
-    int endPos = jsniCode.lastIndexOf(Jsni.JSNI_BLOCK_END);
+    int startPos = jsniCode.indexOf(JsniCollector.JSNI_BLOCK_START);
+    int endPos = jsniCode.lastIndexOf(JsniCollector.JSNI_BLOCK_END);
     if (startPos < 0 || endPos < 0) {
       return null; // ignore the error
     }
 
-    startPos += Jsni.JSNI_BLOCK_START.length() - 1; // move up to open brace
+    startPos += JsniCollector.JSNI_BLOCK_START.length() - 1; // move up to open brace
     endPos += 1; // move past close brace
 
     jsniCode = jsniCode.substring(startPos, endPos);
