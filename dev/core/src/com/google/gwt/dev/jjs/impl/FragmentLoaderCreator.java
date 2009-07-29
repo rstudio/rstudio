@@ -22,8 +22,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
+import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor;
-import com.google.gwt.dev.shell.StandardGeneratorContext;
 
 import java.io.PrintWriter;
 import java.util.List;

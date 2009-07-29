@@ -19,7 +19,7 @@ import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.shell.StandardGeneratorContext;
+import com.google.gwt.dev.javac.StandardGeneratorContext;
 
 /**
  * A rule to replace the type being rebound with a class whose name is

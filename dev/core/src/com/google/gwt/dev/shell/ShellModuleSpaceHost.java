@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Rules;
+import com.google.gwt.dev.javac.StandardGeneratorContext;
 
 import java.io.File;
 

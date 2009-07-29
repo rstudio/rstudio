@@ -18,11 +18,11 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationUnit.State;
+import com.google.gwt.dev.javac.StandardGeneratorContext.Generated;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
-import com.google.gwt.dev.shell.StandardGeneratorContext.Generated;
 import com.google.gwt.dev.util.PerfLogger;
 
 import java.util.Collection;
