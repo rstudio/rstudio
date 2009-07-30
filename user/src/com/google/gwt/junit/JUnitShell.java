@@ -362,15 +362,15 @@ public class JUnitShell extends GWTShell {
 
   /**
    * The amount of time to wait for all clients to have contacted the server and
-   * begin running the test.  "Contacted" does not necessarily mean "the test
-   * has begun," e.g. for linker errors stopping the test initialization.
+   * begin running the test. "Contacted" does not necessarily mean "the test has
+   * begun," e.g. for linker errors stopping the test initialization.
    */
   private static final int TEST_BEGIN_TIMEOUT_MILLIS = 60000;
 
   /**
    * The amount of time to wait for all clients to complete a single test
    * method, in milliseconds, measured from when the <i>last</i> client connects
-   * (and thus starts the test). 25 minutes.
+   * (and thus starts the test). 20 minutes.
    */
   private static final long TEST_METHOD_TIMEOUT_MILLIS = 4 * 300000;
 
@@ -540,9 +540,9 @@ public class JUnitShell extends GWTShell {
   private long testBeginTimeout;
 
   /**
-   * Timeout for individual test method.  If System.currentTimeMillis() is later
-   * than this timestamp, then we need to pack up and go home.  Zero for "not
-   * yet set" (at the start of a test).  This interval begins when the
+   * Timeout for individual test method. If System.currentTimeMillis() is later
+   * than this timestamp, then we need to pack up and go home. Zero for "not yet
+   * set" (at the start of a test). This interval begins when the
    * testBeginTimeout interval is done.
    */
   private long testMethodTimeout;
@@ -625,11 +625,12 @@ public class JUnitShell extends GWTShell {
       } else if (testMethodTimeout < currentTimeMillis) {
         double elapsed = (currentTimeMillis - testBeginTime) / 1000.0;
         throw new TimeoutException(
-            "The browser did not complete the test method " 
+            "The browser did not complete the test method "
                 + messageQueue.getCurrentTestName() + " in "
-                + TEST_METHOD_TIMEOUT_MILLIS + "ms.\n  We have no results from: "
-                + messageQueue.getWorkingClients()
-                + "\n Actual time elapsed: " + elapsed + " seconds.\n");
+                + TEST_METHOD_TIMEOUT_MILLIS
+                + "ms.\n  We have no results from: "
+                + messageQueue.getWorkingClients() + "\n Actual time elapsed: "
+                + elapsed + " seconds.\n");
       }
     } else if (testBeginTimeout < currentTimeMillis) {
       double elapsed = (currentTimeMillis - testBeginTime) / 1000.0;
@@ -750,9 +751,8 @@ public class JUnitShell extends GWTShell {
       currentModule.clearEntryPoints();
       currentModule.addEntryPointTypeName(GWTRunner.class.getName());
       // Squirrel away the name of the active module for GWTRunnerGenerator
-      ConfigurationProperty moduleNameProp
-          = currentModule.getProperties().createConfiguration(
-              "junit.moduleName", false);
+      ConfigurationProperty moduleNameProp = currentModule.getProperties().createConfiguration(
+          "junit.moduleName", false);
       moduleNameProp.setValue(moduleName);
       runStyle.maybeCompileModule(syntheticModuleName);
     }
@@ -794,7 +794,7 @@ public class JUnitShell extends GWTShell {
       // contacted; something probably went wrong (the module failed to load?)
       testBeginTime = System.currentTimeMillis();
       testBeginTimeout = testBeginTime + TEST_BEGIN_TIMEOUT_MILLIS;
-      testMethodTimeout = 0;  // wait until test execution begins
+      testMethodTimeout = 0; // wait until test execution begins
       pumpEventLoop();
     } catch (TimeoutException e) {
       lastLaunchFailed = true;
