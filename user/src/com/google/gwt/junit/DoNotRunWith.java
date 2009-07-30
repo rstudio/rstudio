@@ -1,0 +1,42 @@
+/*
+ * Copyright 2009 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.junit;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * When a test method is annotated with DoNotRunWith, it is _not_ executed on
+ * the specified platforms. We chose DoNotRunWith instead of RunWith because we
+ * want each exception to be listed separately here.
+ * 
+ * TODO(amitmanjhi): Make this work with batching of test cases. 
+ * 
+ * <pre>
+ * &#064;DoNotRunWith({HtmlUnit})
+ * public class EmulSuite {
+ * }
+ * </pre>
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE,ElementType.METHOD})
+@Inherited
+public @interface DoNotRunWith {
+  Platform[] value();
+}

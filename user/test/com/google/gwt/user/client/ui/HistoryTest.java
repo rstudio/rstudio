@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.HistoryListener;
@@ -93,6 +95,7 @@ public class HistoryTest extends GWTTestCase {
    * Tests against issue #879: Ensure that empty history tokens do not add
    * additional characters after the '#' symbol in the URL.
    */
+  @DoNotRunWith(Platform.Htmlunit)
   public void testEmptyHistoryTokens() {
     delayTestFinish(5000);
 
@@ -283,6 +286,7 @@ public class HistoryTest extends GWTTestCase {
    * Test that using an empty history token works properly. There have been
    * problems (see issue 2905) with this in the past on Safari.
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testEmptyHistoryToken() {
     final ArrayList<Object> counter = new ArrayList<Object>();
 

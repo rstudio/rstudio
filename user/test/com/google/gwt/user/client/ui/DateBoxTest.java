@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.user.datepicker.client.DateBox;
 
 /**
@@ -28,6 +30,7 @@ public class DateBoxTest extends WidgetTestBase {
     return "com.google.gwt.user.User";
   }
 
+  @DoNotRunWith(Platform.Htmlunit)
   public void testAccessors() {
     DateBox db = new DateBox();
     assertFalse(db.isDatePickerShowing());
@@ -37,6 +40,7 @@ public class DateBoxTest extends WidgetTestBase {
     assertFalse(db.isDatePickerShowing());
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testValueChangeEvent() {
 
     // Checks setValue(date, true);

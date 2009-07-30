@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -30,6 +32,7 @@ public class MapTests extends GWTTestCase {
   /**
    * getAreas.
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testGetArea() {
     Document doc = Document.get();
     MapElement map = doc.createMapElement();

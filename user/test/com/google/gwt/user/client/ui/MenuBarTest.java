@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -205,6 +207,7 @@ public class MenuBarTest extends GWTTestCase {
     assertNull(bar.getSelectedItem());
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testDebugId() {
     Command emptyCommand = new Command() {
       public void execute() {

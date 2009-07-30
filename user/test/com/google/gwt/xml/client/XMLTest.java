@@ -15,6 +15,8 @@
  */
 package com.google.gwt.xml.client;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.xml.client.impl.DOMParseException;
 import com.google.gwt.xml.client.impl.XMLParserImplSafari;
@@ -133,6 +135,7 @@ public class XMLTest extends GWTTestCase {
     return "com.google.gwt.xml.XML";
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testAttr() {
     Document d = createTestDocument();
     Element de = d.getDocumentElement();
@@ -144,6 +147,7 @@ public class XMLTest extends GWTTestCase {
     assertEquals(de.getAttributeNode("unset"), null);
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testCreate() {
     Document d = XMLParser.createDocument();
     CDATASection createCDATA;
@@ -199,6 +203,7 @@ public class XMLTest extends GWTTestCase {
     }
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testDocument() {
     Document d = createTestDocument();
     NodeList e1Nodes = d.getElementsByTagName("e1");
@@ -217,6 +222,7 @@ public class XMLTest extends GWTTestCase {
     assertEquals(e1Node.toString(), alienNode11.toString());
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testElement() {
     Document d = createTestDocument();
     Element top = d.getDocumentElement();
@@ -258,6 +264,7 @@ public class XMLTest extends GWTTestCase {
     }
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testNamedNodeMap() {
     Document d = createTestDocument();
     NamedNodeMap m = d.getDocumentElement().getAttributes();
@@ -265,6 +272,7 @@ public class XMLTest extends GWTTestCase {
     assertEquals(m.getLength(), 2);
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testNavigation() {
     Document d = createTestDocument();
     Element documentElement = d.getDocumentElement();
@@ -345,6 +353,7 @@ public class XMLTest extends GWTTestCase {
     }
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testPrefix() {
     Document d = XMLParser.parse("<?xml version=\"1.0\"?>\r\n"
         + "<!-- both namespace prefixes are available throughout -->\r\n"
@@ -358,6 +367,7 @@ public class XMLTest extends GWTTestCase {
     assertEquals(d.getElementsByTagName("book").item(0), d.getDocumentElement());
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testProcessingInstruction() {
     Document d = createTestDocument();
     ProcessingInstruction pi = (ProcessingInstruction) d.getChildNodes().item(0);
@@ -367,6 +377,7 @@ public class XMLTest extends GWTTestCase {
     assertEquals(pi.getData(), "other data");
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testText() {
     Document d = createTestDocument();
     List<Node> textLikeNodes = Arrays.asList(new Node[] {

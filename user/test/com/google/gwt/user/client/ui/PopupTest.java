@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
@@ -202,6 +204,7 @@ public class PopupTest extends GWTTestCase {
     assertTrue(popup.isShowing());
   }
 
+  @DoNotRunWith(Platform.Htmlunit)
   public void testPopup() {
     // Get rid of window margins so we can test absolute position.
     Window.setMargin("0px");

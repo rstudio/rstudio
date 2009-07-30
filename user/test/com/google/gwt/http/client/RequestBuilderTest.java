@@ -16,6 +16,8 @@
 package com.google.gwt.http.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -71,6 +73,7 @@ public class RequestBuilderTest extends GWTTestCase {
    * <li>url == "www.freebsd.org" - violates same source
    * </ul>
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testRequestBuilderStringString() throws RequestException {
     try {
       new RequestBuilder((RequestBuilder.Method) null, null);

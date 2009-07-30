@@ -21,6 +21,8 @@ import com.google.gwt.event.dom.client.ErrorEvent;
 import com.google.gwt.event.dom.client.ErrorHandler;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -267,6 +269,7 @@ public class ImageTest extends GWTTestCase {
   /**
    * Tests the creation of an image in clipped mode.
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testCreateClippedImage() {
     final Image image = new Image("counting-forwards.png", 16, 16, 16, 16);
 
@@ -338,6 +341,7 @@ public class ImageTest extends GWTTestCase {
    * {@link com.google.gwt.user.client.ui.Image#setUrlAndVisibleRect(String,int,int,int,int)}
    * on a clipped image.
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testSetUrlAndVisibleRectOnClippedImage() {
     final Image image = new Image("counting-backwards.png", 12, 12, 12, 12);
 
@@ -388,6 +392,7 @@ public class ImageTest extends GWTTestCase {
    * {@link com.google.gwt.user.client.ui.Image#setVisibleRect(int,int,int,int)}
    * on a clipped image.
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testSetVisibleRectAndLoadEventsOnClippedImage() {
     final Image image = new Image("counting-backwards.png", 16, 16, 16, 16);
 

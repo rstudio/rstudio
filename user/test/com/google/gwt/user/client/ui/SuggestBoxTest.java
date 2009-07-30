@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Arrays;
@@ -34,6 +36,7 @@ public class SuggestBoxTest extends GWTTestCase {
   /**
    * Test the basic accessors.
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testAccessors() {
     SuggestBox box = createSuggestBox();
 
@@ -53,6 +56,7 @@ public class SuggestBoxTest extends GWTTestCase {
     assertTrue(box.isSuggestionListShowing());
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testShowAndHide() {
     SuggestBox box = createSuggestBox();
     assertFalse(box.isSuggestionListShowing());
@@ -81,6 +85,7 @@ public class SuggestBoxTest extends GWTTestCase {
     assertFalse(box.isSuggestionListShowing());
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testDefaults() {
     MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
     oracle.setDefaultSuggestionsFromText(Arrays.asList("A", "B"));

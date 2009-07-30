@@ -7,7 +7,21 @@
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/junit/junit-3.8.1.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-3.8.1-src.zip"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/tomcat/servlet-api-2.5.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-codec-1.3.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-collections-3.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-httpclient-3.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-lang-2.4.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-logging-1.0.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-io-1.4.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/cssparser/cssparser-0.9.5.jar" />
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.5.jar" />
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-core-js-2.5.jar" />
+	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.12.jar" />
 	<classpathentry kind="var" path="GWT_TOOLS/lib/selenium/selenium-java-client-driver.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xalan/xalan-2.7.1.jar" />
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/serializer-2.7.1.jar" />
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xercesImpl-2.8.1.jar" />
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xml-apis-1.3.04.jar" />
 	<classpathentry kind="var" path="GWT_TOOLS/lib/w3c/sac/sac-1.3.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/w3c/flute/flute-1.3.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev-windows"/>

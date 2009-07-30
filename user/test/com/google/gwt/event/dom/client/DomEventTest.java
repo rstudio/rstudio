@@ -20,6 +20,8 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HandlerTestBase;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.RootPanel;
 
@@ -131,6 +133,7 @@ public class DomEventTest extends HandlerTestBase {
         "onDoubleClick");
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testMouseEventCoordinates() {
     Button b = new Button();
     RootPanel.get().add(b);

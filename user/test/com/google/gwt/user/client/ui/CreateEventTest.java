@@ -21,6 +21,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
@@ -195,6 +197,7 @@ public class CreateEventTest extends GWTTestCase {
    * Tests that {@link Event#getCurrentEvent()} returns the right value for
    * synthesized events.
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testGetCurrentEvent() {
     CurrentEventListener listener = new CurrentEventListener();
     Event.setEventListener(child, listener);
@@ -214,6 +217,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests NativeEvent.stopPropagation().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testStopPropagation() {
     NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(
         "click") {
@@ -237,6 +241,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createBlurEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerBlurEvent() {
     NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(
         "blur") {
@@ -256,6 +261,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createChangeEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerChangeEvent() {
     BubbleAssertingEventListener listener = new BubbleAssertingEventListener(
         "change");
@@ -270,6 +276,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createClickEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerClickEvent() {
     BubbleAssertingEventListener listener = new BubbleAssertingEventListener(
         "click") {
@@ -309,6 +316,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createDblClickEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerDblClickEvent() {
     BubbleAssertingEventListener listener = new BubbleAssertingEventListener(
         "dblclick") {
@@ -339,6 +347,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createErrorEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerErrorEvent() {
     ImgEventListener listener = new ImgEventListener("error");
     Event.setEventListener(parent, listener);
@@ -352,6 +361,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createFocusEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerFocusEvent() {
     NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(
         "focus") {
@@ -371,6 +381,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createKeyDownEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerKeyDownEvent() {
     KeyEventListener listener = new KeyEventListener("keydown");
     Event.setEventListener(parent, listener);
@@ -386,6 +397,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createKeyPressEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerKeyPressEvent() {
     KeyEventListener listener = new KeyEventListener("keypress");
     Event.setEventListener(parent, listener);
@@ -401,6 +413,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createKeyUpEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerKeyUpEvent() {
     KeyEventListener listener = new KeyEventListener("keyup");
     Event.setEventListener(parent, listener);
@@ -429,6 +442,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createMouseDownEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerMouseDownEvent() {
     MouseEventListener listener = new MouseEventListener("mousedown");
     Event.setEventListener(parent, listener);
@@ -445,6 +459,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createMouseMoveEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerMouseMoveEvent() {
     MouseEventListener listener = new MouseEventListener("mousemove");
     Event.setEventListener(parent, listener);
@@ -461,6 +476,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createMouseOutEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerMouseOutEvent() {
     MouseEventListener listener = new MouseEventListener("mouseout") {
       public void onBrowserEvent(Event event) {
@@ -486,6 +502,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createMouseOverEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerMouseOverEvent() {
     MouseEventListener listener = new MouseEventListener("mouseover") {
       public void onBrowserEvent(Event event) {
@@ -510,6 +527,7 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createMouseUpEvent().
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerMouseUpEvent() {
     MouseEventListener listener = new MouseEventListener("mouseup");
     Event.setEventListener(parent, listener);

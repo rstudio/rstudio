@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -29,6 +31,7 @@ public class StyleInjectorTest extends GWTTestCase {
     return "com.google.gwt.dom.DOMTest";
   }
 
+  @DoNotRunWith({Platform.Htmlunit})
   public void testStyleInjector() {
     final DivElement elt = Document.get().createDivElement();
     elt.setId("styleInjectorTest");
@@ -56,6 +59,7 @@ public class StyleInjectorTest extends GWTTestCase {
   /**
    * Ensure that the IE createStyleSheet compatibility code is exercised.
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testLotsOfStyles() {
     StyleElement[] elements = new StyleElement[100];
     for (int i = 0, j = elements.length; i < j; i++) {

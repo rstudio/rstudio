@@ -16,6 +16,9 @@
 
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
+
 /**
  * Tests a {@link TextArea}.
  */
@@ -27,6 +30,7 @@ public class TextAreaTest extends TextBoxBaseTestBase {
    * designed to work on all browsers and verifies that the newlines are
    * accounted for in all browsers.
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testNewline() {
     testNewline("Hello World\r\n\r\n\r\n\r\n\r\n", 15, 6, 15);
     testNewline("Hello\r\n\r\n\r\n\r\nWorld, My name is John.", 7, 3, 15);

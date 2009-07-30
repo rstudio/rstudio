@@ -43,9 +43,13 @@ import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -206,6 +210,37 @@ public class JUnitShell extends GWTShell {
           numClients = targets.length;
           runStyle = RunStyleSelenium.create(JUnitShell.this, targets);
           return runStyle != null;
+        }
+      });
+
+      registerHandler(new ArgHandlerString() {
+        @Override
+        public String getPurpose() {
+          return "Runs web mode via HTMLUnit given a list of browsers; "
+              + "e.g. " + RunStyleHtmlUnit.getBrowserList();
+        }
+
+        @Override
+        public String getTag() {
+          return "-htmlunit";
+        }
+
+        @Override
+        public String[] getTagArgs() {
+          return new String[] {"browserNames"};
+        }
+
+        @Override
+        public boolean setString(String str) {
+          String[] targets = str.split(",");
+          try {
+            runStyle = new RunStyleHtmlUnit(JUnitShell.this, targets);
+            numClients = ((RunStyleHtmlUnit) runStyle).numBrowsers();
+            return true;
+          } catch (IllegalArgumentException ex) {
+            System.err.println(ex.getMessage());
+            return false;
+          }
         }
       });
 
@@ -662,19 +697,64 @@ public class JUnitShell extends GWTShell {
     }
   }
 
-  void compileForWebMode(String moduleName, String userAgentString)
+  void compileForWebMode(String moduleName, String... userAgents)
       throws UnableToCompleteException {
     // Never fresh during JUnit.
     ModuleDef module = ModuleDefLoader.loadFromClassPath(getTopLogger(),
         moduleName, false);
-    if (userAgentString != null) {
+    if (userAgents != null && userAgents.length > 0) {
       Properties props = module.getProperties();
       Property userAgent = props.find("user.agent");
       if (userAgent instanceof BindingProperty) {
-        ((BindingProperty) userAgent).setAllowedValues(userAgentString);
+        ((BindingProperty) userAgent).setAllowedValues(userAgents);
       }
     }
     super.compile(getTopLogger(), module);
+  }
+
+  /**
+   * returns the set of banned {@code Platform} for a test method.
+   */
+  private Set<Platform> getBannedPlatforms(TestCase testCase) {
+    Class<?> testClass = testCase.getClass();
+    Set<Platform> bannedSet = EnumSet.noneOf(Platform.class);
+    if (testClass.isAnnotationPresent(DoNotRunWith.class)) {
+      bannedSet.addAll(Arrays.asList(testClass.getAnnotation(DoNotRunWith.class).value()));
+    }
+    try {
+      Method testMethod = testClass.getMethod(testCase.getName());
+      if (testMethod.isAnnotationPresent(DoNotRunWith.class)) {
+        bannedSet.addAll(Arrays.asList(testMethod.getAnnotation(
+            DoNotRunWith.class).value()));
+      }
+    } catch (SecurityException e) {
+      // should not happen
+      e.printStackTrace();
+    } catch (NoSuchMethodException e) {
+      // should not happen
+      e.printStackTrace();
+    }
+    return bannedSet;
+  }
+
+  private boolean mostNotExecuteTest(Set<Platform> bannedPlatforms) {
+    // TODO (amitmanjhi): Remove this hard-coding. A RunStyle somehow needs to
+    // specify how it interacts with the platforms.
+    return runStyle instanceof RunStyleHtmlUnit
+        && bannedPlatforms.contains(Platform.Htmlunit);
+  }
+
+  /**
+   * Checks if a testCase should not be executed. Currently, a test is either
+   * executed on all clients (mentioned in this test) or on no clients.
+   * 
+   * @param testCase current testCase.
+   * @return true iff the test should not be executed on any of the specified
+   *         clients.
+   */
+  private boolean mustNotExecuteTest(TestCase testCase) {
+    // TODO: collect stats on tests that were not run
+    return mostNotExecuteTest(getBannedPlatforms(testCase));
   }
 
   private void processTestResult(TestInfo testInfo, TestCase testCase,
@@ -726,6 +806,10 @@ public class JUnitShell extends GWTShell {
   private void runTestImpl(String moduleName, TestCase testCase,
       TestResult testResult, Strategy strategy)
       throws UnableToCompleteException {
+
+    if (mustNotExecuteTest(testCase)) {
+      return;
+    }
 
     if (lastLaunchFailed) {
       throw new UnableToCompleteException();

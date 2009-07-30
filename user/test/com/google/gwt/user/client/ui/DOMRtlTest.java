@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -34,6 +36,7 @@ public class DOMRtlTest extends GWTTestCase {
    * Tests {@link DOM#getAbsoluteLeft(Element)} for consistency when the element
    * contains children and has scrollbars.
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testGetAbsolutePositionWhenScrolled() {
     assertTrue(LocaleInfo.getCurrentLocale().isRTL());
     final Element outer = DOM.createDiv();

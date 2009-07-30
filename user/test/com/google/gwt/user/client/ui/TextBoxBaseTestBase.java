@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -46,6 +48,7 @@ public abstract class TextBoxBaseTestBase extends GWTTestCase {
    * Tests that {@link TextArea#setCursorPos(int)} updates the cursor position
    * correctly.
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testMovingCursor() {
     TextBoxBase area = createTextBoxBase();
     RootPanel.get().add(area);
@@ -96,6 +99,7 @@ public abstract class TextBoxBaseTestBase extends GWTTestCase {
     }
   }
   
+  @DoNotRunWith({Platform.Htmlunit})
   public void testValueChangeEvent() {
     TextBoxBase tb = createTextBoxBase();
     // To work cross-platform, the tb must be added to the root panel.

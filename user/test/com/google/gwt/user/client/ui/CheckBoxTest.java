@@ -23,6 +23,8 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -66,6 +68,7 @@ public class CheckBoxTest extends GWTTestCase {
    * Test accessors.
    */
   @SuppressWarnings("deprecation")
+  @DoNotRunWith({Platform.Htmlunit})
   public void testAccessors() {
     cb.setHTML("test HTML");
     assertEquals(cb.getHTML(), "test HTML");

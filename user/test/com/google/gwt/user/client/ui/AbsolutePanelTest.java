@@ -16,6 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Window;
 
@@ -32,6 +34,7 @@ public class AbsolutePanelTest extends GWTTestCase {
     HasWidgetsTester.testAll(new AbsolutePanel());
   }
 
+  @DoNotRunWith(Platform.Htmlunit)
   public void testPositioning() {
     // Make an absolute panel with a label at (3, 7).
     AbsolutePanel abs = new AbsolutePanel();

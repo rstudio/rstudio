@@ -16,6 +16,8 @@
 
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -84,6 +86,7 @@ public class DeckPanelTest extends GWTTestCase {
    * Test that the offsetHeight/Width of a widget are defined when the widget is
    * added to the DeckPanel.
    */
+  @DoNotRunWith(Platform.Htmlunit)
   public void testWidgetOffsetDimensionsOnload() {
     DeckPanel deck = new DeckPanel();
     RootPanel.get().add(deck);
