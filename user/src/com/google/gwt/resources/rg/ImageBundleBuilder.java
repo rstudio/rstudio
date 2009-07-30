@@ -31,11 +31,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.MemoryCacheImageInputStream;
 
 /**
  * Accumulates state for the bundled image.
@@ -213,6 +216,8 @@ class ImageBundleBuilder {
 
     BufferedImage getImage();
 
+    BufferedImage[] getImages();
+
     int getLeft();
 
     String getName();
@@ -287,7 +292,7 @@ class ImageBundleBuilder {
 
     private boolean hasBeenPositioned;
     private final int height, width;
-    private final BufferedImage image;
+    private final BufferedImage[] images;
     private int left, top;
     private final String name;
     private final AffineTransform transform = new AffineTransform();
@@ -299,7 +304,7 @@ class ImageBundleBuilder {
       this.name = other.getName();
       this.height = other.getHeight();
       this.width = other.getWidth();
-      this.image = other.getImage();
+      this.images = other.getImages();
       this.left = other.getLeft();
       this.top = other.getTop();
       setTransform(other.getTransform());
@@ -307,9 +312,16 @@ class ImageBundleBuilder {
 
     public ImageRect(String name, BufferedImage image) {
       this.name = name;
-      this.image = image;
+      this.images = new BufferedImage[] {image};
       this.width = image.getWidth();
       this.height = image.getHeight();
+    }
+
+    public ImageRect(String name, BufferedImage[] images) {
+      this.name = name;
+      this.images = images;
+      this.width = images[0].getWidth();
+      this.height = images[0].getHeight();
     }
 
     public int getHeight() {
@@ -317,7 +329,11 @@ class ImageBundleBuilder {
     }
 
     public BufferedImage getImage() {
-      return image;
+      return images[0];
+    }
+
+    public BufferedImage[] getImages() {
+      return images;
     }
 
     public int getLeft() {
@@ -342,6 +358,10 @@ class ImageBundleBuilder {
 
     public boolean hasBeenPositioned() {
       return hasBeenPositioned;
+    }
+
+    public boolean isAnimated() {
+      return images.length > 1;
     }
 
     public void setPosition(int left, int top) {
@@ -603,10 +623,40 @@ class ImageBundleBuilder {
     logger = logger.branch(TreeLogger.TRACE,
         "Adding image '" + imageName + "'", null);
 
-    BufferedImage image;
+    BufferedImage image = null;
     // Load the image
     try {
-      image = ImageIO.read(imageUrl);
+      String path = imageUrl.getPath();
+      String suffix = path.substring(path.lastIndexOf('.') + 1);
+
+      /*
+       * ImageIO uses an SPI pattern API. We don't care about the particulars of
+       * the implementation, so just choose the first ImageReader.
+       */
+      Iterator<ImageReader> it = ImageIO.getImageReadersBySuffix(suffix);
+      if (it.hasNext()) {
+        ImageReader reader = it.next();
+
+        reader.setInput(new MemoryCacheImageInputStream(imageUrl.openStream()));
+
+        int numImages = reader.getNumImages(true);
+        if (numImages == 0) {
+          // Fall through
+
+        } else if (numImages == 1) {
+          image = reader.read(0);
+
+        } else {
+          // Read all contained images
+          BufferedImage[] images = new BufferedImage[numImages];
+          for (int i = 0; i < numImages; i++) {
+            images[i] = reader.read(i);
+          }
+
+          ImageRect rect = new ImageRect(imageName, images);
+          throw new UnsuitableForStripException(rect);
+        }
+      }
     } catch (IllegalArgumentException iex) {
       if (imageName.toLowerCase().endsWith("png")
           && iex.getMessage() != null
@@ -625,7 +675,7 @@ class ImageBundleBuilder {
         throw iex;
       }
     } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Unable to read image resource", null);
+      logger.log(TreeLogger.ERROR, "Unable to read image resource", e);
       throw new UnableToCompleteException();
     }
 

@@ -86,7 +86,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
           + urlExpressions[1] + " : " + urlExpressions[0] + ",");
     }
     sw.println(rect.getLeft() + ", " + rect.getTop() + ", " + rect.getWidth()
-        + ", " + rect.getHeight());
+        + ", " + rect.getHeight() + ", " + rect.isAnimated());
 
     sw.outdent();
     sw.print(")");
@@ -224,9 +224,17 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
     } catch (UnsuitableForStripException e) {
       // Add the image to the output as a separate resource
       rect = e.getImageRect();
-      byte[] imageBytes = ImageBundleBuilder.toPng(logger, rect);
-      String urlExpression = context.deploy(rect.getName() + ".png",
-          "image/png", imageBytes, false);
+
+      String urlExpression;
+      if (rect.isAnimated()) {
+        // Can't re-encode animated images, so we emit it as-is
+        urlExpression = context.deploy(resource, false);
+      } else {
+        // Re-encode the image as a PNG to strip random header data
+        byte[] imageBytes = ImageBundleBuilder.toPng(logger, rect);
+        urlExpression = context.deploy(rect.getName() + ".png", "image/png",
+            imageBytes, false);
+      }
       urlsByExternalImageRect.put(rect, new String[] {urlExpression, null});
     }
 
