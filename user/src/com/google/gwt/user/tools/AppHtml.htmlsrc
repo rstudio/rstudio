@@ -37,6 +37,13 @@
 
     <!-- OPTIONAL: include this if you want history support -->
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
+    
+    <!-- RECOMMENDED if your web app will not function without JavaScript enabled -->
+    <noscript>
+      <b style="color: red; border: 1px solid red; padding: 4px;">
+        Your web browser must have JavaScript enabled in order for this application to display correctly
+      </b>
+    </noscript>
 
     <h1>Web Application Starter Project</h1>
 

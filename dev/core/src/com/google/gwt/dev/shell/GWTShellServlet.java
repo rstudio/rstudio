@@ -381,6 +381,11 @@ public class GWTShellServlet extends HttpServlet {
     writer.println("</head><body>");
     writer.println("<iframe src=\"javascript:''\" id='__gwt_historyFrame' "
         + "style='position:absolute;width:0;height:0;border:0'></iframe>");
+    writer.println("<noscript>");
+    writer.println("  <b style=\"color: red; border: 1px solid red; padding: 4px;\">");
+    writer.println("    Your web browser must have JavaScript enabled in order for this application to display correctly");
+    writer.println("  </b>");
+    writer.println("</noscript>");
     writer.println("</body></html>");
 
     // Done.
