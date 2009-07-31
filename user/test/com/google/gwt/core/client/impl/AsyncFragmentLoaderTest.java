@@ -239,6 +239,30 @@ public class AsyncFragmentLoaderTest extends TestCase {
   }
 
   /**
+   * This test catches a case in an earlier version of AsyncFragmentLoader where
+   * AsyncFragmentLoader.waitingForInitialFragments could exhaust its available
+   * space.
+   */
+  public void testOverflowInWaitingForInitialFragments() {
+    MockLoadStrategy reqs = new MockLoadStrategy();
+    int numEntries = 6;
+    AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
+        1, 2, 3}, reqs, NULL_LOGGER);
+
+    /*
+     * Repeatedly queue up extra downloads waiting on an initial and then fail.
+     */
+    for (int i = 0; i < 10; i++) {
+      MockErrorHandler error = new MockErrorHandler();
+      loader.inject(4, error);
+      reqs.assertFragmentsRequested(1);
+
+      loadFailed(reqs, 1);
+      assertTrue(error.getWasCalled());
+    }
+  }
+
+  /**
    * A thorough exercise of loading with an initial load sequence specified.
    */
   public void testWithInitialLoadSequence() {
