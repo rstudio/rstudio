@@ -1081,7 +1081,7 @@ public class MakeTopLevelHtmlForPerm {
   }
 
   private String leftoversStatusFileName(String className) {
-    return "leftoverStatus-" + filename(className);
+    return "leftoverStatus-" + filename(className) + ".html";
   }
 
   private void makeDependenciesHtml(String depGraphName,
@@ -1450,6 +1450,6 @@ public class MakeTopLevelHtmlForPerm {
   }
 
   private String splitStatusFileName(String className) {
-    return "splitStatus-" + filename(className);
+    return "splitStatus-" + filename(className) + ".html";
   }
 }
