@@ -54,7 +54,7 @@
     <pathelement location="${gwt.tools.lib}/apache/commons/commons-httpclient-3.1.jar" />
     <pathelement location="${gwt.tools.lib}/apache/commons/commons-io-1.4.jar" />
     <pathelement location="${gwt.tools.lib}/apache/commons/commons-lang-2.4.jar" />
-    <pathelement location="${gwt.tools.lib}/tomcat/commons-logging-1.1.jar" />
+    <pathelement location="${gwt.tools.lib}/tomcat/commons-logging-1.0.jar" />
     <pathelement location="${gwt.tools.lib}/cssparser/cssparser-0.9.5.jar" />
     <pathelement location="${gwt.tools.lib}/htmlunit/htmlunit-2.5.jar" />
     <pathelement location="${gwt.tools.lib}/htmlunit/htmlunit-core-js-2.5.jar" />
