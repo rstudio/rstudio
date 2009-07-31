@@ -36,6 +36,8 @@ import com.google.gwt.dev.shell.rewrite.HasAnnotation;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOracle;
 import com.google.gwt.dev.util.JsniRef;
+import com.google.gwt.dev.util.Name.SourceOrBinaryName;
+import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
@@ -251,12 +253,12 @@ public final class CompilingClassLoader extends ClassLoader implements
      */
     private Class<?> getClassFromBinaryOrSourceName(String className) {
       // Try the type oracle first
-      JClassType type = typeOracle.findType(className.replace('$', '.'));
+      JClassType type = typeOracle.findType(SourceOrBinaryName.toSourceName(className));
       if (type != null) {
         // Use the type oracle to compute the exact binary name
         String jniSig = type.getJNISignature();
         jniSig = jniSig.substring(1, jniSig.length() - 1);
-        className = jniSig.replace('/', '.');
+        className = InternalName.toBinaryName(jniSig);
       }
       return getClassFromBinaryName(className);
     }

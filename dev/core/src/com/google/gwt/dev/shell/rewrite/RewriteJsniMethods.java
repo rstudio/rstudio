@@ -23,6 +23,7 @@ import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.commons.GeneratorAdapter;
 import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.shell.JavaScriptHost;
+import com.google.gwt.dev.util.Name.InternalName;
 
 import java.lang.reflect.Modifier;
 import java.util.Map;
@@ -234,6 +235,7 @@ public class RewriteJsniMethods extends ClassAdapter {
      *     new Class[] {int.class,}, new Object[] {x,});
      * </pre>
      */
+    @Override
     public void visitCode() {
       super.visitCode();
 
@@ -319,7 +321,7 @@ public class RewriteJsniMethods extends ClassAdapter {
   private static final Type VOID_TYPE = Type.getObjectType("java/lang/Void");
 
   /**
-   * The name of the class we're operating on.
+   * The internal name of the class we're operating on.
    */
   private String classDesc;
   private Map<String, String> anonymousClassMap;
@@ -370,11 +372,12 @@ public class RewriteJsniMethods extends ClassAdapter {
         + descriptor;
     String argsDescriptor = descriptor.substring(argsIndexBegin,
         argsIndexEnd + 1);
-    String classDescriptor = classDesc.replace('/', '.');
+    String classDescriptor = InternalName.toBinaryName(classDesc);
     String newDescriptor = anonymousClassMap.get(classDesc);
     if (newDescriptor != null) {
-      classDescriptor = newDescriptor.replace('/', '.');
+      classDescriptor = InternalName.toBinaryName(newDescriptor);
     }
+    // Always use binary names for JSNI method names
     return "@" + classDescriptor + "::" + name + argsDescriptor;
   }
 }

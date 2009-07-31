@@ -17,6 +17,7 @@ package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 
@@ -253,6 +254,7 @@ public class TypeOracle {
    * @return <code>null</code> if the type is not found
    */
   public JClassType findType(String name) {
+    assert Name.isSourceName(name);
     return allTypes.get(name);
   }
 
@@ -264,6 +266,7 @@ public class TypeOracle {
    * @return <code>null</code> if the type is not found
    */
   public JClassType findType(String pkgName, String typeName) {
+    assert Name.isSourceName(typeName);
     JPackage pkg = findPackage(pkgName);
     if (pkg != null) {
       JClassType type = pkg.findType(typeName);
@@ -471,6 +474,7 @@ public class TypeOracle {
    * @return the specified type
    */
   public JClassType getType(String name) throws NotFoundException {
+    assert Name.isSourceName(name);
     JClassType type = findType(name);
     if (type == null) {
       throw new NotFoundException(name);
@@ -487,6 +491,7 @@ public class TypeOracle {
    */
   public JClassType getType(String pkgName, String topLevelTypeSimpleName)
       throws NotFoundException {
+    assert Name.isSourceName(topLevelTypeSimpleName);
     JClassType type = findType(pkgName, topLevelTypeSimpleName);
     if (type == null) {
       throw new NotFoundException(pkgName + "." + topLevelTypeSimpleName);

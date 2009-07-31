@@ -17,6 +17,8 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.util.Name;
+import com.google.gwt.dev.util.Name.BinaryName;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -396,13 +398,14 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   @SuppressWarnings("unchecked")
   public <T> T rebindAndCreate(String requestedClassName)
       throws UnableToCompleteException {
+    assert Name.isBinaryName(requestedClassName);
     Throwable caught = null;
     String msg = null;
     String resultName = null;
     try {
       // Rebind operates on source-level names.
       //
-      String sourceName = requestedClassName.replace('$', '.');
+      String sourceName = BinaryName.toSourceName(requestedClassName);
       resultName = rebind(sourceName);
       Class<?> resolvedClass = loadClassFromSourceName(resultName);
       if (Modifier.isAbstract(resolvedClass.getModifiers())) {
