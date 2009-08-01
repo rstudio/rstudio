@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * A scope is a factory for creating and allocating
@@ -162,11 +161,7 @@ public class JsScope implements Serializable {
    * Returns an iterator for all the names defined by this scope.
    */
   public Iterator<JsName> getAllNames() {
-    if (names.size() > 1) {
-      return new TreeMap<String, JsName>(names).values().iterator();
-    } else {
       return names.values().iterator();
-    }
   }
 
   /**
@@ -206,7 +201,7 @@ public class JsScope implements Serializable {
    */
   protected JsName doCreateName(String ident, String shortIdent) {
     JsName name = new JsName(this, ident, shortIdent);
-    names = Maps.put(names, ident, name);
+    names = Maps.putOrdered(names, ident, name);
     return name;
   }
 
