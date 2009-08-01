@@ -36,9 +36,9 @@ public class JsObfuscateNamer {
       'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
       'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B',
       'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3',
-      '4', '5', '6', '7', '8', '9', '$', '_'};
-
+      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '$', '_', '0', '1',
+      '2', '3', '4', '5', '6', '7', '8', '9'};
+      
   public static void exec(JsProgram program) {
     new JsObfuscateNamer(program).execImpl();
   }
@@ -77,13 +77,13 @@ public class JsObfuscateNamer {
   }
 
   private String makeObfuscatedIdent(int id) {
-    // Use base-32 for the first character of the identifier,
+    // Use base-54 for the first character of the identifier,
     // so that we don't use any numbers (which are illegal at
     // the beginning of an identifier).
     //
     int i = 0;
-    sIdentBuf[i++] = sBase64Chars[id & 0x1f];
-    id >>= 5;
+    sIdentBuf[i++] = sBase64Chars[id % 54];
+    id /= 54;
 
     // Use base-64 for the rest of the identifier.
     //
