@@ -39,6 +39,11 @@ public final class JsContinue extends JsStatement {
 
   public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     v.visit(this, ctx);
+    if (v.visit(this, ctx)) {
+      if (label != null) {
+        v.accept(label);
+      }
+    }
     v.endVisit(this, ctx);
   }
 
