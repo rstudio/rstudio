@@ -201,7 +201,7 @@
   </target>
   
   <target name="test.web.disableClassMetadata" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
-    <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -web -batch module" test.out="${junit.out}/${build.host.platform}-web-mode-disableClassMetadata" test.cases="default.web.tests" >
+    <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode-disableClassMetadata" test.cases="default.web.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
