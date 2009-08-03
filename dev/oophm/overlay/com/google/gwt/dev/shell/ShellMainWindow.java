@@ -35,22 +35,26 @@ public class ShellMainWindow extends JPanel {
 
   public ShellMainWindow(TreeLogger.Type maxLevel) {
     super(new BorderLayout());
-    JPanel panel = new JPanel(new GridLayout(2, 1));
-    JPanel optionPanel = new JPanel();
-    optionPanel.setBorder(BorderFactory.createTitledBorder("Options"));
-    optionPanel.add(new JLabel("Miscellaneous options here"));
-    panel.add(optionPanel);
-    JPanel launchPanel = new JPanel();
-    launchPanel.setBorder(BorderFactory.createTitledBorder("Launch GWT Module"));
-    launchPanel.add(new JLabel("Selections for launching a new module on a selected browser"));
-    panel.add(launchPanel);
-    add(panel, BorderLayout.NORTH);
+    // TODO(jat): add back when we have real options
+    if (false) {
+      JPanel panel = new JPanel(new GridLayout(2, 1));
+      JPanel optionPanel = new JPanel();
+      optionPanel.setBorder(BorderFactory.createTitledBorder("Options"));
+      optionPanel.add(new JLabel("Miscellaneous options here"));
+      panel.add(optionPanel);
+      JPanel launchPanel = new JPanel();
+      launchPanel.setBorder(BorderFactory.createTitledBorder("Launch GWT Module"));
+      launchPanel.add(new JLabel(
+          "Selections for launching a new module on a selected browser"));
+      panel.add(launchPanel);
+      add(panel, BorderLayout.NORTH);
+    }
     logWindow = new SwingLoggerPanel(maxLevel);
     add(logWindow);
   }
 
   /**
-   * @return
+   * @return TreeLogger instance
    */
   public AbstractTreeLogger getLogger() {
     return logWindow.getLogger();

@@ -269,10 +269,8 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
       }
     });
     topPanel.add(collapsButton);
-    if (true) {
-      // temporarily avoid showing parts that aren't implemented.
-      topPanel.add(new JLabel("Log filtering controls will go here"));
-    } else {
+    // TODO(jat): temporarily avoid showing parts that aren't implemented.
+    if (false) {
       topPanel.add(new JLabel("Filter Log Messages: "));
       levelComboBox = new JComboBox();
       for (TreeLogger.Type type : TreeLogger.Type.instances()) {

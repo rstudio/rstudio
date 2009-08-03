@@ -34,6 +34,7 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 /**
+ * A panel which represents a single module session.
  */
 public class ModulePanel extends JPanel {
 
@@ -62,12 +63,16 @@ public class ModulePanel extends JPanel {
     }
   }
 
+  @SuppressWarnings("deprecation")
   private static ImageIcon firefoxIcon = GWTShell.loadImageIcon("firefox24.png");
 
+  @SuppressWarnings("deprecation")
   private static ImageIcon ieIcon = GWTShell.loadImageIcon("ie24.png");
 
+  @SuppressWarnings("deprecation")
   private static ImageIcon safariIcon = GWTShell.loadImageIcon("safari24.png");
 
+  @SuppressWarnings("deprecation")
   private static ImageIcon closeIcon = GWTShell.loadImageIcon("close.png");
 
   private SwingLoggerPanel loggerPanel;
@@ -81,16 +86,18 @@ public class ModulePanel extends JPanel {
     super(new BorderLayout());
     this.tabs = tabs;
     topPanel = new JPanel();
-    topPanel.add(new JLabel(moduleName));
-    JButton compileButton = new JButton("Compile (not yet implemented)");
-    compileButton.setEnabled(false);
-    compileButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        JOptionPane.showMessageDialog(null, "Compiling not implemented yet", 
-            "Alert: Not Implemented", JOptionPane.INFORMATION_MESSAGE);
-      }
-    });
-    topPanel.add(compileButton);
+    topPanel.add(new JLabel("Module: " + moduleName));
+    if (false) {
+      JButton compileButton = new JButton("Compile (not yet implemented)");
+      compileButton.setEnabled(false);
+      compileButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          JOptionPane.showMessageDialog(null, "Compiling not implemented yet", 
+              "Alert: Not Implemented", JOptionPane.INFORMATION_MESSAGE);
+        }
+      });
+      topPanel.add(compileButton);
+    }
     add(topPanel, BorderLayout.NORTH);
     loggerPanel = new SwingLoggerPanel(maxLevel);
     add(loggerPanel);
