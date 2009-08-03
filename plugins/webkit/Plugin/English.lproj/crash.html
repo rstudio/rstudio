@@ -1,0 +1,27 @@
+<html>
+<head>
+<title>Hosted Mode failure</title>
+<style>
+* {font-family: monospace;}
+h1 {background: blue; color: white;}
+#r {border: thin solid silver; width:100%; height: 50em; white-space: pre; overflow: scroll;}
+</style>
+</head>
+<body>
+<h1>STOP</h1>
+<p>The hosted mode plugin encountered a fatal error and was unable to continue.  Ensure
+that the hosted mode server is running.  You can attempt to restart the module
+by reloading the current page.</p>
+<textarea id="r" wrap="off">
+__MESSAGE__
+
+System version: __SYSTEM_VERSION__
+
+__USER_AGENT__
+
+Compilation time: __DATE__ __TIME__
+
+__BACKTRACE__
+</textarea>
+</body>
+</html>

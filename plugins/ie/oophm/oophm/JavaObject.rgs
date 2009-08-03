@@ -1,0 +1,26 @@
+HKCR
+{
+	oophm.JavaObject.1 = s 'JavaObject Class'
+	{
+		CLSID = s '{644FD769-8B9D-4AC4-A79E-AAAF5CD751C1}'
+	}
+	oophm.JavaObject = s 'JavaObject Class'
+	{
+		CLSID = s '{644FD769-8B9D-4AC4-A79E-AAAF5CD751C1}'
+		CurVer = s 'oophm.JavaObject.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {644FD769-8B9D-4AC4-A79E-AAAF5CD751C1} = s 'JavaObject Class'
+		{
+			ProgID = s 'oophm.JavaObject.1'
+			VersionIndependentProgID = s 'oophm.JavaObject'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			'TypeLib' = s '{9259F105-BE55-4BF6-B7CE-D0AA878C1BA6}'
+		}
+	}
+}

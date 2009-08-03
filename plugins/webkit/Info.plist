@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>${EXECUTABLE_NAME}</string>
+	<key>CFBundleIconFile</key>
+	<string>gwtlogo</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.google.gwt.oophm</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>CFBundlePackageType</key>
+	<string>WBPL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>0.1</string>
+	<key>NSPrincipalClass</key>
+	<string>OophmPlugin</string>
+	<key>WebPluginDescription</key>
+	<string>Google Web Toolkit Out-Of-Process Hosted Mode plugin</string>
+	<key>WebPluginMIMETypes</key>
+	<dict>
+		<key>application/x-gwt-hosted-mode</key>
+		<dict>
+			<key>WebPluginTypeDescription</key>
+			<string>Google Web Toolkit Out-of-Process hosted mode.</string>
+		</dict>
+	</dict>
+	<key>WebPluginName</key>
+	<string>GWT OOPHM</string>
+</dict>
+</plist>

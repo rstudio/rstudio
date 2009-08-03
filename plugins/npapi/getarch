@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ -r $1 ]
+then
+  read k <$1
+  echo $k
+else 
+  echo "unknown"
+fi
+exit 0

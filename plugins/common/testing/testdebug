@@ -1,0 +1,61 @@
+#!/bin/sh
+# Copyright 2008 Google Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
+# this verifies that debug code is elided if it is not needed
+
+# The C++ compiler is specified in CXX, and its flags in CXXFLAGS
+# Defaults for GCC are used if not supplied.  Note that CXXFLAGS should
+# include optimizations intended to be used.  It is assumed that the
+# compiler uses -S to produce assembly output and -o - works to get that
+# output on stdout, and -Dsym=val is used to define preprocessor symbols.
+#
+# Note that debugging symbols should not be included as generally the
+# debugging info contains references to elided calls etc.
+if [ "x$CXX" == "x" ]
+then
+  CXX=g++
+fi
+
+if [ "x$CXXFLAGS" == "x" ]
+then
+  CXXFLAGS=-O3
+else
+  # remove -g if supplied
+  CXXFLAGS=`echo $CXXFLAGS | sed 's/-g\S*//'`
+fi
+
+CMD="$CXX $CXXFLAGS -S -o -"
+
+err=0
+$CMD -DGWT_DEBUGDISABLE DebugTest.cpp | egrep '(GarbalDeGook|ExpensiveCall)' >/dev/null
+if [ $? -eq 0 ]
+then
+  echo "Debug disabled leaves debug code around"
+  err=1
+fi
+$CMD -DGWT_DEBUGLEVEL=Error DebugTest.cpp | egrep '(Warning|ExpensiveCall)' >/dev/null
+if [ $? -eq 0 ]
+then
+  echo "Debug level Error leaves lower-level debug code around"
+  err=1
+fi
+$CMD -DGWT_DEBUGLEVEL=Spam DebugTest.cpp | grep 'ExpensiveCall' >/dev/null
+if [ $? -eq 1 ]
+then
+  echo "Debug level Spam does not include code that should be included"
+  err=1
+fi
+
+exit $err

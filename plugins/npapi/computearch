@@ -1,0 +1,72 @@
+#!/bin/sh
+#
+# Compute the Firefox XPCOM-ABI string -- see
+#    http://developer.mozilla.org/en/docs/XPCOM_ABI
+# 
+
+# OS_TARGET portion should be one of:
+#   Linux
+#   Darwin - Mac OSX
+#   WINNT - Windows NT, 2000, XP and later
+#   SunOS - all Solaris versions
+#
+OS=`uname -s`
+
+# COMPILER should be one of:
+#    gcc2 - GNU C++ v2.x
+#    gcc3 - GNU C++ v3.x or v4.x
+#    msvc - MS Visual C++
+#    n32 - IRIX 6 C++ Compiler
+#    sunc - Sun C++ Compiler
+#    ibmc - IBM C++ Compiler
+#
+# TODO: figure out how to determine this in a better way
+case $OS in
+  SunOS)
+    COMPILER=sunc
+    ;;
+  WINNT)
+    COMPILER=msvc
+    ;;
+  *)
+    COMPILER=gcc3
+    ;;
+esac
+
+# TARGET_XPCOM_ABI consists of ARCH and COMPILER
+
+# Currently acceptable ARCH values are:
+#    x86 - i386 and up, 32-bit mode
+#    x86_64 - AMD64/EMT64 processors in 64-bit mode
+#    ppc
+#    alpha
+#    sparc
+#    ia64 - Itanium
+#
+ARCH=`uname -m`
+case "$ARCH" in
+  x86_64 | ppc | sparc | alpha | ia64)
+    # these don't need changing
+    ;;
+  athlon | i386 | i486 | i586 | i686 | i86pc)
+    ARCH=x86
+    ;;
+  *Macintosh*)
+    case `uname -p` in
+      powerpc)
+        ARCH=ppc
+        ;;
+      *)
+        echo "Unknown mac architecture '$ARCH'" >&2
+        exit 1
+        ;;
+    esac
+    ;;
+  *)
+    echo "Unknown architecture '$ARCH'" >&2
+    exit 1
+    ;;
+esac
+
+echo ${OS}_$ARCH-$COMPILER >$1
+exit 0

@@ -1,0 +1,18 @@
+<project name="webkit" default="build" basedir=".">
+	<property name="plugin.root" value="webkit" />
+	<import file="../common.ant.xml" />
+
+	<target name="build" description="Copy compiled plugin to the output folder">
+		<mkdir dir="${gwt.build.out}/plugins" />
+		<mkdir dir="${gwt.build.out}/plugins/webkit" />
+		<copy todir="${gwt.build.out}/plugins/webkit">
+			<fileset file="prebuilt/oophm.dmg" />
+		</copy>
+	</target>
+
+	<target name="test" description="Run any tests">
+	</target>
+
+	<target name="checkstyle" description="Static style analysis">
+	</target>
+</project>

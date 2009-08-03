@@ -1,0 +1,18 @@
+<project name="ie" default="build" basedir=".">
+	<property name="plugin.root" value="ie" />
+	<import file="../common.ant.xml" />
+
+	<target name="build" description="Copy compiled plugin to the output folder">
+		<mkdir dir="${gwt.build.out}/plugins" />
+		<mkdir dir="${gwt.build.out}/plugins/ie" />
+		<copy todir="${gwt.build.out}/plugins/ie">
+			<fileset file="prebuilt/oophm.dll" />
+		</copy>
+	</target>
+
+	<target name="test" description="Run any tests">
+	</target>
+
+	<target name="checkstyle" description="Static style analysis">
+	</target>
+</project>

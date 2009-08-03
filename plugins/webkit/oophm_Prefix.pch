@@ -1,0 +1,7 @@
+//
+// Prefix header for all source files of the 'oophm' target in the 'oophm' project.
+//
+
+#ifdef __OBJC__
+    #import <Cocoa/Cocoa.h>
+#endif

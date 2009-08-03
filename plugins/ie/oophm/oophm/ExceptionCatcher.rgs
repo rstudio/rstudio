@@ -1,0 +1,26 @@
+HKCR
+{
+	oophm.ExceptionCatcher.1 = s 'ExceptionCatcher Class'
+	{
+		CLSID = s '{1A2A78F4-B5A4-4208-B520-BDDA0A7EC5CB}'
+	}
+	oophm.ExceptionCatcher = s 'ExceptionCatcher Class'
+	{
+		CLSID = s '{1A2A78F4-B5A4-4208-B520-BDDA0A7EC5CB}'
+		CurVer = s 'oophm.ExceptionCatcher.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {1A2A78F4-B5A4-4208-B520-BDDA0A7EC5CB} = s 'ExceptionCatcher Class'
+		{
+			ProgID = s 'oophm.ExceptionCatcher.1'
+			VersionIndependentProgID = s 'oophm.ExceptionCatcher'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			'TypeLib' = s '{9259F105-BE55-4BF6-B7CE-D0AA878C1BA6}'
+		}
+	}
+}

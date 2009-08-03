@@ -1,0 +1,833 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXAggregateTarget section */
+		48420E420DD52761001F3839 /* oophm.dmg */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 48420E5A0DD527AD001F3839 /* Build configuration list for PBXAggregateTarget "oophm.dmg" */;
+			buildPhases = (
+				48420E460DD52768001F3839 /* ShellScript */,
+			);
+			dependencies = (
+				48420E480DD5278D001F3839 /* PBXTargetDependency */,
+			);
+			name = oophm.dmg;
+			productName = oophm_package;
+		};
+		48547E030DD882170047AC8A /* symlinks */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 48547E080DD8823B0047AC8A /* Build configuration list for PBXAggregateTarget "symlinks" */;
+			buildPhases = (
+				48547E020DD882170047AC8A /* Make symlink */,
+			);
+			comments = "This will create a symlink in ~/Library/Internet Plug-Ins to the plugin";
+			dependencies = (
+				48547E070DD8821D0047AC8A /* PBXTargetDependency */,
+			);
+			name = symlinks;
+			productName = oophm.symlink;
+		};
+/* End PBXAggregateTarget section */
+
+/* Begin PBXBuildFile section */
+		480DDCAA0E381E22000711F4 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = 48A23BB50DD0E688004EF5CA /* AppController.m */; };
+		480DDCAB0E381E23000711F4 /* BrowserWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 48A23C770DD0F545004EF5CA /* BrowserWindow.m */; };
+		480DDCAC0E381E28000711F4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 48A23BB60DD0E688004EF5CA /* main.m */; };
+		48108DDF0E2C15BD007FA76C /* AllowedConnections.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 48108DDB0E2C15BD007FA76C /* AllowedConnections.cpp */; };
+		48108DE00E2C15BD007FA76C /* Socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 48108DDD0E2C15BD007FA76C /* Socket.cpp */; };
+		48338DDF0E4A2CA7008ACF0F /* oophm_bypass.plist in Resources */ = {isa = PBXBuildFile; fileRef = 48338DDB0E4A2C49008ACF0F /* oophm_bypass.plist */; };
+		48420D410DD51A3D001F3839 /* GTMNSString+HTML.m in Sources */ = {isa = PBXBuildFile; fileRef = 48420D3E0DD51A3D001F3839 /* GTMNSString+HTML.m */; };
+		48420D420DD51A3D001F3839 /* GTMStackTrace.c in Sources */ = {isa = PBXBuildFile; fileRef = 48420D3F0DD51A3D001F3839 /* GTMStackTrace.c */; };
+		4851A9D50DD1198300C577B2 /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 48FD98A00DC62FD800E011A2 /* JavaScriptCore.framework */; };
+		48547F000DD889DA0047AC8A /* GTMSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 48547EFF0DD889DA0047AC8A /* GTMSystemVersion.m */; };
+		48547F4B0DD88D110047AC8A /* NSMutableString+HtmlReplacement.m in Sources */ = {isa = PBXBuildFile; fileRef = 48547F4A0DD88D110047AC8A /* NSMutableString+HtmlReplacement.m */; };
+		485505ED0DCD475C0009536F /* SlowScriptProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 485505EC0DCD475C0009536F /* SlowScriptProxy.m */; };
+		4856DF890DCF95B8000BF47C /* HostChannel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4856DF750DCF95B8000BF47C /* HostChannel.cpp */; };
+		4856DF8A0DCF95B8000BF47C /* InvokeMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4856DF770DCF95B8000BF47C /* InvokeMessage.cpp */; };
+		4856DF8B0DCF95B8000BF47C /* LoadModuleMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4856DF790DCF95B8000BF47C /* LoadModuleMessage.cpp */; };
+		4856DF8E0DCF95B8000BF47C /* ReturnMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4856DF7F0DCF95B8000BF47C /* ReturnMessage.cpp */; };
+		4856DF8F0DCF95B8000BF47C /* README.google in Resources */ = {isa = PBXBuildFile; fileRef = 4856DF820DCF95B8000BF47C /* README.google */; };
+		4856DF900DCF95B8000BF47C /* ServerMethods.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4856DF840DCF95B8000BF47C /* ServerMethods.cpp */; };
+		485CCFF00DDDDEA400AEE666 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 485CCFEF0DDDDEA400AEE666 /* CoreFoundation.framework */; };
+		485CD0AA0DDDEAF300AEE666 /* Debug.mm in Sources */ = {isa = PBXBuildFile; fileRef = 485CD0A90DDDEAF300AEE666 /* Debug.mm */; };
+		486DA8F50DD22BD50065980B /* crash.html in Resources */ = {isa = PBXBuildFile; fileRef = 486DA8F40DD22BD50065980B /* crash.html */; };
+		48A237D10DCFB46D004EF5CA /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */; };
+		48A23BC60DD0E6EE004EF5CA /* browser.nib in Resources */ = {isa = PBXBuildFile; fileRef = 48A23BC50DD0E6EE004EF5CA /* browser.nib */; };
+		48A23BE00DD0E8B1004EF5CA /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 48FD98A10DC62FD800E011A2 /* WebKit.framework */; };
+		48A23BE10DD0E8B6004EF5CA /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */; };
+		48A23C510DD0F2D6004EF5CA /* Browser-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 48A23C500DD0F2D6004EF5CA /* Browser-Info.plist */; };
+		48A23C530DD0F302004EF5CA /* gwtlogo.icns in Resources */ = {isa = PBXBuildFile; fileRef = 48C4D72D0DCA2B6900C34919 /* gwtlogo.icns */; };
+		48ABDDC50DCBA04800B0159A /* WebScriptSessionHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 48ABDDC40DCBA04800B0159A /* WebScriptSessionHandler.cpp */; };
+		48C4D72E0DCA2B6900C34919 /* gwtlogo.icns in Resources */ = {isa = PBXBuildFile; fileRef = 48C4D72D0DCA2B6900C34919 /* gwtlogo.icns */; };
+		48C9EA4A0E37863700E691C6 /* FreeValueMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 48C9EA440E37863700E691C6 /* FreeValueMessage.cpp */; };
+		48C9EA4B0E37863700E691C6 /* InvokeSpecialMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 48C9EA460E37863700E691C6 /* InvokeSpecialMessage.cpp */; };
+		48C9EA4C0E37863700E691C6 /* LoadJsniMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 48C9EA480E37863700E691C6 /* LoadJsniMessage.cpp */; };
+		48EF692D0E318E200050F5D6 /* ObjectFunctions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 48EF692C0E318E200050F5D6 /* ObjectFunctions.cpp */; };
+		48FD98900DC62E7400E011A2 /* OophmPlugin.mm in Sources */ = {isa = PBXBuildFile; fileRef = 48FD988F0DC62E7400E011A2 /* OophmPlugin.mm */; };
+		48FD98A20DC62FD800E011A2 /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 48FD98A00DC62FD800E011A2 /* JavaScriptCore.framework */; };
+		48FD98A30DC62FD800E011A2 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 48FD98A10DC62FD800E011A2 /* WebKit.framework */; };
+		48FD99540DC6349F00E011A2 /* OophmWebScriptObject.mm in Sources */ = {isa = PBXBuildFile; fileRef = 48FD99530DC6349F00E011A2 /* OophmWebScriptObject.mm */; };
+		8D5B49B0048680CD000E48DA /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C167DFE841241C02AAC07 /* InfoPlist.strings */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		48420E470DD5278D001F3839 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D5B49AC048680CD000E48DA;
+			remoteInfo = oophm;
+		};
+		48547E060DD8821D0047AC8A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D5B49AC048680CD000E48DA;
+			remoteInfo = oophm;
+		};
+		485CD0C40DDDED1700AEE666 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 48547E030DD882170047AC8A;
+			remoteInfo = symlinks;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		089C1672FE841209C02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		089C167FFE841241C02AAC07 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+		1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
+		32DBCF630370AF2F00C91783 /* oophm_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = oophm_Prefix.pch; sourceTree = "<group>"; };
+		48108DDB0E2C15BD007FA76C /* AllowedConnections.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AllowedConnections.cpp; sourceTree = "<group>"; };
+		48108DDC0E2C15BD007FA76C /* AllowedConnections.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AllowedConnections.h; sourceTree = "<group>"; };
+		48108DDD0E2C15BD007FA76C /* Socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Socket.cpp; sourceTree = "<group>"; };
+		48108DDE0E2C15BD007FA76C /* Socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Socket.h; sourceTree = "<group>"; };
+		48338DDB0E4A2C49008ACF0F /* oophm_bypass.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = oophm_bypass.plist; sourceTree = "<group>"; };
+		48420D3C0DD51A23001F3839 /* GTMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMDefines.h; path = GTM/GTMDefines.h; sourceTree = "<group>"; };
+		48420D3D0DD51A3D001F3839 /* GTMNSString+HTML.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "GTMNSString+HTML.h"; path = "GTM/Foundation/GTMNSString+HTML.h"; sourceTree = "<group>"; };
+		48420D3E0DD51A3D001F3839 /* GTMNSString+HTML.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "GTMNSString+HTML.m"; path = "GTM/Foundation/GTMNSString+HTML.m"; sourceTree = "<group>"; };
+		48420D3F0DD51A3D001F3839 /* GTMStackTrace.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = GTMStackTrace.c; path = GTM/Foundation/GTMStackTrace.c; sourceTree = "<group>"; };
+		48420D400DD51A3D001F3839 /* GTMStackTrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMStackTrace.h; path = GTM/Foundation/GTMStackTrace.h; sourceTree = "<group>"; };
+		48547EFE0DD889DA0047AC8A /* GTMSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMSystemVersion.h; path = GTM/Foundation/GTMSystemVersion.h; sourceTree = "<group>"; };
+		48547EFF0DD889DA0047AC8A /* GTMSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GTMSystemVersion.m; path = GTM/Foundation/GTMSystemVersion.m; sourceTree = "<group>"; };
+		48547F490DD88D110047AC8A /* NSMutableString+HtmlReplacement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableString+HtmlReplacement.h"; sourceTree = "<group>"; };
+		48547F4A0DD88D110047AC8A /* NSMutableString+HtmlReplacement.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableString+HtmlReplacement.m"; sourceTree = "<group>"; };
+		485505EB0DCD475C0009536F /* SlowScriptProxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SlowScriptProxy.h; sourceTree = "<group>"; };
+		485505EC0DCD475C0009536F /* SlowScriptProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SlowScriptProxy.m; sourceTree = "<group>"; };
+		4856DF740DCF95B8000BF47C /* BrowserChannel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BrowserChannel.h; path = ../common/BrowserChannel.h; sourceTree = SOURCE_ROOT; };
+		4856DF750DCF95B8000BF47C /* HostChannel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HostChannel.cpp; path = ../common/HostChannel.cpp; sourceTree = SOURCE_ROOT; };
+		4856DF760DCF95B8000BF47C /* HostChannel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HostChannel.h; path = ../common/HostChannel.h; sourceTree = SOURCE_ROOT; };
+		4856DF770DCF95B8000BF47C /* InvokeMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InvokeMessage.cpp; path = ../common/InvokeMessage.cpp; sourceTree = SOURCE_ROOT; };
+		4856DF780DCF95B8000BF47C /* InvokeMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InvokeMessage.h; path = ../common/InvokeMessage.h; sourceTree = SOURCE_ROOT; };
+		4856DF790DCF95B8000BF47C /* LoadModuleMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LoadModuleMessage.cpp; path = ../common/LoadModuleMessage.cpp; sourceTree = SOURCE_ROOT; };
+		4856DF7A0DCF95B8000BF47C /* LoadModuleMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LoadModuleMessage.h; path = ../common/LoadModuleMessage.h; sourceTree = SOURCE_ROOT; };
+		4856DF7D0DCF95B8000BF47C /* Message.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Message.h; path = ../common/Message.h; sourceTree = SOURCE_ROOT; };
+		4856DF7E0DCF95B8000BF47C /* QuitMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = QuitMessage.h; path = ../common/QuitMessage.h; sourceTree = SOURCE_ROOT; };
+		4856DF7F0DCF95B8000BF47C /* ReturnMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ReturnMessage.cpp; path = ../common/ReturnMessage.cpp; sourceTree = SOURCE_ROOT; };
+		4856DF800DCF95B8000BF47C /* ReturnMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ReturnMessage.h; path = ../common/ReturnMessage.h; sourceTree = SOURCE_ROOT; };
+		4856DF820DCF95B8000BF47C /* README.google */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README.google; path = ../common/scoped_ptr/README.google; sourceTree = SOURCE_ROOT; };
+		4856DF830DCF95B8000BF47C /* scoped_ptr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = scoped_ptr.h; path = ../common/scoped_ptr/scoped_ptr.h; sourceTree = SOURCE_ROOT; };
+		4856DF840DCF95B8000BF47C /* ServerMethods.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ServerMethods.cpp; path = ../common/ServerMethods.cpp; sourceTree = SOURCE_ROOT; };
+		4856DF850DCF95B8000BF47C /* ServerMethods.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ServerMethods.h; path = ../common/ServerMethods.h; sourceTree = SOURCE_ROOT; };
+		4856DF860DCF95B8000BF47C /* SessionHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SessionHandler.h; path = ../common/SessionHandler.h; sourceTree = SOURCE_ROOT; };
+		4856DF880DCF95B8000BF47C /* Value.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Value.h; path = ../common/Value.h; sourceTree = SOURCE_ROOT; };
+		485CCE650DDDC5E900AEE666 /* HashMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HashMap.h; sourceTree = "<group>"; };
+		485CCFEF0DDDDEA400AEE666 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
+		485CD0A90DDDEAF300AEE666 /* Debug.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Debug.mm; sourceTree = "<group>"; };
+		486DA8ED0DD22B850065980B /* English */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = English; path = English.lproj/crash.html; sourceTree = "<group>"; wrapsLines = 0; };
+		48A23BA20DD0E5B4004EF5CA /* Browser.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Browser.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		48A23BB40DD0E688004EF5CA /* AppController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppController.h; sourceTree = "<group>"; };
+		48A23BB50DD0E688004EF5CA /* AppController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppController.m; sourceTree = "<group>"; };
+		48A23BB60DD0E688004EF5CA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		48A23BC50DD0E6EE004EF5CA /* browser.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = browser.nib; sourceTree = "<group>"; };
+		48A23C500DD0F2D6004EF5CA /* Browser-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Browser-Info.plist"; sourceTree = "<group>"; };
+		48A23C760DD0F545004EF5CA /* BrowserWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BrowserWindow.h; sourceTree = "<group>"; };
+		48A23C770DD0F545004EF5CA /* BrowserWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BrowserWindow.m; sourceTree = "<group>"; };
+		48ABDDC30DCBA04800B0159A /* WebScriptSessionHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebScriptSessionHandler.h; sourceTree = "<group>"; };
+		48ABDDC40DCBA04800B0159A /* WebScriptSessionHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebScriptSessionHandler.cpp; sourceTree = "<group>"; };
+		48ABDDC80DCBA09D00B0159A /* TrackingData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrackingData.h; sourceTree = "<group>"; };
+		48ABE1050DCBB67600B0159A /* SessionData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SessionData.h; sourceTree = "<group>"; };
+		48C4D72D0DCA2B6900C34919 /* gwtlogo.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = gwtlogo.icns; sourceTree = "<group>"; };
+		48C9EA440E37863700E691C6 /* FreeValueMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FreeValueMessage.cpp; sourceTree = "<group>"; };
+		48C9EA450E37863700E691C6 /* FreeValueMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FreeValueMessage.h; sourceTree = "<group>"; };
+		48C9EA460E37863700E691C6 /* InvokeSpecialMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InvokeSpecialMessage.cpp; sourceTree = "<group>"; };
+		48C9EA470E37863700E691C6 /* InvokeSpecialMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InvokeSpecialMessage.h; sourceTree = "<group>"; };
+		48C9EA480E37863700E691C6 /* LoadJsniMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoadJsniMessage.cpp; sourceTree = "<group>"; };
+		48C9EA490E37863700E691C6 /* LoadJsniMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoadJsniMessage.h; sourceTree = "<group>"; };
+		48D5795D0DDB8C03005A3498 /* Debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Debug.h; sourceTree = "<group>"; };
+		48D5795E0DDB8C03005A3498 /* DebugLevel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DebugLevel.h; sourceTree = "<group>"; };
+		48EF692B0E318E200050F5D6 /* ObjectFunctions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectFunctions.h; sourceTree = "<group>"; };
+		48EF692C0E318E200050F5D6 /* ObjectFunctions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectFunctions.cpp; sourceTree = "<group>"; };
+		48FD988E0DC62E7400E011A2 /* OophmPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OophmPlugin.h; sourceTree = "<group>"; };
+		48FD988F0DC62E7400E011A2 /* OophmPlugin.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = OophmPlugin.mm; sourceTree = "<group>"; };
+		48FD989B0DC62F8800E011A2 /* WebFrameNonTigerHeaders.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = WebFrameNonTigerHeaders.h; sourceTree = "<group>"; };
+		48FD98A00DC62FD800E011A2 /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = /System/Library/Frameworks/JavaScriptCore.framework; sourceTree = "<absolute>"; };
+		48FD98A10DC62FD800E011A2 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = /System/Library/Frameworks/WebKit.framework; sourceTree = "<absolute>"; };
+		48FD99520DC6349F00E011A2 /* OophmWebScriptObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OophmWebScriptObject.h; sourceTree = "<group>"; };
+		48FD99530DC6349F00E011A2 /* OophmWebScriptObject.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = OophmWebScriptObject.mm; sourceTree = "<group>"; };
+		48FFCFC80DD35DA900805659 /* Platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Platform.h; sourceTree = "<group>"; };
+		8D5B49B6048680CD000E48DA /* oophm.webplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = oophm.webplugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D5B49B7048680CD000E48DA /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Info.plist; sourceTree = "<group>"; };
+		D2F7E65807B2D6F200F64583 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		48A23BA00DD0E5B4004EF5CA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				48A23BE00DD0E8B1004EF5CA /* WebKit.framework in Frameworks */,
+				48A23BE10DD0E8B6004EF5CA /* Cocoa.framework in Frameworks */,
+				4851A9D50DD1198300C577B2 /* JavaScriptCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8D5B49B3048680CD000E48DA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				48FD98A20DC62FD800E011A2 /* JavaScriptCore.framework in Frameworks */,
+				48FD98A30DC62FD800E011A2 /* WebKit.framework in Frameworks */,
+				48A237D10DCFB46D004EF5CA /* Cocoa.framework in Frameworks */,
+				485CCFF00DDDDEA400AEE666 /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		089C166AFE841209C02AAC07 /* oophm */ = {
+			isa = PBXGroup;
+			children = (
+				485506C90DCD54180009536F /* Classes */,
+				48420D3B0DD51A0F001F3839 /* GTM */,
+				32C88E010371C26100C91783 /* Other Sources */,
+				089C167CFE841241C02AAC07 /* Resources */,
+				089C1671FE841209C02AAC07 /* Frameworks and Libraries */,
+				19C28FB8FE9D52D311CA2CBB /* Products */,
+			);
+			comments = "/*\n * Copyright 2008 Google Inc.\n * \n * Licensed under the Apache License, Version 2.0 (the \"License\"); you may not\n * use this file except in compliance with the License. You may obtain a copy of\n * the License at\n * \n * http://www.apache.org/licenses/LICENSE-2.0\n * \n * Unless required by applicable law or agreed to in writing, software\n * distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT\n * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the\n * License for the specific language governing permissions and limitations under\n * the License.\n */\n";
+			name = oophm;
+			sourceTree = "<group>";
+		};
+		089C1671FE841209C02AAC07 /* Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7ACFEA557BF11CA2CBB /* Linked Frameworks */,
+				1058C7AEFEA557BF11CA2CBB /* Other Frameworks */,
+			);
+			name = "Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		089C167CFE841241C02AAC07 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				48338DDB0E4A2C49008ACF0F /* oophm_bypass.plist */,
+				486DA8F40DD22BD50065980B /* crash.html */,
+				48C4D72D0DCA2B6900C34919 /* gwtlogo.icns */,
+				8D5B49B7048680CD000E48DA /* Info.plist */,
+				089C167DFE841241C02AAC07 /* InfoPlist.strings */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		1058C7ACFEA557BF11CA2CBB /* Linked Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				485CCFEF0DDDDEA400AEE666 /* CoreFoundation.framework */,
+				48FD98A00DC62FD800E011A2 /* JavaScriptCore.framework */,
+				48FD98A10DC62FD800E011A2 /* WebKit.framework */,
+				1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */,
+			);
+			name = "Linked Frameworks";
+			sourceTree = "<group>";
+		};
+		1058C7AEFEA557BF11CA2CBB /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				089C167FFE841241C02AAC07 /* AppKit.framework */,
+				D2F7E65807B2D6F200F64583 /* CoreData.framework */,
+				089C1672FE841209C02AAC07 /* Foundation.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		19C28FB8FE9D52D311CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D5B49B6048680CD000E48DA /* oophm.webplugin */,
+				48A23BA20DD0E5B4004EF5CA /* Browser.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		32C88E010371C26100C91783 /* Other Sources */ = {
+			isa = PBXGroup;
+			children = (
+				4856DF730DCF95B8000BF47C /* common */,
+				32DBCF630370AF2F00C91783 /* oophm_Prefix.pch */,
+			);
+			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+		48420D3B0DD51A0F001F3839 /* GTM */ = {
+			isa = PBXGroup;
+			children = (
+				48547EFE0DD889DA0047AC8A /* GTMSystemVersion.h */,
+				48547EFF0DD889DA0047AC8A /* GTMSystemVersion.m */,
+				48420D3D0DD51A3D001F3839 /* GTMNSString+HTML.h */,
+				48420D3E0DD51A3D001F3839 /* GTMNSString+HTML.m */,
+				48420D3F0DD51A3D001F3839 /* GTMStackTrace.c */,
+				48420D400DD51A3D001F3839 /* GTMStackTrace.h */,
+				48420D3C0DD51A23001F3839 /* GTMDefines.h */,
+			);
+			comments = "We just need a subset of the functionality available in GTM, so we'll pull in only the files we need as opposed to creating a cross-project dependency and having to package the framework in the plugin.";
+			name = GTM;
+			sourceTree = "<group>";
+		};
+		485506C90DCD54180009536F /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				48A23B9D0DD0E57E004EF5CA /* Browser */,
+				4856DFFB0DCFAEFD000BF47C /* Plugin */,
+				4856DFFA0DCFAEBC000BF47C /* Core */,
+			);
+			name = Classes;
+			sourceTree = "<group>";
+		};
+		4856DF730DCF95B8000BF47C /* common */ = {
+			isa = PBXGroup;
+			children = (
+				48C9EA440E37863700E691C6 /* FreeValueMessage.cpp */,
+				48C9EA450E37863700E691C6 /* FreeValueMessage.h */,
+				48C9EA460E37863700E691C6 /* InvokeSpecialMessage.cpp */,
+				48C9EA470E37863700E691C6 /* InvokeSpecialMessage.h */,
+				48C9EA480E37863700E691C6 /* LoadJsniMessage.cpp */,
+				48C9EA490E37863700E691C6 /* LoadJsniMessage.h */,
+				48108DDB0E2C15BD007FA76C /* AllowedConnections.cpp */,
+				48108DDC0E2C15BD007FA76C /* AllowedConnections.h */,
+				48108DDD0E2C15BD007FA76C /* Socket.cpp */,
+				48108DDE0E2C15BD007FA76C /* Socket.h */,
+				485CCE650DDDC5E900AEE666 /* HashMap.h */,
+				48D5795D0DDB8C03005A3498 /* Debug.h */,
+				48D5795E0DDB8C03005A3498 /* DebugLevel.h */,
+				48FFCFC80DD35DA900805659 /* Platform.h */,
+				4856DF740DCF95B8000BF47C /* BrowserChannel.h */,
+				4856DF750DCF95B8000BF47C /* HostChannel.cpp */,
+				4856DF760DCF95B8000BF47C /* HostChannel.h */,
+				4856DF770DCF95B8000BF47C /* InvokeMessage.cpp */,
+				4856DF780DCF95B8000BF47C /* InvokeMessage.h */,
+				4856DF790DCF95B8000BF47C /* LoadModuleMessage.cpp */,
+				4856DF7A0DCF95B8000BF47C /* LoadModuleMessage.h */,
+				4856DF7D0DCF95B8000BF47C /* Message.h */,
+				4856DF7E0DCF95B8000BF47C /* QuitMessage.h */,
+				4856DF7F0DCF95B8000BF47C /* ReturnMessage.cpp */,
+				4856DF800DCF95B8000BF47C /* ReturnMessage.h */,
+				4856DF810DCF95B8000BF47C /* scoped_ptr */,
+				4856DF840DCF95B8000BF47C /* ServerMethods.cpp */,
+				4856DF850DCF95B8000BF47C /* ServerMethods.h */,
+				4856DF860DCF95B8000BF47C /* SessionHandler.h */,
+				4856DF880DCF95B8000BF47C /* Value.h */,
+			);
+			name = common;
+			path = ../common;
+			sourceTree = SOURCE_ROOT;
+		};
+		4856DF810DCF95B8000BF47C /* scoped_ptr */ = {
+			isa = PBXGroup;
+			children = (
+				4856DF820DCF95B8000BF47C /* README.google */,
+				4856DF830DCF95B8000BF47C /* scoped_ptr.h */,
+			);
+			name = scoped_ptr;
+			path = ../common/scoped_ptr;
+			sourceTree = SOURCE_ROOT;
+		};
+		4856DFFA0DCFAEBC000BF47C /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				48ABDDC30DCBA04800B0159A /* WebScriptSessionHandler.h */,
+				48ABDDC40DCBA04800B0159A /* WebScriptSessionHandler.cpp */,
+				48ABDDC80DCBA09D00B0159A /* TrackingData.h */,
+				48ABE1050DCBB67600B0159A /* SessionData.h */,
+				48EF692B0E318E200050F5D6 /* ObjectFunctions.h */,
+				48EF692C0E318E200050F5D6 /* ObjectFunctions.cpp */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		4856DFFB0DCFAEFD000BF47C /* Plugin */ = {
+			isa = PBXGroup;
+			children = (
+				485CD0A90DDDEAF300AEE666 /* Debug.mm */,
+				48FD988E0DC62E7400E011A2 /* OophmPlugin.h */,
+				48FD988F0DC62E7400E011A2 /* OophmPlugin.mm */,
+				48FD99520DC6349F00E011A2 /* OophmWebScriptObject.h */,
+				48FD99530DC6349F00E011A2 /* OophmWebScriptObject.mm */,
+				485505EB0DCD475C0009536F /* SlowScriptProxy.h */,
+				485505EC0DCD475C0009536F /* SlowScriptProxy.m */,
+				48FD989B0DC62F8800E011A2 /* WebFrameNonTigerHeaders.h */,
+				48547F490DD88D110047AC8A /* NSMutableString+HtmlReplacement.h */,
+				48547F4A0DD88D110047AC8A /* NSMutableString+HtmlReplacement.m */,
+			);
+			path = Plugin;
+			sourceTree = "<group>";
+		};
+		48A23B9D0DD0E57E004EF5CA /* Browser */ = {
+			isa = PBXGroup;
+			children = (
+				48A23C760DD0F545004EF5CA /* BrowserWindow.h */,
+				48A23C770DD0F545004EF5CA /* BrowserWindow.m */,
+				48A23C500DD0F2D6004EF5CA /* Browser-Info.plist */,
+				48A23BB40DD0E688004EF5CA /* AppController.h */,
+				48A23BB50DD0E688004EF5CA /* AppController.m */,
+				48A23BB60DD0E688004EF5CA /* main.m */,
+				48A23BC50DD0E6EE004EF5CA /* browser.nib */,
+			);
+			path = Browser;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		48A23BA10DD0E5B4004EF5CA /* Browser */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 48A23BA70DD0E5B5004EF5CA /* Build configuration list for PBXNativeTarget "Browser" */;
+			buildPhases = (
+				48A23B9E0DD0E5B4004EF5CA /* Resources */,
+				48A23B9F0DD0E5B4004EF5CA /* Sources */,
+				48A23BA00DD0E5B4004EF5CA /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				485CD0C50DDDED1700AEE666 /* PBXTargetDependency */,
+			);
+			name = Browser;
+			productName = Browser;
+			productReference = 48A23BA20DD0E5B4004EF5CA /* Browser.app */;
+			productType = "com.apple.product-type.application";
+		};
+		8D5B49AC048680CD000E48DA /* oophm */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1DEB913A08733D840010E9CD /* Build configuration list for PBXNativeTarget "oophm" */;
+			buildPhases = (
+				8D5B49AF048680CD000E48DA /* Resources */,
+				8D5B49B1048680CD000E48DA /* Sources */,
+				8D5B49B3048680CD000E48DA /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = oophm;
+			productInstallPath = "$(HOME)/Library/Bundles";
+			productName = oophm;
+			productReference = 8D5B49B6048680CD000E48DA /* oophm.webplugin */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		089C1669FE841209C02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB913E08733D840010E9CD /* Build configuration list for PBXProject "oophm" */;
+			compatibilityVersion = "Xcode 2.4";
+			hasScannedForEncodings = 1;
+			mainGroup = 089C166AFE841209C02AAC07 /* oophm */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				48A23BA10DD0E5B4004EF5CA /* Browser */,
+				8D5B49AC048680CD000E48DA /* oophm */,
+				48420E420DD52761001F3839 /* oophm.dmg */,
+				48547E030DD882170047AC8A /* symlinks */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		48A23B9E0DD0E5B4004EF5CA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				48A23BC60DD0E6EE004EF5CA /* browser.nib in Resources */,
+				48A23C510DD0F2D6004EF5CA /* Browser-Info.plist in Resources */,
+				48A23C530DD0F302004EF5CA /* gwtlogo.icns in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8D5B49AF048680CD000E48DA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D5B49B0048680CD000E48DA /* InfoPlist.strings in Resources */,
+				48C4D72E0DCA2B6900C34919 /* gwtlogo.icns in Resources */,
+				4856DF8F0DCF95B8000BF47C /* README.google in Resources */,
+				486DA8F50DD22BD50065980B /* crash.html in Resources */,
+				48338DDF0E4A2CA7008ACF0F /* oophm_bypass.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		48420E460DD52768001F3839 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/oophm.webplugin",
+			);
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/oophm.dmg",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -x\n# This is because the PackageMaker definition has \"Release\" hard-coded into it\nif [ \"${CONFIGURATION}\" != \"Release\" ]; then\n  echo error: Must be in Release configuration to build disk image\n  exit 1\nfi\n\n/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker --doc \"${PROJECT_DIR}/oophm.pmdoc\" --out \"${TEMP_FILES_DIR}/oophm.mpkg\"\n\nhdiutil create -ov -srcfolder \"${TEMP_FILES_DIR}/oophm.mpkg\" -format UDBZ \"${BUILT_PRODUCTS_DIR}/oophm.dmg\"\nhdiutil internet-enable \"${BUILT_PRODUCTS_DIR}/oophm.dmg\"";
+			showEnvVarsInLog = 0;
+		};
+		48547E020DD882170047AC8A /* Make symlink */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/oophm.webplugin",
+			);
+			name = "Make symlink";
+			outputPaths = (
+				"$(USER_LIBRARY_DIR)/Internet Plug-Ins/oophm.webplugin/Contents",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -x\nln -sf \"${BUILT_PRODUCTS_DIR}/oophm.webplugin\" \"${USER_LIBRARY_DIR}/Internet Plug-Ins/.\"";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		48A23B9F0DD0E5B4004EF5CA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				480DDCAA0E381E22000711F4 /* AppController.m in Sources */,
+				480DDCAB0E381E23000711F4 /* BrowserWindow.m in Sources */,
+				480DDCAC0E381E28000711F4 /* main.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8D5B49B1048680CD000E48DA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				48FD98900DC62E7400E011A2 /* OophmPlugin.mm in Sources */,
+				48FD99540DC6349F00E011A2 /* OophmWebScriptObject.mm in Sources */,
+				48ABDDC50DCBA04800B0159A /* WebScriptSessionHandler.cpp in Sources */,
+				485505ED0DCD475C0009536F /* SlowScriptProxy.m in Sources */,
+				4856DF890DCF95B8000BF47C /* HostChannel.cpp in Sources */,
+				4856DF8A0DCF95B8000BF47C /* InvokeMessage.cpp in Sources */,
+				4856DF8B0DCF95B8000BF47C /* LoadModuleMessage.cpp in Sources */,
+				4856DF8E0DCF95B8000BF47C /* ReturnMessage.cpp in Sources */,
+				4856DF900DCF95B8000BF47C /* ServerMethods.cpp in Sources */,
+				48420D410DD51A3D001F3839 /* GTMNSString+HTML.m in Sources */,
+				48420D420DD51A3D001F3839 /* GTMStackTrace.c in Sources */,
+				48547F000DD889DA0047AC8A /* GTMSystemVersion.m in Sources */,
+				48547F4B0DD88D110047AC8A /* NSMutableString+HtmlReplacement.m in Sources */,
+				485CD0AA0DDDEAF300AEE666 /* Debug.mm in Sources */,
+				48108DDF0E2C15BD007FA76C /* AllowedConnections.cpp in Sources */,
+				48108DE00E2C15BD007FA76C /* Socket.cpp in Sources */,
+				48EF692D0E318E200050F5D6 /* ObjectFunctions.cpp in Sources */,
+				48C9EA4A0E37863700E691C6 /* FreeValueMessage.cpp in Sources */,
+				48C9EA4B0E37863700E691C6 /* InvokeSpecialMessage.cpp in Sources */,
+				48C9EA4C0E37863700E691C6 /* LoadJsniMessage.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		48420E480DD5278D001F3839 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8D5B49AC048680CD000E48DA /* oophm */;
+			targetProxy = 48420E470DD5278D001F3839 /* PBXContainerItemProxy */;
+		};
+		48547E070DD8821D0047AC8A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8D5B49AC048680CD000E48DA /* oophm */;
+			targetProxy = 48547E060DD8821D0047AC8A /* PBXContainerItemProxy */;
+		};
+		485CD0C50DDDED1700AEE666 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 48547E030DD882170047AC8A /* symlinks */;
+			targetProxy = 485CD0C40DDDED1700AEE666 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		089C167DFE841241C02AAC07 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				089C167EFE841241C02AAC07 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		486DA8F40DD22BD50065980B /* crash.html */ = {
+			isa = PBXVariantGroup;
+			children = (
+				486DA8ED0DD22B850065980B /* English */,
+			);
+			name = crash.html;
+			path = Plugin;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		1DEB913B08733D840010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
+				);
+				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/GTM/build/TigerOrLater-Release\"";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = oophm_Prefix.pch;
+				GCC_WARN_EFFECTIVE_CPLUSPLUS_VIOLATIONS = NO;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = NO;
+				GCC_WARN_PEDANTIC = NO;
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Library/Bundles";
+				PRODUCT_NAME = oophm;
+				WRAPPER_EXTENSION = webplugin;
+				ZERO_LINK = YES;
+			};
+			name = Debug;
+		};
+		1DEB913C08733D840010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					ppc,
+					i386,
+				);
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_1)",
+				);
+				FRAMEWORK_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)/GTM/build/TigerOrLater-Release\"";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = oophm_Prefix.pch;
+				GCC_WARN_EFFECTIVE_CPLUSPLUS_VIOLATIONS = NO;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = NO;
+				GCC_WARN_PEDANTIC = NO;
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Library/Bundles";
+				PRODUCT_NAME = oophm;
+				STRIP_INSTALLED_PRODUCT = YES;
+				STRIP_STYLE = "non-global";
+				WRAPPER_EXTENSION = webplugin;
+			};
+			name = Release;
+		};
+		1DEB913F08733D840010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "GWT_DEBUGLEVEL=Debugging";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				OTHER_CFLAGS = "-mmacosx-version-min=10.4";
+				PREBINDING = NO;
+				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
+				STRIP_INSTALLED_PRODUCT = NO;
+				STRIP_STYLE = "non-global";
+				SYMROOT = build;
+			};
+			name = Debug;
+		};
+		1DEB914008733D840010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = GWT_DEBUGDISABLE;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				OTHER_CFLAGS = "-mmacosx-version-min=10.4";
+				PREBINDING = NO;
+				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
+				STRIP_STYLE = "non-global";
+				SYMROOT = build;
+			};
+			name = Release;
+		};
+		48420E430DD52761001F3839 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = oophm_package;
+			};
+			name = Debug;
+		};
+		48420E440DD52761001F3839 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = oophm_package;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		48547E040DD882170047AC8A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = oophm.symlink;
+			};
+			name = Debug;
+		};
+		48547E050DD882170047AC8A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = oophm.symlink;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		48A23BA50DD0E5B5004EF5CA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = oophm_Prefix.pch;
+				INFOPLIST_FILE = "Browser/Browser-Info.plist";
+				INSTALL_PATH = "$(HOME)/Applications";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Foundation,
+					"-framework",
+					AppKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = Browser;
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = YES;
+			};
+			name = Debug;
+		};
+		48A23BA60DD0E5B5004EF5CA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					i386,
+					ppc,
+				);
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = oophm_Prefix.pch;
+				INFOPLIST_FILE = "Browser/Browser-Info.plist";
+				INSTALL_PATH = "$(HOME)/Applications";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Foundation,
+					"-framework",
+					AppKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = Browser;
+				STRIP_INSTALLED_PRODUCT = YES;
+				STRIP_STYLE = "non-global";
+				VALID_ARCHS = "ppc64 ppc7400 ppc970 i386 x86_64 ppc";
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1DEB913A08733D840010E9CD /* Build configuration list for PBXNativeTarget "oophm" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB913B08733D840010E9CD /* Debug */,
+				1DEB913C08733D840010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1DEB913E08733D840010E9CD /* Build configuration list for PBXProject "oophm" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB913F08733D840010E9CD /* Debug */,
+				1DEB914008733D840010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		48420E5A0DD527AD001F3839 /* Build configuration list for PBXAggregateTarget "oophm.dmg" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				48420E430DD52761001F3839 /* Debug */,
+				48420E440DD52761001F3839 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		48547E080DD8823B0047AC8A /* Build configuration list for PBXAggregateTarget "symlinks" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				48547E040DD882170047AC8A /* Debug */,
+				48547E050DD882170047AC8A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		48A23BA70DD0E5B5004EF5CA /* Build configuration list for PBXNativeTarget "Browser" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				48A23BA50DD0E5B5004EF5CA /* Debug */,
+				48A23BA60DD0E5B5004EF5CA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 089C1669FE841209C02AAC07 /* Project object */;
+}

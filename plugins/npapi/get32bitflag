@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if [ ! -r "$1" ]
+then
+  echo "32"
+  exit 0
+fi
+
+read ARCH <$1
+
+case "$ARCH" in
+   *_64* | *sparc*)
+	echo "64"
+	;;
+   *)
+	echo "32"
+	;;
+esac
+exit 0

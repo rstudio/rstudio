@@ -1,0 +1,110 @@
+<html>
+<head>
+<title>OOPHM test page</title>
+<script>
+var $wnd = window,$doc = document;
+var $moduleBase = 'file:///home/jat/s/gwt-oophm/plugins/firefox/';
+
+// fake property provider
+function __gwt_getProperty(prop) {
+  return "gecko1_8";
+}
+
+// wrapper to call JS methods, which we need both to be able to supply a
+// different this for method lookup and to get the exception back
+function __gwt_jsWrapper(method, methodlookup, thisref) {
+  try {
+    var args = Array.prototype.slice.call(arguments, 3);
+//    console.log("calling " + method + " on " + methodlookup + " (this=" + thisref + "), args are ",
+//        args);
+    var ret = methodlookup[method].apply(thisref, args);
+//    console.log("successful; returned ", ret);
+    return [0, ret];
+  } catch (e) {
+    try {
+//      console.log("methodlookup[method]=", methodlookup[method] ?
+//          methodlookup[method].toString() : methodlookup[method]);
+//      console.log("failed; exception ", e);
+    } catch (e2) {
+//      console.log("exception " + e2 + " logging original exception");
+    }
+    return [1, e];
+  }
+}
+
+function __gwt_initHandlers(resize, beforeunload, unload) {
+  console.log("initHandlers called", resize, beforeunload, unload);
+  var $wnd = window
+  , oldOnResize = $wnd.onresize
+  , oldOnBeforeUnload = $wnd.onbeforeunload
+  , oldOnUnload = $wnd.onunload
+  ;
+
+  $wnd.onresize = function(evt) {
+    try {
+      resize();
+    } finally {
+      oldOnResize && oldOnResize(evt);
+    }
+  };
+
+  $wnd.onbeforeunload = function(evt) {
+    var ret, oldRet;
+    try {
+      ret = beforeunload();
+    } finally {
+      oldRet = oldOnBeforeUnload && oldOnBeforeUnload(evt);
+    }
+    // Avoid returning null as IE6 will coerce it into a string.
+    // Ensure that "" gets returned properly.
+    if (ret != null) {
+      return ret;
+    }
+    if (oldRet != null) {
+      return oldRet;
+    }
+    // returns undefined.
+  };
+
+  $wnd.onunload = function(evt) {
+    try {
+      unload();
+    } finally {
+      oldOnUnload && oldOnUnload(evt);
+    }
+  };
+};
+
+// fire up plugin
+window.onload = function() {
+  var plugin = document.getElementById('plugin');
+  var connectTo = "localhost:9997";
+  var module = "com.google.gwt.sample.kitchensink.KitchenSink";
+  var idx = location.search.indexOf("gwt.hosted=");
+  if (idx >= 0) {
+    var amp = location.search.indexOf("&", idx);
+    if (amp >= 0) {
+      connectTo = location.search.substring(idx + 11, amp);
+    } else {
+      connectTo = location.search.substring(idx + 11);
+    }
+  }
+  var idx = location.search.indexOf("gwt.module=");
+  if (idx >= 0) {
+    var amp = location.search.indexOf("&", idx);
+    if (amp >= 0) {
+      module = location.search.substring(idx + 11, amp);
+    } else {
+      module = location.search.substring(idx + 11);
+    }
+  }
+  plugin.connect(connectTo, module)
+      || alert("failed to connect");
+};
+</script>
+</head>
+<body>
+<embed id="plugin" type="application/x-gwt-hosted-mode" width="10"
+        height="10"/>
+</body>
+</html>

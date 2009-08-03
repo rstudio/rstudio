@@ -1,0 +1,19 @@
+<HTML>
+<HEAD>
+<TITLE>ATL 8.0 test page for object plugin</TITLE>
+</HEAD>
+<BODY>
+
+
+<OBJECT ID="plugin" CLASSID="CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E"></OBJECT>
+
+<script>
+var p = document.getElementById("plugin");
+var b = p.connect("this", "sucks");
+var o = p.testObject();
+o.doSomething(42);
+
+
+</script>
+</BODY>
+</HTML>

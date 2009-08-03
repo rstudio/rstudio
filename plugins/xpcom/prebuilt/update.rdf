@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RDF:RDF xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+
+  <RDF:Description about="urn:mozilla:extension:oophm-xpcom-ff2@gwt.google.com">
+    <em:updates>
+      <RDF:Seq>
+
+        <RDF:li>
+          <RDF:Description>
+            <em:version>0.0.4229M.20081202172443</em:version>
+	    <em:targetApplication>
+	      <Description>
+		<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+		<em:minVersion>1.5</em:minVersion>
+		<em:maxVersion>2.*</em:maxVersion>
+                <em:updateLink>http://google-web-toolkit.googlecode.com/svn/changes/jat/oophm-plugins-trunk/plugins/xpcom/prebuilt/oophm-xpcom-ff2.xpi</em:updateLink>
+
+		<!--
+                <em:updateInfoURL>http://www.mysite.com/updateinfo2.2.xhtml</em:updateInfoURL>
+		-->
+	      </Description>
+	    </em:targetApplication>
+          </RDF:Description>
+        </RDF:li>
+
+      </RDF:Seq>
+    </em:updates>
+  </RDF:Description>
+
+  <RDF:Description about="urn:mozilla:extension:oophm-xpcom-ff3@gwt.google.com">
+    <em:updates>
+      <RDF:Seq>
+
+        <RDF:li>
+          <RDF:Description>
+            <em:version>0.0.4229M.20081202172443</em:version>
+	    <em:targetApplication>
+	      <Description>
+		<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+		<em:minVersion>3</em:minVersion>
+		<em:maxVersion>3.4.*</em:maxVersion>
+                <em:updateLink>http://google-web-toolkit.googlecode.com/svn/changes/jat/oophm-plugins-trunk/plugins/xpcom/prebuilt/oophm-xpcom-ff3.xpi</em:updateLink>
+
+		<!--
+                <em:updateInfoURL>http://www.mysite.com/updateinfo2.2.xhtml</em:updateInfoURL>
+		-->
+	      </Description>
+	    </em:targetApplication>
+          </RDF:Description>
+        </RDF:li>
+
+      </RDF:Seq>
+    </em:updates>
+  </RDF:Description>
+
+  <RDF:Description about="urn:mozilla:extension:oophm-xpcom-ff3+@gwt.google.com">
+    <em:updates>
+      <RDF:Seq>
+
+        <RDF:li>
+          <RDF:Description>
+            <em:version>0.0.4229M.20081202172443</em:version>
+	    <em:targetApplication>
+	      <Description>
+		<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+		<em:minVersion>3</em:minVersion>
+		<em:maxVersion>3.4.*</em:maxVersion>
+                <em:updateLink>http://google-web-toolkit.googlecode.com/svn/changes/jat/oophm-plugins-trunk/plugins/xpcom/prebuilt/oophm-xpcom-ff3+.xpi</em:updateLink>
+
+		<!--
+                <em:updateInfoURL>http://www.mysite.com/updateinfo2.2.xhtml</em:updateInfoURL>
+		-->
+	      </Description>
+	    </em:targetApplication>
+          </RDF:Description>
+        </RDF:li>
+
+      </RDF:Seq>
+    </em:updates>
+  </RDF:Description>
+
+  <RDF:Description about="urn:mozilla:extension:oophm-xpcom-ff35@gwt.google.com">
+    <em:updates>
+      <RDF:Seq>
+
+        <RDF:li>
+          <RDF:Description>
+            <em:version>0.0.4229M.20081202172443</em:version>
+	    <em:targetApplication>
+	      <Description>
+		<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+		<em:minVersion>3.5</em:minVersion>
+		<em:maxVersion>3.*</em:maxVersion>
+                <em:updateLink>http://google-web-toolkit.googlecode.com/svn/changes/jat/oophm-plugins-trunk/plugins/xpcom/prebuilt/oophm-xpcom-ff35.xpi</em:updateLink>
+
+		<!--
+                <em:updateInfoURL>http://www.mysite.com/updateinfo2.2.xhtml</em:updateInfoURL>
+		-->
+	      </Description>
+	    </em:targetApplication>
+          </RDF:Description>
+        </RDF:li>
+
+      </RDF:Seq>
+    </em:updates>
+  </RDF:Description>
+</RDF:RDF>

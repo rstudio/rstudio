@@ -1,0 +1,9 @@
+# Create new certificate database
+certutil -N -d certdb
+
+# Create Object CA certificate
+certutil -d certdb -S -n 'GWT Plugin' -t u,u,Ccu -g 2048 -x -v 24 -5 -s 'CN=GWT Plugin,O=Google Inc,OU=Google Web Toolkit,ST=California,C=US,UID=jat,E=Google-Web-Toolkit-Contributors@googlegroups.com'
+#   add #3 & #7, then specify as critical extension
+
+# Export Object CA certificate in DER format, for import into browser
+certutil -d certdb -L -n 'GWT Plugin' -r >GwtPlugin.der

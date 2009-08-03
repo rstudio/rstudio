@@ -1,0 +1,9 @@
+#include "nsISupports.idl"
+
+interface nsIDOMWindow;
+
+[scriptable, uuid(90CEF17B-C3FE-4251-AF68-4381B3D938A0)]
+interface IOOPHM : nsISupports
+{
+  boolean connect( in ACString addr, in ACString moduleName, in nsIDOMWindow window );
+};

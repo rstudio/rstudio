@@ -1,0 +1,34 @@
+HKCR
+{
+	oophm.plugin.1 = s 'plugin Class'
+	{
+		CLSID = s '{1D6156B6-002B-49E7-B5CA-C138FB843B4E}'
+	}
+	oophm.plugin = s 'plugin Class'
+	{
+		CLSID = s '{1D6156B6-002B-49E7-B5CA-C138FB843B4E}'
+		CurVer = s 'oophm.plugin.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {1D6156B6-002B-49E7-B5CA-C138FB843B4E} = s 'plugin Class'
+		{
+			ProgID = s 'oophm.plugin.1'
+			VersionIndependentProgID = s 'oophm.plugin'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			val AppID = s '%APPID%'
+			ForceRemove 'Control'
+			ForceRemove 'ToolboxBitmap32' = s '%MODULE%, 102'
+			'MiscStatus' = s '0'
+			{
+			    '1' = s '%OLEMISC%'
+			}
+			'TypeLib' = s '{9259F105-BE55-4BF6-B7CE-D0AA878C1BA6}'
+			'Version' = s '1.0'
+		}
+	}
+}
