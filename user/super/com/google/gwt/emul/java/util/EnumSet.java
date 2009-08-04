@@ -229,10 +229,15 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
     E[] all = first.getDeclaringClass().getEnumConstants();
     E[] set = Array.createFrom(all);
     set[first.ordinal()] = first;
+    int size = 1;
     for (E e : rest) {
-      set[e.ordinal()] = e;
+      int ordinal = e.ordinal();
+      if (set[ordinal] == null) {
+        set[ordinal] = e;
+        ++size; // count only new elements
+      }
     }
-    return new EnumSetImpl<E>(all, set, rest.length + 1);
+    return new EnumSetImpl<E>(all, set, size);
   }
 
   public static <E extends Enum<E>> EnumSet<E> range(E from, E to) {

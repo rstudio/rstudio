@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.NoSuchElementException;
 
 /**
  * Tests EnumSet. TODO(tobyr) Consider using Apache collections tests.
@@ -38,6 +39,32 @@ public class EnumSetTest extends GWTTestCase {
 
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
+  }
+  
+  /**
+   * Test failure mode from issue 3605.  Previously resulted in an incorrect size.
+   */
+  public void testDuplicates() {
+    EnumSet<Numbers> set = EnumSet.of(Numbers.Two, Numbers.One, Numbers.Two, Numbers.One);
+    assertEquals(set.size(), 2);
+    assertTrue(set.contains(Numbers.One));
+    assertTrue(set.contains(Numbers.Two));
+  }
+  
+  /**
+   * Test failure mode from issue 3605.  Previously resulted in a NoSuchElementException.
+   */
+  public void testDuplicatesToArray() {
+    EnumSet<Numbers> set = EnumSet.of(Numbers.Two, Numbers.One, Numbers.Two, Numbers.One);
+    Numbers[] array = set.toArray(new Numbers[set.size()]);
+    assertNotNull(array);
+    assertEquals(array.length, 2);
+    if (array[0] != Numbers.One && array[1] != Numbers.One) {
+      fail("Numbers.One not found");
+    }
+    if (array[0] != Numbers.Two && array[1] != Numbers.Two) {
+      fail("Numbers.Two not found");
+    }
   }
 
   public void testNumbers() {
@@ -77,9 +104,14 @@ public class EnumSetTest extends GWTTestCase {
     assertEquals(numberSet, numbers);
 
     // Attempt to add a duplicate value
+    int numbersSize = numbers.size();
+    int numberSetSize = numberSet.size();
     numbers.add(enums[23]);
     numberSet.add(enums[23]);
     assertEquals(numberSet, numbers);
+    // Check sizes haven't changed
+    assertEquals(numbersSize, numbers.size());
+    assertEquals(numberSetSize, numberSet.size());
 
     numbers = EnumSet.allOf(e);
     numberSet.clear();
