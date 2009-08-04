@@ -55,7 +55,7 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
   public SizeBreakdown getSizeBreakdown() {
     return new SizeBreakdown(out.getPosition(), sizeMap);
   }
-  
+
   @Override
   public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
     printJsBlock(x, false, true);
@@ -113,7 +113,12 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
     sizeMap.put(nameToBillTo, oldSize + chars);
   }
 
-  private JsName nameToBillTo(JsVisitable<?> node) {
+  /**
+   * If parameter is JsVisitable<?>, javac version sun jdk1.6.0 complains about
+   * incompatible types.
+   */
+  @SuppressWarnings("unchecked")
+  private JsName nameToBillTo(JsVisitable node) {
     if (node instanceof JsStatement) {
       JsStatement stat = (JsStatement) node;
       JReferenceType type = map.typeForStatement(stat);
