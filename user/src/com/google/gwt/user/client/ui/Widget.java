@@ -54,6 +54,16 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   }
 
   /**
+   * Gets the panel-defined layout data associated with this widget.
+   * 
+   * @return the widget's layout data
+   * @see #setLayoutData
+   */
+  public Object getLayoutData() {
+    return layoutData;
+  }
+
+  /**
    * Gets this widget's parent panel.
    * 
    * @return the widget's parent panel
@@ -117,6 +127,18 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
       throw new IllegalStateException(
           "This widget's parent does not implement HasWidgets");
     }
+  }
+
+  /**
+   * Sets the panel-defined layout data associated with this widget. Only the
+   * panel that currently contains a widget should ever set this value. It
+   * serves as a place to store layout bookkeeping data associated with a
+   * widget.
+   * 
+   * @param layoutData the widget's layout data
+   */
+  public void setLayoutData(Object layoutData) {
+    this.layoutData = layoutData;
   }
 
   /**
@@ -325,16 +347,6 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
     return handlerManager;
   }
 
-  /**
-   * Gets the panel-defined layout data associated with this widget.
-   * 
-   * @return the widget's layout data
-   * @see #setLayoutData
-   */
-  Object getLayoutData() {
-    return layoutData;
-  }
-
   @Override
   void replaceElement(com.google.gwt.dom.client.Element elem) {
     if (isAttached()) {
@@ -352,18 +364,6 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
       // attached to the document.
       DOM.setEventListener(getElement(), this);
     }
-  }
-
-  /**
-   * Sets the panel-defined layout data associated with this widget. Only the
-   * panel that currently contains a widget should ever set this value. It
-   * serves as a place to store layout bookkeeping data associated with a
-   * widget.
-   * 
-   * @param layoutData the widget's layout data
-   */
-  void setLayoutData(Object layoutData) {
-    this.layoutData = layoutData;
   }
 
   /**
