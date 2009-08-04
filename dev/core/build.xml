@@ -110,7 +110,33 @@
     <touch file="${filter.sentinel}" />
   </target>
 
-  <target name="build" depends="build.alldeps.jar" description="Compiles this project">
+  <target name="compiler.standalone" description="Validates that the standalone gwt-compiler project can build.">
+    <mkdir dir="${javac.out}" />
+    <gwt.javac srcdir="super" excludes="com/google/gwt/dev/jjs/intrinsic/"/>
+    <gwt.javac srcdir="src">
+      <include name="com/google/gwt/core/ext/**"/>
+      <include name="com/google/gwt/core/linker/**"/>
+      <include name="com/google/gwt/dev/About.java"/>
+      <include name="com/google/gwt/dev/asm/**"/>
+      <include name="com/google/gwt/dev/cfg/**"/>
+      <include name="com/google/gwt/dev/javac/**"/>
+      <include name="com/google/gwt/dev/jdt/**"/>
+      <include name="com/google/gwt/dev/jjs/**"/>
+      <include name="com/google/gwt/dev/js/**"/>
+      <include name="com/google/gwt/dev/resource/**"/>
+      <include name="com/google/gwt/dev/util/**"/>
+      <include name="com/google/gwt/util/tools/**"/>
+      <classpath>
+          <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
+          <pathelement location="${gwt.tools.lib}/eclipse/jdt-3.4.2.jar" />
+          <pathelement location="${gwt.tools.lib}/tomcat/commons-collections-3.1.jar" />
+          <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+      </classpath>
+    </gwt.javac>
+
+  </target>
+  
+  <target name="build" depends="compiler.standalone, build.alldeps.jar" description="Compiles this project">
     <!--
     There are classes missing from dev/core that are necessary
     to compile the rest of dev/core (e.g. BootStrapPlatform); these are
@@ -121,8 +147,6 @@
     <mkdir dir="${javac.out-dummy}" />
     <gwt.javac srcdir="src-dummy" destdir="${javac.out-dummy}" />
 
-    <mkdir dir="${javac.out}" />
-    <gwt.javac srcdir="super" excludes="com/google/gwt/dev/jjs/intrinsic/"/>
     <gwt.javac srcdir="src" excludes="${filter.pattern}">
       <classpath>
         <pathelement location="${javac.out-dummy}" />

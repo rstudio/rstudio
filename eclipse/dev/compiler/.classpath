@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry including="com/google/gwt/core/ext/|com/google/gwt/core/linker/|com/google/gwt/dev/About.java|com/google/gwt/dev/asm/|com/google/gwt/dev/cfg/|com/google/gwt/dev/javac/|com/google/gwt/dev/jdt/|com/google/gwt/dev/jjs/|com/google/gwt/dev/js/|com/google/gwt/dev/resource/|com/google/gwt/dev/util/|com/google/gwt/util/tools/" kind="src" path="core/src"/>
+	<classpathentry excluding="com/google/gwt/dev/jjs/intrinsic/" kind="src" path="core/super"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.6.5.jar" sourcepath="/GWT_TOOLS/lib/apache/ant-1.6.5-src.zip"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdt-3.4.2.jar" sourcepath="/GWT_TOOLS/lib/eclipse/jdt-3.4.2-src.zip"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-3.8.1.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-3.8.1-src.zip"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-collections-3.1.jar" sourcepath="/GWT_TOOLS/lib/tomcat/commons-collections-3.1-src.zip"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
