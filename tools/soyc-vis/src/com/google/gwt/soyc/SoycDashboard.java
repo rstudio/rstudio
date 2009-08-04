@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -48,8 +47,16 @@ import javax.xml.parsers.SAXParserFactory;
  */
 public class SoycDashboard {
   private static class FormatException extends RuntimeException {
+    public FormatException() {
+      super();
+    }
+
     public FormatException(String message) {
       super(message);
+    }
+
+    public FormatException(Throwable cause) {
+      super(cause);
     }
   }
 
@@ -113,7 +120,7 @@ public class SoycDashboard {
        */
 
       // make the parser handler
-      DefaultHandler handler = parseXMLDocument();
+      DefaultHandler handler = parseXMLDocumentSizeMap();
 
       // start parsing
       SAXParserFactory factoryMain = SAXParserFactory.newInstance();
@@ -133,7 +140,6 @@ public class SoycDashboard {
 
       // now we need to aggregate numbers
       GlobalInformation.computePackageSizes();
-      GlobalInformation.computePartialPackageSizes();
 
       // clean up the RPC categories
       for (SizeBreakdown breakdown : GlobalInformation.allSizeBreakdowns()) {
@@ -170,6 +176,22 @@ public class SoycDashboard {
       System.err.println(Settings.settingsHelp());
       System.exit(1);
     }
+  }
+
+  private static Collection<SizeBreakdown> breakdownsForFragment(
+      Integer fragment) {
+    List<SizeBreakdown> breakdowns = new ArrayList<SizeBreakdown>();
+    breakdowns.add(GlobalInformation.totalCodeBreakdown);
+    if (fragment == 0) {
+      breakdowns.add(GlobalInformation.initialCodeBreakdown);
+    }
+    if (fragment == (GlobalInformation.numSplitPoints + 1)) {
+      breakdowns.add(GlobalInformation.leftoversBreakdown);
+    }
+    if (fragment >= 1 && fragment <= GlobalInformation.numSplitPoints) {
+      breakdowns.add(GlobalInformation.splitPointCodeBreakdown(fragment));
+    }
+    return breakdowns;
   }
 
   private static DependencyLinker chooseDependencyLinker(
@@ -228,518 +250,8 @@ public class SoycDashboard {
     makeTopLevelHtmlForPerm.makePackageClassesHtmls(breakdown, depLinker);
     makeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(breakdown);
     makeTopLevelHtmlForPerm.makeLiteralsClassesTableHtmls(breakdown);
-    makeTopLevelHtmlForPerm.makeStringLiteralsClassesTableHtmls(breakdown);
     makeTopLevelHtmlForPerm.makeBreakdownShell(breakdown);
     makeTopLevelHtmlForPerm.makeTopLevelShell();
-  }
-
-  private static DefaultHandler parseXMLDocument() {
-    DefaultHandler handler = new DefaultHandler() {
-      String curClassId;
-      Integer curFragment;
-      String curLineNumber;
-      String curLocation;
-      HashSet<String> curRelevantCodeTypes = new HashSet<String>();
-      HashSet<String> curRelevantLitTypes = new HashSet<String>();
-      String curStoryId;
-      String curStoryLiteralType;
-      String curStoryRef;
-      boolean specialCodeType = false;
-      StringBuilder valueBuilder = new StringBuilder();
-
-      /**
-       * This method collects a block of the value of the current XML node that
-       * the SAX parser parses. It simply adds to the the previous blocks, so
-       * that we can collect the entire value block.
-       */
-      @Override
-      public void characters(char ch[], int start, int length) {
-        valueBuilder.append(ch, start, length);
-      }
-
-      /**
-       * This method marks the end of an XML element that the SAX parser parses.
-       * It has access to the full value of the node and uses it to add
-       * information to the relevant literal or code collections.
-       * 
-       * @see org.xml.sax.helpers.DefaultHandler#endElement(java.lang.String,
-       *      java.lang.String, java.lang.String)
-       */
-      @Override
-      public void endElement(String nsUri, String strippedName, String qName) {
-
-        if (strippedName.compareTo("storyref") == 0) {
-          String value = valueBuilder.toString();
-
-          int numBytes = currentStorySize();
-          if (curStoryRef != null) {
-            if (!GlobalInformation.fragmentToPartialSize.containsKey(curFragment)) {
-              GlobalInformation.fragmentToPartialSize.put(curFragment,
-                  (float) numBytes);
-            } else {
-              float newSize = GlobalInformation.fragmentToPartialSize.get(curFragment)
-                  + numBytes;
-              GlobalInformation.fragmentToPartialSize.put(curFragment, newSize);
-            }
-
-            for (SizeBreakdown breakdown : breakdownsForCurFragment()) {
-              breakdown.sizeAllCode += numBytes;
-            }
-
-            // add this size to the classes associated with it
-            if (GlobalInformation.storiesToCorrClasses.containsKey(curStoryRef)) {
-
-              if ((GlobalInformation.storiesToLitType.containsKey(curStoryRef))
-                  && (GlobalInformation.storiesToCorrClasses.get(curStoryRef).size() > 0)) {
-                GlobalInformation.numBytesDoubleCounted += numBytes;
-              }
-
-              for (SizeBreakdown breakdown : breakdownsForCurFragment()) {
-                accountForCurrentStory(breakdown.nameToCodeColl, breakdown);
-              }
-            }
-
-            for (SizeBreakdown breakdown : breakdownsForCurFragment()) {
-              updateLitTypes(breakdown.nameToLitColl, value, numBytes);
-            }
-          }
-        }
-      }
-
-      /**
-       * This method deals with the beginning of the XML element. It analyzes
-       * the XML node and adds its information to the relevant literal or code
-       * collection for later analysis.
-       * 
-       * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String,
-       *      java.lang.String, java.lang.String, org.xml.sax.Attributes)
-       */
-      @Override
-      public void startElement(String nsUri, String strippedName,
-          String tagName, Attributes attributes) {
-        valueBuilder.delete(0, valueBuilder.length());
-
-        if (strippedName.compareTo("story") == 0) {
-          parseStory(attributes);
-        } else if (strippedName.compareTo("of") == 0) {
-          for (SizeBreakdown breakdown : breakdownsForCurFragment()) {
-            parseOverrides(breakdown.nameToCodeColl, attributes);
-          }
-        } else if (strippedName.compareTo("by") == 0) {
-          for (SizeBreakdown breakdown : breakdownsForCurFragment()) {
-            parseCorrelations(breakdown.nameToCodeColl, attributes);
-          }
-        } else if (strippedName.compareTo("origin") == 0) {
-          for (SizeBreakdown breakdown : breakdownsForCurFragment()) {
-            parseOrigins(breakdown.nameToLitColl, attributes);
-          }
-        } else if (strippedName.compareTo("js") == 0) {
-          if (attributes.getValue("fragment") != null) {
-            curFragment = Integer.parseInt(attributes.getValue("fragment"));
-          } else {
-            curFragment = -2;
-          }
-        } else if (strippedName.compareTo("storyref") == 0) {
-          for (SizeBreakdown breakdown : breakdownsForCurFragment()) {
-            parseJs(breakdown.nameToLitColl, breakdown.nameToCodeColl,
-                attributes, curFragment);
-          }
-        }
-      }
-
-      private void accountForCurrentStory(
-          final HashMap<String, CodeCollection> nameToCodeColl,
-          SizeBreakdown breakdown) {
-        int storySize = currentStorySize();
-        if ((!GlobalInformation.storiesToLitType.containsKey(curStoryRef))
-            && (!GlobalInformation.storiesToCorrClasses.containsKey(curStoryRef))) {
-          breakdown.nonAttributedStories.add(curStoryRef);
-          breakdown.nonAttributedBytes += storySize;
-        }
-
-        // go through all the classes for this story
-        for (String className : GlobalInformation.storiesToCorrClasses.get(curStoryRef)) {
-          // get the corresponding package
-
-          String packageName = "";
-
-          if (!GlobalInformation.classToPackage.containsKey(className)) {
-            // derive the package name from the class
-            packageName = className;
-            packageName = packageName.replaceAll("\\.[A-Z].*", "");
-            GlobalInformation.classToPackage.put(className, packageName);
-          } else {
-            packageName = GlobalInformation.classToPackage.get(className);
-          }
-          parseClass(nameToCodeColl, className, packageName);
-
-          if (!GlobalInformation.packageToClasses.containsKey(packageName)) {
-            TreeSet<String> insertSet = new TreeSet<String>();
-            insertSet.add(className);
-            GlobalInformation.packageToClasses.put(packageName, insertSet);
-          } else {
-            GlobalInformation.packageToClasses.get(packageName).add(className);
-          }
-
-          if (breakdown.classToSize.containsKey(className)) {
-            int newSize = breakdown.classToSize.get(className) + storySize;
-            breakdown.classToSize.put(className, newSize);
-          } else {
-            breakdown.classToSize.put(className, storySize);
-          }
-
-          if (breakdown.classToPartialSize.containsKey(className)) {
-            float newSize = breakdown.classToPartialSize.get(className)
-                + currentStoryPartialSize();
-            breakdown.classToPartialSize.put(className, newSize);
-          } else {
-            breakdown.classToPartialSize.put(className,
-                currentStoryPartialSize());
-          }
-        }
-      }
-
-      private Collection<SizeBreakdown> breakdownsForCurFragment() {
-        List<SizeBreakdown> breakdowns = new ArrayList<SizeBreakdown>();
-        breakdowns.add(GlobalInformation.totalCodeBreakdown);
-        if (curFragment == 0) {
-          breakdowns.add(GlobalInformation.initialCodeBreakdown);
-        }
-        if (curFragment == (GlobalInformation.numSplitPoints + 1)) {
-          breakdowns.add(GlobalInformation.leftoversBreakdown);
-        }
-        if (curFragment >= 1 && curFragment <= GlobalInformation.numSplitPoints) {
-          breakdowns.add(GlobalInformation.splitPointCodeBreakdown(curFragment));
-        }
-        return breakdowns;
-      }
-
-      private float currentStoryPartialSize() {
-        return (float) currentStorySize()
-            / (float) GlobalInformation.storiesToCorrClasses.get(curStoryRef).size();
-      }
-
-      private int currentStorySize() {
-        return valueBuilder.toString().getBytes().length;
-      }
-
-      /*
-       * parses the "class" portion of the XML file
-       */
-      private void parseClass(
-          final HashMap<String, CodeCollection> nameToCodeColl,
-          String curClassId, String curPackage) {
-        // if (attributes.getValue("id") != null) {
-        // curClassId = attributes.getValue("id");
-
-        // GlobalInformation.classToPackage.put(curClassId, curPackage);
-
-        if (curPackage.startsWith("java")) {
-          nameToCodeColl.get("jre").classes.add(curClassId);
-        } else if (curPackage.startsWith("com.google.gwt.lang")) {
-          nameToCodeColl.get("gwtLang").classes.add(curClassId);
-        }
-        if (curClassId.contains("_CustomFieldSerializer")) {
-          nameToCodeColl.get("rpcUser").classes.add(curClassId);
-        } else if (curClassId.endsWith("_FieldSerializer")
-            || curClassId.endsWith("_Proxy")
-            || curClassId.endsWith("_TypeSerializer")) {
-          nameToCodeColl.get("rpcGen").classes.add(curClassId);
-        }
-        // }
-      }
-
-      /*
-       * parses the "correlations" portion of the XML file
-       */
-      private void parseCorrelations(
-          final HashMap<String, CodeCollection> nameToCodeColl,
-          Attributes attributes) {
-
-        if (attributes.getValue("idref") != null) {
-
-          String corrClassOrMethod = attributes.getValue("idref");
-          String corrClass = attributes.getValue("idref");
-
-          if (corrClass.contains(":")) {
-            corrClass = corrClass.replaceAll(":.*", "");
-          }
-
-          if (!GlobalInformation.storiesToCorrClassesAndMethods.containsKey(curStoryId)) {
-            HashSet<String> insertSet = new HashSet<String>();
-            insertSet.add(corrClassOrMethod);
-            GlobalInformation.storiesToCorrClassesAndMethods.put(curStoryId,
-                insertSet);
-          } else {
-            GlobalInformation.storiesToCorrClassesAndMethods.get(curStoryId).add(
-                corrClassOrMethod);
-          }
-
-          if (!GlobalInformation.storiesToCorrClasses.containsKey(curStoryId)) {
-            HashSet<String> insertSet = new HashSet<String>();
-            insertSet.add(corrClass);
-            GlobalInformation.storiesToCorrClasses.put(curStoryId, insertSet);
-          } else {
-            GlobalInformation.storiesToCorrClasses.get(curStoryId).add(
-                corrClass);
-          }
-
-          for (String codeType : nameToCodeColl.keySet()) {
-            if (nameToCodeColl.get(codeType).classes.contains(corrClass)) {
-              nameToCodeColl.get(codeType).stories.add(curStoryId);
-            }
-          }
-        }
-      }
-
-      /*
-       * parses the "JS" portion of the XML file
-       */
-      private void parseJs(final Map<String, LiteralsCollection> nameToLitColl,
-          final HashMap<String, CodeCollection> nameToCodeColl,
-          Attributes attributes, Integer curFragment) {
-        curRelevantLitTypes.clear();
-        curRelevantCodeTypes.clear();
-
-        if (attributes.getValue("idref") != null) {
-
-          curStoryRef = attributes.getValue("idref");
-
-          if (curFragment != -1) {
-            // add this to the stories for this fragment
-            if (!GlobalInformation.fragmentToStories.containsKey(curFragment)) {
-              HashSet<String> insertSet = new HashSet<String>();
-              insertSet.add(curStoryRef);
-              GlobalInformation.fragmentToStories.put(curFragment, insertSet);
-            } else {
-              GlobalInformation.fragmentToStories.get(curFragment).add(
-                  curStoryRef);
-            }
-          }
-
-          for (String litType : nameToLitColl.keySet()) {
-            if (nameToLitColl.get(litType).storyToLocations.containsKey(curStoryRef)) {
-              curRelevantLitTypes.add(litType);
-            }
-          }
-
-          specialCodeType = false;
-          for (String codeType : nameToCodeColl.keySet()) {
-            if (nameToCodeColl.get(codeType).stories.contains(curStoryRef)) {
-              curRelevantCodeTypes.add(codeType);
-              specialCodeType = true;
-            }
-          }
-          if (specialCodeType == false) {
-
-            nameToCodeColl.get("allOther").stories.add(curStoryRef);
-            curRelevantCodeTypes.add("allOther");
-          }
-        }
-      }
-
-      /*
-       * parses the "origins" portion of the XML file
-       */
-      private void parseOrigins(
-          final Map<String, LiteralsCollection> nameToLitColl,
-          Attributes attributes) {
-        if ((curStoryLiteralType.compareTo("") != 0)
-            && (attributes.getValue("lineNumber") != null)
-            && (attributes.getValue("location") != null)) {
-          curLineNumber = attributes.getValue("lineNumber");
-          curLocation = attributes.getValue("location");
-          String curOrigin = curLocation + ": Line " + curLineNumber;
-
-          if (!nameToLitColl.get(curStoryLiteralType).storyToLocations.containsKey(curStoryId)) {
-            HashSet<String> insertSet = new HashSet<String>();
-            insertSet.add(curOrigin);
-            nameToLitColl.get(curStoryLiteralType).storyToLocations.put(
-                curStoryId, insertSet);
-          } else {
-            nameToLitColl.get(curStoryLiteralType).storyToLocations.get(
-                curStoryId).add(curOrigin);
-          }
-        }
-      }
-
-      /*
-       * parses the "overrides" portion of the XML file
-       */
-      private void parseOverrides(
-          final HashMap<String, CodeCollection> nameToCodeColl,
-          Attributes attributes) {
-        if (attributes.getValue("idref") != null) {
-          String overriddenClass = attributes.getValue("idref");
-
-          // we either generalize to classes, or the
-          // numbers are messed up...
-          if (overriddenClass.contains(":")) {
-            overriddenClass = overriddenClass.replaceAll(":.*", "");
-          }
-
-          if (overriddenClass.compareTo("com.google.gwt.user.client.ui.UIObject") == 0) {
-            nameToCodeColl.get("widget").classes.add(curClassId);
-          } else if (overriddenClass.contains("java.io.Serializable")
-              || overriddenClass.contains("IsSerializable")) {
-            nameToCodeColl.get("rpcUser").classes.add(curClassId);
-          } else if (overriddenClass.contains("com.google.gwt.user.client.rpc.core.java")) {
-            nameToCodeColl.get("rpcGwt").classes.add(curClassId);
-          }
-        }
-      }
-
-      /*
-       * parses the "story" portion of the XML file
-       */
-      private void parseStory(Attributes attributes) {
-        if (attributes.getValue("id") != null) {
-          curStoryId = attributes.getValue("id");
-          if (attributes.getValue("literal") != null) {
-            curStoryLiteralType = attributes.getValue("literal");
-            GlobalInformation.storiesToLitType.put(curStoryId,
-                curStoryLiteralType);
-            for (SizeBreakdown breakdown : breakdownsForCurFragment()) {
-              if (!breakdown.nameToLitColl.get(curStoryLiteralType).storyToLocations.containsKey(curStoryId)) {
-                HashSet<String> insertSet = new HashSet<String>();
-                breakdown.nameToLitColl.get(curStoryLiteralType).storyToLocations.put(
-                    curStoryId, insertSet);
-              }
-            }
-          } else {
-            curStoryLiteralType = "";
-          }
-        }
-      }
-
-      /*
-       * This method assigns strings to the appropriate category
-       */
-      private void updateLitTypes(
-          final Map<String, LiteralsCollection> nameToLitColl, String value,
-          int numBytes) {
-
-        int iNumCounted = 0;
-
-        for (String relLitType : curRelevantLitTypes) {
-          iNumCounted++;
-
-          // then give string literals special treatment
-          if (relLitType.compareTo("string") == 0) {
-
-            // note that this will double-count (i.e., it will count a string
-            // twice if it's in the output twice), as it should.
-            nameToLitColl.get("string").cumStringSize += numBytes;
-            nameToLitColl.get(relLitType).cumSize += numBytes;
-
-            // get the origins
-            HashSet<String> originSet = nameToLitColl.get("string").storyToLocations.get(curStoryRef);
-
-            // find the most appropriate string literal category
-            String mostAppropriateCategory = "";
-            String mostAppropriateLocation = "";
-            String backupLocation = "";
-            for (String origin : originSet) {
-
-              if ((origin.contains("ClassLiteralHolder"))
-                  && (mostAppropriateCategory.compareTo("") == 0)) {
-                mostAppropriateCategory = "compiler";
-                mostAppropriateLocation = origin;
-              } else if ((origin.startsWith("transient source for"))
-                  && (origin.contains("_TypeSerializer"))
-                  && (mostAppropriateCategory.compareTo("") == 0)) {
-                mostAppropriateCategory = "transient";
-                mostAppropriateLocation = origin;
-              } else if ((origin.contains("InlineResourceBundleGenerator"))
-                  && (mostAppropriateCategory.compareTo("") == 0)) {
-                mostAppropriateCategory = "inlinedTextRes";
-                mostAppropriateLocation = origin;
-              }
-              if (origin.compareTo("com.google.gwt.dev.js.ast.JsProgram: Line 0") != 0) {
-                backupLocation = origin;
-              }
-            }
-
-            if (backupLocation.compareTo("") == 0) {
-              backupLocation = GlobalInformation.backupLocation;
-            }
-            if ((((value.startsWith("'")) && (value.endsWith("'"))) || ((value.startsWith("\"")) && (value.endsWith("\""))))
-                && (mostAppropriateCategory.compareTo("") == 0)) {
-              mostAppropriateCategory = "user";
-              mostAppropriateLocation = backupLocation;
-            } else if (mostAppropriateCategory.compareTo("") == 0) {
-              mostAppropriateCategory = "otherStrings";
-              mostAppropriateLocation = backupLocation;
-            }
-
-            if (!nameToLitColl.get("string").stringLiteralToType.containsKey(value)) {
-              nameToLitColl.get("string").stringLiteralToType.put(value,
-                  mostAppropriateCategory);
-              if (!nameToLitColl.get("string").stringTypeToCount.containsKey(mostAppropriateCategory)) {
-                nameToLitColl.get("string").stringTypeToCount.put(
-                    mostAppropriateCategory, 1);
-              } else {
-                int iNewCount = nameToLitColl.get("string").stringTypeToCount.get(mostAppropriateCategory) + 1;
-                nameToLitColl.get("string").stringTypeToCount.put(
-                    mostAppropriateCategory, iNewCount);
-              }
-
-              int iNewSize = numBytes;
-              if (nameToLitColl.get("string").stringTypeToSize.containsKey(mostAppropriateCategory)) {
-                iNewSize += nameToLitColl.get("string").stringTypeToSize.get(mostAppropriateCategory);
-              }
-              nameToLitColl.get("string").stringTypeToSize.put(
-                  mostAppropriateCategory, iNewSize);
-
-              if (nameToLitColl.get("string").storyToLocations.containsKey(curStoryRef)) {
-                HashSet<String> insertSet = new HashSet<String>();
-                insertSet.add(mostAppropriateLocation);
-                nameToLitColl.get(relLitType).literalToLocations.put(value,
-                    insertSet);
-              }
-            }
-          } else {
-            // note that this will double-count (i.e., it will count a literal
-            // twice if it's in the output twice), as it should.
-            nameToLitColl.get(relLitType).cumSize += numBytes;
-
-            if (nameToLitColl.get(relLitType).storyToLocations.containsKey(curStoryRef)) {
-              if (nameToLitColl.get(relLitType).literalToLocations.containsKey(value)) {
-                nameToLitColl.get(relLitType).literalToLocations.get(value).addAll(
-                    nameToLitColl.get(relLitType).storyToLocations.get(curStoryRef));
-              } else {
-                HashSet<String> insertSet = nameToLitColl.get(relLitType).storyToLocations.get(curStoryRef);
-                nameToLitColl.get(relLitType).literalToLocations.put(value,
-                    insertSet);
-              }
-            }
-          }
-        }
-      }
-
-      /*
-       * parses the "depends on" portion of the XML file
-       */
-      /*
-       * private void parseDependsOn( final HashMap<String, CodeCollection>
-       * nameToCodeColl, Attributes attributes) { if
-       * (curFunctionId.compareTo("") == 0) { if (attributes.getValue("idref")
-       * != null) { String curDepClassId = attributes.getValue("idref");
-       * 
-       * if (curDepClassId.contains(":")) { // strip everything after the :: (to
-       * get to class, even if it's a // method) curDepClassId =
-       * curDepClassId.replaceAll(":.*", ""); }
-       * 
-       * if (curDepClassId.contains(".")) { if
-       * (!GlobalInformation.classToWhatItDependsOn.containsKey(curClassId)) {
-       * HashSet<String> insertSet = new HashSet<String>();
-       * insertSet.add(curDepClassId);
-       * GlobalInformation.classToWhatItDependsOn.put(curClassId, insertSet); }
-       * else { GlobalInformation.classToWhatItDependsOn.get(curClassId).add(
-       * curDepClassId); } } } } }
-       */
-    };
-    return handler;
   }
 
   private static DefaultHandler parseXMLDocumentDependencies(
@@ -797,6 +309,143 @@ public class SoycDashboard {
       }
     };
     return handler;
+  }
+
+  private static DefaultHandler parseXMLDocumentSizeMap() {
+    return new DefaultHandler() {
+      int fragment = -1;
+
+      @Override
+      public void endElement(String uri, String localName, String qName) {
+        if (localName.compareTo("sizemap") == 0) {
+          fragment = -1;
+        }
+      }
+
+      @Override
+      public void startElement(String uri, String localName, String qName,
+          Attributes attributes) {
+        if (localName.compareTo("sizemap") == 0) {
+          // starting a new size map
+          String fragString = attributes.getValue("fragment");
+          if (fragString == null) {
+            throw new FormatException();
+          }
+          try {
+            fragment = Integer.valueOf(fragString);
+          } catch (NumberFormatException e) {
+            throw new FormatException(e);
+          }
+          String sizeString = attributes.getValue("size");
+          if (sizeString == null) {
+            throw new FormatException();
+          }
+          int size;
+          try {
+            size = Integer.valueOf(sizeString);
+          } catch (NumberFormatException e) {
+            throw new FormatException(e);
+          }
+          for (SizeBreakdown breakdown : breakdownsForFragment(fragment)) {
+            breakdown.sizeAllCode += size;
+          }
+        } else if (localName.compareTo("size") == 0) {
+          String type = attributes.getValue("type");
+          if (type == null) {
+            throw new FormatException();
+          }
+          String ref = attributes.getValue("ref");
+          if (ref == null) {
+            throw new FormatException();
+          }
+          String sizeString = attributes.getValue("size");
+          if (sizeString == null) {
+            throw new FormatException();
+          }
+          int size;
+          try {
+            size = Integer.valueOf(sizeString);
+          } catch (NumberFormatException e) {
+            throw new FormatException(e);
+          }
+          recordSize(type, ref, size);
+        }
+      }
+
+      private void accountForSize(SizeBreakdown breakdown, String refType,
+          String ref, int size) {
+        if (refType.equals("string")) {
+          LiteralsCollection stringLiterals = breakdown.nameToLitColl.get("string");
+          stringLiterals.size += size;
+          stringLiterals.literals.add(ref);
+        } else if (refType.equals("var")) {
+          // Nothing to record, because no breakdown is provided for random
+          // variables
+        } else {
+          if (!refType.equals("type") && !refType.equals("method")) {
+            throw new FormatException();
+          }
+          String className = ref;
+          if (className.contains("::")) {
+            /*
+             * It's a method reference. Discard the method part.
+             */
+            int idx = className.indexOf(':');
+            className = className.substring(0, idx);
+          }
+
+          // derive the package name from the class
+          String packageName;
+          if (!GlobalInformation.classToPackage.containsKey(className)) {
+            packageName = className;
+            packageName = packageName.replaceAll("\\.[A-Z].*", "");
+            GlobalInformation.classToPackage.put(className, packageName);
+          } else {
+            packageName = GlobalInformation.classToPackage.get(className);
+          }
+          if (!GlobalInformation.packageToClasses.containsKey(packageName)) {
+            TreeSet<String> insertSet = new TreeSet<String>();
+            insertSet.add(className);
+            GlobalInformation.packageToClasses.put(packageName, insertSet);
+          } else {
+            GlobalInformation.packageToClasses.get(packageName).add(className);
+          }
+
+          recordClassCategories(breakdown.nameToCodeColl, className,
+              packageName);
+
+          if (breakdown.classToSize.containsKey(className)) {
+            int newSize = breakdown.classToSize.get(className) + size;
+            breakdown.classToSize.put(className, newSize);
+          } else {
+            breakdown.classToSize.put(className, size);
+          }
+        }
+      }
+
+      private void recordClassCategories(
+          final HashMap<String, CodeCollection> nameToCodeColl,
+          String className, String packageName) {
+        if (packageName.startsWith("java")) {
+          nameToCodeColl.get("jre").classes.add(className);
+        } else if (packageName.startsWith("com.google.gwt.lang")) {
+          nameToCodeColl.get("gwtLang").classes.add(className);
+        }
+        if (className.contains("_CustomFieldSerializer")) {
+          nameToCodeColl.get("rpcUser").classes.add(className);
+        } else if (className.endsWith("_FieldSerializer")
+            || className.endsWith("_Proxy")
+            || className.endsWith("_TypeSerializer")) {
+          nameToCodeColl.get("rpcGen").classes.add(className);
+        }
+      }
+
+      private void recordSize(String refType, String ref, int size) {
+        for (SizeBreakdown breakdown : breakdownsForFragment(fragment)) {
+          accountForSize(breakdown, refType, ref, size);
+        }
+      }
+    };
   }
 
   private static DefaultHandler parseXMLDocumentSplitPoints() {

@@ -43,24 +43,31 @@ public class StandardCompilationAnalysis extends CompilationAnalysis {
   private SoycArtifact depFile;
 
   /**
+   * File containing detailed story information.
+   */
+  private SoycArtifact detailedStoriesFile;
+
+  /**
    * File containing split points.
    */
   private SoycArtifact splitPointsFile;
 
   /**
-   * File containing stories.
+   * File containing size maps.
    */
-  private SoycArtifact storiesFile;
+  private SoycArtifact sizeMapsFile;
 
   /**
    * Constructed by PermutationCompiler.
    */
   public StandardCompilationAnalysis(SoycArtifact dependencies,
-      SoycArtifact stories, SoycArtifact splitPoints) {
+      SoycArtifact sizeMaps, SoycArtifact splitPoints,
+      SoycArtifact detailedStories) {
     super(StandardLinkerContext.class);
     this.depFile = dependencies;
-    this.storiesFile = stories;
+    this.sizeMapsFile = sizeMaps;
     this.splitPointsFile = splitPoints;
+    this.detailedStoriesFile = detailedStories;
   }
 
   @Override
@@ -69,12 +76,17 @@ public class StandardCompilationAnalysis extends CompilationAnalysis {
   }
 
   @Override
-  public SoycArtifact getSplitPointsFile() {
-    return splitPointsFile;
+  public SoycArtifact getDetailedStoriesFile() {
+    return detailedStoriesFile;
   }
 
   @Override
-  public SoycArtifact getStoriesFile() {
-    return storiesFile;
+  public SoycArtifact getSizeMapsFile() {
+    return sizeMapsFile;
+  }
+
+  @Override
+  public SoycArtifact getSplitPointsFile() {
+    return splitPointsFile;
   }
 }

@@ -43,8 +43,11 @@ public class SoycReportLinker extends Linker {
       if (soycFiles.getDepFile() != null) {
         results.add(soycFiles.getDepFile());
       }
-      if (soycFiles.getStoriesFile() != null) {
-        results.add(soycFiles.getStoriesFile());
+      if (soycFiles.getSizeMapsFile() != null) {
+        results.add(soycFiles.getSizeMapsFile());
+      }
+      if (soycFiles.getDetailedStoriesFile() != null) {
+        results.add(soycFiles.getDetailedStoriesFile());
       }
       results.add(soycFiles.getSplitPointsFile());
     }

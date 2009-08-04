@@ -18,6 +18,7 @@ package com.google.gwt.dev.js;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.util.TextOutput;
 
@@ -30,12 +31,12 @@ import java.util.Map;
  * A variation on the standard source generation visitor that records the
  * locations of SourceInfo objects in the output.
  */
-public class JsReportGenerationVisitor extends JsSourceGenerationVisitor {
+public class JsReportGenerationVisitor extends JsSourceGenerationVisitorWithSizeBreakdown {
   private final Map<Range, SourceInfo> sourceInfoMap = new HashMap<Range, SourceInfo>();
   private final TextOutput out;
 
-  public JsReportGenerationVisitor(TextOutput out) {
-    super(out);
+  public JsReportGenerationVisitor(TextOutput out, JavaToJavaScriptMap map) {
+    super(out, map);
     this.out = out;
   }
 

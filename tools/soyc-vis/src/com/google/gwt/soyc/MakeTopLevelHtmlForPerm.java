@@ -43,12 +43,30 @@ import java.util.regex.Pattern;
  * A utility to make the top level HTTML file for one permutation.
  */
 public class MakeTopLevelHtmlForPerm {
+  /**
+   * A class that specifies the URL to which a class should be linked in a size
+   * breakdown. It is always either a dependencies page, an intermediate status
+   * page that itself links to dependencies pages, or <code>null</code>. If it's
+   * <code>null</code>, then no link should be created for the class.
+   */
+  public interface DependencyLinker {
+    String dependencyLinkForClass(String className);
+  }
+
+  /**
+   * A {@link DependencyLinker} for exclusive fragments. It doesn't link to any
+   * dependencies.
+   */
   public class DependencyLinkerForExclusiveFragment implements DependencyLinker {
     public String dependencyLinkForClass(String className) {
       return null;
     }
   }
 
+  /**
+   * A {@link DependencyLinker} for the initially downloaded code. It links into
+   * the initial dependencies.
+   */
   public class DependencyLinkerForInitialCode implements DependencyLinker {
     public String dependencyLinkForClass(String className) {
       String packageName = GlobalInformation.classToPackage.get(className);
@@ -57,20 +75,25 @@ public class MakeTopLevelHtmlForPerm {
     }
   }
 
+  /**
+   * A {@link DependencyLinker} for the leftovers fragment. It links a class to
+   * the leftovers status page for that class.
+   * 
+   */
   public class DependencyLinkerForLeftoversFragment implements DependencyLinker {
     public String dependencyLinkForClass(String className) {
       return leftoversStatusFileName(className);
     }
   }
 
+  /**
+   * A dependency linker for the size breakdown of the entire program. It links
+   * each class to a general split status page describing that class.
+   */
   public class DependencyLinkerForTotalBreakdown implements DependencyLinker {
     public String dependencyLinkForClass(String className) {
       return splitStatusFileName(className);
     }
-  }
-
-  interface DependencyLinker {
-    String dependencyLinkForClass(String className);
   }
 
   /**
@@ -279,7 +302,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<body>");
 
     int yOffset = 0;
-    for (Float size : sortedCodeTypes.keySet()) {
+    for (float size : sortedCodeTypes.keySet()) {
 
       String codeType = sortedCodeTypes.get(size);
       String drillDownFileName = breakdown.getId() + "_" + codeType
@@ -306,7 +329,7 @@ public class MakeTopLevelHtmlForPerm {
 
       int yOffsetText = yOffset + 8;
       outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:5px;\">%.1f</div>\n", size);
+          + "px; left:5px;\">%d</div>\n", (int) size);
       outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
           + "px; left:70px;\">%.1f", perc);
       outFile.println("%</div>\n");
@@ -379,33 +402,18 @@ public class MakeTopLevelHtmlForPerm {
     addHeaderWithBreakdownContext(breakdown, outFile);
 
     outFile.println("</center>");
-    outFile.println("  <div style=\"width:50%;  float:left; padding-top: 10px;\">");
+    outFile.println("  <div style=\"width:100%;  float:left; padding-top: 10px;\">");
     outFile.println("<b>Package breakdown</b>");
     outFile.println("    </div>");
-    outFile.println("  <div style=\"width:48%;  float:right; padding-top: 10px; \">");
-    outFile.println("<b>Code type breakdown</b>");
-    outFile.println("    </div>");
 
-    outFile.println("  <div style=\"width:50%;  float:left; padding-top: 10px;\">");
+    outFile.println("  <div style=\"width:100%;  float:left; padding-top: 10px;\">");
     outFile.println("<div style=\"width: 110px; float: left; font-size:16px;\">Size</div>");
     outFile.println("<div style=\"width: 200px; float: left; text-align:left; font-size:16px; \">Package Name</div>");
     outFile.println("    </div>");
 
-    outFile.println("  <div style=\"width:48%;  float:right; padding-top: 10px;\">");
-    outFile.println("<div style=\"width: 110px; float: left; font-size:16px;\">Size</div>");
-    outFile.println("<div style=\"width: 200px; float: left; text-align:left; font-size:16px; \">Code Type</div>");
-    outFile.println("    </div>");
-
     String packageBreakdownFileName = makePackageHtml(breakdown);
-    outFile.println("<div style=\"height:35%; width:48%; margin:0 auto; background-color:white; float:left;\">");
+    outFile.println("<div style=\"height:35%; width:100%; margin:0 auto; background-color:white; float:left;\">");
     outFile.println("<iframe src=\"" + packageBreakdownFileName
-        + "\" width=100% height=100% scrolling=auto></iframe>");
-    outFile.println("  </div>");
-
-    String codeTypeBreakdownFileName = makeCodeTypeHtml(breakdown,
-        nameToCodeColl);
-    outFile.println("<div style=\"height:35%; width:48%; margin:0 auto; background-color:white; float:right;\">");
-    outFile.println("<iframe src=\"" + codeTypeBreakdownFileName
         + "\" width=100% height=100% scrolling=auto></iframe>");
     outFile.println("  </div>");
 
@@ -413,7 +421,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<b>Literals breakdown</b>");
     outFile.println("    </div>");
     outFile.println("  <div style=\"width:48%;  float:right; padding-top: 10px;  \">");
-    outFile.println("<b>String literals breakdown</b>");
+    outFile.println("<b>Code type breakdown</b>");
     outFile.println("    </div>");
 
     outFile.println("  <div style=\"width:50%;  float:left; padding-top: 10px;\">");
@@ -423,7 +431,7 @@ public class MakeTopLevelHtmlForPerm {
 
     outFile.println("  <div style=\"width:48%;  float:right; padding-top: 10px; \">");
     outFile.println("<div style=\"width: 110px; float: left; font-size:16px;\">Size</div>");
-    outFile.println("<div style=\"width: 200px; float: left; text-align:left; font-size:16px; \">String Literal Type</div>");
+    outFile.println("<div style=\"width: 200px; float: left; text-align:left; font-size:16px; \">Code Type</div>");
     outFile.println("    </div>");
 
     String literalsBreakdownFileName = makeLiteralsHtml(breakdown,
@@ -433,10 +441,10 @@ public class MakeTopLevelHtmlForPerm {
         + "\" width=100% height=100% scrolling=auto></iframe>");
     outFile.println("</div>");
 
-    String stringLiteralsBreakdownFileName = makeStringLiteralsHtml(breakdown,
-        nameToLitColl);
+    String codeTypeBreakdownFileName = makeCodeTypeHtml(breakdown,
+        nameToCodeColl);
     outFile.println("<div style=\"height:35%; width:48%; margin:0 auto; background-color:white; float:right;\">");
-    outFile.println("<iframe src=\"" + stringLiteralsBreakdownFileName
+    outFile.println("<iframe src=\"" + codeTypeBreakdownFileName
         + "\" width=100% height=100% scrolling=auto></iframe>");
     outFile.println("  </div>");
 
@@ -459,11 +467,11 @@ public class MakeTopLevelHtmlForPerm {
           Collections.reverseOrder());
 
       for (String className : nameToCodeColl.get(codeType).classes) {
-        if (breakdown.classToPartialSize.containsKey(className)) {
+        if (breakdown.classToSize.containsKey(className)) {
 
           float curSize = 0f;
-          if (breakdown.classToPartialSize.containsKey(className)) {
-            curSize = breakdown.classToPartialSize.get(className);
+          if (breakdown.classToSize.containsKey(className)) {
+            curSize = breakdown.classToSize.get(className);
           }
 
           if (curSize != 0f) {
@@ -502,7 +510,7 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("<div style=\"width:90%; height:80%; overflow-y:auto; overflow-x:auto; top: 120px; left:70px; position:absolute; background-color:white\"");
 
       int yOffset = 0;
-      for (Float size : sortedClasses.keySet()) {
+      for (float size : sortedClasses.keySet()) {
 
         String className = sortedClasses.get(size);
 
@@ -526,7 +534,7 @@ public class MakeTopLevelHtmlForPerm {
 
         int yOffsetText = yOffset + 8;
         outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-            + "px; left:5px;\">%.1f</div>\n", size);
+            + "px; left:5px;\">%d</div>\n", (int) size);
         outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
             + "px; left:70px;\">" + className + "</div>");
 
@@ -584,73 +592,29 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("<center>");
       outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
 
-      for (String literal : nameToLitColl.get(literalType).literalToLocations.keySet()) {
-
-        if ((literalType.compareTo("string") != 0)
-            || (nameToLitColl.get("string").stringLiteralToType.get(literal).compareTo(
-                "otherStrings") != 0)) {
-
-          if (literal.trim().compareTo("") == 0) {
-            literal = "[whitespace only string]";
+      for (String literal : nameToLitColl.get(literalType).literals) {
+        String newLiteral = "";
+        if (literal.length() > 80) {
+          int i;
+          for (i = 80; i < literal.length(); i = i + 80) {
+            String part1 = literal.substring(i - 80, i);
+            newLiteral = newLiteral + part1 + " ";
           }
-
-          String newLiteral = "";
-          if (literal.length() > 80) {
-            int i;
-            for (i = 80; i < literal.length(); i = i + 80) {
-              String part1 = literal.substring(i - 80, i);
-              newLiteral = newLiteral + part1 + " ";
-            }
-            if (i - 80 > 0) {
-              newLiteral = newLiteral + literal.substring(i - 80);
-            }
-          } else {
-            newLiteral = literal;
+          if (i - 80 > 0) {
+            newLiteral = newLiteral + literal.substring(i - 80);
           }
-
-          String escliteral = escapeXml(newLiteral);
-
-          outFile.println("<tr>");
-          outFile.println("<td width=\"40%\">" + escliteral + "</td>");
-
-          int ct = 0;
-          if ((nameToLitColl.containsKey(literalType))
-              && (nameToLitColl.get(literalType).literalToLocations.containsKey(literal))) {
-            for (String location : nameToLitColl.get(literalType).literalToLocations.get(literal)) {
-
-              if (ct > 0) {
-                outFile.println("<tr>");
-                outFile.println("<td width=\"40%\"> </td>");
-              }
-
-              String newLocation = "";
-              if (location.length() > 80) {
-                int i;
-                for (i = 80; i < location.length(); i = i + 80) {
-                  String part1 = location.substring(i - 80, i);
-                  newLocation = newLocation + part1 + " ";
-                }
-                if (i - 80 > 0) {
-                  newLocation = newLocation + location.substring(i - 80);
-                }
-              } else {
-                newLocation = location;
-              }
-
-              outFile.println("<td width=\"40%\">" + newLocation + "</td>");
-
-              if (ct > 0) {
-                outFile.println("</tr>");
-              }
-              ct++;
-            }
-          } else {
-            System.err.println("either literalType " + literalType
-                + " not known, or no location for literal " + literal);
-          }
-
-          outFile.println("</tr>");
+        } else {
+          newLiteral = literal;
         }
+
+        if (newLiteral.trim().length() == 0) {
+          newLiteral = "[whitespace only string]";
+        }
+        String escliteral = escapeXml(newLiteral);
+
+        outFile.println("<tr>");
+        outFile.println("<td>" + escliteral + "</td>");
+        outFile.println("</tr>");
       }
 
       outFile.println("</table>");
@@ -677,10 +641,10 @@ public class MakeTopLevelHtmlForPerm {
       for (String className : GlobalInformation.packageToClasses.get(packageName)) {
 
         float curSize = 0f;
-        if (!breakdown.classToPartialSize.containsKey(className)) {
+        if (!breakdown.classToSize.containsKey(className)) {
           // This class not present in this code collection
         } else {
-          curSize = breakdown.classToPartialSize.get(className);
+          curSize = breakdown.classToSize.get(className);
         }
 
         int depCount = 0;
@@ -722,7 +686,7 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("<div style=\"width:90%; height:80%; overflow-y:auto; overflow-x:auto; top: 120px; left:70px; position:absolute; background-color:white\"");
 
       int yOffset = 0;
-      for (Float size : sortedClasses.keySet()) {
+      for (float size : sortedClasses.keySet()) {
 
         String className = sortedClasses.get(size);
 
@@ -774,7 +738,7 @@ public class MakeTopLevelHtmlForPerm {
 
         int yOffsetText = yOffset + 8;
         outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-            + "px; left:5px;\">%.1f</div>\n", size);
+            + "px; left:5px;\">%d</div>\n", (int) size);
         if (GlobalInformation.displayDependencies == true) {
           String dependencyLink = depLinker.dependencyLinkForClass(className);
           outFile.print("<div class=\"barlabel\" style=\"top:" + yOffsetText
@@ -811,121 +775,6 @@ public class MakeTopLevelHtmlForPerm {
     }
   }
 
-  public void makeStringLiteralsClassesTableHtmls(SizeBreakdown breakdown)
-      throws IOException {
-    Map<String, LiteralsCollection> nameToLitColl = breakdown.nameToLitColl;
-
-    for (String literalType : nameToLitColl.get("string").stringTypeToSize.keySet()) {
-      String outFileName = literalType + "Strings.html";
-      final PrintWriter outFile = new PrintWriter(getOutFile(breakdown.getId()
-          + "_" + outFileName));
-
-      String title = "Literals of type \"" + literalType + "\"";
-      String header = headerLineForBreakdown(breakdown);
-
-      addStandardHtmlProlog(outFile, title, header);
-
-      if (literalType.compareTo("otherStrings") == 0) {
-        outFile.println("<center>");
-        outFile.println("(JavaScript variable names are not displayed.)");
-        outFile.println("</center>");
-      }
-
-      else {
-        outFile.println("<center>");
-        outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
-
-        for (String literal : nameToLitColl.get("string").stringLiteralToType.keySet()) {
-
-          if (nameToLitColl.get("string").stringLiteralToType.get(literal).compareTo(
-              literalType) == 0) {
-
-            if (literal.trim().compareTo("") == 0) {
-              literal = "[whitespace only string]";
-            }
-
-            String newLiteral = "";
-            if (literal.length() > 80) {
-              int i;
-              for (i = 80; i < literal.length(); i = i + 80) {
-                String part1 = literal.substring(i - 80, i);
-                newLiteral = newLiteral + part1 + " ";
-              }
-              if (i - 80 > 0) {
-                newLiteral = newLiteral + literal.substring(i - 80);
-              }
-            } else {
-              newLiteral = literal;
-            }
-
-            String escliteral = escapeXml(newLiteral);
-
-            outFile.println("<tr>");
-            outFile.println("<td width=\"40%\">" + escliteral + "</td>");
-
-            int ct = 0;
-
-            if (nameToLitColl.get("string").literalToLocations.containsKey(literal)) {
-
-              for (String location : nameToLitColl.get("string").literalToLocations.get(literal)) {
-
-                if ((location.indexOf("Line 0") == -1)
-                    && (location.compareTo(GlobalInformation.backupLocation) != 0)) { // i.e.,
-                  // if
-                  // we
-                  // actually
-                  // know
-                  // the
-                  // location
-                  if (ct > 0) {
-                    outFile.println("<tr>");
-                    outFile.println("<td width=\"40%\"> </td>");
-                  }
-
-                  String newLocation = "";
-                  if (location.length() > 80) {
-                    int i;
-                    for (i = 80; i < location.length(); i = i + 80) {
-                      String part1 = location.substring(i - 80, i);
-                      newLocation = newLocation + part1 + " ";
-                    }
-                    if (i - 80 > 0) {
-                      newLocation = newLocation + location.substring(i - 80);
-                    }
-                  } else {
-                    newLocation = location;
-                  }
-
-                  outFile.println("<td width=\"40%\"> " + newLocation
-                      + " </td>");
-
-                  if (ct > 0) {
-                    outFile.println("</tr>");
-                  }
-                  ct++;
-                }
-              }
-              if (ct == 0) {
-                outFile.println("<td width=\"40%\"> "
-                    + GlobalInformation.backupLocation + " </td>");
-              }
-            } else {
-              System.err.println("no location given for string literal: "
-                  + literal);
-            }
-            outFile.println("</tr>");
-          }
-        }
-
-        outFile.println("</table>");
-        outFile.println("<center>");
-      }
-
-      addStandardHtmlEnding(outFile);
-      outFile.close();
-    }
-  }
-
   public void makeTopLevelShell() throws IOException {
     PrintWriter outFile = new PrintWriter(
         getOutFile("SoycDashboard-index.html"));
@@ -947,7 +796,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<center>");
     outFile.println("<h3>Story of Your Compile Dashboard</h3>");
     outFile.println("<hr>");
-    if (GlobalInformation.fragmentToStories.size() > 1) {
+    if (GlobalInformation.splitPointToLocation.size() > 1) {
       outFile.println("<b>Initial download size: <span style=\"color:maroon\">"
           + GlobalInformation.initialCodeBreakdown.sizeAllCode
           + "</span></span></b>");
@@ -971,7 +820,7 @@ public class MakeTopLevelHtmlForPerm {
     int outerHeight = 25 * numRows;
     outFile.println("<div style=\"width:100%; margin:20px 0 20px 0; background-color:white;position:relative;height:"
         + outerHeight + "\">");
-    float maxSize = GlobalInformation.totalCodeBreakdown.sizeAllCode;
+    int maxSize = GlobalInformation.totalCodeBreakdown.sizeAllCode;
 
     int yOffset = 0;
     for (int i = FRAGMENT_NUMBER_TOTAL_PROGRAM; i <= numSplitPoints + 1; i++) {
@@ -994,13 +843,8 @@ public class MakeTopLevelHtmlForPerm {
       String drillDownFileName = shellFileName(breakdown);
       String splitPointDescription = breakdown.getDescription();
 
-      float size;
-      if (i >= 0) {
-        size = GlobalInformation.fragmentToPartialSize.get(i);
-      } else {
-        size = GlobalInformation.totalCodeBreakdown.sizeAllCode;
-      }
-      float ratio = (size / maxSize) * 79;
+      int size = breakdown.sizeAllCode;
+      float ratio = (1.0F * size / maxSize) * 79;
       if (ratio < 3) {
         ratio = 3;
       }
@@ -1019,7 +863,7 @@ public class MakeTopLevelHtmlForPerm {
 
       int yOffsetText = yOffset + 8;
       outFile.printf("<div class=\"barlabel\" style=\"top: " + yOffsetText
-          + "px; left:5px;\">%.1f</div>\n", size);
+          + "px; left:5px;\">%d</div>\n", size);
       outFile.println("<div class=\"barlabel\" style=\"top: " + yOffsetText
           + "px; left:120px;\"><a href=\"" + drillDownFileName
           + "\" target=\"_top\">" + splitPointDescription + "</a></div>");
@@ -1181,7 +1025,7 @@ public class MakeTopLevelHtmlForPerm {
         Collections.reverseOrder());
 
     for (String literal : nameToLitColl.keySet()) {
-      float curSize = nameToLitColl.get(literal).cumSize;
+      float curSize = nameToLitColl.get(literal).size;
       sumSize += curSize;
 
       if (curSize != 0f) {
@@ -1205,7 +1049,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<body>");
 
     int yOffset = 0;
-    for (Float size : sortedLitTypes.keySet()) {
+    for (float size : sortedLitTypes.keySet()) {
 
       String literal = sortedLitTypes.get(size);
       String drillDownFileName = breakdown.getId() + "_" + literal
@@ -1232,7 +1076,7 @@ public class MakeTopLevelHtmlForPerm {
 
       int yOffsetText = yOffset + 8;
       outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:5px;\">%.1f</div>\n", size);
+          + "px; left:5px;\">%d</div>\n", (int) size);
       outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
           + "px; left:70px;\">%.1f", perc);
       outFile.println("%</div>\n");
@@ -1252,8 +1096,8 @@ public class MakeTopLevelHtmlForPerm {
   private String makePackageHtml(SizeBreakdown breakdown)
       throws FileNotFoundException {
     String outFileName = breakdown.getId() + "_" + "packageBreakdown.html";
-    Map<String, Float> packageToPartialSize = breakdown.packageToPartialSize;
-    TreeMap<Float, String> sortedPackages = new TreeMap<Float, String>(
+    Map<String, Integer> packageToPartialSize = breakdown.packageToSize;
+    TreeMap<Integer, String> sortedPackages = new TreeMap<Integer, String>(
         Collections.reverseOrder());
     float maxSize = 0f;
     float sumSize = 0f;
@@ -1278,7 +1122,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<body>");
 
     int yOffset = 0;
-    for (Float size : sortedPackages.keySet()) {
+    for (int size : sortedPackages.keySet()) {
       String packageName = sortedPackages.get(size);
       String drillDownFileName = classesInPackageFileName(breakdown,
           packageName);
@@ -1305,7 +1149,7 @@ public class MakeTopLevelHtmlForPerm {
 
       int yOffsetText = yOffset + 8;
       outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:5px;\">%.1f</div>\n", size);
+          + "px; left:5px;\">%d</div>\n", size);
       outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
           + "px; left:70px;\">%.1f", perc);
       outFile.println("%</div>\n");
@@ -1350,89 +1194,6 @@ public class MakeTopLevelHtmlForPerm {
     addStandardHtmlEnding(out);
 
     out.close();
-  }
-
-  private String makeStringLiteralsHtml(SizeBreakdown breakdown,
-      Map<String, LiteralsCollection> nameToLitColl) throws IOException {
-    String outFileName = breakdown.getId() + "_stringLiteralsBreakdown.html";
-    final PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
-
-    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-    outFile.println("<html>");
-    outFile.println("<head>");
-    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    outFile.println("<link rel=\"stylesheet\" href=\"roundedCorners.css\" media=\"screen\">");
-    outFile.println("</head>");
-    outFile.println("<body>");
-
-    if (nameToLitColl.get("string").stringTypeToSize.size() > 0) {
-
-      float maxSize = 0f;
-      float sumSize = 0f;
-      TreeMap<Float, String> sortedStLitTypes = new TreeMap<Float, String>(
-          Collections.reverseOrder());
-
-      for (String stringLiteral : nameToLitColl.get("string").stringTypeToSize.keySet()) {
-        float curSize = nameToLitColl.get("string").stringTypeToSize.get(stringLiteral);
-        sumSize += curSize;
-
-        if (curSize != 0f) {
-          sortedStLitTypes.put(curSize, stringLiteral);
-
-          if (curSize > maxSize) {
-            maxSize = curSize;
-          }
-        }
-      }
-
-      int yOffset = 0;
-      for (Float size : sortedStLitTypes.keySet()) {
-
-        String stringLiteral = sortedStLitTypes.get(size);
-        String drillDownFileName = breakdown.getId() + "_" + stringLiteral
-            + "Strings.html";
-
-        float ratio = (size / maxSize) * 79;
-        float perc = (size / sumSize) * 100;
-
-        if (ratio < 3) {
-          ratio = 3;
-        }
-
-        outFile.println("<div id=\"box\" style=\"width:" + ratio + "%; top: "
-            + yOffset + "px; left: 110px;\">");
-        outFile.println("<div id=\"lb\">");
-        outFile.println("<div id=\"rb\">");
-        outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
-        outFile.println("<div id=\"tb\"><div id=\"tlc\"><div id=\"trc\">");
-        outFile.println("<div id=\"content\">");
-        outFile.println("</div>");
-        outFile.println("</div></div></div></div>");
-        outFile.println("</div></div></div></div>");
-        outFile.println("</div>");
-
-        int yOffsetText = yOffset + 8;
-        outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-            + "px; left:5px;\">%.1f</div>\n", size);
-        outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-            + "px; left:70px;\">%.1f", perc);
-        outFile.println("%</div>\n");
-        outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
-            + "px; left:110px;\"><a href=\"" + drillDownFileName
-            + "\" target=\"_top\">" + stringLiteral + "</a></div>");
-
-        yOffset = yOffset + 25;
-      }
-    } else {
-      outFile.println("No string literals found for this application.");
-    }
-
-    outFile.println("</body>");
-    outFile.println("</html>");
-    outFile.close();
-
-    return outFileName;
   }
 
   /**

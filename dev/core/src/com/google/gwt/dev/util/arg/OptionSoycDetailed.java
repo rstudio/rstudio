@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,16 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package com.google.gwt.soyc;
-
-import java.util.Set;
-import java.util.TreeSet;
+package com.google.gwt.dev.util.arg;
 
 /**
- * A collection of literals.
+ * Option to request extra SOYC output at the expense of more compile time.
  */
-public class LiteralsCollection {
-  public int size = 0;
-  public final Set<String> literals = new TreeSet<String>();
+public interface OptionSoycDetailed {
+
+  /**
+   * Returns true if the compiler should record and emit extra SOYC information.
+   */
+  boolean isSoycExtra();
+
+  /**
+   * Sets whether or not the compiler should record and emit extra SOYC
+   * information.
+   */
+  void setSoycExtra(boolean soycExtra);
 }

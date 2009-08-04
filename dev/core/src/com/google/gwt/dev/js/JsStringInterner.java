@@ -36,11 +36,13 @@ import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Map.Entry;
 
 /**
  * Interns all String literals in a JsProgram. Each unique String will be
@@ -191,13 +193,13 @@ public class JsStringInterner {
     }
   }
 
+  public static final String PREFIX = "$intern_";
+
   private static final Comparator<JsStringLiteral> LITERAL_COMPARATOR = new Comparator<JsStringLiteral>() {
     public int compare(JsStringLiteral o1, JsStringLiteral o2) {
       return o1.getValue().compareTo(o2.getValue());
     }
   };
-
-  public static final String PREFIX = "$intern_";
 
   /**
    * Apply interning of String literals to a JsProgram. The symbol names for the
@@ -208,8 +210,9 @@ public class JsStringInterner {
    * @param jprogram the JProgram that has fragment dependency data for
    *          <code>program</code>
    * @param program the JsProgram
+   * @return a map describing the interning that occurred
    */
-  public static void exec(JProgram jprogram, JsProgram program) {
+  public static Map<JsName, String> exec(JProgram jprogram, JsProgram program) {
     StringVisitor v = new StringVisitor(jprogram, program.getScope());
     v.accept(program);
 
@@ -227,6 +230,8 @@ public class JsStringInterner {
       createVars(program, program.getFragmentBlock(entry.getKey()),
           entry.getValue(), v.toCreate);
     }
+
+    return reverse(v.toCreate);
   }
 
   /**
@@ -265,6 +270,16 @@ public class JsStringInterner {
       }
       block.getStatements().add(0, vars);
     }
+  }
+
+  private static Map<JsName, String> reverse(
+      SortedMap<JsStringLiteral, JsName> toCreate) {
+    Map<JsName, String> reversed = new LinkedHashMap<JsName, String>(
+        toCreate.size());
+    for (Entry<JsStringLiteral, JsName> entry : toCreate.entrySet()) {
+      reversed.put(entry.getValue(), entry.getKey().getValue());
+    }
+    return reversed;
   }
 
   /**

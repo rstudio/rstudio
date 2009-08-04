@@ -15,11 +15,8 @@
  */
 package com.google.gwt.soyc;
 
-import com.google.gwt.dev.util.collect.HashSet;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -28,38 +25,34 @@ import java.util.TreeMap;
 public class SizeBreakdown {
   private static void initializeLiteralsCollection(
       Map<String, LiteralsCollection> nameToLitColl) {
-    nameToLitColl.put("long", new LiteralsCollection("long"));
-    nameToLitColl.put("null", new LiteralsCollection("null"));
-    nameToLitColl.put("class", new LiteralsCollection("class"));
-    nameToLitColl.put("int", new LiteralsCollection("int"));
-    nameToLitColl.put("string", new LiteralsCollection("string"));
-    nameToLitColl.put("number", new LiteralsCollection("number"));
-    nameToLitColl.put("boolean", new LiteralsCollection("boolean"));
-    nameToLitColl.put("double", new LiteralsCollection("double"));
-    nameToLitColl.put("char", new LiteralsCollection("char"));
-    nameToLitColl.put("undefined", new LiteralsCollection("undefined"));
-    nameToLitColl.put("float", new LiteralsCollection("float"));
+    nameToLitColl.put("long", new LiteralsCollection());
+    nameToLitColl.put("null", new LiteralsCollection());
+    nameToLitColl.put("class", new LiteralsCollection());
+    nameToLitColl.put("int", new LiteralsCollection());
+    nameToLitColl.put("string", new LiteralsCollection());
+    nameToLitColl.put("number", new LiteralsCollection());
+    nameToLitColl.put("boolean", new LiteralsCollection());
+    nameToLitColl.put("double", new LiteralsCollection());
+    nameToLitColl.put("char", new LiteralsCollection());
+    nameToLitColl.put("undefined", new LiteralsCollection());
+    nameToLitColl.put("float", new LiteralsCollection());
   }
 
   private static void initializeNameToCodeCollection(
       HashMap<String, CodeCollection> nameToCodeColl) {
-    nameToCodeColl.put("allOther", new CodeCollection("allOther"));
-    nameToCodeColl.put("widget", new CodeCollection("widget"));
-    nameToCodeColl.put("rpcUser", new CodeCollection("rpcUser"));
-    nameToCodeColl.put("rpcGen", new CodeCollection("rpcGen"));
-    nameToCodeColl.put("rpcGwt", new CodeCollection("rpcGwt"));
-    nameToCodeColl.put("gwtLang", new CodeCollection("long"));
-    nameToCodeColl.put("jre", new CodeCollection("jre"));
+    nameToCodeColl.put("allOther", new CodeCollection());
+    nameToCodeColl.put("widget", new CodeCollection());
+    nameToCodeColl.put("rpcUser", new CodeCollection());
+    nameToCodeColl.put("rpcGen", new CodeCollection());
+    nameToCodeColl.put("rpcGwt", new CodeCollection());
+    nameToCodeColl.put("gwtLang", new CodeCollection());
+    nameToCodeColl.put("jre", new CodeCollection());
   }
 
-  public Map<String, Float> classToPartialSize = new HashMap<String, Float>();
   public Map<String, Integer> classToSize = new HashMap<String, Integer>();
-  public Map<String, LiteralsCollection> nameToLitColl = new TreeMap<String, LiteralsCollection>();
-  public int nonAttributedBytes = 0;
-  public Set<String> nonAttributedStories = new HashSet<String>();;
-  public Map<String, Float> packageToPartialSize = new HashMap<String, Float>();
-  public Map<String, Integer> packageToSize = new HashMap<String, Integer>();
   public HashMap<String, CodeCollection> nameToCodeColl = new HashMap<String, CodeCollection>();
+  public Map<String, LiteralsCollection> nameToLitColl = new TreeMap<String, LiteralsCollection>();
+  public Map<String, Integer> packageToSize = new HashMap<String, Integer>();
 
   public int sizeAllCode;
 
@@ -87,7 +80,7 @@ public class SizeBreakdown {
   public String getId() {
     return id;
   }
-  
+
   @Override
   public String toString() {
     return getId();

@@ -161,6 +161,29 @@ public class FragmentExtractor {
     }
   }
 
+  /**
+   * Return the Java method corresponding to <code>stat</code>, or
+   * <code>null</code> if there isn't one. It recognizes JavaScript of the form
+   * <code>function foo(...) { ...}</code>, where <code>foo</code> is the name
+   * of the JavaScript translation of a Java method.
+   */
+  public static JMethod methodFor(JsStatement stat, JavaToJavaScriptMap map) {
+    if (stat instanceof JsExprStmt) {
+      JsExpression exp = ((JsExprStmt) stat).getExpression();
+      if (exp instanceof JsFunction) {
+        JsFunction func = (JsFunction) exp;
+        if (func.getName() != null) {
+          JMethod method = map.nameToMethod(func.getName());
+          if (method != null) {
+            return method;
+          }
+        }
+      }
+    }
+
+    return map.vtableInitToMethod(stat);
+  }
+
   private Set<JsName> entryMethodNames;
 
   private final JProgram jprogram;
@@ -363,9 +386,6 @@ public class FragmentExtractor {
     }
 
     JMethod meth = methodFor(stat);
-    if (meth == null) {
-      meth = map.vtableInitToMethod(stat);
-    }
 
     if (meth != null) {
       /*
@@ -411,16 +431,7 @@ public class FragmentExtractor {
    * of the JavaScript translation of a Java method.
    */
   private JMethod methodFor(JsStatement stat) {
-    if (stat instanceof JsExprStmt) {
-      JsExpression exp = ((JsExprStmt) stat).getExpression();
-      if (exp instanceof JsFunction) {
-        JsFunction func = (JsFunction) exp;
-        if (func.getName() != null) {
-          return map.nameToMethod(func.getName());
-        }
-      }
-    }
-    return null;
+    return methodFor(stat, map);
   }
 
   /**

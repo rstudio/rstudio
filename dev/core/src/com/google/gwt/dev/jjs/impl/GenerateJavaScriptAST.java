@@ -1884,14 +1884,14 @@ public class GenerateJavaScriptAST {
    */
   private Set<JMethod> crossClassTargets = new HashSet<JMethod>();
 
+  private Map<String, JsFunction> indexedFunctions = Maps.create();
+
   /**
    * Contains JsNames for all interface methods. A special scope is needed so
    * that independent classes will obfuscate their interface implementation
    * methods the same way.
    */
   private final JsScope interfaceScope;
-
-  private Map<String, JsFunction> indexedFunctions = Maps.create();
 
   private final JsProgram jsProgram;
 
@@ -2141,6 +2141,10 @@ public class GenerateJavaScriptAST {
 
       public JMethod nameToMethod(JsName name) {
         return nameToMethodMap.get(name);
+      }
+
+      public JReferenceType nameToType(JsName name) {
+        return constructorNameToTypeMap.get(name);
       }
 
       public JReferenceType typeForStatement(JsStatement stat) {

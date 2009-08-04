@@ -17,6 +17,10 @@ package com.google.gwt.core.ext.linker;
 
 import com.google.gwt.core.ext.Linker;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * Represents analysis data for a CompilationResult.
  */
@@ -32,70 +36,77 @@ public abstract class CompilationAnalysis extends Artifact<CompilationAnalysis> 
   public abstract EmittedArtifact getDepFile();
 
   /**
+   * @return a file with detailed story information
+   */
+  public abstract EmittedArtifact getDetailedStoriesFile();
+
+  /**
+   * @return a file of size maps
+   */
+  public abstract EmittedArtifact getSizeMapsFile();
+
+  /**
    * @return a file of split points
    */
   public abstract EmittedArtifact getSplitPointsFile();
 
-  /**
-   * @return a file of stories
-   */
-  public abstract EmittedArtifact getStoriesFile();
-
   @Override
   public final int hashCode() {
-
-    assert (getDepFile() != null);
-    assert (getStoriesFile() != null);
-    assert (getSplitPointsFile() != null);
-
-    return 17 * (37 + getDepFile().getPartialPath().hashCode())
-        + (37 + getStoriesFile().getPartialPath().hashCode())
-        + (37 + getSplitPointsFile().getPartialPath().hashCode());
+    int code = 37;
+    for (EmittedArtifact file : allFiles()) {
+      if (file == null) {
+        code = code * 17 + 37;
+      } else {
+        code = code * 17 + file.getPartialPath().hashCode();
+      }
+    }
+    return code;
   }
 
   @Override
   protected final int compareToComparableArtifact(CompilationAnalysis o) {
+    LinkedList<EmittedArtifact> myFiles = new LinkedList<EmittedArtifact>(
+        allFiles());
+    LinkedList<EmittedArtifact> otherFiles = new LinkedList<EmittedArtifact>(
+        o.allFiles());
+    assert (myFiles.size() == otherFiles.size());
 
-    if ((getDepFile() == null) && (o.getDepFile() == null)) {
-      return 0;
-    } else if ((getDepFile() == null) && (o.getDepFile() != null)) {
-      return 1;
-    } else if ((getDepFile() != null) && (o.getDepFile() == null)) {
-      return -1;
-    } else if (getDepFile().getPartialPath().compareTo(
-        o.getDepFile().getPartialPath()) == 0) {
-      if ((getStoriesFile() == null) && (o.getStoriesFile() == null)) {
-        return 0;
-      } else if ((getStoriesFile() == null) && (o.getStoriesFile() != null)) {
-        return 1;
-      } else if ((getStoriesFile() != null) && (o.getStoriesFile() == null)) {
-        return -1;
-      } else if (getStoriesFile().getPartialPath().compareTo(
-          o.getStoriesFile().getPartialPath()) == 0) {
-        if ((getSplitPointsFile() == null) && (o.getSplitPointsFile() == null)) {
-          return 0;
-        }
-        if ((getSplitPointsFile() == null) && (o.getSplitPointsFile() != null)) {
-          return 1;
-        } else if ((getSplitPointsFile() != null)
-            && (o.getSplitPointsFile() == null)) {
-          return -1;
-        } else {
-          return getSplitPointsFile().getPartialPath().compareTo(
-              o.getSplitPointsFile().getPartialPath());
-        }
-      } else {
-        return getStoriesFile().getPartialPath().compareTo(
-            o.getStoriesFile().getPartialPath());
+    while (!myFiles.isEmpty()) {
+      EmittedArtifact myFile = myFiles.removeFirst();
+      EmittedArtifact otherFile = otherFiles.removeFirst();
+      if (myFile == null && otherFile == null) {
+        continue;
       }
-    } else {
-      return getDepFile().getPartialPath().compareTo(
-          o.getDepFile().getPartialPath());
+      if (myFile == null && otherFile != null) {
+        return -1;
+      }
+      if (myFile != null && otherFile == null) {
+        return 1;
+      }
+      assert myFile != null;
+      assert otherFile != null;
+
+      int fileCompare = myFile.getPartialPath().compareTo(
+          otherFile.getPartialPath());
+      if (fileCompare != 0) {
+        return fileCompare;
+      }
     }
+
+    return 0;
   }
 
   @Override
   protected final Class<CompilationAnalysis> getComparableArtifactType() {
     return CompilationAnalysis.class;
+  }
+
+  private List<EmittedArtifact> allFiles() {
+    List<EmittedArtifact> files = new ArrayList<EmittedArtifact>();
+    files.add(getSplitPointsFile());
+    files.add(getDepFile());
+    files.add(getSizeMapsFile());
+    files.add(getDetailedStoriesFile());
+    return files;
   }
 }

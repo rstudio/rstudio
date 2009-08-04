@@ -30,28 +30,18 @@ import java.util.TreeSet;
 public class GlobalInformation {
   private static final SizeBreakdown[] EMPTY_SIZE_BREAKDOWN = new SizeBreakdown[0];
 
-  public static String backupLocation = "(Source location not known)";
-  
   public static Boolean displayDependencies = false;
   public static Boolean displaySplitPoints = false;
 
   public static HashMap<String, String> classToPackage = new HashMap<String, String>();
-  public static HashMap<String, HashSet<String>> classToWhatItDependsOn = new HashMap<String, HashSet<String>>();
-  public static HashMap<Integer, Float> fragmentToPartialSize = new HashMap<Integer, Float>();
-  public static HashMap<Integer, HashSet<String>> fragmentToStories = new HashMap<Integer, HashSet<String>>();
-
-  public static int numBytesDoubleCounted = 0;
-  public static int numFragments = 0;
-  public static int numSplitPoints = 0;
   public static Map<String, TreeSet<String>> packageToClasses = new TreeMap<String, TreeSet<String>>();
+
+  public static HashMap<String, HashSet<String>> classToWhatItDependsOn = new HashMap<String, HashSet<String>>();
+
+  public static int numSplitPoints = 0;
 
   public static HashMap<Integer, String> splitPointToLocation = new HashMap<Integer, String>();
   public static ArrayList<Integer> splitPointInitialLoadSequence = new ArrayList<Integer>();
-
-  public static HashMap<String, HashSet<String>> storiesToCorrClasses = new HashMap<String, HashSet<String>>();
-  public static HashMap<String, HashSet<String>> storiesToCorrClassesAndMethods = new HashMap<String, HashSet<String>>();
-
-  public static HashMap<String, String> storiesToLitType = new HashMap<String, String>();
 
   public static Settings settings = new Settings();
 
@@ -82,13 +72,6 @@ public class GlobalInformation {
     }
   }
 
-  public static void computePartialPackageSizes() {
-    for (SizeBreakdown breakdown : allSizeBreakdowns()) {
-      computePartialPackageSizes(breakdown.packageToPartialSize,
-          breakdown.classToPartialSize);
-    }
-  }
-
   public static SizeBreakdown splitPointCodeBreakdown(int sp) {
     assert sp >= 1 && sp <= numSplitPoints;
     if (!exclusiveCodeBreakdowns.containsKey(sp)) {
@@ -98,6 +81,9 @@ public class GlobalInformation {
     return exclusiveCodeBreakdowns.get(sp);
   }
 
+  /**
+   * TODO(spoon) move this to the SizeBreakdown class.
+   */
   private static void computePackageSizes(Map<String, Integer> packageToSize,
       Map<String, Integer> classToSize) {
     packageToSize.clear();
@@ -108,25 +94,6 @@ public class GlobalInformation {
           int curSize = classToSize.get(className);
           int newSize = curSize + packageToSize.get(packageName);
           packageToSize.put(packageName, newSize);
-        }
-      }
-    }
-  }
-
-  private static void computePartialPackageSizes(
-      Map<String, Float> packageToPartialSize,
-      Map<String, Float> classToPartialSize) {
-    float cumPartialSizeFromPackages = 0f;
-
-    packageToPartialSize.clear();
-    for (String packageName : packageToClasses.keySet()) {
-      packageToPartialSize.put(packageName, 0f);
-      for (String className : packageToClasses.get(packageName)) {
-        if (classToPartialSize.containsKey(className)) {
-          float curSize = classToPartialSize.get(className);
-          cumPartialSizeFromPackages += curSize;
-          float newSize = curSize + packageToPartialSize.get(packageName);
-          packageToPartialSize.put(packageName, newSize);
         }
       }
     }

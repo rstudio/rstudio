@@ -49,6 +49,12 @@ public interface JavaToJavaScriptMap {
   JMethod nameToMethod(JsName name);
 
   /**
+   * If <code>name</code> is the name of a constructor function corresponding to
+   * a Java type, then return that type. Otherwise, return <code>null</code>.
+   */
+  JReferenceType nameToType(JsName name);
+
+  /**
    * If <code>stat</code> is used to set up the definition of some class, return
    * that class. Otherwise, return null.
    */

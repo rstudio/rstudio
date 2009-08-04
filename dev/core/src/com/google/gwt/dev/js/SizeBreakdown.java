@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,16 +13,29 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package com.google.gwt.dev.js;
 
-package com.google.gwt.soyc;
+import com.google.gwt.dev.js.ast.JsName;
 
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.Map;
 
 /**
- * A collection of literals.
+ * A size breakdown of a single JavaScript code fragment.
  */
-public class LiteralsCollection {
-  public int size = 0;
-  public final Set<String> literals = new TreeSet<String>();
+public class SizeBreakdown {
+  private final int size;
+  private final Map<JsName, Integer> sizeMap;
+
+  public SizeBreakdown(int size, Map<JsName, Integer> sizeMap) {
+    this.size = size;
+    this.sizeMap = sizeMap;
+  }
+
+  public int getSize() {
+    return size;
+  }
+
+  public Map<JsName, Integer> getSizeMap() {
+    return sizeMap;
+  }
 }

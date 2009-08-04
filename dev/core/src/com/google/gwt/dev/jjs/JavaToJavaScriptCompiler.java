@@ -26,6 +26,7 @@ import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis.SoycArtifact;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.core.ext.soyc.impl.DependencyRecorder;
+import com.google.gwt.core.ext.soyc.impl.SizeMapRecorder;
 import com.google.gwt.core.ext.soyc.impl.SplitPointRecorder;
 import com.google.gwt.core.ext.soyc.impl.StoryRecorder;
 import com.google.gwt.dev.cfg.ModuleDef;
@@ -88,13 +89,14 @@ import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsReportGenerationVisitor;
-import com.google.gwt.dev.js.JsSourceGenerationVisitor;
+import com.google.gwt.dev.js.JsSourceGenerationVisitorWithSizeBreakdown;
 import com.google.gwt.dev.js.JsStackEmulator;
 import com.google.gwt.dev.js.JsStaticEval;
 import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
+import com.google.gwt.dev.js.SizeBreakdown;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.AbstractTextOutput;
@@ -104,6 +106,7 @@ import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.collect.Maps;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
@@ -291,9 +294,10 @@ public class JavaToJavaScriptCompiler {
       }
 
       // (10.5) Obfuscate
+      Map<JsName, String> obfuscateMap = Maps.create();
       switch (options.getOutput()) {
         case OBFUSCATED:
-          JsStringInterner.exec(jprogram, jsProgram);
+          obfuscateMap = JsStringInterner.exec(jprogram, jsProgram);
           JsObfuscateNamer.exec(jsProgram);
           break;
         case PRETTY:
@@ -301,7 +305,7 @@ public class JavaToJavaScriptCompiler {
           JsPrettyNamer.exec(jsProgram);
           break;
         case DETAILED:
-          JsStringInterner.exec(jprogram, jsProgram);
+          obfuscateMap = JsStringInterner.exec(jprogram, jsProgram);
           JsVerboseNamer.exec(jsProgram);
           break;
         default:
@@ -317,33 +321,19 @@ public class JavaToJavaScriptCompiler {
 
       // (12) Generate the final output text.
       String[] js = new String[jsProgram.getFragmentCount()];
-      List<Map<Range, SourceInfo>> sourceInfoMaps = options.isSoycEnabled()
-          ? new ArrayList<Map<Range, SourceInfo>>(jsProgram.getFragmentCount())
-          : null;
       StatementRanges[] ranges = new StatementRanges[js.length];
-      for (int i = 0; i < js.length; i++) {
-        DefaultTextOutput out = new DefaultTextOutput(
-            options.getOutput().shouldMinimize());
-        JsSourceGenerationVisitor v;
-        if (sourceInfoMaps != null) {
-          v = new JsReportGenerationVisitor(out);
-        } else {
-          v = new JsSourceGenerationVisitor(out);
-        }
-        v.accept(jsProgram.getFragmentBlock(i));
-        js[i] = out.toString();
-        if (sourceInfoMaps != null) {
-          sourceInfoMaps.add(((JsReportGenerationVisitor) v).getSourceInfoMap());
-        }
-        ranges[i] = v.getStatementRanges();
-      }
+      SizeBreakdown[] sizeBreakdowns = options.isSoycEnabled()
+          ? new SizeBreakdown[js.length] : null;
+      List<Map<Range, SourceInfo>> sourceInfoMaps = options.isSoycExtra()
+          ? new ArrayList<Map<Range, SourceInfo>>() : null;
+      generateJavaScriptCode(options, jsProgram, map, js, ranges,
+          sizeBreakdowns, sourceInfoMaps);
 
       PermutationResult toReturn = new PermutationResultImpl(js,
           makeSymbolMap(symbolTable), ranges, permutationId);
-
       toReturn.getArtifacts().add(
-          makeSoycArtifact(logger, permutationId, jprogram, js, sourceInfoMaps,
-              dependencies));
+          makeSoycArtifact(logger, permutationId, jprogram, js, sizeBreakdowns,
+              sourceInfoMaps, dependencies, map, obfuscateMap));
 
       System.out.println("Permutation took "
           + (System.currentTimeMillis() - permStart) + " ms");
@@ -422,7 +412,7 @@ public class JavaToJavaScriptCompiler {
     checkForErrors(logger, goldenCuds, false);
 
     PerfLogger.start("Build AST");
-    CorrelationFactory correlator = options.isSoycEnabled()
+    CorrelationFactory correlator = options.isSoycExtra()
         ? new RealCorrelationFactory() : new DummyCorrelationFactory();
     JProgram jprogram = new JProgram(correlator);
     JsProgram jsProgram = new JsProgram(correlator);
@@ -816,6 +806,46 @@ public class JavaToJavaScriptCompiler {
     return null;
   }
 
+  /**
+   * Generate JavaScript code from the given JavaScript ASTs. Also produces
+   * information about that transformation.
+   * 
+   * @param options The options this compiler instance is running with
+   * @param jsProgram The AST to convert to source code
+   * @param jjsMap A map between the JavaScript AST and the Java AST it came
+   *          from
+   * @param js An array to hold the output JavaScript
+   * @param ranges An array to hold the statement ranges for that JavaScript
+   * @param sizeBreakdowns An array to hold the size breakdowns for that
+   *          JavaScript
+   * @param sourceInfoMaps An array to hold the source info maps for that
+   *          JavaScript
+   */
+  private static void generateJavaScriptCode(JJSOptions options,
+      JsProgram jsProgram, JavaToJavaScriptMap jjsMap, String[] js,
+      StatementRanges[] ranges, SizeBreakdown[] sizeBreakdowns,
+      List<Map<Range, SourceInfo>> sourceInfoMaps) {
+    for (int i = 0; i < js.length; i++) {
+      DefaultTextOutput out = new DefaultTextOutput(
+          options.getOutput().shouldMinimize());
+      JsSourceGenerationVisitorWithSizeBreakdown v;
+      if (sourceInfoMaps != null) {
+        v = new JsReportGenerationVisitor(out, jjsMap);
+      } else {
+        v = new JsSourceGenerationVisitorWithSizeBreakdown(out, jjsMap);
+      }
+      v.accept(jsProgram.getFragmentBlock(i));
+      js[i] = out.toString();
+      if (sizeBreakdowns != null) {
+        sizeBreakdowns[i] = v.getSizeBreakdown();
+      }
+      if (sourceInfoMaps != null) {
+        sourceInfoMaps.add(((JsReportGenerationVisitor) v).getSourceInfoMap());
+      }
+      ranges[i] = v.getStatementRanges();
+    }
+  }
+
   private static UnableToCompleteException logAndTranslateException(
       TreeLogger logger, Throwable e) {
     if (e instanceof UnableToCompleteException) {
@@ -861,10 +891,13 @@ public class JavaToJavaScriptCompiler {
 
   private static StandardCompilationAnalysis makeSoycArtifact(
       TreeLogger logger, int permutationId, JProgram jprogram, String[] js,
-      List<Map<Range, SourceInfo>> sourceInfoMaps, SoycArtifact dependencies) {
+      SizeBreakdown[] sizeBreakdowns,
+      List<Map<Range, SourceInfo>> sourceInfoMaps, SoycArtifact dependencies,
+      JavaToJavaScriptMap jjsmap, Map<JsName, String> obfuscateMap)
+      throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-    PerfLogger.start("Computing SOYC output");
+    PerfLogger.start("Recording SOYC output");
 
     PerfLogger.start("Record split points");
     SplitPointRecorder.recordSplitPoints(jprogram, baos, logger);
@@ -872,20 +905,32 @@ public class JavaToJavaScriptCompiler {
         + ".xml.gz", baos.toByteArray());
     PerfLogger.end();
 
-    SoycArtifact stories = null;
+    SoycArtifact sizeMaps = null;
+    SoycArtifact detailedStories = null;
+
+    if (sizeBreakdowns != null) {
+      PerfLogger.start("Record size map");
+      baos.reset();
+      SizeMapRecorder.recordMap(logger, baos, sizeBreakdowns, jjsmap,
+          obfuscateMap);
+      sizeMaps = new SoycArtifact("stories" + permutationId + ".xml.gz",
+          baos.toByteArray());
+      PerfLogger.end();
+    }
 
     if (sourceInfoMaps != null) {
-      PerfLogger.start("Record stories");
+      PerfLogger.start("Record detailed stories");
       baos.reset();
       StoryRecorder.recordStories(logger, baos, sourceInfoMaps, js);
-      stories = new SoycArtifact("stories" + permutationId + ".xml.gz",
-          baos.toByteArray());
+      detailedStories = new SoycArtifact("detailedStories" + permutationId
+          + ".xml.gz", baos.toByteArray());
       PerfLogger.end();
     }
 
     PerfLogger.end();
 
-    return new StandardCompilationAnalysis(dependencies, stories, splitPoints);
+    return new StandardCompilationAnalysis(dependencies, sizeMaps, splitPoints,
+        detailedStories);
   }
 
   /**

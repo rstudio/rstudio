@@ -54,6 +54,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
+import com.google.gwt.dev.util.arg.ArgHandlerSoycDetailed;
 import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
 import com.google.gwt.dev.util.arg.OptionDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.OptionDumpSignatures;
@@ -104,6 +105,7 @@ public class Precompile {
       registerHandler(new ArgHandlerDumpSignatures(options));
       registerHandler(new ArgHandlerMaxPermsPerPrecompile(options));
       registerHandler(new ArgHandlerSoyc(options));
+      registerHandler(new ArgHandlerSoycDetailed(options));
     }
 
     @Override
@@ -192,6 +194,10 @@ public class Precompile {
       return jjsOptions.isSoycEnabled();
     }
 
+    public boolean isSoycExtra() {
+      return jjsOptions.isSoycExtra();
+    }
+
     public boolean isUpdateCheckDisabled() {
       return disableUpdateCheck;
     }
@@ -254,6 +260,10 @@ public class Precompile {
 
     public void setSoycEnabled(boolean enabled) {
       jjsOptions.setSoycEnabled(enabled);
+    }
+
+    public void setSoycExtra(boolean soycExtra) {
+      jjsOptions.setSoycExtra(soycExtra);
     }
 
     public void setValidateOnly(boolean validateOnly) {
