@@ -60,6 +60,10 @@ class LayoutImpl {
 
   protected DivElement relativeRuler;
 
+  public void attach(Element parent) {
+    // Do nothing. This exists only to help LayoutImplIE6 avoid memory leaks.
+  }
+
   public Element attachChild(Element parent, Element child) {
     DivElement container = Document.get().createDivElement();
     container.appendChild(child);
@@ -75,6 +79,10 @@ class LayoutImpl {
 
     parent.appendChild(container);
     return container;
+  }
+
+  public void detach(Element parent) {
+    // Do nothing. This exists only to help LayoutImplIE6 avoid memory leaks.
   }
 
   public void fillParent(Element elem) {
@@ -95,9 +103,6 @@ class LayoutImpl {
     }
 
     switch (unit) {
-      default:
-      case PX:
-        return 1;
       case PCT:
         return (vertical ? parent.getClientHeight() : parent.getClientWidth()) / 100.0;
       case EM:
@@ -114,6 +119,9 @@ class LayoutImpl {
         return fixedRuler.getOffsetWidth() / 28.4;
       case PC:
         return fixedRuler.getOffsetWidth() / 2.36;
+      default:
+      case PX:
+        return 1;
     }
   }
 
@@ -155,13 +163,5 @@ class LayoutImpl {
     style.clearTop();
     style.clearWidth();
     style.clearHeight();
-  }
-
-  public void detach(Element parent) {
-    // Do nothing. This exists only to help LayoutImplIE6 avoid memory leaks.
-  }
-
-  public void attach(Element parent) {
-    // Do nothing. This exists only to help LayoutImplIE6 avoid memory leaks.
   }
 }

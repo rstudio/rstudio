@@ -79,6 +79,24 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
   }
 
   /**
+   * Gets the {@link Layer} associated with the given widget. This layer may be
+   * used to manipulate the child widget's layout constraints.
+   * 
+   * <p>
+   * After you have made changes to any of the child widgets' constraints, you
+   * must call one of the {@link HasAnimatedLayout} methods for those changes to
+   * be reflected visually.
+   * </p>
+   * 
+   * @param child the child widget whose layer is to be retrieved
+   * @return the associated layer
+   */
+  public Layout.Layer getLayer(Widget child) {
+    assert child.getParent() == this : "The requested widget is not a child of this panel";
+    return (Layout.Layer) child.getLayoutData();
+  }
+
+  /**
    * This method, or one of its overloads, must be called whenever any of the
    * {@link Layout.Layer layers} associated with its children is modified.
    * 
@@ -155,24 +173,6 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
         ((RequiresLayout) child).onLayout();
       }
     }
-  }
-
-  /**
-   * Gets the {@link Layer} associated with the given widget. This layer may be
-   * used to manipulate the child widget's layout constraints.
-   * 
-   * <p>
-   * After you have made changes to any of the child widgets' constraints, you
-   * must call one of the {@link HasAnimatedLayout} methods for those changes to
-   * be reflected visually.
-   * </p>
-   * 
-   * @param child the child widget whose layer is to be retrieved
-   * @return the associated layer
-   */
-  public Layout.Layer getLayer(Widget child) {
-    assert child.getParent() == this : "The requested widget is not a child of this panel";
-    return (Layout.Layer) child.getLayoutData();
   }
 
   @Override
