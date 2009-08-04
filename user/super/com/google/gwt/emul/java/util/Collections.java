@@ -83,6 +83,10 @@ public class Collections {
     public <E> E[] toArray(E[] a) {
       return coll.toArray(a);
     }
+    
+    public String toString() {
+      return coll.toString();
+    }
   }
 
   static class UnmodifiableList<T> extends UnmodifiableCollection<T> implements
