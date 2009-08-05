@@ -206,7 +206,7 @@
   
   <target name="test.web.disableClassMetadata" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
     <fileset id="test.web.disableClassMetadata.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode-disableClassMetadata" test.cases="test.web.disableClassMetadata.tests" >
+    <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -web -batch module" test.out="${junit.out}/${build.host.platform}-web-mode-disableClassMetadata" test.cases="test.web.disableClassMetadata.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -215,7 +215,7 @@
 
   <target name="test.web.draft" depends="compile, compile.tests" description="Run only web-mode tests for this project, not batching tests on purpose.">
     <fileset id="test.web.draft.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -draftCompile -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode-draft" test.cases="test.web.draft.tests" >
+    <gwt.junit test.args="${test.args} -draftCompile -out www -web -batch module" test.out="${junit.out}/${build.host.platform}-web-mode-draft" test.cases="test.web.draft.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
