@@ -81,7 +81,7 @@ public class RootLayoutPanel extends LayoutPanel implements ProvidesLayout {
 
   @Override
   protected void onLoad() {
-    getLayout().attach();
+    getLayout().onAttach();
     getLayout().fillParent();
   }
 }

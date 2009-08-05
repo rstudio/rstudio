@@ -122,7 +122,7 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
    * @see #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)
    */
   public void layout(int duration) {
-    layout.animate(duration);
+    layout.layout(duration);
   }
 
   /**
@@ -143,7 +143,7 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
    * @see #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)
    */
   public void layout(int duration, final Layout.AnimationCallback callback) {
-    layout.animate(duration, new Layout.AnimationCallback() {
+    layout.layout(duration, new Layout.AnimationCallback() {
       public void onAnimationComplete() {
         // Chain to the passed callback.
         if (callback != null) {
@@ -195,11 +195,11 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
 
   @Override
   protected void onLoad() {
-    layout.attach();
+    layout.onAttach();
   }
 
   @Override
   protected void onUnload() {
-    layout.detach();
+    layout.onDetach();
   }
 }

@@ -29,7 +29,7 @@ public class LayoutPanelExample implements EntryPoint {
   public void onModuleLoad() {
     // Attach two child widgets to a LayoutPanel, laying them out horizontally,
     // splitting at 50%.
-    Widget childOne = new HTML(), childTwo = new HTML();
+    Widget childOne = new HTML("left"), childTwo = new HTML("right");
     LayoutPanel p = new LayoutPanel();
     p.add(childOne);
     p.add(childTwo);

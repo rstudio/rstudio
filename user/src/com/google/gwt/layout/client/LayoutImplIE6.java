@@ -111,16 +111,6 @@ class LayoutImplIE6 extends LayoutImpl {
     elem[name] = value;
   }-*/;
 
-  @Override
-  public void attach(Element parent) {
-    if (UserAgent.isIE6()) {
-      // No need to re-connect layer refs. This will be taken care of
-      // automatically in layout().
-      initResizeHandler(parent);
-      initUnitChangeHandler(parent, relativeRuler);
-    }
-  }
-
   public Element attachChild(Element parent, Element child) {
     if (!UserAgent.isIE6()) {
       return super.attachChild(parent, child);
@@ -139,15 +129,6 @@ class LayoutImplIE6 extends LayoutImpl {
 
     parent.appendChild(container);
     return container;
-  }
-
-  @Override
-  public void detach(Element parent) {
-    if (UserAgent.isIE6()) {
-      removeLayerRefs(parent);
-      removeResizeHandler(parent);
-      removeUnitChangeHandler(relativeRuler);
-    }
   }
 
   @Override
@@ -188,6 +169,25 @@ class LayoutImplIE6 extends LayoutImpl {
 
     Element elem = layer.getContainerElement();
     setLayer(elem, layer);
+  }
+
+  @Override
+  public void onAttach(Element parent) {
+    if (UserAgent.isIE6()) {
+      // No need to re-connect layer refs. This will be taken care of
+      // automatically in layout().
+      initResizeHandler(parent);
+      initUnitChangeHandler(parent, relativeRuler);
+    }
+  }
+
+  @Override
+  public void onDetach(Element parent) {
+    if (UserAgent.isIE6()) {
+      removeLayerRefs(parent);
+      removeResizeHandler(parent);
+      removeUnitChangeHandler(relativeRuler);
+    }
   }
 
   private native void fillParentImpl(Element elem) /*-{

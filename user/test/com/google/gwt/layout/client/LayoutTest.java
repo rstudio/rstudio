@@ -54,7 +54,7 @@ public class LayoutTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.layout.Layout";
+    return "com.google.gwt.layout.LayoutTest";
   }
 
   /**
@@ -164,7 +164,7 @@ public class LayoutTest extends GWTTestCase {
     container.getStyle().setHeight(256, PX);
 
     Layout layout = new Layout(parent);
-    layout.attach();
+    layout.onAttach();
     Layer layer = layout.attachChild(child);
     layer.setTopBottom(0, PX, 0, PX);
     layer.setLeftRight(0, PX, 0, PX);
@@ -187,7 +187,7 @@ public class LayoutTest extends GWTTestCase {
     assertEquals(256, parent.getOffsetWidth());
     assertEquals(256, child.getOffsetWidth());
 
-    layout.detach();
+    layout.onDetach();
   }
 
   /**
@@ -379,7 +379,7 @@ public class LayoutTest extends GWTTestCase {
     doc.getBody().appendChild(parent);
 
     layout = new Layout(parent);
-    layout.attach();
+    layout.onAttach();
     layout.fillParent();
 
     layer0 = layout.attachChild(child0);
@@ -393,7 +393,7 @@ public class LayoutTest extends GWTTestCase {
   protected void gwtTearDown() throws Exception {
     Window.enableScrolling(true);
     Document.get().getBody().removeChild(parent);
-    layout.detach();
+    layout.onDetach();
   }
 
   private void assertLeftRightTopBottomUnitsMakeSense(Element elem) {
@@ -500,7 +500,7 @@ public class LayoutTest extends GWTTestCase {
 
     after.setupLayers(layer0, layer1);
     delayTestFinish(200);
-    layout.animate(100, new Layout.AnimationCallback() {
+    layout.layout(100, new Layout.AnimationCallback() {
       public void onAnimationComplete() {
         // Assert that the two layers have swapped positions.
         assertEquals(l0, wrapper1.getOffsetLeft());

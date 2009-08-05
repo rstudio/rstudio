@@ -60,10 +60,6 @@ class LayoutImpl {
 
   protected DivElement relativeRuler;
 
-  public void attach(Element parent) {
-    // Do nothing. This exists only to help LayoutImplIE6 avoid memory leaks.
-  }
-
   public Element attachChild(Element parent, Element child) {
     DivElement container = Document.get().createDivElement();
     container.appendChild(child);
@@ -79,10 +75,6 @@ class LayoutImpl {
 
     parent.appendChild(container);
     return container;
-  }
-
-  public void detach(Element parent) {
-    // Do nothing. This exists only to help LayoutImplIE6 avoid memory leaks.
   }
 
   public void fillParent(Element elem) {
@@ -145,6 +137,14 @@ class LayoutImpl {
         ? (layer.width + layer.widthUnit.getType()) : "");
     style.setProperty("height", layer.setHeight
         ? (layer.height + layer.heightUnit.getType()) : "");
+  }
+
+  public void onAttach(Element parent) {
+    // Do nothing. This exists only to help LayoutImplIE6 avoid memory leaks.
+  }
+
+  public void onDetach(Element parent) {
+    // Do nothing. This exists only to help LayoutImplIE6 avoid memory leaks.
   }
 
   public void removeChild(Element container, Element child) {

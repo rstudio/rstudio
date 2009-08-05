@@ -50,7 +50,7 @@ import java.util.List;
  * element. There is a set of methods available on this class to manipulate the
  * child element's position and size. In order for changes to a layer to take
  * effect, you must finally call one of {@link #layout()} or
- * {@link #animate(int)}. This allows many changes to different layers to be
+ * {@link #layout(int)}. This allows many changes to different layers to be
  * applied efficiently, and to be animated.
  * </p>
  * 
@@ -78,7 +78,7 @@ import java.util.List;
 public class Layout {
 
   /**
-   * Callback interface used by {@link Layout#animate(int, AnimationCallback)}
+   * Callback interface used by {@link Layout#layout(int, AnimationCallback)}
    * to provide updates on animation progress.
    */
   public interface AnimationCallback {
@@ -294,13 +294,122 @@ public class Layout {
   }
 
   /**
+   * Asserts that the given child element is managed by this layout.
+   * 
+   * @param elem the element to be tested
+   */
+  public void assertIsChild(Element elem) {
+    assert elem.getParentElement().getParentElement() == this.parentElem : "Element is not a child of this layout";
+  }
+
+  /**
+   * Attaches a child element to this layout.
+   * 
+   * <p>
+   * This method will attach the child to the layout, removing it from its
+   * current parent element. Use the {@link Layer} it returns to manipulate the
+   * child.
+   * </p>
+   * 
+   * @param child the child to be attached
+   * @return the {@link Layer} associated with the element
+   */
+  public Layer attachChild(Element child) {
+    return attachChild(child, null);
+  }
+
+  /**
+   * Attaches a child element to this layout.
+   * 
+   * <p>
+   * This method will attach the child to the layout, removing it from its
+   * current parent element. Use the {@link Layer} it returns to manipulate the
+   * child.
+   * </p>
+   * 
+   * @param child the child to be attached
+   * @param userObject an arbitrary object to be associated with this layer
+   * @return the {@link Layer} associated with the element
+   */
+  public Layer attachChild(Element child, Object userObject) {
+    Element container = impl.attachChild(parentElem, child);
+    Layer layer = new Layer(container, child, userObject);
+    layers.add(layer);
+    return layer;
+  }
+
+  /**
+   * Causes the parent element to fill its own parent.
+   * 
+   * <p>
+   * This is most useful for top-level layouts that need to follow the size of
+   * another element, such as the &lt;body&gt;.
+   * </p>
+   */
+  public void fillParent() {
+    impl.fillParent(parentElem);
+  }
+
+  /**
+   * Returns the size of one unit, in pixels, in the context of this layout.
+   * 
+   * <p>
+   * This will work for any unit type, but be aware that certain unit types,
+   * such as {@link Unit#EM}, and {@link Unit#EX}, will return different values
+   * based upon the parent's associated font size. {@link Unit#PCT} is dependent
+   * upon the parent's actual size, and the axis to be measured.
+   * </p>
+   * 
+   * @param unit the unit type to be measured
+   * @param vertical whether the unit to be measured is on the vertical or
+   *          horizontal axis (this matters only for {@link Unit#PCT})
+   * @return the unit size, in pixels
+   */
+  public double getUnitSize(Unit unit, boolean vertical) {
+    return impl.getUnitSizeInPixels(parentElem, unit, vertical);
+  }
+
+  /**
+   * Updates this layout's children immediately. This method <em>must</em> be
+   * called after updating any of its children's {@link Layer layers}.
+   */
+  public void layout() {
+    for (Layer l : layers) {
+      l.left = l.sourceLeft = l.targetLeft;
+      l.top = l.sourceTop = l.targetTop;
+      l.right = l.sourceRight = l.targetRight;
+      l.bottom = l.sourceBottom = l.targetBottom;
+      l.width = l.sourceWidth = l.targetWidth;
+      l.height = l.sourceHeight = l.targetHeight;
+
+      l.setLeft = l.setTargetLeft;
+      l.setTop = l.setTargetTop;
+      l.setRight = l.setTargetRight;
+      l.setBottom = l.setTargetBottom;
+      l.setWidth = l.setTargetWidth;
+      l.setHeight = l.setTargetHeight;
+
+      l.leftUnit = l.targetLeftUnit;
+      l.topUnit = l.targetTopUnit;
+      l.rightUnit = l.targetRightUnit;
+      l.bottomUnit = l.targetBottomUnit;
+      l.widthUnit = l.targetWidthUnit;
+      l.heightUnit = l.targetHeightUnit;
+
+      impl.layout(l);
+    }
+
+    impl.finalizeLayout(parentElem);
+  }
+
+  /**
    * Updates the layout by animating it over time.
    * 
    * @param duration the duration of the animation
-   * @see #animate(int, AnimationCallback)
+   * @see #layout(int, AnimationCallback)
    */
-  public void animate(int duration) {
-    animate(duration, null);
+  public void layout(int duration) {
+    layout(duration, null);
   }
 
   /**
@@ -310,7 +419,7 @@ public class Layout {
    * @param duration the duration of the animation
    * @param callback the animation callback
    */
-  public void animate(int duration, final AnimationCallback callback) {
+  public void layout(int duration, final AnimationCallback callback) {
     // Deal with constraint changes (e.g. left-width => right-width, etc)
     int parentWidth = parentElem.getClientWidth();
     int parentHeight = parentElem.getClientHeight();
@@ -378,132 +487,23 @@ public class Layout {
   }
 
   /**
-   * Asserts that the given child element is managed by this layout
-   * 
-   * @param elem the element to be tested
-   */
-  public void assertIsChild(Element elem) {
-    assert elem.getParentElement().getParentElement() == this.parentElem : "Element is not a child of this layout";
-  }
-
-  /**
    * This method must be called when the parent element becomes attached to the
    * document.
    * 
-   * @see #detach()
+   * @see #onDetach()
    */
-  public void attach() {
-    impl.attach(parentElem);
-  }
-
-  /**
-   * Attaches a child element to this layout.
-   * 
-   * <p>
-   * This method will attach the child to the layout, removing it from its
-   * current parent element. Use the {@link Layer} it returns to manipulate the
-   * child.
-   * </p>
-   * 
-   * @param child the child to be attached
-   * @return the {@link Layer} associated with the element
-   */
-  public Layer attachChild(Element child) {
-    return attachChild(child, null);
-  }
-
-  /**
-   * Attaches a child element to this layout.
-   * 
-   * <p>
-   * This method will attach the child to the layout, removing it from its
-   * current parent element. Use the {@link Layer} it returns to manipulate the
-   * child.
-   * </p>
-   * 
-   * @param child the child to be attached
-   * @param userObject an arbitrary object to be associated with this layer
-   * @return the {@link Layer} associated with the element
-   */
-  public Layer attachChild(Element child, Object userObject) {
-    Element container = impl.attachChild(parentElem, child);
-    Layer layer = new Layer(container, child, userObject);
-    layers.add(layer);
-    return layer;
+  public void onAttach() {
+    impl.onAttach(parentElem);
   }
 
   /**
    * This method must be called when the parent element becomes detached from
    * the document.
    * 
-   * @see #attach()
+   * @see #onAttach()
    */
-  public void detach() {
-    impl.detach(parentElem);
-  }
-
-  /**
-   * Causes the parent element to fill its own parent.
-   * 
-   * <p>
-   * This is most useful for top-level layouts that need to follow the size of
-   * another element, such as the &lt;body&gt;.
-   * </p>
-   */
-  public void fillParent() {
-    impl.fillParent(parentElem);
-  }
-
-  /**
-   * Returns the size of one unit, in pixels, in the context of this layout.
-   * 
-   * <p>
-   * This will work for any unit type, but be aware that certain unit types,
-   * such as {@link Unit#EM}, and {@link Unit#EX}, will return different values
-   * based upon the parent's associated font size. {@link Unit#PCT} is dependent
-   * upon the parent's actual size, and the axis to be measured.
-   * </p>
-   * 
-   * @param unit the unit type to be measured
-   * @param vertical whether the unit to be measured is on the vertical or
-   *          horizontal axis (this matters only for {@link Unit#PCT})
-   * @return the unit size, in pixels
-   */
-  public double getUnitSize(Unit unit, boolean vertical) {
-    return impl.getUnitSizeInPixels(parentElem, unit, vertical);
-  }
-
-  /**
-   * Updates this layout's children immediately. This method <em>must</em> be
-   * called after updating any of its children's {@link Layer layers}.
-   */
-  public void layout() {
-    for (Layer l : layers) {
-      l.left = l.sourceLeft = l.targetLeft;
-      l.top = l.sourceTop = l.targetTop;
-      l.right = l.sourceRight = l.targetRight;
-      l.bottom = l.sourceBottom = l.targetBottom;
-      l.width = l.sourceWidth = l.targetWidth;
-      l.height = l.sourceHeight = l.targetHeight;
-
-      l.setLeft = l.setTargetLeft;
-      l.setTop = l.setTargetTop;
-      l.setRight = l.setTargetRight;
-      l.setBottom = l.setTargetBottom;
-      l.setWidth = l.setTargetWidth;
-      l.setHeight = l.setTargetHeight;
-
-      l.leftUnit = l.targetLeftUnit;
-      l.topUnit = l.targetTopUnit;
-      l.rightUnit = l.targetRightUnit;
-      l.bottomUnit = l.targetBottomUnit;
-      l.widthUnit = l.targetWidthUnit;
-      l.heightUnit = l.targetHeightUnit;
-
-      impl.layout(l);
-    }
-
-    impl.finalizeLayout(parentElem);
+  public void onDetach() {
+    impl.onDetach(parentElem);
   }
 
   /**
