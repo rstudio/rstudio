@@ -49,6 +49,7 @@
   <property name="project.jni" location="${gwt.build}/${project.tail}" />
   <property name="javac.out" location="${project.build}/bin" />
   <property name="javac.junit.out" location="${project.build}/bin-test" />
+  <property name="javac.emma.out" location="${project.build}/bin-emma" />
   <property name="javac.debug" value="true" />
   <property name="javac.debuglevel" value="lines,vars,source" />
   <property name="javac.encoding" value="utf-8" />
@@ -56,6 +57,8 @@
   <property name="javac.target" value="1.5" />
   <property name="javac.nowarn" value="true" />
   <property name="junit.out" location="${project.build}/test" />
+  <property name="emma.dir" value="${gwt.tools.redist}/emma" />
+  <property name="emma.filter.exclude" value="" />
   
   <!-- Sanity check -->
   <available file="${gwt.tools}" type="dir" property="gwt.tools.exists" />
@@ -119,6 +122,14 @@
     </not>
   </condition>
 
+  <!-- Shared class paths -->
+  <path id="project.classpath.class">
+    <pathelement location="${javac.out}" />
+  </path>
+  <path id="project.classpath.src">
+    <pathelement location="${gwt.root}/${project.tail}/src" />
+  </path>
+
   <!-- Pulls in tasks defined in ant-contrib, i.e. foreach -->
   <taskdef resource="net/sf/antcontrib/antlib.xml">
     <classpath>
@@ -133,6 +144,7 @@
         <propertyref name="gwt.version" />
         <propertyref name="gwt.junit.port" />
         <propertyref name="gwt.remote.browsers" />
+        <propertyref name="emma.enabled" />
       </propertyset>
     </ant>
   </presetdef>
@@ -163,6 +175,7 @@
     <attribute name="test.args" default="" />
     <attribute name="test.out" default="" />
     <attribute name="test.reports" default="@{test.out}/reports" />
+    <attribute name="test.emma.coverage" default="@{test.out}/emma-coverage" />
     <attribute name="test.cases" default="" />
     <element name="extraclasspaths" optional="true" />
     <sequential>
@@ -177,20 +190,32 @@
       <echo message="Writing test results to @{test.reports} for @{test.cases}" />
       <mkdir dir="@{test.reports}" />
 
+      <antcall target="-create.emma.coverage">
+    	  <param name="test.emma.coverage" value="@{test.emma.coverage}"/>
+      </antcall>
+      <condition property="emma.lib" value="${emma.dir}/emma-2.0.5312-patched.jar" else="">
+        <isset property="emma.enabled" />
+      </condition>
+
       <echo message="${javac.out} ${javac.junit.out}" />
       <junit dir="@{test.out}" fork="yes" printsummary="yes"
              failureproperty="junit.failure" tempdir="@{test.out}" >
         <jvmarg line="${junit.platform.args}" />
         <jvmarg line="-Xmx768m" />
+        <jvmarg value="-Demma.coverage.out.file=@{test.emma.coverage}/coverage.emma" />
+        <jvmarg value="-Demma.coverage.out.merge=true" />
         <sysproperty key="gwt.args" value="${junit.notheadless.arg} @{test.args}" />
         <sysproperty key="java.awt.headless" value="${junit.headless}" />
         <sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
         <classpath>
-          <pathelement location="${gwt.root}/${project.tail}/src" />
+          <path refid="project.classpath.src" />
           <pathelement location="${gwt.root}/${project.tail}/super" />
           <pathelement location="${gwt.root}/${project.tail}/test" />
           <pathelement location="${javac.junit.out}" />
-          <pathelement location="${javac.out}" />
+          <!-- javac.emma.out is empty unless emma is enabled. -->
+          <pathelement location="${javac.emma.out}" />
+          <path refid="project.classpath.class" />
+          <pathelement location="${emma.lib}" />
           <pathelement location="${gwt.dev.staging.jar}" />
           <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
           <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
@@ -206,6 +231,19 @@
           <fileset refid="@{test.cases}" />
         </batchtest>
       </junit>
+
+      <emma enabled="${emma.enabled}">
+        <report sourcepath="${project.classpath.src}">
+          <fileset file="${javac.emma.out}/metadata.emma" />
+          <fileset dir="@{test.emma.coverage}">
+            <include name="*.emma" />
+          </fileset>
+          <txt outfile="@{test.emma.coverage}/coverage.txt" />
+          <html outfile="@{test.emma.coverage}/coverage.html" />
+          <xml outfile="@{test.emma.coverage}/coverage.xml" />
+        </report>
+      </emma>
+
       <fail message="One or more junit tests failed" if="junit.failure" />
     </sequential>
   </macrodef>
@@ -302,6 +340,39 @@
       <fail unless="@{name}.exists" message="@{message}" />
     </sequential>
   </macrodef>
+
+  <!-- Targets for emma support.  To run tests with emma enabled, use 
+       ant <test-target> -Demma.enabled=true -->
+  <path id="emma.taskdef.lib">
+    <pathelement location="${emma.dir}/emma-2.0.5312-patched.jar" />
+    <pathelement location="${emma.dir}/emma_ant-2.0.5312.jar" />
+  </path>
+
+  <taskdef resource="emma_ant.properties" classpathref="emma.taskdef.lib" />
+
+  <target name="compile.emma" description="Instruments emma classes" unless="emma.compiled">
+    <delete dir="${javac.emma.out}" />
+    <property name="emma.compiled" value="true" />
+    <antcall target="-compile.emma.if.enabled" />
+  </target>
+
+  <target name="-compile.emma.if.enabled" description="Instruments emma classes" if="emma.enabled">
+    <mkdir dir="${javac.emma.out}" />
+    <path id="emma.classpath">
+      <pathelement location="${javac.out}" />
+    </path>
+    <emma enabled="${emma.enabled}" >
+      <instr instrpathref="emma.classpath" destdir="${javac.emma.out}" metadatafile="${javac.emma.out}/metadata.emma" merge="false">
+        <filter includes="com.google.*" />
+        <filter excludes="${emma.filter.exclude}" />
+      </instr>
+    </emma>
+  </target>
+
+  <target name="-create.emma.coverage" description="Create the emma coverage directory" if="emma.enabled">
+    <delete dir="${test.emma.coverage}" />
+    <mkdir dir="${test.emma.coverage}" />
+  </target>
 
   <!-- Default implementations of the required targets; projects should
   override the ones that matter -->

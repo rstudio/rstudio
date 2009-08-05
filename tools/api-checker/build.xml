@@ -1,10 +1,12 @@
 <project name="api-checker" default="build" basedir=".">
 
-        <property name="gwt.root" location="../.." />
+  <property name="gwt.root" location="../.." />
   <property name="project.tail" value="tools/api-checker" />
   <import file="${gwt.root}/common.ant.xml" />
 
-        <property name="tools.build" value="${gwt.build.out}/${project.tail}" />
+  <property name="tools.build" value="${gwt.build.out}/${project.tail}" />
+  <property name="gwt.junit.testcase.apichecker.includes" value="**/*Test.class" />
+  <property name="gwt.junit.testcase.apichecker.excludes" value="" />
 
   <!-- Platform shouldn't matter here, just picking one -->
   <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-${build.host.platform}.jar" />
@@ -20,7 +22,7 @@
     </gwt.javac>
   </target>
 
-  <target name="compile.tests" description="Compiles the test code for this project">
+  <target name="compile.tests" depends="compile.emma" description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" destdir="${javac.junit.out}">
       <classpath>
@@ -42,33 +44,13 @@
   </target>
 
   <target name="test" depends="build, compile.tests" description="Run unit tests for this project.">
-    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
-      <classpath>
-        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-        <pathelement location="${gwt.tools.antlib}/ant-junit-1.6.5.jar" />
-      </classpath>
-    </taskdef>
-  
-    <echo message="Writing test results to ${junit.out}/reports" />
-    <mkdir dir="${junit.out}/reports" />
-  
-    <junit dir="${junit.out}" fork="yes" printsummary="yes" haltonfailure="true">
-      <sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
-      <classpath>
-        <pathelement location="test" />
-        <pathelement location="${javac.junit.out}" />
+    <fileset id="tests.apichecker" dir="${javac.junit.out}" includes="${gwt.junit.testcase.apichecker.includes}" excludes="${gwt.junit.testcase.apichecker.excludes}" />
+    <gwt.junit test.out="${junit.out}" test.cases="tests.apichecker" >
+      <extraclasspaths>
         <pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
         <pathelement location="${gwt.dev.jar}" />
-        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-      </classpath>
-  
-      <formatter type="plain" />
-      <formatter type="xml" />
-      <batchtest todir="${junit.out}/reports">
-                          <fileset dir="${javac.junit.out}"
-                            includes="**/*Test.class"/> 
-      </batchtest>
-    </junit>
+      </extraclasspaths>
+    </gwt.junit>
   </target>
 
   <target name="checkstyle" description="Static analysis of source">

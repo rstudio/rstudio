@@ -5,6 +5,7 @@
 
   <!-- "build" is the default when subprojects are directly targetted  -->
   <property name="target" value="build" />
+  <property name="emma.merged.out" value="${project.build}/emma-coverage" />
 
   <!-- 
      Convenience for the lateral calls we make.  Use gwt.ant to
@@ -125,6 +126,39 @@
     <call-subproject subproject="user" subtarget="test" />
     <call-subproject subproject="servlet" subtarget="test" />
     <call-subproject subproject="tools" subtarget="test" />
+  </target>
+
+  <path id="emma.classpath.src">
+    <pathelement location="${gwt.root}/user/src" />
+    <pathelement location="${gwt.root}/dev/**/src/com/google" />
+    <pathelement location="${gwt.root}/build-tools/**/src/com/google" />
+    <pathelement location="${gwt.root}/tools/**/src/com/google" />
+  </path>
+
+  <target name="emma.merge" description="Merges coverage data for all projects">
+    <delete dir="${emma.merged.out}" />
+    <mkdir dir="${emma.merged.out}" />
+    <emma>
+      <merge outfile="${emma.merged.out}/merged.emma" >
+        <fileset dir="${project.build}">
+          <include name="**/*.emma" />
+          <exclude name="**/merged.emma" />
+        </fileset>
+      </merge>
+    </emma>
+    <emma>
+      <report sourcepath="${emma.classpath.src}">
+        <fileset dir="${project.build}">
+          <patternset>
+            <include name="**/metadata.emma"/>
+          </patternset>
+        </fileset>
+        <fileset file="${emma.merged.out}/merged.emma" />
+        <txt outfile="${emma.merged.out}/coverage.txt" />
+        <html outfile="${emma.merged.out}/coverage.html" />
+        <xml outfile="${emma.merged.out}/coverage.xml" />
+      </report>
+    </emma>
   </target>
 
   <target name="clean" description="[action] Cleans the entire GWT build">

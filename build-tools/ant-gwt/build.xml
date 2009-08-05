@@ -3,6 +3,9 @@
   <property name="project.tail" value="build-tools/ant-gwt" />
   <import file="${gwt.root}/common.ant.xml" />
 
+  <property name="gwt.junit.testcase.antgwt.includes" value="**/*Test.class" />
+  <property name="gwt.junit.testcase.antgwt.excludes" value="" />
+
   <target name="compile" description="Compiles this project">
     <mkdir dir="${javac.out}" />
     <gwt.javac>
@@ -12,7 +15,7 @@
     </gwt.javac>
   </target>
 
-  <target name="compile.tests" depends="build" description="Compiles the test code for this project">
+  <target name="compile.tests" depends="build, compile.emma" description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" destdir="${javac.junit.out}">
       <classpath>
@@ -33,32 +36,8 @@
   </target>
 
   <target name="test" depends="build, compile.tests" description="Run unit tests for this project.">
-    <!-- TODO: refactor gwt.junit so it can be reused here -->
-    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
-      <classpath>
-        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-        <pathelement location="${gwt.tools.antlib}/ant-junit-1.6.5.jar" />
-      </classpath>
-    </taskdef>
-  
-    <echo message="Writing test results to ${junit.out}/reports for ${test.cases}" />
-    <mkdir dir="${junit.out}/reports" />
-  
-    <echo message="${javac.out} ${javac.junit.out}" />
-    <junit dir="${junit.out}" fork="yes" printsummary="yes" haltonfailure="true">
-      <classpath>
-        <pathelement location="${javac.junit.out}" />
-        <pathelement location="${javac.out}" />
-        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-      </classpath>
-  
-      <formatter type="plain" />
-      <formatter type="xml" />
-  
-      <batchtest todir="${junit.out}/reports">
-        <fileset dir="${javac.junit.out}" includes="**/*Test.class" />
-      </batchtest>
-    </junit>
+    <fileset id="tests.antgwt" dir="${javac.junit.out}" includes="${gwt.junit.testcase.antgwt.includes}" excludes="${gwt.junit.testcase.antgwt.excludes}" />
+    <gwt.junit test.out="${junit.out}" test.cases="tests.antgwt" />
   </target>
 
   <target name="checkstyle" description="Static analysis of source">

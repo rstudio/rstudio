@@ -3,38 +3,29 @@
   <property name="project.tail" value="user" />
   <property name="test.args" value="" />
 
+  <!-- BrowserManagerServer_Stub compiled using rmic, which doesn't generate full source code -->
+  <property name="emma.filter.exclude" value="*BrowserManagerServer_Stub*" />
+
   <import file="${gwt.root}/common.ant.xml" />
 
-  <property name="gwt.junit.emmatestcase.includes" value="**/*Suite.class,com/google/gwt/dev/jjs/test/*Test.class"/>
   <property name="test.timeout" value="3" />
+  <property name="emma.merged.out" value="${junit.out}/emma-coverage" />
+  <property name="gwt.junit.testcase.web.includes" value="${gwt.junit.testcase.includes}" />
+  <property name="gwt.junit.testcase.web.excludes" value="" />
+
+  <!-- CoverageTest.java fails due to a javac bug in sun/OpenJDK's Java. See the file contents for details -->
+  <property name="gwt.junit.testcase.hosted.emma.includes" value="**/*Suite.class,com/google/gwt/dev/jjs/test/*Test.class" />
+  <property name="gwt.junit.testcase.hosted.emma.excludes" value="**/CoverageTest.class,**/CompilerSuite.class" />
+
+  <!-- Only IFrameLinker actually supports -noserver mode; run the other linker tests if and when they are supported -->
+  <property name="gwt.junit.testcase.noserver.includes" value="**/IFrameLinkerTest.class" />
+  <property name="gwt.junit.testcase.noserver.excludes" value="" />
 
   <!-- 
     Whether I18NSuite should test e.g. Foo$InnerMsgs_fr.properties (if the
     value is "dollar") or Foo_Inner_fr.properties (for "bar")
    -->
   <property name="gwt.i18n.test.InnerClassChar" value="dollar"/>
-
-  <!--
-    Default hosted mode test cases
-  -->
-  <fileset id="default.hosted.tests" dir="${javac.junit.out}" 
-       includes="${gwt.junit.testcase.includes}" />
-
-  <fileset id="default.emma.tests" dir="${javac.junit.out}" 
-       includes="**/EmmaClassLoadingTest.class" />
-
-  <fileset id="default.hosted.emma.tests" dir="${javac.junit.out}" 
-      excludes="**/CoverageTest.class,**/CompilerSuite.class" includes="${gwt.junit.emmatestcase.includes}" />
-  <!-- everything succeeds except CoverageTest.java. It fails due to a javac bug in sun/OpenJDK's Java. See the file contents for details -->
-
-  <fileset id="default.noserver.tests" dir="${javac.junit.out}" includes="**/IFrameLinkerTest.class" />
-  <!-- Only IFrameLinker actually supports -noserver mode; run the other linker tests if and when they are supported -->
-
-  <!--
-    Default web mode test cases
-  -->
-  <fileset id="default.web.tests" dir="${javac.junit.out}"
-         includes="${gwt.junit.testcase.includes}" />
 
   <!--
     Classpaths added for test cases
@@ -96,7 +87,7 @@
     <gwt.ant dir="../dev/core" target="compile.tests" />
   </target>
 
-  <target name="compile.tests" depends="compile.dev.core.tests" description="Compiles the test code for this project">
+  <target name="compile.tests" depends="compile.dev.core.tests, compile.emma" description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**" destdir="${javac.junit.out}">
       <classpath>
@@ -137,7 +128,8 @@
 
   <target name="test.remoteweb" description="Run a remoteweb test at the given host and path" if="gwt.remote.browsers">
     <echo message="Performing remote browser testing at ${gwt.remote.browsers}" />
-    <gwt.junit test.args="${test.args} -out www -remoteweb ${gwt.remote.browsers} -batch module" test.out="${junit.out}/remoteweb" test.cases="default.web.tests" >
+    <fileset id="test.remoteweb.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
+    <gwt.junit test.args="${test.args} -out www -remoteweb ${gwt.remote.browsers} -batch module" test.out="${junit.out}/remoteweb" test.cases="test.remoteweb.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -150,7 +142,8 @@
 
   <target name="test.selenium" description="Run a remote test using Selenium RC test at the given host and path" if="gwt.selenium.hosts">
     <echo message="Performing remote browser testing using Selenium RC at ${gwt.selenium.hosts}" />
-    <gwt.junit test.args="${test.args} -out www -selenium ${gwt.selenium.hosts} -batch module" test.out="${junit.out}/selenium" test.cases="default.web.tests" >
+    <fileset id="test.selenium.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
+    <gwt.junit test.args="${test.args} -out www -selenium ${gwt.selenium.hosts} -batch module" test.out="${junit.out}/selenium" test.cases="test.selenium.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -158,7 +151,8 @@
   </target>
 
   <target name="test.hosted.emma" depends="compile, compile.tests" description="Run all hosted-mode tests in emma mode.">
-    <gwt.junit test.args="${test.args} -batch module" test.out="${junit.out}/${build.host.platform}-hosted-mode-emma" test.cases="default.hosted.emma.tests" >
+    <fileset id="test.hosted.emma.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.hosted.emma.includes}" excludes="${gwt.junit.testcase.hosted.emma.excludes}" />
+    <gwt.junit test.args="${test.args} -batch module" test.out="${junit.out}/${build.host.platform}-hosted-mode-emma" test.cases="test.hosted.emma.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
         <pathelement location="${gwt.tools.redist}/emma/emma.jar" />
@@ -166,16 +160,25 @@
     </gwt.junit>
   </target>
 
-  <target name="test.hosted" depends="compile, compile.tests" description="Run only hosted-mode tests for this project.">
-    <gwt.junit test.args="${test.args} -batch module" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.tests" >
+  <target name="test.hosted" depends="compile, compile.tests, -test.hosted.includes" description="Run only hosted-mode tests for this project.">
+    <property name="gwt.junit.testcase.hosted.includes" value="${gwt.junit.testcase.includes}" />
+    <property name="gwt.junit.testcase.hosted.excludes" value="${gwt.junit.testcase.excludes}" />
+    <fileset id="test.hosted.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.hosted.includes}" excludes="${gwt.junit.testcase.hosted.excludes}" />
+    <gwt.junit test.args="${test.args} -batch module" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="test.hosted.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
     </gwt.junit>
   </target>
 
+  <target name="-test.hosted.includes" if="emma.enabled">
+    <property name="gwt.junit.testcase.hosted.includes" value="${gwt.junit.testcase.hosted.emma.includes}" />
+    <property name="gwt.junit.testcase.hosted.excludes" value="${gwt.junit.testcase.hosted.emma.excludes}" />
+  </target>
+
   <target name="test.noserver" depends="compile, compile.tests" description="Run noserver hosted-mode tests for this project.">
-    <gwt.junit test.args="${test.args} -noserver -batch module" test.out="${junit.out}/${build.host.platform}-noserver-mode" test.cases="default.noserver.tests">
+    <fileset id="test.noserver.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.noserver.includes}" excludes="${gwt.junit.testcase.noserver.excludes}" />
+    <gwt.junit test.args="${test.args} -noserver -batch module" test.out="${junit.out}/${build.host.platform}-noserver-mode" test.cases="test.noserver.tests">
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -183,7 +186,8 @@
   </target>
 
   <target name="test.web" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
-    <gwt.junit test.args="${test.args} -out www -web -batch module" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="default.web.tests">
+    <fileset id="test.web.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
+    <gwt.junit test.args="${test.args} -out www -web -batch module" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="test.web.tests">
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -201,7 +205,8 @@
   </target>
   
   <target name="test.web.disableClassMetadata" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
-    <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode-disableClassMetadata" test.cases="default.web.tests" >
+    <fileset id="test.web.disableClassMetadata.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
+    <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode-disableClassMetadata" test.cases="test.web.disableClassMetadata.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -209,7 +214,8 @@
   </target>
 
   <target name="test.web.draft" depends="compile, compile.tests" description="Run only web-mode tests for this project, not batching tests on purpose.">
-    <gwt.junit test.args="${test.args} -draftCompile -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode-draft" test.cases="default.web.tests" >
+    <fileset id="test.web.draft.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
+    <gwt.junit test.args="${test.args} -draftCompile -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode-draft" test.cases="test.web.draft.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -218,6 +224,7 @@
 
   <target name="test" depends="compile, compile.tests" description="Run hosted-mode, web-mode, remoteweb, and selenium tests for this project.">
     <property.ensure name="distro.built" location="${gwt.dev.staging.jar}" message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
+    <property name="emma.compiled" value="true" />
 
     <!--
       Run hosted and web mode tests for the platform on which this build
@@ -239,6 +246,28 @@
       <antcall target="test.web.draft"/>
     </parallel>
     </limit>
+  </target>
+
+  <target name="emma.merge" description="Merges coverage data for the entire project">
+    <delete dir="${emma.merged.out}" />
+    <mkdir dir="${emma.merged.out}" />
+    <emma>
+      <merge outfile="${emma.merged.out}/merged.emma" >
+        <fileset dir="${junit.out}" >
+          <include name="**/*.emma" />
+          <exclude name="${emma.merged.out}/merged.emma" />
+        </fileset>
+      </merge>
+    </emma>
+    <emma>
+      <report sourcepath="${project.classpath.src}">
+        <fileset file="${javac.emma.out}/metadata.emma" />
+        <fileset file="${emma.merged.out}/merged.emma" />
+        <txt outfile="${emma.merged.out}/coverage.txt" />
+        <html outfile="${emma.merged.out}/coverage.html" />
+        <xml outfile="${emma.merged.out}/coverage.xml" />
+      </report>
+    </emma>
   </target>
 
   <target name="clean" description="Cleans this project's intermediate and output files">
