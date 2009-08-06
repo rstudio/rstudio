@@ -19,9 +19,9 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.12.jar" />
 	<classpathentry kind="var" path="GWT_TOOLS/lib/selenium/selenium-java-client-driver.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/xalan/xalan-2.7.1.jar" />
-	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/serializer.jar" />
-	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/xercesImpl.jar" />
-	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/xml-apis.jar" />
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/serializer-2.7.1.jar" />
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xercesImpl-2.8.1.jar" />
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xml-apis-1.3.04.jar" />
 	<classpathentry kind="var" path="GWT_TOOLS/lib/w3c/sac/sac-1.3.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/w3c/flute/flute-1.3.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev-windows"/>
