@@ -14,18 +14,22 @@
 
 include ../config.mk
 
-# Make variables intended to be settable from the command line:
+# Make variables intended to be settable fromthe command line:
+#   DEFAULT_FIREFOX_LIBS	points to /usr/lib/firefox or equivalent
 #   PLUGIN_SDKS			points to GWT /plugin-sdks directory
 #   GECKO_PLATFORM		XPCOM ABI (ie, Linux_x86_64-gcc3)
 #
 
 ifeq ($(OS),mac)
+DEFAULT_FIREFOX_LIBS ?= /Applications/Firefox.app/Contents/MacOS
 RUN_PATH_FLAG = -executable_path
 DLL_SUFFIX = .dylib
 DLLFLAGS = -bundle -arch i386 -arch ppc
+TARGET_PLATFORM = Darwin_x86-gcc3
 # Mac puts multiple architectures into the same files
-TARGET_PLATFORM = Darwin-gcc3
+GECKO_PLATFORM = Darwin-gcc3
 else ifeq ($(OS),linux)
+DEFAULT_FIREFOX_LIBS ?= /usr/lib/firefox
 RUN_PATH_FLAG = -rpath-link
 DLL_SUFFIX = .so
 DLLFLAGS = -shared -m$(FLAG32BIT)
@@ -96,7 +100,9 @@ XPIDL_FLAGS       = -I$(GECKO_SDK)/idl
 #		-Wl,$(RUN_PATH_FLAG),$(FIREFOX_LIBS) \
 #		-lxpcomglue_s -lxpcom -lnspr4 -lmozjs
 DLLFLAGS += \
+		-L$(DEFAULT_FIREFOX_LIBS) \
 		-L$(GECKO_LIBS) \
+		-Wl,$(RUN_PATH_FLAG),$(DEFAULT_FIREFOX_LIBS) \
 		-Wl,$(RUN_PATH_FLAG),$(GECKO_LIBS) \
 		-lxpcomglue_s -lxpcom -lnspr4 -lmozjs
 
