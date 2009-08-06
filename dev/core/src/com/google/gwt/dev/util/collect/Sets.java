@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.util.collect;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -47,6 +48,32 @@ public class Sets {
       default:
         // HashSet
         set.add(toAdd);
+        return set;
+    }
+  }
+
+  public static <T> Set<T> addAll(Set<T> set, Collection<T> toAdd) {
+    switch (toAdd.size()) {
+      case 0:
+        return set;
+      case 1:
+        return add(set, toAdd.iterator().next());
+    }
+
+    switch (set.size()) {
+      case 0:
+        // Empty -> HashSet
+        return new HashSet<T>(toAdd);
+      case 1: {
+        // Singleton -> HashSet
+        Set<T> result = new HashSet<T>();
+        result.add(set.iterator().next());
+        result.addAll(toAdd);
+        return result;
+      }
+      default:
+        // HashSet
+        set.addAll(toAdd);
         return set;
     }
   }

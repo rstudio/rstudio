@@ -109,7 +109,7 @@ public class Maps {
             K key = map.keySet().iterator().next();
             result.put(key, map.get(key));
             result.putAll(toAdd);
-            return normalize(result);
+            return result;
           }
           default:
             map.putAll(toAdd);
