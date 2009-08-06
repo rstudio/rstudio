@@ -1,0 +1,19 @@
+<gwt:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:gwt='urn:import:com.google.gwt.user.client.ui'>
+
+  <gwt:FlowPanel>
+    <gwt:Button ui:field="buttonClick" text="ClickEvent test for Button"/>
+    <gwt:Button ui:field="buttonMouseOver" text="MouseOverEvent test for Button"/>
+    <gwt:Button ui:field="buttonMouseOut" text="MouseOutEvent test for Button"/>
+    <gwt:Label ui:field="labelClick" text="ClickEvent test for Label"/>
+
+    <gwt:FormPanel ui:field="panelForm">
+      <gwt:Button ui:field="buttonSubmit" text="SubmitEvent test" />
+    </gwt:FormPanel>
+
+    <gwt:Label text="ValueChangeEvent test" />
+    <gwt:TextBox ui:field="textBoxValueChange"/>
+  </gwt:FlowPanel>
+
+</gwt:UiBinder>

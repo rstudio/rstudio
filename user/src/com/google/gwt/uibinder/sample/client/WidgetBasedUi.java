@@ -1,0 +1,286 @@
+/*
+ * Copyright 2008 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.uibinder.sample.client;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DListElement;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.OListElement;
+import com.google.gwt.dom.client.ParagraphElement;
+import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.dom.client.StyleInjector;
+import com.google.gwt.dom.client.TableElement;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiFactory;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiTemplate;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DisclosurePanel;
+import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.RadioButton;
+import com.google.gwt.user.client.ui.StackPanel;
+import com.google.gwt.user.client.ui.Tree;
+import com.google.gwt.user.client.ui.Widget;
+
+/**
+ * Sample use of a {@code UiBinder} with the com.google.gwt.user Widget set, and
+ * custom widgets.
+ */
+public class WidgetBasedUi extends Composite {
+  @UiTemplate("WidgetBasedUi.ui.xml")
+  // Actually, it will default to this name w/o annotation
+  interface Binder extends UiBinder<Widget, WidgetBasedUi> {
+  }
+
+  private static final Binder binder = GWT.create(Binder.class);
+
+  private static boolean stylesInjected = false;
+
+  @UiField(provided = true)
+  final WidgetBasedUiResources res;
+
+  @UiField(provided = true)
+  final Label bundledLabel;
+
+  @UiField
+  ClickyLink customLinkWidget;
+  @UiField
+  PointlessRadioButtonSubclass emptyRadio;
+  @UiField
+  ClickyLink funnyCharsAttributeWidget;
+  @UiField
+  ParagraphElement funnyCharsDomAttributeParagraph;
+  @UiField
+  ClickyLink funnyCharsMessageAttributeWidget;
+  @UiField
+  ParagraphElement funnyCharsMessageDomAttributeParagraph;
+  @UiField
+  ParagraphElement funnyCharsMessageParagraph;
+  @UiField
+  ParagraphElement funnyCharsParagraph;
+  @UiField
+  Label gwtFieldLabel;
+  @UiField
+  ParagraphElement main;
+  @UiField
+  Button myButton;
+  @UiField
+  RadioButton myRadioAble;
+  @UiField
+  RadioButton myRadioBaker;
+  @UiField
+  StackPanel myStackPanel;
+  @UiField
+  Widget myStackPanelItem;
+  @UiField
+  DisclosurePanel myDisclosurePanel;
+  @UiField
+  Widget myDisclosurePanelItem;
+  @UiField
+  Tree myTree;
+  @UiField
+  Element nonStandardElement;
+  @UiField
+  DockPanel root;
+  @UiField
+  DivElement sideBar;
+  @UiField
+  SpanElement spanInMsg;
+  @UiField
+  Element tmElement;
+  @UiField
+  Element tmElementJr;
+  @UiField
+  SpanElement trimmedMessage;
+  @UiField
+  NeedlesslyAnnotatedLabel needlessLabel;
+  @UiField
+  AnnotatedStrictLabel strictLabel;
+  @UiField
+  AnnotatedStrictLabel translatedStrictLabel;
+  @UiField
+  StrictLabel veryStrictLabel;
+  @UiField
+  StrictLabel translatedVeryStrictLabel;
+  @UiField
+  FooLabel theFoo;
+  @UiField
+  MenuBar dropdownMenuBar;
+  @UiField
+  MenuItem menuItemMop;
+  @UiField
+  MenuItem menuItemLegacy;
+  @UiField
+  SpanElement messageInMain;
+  @UiField
+  TableElement widgetCrazyTable;
+  @UiField
+  OListElement widgetCrazyOrderedList;
+  @UiField
+  DListElement widgetCrazyDefinitionList;
+  @UiField
+  HTMLPanel customTagHtmlPanel;
+
+  public WidgetBasedUi() {
+    this.bundledLabel = new Label();
+    this.res = GWT.create(WidgetBasedUiResources.class);
+
+    // Inject only once.
+    if (!stylesInjected) {
+      StyleInjector.injectStylesheet(res.style().getText());
+      stylesInjected = true;
+    }
+
+    initWidget(binder.createAndBindUi(this));
+  }
+
+  public Label getBundledLabel() {
+    return bundledLabel;
+  }
+
+  public ClickyLink getCustomLinkWidget() {
+    return customLinkWidget;
+  }
+
+  public HTMLPanel getCustomTagHtmlPanel() {
+    return customTagHtmlPanel;
+  }
+
+  public MenuBar getDropdownMenuBar() {
+    return dropdownMenuBar;
+  }
+
+  public ClickyLink getFunnyCharsAttributeWidget() {
+    return funnyCharsAttributeWidget;
+  }
+
+  public ParagraphElement getFunnyCharsDomAttributeParagraph() {
+    return funnyCharsDomAttributeParagraph;
+  }
+
+  public ClickyLink getFunnyCharsMessageAttributeWidget() {
+    return funnyCharsMessageAttributeWidget;
+  }
+
+  public ParagraphElement getFunnyCharsMessageDomAttributeParagraph() {
+    return funnyCharsMessageDomAttributeParagraph;
+  }
+
+  public ParagraphElement getFunnyCharsMessageParagraph() {
+    return funnyCharsMessageParagraph;
+  }
+
+  public ParagraphElement getFunnyCharsParagraph() {
+    return funnyCharsParagraph;
+  }
+
+  public Label getGwtFieldLabel() {
+    return gwtFieldLabel;
+  }
+
+  public ParagraphElement getMain() {
+    return main;
+  }
+
+  public MenuItem getMenuItemLegacy() {
+    return menuItemLegacy;
+  }
+
+  public MenuItem getMenuItemMop() {
+    return menuItemMop;
+  }
+
+  public SpanElement getMessageInMain() {
+    return messageInMain;
+  }
+
+  public Button getMyButton() {
+    return myButton;
+  }
+
+  public DisclosurePanel getMyDisclosurePanel() {
+    return myDisclosurePanel;
+  }
+
+  public Widget getMyDisclosurePanelItem() {
+    return myDisclosurePanelItem;
+  }
+
+  public RadioButton getMyRadioAble() {
+    return myRadioAble;
+  }
+
+  public RadioButton getMyRadioBaker() {
+    return myRadioBaker;
+  }
+
+  public StackPanel getMyStackPanel() {
+    return myStackPanel;
+  }
+
+  public Widget getMyStackPanelItem() {
+    return myStackPanelItem;
+  }
+  public Element getNonStandardElement() {
+    return nonStandardElement;
+  }
+  
+  public DockPanel getRoot() {
+    return root;
+  }
+  
+  public DivElement getSideBar() {
+    return sideBar;
+  }
+
+  public SpanElement getSpanInMsg() {
+    return spanInMsg;
+  }
+  
+  public FooLabel getTheFoo() {
+    return theFoo;
+  }
+
+  public Element getTmElement() {
+    return tmElement;
+  }
+
+  public SpanElement getTrimmedMessage() {
+    return trimmedMessage;
+  }
+  
+  public DListElement getWidgetCrazyDefinitionList() {
+    return widgetCrazyDefinitionList;
+  }
+  
+  public OListElement getWidgetCrazyOrderedList() {
+    return widgetCrazyOrderedList;
+  }
+  public TableElement getWidgetCrazyTable() {
+    return widgetCrazyTable;
+  }
+  
+  @UiFactory
+  StrictLabel createStrictLabel(String text) {
+    return new StrictLabel(text);
+  }
+}
