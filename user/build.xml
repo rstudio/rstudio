@@ -51,9 +51,9 @@
     <pathelement location="${gwt.tools.lib}/htmlunit/htmlunit-core-js-2.5.jar" />
     <pathelement location="${gwt.tools.lib}/nekohtml/nekohtml-1.9.12.jar" />
     <pathelement location="${gwt.tools.lib}/xalan/xalan-2.7.1.jar" />
-    <pathelement location="${gwt.tools.lib}/xerces/serializer-2.7.1.jar" />
-    <pathelement location="${gwt.tools.lib}/xerces/xercesImpl-2.8.1.jar" />
-    <pathelement location="${gwt.tools.lib}/xerces/xml-apis-1.3.04.jar" />
+    <pathelement location="${gwt.tools.lib}/xerces/xerces-2_9_1/serializer.jar" />
+    <pathelement location="${gwt.tools.lib}/xerces/xerces-2_9_1/xercesImpl.jar" />
+    <pathelement location="${gwt.tools.lib}/xerces/xerces-2_9_1/xml-apis.jar" />
     <pathelement location="${gwt.tools.lib}/w3c/sac/sac-1.3.jar" />
   </path>
   <!-- Platform shouldn't matter here, just picking one -->
@@ -196,7 +196,8 @@
 
   <target name="test.web.htmlunit" depends="compile, compile.tests" description="Run htmlunit web-mode tests for this project.">
     <!-- TODO: add more browsers later -->
-    <gwt.junit test.args="${test.args} -htmlunit FF3" test.out="${junit.out}/${build.host.platform}-htmlunit-web-mode" test.cases="default.web.tests" >
+    <fileset id="test.web.htmlunit.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
+    <gwt.junit test.args="${test.args} -htmlunit FF3" test.out="${junit.out}/${build.host.platform}-htmlunit-web-mode" test.cases="test.web.htmlunit.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
         <path refid="htmlunit.libs" />
@@ -241,8 +242,7 @@
       <antcall target="test.noserver"/>
       <antcall target="test.web"/>
       <antcall target="test.web.disableClassMetadata"/>
-      <!-- TODO(amitmanjhi): uncomment it after fixing the xerces issue --> 
-      <!-- <antcall target="test.web.htmlunit"/> --> 
+      <antcall target="test.web.htmlunit"/>
       <antcall target="test.web.draft"/>
     </parallel>
     </limit>
