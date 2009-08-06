@@ -66,7 +66,7 @@ OS=linux
 CFLAGS= -g -O2 -fPIC $(INC) -rdynamic -m$(FLAG32BIT)
 else ifeq ($(shell uname),Darwin)
 OS=mac
-CFLAGS= -g -O2 -fPIC $(INC) -D__mac -arch $(MARCH)
+CFLAGS= -g -O2 -fPIC $(INC) -D__mac -arch i386 -arch ppc
 AR=libtool
 ARFLAGS=-static -o
 else ifeq ($(shell uname),SunOS)
