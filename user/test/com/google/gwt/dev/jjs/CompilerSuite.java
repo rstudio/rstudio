@@ -42,7 +42,6 @@ import com.google.gwt.dev.jjs.test.MiscellaneousTest;
 import com.google.gwt.dev.jjs.test.NativeLongTest;
 import com.google.gwt.dev.jjs.test.ObjectIdentityTest;
 import com.google.gwt.dev.jjs.test.RunAsyncFailureTest;
-import com.google.gwt.dev.jjs.test.RunAsyncMetricsIntegrationTest;
 import com.google.gwt.dev.jjs.test.RunAsyncTest;
 import com.google.gwt.dev.jjs.test.SingleJsoImplTest;
 import com.google.gwt.dev.jjs.test.UnstableGeneratorTest;
@@ -87,7 +86,6 @@ public class CompilerSuite {
     suite.addTestSuite(NativeLongTest.class);
     suite.addTestSuite(ObjectIdentityTest.class);
     suite.addTestSuite(RunAsyncFailureTest.class);
-    suite.addTestSuite(RunAsyncMetricsIntegrationTest.class);
     suite.addTestSuite(RunAsyncTest.class);
     suite.addTestSuite(ScriptOnlyTest.class);
     suite.addTestSuite(SingleJsoImplTest.class);
