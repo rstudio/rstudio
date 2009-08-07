@@ -21,6 +21,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.uibinder.sample.client.ClickyLink;
 import com.google.gwt.uibinder.sample.client.DomBasedUi;
@@ -244,6 +246,7 @@ public class UiBinderTest extends GWTTestCase {
     assertTrue(((HTML) north).getHTML().contains("Title area"));
   }
 
+  @DoNotRunWith(Platform.Htmlunit)
   public void testRadioButton() {
     RadioButton able = widgetUi.getMyRadioAble();
     RadioButton baker = widgetUi.getMyRadioBaker();
