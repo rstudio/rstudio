@@ -172,7 +172,7 @@ public abstract class BrowserWidget extends Composite {
    * The version number that should be passed into gwtOnLoad. Must match the
    * version in hosted.html.
    */
-  private static final String EXPECTED_GWT_ONLOAD_VERSION = "1.6";
+  private static final String EXPECTED_GWT_ONLOAD_VERSION = "2.0";
 
   public static void launchExternalBrowser(TreeLogger logger, String location) {
     String browserCmd = System.getenv("GWT_EXTERNAL_BROWSER");
