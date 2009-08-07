@@ -26,6 +26,8 @@ import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -102,9 +104,14 @@ public abstract class BrowserChannel {
 
   /**
    * Enumeration of message type ids.
+   * 
+   * NOTE: order is important as this defines the ordinals used in the wire
+   * protocol.
    */
   public enum MessageType {
-    Invoke, Return, LoadModule, Quit, LoadJsni, InvokeSpecial, FreeValue;
+    INVOKE, RETURN, OLD_LOAD_MODULE, QUIT, LOAD_JSNI, INVOKE_SPECIAL, FREE_VALUE,
+    FATAL_ERROR, CHECK_VERSIONS, PROTOCOL_VERSION, CHOOSE_TRANSPORT,
+    SWITCH_TRANSPORT, LOAD_MODULE;
   }
 
   /**
@@ -152,7 +159,8 @@ public abstract class BrowserChannel {
         Value thisObj, int dispId, Value[] args);
 
     public abstract TreeLogger loadModule(TreeLogger logger,
-        BrowserChannel channel, String moduleName, String userAgent);
+        BrowserChannel channel, String moduleName, String userAgent, String url,
+        String sessionKey);
 
     public abstract ExceptionOrReturnValue setProperty(BrowserChannel channel,
         int refId, int dispId, Value newValue);
@@ -514,6 +522,132 @@ public abstract class BrowserChannel {
   }
 
   /**
+   * The initial request from the client, supplies a range of supported versions
+   * and the version from hosted.html (so stale copies on an external server
+   * can be detected).
+   */
+  protected static class CheckVersionsMessage extends Message {
+    
+    public static CheckVersionsMessage receive(BrowserChannel channel)
+        throws IOException {
+      DataInputStream stream = channel.getStreamFromOtherSide();
+      int minVersion = stream.readInt();
+      int maxVersion = stream.readInt();
+      String hostedHtmlVersion = readUtf8String(stream);
+      return new CheckVersionsMessage(channel, minVersion, maxVersion,
+          hostedHtmlVersion);
+    }
+
+    private final int minVersion;
+
+    private final int maxVersion;
+
+    private final String hostedHtmlVersion;
+
+    public CheckVersionsMessage(BrowserChannel channel, int minVersion,
+        int maxVersion, String hostedHtmlVersion) {
+      super(channel);
+      this.minVersion = minVersion;
+      this.maxVersion = maxVersion;
+      this.hostedHtmlVersion = hostedHtmlVersion;
+    }
+
+    public String getHostedHtmlVersion() {
+      return hostedHtmlVersion;
+    }
+
+    public int getMaxVersion() {
+      return maxVersion;
+    }
+
+    public int getMinVersion() {
+      return minVersion;
+    }
+
+    @Override
+    public void send() throws IOException {
+      DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
+      stream.writeByte(MessageType.CHECK_VERSIONS.ordinal());
+      stream.writeInt(minVersion);
+      stream.writeInt(maxVersion);
+      writeUntaggedString(stream, hostedHtmlVersion);
+      stream.flush();
+    }
+  }
+
+  /**
+   * A message from the client giving a list of supported connection methods
+   * and requesting the server choose one of them to switch protocol traffic to.
+   */
+  protected static class ChooseTransportMessage extends Message {
+    
+    public static ChooseTransportMessage receive(BrowserChannel channel)
+        throws IOException {
+      DataInputStream stream = channel.getStreamFromOtherSide();
+      int n = stream.readInt();
+      String[] transports = new String[n];
+      for (int i = 0; i < n; ++i) {
+        transports[i] = readUtf8String(stream);
+      }
+      return new ChooseTransportMessage(channel, transports);
+    }
+
+    private final String[] transports;
+
+    public ChooseTransportMessage(BrowserChannel channel,
+        String[] transports) {
+      super(channel);
+      this.transports = transports;
+    }
+
+    public String[] getTransports() {
+      return transports;
+    }
+    
+    @Override
+    public void send() throws IOException {
+      DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
+      stream.writeByte(MessageType.CHOOSE_TRANSPORT.ordinal());
+      stream.writeInt(transports.length);
+      for (String transport : transports) {
+        writeUntaggedString(stream, transport);
+      }
+    }
+  }
+
+  /**
+   * A message reporting a connection error to the client.
+   */
+  protected static class FatalErrorMessage extends Message {
+
+    public static FatalErrorMessage receive(BrowserChannel channel)
+        throws IOException {
+      DataInputStream stream = channel.getStreamFromOtherSide();
+      // NOTE: Tag has already been read.
+      String error = readUtf8String(stream);
+      return new FatalErrorMessage(channel, error);
+    }
+
+    private final String error;
+
+    public FatalErrorMessage(BrowserChannel channel, String error) {
+      super(channel);
+      this.error = error;
+    }
+    
+    public String getError() {
+      return error;
+    }
+    
+    @Override
+    public void send() throws IOException {
+      DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
+      stream.writeByte(MessageType.FATAL_ERROR.ordinal());
+      writeUntaggedString(stream, error);
+    }
+  }
+
+  /**
    * A message asking the other side to free object references. Note that there
    * is no response to this message, and this must only be sent immediately
    * before an Invoke or Return message.
@@ -534,7 +668,7 @@ public abstract class BrowserChannel {
     public static void send(BrowserChannel channel, int[] ids)
         throws IOException {
       DataOutputStream stream = channel.getStreamToOtherSide();
-      stream.writeByte(MessageType.FreeValue.ordinal());
+      stream.writeByte(MessageType.FREE_VALUE.ordinal());
       stream.writeInt(ids.length);
       for (int id : ids) {
         stream.writeInt(id);
@@ -565,53 +699,43 @@ public abstract class BrowserChannel {
   }
 
   /**
-   * A request from the to invoke a function on the other side.
+   * A request from the server to invoke a function on the client.
+   * 
+   * Note that MessageType.INVOKE can refer to either this class
+   * or {@link InvokeOnServerMessage} depending on the direction, as the
+   * protocol is asymmetric (Java needs a dispatch ID, Javascript needs a
+   * name).
    */
-  protected static class InvokeMessage extends Message {
-    public static InvokeMessage receive(BrowserChannel channel)
+  protected static class InvokeOnClientMessage extends Message {
+    public static InvokeOnClientMessage receive(BrowserChannel channel)
         throws IOException {
-      final DataInputStream stream = channel.getStreamFromOtherSide();
+      DataInputStream stream = channel.getStreamFromOtherSide();
       // NOTE: Tag has already been read.
-      final int methodDispatchId = stream.readInt();
-      final Value thisRef = readValue(stream);
-      final int argLen = stream.readInt();
-      final Value[] args = new Value[argLen];
+      String methodName = readUtf8String(stream);
+      Value thisRef = readValue(stream);
+      int argLen = stream.readInt();
+      Value[] args = new Value[argLen];
       for (int i = 0; i < argLen; i++) {
         args[i] = readValue(stream);
       }
-      return new InvokeMessage(channel, methodDispatchId, thisRef, args);
+      return new InvokeOnClientMessage(channel, methodName, thisRef, args);
     }
 
-    private final int methodDispatchId;
     private final String methodName;
 
     private final Value thisRef;
     private final Value[] args;
 
-    public InvokeMessage(BrowserChannel channel, int methodDispatchId,
-        Value thisRef, Value[] args) {
-      super(channel);
-      this.thisRef = thisRef;
-      this.methodName = null;
-      this.methodDispatchId = methodDispatchId;
-      this.args = args;
-    }
-
-    public InvokeMessage(BrowserChannel channel, String methodName,
+    public InvokeOnClientMessage(BrowserChannel channel, String methodName,
         Value thisRef, Value[] args) {
       super(channel);
       this.thisRef = thisRef;
       this.methodName = methodName;
-      this.methodDispatchId = -1;
       this.args = args;
     }
 
     public Value[] getArgs() {
       return args;
-    }
-
-    public int getMethodDispatchId() {
-      return methodDispatchId;
     }
 
     public String getMethodName() {
@@ -626,8 +750,71 @@ public abstract class BrowserChannel {
     public void send() throws IOException {
       final DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
 
-      stream.writeByte(MessageType.Invoke.ordinal());
+      stream.writeByte(MessageType.INVOKE.ordinal());
       writeUntaggedString(stream, methodName);
+      writeValue(stream, thisRef);
+      stream.writeInt(args.length);
+      for (int i = 0; i < args.length; i++) {
+        writeValue(stream, args[i]);
+      }
+      stream.flush();
+    }
+  }
+
+  /**
+   * A request from the client to invoke a function on the server.
+   * 
+   * Note that MessageType.INVOKE can refer to either this class
+   * or {@link InvokeOnClientMessage} depending on the direction, as the
+   * protocol is asymmetric (Java needs a dispatch ID, Javascript needs a
+   * name).
+   */
+  protected static class InvokeOnServerMessage extends Message {
+    public static InvokeOnServerMessage receive(BrowserChannel channel)
+        throws IOException {
+      DataInputStream stream = channel.getStreamFromOtherSide();
+      // NOTE: Tag has already been read.
+      int methodDispatchId = stream.readInt();
+      Value thisRef = readValue(stream);
+      int argLen = stream.readInt();
+      Value[] args = new Value[argLen];
+      for (int i = 0; i < argLen; i++) {
+        args[i] = readValue(stream);
+      }
+      return new InvokeOnServerMessage(channel, methodDispatchId, thisRef,
+          args);
+    }
+
+    private final int methodDispatchId;
+    private final Value thisRef;
+    private final Value[] args;
+
+    public InvokeOnServerMessage(BrowserChannel channel, int methodDispatchId,
+        Value thisRef, Value[] args) {
+      super(channel);
+      this.thisRef = thisRef;
+      this.methodDispatchId = methodDispatchId;
+      this.args = args;
+    }
+
+    public Value[] getArgs() {
+      return args;
+    }
+
+    public int getMethodDispatchId() {
+      return methodDispatchId;
+    }
+
+    public Value getThis() {
+      return thisRef;
+    }
+
+    @Override
+    public void send() throws IOException {
+      final DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
+
+      stream.writeByte(MessageType.INVOKE.ordinal());
+      stream.writeInt(methodDispatchId);
       writeValue(stream, thisRef);
       stream.writeInt(args.length);
       for (int i = 0; i < args.length; i++) {
@@ -682,7 +869,7 @@ public abstract class BrowserChannel {
     public void send() throws IOException {
       final DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
 
-      stream.writeByte(MessageType.InvokeSpecial.ordinal());
+      stream.writeByte(MessageType.INVOKE_SPECIAL.ordinal());
       stream.writeByte(dispatchId.ordinal());
       stream.writeInt(args.length);
       for (int i = 0; i < args.length; i++) {
@@ -701,14 +888,14 @@ public abstract class BrowserChannel {
     public static LoadJsniMessage receive(BrowserChannel channel)
         throws IOException {
       DataInputStream stream = channel.getStreamFromOtherSide();
-      String js = stream.readUTF();
+      String js = readUtf8String(stream);
       return new LoadJsniMessage(channel, js);
     }
 
     public static void send(BrowserChannel channel, String js)
         throws IOException {
       DataOutputStream stream = channel.getStreamToOtherSide();
-      stream.write(MessageType.LoadJsni.ordinal());
+      stream.write(MessageType.LOAD_JSNI.ordinal());
       writeUntaggedString(stream, js);
       stream.flush();
     }
@@ -718,6 +905,10 @@ public abstract class BrowserChannel {
     public LoadJsniMessage(BrowserChannel channel, String js) {
       super(channel);
       this.js = js;
+    }
+
+    public String getJsni() {
+      return js;
     }
 
     @Override
@@ -737,44 +928,43 @@ public abstract class BrowserChannel {
    */
   protected static class LoadModuleMessage extends Message {
     public static LoadModuleMessage receive(BrowserChannel channel)
-        throws IOException, BrowserChannelException {
-      final DataInputStream stream = channel.getStreamFromOtherSide();
-      final int version = stream.readInt();
-      checkProtocolVersion(version);
-      final String moduleName = readUtf8String(stream);
-      final String userAgent = readUtf8String(stream);
-      return new LoadModuleMessage(channel, version, moduleName, userAgent);
-    }
-
-    private static void checkProtocolVersion(int version)
-        throws BrowserChannelException {
-      if (version != BROWSERCHANNEL_PROTOCOL_VERSION) {
-        throw new BrowserChannelException(
-            "Incompatible client version: server="
-                + BROWSERCHANNEL_PROTOCOL_VERSION + ", client=" + version);
-      }
+        throws IOException {
+      DataInputStream stream = channel.getStreamFromOtherSide();
+      String url = readUtf8String(stream);
+      String sessionKey = readUtf8String(stream);
+      String moduleName = readUtf8String(stream);
+      String userAgent = readUtf8String(stream);
+      return new LoadModuleMessage(channel, url, sessionKey, moduleName,
+          userAgent);
     }
 
     private final String moduleName;
 
     private final String userAgent;
 
-    private final int protocolVersion;
+    private final String url;
+    
+    private final String sessionKey;
 
-    public LoadModuleMessage(BrowserChannel channel, int protocolVersion,
-        String moduleName, String userAgent) {
+    public LoadModuleMessage(BrowserChannel channel, String url,
+        String sessionKey, String moduleName, String userAgent) {
       super(channel);
+      this.url = url;
+      this.sessionKey = sessionKey;
       this.moduleName = moduleName;
       this.userAgent = userAgent;
-      this.protocolVersion = protocolVersion;
     }
 
     public String getModuleName() {
       return moduleName;
     }
 
-    public int getProtocolVersion() {
-      return protocolVersion;
+    public String getSessionKey() {
+      return sessionKey;
+    }
+
+    public String getUrl() {
+      return url;
     }
 
     public String getUserAgent() {
@@ -783,9 +973,10 @@ public abstract class BrowserChannel {
 
     @Override
     public void send() throws IOException {
-      final DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
-      stream.writeByte(MessageType.LoadModule.ordinal());
-      stream.writeInt(protocolVersion);
+      DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
+      stream.writeByte(MessageType.LOAD_MODULE.ordinal());
+      writeUntaggedString(stream, url);
+      writeUntaggedString(stream, sessionKey);
       writeUntaggedString(stream, moduleName);
       writeUntaggedString(stream, userAgent);
       stream.flush();
@@ -834,6 +1025,90 @@ public abstract class BrowserChannel {
   }
 
   /**
+   * A request from the client that the server load and initialize a given
+   * module (original v1 version).
+   */
+  protected static class OldLoadModuleMessage extends Message {
+    public static OldLoadModuleMessage receive(BrowserChannel channel)
+        throws IOException {
+      DataInputStream stream = channel.getStreamFromOtherSide();
+      int protoVersion = stream.readInt();
+      String moduleName = readUtf8String(stream);
+      String userAgent = readUtf8String(stream);
+      return new OldLoadModuleMessage(channel, protoVersion, moduleName,
+          userAgent);
+    }
+
+    private final String moduleName;
+
+    private final String userAgent;
+
+    private final int protoVersion;
+    
+    public OldLoadModuleMessage(BrowserChannel channel, int protoVersion,
+        String moduleName, String userAgent) {
+      super(channel);
+      this.protoVersion = protoVersion;
+      this.moduleName = moduleName;
+      this.userAgent = userAgent;
+    }
+
+    public String getModuleName() {
+      return moduleName;
+    }
+
+    public int getProtoVersion() {
+      return protoVersion;
+    }
+
+    public String getUserAgent() {
+      return userAgent;
+    }
+
+    @Override
+    public void send() throws IOException {
+      DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
+      stream.writeByte(MessageType.OLD_LOAD_MODULE.ordinal());
+      stream.writeInt(protoVersion);
+      writeUntaggedString(stream, moduleName);
+      writeUntaggedString(stream, userAgent);
+      stream.flush();
+    }
+  }
+
+  /**
+   * Reports the selected protocol version.
+   */
+  protected static class ProtocolVersionMessage extends Message {
+    
+    public static ProtocolVersionMessage receive(BrowserChannel channel)
+        throws IOException {
+      DataInputStream stream = channel.getStreamFromOtherSide();
+      int protocolVersion = stream.readInt();
+      return new ProtocolVersionMessage(channel, protocolVersion);
+    }
+
+    private final int protocolVersion;
+
+    public ProtocolVersionMessage(BrowserChannel channel, int protocolVersion) {
+      super(channel);
+      this.protocolVersion = protocolVersion;
+    }
+
+    public int getProtocolVersion() {
+      return protocolVersion;
+    }
+
+    @Override
+    public void send() throws IOException {
+      DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
+      stream.writeByte(MessageType.PROTOCOL_VERSION.ordinal());
+      stream.writeInt(protocolVersion);
+      stream.flush();
+    }
+  }
+
+  /**
    * A message signifying a soft close of the communications channel.
    */
   protected static class QuitMessage extends Message {
@@ -843,7 +1118,7 @@ public abstract class BrowserChannel {
 
     public static void send(BrowserChannel channel) throws IOException {
       final DataOutputStream stream = channel.getStreamToOtherSide();
-      stream.writeByte(MessageType.Quit.ordinal());
+      stream.writeByte(MessageType.QUIT.ordinal());
       stream.flush();
     }
 
@@ -872,7 +1147,7 @@ public abstract class BrowserChannel {
     public static void send(BrowserChannel channel, boolean isException,
         Value returnValue) throws IOException {
       final DataOutputStream stream = channel.getStreamToOtherSide();
-      stream.writeByte(MessageType.Return.ordinal());
+      stream.writeByte(MessageType.RETURN.ordinal());
       stream.writeBoolean(isException);
       writeValue(stream, returnValue);
       stream.flush();
@@ -908,7 +1183,56 @@ public abstract class BrowserChannel {
     }
   }
 
-  public static final int BROWSERCHANNEL_PROTOCOL_VERSION = 1;
+  /**
+   * A response to ChooseTransport telling the client which transport should
+   * be used for the remainder of the protocol. 
+   */
+  protected static class SwitchTransportMessage extends Message {
+    
+    public static SwitchTransportMessage receive(BrowserChannel channel)
+        throws IOException {
+      DataInputStream stream = channel.getStreamFromOtherSide();
+      String transport = readUtf8String(stream);
+      String transportArgs = readUtf8String(stream);
+      return new SwitchTransportMessage(channel, transport, transportArgs);
+    }
+
+    private final String transport;
+
+    private final String transportArgs;
+
+    public SwitchTransportMessage(BrowserChannel channel,
+        String transport, String transportArgs) {
+      super(channel);
+      // Change nulls to empty strings
+      if (transport == null) {
+        transport = "";
+      }
+      if (transportArgs == null) {
+        transportArgs = "";
+      }
+      this.transport = transport;
+      this.transportArgs = transportArgs;
+    }
+    
+    public String getTransport() {
+      return transport;
+    }
+
+    public String getTransportArgs() {
+      return transportArgs;
+    }
+    
+    @Override
+    public void send() throws IOException {
+      DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
+      stream.writeByte(MessageType.SWITCH_TRANSPORT.ordinal());
+      writeUntaggedString(stream, transport);
+      writeUntaggedString(stream, transportArgs);
+    }
+  }
+
+  public static final int BROWSERCHANNEL_PROTOCOL_VERSION = 2;
 
   public static final int SPECIAL_CLIENTMETHODS_OBJECT = 0;
 
@@ -1161,11 +1485,16 @@ public abstract class BrowserChannel {
   private Socket socket;
 
   public BrowserChannel(Socket socket) throws IOException {
-    streamFromOtherSide = new DataInputStream(new BufferedInputStream(
-        socket.getInputStream()));
-    streamToOtherSide = new DataOutputStream(new BufferedOutputStream(
-        socket.getOutputStream()));
+    this(new BufferedInputStream(socket.getInputStream()),
+        new BufferedOutputStream(socket.getOutputStream()));
     this.socket = socket;
+  }
+
+  protected BrowserChannel(InputStream inputStream, OutputStream outputStream)
+      throws IOException {
+    streamFromOtherSide = new DataInputStream(inputStream);
+    streamToOtherSide = new DataOutputStream(outputStream);
+    socket = null;
   }
 
   public void endSession() {
@@ -1209,13 +1538,16 @@ public abstract class BrowserChannel {
   }
 
   public String getRemoteEndpoint() {
+    if (socket == null) {
+      return "";
+    }
     return socket.getInetAddress().getCanonicalHostName() + ":"
         + socket.getPort();
   }
 
   public Value invoke(String methodName, Value vthis, Value[] vargs,
       SessionHandler handler) throws IOException, BrowserChannelException {
-    new InvokeMessage(this, methodName, vthis, vargs).send();
+    new InvokeOnClientMessage(this, methodName, vthis, vargs).send();
     final ReturnMessage msg = reactToMessagesWhileWaitingForReturn(handler);
     return msg.returnValue;
   }
@@ -1226,19 +1558,19 @@ public abstract class BrowserChannel {
       getStreamToOtherSide().flush();
       MessageType messageType = Message.readMessageType(getStreamFromOtherSide());
       switch (messageType) {
-        case FreeValue:
+        case FREE_VALUE:
           final FreeMessage freeMsg = FreeMessage.receive(this);
           handler.freeValue(this, freeMsg.getIds());
           break;
-        case Invoke:
-          final InvokeMessage imsg = InvokeMessage.receive(this);
+        case INVOKE:
+          final InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
           ReturnMessage.send(this, handler.invoke(this, imsg.getThis(),
               imsg.getMethodDispatchId(), imsg.getArgs()));
           break;
-        case InvokeSpecial:
+        case INVOKE_SPECIAL:
           handleInvokeSpecial(handler);
           break;
-        case Quit:
+        case QUIT:
           return;
         default:
           throw new BrowserChannelException("Invalid message type "
@@ -1253,18 +1585,18 @@ public abstract class BrowserChannel {
       getStreamToOtherSide().flush();
       MessageType messageType = Message.readMessageType(getStreamFromOtherSide());
       switch (messageType) {
-        case FreeValue:
+        case FREE_VALUE:
           final FreeMessage freeMsg = FreeMessage.receive(this);
           handler.freeValue(this, freeMsg.getIds());
           break;
-        case Return:
+        case RETURN:
           return ReturnMessage.receive(this);
-        case Invoke:
-          final InvokeMessage imsg = InvokeMessage.receive(this);
+        case INVOKE:
+          final InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
           ReturnMessage.send(this, handler.invoke(this, imsg.getThis(),
               imsg.getMethodDispatchId(), imsg.getArgs()));
           break;
-        case InvokeSpecial:
+        case INVOKE_SPECIAL:
           handleInvokeSpecial(handler);
           break;
         default:

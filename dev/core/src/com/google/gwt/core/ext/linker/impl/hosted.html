@@ -11,6 +11,7 @@ if ($stats) {
   var moduleName = moduleFunc ? moduleFunc.moduleName : "unknown";
   $stats({moduleName:moduleName,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
 }
+var $hostedHtmlVersion="2.0";
 
 var gwtOnLoad;
 var $hosted = "localhost:9997";
@@ -23,11 +24,30 @@ try {
   }
 } catch(e) {
 }
+
+function getTopWindow() {
+  var topWin = window.top;
+  while (topWin.opener) {
+    topWin = topWin.opener.top;
+  }
+  return topWin;
+}
+
+function loadIframe(url) {
+  var iframe = $doc.createElement('iframe');
+  iframe.src = "javascript:''";
+  iframe.style.width = "100%";
+  iframe.style.height = "100%";
+  iframe.style.borderWidth = "0px";
+  $doc.body.insertBefore(iframe, $doc.body.firstChild);
+  iframe.contentWindow.location.replace(url);
+}
+
 if ($legacyHosted) {
   gwtOnLoad = function(errFn, modName, modBase) {
     $moduleName = modName;
     $moduleBase = modBase;
-    if (!external.gwtOnLoad(window, modName, "1.6")) {
+    if (!external.gwtOnLoad(window, modName, $hostedHtmlVersion)) {
       if (errFn) {
         errFn(modName);
       }
@@ -35,7 +55,7 @@ if ($legacyHosted) {
   }
 
   window.onunload = function() {
-    external.gwtOnLoad(window, null, "1.6");
+    external.gwtOnLoad(window, null, $hostedHtmlVersion);
   };
 } else {
   // install eval wrapper on FF to avoid EvalError problem
@@ -175,29 +195,51 @@ if ($legacyHosted) {
       findPluginObject,
       findPluginEmbed,
     ];
-    var found = false;
+    var topWin = getTopWindow();
+    var url = topWin.location.href;
+    if (!topWin.__gwt_SessionID) {
+      var ASCII_EXCLAMATION = 33;
+      var ASCII_TILDE = 126;
+      var chars = [];
+      for (var i = 0; i < 16; ++i) {
+        chars.push(Math.floor(ASCII_EXCLAMATION
+            + Math.random() * (ASCII_TILDE - ASCII_EXCLAMATION + 1)));
+      }
+      topWin.__gwt_SessionID = String.fromCharCode.apply(null, chars);
+    }
+    var plugin = null;
     for (var i = 0; i < pluginFinders.length; ++i) {
       try {
-        var plugin = pluginFinders[i]();
-        if (plugin != null) {
-          // TODO: split connect into init/connect so we can tell plugin
-          // failures from connection failures.
-          if (plugin.connect($hosted, $moduleName, window)) {
-            found = true;
-            break;
-          } else {
-            if (errFn) {
-              errFn(modName);
-            } else {
-              alert("failed to connect to hosted mode server at " + $hosted);
-            }
-          }
+        plugin = pluginFinders[i]();
+        if (plugin != null && plugin.init(window)) {
+          break;
         }
       } catch (e) {
       }
     }
-    if (!found) {
-      alert("No GWT plugin found or hosted-mode connection failed");
+    if (!plugin) {
+      // try searching for a v1 plugin for backwards compatibility
+      var found = false;
+      for (var i = 0; i < pluginFinders.length; ++i) {
+        try {
+          plugin = pluginFinders[i]();
+          if (plugin != null && plugin.connect($hosted, $moduleName, window)) {
+            return;
+          }
+        } catch (e) {
+        }
+      }      
+      loadIframe("http://google-web-toolkit.googlecode.com/svn/trunk/plugins/MissingBrowserPlugin.html");
+    } else {
+      if (!plugin.connect(url, topWin.__gwt_SessionID, $hosted, $moduleName,
+          $hostedHtmlVersion)) {
+        if (errFn) {
+          errFn(modName);
+        } else {
+          alert("Plugin failed to connect to hosted mode server at " + $hosted);
+          loadIframe("http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM");
+        }
+      }
     }
   }
 

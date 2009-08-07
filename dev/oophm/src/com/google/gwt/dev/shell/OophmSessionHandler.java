@@ -155,13 +155,13 @@ public class OophmSessionHandler extends SessionHandler {
 
   @Override
   public TreeLogger loadModule(TreeLogger logger, BrowserChannel channel,
-      String moduleName, String userAgent) {
+      String moduleName, String userAgent, String url, String sessionKey) {
     try {
       // Attach a new ModuleSpace to make it programmable.
       //
       BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
       ModuleSpaceHost msh = host.createModuleSpaceHost(logger, moduleName,
-          userAgent, channel.getRemoteEndpoint());
+          userAgent, url, sessionKey, channel.getRemoteEndpoint());
       this.logger = logger = msh.getLogger();
       ModuleSpace moduleSpace = new ModuleSpaceOOPHM(msh, moduleName,
           serverChannel);

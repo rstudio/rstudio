@@ -49,9 +49,17 @@ public interface BrowserWidgetHost {
 
   /**
    * For OOPHM.
+   * 
+   * @param logger
+   * @param moduleName
+   * @param userAgent
+   * @param url URL of top-level window (may be null for old browser plugins) 
+   * @param sessionKey unique session key (may be null for old browser plugins)
+   * @param remoteEndpoint
    */
   ModuleSpaceHost createModuleSpaceHost(TreeLogger logger, String moduleName,
-      String userAgent, String remoteEndpoint) throws UnableToCompleteException;
+      String userAgent, String url, String sessionKey,
+      String remoteEndpoint) throws UnableToCompleteException;
 
   TreeLogger getLogger();
 
