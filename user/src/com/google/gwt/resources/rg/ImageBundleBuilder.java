@@ -18,13 +18,18 @@ package com.google.gwt.resources.rg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.resources.ext.ResourceContext;
 
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -453,6 +458,61 @@ class ImageBundleBuilder {
   private static final int IMAGE_MAX_SIZE = Integer.getInteger(
       "gwt.imageResource.maxBundleSize", 256);
 
+  public static void main(String[] args) {
+    final TreeLogger logger = new PrintWriterTreeLogger(new PrintWriter(
+        System.out));
+    if (args.length < 2) {
+      logger.log(TreeLogger.ERROR, ImageBundleBuilder.class.getSimpleName()
+          + " <output file> <input file> ...");
+      System.exit(-1);
+    }
+
+    ImageBundleBuilder builder = new ImageBundleBuilder();
+    boolean fail = false;
+    for (int i = 1, j = args.length; i < j; i++) {
+      TreeLogger loopLogger = logger.branch(TreeLogger.DEBUG,
+          "Processing argument " + args[i]);
+      File file = new File(args[i]);
+
+      Exception ex = null;
+      try {
+        builder.assimilate(loopLogger, args[i], file.toURL());
+      } catch (MalformedURLException e) {
+        ex = e;
+      } catch (UnableToCompleteException e) {
+        ex = e;
+      } catch (UnsuitableForStripException e) {
+        ex = e;
+      }
+      if (ex != null) {
+        loopLogger.log(TreeLogger.ERROR, "Unable to assimilate image", ex);
+        fail = true;
+      }
+    }
+
+    if (fail) {
+      System.exit(-1);
+    }
+
+    final String outFile = args[0];
+    try {
+      BufferedImage bundledImage = builder.drawBundledImage(new BestFitArranger());
+      byte[] bytes = createImageBytes(logger, bundledImage);
+
+      FileOutputStream out = new FileOutputStream(outFile);
+      out.write(bytes);
+      out.close();
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to write output file", e);
+      System.exit(-2);
+    } catch (UnableToCompleteException e) {
+      logger.log(TreeLogger.ERROR, "Unable to draw output image", e);
+      System.exit(-2);
+    }
+
+    System.exit(0);
+  }
+
   public static byte[] toPng(TreeLogger logger, HasRect rect)
       throws UnableToCompleteException {
     // Create the bundled image.
@@ -463,6 +523,16 @@ class ImageBundleBuilder {
     g2d.drawImage(rect.getImage(), rect.transform(), null);
     g2d.dispose();
 
+    byte[] imageBytes = createImageBytes(logger, bundledImage);
+    return imageBytes;
+  }
+
+  /**
+   * Write the bundled image into a byte array, so that we can compute its
+   * strong name.
+   */
+  private static byte[] createImageBytes(TreeLogger logger,
+      BufferedImage bundledImage) throws UnableToCompleteException {
     byte[] imageBytes;
 
     try {
@@ -596,19 +666,7 @@ class ImageBundleBuilder {
     // Create the bundled image from all of the constituent images.
     BufferedImage bundledImage = drawBundledImage(arranger);
 
-    // Write the bundled image into a byte array, so that we can compute
-    // its strong name.
-    byte[] imageBytes;
-
-    try {
-      ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-      ImageIO.write(bundledImage, BUNDLE_FILE_TYPE, byteOutputStream);
-      imageBytes = byteOutputStream.toByteArray();
-    } catch (IOException e) {
-      logger.log(TreeLogger.ERROR,
-          "Unable to generate file name for image bundle file", null);
-      throw new UnableToCompleteException();
-    }
+    byte[] imageBytes = createImageBytes(logger, bundledImage);
 
     String bundleFileName = context.deploy(
         context.getClientBundleType().getQualifiedSourceName() + ".cache."
@@ -626,31 +684,40 @@ class ImageBundleBuilder {
     BufferedImage image = null;
     // Load the image
     try {
-      String path = imageUrl.getPath();
-      String suffix = path.substring(path.lastIndexOf('.') + 1);
-
       /*
        * ImageIO uses an SPI pattern API. We don't care about the particulars of
        * the implementation, so just choose the first ImageReader.
        */
-      Iterator<ImageReader> it = ImageIO.getImageReadersBySuffix(suffix);
-      if (it.hasNext()) {
+      MemoryCacheImageInputStream input = new MemoryCacheImageInputStream(
+          imageUrl.openStream());
+      Iterator<ImageReader> it = ImageIO.getImageReaders(input);
+      readers : while (it.hasNext()) {
         ImageReader reader = it.next();
-
-        reader.setInput(new MemoryCacheImageInputStream(imageUrl.openStream()));
+        reader.setInput(input);
 
         int numImages = reader.getNumImages(true);
         if (numImages == 0) {
           // Fall through
 
         } else if (numImages == 1) {
-          image = reader.read(0);
+          try {
+            image = reader.read(0);
+          } catch (Exception e) {
+            // Hope we have another reader that can handle the image
+            continue readers;
+          }
 
         } else {
           // Read all contained images
           BufferedImage[] images = new BufferedImage[numImages];
-          for (int i = 0; i < numImages; i++) {
-            images[i] = reader.read(i);
+
+          try {
+            for (int i = 0; i < numImages; i++) {
+              images[i] = reader.read(i);
+            }
+          } catch (Exception e) {
+            // Hope we have another reader that can handle the image
+            continue readers;
           }
 
           ImageRect rect = new ImageRect(imageName, images);
