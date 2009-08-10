@@ -118,8 +118,8 @@ public class PopupTest extends GWTTestCase {
    */
   public void testCenterLargePopup() {
     PopupPanel popup = new PopupPanel();
-    popup.setHeight("1000px");
-    popup.setWidth("1000px");
+    popup.setHeight("4096px");
+    popup.setWidth("4096px");
     popup.setWidget(new Label("foo"));
     popup.center();
     assertEquals(0, popup.getAbsoluteTop());
