@@ -224,17 +224,81 @@ public class BrowserChannelTest extends TestCase {
       BrowserChannelException {
     String url = "http://www.google.com";
     String sessionKey = "asdkfjklAI*23ja";
+    String tabKey = "372F4";
     String moduleName = "org.example.Hello";
     String userAgent = "Firefox";
-    new LoadModuleMessage(channel, url, sessionKey, moduleName,
+    new LoadModuleMessage(channel, url, tabKey, sessionKey, moduleName,
         userAgent).send();
     MessageType type = channel.readMessageType();
     assertEquals(MessageType.LOAD_MODULE, type);
     LoadModuleMessage message = LoadModuleMessage.receive(channel);
     assertEquals(url, message.getUrl());
+    assertEquals(tabKey, message.getTabKey());
     assertEquals(sessionKey, message.getSessionKey());
     assertEquals(moduleName, message.getModuleName());
     assertEquals(userAgent, message.getUserAgent());
+    url = "https://www.google.com:8443/extra_stuff_that_is_really_long?foo";
+    sessionKey = "asdfkasdjfkjaskldfjkajsfkjasdfjklaasdkfjklAI*23ja";
+    tabKey = "";
+    moduleName = "showcase";
+    userAgent = "Safari";
+    new LoadModuleMessage(channel, url, tabKey, sessionKey, moduleName,
+        userAgent).send();
+    type = channel.readMessageType();
+    assertEquals(MessageType.LOAD_MODULE, type);
+    message = LoadModuleMessage.receive(channel);
+    assertEquals(url, message.getUrl());
+    assertEquals(tabKey, message.getTabKey());
+    assertEquals(sessionKey, message.getSessionKey());
+    assertEquals(moduleName, message.getModuleName());
+    assertEquals(userAgent, message.getUserAgent());
+    
+    // create a separate channel so we don't cause problems with partial
+    // messages written to the stream
+    TemporaryBufferStream tempBufferStream = new TemporaryBufferStream();
+    TestBrowserChannel trashableChannel = new TestBrowserChannel(
+        tempBufferStream.getInputStream(),
+          tempBufferStream.getOutputStream()); 
+
+    try {
+      new LoadModuleMessage(trashableChannel, null, tabKey, sessionKey, moduleName,
+          userAgent).send();
+      fail("Expected exception with null url");
+    } catch (Exception expected) {
+      // will be AssertionError if assertions are turned on, otherwise NPE
+    }
+    
+    try {
+      new LoadModuleMessage(trashableChannel, url, null, sessionKey, moduleName,
+          userAgent).send();
+      fail("Expected exception with null tabKey");
+    } catch (Exception expected) {
+      // will be AssertionError if assertions are turned on, otherwise NPE
+    }
+    
+    try {
+      new LoadModuleMessage(trashableChannel, url, tabKey, null, moduleName,
+          userAgent).send();
+      fail("Expected exception with null sessionKey");
+    } catch (Exception expected) {
+      // will be AssertionError if assertions are turned on, otherwise NPE
+    }
+    
+    try {
+      new LoadModuleMessage(trashableChannel, url, tabKey, sessionKey, null,
+          userAgent).send();
+      fail("Expected exception with null moduleName");
+    } catch (Exception expected) {
+      // will be AssertionError if assertions are turned on, otherwise NPE
+    }
+    
+    try {
+      new LoadModuleMessage(trashableChannel, url, tabKey, sessionKey, moduleName,
+          null).send();
+      fail("Expected exception with null userAgent");
+    } catch (Exception expected) {
+      // will be AssertionError if assertions are turned on, otherwise NPE
+    }
   }
   
   public void testOldLoadModuleMessage() throws IOException,

@@ -76,8 +76,9 @@ abstract class SwtHostedModeBase extends HostedModeBase {
     }
 
     public ModuleSpaceHost createModuleSpaceHost(TreeLogger logger,
-        String moduleName, String userAgent, String url, String sessionKey,
-        String remoteEndpoint) throws UnableToCompleteException {
+        String moduleName, String userAgent, String url, String tabKey,
+        String sessionKey, String remoteEndpoint)
+        throws UnableToCompleteException {
       throw new UnsupportedOperationException();
     }
 

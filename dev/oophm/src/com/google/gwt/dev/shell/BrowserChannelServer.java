@@ -271,6 +271,7 @@ public final class BrowserChannelServer extends BrowserChannel
     // TODO(jat): add support for getting the a shim plugin downloading the
     //    real plugin via a GetRealPlugin message before CheckVersions
     String url = null;
+    String tabKey = null;
     String sessionKey = null;
     switch (type) {
       case OLD_LOAD_MODULE:
@@ -327,6 +328,7 @@ public final class BrowserChannelServer extends BrowserChannel
         }
         LoadModuleMessage loadModule = LoadModuleMessage.receive(this);
         url = loadModule.getUrl();
+        tabKey = loadModule.getTabKey();
         sessionKey = loadModule.getSessionKey();
         moduleName = loadModule.getModuleName();
         userAgent = loadModule.getUserAgent();
@@ -340,7 +342,7 @@ public final class BrowserChannelServer extends BrowserChannel
         "Hosting " + moduleName + " for " + userAgent + " on " + url + " @ "
         + sessionKey);
     logger = handler.loadModule(logger, this, moduleName, userAgent, url,
-        sessionKey);
+        tabKey, sessionKey);
     try {
       // send LoadModule response
       ReturnMessage.send(this, false, new Value());

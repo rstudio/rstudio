@@ -158,9 +158,22 @@ public abstract class BrowserChannel {
     public abstract ExceptionOrReturnValue invoke(BrowserChannel channel,
         Value thisObj, int dispId, Value[] args);
 
+    /**
+     * Load a new instance of a module.
+     * 
+     * @param logger
+     * @param channel
+     * @param moduleName
+     * @param userAgent
+     * @param url top-level URL of the main page, null if using an old plugin
+     * @param tabKey opaque key of the tab, may be empty if the plugin can't
+     *     distinguish tabs or null if using an old plugin
+     * @param sessionKey opaque key for this session, null if using an old plugin
+     * @return a TreeLogger to use for the module's logs
+     */
     public abstract TreeLogger loadModule(TreeLogger logger,
         BrowserChannel channel, String moduleName, String userAgent, String url,
-        String sessionKey);
+        String tabKey, String sessionKey);
 
     public abstract ExceptionOrReturnValue setProperty(BrowserChannel channel,
         int refId, int dispId, Value newValue);
@@ -570,7 +583,7 @@ public abstract class BrowserChannel {
       stream.writeByte(MessageType.CHECK_VERSIONS.ordinal());
       stream.writeInt(minVersion);
       stream.writeInt(maxVersion);
-      writeUntaggedString(stream, hostedHtmlVersion);
+      writeUtf8String(stream, hostedHtmlVersion);
       stream.flush();
     }
   }
@@ -610,7 +623,7 @@ public abstract class BrowserChannel {
       stream.writeByte(MessageType.CHOOSE_TRANSPORT.ordinal());
       stream.writeInt(transports.length);
       for (String transport : transports) {
-        writeUntaggedString(stream, transport);
+        writeUtf8String(stream, transport);
       }
     }
   }
@@ -643,7 +656,7 @@ public abstract class BrowserChannel {
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
       stream.writeByte(MessageType.FATAL_ERROR.ordinal());
-      writeUntaggedString(stream, error);
+      writeUtf8String(stream, error);
     }
   }
 
@@ -751,7 +764,7 @@ public abstract class BrowserChannel {
       final DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
 
       stream.writeByte(MessageType.INVOKE.ordinal());
-      writeUntaggedString(stream, methodName);
+      writeUtf8String(stream, methodName);
       writeValue(stream, thisRef);
       stream.writeInt(args.length);
       for (int i = 0; i < args.length; i++) {
@@ -896,7 +909,7 @@ public abstract class BrowserChannel {
         throws IOException {
       DataOutputStream stream = channel.getStreamToOtherSide();
       stream.write(MessageType.LOAD_JSNI.ordinal());
-      writeUntaggedString(stream, js);
+      writeUtf8String(stream, js);
       stream.flush();
     }
 
@@ -931,10 +944,11 @@ public abstract class BrowserChannel {
         throws IOException {
       DataInputStream stream = channel.getStreamFromOtherSide();
       String url = readUtf8String(stream);
+      String tabKey = readUtf8String(stream);
       String sessionKey = readUtf8String(stream);
       String moduleName = readUtf8String(stream);
       String userAgent = readUtf8String(stream);
-      return new LoadModuleMessage(channel, url, sessionKey, moduleName,
+      return new LoadModuleMessage(channel, url, tabKey, sessionKey, moduleName,
           userAgent);
     }
 
@@ -946,10 +960,30 @@ public abstract class BrowserChannel {
     
     private final String sessionKey;
 
+    private final String tabKey;
+
+    /**
+     * Creates a LoadModule message to be sent to the server.
+     * 
+     * @param channel BrowserChannel instance
+     * @param url URL of main top-level window - may not be null
+     * @param tabKey opaque key identifying the tab in the browser, or an
+     *     empty string if it cannot be determined - may not be null
+     * @param sessionKey opaque key identifying a particular session (ie,
+     *     group of modules) - may not be null
+     * @param moduleName name of GWT module to load - may not be null
+     * @param userAgent user agent identifier of the browser - may not be null
+     */
     public LoadModuleMessage(BrowserChannel channel, String url,
-        String sessionKey, String moduleName, String userAgent) {
+        String tabKey, String sessionKey, String moduleName, String userAgent) {
       super(channel);
+      assert url != null;
+      assert tabKey != null;
+      assert sessionKey != null;
+      assert moduleName != null;
+      assert userAgent != null;
       this.url = url;
+      this.tabKey = tabKey;
       this.sessionKey = sessionKey;
       this.moduleName = moduleName;
       this.userAgent = userAgent;
@@ -961,6 +995,10 @@ public abstract class BrowserChannel {
 
     public String getSessionKey() {
       return sessionKey;
+    }
+
+    public String getTabKey() {
+      return tabKey;
     }
 
     public String getUrl() {
@@ -975,10 +1013,11 @@ public abstract class BrowserChannel {
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
       stream.writeByte(MessageType.LOAD_MODULE.ordinal());
-      writeUntaggedString(stream, url);
-      writeUntaggedString(stream, sessionKey);
-      writeUntaggedString(stream, moduleName);
-      writeUntaggedString(stream, userAgent);
+      writeUtf8String(stream, url);
+      writeUtf8String(stream, tabKey);
+      writeUtf8String(stream, sessionKey);
+      writeUtf8String(stream, moduleName);
+      writeUtf8String(stream, userAgent);
       stream.flush();
     }
   }
@@ -1070,8 +1109,8 @@ public abstract class BrowserChannel {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
       stream.writeByte(MessageType.OLD_LOAD_MODULE.ordinal());
       stream.writeInt(protoVersion);
-      writeUntaggedString(stream, moduleName);
-      writeUntaggedString(stream, userAgent);
+      writeUtf8String(stream, moduleName);
+      writeUtf8String(stream, userAgent);
       stream.flush();
     }
   }
@@ -1227,8 +1266,8 @@ public abstract class BrowserChannel {
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
       stream.writeByte(MessageType.SWITCH_TRANSPORT.ordinal());
-      writeUntaggedString(stream, transport);
-      writeUntaggedString(stream, transportArgs);
+      writeUtf8String(stream, transport);
+      writeUtf8String(stream, transportArgs);
     }
   }
 
@@ -1366,50 +1405,14 @@ public abstract class BrowserChannel {
     return types[type];
   }
 
-  protected static void writeBoolean(DataOutputStream stream, boolean value)
-      throws IOException {
-    stream.writeByte(ValueType.BOOLEAN.getTag());
-    stream.writeBoolean(value);
-  }
-
-  protected static void writeByte(DataOutputStream stream, byte value)
-      throws IOException {
-    stream.writeByte(ValueType.BYTE.getTag());
-    stream.writeByte(value);
-  }
-
-  protected static void writeChar(DataOutputStream stream, char value)
-      throws IOException {
-    stream.writeByte(ValueType.CHAR.getTag());
-    stream.writeChar(value);
-  }
-
-  protected static void writeDouble(DataOutputStream stream, double value)
-      throws IOException {
-    stream.writeByte(ValueType.DOUBLE.getTag());
-    stream.writeDouble(value);
-  }
-
-  protected static void writeFloat(DataOutputStream stream, float value)
-      throws IOException {
-    stream.writeByte(ValueType.FLOAT.getTag());
-    stream.writeFloat(value);
-  }
-
-  protected static void writeInt(DataOutputStream stream, int value)
-      throws IOException {
-    stream.writeByte(ValueType.INT.getTag());
-    stream.writeInt(value);
-  }
-
   protected static void writeJavaObject(DataOutputStream stream,
       JavaObjectRef value) throws IOException {
     stream.writeByte(ValueType.JAVA_OBJECT.getTag());
     stream.writeInt(value.getRefid());
   }
 
-  protected static void writeJsObject(DataOutputStream stream, JsObjectRef value)
-      throws IOException {
+  protected static void writeJsObject(DataOutputStream stream,
+      JsObjectRef value) throws IOException {
     stream.writeByte(ValueType.JS_OBJECT.getTag());
     stream.writeInt(value.getRefid());
   }
@@ -1418,13 +1421,55 @@ public abstract class BrowserChannel {
     stream.writeByte(ValueType.NULL.getTag());
   }
 
-  protected static void writeShort(DataOutputStream stream, short value)
+  protected static void writeTaggedBoolean(DataOutputStream stream,
+      boolean value) throws IOException {
+    stream.writeByte(ValueType.BOOLEAN.getTag());
+    stream.writeBoolean(value);
+  }
+
+  protected static void writeTaggedByte(DataOutputStream stream, byte value)
+      throws IOException {
+    stream.writeByte(ValueType.BYTE.getTag());
+    stream.writeByte(value);
+  }
+
+  protected static void writeTaggedChar(DataOutputStream stream, char value)
+      throws IOException {
+    stream.writeByte(ValueType.CHAR.getTag());
+    stream.writeChar(value);
+  }
+
+  protected static void writeTaggedDouble(DataOutputStream stream, double value)
+      throws IOException {
+    stream.writeByte(ValueType.DOUBLE.getTag());
+    stream.writeDouble(value);
+  }
+
+  protected static void writeTaggedFloat(DataOutputStream stream, float value)
+      throws IOException {
+    stream.writeByte(ValueType.FLOAT.getTag());
+    stream.writeFloat(value);
+  }
+
+  protected static void writeTaggedInt(DataOutputStream stream, int value)
+      throws IOException {
+    stream.writeByte(ValueType.INT.getTag());
+    stream.writeInt(value);
+  }
+
+  protected static void writeTaggedShort(DataOutputStream stream, short value)
       throws IOException {
     stream.writeByte(ValueType.SHORT.getTag());
     stream.writeShort(value);
   }
 
-  protected static void writeUntaggedString(DataOutputStream stream, String data)
+  protected static void writeTaggedString(DataOutputStream stream, String data)
+      throws IOException {
+    stream.writeByte(ValueType.STRING.getTag());
+    writeUtf8String(stream, data);
+  }
+
+  protected static void writeUtf8String(DataOutputStream stream, String data)
       throws IOException {
     try {
       final byte[] bytes = data.getBytes("UTF8");
@@ -1434,12 +1479,6 @@ public abstract class BrowserChannel {
       // TODO: Add description.
       throw new RuntimeException();
     }
-  }
-
-  protected static void writeUtf8String(DataOutputStream stream, String data)
-      throws IOException {
-    stream.writeByte(ValueType.STRING.getTag());
-    writeUntaggedString(stream, data);
   }
 
   protected static void writeValue(DataOutputStream stream, Value value)
@@ -1453,21 +1492,21 @@ public abstract class BrowserChannel {
     } else if (value.isJavaObject()) {
       writeJavaObject(stream, value.getJavaObject());
     } else if (value.isBoolean()) {
-      writeBoolean(stream, value.getBoolean());
+      writeTaggedBoolean(stream, value.getBoolean());
     } else if (value.isByte()) {
-      writeByte(stream, value.getByte());
+      writeTaggedByte(stream, value.getByte());
     } else if (value.isChar()) {
-      writeChar(stream, value.getChar());
+      writeTaggedChar(stream, value.getChar());
     } else if (value.isShort()) {
-      writeShort(stream, value.getShort());
+      writeTaggedShort(stream, value.getShort());
     } else if (value.isDouble()) {
-      writeDouble(stream, value.getDouble());
+      writeTaggedDouble(stream, value.getDouble());
     } else if (value.isFloat()) {
-      writeFloat(stream, value.getFloat());
+      writeTaggedFloat(stream, value.getFloat());
     } else if (value.isInt()) {
-      writeInt(stream, value.getInt());
+      writeTaggedInt(stream, value.getInt());
     } else if (value.isString()) {
-      writeUtf8String(stream, value.getString());
+      writeTaggedString(stream, value.getString());
     } else {
       assert false;
     }

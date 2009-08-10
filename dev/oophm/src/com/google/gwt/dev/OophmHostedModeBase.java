@@ -142,8 +142,9 @@ abstract class OophmHostedModeBase extends HostedModeBase {
     }
 
     public ModuleSpaceHost createModuleSpaceHost(TreeLogger mainLogger,
-        String moduleName, String userAgent, String url, String sessionKey,
-        String remoteSocket) throws UnableToCompleteException {
+        String moduleName, String userAgent, String url, String tabKey,
+        String sessionKey, String remoteSocket)
+        throws UnableToCompleteException {
       TreeLogger logger = mainLogger;
       TreeLogger.Type maxLevel = TreeLogger.INFO;
       if (mainLogger instanceof AbstractTreeLogger) {
