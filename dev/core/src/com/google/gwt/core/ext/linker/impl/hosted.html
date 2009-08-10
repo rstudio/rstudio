@@ -210,8 +210,9 @@ if ($legacyHosted) {
     var plugin = null;
     for (var i = 0; i < pluginFinders.length; ++i) {
       try {
-        plugin = pluginFinders[i]();
-        if (plugin != null && plugin.init(window)) {
+        var maybePlugin = pluginFinders[i]();
+        if (maybePlugin != null && maybePlugin.init(window)) {
+          plugin = maybePlugin;
           break;
         }
       } catch (e) {
