@@ -35,13 +35,13 @@ public class PopupTest extends GWTTestCase {
   private static class TestablePopupPanel extends PopupPanel {
     private int onLoadCount;
 
+    public void assertOnLoadCount(int expected) {
+      assertEquals(expected, onLoadCount);
+    }
+
     @Override
     public Element getContainerElement() {
       return super.getContainerElement();
-    }
-
-    public void assertOnLoadCount(int expected) {
-      assertEquals(expected, onLoadCount);
     }
 
     @Override
@@ -113,6 +113,20 @@ public class PopupTest extends GWTTestCase {
   }
 
   /**
+   * Tests that a large PopupPanel is not positioned off the top or left edges
+   * of the browser window, making part of the panel unreachable.
+   */
+  public void testCenterLargePopup() {
+    PopupPanel popup = new PopupPanel();
+    popup.setHeight("1000px");
+    popup.setWidth("1000px");
+    popup.setWidget(new Label("foo"));
+    popup.center();
+    assertEquals(0, popup.getAbsoluteTop());
+    assertEquals(0, popup.getAbsoluteLeft());
+  }
+
+  /**
    * Issue 2463: If a {@link PopupPanel} contains a dependent {@link PopupPanel}
    * that is hidden or shown in the onDetach or onAttach method, we could run
    * into conflicts with the animations. The {@link MenuBar} exhibits this
@@ -180,28 +194,6 @@ public class PopupTest extends GWTTestCase {
       popup.assertOnLoadCount(4);
       popup.hide();
     }
-  }
-
-  /**
-   * Test the showing a popup while it is hiding will not result in an illegal
-   * state.
-   */
-  public void testShowWhileHiding() {
-    PopupPanel popup = createPopupPanel();
-
-    // Show the popup
-    popup.setAnimationEnabled(false);
-    popup.show();
-    assertTrue(popup.isShowing());
-
-    // Start hiding the popup
-    popup.setAnimationEnabled(true);
-    popup.hide();
-    assertFalse(popup.isShowing());
-
-    // Show the popup while its hiding
-    popup.show();
-    assertTrue(popup.isShowing());
   }
 
   @DoNotRunWith(Platform.Htmlunit)
@@ -275,6 +267,28 @@ public class PopupTest extends GWTTestCase {
     popup.show();
     popup.setWidget(new Label("test"));
     popup.hide();
+  }
+
+  /**
+   * Test the showing a popup while it is hiding will not result in an illegal
+   * state.
+   */
+  public void testShowWhileHiding() {
+    PopupPanel popup = createPopupPanel();
+
+    // Show the popup
+    popup.setAnimationEnabled(false);
+    popup.show();
+    assertTrue(popup.isShowing());
+
+    // Start hiding the popup
+    popup.setAnimationEnabled(true);
+    popup.hide();
+    assertFalse(popup.isShowing());
+
+    // Show the popup while its hiding
+    popup.show();
+    assertTrue(popup.isShowing());
   }
 
   /**

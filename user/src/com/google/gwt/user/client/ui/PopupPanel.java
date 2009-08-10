@@ -389,7 +389,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
     int left = (Window.getClientWidth() - getOffsetWidth()) >> 1;
     int top = (Window.getClientHeight() - getOffsetHeight()) >> 1;
-    setPopupPosition(Window.getScrollLeft() + left, Window.getScrollTop() + top);
+    setPopupPosition(Math.max(Window.getScrollLeft() + left, 0), Math.max(Window.getScrollTop() + top, 0));
 
     if (!initiallyShowing) {
       setAnimationEnabled(initiallyAnimated);
