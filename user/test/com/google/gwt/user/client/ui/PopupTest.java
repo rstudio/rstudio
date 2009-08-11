@@ -116,6 +116,7 @@ public class PopupTest extends GWTTestCase {
    * Tests that a large PopupPanel is not positioned off the top or left edges
    * of the browser window, making part of the panel unreachable.
    */
+  @DoNotRunWith(Platform.Htmlunit)
   public void testCenterLargePopup() {
     PopupPanel popup = new PopupPanel();
     popup.setHeight("4096px");
