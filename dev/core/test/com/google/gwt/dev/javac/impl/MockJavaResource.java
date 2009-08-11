@@ -17,7 +17,14 @@ package com.google.gwt.dev.javac.impl;
 
 public abstract class MockJavaResource extends MockResource {
 
+  private final String qualifiedTypeName;
+
   public MockJavaResource(String qualifiedTypeName) {
     super(Shared.toPath(qualifiedTypeName));
+    this.qualifiedTypeName = qualifiedTypeName;
+  }
+
+  public String getTypeName() {
+    return qualifiedTypeName;
   }
 }

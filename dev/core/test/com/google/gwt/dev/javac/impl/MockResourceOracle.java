@@ -48,6 +48,14 @@ public class MockResourceOracle implements ResourceOracle {
     export(newMap);
   }
 
+  public void addOrReplace(Resource... resources) {
+    Map<String, Resource> newMap = new HashMap<String, Resource>(exportedMap);
+    for (Resource resource : resources) {
+      newMap.put(resource.getPath(), resource);
+    }
+    export(newMap);
+  }
+
   public void clear() {
   }
 

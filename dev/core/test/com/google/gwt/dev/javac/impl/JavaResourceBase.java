@@ -95,6 +95,7 @@ public class JavaResourceBase {
       code.append("public class Object {\n");
       code.append("  public String toString() { return \"Object\"; }\n");
       code.append("  public Object clone() { return this; } ");
+      code.append("  public Class getClass() { return Object.class; } ");
       code.append("}\n");
       return code;
     }

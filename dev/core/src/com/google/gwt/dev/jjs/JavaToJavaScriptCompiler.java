@@ -615,7 +615,7 @@ public class JavaToJavaScriptCompiler {
     return didChange;
   }
 
-  private static void checkForErrors(TreeLogger logger,
+  static void checkForErrors(TreeLogger logger,
       CompilationUnitDeclaration[] cuds, boolean itemizeErrors)
       throws UnableToCompleteException {
     boolean compilationFailed = false;
