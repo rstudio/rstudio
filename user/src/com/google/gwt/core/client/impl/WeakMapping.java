@@ -41,14 +41,14 @@ public class WeakMapping {
    * reference is permanently set to the identity hash code of the referent at
    * construction time.
    */
-  static class IdentityWeakReference extends WeakReference {
+  static class IdentityWeakReference extends WeakReference<Object> {
 
     /**
      * The identity hash code of the referent, cached during construction.
      */
     private int hashCode;
 
-    public IdentityWeakReference(Object referent, ReferenceQueue queue) {
+    public IdentityWeakReference(Object referent, ReferenceQueue<Object> queue) {
       super(referent, queue);
       hashCode = System.identityHashCode(referent);
     }
@@ -99,7 +99,7 @@ public class WeakMapping {
    * A ReferenceQueue used to clean up the map as its keys are
    * garbage-collected.
    */
-  private static ReferenceQueue queue = new ReferenceQueue();
+  private static ReferenceQueue<Object> queue = new ReferenceQueue<Object>();
 
   /**
    * Returns the Object associated with the given key in the (key, value)
@@ -157,7 +157,7 @@ public class WeakMapping {
    * will be eligible for future garbage collection.
    */
   private static void cleanup() {
-    Reference ref;
+    Reference<? extends Object> ref;
     while ((ref = queue.poll()) != null) {
       /**
        * Note that we can still remove ref from the map even though its referent

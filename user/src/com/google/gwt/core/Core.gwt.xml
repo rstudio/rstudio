@@ -23,6 +23,8 @@
   <inherits name="com.google.gwt.xhr.XMLHttpRequest" />
   <inherits name="com.google.gwt.core.CompilerParameters" />
 
+  <super-source path="translatable" />
+
   <define-linker name="sso" class="com.google.gwt.core.linker.SingleScriptLinker" />
   <define-linker name="std" class="com.google.gwt.core.linker.IFrameLinker" />
   <define-linker name="xs" class="com.google.gwt.core.linker.XSLinker" />
