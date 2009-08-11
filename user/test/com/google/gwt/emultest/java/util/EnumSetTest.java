@@ -46,7 +46,7 @@ public class EnumSetTest extends GWTTestCase {
    */
   public void testDuplicates() {
     EnumSet<Numbers> set = EnumSet.of(Numbers.Two, Numbers.One, Numbers.Two, Numbers.One);
-    assertEquals(set.size(), 2);
+    assertEquals(2, set.size());
     assertTrue(set.contains(Numbers.One));
     assertTrue(set.contains(Numbers.Two));
   }
@@ -58,7 +58,7 @@ public class EnumSetTest extends GWTTestCase {
     EnumSet<Numbers> set = EnumSet.of(Numbers.Two, Numbers.One, Numbers.Two, Numbers.One);
     Numbers[] array = set.toArray(new Numbers[set.size()]);
     assertNotNull(array);
-    assertEquals(array.length, 2);
+    assertEquals(2, array.length);
     if (array[0] != Numbers.One && array[1] != Numbers.One) {
       fail("Numbers.One not found");
     }
