@@ -284,7 +284,7 @@ public class JSORestrictionsTest extends TestCase {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.setLowestLogLevel(TreeLogger.ERROR);
     if (expectedErrors != null) {
-      builder.expectError("Errors in \'/mock/Buggy\'", null);
+      builder.expectError("Errors in \'/mock/Buggy.java\'", null);
       for (String e : expectedErrors) {
         builder.expectError(e, null);
       }

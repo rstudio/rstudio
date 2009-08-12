@@ -28,14 +28,14 @@ import java.util.Set;
 /**
  * A base type for testing the code checkers.
  */
-public class CheckerTestCase extends TestCase {
+public abstract class CheckerTestCase extends TestCase {
 
   protected void shouldGenerate(CharSequence buggyCode, CharSequence extraCode,
       int line, Type logLevel, String logHeader, String message) {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
     b.setLowestLogLevel(logLevel);
     if (message != null) {
-      b.expect(logLevel, logHeader + " in '/mock/Buggy'", null);
+      b.expect(logLevel, logHeader + " in '/mock/Buggy.java'", null);
       final String fullMessage = "Line " + line + ": " + message;
       b.expect(logLevel, fullMessage, null);
     }
