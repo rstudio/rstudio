@@ -97,14 +97,13 @@ public class RunStyleHtmlUnit extends RunStyleRemote {
             + ((HtmlPage) page).asXml());
       } catch (FailingHttpStatusCodeException e) {
         treeLogger.log(TreeLogger.ERROR, "HTTP request failed", e);
-        return;
       } catch (MalformedURLException e) {
         treeLogger.log(TreeLogger.ERROR, "Bad URL", e);
-        return;
       } catch (IOException e) {
         treeLogger.log(TreeLogger.ERROR, "I/O error on HTTP request", e);
-        return;
       }
+      webClient.closeAllWindows();
+      return;
     }
 
     /**
