@@ -106,6 +106,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   private static final int EXPOSURE_NONE = TypeParameterExposureComputer.EXPOSURE_NONE;
 
+  private static TypeOracle sTypeOracle;
+
   private static void addGwtTransient(Set<CompilationUnit> units) {
     StringBuffer code = new StringBuffer();
     code.append("package com.google.gwt.user.client.rpc;\n");
@@ -251,6 +253,20 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     return actual;
   }
 
+  private static TypeOracle getTestTypeOracle()
+      throws UnableToCompleteException {
+    if (sTypeOracle == null) {
+      TreeLogger logger = createLogger();
+      ModuleDef moduleDef = ModuleDefLoader.createSyntheticModule(logger,
+          "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases.JUnit",
+          new String[] {
+              "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases",
+              "com.google.gwt.junit.JUnit"}, true);
+      sTypeOracle = moduleDef.getTypeOracle(logger);
+    }
+    return sTypeOracle;
+  }
+
   private static String makeSourceName(String binaryName) {
     return binaryName.replace('$', '.');
   }
@@ -289,21 +305,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
     assertTrue("Expected: \n" + toString(expected) + ",\n Actual: \n"
         + toString(actual), Arrays.equals(expected, actual));
-  }
-
-  private final ModuleDef moduleDef;
-
-  private final TypeOracle typeOracle;
-
-  public SerializableTypeOracleBuilderTest() throws UnableToCompleteException {
-    TreeLogger logger = createLogger();
-
-    moduleDef = ModuleDefLoader.createSyntheticModule(logger,
-        "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases.JUnit",
-        new String[] {
-            "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases",
-            "com.google.gwt.junit.JUnit"}, true);
-    typeOracle = moduleDef.getTypeOracle(logger);
   }
 
   /**
@@ -872,6 +873,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       throws NotFoundException, UnableToCompleteException {
     TreeLogger logger = createLogger();
 
+    TypeOracle typeOracle = getTestTypeOracle();
     JRawType rawType = typeOracle.getType(
         ClassWithTypeParameterThatErasesToObject.class.getCanonicalName()).isGenericType().getRawType();
 
@@ -1400,6 +1402,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       UnableToCompleteException {
     TreeLogger logger = createLogger();
 
+    TypeOracle typeOracle = getTestTypeOracle();
     SerializableTypeOracleBuilder stob = createSerializableTypeOracleBuilder(
         logger, typeOracle);
     JClassType a = typeOracle.getType(ManualSerialization.A.class.getCanonicalName());
@@ -1418,6 +1421,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       UnableToCompleteException {
     TreeLogger logger = createLogger();
 
+    TypeOracle typeOracle = getTestTypeOracle();
     JClassType rawList = typeOracle.getType(List.class.getName());
     SerializableTypeOracleBuilder stob = createSerializableTypeOracleBuilder(
         logger, typeOracle);
@@ -1562,6 +1566,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       UnableToCompleteException {
     TreeLogger logger = createLogger();
 
+    TypeOracle typeOracle = getTestTypeOracle();
     JClassType a = typeOracle.getType(NoSerializableTypes.A.class.getCanonicalName());
     SerializableTypeOracleBuilder stob = createSerializableTypeOracleBuilder(
         logger, typeOracle);
@@ -1583,6 +1588,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       throws UnableToCompleteException, NotFoundException {
     TreeLogger logger = createLogger();
 
+    TypeOracle typeOracle = getTestTypeOracle();
     JClassType a = typeOracle.getType(NotAllSubtypesAreSerializable.A.class.getCanonicalName());
     SerializableTypeOracleBuilder stob = createSerializableTypeOracleBuilder(
         logger, typeOracle);
@@ -1605,6 +1611,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   public void testObjectArrayNotInstantiable() throws UnableToCompleteException {
     TreeLogger logger = createLogger();
 
+    TypeOracle typeOracle = getTestTypeOracle();
     JArrayType objectArray = typeOracle.getArrayType(typeOracle.getJavaLangObject());
     SerializableTypeOracleBuilder stob = createSerializableTypeOracleBuilder(
         logger, typeOracle);
@@ -1623,6 +1630,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   public void testObjectNotInstantiable() throws UnableToCompleteException {
     TreeLogger logger = createLogger();
 
+    TypeOracle typeOracle = getTestTypeOracle();
     SerializableTypeOracleBuilder stob = createSerializableTypeOracleBuilder(
         logger, typeOracle);
     stob.addRootType(logger, typeOracle.getJavaLangObject());
@@ -1642,6 +1650,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       throws UnableToCompleteException, NotFoundException {
     TreeLogger logger = createLogger();
 
+    TypeOracle typeOracle = getTestTypeOracle();
     SerializableTypeOracleBuilder stob = createSerializableTypeOracleBuilder(
         logger, typeOracle);
     stob.addRootType(
