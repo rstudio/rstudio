@@ -135,6 +135,10 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
   public void testUnaryOperations() throws Exception {
     // spaces or parentheses are necessary to separate negation and decrement
     doTest("var x = -(-(--y))");
+    // + prefix not stripped when operand is not literal number
+    doTest("var x = +y", "var x = +y");
+    // + prefix stripped when operand is literal number
+    doTest("var x = +42","var x = 42");
   }
 
   private void doTest(String js) throws Exception {
@@ -144,6 +148,14 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
     ComparingVisitor.exec(expected, actual);
 
     actual = parse(expected, false);
+    ComparingVisitor.exec(expected, actual);
+  }
+
+  private void doTest(String js, String expectedJs) throws Exception {
+    List<JsStatement> actual = JsParser.parse(SourceOrigin.UNKNOWN,
+        new JsProgram().getScope(), new StringReader(js));
+    List<JsStatement> expected = JsParser.parse(SourceOrigin.UNKNOWN,
+        new JsProgram().getScope(), new StringReader(expectedJs));
     ComparingVisitor.exec(expected, actual);
   }
 
