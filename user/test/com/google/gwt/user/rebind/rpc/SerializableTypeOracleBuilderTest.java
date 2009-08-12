@@ -38,6 +38,7 @@ import com.google.gwt.dev.javac.MockCompilationUnit;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.user.rebind.rpc.testcases.client.AbstractSerializableTypes;
 import com.google.gwt.user.rebind.rpc.testcases.client.ClassWithTypeParameterThatErasesToObject;
@@ -132,10 +133,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
         "com.google.gwt.user.client.rpc.IsSerializable", code));
   }
 
-  private static void addJavaIoSerializable(Set<CompilationUnit> units) {
-    units.add(new SourceFileCompilationUnit(JavaResourceBase.SERIALIZABLE));
-  }
-
   private static void addJavaLangException(Set<CompilationUnit> units) {
     StringBuffer code = new StringBuffer();
     code.append("package java.lang;\n");
@@ -143,14 +140,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     code.append("}\n");
 
     units.add(createMockCompilationUnit("java.lang.Exception", code));
-  }
-
-  private static void addJavaLangObject(Set<CompilationUnit> units) {
-    units.add(new SourceFileCompilationUnit(JavaResourceBase.OBJECT));
-  }
-
-  private static void addJavaLangString(Set<CompilationUnit> units) {
-    units.add(new SourceFileCompilationUnit(JavaResourceBase.STRING));
   }
 
   private static void addJavaLangThrowable(Set<CompilationUnit> units) {
@@ -175,10 +164,10 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   }
 
   private static void addStandardClasses(Set<CompilationUnit> units) {
+    for (Resource resource : JavaResourceBase.getStandardResources()) {
+      units.add(new SourceFileCompilationUnit(resource));
+    }
     addGwtTransient(units);
-    addJavaIoSerializable(units);
-    addJavaLangObject(units);
-    addJavaLangString(units);
     addJavaUtilMap(units);
     addICRSE(units);
     addJavaLangException(units);

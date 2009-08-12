@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.util.Name.BinaryName;
+
 public class MockCompilationUnit extends CompilationUnit {
 
   private final String typeName;
@@ -31,7 +33,7 @@ public class MockCompilationUnit extends CompilationUnit {
   }
 
   public String getDisplayLocation() {
-    return "/mock/" + getTypeName();
+    return "/mock/" + BinaryName.toInternalName(typeName) + ".java";
   }
 
   @Override
