@@ -32,8 +32,8 @@ import com.google.gwt.i18n.client.PluralRule;
  * DefaultRule_en_uk for English spoken in the UK (note the lower-cased
  * tag).
  * 
- * Many of the rules implemented in subclasses of this class are from:
- *   http://translate.sourceforge.net/wiki/l10n/pluralforms
+ * This is an implementation of the language pluralization rules described
+ * at http://translate.sourceforge.net/wiki/l10n/pluralforms
  * 
  * Eventually, all these rules will be machine generated from Unicode's
  * CLDR, perhaps with some additional data that isn't kept there if
