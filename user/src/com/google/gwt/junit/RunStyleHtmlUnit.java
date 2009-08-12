@@ -82,13 +82,13 @@ public class RunStyleHtmlUnit extends RunStyleRemote {
     @Override
     public void run() {
       WebClient webClient = new WebClient(browser);
-      webClient.setAlertHandler(this);
-      webClient.setIncorrectnessListener(this);
-      webClient.setThrowExceptionOnFailingStatusCode(false);
-      webClient.setThrowExceptionOnScriptError(true);
-      webClient.setOnbeforeunloadHandler(this);
-      setupWebClient(webClient);
       try {
+        webClient.setAlertHandler(this);
+        webClient.setIncorrectnessListener(this);
+        webClient.setThrowExceptionOnFailingStatusCode(false);
+        webClient.setThrowExceptionOnScriptError(true);
+        webClient.setOnbeforeunloadHandler(this);
+        setupWebClient(webClient);
         Page page = webClient.getPage(url);
         // TODO(jat): is this necessary?
         webClient.waitForBackgroundJavaScriptStartingBefore(2000);
@@ -101,9 +101,9 @@ public class RunStyleHtmlUnit extends RunStyleRemote {
         treeLogger.log(TreeLogger.ERROR, "Bad URL", e);
       } catch (IOException e) {
         treeLogger.log(TreeLogger.ERROR, "I/O error on HTTP request", e);
+      } finally {
+        webClient.closeAllWindows();
       }
-      webClient.closeAllWindows();
-      return;
     }
 
     /**
