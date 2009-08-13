@@ -1197,13 +1197,8 @@ public class JsParser {
         return mapPrefixOperation(JsUnaryOperator.TYPEOF, unOp);
 
       case TokenStream.ADD:
-        if (unOp.getFirstChild().getType() != TokenStream.NUMBER) {
-          return mapPrefixOperation(JsUnaryOperator.POS, unOp);
-        } else {
-          // Pretend we didn't see it.
-          return mapExpression(unOp.getFirstChild());
-        }
-
+        // Pretend we didn't see it.
+        return mapExpression(unOp.getFirstChild());
       case TokenStream.VOID:
         return mapPrefixOperation(JsUnaryOperator.VOID, unOp);
 

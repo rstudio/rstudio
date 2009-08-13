@@ -34,54 +34,6 @@ public final class LinkedHashMap_CustomFieldSerializer {
     Map_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
-  /**
-   * Infers the value of the private accessOrder field of instance by examining
-   * its behavior on a set of test inputs, without using reflection. Note that
-   * this implementation clones the instance, which could be slow.
-   * 
-   * @param instance the instance to check
-   * @return the value of instance.accessOrder
-   */
-  @SuppressWarnings("unchecked") // raw LinkedHashMap
-  public static boolean getAccessOrderNoReflection(LinkedHashMap instance) {    
-    /*
-     * Clone the instance so our modifications won't affect the original.
-     * In particular, if the original overrides removeEldestEntry, adding
-     * elements to the map could cause existing elements to be removed.
-     */
-    instance = (LinkedHashMap) instance.clone();
-    instance.clear();
-
-    /*
-     * We insert key1, then key2, after which we access key1. We then iterate
-     * over the key set and observe the order in which keys are returned. The
-     * iterator will return keys in the order of least recent insertion or
-     * access, depending on the value of the accessOrder field within the
-     * LinkedHashMap instance. If the iterator is ordered by least recent
-     * insertion (accessOrder = false), we will encounter key1 first since key2
-     * has been inserted more recently. If it is ordered by least recent access
-     * (accessOrder = true), we will encounter key2 first, since key1 has been
-     * accessed more recently.
-     */
-    Object key1 = new Object();
-    Object key2 = new Object();
-    instance.put(key1, key1); // INSERT key1
-    instance.put(key2, key2); // INSERT key2
-    instance.get(key1);       // ACCESS key1
-    boolean accessOrder = false;
-    for (Object key : instance.keySet()) {
-      if (key == key1) {
-        break;
-      }
-      if (key == key2) {
-        accessOrder = true;
-        break;
-      }
-    }
-
-    return accessOrder;
-  }
-
   @SuppressWarnings("unchecked") // raw LinkedHashMap
   public static LinkedHashMap instantiate(SerializationStreamReader streamReader)
       throws SerializationException {
@@ -97,23 +49,21 @@ public final class LinkedHashMap_CustomFieldSerializer {
   }
 
   @SuppressWarnings("unchecked") // raw LinkedHashMap
-  private static boolean getAccessOrder(LinkedHashMap instance) {
+  private static boolean getAccessOrder(LinkedHashMap instance)
+      throws SerializationException {
     Field accessOrderField;
     try {
       accessOrderField = LinkedHashMap.class.getDeclaredField("accessOrder");
       accessOrderField.setAccessible(true);
       return ((Boolean) accessOrderField.get(instance)).booleanValue();
     } catch (SecurityException e) {
-      // fall through
+      throw new SerializationException("Can't get accessOrder field", e);
     } catch (NoSuchFieldException e) {
-      // fall through
+      throw new SerializationException("Can't get accessOrder field", e);
     } catch (IllegalArgumentException e) {
-      // fall through
+      throw new SerializationException("Can't get accessOrder field", e);
     } catch (IllegalAccessException e) {
-      // fall through
+      throw new SerializationException("Can't get accessOrder field", e);
     }
-    
-    // Use a (possibly slower) technique that does not require reflection.
-    return getAccessOrderNoReflection(instance);
   }
 }
