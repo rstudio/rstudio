@@ -31,6 +31,12 @@ public final class LinkedHashMap_CustomFieldSerializer {
       LinkedHashMap instance) throws SerializationException {
     Map_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
+  
+  @SuppressWarnings("unchecked") // raw LinkedHashMap
+  // Included for testability
+  public static boolean getAccessOrderNoReflection(LinkedHashMap instance) {  
+    return getAccessOrder(instance);
+  }
 
   public static LinkedHashMap instantiate(SerializationStreamReader streamReader)
       throws SerializationException {
@@ -44,6 +50,7 @@ public final class LinkedHashMap_CustomFieldSerializer {
     Map_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 
+  @SuppressWarnings("unchecked") // raw LinkedHashMap
   private static native boolean getAccessOrder(LinkedHashMap instance) /*-{
     return instance.@java.util.LinkedHashMap::accessOrder;
   }-*/;
