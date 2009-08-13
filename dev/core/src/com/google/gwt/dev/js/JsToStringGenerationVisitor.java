@@ -1188,7 +1188,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       JsOperator op2 = ((JsPrefixOperation) arg).getOperator();
       return (op == JsBinaryOperator.SUB || op == JsUnaryOperator.NEG)
           && (op2 == JsUnaryOperator.DEC || op2 == JsUnaryOperator.NEG)
-          || (op == JsBinaryOperator.ADD && op2 == JsUnaryOperator.INC);
+          || (op == JsBinaryOperator.ADD || op == JsUnaryOperator.POS)
+          && (op2 == JsUnaryOperator.INC || op2 == JsUnaryOperator.POS);
     }
     if (arg instanceof JsNumberLiteral) {
       JsNumberLiteral literal = (JsNumberLiteral) arg;
