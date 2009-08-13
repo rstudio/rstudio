@@ -36,7 +36,7 @@ import java.util.zip.GZIPOutputStream;
 public class DependencyRecorder implements MultipleDependencyGraphRecorder {
   /**
    * DependencyRecorder is not allowed to throw checked exceptions, because if
-   * it did then {@link CodeSplitter} and {@link ControlFlowAnalyzer} would
+   * it did then {@link com.google.gwt.dev.jjs.impl.CodeSplitter} and {@link ControlFlowAnalyzer} would
    * throw exceptions all over the place. Instead, this class throws
    * NestedIOExceptions that wrap them.
    */
@@ -47,14 +47,11 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
   }
 
   private final StringBuilder builder = new StringBuilder();
+  private final OutputStream finalOutput;
   private OutputStreamWriter writer;
 
-  public DependencyRecorder(OutputStream out) throws IOException {
-    try {
-      this.writer = new OutputStreamWriter(new GZIPOutputStream(out), "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new InternalCompilerException("UTF-8 is an unsupported encoding", e);
-    }
+  public DependencyRecorder(OutputStream out) {
+    this.finalOutput = out;
   }
 
   public void close() {
@@ -81,6 +78,15 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
   }
 
   public void open() {
+    try {
+      this.writer = new OutputStreamWriter(new GZIPOutputStream(finalOutput),
+          "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new InternalCompilerException("UTF-8 is an unsupported encoding", e);
+    } catch (IOException e) {
+      throw new NestedIOException(e);
+    }
+
     printPre();
   }
 

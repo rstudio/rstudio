@@ -56,6 +56,7 @@ import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
+import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
@@ -136,9 +137,9 @@ public class JavaToJavaScriptCompiler {
   private static class PermutationResultImpl implements PermutationResult {
     private final ArtifactSet artifacts = new ArtifactSet();
     private final byte[][] js;
+    private final int permutationId;
     private final byte[] serializedSymbolMap;
     private final StatementRanges[] statementRanges;
-    private final int permutationId;
 
     public PermutationResultImpl(String[] js, SymbolData[] symbolMap,
         StatementRanges[] statementRanges, int permutationId) {
@@ -287,6 +288,9 @@ public class JavaToJavaScriptCompiler {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         CodeSplitter.exec(logger, jprogram, jsProgram, map,
             chooseDependencyRecorder(options.isSoycEnabled(), baos));
+        if (baos.size() == 0 && options.isSoycEnabled()) {
+          recordNonSplitDependencies(jprogram, baos);
+        }
         if (baos.size() > 0) {
           dependencies = new SoycArtifact("dependencies" + permutationId
               + ".xml.gz", baos.toByteArray());
@@ -994,5 +998,28 @@ public class JavaToJavaScriptCompiler {
         e.printStackTrace();
       }
     }
+  }
+
+  /**
+   * Dependency information is normally recorded during code splitting, and it
+   * results in multiple dependency graphs. If the code splitter doesn't run,
+   * then this method can be used instead to record a single dependency graph
+   * for the whole program.
+   */
+  private static void recordNonSplitDependencies(JProgram program,
+      OutputStream out) {
+    DependencyRecorder deps = new DependencyRecorder(out);
+    deps.open();
+    deps.startDependencyGraph("initial", null);
+
+    ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(program);
+    cfa.setDependencyRecorder(deps);
+    for (List<JMethod> entryList : program.entryMethods) {
+      for (JMethod entry : entryList)
+        cfa.traverseFrom(entry);
+    }
+
+    deps.endDependencyGraph();
+    deps.close();
   }
 }
