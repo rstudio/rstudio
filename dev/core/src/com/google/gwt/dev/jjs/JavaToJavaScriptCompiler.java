@@ -16,14 +16,15 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis;
-import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis.SoycArtifact;
+import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.core.ext.soyc.impl.DependencyRecorder;
 import com.google.gwt.core.ext.soyc.impl.SizeMapRecorder;
@@ -56,6 +57,7 @@ import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
+import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
@@ -65,6 +67,8 @@ import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.JavaScriptObjectNormalizer;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
+import com.google.gwt.dev.jjs.impl.JsFunctionClusterer;
+import com.google.gwt.dev.jjs.impl.JsIEBlockTextTransformer;
 import com.google.gwt.dev.jjs.impl.JsoDevirtualizer;
 import com.google.gwt.dev.jjs.impl.LongCastNormalizer;
 import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
@@ -80,7 +84,6 @@ import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
-import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
@@ -316,7 +319,23 @@ public class JavaToJavaScriptCompiler {
 
       // Work around an IE7 bug,
       // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
-      JsIEBlockSizeVisitor.exec(jsProgram);
+      // note, JsIEBlockTextTransformer now handles restructuring top level
+      // blocks, this class now handles non-top level blocks only.
+      SelectionProperty userAgentProperty = null;
+      for (PropertyOracle oracle : propertyOracles) {
+        userAgentProperty = oracle.getSelectionProperty(logger, "user.agent");
+        if (userAgentProperty != null) {
+          break;
+        }
+      }
+      // if user agent is known or ie6, split overly large blocks
+      boolean splitBlocks = userAgentProperty == null || (
+          userAgentProperty != null &&
+              "ie6".equals(userAgentProperty.getCurrentValue()));
+
+      if (splitBlocks) {
+        JsIEBlockSizeVisitor.exec(jsProgram);
+      }
       JsBreakUpLargeVarStatements.exec(jsProgram, propertyOracles);
 
       // (12) Generate the final output text.
@@ -327,7 +346,7 @@ public class JavaToJavaScriptCompiler {
       List<Map<Range, SourceInfo>> sourceInfoMaps = options.isSoycExtra()
           ? new ArrayList<Map<Range, SourceInfo>>() : null;
       generateJavaScriptCode(options, jsProgram, map, js, ranges,
-          sizeBreakdowns, sourceInfoMaps);
+          sizeBreakdowns, sourceInfoMaps, splitBlocks);
 
       PermutationResult toReturn = new PermutationResultImpl(js,
           makeSymbolMap(symbolTable), ranges, permutationId);
@@ -820,11 +839,12 @@ public class JavaToJavaScriptCompiler {
    *          JavaScript
    * @param sourceInfoMaps An array to hold the source info maps for that
    *          JavaScript
+   * @param splitBlocks true if current permutation is for IE6 or unknown
    */
   private static void generateJavaScriptCode(JJSOptions options,
       JsProgram jsProgram, JavaToJavaScriptMap jjsMap, String[] js,
       StatementRanges[] ranges, SizeBreakdown[] sizeBreakdowns,
-      List<Map<Range, SourceInfo>> sourceInfoMaps) {
+      List<Map<Range, SourceInfo>> sourceInfoMaps, boolean splitBlocks) {
     for (int i = 0; i < js.length; i++) {
       DefaultTextOutput out = new DefaultTextOutput(
           options.getOutput().shouldMinimize());
@@ -835,14 +855,31 @@ public class JavaToJavaScriptCompiler {
         v = new JsSourceGenerationVisitorWithSizeBreakdown(out, jjsMap);
       }
       v.accept(jsProgram.getFragmentBlock(i));
-      js[i] = out.toString();
+      
+      /**
+       * Reorder function decls to improve compression ratios. Also restructures
+       * the top level blocks into sub-blocks if they exceed 32767 statements.
+       */
+      JsFunctionClusterer clusterer = new JsFunctionClusterer(out.toString(),
+          v.getStatementRanges());
+      // only cluster for obfuscated mode
+      if (options.getOutput() == JsOutputOption.OBFUSCATED) {
+        clusterer.exec();
+      }
+      // rewrite top-level blocks to limit the number of statements
+      JsIEBlockTextTransformer ieXformer = new JsIEBlockTextTransformer(
+          clusterer);
+      if (splitBlocks) {
+        ieXformer.exec();
+      }
+      js[i] = ieXformer.getJs();
       if (sizeBreakdowns != null) {
         sizeBreakdowns[i] = v.getSizeBreakdown();
       }
       if (sourceInfoMaps != null) {
         sourceInfoMaps.add(((JsReportGenerationVisitor) v).getSourceInfoMap());
       }
-      ranges[i] = v.getStatementRanges();
+      ranges[i] = ieXformer.getStatementRanges();
     }
   }
 
