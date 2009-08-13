@@ -46,6 +46,13 @@
       expression is applied to just the base class's fully qualified name.
   -->
   <define-configuration-property name="rpc.blacklist" is-multi-valued="true" />
+  
+  <!--
+      Contains a list of fully-qualified class names indicating classes that
+      should be treated as being enhanced on the server with additional fields.
+      These classes will be treated specially by RPC.
+  -->
+  <define-configuration-property name="rpc.enhancedClasses" is-multi-valued="true"/>
 
 	<generate-with class="com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator">
 		<when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>

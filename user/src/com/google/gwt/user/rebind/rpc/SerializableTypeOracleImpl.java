@@ -22,14 +22,17 @@ import java.util.Set;
 
 final class SerializableTypeOracleImpl implements SerializableTypeOracle {
 
+  private final Set<JClassType> possiblyEnhancedTypes;
   private final Set<JClassType> possiblyInstantiatedTypes;
   private final Set<JClassType> serializableTypesSet;
 
   public SerializableTypeOracleImpl(Set<JClassType> serializableTypes,
-      Set<JClassType> possiblyInstantiatedTypes) {
+      Set<JClassType> possiblyInstantiatedTypes,
+      Set<JClassType> possiblyEnhancedTypes) {
 
     serializableTypesSet = serializableTypes;
     this.possiblyInstantiatedTypes = possiblyInstantiatedTypes;
+    this.possiblyEnhancedTypes = possiblyEnhancedTypes;
   }
 
   public JType[] getSerializableTypes() {
@@ -41,6 +44,14 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
    */
   public boolean isSerializable(JType type) {
     return serializableTypesSet.contains(type);
+  }
+
+  /**
+   * Returns <code>true</code> if the type may be enhanced on the server to
+   * contain additional fields.
+   */
+  public boolean maybeEnhanced(JType type) {
+    return possiblyEnhancedTypes.contains(type);
   }
 
   /**

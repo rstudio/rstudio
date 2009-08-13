@@ -124,7 +124,7 @@ public class StandardSerializationPolicyTest extends TestCase {
     Map typeIds = new HashMap();
     typeIds.put(A.class, "A");
     typeIds.put(B.class, "B");
-    
-    return new StandardSerializationPolicy(map, map, typeIds);
+
+    return new StandardSerializationPolicy(map, map, typeIds, new HashMap());
   }
 }

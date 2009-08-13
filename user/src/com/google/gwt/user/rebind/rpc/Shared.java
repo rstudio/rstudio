@@ -16,6 +16,7 @@
 package com.google.gwt.user.rebind.rpc;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
@@ -25,7 +26,10 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 class Shared {
 
@@ -36,6 +40,13 @@ class Shared {
   private static final String RPC_PROP_SUPPRESS_NON_STATIC_FINAL_FIELD_WARNINGS = "gwt.suppressNonStaticFinalFieldWarnings";
 
   /**
+   * Multi-valued configuration roperty used to list classes that are
+   * (potentially) enhanced with server-only fields, to be handled specially by
+   * RPC.
+   */
+  private static final String RPC_ENHANCED_CLASSES = "rpc.enhancedClasses";
+
+  /**
    * Capitalizes a name.
    * 
    * @param name the string to be capitalized
@@ -43,6 +54,22 @@ class Shared {
    */
   static String capitalize(String name) {
     return name.substring(0, 1).toUpperCase(Locale.US) + name.substring(1);
+  }
+  
+  /**
+   * Returns a Set of names of classes that may be enhanced with extra server-only fields.
+   * 
+   * @param propertyOracle The propertyOracle used to access the relevant configuration
+   * property.
+   * @return a Set of Strings, or null.
+   */
+  static Set<String> getEnhancedTypes(PropertyOracle propertyOracle) {
+    try {
+      ConfigurationProperty prop = propertyOracle.getConfigurationProperty(RPC_ENHANCED_CLASSES);
+      return Collections.unmodifiableSet(new HashSet(prop.getValues()));
+    } catch (BadPropertyValueException e) {
+      return null;
+    }
   }
 
   static String getStreamReadMethodNameFor(JType type) {

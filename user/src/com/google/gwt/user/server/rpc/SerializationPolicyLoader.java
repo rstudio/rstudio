@@ -25,13 +25,22 @@ import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * API for loading a {@link SerializationPolicy}.
  */
 public final class SerializationPolicyLoader {
+
+  /**
+   * Keyword for listing the serializable fields of an enchanced class that are
+   * visible to client code.
+   */
+  public static final String CLIENT_FIELDS_KEYWORD = "@ClientFields";
+
   /**
    * Default encoding for serialization policy files.
    */
@@ -39,7 +48,7 @@ public final class SerializationPolicyLoader {
 
   private static final String FORMAT_ERROR_MESSAGE = "Expected: className, "
       + "[true | false], [true | false], [true | false], [true | false], typeId, signature";
-
+  
   /**
    * Returns the serialization policy file name from the serialization
    * policy strong name.
@@ -104,6 +113,9 @@ public final class SerializationPolicyLoader {
     Map<Class<?>, Boolean> whitelistSer = new HashMap<Class<?>, Boolean>();
     Map<Class<?>, Boolean> whitelistDeser = new HashMap<Class<?>, Boolean>();
     Map<Class<?>, String> typeIds = new HashMap<Class<?>, String>();
+    Map<Class<?>, Set<String>> clientFields = new HashMap<Class<?>, Set<String>>();
+    
+    ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
 
     InputStreamReader isr = new InputStreamReader(inputStream,
         SERIALIZATION_POLICY_FILE_ENCODING);
@@ -116,62 +128,86 @@ public final class SerializationPolicyLoader {
       if (line.length() > 0) {
         String[] components = line.split(",");
 
-        if (components.length != 2 && components.length != 7) {
-          throw new ParseException(FORMAT_ERROR_MESSAGE, lineNum);
-        }
-
-        for (int i = 0; i < components.length; i++) {
-          components[i] = components[i].trim();
-          if (components[i].length() == 0) {
+        if (components[0].equals(CLIENT_FIELDS_KEYWORD)) {
+          /*
+           * Lines starting with '@ClientFields' list potentially serializable fields known to
+           * client code for classes that may be enhanced with additional fields on the server.
+           * If additional server  fields are found, they will be serizalized separately from the
+           * normal RPC process and transmitted to the client as an opaque blob of data stored
+           * in a WeakMapping associated with the object instance.
+           */
+          String binaryTypeName = components[1].trim();
+          Class<?> clazz;
+          try {
+            clazz = Class.forName(binaryTypeName, false, contextClassLoader);
+            HashSet<String> fieldNames = new HashSet<String>();
+            for (int i = 2; i < components.length; i++) {
+              fieldNames.add(components[i]);
+            }
+            clientFields.put(clazz, fieldNames);
+          } catch (ClassNotFoundException ex) {
+            // Ignore the error, but add it to the list of errors if one was
+            // provided.
+            if (classNotFoundExceptions != null) {
+              classNotFoundExceptions.add(ex);
+            }
+          }
+        } else {
+          if (components.length != 2 && components.length != 7) {
             throw new ParseException(FORMAT_ERROR_MESSAGE, lineNum);
           }
-        }
 
-        String binaryTypeName = components[0].trim();
-        boolean fieldSer;
-        boolean instantSer;
-        boolean fieldDeser;
-        boolean instantDeser;
-        String typeId;
-
-        if (components.length == 2) {
-          fieldSer = fieldDeser = true;
-          instantSer = instantDeser = Boolean.valueOf(components[1]);
-          typeId = binaryTypeName;
-        } else {
-          int idx = 1;
-          // TODO: Validate the instantiable string better.
-          fieldSer = Boolean.valueOf(components[idx++]);
-          instantSer = Boolean.valueOf(components[idx++]);
-          fieldDeser = Boolean.valueOf(components[idx++]);
-          instantDeser = Boolean.valueOf(components[idx++]);
-          typeId = components[idx++];
-
-          if (!fieldSer && !fieldDeser
-              && !TypeNameObfuscator.SERVICE_INTERFACE_ID.equals(typeId)) {
-            throw new ParseException("Type " + binaryTypeName
-                + " is neither field serializable, field deserializable "
-                + "nor the service interface", lineNum);
+          for (int i = 0; i < components.length; i++) {
+            components[i] = components[i].trim();
+            if (components[i].length() == 0) {
+              throw new ParseException(FORMAT_ERROR_MESSAGE, lineNum);
+            }
           }
-        }
 
-        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+          String binaryTypeName = components[0].trim();
+          boolean fieldSer;
+          boolean instantSer;
+          boolean fieldDeser;
+          boolean instantDeser;
+          String typeId;
 
-        try {
-          Class<?> clazz = Class.forName(binaryTypeName, false,
-              contextClassLoader);
-          if (fieldSer) {
-            whitelistSer.put(clazz, instantSer);
+          if (components.length == 2) {
+            fieldSer = fieldDeser = true;
+            instantSer = instantDeser = Boolean.valueOf(components[1]);
+            typeId = binaryTypeName;
+          } else {
+            int idx = 1;
+            // TODO: Validate the instantiable string better.
+            fieldSer = Boolean.valueOf(components[idx++]);
+            instantSer = Boolean.valueOf(components[idx++]);
+            fieldDeser = Boolean.valueOf(components[idx++]);
+            instantDeser = Boolean.valueOf(components[idx++]);
+            typeId = components[idx++];
+
+            if (!fieldSer && !fieldDeser
+                && !TypeNameObfuscator.SERVICE_INTERFACE_ID.equals(typeId)) {
+              throw new ParseException("Type " + binaryTypeName
+                  + " is neither field serializable, field deserializable "
+                  + "nor the service interface", lineNum);
+            }
           }
-          if (fieldDeser) {
-            whitelistDeser.put(clazz, instantDeser);
-          }
-          typeIds.put(clazz, typeId);
-        } catch (ClassNotFoundException ex) {
-          // Ignore the error, but add it to the list of errors if one was
-          // provided.
-          if (classNotFoundExceptions != null) {
-            classNotFoundExceptions.add(ex);
+
+          try {
+            Class<?> clazz = Class.forName(binaryTypeName, false,
+                contextClassLoader);
+            if (fieldSer) {
+              whitelistSer.put(clazz, instantSer);
+            }
+            if (fieldDeser) {
+              whitelistDeser.put(clazz, instantDeser);
+            }
+            typeIds.put(clazz, typeId);
+          } catch (ClassNotFoundException ex) {
+            // Ignore the error, but add it to the list of errors if one was
+            // provided.
+            if (classNotFoundExceptions != null) {
+              classNotFoundExceptions.add(ex);
+            }
           }
         }
       }
@@ -181,7 +217,7 @@ public final class SerializationPolicyLoader {
     }
 
     return new StandardSerializationPolicy(whitelistSer, whitelistDeser,
-        typeIds);
+        typeIds, clientFields);
   }
 
   private SerializationPolicyLoader() {

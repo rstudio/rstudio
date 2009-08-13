@@ -102,6 +102,14 @@ public class LegacySerializationPolicy extends SerializationPolicy implements
       throws SerializationException {
     throw new SerializationException(ELISION_ERROR);
   }
+  
+  /**
+   * Ignore the possibility of server-side enhancement for legacy classes.
+   */
+  @Override
+  public Set<String> getClientFieldNamesForEnhancedClass(Class<?> clazz) {
+    return null;
+  }
 
   /**
    * Implemented to fail with a useful error message.
@@ -174,5 +182,4 @@ public class LegacySerializationPolicy extends SerializationPolicy implements
     }
     return SerializabilityUtil.hasCustomFieldSerializer(clazz) != null;
   }
-
 }

@@ -29,6 +29,7 @@ import junit.framework.TestCase;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.Set;
 
 /**
  * Tests for the {@link com.google.gwt.user.server.rpc.RPC RPC} class.
@@ -322,6 +323,11 @@ public class RPCTest extends TestCase {
       public void validateSerialize(Class<?> clazz)
           throws SerializationException {
       }
+
+      @Override
+      public Set<String> getClientFieldNamesForEnhancedClass(Class<?> clazz) {
+        return null;
+      }
     }
 
     String rpc = RPC.encodeResponseForSuccess(CC.class.getMethod("c"), new C(),
@@ -351,6 +357,11 @@ public class RPCTest extends TestCase {
       @Override
       public void validateSerialize(Class<?> clazz)
           throws SerializationException {
+      }
+
+      @Override
+      public Set<String> getClientFieldNamesForEnhancedClass(Class<?> clazz) {
+        return null;
       }
     }
 

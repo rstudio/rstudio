@@ -22,35 +22,31 @@ public class Base64Utils {
 
   /**
    * An array mapping size but values to the characters that will be used to represent them.
+   * Note that this is not identical to the set of characters used by MIME-Base64.
    */
   private static final char[] base64Chars = new char[] {
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-    'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B',
-    'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-    'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3',
-    '4', '5', '6', '7', '8', '9', '$', '_'
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '$', '_'
   };
 
   /**
    * An array mapping legal base 64 characters [a-zA-Z0-9$_] to their associated 6-bit values.
+   * The source indicies will be given by 7-bit ASCII characters, thus the array size needs to
+   * be 128 (actually 123 would suffice for the given set of characters in use).
    */
-  private static final byte[] base64Values = new byte[123];
+  private static final byte[] base64Values = new byte[128];
 
   /**
    * Initialize the base 64 encoder values.
    */
   static {
-    for (int i = 'a'; i <= 'z'; i++) {
-      base64Values[i] = (byte) (i - 'a');
+    // Invert the mapping (i -> base64Chars[i])
+    for (int i = 0; i < base64Chars.length; i++) {
+      base64Values[base64Chars[i]] = (byte) i;
     }
-    for (int i = 'A'; i <= 'Z'; i++) {
-      base64Values[i] = (byte) (i - 'A' + 26);
-    }
-    for (int i = '0'; i <= '9'; i++) {
-      base64Values[i] = (byte) (i - '0' + 52);
-    }
-    base64Values['$'] = 62;
-    base64Values['_'] = 63;
   }
 
   /**
@@ -113,7 +109,7 @@ public class Base64Utils {
    * null, and an empty array is encoded as an empty string. Otherwise, the byte
    * data is read 3 bytes at a time, with bytes off the end of the array padded
    * with zeros. Each 24-bit chunk is encoded as 4 characters from the sequence
-   * [a-zA-Z0-9$_]. If one of the size-bit source positions consists entirely of
+   * [A-Za-z0-9$_]. If one of the size-bit source positions consists entirely of
    * padding zeros, an '=' character is used instead.
    * 
    * @param data a byte array, which may be null or empty

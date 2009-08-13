@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
@@ -619,7 +620,7 @@ public class ProxyCreator {
   protected Class<? extends SerializationStreamWriter> getStreamWriterClass() {
     return ClientSerializationStreamWriter.class;
   }
-
+  
   protected String writeSerializationPolicyFile(TreeLogger logger,
       GeneratorContext ctx, SerializableTypeOracle serializationSto,
       SerializableTypeOracle deserializationSto)
@@ -655,6 +656,35 @@ public class ProxyCreator {
         pw.print(", "
             + SerializationUtils.getSerializationSignature(oracle, type));
         pw.print('\n');
+
+        /*
+         * Emit client-side field information for classes that may be enhanced
+         * on the server and which are capable of being transmitted in both
+         * directions. Each line consists of a comma-separated list containing
+         * the keyword '@ClientFields', the class name, and a list of all
+         * potentially serializable client-visible fields.
+         */
+        if ((type instanceof JClassType)
+            && serializationSto.maybeEnhanced(type) && deserializationSto.maybeEnhanced(type)) {
+          JField[] fields = ((JClassType) type).getFields();
+          JField[] rpcFields = new JField[fields.length];
+          int numRpcFields = 0;
+          for (JField f : fields) {
+            if (f.isTransient() || f.isStatic() || f.isFinal()) {
+              continue;
+            }
+            rpcFields[numRpcFields++] = f;
+          }
+
+          pw.print(SerializationPolicyLoader.CLIENT_FIELDS_KEYWORD);
+          pw.print(',');
+          pw.print(binaryTypeName);
+          for (int idx = 0; idx < numRpcFields; idx++) {
+            pw.print(',');
+            pw.print(rpcFields[idx].getName());
+          }
+          pw.print('\n');
+        }
       }
 
       // Closes the wrapped streams.

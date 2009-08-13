@@ -18,8 +18,10 @@ package com.google.gwt.user.server.rpc.impl;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Standard implementation of a {@link SerializationPolicy}.
@@ -51,18 +53,20 @@ public class StandardSerializationPolicy extends SerializationPolicy implements
     return (instantiable != null && instantiable);
   }
 
+  private final Map<Class<?>, Set<String>> clientFields;
   private final Map<Class<?>, Boolean> deserializationWhitelist;
   private final Map<Class<?>, Boolean> serializationWhitelist;
   private final Map<Class<?>, String> typeIds;
   private final Map<String, Class<?>> typeIdsToClasses = new HashMap<String, Class<?>>();
 
   /**
-   * Constructs a {@link SerializationPolicy} from a {@link Map}.
+   * Constructs a {@link SerializationPolicy} from several {@link Map}s.
    */
   public StandardSerializationPolicy(
       Map<Class<?>, Boolean> serializationWhitelist,
       Map<Class<?>, Boolean> deserializationWhitelist,
-      Map<Class<?>, String> obfuscatedTypeIds) {
+      Map<Class<?>, String> obfuscatedTypeIds,
+      Map<Class<?>, Set<String>> clientFields) {
     if (serializationWhitelist == null || deserializationWhitelist == null) {
       throw new NullPointerException("whitelist");
     }
@@ -70,6 +74,7 @@ public class StandardSerializationPolicy extends SerializationPolicy implements
     this.serializationWhitelist = serializationWhitelist;
     this.deserializationWhitelist = deserializationWhitelist;
     this.typeIds = obfuscatedTypeIds;
+    this.clientFields = clientFields;
 
     for (Map.Entry<Class<?>, String> entry : obfuscatedTypeIds.entrySet()) {
       assert entry.getKey() != null : "null key";
@@ -89,6 +94,15 @@ public class StandardSerializationPolicy extends SerializationPolicy implements
     }
 
     return clazz.getName();
+  }
+
+  @Override
+  public Set<String> getClientFieldNamesForEnhancedClass(Class<?> clazz) {
+    if (clientFields == null) {
+      return null;
+    }
+    Set<String> fieldNames = clientFields.get(clazz);
+    return fieldNames == null ? null : Collections.unmodifiableSet(fieldNames);
   }
 
   public final String getTypeIdForClass(Class<?> clazz)

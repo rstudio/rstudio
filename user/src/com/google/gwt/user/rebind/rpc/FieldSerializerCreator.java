@@ -266,6 +266,16 @@ public class FieldSerializerCreator {
   }
 
   private void writeClassDeserializationStatements() {
+    /**
+     * If the type is capable of making a round trip between the client and
+     * server, store additional server-only field data using {@link WeakMapping}.
+     */
+    if (typesSentToBrowser.maybeEnhanced(serializableClass)
+        && typesSentFromBrowser.maybeEnhanced(serializableClass)) {
+      sourceWriter.println(WEAK_MAPPING_CLASS_NAME + ".set(instance, "
+          + "\"server-enhanced-data\", streamReader.readString());");
+    }
+    
     for (JField serializableField : serializableFields) {
       JType fieldType = serializableField.getType();
 
@@ -304,6 +314,17 @@ public class FieldSerializerCreator {
   }
 
   private void writeClassSerializationStatements() {
+    /**
+     * If the type is capable of making a round trip between the client and
+     * server, retrieve the additional server-only field data from {@link WeakMapping}.
+     */
+    
+    if (typesSentToBrowser.maybeEnhanced(serializableClass)
+        && typesSentFromBrowser.maybeEnhanced(serializableClass)) {
+      sourceWriter.println("streamWriter.writeString((String) "
+          + WEAK_MAPPING_CLASS_NAME + ".get(instance, \"server-enhanced-data\"));");
+    }
+    
     for (JField serializableField : serializableFields) {
       JType fieldType = serializableField.getType();
 
@@ -351,14 +372,8 @@ public class FieldSerializerCreator {
       writeEnumDeserializationStatements(serializableClass.isEnum());
     } else {
       writeClassDeserializationStatements();
-      
-      for (ClientDataSerializer serializer : ClientDataSerializer.getSerializers()) {
-        if (serializer.shouldSerialize(serializableClass)) {
-          sourceWriter.println(WEAK_MAPPING_CLASS_NAME + ".set(instance, "
-              + "\"" + serializer.getName() + "\", streamReader.readString());");
-        }
-      }
     }
+      
     sourceWriter.outdent();
     sourceWriter.println("}");
     sourceWriter.println();
@@ -465,14 +480,6 @@ public class FieldSerializerCreator {
       writeEnumSerializationStatements(serializableClass.isEnum());
     } else {
       writeClassSerializationStatements();
-
-      for (ClientDataSerializer serializer : ClientDataSerializer.getSerializers()) {
-        if (serializer.shouldSerialize(serializableClass)) {
-          sourceWriter.println("streamWriter.writeString((String) "
-              + WEAK_MAPPING_CLASS_NAME + ".get(instance, \""
-              + serializer.getName() + "\"));");
-        }
-      }
     }
 
     sourceWriter.outdent();

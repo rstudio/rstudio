@@ -38,7 +38,10 @@ public class WeakMapping {
    * @return an Object associated with that key on the given instance, or null.
    */
   public static native Object get(Object instance, String key) /*-{
-    return instance.@java.lang.Object::expando[':' + key];
+    if (instance.@java.lang.Object::expando) {
+      return instance.@java.lang.Object::expando[':' + key];
+    }
+    return null;
   }-*/;
 
   /**

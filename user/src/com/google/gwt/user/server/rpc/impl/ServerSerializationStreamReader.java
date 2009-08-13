@@ -23,6 +23,9 @@ import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.SerializationPolicyProvider;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -30,9 +33,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * For internal use only. Used for server call serialization. This class is
@@ -328,6 +333,12 @@ public final class ServerSerializationStreamReader extends
 
   private final SerializationPolicyProvider serializationPolicyProvider;
 
+  /**
+   * Used to look up setter methods of the form 'void Class.setXXX(T value)' given a
+   * Class type and a field name XXX corresponding to a field of type T.
+   */
+  private final Map<Class<?>, Map<String, Method>> settersByClass = new HashMap<Class<?>, Map<String, Method>>();
+
   private String[] stringTable;
 
   private final ArrayList<String> tokenList = new ArrayList<String>();
@@ -484,7 +495,6 @@ public final class ServerSerializationStreamReader extends
   protected Object deserialize(String typeSignature)
       throws SerializationException {
     Object instance = null;
-
     try {
       Class<?> instanceClass;
       if (hasFlags(FLAG_ELIDE_TYPE_NAMES)) {
@@ -580,40 +590,83 @@ public final class ServerSerializationStreamReader extends
   private void deserializeClass(Class<?> instanceClass, Object instance)
       throws SerializationException, IllegalAccessException,
       NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
-    Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(instanceClass);
+    /**
+     * A map from field names to corresponding setter methods. The reference
+     * will be null for classes that do not require special handling for
+     * server-only fields.
+     */
+    Map<String, Method> setters = null;
 
+    /**
+     * A list of fields of this class known to the client. If null, assume the class is not
+     * enhanced and don't attempt to deal with server-only fields.
+     */
+    Set<String> clientFieldNames = serializationPolicy.getClientFieldNamesForEnhancedClass(instanceClass);
+    if (clientFieldNames != null) {
+      // Read and set server-only instance fields encoded in the RPC data
+      try {
+        String encodedData = readString();
+        if (encodedData != null) {
+          byte[] serializedData = Base64Utils.fromBase64(encodedData);
+          ByteArrayInputStream baos = new ByteArrayInputStream(serializedData);
+          ObjectInputStream ois = new ObjectInputStream(baos);
+
+          int count = ois.readInt();
+          for (int i = 0; i < count; i++) {
+            String fieldName = (String) ois.readObject();
+            Object fieldValue = ois.readObject();
+            Field field = instanceClass.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(instance, fieldValue);
+          }
+        }
+      } catch (IOException e) {
+        throw new SerializationException(e);
+      } catch (NoSuchFieldException e) {
+        throw new SerializationException(e);
+      }
+
+      setters = getSetters(instanceClass);
+    }
+
+    Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(instanceClass);
     for (Field declField : serializableFields) {
       assert (declField != null);
+      if ((clientFieldNames != null)
+          && !clientFieldNames.contains(declField.getName())) {
+        continue;
+      }
 
       Object value = deserializeValue(declField.getType());
 
-      boolean isAccessible = declField.isAccessible();
-      boolean needsAccessOverride = !isAccessible
-          && !Modifier.isPublic(declField.getModifiers());
-      if (needsAccessOverride) {
-        // Override access restrictions
-        declField.setAccessible(true);
-      }
+      String fieldName = declField.getName();
+      Method setter;
+      /*
+       * If setters is non-null and there is a setter method for the given
+       * field, call the setter. Otherwise, set the field value directly. For
+       * persistence APIs such as JDO, the setter methods have been enhanced to
+       * manipulate additional object state, causing direct field writes to fail
+       * to update the object state properly.
+       */
+      if ((setters != null) && ((setter = setters.get(fieldName)) != null)) {
+        setter.invoke(instance, value);
+      } else {
+        boolean isAccessible = declField.isAccessible();
+        boolean needsAccessOverride = !isAccessible
+            && !Modifier.isPublic(declField.getModifiers());
+        if (needsAccessOverride) {
+          // Override access restrictions
+          declField.setAccessible(true);
+        }
 
-      declField.set(instance, value);
+        declField.set(instance, value);
+      }
     }
 
     Class<?> superClass = instanceClass.getSuperclass();
     if (serializationPolicy.shouldDeserializeFields(superClass)) {
       deserializeImpl(SerializabilityUtil.hasCustomFieldSerializer(superClass),
           superClass, instance);
-    }
-
-    /*
-     * Iterate through all ServerDataSerializers, in name order, allowing each
-     * to perform custom deserialization.
-     */
-    for (ServerDataSerializer serializer : ServerDataSerializer.getSerializers()) {
-      if (serializer.shouldSerialize(instanceClass)) {
-        String encodedData = readString();
-        byte[] serializedData = Base64Utils.fromBase64(encodedData);
-        serializer.deserializeServerData(serializedData, instance);
-      }
     }
   }
 
@@ -719,6 +772,50 @@ public final class ServerSerializationStreamReader extends
     }
   }
 
+  /**
+   * Returns a Map from a field name to the setter method for that field, for a
+   * given class. The results are computed once for each class and cached.
+   * 
+   * @param instanceClass the class to query
+   * @return a Map from Strings to Methods such that the name <code>XXX</code>
+   *         (corresponding to the field <code>T XXX</code>) maps to the method
+   *         <code>void setXXX(T value)</code>, or null if no such method exists.
+   */
+  private Map<String, Method> getSetters(Class<?> instanceClass) {
+    synchronized (settersByClass) {
+      Map<String, Method> setters = settersByClass.get(instanceClass);
+      if (setters == null) {
+        setters = new HashMap<String, Method>();
+
+        // Iterate over each field and locate a suitable setter method
+        Field[] fields = instanceClass.getDeclaredFields();
+        for (Field field : fields) {
+          // Consider non-final, non-static, non-transient fields only
+          int mod = field.getModifiers();
+          if (Modifier.isFinal(mod) || Modifier.isStatic(mod)
+              || Modifier.isTransient(mod)) {
+            continue;
+          }
+
+          String fieldName = field.getName();
+          String setterName = "set"
+              + Character.toUpperCase(fieldName.charAt(0))
+              + fieldName.substring(1);
+          try {
+            Method setter = instanceClass.getMethod(setterName, field.getType());
+            setters.put(fieldName, setter);
+          } catch (NoSuchMethodException e) {
+            // Just leave this field out of the map
+          }
+        }
+
+        settersByClass.put(instanceClass, setters);
+      }
+
+      return setters;
+    }
+  }
+
   private Object instantiate(Class<?> customSerializer, Class<?> instanceClass)
       throws InstantiationException, IllegalAccessException,
       IllegalArgumentException, InvocationTargetException,
@@ -757,7 +854,8 @@ public final class ServerSerializationStreamReader extends
           + instanceClass.getName());
     }
 
-    String serverTypeSignature = SerializabilityUtil.getSerializationSignature(instanceClass);
+    String serverTypeSignature = SerializabilityUtil.getSerializationSignature(
+        instanceClass, serializationPolicy);
 
     if (!clientTypeSignature.equals(serverTypeSignature)) {
       throw new SerializationException("Invalid type signature for "

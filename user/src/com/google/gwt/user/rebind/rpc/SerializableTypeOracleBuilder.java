@@ -40,6 +40,9 @@ import com.google.gwt.user.rebind.rpc.TypePaths.TypePath;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -83,6 +86,32 @@ import java.util.Map.Entry;
  * qualifies for both manual and automatic serialization, manual serialization
  * is preferred.
  * </p>
+ *
+ * <p>
+ * Some types may be marked as "enhanced," either automatically by the presence
+ * of a JDO <code>@PersistenceCapable</code> or JPA <code>@Entity</code> tag on
+ * the class definition, or manually by extending the 'rpc.enhancedClasses'
+ * configuration property in the GWT module XML file. For example, to manually
+ * mark the class com.google.myapp.MyPersistentClass as enhanced, use:
+ *
+ * <pre>
+ * <extend-configuration-property name='rpc.enhancedClasses'
+ *     value='com.google.myapp.MyPersistentClass'/>
+ * </pre>
+ *
+ * <p>
+ * Enhanced classes are checked for the presence of additional serializable
+ * fields on the server that were not defined in client code as seen by the GWT
+ * compiler. If it is possible for an instance of such a class to be transmitted
+ * bidrectionally between server and client, a special RPC rule is used. The
+ * server-only fields are serialized using standard Java serialization and sent
+ * between the client and server as a blob of opaque base-64 encoded binary
+ * data. When an instance is sent from client to server, the server instance is
+ * populated by invoking setter methods where possible rather than by setting
+ * fields directly. This allows APIs such as JDO the opportunity to update the
+ * object state properly to take into account changes that may have occurred to
+ * the object's state while resident on the client.
+ * </p>
  */
 public class SerializableTypeOracleBuilder {
 
@@ -123,6 +152,12 @@ public class SerializableTypeOracleBuilder {
     private final JClassType manualSerializer;
 
     /**
+     * <code>true</code> if this class might be enhanced on the server to
+     * contain extra fields.
+     */
+    private final boolean maybeEnhanced;
+
+    /**
      * Path used to discover this type.
      */
     private final TypePath path;
@@ -143,6 +178,7 @@ public class SerializableTypeOracleBuilder {
       autoSerializable = SerializableTypeOracleBuilder.isAutoSerializable(type);
       manualSerializer = findCustomFieldSerializer(typeOracle, type);
       directlyImplementsMarker = directlyImplementsMarkerInterface(type);
+      maybeEnhanced = hasJdoAnnotation(type) || hasJpaAnnotation(type);
     }
 
     public JClassType getManualSerializer() {
@@ -191,6 +227,10 @@ public class SerializableTypeOracleBuilder {
 
     public boolean isPendingInstantiable() {
       return state == TypeState.CHECK_IN_PROGRESS;
+    }
+
+    public boolean maybeEnhanced() {
+      return maybeEnhanced;
     }
 
     public void setFieldSerializable() {
@@ -262,6 +302,46 @@ public class SerializableTypeOracleBuilder {
     }
   };
 
+  /**
+   * A reference to the annotation class
+   * javax.jdo.annotations.PersistenceCapable used by the JDO API. May be null
+   * if JDO is not present in the runtime environment.
+   */
+  private static Class<? extends Annotation> JDO_PERSISTENCE_CAPABLE_ANNOTATION = null;
+
+  /**
+   * A reference to the method 'String
+   * javax.jdo.annotations.PersistenceCapable.detachable()'.
+   */
+  private static Method JDO_PERSISTENCE_CAPABLE_DETACHABLE_METHOD;
+
+  /**
+   * A reference to the annotation class javax.persistence.Entity used by the
+   * JPA API. May be null if JPA is not present in the runtime environment.
+   */
+  private static Class<? extends Annotation> JPA_ENTITY_ANNOTATION = null;
+
+  static {
+    try {
+      JDO_PERSISTENCE_CAPABLE_ANNOTATION = Class.forName(
+          "javax.jdo.annotations.PersistenceCapable").asSubclass(
+          Annotation.class);
+      JDO_PERSISTENCE_CAPABLE_DETACHABLE_METHOD =
+          JDO_PERSISTENCE_CAPABLE_ANNOTATION.getDeclaredMethod("detachable", (Class[]) null);
+    } catch (ClassNotFoundException e) {
+      // Ignore, JDO_PERSISTENCE_CAPABLE_ANNOTATION will be null
+    } catch (NoSuchMethodException e) {
+      JDO_PERSISTENCE_CAPABLE_ANNOTATION = null;
+    }
+
+    try {
+      JPA_ENTITY_ANNOTATION = Class.forName("javax.persistence.Entity").asSubclass(
+          Annotation.class);
+    } catch (ClassNotFoundException e) {
+      // Ignore, JPA_ENTITY_CAPABLE_ANNOTATION will be null
+    }
+  }
+
   static boolean canBeInstantiated(JClassType type, ProblemReport problems) {
     if (type.isEnum() == null) {
       if (type.isAbstract()) {
@@ -323,6 +403,48 @@ public class SerializableTypeOracleBuilder {
     }
 
     return (JRealClassType) type;
+  }
+
+  /**
+   * @param type the type to query
+   * @return true if the type is annotated with @PersistenceCapable(...,
+   *         detachable="true")
+   */
+  static boolean hasJdoAnnotation(JClassType type) {
+    if (JDO_PERSISTENCE_CAPABLE_ANNOTATION == null) {
+      return false;
+    }
+    Annotation annotation = type.getAnnotation(JDO_PERSISTENCE_CAPABLE_ANNOTATION);
+    if (annotation == null) {
+      return false;
+    }
+    try {
+      Object value = JDO_PERSISTENCE_CAPABLE_DETACHABLE_METHOD.invoke(
+          annotation, (Object[]) null);
+      if (value instanceof String) {
+        return "true".equalsIgnoreCase((String) value);
+      } else {
+        return false;
+      }
+    } catch (IllegalAccessException e) {
+      // will return false
+    } catch (InvocationTargetException e) {
+      // will return false
+    }
+
+    return false;
+  }
+
+  /**
+   * @param type the type to query
+   * @return true if the type is annotated with @Entity
+   */
+  static boolean hasJpaAnnotation(JClassType type) {
+    if (JPA_ENTITY_ANNOTATION == null) {
+      return false;
+    }
+    Annotation annotation = type.getAnnotation(JPA_ENTITY_ANNOTATION);
+    return annotation != null;
   }
 
   static boolean isAutoSerializable(JClassType type) {
@@ -568,6 +690,8 @@ public class SerializableTypeOracleBuilder {
    * Cache of the {@link JClassType} for {@link Collection}.
    */
   private final JGenericType collectionClass;
+  
+  private Set<String> enhancedClasses = null;
 
   private OutputStream logOutputStream;
 
@@ -631,6 +755,7 @@ public class SerializableTypeOracleBuilder {
 
     suppressNonStaticFinalFieldWarnings = Shared.shouldSuppressNonStaticFinalFieldWarnings(
         logger, propertyOracle);
+    enhancedClasses = Shared.getEnhancedTypes(propertyOracle);
   }
 
   public void addRootType(TreeLogger logger, JType type) {
@@ -701,6 +826,9 @@ public class SerializableTypeOracleBuilder {
 
     logReachableTypes(logger);
 
+    Set<JClassType> possiblyEnhancedTypes = new TreeSet<JClassType>(
+        JTYPE_COMPARATOR);
+
     Set<JClassType> possiblyInstantiatedTypes = new TreeSet<JClassType>(
         JTYPE_COMPARATOR);
 
@@ -723,12 +851,17 @@ public class SerializableTypeOracleBuilder {
 
         fieldSerializableTypes.add(type);
       }
+
+      if ((enhancedClasses != null && enhancedClasses.contains(type.getQualifiedSourceName()))
+          || tic.maybeEnhanced()) {
+        possiblyEnhancedTypes.add(type);
+      }
     }
 
     logSerializableTypes(logger, fieldSerializableTypes);
 
     return new SerializableTypeOracleImpl(fieldSerializableTypes,
-        possiblyInstantiatedTypes);
+        possiblyInstantiatedTypes, possiblyEnhancedTypes);
   }
 
   /**

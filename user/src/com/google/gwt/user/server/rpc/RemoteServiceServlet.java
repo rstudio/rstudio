@@ -80,7 +80,7 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
       String serializationPolicyFilePath = SerializationPolicyLoader.getSerializationPolicyFileName(contextRelativePath
           + strongName);
 
-      // Open the RPC resource file read its contents.
+      // Open the RPC resource file and read its contents.
       InputStream is = servlet.getServletContext().getResourceAsStream(
           serializationPolicyFilePath);
       try {

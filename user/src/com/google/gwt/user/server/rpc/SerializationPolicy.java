@@ -17,6 +17,8 @@ package com.google.gwt.user.server.rpc;
 
 import com.google.gwt.user.client.rpc.SerializationException;
 
+import java.util.Set;
+
 /**
  * This is an abstract class for representing the serialization policy for a
  * given module and
@@ -25,6 +27,17 @@ import com.google.gwt.user.client.rpc.SerializationException;
  * of the server, not the web browser.
  */
 public abstract class SerializationPolicy {
+
+  /**
+   * Returns the field names of the given class known to the client for classes
+   * that are expected to be enhanced on the server to have additional fields,
+   * or null for classes that are not expected to be enhanced.
+   * 
+   * @param clazz the class to test
+   * @return a set containing client field names, or null
+   */
+  public abstract Set<String> getClientFieldNamesForEnhancedClass(Class<?> clazz);
+  
   /**
    * Returns <code>true</code> if the class' fields should be deserialized.
    * 

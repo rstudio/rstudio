@@ -20,14 +20,19 @@ import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamWriter;
 import com.google.gwt.user.server.Base64Utils;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * For internal use only. Used for server call serialization. This class is
@@ -588,7 +593,7 @@ public final class ServerSerializationStreamWriter extends
           + serializationPolicy.getClass().getName() + " does not implement "
           + TypeNameObfuscator.class.getName());
     } else {
-      return SerializabilityUtil.encodeSerializedInstanceReference(clazz);
+      return SerializabilityUtil.encodeSerializedInstanceReference(clazz, serializationPolicy);
     }
   }
 
@@ -599,8 +604,11 @@ public final class ServerSerializationStreamWriter extends
 
     Class<?> clazz = getClassForSerialization(instance);
 
-    serializationPolicy.validateSerialize(clazz);
-
+    try {
+      serializationPolicy.validateSerialize(clazz);
+    } catch (SerializationException e) {
+      throw new SerializationException(e.getMessage() + ": instance = " + instance);
+    }
     serializeImpl(instance, clazz);
   }
 
@@ -628,10 +636,55 @@ public final class ServerSerializationStreamWriter extends
   private void serializeClass(Object instance, Class<?> instanceClass)
       throws SerializationException {
     assert (instance != null);
-
     Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(instanceClass);
+
+    /**
+     * If clientFieldNames is non-null, identify any additional server-only fields and serialize
+     * them separately.  Java serialization is used to construct a byte array, which is encoded
+     * as a String and written prior to the rest of the field data.
+     */
+    Set<String> clientFieldNames = serializationPolicy.getClientFieldNamesForEnhancedClass(instanceClass);
+    if (clientFieldNames != null) {
+      List<Field> serverFields = new ArrayList<Field>();
+      for (Field declField : serializableFields) {
+        assert (declField != null);
+        
+        // Identify server-only fields
+        if (!clientFieldNames.contains(declField.getName())) {
+          serverFields.add(declField);
+          continue;
+        }
+      }
+      
+      // Serialize the server-only fields into a byte array and encode as a String
+      try {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeInt(serverFields.size());
+        for (Field f : serverFields) {
+          oos.writeObject(f.getName());
+          f.setAccessible(true);
+          Object fieldData = f.get(instance);
+          oos.writeObject(fieldData);
+        }
+        oos.close();
+
+        byte[] serializedData = baos.toByteArray();
+        String encodedData = Base64Utils.toBase64(serializedData);
+        writeString(encodedData);
+      } catch (IllegalAccessException e) {
+        throw new SerializationException(e);
+      } catch (IOException e) {
+        throw new SerializationException(e);
+      }
+    }
+    
+    // Write the client-visible field data
     for (Field declField : serializableFields) {
-      assert (declField != null);
+      if ((clientFieldNames != null) && !clientFieldNames.contains(declField.getName())) {
+        // Skip server-only fields
+        continue;
+      }
 
       boolean isAccessible = declField.isAccessible();
       boolean needsAccessOverride = !isAccessible
@@ -657,18 +710,6 @@ public final class ServerSerializationStreamWriter extends
     Class<?> superClass = instanceClass.getSuperclass();
     if (serializationPolicy.shouldSerializeFields(superClass)) {
       serializeImpl(instance, superClass);
-    }
-
-    /*
-     * Iterate through all ServerDataSerializers, in name order, allowing each
-     * to perform custom serialization.
-     */
-    for (ServerDataSerializer serializer : ServerDataSerializer.getSerializers()) {
-      if (serializer.shouldSerialize(instanceClass)) {
-        byte[] serializedData = serializer.serializeServerData(instance);
-        String encodedData = Base64Utils.toBase64(serializedData);
-        writeString(encodedData);
-      }
     }
   }
 
