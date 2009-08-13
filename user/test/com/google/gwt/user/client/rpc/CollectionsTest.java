@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
+import com.google.gwt.user.client.rpc.core.java.util.LinkedHashMap_CustomFieldSerializer;
 
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -304,6 +305,7 @@ public class CollectionsTest extends GWTTestCase {
     CollectionsTestServiceAsync service = getServiceAsync();
 
     final LinkedHashMap<String, MarkerTypeLinkedHashMap> expected = TestSetFactory.createLinkedHashMap();
+    assertFalse(LinkedHashMap_CustomFieldSerializer.getAccessOrderNoReflection(expected));
 
     service.echo(expected,
         new AsyncCallback<LinkedHashMap<String, MarkerTypeLinkedHashMap>>() {
@@ -327,6 +329,7 @@ public class CollectionsTest extends GWTTestCase {
     CollectionsTestServiceAsync service = getServiceAsync();
 
     final LinkedHashMap<String, MarkerTypeLinkedHashMap> expected = TestSetFactory.createLRULinkedHashMap();
+    assertTrue(LinkedHashMap_CustomFieldSerializer.getAccessOrderNoReflection(expected));
 
     service.echo(expected,
         new AsyncCallback<LinkedHashMap<String, MarkerTypeLinkedHashMap>>() {
