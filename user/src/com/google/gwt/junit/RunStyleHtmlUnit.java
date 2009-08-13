@@ -82,27 +82,29 @@ public class RunStyleHtmlUnit extends RunStyleRemote {
     @Override
     public void run() {
       WebClient webClient = new WebClient(browser);
+      webClient.setAlertHandler(this);
+      webClient.setIncorrectnessListener(this);
+      webClient.setThrowExceptionOnFailingStatusCode(false);
+      webClient.setThrowExceptionOnScriptError(true);
+      webClient.setOnbeforeunloadHandler(this);
+      setupWebClient(webClient);
       try {
-        webClient.setAlertHandler(this);
-        webClient.setIncorrectnessListener(this);
-        webClient.setThrowExceptionOnFailingStatusCode(false);
-        webClient.setThrowExceptionOnScriptError(true);
-        webClient.setOnbeforeunloadHandler(this);
-        setupWebClient(webClient);
         Page page = webClient.getPage(url);
         // TODO(jat): is this necessary?
         webClient.waitForBackgroundJavaScriptStartingBefore(2000);
         page.getEnclosingWindow().getJobManager().waitForJobs(60000);
         treeLogger.log(TreeLogger.DEBUG, "getPage returned "
             + ((HtmlPage) page).asXml());
+        // TODO(amitmanjhi): call webClient.closeAllWindows()
       } catch (FailingHttpStatusCodeException e) {
         treeLogger.log(TreeLogger.ERROR, "HTTP request failed", e);
+        return;
       } catch (MalformedURLException e) {
         treeLogger.log(TreeLogger.ERROR, "Bad URL", e);
+        return;
       } catch (IOException e) {
         treeLogger.log(TreeLogger.ERROR, "I/O error on HTTP request", e);
-      } finally {
-        webClient.closeAllWindows();
+        return;
       }
     }
 
