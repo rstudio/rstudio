@@ -292,7 +292,7 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
         padTwo(d.getMinutes()) + ":" +
         padTwo(d.getSeconds()) +
         " GMT" + hourOffset + minuteOffset +
-        + " " + d.getFullYear();
+        " " + d.getFullYear();
   }-*/;
 
   /**
