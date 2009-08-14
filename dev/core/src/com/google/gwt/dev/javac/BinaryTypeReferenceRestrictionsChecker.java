@@ -66,8 +66,9 @@ public class BinaryTypeReferenceRestrictionsChecker {
   static class BinaryTypeReferenceVisitor extends TypeRefVisitor {
     private final List<BinaryTypeReferenceSite> binaryTypeReferenceSites;
 
-    public BinaryTypeReferenceVisitor(
+    public BinaryTypeReferenceVisitor(CompilationUnitDeclaration cud,
         List<BinaryTypeReferenceSite> binaryTypeReferenceSites) {
+      super(cud);
       this.binaryTypeReferenceSites = binaryTypeReferenceSites;
     }
 
@@ -140,7 +141,7 @@ public class BinaryTypeReferenceRestrictionsChecker {
       CompilationUnitDeclaration cud) {
     List<BinaryTypeReferenceSite> binaryTypeReferenceSites = new ArrayList<BinaryTypeReferenceSite>();
     BinaryTypeReferenceVisitor binaryTypeReferenceVisitor = new BinaryTypeReferenceVisitor(
-        binaryTypeReferenceSites);
+        cud, binaryTypeReferenceSites);
     cud.traverse(binaryTypeReferenceVisitor, cud.scope);
     return binaryTypeReferenceSites;
   }

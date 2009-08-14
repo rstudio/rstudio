@@ -289,7 +289,7 @@ public abstract class CompilationUnit {
       CompilationUnitDeclaration cud,
       final Map<String, String> binaryTypeToSourceFileMap) {
     final Set<String> result = new HashSet<String>();
-    cud.traverse(new TypeRefVisitor() {
+    cud.traverse(new TypeRefVisitor(cud) {
       @Override
       protected void onBinaryTypeRef(BinaryTypeBinding referencedType,
           CompilationUnitDeclaration unitOfReferrer, Expression expression) {
