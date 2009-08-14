@@ -34,7 +34,6 @@ import com.google.gwt.util.tools.ArgHandlerString;
 import java.awt.Cursor;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -318,19 +317,12 @@ abstract class OophmHostedModeBase extends HostedModeBase {
       getTopLogger().log(TreeLogger.ERROR, "Invalid URL " + url, e);
       throw new UnableToCompleteException();
     }
-    TreeLogger branch = getTopLogger().branch(TreeLogger.INFO,
-        "Launching firefox with " + url, null);
-    try {
-      Process browser = Runtime.getRuntime().exec("firefox " + url + "&");
-      int exitCode = browser.waitFor();
-      if (exitCode != 0) {
-        branch.log(TreeLogger.ERROR, "Exit code " + exitCode, null);
-      }
-    } catch (IOException e) {
-      branch.log(TreeLogger.ERROR, "Error starting browser", e);
-    } catch (InterruptedException e) {
-      branch.log(TreeLogger.ERROR, "Error starting browser", e);
-    }
+    System.err.println(
+        "Using a browser with the GWT Development Plugin, please browse to");
+    System.err.println("the following URL:");
+    System.err.println("  " + url);
+    getTopLogger().log(TreeLogger.INFO,
+        "Waiting for browser connection to " + url, null);
   }
 
   public BrowserWidget openNewBrowserWindow() throws UnableToCompleteException {
@@ -407,10 +399,10 @@ abstract class OophmHostedModeBase extends HostedModeBase {
   @Override
   protected void openAppWindow() {
     ImageIcon gwtIcon = loadImageIcon("icon24.png");
-    frame = new JFrame("GWT Hosted Mode");
+    frame = new JFrame("GWT Development Mode");
     tabs = new JTabbedPane();
     mainWnd = new ShellMainWindow(options.getLogLevel());
-    tabs.addTab("Hosted Mode", gwtIcon, mainWnd, "GWT Hosted-mode");
+    tabs.addTab("Development Mode", gwtIcon, mainWnd, "GWT Development mode");
     if (!options.isNoServer()) {
       webServerLog = new WebServerPanel(getPort(), options.getLogLevel(),
           new RestartAction() {
