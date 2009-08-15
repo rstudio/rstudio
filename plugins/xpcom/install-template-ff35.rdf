@@ -4,7 +4,7 @@
 
   <Description about="urn:mozilla:install-manifest">
     <em:id>oophm-xpcom-ff35@gwt.google.com</em:id>
-    <em:name>GWT Hosted Mode Plugin (XPCOM) for FF v3.5+</em:name>
+    <em:name>GWT Development Mode Plugin (XPCOM) for FF v3.5+</em:name>
     <em:version>GWT_OOPHM_VERSION</em:version>
     <em:type>2</em:type>
     <em:targetApplication>
@@ -16,7 +16,7 @@
     </em:targetApplication>
 
     <!-- Front End MetaData -->
-    <em:description>A plugin to support hosted-mode development of GWT applications</em:description>
+    <em:description>A plugin to support development-mode development of GWT applications</em:description>
     <em:creator>Google, Inc.</em:creator>
     <em:homepageURL>http://code.google.com/webtoolkit/</em:homepageURL>
     <em:iconURL>chrome://gwt-oophm/skin/icon.png</em:iconURL>
