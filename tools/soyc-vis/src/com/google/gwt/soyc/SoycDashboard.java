@@ -46,6 +46,7 @@ import javax.xml.parsers.SAXParserFactory;
  * The command-line entry point for creating a SOYC report.
  */
 public class SoycDashboard {
+
   private static class FormatException extends RuntimeException {
     public FormatException() {
       super();
@@ -60,102 +61,136 @@ public class SoycDashboard {
     }
   }
 
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
     try {
       System.out.println("Generating the Story of Your Compile...");
-      GlobalInformation.settings = Settings.fromArgumentList(args);
+      Settings settings = Settings.fromArgumentList(args);
 
-      Settings settings = GlobalInformation.settings;
-      GlobalInformation.displayDependencies = (settings.depFileName != null);
-      GlobalInformation.displaySplitPoints = (settings.splitPointsFileName != null);
+      MakeTopLevelHtmlForPerm makeTopLevelHtml = new MakeTopLevelHtmlForPerm();
+      makeTopLevelHtml.setSettings(settings);
 
-      MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm = new MakeTopLevelHtmlForPerm();
+      // read in all the symbol maps
+      settings.readPermutationInfo();
+      makeTopLevelHtml.makeTopLevelHtmlForAllPerms();
+      for (String permutationId : settings.allPermsInfo.keySet()) {
+        GlobalInformation globalInformation = new GlobalInformation();
+        MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm = new MakeTopLevelHtmlForPerm(
+            globalInformation);
+        makeTopLevelHtmlForPerm.setSettings(settings);
 
-      new File(settings.out.get()).mkdir();
+        String storiesFileName = settings.storiesFileName;
 
-      if (GlobalInformation.displayDependencies == true) {
+        String depFileName = settings.depFileName;
+        if (depFileName == null) {
+          depFileName = "";
+        }
+        String splitPointsFileName = settings.splitPointsFileName;
+        if (splitPointsFileName == null) {
+          splitPointsFileName = "";
+        }
+
+        if (settings.symbolMapsDir.get() != null) {
+          storiesFileName = settings.soycDir.get() + "/stories" + permutationId
+              + ".xml.gz";
+
+          if (!(new File(storiesFileName).exists())) {
+            storiesFileName = settings.soycDir.get() + "/stories"
+                + permutationId + ".xml";
+          }
+          depFileName = settings.soycDir.get() + "/dependencies"
+              + permutationId + ".xml.gz";
+          if (!(new File(depFileName).exists())) {
+            depFileName = settings.soycDir.get() + "/dependencies"
+                + permutationId + ".xml";
+          }
+          splitPointsFileName = settings.soycDir.get() + "/splitPoints"
+              + permutationId + ".xml.gz";
+          if (!(new File(splitPointsFileName).exists())) {
+            splitPointsFileName = settings.soycDir.get() + "/splitPoints"
+                + permutationId + ".xml";
+          }
+        }
+
+        settings.displayDependencies = (new File(depFileName)).exists();
+        settings.displaySplitPoints = (new File(splitPointsFileName)).exists();
+
+        new File(settings.out.get()).mkdir();
+        if (settings.displayDependencies) {
+          /**
+           * handle dependencies
+           */
+          Map<String, Map<String, String>> dependencies = new TreeMap<String, Map<String, String>>();
+          DefaultHandler depHandler = parseXMLDocumentDependencies(dependencies);
+          SAXParserFactory depFactoryMain = SAXParserFactory.newInstance();
+          depFactoryMain.setNamespaceAware(true);
+          SAXParser saxParser = depFactoryMain.newSAXParser();
+          InputStream in = new FileInputStream(depFileName);
+          if (depFileName.endsWith(".gz")) {
+            in = new GZIPInputStream(in);
+          }
+          in = new BufferedInputStream(in);
+          saxParser.parse(in, depHandler);
+
+          makeTopLevelHtmlForPerm.makeDependenciesHtml(dependencies,
+              permutationId);
+        }
+
+        if (settings.displaySplitPoints) {
+          /**
+           * handle runAsync split points
+           */
+
+          DefaultHandler splitPointHandler = parseXMLDocumentSplitPoints(globalInformation);
+          SAXParserFactory splitPointsFactoryMain = SAXParserFactory.newInstance();
+          splitPointsFactoryMain.setNamespaceAware(true);
+
+          SAXParser saxParser = splitPointsFactoryMain.newSAXParser();
+          InputStream in = new FileInputStream(splitPointsFileName);
+          if (depFileName.endsWith(".gz")) {
+            in = new GZIPInputStream(in);
+          }
+          in = new BufferedInputStream(in);
+          saxParser.parse(in, splitPointHandler);
+        }
+
         /**
-         * handle dependencies
+         * handle everything else
          */
-        Map<String, Map<String, String>> dependencies = new TreeMap<String, Map<String, String>>();
-        DefaultHandler depHandler = parseXMLDocumentDependencies(dependencies);
 
-        // start parsing
-        SAXParserFactory depFactoryMain = SAXParserFactory.newInstance();
-        depFactoryMain.setNamespaceAware(true);
-
-        SAXParser saxParser = depFactoryMain.newSAXParser();
-        InputStream in = new FileInputStream(settings.depFileName);
-        if (settings.depFileName.endsWith(".gz")) {
+        DefaultHandler handler = parseXMLDocumentSizeMap(globalInformation);
+        SAXParserFactory factoryMain = SAXParserFactory.newInstance();
+        factoryMain.setNamespaceAware(true);
+        SAXParser saxParser = factoryMain.newSAXParser();
+        InputStream in = new FileInputStream(storiesFileName);
+        if (storiesFileName.endsWith(".gz")) {
           in = new GZIPInputStream(in);
         }
         in = new BufferedInputStream(in);
-        saxParser.parse(in, depHandler);
+        saxParser.parse(in, handler);
 
-        makeTopLevelHtmlForPerm.makeDependenciesHtml(dependencies);
-      }
-
-      if (GlobalInformation.displaySplitPoints == true) {
-        /**
-         * handle runAsync split points
-         */
-
-        DefaultHandler splitPointHandler = parseXMLDocumentSplitPoints();
-
-        // start parsing
-        SAXParserFactory splitPointsFactoryMain = SAXParserFactory.newInstance();
-        splitPointsFactoryMain.setNamespaceAware(true);
-
-        SAXParser saxParser = splitPointsFactoryMain.newSAXParser();
-        InputStream in = new FileInputStream(settings.splitPointsFileName);
-        if (settings.depFileName.endsWith(".gz")) {
-          in = new GZIPInputStream(in);
+        // add to "All Other Code" if none of the special categories apply
+        for (SizeBreakdown breakdown : globalInformation.allSizeBreakdowns()) {
+          updateAllOtherCodeType(breakdown.nameToCodeColl, globalInformation);
         }
-        in = new BufferedInputStream(in);
-        saxParser.parse(in, splitPointHandler);
+        globalInformation.computePackageSizes();
+
+        // clean up the RPC categories
+        for (SizeBreakdown breakdown : globalInformation.allSizeBreakdowns()) {
+          foldInRPCHeuristic(breakdown.nameToCodeColl);
+        }
+
+        // generate all the html files
+        makeTopLevelHtmlForPerm.makeSplitStatusPages(permutationId);
+        makeTopLevelHtmlForPerm.makeLeftoverStatusPages(permutationId);
+        for (SizeBreakdown breakdown : globalInformation.allSizeBreakdowns()) {
+          DependencyLinker linker = chooseDependencyLinker(
+              makeTopLevelHtmlForPerm, breakdown);
+          makeHTMLFiles(makeTopLevelHtmlForPerm, breakdown, linker,
+              permutationId);
+        }
+        System.out.println("Finished creating reports for permutation.");
       }
-
-      /**
-       * handle everything else
-       */
-
-      // make the parser handler
-      DefaultHandler handler = parseXMLDocumentSizeMap();
-
-      // start parsing
-      SAXParserFactory factoryMain = SAXParserFactory.newInstance();
-      factoryMain.setNamespaceAware(true);
-      SAXParser saxParser = factoryMain.newSAXParser();
-      InputStream in = new FileInputStream(settings.storiesFileName);
-      if (settings.storiesFileName.endsWith(".gz")) {
-        in = new GZIPInputStream(in);
-      }
-      in = new BufferedInputStream(in);
-      saxParser.parse(in, handler);
-
-      // add to "All Other Code" if none of the special categories apply
-      for (SizeBreakdown breakdown : GlobalInformation.allSizeBreakdowns()) {
-        updateAllOtherCodeType(breakdown.nameToCodeColl);
-      }
-
-      // now we need to aggregate numbers
-      GlobalInformation.computePackageSizes();
-
-      // clean up the RPC categories
-      for (SizeBreakdown breakdown : GlobalInformation.allSizeBreakdowns()) {
-        foldInRPCHeuristic(breakdown.nameToCodeColl);
-      }
-
-      // generate all the html files
-      makeTopLevelHtmlForPerm.makeSplitStatusPages();
-      makeTopLevelHtmlForPerm.makeLeftoverStatusPages();
-      for (SizeBreakdown breakdown : GlobalInformation.allSizeBreakdowns()) {
-        DependencyLinker linker = chooseDependencyLinker(
-            makeTopLevelHtmlForPerm, breakdown);
-        makeHTMLFiles(makeTopLevelHtmlForPerm, breakdown, linker);
-      }
-
-      System.out.println("Finished creating reports. To see the dashboard, open SoycDashboard-index.html in your browser.");
+      System.out.println("Finished creating reports. To see the dashboard, open index.html in your browser.");
 
     } catch (ParserConfigurationException e) {
       System.err.println("Could not parse document. " + e.getMessage());
@@ -171,7 +206,10 @@ public class SoycDashboard {
       System.exit(1);
     } catch (Settings.ArgumentListException e) {
       System.err.println(e.getMessage());
-      System.err.println("Usage: java com.google.gwt.soyc.SoycDashboard options stories0.xml[.gz] [dependencies0.xml[.gz]] [splitpoints0.xml[.gz]]");
+      System.err.println("Usage: "
+          + "java com.google.gwt.soyc.SoycDashboard -resources dir -soycDir dir -symbolMaps dir [-out dir]");
+      System.err.println("(Legacy usage: "
+          + "java com.google.gwt.soyc.SoycDashboard options stories0.xml[.gz] [dependencies0.xml[.gz]] [splitpoints0.xml[.gz]])");
       System.err.println("Options:");
       System.err.println(Settings.settingsHelp());
       System.exit(1);
@@ -179,28 +217,28 @@ public class SoycDashboard {
   }
 
   private static Collection<SizeBreakdown> breakdownsForFragment(
-      Integer fragment) {
+      Integer fragment, GlobalInformation globalInformation) {
     List<SizeBreakdown> breakdowns = new ArrayList<SizeBreakdown>();
-    breakdowns.add(GlobalInformation.totalCodeBreakdown);
+    breakdowns.add(globalInformation.getTotalCodeBreakdown());
     if (fragment == 0) {
-      breakdowns.add(GlobalInformation.initialCodeBreakdown);
+      breakdowns.add(globalInformation.getInitialCodeBreakdown());
     }
-    if (fragment == (GlobalInformation.numSplitPoints + 1)) {
-      breakdowns.add(GlobalInformation.leftoversBreakdown);
+    if (fragment == (globalInformation.getNumSplitPoints() + 1)) {
+      breakdowns.add(globalInformation.getLeftoversBreakdown());
     }
-    if (fragment >= 1 && fragment <= GlobalInformation.numSplitPoints) {
-      breakdowns.add(GlobalInformation.splitPointCodeBreakdown(fragment));
+    if (fragment >= 1 && fragment <= globalInformation.getNumSplitPoints()) {
+      breakdowns.add(globalInformation.splitPointCodeBreakdown(fragment));
     }
     return breakdowns;
   }
 
   private static DependencyLinker chooseDependencyLinker(
       MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm, SizeBreakdown breakdown) {
-    if (breakdown == GlobalInformation.totalCodeBreakdown) {
+    if (breakdown == makeTopLevelHtmlForPerm.getGlobalInformation().getTotalCodeBreakdown()) {
       return makeTopLevelHtmlForPerm.new DependencyLinkerForTotalBreakdown();
-    } else if (breakdown == GlobalInformation.initialCodeBreakdown) {
+    } else if (breakdown == makeTopLevelHtmlForPerm.getGlobalInformation().getInitialCodeBreakdown()) {
       return makeTopLevelHtmlForPerm.new DependencyLinkerForInitialCode();
-    } else if (breakdown == GlobalInformation.leftoversBreakdown) {
+    } else if (breakdown == makeTopLevelHtmlForPerm.getGlobalInformation().getLeftoversBreakdown()) {
       return makeTopLevelHtmlForPerm.new DependencyLinkerForLeftoversFragment();
     } else {
       return makeTopLevelHtmlForPerm.new DependencyLinkerForExclusiveFragment();
@@ -242,16 +280,24 @@ public class SoycDashboard {
   }
 
   /**
-   * generates all the HTML files for one size breakdown
+   * Generates all the HTML files for one size breakdown.
+   * 
+   * @param makeTopLevelHtmlForPerm
+   * @param breakdown
+   * @param depLinker
+   * @param permutationId
+   * @throws IOException
    */
   private static void makeHTMLFiles(
       MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm, SizeBreakdown breakdown,
-      DependencyLinker depLinker) throws IOException {
-    makeTopLevelHtmlForPerm.makePackageClassesHtmls(breakdown, depLinker);
-    makeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(breakdown);
-    makeTopLevelHtmlForPerm.makeLiteralsClassesTableHtmls(breakdown);
-    makeTopLevelHtmlForPerm.makeBreakdownShell(breakdown);
-    makeTopLevelHtmlForPerm.makeTopLevelShell();
+      DependencyLinker depLinker, String permutationId) throws IOException {
+    makeTopLevelHtmlForPerm.makePackageClassesHtmls(breakdown, depLinker,
+        permutationId);
+    makeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(breakdown, permutationId);
+    makeTopLevelHtmlForPerm.makeLiteralsClassesTableHtmls(breakdown,
+        permutationId);
+    makeTopLevelHtmlForPerm.makeBreakdownShell(breakdown, permutationId);
+    makeTopLevelHtmlForPerm.makeTopLevelShell(permutationId);
   }
 
   private static DefaultHandler parseXMLDocumentDependencies(
@@ -278,7 +324,7 @@ public class SoycDashboard {
 
       @Override
       public void startElement(String nsUri, String strippedName,
-          String tagName, Attributes attributes) {
+          String tagName, final Attributes attributes) {
 
         valueBuilder.delete(0, valueBuilder.length());
 
@@ -311,7 +357,8 @@ public class SoycDashboard {
     return handler;
   }
 
-  private static DefaultHandler parseXMLDocumentSizeMap() {
+  private static DefaultHandler parseXMLDocumentSizeMap(
+      final GlobalInformation globalInformation) {
     return new DefaultHandler() {
       int fragment = -1;
 
@@ -324,7 +371,7 @@ public class SoycDashboard {
 
       @Override
       public void startElement(String uri, String localName, String qName,
-          Attributes attributes) {
+          final Attributes attributes) {
         if (localName.compareTo("sizemap") == 0) {
           // starting a new size map
           String fragString = attributes.getValue("fragment");
@@ -346,7 +393,8 @@ public class SoycDashboard {
           } catch (NumberFormatException e) {
             throw new FormatException(e);
           }
-          for (SizeBreakdown breakdown : breakdownsForFragment(fragment)) {
+          for (SizeBreakdown breakdown : breakdownsForFragment(fragment,
+              globalInformation)) {
             breakdown.sizeAllCode += size;
           }
         } else if (localName.compareTo("size") == 0) {
@@ -368,12 +416,12 @@ public class SoycDashboard {
           } catch (NumberFormatException e) {
             throw new FormatException(e);
           }
-          recordSize(type, ref, size);
+          recordSize(type, ref, size, globalInformation);
         }
       }
 
       private void accountForSize(SizeBreakdown breakdown, String refType,
-          String ref, int size) {
+          String ref, int size, GlobalInformation globalInformation) {
         if (refType.equals("string")) {
           LiteralsCollection stringLiterals = breakdown.nameToLitColl.get("string");
           stringLiterals.size += size;
@@ -396,19 +444,20 @@ public class SoycDashboard {
 
           // derive the package name from the class
           String packageName;
-          if (!GlobalInformation.classToPackage.containsKey(className)) {
+          if (!globalInformation.getClassToPackage().containsKey(className)) {
             packageName = className;
             packageName = packageName.replaceAll("\\.[A-Z].*", "");
-            GlobalInformation.classToPackage.put(className, packageName);
+            globalInformation.getClassToPackage().put(className, packageName);
           } else {
-            packageName = GlobalInformation.classToPackage.get(className);
+            packageName = globalInformation.getClassToPackage().get(className);
           }
-          if (!GlobalInformation.packageToClasses.containsKey(packageName)) {
+          if (!globalInformation.getPackageToClasses().containsKey(packageName)) {
             TreeSet<String> insertSet = new TreeSet<String>();
             insertSet.add(className);
-            GlobalInformation.packageToClasses.put(packageName, insertSet);
+            globalInformation.getPackageToClasses().put(packageName, insertSet);
           } else {
-            GlobalInformation.packageToClasses.get(packageName).add(className);
+            globalInformation.getPackageToClasses().get(packageName).add(
+                className);
           }
 
           recordClassCategories(breakdown.nameToCodeColl, className,
@@ -440,15 +489,18 @@ public class SoycDashboard {
         }
       }
 
-      private void recordSize(String refType, String ref, int size) {
-        for (SizeBreakdown breakdown : breakdownsForFragment(fragment)) {
-          accountForSize(breakdown, refType, ref, size);
+      private void recordSize(String refType, String ref, int size,
+          GlobalInformation globalInformation) {
+        for (SizeBreakdown breakdown : breakdownsForFragment(fragment,
+            globalInformation)) {
+          accountForSize(breakdown, refType, ref, size, globalInformation);
         }
       }
     };
   }
 
-  private static DefaultHandler parseXMLDocumentSplitPoints() {
+  private static DefaultHandler parseXMLDocumentSplitPoints(
+      final GlobalInformation globalInformation) {
 
     DefaultHandler handler = new DefaultHandler() {
 
@@ -463,21 +515,22 @@ public class SoycDashboard {
 
       @Override
       public void startElement(String nsUri, String strippedName,
-          String tagName, Attributes attributes) {
+          String tagName, final Attributes attributes) {
         if (strippedName.compareTo("splitpoint") == 0) {
           parseSplitPoint(attributes);
         } else if (strippedName.compareTo("initialseq") == 0) {
           inInitialLoadSequence = true;
         } else if (inInitialLoadSequence
             && strippedName.compareTo("splitpointref") == 0) {
-          GlobalInformation.splitPointInitialLoadSequence.add(parseSplitPointReference(attributes));
+          globalInformation.getSplitPointInitialLoadSequence().add(
+              parseSplitPointReference(attributes));
         }
       }
 
       /*
        * parses the split points
        */
-      private void parseSplitPoint(Attributes attributes) {
+      private void parseSplitPoint(final Attributes attributes) {
         if (attributes.getValue("id") != null) {
           String curSplitPoint = attributes.getValue("id");
           if (attributes.getValue("location") != null) {
@@ -486,14 +539,14 @@ public class SoycDashboard {
             curSplitPointLocation = curSplitPointLocation.replaceAll("\\(L.*",
                 "");
 
-            GlobalInformation.splitPointToLocation.put(
+            globalInformation.getSplitPointToLocation().put(
                 Integer.parseInt(curSplitPoint), curSplitPointLocation);
-            GlobalInformation.numSplitPoints++;
+            globalInformation.incrementSplitPoints();
           }
         }
       }
 
-      private Integer parseSplitPointReference(Attributes attributes) {
+      private Integer parseSplitPointReference(final Attributes attributes) {
         String spString = attributes.getValue("id");
         if (spString == null) {
           throw new FormatException("Could not parse split point reference");
@@ -509,9 +562,10 @@ public class SoycDashboard {
    * assigns code to "all other code" if none of the special categories apply
    */
   private static void updateAllOtherCodeType(
-      final HashMap<String, CodeCollection> nameToCodeColl) {
+      final HashMap<String, CodeCollection> nameToCodeColl,
+      GlobalInformation globalInformation) {
     // all classes not in any of the other categories
-    for (String className : GlobalInformation.classToPackage.keySet()) {
+    for (String className : globalInformation.getClassToPackage().keySet()) {
       if ((!nameToCodeColl.get("widget").classes.contains(className))
           && (!nameToCodeColl.get("rpcUser").classes.contains(className))
           && (!nameToCodeColl.get("rpcGwt").classes.contains(className))

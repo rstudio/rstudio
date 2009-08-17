@@ -28,32 +28,22 @@ import java.util.TreeSet;
  * Information global to the entire SOYC report generator.
  */
 public class GlobalInformation {
-  private static final SizeBreakdown[] EMPTY_SIZE_BREAKDOWN = new SizeBreakdown[0];
-
-  public static Boolean displayDependencies = false;
-  public static Boolean displaySplitPoints = false;
-
-  public static HashMap<String, String> classToPackage = new HashMap<String, String>();
-  public static Map<String, TreeSet<String>> packageToClasses = new TreeMap<String, TreeSet<String>>();
-
-  public static HashMap<String, HashSet<String>> classToWhatItDependsOn = new HashMap<String, HashSet<String>>();
-
-  public static int numSplitPoints = 0;
-
-  public static HashMap<Integer, String> splitPointToLocation = new HashMap<Integer, String>();
-  public static ArrayList<Integer> splitPointInitialLoadSequence = new ArrayList<Integer>();
-
-  public static Settings settings = new Settings();
-
-  public static SizeBreakdown initialCodeBreakdown = new SizeBreakdown(
+  private HashMap<String, String> classToPackage = new HashMap<String, String>();
+  private HashMap<String, HashSet<String>> classToWhatItDependsOn = new HashMap<String, HashSet<String>>();
+  private final SizeBreakdown[] EMPTY_SIZE_BREAKDOWN = new SizeBreakdown[0];
+  private Map<Integer, SizeBreakdown> exclusiveCodeBreakdowns = new HashMap<Integer, SizeBreakdown>();
+  private SizeBreakdown initialCodeBreakdown = new SizeBreakdown(
       "Initially downloaded code", "initial");
-  public static SizeBreakdown leftoversBreakdown = new SizeBreakdown(
+  private SizeBreakdown leftoversBreakdown = new SizeBreakdown(
       "Leftovers code, code not in any other category", "leftovers");
-  public static SizeBreakdown totalCodeBreakdown = new SizeBreakdown(
-      "Total program", "total");
-  private static Map<Integer, SizeBreakdown> exclusiveCodeBreakdowns = new HashMap<Integer, SizeBreakdown>();
-
-  public static SizeBreakdown[] allSizeBreakdowns() {
+  private int numSplitPoints = 0;
+  private Map<String, TreeSet<String>> packageToClasses = new TreeMap<String, TreeSet<String>>();
+  private HashMap<Integer, String> splitPointToLocation = new HashMap<Integer, String>();
+  private ArrayList<Integer> splitPointInitialLoadSequence = new ArrayList<Integer>();
+  private SizeBreakdown totalCodeBreakdown = new SizeBreakdown("Total program",
+      "total");
+  
+  public SizeBreakdown[] allSizeBreakdowns() {
     List<SizeBreakdown> breakdowns = new ArrayList<SizeBreakdown>();
     breakdowns.add(totalCodeBreakdown);
     breakdowns.add(initialCodeBreakdown);
@@ -65,26 +55,24 @@ public class GlobalInformation {
     }
     return breakdowns.toArray(EMPTY_SIZE_BREAKDOWN);
   }
-
-  public static void computePackageSizes() {
+  
+  /**
+   * Computes all package sizes.
+   */
+  public void computePackageSizes() {
     for (SizeBreakdown breakdown : allSizeBreakdowns()) {
       computePackageSizes(breakdown.packageToSize, breakdown.classToSize);
     }
   }
 
-  public static SizeBreakdown splitPointCodeBreakdown(int sp) {
-    assert sp >= 1 && sp <= numSplitPoints;
-    if (!exclusiveCodeBreakdowns.containsKey(sp)) {
-      exclusiveCodeBreakdowns.put(sp, new SizeBreakdown("split point " + sp
-          + ": " + splitPointToLocation.get(sp), "sp" + sp));
-    }
-    return exclusiveCodeBreakdowns.get(sp);
-  }
-
   /**
-   * TODO(spoon) move this to the SizeBreakdown class.
+   * Computes package sizes from class sizes. TODO(spoon) move this to the
+   * SizeBreakdown class.
+   * 
+   * @param packageToSize mapping from packages to their sizes
+   * @param classToSize mapping from classes to their sizes
    */
-  private static void computePackageSizes(Map<String, Integer> packageToSize,
+  private void computePackageSizes(Map<String, Integer> packageToSize,
       Map<String, Integer> classToSize) {
     packageToSize.clear();
     for (String packageName : packageToClasses.keySet()) {
@@ -98,4 +86,117 @@ public class GlobalInformation {
       }
     }
   }
+  
+  /**
+   * Gets the mapping from each class to its package.
+   * 
+   * @return classToPackage
+   */
+  public final HashMap<String, String> getClassToPackage() {
+    return classToPackage;
+  }
+
+  /**
+   * Gets the mapping from a class to what it depends on.
+   * 
+   * @return classToWhatItDependsOn
+   */
+  public final HashMap<String, HashSet<String>> getClassToWhatItDependsOn() {
+    return classToWhatItDependsOn;
+  }
+
+  /**
+   * Gets the exclusive code breakdown.
+   * 
+   * @return exclusiveCodeBreakdown
+   */
+  public final Map<Integer, SizeBreakdown> getExclusiveCodeBreakdowns() {
+    return exclusiveCodeBreakdowns;
+  }
+  
+  /**
+   * Gets the initial code breakdown.
+   * 
+   * @return initialCodeBreakdown
+   */
+  public final SizeBreakdown getInitialCodeBreakdown() {
+    return initialCodeBreakdown;
+  }
+
+  /**
+   * Gets the leftovers code breakdown.
+   * 
+   * @return leftoversCodeBreakdown
+   */
+  public final SizeBreakdown getLeftoversBreakdown() {
+    return leftoversBreakdown;
+  }
+  
+  /**
+   * Gets the number of split points.
+   * 
+   * @return numSplitPoints
+   */
+  public final int getNumSplitPoints() {
+    return numSplitPoints;
+  }
+
+  /**
+   * Gets the mapping from packages to classes.
+   * 
+   * @return packageToClasses
+   */
+  public final Map<String, TreeSet<String>> getPackageToClasses() {
+    return packageToClasses;
+  }
+  
+  /**
+   * Gets the initial load sequence.
+   * 
+   * @return splitPointInitialLoadSequence
+   */
+  public final ArrayList<Integer> getSplitPointInitialLoadSequence() {
+    return splitPointInitialLoadSequence;
+  }
+
+  /**
+   * Gets the mapping from split points to locations where they were set.
+   * 
+   * @return splitPointToLocation
+   */
+  public final HashMap<Integer, String> getSplitPointToLocation() {
+    return splitPointToLocation;
+  }
+  
+  /**
+   * Gets the total code breakdown.
+   * 
+   * @return totalCodeBreakdown
+   */
+  public final SizeBreakdown getTotalCodeBreakdown() {
+    return totalCodeBreakdown;
+  }
+  
+  /**
+   * Increments the split point count.
+   */
+  public final void incrementSplitPoints() {
+    numSplitPoints++;
+  }
+
+  /**
+   * Gets an exclusive code breakdown for a split point.
+   * 
+   * @param sp split point
+   * @return exlusive code breakdown for sp
+   */
+  public SizeBreakdown splitPointCodeBreakdown(int sp) {
+    assert sp >= 1 && sp <= numSplitPoints;
+    if (!exclusiveCodeBreakdowns.containsKey(sp)) {
+      exclusiveCodeBreakdowns.put(sp, new SizeBreakdown("split point " + sp
+          + ": " + splitPointToLocation.get(sp), "sp" + sp));
+    }
+    return exclusiveCodeBreakdowns.get(sp);
+  }
+
 }

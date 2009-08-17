@@ -23,7 +23,7 @@ import java.util.TreeMap;
  * A size breakdown of one code collection.
  */
 public class SizeBreakdown {
-  private static void initializeLiteralsCollection(
+  private void initializeLiteralsCollection(
       Map<String, LiteralsCollection> nameToLitColl) {
     nameToLitColl.put("long", new LiteralsCollection());
     nameToLitColl.put("null", new LiteralsCollection());
@@ -38,7 +38,7 @@ public class SizeBreakdown {
     nameToLitColl.put("float", new LiteralsCollection());
   }
 
-  private static void initializeNameToCodeCollection(
+  private void initializeNameToCodeCollection(
       HashMap<String, CodeCollection> nameToCodeColl) {
     nameToCodeColl.put("allOther", new CodeCollection());
     nameToCodeColl.put("widget", new CodeCollection());

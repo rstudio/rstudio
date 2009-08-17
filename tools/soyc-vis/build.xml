@@ -26,6 +26,7 @@
     </copy>
     <copy file="classLevel.css" tofile="${javac.out}/classLevel.css"/>
     <copy file="roundedCorners.css" tofile="${javac.out}/roundedCorners.css"/>
+    <copy file="common.css" tofile="${javac.out}/common.css"/>
   </target>
 
   <target name="build" depends="compile">
