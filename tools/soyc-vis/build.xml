@@ -20,13 +20,13 @@
         <pathelement location="${gwt.dev.jar}" />
       </classpath>
     </javac>
-    <mkdir dir="${javac.out}/images"/>
-    <copy todir="${javac.out}/images">
+    <mkdir dir="${javac.out}/com/google/gwt/soyc/resources/images"/>
+    <copy todir="${javac.out}/com/google/gwt/soyc/resources/images">
       <fileset dir="images"/>
     </copy>
-    <copy file="classLevel.css" tofile="${javac.out}/classLevel.css"/>
-    <copy file="roundedCorners.css" tofile="${javac.out}/roundedCorners.css"/>
-    <copy file="common.css" tofile="${javac.out}/common.css"/>
+    <copy file="classLevel.css" tofile="${javac.out}/com/google/gwt/soyc/resources/classLevel.css"/>
+    <copy file="roundedCorners.css" tofile="${javac.out}/com/google/gwt/soyc/resources/roundedCorners.css"/>
+    <copy file="common.css" tofile="${javac.out}/com/google/gwt/soyc/resources/common.css"/>
   </target>
 
   <target name="build" depends="compile">

@@ -121,6 +121,10 @@ public class MakeTopLevelHtmlForPerm {
    */
   private static final Pattern PATTERN_SP_INT = Pattern.compile("sp([0-9]+)");
 
+  private static String RESOURCES_PATH = MakeTopLevelHtmlForPerm.class.getPackage().getName().replace(
+      '.', '/')
+      + "/resources/";
+
   public void copyFileOrDirectory(File srcPath, File dstPath, String classPath,
       String inputFileName, boolean isDirectory) throws IOException {
     if (srcPath.isDirectory()) {
@@ -418,24 +422,24 @@ public class MakeTopLevelHtmlForPerm {
       classPath += "/";
     }
     String inputFileName = "roundedCorners.css";
-    File inputFile = new File(classPath + inputFileName);
+    File inputFile = new File(classPath + RESOURCES_PATH + inputFileName);
     File outputFile = getOutFile("roundedCorners.css");
-    copyFileOrDirectory(inputFile, outputFile, classPath, inputFileName, false);
+    copyFileOrDirectory(inputFile, outputFile, classPath, RESOURCES_PATH + inputFileName, false);
 
     inputFileName = "classLevel.css";
-    File inputFile2 = new File(classPath + inputFileName);
+    File inputFile2 = new File(classPath + RESOURCES_PATH + inputFileName);
     File outputFile2 = getOutFile("classLevel.css");
-    copyFileOrDirectory(inputFile2, outputFile2, classPath, inputFileName,
+    copyFileOrDirectory(inputFile2, outputFile2, classPath, RESOURCES_PATH + inputFileName,
         false);
 
     inputFileName = "common.css";
-    File inputFile3 = new File(classPath + inputFileName);
+    File inputFile3 = new File(classPath + RESOURCES_PATH + inputFileName);
     File outputFile3 = getOutFile("common.css");
-    copyFileOrDirectory(inputFile3, outputFile3, classPath, inputFileName,
+    copyFileOrDirectory(inputFile3, outputFile3, classPath, RESOURCES_PATH + inputFileName,
         false);
 
     inputFileName = "images";
-    File inputDir = new File(classPath + "images");
+    File inputDir = new File(classPath + RESOURCES_PATH + "images");
     File outputDir = getOutFile("images");
     copyFileOrDirectory(inputDir, outputDir, classPath, inputFileName, true);
 
