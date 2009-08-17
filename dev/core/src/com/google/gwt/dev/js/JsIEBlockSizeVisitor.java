@@ -33,7 +33,7 @@ import java.util.ListIterator;
  * within a JsBlock. This visitor will restructure blocks and other block-like
  * structures with too many statements in order to reduce the total number of
  * statements that appear within any given block to fewer than
- * {@value #MAX_BLOCK_SIZE} statements by creating nested blocks:
+ * {@value #MAX_BLOCK_SIZE} statements by creating nested blocks:  
  * 
  * <pre>
  * {
@@ -60,7 +60,10 @@ public class JsIEBlockSizeVisitor {
 
     @Override
     public void endVisit(JsBlock x, JsContext<JsStatement> ctx) {
-      restructure(x.getStatements());
+      // JsFunctionClusterer handles restructuring top-level statement blocks
+      if (!x.isGlobalBlock()) {
+        restructure(x.getStatements());
+      }
     }
 
     @Override
