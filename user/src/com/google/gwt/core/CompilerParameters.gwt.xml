@@ -22,14 +22,6 @@
   <define-configuration-property name='compiler.splitpoint.initial.sequence'
     is-multi-valued='true' />
 
-  <!-- If set to true, this will add line number data to the stack trace data -->
-  <define-configuration-property name="compiler.emulatedStack.recordLineNumbers"
-    is-multi-valued="false" />
-
-  <!-- Implies recordLineNumbers and adds source file name data to emitted JS -->
-  <define-configuration-property name="compiler.emulatedStack.recordFileNames"
-    is-multi-valued="false" />
- 
   <!-- From here down, the properties are unsupported and are only available for test cases -->
 
   <!--

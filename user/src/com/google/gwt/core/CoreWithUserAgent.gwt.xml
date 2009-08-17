@@ -18,6 +18,7 @@
   
   <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorMoz">
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
+    <when-property-is name="compiler.emulatedStack" value="false" />
     <any>
       <when-property-is name="user.agent" value="gecko" />
       <when-property-is name="user.agent" value="gecko1_8" />
@@ -26,6 +27,7 @@
 
   <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorOpera">
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
+    <when-property-is name="compiler.emulatedStack" value="false" />
     <any>
       <when-property-is name="user.agent" value="opera" />
     </any>

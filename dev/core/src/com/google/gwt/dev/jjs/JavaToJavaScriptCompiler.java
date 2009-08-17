@@ -272,15 +272,8 @@ public class JavaToJavaScriptCompiler {
 
       /*
        * Creates new variables, must run before code splitter and namer.
-       * 
-       * TODO(bobv): This is a temporary hack to conditionally map in this pass.
-       * Once deferred-binding properties can specify a subset of the
-       * permutation matrix, revisit this if statement.
        */
-      if (jprogram.getDeclaredTypes().contains(
-          jprogram.getFromTypeMap("com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated"))) {
-        JsStackEmulator.exec(jsProgram, propertyOracles);
-      }
+      JsStackEmulator.exec(jsProgram, propertyOracles);
 
       // (10) Split up the program into fragments
       SoycArtifact dependencies = null;

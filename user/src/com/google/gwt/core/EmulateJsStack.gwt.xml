@@ -13,11 +13,25 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- TODO(bobv): Implement the subset-of-permutation-matrix predicates -->
+<!-- Defines support for emulating the JS stack -->
 <module>
   <inherits name="com.google.gwt.core.Core" />
+
+  <!-- If set to true, emulated stack frames will be emitted into the JS -->
+  <define-property name="compiler.emulatedStack" values="true,false" />
+  <set-property name="compiler.emulatedStack" value="false" />
+
+  <!-- If set to true, this will add line number data to the stack trace data -->
+  <define-configuration-property name="compiler.emulatedStack.recordLineNumbers"
+    is-multi-valued="false" />
+
+  <!-- Implies recordLineNumbers and adds source file name data to emitted JS -->
+  <define-configuration-property name="compiler.emulatedStack.recordFileNames"
+    is-multi-valued="false" />
+ 
   <replace-with
     class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorEmulated">
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
+    <when-property-is name="compiler.emulatedStack" value="true" />
   </replace-with>
 </module>

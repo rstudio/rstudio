@@ -17,7 +17,10 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.SelectionProperty;
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.HasSourceInfo;
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
@@ -63,6 +66,8 @@ import java.util.Map;
  * @see com.google.gwt.core.client.impl.StackTraceCreator
  */
 public class JsStackEmulator {
+
+  private static final String PROPERTY_NAME = "compiler.emulatedStack";
 
   /**
    * Resets the global stack depth to the local stack index and top stack frame
@@ -776,7 +781,21 @@ public class JsStackEmulator {
   }
 
   public static void exec(JsProgram program, PropertyOracle[] propertyOracles) {
-    (new JsStackEmulator(program, propertyOracles)).execImpl();
+    SelectionProperty property;
+    try {
+      property = propertyOracles[0].getSelectionProperty(TreeLogger.NULL,
+          PROPERTY_NAME);
+    } catch (BadPropertyValueException e) {
+      // Should be inherited via Core.gwt.xml
+      throw new InternalCompilerException("Expected property " + PROPERTY_NAME
+          + " not defined", e);
+    }
+
+    String value = property.getCurrentValue();
+    assert value != null : property.getName() + " did not have a value";
+    if (Boolean.valueOf(value)) {
+      (new JsStackEmulator(program, propertyOracles)).execImpl();
+    }
   }
 
   private JsFunction caughtFunction;
