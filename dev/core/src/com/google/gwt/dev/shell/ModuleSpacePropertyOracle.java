@@ -19,11 +19,14 @@ import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.cfg.BindingProperty;
+import com.google.gwt.dev.cfg.Condition;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,9 +50,8 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     this.props = props;
   }
 
-  public com.google.gwt.core.ext.ConfigurationProperty
-      getConfigurationProperty(String propertyName)
-      throws BadPropertyValueException {
+  public com.google.gwt.core.ext.ConfigurationProperty getConfigurationProperty(
+      String propertyName) throws BadPropertyValueException {
     Property prop = getProperty(propertyName);
     if (prop instanceof ConfigurationProperty) {
       final ConfigurationProperty cprop = (ConfigurationProperty) prop;
@@ -118,14 +120,20 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     if (prop instanceof BindingProperty) {
       final BindingProperty cprop = (BindingProperty) prop;
       final String name = cprop.getName();
-      final String value = computePropertyValue(logger, propertyName, cprop);
+      final String value;
+      if (prevAnswers.containsKey(propertyName)) {
+        value = prevAnswers.get(propertyName);
+      } else {
+        value = computePropertyValue(logger, propertyName, cprop);
+        prevAnswers.put(propertyName, value);
+      }
       final String fallback = cprop.getFallback();
       final SortedSet<String> possibleValues = new TreeSet<String>();
       for (String v : cprop.getDefinedValues()) {
         possibleValues.add(v);
       }
       return new com.google.gwt.core.ext.SelectionProperty() {
-        
+
         public String getCurrentValue() {
           return value;
         }
@@ -147,6 +155,26 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     }
   }
 
+  private Condition computeActiveCondition(TreeLogger logger,
+      BindingProperty prop) throws BadPropertyValueException {
+    // Last-one-wins
+    Condition winner = null;
+    for (Condition cond : prop.getConditionalValues().keySet()) {
+      try {
+        if (cond.isTrue(logger, this, null, null)) {
+          winner = cond;
+        }
+      } catch (UnableToCompleteException e) {
+        BadPropertyValueException t = new BadPropertyValueException(
+            prop.getName());
+        t.initCause(e);
+        throw t;
+      }
+    }
+    assert winner != null : "No active Condition for " + prop.getName();
+    return winner;
+  }
+
   /**
    * Returns the value of the specified property.
    * 
@@ -157,12 +185,18 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
   private String computePropertyValue(TreeLogger logger, String propertyName,
       BindingProperty prop) throws BadPropertyValueException {
 
-    if (prop.getAllowedValues().length == 1) {
+    String value = prop.getConstrainedValue();
+    if (value != null) {
       // If there is only one legal value, use that.
-      return prop.getAllowedValues()[0];
+      return value;
     }
 
-    String value;
+    Condition winner = computeActiveCondition(logger, prop);
+    String[] values = prop.getAllowedValues(winner);
+    if (values.length == 1) {
+      return values[0];
+    }
+
     // Invokes the script function.
     //
     try {
@@ -180,7 +214,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     }
 
     // value may be null if the provider returned an unknown property value.
-    if (prop.isAllowedValue(value)) {
+    if (Arrays.asList(values).contains(value)) {
       return value;
     } else {
       // Bad value due to the provider returning an unknown value.

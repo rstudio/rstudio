@@ -253,6 +253,12 @@ public class Link {
            * values.
            */
           continue;
+        } else if (key.isDerived()) {
+          /*
+           * The property provider does not need to be invoked, because the
+           * value is determined entirely by other properties.
+           */
+          continue;
         }
         unboundProperties.put(key, orderedPropValues[i]);
       }

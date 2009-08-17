@@ -15,9 +15,10 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
 import java.util.Iterator;
 
@@ -29,11 +30,11 @@ public class ConditionAny extends CompoundCondition {
   public ConditionAny() {
   }
 
-  protected boolean doEval(TreeLogger logger, GeneratorContext context,
-      String testType) throws UnableToCompleteException {
-    for (Iterator iter = getConditions().iterator(); iter.hasNext();) {
-      Condition condition = (Condition) iter.next();
-      if (condition.isTrue(logger, context, testType)) {
+  protected boolean doEval(TreeLogger logger, PropertyOracle propertyOracle,
+      TypeOracle typeOracle, String testType) throws UnableToCompleteException {
+    for (Iterator<Condition> iter = getConditions().iterator(); iter.hasNext();) {
+      Condition condition = iter.next();
+      if (condition.isTrue(logger, propertyOracle, typeOracle, testType)) {
         return true;
       }
     }

@@ -15,16 +15,53 @@
  */
 package com.google.gwt.dev.util.test;
 
+import com.google.gwt.dev.cfg.BindingProperty;
+import com.google.gwt.dev.cfg.ConditionAny;
+import com.google.gwt.dev.cfg.ConditionWhenPropertyIs;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Properties;
-import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.PropertyPermutations;
 
 import junit.framework.TestCase;
 
 import java.util.Iterator;
 
+/**
+ * Tests the PropertyPermutations code.
+ */
 public class PropertyPermutationsTest extends TestCase {
+
+  /**
+   * Make sure that a cycle doesn't cause an infinite loop.
+   */
+  public void testCycle() {
+    // This is what you'd get with a conditional <set-property value="false">
+    ModuleDef md = new ModuleDef("testCycle");
+    Properties props = md.getProperties();
+
+    {
+      BindingProperty prop = props.createBinding("A");
+      prop.addDefinedValue(prop.getRootCondition(), "a1");
+      prop.addDefinedValue(prop.getRootCondition(), "a2");
+
+      prop.addDefinedValue(new ConditionWhenPropertyIs("B", "b3"), "a3");
+    }
+
+    {
+      BindingProperty prop = props.createBinding("B");
+      prop.addDefinedValue(prop.getRootCondition(), "b1");
+      prop.addDefinedValue(prop.getRootCondition(), "b2");
+
+      prop.addDefinedValue(new ConditionWhenPropertyIs("A", "a3"), "b3");
+    }
+
+    try {
+      new PropertyPermutations(props);
+      fail();
+    } catch (IllegalStateException e) {
+      // OK
+    }
+  }
 
   public void testOneDimensionPerm() {
     ModuleDef md = new ModuleDef("testOneDimensionPerm");
@@ -32,8 +69,8 @@ public class PropertyPermutationsTest extends TestCase {
 
     {
       BindingProperty prop = props.createBinding("debug");
-      prop.addDefinedValue("false");
-      prop.addDefinedValue("true");
+      prop.addDefinedValue(prop.getRootCondition(), "false");
+      prop.addDefinedValue(prop.getRootCondition(), "true");
     }
 
     // Permutations and their values are in stable alphabetical order.
@@ -57,15 +94,15 @@ public class PropertyPermutationsTest extends TestCase {
 
     {
       BindingProperty prop = props.createBinding("user.agent");
-      prop.addDefinedValue("moz");
-      prop.addDefinedValue("ie6");
-      prop.addDefinedValue("opera");
+      prop.addDefinedValue(prop.getRootCondition(), "moz");
+      prop.addDefinedValue(prop.getRootCondition(), "ie6");
+      prop.addDefinedValue(prop.getRootCondition(), "opera");
     }
 
     {
       BindingProperty prop = props.createBinding("debug");
-      prop.addDefinedValue("false");
-      prop.addDefinedValue("true");
+      prop.addDefinedValue(prop.getRootCondition(), "false");
+      prop.addDefinedValue(prop.getRootCondition(), "true");
     }
 
     // String[]s and their values are in stable alphabetical order.
@@ -103,5 +140,135 @@ public class PropertyPermutationsTest extends TestCase {
     perm = iter.next();
     assertEquals("true", perm[0]);
     assertEquals("opera", perm[1]);
+  }
+
+  public void testTwoDimensionPermWithExpansion() {
+    ModuleDef md = new ModuleDef("testTwoDimensionsWithExpansion");
+    Properties props = md.getProperties();
+
+    {
+      BindingProperty prop = props.createBinding("user.agent");
+      prop.addDefinedValue(prop.getRootCondition(), "moz");
+      prop.addDefinedValue(prop.getRootCondition(), "ie6");
+      prop.addDefinedValue(prop.getRootCondition(), "ie8");
+      prop.addDefinedValue(prop.getRootCondition(), "opera");
+    }
+
+    {
+      BindingProperty prop = props.createBinding("stackTraces");
+      prop.addDefinedValue(prop.getRootCondition(), "false");
+      prop.addDefinedValue(prop.getRootCondition(), "true");
+      // <set-property name="stackTraces" value="false" />
+      prop.setAllowedValues(prop.getRootCondition(), "false");
+
+      /*
+       * <set-property name="stackTraces" value="true,false"> <when user.agent
+       * is ie6 or ie 8> </set-property>
+       */
+      ConditionAny cond = new ConditionAny();
+      cond.getConditions().add(new ConditionWhenPropertyIs("user.agent", "ie6"));
+      cond.getConditions().add(new ConditionWhenPropertyIs("user.agent", "ie8"));
+      prop.setAllowedValues(cond, "true", "false");
+    }
+
+    validateTwoDimensionPerm(props);
+  }
+
+  public void testTwoDimensionPermWithExtension() {
+    // This is what you'd get with a conditional <extend-property>
+    ModuleDef md = new ModuleDef("testTwoDimensionsWithConditions");
+    Properties props = md.getProperties();
+
+    {
+      BindingProperty prop = props.createBinding("user.agent");
+      prop.addDefinedValue(prop.getRootCondition(), "moz");
+      prop.addDefinedValue(prop.getRootCondition(), "ie6");
+      prop.addDefinedValue(prop.getRootCondition(), "ie8");
+      prop.addDefinedValue(prop.getRootCondition(), "opera");
+    }
+
+    {
+      BindingProperty prop = props.createBinding("stackTraces");
+      prop.addDefinedValue(prop.getRootCondition(), "false");
+
+      ConditionAny cond = new ConditionAny();
+      cond.getConditions().add(new ConditionWhenPropertyIs("user.agent", "ie6"));
+      cond.getConditions().add(new ConditionWhenPropertyIs("user.agent", "ie8"));
+
+      prop.addDefinedValue(cond, "true");
+    }
+
+    validateTwoDimensionPerm(props);
+  }
+
+  public void testTwoDimensionPermWithRestriction() {
+    // This is what you'd get with a conditional <set-property value="false">
+    ModuleDef md = new ModuleDef("testTwoDimensionsWithRestriction");
+    Properties props = md.getProperties();
+
+    {
+      BindingProperty prop = props.createBinding("user.agent");
+      prop.addDefinedValue(prop.getRootCondition(), "moz");
+      prop.addDefinedValue(prop.getRootCondition(), "ie6");
+      prop.addDefinedValue(prop.getRootCondition(), "ie8");
+      prop.addDefinedValue(prop.getRootCondition(), "opera");
+    }
+
+    {
+      BindingProperty prop = props.createBinding("stackTraces");
+      prop.addDefinedValue(prop.getRootCondition(), "false");
+      prop.addDefinedValue(prop.getRootCondition(), "true");
+
+      ConditionAny cond = new ConditionAny();
+      cond.getConditions().add(new ConditionWhenPropertyIs("user.agent", "moz"));
+      cond.getConditions().add(
+          new ConditionWhenPropertyIs("user.agent", "opera"));
+
+      prop.setAllowedValues(cond, "false");
+    }
+
+    validateTwoDimensionPerm(props);
+  }
+
+  private void validateTwoDimensionPerm(Properties props) {
+    PropertyPermutations perms = new PropertyPermutations(props);
+
+    assertEquals(6, perms.size());
+
+    // Order is alphabetical in dependency order
+    String[] perm;
+    Iterator<String[]> iter = perms.iterator();
+
+    assertTrue(iter.hasNext());
+    perm = iter.next();
+    assertEquals("ie6", perm[0]);
+    assertEquals("false", perm[1]);
+
+    assertTrue(iter.hasNext());
+    perm = iter.next();
+    assertEquals("ie6", perm[0]);
+    assertEquals("true", perm[1]);
+
+    assertTrue(iter.hasNext());
+    perm = iter.next();
+    assertEquals("ie8", perm[0]);
+    assertEquals("false", perm[1]);
+
+    assertTrue(iter.hasNext());
+    perm = iter.next();
+    assertEquals("ie8", perm[0]);
+    assertEquals("true", perm[1]);
+
+    assertTrue(iter.hasNext());
+    perm = iter.next();
+    assertEquals("moz", perm[0]);
+    assertEquals("false", perm[1]);
+
+    assertTrue(iter.hasNext());
+    perm = iter.next();
+    assertEquals("opera", perm[0]);
+    assertEquals("false", perm[1]);
+
+    assertFalse(iter.hasNext());
   }
 }

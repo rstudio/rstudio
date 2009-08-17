@@ -706,7 +706,9 @@ public class JUnitShell extends GWTShell {
       Properties props = module.getProperties();
       Property userAgent = props.find("user.agent");
       if (userAgent instanceof BindingProperty) {
-        ((BindingProperty) userAgent).setAllowedValues(userAgents);
+        BindingProperty bindingProperty = (BindingProperty) userAgent;
+        bindingProperty.setAllowedValues(bindingProperty.getRootCondition(),
+            userAgents);
       }
     }
     super.compile(getTopLogger(), module);

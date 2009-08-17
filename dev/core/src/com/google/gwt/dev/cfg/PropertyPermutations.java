@@ -15,10 +15,17 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
+
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.SortedSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Generates all possible permutations of properties in a module. Each
@@ -36,12 +43,9 @@ public class PropertyPermutations implements Iterable<String[]> {
   private static List<String[]> allPermutationsOf(Properties properties) {
     BindingProperty[] bindingProperties = getOrderedPropertiesOf(properties);
 
-    int permCount = properties.numPermutations();
-
-    List<String[]> permutations = new ArrayList<String[]>(permCount);
+    List<String[]> permutations = new ArrayList<String[]>();
     if (bindingProperties.length > 0) {
       permute(bindingProperties, null, 0, permutations);
-      assert (permCount == permutations.size());
     } else {
       permutations.add(new String[0]);
     }
@@ -49,8 +53,44 @@ public class PropertyPermutations implements Iterable<String[]> {
   }
 
   private static BindingProperty[] getOrderedPropertiesOf(Properties properties) {
-    SortedSet<BindingProperty> bindingProps = properties.getBindingProperties();
-    return bindingProps.toArray(new BindingProperty[bindingProps.size()]);
+    /*
+     * We delete items from this set, but want to retain the original order as
+     * much as possible.
+     */
+    Set<BindingProperty> bindingProps = new LinkedHashSet<BindingProperty>(
+        properties.getBindingProperties());
+
+    // Accumulates the order in which the properties should be evaluated
+    Map<String, BindingProperty> evaluationOrder = new LinkedHashMap<String, BindingProperty>(
+        bindingProps.size());
+
+    /*
+     * Insert a property after all of the properties that it depends upon have
+     * been inserted.
+     */
+    while (!bindingProps.isEmpty()) {
+      boolean changed = false;
+
+      for (Iterator<BindingProperty> it = bindingProps.iterator(); it.hasNext();) {
+        BindingProperty prop = it.next();
+
+        Set<String> deps = prop.getRequiredProperties();
+        if (evaluationOrder.keySet().containsAll(deps)) {
+          it.remove();
+          evaluationOrder.put(prop.getName(), prop);
+          changed = true;
+        }
+      }
+
+      if (!changed) {
+        throw new IllegalStateException(
+            "Cycle detected within remaining property dependencies "
+                + bindingProps.toString());
+      }
+    }
+
+    return evaluationOrder.values().toArray(
+        new BindingProperty[evaluationOrder.size()]);
   }
 
   private static void permute(BindingProperty[] properties, String[] soFar,
@@ -58,8 +98,32 @@ public class PropertyPermutations implements Iterable<String[]> {
     int lastProp = properties.length - 1;
 
     BindingProperty prop = properties[whichProp];
-    String[] options = prop.getAllowedValues();
 
+    // Find the last-one-wins Condition
+    Condition winner = null;
+    if (prop.getConditionalValues().size() == 1) {
+      winner = prop.getRootCondition();
+    } else {
+      BindingProperty[] answerable = new BindingProperty[soFar.length];
+      System.arraycopy(properties, 0, answerable, 0, soFar.length);
+      PropertyOracle propertyOracle = new StaticPropertyOracle(answerable,
+          soFar, new ConfigurationProperty[0]);
+
+      for (Condition cond : prop.getConditionalValues().keySet()) {
+        try {
+          if (cond.isTrue(TreeLogger.NULL, propertyOracle, null, null)) {
+            winner = cond;
+          }
+        } catch (UnableToCompleteException e) {
+          throw new IllegalStateException(
+              "Should never get here for simple properties", e);
+        }
+      }
+    }
+
+    assert winner != null;
+
+    String[] options = prop.getAllowedValues(winner);
     for (int i = 0; i < options.length; i++) {
       String knownValue = options[i];
 
@@ -90,6 +154,12 @@ public class PropertyPermutations implements Iterable<String[]> {
     this.properties = properties;
     values = allPermutationsOf(properties).subList(firstPerm,
         firstPerm + numPerms);
+  }
+
+  public PropertyPermutations(PropertyPermutations allPermutations,
+      int firstPerm, int numPerms) {
+    this.properties = allPermutations.properties;
+    values = allPermutations.values.subList(firstPerm, firstPerm + numPerms);
   }
 
   public BindingProperty[] getOrderedProperties() {

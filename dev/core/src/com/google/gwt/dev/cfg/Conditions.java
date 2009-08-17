@@ -24,7 +24,7 @@ import java.util.List;
  */
 public class Conditions {
 
-  private final List list = new ArrayList();
+  private final List<Condition> list = new ArrayList<Condition>();
 
   /**
    * Appends a condition.
@@ -33,7 +33,7 @@ public class Conditions {
     list.add(condition);
   }
 
-  public Iterator iterator() {
+  public Iterator<Condition> iterator() {
     return list.iterator();
   }
 }

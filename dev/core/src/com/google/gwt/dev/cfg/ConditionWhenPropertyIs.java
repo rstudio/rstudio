@@ -17,11 +17,14 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
-import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.util.collect.Sets;
+
+import java.util.Set;
 
 /**
  * A deferred binding condition to determine whether a named property has a
@@ -38,22 +41,25 @@ public class ConditionWhenPropertyIs extends Condition {
     this.value = value;
   }
 
+  @Override
+  public Set<String> getRequiredProperties() {
+    return Sets.create(propName);
+  }
+
   public String toString() {
     return "<when-property-is name='" + propName + "' value='" + value + "'/>";
   }
 
-  protected boolean doEval(TreeLogger logger, GeneratorContext context,
-      String testType) throws UnableToCompleteException {
+  protected boolean doEval(TreeLogger logger, PropertyOracle propertyOracle,
+      TypeOracle typeOracle, String testType) throws UnableToCompleteException {
     String testValue;
     try {
-      PropertyOracle propertyOracle = context.getPropertyOracle();
       try {
-        SelectionProperty prop
-            = propertyOracle.getSelectionProperty(logger, propName);
+        SelectionProperty prop = propertyOracle.getSelectionProperty(logger,
+            propName);
         testValue = prop.getCurrentValue();
       } catch (BadPropertyValueException e) {
-        ConfigurationProperty prop
-            = propertyOracle.getConfigurationProperty(propName);
+        ConfigurationProperty prop = propertyOracle.getConfigurationProperty(propName);
         testValue = prop.getValues().get(0);
       }
       logger.log(TreeLogger.DEBUG, "Property value is '" + testValue + "'",

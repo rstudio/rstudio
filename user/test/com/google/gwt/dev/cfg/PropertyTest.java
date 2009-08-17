@@ -23,6 +23,8 @@ import junit.framework.TestCase;
 
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Checks the behaviors of ModuleDefLoader and Properties.
@@ -50,9 +52,11 @@ public class PropertyTest extends TestCase {
     {
       BindingProperty restricted = (BindingProperty) p.find("restricted");
       assertNotNull(restricted);
-      assertEquals(3, restricted.getAllowedValues().length);
-      assertEquals(Arrays.asList("a", "b", "c"),
-          Arrays.asList(restricted.getAllowedValues()));
+      assertEquals(3,
+          restricted.getAllowedValues(restricted.getRootCondition()).length);
+      assertEquals(
+          Arrays.asList("a", "b", "c"),
+          Arrays.asList(restricted.getAllowedValues(restricted.getRootCondition())));
       assertTrue(restricted.isDefinedValue("d"));
       assertFalse(restricted.isAllowedValue("d"));
     }
@@ -61,8 +65,30 @@ public class PropertyTest extends TestCase {
       BindingProperty restricted1s = (BindingProperty) p.find("restricted1s");
       assertNotNull(restricted1s);
       assertTrue(restricted1s.isAllowedValue("a"));
-      assertEquals(1, restricted1s.getAllowedValues().length);
-      assertEquals("a", restricted1s.getAllowedValues()[0]);
+      assertEquals(1,
+          restricted1s.getAllowedValues(restricted1s.getRootCondition()).length);
+      assertEquals("a",
+          restricted1s.getAllowedValues(restricted1s.getRootCondition())[0]);
+    }
+
+    {
+      BindingProperty conditional = (BindingProperty) p.find("conditional");
+      assertNotNull(conditional);
+      assertFalse(conditional.isDerived());
+
+      Set<String> required = conditional.getRequiredProperties();
+      assertEquals(required.size(), 1);
+      assertTrue(required.contains("restricted"));
+
+      assertEquals(3, conditional.getConditionalValues().size());
+      Iterator<Condition> it = conditional.getConditionalValues().keySet().iterator();
+
+      assertEquals(Arrays.asList("a", "b", "c"),
+          Arrays.asList(conditional.getAllowedValues(it.next())));
+      assertEquals(Arrays.asList("a", "b"),
+          Arrays.asList(conditional.getAllowedValues(it.next())));
+      assertEquals(Arrays.asList("c"),
+          Arrays.asList(conditional.getAllowedValues(it.next())));
     }
 
     {
@@ -74,6 +100,31 @@ public class PropertyTest extends TestCase {
     {
       Property configRedefined = p.find("configRedefined");
       assertEquals("bar", ((ConfigurationProperty) configRedefined).getValue());
+    }
+
+    {
+      BindingProperty derived = (BindingProperty) p.find("derived");
+      assertNotNull(derived);
+      assertTrue(derived.isDerived());
+
+      Set<String> required = derived.getRequiredProperties();
+      assertEquals(required.size(), 1);
+      assertTrue(required.contains("restricted"));
+
+      assertEquals(3, derived.getConditionalValues().size());
+    }
+
+    {
+      BindingProperty reset = (BindingProperty) p.find("reset");
+      assertNotNull(reset);
+      assertTrue(reset.isDerived());
+
+      Set<String> required = reset.getRequiredProperties();
+      assertEquals(0, required.size());
+
+      assertEquals(1, reset.getConditionalValues().size());
+      assertSame(reset.getRootCondition(),
+          reset.getConditionalValues().keySet().iterator().next());
     }
   }
 

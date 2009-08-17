@@ -23,8 +23,8 @@ import java.util.SortedSet;
  * 
  * SelectionProperty implementations must support object identity comparisons.
  * 
- * @see com.google.gwt.core.ext.SelectionProperty A similarly-named interface used
- * in generators.
+ * @see com.google.gwt.core.ext.SelectionProperty A similarly-named interface
+ *      used in generators.
  */
 public interface SelectionProperty {
   /**
@@ -42,6 +42,13 @@ public interface SelectionProperty {
    * a deferred binding property.
    */
   String getPropertyProvider();
+
+  /**
+   * Returns <code>true</code> if the value of the SelectionProperty is always
+   * derived from other SelectionProperties and, as a consequence, the property
+   * provider never needs to be evaluated.
+   */
+  boolean isDerived();
 
   /**
    * Returns the defined value for the deferred binding property or

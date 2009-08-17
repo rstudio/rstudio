@@ -449,7 +449,7 @@ public class ModuleDef implements PublicOracle {
          * Create a default property provider for any properties with more than
          * one possible value and no existing provider.
          */
-        if (prop.getProvider() == null && prop.getAllowedValues().length > 1) {
+        if (prop.getProvider() == null && prop.getConstrainedValue() == null) {
           String src = "{";
           src += "return __gwt_getMetaProperty(\"";
           src += prop.getName();

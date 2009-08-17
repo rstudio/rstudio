@@ -31,20 +31,18 @@ public class StandardSelectionProperty implements SelectionProperty {
   private static final String FALLBACK_TOKEN = "/*-FALLBACK-*/";
 
   private final String activeValue;
+  private final boolean isDerived;
   private final String name;
   private final String provider;
   private final SortedSet<String> values;
 
   public StandardSelectionProperty(BindingProperty p) {
-    if (p.getAllowedValues().length == 1) {
-      activeValue = p.getAllowedValues()[0];
-    } else {
-      activeValue = null;
-    }
+    activeValue = p.getConstrainedValue();
+    isDerived = p.isDerived();
     name = p.getName();
     String fallback = p.getFallback();
-    provider = p.getProvider() == null ? null : 
-        p.getProvider().getBody().replace(FALLBACK_TOKEN, fallback);
+    provider = p.getProvider() == null ? null
+        : p.getProvider().getBody().replace(FALLBACK_TOKEN, fallback);
     values = Collections.unmodifiableSortedSet(new TreeSet<String>(
         Arrays.asList(p.getDefinedValues())));
   }
@@ -59,6 +57,10 @@ public class StandardSelectionProperty implements SelectionProperty {
 
   public String getPropertyProvider() {
     return provider;
+  }
+
+  public boolean isDerived() {
+    return isDerived;
   }
 
   @Override

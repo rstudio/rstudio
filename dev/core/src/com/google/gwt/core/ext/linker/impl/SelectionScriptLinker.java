@@ -176,7 +176,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   protected String generatePropertyProvider(SelectionProperty prop) {
     StringBuffer toReturn = new StringBuffer();
 
-    if (prop.tryGetValue() == null) {
+    if (prop.tryGetValue() == null && !prop.isDerived()) {
       toReturn.append("providers['" + prop.getName() + "'] = function()");
       toReturn.append(prop.getPropertyProvider());
       toReturn.append(";");
@@ -314,6 +314,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
         boolean needsIndexMarkers = false;
         for (SelectionProperty p : context.getProperties()) {
           if (p.tryGetValue() != null) {
+            continue;
+          } else if (p.isDerived()) {
             continue;
           }
           if (needsIndexMarkers) {

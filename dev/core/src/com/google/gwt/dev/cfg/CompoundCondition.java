@@ -15,6 +15,11 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.dev.util.collect.Sets;
+
+import java.util.Iterator;
+import java.util.Set;
+
 /**
  * Abstract base class for various kinds of compound deferred binding
  * conditions.
@@ -25,5 +30,14 @@ public abstract class CompoundCondition extends Condition {
 
   public Conditions getConditions() {
     return conditions;
+  }
+
+  @Override
+  public Set<String> getRequiredProperties() {
+    Set<String> toReturn = Sets.create();
+    for (Iterator<Condition> it = conditions.iterator(); it.hasNext();) {
+      toReturn = Sets.addAll(toReturn, it.next().getRequiredProperties());
+    }
+    return toReturn;
   }
 }

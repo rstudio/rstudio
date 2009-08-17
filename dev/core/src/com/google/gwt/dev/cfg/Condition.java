@@ -15,16 +15,28 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.util.collect.Sets;
+
+import java.util.Set;
 
 /**
  * Abstract base class for various kinds of deferred binding conditions.
  */
 public abstract class Condition {
-  public final boolean isTrue(TreeLogger logger, GeneratorContext context,
-      String testType) throws UnableToCompleteException {
+  /**
+   * Returns the set of property names that the Condition requires in order to
+   * be evaluated.
+   */
+  public Set<String> getRequiredProperties() {
+    return Sets.create();
+  }
+
+  public final boolean isTrue(TreeLogger logger, PropertyOracle propertyOracle,
+      TypeOracle typeOracle, String testType) throws UnableToCompleteException {
 
     boolean logDebug = logger.isLoggable(TreeLogger.DEBUG);
 
@@ -33,7 +45,7 @@ public abstract class Condition {
       logger = logger.branch(TreeLogger.DEBUG, startMsg, null);
     }
 
-    boolean result = doEval(logger, context, testType);
+    boolean result = doEval(logger, propertyOracle, typeOracle, testType);
 
     if (logDebug) {
       String afterMsg = getEvalAfterMessage(testType, result);
@@ -44,7 +56,7 @@ public abstract class Condition {
   }
 
   protected abstract boolean doEval(TreeLogger logger,
-      GeneratorContext context, String testType)
+      PropertyOracle propertyOracle, TypeOracle typeOracle, String testType)
       throws UnableToCompleteException;
 
   protected abstract String getEvalAfterMessage(String testType, boolean result);

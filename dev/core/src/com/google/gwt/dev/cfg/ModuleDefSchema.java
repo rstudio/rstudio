@@ -46,7 +46,7 @@ import java.util.Set;
  * Configures a module definition object using XML.
  */
 public class ModuleDefSchema extends Schema {
-  
+
   private final class BodySchema extends Schema {
 
     protected final String __add_linker_1_name = null;
@@ -133,6 +133,12 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __super_source_5_casesensitive = "true";
 
+    /**
+     * Used to accumulate binding property conditions before recording the
+     * newly-allowed values.
+     */
+    private ConditionAll bindingPropertyCondition;
+
     private Schema fChild;
 
     protected Schema __add_linker_begin(LinkerName name)
@@ -144,7 +150,7 @@ public class ModuleDefSchema extends Schema {
       moduleDef.addLinker(name.name);
       return null;
     }
-    
+
     protected Schema __clear_configuration_property_begin(PropertyName name)
         throws UnableToCompleteException {
       // Don't allow configuration properties with the same name as a
@@ -174,14 +180,13 @@ public class ModuleDefSchema extends Schema {
     protected Schema __define_configuration_property_begin(PropertyName name,
         String is_multi_valued) throws UnableToCompleteException {
       boolean isMultiValued = toPrimitiveBoolean(is_multi_valued);
-      
+
       // Don't allow configuration properties with the same name as a
       // deferred-binding property.
       Property existingProperty = moduleDef.getProperties().find(name.token);
       if (existingProperty == null) {
         // Create the property
-        moduleDef.getProperties().createConfiguration(name.token,
-            isMultiValued);
+        moduleDef.getProperties().createConfiguration(name.token, isMultiValued);
         if (!propertyDefinitions.containsKey(name.token)) {
           propertyDefinitions.put(name.token, moduleName);
         }
@@ -189,36 +194,38 @@ public class ModuleDefSchema extends Schema {
         // Allow redefinition only if the 'is-multi-valued' setting is identical
         // The previous definition may have been explicit, via
         // <define-configuration-property>, or implicit, via
-        // <set-configuration-property>.  In the latter case, the
+        // <set-configuration-property>. In the latter case, the
         // value of the 'is-multi-valued' attribute was taken as false.
         String originalDefinition = propertyDefinitions.get(name.token);
-        if (((ConfigurationProperty) existingProperty).allowsMultipleValues()
-            != isMultiValued) {
+        if (((ConfigurationProperty) existingProperty).allowsMultipleValues() != isMultiValued) {
           if (originalDefinition != null) {
-            logger.log(TreeLogger.ERROR, "The configuration property named "
-                + name.token
-                + " is already defined with a different 'is-multi-valued' setting");
+            logger.log(
+                TreeLogger.ERROR,
+                "The configuration property named "
+                    + name.token
+                    + " is already defined with a different 'is-multi-valued' setting");
           } else {
-            logger.log(TreeLogger.ERROR, "The configuration property named "
-                + name.token
-                + " is already defined implicitly by 'set-configuration-property'"
-                + " in " + propertySettings.get(name.token)
-                + " with 'is-multi-valued' set to 'false'");
+            logger.log(
+                TreeLogger.ERROR,
+                "The configuration property named "
+                    + name.token
+                    + " is already defined implicitly by 'set-configuration-property'"
+                    + " in " + propertySettings.get(name.token)
+                    + " with 'is-multi-valued' set to 'false'");
           }
           throw new UnableToCompleteException();
         } else {
           if (originalDefinition != null) {
             logger.log(TreeLogger.WARN,
                 "Ignoring identical definition of the configuration property named "
-                + name.token + " (originally defined in "
-                + originalDefinition
-                + ", redefined in " + moduleName + ")");
+                    + name.token + " (originally defined in "
+                    + originalDefinition + ", redefined in " + moduleName + ")");
           } else {
             logger.log(TreeLogger.WARN,
                 "Definition of already set configuration property named "
-                + name.token + " in " + moduleName
-                + " (set in " + propertySettings.get(name.token)
-                + ").  This may be disallowed in the future.");
+                    + name.token + " in " + moduleName + " (set in "
+                    + propertySettings.get(name.token)
+                    + ").  This may be disallowed in the future.");
           }
         }
       } else {
@@ -233,7 +240,7 @@ public class ModuleDefSchema extends Schema {
         }
         throw new UnableToCompleteException();
       }
-      
+
       // No children.
       return null;
     }
@@ -279,7 +286,7 @@ public class ModuleDefSchema extends Schema {
       BindingProperty prop = moduleDef.getProperties().createBinding(name.token);
 
       for (int i = 0; i < values.length; i++) {
-        prop.addDefinedValue(values[i].token);
+        prop.addDefinedValue(prop.getRootCondition(), values[i].token);
       }
 
       // No children.
@@ -316,7 +323,7 @@ public class ModuleDefSchema extends Schema {
     protected Schema __extend_property_begin(BindingProperty property,
         PropertyValue[] values) {
       for (int i = 0; i < values.length; i++) {
-        property.addDefinedValue(values[i].token);
+        property.addDefinedValue(property.getRootCondition(), values[i].token);
       }
 
       // No children.
@@ -326,13 +333,13 @@ public class ModuleDefSchema extends Schema {
     protected Schema __fail_begin() {
       RuleFail rule = new RuleFail();
       moduleDef.getRules().prepend(rule);
-      return new ConditionSchema(rule.getRootCondition());
+      return new FullConditionSchema(rule.getRootCondition());
     }
 
     protected Schema __generate_with_begin(Generator gen) {
       RuleGenerateWith rule = new RuleGenerateWith(gen);
       moduleDef.getRules().prepend(rule);
-      return new ConditionSchema(rule.getRootCondition());
+      return new FullConditionSchema(rule.getRootCondition());
     }
 
     protected Schema __inherits_begin(String name)
@@ -393,7 +400,7 @@ public class ModuleDefSchema extends Schema {
     protected Schema __replace_with_begin(String className) {
       RuleReplaceWith rule = new RuleReplaceWith(className);
       moduleDef.getRules().prepend(rule);
-      return new ConditionSchema(rule.getRootCondition());
+      return new FullConditionSchema(rule.getRootCondition());
     }
 
     /**
@@ -444,7 +451,7 @@ public class ModuleDefSchema extends Schema {
 
     protected Schema __set_configuration_property_begin(PropertyName name,
         String value) throws UnableToCompleteException {
-      
+
       Property existingProperty = moduleDef.getProperties().find(name.token);
       if (existingProperty == null) {
         // If a property is created by "set-configuration-property" without
@@ -456,10 +463,8 @@ public class ModuleDefSchema extends Schema {
           propertySettings.put(name.token, moduleName);
         }
 
-        logger.log(TreeLogger.WARN,
-            "Setting configuration property named "
-            + name.token + " in "
-            + moduleName
+        logger.log(TreeLogger.WARN, "Setting configuration property named "
+            + name.token + " in " + moduleName
             + " that has not been previously defined."
             + "  This may be disallowed in the future.");
       } else if (!(existingProperty instanceof ConfigurationProperty)) {
@@ -482,6 +487,12 @@ public class ModuleDefSchema extends Schema {
 
     protected Schema __set_property_begin(BindingProperty prop,
         PropertyValue[] value) throws UnableToCompleteException {
+      bindingPropertyCondition = new ConditionAll();
+      return new PropertyConditionSchema(bindingPropertyCondition);
+    }
+
+    protected void __set_property_end(BindingProperty prop,
+        PropertyValue[] value) throws UnableToCompleteException {
       boolean error = false;
       String[] stringValues = new String[value.length];
       for (int i = 0, len = stringValues.length; i < len; i++) {
@@ -495,16 +506,18 @@ public class ModuleDefSchema extends Schema {
         throw new UnableToCompleteException();
       }
 
-      prop.setAllowedValues(stringValues);
+      // No conditions were specified, so use the property's root condition
+      if (!bindingPropertyCondition.getConditions().iterator().hasNext()) {
+        bindingPropertyCondition = prop.getRootCondition();
+      }
 
-      // No children.
-      return null;
+      prop.setAllowedValues(bindingPropertyCondition, stringValues);
     }
 
     protected Schema __set_property_fallback_begin(BindingProperty prop,
         PropertyValue value) throws UnableToCompleteException {
       boolean error = true;
-      for (String possibleValue : prop.getAllowedValues()) {
+      for (String possibleValue : prop.getAllowedValues(prop.getRootCondition())) {
         if (possibleValue.equals(value.token)) {
           error = false;
           break;
@@ -512,8 +525,8 @@ public class ModuleDefSchema extends Schema {
       }
       if (error) {
         logger.log(TreeLogger.ERROR, "The fallback value '" + value.token
-            + "' was not previously defined for property '"
-            + prop.getName() + "'");
+            + "' was not previously defined for property '" + prop.getName()
+            + "'");
         throw new UnableToCompleteException();
       }
       prop.setFallback(value.token);
@@ -697,52 +710,17 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
-  private final class ConditionSchema extends Schema {
-
-    protected final String __when_property_is_1_name = null;
-
-    protected final String __when_property_is_2_value = null;
+  /**
+   * All conditional expressions, including those based on types.
+   */
+  private final class FullConditionSchema extends PropertyConditionSchema {
 
     protected final String __when_type_assignable_1_class = null;
 
     protected final String __when_type_is_1_class = null;
 
-    private final CompoundCondition parentCondition;
-
-    public ConditionSchema(CompoundCondition parentCondition) {
-      this.parentCondition = parentCondition;
-    }
-
-    protected Schema __all_begin() {
-      CompoundCondition cond = new ConditionAll();
-      parentCondition.getConditions().add(cond);
-      return new ConditionSchema(cond);
-    }
-
-    protected Schema __any_begin() {
-      CompoundCondition cond = new ConditionAny();
-      parentCondition.getConditions().add(cond);
-      return new ConditionSchema(cond);
-    }
-
-    protected Schema __none_begin() {
-      CompoundCondition cond = new ConditionNone();
-      parentCondition.getConditions().add(cond);
-      return new ConditionSchema(cond);
-    }
-
-    /*
-     * We intentionally use the BindingProperty type here for tough-love on
-     * module writers. It prevents them from trying to create property providers
-     * for unknown properties.
-     */
-    protected Schema __when_property_is_begin(BindingProperty prop,
-        PropertyValue value) {
-      Condition cond = new ConditionWhenPropertyIs(prop.getName(), value.token);
-      parentCondition.getConditions().add(cond);
-
-      // No children allowed.
-      return null;
+    public FullConditionSchema(CompoundCondition parentCondition) {
+      super(parentCondition);
     }
 
     protected Schema __when_type_assignable_begin(String className) {
@@ -759,6 +737,11 @@ public class ModuleDefSchema extends Schema {
 
       // No children allowed.
       return null;
+    }
+
+    @Override
+    protected Schema subSchema(CompoundCondition cond) {
+      return new FullConditionSchema(cond);
     }
   }
 
@@ -942,6 +925,57 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
+  /**
+   * A limited number of conditional predicates based only on properties.
+   */
+  private class PropertyConditionSchema extends Schema {
+    protected final String __when_property_is_1_name = null;
+
+    protected final String __when_property_is_2_value = null;
+
+    protected final CompoundCondition parentCondition;
+
+    public PropertyConditionSchema(CompoundCondition parentCondition) {
+      this.parentCondition = parentCondition;
+    }
+
+    protected Schema __all_begin() {
+      CompoundCondition cond = new ConditionAll();
+      parentCondition.getConditions().add(cond);
+      return subSchema(cond);
+    }
+
+    protected Schema __any_begin() {
+      CompoundCondition cond = new ConditionAny();
+      parentCondition.getConditions().add(cond);
+      return subSchema(cond);
+    }
+
+    protected Schema __none_begin() {
+      CompoundCondition cond = new ConditionNone();
+      parentCondition.getConditions().add(cond);
+      return subSchema(cond);
+    }
+
+    /*
+     * We intentionally use the BindingProperty type here for tough-love on
+     * module writers. It prevents them from trying to create property providers
+     * for unknown properties.
+     */
+    protected Schema __when_property_is_begin(BindingProperty prop,
+        PropertyValue value) {
+      Condition cond = new ConditionWhenPropertyIs(prop.getName(), value.token);
+      parentCondition.getConditions().add(cond);
+
+      // No children allowed.
+      return null;
+    }
+
+    protected Schema subSchema(CompoundCondition cond) {
+      return new PropertyConditionSchema(cond);
+    }
+  }
+
   private static class PropertyName {
     public final String token;
 
@@ -1075,15 +1109,13 @@ public class ModuleDefSchema extends Schema {
    * Map of property names to the modules that defined them explicitly using
    * <define-configuration-property>, used to generate warning messages.
    */
-  private static final HashMap<String,String> propertyDefinitions
-      = new HashMap<String,String>();
- 
+  private static final HashMap<String, String> propertyDefinitions = new HashMap<String, String>();
+
   /**
    * Map of property names to the modules that defined them implicitly using
    * <set-configuration-property>, used to generate warning messages.
    */
-  private static final HashMap<String,String> propertySettings
-      = new HashMap<String,String>();
+  private static final HashMap<String, String> propertySettings = new HashMap<String, String>();
 
   private static final Map<String, Object> singletonsByName = new HashMap<String, Object>();
 
@@ -1100,7 +1132,7 @@ public class ModuleDefSchema extends Schema {
   private static boolean toPrimitiveBoolean(String s) {
     return "yes".equalsIgnoreCase(s) || "true".equalsIgnoreCase(s);
   }
-  
+
   protected final String __module_1_rename_to = "";
   private final PropertyAttrCvt bindingPropAttrCvt = new PropertyAttrCvt(
       BindingProperty.class);
@@ -1126,7 +1158,8 @@ public class ModuleDefSchema extends Schema {
   private final PropertyValueAttrCvt propValueAttrCvt = new PropertyValueAttrCvt();
 
   public ModuleDefSchema(TreeLogger logger, ModuleDefLoader loader,
-      String moduleName, URL moduleURL, String modulePackageAsPath, ModuleDef toConfigure) {
+      String moduleName, URL moduleURL, String modulePackageAsPath,
+      ModuleDef toConfigure) {
     this.logger = logger;
     this.loader = loader;
     this.moduleName = moduleName;

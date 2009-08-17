@@ -402,8 +402,9 @@ public class Precompile {
   public static Precompilation precompile(TreeLogger logger,
       JJSOptions jjsOptions, ModuleDef module, File genDir,
       File generatorResourcesDir, File dumpSignatureFile) {
-    return precompile(logger, jjsOptions, module, 0, 0,
-        module.getProperties().numPermutations(), genDir,
+    PropertyPermutations allPermutations = new PropertyPermutations(
+        module.getProperties());
+    return precompile(logger, jjsOptions, module, 0, allPermutations, genDir,
         generatorResourcesDir, dumpSignatureFile);
   }
 
@@ -458,8 +459,8 @@ public class Precompile {
 
   private static Precompilation precompile(TreeLogger logger,
       JJSOptions jjsOptions, ModuleDef module, int permutationBase,
-      int firstPerm, int numPerms, File genDir, File generatorResourcesDir,
-      File dumpSignatureFile) {
+      PropertyPermutations allPermutations, File genDir,
+      File generatorResourcesDir, File dumpSignatureFile) {
 
     try {
       CompilationState compilationState = module.getCompilationState(logger);
@@ -477,10 +478,7 @@ public class Precompile {
 
       ArtifactSet generatedArtifacts = new ArtifactSet();
       DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
-          module,
-          compilationState,
-          generatedArtifacts,
-          new PropertyPermutations(module.getProperties(), firstPerm, numPerms),
+          module, compilationState, generatedArtifacts, allPermutations,
           genDir, generatorResourcesDir);
       PerfLogger.start("Precompile");
       UnifiedAst unifiedAst = JavaToJavaScriptCompiler.precompile(logger,
@@ -556,7 +554,9 @@ public class Precompile {
       } else {
         TreeLogger branch = logger.branch(TreeLogger.INFO,
             "Precompiling module " + module.getName());
-        int potentialPermutations = module.getProperties().numPermutations();
+        PropertyPermutations allPermutations = new PropertyPermutations(
+            module.getProperties());
+        int potentialPermutations = allPermutations.size();
         int permutationsPerIteration = options.getMaxPermsPerPrecompile();
 
         if (permutationsPerIteration <= 0) {
@@ -594,10 +594,13 @@ public class Precompile {
             options.setCompilationStateRetained(originalCompilationStateRetained);
           }
 
+          // Select only the range of property permutations that we want
+          PropertyPermutations localPermutations = new PropertyPermutations(
+              allPermutations, potentialFirstPerm, numPermsToPrecompile);
+
           Precompilation precompilation = precompile(branch, options, module,
-              actualPermutations, potentialFirstPerm, numPermsToPrecompile,
-              options.getGenDir(), compilerWorkDir,
-              options.getDumpSignatureFile());
+              actualPermutations, localPermutations, options.getGenDir(),
+              compilerWorkDir, options.getDumpSignatureFile());
           if (precompilation == null) {
             branch.log(TreeLogger.ERROR, "Precompilation failed");
             return false;

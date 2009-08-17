@@ -31,7 +31,7 @@ public abstract class Property implements Comparable<Property>, Serializable {
   public int compareTo(Property o) {
     return name.compareTo(o.name);
   }
-  
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof Property)) {
@@ -43,7 +43,7 @@ public abstract class Property implements Comparable<Property>, Serializable {
   public String getName() {
     return name;
   }
-  
+
   @Override
   public int hashCode() {
     return name.hashCode();

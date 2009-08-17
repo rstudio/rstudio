@@ -47,8 +47,10 @@ public class Properties implements Iterable<Property> {
    * Creates the specified configuration property, or returns an existing one by
    * the specified name if present.
    */
-  public ConfigurationProperty createConfiguration(String name, boolean allowMultipleValues) {
-    ConfigurationProperty prop = create(name, allowMultipleValues, ConfigurationProperty.class);
+  public ConfigurationProperty createConfiguration(String name,
+      boolean allowMultipleValues) {
+    ConfigurationProperty prop = create(name, allowMultipleValues,
+        ConfigurationProperty.class);
     configProps.add(prop);
     return prop;
   }
@@ -72,35 +74,17 @@ public class Properties implements Iterable<Property> {
     return map.values().iterator();
   }
 
-  /**
-   * Count the total number of permutations that this property set supports.
-   */
-  public int numPermutations() {
-    BindingProperty[] bindingPropsArray = bindingProps.toArray(
-        new BindingProperty[bindingProps.size()]);
-
-    int count = 1;
-
-    for (BindingProperty prop : bindingPropsArray) {
-      String[] options = prop.getAllowedValues();
-      assert (options.length > 0);
-      count *= options.length;
-    }
-
-    return count;
-  }
-
   private <T extends Property> T create(String name, Class<T> clazz) {
     return create(name, false, false, clazz);
   }
-  
-  private <T extends Property> T create(String name, boolean flag, Class<T> clazz) {
+
+  private <T extends Property> T create(String name, boolean flag,
+      Class<T> clazz) {
     return create(name, flag, true, clazz);
   }
-  
-  private <T extends Property> T create(String name,
-      boolean flag, boolean useFlagArgument,
-      Class<T> clazz) {
+
+  private <T extends Property> T create(String name, boolean flag,
+      boolean useFlagArgument, Class<T> clazz) {
     if (clazz == null) {
       throw new NullPointerException("clazz");
     } else if (name == null) {
@@ -122,8 +106,8 @@ public class Properties implements Iterable<Property> {
     try {
       T newInstance;
       if (useFlagArgument) {
-        newInstance = clazz.getConstructor(String.class,
-            boolean.class).newInstance(name, flag);
+        newInstance = clazz.getConstructor(String.class, boolean.class).newInstance(
+            name, flag);
       } else {
         newInstance = clazz.getConstructor(String.class).newInstance(name);
       }

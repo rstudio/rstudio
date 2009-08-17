@@ -20,7 +20,30 @@
   <define-property name="restricted1s" values="a,b,c,d,e,f" />
   <set-property name="restricted1s" value="d,e,f" />
   <set-property name="restricted1s" value="a" />
-    
+
+  <define-property name="conditional" values="a,b,c" />
+  <set-property name="conditional" value="a,b">
+    <when-property-is name="restricted" value="a" />
+  </set-property>
+  <set-property name="conditional" value="c">
+    <when-property-is name="restricted" value="c" />
+  </set-property>
+
+  <define-property name="derived" values="a,b,c" />
+  <set-property name="derived" value="a" />
+  <set-property name="derived" value="b" >
+    <when-property-is name="restricted" value="b" />
+  </set-property>
+  <set-property name="derived" value="c">
+    <when-property-is name="restricted" value="c" />
+  </set-property>
+
+  <define-property name="reset" values="a,b,c" />
+  <set-property name="reset" value="a,b" >
+    <when-property-is name="restricted" value="a" />
+  </set-property>
+  <set-property name="reset" value="a" />
+
   <set-configuration-property name="configProperty" value="Hello World!" />
 
   <set-configuration-property name="configRedefined" value="foo" />
