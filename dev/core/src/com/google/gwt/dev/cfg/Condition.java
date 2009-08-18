@@ -21,12 +21,13 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.collect.Sets;
 
+import java.io.Serializable;
 import java.util.Set;
 
 /**
  * Abstract base class for various kinds of deferred binding conditions.
  */
-public abstract class Condition {
+public abstract class Condition implements Serializable {
   /**
    * Returns the set of property names that the Condition requires in order to
    * be evaluated.

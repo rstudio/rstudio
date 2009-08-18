@@ -15,22 +15,24 @@
  */
 package com.google.gwt.dev.cfg;
 
-import java.util.ArrayList;
+import com.google.gwt.dev.util.collect.Lists;
+
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
 
 /**
  * A typed collection of {@link Condition} objects.
  */
-public class Conditions {
+public class Conditions implements Serializable {
 
-  private final List<Condition> list = new ArrayList<Condition>();
+  private List<Condition> list = Lists.create();
 
   /**
    * Appends a condition.
    */
   public void add(Condition condition) {
-    list.add(condition);
+    list = Lists.add(list, condition);
   }
 
   public Iterator<Condition> iterator() {
