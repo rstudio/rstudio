@@ -34,27 +34,38 @@ FLAG32BIT=32
 # Figure out 64-bit platforms, canonicalize ARCH and MARCH
 ifeq ($(ARCH),x86_64)
 FLAG32BIT=64
-else ifeq ($(ARCH),sparc)
+endif
+ifeq ($(ARCH),sparc)
 FLAG32BIT=64
-else ifeq ($(ARCH),alpha)
+endif
+ifeq ($(ARCH),alpha)
 FLAG32BIT=64
-else ifeq ($(ARCH),ia64)
+endif
+ifeq ($(ARCH),ia64)
 FLAG32BIT=64
-else ifeq ($(ARCH),athlon)
+endif
+ifeq ($(ARCH),athlon)
 ARCH=x86
-else ifeq ($(ARCH),i386)
+endif
+ifeq ($(ARCH),i386)
 ARCH=x86
-else ifeq ($(ARCH),i486)
+endif
+ifeq ($(ARCH),i486)
 ARCH=x86
-else ifeq ($(ARCH),i586)
+endif
+ifeq ($(ARCH),i586)
 ARCH=x86
-else ifeq ($(ARCH),i686)
+endif
+ifeq ($(ARCH),i686)
 ARCH=x86
-else ifeq ($(ARCH),i86pc)
+endif
+ifeq ($(ARCH),i86pc)
 ARCH=x86
-else ifeq ($(ARCH),Macintosh)
+endif
+ifeq ($(ARCH),Macintosh)
 ARCH=ppc
 endif
+
 MARCH=$(ARCH)
 ifeq ($(ARCH),x86)
 MARCH=i386
@@ -64,12 +75,14 @@ endif
 ifeq ($(shell uname),Linux)
 OS=linux
 CFLAGS= -g -O2 -fPIC $(INC) -rdynamic -m$(FLAG32BIT)
-else ifeq ($(shell uname),Darwin)
+endif
+ifeq ($(shell uname),Darwin)
 OS=mac
 CFLAGS= -g -O2 -fPIC $(INC) -D__mac -arch $(MARCH)
 AR=libtool
 ARFLAGS=-static -o
-else ifeq ($(shell uname),SunOS)
+endif
+ifeq ($(shell uname),SunOS)
 OS=sun
 #CFLAGS=-fast -g0 -Kpic $(INC) -Bdynamic -noex
 # SunC appears to miscompile Socket::writeByte by not incrementing the

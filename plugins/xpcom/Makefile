@@ -28,16 +28,20 @@ DLLFLAGS = -bundle -arch i386 -arch ppc
 TARGET_PLATFORM = Darwin_x86-gcc3
 # Mac puts multiple architectures into the same files
 GECKO_PLATFORM = Darwin-gcc3
-else ifeq ($(OS),linux)
+else
+ifeq ($(OS),linux)
 DEFAULT_FIREFOX_LIBS ?= /usr/lib/firefox
 RUN_PATH_FLAG = -rpath-link
 DLL_SUFFIX = .so
 DLLFLAGS = -shared -m$(FLAG32BIT)
 TARGET_PLATFORM = Linux_$(ARCH)-gcc3
-else ifeq ($(OS),sun)
+else
+ifeq ($(OS),sun)
 TARGET_PLATFORM = SunOS_$(ARCH)-sunc
 RUN_PATH_FLAG = -rpath-link
 DLLFLAGS=
+endif
+endif
 endif
 
 export FLAG32BIT
@@ -51,18 +55,24 @@ GECKO_MINOR_VERSION=
 ifeq ($(BROWSER),ff2)
 BROWSER_VERSION   = 1.8
 CFLAGS += -DBROWSER_FF2
-else ifeq ($(BROWSER),ff3)
+else
+ifeq ($(BROWSER),ff3)
 BROWSER_VERSION   = 1.9.0
 CFLAGS += -DBROWSER_FF3
-else ifeq ($(BROWSER),ff3+)
+else
+ifeq ($(BROWSER),ff3+)
 BROWSER_VERSION   = 1.9.0
 CFLAGS += -DBROWSER_FF3
 GECKO_MINOR_VERSION=.10
-else ifeq ($(BROWSER),ff35)
+else
+ifeq ($(BROWSER),ff35)
 BROWSER_VERSION   = 1.9.1
 CFLAGS += -DBROWSER_FF3
 else
 $(error Unrecognized BROWSER of $(BROWSER) - options are ff2, ff3, ff3+, ff35)
+endif
+endif
+endif
 endif
 
 CFLAGS += -fshort-wchar
@@ -98,11 +108,12 @@ XPIDL_FLAGS       = -I$(GECKO_SDK)/idl
 #		-L$(GECKO_LIBS) \
 #		-L$(FIREFOX_LIBS) \
 #		-Wl,$(RUN_PATH_FLAG),$(FIREFOX_LIBS) \
+#		-Wl,$(RUN_PATH_FLAG),$(GECKO_LIBS) \
+#		-Wl,$(RUN_PATH_FLAG),$(DEFAULT_FIREFOX_LIBS) \
 #		-lxpcomglue_s -lxpcom -lnspr4 -lmozjs
 DLLFLAGS += \
 		-L$(DEFAULT_FIREFOX_LIBS) \
 		-L$(GECKO_LIBS) \
-		-Wl,$(RUN_PATH_FLAG),$(DEFAULT_FIREFOX_LIBS) \
 		-Wl,$(RUN_PATH_FLAG),$(GECKO_LIBS) \
 		-lxpcomglue_s -lxpcom -lnspr4 -lmozjs
 
