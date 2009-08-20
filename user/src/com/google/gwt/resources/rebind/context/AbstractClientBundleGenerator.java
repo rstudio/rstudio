@@ -418,40 +418,18 @@ public abstract class AbstractClientBundleGenerator extends Generator {
   private Class<? extends ResourceGenerator> findResourceGenerator(
       TreeLogger logger, TypeOracle typeOracle, JMethod method)
       throws UnableToCompleteException {
-
     JClassType resourceType = method.getReturnType().isClassOrInterface();
     assert resourceType != null;
 
-    List<JClassType> searchTypes = new ArrayList<JClassType>();
-    searchTypes.add(resourceType);
-
-    ResourceGeneratorType generatorType = null;
-
-    while (!searchTypes.isEmpty()) {
-      JClassType current = searchTypes.remove(0);
-      generatorType = current.getAnnotation(ResourceGeneratorType.class);
-      if (generatorType != null) {
-        break;
-      }
-
-      if (current.getSuperclass() != null) {
-        searchTypes.add(current.getSuperclass());
-      }
-
-      for (JClassType t : current.getImplementedInterfaces()) {
-        searchTypes.add(t);
-      }
-    }
-
-    if (generatorType == null) {
+    ResourceGeneratorType annotation = resourceType.findAnnotationInTypeHierarchy(ResourceGeneratorType.class);
+    if (annotation == null) {
       logger.log(TreeLogger.ERROR, "No @"
-          + ResourceGeneratorType.class.getName()
-          + " was specifed for resource type "
+          + ResourceGeneratorType.class.getName() + " was specifed for type "
           + resourceType.getQualifiedSourceName() + " or its supertypes");
       throw new UnableToCompleteException();
     }
 
-    return generatorType.value();
+    return annotation.value();
   }
 
   /**

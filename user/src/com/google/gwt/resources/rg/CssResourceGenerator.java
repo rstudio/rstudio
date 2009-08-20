@@ -1002,8 +1002,6 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
    */
   private static final int CONCAT_EXPRESSION_LIMIT = 20;
 
-  private static final String[] DEFAULT_EXTENSIONS = new String[] {".css"};
-
   /**
    * These constants are used to cache obfuscated class names.
    */
@@ -1377,7 +1375,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
     }
 
     URL[] resources = ResourceGeneratorUtil.findResources(logger, context,
-        method, DEFAULT_EXTENSIONS);
+        method);
 
     if (resources.length == 0) {
       logger.log(TreeLogger.ERROR, "At least one source must be specified");

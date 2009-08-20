@@ -15,6 +15,7 @@
  */
 package com.google.gwt.resources.client;
 
+import com.google.gwt.resources.ext.DefaultExtensions;
 import com.google.gwt.resources.ext.ResourceGeneratorType;
 import com.google.gwt.resources.rg.CssResourceGenerator;
 
@@ -32,9 +33,9 @@ import java.lang.annotation.Target;
  * <li>{@code String someClassName();} will allow the css class
  * <code>.someClassName</code> to be obfuscated at runtime. The function will
  * return the obfuscated class name.</li>
- * <li>{@code <primitive numeric type or String> someDefName();} will allow 
- * access to the values defined by {@literal @def} rules within the CSS file. 
- * The defined value must be a raw number, a CSS length, or a percentage value 
+ * <li>{@code <primitive numeric type or String> someDefName();} will allow
+ * access to the values defined by {@literal @def} rules within the CSS file.
+ * The defined value must be a raw number, a CSS length, or a percentage value
  * if it is to be returned as a numeric type.
  * </ul>
  * 
@@ -94,6 +95,7 @@ import java.lang.annotation.Target;
  * @see <a href="http://code.google.com/p/google-web-toolkit/wiki/CssResource"
  *      >CssResource design doc</a>
  */
+@DefaultExtensions(value = {".css"})
 @ResourceGeneratorType(CssResourceGenerator.class)
 public interface CssResource extends ResourcePrototype {
   /**

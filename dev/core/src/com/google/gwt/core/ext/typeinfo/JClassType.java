@@ -19,6 +19,9 @@ import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.collect.Sets;
 
 import java.lang.annotation.Annotation;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,8 +48,8 @@ public abstract class JClassType extends JType implements HasAnnotations,
   }
 
   /**
-   * Returns <code>true</code> if the rhs array type can be assigned to the
-   * lhs array type.
+   * Returns <code>true</code> if the rhs array type can be assigned to the lhs
+   * array type.
    */
   private static boolean areArraysAssignable(JArrayType lhsType,
       JArrayType rhsType) {
@@ -327,8 +330,8 @@ public abstract class JClassType extends JType implements HasAnnotations,
   }
 
   /**
-   * Cached set of supertypes for this type (including itself).  If null,
-   * the set has not been calculated yet.
+   * Cached set of supertypes for this type (including itself). If null, the set
+   * has not been calculated yet.
    */
   private Set<JClassType> flattenedSupertypes;
 
@@ -356,6 +359,65 @@ public abstract class JClassType extends JType implements HasAnnotations,
     }
 
     return null;
+  }
+
+  /**
+   * Find an annotation on a type or on one of its superclasses or
+   * superinterfaces.
+   * <p>
+   * This provides semantics similar to that of
+   * {@link java.lang.annotation.Inherited} except that it checks all types to
+   * which this type is assignable. {@code @Inherited} only works on
+   * superclasses, not superinterfaces.
+   * <p>
+   * Annotations present on the superclass chain will be returned preferentially
+   * over those found in the superinterface hierarchy. Note that the annotation
+   * does not need to be tagged with {@code @Inherited} in order to be returned
+   * from the superclass chain.
+   * 
+   * @param annotationType the type of the annotation to look for
+   * @return the desired annotation or <code>null</code> if the annotation is
+   *         not present in the type's type hierarchy
+   */
+  public <T extends Annotation> T findAnnotationInTypeHierarchy(
+      Class<T> annotationType) {
+
+    // Remember what we've seen to avoid loops
+    Set<JClassType> seen = new HashSet<JClassType>();
+
+    // Work queue
+    List<JClassType> searchTypes = new LinkedList<JClassType>();
+    searchTypes.add(this);
+
+    T toReturn = null;
+
+    while (!searchTypes.isEmpty()) {
+      JClassType current = searchTypes.remove(0);
+
+      if (!seen.add(current)) {
+        continue;
+      }
+
+      toReturn = current.getAnnotation(annotationType);
+      if (toReturn != null) {
+        /*
+         * First one wins. It might be desirable at some point to have a
+         * variation that can return more than one instance of the annotation if
+         * it is present on multiple supertypes.
+         */
+        break;
+      }
+
+      if (current.getSuperclass() != null) {
+        // Add the superclass at the front of the list
+        searchTypes.add(0, current.getSuperclass());
+      }
+
+      // Superinterfaces
+      Collections.addAll(searchTypes, current.getImplementedInterfaces());
+    }
+
+    return toReturn;
   }
 
   public abstract JConstructor findConstructor(JType[] paramTypes);
@@ -446,12 +508,12 @@ public abstract class JClassType extends JType implements HasAnnotations,
       Class<? extends Annotation> annotationClass);
 
   /**
-   * Returns <code>true</code> if this {@link JClassType} is assignable from
-   * the specified {@link JClassType} parameter.
+   * Returns <code>true</code> if this {@link JClassType} is assignable from the
+   * specified {@link JClassType} parameter.
    * 
    * @param possibleSubtype possible subtype of this {@link JClassType}
-   * @return <code>true</code> if this {@link JClassType} is assignable from
-   *         the specified {@link JClassType} parameter
+   * @return <code>true</code> if this {@link JClassType} is assignable from the
+   *         specified {@link JClassType} parameter
    * 
    * @throws NullPointerException if <code>possibleSubtype</code> is
    *           <code>null</code>
@@ -487,7 +549,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
    * Determines if the class can be constructed using a simple <code>new</code>
    * operation. Specifically, the class must
    * <ul>
-   * <li>be a class rather than an interface, </li>
+   * <li>be a class rather than an interface,</li>
    * <li>have either no constructors or a parameterless constructor, and</li>
    * <li>be a top-level class or a static nested class.</li>
    * </ul>

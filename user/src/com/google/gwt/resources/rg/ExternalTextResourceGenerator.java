@@ -41,7 +41,6 @@ import java.util.Map;
  */
 public final class ExternalTextResourceGenerator extends
     AbstractResourceGenerator {
-  private static final String[] DEFAULT_EXTENSIONS = new String[] {".txt"};
   private StringBuffer data;
   private boolean first;
   private String urlExpression;
@@ -112,8 +111,7 @@ public final class ExternalTextResourceGenerator extends
       ClientBundleRequirements requirements, JMethod method)
       throws UnableToCompleteException {
 
-    URL[] urls = ResourceGeneratorUtil.findResources(logger, context, method,
-        DEFAULT_EXTENSIONS);
+    URL[] urls = ResourceGeneratorUtil.findResources(logger, context, method);
 
     if (urls.length != 1) {
       logger.log(TreeLogger.ERROR, "Exactly one resource must be specified",

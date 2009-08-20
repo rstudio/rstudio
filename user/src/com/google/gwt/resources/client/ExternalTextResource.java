@@ -15,6 +15,7 @@
  */
 package com.google.gwt.resources.client;
 
+import com.google.gwt.resources.ext.DefaultExtensions;
 import com.google.gwt.resources.ext.ResourceGeneratorType;
 import com.google.gwt.resources.rg.ExternalTextResourceGenerator;
 
@@ -23,6 +24,7 @@ import com.google.gwt.resources.rg.ExternalTextResourceGenerator;
  * not inlined into the compiled output. This is suitable for resources that are
  * not required as part of program initialization.
  */
+@DefaultExtensions(value = {".txt"})
 @ResourceGeneratorType(ExternalTextResourceGenerator.class)
 public interface ExternalTextResource extends ResourcePrototype {
   void getText(ResourceCallback<TextResource> callback)

@@ -45,8 +45,6 @@ import java.util.Set;
  * Builds an image strip for all ImageResources defined within an ClientBundle.
  */
 public final class ImageResourceGenerator extends AbstractResourceGenerator {
-  private static final String[] DEFAULT_EXTENSIONS = new String[] {
-      ".png", ".jpg", ".gif", ".bmp"};
   private Map<String, ImageRect> imageRectsByName;
   private Map<ImageRect, ImageBundleBuilder> buildersByImageRect;
   private Map<RepeatStyle, ImageBundleBuilder> buildersByRepeatStyle;
@@ -199,7 +197,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
       ClientBundleRequirements requirements, JMethod method)
       throws UnableToCompleteException {
     URL[] resources = ResourceGeneratorUtil.findResources(logger, context,
-        method, DEFAULT_EXTENSIONS);
+        method);
 
     if (resources.length != 1) {
       logger.log(TreeLogger.ERROR, "Exactly one image may be specified", null);

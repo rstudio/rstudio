@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.dev.resource.Resource;
@@ -171,6 +172,10 @@ public final class ResourceGeneratorUtil {
    * will fall back to using the current thread's context ClassLoader. If it is
    * necessary to alter the way in which resources are located, use the overload
    * that accepts a ClassLoader.
+   * <p>
+   * If the method's return type declares the {@link DefaultExtensions}
+   * annotation, the value of this annotation will be used to find matching
+   * resource names if the method lacks an {@link Source} annotation.
    * 
    * @param logger a TreeLogger that will be used to report errors or warnings
    * @param context the ResourceContext in which the ResourceGenerator is
@@ -184,7 +189,16 @@ public final class ResourceGeneratorUtil {
    */
   public static URL[] findResources(TreeLogger logger, ResourceContext context,
       JMethod method) throws UnableToCompleteException {
-    return findResources(logger, context, method, new String[0]);
+    JClassType returnType = method.getReturnType().isClassOrInterface();
+    assert returnType != null;
+    DefaultExtensions annotation = returnType.findAnnotationInTypeHierarchy(DefaultExtensions.class);
+    String[] extensions;
+    if (annotation != null) {
+      extensions = annotation.value();
+    } else {
+      extensions = new String[0];
+    }
+    return findResources(logger, context, method, extensions);
   }
 
   /**

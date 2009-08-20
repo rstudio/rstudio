@@ -15,6 +15,7 @@
  */
 package com.google.gwt.resources.client;
 
+import com.google.gwt.resources.ext.DefaultExtensions;
 import com.google.gwt.resources.ext.ResourceGeneratorType;
 import com.google.gwt.resources.rg.TextResourceGenerator;
 
@@ -22,6 +23,7 @@ import com.google.gwt.resources.rg.TextResourceGenerator;
  * A resource that contains text that should be incorporated into the compiled
  * output.
  */
+@DefaultExtensions(value = {".txt"})
 @ResourceGeneratorType(TextResourceGenerator.class)
 public interface TextResource extends ResourcePrototype {
   String getText();

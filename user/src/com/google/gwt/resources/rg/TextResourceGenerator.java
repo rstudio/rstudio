@@ -33,13 +33,11 @@ import java.net.URL;
  */
 public final class TextResourceGenerator extends AbstractResourceGenerator {
 
-  private static final String[] DEFAULT_EXTENSIONS = new String[] {".txt"};
-
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context,
       JMethod method) throws UnableToCompleteException {
     URL[] resources = ResourceGeneratorUtil.findResources(logger, context,
-        method, DEFAULT_EXTENSIONS);
+        method);
 
     if (resources.length != 1) {
       logger.log(TreeLogger.ERROR, "Exactly one resource must be specified",
