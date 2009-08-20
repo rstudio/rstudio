@@ -68,7 +68,8 @@ function __MODULE_FUNC__() {
     var result = false;
     try {
       var query = $wnd.location.search;
-      return (query.indexOf('gwt.hosted=') != -1 
+      return (query.indexOf('gwt.codesvr=') != -1
+          || query.indexOf('gwt.hosted=') != -1 
           || ($wnd.external && $wnd.external.gwtOnLoad)) &&
           (query.indexOf('gwt.hybrid') == -1);
     } catch (e) {

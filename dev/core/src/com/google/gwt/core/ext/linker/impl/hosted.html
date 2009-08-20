@@ -1,5 +1,7 @@
 <html>
 <head><script>
+// TODO(jat): wrap these to reduce namespace issues, and refactor code into
+//    separate functions.
 var $wnd = parent;
 var $doc = $wnd.document;
 var $moduleName, $moduleBase
@@ -35,12 +37,11 @@ function getTopWindow() {
 
 function loadIframe(url) {
   var iframe = $doc.createElement('iframe');
-  iframe.src = "javascript:''";
+  iframe.src = url;
   iframe.style.width = "100%";
   iframe.style.height = "100%";
   iframe.style.borderWidth = "0px";
   $doc.body.insertBefore(iframe, $doc.body.firstChild);
-  iframe.contentWindow.location.replace(url);
 }
 
 if ($legacyHosted) {
@@ -273,13 +274,22 @@ if (!$legacyHosted) {
     document.write('</object>');
   }
 
-  var idx = query.indexOf("gwt.hosted=");
+  // look for the old query parameter if we don't find the new one
+  var idx = query.indexOf("gwt.codesvr=");
+  if (idx >= 0) {
+    idx += 12;  // "gwt.codesvr=".length() == 12
+  } else {
+    idx = query.indexOf("gwt.hosted=");
+    if (idx >= 0) {
+      idx += 11;  // "gwt.hosted=".length() == 11
+    }
+  }
   if (idx >= 0) {
     var amp = query.indexOf("&", idx);
     if (amp >= 0) {
-      $hosted = query.substring(idx + 11, amp);
+      $hosted = query.substring(idx, amp);
     } else {
-      $hosted = query.substring(idx + 11);
+      $hosted = query.substring(idx);
     }
 
     // According to RFC 3986, some of this component's characters (e.g., ':')
