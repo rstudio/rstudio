@@ -29,6 +29,12 @@ import com.google.gwt.user.client.rpc.SerializationStreamReader;
 public class CommandClientSerializationStreamReader implements
     SerializationStreamReader {
 
+  /**
+   * An identifier in the payload evaluation context that is used to hold
+   * backreferences.
+   */
+  public static final String BACKREF_IDENT = "_";
+
   private static native JsArray<JavaScriptObject> eval(String payload) /*-{
     return eval(payload);
   }-*/;
@@ -80,7 +86,7 @@ public class CommandClientSerializationStreamReader implements
 
   public void prepareToRead(String js) throws RemoteException {
     try {
-      payload = eval("(function(){var _={};" + js + "})()");
+      payload = eval("(function(){var " + BACKREF_IDENT + "={};" + js + "})()");
       assert payload != null : "Payload evaluated to null";
     } catch (JavaScriptException e) {
       throw new IncompatibleRemoteServiceException(

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.rpc.server;
 
+import static com.google.gwt.rpc.client.impl.CommandClientSerializationStreamReader.BACKREF_IDENT;
+
 import com.google.gwt.rpc.client.ast.ArrayValueCommand;
 import com.google.gwt.rpc.client.ast.BooleanValueCommand;
 import com.google.gwt.rpc.client.ast.ByteValueCommand;
@@ -862,7 +864,6 @@ public class WebModePayloadSink extends CommandSink {
   }
 
   private final ClientOracle clientOracle;
-  private final String backRefIdent;
   private boolean finished = false;
   private final OutputStream out;
   private final Map<ValueCommand, byte[]> valueBackRefs = new HashMap<ValueCommand, byte[]>();
@@ -873,7 +874,6 @@ public class WebModePayloadSink extends CommandSink {
   public WebModePayloadSink(ClientOracle clientOracle, OutputStream out) {
     this.clientOracle = clientOracle;
     this.out = out;
-    backRefIdent = clientOracle.createUnusedIdent("_");
   }
 
   @Override
@@ -920,7 +920,7 @@ public class WebModePayloadSink extends CommandSink {
     if (toReturn == null) {
       if (freeBackRefs.isEmpty()) {
         int idx = valueBackRefs.size();
-        toReturn = getBytes(backRefIdent + "._"
+        toReturn = getBytes(BACKREF_IDENT + "._"
             + Integer.toString(idx, Character.MAX_RADIX));
       } else {
         toReturn = freeBackRefs.pop();
