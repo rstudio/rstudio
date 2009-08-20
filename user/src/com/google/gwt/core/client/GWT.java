@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.client;
 
+import com.google.gwt.core.client.impl.AsyncFragmentLoader;
 import com.google.gwt.core.client.impl.Impl;
 
 /**
@@ -211,6 +212,16 @@ public final class GWT {
      * <code>runAsync</code> in code that might or might not run in a web
      * browser.
      */
+    if (isScript()) {
+      /*
+       * It's possible that the code splitter does not run, even for a
+       * production build. Signal a lightweight event, anyway, just so that
+       * there isn't a complete lack of lightweight events for runAsync.
+       */
+      AsyncFragmentLoader.BROWSER_LOADER.logEventProgress("noDownloadNeeded", "begin");
+      AsyncFragmentLoader.BROWSER_LOADER.logEventProgress("noDownloadNeeded", "end");
+    }
+
     UncaughtExceptionHandler handler = sUncaughtExceptionHandler;
     if (handler == null) {
       callback.onSuccess();

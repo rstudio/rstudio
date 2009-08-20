@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 /** Tests the fragment loader. */
 public class AsyncFragmentLoaderTest extends TestCase {
@@ -97,14 +98,45 @@ public class AsyncFragmentLoaderTest extends TestCase {
     }
   }
 
-  private static final LoadErrorHandler NULL_ERROR_HANDLER = new LoadErrorHandler() {
-    public void loadFailed(Throwable reason) {
-    }
-  };
+  private static class MockProgressEvent {
+    public final String eventGroup;
+    public final Integer fragment;
+    public final String type;
 
-  private static final Logger NULL_LOGGER = new Logger() {
+    public MockProgressEvent(String eventGroup, String type, Integer fragment) {
+      this.eventGroup = eventGroup;
+      this.type = type;
+      this.fragment = fragment;
+    }
+  }
+
+  private static class MockProgressLogger implements Logger {
+    private Queue<MockProgressEvent> events = new LinkedList<MockProgressEvent>();
+
+    public void assertEvent(String eventGroup, String type, Integer fragment) {
+      MockProgressEvent event = events.remove();
+      assertEquals(eventGroup, event.eventGroup);
+      assertEquals(type, event.type);
+      assertEquals(fragment, event.fragment);
+    }
+
+    public void assertNoEvents() {
+      assertTrue("Expected no more progress events, but there are "
+          + events.size(), events.size() == 0);
+    }
+
     public void logEventProgress(String eventGroup, String type,
         Integer fragment, Integer size) {
+      events.add(new MockProgressEvent(eventGroup, type, fragment));
+    }
+  }
+
+  private static final String BEGIN = "begin";
+  private static final String END = "end";
+  private static final String LEFTOVERS_DOWNLOAD = "leftoversDownload";
+
+  private static final LoadErrorHandler NULL_ERROR_HANDLER = new LoadErrorHandler() {
+    public void loadFailed(Throwable reason) {
     }
   };
 
@@ -114,19 +146,31 @@ public class AsyncFragmentLoaderTest extends TestCase {
 
   public void testBasics() {
     MockLoadStrategy reqs = new MockLoadStrategy();
+    MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 5;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries,
-        new int[] {}, reqs, NULL_LOGGER);
+        new int[] {}, reqs, progress);
 
     loader.inject(1, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(numEntries);
+    progress.assertEvent(LEFTOVERS_DOWNLOAD, BEGIN, numEntries);
+
     loader.leftoversFragmentHasLoaded();
     reqs.assertFragmentsRequested(1);
+    progress.assertEvent(LEFTOVERS_DOWNLOAD, END, numEntries);
+    progress.assertEvent("download1", BEGIN, 1);
+
     loader.fragmentHasLoaded(1);
+    progress.assertEvent("download1", END, 1);
 
     loader.inject(2, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(2);
+    progress.assertEvent("download2", BEGIN, 2);
+
     loader.fragmentHasLoaded(2);
+    progress.assertEvent("download2", END, 2);
+
+    progress.assertNoEvents();
   }
 
   /**
@@ -134,14 +178,16 @@ public class AsyncFragmentLoaderTest extends TestCase {
    */
   public void testDownloadFailures() {
     MockLoadStrategy reqs = new MockLoadStrategy();
+    MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 6;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
-        1, 2, 3}, reqs, NULL_LOGGER);
+        1, 2, 3}, reqs, progress);
 
     // request fragment 1
     MockErrorHandler error1try1 = new MockErrorHandler();
     loader.inject(1, error1try1);
     reqs.assertFragmentsRequested(1);
+    progress.assertEvent("download1", BEGIN, 1);
 
     // fragment 1 fails
     loadFailed(reqs, 1);
@@ -151,34 +197,42 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockErrorHandler error1try2 = new MockErrorHandler();
     loader.inject(1, error1try2);
     reqs.assertFragmentsRequested(1);
+    progress.assertEvent("download1", BEGIN, 1);
 
     // this time fragment 1 succeeds
     loader.fragmentHasLoaded(1);
     reqs.assertFragmentsRequested();
     assertFalse(error1try2.getWasCalled());
+    progress.assertEvent("download1", END, 1);
 
     // request a later initial fragment (3), and see what happens if an
     // intermediate download fails
     MockErrorHandler error3try1 = new MockErrorHandler();
     loader.inject(3, error3try1);
     reqs.assertFragmentsRequested(2);
+    progress.assertEvent("download2", BEGIN, 2);
 
     loadFailed(reqs, 2);
     assertTrue(error3try1.wasCalled);
 
-    // request both 3 and 5, an see what happens if
+    // request both 3 and 5, and see what happens if
     // the leftovers download fails
     MockErrorHandler error3try2 = new MockErrorHandler();
     MockErrorHandler error5try1 = new MockErrorHandler();
     loader.inject(3, error3try2);
     loader.inject(5, error5try1);
     reqs.assertFragmentsRequested(2);
+    progress.assertEvent("download2", BEGIN, 2);
 
     loader.fragmentHasLoaded(2);
     reqs.assertFragmentsRequested(3);
+    progress.assertEvent("download2", END, 2);
+    progress.assertEvent("download3", BEGIN, 3);
 
     loader.fragmentHasLoaded(3);
     reqs.assertFragmentsRequested(numEntries);
+    progress.assertEvent("download3", END, 3);
+    progress.assertEvent(LEFTOVERS_DOWNLOAD, BEGIN, numEntries);
 
     loadFailed(reqs, numEntries); // leftovers fails!
     assertFalse(error3try2.getWasCalled()); // 3 should have succeeded
@@ -189,13 +243,19 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockErrorHandler error5try2 = new MockErrorHandler();
     loader.inject(5, error5try2);
     reqs.assertFragmentsRequested(numEntries);
+    progress.assertEvent(LEFTOVERS_DOWNLOAD, BEGIN, numEntries);
 
     loader.leftoversFragmentHasLoaded();
     reqs.assertFragmentsRequested(5);
+    progress.assertEvent(LEFTOVERS_DOWNLOAD, END, numEntries);
+    progress.assertEvent("download5", BEGIN, 5);
 
     loader.fragmentHasLoaded(5);
     reqs.assertFragmentsRequested();
     assertFalse(error5try2.getWasCalled());
+    progress.assertEvent("download5", END, 5);
+
+    progress.assertNoEvents();
   }
 
   /**
@@ -204,38 +264,51 @@ public class AsyncFragmentLoaderTest extends TestCase {
    */
   public void testLoadingPartOfInitialSequence() {
     MockLoadStrategy reqs = new MockLoadStrategy();
+    MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 6;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
-        1, 2, 3}, reqs, NULL_LOGGER);
+        1, 2, 3}, reqs, progress);
 
     loader.inject(1, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(1);
+    progress.assertEvent("download1", BEGIN, 1);
 
     loader.fragmentHasLoaded(1);
     reqs.assertFragmentsRequested(); // should stop
+    progress.assertEvent("download1", END, 1);
 
     loader.inject(2, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(2);
+    progress.assertEvent("download2", BEGIN, 2);
 
     loader.fragmentHasLoaded(2);
     reqs.assertFragmentsRequested(); // again, should stop
+    progress.assertEvent("download2", END, 2);
 
     loader.inject(3, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(3);
+    progress.assertEvent("download3", BEGIN, 3);
 
     loader.fragmentHasLoaded(3);
-    reqs.assertFragmentsRequested(numEntries); // last initial, so it should
-    // request the leftovers
+    // last initial, so it should now request the leftovers
+    reqs.assertFragmentsRequested(numEntries);
+    progress.assertEvent("download3", END, 3);
+    progress.assertEvent(LEFTOVERS_DOWNLOAD, BEGIN, numEntries);
 
     loader.fragmentHasLoaded(numEntries);
     reqs.assertFragmentsRequested();
+    progress.assertEvent(LEFTOVERS_DOWNLOAD, END, numEntries);
 
     // check that exclusives now load
     loader.inject(5, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(5);
+    progress.assertEvent("download5", BEGIN, 5);
 
     loader.fragmentHasLoaded(5);
     reqs.assertFragmentsRequested();
+    progress.assertEvent("download5", END, 5);
+
+    progress.assertNoEvents();
   }
 
   /**
@@ -245,9 +318,10 @@ public class AsyncFragmentLoaderTest extends TestCase {
    */
   public void testOverflowInWaitingForInitialFragments() {
     MockLoadStrategy reqs = new MockLoadStrategy();
+    MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 6;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
-        1, 2, 3}, reqs, NULL_LOGGER);
+        1, 2, 3}, reqs, progress);
 
     /*
      * Repeatedly queue up extra downloads waiting on an initial and then fail.
@@ -256,9 +330,11 @@ public class AsyncFragmentLoaderTest extends TestCase {
       MockErrorHandler error = new MockErrorHandler();
       loader.inject(4, error);
       reqs.assertFragmentsRequested(1);
+      progress.assertEvent("download1", BEGIN, 1);
 
       loadFailed(reqs, 1);
       assertTrue(error.getWasCalled());
+      progress.assertNoEvents();
     }
   }
 
@@ -267,40 +343,58 @@ public class AsyncFragmentLoaderTest extends TestCase {
    */
   public void testWithInitialLoadSequence() {
     MockLoadStrategy reqs = new MockLoadStrategy();
+    MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 6;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
-        1, 2, 3}, reqs, NULL_LOGGER);
+        1, 2, 3}, reqs, progress);
 
     loader.inject(1, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(1);
+    progress.assertEvent("download1", BEGIN, 1);
 
     loader.inject(3, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(); // still waiting on fragment 1
+    progress.assertNoEvents();
 
     loader.inject(5, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(); // still waiting on fragment 1
+    progress.assertNoEvents();
 
     // say that 1 loads, which should trigger a chain of backlogged downloads
     loader.fragmentHasLoaded(1);
     reqs.assertFragmentsRequested(2); // next initial
+    progress.assertEvent("download1", END, 1);
+    progress.assertEvent("download2", BEGIN, 2);
 
     loader.fragmentHasLoaded(2);
     reqs.assertFragmentsRequested(3); // next initial
+    progress.assertEvent("download2", END, 2);
+    progress.assertEvent("download3", BEGIN, 3);
 
     loader.fragmentHasLoaded(3);
     reqs.assertFragmentsRequested(numEntries); // leftovers
+    progress.assertEvent("download3", END, 3);
+    progress.assertEvent("leftoversDownload", BEGIN, numEntries);
 
     loader.leftoversFragmentHasLoaded();
     reqs.assertFragmentsRequested(5);
+    progress.assertEvent("leftoversDownload", END, numEntries);
+    progress.assertEvent("download5", BEGIN, 5);
 
     loader.fragmentHasLoaded(5);
     reqs.assertFragmentsRequested(); // quiescent
+    progress.assertEvent("download5", END, 5);
+    progress.assertNoEvents();
 
     // check that new exclusive fragment requests work
     loader.inject(4, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(4);
+    progress.assertEvent("download4", BEGIN, 4);
+
     loader.fragmentHasLoaded(4);
     reqs.assertFragmentsRequested();
+    progress.assertEvent("download4", END, 4);
+    progress.assertNoEvents();
   }
 
   private void loadFailed(MockLoadStrategy reqs, int fragment) {

@@ -101,7 +101,7 @@ public class AsyncFragmentLoader {
 
     private static final String LEFTOVERS_DOWNLOAD = "leftoversDownload";
 
-    private static String downloadGroup(int splitPoint) {
+    private static String downloadGroupForExclusive(int splitPoint) {
       return "download" + splitPoint;
     }
   }
@@ -445,8 +445,7 @@ public class AsyncFragmentLoader {
        * The initial fragments has loaded. Immediately start loading the
        * requested code.
        */
-      logEventProgress(LwmLabels.downloadGroup(splitPoint), LwmLabels.BEGIN,
-          splitPoint, null);
+      logDownloadStart(splitPoint);
       startLoadingFragment(splitPoint, loadErrorHandler);
       return;
     }
@@ -488,6 +487,11 @@ public class AsyncFragmentLoader {
     logEventProgress(eventGroup, type, null, null);
   }
 
+  private String downloadGroup(int fragment) {
+    return (fragment == leftoversFragment()) ? LwmLabels.LEFTOVERS_DOWNLOAD
+        : LwmLabels.downloadGroupForExclusive(fragment);
+  }
+
   /**
    * Return whether all initial fragments have completed loading.
    */
@@ -512,6 +516,10 @@ public class AsyncFragmentLoader {
     return numEntries;
   }
 
+  private void logDownloadStart(int fragment) {
+    logEventProgress(downloadGroup(fragment), LwmLabels.BEGIN, fragment, null);
+  }
+
   /**
    * Log event progress via the {@link Logger} this instance was provided. The
    * <code>fragment</code> and <code>size</code> objects are allowed to be
@@ -523,8 +531,7 @@ public class AsyncFragmentLoader {
   }
 
   private void logFragmentLoaded(int fragment) {
-    String logGroup = (fragment == leftoversFragment())
-        ? LwmLabels.LEFTOVERS_DOWNLOAD : LwmLabels.downloadGroup(fragment);
+    String logGroup = downloadGroup(fragment);
     logEventProgress(logGroup, LwmLabels.END, fragment, null);
   }
 
@@ -563,8 +570,7 @@ public class AsyncFragmentLoader {
       // start loading the next initial fragment
       initialFragmentsLoading = true;
       int nextSplitPoint = remainingInitialFragments.peek();
-      logEventProgress(LwmLabels.downloadGroup(nextSplitPoint),
-          LwmLabels.BEGIN, nextSplitPoint, null);
+      logDownloadStart(nextSplitPoint);
       startLoadingFragment(nextSplitPoint, new InitialFragmentDownloadFailed());
       return;
     }
@@ -576,8 +582,10 @@ public class AsyncFragmentLoader {
     // start loading any pending fragments
     assert (waitingForInitialFragments.size() == waitingForInitialFragmentsErrorHandlers.size());
     while (waitingForInitialFragments.size() > 0) {
-      startLoadingFragment(waitingForInitialFragments.remove(),
-          waitingForInitialFragmentsErrorHandlers.remove());
+      int nextSplitPoint = waitingForInitialFragments.remove();
+      LoadErrorHandler handler = waitingForInitialFragmentsErrorHandlers.remove();
+      logDownloadStart(nextSplitPoint);
+      startLoadingFragment(nextSplitPoint, handler);
     }
   }
 }
