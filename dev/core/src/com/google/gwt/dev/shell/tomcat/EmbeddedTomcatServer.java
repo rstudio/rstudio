@@ -177,15 +177,6 @@ public class EmbeddedTomcatServer {
     //
     File topWorkDir = new File(System.getProperty("user.dir"));
 
-    /*
-     * set property explicitly so that addition of the xercesImpl lib, when java
-     * 1.5 is used, does not affect tomcat.
-     */
-    if ("1.5".equals(System.getProperty("java.specification.version"))) {
-      System.setProperty("javax.xml.parsers.DocumentBuilderFactory",
-          "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
-    }
-    
     // Tell Tomcat its base directory so that it won't complain.
     //
     String catBase = System.getProperty("catalina.base");

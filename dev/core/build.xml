@@ -65,7 +65,7 @@
           <include name="nekohtml/nekohtml-1.9.12.jar" />
           <include name="xalan/xalan-2.7.1.jar" />
           <include name="xerces/xerces-2_9_1/serializer.jar" />
-          <include name="xerces/xerces-2_9_1/xercesImpl.jar" />
+          <include name="xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar" />
           <include name="xerces/xerces-2_9_1/xml-apis.jar" />
           <include name="w3c/sac/sac-1.3.jar" />
           <!-- htmlunit dependencies not already included: END -->
@@ -119,7 +119,7 @@
           <zipfileset src="${gwt.tools.lib}/nekohtml/nekohtml-1.9.12.jar" />
           <zipfileset src="${gwt.tools.lib}/xalan/xalan-2.7.1.jar" />
           <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/serializer.jar" />
-          <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/xercesImpl.jar" />
+          <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar" />
           <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/xml-apis.jar" />
           <zipfileset src="${gwt.tools.lib}/w3c/sac/sac-1.3.jar" />
           <!-- htmlunit dependencies not already included: END -->
