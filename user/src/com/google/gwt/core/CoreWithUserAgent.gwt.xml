@@ -15,7 +15,17 @@
 <!-- Deferred binding rules for core classes based on user agent. -->
 <module>
   <inherits name="com.google.gwt.core.Core"/>
-  
+
+  <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorChrome">
+    <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
+    <when-property-is name="compiler.emulatedStack" value="false" />
+    <any>
+      <!-- For now, only Chrome provides Error.stack support, so we hijack the
+           entire WebKit permutation -->
+      <when-property-is name="user.agent" value="safari" />
+    </any>
+  </replace-with>
+
   <replace-with class="com.google.gwt.core.client.impl.StackTraceCreator.CollectorMoz">
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
     <when-property-is name="compiler.emulatedStack" value="false" />

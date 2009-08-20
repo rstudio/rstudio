@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.impl.StackTraceCreator.CollectorChrome;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -64,7 +65,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
   /**
    * Just make sure that reentrant behavior doesn't fail.
    */
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith(value = {Platform.Htmlunit})
   public static void testReentrantCalls() {
     if (!GWT.isScript()) {
       // sample is useless in hosted mode
@@ -81,7 +82,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
     assertEquals(start, end);
   }
 
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith(value = {Platform.Htmlunit})
   public static void testStackTraces() {
     JsArrayString start = sample();
 
@@ -192,5 +193,17 @@ public class StackTraceCreatorTest extends GWTTestCase {
         StackTraceCreator.extractNameFromToString("function foo (){}"));
     assertEquals("foo",
         StackTraceCreator.extractNameFromToString("  function foo (){}"));
+  }
+
+  public void testChromeExtractName() {
+    CollectorChrome c = new CollectorChrome();
+
+    assertEquals("anonymous", c.extractName(" at file.js:1:2"));
+    assertEquals("functionName",
+        c.extractName(" at functionName (file.js:1:2)"));
+    assertEquals("functionName",
+        c.extractName(" at Type.functionName (file.js:1:2)"));
+    assertEquals("functionName",
+        c.extractName(" at Type.functionName [as methodName] (file.js:1:2)"));
   }
 }

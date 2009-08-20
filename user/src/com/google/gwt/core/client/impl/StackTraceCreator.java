@@ -209,6 +209,88 @@ public class StackTraceCreator {
   }
 
   /**
+   * Chrome uses a slightly different format to Mozilla.
+   * 
+   * See http://code.google.com/p/v8/source/browse/branches/bleeding_edge/src/
+   * messages.js?r=2340#712 for formatting code.
+   * 
+   * Function calls can be of the four following forms:
+   * 
+   * <pre>
+   * at file.js:1:2
+   * at functionName (file.js:1:2)
+   * at Type.functionName (file.js:1:2)
+   * at Type.functionName [as methodName] (file.js:1:2)
+   * </pre>
+   */
+  static class CollectorChrome extends CollectorMoz {
+    @Override
+    public JsArrayString collect() {
+      JsArrayString res = super.collect();
+      if (res.length() == 0) {
+        /*
+         * Ensure Safari falls back to default Collector implementation.
+         * Remember to remove this method call from the stack:
+         */
+        res = splice(new Collector().collect(), 1);
+      }
+      return res;
+    }
+
+    @Override
+    public JsArrayString inferFrom(JavaScriptObject e) {
+      JsArrayString stack = super.inferFrom(e);
+      if (stack.length() == 0) {
+        // Safari should fall back to default Collector:
+        return new Collector().inferFrom(e);
+      } else {
+        // Chrome contains the error itself as the first line of the stack:
+        return splice(stack, 1);
+      }
+    }
+
+    @Override
+    protected String extractName(String fnToString) {
+      if (fnToString.length() == 0) {
+        return "anonymous";
+      }
+
+      String toReturn = fnToString.trim();
+
+      // Strip the "at " prefix:
+      if (toReturn.startsWith("at ")) {
+        toReturn = toReturn.substring(3);
+      }
+
+      // Strip bracketed items from the end:
+      int index = toReturn.indexOf("[");
+      if (index == -1) {
+        index = toReturn.indexOf("(");
+      }
+      if (index == -1) {
+        // No bracketed items found, hence no function name available:
+        return "anonymous";
+      } else {
+        // Bracketed items found: strip them off.
+        toReturn = toReturn.substring(0, index).trim();
+      }
+
+      // Strip the Type off to leave just the functionName:
+      index = toReturn.indexOf('.');
+      if (index != -1) {
+        toReturn = toReturn.substring(index + 1);
+      }
+
+      return toReturn.length() > 0 ? toReturn : "anonymous";
+    }
+
+    @Override
+    protected int toSplice() {
+      return 3;
+    }
+  }
+
+  /**
    * Opera encodes stack trace information in the error's message.
    */
   static class CollectorOpera extends CollectorMoz {
