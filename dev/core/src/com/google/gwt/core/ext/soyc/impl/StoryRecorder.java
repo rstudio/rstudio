@@ -310,7 +310,7 @@ public class StoryRecorder {
       builder.append("\"/>\n</story>\n");
     } else {
       builder.append("\">");
-      Util.escapeXml(jsCode, start, end, false, builder);
+      SizeMapRecorder.escapeXml(jsCode, start, end, false, builder);
       builder.append("</storyref>\n</story>\n");
     }
   }

@@ -55,6 +55,87 @@ public class SizeMapRecorder {
     }
   }
 
+  /**
+   * Escapes '&', '<', '>', '"', and '\'' to their XML entity equivalents.
+   */
+  public static String escapeXml(String unescaped) {
+    StringBuilder builder = new StringBuilder();
+    escapeXml(unescaped, 0, unescaped.length(), true, builder);
+    return builder.toString();
+  }
+
+  /**
+   * Escapes '&', '<', '>', '"', and optionally ''' to their XML entity
+   * equivalents. The portion of the input string between start (inclusive) and
+   * end (exclusive) is scanned.  The output is appended to the given
+   * StringBuilder.
+   * 
+   * @param code the input String
+   * @param start the first character position to scan.
+   * @param end the character position following the last character to scan.
+   * @param quoteApostrophe if true, the &apos; character is quoted as
+   *     &amp;apos;
+   * @param builder a StringBuilder to be appended with the output.
+   */
+  public static void escapeXml(String code, int start, int end,
+      boolean quoteApostrophe, StringBuilder builder) {
+    int lastIndex = 0;
+    int len = end - start;
+    char[] c = new char[len];
+
+    code.getChars(start, end, c, 0);
+    for (int i = 0; i < len; i++) {
+      if ((c[i] >= '\uD800') && (c[i] <= '\uDBFF')) {
+        builder.append(c, lastIndex, i - lastIndex);
+        builder.append("(non-valid utf-8 character)");
+        lastIndex = i + 1;
+        break;
+      } else if ((c[i] >= '\uDC00') && (c[i] <= '\uDFFF')) {
+        builder.append(c, lastIndex, i - lastIndex);
+        builder.append("(non-valid utf-8 character)");
+        lastIndex = i + 1;
+        break;
+      } else if (c[i] == '\0') {
+        builder.append(c, lastIndex, i - lastIndex);
+        builder.append("(null)");
+        lastIndex = i + 1;
+        break;
+      } else if (c[i] == '\uffff') {
+        builder.append(c, lastIndex, i - lastIndex);
+        builder.append("(uffff)");
+        lastIndex = i + 1;
+        break;
+      } else if (c[i] == '\ufffe') {
+        builder.append(c, lastIndex, i - lastIndex);
+        builder.append("(ufffe)");
+        lastIndex = i + 1;
+      } else if (c[i] == '&') {
+        builder.append(c, lastIndex, i - lastIndex);
+        builder.append("&amp;");
+        lastIndex = i + 1;
+      } else if (c[i] == '>') {
+        builder.append(c, lastIndex, i - lastIndex);
+        builder.append("&gt;");
+        lastIndex = i + 1;
+      } else if (c[i] == '<') {
+        builder.append(c, lastIndex, i - lastIndex);
+        builder.append("&lt;");
+        lastIndex = i + 1;
+      } else if (c[i] == '\"') {
+        builder.append(c, lastIndex, i - lastIndex);
+        builder.append("&quot;");
+        lastIndex = i + 1;
+      } else if (c[i] == '\'') {
+        if (quoteApostrophe) {
+          builder.append(c, lastIndex, i - lastIndex);
+          builder.append("&apos;");
+          lastIndex = i + 1;
+        }
+      }
+    }
+    builder.append(c, lastIndex, len - lastIndex);
+  }
+  
   public static void recordMap(TreeLogger logger, OutputStream out,
       SizeBreakdown[] sizeBreakdowns, JavaToJavaScriptMap jjsmap,
       Map<JsName, String> obfuscateMap) throws IOException {
@@ -72,8 +153,8 @@ public class SizeMapRecorder {
         int size = sizeMapEntry.getValue();
         TypedProgramReference typedRef = typedProgramReference(name, jjsmap,
             obfuscateMap);
-        writer.append("  <size " + "type=\"" + Util.escapeXml(typedRef.type)
-            + "\" " + "ref=\"" + Util.escapeXml(typedRef.description) + "\" "
+        writer.append("  <size " + "type=\"" + escapeXml(typedRef.type)
+            + "\" " + "ref=\"" + escapeXml(typedRef.description) + "\" "
             + "size=\"" + size + "\"/>\n");
       }
       writer.append("</sizemap>\n");
