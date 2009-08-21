@@ -43,12 +43,19 @@ import java.util.regex.Pattern;
  * A utility to make the top level HTTML file for one permutation.
  */
 public class MakeTopLevelHtmlForPerm {
+  /**
+   * A dependency linker for exclusive fragments. It links to nothing.
+   */
   public class DependencyLinkerForExclusiveFragment implements DependencyLinker {
     public String dependencyLinkForClass(String className, String permutationId) {
       return null;
     }
   }
 
+  /**
+   * A dependency linker for the initial code download. It links to the
+   * dependencies for the initial download.
+   */
   public class DependencyLinkerForInitialCode implements DependencyLinker {
     public String dependencyLinkForClass(String className, String permutationId) {
       String packageName = globalInformation.getClassToPackage().get(className);
@@ -58,12 +65,21 @@ public class MakeTopLevelHtmlForPerm {
     }
   }
 
+  /**
+   * A dependency linker for the leftovers fragment. It links to leftovers
+   * status pages.
+   */
   public class DependencyLinkerForLeftoversFragment implements DependencyLinker {
     public String dependencyLinkForClass(String className, String permutationId) {
       return leftoversStatusFileName(className, permutationId);
     }
   }
 
+  /**
+   * A dependency linker for the total program breakdown. It links to a split
+   * status page.
+   * 
+   */
   public class DependencyLinkerForTotalBreakdown implements DependencyLinker {
     public String dependencyLinkForClass(String className, String permutationId) {
       return splitStatusFileName(className, permutationId);
@@ -73,33 +89,6 @@ public class MakeTopLevelHtmlForPerm {
   interface DependencyLinker {
     String dependencyLinkForClass(String className, String permutationId);
   }
-
-  /**
-   * Default constructor. Will be used for all permutations.
-   */
-  MakeTopLevelHtmlForPerm() {
-    this.globalInformation = new GlobalInformation();
-    this.settings = new Settings();
-  }
-
-  /**
-   * Constructor for a specific permutation.
-   * 
-   * @param globalInformation All the information about this permutation
-   */
-  MakeTopLevelHtmlForPerm(final GlobalInformation globalInformation) {
-    this.globalInformation = globalInformation;
-  }
-
-  /**
-   * Global information for this permutation.
-   */
-  private GlobalInformation globalInformation = new GlobalInformation();
-
-  /**
-   * Settings for this permutation.
-   */
-  private Settings settings = new Settings();
 
   /**
    * By a convention shared with the compiler, the initial download is fragment
@@ -124,6 +113,83 @@ public class MakeTopLevelHtmlForPerm {
   private static String RESOURCES_PATH = MakeTopLevelHtmlForPerm.class.getPackage().getName().replace(
       '.', '/')
       + "/resources/";
+
+  public static String escapeXml(String unescaped) {
+    String escaped = unescaped.replaceAll("\\&", "&amp;");
+    escaped = escaped.replaceAll("\\<", "&lt;");
+    escaped = escaped.replaceAll("\\>", "&gt;");
+    escaped = escaped.replaceAll("\\\"", "&quot;");
+    escaped = escaped.replaceAll("\\'", "&apos;");
+    return escaped;
+  }
+
+  private static void addCenteredHeader(final PrintWriter outFile, String header) {
+    outFile.println("<hr>");
+    outFile.println("<b>" + header + "</b>");
+    outFile.println("<hr>");
+  }
+
+  /**
+   * Adds a header line indicating which breakdown is being analyzed.
+   */
+  private static void addHeaderWithBreakdownContext(SizeBreakdown breakdown,
+      final PrintWriter outFile) {
+    addCenteredHeader(outFile, headerLineForBreakdown(breakdown));
+  }
+
+  private static String classesInPackageFileName(SizeBreakdown breakdown,
+      String packageName, String permutationId) {
+    return breakdown.getId() + "_" + packageName + "-" + permutationId
+        + "_Classes.html";
+  }
+
+  /**
+   * Convert a potentially long string into a short file name. The current
+   * implementation simply hashes the long name.
+   */
+  private static String filename(String longFileName) {
+    try {
+      return Util.computeStrongName(longFileName.getBytes(Util.DEFAULT_ENCODING));
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static String headerLineForBreakdown(SizeBreakdown breakdown) {
+    return "(Analyzing code subset: " + breakdown.getDescription() + ")";
+  }
+
+  private static String shellFileName(SizeBreakdown breakdown,
+      String permutationId) {
+    return breakdown.getId() + "-" + permutationId + "-overallBreakdown.html";
+  }
+
+  /**
+   * Global information for this permutation.
+   */
+  private GlobalInformation globalInformation = new GlobalInformation();
+
+  /**
+   * Settings for this permutation.
+   */
+  private Settings settings = new Settings();
+
+  /**
+   * Default constructor. Will be used for all permutations.
+   */
+  MakeTopLevelHtmlForPerm() {
+    this.globalInformation = new GlobalInformation();
+    this.settings = new Settings();
+  }
+
+  /**
+   * Constructor for a specific permutation.
+   * 
+   * @param globalInformation All the information about this permutation
+   */
+  MakeTopLevelHtmlForPerm(final GlobalInformation globalInformation) {
+    this.globalInformation = globalInformation;
+  }
 
   public void copyFileOrDirectory(File srcPath, File dstPath, String classPath,
       String inputFileName, boolean isDirectory) throws IOException {
@@ -193,216 +259,8 @@ public class MakeTopLevelHtmlForPerm {
     }
   }
 
-  public static String escapeXml(String unescaped) {
-    String escaped = unescaped.replaceAll("\\&", "&amp;");
-    escaped = escaped.replaceAll("\\<", "&lt;");
-    escaped = escaped.replaceAll("\\>", "&gt;");
-    escaped = escaped.replaceAll("\\\"", "&quot;");
-    escaped = escaped.replaceAll("\\'", "&apos;");
-    return escaped;
-  }
-
-  private static void addCenteredHeader(final PrintWriter outFile, String header) {
-    outFile.println("<hr>");
-    outFile.println("<b>" + header + "</b>");
-    outFile.println("<hr>");
-  }
-
-  /**
-   * Adds a header line indicating which breakdown is being analyzed.
-   */
-  private static void addHeaderWithBreakdownContext(SizeBreakdown breakdown,
-      final PrintWriter outFile) {
-    addCenteredHeader(outFile, headerLineForBreakdown(breakdown));
-  }
-
-  private static String classesInPackageFileName(SizeBreakdown breakdown,
-      String packageName, String permutationId) {
-    return breakdown.getId() + "_" + packageName + "-" + permutationId
-        + "_Classes.html";
-  }
-
-  /**
-   * Convert a potentially long string into a short file name. The current
-   * implementation simply hashes the long name.
-   */
-  private static String filename(String longFileName) {
-    try {
-      return Util.computeStrongName(longFileName.getBytes(Util.DEFAULT_ENCODING));
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * Return a {@link File} object for a file to be emitted into the output
-   * directory.
-   */
-  private File getOutFile(String localFileName) {
-    File outDir = new File(settings.out.get());
-    return new File(outDir, localFileName);
-  }
-
-  private static String headerLineForBreakdown(SizeBreakdown breakdown) {
-    return "(Analyzing code subset: " + breakdown.getDescription() + ")";
-  }
-
-  /**
-   * Describe the code covered by the dependency graph with the supplied name.
-   */
-  private String inferDepGraphDescription(String depGraphName) {
-    if (depGraphName.equals("initial")) {
-      return "Initially Live Code";
-    }
-
-    if (depGraphName.equals("total")) {
-      return "All Code";
-    }
-
-    Matcher matcher = PATTERN_SP_INT.matcher(depGraphName);
-    if (matcher.matches()) {
-      int splitPoint = Integer.valueOf(matcher.group(1));
-      if (isInitialSplitPoint(splitPoint)) {
-        return "Code Becoming Live at Split Point " + splitPoint;
-      } else {
-        return "Code not Exclusive to Split Point " + splitPoint;
-      }
-    }
-
-    throw new RuntimeException("Unexpected dependency graph name: "
-        + depGraphName);
-  }
-
-  private boolean isInitialSplitPoint(int splitPoint) {
-    return globalInformation.getSplitPointInitialLoadSequence().contains(
-        splitPoint);
-  }
-
-  private String makeCodeTypeHtml(SizeBreakdown breakdown,
-      Map<String, CodeCollection> nameToCodeColl,
-      Map<String, LiteralsCollection> nameToLitColl, String permutationId)
-      throws IOException {
-    String outFileName = breakdown.getId() + "-" + permutationId
-        + "_codeTypeBreakdown.html";
-    float maxSize = 0f;
-    float sumSize = 0f;
-    TreeMap<Float, String> sortedCodeTypes = new TreeMap<Float, String>(
-        Collections.reverseOrder());
-
-    for (String codeType : nameToCodeColl.keySet()) {
-      float curSize = nameToCodeColl.get(codeType).getCumPartialSize(breakdown);
-      sumSize += curSize;
-
-      if (curSize != 0f) {
-        sortedCodeTypes.put(curSize, codeType);
-        if (curSize > maxSize) {
-          maxSize = curSize;
-        }
-      }
-    }
-
-    final PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
-
-    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-    outFile.println("<html>");
-    outFile.println("<head>");
-    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    outFile.println("<link rel=\"stylesheet\" href=\"common.css\" media=\"screen\">");
-    outFile.println("</head>");
-
-    outFile.println("<body>");
-    outFile.println("<table style='width:100%'>");
-    outFile.println("<thead>");
-    outFile.println("<th class='barlabel'>Size</th>");
-
-    outFile.println("<th class='barlabel'>Percentage</th>");
-    outFile.println("<th class='barlabel'></th>");
-    outFile.println("<th style='width:100%' class='barlabel'></th>");
-    outFile.println("</thead>");
-
-    for (Float size : sortedCodeTypes.keySet()) {
-
-      String codeType = sortedCodeTypes.get(size);
-      String drillDownFileName = breakdown.getId() + "_" + codeType + "-"
-          + permutationId + "Classes.html";
-
-      float ratio = (size / maxSize) * 79;
-      float perc = (size / sumSize) * 100;
-
-      if (ratio < 5) {
-        ratio = 5;
-      }
-
-      outFile.println("<tr>");
-      outFile.println("<td class=\"barlabel\">" + size + "</td>");
-      outFile.println("<td class=\"barlabel\">" + perc + "%</td>");
-      outFile.println("<td class=\"barlabel\"><a href=\"" + drillDownFileName
-          + "\" target=\"_top\">" + codeType + "</a></td>");
-      outFile.println("<td class=\"box\">");
-      outFile.println("<div style=\"width:"
-          + ratio
-          + "%;\" class=\"lb\"><div class=\"rb\"><div class=\"bb\"><div class=\"blc\"><div class=\"brc\"><div class=\"tb\"><div class=\"tlc\"><div class=\"trc\"><div class=\"content\"></div></div></div></div></div></div></div></div>");
-      outFile.println("</td>");
-      outFile.println("</tr>");
-
-    }
-
-    maxSize = 0f;
-    sumSize = 0f;
-    TreeMap<Float, String> sortedLitTypes = new TreeMap<Float, String>(
-        Collections.reverseOrder());
-
-    for (String literal : nameToLitColl.keySet()) {
-      float curSize = nameToLitColl.get(literal).size;
-      sumSize += curSize;
-
-      if (curSize != 0f) {
-        sortedLitTypes.put(curSize, literal);
-
-        if (curSize > maxSize) {
-          maxSize = curSize;
-        }
-      }
-    }
-
-    for (Float size : sortedLitTypes.keySet()) {
-      String literal = sortedLitTypes.get(size);
-      String drillDownFileName = breakdown.getId() + "_" + literal + "-"
-          + permutationId + "Lits.html";
-
-      float ratio = (size / maxSize) * 79;
-      float perc = (size / sumSize) * 100;
-
-      if (ratio < 5) {
-        ratio = 5;
-      }
-
-      outFile.println("<tr>");
-      outFile.println("<td class=\"barlabel\">" + size + "</td>");
-      outFile.println("<td class=\"barlabel\">" + perc + "%</td>");
-      outFile.println("<td class=\"barlabel\"><a href=\"" + drillDownFileName
-          + "\" target=\"_top\">" + literal + "</a></td>");
-      outFile.println("<td class=\"box\">");
-      outFile.println("<div style=\"width:"
-          + ratio
-          + "%;\" class=\"lb\"><div class=\"rb\"><div class=\"bb\"><div class=\"blc\"><div class=\"brc\"><div class=\"tb\"><div class=\"tlc\"><div class=\"trc\"><div class=\"content\"></div></div></div></div></div></div></div></div>");
-      outFile.println("</td>");
-      outFile.println("</tr>");
-
-    }
-
-    outFile.println("</table>");
-    outFile.println("</body>");
-    outFile.println("</html>");
-    outFile.close();
-
-    return outFileName;
-  }
-
-  private static String shellFileName(SizeBreakdown breakdown,
-      String permutationId) {
-    return breakdown.getId() + "-" + permutationId + "-overallBreakdown.html";
+  public GlobalInformation getGlobalInformation() {
+    return globalInformation;
   }
 
   public void makeBreakdownShell(SizeBreakdown breakdown, String permutationId)
@@ -424,19 +282,20 @@ public class MakeTopLevelHtmlForPerm {
     String inputFileName = "roundedCorners.css";
     File inputFile = new File(classPath + RESOURCES_PATH + inputFileName);
     File outputFile = getOutFile("roundedCorners.css");
-    copyFileOrDirectory(inputFile, outputFile, classPath, RESOURCES_PATH + inputFileName, false);
+    copyFileOrDirectory(inputFile, outputFile, classPath, RESOURCES_PATH
+        + inputFileName, false);
 
     inputFileName = "classLevel.css";
     File inputFile2 = new File(classPath + RESOURCES_PATH + inputFileName);
     File outputFile2 = getOutFile("classLevel.css");
-    copyFileOrDirectory(inputFile2, outputFile2, classPath, RESOURCES_PATH + inputFileName,
-        false);
+    copyFileOrDirectory(inputFile2, outputFile2, classPath, RESOURCES_PATH
+        + inputFileName, false);
 
     inputFileName = "common.css";
     File inputFile3 = new File(classPath + RESOURCES_PATH + inputFileName);
     File outputFile3 = getOutFile("common.css");
-    copyFileOrDirectory(inputFile3, outputFile3, classPath, RESOURCES_PATH + inputFileName,
-        false);
+    copyFileOrDirectory(inputFile3, outputFile3, classPath, RESOURCES_PATH
+        + inputFileName, false);
 
     inputFileName = "images";
     File inputDir = new File(classPath + RESOURCES_PATH + "images");
@@ -855,7 +714,7 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("<th class='barlabel'></th>");
       outFile.println("<th style='width:100%' class='barlabel'></th>");
       outFile.println("</thead>");
-
+//
       for (Float size : sortedClasses.keySet()) {
 
         String className = sortedClasses.get(size);
@@ -882,7 +741,6 @@ public class MakeTopLevelHtmlForPerm {
             + "%;\" class=\"lb\"><div class=\"rb\"><div class=\"bb\"><div class=\"blc\"><div class=\"brc\"><div class=\"tb\"><div class=\"tlc\"><div class=\"trc\"><div class=\"content\"></div></div></div></div></div></div></div></div>");
         outFile.println("</td>");
         outFile.println("</tr>");
-
       }
       outFile.println("</table>");
       outFile.println("</div>");
@@ -895,6 +753,45 @@ public class MakeTopLevelHtmlForPerm {
     for (String className : globalInformation.getClassToPackage().keySet()) {
       makeSplitStatusPage(className, permutationId);
     }
+  }
+
+  public void makeTopLevelHtmlForAllPerms() throws FileNotFoundException {
+
+    PrintWriter outFile = new PrintWriter(getOutFile("index.html"));
+
+    outFile.println("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML//EN\">");
+    outFile.println("<html>");
+    outFile.println("<head>");
+    outFile.println("  <title>Story of Your Compile - Top Level Dashboard for all Permutations</title>");
+    outFile.println("<style type=\"text/css\">");
+    outFile.println("body {background-color: #728FCE}");
+    outFile.println("h2 {background-color: transparent}");
+    outFile.println("</style>");
+    outFile.println("</head>");
+
+    outFile.println("<body>");
+    outFile.println("<center>");
+    outFile.println("<h1>Story of Your Compile</h1>");
+    outFile.println("<hr>");
+    outFile.println("<h3>Story of Your Compile - Overview of Permutations</h3>");
+    outFile.println("<hr>");
+
+    outFile.println("<div style='overflow:auto; background-color:white'>");
+    outFile.println("<center>");
+    for (String permutationId : settings.allPermsInfo.keySet()) {
+      String permutationInfo = settings.allPermsInfo.get(permutationId);
+      outFile.print("<p><a href=\"SoycDashboard" + "-" + permutationId
+          + "-index.html\">Permutation " + permutationId);
+      if (permutationInfo.length() > 0) {
+        outFile.println(" (" + permutationInfo + ")" + "</a>");
+      } else {
+        outFile.println("</a>");
+      }
+    }
+    outFile.println("</center>");
+    outFile.println("</div>");
+    addStandardHtmlEnding(outFile);
+    outFile.close();
   }
 
   public void makeTopLevelShell(String permutationId) throws IOException {
@@ -1048,49 +945,12 @@ public class MakeTopLevelHtmlForPerm {
     outFile.close();
   }
 
-  private void addLefttoversStatus(String className, String packageName,
-      PrintWriter out, String permutationId) {
-    out.println("<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\""
-        + dependenciesFileName("total", packageName, permutationId) + "#"
-        + className + "\">See why it's live</a></td></tr>");
-    for (int sp = 1; sp <= globalInformation.getNumSplitPoints(); sp++) {
-      out.println("<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\""
-          + dependenciesFileName("sp" + sp, packageName, permutationId) + "#"
-          + className + "\">See why it's not exclusive to s.p. #" + sp + " ("
-          + globalInformation.getSplitPointToLocation().get(sp)
-          + ")</a></td></tr>");
-    }
+  public void setGlobalInformation(GlobalInformation globalInformation) {
+    this.globalInformation = globalInformation;
   }
 
-  private void addStandardHtmlEnding(final PrintWriter out) {
-    out.println("</div>");
-    out.println("</body>");
-    out.println("</html>");
-  }
-
-  private void addStandardHtmlProlog(final PrintWriter out, String title,
-      String header) {
-    out.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-    out.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-    out.println("<html>");
-    out.println("<head>");
-    out.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    out.println("<title>" + title + "</title>");
-    out.println("</head>");
-
-    out.println("<style type=\"text/css\">");
-    out.println("body {background-color: #728FCE}");
-    out.println("h2 {background-color: transparent}");
-    out.println("p {background-color: fuchsia}");
-    out.println("</style>");
-
-    out.println("<body>");
-    out.println("<center>");
-    out.println("<h2>" + title + "</h2>");
-    if (header != null) {
-      addCenteredHeader(out, header);
-    }
-    out.println("</center>");
+  public void setSettings(Settings settings) {
+    this.settings = settings;
   }
 
   private void addDependenciesHtmlProlog(final PrintWriter out, String title,
@@ -1143,7 +1003,51 @@ public class MakeTopLevelHtmlForPerm {
       addCenteredHeader(out, header);
     }
     out.println("</center>");
+  }
 
+  private void addLefttoversStatus(String className, String packageName,
+      PrintWriter out, String permutationId) {
+    out.println("<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\""
+        + dependenciesFileName("total", packageName, permutationId) + "#"
+        + className + "\">See why it's live</a></td></tr>");
+    for (int sp = 1; sp <= globalInformation.getNumSplitPoints(); sp++) {
+      out.println("<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\""
+          + dependenciesFileName("sp" + sp, packageName, permutationId) + "#"
+          + className + "\">See why it's not exclusive to s.p. #" + sp + " ("
+          + globalInformation.getSplitPointToLocation().get(sp)
+          + ")</a></td></tr>");
+    }
+  }
+
+  private void addStandardHtmlEnding(final PrintWriter out) {
+    out.println("</div>");
+    out.println("</body>");
+    out.println("</html>");
+  }
+
+  private void addStandardHtmlProlog(final PrintWriter out, String title,
+      String header) {
+    out.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+    out.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+    out.println("<html>");
+    out.println("<head>");
+    out.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+    out.println("<title>" + title + "</title>");
+    out.println("</head>");
+
+    out.println("<style type=\"text/css\">");
+    out.println("body {background-color: #728FCE}");
+    out.println("h2 {background-color: transparent}");
+    out.println("p {background-color: fuchsia}");
+    out.println("</style>");
+
+    out.println("<body>");
+    out.println("<center>");
+    out.println("<h2>" + title + "</h2>");
+    if (header != null) {
+      addCenteredHeader(out, header);
+    }
+    out.println("</center>");
   }
 
   private String dependenciesFileName(String depGraphName, String packageName,
@@ -1152,9 +1056,169 @@ public class MakeTopLevelHtmlForPerm {
         + "-" + permutationId + ".html";
   }
 
+  /**
+   * Return a {@link File} object for a file to be emitted into the output
+   * directory.
+   */
+  private File getOutFile(String localFileName) {
+    File outDir = new File(settings.out.get());
+    return new File(outDir, localFileName);
+  }
+
+  /**
+   * Describe the code covered by the dependency graph with the supplied name.
+   */
+  private String inferDepGraphDescription(String depGraphName) {
+    if (depGraphName.equals("initial")) {
+      return "Initially Live Code";
+    }
+
+    if (depGraphName.equals("total")) {
+      return "All Code";
+    }
+
+    Matcher matcher = PATTERN_SP_INT.matcher(depGraphName);
+    if (matcher.matches()) {
+      int splitPoint = Integer.valueOf(matcher.group(1));
+      if (isInitialSplitPoint(splitPoint)) {
+        return "Code Becoming Live at Split Point " + splitPoint;
+      } else {
+        return "Code not Exclusive to Split Point " + splitPoint;
+      }
+    }
+
+    throw new RuntimeException("Unexpected dependency graph name: "
+        + depGraphName);
+  }
+
+  private boolean isInitialSplitPoint(int splitPoint) {
+    return globalInformation.getSplitPointInitialLoadSequence().contains(
+        splitPoint);
+  }
+
   private String leftoversStatusFileName(String className, String permutationId) {
     return "leftoverStatus-" + filename(className) + "-" + permutationId
         + ".html";
+  }
+
+  private String makeCodeTypeHtml(SizeBreakdown breakdown,
+      Map<String, CodeCollection> nameToCodeColl,
+      Map<String, LiteralsCollection> nameToLitColl, String permutationId)
+      throws IOException {
+    String outFileName = breakdown.getId() + "-" + permutationId
+        + "_codeTypeBreakdown.html";
+    float maxSize = 0f;
+    float sumSize = 0f;
+    TreeMap<Float, String> sortedCodeTypes = new TreeMap<Float, String>(
+        Collections.reverseOrder());
+
+    for (String codeType : nameToCodeColl.keySet()) {
+      float curSize = nameToCodeColl.get(codeType).getCumPartialSize(breakdown);
+      sumSize += curSize;
+
+      if (curSize != 0f) {
+        sortedCodeTypes.put(curSize, codeType);
+        if (curSize > maxSize) {
+          maxSize = curSize;
+        }
+      }
+    }
+
+    final PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
+
+    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+    outFile.println("<html>");
+    outFile.println("<head>");
+    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+    outFile.println("<link rel=\"stylesheet\" href=\"common.css\" media=\"screen\">");
+    outFile.println("</head>");
+
+    outFile.println("<body>");
+    outFile.println("<table style='width:100%'>");
+    outFile.println("<thead>");
+    outFile.println("<th class='barlabel'>Size</th>");
+
+    outFile.println("<th class='barlabel'>Percentage</th>");
+    outFile.println("<th class='barlabel'></th>");
+    outFile.println("<th style='width:100%' class='barlabel'></th>");
+    outFile.println("</thead>");
+
+    for (Float size : sortedCodeTypes.keySet()) {
+
+      String codeType = sortedCodeTypes.get(size);
+      String drillDownFileName = breakdown.getId() + "_" + codeType + "-"
+          + permutationId + "Classes.html";
+
+      float ratio = (size / maxSize) * 79;
+      float perc = (size / sumSize) * 100;
+
+      if (ratio < 5) {
+        ratio = 5;
+      }
+
+      outFile.println("<tr>");
+      outFile.println("<td class=\"barlabel\">" + size + "</td>");
+      outFile.println("<td class=\"barlabel\">" + perc + "%</td>");
+      outFile.println("<td class=\"barlabel\"><a href=\"" + drillDownFileName
+          + "\" target=\"_top\">" + codeType + "</a></td>");
+      outFile.println("<td class=\"box\">");
+      outFile.println("<div style=\"width:"
+          + ratio
+          + "%;\" class=\"lb\"><div class=\"rb\"><div class=\"bb\"><div class=\"blc\"><div class=\"brc\"><div class=\"tb\"><div class=\"tlc\"><div class=\"trc\"><div class=\"content\"></div></div></div></div></div></div></div></div>");
+      outFile.println("</td>");
+      outFile.println("</tr>");
+    }
+
+    maxSize = 0f;
+    sumSize = 0f;
+    TreeMap<Float, String> sortedLitTypes = new TreeMap<Float, String>(
+        Collections.reverseOrder());
+
+    for (String literal : nameToLitColl.keySet()) {
+      float curSize = nameToLitColl.get(literal).size;
+      sumSize += curSize;
+
+      if (curSize != 0f) {
+        sortedLitTypes.put(curSize, literal);
+
+        if (curSize > maxSize) {
+          maxSize = curSize;
+        }
+      }
+    }
+
+    for (Float size : sortedLitTypes.keySet()) {
+      String literal = sortedLitTypes.get(size);
+      String drillDownFileName = breakdown.getId() + "_" + literal + "-"
+          + permutationId + "Lits.html";
+
+      float ratio = (size / maxSize) * 79;
+      float perc = (size / sumSize) * 100;
+
+      if (ratio < 5) {
+        ratio = 5;
+      }
+
+      outFile.println("<tr>");
+      outFile.println("<td class=\"barlabel\">" + size + "</td>");
+      outFile.println("<td class=\"barlabel\">" + perc + "%</td>");
+      outFile.println("<td class=\"barlabel\"><a href=\"" + drillDownFileName
+          + "\" target=\"_top\">" + literal + "</a></td>");
+      outFile.println("<td class=\"box\">");
+      outFile.println("<div style=\"width:"
+          + ratio
+          + "%;\" class=\"lb\"><div class=\"rb\"><div class=\"bb\"><div class=\"blc\"><div class=\"brc\"><div class=\"tb\"><div class=\"tlc\"><div class=\"trc\"><div class=\"content\"></div></div></div></div></div></div></div></div>");
+      outFile.println("</td>");
+      outFile.println("</tr>");
+    }
+
+    outFile.println("</table>");
+    outFile.println("</body>");
+    outFile.println("</html>");
+    outFile.close();
+
+    return outFileName;
   }
 
   private void makeDependenciesHtml(String depGraphName,
@@ -1300,7 +1364,6 @@ public class MakeTopLevelHtmlForPerm {
           + "%;\" class=\"lb\"><div class=\"rb\"><div class=\"bb\"><div class=\"blc\"><div class=\"brc\"><div class=\"tb\"><div class=\"tlc\"><div class=\"trc\"><div class=\"content\"></div></div></div></div></div></div></div></div>");
       outFile.println("</td>");
       outFile.println("</tr>");
-
     }
 
     outFile.println("</table>");
@@ -1358,56 +1421,5 @@ public class MakeTopLevelHtmlForPerm {
 
   private String splitStatusFileName(String className, String permutationId) {
     return "splitStatus-" + filename(className) + "-" + permutationId + ".html";
-  }
-
-  public void makeTopLevelHtmlForAllPerms() throws FileNotFoundException {
-
-    PrintWriter outFile = new PrintWriter(getOutFile("index.html"));
-
-    outFile.println("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML//EN\">");
-    outFile.println("<html>");
-    outFile.println("<head>");
-    outFile.println("  <title>Story of Your Compile - Top Level Dashboard for all Permutations</title>");
-    outFile.println("<style type=\"text/css\">");
-    outFile.println("body {background-color: #728FCE}");
-    outFile.println("h2 {background-color: transparent}");
-    outFile.println("</style>");
-    outFile.println("</head>");
-
-    outFile.println("<body>");
-    outFile.println("<center>");
-    outFile.println("<h1>Story of Your Compile</h1>");
-    outFile.println("<hr>");
-    outFile.println("<h3>Story of Your Compile - Overview of Permutations</h3>");
-    outFile.println("<hr>");
-
-    outFile.println("<div style='overflow:auto; background-color:white'>");
-    outFile.println("<center>");
-    for (String permutationId : settings.allPermsInfo.keySet()) {
-      String permutationInfo = settings.allPermsInfo.get(permutationId);
-      outFile.print("<p><a href=\"SoycDashboard" + "-" + permutationId
-          + "-index.html\">Permutation " + permutationId);
-      if (permutationInfo.length() > 0) {
-        outFile.println(" (" + permutationInfo + ")" + "</a>");
-      } else {
-        outFile.println("</a>");
-      }
-    }
-    outFile.println("</center>");
-    outFile.println("</div>");
-    addStandardHtmlEnding(outFile);
-    outFile.close();
-  }
-
-  public GlobalInformation getGlobalInformation() {
-    return globalInformation;
-  }
-
-  public void setGlobalInformation(GlobalInformation globalInformation) {
-    this.globalInformation = globalInformation;
-  }
-
-  public void setSettings(Settings settings) {
-    this.settings = settings;
   }
 }

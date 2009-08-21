@@ -28,9 +28,9 @@ import java.util.TreeSet;
  * Information global to the entire SOYC report generator.
  */
 public class GlobalInformation {
+  private static final SizeBreakdown[] EMPTY_SIZE_BREAKDOWN = new SizeBreakdown[0];
   private HashMap<String, String> classToPackage = new HashMap<String, String>();
   private HashMap<String, HashSet<String>> classToWhatItDependsOn = new HashMap<String, HashSet<String>>();
-  private final SizeBreakdown[] EMPTY_SIZE_BREAKDOWN = new SizeBreakdown[0];
   private Map<Integer, SizeBreakdown> exclusiveCodeBreakdowns = new HashMap<Integer, SizeBreakdown>();
   private SizeBreakdown initialCodeBreakdown = new SizeBreakdown(
       "Initially downloaded code", "initial");
@@ -38,11 +38,11 @@ public class GlobalInformation {
       "Leftovers code, code not in any other category", "leftovers");
   private int numSplitPoints = 0;
   private Map<String, TreeSet<String>> packageToClasses = new TreeMap<String, TreeSet<String>>();
-  private HashMap<Integer, String> splitPointToLocation = new HashMap<Integer, String>();
   private ArrayList<Integer> splitPointInitialLoadSequence = new ArrayList<Integer>();
+  private HashMap<Integer, String> splitPointToLocation = new HashMap<Integer, String>();
   private SizeBreakdown totalCodeBreakdown = new SizeBreakdown("Total program",
       "total");
-  
+
   public SizeBreakdown[] allSizeBreakdowns() {
     List<SizeBreakdown> breakdowns = new ArrayList<SizeBreakdown>();
     breakdowns.add(totalCodeBreakdown);
@@ -55,7 +55,7 @@ public class GlobalInformation {
     }
     return breakdowns.toArray(EMPTY_SIZE_BREAKDOWN);
   }
-  
+
   /**
    * Computes all package sizes.
    */
@@ -65,28 +65,6 @@ public class GlobalInformation {
     }
   }
 
-  /**
-   * Computes package sizes from class sizes. TODO(spoon) move this to the
-   * SizeBreakdown class.
-   * 
-   * @param packageToSize mapping from packages to their sizes
-   * @param classToSize mapping from classes to their sizes
-   */
-  private void computePackageSizes(Map<String, Integer> packageToSize,
-      Map<String, Integer> classToSize) {
-    packageToSize.clear();
-    for (String packageName : packageToClasses.keySet()) {
-      packageToSize.put(packageName, 0);
-      for (String className : packageToClasses.get(packageName)) {
-        if (classToSize.containsKey(className)) {
-          int curSize = classToSize.get(className);
-          int newSize = curSize + packageToSize.get(packageName);
-          packageToSize.put(packageName, newSize);
-        }
-      }
-    }
-  }
-  
   /**
    * Gets the mapping from each class to its package.
    * 
@@ -113,7 +91,7 @@ public class GlobalInformation {
   public final Map<Integer, SizeBreakdown> getExclusiveCodeBreakdowns() {
     return exclusiveCodeBreakdowns;
   }
-  
+
   /**
    * Gets the initial code breakdown.
    * 
@@ -131,7 +109,7 @@ public class GlobalInformation {
   public final SizeBreakdown getLeftoversBreakdown() {
     return leftoversBreakdown;
   }
-  
+
   /**
    * Gets the number of split points.
    * 
@@ -149,7 +127,7 @@ public class GlobalInformation {
   public final Map<String, TreeSet<String>> getPackageToClasses() {
     return packageToClasses;
   }
-  
+
   /**
    * Gets the initial load sequence.
    * 
@@ -167,7 +145,7 @@ public class GlobalInformation {
   public final HashMap<Integer, String> getSplitPointToLocation() {
     return splitPointToLocation;
   }
-  
+
   /**
    * Gets the total code breakdown.
    * 
@@ -176,7 +154,7 @@ public class GlobalInformation {
   public final SizeBreakdown getTotalCodeBreakdown() {
     return totalCodeBreakdown;
   }
-  
+
   /**
    * Increments the split point count.
    */
@@ -197,6 +175,28 @@ public class GlobalInformation {
           + ": " + splitPointToLocation.get(sp), "sp" + sp));
     }
     return exclusiveCodeBreakdowns.get(sp);
+  }
+
+  /**
+   * Computes package sizes from class sizes. TODO(spoon) move this to the
+   * SizeBreakdown class.
+   * 
+   * @param packageToSize mapping from packages to their sizes
+   * @param classToSize mapping from classes to their sizes
+   */
+  private void computePackageSizes(Map<String, Integer> packageToSize,
+      Map<String, Integer> classToSize) {
+    packageToSize.clear();
+    for (String packageName : packageToClasses.keySet()) {
+      packageToSize.put(packageName, 0);
+      for (String className : packageToClasses.get(packageName)) {
+        if (classToSize.containsKey(className)) {
+          int curSize = classToSize.get(className);
+          int newSize = curSize + packageToSize.get(packageName);
+          packageToSize.put(packageName, newSize);
+        }
+      }
+    }
   }
 
 }

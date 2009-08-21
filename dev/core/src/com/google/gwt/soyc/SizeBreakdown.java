@@ -23,6 +23,43 @@ import java.util.TreeMap;
  * A size breakdown of one code collection.
  */
 public class SizeBreakdown {
+  public Map<String, Integer> classToSize = new HashMap<String, Integer>();
+
+  public HashMap<String, CodeCollection> nameToCodeColl = new HashMap<String, CodeCollection>();
+
+  public Map<String, LiteralsCollection> nameToLitColl = new TreeMap<String, LiteralsCollection>();
+  public Map<String, Integer> packageToSize = new HashMap<String, Integer>();
+  public int sizeAllCode;
+  private final String description;
+
+  private final String id;
+
+  public SizeBreakdown(String description, String id) {
+    this.description = description;
+    this.id = id;
+
+    initializeLiteralsCollection(nameToLitColl);
+    initializeNameToCodeCollection(nameToCodeColl);
+  }
+  /**
+   * A short but human-readable description of this code collection.
+   */
+  public String getDescription() {
+    return description;
+  }
+
+  /**
+   * An identifier for this code collection suitable for use within file names.
+   */
+  public String getId() {
+    return id;
+  }
+
+  @Override
+  public String toString() {
+    return getId();
+  }
+
   private void initializeLiteralsCollection(
       Map<String, LiteralsCollection> nameToLitColl) {
     nameToLitColl.put("long", new LiteralsCollection());
@@ -47,42 +84,5 @@ public class SizeBreakdown {
     nameToCodeColl.put("rpcGwt", new CodeCollection());
     nameToCodeColl.put("gwtLang", new CodeCollection());
     nameToCodeColl.put("jre", new CodeCollection());
-  }
-
-  public Map<String, Integer> classToSize = new HashMap<String, Integer>();
-  public HashMap<String, CodeCollection> nameToCodeColl = new HashMap<String, CodeCollection>();
-  public Map<String, LiteralsCollection> nameToLitColl = new TreeMap<String, LiteralsCollection>();
-  public Map<String, Integer> packageToSize = new HashMap<String, Integer>();
-
-  public int sizeAllCode;
-
-  private final String description;
-  private final String id;
-
-  public SizeBreakdown(String description, String id) {
-    this.description = description;
-    this.id = id;
-
-    initializeLiteralsCollection(nameToLitColl);
-    initializeNameToCodeCollection(nameToCodeColl);
-  }
-
-  /**
-   * A short but human-readable description of this code collection.
-   */
-  public String getDescription() {
-    return description;
-  }
-
-  /**
-   * An identifier for this code collection suitable for use within file names.
-   */
-  public String getId() {
-    return id;
-  }
-
-  @Override
-  public String toString() {
-    return getId();
   }
 }

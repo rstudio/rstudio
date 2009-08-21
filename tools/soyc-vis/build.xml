@@ -14,12 +14,6 @@
   </target>
 
   <target name="compile">
-    <mkdir dir="${javac.out}"/>
-    <javac srcdir="src" destdir="${javac.out}">
-      <classpath>
-        <pathelement location="${gwt.dev.jar}" />
-      </classpath>
-    </javac>
     <mkdir dir="${javac.out}/com/google/gwt/soyc/resources/images"/>
     <copy todir="${javac.out}/com/google/gwt/soyc/resources/images">
       <fileset dir="images"/>
@@ -30,12 +24,13 @@
   </target>
 
   <target name="build" depends="compile">
-    <gwt.jar>
+    <!-- Build a transitional jar that is good enough for
+         passing as -resources to SoycDashboard.  This jar
+         is being phased out in favor of gwt-dev-platform.jar
+         holding all the SOYC bits.  -->
+    <jar destfile="${project.lib}">
       <fileset dir="${javac.out}" />
-      <manifest>
-        <attribute name="Main-Class" value="com.google.gwt.soyc.SoycDashboard" />
-      </manifest>
-    </gwt.jar>
+    </jar>
   </target>
 
   <target name="test"/>

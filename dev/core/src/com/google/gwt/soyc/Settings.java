@@ -184,37 +184,29 @@ public class Settings {
     return help.toString();
   }
 
+  public Map<String, String> allPermsInfo = new TreeMap<String, String>();
+  public String depFileName;
+  public Boolean displayDependencies = false;
+  public Boolean displaySplitPoints = false;
+
   public final Setting<String> out = addSetting(new StringSetting("-out",
       "dir", ".", "output directory"));
+
   public final Setting<String> resources = addSetting(new StringSetting(
       "-resources", "jarfile", null,
       " directory or jar file with CSS, etc., resources"));
+
   public final Setting<String> soycDir = addSetting(new StringSetting(
       "-soycDir", "dir", null, " directory for soyc files"));
-  public final Setting<String> symbolMapsDir = addSetting(new StringSetting(
-      "-symbolMapsDir", "dir", null, " directory or symbol maps files"));
-
-  public String depFileName;
 
   public String splitPointsFileName;
 
   public String storiesFileName;
 
+  public final Setting<String> symbolMapsDir = addSetting(new StringSetting(
+      "-symbolMapsDir", "dir", null, " directory or symbol maps files"));
+
   private List<Setting<?>> allSettings;
-
-  private <T> Setting<T> addSetting(Setting<T> setting) {
-    if (allSettings == null) {
-      allSettings = new ArrayList<Setting<?>>();
-    }
-    allSettings.add(setting);
-    return setting;
-  }
-
-  public Map<String, String> allPermsInfo = new TreeMap<String, String>();
-
-  public Boolean displayDependencies = false;
-  public Boolean displaySplitPoints = false;
-
   public void readPermutationInfo() throws FileNotFoundException {
 
     if (symbolMapsDir.get() == null) {
@@ -252,6 +244,14 @@ public class Settings {
         allPermsInfo.put(permutationId, permutationInfo);
       }
     }
+  }
+
+  private <T> Setting<T> addSetting(Setting<T> setting) {
+    if (allSettings == null) {
+      allSettings = new ArrayList<Setting<?>>();
+    }
+    allSettings.add(setting);
+    return setting;
   }
 
 }
