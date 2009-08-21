@@ -27,6 +27,7 @@ import com.google.gwt.user.client.Window;
 /**
  * Tests for {@link PopupPanel}.
  */
+@DoNotRunWith(Platform.Htmlunit)
 public class PopupTest extends GWTTestCase {
 
   /**
