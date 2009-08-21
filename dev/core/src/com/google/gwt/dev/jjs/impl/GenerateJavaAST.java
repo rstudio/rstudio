@@ -907,7 +907,11 @@ public class GenerateJavaAST {
           op = JBinaryOperator.SHRU;
           break;
         case BinaryExpression.PLUS:
-          op = JBinaryOperator.ADD;
+          if (typeMap.get(x.resolvedType) == program.getTypeJavaLangString()) {
+            op = JBinaryOperator.CONCAT;
+          } else {
+            op = JBinaryOperator.ADD;
+          }
           break;
         case BinaryExpression.MINUS:
           op = JBinaryOperator.SUB;
@@ -974,7 +978,11 @@ public class GenerateJavaAST {
 
       switch (x.operator) {
         case CompoundAssignment.PLUS:
-          op = JBinaryOperator.ASG_ADD;
+          if (typeMap.get(x.resolvedType) == program.getTypeJavaLangString()) {
+            op = JBinaryOperator.ASG_CONCAT;
+          } else {
+            op = JBinaryOperator.ASG_ADD;
+          }
           break;
         case CompoundAssignment.MINUS:
           op = JBinaryOperator.ASG_SUB;

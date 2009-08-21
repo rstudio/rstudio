@@ -329,24 +329,20 @@ public class CastNormalizer {
 
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
-      if (x.getType() != program.getTypeJavaLangString()) {
-        return;
-      }
-
-      if (x.getOp() == JBinaryOperator.ADD) {
+      if (x.getOp() == JBinaryOperator.CONCAT) {
         JExpression newLhs = convertString(x.getLhs());
         JExpression newRhs = convertString(x.getRhs());
         if (newLhs != x.getLhs() || newRhs != x.getRhs()) {
           JBinaryOperation newExpr = new JBinaryOperation(x.getSourceInfo(),
-              program.getTypeJavaLangString(), JBinaryOperator.ADD, newLhs,
+              program.getTypeJavaLangString(), JBinaryOperator.CONCAT, newLhs,
               newRhs);
           ctx.replaceMe(newExpr);
         }
-      } else if (x.getOp() == JBinaryOperator.ASG_ADD) {
+      } else if (x.getOp() == JBinaryOperator.ASG_CONCAT) {
         JExpression newRhs = convertString(x.getRhs());
         if (newRhs != x.getRhs()) {
           JBinaryOperation newExpr = new JBinaryOperation(x.getSourceInfo(),
-              program.getTypeJavaLangString(), JBinaryOperator.ASG_ADD,
+              program.getTypeJavaLangString(), JBinaryOperator.ASG_CONCAT,
               x.getLhs(), newRhs);
           ctx.replaceMe(newExpr);
         }

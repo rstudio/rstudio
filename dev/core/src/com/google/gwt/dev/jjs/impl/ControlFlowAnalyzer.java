@@ -128,8 +128,7 @@ public class ControlFlowAnalyzer {
       }
 
       // special string concat handling
-      if ((x.getOp() == JBinaryOperator.ADD || x.getOp() == JBinaryOperator.ASG_ADD)
-          && x.getType() == program.getTypeJavaLangString()) {
+      if ((x.getOp() == JBinaryOperator.CONCAT || x.getOp() == JBinaryOperator.ASG_CONCAT)) {
         rescueByConcat(x.getLhs().getType());
         rescueByConcat(x.getRhs().getType());
       } else if (x.getOp() == JBinaryOperator.ASG) {

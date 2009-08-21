@@ -155,11 +155,10 @@ public class DeadCodeElimination {
           simplifyEq(lhs, rhs, ctx, true);
           break;
         case ADD:
-          if (x.getType() == program.getTypeJavaLangString()) {
-            evalConcat(lhs, rhs, ctx);
-            break;
-          }
           simplifyAdd(lhs, rhs, ctx, x.getType());
+          break;
+        case CONCAT:
+          evalConcat(lhs, rhs, ctx);
           break;
         case SUB:
           simplifySub(lhs, rhs, ctx, x.getType());

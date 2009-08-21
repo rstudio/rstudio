@@ -1763,6 +1763,7 @@ public class GenerateJavaScriptAST {
       bOpMap.put(JBinaryOperator.DIV, JsBinaryOperator.DIV);
       bOpMap.put(JBinaryOperator.MOD, JsBinaryOperator.MOD);
       bOpMap.put(JBinaryOperator.ADD, JsBinaryOperator.ADD);
+      bOpMap.put(JBinaryOperator.CONCAT, JsBinaryOperator.ADD);
       bOpMap.put(JBinaryOperator.SUB, JsBinaryOperator.SUB);
       bOpMap.put(JBinaryOperator.SHL, JsBinaryOperator.SHL);
       bOpMap.put(JBinaryOperator.SHR, JsBinaryOperator.SHR);
@@ -1780,6 +1781,7 @@ public class GenerateJavaScriptAST {
       bOpMap.put(JBinaryOperator.OR, JsBinaryOperator.OR);
       bOpMap.put(JBinaryOperator.ASG, JsBinaryOperator.ASG);
       bOpMap.put(JBinaryOperator.ASG_ADD, JsBinaryOperator.ASG_ADD);
+      bOpMap.put(JBinaryOperator.ASG_CONCAT, JsBinaryOperator.ASG_ADD);
       bOpMap.put(JBinaryOperator.ASG_SUB, JsBinaryOperator.ASG_SUB);
       bOpMap.put(JBinaryOperator.ASG_MUL, JsBinaryOperator.ASG_MUL);
       bOpMap.put(JBinaryOperator.ASG_DIV, JsBinaryOperator.ASG_DIV);
