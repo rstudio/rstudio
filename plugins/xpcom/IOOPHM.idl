@@ -5,5 +5,7 @@ interface nsIDOMWindow;
 [scriptable, uuid(90CEF17B-C3FE-4251-AF68-4381B3D938A0)]
 interface IOOPHM : nsISupports
 {
-  boolean connect( in ACString addr, in ACString moduleName, in nsIDOMWindow window );
+  boolean init(in nsIDOMWindow window);
+  boolean connect(in ACString url, in ACString sessionKey, in ACString addr,
+  in ACString moduleName, in ACString hostedHtmlVersion);
 };

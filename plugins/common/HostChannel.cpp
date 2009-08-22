@@ -37,6 +37,11 @@
 #include "Platform.h"
 #include "ByteOrder.h"
 
+#include "CheckVersionsMessage.h"
+#include "ProtocolVersionMessage.h"
+#include "ChooseTransportMessage.h"
+#include "SwitchTransportMessage.h"
+#include "FatalErrorMessage.h"
 #include "FreeValueMessage.h"
 #include "HostChannel.h"
 #include "LoadJsniMessage.h"
@@ -63,6 +68,51 @@ bool HostChannel::connectToHost(const char* host, unsigned port) {
     return false;
   }
   return sock.connect(host, port);
+}
+
+bool HostChannel::init(SessionHandler* handler, int minProtoVers,
+    int maxProtoVers, const std::string& hostedHtmlVers) {
+  Debug::log(Debug::Info) << "initializing connection: proto=" << minProtoVers
+      << "-" << maxProtoVers << ", hostedHtmlVersion=" << hostedHtmlVers
+      << Debug::flush;
+  // TODO(jat): support transport selection
+  CheckVersionsMessage::send(*this, minProtoVers, maxProtoVers, hostedHtmlVers);
+  flush();
+  char type;
+  if (!readByte(type)) {
+    handler->fatalError(*this, "Failed to receive message type");
+    Debug::log(Debug::Error) << "Failed to receive message type" << Debug::flush;
+    disconnectFromHost();
+    return false;
+  }
+  switch (type) {
+    case MESSAGE_TYPE_PROTOCOL_VERSION:
+    {
+      scoped_ptr<ProtocolVersionMessage> imsg(ProtocolVersionMessage
+          ::receive(*this));
+      if (!imsg.get()) {
+        Debug::log(Debug::Error) << "Failed to receive protocol version message"
+            << Debug::flush;
+        return false;
+      }
+      // TODO(jat): save selected protocol version when we support a range
+      break;
+    }
+    case MESSAGE_TYPE_FATAL_ERROR:
+    {
+      scoped_ptr<FatalErrorMessage> imsg(FatalErrorMessage::receive(*this));
+      if (!imsg.get()) {
+        Debug::log(Debug::Error) << "Failed to receive fatal error message"
+            << Debug::flush;
+        return false;
+      }
+      handler->fatalError(*this, imsg.get()->getError());
+      return false;
+    }
+    default:
+      return false;
+  }
+  return true;
 }
 
 bool HostChannel::disconnectFromHost() {
@@ -189,9 +239,13 @@ ReturnMessage* HostChannel::reactToMessages(SessionHandler* handler, bool expect
   char type;
   while (true) {
     flush();
-     Debug::log(Debug::Spam) << "Waiting for response, flushed output" << Debug::flush;
+    Debug::log(Debug::Spam) << "Waiting for response, flushed output"
+        << Debug::flush;
     if (!readByte(type)) {
-      Debug::log(Debug::Error) << "Failed to receive message type" << Debug::flush;
+      if (isConnected()) {
+        Debug::log(Debug::Error) << "Failed to receive message type"
+            << Debug::flush;
+      }
       return 0;
     }
     switch (type) {

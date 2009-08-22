@@ -1,0 +1,46 @@
+Startup protocol changes for version 2:
+
+C->S	S->C
+====	====
+{later:
+GetRealPlugin(String pluginType, String platformId)
+
+	FatalError(String message)
+
+	RealPlugin(byte[] plugin)
+}
+
+
+CheckVersions(int minProtoVersion, int maxProtoVersion,
+    String hostedHtmlVersion)
+
+	FatalError(String message)
+
+	ProtocolVersion(int protoVersion)
+
+
+{may be ommitted if no other supported transports:
+ChooseTransport(String[] supportedTransports)
+
+	FatalError(String msg)
+
+	SwitchTransport(String transport, String transportArgs)
+
+	  [If transport is not empty, all further communication should be
+           switched to the selected transport.  transportArgs varies by the
+           transport.]
+}
+
+
+LoadModule(String url, String sessionKey, String userAgent, String moduleName)
+
+  [sessionKey is some arbitrary string to identify one group of modules as
+   being part of the same session of one application.]
+
+... as before
+
+
+
+The v1 protocol LoadModule message is still accepted, though with reduced
+functionality in the OOPHM UI.  After the module is loaded, v1 and v2 are
+exactly the same, which makes supporting both versions easier.

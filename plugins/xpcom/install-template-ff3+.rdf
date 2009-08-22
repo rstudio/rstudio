@@ -3,15 +3,15 @@
      xmlns:em="http://www.mozilla.org/2004/em-rdf#">
 
   <Description about="urn:mozilla:install-manifest">
-    <em:id>oophm-xpcom-ff3@gwt.google.com</em:id>
-    <em:name>GWT Development Mode Plugin (XPCOM) for FF v3.x</em:name>
+    <em:id>oophm-xpcom-ff3p@gwt.google.com</em:id>
+    <em:name>GWT Development Mode Plugin (XPCOM) for FF v3.x (alt libraries)</em:name>
     <em:version>GWT_OOPHM_VERSION</em:version>
     <em:type>2</em:type>
     <em:targetApplication>
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
         <em:minVersion>3</em:minVersion>
-        <em:maxVersion>3.*</em:maxVersion>
+        <em:maxVersion>3.3.*</em:maxVersion>
       </Description>
     </em:targetApplication>
 

@@ -25,8 +25,8 @@
 class HostChannel;
 
 /**
- * Class representing an InvokeSpecialMessage received from the server, and a way
- * to send an invoke message to the server.
+ * Class representing an InvokeSpecial message received from the server, and a
+ * way to send an invoke message to the server.
  */
 class InvokeSpecialMessage : public Message {
 public:

@@ -125,7 +125,7 @@ void FFSessionHandler::freeValue(HostChannel& channel, int idCount, const int* i
     dbg << objId << " ";
     jsval toRemove;
     if (JS_GetElement(ctx, jsObjectsById, objId, &toRemove) && JSVAL_IS_OBJECT(toRemove)) {
-      jsIdsByObject.erase(JSVAL_TO_OBJECT(toRemove));
+      jsIdsByObject.erase(identityFromObject(JSVAL_TO_OBJECT(toRemove)));
       JS_DeleteElement(ctx, jsObjectsById, objId);
     } else {
       Debug::log(Debug::Error) << "Error deleting js objId=" << objId << Debug::flush;
@@ -158,6 +158,11 @@ void FFSessionHandler::sendFreeValues(HostChannel& channel) {
   }
 }
 
+void FFSessionHandler::fatalError(HostChannel& channel,
+    const std::string& message) {
+  // TODO(jat): implement
+}
+
 bool FFSessionHandler::invoke(HostChannel& channel, const Value& thisObj, const std::string& methodName,
     int numArgs, const Value* const args, Value* returnValue) {
   Debug::log(Debug::Spam) << "FFSessionHandler::invoke " << thisObj.toString()
@@ -176,7 +181,7 @@ bool FFSessionHandler::invoke(HostChannel& channel, const Value& thisObj, const 
         << Debug::flush;
     return true;
   }
-  
+
   jsval jsThis;
   if (thisObj.isNull()) {
     jsThis = OBJECT_TO_JSVAL(global);
@@ -257,7 +262,10 @@ bool FFSessionHandler::invokeSpecial(HostChannel& channel, SpecialMethodId metho
 
 /**
  * Convert UTF16 string to UTF8-encoded std::string.
- * 
+ *
+ * This is implemented here because the Mozilla libraries mangle certain UTF8
+ * strings.
+ *
  * @return UTF8-encoded string.
  */
 static std::string utf8String(const jschar* str, unsigned len) {
@@ -290,7 +298,10 @@ static std::string utf8String(const jschar* str, unsigned len) {
 
 /**
  * Creates a JSString from a UTF8-encoded std::string.
- * 
+ *
+ * This is implemented here because the Mozilla libraries mangle certain UTF8
+ * strings.
+ *
  * @return the JSString object, which owns its memory buffer.
  */
 static JSString* stringUtf8(JSContext* ctx, const std::string& utf8str) {
@@ -406,14 +417,15 @@ void FFSessionHandler::makeValueFromJsval(Value& retVal, JSContext* ctx,
       // str will be garbage-collected, does not need to be freed
     } else {
       // It's a plain-old JavaScript Object
-      std::map<JSObject*, int>::iterator it = jsIdsByObject.find(obj);
+      void* objKey = identityFromObject(obj);
+      std::map<void*, int>::iterator it = jsIdsByObject.find(objKey);
       if (it != jsIdsByObject.end()) {
         retVal.setJsObjectId(it->second);
       } else {
         // Allocate a new id
         int objId = ++jsObjectId;
         JS_SetElement(ctx, jsObjectsById, objId, const_cast<jsval*>(&value));
-        jsIdsByObject[obj] = objId;
+        jsIdsByObject[objKey] = objId;
         retVal.setJsObjectId(objId);
       }
     }
@@ -551,4 +563,17 @@ void FFSessionHandler::disconnect() {
   if (channel->isConnected()) {
     channel->disconnectFromHost();
   }
+}
+
+void* FFSessionHandler::identityFromObject(JSObject* obj) {
+  JSContext* ctx = getJSContext();
+  jsval rval;
+  void* returnValue = obj;
+  if (JS_GetProperty(ctx, obj, "wrappedJSObject", &rval)
+      && JSVAL_IS_OBJECT(rval)) {
+    returnValue = JSVAL_TO_OBJECT(rval);
+    Debug::log(Debug::Info) << "identityFromObject mapped " << obj << " to "
+        << returnValue << Debug::flush;
+  }
+  return returnValue;
 }

@@ -129,7 +129,7 @@ NSGETMODULE_ENTRY_POINT(ExternalWrapperModule) (nsIComponentManager *servMgr,
 
   nsCString gecko_version;
   app_info->GetPlatformVersion(gecko_version);
-  Debug::log(Debug::Debugging) << "  gecko version = "
+  Debug::log(Debug::Info) << "  gecko version = "
       << gecko_version.BeginReading() << Debug::flush;
 #if defined(BROWSER_FF2)
   if (strncmp(gecko_version.BeginReading(), "1.8", 3) != 0) {

@@ -135,6 +135,12 @@ JSBool JavaObject::getProperty(JSContext* ctx, JSObject* obj, jsval id,
       *rval = INT_TO_JSVAL(objectRef);
       return JS_TRUE;
     }
+    if ((JS_GetStringLength(str) == 16) && !strncmp("__noSuchMethod__",
+          JS_GetStringBytes(str), 16)) {
+      // Avoid error spew if we are disconnected
+      *rval = JSVAL_VOID;
+      return JS_TRUE;
+    }
     Debug::log(Debug::Error) << "Getting unexpected string property "
         << dumpJsVal(ctx, id) << Debug::flush;
     // TODO: throw a better exception here
@@ -354,13 +360,13 @@ JSBool JavaObject::invokeJava(JSContext* ctx, SessionData* data,
     data->makeValueFromJsval(args[i], ctx, jsargs[i]);
   }
   if (!InvokeMessage::send(*channel, javaThis, dispId, numArgs, args.get())) {
-    Debug::log(Debug::Error) << "JavaObject::call failed to send invoke message" << Debug::flush;
+    Debug::log(Debug::Debugging) << "JavaObject::call failed to send invoke message" << Debug::flush;
     return false;
   }
   Debug::log(Debug::Spam) << " return from invoke" << Debug::flush;
   scoped_ptr<ReturnMessage> retMsg(channel->reactToMessagesWhileWaitingForReturn(handler));
   if (!retMsg.get()) {
-    Debug::log(Debug::Error) << "JavaObject::call failed to get return value" << Debug::flush;
+    Debug::log(Debug::Debugging) << "JavaObject::call failed to get return value" << Debug::flush;
     return false;
   }
   Value returnValue = retMsg->getReturnValue();

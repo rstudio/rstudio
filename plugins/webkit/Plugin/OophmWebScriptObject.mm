@@ -64,7 +64,9 @@ private:
 }
 
 + (BOOL)isSelectorExcludedFromWebScript:(SEL)selector {
-  if (selector == @selector(connectWithHost:withModuleName:withJsniContext:)) {
+  if (selector == @selector(initForWebScriptWithJsniContext:)) {
+    return NO;
+  } else if (selector == @selector(connectWithUrl:withSessionKey:withHost:withModuleName:withHostedHtmlVersion:)) {
     return NO;
   } else if (selector == @selector(crashWithMessage:)) {
     return NO;
@@ -83,7 +85,9 @@ private:
 }
 
 + (NSString*)webScriptNameForSelector: (SEL)selector {
-  if (selector == @selector(connectWithHost:withModuleName:withJsniContext:)) {
+  if (selector == @selector(initForWebScriptWithJsniContext:)) {
+    return @"init";
+  } else if (selector == @selector(connectWithUrl:withSessionKey:withHost:withModuleName:withHostedHtmlVersion:)) {
     return @"connect";
   } else if (selector == @selector(crashWithMessage:)) {
     return @"crash";
@@ -91,19 +95,29 @@ private:
   return nil;
 }
 
-- (BOOL)connectWithHost: (NSString*) host
-         withModuleName: (NSString*) moduleName
-        withJsniContext: (WebScriptObject*) jsniContext {
+// Simply return true to indicate the plugin was successfully loaded and
+// reachable.
+- (BOOL)initForWebScriptWithJsniContext: (WebScriptObject*) jsniContext {
+  return YES;
+}
+
+- (BOOL)connectWithUrl: (NSString*) url
+        withSessionKey: (NSString*) sessionKey
+              withHost: (NSString*) host
+        withModuleName: (NSString*) moduleName
+ withHostedHtmlVersion: (NSString*) hostedHtmlVersion {
   
   // TODO remove this for production builds
   Debug::log(Debug::Warning) << "ACLs are currently disabled" << Debug::flush;
-  return [self doConnectWithHost:host withModule:moduleName];
+  return [self doConnectWithUrl:url withSessonKey: withHost:host
+       withModule:moduleName withHostedHtmlVersion];
 
   NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 
   // See if authentication has been bypassed
   if ([defaults boolForKey:@"allowAll"]) {
-    return [self doConnectWithHost:host withModule:moduleName];
+    return [self doConnectWithUrl:url withSessonKey: withHost:host
+        withModule:moduleName withHostedHtmlVersion];
   }
   
   // Otherwise, check for an explicit entry
@@ -247,8 +261,11 @@ private:
   [self doConnectWithHost:host withModule:moduleName];
 }
 
-- (BOOL)doConnectWithHost:(NSString*) host
-               withModule:(NSString*) moduleName {
+- (BOOL)doConnectWithUrl: (NSString*) url
+          withSessionKey: (NSString*) sessionKey
+                withHost: (NSString*) host
+              withModule: (NSString*) moduleName
+   withHostedHtmlVersion: (NSString*) hostedHtmlVersion {
   Debug::log(Debug::Debugging) << "connect : " << [host UTF8String] << " " <<
       [moduleName UTF8String] << Debug::flush;
   
@@ -282,13 +299,28 @@ private:
     return NO;
   }
   
-  const char *moduleNameChars = [moduleName UTF8String];
-  
   _crashHandler = new PluginCrashHandler(self);
   _sessionHandler = new WebScriptSessionHandler(_hostChannel, _contextRef, _crashHandler);
-  
-  if (!LoadModuleMessage::send(*_hostChannel, BROWSERCHANNEL_PROTOCOL_VERSION,
-                               moduleNameChars, strlen(moduleNameChars),
+
+  std::string hostedHtmlVersionStr([hostedHtmlVersion UTF8String]);
+  // TODO: add support for a range of protocol versions when more are added.
+  if (!_hostChannel->init(_sessionHandler, BROWSERCHANNEL_PROTOCOL_VERSION,
+      BROWSERCHANNEL_PROTOCOL_VERSION, hostedHtmlVersionStr)) {
+    [OophmWebScriptObject logAndThrowString:@"HostChannel failed to initialize"];
+    _hostChannel->disconnectFromHost();
+    delete _hostChannel;
+    _hostChannel = NULL;
+    return NO;
+  }
+
+  const std::string urlStr = [url UTF8String];
+  // TODO(jat): add support for tab identity
+  const std::string tabKeyStr = "";
+  const std::string sessionKeyStr = [sessionKey UTF8String];
+  const std::string moduleNameStr = [moduleName UTF8String];
+    
+  if (!LoadModuleMessage::send(*_hostChannel, urlStr, tabKeyStr, 
+                               sessionKeyStr, moduleNameStr,
                                "Safari OOPHM", _sessionHandler)) {
     _hostChannel->disconnectFromHost();
     delete _hostChannel;

@@ -18,12 +18,16 @@ HDRS= HostChannel.h InvokeMessage.h LoadModuleMessage.h Message.h \
       ReturnMessage.h Value.h BrowserChannel.h Debug.h DebugLevel.h \
       SessionHandler.h ServerMethods.h Socket.h AllowedConnections.h \
       LoadJsniMessage.h InvokeSpecialMessage.h FreeValueMessage.h \
-      ByteOrder.h
+      ByteOrder.h FatalErrorMessage.h CheckVersionsMessage.h \
+      ChooseTransportMessage.h SwitchTransportMessage.h \
+      ProtocolVersionMessage.h
 
 SRCS=	HostChannel.cpp LoadModuleMessage.cpp InvokeMessage.cpp \
 	ReturnMessage.cpp ServerMethods.cpp Debug.cpp Socket.cpp \
 	AllowedConnections.cpp LoadJsniMessage.cpp InvokeSpecialMessage.cpp \
-	FreeValueMessage.cpp
+	FreeValueMessage.cpp FatalErrorMessage.cpp CheckVersionsMessage.cpp \
+      ChooseTransportMessage.cpp SwitchTransportMessage.cpp \
+      ProtocolVersionMessage.cpp
 
 LIBCOMMON= libcommon$(FLAG32BIT).a
 OBJDIR= obj$(FLAG32BIT)
@@ -55,9 +59,11 @@ depend:
 
 # DO NOT DELETE
 HostChannel.o: HostChannel.cpp Debug.h Platform.h DebugLevel.h \
-  ByteOrder.h FreeValueMessage.h Message.h BrowserChannel.h HostChannel.h \
-  Socket.h AllowedConnections.h ReturnMessage.h Value.h SessionHandler.h \
-  LoadJsniMessage.h InvokeMessage.h InvokeSpecialMessage.h QuitMessage.h \
+  ByteOrder.h CheckVersionsMessage.h Message.h BrowserChannel.h Value.h \
+  ProtocolVersionMessage.h ChooseTransportMessage.h \
+  SwitchTransportMessage.h FreeValueMessage.h HostChannel.h Socket.h \
+  AllowedConnections.h ReturnMessage.h SessionHandler.h LoadJsniMessage.h \
+  InvokeMessage.h InvokeSpecialMessage.h QuitMessage.h \
   scoped_ptr/scoped_ptr.h
 LoadModuleMessage.o: LoadModuleMessage.cpp Debug.h Platform.h \
   DebugLevel.h LoadModuleMessage.h Message.h BrowserChannel.h \
@@ -91,3 +97,26 @@ FreeValueMessage.o: FreeValueMessage.cpp FreeValueMessage.h Message.h \
   BrowserChannel.h HostChannel.h Debug.h Platform.h DebugLevel.h \
   ByteOrder.h Socket.h AllowedConnections.h ReturnMessage.h Value.h \
   SessionHandler.h scoped_ptr/scoped_ptr.h
+FatalErrorMessage.o: FatalErrorMessage.cpp FatalErrorMessage.h Message.h \
+  BrowserChannel.h Value.h Debug.h Platform.h DebugLevel.h HostChannel.h \
+  ByteOrder.h Socket.h AllowedConnections.h ReturnMessage.h \
+  SessionHandler.h scoped_ptr/scoped_ptr.h
+CheckVersionsMessage.o: CheckVersionsMessage.cpp CheckVersionsMessage.h \
+  Message.h BrowserChannel.h Value.h Debug.h Platform.h DebugLevel.h \
+  HostChannel.h ByteOrder.h Socket.h AllowedConnections.h ReturnMessage.h \
+  SessionHandler.h scoped_ptr/scoped_ptr.h
+ChooseTransportMessage.o: ChooseTransportMessage.cpp \
+  ChooseTransportMessage.h Message.h BrowserChannel.h Value.h Debug.h \
+  Platform.h DebugLevel.h HostChannel.h ByteOrder.h Socket.h \
+  AllowedConnections.h ReturnMessage.h SessionHandler.h \
+  scoped_ptr/scoped_ptr.h
+SwitchTransportMessage.o: SwitchTransportMessage.cpp \
+  SwitchTransportMessage.h Message.h BrowserChannel.h Value.h Debug.h \
+  Platform.h DebugLevel.h HostChannel.h ByteOrder.h Socket.h \
+  AllowedConnections.h ReturnMessage.h SessionHandler.h \
+  scoped_ptr/scoped_ptr.h
+ProtocolVersionMessage.o: ProtocolVersionMessage.cpp \
+  ProtocolVersionMessage.h Message.h BrowserChannel.h Value.h Debug.h \
+  Platform.h DebugLevel.h HostChannel.h ByteOrder.h Socket.h \
+  AllowedConnections.h ReturnMessage.h SessionHandler.h \
+  scoped_ptr/scoped_ptr.h

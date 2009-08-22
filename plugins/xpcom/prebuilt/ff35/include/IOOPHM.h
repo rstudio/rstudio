@@ -29,8 +29,11 @@ class NS_NO_VTABLE NS_SCRIPTABLE IOOPHM : public nsISupports {
 
   NS_DECLARE_STATIC_IID_ACCESSOR(IOOPHM_IID)
 
-  /* boolean connect (in ACString addr, in ACString moduleName, in nsIDOMWindow window); */
-  NS_SCRIPTABLE NS_IMETHOD Connect(const nsACString & addr, const nsACString & moduleName, nsIDOMWindow *window, PRBool *_retval NS_OUTPARAM) = 0;
+  /* boolean init (in nsIDOMWindow window); */
+  NS_SCRIPTABLE NS_IMETHOD Init(nsIDOMWindow *window, PRBool *_retval NS_OUTPARAM) = 0;
+
+  /* boolean connect (in ACString url, in ACString sessionKey, in ACString addr, in ACString moduleName, in ACString hostedHtmlVersion); */
+  NS_SCRIPTABLE NS_IMETHOD Connect(const nsACString & url, const nsACString & sessionKey, const nsACString & addr, const nsACString & moduleName, const nsACString & hostedHtmlVersion, PRBool *_retval NS_OUTPARAM) = 0;
 
 };
 
@@ -38,15 +41,18 @@ class NS_NO_VTABLE NS_SCRIPTABLE IOOPHM : public nsISupports {
 
 /* Use this macro when declaring classes that implement this interface. */
 #define NS_DECL_IOOPHM \
-  NS_SCRIPTABLE NS_IMETHOD Connect(const nsACString & addr, const nsACString & moduleName, nsIDOMWindow *window, PRBool *_retval NS_OUTPARAM); 
+  NS_SCRIPTABLE NS_IMETHOD Init(nsIDOMWindow *window, PRBool *_retval NS_OUTPARAM); \
+  NS_SCRIPTABLE NS_IMETHOD Connect(const nsACString & url, const nsACString & sessionKey, const nsACString & addr, const nsACString & moduleName, const nsACString & hostedHtmlVersion, PRBool *_retval NS_OUTPARAM); 
 
 /* Use this macro to declare functions that forward the behavior of this interface to another object. */
 #define NS_FORWARD_IOOPHM(_to) \
-  NS_SCRIPTABLE NS_IMETHOD Connect(const nsACString & addr, const nsACString & moduleName, nsIDOMWindow *window, PRBool *_retval NS_OUTPARAM) { return _to Connect(addr, moduleName, window, _retval); } 
+  NS_SCRIPTABLE NS_IMETHOD Init(nsIDOMWindow *window, PRBool *_retval NS_OUTPARAM) { return _to Init(window, _retval); } \
+  NS_SCRIPTABLE NS_IMETHOD Connect(const nsACString & url, const nsACString & sessionKey, const nsACString & addr, const nsACString & moduleName, const nsACString & hostedHtmlVersion, PRBool *_retval NS_OUTPARAM) { return _to Connect(url, sessionKey, addr, moduleName, hostedHtmlVersion, _retval); } 
 
 /* Use this macro to declare functions that forward the behavior of this interface to another object in a safe way. */
 #define NS_FORWARD_SAFE_IOOPHM(_to) \
-  NS_SCRIPTABLE NS_IMETHOD Connect(const nsACString & addr, const nsACString & moduleName, nsIDOMWindow *window, PRBool *_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Connect(addr, moduleName, window, _retval); } 
+  NS_SCRIPTABLE NS_IMETHOD Init(nsIDOMWindow *window, PRBool *_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Init(window, _retval); } \
+  NS_SCRIPTABLE NS_IMETHOD Connect(const nsACString & url, const nsACString & sessionKey, const nsACString & addr, const nsACString & moduleName, const nsACString & hostedHtmlVersion, PRBool *_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Connect(url, sessionKey, addr, moduleName, hostedHtmlVersion, _retval); } 
 
 #if 0
 /* Use the code below as a template for the implementation class for this interface. */
@@ -80,8 +86,14 @@ _MYCLASS_::~_MYCLASS_()
   /* destructor code */
 }
 
-/* boolean connect (in ACString addr, in ACString moduleName, in nsIDOMWindow window); */
-NS_IMETHODIMP _MYCLASS_::Connect(const nsACString & addr, const nsACString & moduleName, nsIDOMWindow *window, PRBool *_retval NS_OUTPARAM)
+/* boolean init (in nsIDOMWindow window); */
+NS_IMETHODIMP _MYCLASS_::Init(nsIDOMWindow *window, PRBool *_retval NS_OUTPARAM)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+/* boolean connect (in ACString url, in ACString sessionKey, in ACString addr, in ACString moduleName, in ACString hostedHtmlVersion); */
+NS_IMETHODIMP _MYCLASS_::Connect(const nsACString & url, const nsACString & sessionKey, const nsACString & addr, const nsACString & moduleName, const nsACString & hostedHtmlVersion, PRBool *_retval NS_OUTPARAM)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }

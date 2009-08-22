@@ -2,13 +2,13 @@
 #define __H_QuitMessage
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,17 +20,21 @@
 #include "Message.h"
 #include "BrowserChannel.h"
 
+/**
+ * This class represents a Quit message sent to the server, indicating the
+ * channel should be closed down.
+ */
 class QuitMessage : public Message {
-public:  
+public:
   static const char TYPE = MESSAGE_TYPE_QUIT;
 private:
   QuitMessage() {}
-  
-public:  
+
+public:
   virtual char getType() const {
     return TYPE;
   }
-  
+
   static bool send(HostChannel& channel) {
     return channel.sendByte(TYPE);
   }

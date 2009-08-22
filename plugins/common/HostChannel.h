@@ -44,9 +44,15 @@ public:
     Debug::log(Debug::Debugging) << "HostChannel destroyed" << Debug::flush;
   }
 
+  // Connects to the OOPHM server (socket operations only).
   bool connectToHost(const char* host, unsigned port);
+
+  // Negotiates protocol version and transport selection.
+  bool init(SessionHandler* handler, int minVersion, int maxVersion,
+      const std::string& hostedHtmlVersion);
+
   bool disconnectFromHost();
-  
+
   bool isConnected() const {
     return sock.isConnected();
   }

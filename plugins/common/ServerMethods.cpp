@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,6 +29,11 @@ using std::string;
 
 Value ServerMethods::getProperty(HostChannel& channel, SessionHandler* handler, int objectRef,
     int dispatchId) {
+  if (!channel.isConnected()) {
+    Debug::log(Debug::Debugging) << "Ignoring getProperty after disconnect"
+        << Debug::flush;
+    return Value();
+  }
   Value args[2];
   args[0].setInt(objectRef);
   args[1].setInt(dispatchId);
@@ -52,6 +57,11 @@ int ServerMethods::hasMethod(HostChannel& channel, SessionHandler* handler, int 
     // only JSNI-style names and toString are valid
     return -1;
   }
+  if (!channel.isConnected()) {
+    Debug::log(Debug::Debugging) << "Ignoring hasMethod after disconnect"
+        << Debug::flush;
+    return -2;
+  }
   Value arg;
   arg.setString(name);
   if (!InvokeSpecialMessage::send(channel, SPECIAL_HAS_METHOD, 1, &arg)) {
@@ -74,6 +84,11 @@ int ServerMethods::hasProperty(HostChannel& channel, SessionHandler* handler, in
     // only JSNI-style names and toString are valid
     return -1;
   }
+  if (!channel.isConnected()) {
+    Debug::log(Debug::Debugging) << "Ignoring hasProperty after disconnect"
+        << Debug::flush;
+    return -2;
+  }
   Value arg;
   arg.setString(name);
   if (!InvokeSpecialMessage::send(channel, SPECIAL_HAS_PROPERTY, 1, &arg)) {
@@ -92,6 +107,11 @@ int ServerMethods::hasProperty(HostChannel& channel, SessionHandler* handler, in
 
 bool ServerMethods::setProperty(HostChannel& channel, SessionHandler* handler, int objectRef,
     int dispatchId, const Value& value) {
+  if (!channel.isConnected()) {
+    Debug::log(Debug::Debugging) << "Ignoring setProperty after disconnect"
+        << Debug::flush;
+    return false;
+  }
   // TODO(jat): error handling?
   Value args[3];
   args[0].setInt(objectRef);

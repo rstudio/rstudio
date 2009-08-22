@@ -26,16 +26,22 @@ char LoadModuleMessage::getType() const {
   return LoadModuleMessage::TYPE;
 }
 
-bool LoadModuleMessage::send(HostChannel& channel, uint32_t version, const char* moduleName,
-    const uint32_t moduleNameLen, const char* userAgent, SessionHandler* handler) {
-  Debug::log(Debug::Spam) << "LoadModule(module=\"" << moduleName << "\",vers="
-      << version << ")" << Debug::flush;
-  if (!channel.sendByte(TYPE) || !channel.sendInt(version)
-      || !channel.sendString(moduleName, moduleNameLen)
-      || !channel.sendString(userAgent, static_cast<uint32_t>(strlen(userAgent)))) {
+bool LoadModuleMessage::send(HostChannel& channel, const std::string& url,
+    const std::string& tabKey, const std::string& sessionKey,
+    const std::string& moduleName, const std::string& userAgent,
+    SessionHandler* handler) {
+  Debug::log(Debug::Spam) << "LoadModule(url=\"" << url << "\", tabKey=\""
+      << "\", sessionKey=\"" << sessionKey << "\", module=\"" << moduleName
+      << "\")" << Debug::flush;
+  if (!channel.sendByte(TYPE) || !channel.sendString(url)
+      || !channel.sendString(tabKey)
+      || !channel.sendString(sessionKey)
+      || !channel.sendString(moduleName)
+      || !channel.sendString(userAgent)) {
     return false;
   }
-  scoped_ptr<ReturnMessage> ret(channel.reactToMessagesWhileWaitingForReturn(handler));
+  scoped_ptr<ReturnMessage> ret(channel.reactToMessagesWhileWaitingForReturn(
+      handler));
   if (!ret.get()) {
     return false;
   }

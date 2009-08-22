@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -44,8 +44,15 @@ IESessionHandler::~IESessionHandler(void) {
 
   channel->disconnectFromHost();
 }
+
+void IESessionHandler::fatalError(HostChannel& channel,
+    const std::string& messsage) {
+  // TODO: better way of reporting error?
+  Debug::log(Debug::Error) << "Fatal error: " << message << Debug::flush;
+}
+
 void IESessionHandler::freeJavaObject(unsigned int objId) {
-  // Remove the now-defunt object from the lookup table
+  // Remove the now-defunct object from the lookup table
   javaObjectsById.erase(objId);
 
   // and add it to the set of objects to free on the server
@@ -376,7 +383,7 @@ void IESessionHandler::makeValueRef(_variant_t& retVal, const Value& value) {
 
     case Value::STRING:
       // The copy-constructor does not correctly handle embedded nulls
-      retVal.bstrVal = UTF8ToBSTR(value.getString().length(), 
+      retVal.bstrVal = UTF8ToBSTR(value.getString().length(),
         value.getString().c_str()).Detach();
       retVal.vt = VT_BSTR;
       break;

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,6 +29,7 @@
 
 #include "LoadModuleMessage.h"
 #include "ServerMethods.h"
+#include "BrowserChannel.h"
 
 NS_IMPL_ISUPPORTS2_CI(ExternalWrapper, IOOPHM, nsISecurityCheckedComponent)
 
@@ -59,35 +60,57 @@ static nsresult getUserAgent(std::string& userAgent) {
 }
 
 // TODO: handle context object passed in (currently nsIDOMWindow below)
-NS_IMETHODIMP ExternalWrapper::Connect(const nsACString & aAddr, const nsACString & aModuleName, nsIDOMWindow* domWindow, PRBool *_retval) {
-  Debug::log(Debug::Spam) << "Address: " << aAddr << " Module: " << aModuleName << Debug::flush;
+NS_IMETHODIMP ExternalWrapper::Init(nsIDOMWindow* domWindow, PRBool *_retval) {
+  Debug::log(Debug::Spam) << "Init" << Debug::flush;
+  *_retval = true;
+  return NS_OK;
+}
+
+NS_IMETHODIMP ExternalWrapper::Connect(const nsACString& url,
+		const nsACString& sessionKey, const nsACString& aAddr,
+		const nsACString& aModuleName, const nsACString& hostedHtmlVersion,
+		PRBool *_retval) {
+  Debug::log(Debug::Spam) << "Connect(url=" << url << ", sessionKey="
+      << sessionKey << ", address=" << aAddr << ", module=" << aModuleName
+      << ", hostedHtmlVersion=" << hostedHtmlVersion << Debug::flush;
 
   // TODO: string utilities?
-  nsCString addrAutoStr(aAddr), moduleAutoStr(aModuleName);
-  std::string url(addrAutoStr.get());
-  
-  size_t index = url.find(':');
+  nsCString urlAutoStr(url);
+  nsCString sessionKeyAutoStr(sessionKey);
+  nsCString addrAutoStr(aAddr);
+  nsCString moduleAutoStr(aModuleName);
+  nsCString hostedHtmlVersionAutoStr(hostedHtmlVersion);
+  std::string hostedUrl(addrAutoStr.get());
+
+  size_t index = hostedUrl.find(':');
   if (index == std::string::npos) {
     *_retval = false;
     return NS_OK;
   }
-  std::string hostPart = url.substr(0, index);
-  std::string portPart = url.substr(index + 1);
+  std::string hostPart = hostedUrl.substr(0, index);
+  std::string portPart = hostedUrl.substr(index + 1);
 
   HostChannel* channel = new HostChannel();
 
   Debug::log(Debug::Debugging) << "Connecting..." << Debug::flush;
 
-  if (!channel->connectToHost(
-      const_cast<char*>(hostPart.c_str()),
+  if (!channel->connectToHost(hostPart.c_str(),
       atoi(portPart.c_str()))) {
     *_retval = false;
     return NS_OK;
   }
 
   Debug::log(Debug::Debugging) << "...Connected" << Debug::flush;
-
   sessionHandler.reset(new FFSessionHandler(channel/*, ctx*/));
+
+  std::string hostedHtmlVersionStr(hostedHtmlVersionAutoStr.get());
+  if (!channel->init(sessionHandler.get(), BROWSERCHANNEL_PROTOCOL_VERSION,
+      BROWSERCHANNEL_PROTOCOL_VERSION,
+      hostedHtmlVersionStr)) {
+    *_retval = false;
+    return NS_OK;
+  }
+
   std::string moduleName(moduleAutoStr.get());
   std::string userAgent;
 
@@ -97,10 +120,12 @@ NS_IMETHODIMP ExternalWrapper::Connect(const nsACString & aAddr, const nsACStrin
     return res;
   }
 
-  LoadModuleMessage::send(*channel, 1,
-    moduleName.c_str(), moduleName.length(),
-    userAgent.c_str(),
-    sessionHandler.get());
+  std::string urlStr(urlAutoStr.get());
+  std::string tabKeyStr(""); // TODO(jat): add support for tab identity
+  std::string sessionKeyStr(sessionKeyAutoStr.get());
+
+  LoadModuleMessage::send(*channel, urlStr, tabKeyStr, sessionKeyStr,
+      moduleName, userAgent, sessionHandler.get());
 
   // TODO: return session object?
   *_retval = true;
@@ -127,7 +152,7 @@ NS_IMETHODIMP ExternalWrapper::CanCreateWrapper(const nsIID * iid, char **_retva
 
 NS_IMETHODIMP ExternalWrapper::CanCallMethod(const nsIID * iid, const PRUnichar *methodName, char **_retval) {
   Debug::log(Debug::Spam) << "ExternalWrapper::CanCallMethod" << Debug::flush;
-  if (strEquals(methodName, "connect")) {
+  if (strEquals(methodName, "connect") || strEquals(methodName, "init")) {
     *_retval = cloneAllAccess();
   } else {
     *_retval = nsnull;

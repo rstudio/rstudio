@@ -119,7 +119,7 @@ DLLFLAGS += \
 
 INC += -I$(GECKO_PLAT_INC) -I$(GECKO_SDK)/include -I$(dir $(FF_HEADER))
 
-VERSION=0.0.$(shell ./getversion).$(shell date +%Y%m%d%H%M%S)
+VERSION=0.9.$(shell ./getversion).$(shell date +%Y%m%d%H%M%S)
 
 .PHONY: all xpi lib common browser clean depend install install-platform find-ff-libs
 

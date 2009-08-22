@@ -2,13 +2,13 @@
 #define _H_FFSessionHandler
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -47,10 +47,12 @@ protected:
   virtual bool invokeSpecial(HostChannel& channel, SpecialMethodId method, int numArgs,
       const Value* const args, Value* returnValue);
   virtual void sendFreeValues(HostChannel& channel);
+  virtual void fatalError(HostChannel& channel, const std::string& message);
 
 private:
   void getStringObjectClass(JSContext* ctx);
   void getToStringTearOff(JSContext* ctx);
+  void* identityFromObject(JSObject* obj);
 
   int jsObjectId;
 
@@ -61,7 +63,7 @@ private:
   JSObject* jsObjectsById;
   JSClass* stringObjectClass;
 
-  std::map<JSObject*, int> jsIdsByObject;
+  std::map<void*, int> jsIdsByObject;
 };
 
 inline Debug::DebugStream& operator<<(Debug::DebugStream& dbg, JSString* str) {
