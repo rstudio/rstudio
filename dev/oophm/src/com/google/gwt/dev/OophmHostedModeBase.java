@@ -27,6 +27,7 @@ import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.OophmSessionHandler;
 import com.google.gwt.dev.shell.ShellMainWindow;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
+import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.util.tools.ArgHandlerString;
@@ -39,6 +40,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Random;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -46,9 +48,66 @@ import javax.swing.JTabbedPane;
 import javax.swing.WindowConstants;
 
 /**
- * The main executable class for hosted mode shells based on SWT.
+ * Base class for OOPHM hosted mode shells.
  */
 abstract class OophmHostedModeBase extends HostedModeBase {
+
+  /**
+   * Interface to group activities related to adding and deleting tabs.
+   */
+  public interface TabPanelCollection {
+    
+    /**
+     * Add a new tab containing a ModuleTabPanel.
+     * 
+     * @param tabPanel
+     * @param icon
+     * @param title
+     * @param tooltip
+     */
+    void addTab(ModuleTabPanel tabPanel, ImageIcon icon, String title,
+        String tooltip);
+    
+    /**
+     * Remove the tab containing a ModuleTabpanel.
+     * 
+     * @param tabPanel
+     */
+    void removeTab(ModuleTabPanel tabPanel);
+  }
+
+  abstract static class ArgProcessor extends HostedModeBase.ArgProcessor {
+    public ArgProcessor(OophmHostedModeBaseOptions options, boolean forceServer) {
+      super(options, forceServer);
+      registerHandler(new ArgHandlerPortHosted(options));
+    }
+  }
+  
+  interface OophmHostedModeBaseOptions extends HostedModeBaseOptions,
+      OptionPortHosted {
+  }
+
+  /**
+   * Concrete class to implement all shell options.
+   */
+  static class OophmHostedModeBaseOptionsImpl extends HostedModeBaseOptionsImpl
+      implements OophmHostedModeBaseOptions {
+    private int portHosted;
+
+    public int getPortHosted() {
+      return portHosted;
+    }
+
+    public void setPortHosted(int port) {
+      portHosted = port;
+    }
+  }
+
+  interface OptionPortHosted {
+    int getPortHosted();
+
+    void setPortHosted(int portHosted);
+  }
 
   /**
    * Handles the -portHosted command line flag.
@@ -96,43 +155,11 @@ abstract class OophmHostedModeBase extends HostedModeBase {
       return true;
     }
   }
-
-  abstract static class ArgProcessor extends HostedModeBase.ArgProcessor {
-    public ArgProcessor(OophmHostedModeBaseOptions options, boolean forceServer) {
-      super(options, forceServer);
-      registerHandler(new ArgHandlerPortHosted(options));
-    }
-  }
-
-  interface OophmHostedModeBaseOptions extends HostedModeBaseOptions,
-      OptionPortHosted {
-  }
-
-  /**
-   * Concrete class to implement all shell options.
-   */
-  static class OophmHostedModeBaseOptionsImpl extends HostedModeBaseOptionsImpl
-      implements OophmHostedModeBaseOptions {
-    private int portHosted;
-
-    public int getPortHosted() {
-      return portHosted;
-    }
-
-    public void setPortHosted(int port) {
-      portHosted = port;
-    }
-  }
-
-  interface OptionPortHosted {
-    int getPortHosted();
-
-    void setPortHosted(int portHosted);
-  }
-
+  
   private class OophmBrowserWidgetHostImpl extends BrowserWidgetHostImpl {
     private final Map<ModuleSpaceHost, ModulePanel> moduleTabs = new IdentityHashMap<ModuleSpaceHost, ModulePanel>();
-
+    private final Map<DevelModeTabKey, ModuleTabPanel> tabPanels = new HashMap<DevelModeTabKey, ModuleTabPanel>();
+    
     @Override
     public ModuleSpaceHost createModuleSpaceHost(TreeLogger logger,
         BrowserWidget widget, String moduleName)
@@ -144,23 +171,38 @@ abstract class OophmHostedModeBase extends HostedModeBase {
         String moduleName, String userAgent, String url, String tabKey,
         String sessionKey, String remoteSocket)
         throws UnableToCompleteException {
+      if (sessionKey == null) {
+        // if we don't have a unique session key, make one up
+        sessionKey = randomString();
+      }
       TreeLogger logger = mainLogger;
       TreeLogger.Type maxLevel = TreeLogger.INFO;
       if (mainLogger instanceof AbstractTreeLogger) {
         maxLevel = ((AbstractTreeLogger) mainLogger).getMaxDetail();
       }
-      // TODO(jat): collect different sessions into the same tab, with a
-      //    dropdown to select individual module's logs
-      ModulePanel tab;
+      ModuleTabPanel tabPanel = null;
+      ModulePanel tab = null;
       if (!isHeadless()) {
-        tab = new ModulePanel(maxLevel, moduleName, userAgent, remoteSocket,
-            tabs);
+        tabPanel = findModuleTab(userAgent, remoteSocket, url, tabKey,
+            moduleName);
+        tab = tabPanel.addModuleSession(maxLevel, moduleName, sessionKey);
         logger = tab.getLogger();
+        TreeLogger branch = logger.branch(TreeLogger.INFO, "Loading module "
+            + moduleName);
+        if (url != null) {
+          branch.log(TreeLogger.INFO, "Top URL: " + url);
+        }
+        branch.log(TreeLogger.INFO, "User agent: " + userAgent);
+        branch.log(TreeLogger.TRACE, "Remote socket: " + remoteSocket);
+        if (tabKey != null) {
+          branch.log(TreeLogger.DEBUG, "Tab key: " + tabKey);
+        }
+        if (sessionKey != null) {
+          branch.log(TreeLogger.DEBUG, "Session key: " + sessionKey);
+        }
 
         // Switch to a wait cursor.
         frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-      } else {
-        tab = null;
       }
 
       try {
@@ -190,15 +232,70 @@ abstract class OophmHostedModeBase extends HostedModeBase {
     }
 
     public void unloadModule(ModuleSpaceHost moduleSpaceHost) {
-      ModulePanel tab = moduleTabs.remove(moduleSpaceHost);
+      Disconnectable tab = moduleTabs.remove(moduleSpaceHost);
       if (tab != null) {
         tab.disconnect();
       }
+    }
+
+    private ModuleTabPanel findModuleTab(String userAgent, String remoteSocket,
+        String url, String tabKey, String moduleName) {
+      int hostEnd = remoteSocket.indexOf(':');
+      if (hostEnd < 0) {
+        hostEnd = remoteSocket.length();
+      }
+      String remoteHost = remoteSocket.substring(0, hostEnd);
+      final DevelModeTabKey key = new DevelModeTabKey(userAgent, url, tabKey,
+          remoteHost);
+      ModuleTabPanel moduleTabPanel = tabPanels.get(key);
+      if (moduleTabPanel == null) {
+        moduleTabPanel = new ModuleTabPanel(userAgent, remoteSocket, url,
+            new TabPanelCollection() {
+              public void addTab(ModuleTabPanel tabPanel, ImageIcon icon,
+                  String title, String tooltip) {
+                synchronized (tabs) {
+                  tabs.addTab(title, icon, tabPanel, tooltip);
+                  tabPanels.put(key, tabPanel);
+                }
+              }
+    
+              public void removeTab(ModuleTabPanel tabPanel) {
+                synchronized (tabs) {
+                  tabs.remove(tabPanel);
+                  tabPanels.remove(key);
+                }
+              }
+            }, moduleName);
+      }
+      return moduleTabPanel;
     }
   }
 
   protected static final String PACKAGE_PATH = OophmHostedModeBase.class.getPackage().getName().replace(
       '.', '/').concat("/shell/");
+
+  private static final Random RNG = new Random();
+  
+  /**
+   * Produce a random string that has low probability of collisions.
+   * 
+   * <p>In this case, we use 16 characters, each drawn from a pool of 94,
+   * so the number of possible values is 94^16, leading to an expected number
+   * of values used before a collision occurs as sqrt(pi/2) * 94^8 (treated the
+   * same as a birthday attack), or a little under 10^16.
+   * 
+   * <p>This algorithm is also implemented in hosted.html, though it is not
+   * technically important that they match.
+   * 
+   * @return a random string
+   */
+  protected static String randomString() {
+    StringBuilder buf = new StringBuilder(16);
+    for (int i = 0; i < 16; ++i) {
+      buf.append((char) RNG.nextInt('~' - '!' + 1) + '!');
+    }
+    return buf.toString();
+  }
 
   /**
    * Loads an image from the classpath in this package.

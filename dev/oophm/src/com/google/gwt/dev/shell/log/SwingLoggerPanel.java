@@ -17,6 +17,8 @@ package com.google.gwt.dev.shell.log;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.dev.shell.CloseButton;
+import com.google.gwt.dev.shell.CloseButton.Callback;
 import com.google.gwt.dev.shell.log.SwingTreeLogger.LogEvent;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 
@@ -38,7 +40,6 @@ import java.util.Enumeration;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -71,6 +72,20 @@ import javax.swing.tree.TreeSelectionModel;
  */
 public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
 
+  /**
+   * Callback interface for optional close button behavior.
+   */
+  public interface CloseHandler {
+    
+    /**
+     * Called when the close button has been clicked on the tree logger
+     * and any confirmation needed has been handled.
+     * 
+     * @param loggerPanel SwingTreeLogger instance being closed
+     */
+    void onCloseRequest(SwingLoggerPanel loggerPanel);
+  }
+
   private class FindBox extends JPanel {
 
     private JTextField searchField;
@@ -101,11 +116,12 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
           prevMatch();
         }
       });
-      JButton closeButton = new JButton(closeIcon);
-      closeButton.setBorderPainted(false);
-      closeButton.setPreferredSize(new Dimension(closeIcon.getIconWidth(),
-          closeIcon.getIconHeight()));
-      closeButton.setToolTipText("Close this search box");
+      CloseButton closeButton = new CloseButton("Close this search box");
+      closeButton.setCallback(new Callback() {
+        public void onCloseRequest() {
+          hideFindBox();
+        }
+      });
       top.add(closeButton);
       KeyStroke key = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
       getInputMap(WHEN_IN_FOCUSED_WINDOW).put(key, "find-cancel");
@@ -125,11 +141,6 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
         }
       };
       getActionMap().put("find-cancel", closeFindBox);
-      closeButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          hideFindBox();
-        }
-      });
       add(top, BorderLayout.NORTH);
       searchStatus = new JLabel("Type search text and press Enter");
       searchStatus.setBorder(BorderFactory.createEmptyBorder(0, 2, 2, 0));
@@ -203,9 +214,10 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
   private static class TreeRenderer extends DefaultTreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value,
-        boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+        boolean sel, boolean expanded, boolean leaf, int row,
+        boolean componentHasFocus) {
       super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row,
-          hasFocus);
+          componentHasFocus);
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
       Object userObject = node.getUserObject();
       if (userObject instanceof LogEvent) {
@@ -215,8 +227,6 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
       return this;
     }
   }
-
-  private static ImageIcon closeIcon = SwingTreeLogger.tryLoadImage("icon-close.png");
 
   private static final Color DISCONNECTED_COLOR = Color.decode("0xFFDDDD");
   
@@ -248,6 +258,12 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
 
   private JScrollPane treeView;
 
+  private CloseButton closeLogger;
+
+  private CloseHandler closeHandler;
+  
+  private boolean disconnected = false;
+
   public SwingLoggerPanel(TreeLogger.Type maxLevel) {
     super(new BorderLayout());
     regexFilter = "";
@@ -255,23 +271,26 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
     // TODO(jat): how to make the topPanel properly layout items
     // when the window is resized
     topPanel = new JPanel();
+    topPanel.setLayout(new BorderLayout());
+    JPanel logButtons = new JPanel();
     JButton expandButton = new JButton("Expand All");
     expandButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         expandAll();
       }
     });
-    topPanel.add(expandButton);
-    JButton collapsButton = new JButton("Collapse All");
-    collapsButton.addActionListener(new ActionListener() {
+    logButtons.add(expandButton);
+    JButton collapseButton = new JButton("Collapse All");
+    collapseButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         collapseAll();
       }
     });
-    topPanel.add(collapsButton);
+    logButtons.add(collapseButton);
+    topPanel.add(logButtons, BorderLayout.CENTER);
     // TODO(jat): temporarily avoid showing parts that aren't implemented.
     if (false) {
-      topPanel.add(new JLabel("Filter Log Messages: "));
+      logButtons.add(new JLabel("Filter Log Messages: "));
       levelComboBox = new JComboBox();
       for (TreeLogger.Type type : TreeLogger.Type.instances()) {
         if (type.compareTo(maxLevel) > 0) {
@@ -288,14 +307,14 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
         }
       });
       regexField = new JTextField(20);
-      topPanel.add(regexField);
+      logButtons.add(regexField);
       JButton applyRegexButton = new JButton("Apply Regex");
       applyRegexButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           setRegexFilter(regexField.getText());
         }
       });
-      topPanel.add(applyRegexButton);
+      logButtons.add(applyRegexButton);
       JButton clearRegexButton = new JButton("Clear Regex");
       clearRegexButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -303,8 +322,20 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
           setRegexFilter("");
         }
       });
-      topPanel.add(clearRegexButton);
+      logButtons.add(clearRegexButton);
     }
+    closeLogger = new CloseButton("Close this log window");
+    closeLogger.setCallback(new Callback() {
+      // TODO(jat): add support for closing active session when SWT is removed
+      public void onCloseRequest() {
+        if (disconnected && closeHandler != null) {
+          closeHandler.onCloseRequest(SwingLoggerPanel.this);
+        }
+      }
+    });
+    closeLogger.setEnabled(false);
+    closeLogger.setVisible(false);
+    topPanel.add(closeLogger, BorderLayout.EAST);
     add(topPanel, BorderLayout.NORTH);
     root = new DefaultMutableTreeNode();
     treeModel = new DefaultTreeModel(root);
@@ -384,6 +415,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
   }
 
   public void disconnected() {
+    disconnected  = true;
     tree.setBackground(DISCONNECTED_COLOR);
     tree.repaint();
   }
@@ -422,6 +454,18 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
     this.autoScroll = autoScroll;
   }
 
+  /**
+   * Sets a callback for handling a close request, which also makes the close
+   * button visible.
+   * 
+   * @param handler
+   */
+  public void setCloseHandler(CloseHandler handler) {
+    closeHandler = handler;
+    closeLogger.setEnabled(true);
+    closeLogger.setVisible(true);
+  }
+
   public void valueChanged(TreeSelectionEvent e) {
     if (e.isAddedPath()) {
       TreePath path = e.getPath();
@@ -444,6 +488,19 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
   protected void alert(String msg) {
     JOptionPane.showMessageDialog(null, msg, "Alert: Not Implemented",
         JOptionPane.INFORMATION_MESSAGE);
+  }
+
+  /**
+   * Ask the user for confirmation to close the current logger.
+   * 
+   * @return true if the user confirmed the request
+   */
+  protected boolean confirmClose() {
+    int response = JOptionPane.showConfirmDialog(null,
+        "Close the logger for the currently displayed module",
+        "Close this Logger", JOptionPane.OK_CANCEL_OPTION,
+        JOptionPane.WARNING_MESSAGE);
+    return response != JOptionPane.YES_OPTION;
   }
 
   protected ArrayList<DefaultMutableTreeNode> doFind(String search) {

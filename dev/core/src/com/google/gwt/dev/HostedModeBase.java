@@ -599,6 +599,8 @@ abstract class HostedModeBase implements BrowserWindowController {
         return false;
       }
       options.setPort(resultPort);
+      getTopLogger().log(TreeLogger.INFO, "Started web server on port "
+          + resultPort);
     }
 
     return true;

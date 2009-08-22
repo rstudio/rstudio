@@ -58,6 +58,9 @@ public interface BrowserWidgetHost {
    *     can't distinguish tabs or null if using an old browser plugin 
    * @param sessionKey unique session key, may be null for old browser plugins
    * @param remoteEndpoint
+   * 
+   * TODO(jat): change remoteEndpoint to be a BrowserChannelServer instance
+   *    when we remove the SWT implementation
    */
   ModuleSpaceHost createModuleSpaceHost(TreeLogger logger, String moduleName,
       String userAgent, String url, String tabKey, String sessionKey,

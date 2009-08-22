@@ -110,6 +110,7 @@ public abstract class BrowserWidget extends Composite {
     public void widgetDefaultSelected(SelectionEvent e) {
     }
 
+    @SuppressWarnings("deprecation")
     public void widgetSelected(SelectionEvent evt) {
       if (evt.widget == backButton) {
         browser.back();
@@ -167,12 +168,6 @@ public abstract class BrowserWidget extends Composite {
       }
     }
   }
-
-  /**
-   * The version number that should be passed into gwtOnLoad. Must match the
-   * version in hosted.html.
-   */
-  private static final String EXPECTED_GWT_ONLOAD_VERSION = "2.0";
 
   public static void launchExternalBrowser(TreeLogger logger, String location) {
     String browserCmd = System.getenv("GWT_EXTERNAL_BROWSER");
@@ -328,19 +323,20 @@ public abstract class BrowserWidget extends Composite {
    * Initializes and attaches module space to this browser widget. Called by
    * subclasses in response to calls from JavaScript.
    * 
+   * @param moduleSpaceLogger logger to use for attaching the ModuleSpace
    * @param space ModuleSpace instance to initialize
    */
-  protected final void attachModuleSpace(TreeLogger logger, ModuleSpace space)
-      throws UnableToCompleteException {
+  protected final void attachModuleSpace(TreeLogger moduleSpaceLogger,
+      ModuleSpace space) throws UnableToCompleteException {
     Object key = space.getKey();
     loadedModules.put(key, space);
 
-    logger.log(TreeLogger.SPAM, "Loading module " + space.getModuleName()
-        + " (id " + key.toString() + ")", null);
+    moduleSpaceLogger.log(TreeLogger.SPAM, "Loading module "
+        + space.getModuleName() + " (id " + key.toString() + ")", null);
 
     // Let the space do its thing.
     //
-    space.onLoad(logger);
+    space.onLoad(moduleSpaceLogger);
 
     // Enable the compile button since we successfully loaded.
     //
@@ -399,30 +395,6 @@ public abstract class BrowserWidget extends Composite {
     moduleSpace.dispose();
     logger.log(TreeLogger.SPAM, "Unloading module " + moduleName + " (id "
         + key.toString() + ")", null);
-  }
-
-  /**
-   * Validate that the supplied hosted.html version matches.
-   * 
-   * This is to detect cases where users upgrade to a new version but forget to
-   * update the generated hosted.html file.
-   * 
-   * @param version version supplied by hosted.html file
-   * @return true if the version is valid, false otherwise
-   */
-  protected boolean validHostedHtmlVersion(String version) {
-    if (!EXPECTED_GWT_ONLOAD_VERSION.equals(version)) {
-      getHost().getLogger().log(
-          TreeLogger.ERROR,
-          "Invalid version number \"" + version
-              + "\" passed to external.gwtOnLoad(), expected \""
-              + EXPECTED_GWT_ONLOAD_VERSION
-              + "\"; your hosted mode bootstrap file may be out of date; "
-              + "if you are using -noserver try recompiling and redeploying "
-              + "your app");
-      return false;
-    }
-    return true;
   }
 
   private Composite buildLocationBar(Composite parent) {

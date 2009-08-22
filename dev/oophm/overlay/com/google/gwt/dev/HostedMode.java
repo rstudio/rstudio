@@ -362,12 +362,14 @@ public class HostedMode extends OophmHostedModeBase {
       servletValidator = ServletValidator.create(getTopLogger(), webXml);
     }
 
+    TreeLogger branch = getTopLogger().branch(TreeLogger.INFO, "Loading modules");
     for (String moduleName : options.getModuleNames()) {
-      TreeLogger loadLogger = getTopLogger().branch(TreeLogger.DEBUG,
-          "Bootstrap link for command-line module '" + moduleName + "'");
+      TreeLogger moduleBranch = branch.branch(TreeLogger.INFO, moduleName);
       try {
-        ModuleDef module = loadModule(loadLogger, moduleName, false);
-        validateServletTags(loadLogger, servletValidator, module, webXml);
+        ModuleDef module = loadModule(moduleBranch, moduleName, false);
+        validateServletTags(moduleBranch, servletValidator, module, webXml);
+        TreeLogger loadLogger = moduleBranch.branch(TreeLogger.DEBUG,
+            "Bootstrap link for command-line module '" + moduleName + "'");
         link(loadLogger, module);
       } catch (UnableToCompleteException e) {
         // Already logged.

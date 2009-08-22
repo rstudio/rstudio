@@ -259,9 +259,6 @@ public final class ModuleDefLoader {
    */
   private ModuleDef doLoadModule(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
-    logger = logger.branch(TreeLogger.TRACE, "Loading module '" + moduleName
-        + "'", null);
-
     if (!ModuleDef.isValidModuleName(moduleName)) {
       logger.log(TreeLogger.ERROR, "Invalid module name: '" + moduleName + "'",
           null);

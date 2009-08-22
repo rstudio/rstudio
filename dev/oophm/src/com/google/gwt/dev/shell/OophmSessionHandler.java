@@ -154,30 +154,34 @@ public class OophmSessionHandler extends SessionHandler {
   }
 
   @Override
-  public TreeLogger loadModule(TreeLogger logger, BrowserChannel channel,
-      String moduleName, String userAgent, String url, String tabKey,
-      String sessionKey) {
+  public TreeLogger loadModule(TreeLogger loadModuleLogger,
+      BrowserChannel channel, String moduleName, String userAgent, String url,
+      String tabKey, String sessionKey) {
+    logger = loadModuleLogger;
     try {
       // Attach a new ModuleSpace to make it programmable.
       //
+      // TODO(jat): pass serverChannel to createModuleSpaceHost instead
+      // of the remote endpoint when we remove SWT
       BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
-      ModuleSpaceHost msh = host.createModuleSpaceHost(logger, moduleName,
-          userAgent, url, tabKey, sessionKey, channel.getRemoteEndpoint());
-      this.logger = logger = msh.getLogger();
+      ModuleSpaceHost msh = host.createModuleSpaceHost(loadModuleLogger,
+          moduleName, userAgent, url, tabKey, sessionKey,
+          channel.getRemoteEndpoint());
+      logger = msh.getLogger();
       ModuleSpace moduleSpace = new ModuleSpaceOOPHM(msh, moduleName,
           serverChannel);
       moduleMap.put(serverChannel, moduleSpace);
-      moduleSpace.onLoad(logger);
+      moduleSpace.onLoad(loadModuleLogger);
     } catch (Throwable e) {
       // We do catch Throwable intentionally because there are a ton of things
       // that can go wrong trying to load a module, including Error-derived
       // things like NoClassDefFoundError.
       // 
-      logger.log(TreeLogger.ERROR, "Failed to load module '" + moduleName
+      this.logger.log(TreeLogger.ERROR, "Failed to load module '" + moduleName
           + "' from user agent '" + userAgent + "' at "
           + channel.getRemoteEndpoint(), e);
     }
-    return logger;
+    return this.logger;
   }
 
   @Override

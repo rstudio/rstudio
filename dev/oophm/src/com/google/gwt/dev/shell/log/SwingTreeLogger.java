@@ -16,6 +16,7 @@
 package com.google.gwt.dev.shell.log;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.shell.Icons;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 
 import org.jdesktop.swingworker.SwingWorker;
@@ -27,7 +28,6 @@ import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -89,7 +89,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
     }
 
     /**
-     * @return
+     * @return full text of log event.
      */
     public String getFullText() {
       StringBuffer sb = new StringBuffer();
@@ -130,28 +130,30 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
     }
 
     /**
-     * @param treeRenderer
+     * Set the properties of a label to match this log entry.
+     * 
+     * @param treeLabel label to set properties for.
      */
     public void setDisplayProperties(JLabel treeLabel) {
       Icon image = null;
       if (type == TreeLogger.ERROR) {
         treeLabel.setForeground(Color.RED);
-        image = imageError;
+        image = Icons.getLogItemError();
       } else if (type == TreeLogger.WARN) {
         treeLabel.setForeground(WARN_COLOR);
-        image = imageWarning;
+        image = Icons.getLogItemWarning();
       } else if (type == TreeLogger.INFO) {
         treeLabel.setForeground(Color.BLACK);
-        image = imageInfo;
+        image = Icons.getLogItemInfo();
       } else if (type == TreeLogger.TRACE) {
         treeLabel.setForeground(Color.DARK_GRAY);
-        image = imageTrace;
+        image = Icons.getLogItemTrace();
       } else if (type == TreeLogger.DEBUG) {
         treeLabel.setForeground(DEBUG_COLOR);
-        image = imageDebug;
+        image = Icons.getLogItemDebug();
       } else if (type == TreeLogger.SPAM) {
         treeLabel.setForeground(SPAM_COLOR);
-        image = imageSpam;
+        image = Icons.getLogItemSpam();
       } else {
         // Messages without icons, ie ALL
         treeLabel.setForeground(Color.BLACK);
@@ -209,34 +211,6 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
     }
   }
 
-  // These don't get disposed, but they do last for the entire process, so
-  // not a big deal.
-  //
-  private static final ImageIcon imageDebug = tryLoadImage("log-item-debug.gif");
-  private static final ImageIcon imageError = tryLoadImage("log-item-error.gif");
-  private static final ImageIcon imageInfo = tryLoadImage("log-item-info.gif");
-  // private static final ImageIcon imageLink = tryLoadImage("log-link.gif");
-  private static final ImageIcon imageSpam = tryLoadImage("log-item-spam.gif");
-  private static final ImageIcon imageTrace = tryLoadImage("log-item-trace.gif");
-  private static final ImageIcon imageWarning = tryLoadImage("log-item-warning.gif");
-
-  // package protected to allow SwingLoggerPanel access
-  // TODO(jat): reorganize
-  static ImageIcon tryLoadImage(String simpleName) {
-    URL url = SwingTreeLogger.class.getResource(simpleName);
-    if (url != null) {
-      try {
-        ImageIcon image = new ImageIcon(url);
-        return image;
-      } finally {
-      }
-    } else {
-      // Bad image.
-      //
-      return null;
-    }
-  }
-
   // package protected so SwingLoggerPanel can access
   DefaultMutableTreeNode treeNode;
 
@@ -245,7 +219,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
   /**
    * Constructs the top-level TreeItemLogger.
    * 
-   * @param treePanel
+   * @param panel
    */
   public SwingTreeLogger(SwingLoggerPanel panel) {
     this.panel = panel;

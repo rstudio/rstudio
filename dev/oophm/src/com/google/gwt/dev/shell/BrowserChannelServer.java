@@ -39,6 +39,8 @@ public final class BrowserChannelServer extends BrowserChannel
 
   private String userAgent;
 
+  private int protocolVersion = -1;
+
   public BrowserChannelServer(TreeLogger initialLogger, Socket socket,
       SessionHandler handler) throws IOException {
     super(socket);
@@ -62,6 +64,13 @@ public final class BrowserChannelServer extends BrowserChannel
 
   public ObjectsTable getJavaObjectsExposedInBrowser() {
     return javaObjectsInBrowser;
+  }
+
+  /**
+   * @return the negotiated protocol version, or -1 if not yet negotiated.
+   */
+  public int getProtocolVersion() {
+    return protocolVersion;
   }
 
   /**
@@ -285,6 +294,9 @@ public final class BrowserChannelServer extends BrowserChannel
         }
         moduleName = oldLoadModule.getModuleName();
         userAgent = oldLoadModule.getUserAgent();
+        protocolVersion = 1;
+        logger.log(TreeLogger.WARN, "Connection from old browser plugin -- "
+            + "please upgrade to a later version for full functionality");
         break;
       case CHECK_VERSIONS:
         String connectError = null;
@@ -296,14 +308,22 @@ public final class BrowserChannelServer extends BrowserChannel
             || maxVersion < BROWSERCHANNEL_PROTOCOL_VERSION) {
           connectError = "No supported protocol version in range " + minVersion
           + " - " + maxVersion;
+        } else {
+          if (!HostedHtmlVersion.validHostedHtmlVersion(logger,
+              hostedHtmlVersion)) {
+            new FatalErrorMessage(this,
+                "Invalid hosted.html version - check log window").send();
+            return;
+          }
         }
-        // TODO(jat): verify hosted.html version
         if (connectError != null) {
-          logger.log(TreeLogger.ERROR, "Connection error " + connectError, null);
+          logger.log(TreeLogger.ERROR, "Connection error: " + connectError,
+              null);
           new FatalErrorMessage(this, connectError).send();
           return;
         }
-        new ProtocolVersionMessage(this, BROWSERCHANNEL_PROTOCOL_VERSION).send();
+        protocolVersion = BROWSERCHANNEL_PROTOCOL_VERSION;
+        new ProtocolVersionMessage(this, protocolVersion).send();
         type = Message.readMessageType(getStreamFromOtherSide());
         
         // Optionally allow client to request switch of transports.  Inband is
