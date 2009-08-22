@@ -18,6 +18,7 @@ package com.google.gwt.dev.shell.mac;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
+import com.google.gwt.dev.shell.HostedHtmlVersion;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchMethod;
@@ -60,7 +61,7 @@ public class BrowserWidgetSaf extends BrowserWidget {
       TreeLogger logger = getHost().getLogger().branch(TreeLogger.DEBUG,
           "Loading an instance of module '" + moduleName + "'");
       try {
-        if (!validHostedHtmlVersion(version)) {
+        if (!HostedHtmlVersion.validHostedHtmlVersion(logger, version)) {
           return false;
         }
 

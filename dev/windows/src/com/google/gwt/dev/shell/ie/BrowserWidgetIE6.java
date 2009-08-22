@@ -18,6 +18,7 @@ package com.google.gwt.dev.shell.ie;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
+import com.google.gwt.dev.shell.HostedHtmlVersion;
 import com.google.gwt.dev.shell.MethodAdaptor;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 
@@ -59,7 +60,7 @@ public class BrowserWidgetIE6 extends BrowserWidget {
       TreeLogger logger = getHost().getLogger().branch(TreeLogger.DEBUG,
           "Loading an instance of module '" + moduleName + "'");
       try {
-        if (!validHostedHtmlVersion(version)) {
+        if (!HostedHtmlVersion.validHostedHtmlVersion(logger, version)) {
           throw new HResultException(COM.E_INVALIDARG);
         }
 
