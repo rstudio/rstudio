@@ -64,7 +64,7 @@
         <pathelement location="src"/>
         <path refid="project.class.path"/>
       </classpath>
-      <jvmarg value="-Xmx256M"/>@antVmargs
+      <jvmarg value="-Xmx256M"/>
       <arg value="-startupUrl"/>
       <arg value="@startupUrl"/>
       <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
