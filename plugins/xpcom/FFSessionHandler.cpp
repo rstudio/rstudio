@@ -43,6 +43,11 @@ static JSContext* getJSContext() {
   if (NS_FAILED(stack->Peek(&cx))) {
     return NULL;
   }
+
+  if (cx == nsnull) {
+    Debug::log(Debug::Error) << "Null context" << Debug::flush;
+  }  
+
   return cx;
 }
 
@@ -80,7 +85,12 @@ void FFSessionHandler::getStringObjectClass(JSContext* ctx) {
 
 void FFSessionHandler::getToStringTearOff(JSContext* ctx) {
   jsval funcVal;
-  if (!JS_GetProperty(ctx, global, "__gwt_makeTearOff", &funcVal)) {
+
+  Debug::log(Debug::Debugging) << "Getting function \"__gwt_makeTearOff\""
+        << Debug::flush;
+
+  if (!JS_GetProperty(ctx, global, "__gwt_makeTearOff", &funcVal)
+      || funcVal == JSVAL_VOID) {
     Debug::log(Debug::Error) << "Could not get function \"__gwt_makeTearOff\""
         << Debug::flush;
     return;
@@ -202,8 +212,10 @@ bool FFSessionHandler::invoke(HostChannel& channel, const Value& thisObj, const 
 
   jsval funcVal;
   // TODO: handle non-ASCII method names
-  if (!JS_GetProperty(ctx, global, methodName.c_str(), &funcVal)) {
-    Debug::log(Debug::Error) << "Could not get function " << methodName << Debug::flush;
+  if (!JS_GetProperty(ctx, global, methodName.c_str(), &funcVal)
+      || funcVal == JSVAL_VOID) {
+    Debug::log(Debug::Error) << "Could not get function " << methodName
+        << Debug::flush;
     return true;
   }
 

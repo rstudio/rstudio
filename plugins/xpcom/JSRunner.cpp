@@ -14,6 +14,7 @@
  * the License.
  */
 
+#include "Debug.h"
 #include "JSRunner.h"
 
 #include "nsCOMPtr.h"
@@ -46,39 +47,49 @@ bool JSRunner::eval(JSContext* ctx, JSObject* object, const std::string& script)
     sgo = do_QueryInterface(priv);
   }
 
-  JSPrincipals *jsprin;
+  JSPrincipals *jsprin = nsnull;
+  std::string virtual_filename;
   nsresult nr;
 
   nsCOMPtr<nsIScriptObjectPrincipal> obj_prin = do_QueryInterface(sgo, &nr);
   if (NS_FAILED(nr)) {
+    Debug::log(Debug::Error) << "Error getting object principal" << Debug::flush;
     return false;
   }
 
   nsIPrincipal *principal = obj_prin->GetPrincipal();
   if (!principal) {
+    Debug::log(Debug::Error) << "Error getting principal" << Debug::flush;
     return false;
   }
 
   // Get the script scheme and host from the principal.  This is the URI that
   // Firefox treats this script as running from.
-  nsCOMPtr<nsIURI> codebase;
-  principal->GetURI(getter_AddRefs(codebase));
-  if (!codebase) { return false; }
-  nsCString scheme;
-  nsCString host;
-  if (NS_FAILED(codebase->GetScheme(scheme)) ||
-      NS_FAILED(codebase->GetHostPort(host))) {
-    return false;
-  }
 
-  // Build a virtual filename that we'll run as.  This is to workaround
-  // http://lxr.mozilla.org/seamonkey/source/dom/src/base/nsJSEnvironment.cpp#500
-  // Bug: https://bugzilla.mozilla.org/show_bug.cgi?id=387477
-  // The filename is being used as the security origin instead of the principal.
-  // TODO(zork): Remove this section if this bug is resolved.
-  std::string virtual_filename(scheme.BeginReading());
-  virtual_filename += "://";
-  virtual_filename += host.BeginReading();
+  // If the codebase is null, the script may be running from a chrome context.
+  // In that case, don't construct a virtual filename.
+
+  nsCOMPtr<nsIURI> codebase;
+  nr = principal->GetURI(getter_AddRefs(codebase));
+  if (codebase) { 
+    nsCString scheme;
+    nsCString host;
+
+    if (NS_FAILED(codebase->GetScheme(scheme)) ||
+        NS_FAILED(codebase->GetHostPort(host))) {
+      Debug::log(Debug::Error) << "Error getting codebase" << Debug::flush;
+      return false;
+    }
+
+    // Build a virtual filename that we'll run as.  This is to workaround
+    // http://lxr.mozilla.org/seamonkey/source/dom/src/base/nsJSEnvironment.cpp#500
+    // Bug: https://bugzilla.mozilla.org/show_bug.cgi?id=387477
+    // The filename is being used as the security origin instead of the principal.
+    // TODO(zork): Remove this section if this bug is resolved.
+    virtual_filename = std::string(scheme.BeginReading());
+    virtual_filename += "://";
+    virtual_filename += host.BeginReading();
+  }
 
   principal->GetJSPrincipals(ctx, &jsprin);
 
@@ -92,16 +103,21 @@ bool JSRunner::eval(JSContext* ctx, JSObject* object, const std::string& script)
 
   uintN line_number_start = 0;
   jsval rval;
-  JSBool js_ok = 
-      JS_EvaluateScriptForPrincipals(ctx, object, jsprin, script.c_str(), script.length(),
-          virtual_filename.c_str(), line_number_start, &rval);
+  JSBool js_ok = JS_EvaluateScriptForPrincipals(ctx, object, jsprin,
+      script.c_str(), script.length(), virtual_filename.c_str(),
+      line_number_start, &rval);
 
   // Restore the context stack.
 //  JSContext *cx;
 //  stack->Pop(&cx);
 
   // Decrements ref count on jsprin (Was added in GetJSPrincipals()).
-  (void)JSPRINCIPALS_DROP(ctx, jsprin);
-  if (!js_ok) { return false; }
+  (void) JSPRINCIPALS_DROP(ctx, jsprin);
+  if (!js_ok) {
+    Debug::log(Debug::Error) << "JS execution failed in JSRunner::eval"
+        << Debug::flush;
+    return false;
+  }
+
   return true;
 }
