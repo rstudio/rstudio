@@ -1,5 +1,5 @@
 #define APSTUDIO_READONLY_SYMBOLS
-#include "afxres.h"
+#include "windows.h"
 #undef APSTUDIO_READONLY_SYMBOLS
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
@@ -54,7 +54,7 @@ END
 
 2 TEXTINCLUDE
 BEGIN
-  "#include ""afxres.h""\r\n"
+  "#include ""windows.h""\r\n"
   "\0"
 END
 

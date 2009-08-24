@@ -1,11 +1,12 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="ff2-xpcom"
 	ProjectGUID="{6BF0C2CE-CB0C-421B-A67C-1E448371D24B}"
 	RootNamespace="ff2-xpcom"
 	Keyword="Win32Proj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -40,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;&quot;S:\xulrunner-sdk-win\sdk\include&quot;;&quot;S:\xulrunner-sdk-win\include\caps&quot;;&quot;s:\xulrunner-sdk-win\include\dom&quot;;&quot;s:\xulrunner-sdk-win\include\js&quot;;&quot;s:\xulrunner-sdk-win\include\necko&quot;;&quot;s:\xulrunner-sdk-win\include\string&quot;;&quot;s:\xulrunner-sdk-win\include\widget&quot;;&quot;s:\xulrunner-sdk-win\include\xpcom&quot;;&quot;s:\xulrunner-sdk-win\include\xpconnect&quot;;&quot;S:\xulrunner-sdk-win\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\xpconnect&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -62,15 +63,17 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib xpcomglue_s.lib xpcom.lib nspr4.lib js3250.lib"
+				AdditionalDependencies="ws2_32.lib xpcomglue_s.lib xpcom.lib nspr4.lib js3250.dll"
 				ShowProgress="2"
-				OutputFile="$(ProjectDir)\..\extension\platform\WINNT_x86-msvc\components\xpOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\extension-ff2\platform\WINNT_x86-msvc\components\xpOOPHM.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\..\xulrunner-sdk-win\lib"
+				AdditionalLibraryDirectories="&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\lib&quot;"
 				ModuleDefinitionFile="$(ProjectDir)\..\xpOOPHM.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)\$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -91,9 +94,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -148,13 +148,15 @@
 				ShowProgress="2"
 				OutputFile="..\extension\platform\WINNT_x86-msvc\components\xpOOPHM.dll"
 				LinkIncremental="0"
-				AdditionalLibraryDirectories="..\..\..\..\xulrunner-sdk-win\lib"
+				AdditionalLibraryDirectories="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\lib"
 				ModuleDefinitionFile="..\xpOOPHM.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)\$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -175,9 +177,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -205,6 +204,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\CheckVersionsMessage.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\ChooseTransportMessage.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\Debug.h"
 				>
 			</File>
@@ -217,11 +224,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FFSessionHandler.h"
+				RelativePath="..\..\common\FatalErrorMessage.h"
 				>
 			</File>
 			<File
-				RelativePath="..\XpcomDebug.h"
+				RelativePath="..\FFSessionHandler.h"
 				>
 			</File>
 			<File
@@ -249,35 +256,35 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jsapi.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jsapi.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jsautocfg.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jsautocfg.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jscompat.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jscompat.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jsconfig.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jsconfig.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jslong.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jslong.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jsotypes.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jsotypes.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jsproto.tbl"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jsproto.tbl"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jspubtd.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jspubtd.h"
 				>
 			</File>
 			<File
@@ -285,23 +292,23 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jstypes.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jstypes.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jsutil.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jsutil.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jsutil.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jsutil.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jsutil.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jsutil.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\js\jsutil.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\js\jsutil.h"
 				>
 			</File>
 			<File
@@ -321,7 +328,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\mozilla-config.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\mozilla-config.h"
 				>
 			</File>
 			<File
@@ -341,227 +348,227 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpconnect\nsAXPCNativeCallContext.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpconnect\nsAXPCNativeCallContext.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsCOMPtr.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsCOMPtr.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nscore.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nscore.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nscore.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nscore.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsCycleCollector.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsCycleCollector.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsDebug.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsDebug.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsError.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsError.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\widget\nsEvent.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\widget\nsEvent.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsICategoryManager.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsICategoryManager.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsIClassInfo.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsIClassInfo.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsIClassInfoImpl.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsIClassInfoImpl.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsIComponentManager.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsIComponentManager.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsID.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsID.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nsIEnumerator.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nsIEnumerator.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nsIException.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nsIException.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nsIExceptionService.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nsIExceptionService.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsIFactory.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsIFactory.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsIGenericFactory.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsIGenericFactory.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\necko\nsIHttpProtocolHandler.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\necko\nsIHttpProtocolHandler.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nsIInterfaceInfo.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nsIInterfaceInfo.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nsIInterfaceInfoManager.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nsIInterfaceInfoManager.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpconnect\nsIJSContextStack.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpconnect\nsIJSContextStack.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsIMemory.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsIMemory.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsIModule.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsIModule.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\caps\nsIPrincipal.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\caps\nsIPrincipal.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsIProgrammingLanguage.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsIProgrammingLanguage.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\necko\nsIProtocolHandler.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\necko\nsIProtocolHandler.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\necko\nsIProxiedProtocolHandler.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\necko\nsIProxiedProtocolHandler.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpconnect\nsIScriptableInterfaces.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpconnect\nsIScriptableInterfaces.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\dom\nsIScriptGlobalObject.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\dom\nsIScriptGlobalObject.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\dom\nsIScriptObjectPrincipal.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\dom\nsIScriptObjectPrincipal.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\caps\nsISecurityCheckedComponent.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\caps\nsISecurityCheckedComponent.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nsISerializable.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nsISerializable.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsIServiceManager.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsIServiceManager.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nsISimpleEnumerator.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsISimpleEnumerator.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsISimpleEnumerator.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nsISimpleEnumerator.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nsISupports.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nsISupports.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsISupports.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsISupports.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsISupportsBase.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsISupportsBase.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nsISupportsBase.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nsISupportsBase.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsISupportsImpl.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsISupportsImpl.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsISupportsUtils.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsISupportsUtils.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nsISupportsUtils.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nsISupportsUtils.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsIURI.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsIURI.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nsIVariant.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nsIVariant.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpconnect\nsIXPConnect.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpconnect\nsIXPConnect.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsMemory.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsMemory.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\necko\nsNetCID.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\necko\nsNetCID.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsrootidl.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\nsrootidl.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\nsrootidl.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsrootidl.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsServiceManagerUtils.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsServiceManagerUtils.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsStringAPI.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsStringAPI.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsTraceRefcnt.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsTraceRefcnt.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsXPCOM.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsXPCOM.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsXPCOMCID.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsXPCOMCID.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\nsXPCOMStrings.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\nsXPCOMStrings.h"
 				>
 			</File>
 			<File
@@ -569,43 +576,47 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\pratom.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\pratom.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\prcpucfg.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\prcpucfg.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\prinrval.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\prinrval.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\prlock.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\prlock.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\prlog.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\prlog.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\prlong.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\prlong.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\obsolete\protypes.h"
+				RelativePath="..\..\common\ProtocolVersionMessage.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\prthread.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\obsolete\protypes.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\prtime.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\prthread.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\prtypes.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\prtime.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\prtypes.h"
 				>
 			</File>
 			<File
@@ -641,35 +652,43 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\SwitchTransportMessage.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\Value.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpconnect\xpccomponents.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpconnect\xpccomponents.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpconnect\xpcexception.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpconnect\xpcexception.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpconnect\xpcjsid.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpconnect\xpcjsid.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\sdk\include\xpcom-config.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\sdk\include\xpcom-config.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\xpt_arena.h"
+				RelativePath="..\XpcomDebug.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\xpt_struct.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\xpt_arena.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\xulrunner-sdk-win\include\xpcom\xptinfo.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\xpt_struct.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\include\xpcom\xptinfo.h"
 				>
 			</File>
 		</Filter>
@@ -693,6 +712,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\CheckVersionsMessage.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\ChooseTransportMessage.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\Debug.cpp"
 				>
 			</File>
@@ -701,11 +728,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FFSessionHandler.cpp"
+				RelativePath="..\..\common\FatalErrorMessage.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\XpcomDebug.cpp"
+				RelativePath="..\FFSessionHandler.cpp"
 				>
 			</File>
 			<File
@@ -745,6 +772,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\ProtocolVersionMessage.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\ReturnMessage.cpp"
 				>
 			</File>
@@ -754,6 +785,14 @@
 			</File>
 			<File
 				RelativePath="..\..\common\Socket.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\SwitchTransportMessage.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\XpcomDebug.cpp"
 				>
 			</File>
 			<File
