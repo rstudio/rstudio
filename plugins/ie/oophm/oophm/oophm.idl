@@ -48,7 +48,7 @@ interface ICanHandleException : IUnknown
 interface Iplugin : IDispatch{
 	[id(1), helpstring("OOPHM connect")] HRESULT connect([in] BSTR url, [in] BSTR sessionKey, [in] BSTR hostedServer, [in] BSTR moduleName, [in] BSTR hostedHtmlVersion, [out,retval] VARIANT_BOOL* ret);
 	[id(2), helpstring("method testObject")] HRESULT testObject([out,retval] IDispatch** ret);
-    [id(3), helpstring("OOPHM init")] HRESULT init([in] IDispatch* jsniContext, [out,retval] VARIANT_BOOL* ret);
+	[id(3), helpstring("OOPHM init")] HRESULT init([in] IDispatch* jsniContext, [out,retval] VARIANT_BOOL* ret);
 };
 
 [
