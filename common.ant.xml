@@ -145,6 +145,7 @@
         <propertyref name="gwt.junit.port" />
         <propertyref name="gwt.remote.browsers" />
         <propertyref name="emma.enabled" />
+        <propertyref name="emma.compiled" />
       </propertyset>
     </ant>
   </presetdef>
