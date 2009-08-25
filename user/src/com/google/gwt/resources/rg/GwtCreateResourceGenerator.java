@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.resources.client.GwtCreateResource.ClassType;
+import com.google.gwt.resources.ext.AbstractResourceGenerator;
 import com.google.gwt.resources.ext.ResourceContext;
 
 /**

@@ -71,6 +71,7 @@ import com.google.gwt.resources.css.ast.CssProperty.IdentValue;
 import com.google.gwt.resources.css.ast.CssProperty.ListValue;
 import com.google.gwt.resources.css.ast.CssProperty.NumberValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
+import com.google.gwt.resources.ext.AbstractResourceGenerator;
 import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;

@@ -13,15 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.resources.rg;
+package com.google.gwt.resources.ext;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.resources.ext.ClientBundleFields;
-import com.google.gwt.resources.ext.ClientBundleRequirements;
-import com.google.gwt.resources.ext.ResourceContext;
-import com.google.gwt.resources.ext.ResourceGenerator;
 
 /**
  * A base class providing common methods for ResourceGenerator implementations.

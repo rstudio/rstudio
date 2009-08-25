@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.resources.client.impl.ExternalTextResourcePrototype;
+import com.google.gwt.resources.ext.AbstractResourceGenerator;
 import com.google.gwt.resources.ext.ClientBundleFields;
 import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
