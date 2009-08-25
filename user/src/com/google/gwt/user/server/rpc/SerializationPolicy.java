@@ -36,7 +36,10 @@ public abstract class SerializationPolicy {
    * @param clazz the class to test
    * @return a set containing client field names, or null
    */
-  public abstract Set<String> getClientFieldNamesForEnhancedClass(Class<?> clazz);
+  public Set<String> getClientFieldNamesForEnhancedClass(Class<?> clazz) {
+    // Ignore the possibility of server-side enhancement for legacy classes.
+    return null;
+  }
   
   /**
    * Returns <code>true</code> if the class' fields should be deserialized.

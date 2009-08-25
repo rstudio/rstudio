@@ -65,6 +65,17 @@ public class StandardSerializationPolicy extends SerializationPolicy implements
   public StandardSerializationPolicy(
       Map<Class<?>, Boolean> serializationWhitelist,
       Map<Class<?>, Boolean> deserializationWhitelist,
+      Map<Class<?>, String> obfuscatedTypeIds) {
+    this(serializationWhitelist, deserializationWhitelist, obfuscatedTypeIds,
+        null);
+  }
+
+  /**
+   * Constructs a {@link SerializationPolicy} from several {@link Map}s.
+   */
+  public StandardSerializationPolicy(
+      Map<Class<?>, Boolean> serializationWhitelist,
+      Map<Class<?>, Boolean> deserializationWhitelist,
       Map<Class<?>, String> obfuscatedTypeIds,
       Map<Class<?>, Set<String>> clientFields) {
     if (serializationWhitelist == null || deserializationWhitelist == null) {

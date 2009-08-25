@@ -104,14 +104,6 @@ public class LegacySerializationPolicy extends SerializationPolicy implements
   }
   
   /**
-   * Ignore the possibility of server-side enhancement for legacy classes.
-   */
-  @Override
-  public Set<String> getClientFieldNamesForEnhancedClass(Class<?> clazz) {
-    return null;
-  }
-
-  /**
    * Implemented to fail with a useful error message.
    */
   public final String getTypeIdForClass(Class<?> clazz)
