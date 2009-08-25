@@ -30,9 +30,8 @@ import java.lang.annotation.Target;
  * newly-instantiated object after the call to runAsync returns.
  * <p>
  * Once method playback has finished, the proxy will continue to forward
- * invocations onto the instantiated object, although it is recommended that the
- * developer use {@link ProxyCallback#onComplete} to reassign the field
- * containing the proxy.
+ * invocations onto the instantiated object.
+ * 
  * <p>
  * Example use:
  * 
@@ -47,11 +46,28 @@ import java.lang.annotation.Target;
  * interface FooProxy extends AsyncProxy&lt;IFoo&gt;, IFoo {}
  * 
  * class UserOfIFoo {
- *   private IFoo fooOrProxy = GWT.create(FooProxy.class);
+ *   private IFoo foo = GWT.create(FooProxy.class);
  *   
+ *   void makeTrouble() {
+ *     // This first call triggers a runAsync load
+ *     foo.doSomething(1, 2);
+ *     
+ *     // and this second will replayed after the call to doSomething()
+ *     foo.anotherMethod("A string");
+ *   }
+ * }
+ * </pre>
+ * 
+ * For cases where dispatch speed is critical, a ProxyCallback can be installed
+ * in order to reassign the field containing the AsyncProxy instance with the
+ * backing object:
+ * 
+ * <pre>
+ * class UserOfIFoo {
+ *   private IFoo fooOrProxy = GWT.create(FooProxy.class);
+ *
  *   public UserOfIFoo() {
  *     // When the load, initialization, and playback are done, get rid of the proxy.
- *     // This is actually optional, but will improve subsequent function dispatch speed.
  *     ((AsyncProxy&lt;IFoo&gt;) fooOrProxy).setProxyCallback(new ProxyCallback&lt;IFoo&gt;() {
  *       public void onComplete(IFoo instance) {
  *         fooOrProxy = instance;
@@ -146,8 +162,7 @@ public interface AsyncProxy<T> {
   }
 
   /**
-   * The callback used by
-   * {@link AsyncProxy#setProxyCallback(ProxyCallback)}.
+   * The callback used by {@link AsyncProxy#setProxyCallback(ProxyCallback)}.
    * 
    * @param <T> the interface parameterization of AsyncProxy.
    */
