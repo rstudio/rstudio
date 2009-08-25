@@ -652,20 +652,17 @@ public class GenerateCssAst {
    * Expresses an rgb function as a hex expression.
    * 
    * @param colors a sequence of LexicalUnits, assumed to be
-   *          <code>(INT COMMA INT COMMA INT)</code>
+   *          <code>(VAL COMMA VAL COMMA VAL)</code>
+   *     where VAL can be an INT or a PERCENT (which is then converted to INT)
    * @return the minimal hex expression for the RGB color values
    */
   private static Value colorValue(LexicalUnit colors) {
     LexicalUnit red = colors;
-    assert red.getLexicalUnitType() == LexicalUnit.SAC_INTEGER;
+    int r = getRgbComponentValue(red);
     LexicalUnit green = red.getNextLexicalUnit().getNextLexicalUnit();
-    assert green.getLexicalUnitType() == LexicalUnit.SAC_INTEGER;
+    int g = getRgbComponentValue(green);
     LexicalUnit blue = green.getNextLexicalUnit().getNextLexicalUnit();
-    assert blue.getLexicalUnitType() == LexicalUnit.SAC_INTEGER;
-
-    int r = Math.min(red.getIntegerValue(), 255);
-    int g = Math.min(green.getIntegerValue(), 255);
-    int b = Math.min(blue.getIntegerValue(), 255);
+    int b = getRgbComponentValue(blue);
 
     String sr = Integer.toHexString(r);
     if (sr.length() == 1) {
@@ -743,6 +740,28 @@ public class GenerateCssAst {
       }
     }
     return null;
+  }
+
+  /**
+   * Return an integer value from 0-255 for a component of an RGB color.
+   * 
+   * @param color typed value from the CSS parser, which may be an INTEGER or
+   *     a PERCENTAGE
+   * @return integer value from 0-255
+   * @throws IllegalArgumentException if the color is not an INTEGER or
+   *     PERCENTAGE value
+   */
+  private static int getRgbComponentValue(LexicalUnit color) {
+    switch (color.getLexicalUnitType()) {
+      case LexicalUnit.SAC_INTEGER:
+        return Math.min(color.getIntegerValue(), 255);
+      case LexicalUnit.SAC_PERCENTAGE:
+        return (int) Math.min(color.getFloatValue() * 255, 255);
+      default:
+        throw new CSSException(CSSException.SAC_SYNTAX_ERR,
+            "RGB component value must be integer or percentage, was " + color,
+            null);
+    }
   }
 
   private static boolean isIdentPart(char c) {
