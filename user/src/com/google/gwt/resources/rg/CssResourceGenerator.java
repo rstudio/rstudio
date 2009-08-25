@@ -102,7 +102,7 @@ import java.util.zip.Adler32;
 /**
  * Provides implementations of CSSResources.
  */
-public class CssResourceGenerator extends AbstractResourceGenerator {
+public final class CssResourceGenerator extends AbstractResourceGenerator {
   static class ClassRenamer extends CssVisitor {
     private final Map<JMethod, String> actualReplacements = new IdentityHashMap<JMethod, String>();
 

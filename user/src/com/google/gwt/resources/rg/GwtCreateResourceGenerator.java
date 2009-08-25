@@ -27,7 +27,7 @@ import com.google.gwt.resources.ext.ResourceContext;
 /**
  * Provides implementations of GwtCreateResource.
  */
-public class GwtCreateResourceGenerator extends AbstractResourceGenerator {
+public final class GwtCreateResourceGenerator extends AbstractResourceGenerator {
 
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context,

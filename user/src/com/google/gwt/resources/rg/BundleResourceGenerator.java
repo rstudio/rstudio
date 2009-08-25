@@ -25,7 +25,7 @@ import com.google.gwt.resources.ext.ResourceContext;
 /**
  * This is a special case of ResourceGenerator that handles nested bundles.
  */
-public class BundleResourceGenerator extends AbstractResourceGenerator {
+public final class BundleResourceGenerator extends AbstractResourceGenerator {
 
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context,
