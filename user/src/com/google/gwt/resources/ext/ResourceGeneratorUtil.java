@@ -25,9 +25,12 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
+import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.resources.client.ClientBundle.Source;
 
+import java.io.File;
 import java.lang.annotation.Annotation;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,6 +55,30 @@ public final class ResourceGeneratorUtil {
   }
 
   /**
+   * A locator which will use files published via
+   * {@link ResourceGeneratorUtil#addNamedFile(String, File)}.
+   */
+  private static class FileLocator implements Locator {
+    public static final FileLocator INSTANCE = new FileLocator();
+
+    private FileLocator() {
+    }
+
+    public URL locate(String resourceName) {
+      File f = namedFiles.get(resourceName);
+      if (f != null && f.isFile() && f.canRead()) {
+        try {
+          return f.toURI().toURL();
+        } catch (MalformedURLException e) {
+          throw new RuntimeException("Unable to make a URL for file "
+              + f.getName());
+        }
+      }
+      return null;
+    }
+  }
+
+  /**
    * Wrapper interface around different strategies for loading resource data.
    */
   private interface Locator {
@@ -70,6 +97,8 @@ public final class ResourceGeneratorUtil {
       return r == null ? null : r.getURL();
     }
   }
+
+  private static Map<String, File> namedFiles = Maps.create();
 
   /**
    * These are type names from previous APIs or from APIs with similar
@@ -109,6 +138,25 @@ public final class ResourceGeneratorUtil {
     } else {
       DEPRECATED_ANNOTATION_CLASSES = Collections.unmodifiableList(classes);
     }
+  }
+
+  /**
+   * Publish or override resources named by {@link Source} annotations. This
+   * method is intended to be called by Generators that create ClientBundle
+   * instances and need to pass source data to the ClientBundle system that is
+   * not accessible through the classpath.
+   * 
+   * @param resourceName the path at which the contents of <code>file</code>
+   *          should be made available
+   * @param file the File whose contents are to be provided to the ClientBundle
+   *          system
+   */
+  public static void addNamedFile(String resourceName, File file) {
+    assert resourceName != null : "resourceName";
+    assert file != null : "file";
+    assert file.isFile() && file.canRead() : "file does not exist or cannot be read";
+
+    namedFiles = Maps.put(namedFiles, resourceName, file);
   }
 
   /**
@@ -233,14 +281,24 @@ public final class ResourceGeneratorUtil {
   public static URL[] findResources(TreeLogger logger, ResourceContext context,
       JMethod method, String[] defaultSuffixes)
       throws UnableToCompleteException {
+    URL[] toReturn = null;
+    Locator locator;
 
-    // Try to find the resources with ResourceOracle
-    Locator locator = new ResourceOracleLocator(
-        context.getGeneratorContext().getResourcesOracle());
+    // If we have named files, attempt them first
+    if (!namedFiles.isEmpty()) {
+      toReturn = findResources(logger, FileLocator.INSTANCE, context, method,
+          defaultSuffixes, false);
+    }
 
-    // Don't report errors since we have a fallback mechanism
-    URL[] toReturn = findResources(logger, locator, context, method,
-        defaultSuffixes, false);
+    if (toReturn == null) {
+      // Try to find the resources with ResourceOracle
+      locator = new ResourceOracleLocator(
+          context.getGeneratorContext().getResourcesOracle());
+
+      // Don't report errors since we have a fallback mechanism
+      toReturn = findResources(logger, locator, context, method,
+          defaultSuffixes, false);
+    }
 
     if (toReturn == null) {
       // Since not all resources were found, try with ClassLoader
