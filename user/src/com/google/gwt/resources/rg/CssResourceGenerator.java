@@ -115,7 +115,6 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
      * obfuscated names for the CssResource that is being generated.
      */
     private final Map<String, Map<JMethod, String>> classReplacementsWithPrefix;
-    private final Pattern classSelectorPattern = Pattern.compile("\\.([^ :>+#.]*)");
     private final Set<String> cssDefs = new HashSet<String>();
     private final Set<String> externalClasses;
     private final TreeLogger logger;
@@ -184,7 +183,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
       sel = sel.trim();
 
       if (strict) {
-        Matcher m = classSelectorPattern.matcher(sel);
+        Matcher m = CssSelector.CLASS_SELECTOR_PATTERN.matcher(sel);
         while (m.find()) {
           String classSelector = m.group(1);
           if (!replacedClasses.contains(classSelector)

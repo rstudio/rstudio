@@ -37,7 +37,7 @@ import java.util.Map;
  * Contains functions for golden-output tests that are concerned with structural
  * modifications to the CSS AST.
  */
-class CssTestCase extends TestCase {
+public class CssTestCase extends TestCase {
 
   /**
    * Triggers an assertion if a CssNode is traversed more than once.

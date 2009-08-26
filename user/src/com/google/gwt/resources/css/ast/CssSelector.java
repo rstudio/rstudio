@@ -15,10 +15,14 @@
  */
 package com.google.gwt.resources.css.ast;
 
+import java.util.regex.Pattern;
+
 /**
- * 
+ * An opaque view of a selector.
  */
 public class CssSelector extends CssNode {
+  public static final Pattern CLASS_SELECTOR_PATTERN = Pattern.compile("\\.([^ :>+#.]*)");
+
   /*
    * TODO: Evaluate whether or not we need to have a type hierarchy of
    * selectors.
