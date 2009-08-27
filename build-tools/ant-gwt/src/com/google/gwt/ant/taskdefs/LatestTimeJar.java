@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -28,12 +28,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 
 /**
  * A variation on Jar which handles duplicate entries by only archiving the most
  * recent of any given path. This is done by keeping a map of paths (as shown in
- * the jar file) against {@link #EntryInfo} objects identifying the input source
+ * the jar file) against {@link EntryInfo} objects identifying the input source
  * and its timestamp. Most of the actual archiving is deferred until archive
  * finalization, when we've decided on the actual de-duplicated set of entries.
  */
@@ -54,7 +55,7 @@ public class LatestTimeJar extends Jar {
 
     /**
      * Called to actually add the entry to a given zip stream.
-     *
+     * 
      * @param out
      * @param path
      * @throws IOException
@@ -101,7 +102,7 @@ public class LatestTimeJar extends Jar {
     public FileEntryInfo(InputStream in, long lastModified, File fromArchive,
         int mode) throws IOException {
       super(lastModified, mode);
-      tmpFile = File.createTempFile("gwtjar", "");
+      tmpFile = createTempFile("gwtjar", "");
       tmpFile.deleteOnExit();
       OutputStream fos = new FileOutputStream(tmpFile);
       int readLen = in.read(buffer);
@@ -123,6 +124,54 @@ public class LatestTimeJar extends Jar {
         inStream.close();
       }
     }
+  }
+
+  /**
+   * Used to generate temporary file names.
+   */
+  private static long counter = -1;
+
+  /**
+   * Creates a temporary file.
+   * 
+   * @param prefix the file prefix
+   * @param suffix the file suffix
+   * @return the new file
+   * @throws IOException if the file cannot be created
+   */
+  private static File createTempFile(String prefix, String suffix)
+      throws IOException {
+    if (suffix == null) {
+      suffix = ".tmp";
+    }
+
+    // Get the temp file directory.
+    File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+    tmpDir.mkdirs();
+
+    // Generate a random name.
+    if (counter == -1) {
+      counter = new Random().nextLong();
+    }
+    boolean created = false;
+    File tmpFile;
+    do {
+      counter++;
+      tmpFile = new File(tmpDir, prefix + Long.toString(counter) + suffix);
+      if (!tmpFile.exists()) {
+        created = tmpFile.createNewFile();
+        if (!created) {
+          // If we fail the create the temp file, it must have been created by
+          // another thread between lines 161 and 162.  We re-seed to avoid
+          // further race conditions.
+          counter = new Random().nextLong();
+        }
+      }
+    } while (!created);
+
+    // Create the file.
+    tmpFile.createNewFile();
+    return tmpFile;
   }
 
   private byte buffer[] = new byte[16 * 1024];
@@ -188,10 +237,10 @@ public class LatestTimeJar extends Jar {
   /**
    * Checks whether an entry should be replaced, by touch dates and duplicates
    * setting.
-   *
+   * 
    * @param path the path of an entry being considered
    * @param touchTime the lastModified of the candiate replacement
-   * @return
+   * @return true if the file should be replaced
    */
   private boolean shouldReplace(String path, long touchTime) {
     EntryInfo oldInfo = paths.get(path);
