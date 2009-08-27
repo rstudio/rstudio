@@ -24,16 +24,16 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
 import com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder;
-import com.google.gwt.user.server.ui.FormPanelTestServlet;
 
 /**
  * Tests the FormPanel.
  * 
- * @see FormPanelTestServlet
+ * @see com.google.gwt.user.server.ui.FormPanelTestServlet
  */
 public class FormPanelTest extends GWTTestCase {
   public static boolean clicked = false;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.FormPanelTest";
   }
@@ -254,6 +254,7 @@ public class FormPanelTest extends GWTTestCase {
 
     delayTestFinish(10000);
     Timer t = new Timer() {
+      @Override
       public void run() {
         // Make sure the frame got the contents we expected.
         assertTrue(isHappyDivPresent(frame.getElement()));
