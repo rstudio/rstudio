@@ -49,6 +49,7 @@ import com.google.gwt.user.client.ui.FileUploadTest;
 import com.google.gwt.user.client.ui.FlexTableTest;
 import com.google.gwt.user.client.ui.FlowPanelTest;
 import com.google.gwt.user.client.ui.FocusPanelTest;
+import com.google.gwt.user.client.ui.FormPanelTest;
 import com.google.gwt.user.client.ui.GridTest;
 import com.google.gwt.user.client.ui.HTMLPanelTest;
 import com.google.gwt.user.client.ui.HiddenTest;
@@ -133,7 +134,7 @@ public class UISuite {
     suite.addTestSuite(FlexTableTest.class);
     suite.addTestSuite(FlowPanelTest.class);
     suite.addTestSuite(FocusPanelTest.class);
-    // suite.addTestSuite(FormPanelTest.class);
+    suite.addTestSuite(FormPanelTest.class);
     suite.addTestSuite(GridTest.class);
     suite.addTestSuite(HiddenTest.class);
     suite.addTestSuite(HistoryTest.class);

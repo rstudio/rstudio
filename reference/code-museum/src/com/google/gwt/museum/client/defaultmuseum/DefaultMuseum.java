@@ -49,6 +49,7 @@ public class DefaultMuseum extends Museum implements EntryPoint {
     addIssue(new Issue2553());
     addIssue(new Issue2855());
     addIssue(new Issue3172());
+    addIssue(new Issue3973());
   }
 
   public void addVisuals() {

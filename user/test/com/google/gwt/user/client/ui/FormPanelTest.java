@@ -18,9 +18,13 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
+import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
 import com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder;
+import com.google.gwt.user.server.ui.FormPanelTestServlet;
 
 /**
  * Tests the FormPanel.
@@ -160,6 +164,37 @@ public class FormPanelTest extends GWTTestCase {
     });
 
     form.submit();
+  }
+
+  public void testNamedTargetSubmitEvent() {
+    // Create a form and frame in the document we can wrap.
+    String uid = Document.get().createUniqueId();
+    HTML formAndFrame = new HTML(
+        "<form id='"
+            + uid
+            + "' method='post' target='targetFrame' action='"
+            + GWT.getModuleBaseURL()
+            + "formHandler?sendHappyHtml'>"
+            + "<input type='submit' id='submitBtn'></input></form>"
+            + "<iframe src='javascript:\'\'' id='targetMe' name='targetFrame'></iframe>");
+    RootPanel.get().add(formAndFrame);
+
+    // Wrap the form and make sure its target frame is intact.
+    FormPanel form = FormPanel.wrap(Document.get().getElementById(uid));
+    assertEquals("targetFrame", form.getTarget());
+
+    // Ensure that no synthesized iframe was created.
+    assertNull(form.getSynthesizedIFrame());
+
+    // Submit the form using the submit button and make sure the submit event fires.
+    delayTestFinish(5000);
+    form.addSubmitHandler(new SubmitHandler() {
+      public void onSubmit(SubmitEvent event) {
+        finishTest();
+      }
+    });
+
+    Document.get().getElementById("submitBtn").<InputElement>cast().click();
   }
 
   public void testReset() {
