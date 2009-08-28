@@ -18,6 +18,8 @@ package com.google.gwt.dev.jjs.test;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -31,7 +33,10 @@ import java.util.Queue;
  * lightweight metrics make it all the way out to the JavaScript LWM system. A
  * number of more detailed tests are in
  * {@link com.google.gwt.core.client.impl.AsyncFragmentLoaderTest}.
+ * 
+ * This test is flaky on HtmlUnit.
  */
+@DoNotRunWith(Platform.Htmlunit)
 public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
   private static final class LightweightMetricsEvent extends JavaScriptObject {
     protected LightweightMetricsEvent() {
