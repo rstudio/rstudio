@@ -52,9 +52,9 @@ public class JsonpRequest<T> {
     return $wnd[name] = new Object();
   }-*/;
   
-  private static native Node getDocumentElement() /*-{
-    return $doc.documentElement;
-  }-*/;
+  private static Node getHeadElement() {
+    return Document.get().getElementsByTagName("head").getItem(0);
+  }
   
   private static String nextCallbackId() {
     return "I" + (callbackCounter++);
@@ -142,7 +142,7 @@ public class JsonpRequest<T> {
     script.setType("text/javascript");
     script.setId(callbackId);
     script.setSrc(uri.toString());
-    getDocumentElement().getFirstChild().appendChild(script);
+    getHeadElement().appendChild(script);
     timer = new Timer() {
       @Override
       public void run() {
@@ -225,7 +225,7 @@ public class JsonpRequest<T> {
       public void execute() {
         unregisterCallbacks(CALLBACKS);
         Node script = Document.get().getElementById(callbackId);
-        getDocumentElement().getFirstChild().removeChild(script);
+        getHeadElement().removeChild(script);
       }
     });
   }
