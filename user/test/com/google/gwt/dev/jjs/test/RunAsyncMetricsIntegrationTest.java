@@ -164,7 +164,7 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
   private void checkMetricsWithCodeSplitting() {
     int lastMillis;
     {
-      LightweightMetricsEvent event = lwmObserver.events.remove();
+      LightweightMetricsEvent event = nextEvent("leftoversDownload-begin");
       assertEquals(getJunitModuleName(), event.getModuleName());
       assertEquals("leftoversDownload", event.getEvtGroup());
       assertEquals("begin", event.getType());
@@ -173,7 +173,7 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
       lastMillis = event.getMillis();
     }
     {
-      LightweightMetricsEvent event = lwmObserver.events.remove();
+      LightweightMetricsEvent event = nextEvent("leftoversDownload-end");
       assertEquals(getJunitModuleName(), event.getModuleName());
       assertEquals("leftoversDownload", event.getEvtGroup());
       assertEquals("end", event.getType());
@@ -182,7 +182,7 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
       lastMillis = event.getMillis();
     }
     {
-      LightweightMetricsEvent event = lwmObserver.events.remove();
+      LightweightMetricsEvent event = nextEvent("download1-begin");
       assertEquals(getJunitModuleName(), event.getModuleName());
       assertEquals("download1", event.getEvtGroup());
       assertEquals("begin", event.getType());
@@ -191,7 +191,7 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
       lastMillis = event.getMillis();
     }
     {
-      LightweightMetricsEvent event = lwmObserver.events.remove();
+      LightweightMetricsEvent event = nextEvent("download1-end");
       assertEquals(getJunitModuleName(), event.getModuleName());
       assertEquals("download1", event.getEvtGroup());
       assertEquals("end", event.getType());
@@ -200,7 +200,7 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
       lastMillis = event.getMillis();
     }
     {
-      LightweightMetricsEvent event = lwmObserver.events.remove();
+      LightweightMetricsEvent event = nextEvent("runCallbacks1-begin");
       assertEquals(getJunitModuleName(), event.getModuleName());
       assertEquals("runCallbacks1", event.getEvtGroup());
       assertEquals("begin", event.getType());
@@ -208,7 +208,7 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
       lastMillis = event.getMillis();
     }
     {
-      LightweightMetricsEvent event = lwmObserver.events.remove();
+      LightweightMetricsEvent event = nextEvent("runCallbacks1-end");
       assertEquals(getJunitModuleName(), event.getModuleName());
       assertEquals("runCallbacks1", event.getEvtGroup());
       assertEquals("end", event.getType());
@@ -218,13 +218,22 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
   }
 
   /**
+   * Remove the next event from {@link #lwmObserver}. If there are no more
+   * events, fail with the specified message.
+   */
+  private LightweightMetricsEvent nextEvent(String description) {
+    assertTrue("Missing event: " + description, !lwmObserver.events.isEmpty());
+    return lwmObserver.events.remove();
+  }
+
+  /**
    * Check the LWM assuming no code splitting happened.
    */
   private void checkMetricsWithoutCodeSplitting() {
     int lastMillis;
 
     {
-      LightweightMetricsEvent event = lwmObserver.events.remove();
+      LightweightMetricsEvent event = nextEvent("noDownloadNeeded-begin");
       assertEquals(getJunitModuleName(), event.getModuleName());
       assertEquals("noDownloadNeeded", event.getEvtGroup());
       assertEquals("begin", event.getType());
@@ -232,7 +241,7 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
       lastMillis = event.getMillis();
     }
     {
-      LightweightMetricsEvent event = lwmObserver.events.remove();
+      LightweightMetricsEvent event = nextEvent("noDownloadNeeded-end");
       assertEquals(getJunitModuleName(), event.getModuleName());
       assertEquals("noDownloadNeeded", event.getEvtGroup());
       assertEquals("end", event.getType());
