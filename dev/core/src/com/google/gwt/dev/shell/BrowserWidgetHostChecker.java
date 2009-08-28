@@ -121,7 +121,8 @@ public class BrowserWidgetHostChecker {
    * @param hosts the set of regexes to be checked against
    * @return true if the host matches
    */
-  public static String checkHost(String hostUnderConsideration, Set<String> hosts) {
+  public static String checkHost(String hostUnderConsideration,
+      Set<String> hosts) {
     // TODO(jat): build a single regex instead of looping
     hostUnderConsideration = hostUnderConsideration.toLowerCase();
     for (String rule : hosts) {
@@ -250,12 +251,12 @@ public class BrowserWidgetHostChecker {
     reason.log(msgType, "blacklist: " + blackListStr, null);
     TreeLogger fix = header.branch(msgType, "To fix: add regex matching "
         + "URL to -whitelist command line argument", null);
-    fix.log(msgType, "Example: -whitelist=\"" + whiteListStr + " " + hostRegex
+    fix.log(msgType, "Example: -whitelist \"" + whiteListStr + " " + hostRegex
         + "\"", null);
     TreeLogger reject = header.branch(msgType,
         "To reject automatically: add regex matching "
             + "URL to -blacklist command line argument", null);
-    reject.log(msgType, "Example: -blacklist=\"" + blackListStr + " "
+    reject.log(msgType, "Example: -blacklist \"" + blackListStr + " "
         + hostRegex + "\"", null);
   }
 
