@@ -28,10 +28,9 @@ import com.google.gwt.event.dom.client.ClickHandler;
  * </p>
  * 
  * <h3>CSS Style Rules</h3>
- * <dl>
- * <dt>.gwt-Button</dt>
- * <dd>the outer element</dd>
- * </dl>
+ * <ul class="css">
+ * <li>.gwt-Button { }</li>
+ * </ul>
  * 
  * <p>
  * <h3>Example</h3>
@@ -54,7 +53,6 @@ public class Button extends ButtonBase {
     assert Document.get().getBody().isOrHasChild(element);
 
     Button button = new Button(element);
-    assert "button".equalsIgnoreCase(button.getButtonElement().getType());
 
     // Mark it attached and remember it for cleanup.
     button.onAttach();
@@ -63,11 +61,22 @@ public class Button extends ButtonBase {
     return button;
   }
 
+  static native void adjustType(Element button) /*-{
+    // Check before setting this attribute, as not all browsers define it.
+    if (button.type == 'submit') {
+      try { 
+        button.setAttribute("type", "button"); 
+      } catch (e) { 
+      }
+    }
+  }-*/;
+
   /**
    * Creates a button with no caption.
    */
   public Button() {
-    super(Document.get().createPushButtonElement());
+    super(Document.get().createButtonElement());
+    adjustType(getElement());
     setStyleName("gwt-Button");
   }
 
@@ -123,12 +132,8 @@ public class Button extends ButtonBase {
     getButtonElement().click();
   }
 
-  /**
-   * Get the underlying button element.
-   * 
-   * @return the {@link ButtonElement}
-   */
-  protected ButtonElement getButtonElement() {
+  private ButtonElement getButtonElement() {
     return getElement().cast();
   }
 }
+

@@ -25,12 +25,6 @@ abstract class DOMImpl {
     button.click();
   }-*/;
 
-  public native ButtonElement createButtonElement(Document doc, String type) /*-{
-    var e = doc.createElement("BUTTON");
-    e.type = type;
-    return e;
-  }-*/;
-
   public native Element createElement(Document doc, String tag) /*-{
     return doc.createElement(tag);
   }-*/;

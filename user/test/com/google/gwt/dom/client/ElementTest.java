@@ -75,7 +75,7 @@ public class ElementTest extends GWTTestCase {
    * Test round-trip of the 'disabled' property.
    */
   public void testDisabled() {
-    ButtonElement button = Document.get().createPushButtonElement();
+    ButtonElement button = Document.get().createButtonElement();
     assertFalse(button.isDisabled());
     button.setDisabled(true);
     assertTrue(button.isDisabled());

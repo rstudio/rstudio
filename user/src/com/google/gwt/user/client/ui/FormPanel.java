@@ -569,23 +569,24 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
       // Create and attach a hidden iframe to the body element.
       createFrame();
       Document.get().getBody().appendChild(synthesizedFrame);
+
+      // Hook up the underlying iframe's onLoad event when attached to the DOM.
+      // Making this connection only when attached avoids memory-leak issues.
+      // The FormPanel cannot use the built-in GWT event-handling mechanism
+      // because there is no standard onLoad event on iframes that works across
+      // browsers.
+      impl.hookEvents(synthesizedFrame, getElement(), this);
     }
-    // Hook up the underlying iframe's onLoad event when attached to the DOM.
-    // Making this connection only when attached avoids memory-leak issues.
-    // The FormPanel cannot use the built-in GWT event-handling mechanism
-    // because there is no standard onLoad event on iframes that works across
-    // browsers.
-    impl.hookEvents(synthesizedFrame, getElement(), this);
   }
 
   @Override
   protected void onDetach() {
     super.onDetach();
 
-    // Unhook the iframe's onLoad when detached.
-    impl.unhookEvents(synthesizedFrame, getElement());
-
     if (synthesizedFrame != null) {
+      // Unhook the iframe's onLoad when detached.
+      impl.unhookEvents(synthesizedFrame, getElement());
+
       // And remove it from the document.
       Document.get().getBody().removeChild(synthesizedFrame);
       synthesizedFrame = null;

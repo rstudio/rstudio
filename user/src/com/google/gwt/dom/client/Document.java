@@ -68,8 +68,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final QuoteElement createBlockQuoteElement() {
-    return (QuoteElement) DOMImpl.impl.createElement(this,
-        QuoteElement.TAG_BLOCKQUOTE);
+    return (QuoteElement) DOMImpl.impl.createElement(this, QuoteElement.TAG_BLOCKQUOTE);
   }
 
   /**
@@ -90,27 +89,11 @@ public class Document extends Node {
 
   /**
    * Creates a &lt;button&gt; element.
-   * <p>
-   * <b>Warning!</b> The button type is actually implementation-dependent and is
-   * read-only.
    * 
    * @return the newly created element
-   * @deprecated use {@link #createPushButtonElement()},
-   *             {@link #createResetButtonElement()} or
-   *             {@link #createSubmitButtonElement()} instead.
    */
-  @Deprecated
   public final ButtonElement createButtonElement() {
     return (ButtonElement) DOMImpl.impl.createElement(this, ButtonElement.TAG);
-  }
-
-  /**
-   * Creates an &lt;input type='button'&gt; element.
-   * 
-   * @return the newly created element
-   */
-  public final InputElement createButtonInputElement() {
-    return DOMImpl.impl.createInputElement(this, "button");
   }
 
   /**
@@ -119,8 +102,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableCaptionElement createCaptionElement() {
-    return (TableCaptionElement) DOMImpl.impl.createElement(this,
-        TableCaptionElement.TAG);
+    return (TableCaptionElement) DOMImpl.impl.createElement(this, TableCaptionElement.TAG);
   }
 
   /**
@@ -158,8 +140,8 @@ public class Document extends Node {
    * @param metaKey <code>true</code> if the meta key is depressed
    * @return the event object
    */
-  public final NativeEvent createClickEvent(int detail, int screenX,
-      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
+  public final NativeEvent createClickEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey) {
     // We disallow setting the button here, because IE doesn't provide the
     // button property for click events.
@@ -174,8 +156,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableColElement createColElement() {
-    return (TableColElement) DOMImpl.impl.createElement(this,
-        TableColElement.TAG_COL);
+    return (TableColElement) DOMImpl.impl.createElement(this, TableColElement.TAG_COL);
   }
 
   /**
@@ -184,8 +165,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableColElement createColGroupElement() {
-    return (TableColElement) DOMImpl.impl.createElement(this,
-        TableColElement.TAG_COLGROUP);
+    return (TableColElement) DOMImpl.impl.createElement(this, TableColElement.TAG_COLGROUP);
   }
 
   /**
@@ -224,8 +204,8 @@ public class Document extends Node {
    * @param metaKey <code>true</code> if the meta key is depressed
    * @return the event object
    */
-  public final NativeEvent createDblClickEvent(int detail, int screenX,
-      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
+  public final NativeEvent createDblClickEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey) {
     // We disallow setting the button here, because IE doesn't provide the
     // button property for click events.
@@ -286,8 +266,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final FieldSetElement createFieldSetElement() {
-    return (FieldSetElement) DOMImpl.impl.createElement(this,
-        FieldSetElement.TAG);
+    return (FieldSetElement) DOMImpl.impl.createElement(this, FieldSetElement.TAG);
   }
 
   /**
@@ -332,8 +311,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final FrameSetElement createFrameSetElement() {
-    return (FrameSetElement) DOMImpl.impl.createElement(this,
-        FrameSetElement.TAG);
+    return (FrameSetElement) DOMImpl.impl.createElement(this, FrameSetElement.TAG);
   }
 
   /**
@@ -599,8 +577,8 @@ public class Document extends Node {
    *          {@link NativeEvent#BUTTON_LEFT} et al)
    * @return the event object
    */
-  public final NativeEvent createMouseDownEvent(int detail, int screenX,
-      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
+  public final NativeEvent createMouseDownEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int button) {
     return createMouseEvent("mousedown", true, true, detail, screenX, screenY,
         clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button, null);
@@ -665,8 +643,8 @@ public class Document extends Node {
    *          {@link NativeEvent#BUTTON_LEFT} et al)
    * @return the event object
    */
-  public final NativeEvent createMouseMoveEvent(int detail, int screenX,
-      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
+  public final NativeEvent createMouseMoveEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int button) {
     return createMouseEvent("mousemove", true, true, detail, screenX, screenY,
         clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button, null);
@@ -692,8 +670,8 @@ public class Document extends Node {
    * @param relatedTarget the event's related target
    * @return the event object
    */
-  public final NativeEvent createMouseOutEvent(int detail, int screenX,
-      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
+  public final NativeEvent createMouseOutEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int button, Element relatedTarget) {
     return createMouseEvent("mouseout", true, true, detail, screenX, screenY,
         clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button,
@@ -720,8 +698,8 @@ public class Document extends Node {
    * @param relatedTarget the event's related target
    * @return the event object
    */
-  public final NativeEvent createMouseOverEvent(int detail, int screenX,
-      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
+  public final NativeEvent createMouseOverEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int button, Element relatedTarget) {
     return createMouseEvent("mouseover", true, true, detail, screenX, screenY,
         clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button,
@@ -744,8 +722,8 @@ public class Document extends Node {
    *          {@link NativeEvent#BUTTON_LEFT} et al)
    * @return the event object
    */
-  public final NativeEvent createMouseUpEvent(int detail, int screenX,
-      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
+  public final NativeEvent createMouseUpEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int button) {
     return createMouseEvent("mouseup", true, true, detail, screenX, screenY,
         clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button, null);
@@ -775,8 +753,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final OptGroupElement createOptGroupElement() {
-    return (OptGroupElement) DOMImpl.impl.createElement(this,
-        OptGroupElement.TAG);
+    return (OptGroupElement) DOMImpl.impl.createElement(this, OptGroupElement.TAG);
   }
 
   /**
@@ -812,8 +789,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final ParagraphElement createPElement() {
-    return (ParagraphElement) DOMImpl.impl.createElement(this,
-        ParagraphElement.TAG);
+    return (ParagraphElement) DOMImpl.impl.createElement(this, ParagraphElement.TAG);
   }
 
   /**
@@ -823,15 +799,6 @@ public class Document extends Node {
    */
   public final PreElement createPreElement() {
     return (PreElement) DOMImpl.impl.createElement(this, PreElement.TAG);
-  }
-
-  /**
-   * Creates a &lt;button type='button'&gt; element.
-   * 
-   * @return the newly created element
-   */
-  public final ButtonElement createPushButtonElement() {
-    return DOMImpl.impl.createButtonElement(this, "button");
   }
 
   /**
@@ -851,24 +818,6 @@ public class Document extends Node {
    */
   public final InputElement createRadioInputElement(String name) {
     return DOMImpl.impl.createInputRadioElement(this, name);
-  }
-
-  /**
-   * Creates a &lt;button type='reset'&gt; element.
-   * 
-   * @return the newly created element
-   */
-  public final ButtonElement createResetButtonElement() {
-    return DOMImpl.impl.createButtonElement(this, "reset");
-  }
-
-  /**
-   * Creates an &lt;input type='reset'&gt; element.
-   * 
-   * @return the newly created element
-   */
-  public final InputElement createResetInputElement() {
-    return DOMImpl.impl.createInputElement(this, "reset");
   }
 
   /**
@@ -940,15 +889,6 @@ public class Document extends Node {
   }
 
   /**
-   * Creates a &lt;button type='submit'&gt; element.
-   * 
-   * @return the newly created element
-   */
-  public final ButtonElement createSubmitButtonElement() {
-    return DOMImpl.impl.createButtonElement(this, "submit");
-  }
-
-  /**
    * Creates an &lt;input type='submit'&gt; element.
    * 
    * @return the newly created element
@@ -972,8 +912,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableSectionElement createTBodyElement() {
-    return (TableSectionElement) DOMImpl.impl.createElement(this,
-        TableSectionElement.TAG_TBODY);
+    return (TableSectionElement) DOMImpl.impl.createElement(this, TableSectionElement.TAG_TBODY);
   }
 
   /**
@@ -982,8 +921,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableCellElement createTDElement() {
-    return (TableCellElement) DOMImpl.impl.createElement(this,
-        TableCellElement.TAG_TD);
+    return (TableCellElement) DOMImpl.impl.createElement(this, TableCellElement.TAG_TD);
   }
 
   /**
@@ -992,8 +930,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TextAreaElement createTextAreaElement() {
-    return (TextAreaElement) DOMImpl.impl.createElement(this,
-        TextAreaElement.TAG);
+    return (TextAreaElement) DOMImpl.impl.createElement(this, TextAreaElement.TAG);
   }
 
   /**
@@ -1021,8 +958,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableSectionElement createTFootElement() {
-    return (TableSectionElement) DOMImpl.impl.createElement(this,
-        TableSectionElement.TAG_TFOOT);
+    return (TableSectionElement) DOMImpl.impl.createElement(this, TableSectionElement.TAG_TFOOT);
   }
 
   /**
@@ -1031,8 +967,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableSectionElement createTHeadElement() {
-    return (TableSectionElement) DOMImpl.impl.createElement(this,
-        TableSectionElement.TAG_THEAD);
+    return (TableSectionElement) DOMImpl.impl.createElement(this, TableSectionElement.TAG_THEAD);
   }
 
   /**
@@ -1041,8 +976,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableCellElement createTHElement() {
-    return (TableCellElement) DOMImpl.impl.createElement(this,
-        TableCellElement.TAG_TH);
+    return (TableCellElement) DOMImpl.impl.createElement(this, TableCellElement.TAG_TH);
   }
 
   /**
@@ -1060,8 +994,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableRowElement createTRElement() {
-    return (TableRowElement) DOMImpl.impl.createElement(this,
-        TableRowElement.TAG);
+    return (TableRowElement) DOMImpl.impl.createElement(this, TableRowElement.TAG);
   }
 
   /**

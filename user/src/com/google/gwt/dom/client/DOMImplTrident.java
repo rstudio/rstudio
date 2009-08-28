@@ -21,16 +21,10 @@ abstract class DOMImplTrident extends DOMImpl {
    * This field *must* be filled in from JSNI code before dispatching an event
    * on IE. It should be set to the 'this' context of the handler that receives
    * the event, then restored to its initial value when the dispatcher is done.
-   * See
-   * {@link com.google.gwt.user.client.impl.DOMImplTrident#initEventSystem()}
+   * See {@link com.google.gwt.user.client.impl.DOMImplTrident#initEventSystem()}
    * for an example of how this should be done.
    */
   private static EventTarget currentEventTarget;
-
-  @Override
-  public native ButtonElement createButtonElement(Document doc, String type) /*-{
-    return doc.createElement("<BUTTON type='" + type + "'></BUTTON>");
-  }-*/;
 
   @Override
   public Element createElement(Document doc, String tagName) {
@@ -54,8 +48,8 @@ abstract class DOMImplTrident extends DOMImpl {
   }
 
   @Override
-  public native NativeEvent createHtmlEvent(Document doc, String type,
-      boolean canBubble, boolean cancelable) /*-{
+  public native NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable) /*-{
     // NOTE: IE doesn't support changing bubbling and canceling behavior (this
     // is documented publicly in Document.createHtmlEvent()).
     var evt = doc.createEventObject();
@@ -69,9 +63,9 @@ abstract class DOMImplTrident extends DOMImpl {
   }-*/;
 
   @Override
-  public native NativeEvent createKeyEvent(Document doc, String type,
-      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
-      boolean shiftKey, boolean metaKey, int keyCode, int charCode) /*-{
+  public native NativeEvent createKeyEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int keyCode, int charCode) /*-{
     // NOTE: IE doesn't support changing bubbling and canceling behavior (this
     // is documented publicly in Document.createKeyEvent()).
     var evt = doc.createEventObject();
@@ -87,10 +81,10 @@ abstract class DOMImplTrident extends DOMImpl {
   }-*/;
 
   @Override
-  public native NativeEvent createMouseEvent(Document doc, String type,
-      boolean canBubble, boolean cancelable, int detail, int screenX,
-      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
-      boolean shiftKey, boolean metaKey, int button, Element relatedTarget) /*-{
+  public native NativeEvent createMouseEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable, int detail, int screenX, int screenY, int clientX,
+      int clientY, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int button, Element relatedTarget) /*-{
     // NOTE: IE doesn't support changing bubbling and canceling behavior (this
     // is documented publicly in Document.createMouseEvent()).
     var evt = doc.createEventObject();
@@ -174,7 +168,7 @@ abstract class DOMImplTrident extends DOMImpl {
 
   /**
    * IE returns a numeric type for some attributes that are really properties,
-   * such as offsetWidth. We need to coerce these to strings to prevent a
+   * such as offsetWidth.  We need to coerce these to strings to prevent a
    * runtime JS exception.
    */
   @Override
@@ -198,7 +192,6 @@ abstract class DOMImplTrident extends DOMImpl {
     return elem.innerText;
   }-*/;
 
-  @Override
   public String getTagName(Element elem) {
     String tagName = getTagNameInternal(elem);
     String scopeName = getScopeNameInternal(elem);
