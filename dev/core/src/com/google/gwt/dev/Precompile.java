@@ -31,9 +31,10 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
+import com.google.gwt.dev.jjs.AbstractCompiler;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JJSOptionsImpl;
-import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
+import com.google.gwt.dev.jjs.JavaScriptCompiler;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.shell.CheckForUpdates;
@@ -448,13 +449,35 @@ public class Precompile {
           generatorResourcesDir);
       // Never optimize on a validation run.
       jjsOptions.setOptimizePrecompile(false);
-      JavaToJavaScriptCompiler.precompile(logger, module, rpo, declEntryPts,
+      getCompiler(module).precompile(logger, module, rpo, declEntryPts,
           additionalRootTypes, jjsOptions, true);
       return true;
     } catch (UnableToCompleteException e) {
       // Already logged.
       return false;
     }
+  }
+
+  private static AbstractCompiler getCompiler(ModuleDef module) {
+    ConfigurationProperty compilerClassProp = module.getProperties().createConfiguration(
+        "x.compiler.class", false);
+    String compilerClassName = compilerClassProp.getValue();
+    if (compilerClassName == null || compilerClassName.length() == 0) {
+      return new JavaScriptCompiler();
+    }
+    Throwable caught;
+    try {
+      Class<?> compilerClass = Class.forName(compilerClassName);
+      return (AbstractCompiler) compilerClass.newInstance();
+    } catch (ClassNotFoundException e) {
+      caught = e;
+    } catch (InstantiationException e) {
+      caught = e;
+    } catch (IllegalAccessException e) {
+      caught = e;
+    }
+    throw new RuntimeException("Unable to instantiate compiler class '"
+        + compilerClassName + "'", caught);
   }
 
   private static Precompilation precompile(TreeLogger logger,
@@ -481,7 +504,7 @@ public class Precompile {
           module, compilationState, generatedArtifacts, allPermutations,
           genDir, generatorResourcesDir);
       PerfLogger.start("Precompile");
-      UnifiedAst unifiedAst = JavaToJavaScriptCompiler.precompile(logger,
+      UnifiedAst unifiedAst = getCompiler(module).precompile(logger,
           module, rpo, declEntryPts, null, jjsOptions,
           rpo.getPermuationCount() == 1);
       PerfLogger.end();
@@ -490,15 +513,18 @@ public class Precompile {
       Permutation[] permutations = rpo.getPermutations();
       // Sort the permutations by an ordered key to ensure determinism.
       SortedMap<String, Permutation> merged = new TreeMap<String, Permutation>();
+      SortedSet<String> liveRebindRequests = unifiedAst.getRebindRequests();
       for (Permutation permutation : permutations) {
-        permutation.reduceRebindAnswers(unifiedAst.getRebindRequests());
-        // Arbitrarily choose as a key the stringified map of rebind answers.
-        String rebindResultsString = permutation.getRebindAnswers().toString();
-        if (merged.containsKey(rebindResultsString)) {
-          Permutation existing = merged.get(rebindResultsString);
-          existing.mergeFrom(permutation);
+        // Construct a key from the stringified map of live rebind answers.
+        SortedMap<String, String> rebindAnswers = new TreeMap<String, String>(
+            permutation.getRebindAnswers());
+        rebindAnswers.keySet().retainAll(liveRebindRequests);
+        String key = rebindAnswers.toString();
+        if (merged.containsKey(key)) {
+          Permutation existing = merged.get(key);
+          existing.mergeFrom(permutation, liveRebindRequests);
         } else {
-          merged.put(rebindResultsString, permutation);
+          merged.put(key, permutation);
         }
       }
       return new Precompilation(unifiedAst, merged.values(), permutationBase,

@@ -19,9 +19,10 @@ import com.google.gwt.dev.cfg.StaticPropertyOracle;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 
 /**
@@ -58,11 +59,17 @@ public final class Permutation implements Serializable {
   }
 
   public SortedMap<String, String> getRebindAnswers() {
-    return rebindAnswers;
+    return Collections.unmodifiableSortedMap(rebindAnswers);
   }
 
-  public void mergeFrom(Permutation other) {
-    assert rebindAnswers.equals(other.rebindAnswers);
+  public void mergeFrom(Permutation other, SortedSet<String> liveRebindRequests) {
+    if (getClass().desiredAssertionStatus()) {
+      for (String rebindRequest : liveRebindRequests) {
+        String myAnswer = rebindAnswers.get(rebindRequest);
+        String otherAnswer = other.rebindAnswers.get(rebindRequest);
+        assert myAnswer.equals(otherAnswer);
+      }
+    }
     assert !propertyOracles.isEmpty();
     assert !other.propertyOracles.isEmpty();
     propertyOracles.addAll(other.propertyOracles);
@@ -71,9 +78,5 @@ public final class Permutation implements Serializable {
 
   public void putRebindAnswer(String requestType, String resultType) {
     rebindAnswers.put(requestType, resultType);
-  }
-
-  public void reduceRebindAnswers(Set<String> liveRebindRequests) {
-    rebindAnswers.keySet().retainAll(liveRebindRequests);
   }
 }

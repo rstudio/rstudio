@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.jjs;
 
+import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.PerfLogger;
@@ -26,6 +29,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -34,7 +38,7 @@ import java.util.TreeSet;
  * Represents a unified, non-permutation specific AST. This AST is used to drive
  * per-permutation compiles.
  */
-public final class UnifiedAst implements Serializable {
+public class UnifiedAst implements Serializable {
 
   /**
    * Encapsulates the combined programs.
@@ -127,6 +131,37 @@ public final class UnifiedAst implements Serializable {
     this.rebindRequests = Collections.unmodifiableSortedSet(new TreeSet<String>(
         rebindRequests));
     this.serializedAst = singlePermutation ? null : serializeAst(initialAst);
+  }
+
+  /**
+   * Copy constructor, invalidates the original.
+   */
+  UnifiedAst(UnifiedAst other) {
+    this.options = other.options;
+    this.initialAst = other.initialAst;
+    other.initialAst = null; // steal its copy
+    this.rebindRequests = other.rebindRequests;
+    this.serializedAst = other.serializedAst;
+  }
+
+  /**
+   * Compiles a particular permutation.
+   * 
+   * @param logger the logger to use
+   * @param rebindAnswers the set of rebind answers to resolve all outstanding
+   *          rebind decisions for this permutation
+   * @param propertyOracles all property oracles corresponding to this
+   *          permutation
+   * @param permutationId the unique id of this permutation
+   * @return the permutation result
+   * @throws UnableToCompleteException if an error other than
+   *           {@link OutOfMemoryError} occurs
+   */
+  public PermutationResult compilePermutation(TreeLogger logger,
+      Map<String, String> rebindAnswers, PropertyOracle[] propertyOracles,
+      int permutationId) throws UnableToCompleteException {
+    return JavaToJavaScriptCompiler.compilePermutation(logger, this,
+        rebindAnswers, propertyOracles, permutationId);
   }
 
   /**

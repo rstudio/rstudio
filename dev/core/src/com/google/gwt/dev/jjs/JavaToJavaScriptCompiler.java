@@ -191,9 +191,10 @@ public class JavaToJavaScriptCompiler {
    * @param unifiedAst the result of a
    *          {@link #precompile(TreeLogger, WebModeCompilerFrontEnd, String[], JJSOptions, boolean)}
    * @param rebindAnswers the set of rebind answers to resolve all outstanding
-   *          rebind decisions
-   * @param propertyOracles All property oracles corresponding to this
-   *          permutation.
+   *          rebind decisions for this permutation
+   * @param propertyOracles all property oracles corresponding to this
+   *          permutation
+   * @param permutationId the unique id of this permutation
    * @return the output JavaScript
    * @throws UnableToCompleteException if an error other than
    *           {@link OutOfMemoryError} occurs
