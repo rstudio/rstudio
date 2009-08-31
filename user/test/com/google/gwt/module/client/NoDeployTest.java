@@ -39,6 +39,11 @@ public class NoDeployTest extends GWTTestCase {
 
   public static final String TEST_TEXT = "Hello world!";
 
+  /**
+   * The maximum amount of time to wait for an RPC response in milliseconds. 
+   */
+  private static final int RESPONSE_DELAY = 1500; 
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.module.NoDeployTest";
@@ -50,7 +55,7 @@ public class NoDeployTest extends GWTTestCase {
     // Try fetching a file that should exist
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
         GWT.getHostPageBaseURL() + "publicFile.txt");
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
     builder.sendRequest("", new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {
@@ -75,7 +80,7 @@ public class NoDeployTest extends GWTTestCase {
     // Try fetching a file that shouldn't exist
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
         GWT.getHostPageBaseURL() + "privateFile.txt");
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
     builder.sendRequest("", new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {
@@ -98,7 +103,7 @@ public class NoDeployTest extends GWTTestCase {
     // Try fetching a file that shouldn't exist
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
         GWT.getHostPageBaseURL() + "no-deploy/inPublic.txt");
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
     builder.sendRequest("", new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {

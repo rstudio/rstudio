@@ -92,7 +92,13 @@ public class ImageResourceTest extends GWTTestCase {
     assertFalse(a.getURL().equals(r.i16x16().getURL()));
   }
 
-  public void testDedup() {
+  /**
+   * Issue 863: Image.onload event does not fire on Internet Explorer when image
+   * is in cache.
+   * 
+   * TODO(jlabanca): Reenable this test after fixing the issue.
+   */
+  public void disabledTestDedup() {
     Resources r = GWT.create(Resources.class);
 
     ImageResource a = r.i64x64();

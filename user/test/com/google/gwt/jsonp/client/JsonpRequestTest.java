@@ -25,6 +25,11 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 public class JsonpRequestTest extends GWTTestCase {
 
   /**
+   * The maximum amount of time to wait for a response in milliseconds. 
+   */
+  private static final int RESPONSE_DELAY = 1500; 
+
+  /**
    * Checks that an error is received.
    */
   private class AssertFailureCallback<T> implements AsyncCallback<T> {
@@ -100,31 +105,31 @@ public class JsonpRequestTest extends GWTTestCase {
   public void testBooleanFalse() {
     jsonp.requestBoolean(echo("false"), new AssertSuccessCallback<Boolean>(
         Boolean.FALSE));
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
   }
 
   public void testBooleanTrue() {
     jsonp.requestBoolean(echo("true"), new AssertSuccessCallback<Boolean>(
         Boolean.TRUE));
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
   }
 
   public void testDouble() {
     jsonp.requestDouble(echo("123.456"), new AssertSuccessCallback<Double>(
         123.456));
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
   }
 
   public void testFailureCallback() {
     jsonp.setFailureCallbackParam("failureCallback");
     jsonp.requestString(echoFailure("ERROR"),
         new AssertFailureCallback<String>("ERROR"));
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
   }
 
   public void testInteger() {
     jsonp.requestInteger(echo("123"), new AssertSuccessCallback<Integer>(123));
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
   }
 
   /**
@@ -135,48 +140,48 @@ public class JsonpRequestTest extends GWTTestCase {
     jsonp.setFailureCallbackParam(null);
     jsonp.requestString(echoFailure("ERROR"),
         new AssertSuccessCallback<String>("ERROR"));
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
   }
 
   public void testNullBoolean() {
     jsonp.requestBoolean(echo("null"), new AssertSuccessCallback<Boolean>(null));
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
   }
 
   public void testNullDouble() {
     jsonp.requestDouble(echo("null"), new AssertSuccessCallback<Double>(null));
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
   }
 
   public void testNullInteger() {
     jsonp.requestInteger(echo("null"), new AssertSuccessCallback<Integer>(null));
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
   }
 
   public void testNullString() {
     jsonp.requestString(echo("null"), new AssertSuccessCallback<String>(null));
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
   }
 
   public void testString() {
     jsonp.requestString(echo("'Hello'"), new AssertSuccessCallback<String>(
         "Hello"));
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
   }
 
   public void testTimeout() {
     jsonp.requestString(echoTimeout(), new AssertTimeoutExceptionCallback<String>());
-    delayTestFinish(2000);
+    delayTestFinish(jsonp.getTimeout() + 500);
   }
 
   public void testVoid() {
     jsonp.send(echo(null), new AssertSuccessCallback<Void>(null));
-    delayTestFinish(500);
+    delayTestFinish(RESPONSE_DELAY);
   }
 
   @Override
   protected void gwtSetUp() throws Exception {
     jsonp = new JsonpRequestBuilder();
-    jsonp.setTimeout(1000);
+    jsonp.setTimeout(RESPONSE_DELAY + 500);
   }
 }
