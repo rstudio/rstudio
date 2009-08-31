@@ -94,6 +94,17 @@ abstract class WriteJsoImpl extends ClassAdapter {
       }
     }
 
+    @Override
+    public MethodVisitor visitMethod(int access, String name, String desc,
+        String signature, String[] exceptions) {
+      if (isCtor(name)) {
+        // make the JavaScriptObject$ constructor public
+        access &= ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED);
+        access |= Opcodes.ACC_PUBLIC;
+      }
+      return super.visitMethod(access, name, desc, signature, exceptions);
+    }
+
     /**
      * JSO methods are implemented as flyweight style, with the instance being
      * passed as the first parameter. This loop create instance methods on JSO$

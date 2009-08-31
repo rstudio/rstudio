@@ -214,7 +214,6 @@ public final class JsValueGlue {
       // Instantiate the JSO class.
       Class<?> jsoType = Class.forName(JSO_IMPL_CLASS, true, classLoader);
       Constructor<?> ctor = jsoType.getDeclaredConstructor();
-      ctor.setAccessible(true);
       jso = ctor.newInstance();
 
       // Set the reference field to this JsValue using reflection.
