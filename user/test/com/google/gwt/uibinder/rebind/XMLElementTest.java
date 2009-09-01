@@ -15,6 +15,7 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.uibinder.testing.UiBinderTesting;
 
 import junit.framework.TestCase;
@@ -51,6 +52,24 @@ public class XMLElementTest extends TestCase {
   public void testConsumeAttribute() {
     assertEquals("attr1Value", elm.consumeAttribute("attr1"));
     assertEquals("", elm.consumeAttribute("attr1"));
+  }
+  
+  public void testConsumeAttributeWithDefault() {
+    assertEquals("attr1Value", elm.consumeAttribute("attr1", "default"));
+    assertEquals("default", elm.consumeAttribute("attr1", "default"));
+    assertEquals("otherDefault", elm.consumeAttribute("unsetthing", "otherDefault"));
+  }
+  
+  public void testConsumeRequired() throws UnableToCompleteException {
+    assertEquals("attr1Value", elm.consumeRequiredAttribute("attr1"));
+
+    // TODO(rjrjr) Can't test this until die() is factored out of UiBinderWriter
+//    try {
+//      elm.consumeRequiredAttribute("unsetthing");
+//      fail("Should have thrown UnableToCompleteException");
+//    } catch (UnableToCompleteException e) {
+//       /* pass */
+//    }    
   }
   
   public void testEmptyStringOnMissingAttribute()

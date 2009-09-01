@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
-import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLAttribute;
@@ -28,10 +27,8 @@ import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.messages.AttributeMessage;
 import com.google.gwt.uibinder.rebind.model.OwnerFieldClass;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -43,7 +40,7 @@ public class BeanParser implements ElementParser {
 
   /**
    * Generates code to initialize all bean attributes on the given element.
-   * Includes support for &lt;m:attribute /&gt; children that will apply
+   * Includes support for &lt;ui:attribute /&gt; children that will apply
    * to setters
    * @throws UnableToCompleteException
    */
@@ -144,17 +141,13 @@ public class BeanParser implements ElementParser {
 
         JParameter[] params = setter.getParameters();
 
-        AttributeParser parser =
-            writer.getAttributeParser(attribute, params);
+        AttributeParser parser = writer.getAttributeParser(attribute, params);
+        
         if (parser == null) {
-          if (params.length == 1 && JPrimitiveType.INT == params[0].getType()) {
-            writer.die("In %s, %s cannot be parsed for %s.",
-                    elem, attribute, asString(setter));
-          }
-        } else {
-          setterValues.put(propertyName, parser.parse(attribute.consumeValue(),
-              writer));
+          writer.die("In %s, unable to parse %s.", elem, attribute);
         }
+        setterValues.put(propertyName, parser.parse(attribute.consumeValue(),
+            writer));
       }
     }
 
@@ -185,12 +178,6 @@ public class BeanParser implements ElementParser {
     }
   }
 
-  private String asString(JMethod setter) {
-    String sig = String.format("%s#%s(%s)", setter.getEnclosingType().getName(),
-        setter.getName(), getParamTypes(setter));
-    return sig;
-  }
-
   /**
    * Fetch the localized attributes that were stored by the
    * AttributeMessageParser.
@@ -209,18 +196,6 @@ public class BeanParser implements ElementParser {
       }
     }
     return localizedValues;
-  }
-
-  private StringBuilder getParamTypes(JMethod setter) {
-    StringBuilder args = new StringBuilder();
-    for (Iterator<JParameter> i =
-        Arrays.asList(setter.getParameters()).iterator(); i.hasNext();) {
-      args.append(i.next().getType().getSimpleSourceName());
-      if (i.hasNext()) {
-        args.append(", ");
-      }
-    }
-    return args;
   }
 
   private String initialCap(String propertyName) {

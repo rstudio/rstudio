@@ -21,7 +21,9 @@ import com.google.gwt.uibinder.rebind.UiBinderWriter;
 /**
  * Interprets an attribute's contents as a method call on a resource class (one
  * tied to an xmnls prefix via a "with://" url).
+ * @deprecated soon to die, replaced by brace expressions
  */
+@Deprecated
 public class BundleAttributeParser implements AttributeParser {
 
   private final JClassType bundleClass;

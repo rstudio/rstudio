@@ -24,10 +24,11 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.uibinder.sample.client.ArbitraryPojo;
 import com.google.gwt.uibinder.sample.client.ClickyLink;
 import com.google.gwt.uibinder.sample.client.DomBasedUi;
 import com.google.gwt.uibinder.sample.client.FakeBundle;
-import com.google.gwt.uibinder.sample.client.Foo;
+import com.google.gwt.uibinder.sample.client.FooLabel;
 import com.google.gwt.uibinder.sample.client.WidgetBasedUi;
 import com.google.gwt.uibinder.sample.client.WidgetBasedUiResources;
 import com.google.gwt.user.client.DOM;
@@ -96,9 +97,10 @@ public class UiBinderTest extends GWTTestCase {
     Element pretty = DOM.getElementById("prettyPara");
     assertEquals(resources.style().prettyText(), pretty.getClassName());
 
-    Foo f = new Foo();
-    assertTrue("Expect " + f,
-        widgetUi.getTheFoo().getText().contains(f.toString()));
+    ArbitraryPojo pojo = new ArbitraryPojo();
+    FooLabel foo = new FooLabel();
+    foo.setPojo(pojo);
+    assertEquals(foo.getText(), widgetUi.getTheFoo().getText());
   }
 
   public void testCenter() {

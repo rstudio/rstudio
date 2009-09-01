@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -28,8 +28,8 @@ import java.util.Set;
  * <p>
  * A field can have a custom initialization statement, set via
  * {@link #setInitializer}. Without one it will be initialized via a
- * {@link GWT#create} call. (In the rare case that you need a field not to be
- * initialized, initialize it to "null".)
+ * {@link com.google.gwt.core.client.GWT#create} call. (In the rare case that
+ * you need a field not to be initialized, initialize it to "null".)
  * <p>
  * Dependencies can be declared between fields via {@link #needs}, to ensure
  * that one can be initialized via reference to another. Circular references are
@@ -77,11 +77,14 @@ public class FieldWriter {
 
   /**
    * Used to provide an initializer string to use instead of a
-   * {@link com.google.gwt.core.client.GWT#create()} call.
-   * Note that this is an RHS expression. Don't include the leading '=', and
-   * don't end it with ';'.
+   * {@link com.google.gwt.core.client.GWT#create()} call. Note that this is an
+   * RHS expression. Don't include the leading '=', and don't end it with ';'.
+   * 
+   * @throws IllegalStateException on second attempt to set the initializer
    */
   public void setInitializer(String initializer) {
+    // TODO(rjrjr) Should be able to make this a constructor argument
+    // when BundleAttributeParser dies
     if (this.initializer != null) {
       throw new IllegalStateException(String.format(
           "Second attempt to set initializer for field \"%s\", "
@@ -91,8 +94,25 @@ public class FieldWriter {
   }
 
   /**
+   * @deprecated needed only by
+   *             {@link com.google.gwt.uibinder.parsers.BundleAttributeParser},
+   *             which will die soon
+   * @throws IllegalStateException if initializer in a later call doesn't match
+   *           earlier call
+   */
+  @Deprecated
+  public void setInitializerMaybe(String initializer) {
+    if (this.initializer != null && !this.initializer.equals(initializer)) {
+      throw new IllegalStateException(String.format(
+          "Attempt to change initializer for field \"%s\", "
+              + "from \"%s\" to \"%s\"", name, this.initializer, initializer));
+    }
+    this.initializer = initializer;
+  }
+
+  /**
    * Write the field delcaration.
-   *
+   * 
    * @return false if unable to write for lack of a default constructor
    */
   // TODO(rjrjr) This return code thing is silly. We should
@@ -113,11 +133,12 @@ public class FieldWriter {
     }
 
     if (initializer == null) {
-      if (type.findConstructor(new JType[0]) == null) {
+      if ((type.isInterface() == null)
+          && (type.findConstructor(new JType[0]) == null)) {
         return false;
       }
-      initializer =
-          String.format("(%1$s) GWT.create(%1$s.class)", getFullTypeName());
+      initializer = String.format("(%1$s) GWT.create(%1$s.class)",
+          getFullTypeName());
     }
 
     w.write("%s %s = %s;", getFullTypeName(), name, initializer);

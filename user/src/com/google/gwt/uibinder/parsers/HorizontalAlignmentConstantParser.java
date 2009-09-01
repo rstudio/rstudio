@@ -39,7 +39,7 @@ public class HorizontalAlignmentConstantParser implements AttributeParser {
   }
 
   public String parse(String value, UiBinderWriter writer)
-  throws UnableToCompleteException {
+      throws UnableToCompleteException {
     String translated = values.get(value);
     if (translated == null) {
       writer.die("Invalid value: horizontalAlignment='" + value + "'");

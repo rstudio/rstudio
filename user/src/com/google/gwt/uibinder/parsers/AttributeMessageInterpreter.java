@@ -22,16 +22,16 @@ import com.google.gwt.uibinder.rebind.messages.AttributeMessage;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 
 /**
- * Examines each element for child &lt;m:attr/&gt; elements, and replaces the
+ * Examines each element for child &lt;ui:attr/&gt; elements, and replaces the
  * corresponding attributes of the examinee with references to the translatable
  * messages created.
  * <p>
  * That is, when examining element foo in
  * <pre>
  *   &lt;foo bar="baz"&gt;
- *     &lt;m:attr name="baz"&gt;
+ *     &lt;ui:attr name="baz"&gt;
  *   &lt;/foo&gt;</pre>
- * cosume the m:attr element, and declare a method on the Messages interface
+ * cosume the ui:attr element, and declare a method on the Messages interface
  * with {@literal @}Default("baz")
  */
  class AttributeMessageInterpreter implements XMLElement.Interpreter<String> {
@@ -52,7 +52,7 @@ import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 
     /*
      * Return null because we don't want to replace the dom element with any
-     * particular string (though we may have consumed its id or gwt:field)
+     * particular string (though we may have consumed its id or ui:field)
      */
     return null;
   }

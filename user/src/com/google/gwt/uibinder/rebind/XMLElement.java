@@ -40,8 +40,6 @@ import java.util.Set;
  * see it.
  */
 public class XMLElement {
-  private static final Set<String> NO_END_TAG = new HashSet<String>();
-
   /**
    * Callback interface used by {@link #consumeInnerHtml(Interpreter)} and
    * {@link #consumeChildElements(Interpreter)}.
@@ -74,6 +72,8 @@ public class XMLElement {
       return rtn;
     }
   }
+
+  private static final Set<String> NO_END_TAG = new HashSet<String>();
 
   private static void clearChildren(Element elem) {
     Node child;
@@ -113,9 +113,9 @@ public class XMLElement {
   }
 
   /**
-   * Consumes the given attribute and returns its trimmed value, or null
-   * if it was undeclared. The returned string is not escaped.
-   *
+   * Consumes the given attribute and returns its trimmed value, or null if it
+   * was unset. The returned string is not escaped.
+   * 
    * @param name the attribute's full name (including prefix)
    * @return the attribute's value, or null
    */
@@ -123,6 +123,22 @@ public class XMLElement {
     String value = elem.getAttribute(name);
     elem.removeAttribute(name);
     return value.trim();
+  }
+
+  /**
+   * Consumes the given attribute and returns its trimmed value, or the given
+   * default value if it was unset. The returned string is not escaped.
+   * 
+   * @param name the attribute's full name (including prefix)
+   * @param defaultValue the value to return if the attribute was unset
+   * @return the attribute's value, or defaultValue
+   */
+  public String consumeAttribute(String name, String defaultValue) {
+    String value = consumeAttribute(name);
+    if ("".equals(value)) {
+      return defaultValue;
+    }
+    return value;
   }
 
   /**
@@ -271,17 +287,29 @@ public class XMLElement {
     return interpreter.postProcess(text);
   }
 
- /**
-   * Consumes all attributes, and returns a string representing the
-   * entire opening tag. E.g., "<div able='baker'>"
+  /**
+     * Consumes all attributes, and returns a string representing the
+     * entire opening tag. E.g., "<div able='baker'>"
    */
   public String consumeOpeningTag() {
     String rtn = getOpeningTag();
-
+  
     for (int i = getAttributeCount() - 1; i >= 0; i--) {
       getAttribute(i).consumeValue();
     }
     return rtn;
+  }
+
+  /**
+   * Consumes the named attribute, or dies if it is missing.
+   */
+  public String consumeRequiredAttribute(String name)
+      throws UnableToCompleteException {
+    String value = consumeAttribute(name);
+    if ("".equals(value)) {
+      writer.die("In %s, missing required attribute name\"%s\"", this);
+    }
+    return value;
   }
 
   /**

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,11 +24,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Assigns computed values to element attributes, e.g.
- * res:styleName="style.pretty" which will become something like
+ * Assigns computed values to element attributes, e.g. nasty old
+ * resources:styleName="style.pretty" and nice new
+ * styleName={resources.style.pretty}, which will become something like
  * myWidget.setStyleName(resources.style().pretty()) in the generated code.
  */
- class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
+class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
 
   private final UiBinderWriter writer;
 
@@ -42,8 +43,18 @@ import java.util.Map;
 
     for (int i = elem.getAttributeCount() - 1; i >= 0; i--) {
       XMLAttribute att = elem.getAttribute(i);
+      AttributeParser parser = writer.getBundleAttributeParser(att);
+      
+      if (parser == null && att.hasComputedValue()) {
+        /*
+         * It's okay to simply create a string parser by hand, rather than
+         * asking the writer to magically guess what kind of parser we need,
+         * because we are only used in string contexts, for attributes in html
+         * markup. Bean parser takes care of the strongly typed cases.
+         */
+        parser = new StringAttributeParser();
+      }
 
-      AttributeParser parser = writer.getAttributeParser(att);
       if (parser != null) {
         String parsedValue = parser.parse(att.consumeValue(), writer);
         String attToken = writer.tokenForExpression(parsedValue);

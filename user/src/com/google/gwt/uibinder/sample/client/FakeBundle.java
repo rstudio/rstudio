@@ -19,11 +19,11 @@ package com.google.gwt.uibinder.sample.client;
  * Faux bundle used by test.
  */
 public class FakeBundle {
-  public Foo foo() {
-    return  new Foo();
-  }
-
   public String helloText() {
     return "hello";
+  }
+
+  public ArbitraryPojo pojo() {
+    return  new ArbitraryPojo();
   }
 }

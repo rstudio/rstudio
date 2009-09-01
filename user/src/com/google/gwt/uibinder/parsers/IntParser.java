@@ -15,15 +15,17 @@
  */
 package com.google.gwt.uibinder.parsers;
 
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 
 /**
  * Parses an integer value.
  */
-public class IntParser implements AttributeParser {
+public class IntParser extends SimpleAttributeParser {
 
-  public String parse(String value, UiBinderWriter writer) {
+  public String parse(String value, UiBinderWriter writer)
+      throws UnableToCompleteException {
     // TODO(jgw): validate
-    return value;
+    return super.parse(value, writer);
   }
 }

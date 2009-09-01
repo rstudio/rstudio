@@ -13,7 +13,7 @@
   limitations under the License.
 -->
 
-<!DOCTYPE gwt:UiBinder 
+<!DOCTYPE ui:UiBinder 
   SYSTEM "http://google-web-toolkit.googlecode.com/svn/resources/xhtml.ent"
   [
     <!ENTITY % MyEntities SYSTEM "MyEntities.ent">
@@ -39,15 +39,12 @@
   and add your custom entity definitions to it, and use this 
   for your DOCTYPE:
   
-  <!DOCTYPE gwt:UiBinder SYSTEM "my-xhtml.ent">
+  <!DOCTYPE ui:UiBinder SYSTEM "my-xhtml.ent">
 -->
 
-<gwt:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:gwt='urn:import:com.google.gwt.user.client.ui'
   xmlns:demo='urn:import:com.google.gwt.uibinder.sample.client'
-
-  xmlns:foo='urn:with:com.google.gwt.uibinder.sample.client.FakeBundle'
-  xmlns:res='urn:with:com.google.gwt.uibinder.sample.client.WidgetBasedUiResources'
 
   ui:defaultLocale="en_us"
   ui:generateKeys="com.google.gwt.i18n.rebind.keygen.MD5KeyGenerator"
@@ -55,6 +52,8 @@
   ui:generateFilename="myapp_translate_source"
   ui:generateLocales="default"
 >
+<ui:with name='res' type='com.google.gwt.uibinder.sample.client.WidgetBasedUiResources' />
+<ui:with name='values' type='com.google.gwt.uibinder.sample.client.FakeBundle' />
 <gwt:DockPanel ui:field="root" width="100%">
   <gwt:Dock direction='NORTH'>
     <gwt:HTML>
@@ -82,7 +81,7 @@
   </gwt:Dock>
   <gwt:Dock direction='CENTER'>
     <gwt:HTMLPanel>
-      <p><ui:msg>This is a demonstration and test bed of GWT's nascent UiBinder
+      <p><ui:msg>This is a demonstration and test bed of GWT's UiBinder
       package. At the moment it works mainly as described in
       <a href="http://code.google.com/p/google-web-toolkit-incubator/wiki/DeclarativeUi"
         ui:ph="oldBlogLink">
@@ -113,7 +112,7 @@
           Of course, it could just as easily be a Tree under a MenuBar...
         </ui:msg>
       </p>
-      <div res:class="style.menuBar">
+      <div class="{res.style.menuBar}">
         <gwt:MenuBar ui:field="topMenuBar" vertical="false">
           <gwt:MenuItem>
             <div id="higgledy">
@@ -121,7 +120,7 @@
                 Higgeldy
                </ui:msg>
             </div>
-            <gwt:MenuBar vertical="true" res:styleName="style.menuBar">
+            <gwt:MenuBar vertical="true" styleName="{res.style.menuBar}">
               <gwt:MenuItem>able</gwt:MenuItem>
               <gwt:MenuItem>baker</gwt:MenuItem>
               <gwt:MenuItem>charlie</gwt:MenuItem>
@@ -133,7 +132,7 @@
                 Piggledy
               </ui:msg>
               </div>
-            <gwt:MenuBar vertical="true" res:styleName="style.menuBar">
+            <gwt:MenuBar vertical="true" styleName="{res.style.menuBar}">
               <gwt:MenuItem>delta</gwt:MenuItem>
               <gwt:MenuItem>echo</gwt:MenuItem>
               <gwt:MenuItem>foxtrot</gwt:MenuItem>
@@ -144,7 +143,7 @@
               <ui:msg description="Last 7 Day Period">Pop</ui:msg>
             </div>
             <gwt:MenuBar vertical="true" ui:field="dropdownMenuBar" 
-              res:styleName="style.menuBar">
+              styleName="{res.style.menuBar}">
               <gwt:MenuItem ui:field='menuItemCustomDateRange'>
                 <ui:msg description="Custom date range">
                   the Dog
@@ -240,8 +239,8 @@
        Templates work with what is now called ImmutableResourceBundle, but
        which you will soon come to know and love as ClientBundle. For example,
        this label gets its text from somplace tricky and its style from a resource:</p>
-      <gwt:Label ui:field='bundledLabel' foo:text="helloText" res:styleName="style.prettyText"/>
-      <p res:class="style.prettyText" id='prettyPara'>
+      <gwt:Label ui:field='bundledLabel' text="{values.helloText}" styleName="{res.style.prettyText}"/>
+      <p class="{res.style.prettyText}" id='prettyPara'>
         This stylish paragraph also gets its good looks from a
         resource.
       </p>
@@ -289,18 +288,18 @@
       <h2>Placeholders in localizables</h2>
       <p><ui:msg>When you mark up your text for translation, there will be bits
       that you don't want the translators to mess with. You can protect
-      these with <span id="placeholdersSpan" style="font-weight:bold" res:class="style.prettyText"
+      these with <span id="placeholdersSpan" style="font-weight:bold" class="{res.style.prettyText}"
         ui:ph="boldSpan">placeholders</span><ui:ph name="tm"><sup ui:field="tmElement"
-        res:class="style.tmText">TM</sup></ui:ph>.</ui:msg></p>
+        class="{res.style.tmText}">TM</sup></ui:ph>.</ui:msg></p>
 
       <p><ui:msg>You may also need to have <span ui:field="spanInMsg"
-      style="font-weight:bold" res:class="style.prettyText">named
-      portions</span> of <span res:class="style.prettyText">translatable text</span></ui:msg></p>
+      style="font-weight:bold" class="{res.style.prettyText}">named
+      portions</span> of <span class="{res.style.prettyText}">translatable text</span></ui:msg></p>
 
       <p><ui:msg>Of course you'll want to be able to do this kind of thing
       with widgets <demo:MyDatePicker/> as well, whether they <gwt:Label>HasText<ui:ph name="tm">*TM*</ui:ph></gwt:Label>
       or <gwt:HTML>HasHTML<ui:ph name="TM2"><sup ui:field="tmElementJr"
-        res:class="style.tmText">TM</sup></ui:ph></gwt:HTML></ui:msg></p> 
+        class="{res.style.tmText}">TM</sup></ui:ph></gwt:HTML></ui:msg></p> 
 
       <h2>Any Widget You Like</h2>
       <p><demo:AnnotatedStrictLabel text="This widget is not default instantiable." ui:field="strictLabel"/></p>
@@ -313,7 +312,7 @@
       </demo:StrictLabel></p>
       <p><demo:NeedlesslyAnnotatedLabel ui:field="needlessLabel"
         text="Sometimes people do things they don't need to do. Don't punish them."/></p>
-      <demo:FooLabel ui:field='theFoo' foo:foo="foo"/>
+      <demo:FooLabel ui:field='theFoo' pojo="{values.pojo}"/>
 
     <h2>How to use the debugId, addStyleNames, addDependentStyleNames attributes</h2>
     <p>You can use the <strong>debugId</strong>, <strong>addStyleNames</strong>, and <strong>addDependentStyleNames</strong>
@@ -329,7 +328,7 @@
 
     <b>Template:</b>
     <pre style="border: 1px dashed #666; padding: 5px 0;">
-  &lt;gwt:UiBinder
+  &lt;ui:UiBinder
     xmlns:ui='urn:ui:com.google.gwt.uibinder'
     xmlns:gwt='urn:import:com.google.gwt.user.client.ui'&gt;
 
@@ -340,7 +339,7 @@
       &lt;gwt:Button ui:field="btnGo" debugId="myButton" addStyleNames="buttonStyle" text="a button with extra attributes" /&gt;
     &lt;/gwt:FlowPanel>
 
-  &lt;/gwt:UiBinder&gt;</pre>
+  &lt;/ui:UiBinder&gt;</pre>
 
     <b>HTML:</b>
     <pre style="border: 1px dashed #666; padding: 5px 0;">
@@ -365,7 +364,7 @@
 
     <b>Template:</b>
     <pre style="border: 1px dashed #666; padding: 5px 0;">
-  &lt;gwt:UiBinder
+  &lt;ui:UiBinder
     xmlns:ui='urn:ui:com.google.gwt.uibinder'
     xmlns:gwt='urn:import:com.google.gwt.user.client.ui'&gt;
 
@@ -375,7 +374,7 @@
       &lt;gwt:TextBox ui:field="textbox" /&gt;
     &lt;/gwt:FlowPanel>
 
-  &lt;/gwt:UiBinder&gt;</pre>
+  &lt;/ui:UiBinder&gt;</pre>
 
   <b>The code:</b>
   <pre style="border: 1px dashed #666; padding: 5px 0;">
@@ -453,4 +452,4 @@
     </gwt:HTMLPanel>
   </gwt:Dock>
 </gwt:DockPanel>
-</gwt:UiBinder>
+</ui:UiBinder>

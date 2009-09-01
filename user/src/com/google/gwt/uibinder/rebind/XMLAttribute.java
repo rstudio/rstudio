@@ -15,6 +15,8 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.uibinder.parsers.FieldReferenceConverter;
+
 import org.w3c.dom.Attr;
 
 /**
@@ -34,7 +36,7 @@ public class XMLAttribute {
   public String consumeValue() {
     return xmlElem.consumeAttribute(w3cAttr.getName());
   }
-
+  
   public String getLocalName() {
     return w3cAttr.getLocalName();
   }
@@ -45,6 +47,10 @@ public class XMLAttribute {
 
   public String getNamespaceUri() {
     return w3cAttr.getNamespaceURI();
+  }
+
+  public boolean hasComputedValue() {
+    return FieldReferenceConverter.hasFieldReferences(w3cAttr.getValue());
   }
 
   public boolean hasToken() {

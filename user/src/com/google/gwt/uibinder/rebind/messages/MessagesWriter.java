@@ -97,7 +97,7 @@ public class MessagesWriter {
    *
    * <pre>
    * &lt;img src="blueSky.jpg" alt="A blue sky">
-   *   &lt;m:attribute m:name="alt" description="blue sky image alt text"/>
+   *   &lt;ui:attribute name="alt" description="blue sky image alt text"/>
    * &lt;/img>
    * </pre>
    *

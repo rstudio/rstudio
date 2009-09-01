@@ -37,9 +37,9 @@ public class FooLabel extends Composite {
     return getLabel().getText();
   }
 
-  public void setFoo(Foo foo) {
+  public void setPojo(ArbitraryPojo pojo) {
     getLabel().setText("This widget has non primitive properties: "
-        + foo.toString());
+        + pojo.toString());
   }
 
   private Label getLabel() {

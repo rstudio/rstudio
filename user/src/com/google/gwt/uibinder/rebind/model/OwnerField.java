@@ -22,7 +22,7 @@ import com.google.gwt.uibinder.client.UiField;
 
 /**
  * Descriptor for a field of the owner class.
- *
+ * <p>
  * Please notice that some fields defined in the XML and in the generated binder
  * class may not be present in the owner class - for instance, they may not be
  * relevant to the code of the owner class.
@@ -52,8 +52,6 @@ public class OwnerField {
       throw new UnableToCompleteException();
     }
 
-    // TODO(rdamazio): For non-widget classes (resources), this will be useless
-    //                 since there are no setters, no uiconstructor, etc.
     this.fieldType = OwnerFieldClass.getFieldClass(fieldClassType);
 
     // Get the UiField annotation and process it
@@ -88,5 +86,11 @@ public class OwnerField {
    */
   public boolean isProvided() {
     return isProvided;
+  }
+  
+  @Override
+  public String toString() {
+    return String.format("%s.%s#%s", fieldType.getRawType().getPackage(),
+        fieldType.getRawType().getName(), name);
   }
 }

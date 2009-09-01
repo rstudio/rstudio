@@ -18,9 +18,9 @@ package com.google.gwt.uibinder.sample.client;
 /**
  * Used when testing non-primitive property setting in templates.
  */
-public class Foo {
+public class ArbitraryPojo {
   @Override
   public String toString() {
-    return "I am a foo!";
+    return "I am an arbitrary pojo.";
   }
 }

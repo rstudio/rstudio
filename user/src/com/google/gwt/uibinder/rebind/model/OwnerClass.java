@@ -83,16 +83,6 @@ public class OwnerClass {
   }
 
   /**
-   * Returns the method annotated with @UiFactory which returns the given type.
-   *
-   * @param forType the type to look for a factory of
-   * @return the factory method, or null if none exists
-   */
-  public JMethod getUiFactoryMethod(OwnerFieldClass forType) {
-    return getUiFactoryMethod(forType.getRawType());
-  }
-
-  /**
    * Gets a field with the given name.
    * It's important to notice that a field may not exist on the owner class even
    * if it has a name in the XML and even has handlers attached to it -  such a
@@ -113,7 +103,9 @@ public class OwnerClass {
    *
    * @param type the type of the field
    * @return the field descriptor
+   * @deprecated This will die with {@link com.google.gwt.uibinder.parsers.BundleAttributeParser}
    */
+  @Deprecated 
   public OwnerField getUiFieldForType(JClassType type) {
     return uiFieldTypes.get(type);
   }
