@@ -25,6 +25,7 @@ import java.util.Date;
  */
 public class CookieTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
@@ -59,26 +60,36 @@ public class CookieTest extends GWTTestCase {
    * but does not expire before that time. 
    */
   public void testExpires() {
+    // Generate a random ID for the cookies. Since cookies are shared across
+    // browser instances, its possible for multiple instances of this test to
+    // run concurrently (eg. hosted and web mode tests).  If that happens,
+    // the cookies will be cleared while we wait for the timer to fire.
+    int uniqueId = Random.nextInt(9000000) + 1000000;
+    final String earlyCookie = "shouldExpireEarly" + uniqueId;
+    final String lateCookie = "shouldExpireLate" + uniqueId;
+    final String sessionCookie = "shouldNotExpire" + uniqueId;
+
     // Test that the cookie expires in 5 seconds
     Date expiresEarly = new Date(new Date().getTime() + (5 * 1000));
     Date expiresLate  = new Date(new Date().getTime() + (60 * 1000));
-    Cookies.setCookie("shouldExpireEarly", "early", expiresEarly);
-    Cookies.setCookie("shouldExpireLate", "late", expiresLate);
-    Cookies.setCookie("shouldNotExpire", "forever", null);
+    Cookies.setCookie(earlyCookie, "early", expiresEarly);
+    Cookies.setCookie(lateCookie, "late", expiresLate);
+    Cookies.setCookie(sessionCookie, "forever", null);
 
     // Wait until the cookie expires before checking it
     Timer timer = new Timer() {
+      @Override
       public void run() {
         // Verify that the early expiring cookie does NOT exist
-        assertNull(Cookies.getCookie("shouldExpireEarly"));
+        assertNull(Cookies.getCookie(earlyCookie));
 
         // Verify that the late expiring cookie does exist
-        assertEquals(Cookies.getCookie("shouldExpireLate"), "late");
+        assertEquals(Cookies.getCookie(lateCookie), "late");
 
         // Verify the session cookie doesn't expire
-        assertEquals(Cookies.getCookie("shouldNotExpire"), "forever");
-        Cookies.removeCookie("shouldNotExpire");
-        assertNull(Cookies.getCookie("shouldNotExpire"));
+        assertEquals(Cookies.getCookie(sessionCookie), "forever");
+        Cookies.removeCookie(sessionCookie);
+        assertNull(Cookies.getCookie(sessionCookie));
 
         // Finish the test
         finishTest();
@@ -96,11 +107,12 @@ public class CookieTest extends GWTTestCase {
     clearCookies();
 
     // Set a few cookies
+    int curCount = Cookies.getCookieNames().size();
     Cookies.setCookie("test1", "value1");
     Cookies.setCookie("test2", "value2");
     Cookies.setCookie("test3", "value3");
     Collection<String> cookies = Cookies.getCookieNames();
-    assertEquals(3, cookies.size());
+    assertEquals(curCount + 3, cookies.size());
 
     // Remove a cookie
     Cookies.removeCookie("test2");
@@ -120,20 +132,20 @@ public class CookieTest extends GWTTestCase {
     assertEquals(null, Cookies.getCookie("test2"));
     assertEquals(null, Cookies.getCookie("test3"));
     cookies = Cookies.getCookieNames();
-    assertEquals(0, cookies.size());
+    assertEquals(curCount, cookies.size());
 
     // Add/remove URI encoded cookies
     Cookies.setCookie("test1-test1", "value1 value1");
     Cookies.removeCookie("test1-test1");
     cookies = Cookies.getCookieNames();
-    assertEquals(0, cookies.size());
+    assertEquals(curCount, cookies.size());
 
     // Add/remove cookies that are not URI encoded
     Cookies.setUriEncode(false);
     Cookies.setCookie("test1+test1", "value1+value1");
     Cookies.removeCookie("test1+test1");
     cookies = Cookies.getCookieNames();
-    assertEquals(0, cookies.size());
+    assertEquals(curCount, cookies.size());
 
     // Make sure unencoded cookies with bogus format are not added
     try {
@@ -181,12 +193,15 @@ public class CookieTest extends GWTTestCase {
   }
 
   /**
-   * Clear out all existing cookies.
+   * Clear out all existing cookies, except the ones used in
+   * {@link #testExpires()}.
    */
   private void clearCookies() {
     Collection<String> cookies = Cookies.getCookieNames();
     for (String cookie : cookies) {
-      Cookies.removeCookie(cookie);
+      if (!cookie.startsWith("should")) {
+        Cookies.removeCookie(cookie);
+      }
     }
   }
 
@@ -204,11 +219,12 @@ public class CookieTest extends GWTTestCase {
     Cookies.setUriEncode(false);
 
     // Set a few cookies
+    int curCount = Cookies.getCookieNames().size();
     Cookies.setCookie("test1+test1", "value1", null, null, "/", false);
     Cookies.setCookie("test2", "value2+value2", null, null, "/", false);
     Cookies.setCookie("test3", "value3", null, null, "/", false);
     Collection<String> cookies = Cookies.getCookieNames();
-    assertEquals(3, cookies.size());
+    assertEquals(curCount + 3, cookies.size());
 
     // Remove a cookie
     Cookies.removeCookie("test2", "/");
@@ -228,7 +244,7 @@ public class CookieTest extends GWTTestCase {
     assertEquals(null, Cookies.getCookie("test2"));
     assertEquals(null, Cookies.getCookie("test3"));
     cookies = Cookies.getCookieNames();
-    assertEquals(0, cookies.size());
+    assertEquals(curCount, cookies.size());
 
     // First clear all cookies
     clearCookies();
@@ -241,7 +257,7 @@ public class CookieTest extends GWTTestCase {
     Cookies.setCookie("test2", "value2+value2", null, null, "/", false);
     Cookies.setCookie("test3", "value3", null, null, "/", false);
     cookies = Cookies.getCookieNames();
-    assertEquals(3, cookies.size());
+    assertEquals(curCount + 3, cookies.size());
 
     // Remove a cookie
     Cookies.removeCookie("test2", "/");
@@ -261,6 +277,6 @@ public class CookieTest extends GWTTestCase {
     assertEquals(null, Cookies.getCookie("test2"));
     assertEquals(null, Cookies.getCookie("test3"));
     cookies = Cookies.getCookieNames();
-    assertEquals(0, cookies.size());
+    assertEquals(curCount, cookies.size());
   }
 }
