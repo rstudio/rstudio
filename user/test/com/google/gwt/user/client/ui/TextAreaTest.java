@@ -54,11 +54,13 @@ public class TextAreaTest extends TextBoxBaseTestBase {
   private void testNewline(String text, int cursorPos, int startRange,
       int endRange) {
     TextBoxBase box = createTextBoxBase();
-    box.setText(text);
     RootPanel.get().add(box);
 
     // Browsers will manipulate the text when attached to the DOM, so we need
-    // to get the new value.
+    // to get the new value. Safari 4 delays the manipulation if the text was
+    // set before attaching the TextArea to the DOM, so we attach first and set
+    // the text second.
+    box.setText(text);
     text = box.getText();
 
     // Position the cursor in the newlines
