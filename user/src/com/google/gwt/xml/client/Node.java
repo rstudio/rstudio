@@ -215,7 +215,8 @@ public interface Node {
 
   /**
    * This method may collapse adjacent text nodes into one text node, depending
-   * on the implementation.
+   * on the implementation. Safari 4.0 and Chrome will also merge CDATA nodes
+   * into text nodes, even though they support CDATA nodes as distinct nodes.
    */
   void normalize();
 

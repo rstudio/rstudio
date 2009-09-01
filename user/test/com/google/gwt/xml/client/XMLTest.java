@@ -124,13 +124,16 @@ public class XMLTest extends GWTTestCase {
     top.getFirstChild().getFirstChild().appendChild(deep2);
 
     top.appendChild(d.createTextNode("0123456789"));
-    top.appendChild(d.createCDATASection("abcdefghij"));
+    top.appendChild(d.createTextNode("abcdefghij"));
+    top.appendChild(d.createElement("e4"));
+    top.appendChild(d.createCDATASection("klmnopqrst"));
     return d;
   }
 
   /**
    * Returns the module name for GWT unit test running.
    */
+  @Override
   public String getModuleName() {
     return "com.google.gwt.xml.XML";
   }
@@ -169,18 +172,18 @@ public class XMLTest extends GWTTestCase {
         createProcessingInstruction, createTextNode});
 
     for (int i = 0; i < canHaveChildren.size(); i++) {
-      Node parent = (Node) canHaveChildren.get(i);
+      Node parent = canHaveChildren.get(i);
       Node cloneParent = parent.cloneNode(false);
       if (canBeChildren.contains(parent)) {
         d.appendChild(cloneParent);
       }
       for (int j = 0; j < canBeChildren.size(); j++) {
-        Node child = (Node) canBeChildren.get(j);
+        Node child = canBeChildren.get(j);
         cloneParent.appendChild(child.cloneNode(false));
       }
       for (int j = 0; j < canBeChildren.size(); j++) {
         Node clonedChild = cloneParent.getChildNodes().item(j);
-        Node hopefullySameChild = (Node) canBeChildren.get(j);
+        Node hopefullySameChild = canBeChildren.get(j);
         assertEquals(hopefullySameChild.cloneNode(false).toString(),
             clonedChild.toString());
       }
@@ -441,22 +444,17 @@ public class XMLTest extends GWTTestCase {
     assertEquals("t data", t.getData(), "01234");
     assertEquals("LeftT data", rightT.getData(), "56789");
     CDATASection cd = (CDATASection) d.getDocumentElement().getChildNodes().item(
-        5);
+        7);
     Text rightCD = cd.splitText(5);
     assertEquals("cd and leftCd parent equality", cd.getParentNode(),
         rightCD.getParentNode());
     assertEquals("leftCD.getPreviousSibling", rightCD.getPreviousSibling(), cd);
     assertEquals("cd length", cd.getData().length(), 5);
     assertEquals("leftCD.length", rightCD.getData().length(), 5);
-    assertEquals("cd data", cd.getData(), "abcde");
-    assertEquals("leftCD data", rightCD.getData(), "fghij");
+    assertEquals("cd data", cd.getData(), "klmno");
+    assertEquals("leftCD data", rightCD.getData(), "pqrst");
     d.getDocumentElement().normalize();
-    if (XMLParser.supportsCDATASection()) {
-      assertEquals("normalized t", d.getDocumentElement().getChildNodes().item(
-          3).toString(), "0123456789");
-    } else {
-      assertEquals("normalized t", d.getDocumentElement().getChildNodes().item(
-          3).toString(), "0123456789abcdefghij");
-    }
+    assertEquals("normalized t", d.getDocumentElement().getChildNodes().item(
+        3).toString(), "0123456789abcdefghij");
   }
 }
