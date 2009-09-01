@@ -63,8 +63,18 @@ import com.google.gwt.uibinder.rebind.model.OwnerClass;
  */
 class HandlerEvaluator {
 
-  private static final String HANDLER_BASE_NAME = "handler";
-
+  private static final String HANDLER_BASE_NAME =
+    "handlerMethodWithNameVeryUnlikelyToCollideWithUserFieldNames";
+  /*
+   * TODO(rjrjr) The correct fix is to put the handlers in a locally defined
+   * class, making the generated code look like this:
+   *
+   *
+   * http://docs.google.com/Doc?docid=0AQfnKgX9tAdgZGZ2cTM5YjdfMmQ4OTk0eGhz&hl=en
+   *
+   * But that needs to wait for a refactor to get most of this stuff out of here
+   * and into com.google.gwt.uibinder.rebind.model
+   */
   private int varCounter = 0;
 
   private final TreeLogger logger;
@@ -222,7 +232,7 @@ class HandlerEvaluator {
    */
   void writeAddHandler(IndentedWriter writer, String handlerVarName,
       String addHandlerMethodName, String objectName) {
-    writer.write("this.%1$s.%2$s(%3$s);", objectName,
+    writer.write("%1$s.%2$s(%3$s);", objectName,
         addHandlerMethodName, handlerVarName);
   }
 

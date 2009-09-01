@@ -21,36 +21,24 @@ import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
 /**
- * Parses a raw dom element, as opposed to a widget or uiobject. Note that this
- * parser does not get a crack at every dom element--it only handles the case of
- * a dom element as ui root. Note also that it is intended to be used only by
- * {@link UiBinderWriter}, and will generate cast class exceptions if used
- * otherwise.
+ * Parses a dom element and all of its children. Note that this parser does not
+ * make recursive calls to parse child elements, unlike what goes on with widget
+ * parsers. Instead, we consume the inner html of the given element into
+ * a single string literal, used to instantiate the dom tree at run time.
  */
 public class DomElementParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
     HtmlInterpreter interpreter =
-        new HtmlInterpreter(writer, "root", new HtmlMessageInterpreter(writer,
-            "root"));
-
-    writer.setFieldInitializer(fieldName, "null");
+        new HtmlInterpreter(writer, fieldName, new HtmlMessageInterpreter(writer,
+            fieldName));
 
     interpreter.interpretElement(elem);
-    String rootHtml = elem.consumeOpeningTag() + elem.getClosingTag();
-    String rootType = getFQTypeName(type);
-    writer.genRoot(String.format(
-        "(%1$s) UiBinderUtil.fromHtml(\"%2$s\")", rootType, rootHtml));
 
-    String innerHtml = elem.consumeInnerHtml(interpreter);
-
-    if (innerHtml.trim().length() > 0) { // TODO(rjrjr) Really want this check?
-      writer.addStatement("root.setInnerHTML(\"%s\");", innerHtml);
-    }
-  }
-
-  private String getFQTypeName(JClassType type) {
-    return type.getPackage().getName() + "." + type.getName();
+    String html = elem.consumeOpeningTag() + elem.consumeInnerHtml(interpreter)
+      + elem.getClosingTag();
+    writer.setFieldInitializer(fieldName, String.format(
+        "(%1$s) UiBinderUtil.fromHtml(\"%2$s\")", type.getQualifiedSourceName(), html));
   }
 }

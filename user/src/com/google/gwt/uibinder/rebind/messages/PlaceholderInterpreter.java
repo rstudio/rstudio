@@ -86,7 +86,7 @@ public abstract class PlaceholderInterpreter implements
       return nextPlaceholder(name, example, value);
     }
 
-    if (uiWriter.isWidget(elem)) {
+    if (uiWriter.isWidgetElement(elem)) {
       uiWriter.die("Found %s in a message that cannot contain widgets", elem);
     }
     return null;

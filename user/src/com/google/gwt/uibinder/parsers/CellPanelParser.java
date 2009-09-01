@@ -90,14 +90,14 @@ public class CellPanelParser implements ElementParser {
         if (widget == null) {
           writer.die("Cell must contain a single child widget");
         }
-        String childFieldName = writer.parseWidget(widget);
+        String childFieldName = writer.parseElementToField(widget);
         writer.addStatement("%1$s.add(%2$s);", fieldName, childFieldName);
 
         // Parse the cell tag's alignment & size attributes.
         parseCellAttributes(child, fieldName, childFieldName, writer);
       } else {
         // It's just a normal child, so parse it as a widget.
-        String childFieldName = writer.parseWidget(child);
+        String childFieldName = writer.parseElementToField(child);
         writer.addStatement("%1$s.add(%2$s);", fieldName, childFieldName);
       }
     }

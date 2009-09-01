@@ -61,7 +61,7 @@ public class TabPanelParser implements ElementParser {
           if (childFieldName != null) {
             writer.die("gwt:Tab may only have a single child widget");
           }
-          childFieldName = writer.parseWidget(tabChild);
+          childFieldName = writer.parseElementToField(tabChild);
         }
       }
 

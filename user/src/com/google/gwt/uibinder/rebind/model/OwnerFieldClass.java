@@ -57,7 +57,7 @@ public class OwnerFieldClass {
     OwnerFieldClass clazz = FIELD_CLASSES.get(forType);
     if (clazz == null) {
       clazz = new OwnerFieldClass(forType);
-      FIELD_CLASSES.put(forType, clazz); 
+      FIELD_CLASSES.put(forType, clazz);
     }
     return clazz;
   }
@@ -96,6 +96,10 @@ public class OwnerFieldClass {
    */
   public JMethod getSetter(String propertyName)
       throws UnableToCompleteException {
+    // TODO(rjrjr) This fails for CheckBox#setValue(Boolean) because it
+    // also finds CheckBox#setValue(Boolean, Boolean). Must fix for 2.0,
+    // when CheckBox#setChecked will go away and CheckBox#setValue must be used
+
     if (ambiguousSetters != null && ambiguousSetters.contains(propertyName)) {
       // TODO(rdamazio): proper logging
       System.out.println("Ambiguous setter requested: " + rawType.getName()
@@ -215,7 +219,7 @@ public class OwnerFieldClass {
     for (String propertyName : allSetters.keySet()) {
       Collection<JMethod> propertySetters = allSetters.get(propertyName);
       JMethod setter = disambiguateSetters(propertySetters);
-      
+
       // If no setter could be disambiguated for this property, add it to the
       // set of ambiguous setters. This is later consulted if and only if the
       // setter is used.

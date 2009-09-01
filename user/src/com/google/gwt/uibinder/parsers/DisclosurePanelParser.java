@@ -82,14 +82,14 @@ public class DisclosurePanelParser implements ElementParser {
           writer.die("In %s, DisclosurePanel cannot contain more than one header widget.", elem);
         }
         child.consumeAttribute(headerAttributeName);
-        headerFieldName = writer.parseWidget(child);
+        headerFieldName = writer.parseElementToField(child);
         childIsHeader = true;
       }
       if (!childIsHeader) {
         if (childFieldName != null) {
           writer.die("In %s, DisclosurePanel cannot contain more than one content widget.", elem);
         }
-        childFieldName = writer.parseWidget(child);
+        childFieldName = writer.parseElementToField(child);
       }
     }
 

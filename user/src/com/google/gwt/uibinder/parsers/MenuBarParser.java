@@ -51,7 +51,7 @@ public class MenuBarParser implements ElementParser {
         }
       }
 
-      String itemFieldName = writer.parseWidget(child);
+      String itemFieldName = writer.parseElementToField(child);
 
       writer.addStatement("%1$s.addItem(%2$s);", fieldName, itemFieldName);
     }

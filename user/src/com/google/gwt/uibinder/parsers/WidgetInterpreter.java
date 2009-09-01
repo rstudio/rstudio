@@ -73,7 +73,7 @@ class WidgetInterpreter implements PostProcessingInterpreter<String> {
   }
 
   public String interpretElement(XMLElement elem) throws UnableToCompleteException {
-    if (uiWriter.isWidget(elem)) {
+    if (uiWriter.isWidgetElement(elem)) {
       // Allocate a local variable to hold the dom id for this widget. Note
       // that idHolder is a local variable reference, not a string id. We
       // have to generate the ids at runtime, not compile time, or else
@@ -102,7 +102,7 @@ class WidgetInterpreter implements PostProcessingInterpreter<String> {
      */
     for (String idHolder : idToWidgetElement.keySet()) {
       XMLElement childElem = idToWidgetElement.get(idHolder);
-      String childField = uiWriter.parseWidget(childElem);
+      String childField = uiWriter.parseElementToField(childElem);
       uiWriter.addInitStatement("%1$s.addAndReplaceElement(%2$s, %3$s);", fieldName,
           childField, idHolder);
     }

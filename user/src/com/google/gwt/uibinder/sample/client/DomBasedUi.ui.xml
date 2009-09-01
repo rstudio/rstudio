@@ -14,14 +14,10 @@
 <ui:UiBinder
   xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:res='urn:with:com.google.gwt.uibinder.sample.client.DomBasedUi.Resources'
-
-  ui:defaultLocale="en_us"
-  ui:generateKeys="com.google.gwt.i18n.rebind.keygen.MD5KeyGenerator"
-  ui:generateFormat="com.google.gwt.i18n.rebind.format.PropertiesFormat"
-  ui:generateFilename="myapp_translate_source"
-  ui:generateLocales="default"
   >
-  <div res:class="style.bodyColor style.bodyFont">
+  <div ui:field='root' res:class="style.bodyColor style.bodyFont" 
+      title="The title of this div is localizable">
+    <ui:attribute name='title'/>
     Hello, <span ui:field="nameSpan" />.
     <ui:msg>How goes it?</ui:msg>
       <h2 res:class="style.bodyColor style.bodyFont">Placeholders in localizables</h2>

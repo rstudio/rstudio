@@ -24,7 +24,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.Strict;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiTemplate;
 
 /**
  * Sample use of a {@code UiBinder} with no dependency on
@@ -48,8 +47,6 @@ public class DomBasedUi {
     String bodyFont();
   }
 
-  @UiTemplate("DomBasedUi.ui.xml")
-  // Actually, it will default to this name w/o annotation
   interface Binder extends UiBinder<Element, DomBasedUi> {
   }
 
@@ -60,34 +57,20 @@ public class DomBasedUi {
 
   @UiField SpanElement nameSpan;
   @UiField Element tmElement;
-
-  private final Element root;
-  private final String yourNameHere;
-
-  private boolean gotRoot = false;
+  @UiField Element root;
 
   public DomBasedUi(String yourNameHere) {
-    this.yourNameHere = yourNameHere;
-    root = binder.createUiRoot(this);
-
     // Inject only once.
     if (!stylesInjected) {
       StyleInjector.injectStylesheet(res.style().getText());
       stylesInjected = true;
     }
 
-    // Or if you don't care about deferred rendering...
-//    root = binder.createAndBindUi(this);
-//    nameSpan.setInnerText(yourNameHere);
-    // ...and delete gotRoot and the bulk of #getElement
+    binder.createAndBindUi(this);
+    nameSpan.setInnerText(yourNameHere);
   }
 
   public Element getRoot() {
-    if (!gotRoot) {
-      binder.bindUi(root, this);
-      nameSpan.setInnerText(yourNameHere);
-      gotRoot = true;
-    }
     return root;
   }
 }

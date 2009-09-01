@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -55,13 +55,6 @@ public class FieldWriter {
   }
 
   /**
-   * @return the fully qualified name of this field's type
-   */
-  public String getFullTypeName() {
-    return type.getPackage().getName() + "." + type.getName();
-  }
-
-  /**
    * @return the type of this field
    */
   public JClassType getType() {
@@ -79,7 +72,7 @@ public class FieldWriter {
    * Used to provide an initializer string to use instead of a
    * {@link com.google.gwt.core.client.GWT#create()} call. Note that this is an
    * RHS expression. Don't include the leading '=', and don't end it with ';'.
-   * 
+   *
    * @throws IllegalStateException on second attempt to set the initializer
    */
   public void setInitializer(String initializer) {
@@ -112,7 +105,7 @@ public class FieldWriter {
 
   /**
    * Write the field delcaration.
-   * 
+   *
    * @return false if unable to write for lack of a default constructor
    */
   // TODO(rjrjr) This return code thing is silly. We should
@@ -138,10 +131,10 @@ public class FieldWriter {
         return false;
       }
       initializer = String.format("(%1$s) GWT.create(%1$s.class)",
-          getFullTypeName());
+          type.getQualifiedSourceName());
     }
 
-    w.write("%s %s = %s;", getFullTypeName(), name, initializer);
+    w.write("%s %s = %s;", type.getQualifiedSourceName(), name, initializer);
 
     this.written = true;
     return true;

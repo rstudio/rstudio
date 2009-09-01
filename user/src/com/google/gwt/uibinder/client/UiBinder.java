@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,38 +26,17 @@ package com.google.gwt.uibinder.client;
  * in {@code /bar/baz/Foo.ui.xml}. (To use a different template file, put the
  * {@link UiTemplate} annotation on your UiBinder interface declaration to point
  * the code generator at it.)
- * 
+ *
  * @param <U> The type of the root object of the generated UI, typically a
  *          subclass of {@link com.google.gwt.dom.client.Element} or
  *          {@link com.google.gwt.user.client.ui.UIObject}
  * @param <O> The type of the object that will own the generated UI
  */
 public interface UiBinder<U, O> {
-
-  /**
-   * Creates and returns the root object of the UI. If possible the creation of
-   * the rest of the UI is deferred until {@link #bindUi} is called.
-   * 
-   * @deprecated The use case for this complexity never materialized. Use
-   *             {@link #createAndBindUi}
-   */
-  @Deprecated
-  U createUiRoot(O owner);
-
-  /**
-   * Completes the creation of a UI started with a call to {@link #createUiRoot}, 
-   * and fills any owner fields tagged with {@link UiField}.
-   * 
-   * @deprecated The use case for this complexity never materialized. Use
-   *             {@link #createAndBindUi}
-   */
-  @Deprecated
-  void bindUi(U root, O owner);
-
   /**
    * Creates and returns the root object of the UI, and fills any fields of owner
    * tagged with {@link UiField}.
-   * 
+   *
    * @param owner the object whose {@literal @}UiField needs will be filled
    */
   U createAndBindUi(O owner);

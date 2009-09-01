@@ -77,11 +77,11 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   public String interpretElement(XMLElement elem)
       throws UnableToCompleteException {
 
-    if (!uiWriter.isWidget(elem)) {
+    if (!uiWriter.isWidgetElement(elem)) {
       return super.interpretElement(elem);
     }
 
-    JClassType type = uiWriter.findWidgetOrElementType(elem);
+    JClassType type = uiWriter.findFieldType(elem);
     TypeOracle oracle = uiWriter.getOracle();
 
     MessagesWriter mw = uiWriter.getMessages();
@@ -112,7 +112,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   public String postProcess(String consumed) throws UnableToCompleteException {
     for (String idHolder : idToWidgetElement.keySet()) {
       XMLElement childElem = idToWidgetElement.get(idHolder);
-      String childField = uiWriter.parseWidget(childElem);
+      String childField = uiWriter.parseElementToField(childElem);
 
       genSetWidgetTextCall(idHolder, childField);
       uiWriter.addInitStatement("%1$s.addAndReplaceElement(%2$s, %3$s);",

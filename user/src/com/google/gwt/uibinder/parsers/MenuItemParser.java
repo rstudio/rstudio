@@ -64,7 +64,7 @@ public class MenuItemParser implements ElementParser {
           writer.die("In %s, only one MenuBar may be contained in a MenuItem",
               errorContext);
         }
-        menuBarField = writer.parseWidget(elem);
+        menuBarField = writer.parseElementToField(elem);
         return "";
       }
 

@@ -69,7 +69,7 @@ public class DockPanelParser implements ElementParser {
       if (widget == null) {
         writer.die("Dock must contain a single child widget.");
       }
-      String childFieldName = writer.parseWidget(widget);
+      String childFieldName = writer.parseElementToField(widget);
       writer.addStatement("%1$s.add(%2$s, %3$s);", fieldName, childFieldName, translated);
 
       // And they can optionally have a width.
