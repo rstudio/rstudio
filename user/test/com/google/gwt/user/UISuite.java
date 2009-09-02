@@ -133,6 +133,7 @@ public class UISuite {
     suite.addTestSuite(FlexTableTest.class);
     suite.addTestSuite(FlowPanelTest.class);
     suite.addTestSuite(FocusPanelTest.class);
+    // Old Mozilla complains about the cross-site forms in FormPanelTest.
     // suite.addTestSuite(FormPanelTest.class);
     suite.addTestSuite(GridTest.class);
     suite.addTestSuite(HiddenTest.class);

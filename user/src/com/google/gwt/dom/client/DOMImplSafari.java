@@ -20,6 +20,17 @@ package com.google.gwt.dom.client;
  */
 class DOMImplSafari extends DOMImplStandard {
 
+  /**
+   * The type property on a button element is read-only in safari, so we need to 
+   * set it using setAttribute.
+   */
+  @Override
+  public native ButtonElement createButtonElement(Document doc, String type) /*-{
+    var e = doc.createElement("BUTTON");
+    e.setAttribute('type', type);
+    return e;
+  }-*/;
+
   @Override
   public native NativeEvent createKeyEvent(Document doc, String type, boolean canBubble,
       boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,

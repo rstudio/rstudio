@@ -18,18 +18,22 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
+import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
 import com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder;
 
 /**
  * Tests the FormPanel.
  * 
- * @see FormPanelTestServlet
+ * @see com.google.gwt.user.server.ui.FormPanelTestServlet
  */
 public class FormPanelTest extends GWTTestCase {
   public static boolean clicked = false;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.FormPanelTest";
   }
@@ -162,14 +166,47 @@ public class FormPanelTest extends GWTTestCase {
     form.submit();
   }
 
+  public void testNamedTargetSubmitEvent() {
+    // Create a form and frame in the document we can wrap.
+    String uid = Document.get().createUniqueId();
+    HTML formAndFrame = new HTML(
+        "<form id='"
+            + uid
+            + "' method='post' target='targetFrame' action='"
+            + GWT.getModuleBaseURL()
+            + "formHandler?sendHappyHtml'>"
+            + "<input type='submit' id='submitBtn'></input></form>"
+            + "<iframe src='javascript:\'\'' id='targetMe' name='targetFrame'></iframe>");
+    RootPanel.get().add(formAndFrame);
+
+    // Wrap the form and make sure its target frame is intact.
+    FormPanel form = FormPanel.wrap(Document.get().getElementById(uid));
+    assertEquals("targetFrame", form.getTarget());
+
+    // Ensure that no synthesized iframe was created.
+    assertNull(form.getSynthesizedIFrame());
+
+    // Submit the form using the submit button and make sure the submit event fires.
+    delayTestFinish(5000);
+    form.addSubmitHandler(new SubmitHandler() {
+      public void onSubmit(SubmitEvent event) {
+        finishTest();
+      }
+    });
+
+    Document.get().getElementById("submitBtn").<InputElement>cast().click();
+  }
+
   public void testReset() {
     FormPanel form = new FormPanel();
+    RootPanel.get().add(form);
     TextBox textBox = new TextBox();
     textBox.setText("Hello World");
     form.setWidget(textBox);
     assertEquals("Hello World", textBox.getText());
     form.reset();
     assertEquals("", textBox.getText());
+    RootPanel.get().remove(form);
   }
 
   public void testSubmitAndHideDialog() {
@@ -219,6 +256,7 @@ public class FormPanelTest extends GWTTestCase {
 
     delayTestFinish(10000);
     Timer t = new Timer() {
+      @Override
       public void run() {
         // Make sure the frame got the contents we expected.
         assertTrue(isHappyDivPresent(frame.getElement()));
