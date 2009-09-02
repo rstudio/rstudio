@@ -22,7 +22,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Window;
 
 /**
- * TODO: document me.
+ * Tests for {@link AbsolutePanel}.
  */
 public class AbsolutePanelTest extends GWTTestCase {
 
@@ -34,6 +34,19 @@ public class AbsolutePanelTest extends GWTTestCase {
     HasWidgetsTester.testAll(new AbsolutePanel());
   }
 
+  /**
+   * AbsolutePanel once had a bug where calling
+   * {@link AbsolutePanel#add(Widget, int, int)} twice on the same child widget
+   * would throw an {@link IndexOutOfBoundsException}.
+   */
+  public void testDoubleAdd() {
+    AbsolutePanel absolutePanel = new AbsolutePanel();
+    Label label = new Label("label");
+
+    absolutePanel.add(label, 10, 10);
+    absolutePanel.add(label, 10, 10);
+  }
+  
   @DoNotRunWith(Platform.Htmlunit)
   public void testPositioning() {
     // Make an absolute panel with a label at (3, 7).

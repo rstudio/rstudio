@@ -25,7 +25,8 @@ import com.google.gwt.user.client.Element;
  * <img class='gallery' src='VerticalPanel.png'/>
  * </p>
  */
-public class VerticalPanel extends CellPanel implements HasAlignment {
+public class VerticalPanel extends CellPanel implements HasAlignment,
+    InsertPanel {
 
   private HorizontalAlignmentConstant horzAlign = ALIGN_DEFAULT;
   private VerticalAlignmentConstant vertAlign = ALIGN_TOP;
@@ -38,12 +39,6 @@ public class VerticalPanel extends CellPanel implements HasAlignment {
     DOM.setElementProperty(getTable(), "cellPadding", "0");
   }
 
-  /**
-   * Adds a child widget to the panel. If the Widget is already attached to the
-   * VerticalPanel, it will be moved to the end of the panel.
-   * 
-   * @param w the widget to be added
-   */
   @Override
   public void add(Widget w) {
     Element tr = DOM.createTR();
@@ -61,21 +56,13 @@ public class VerticalPanel extends CellPanel implements HasAlignment {
     return vertAlign;
   }
 
-  /**
-   * Inserts a widget before the specified index. If the Widget is already
-   * attached to the VerticalPanel, it will be moved to the specified index.
-   * 
-   * @param w the widget to be inserted
-   * @param beforeIndex the index before which it will be inserted
-   * @throws IndexOutOfBoundsException if <code>beforeIndex</code> is out of
-   *           range
-   */
   public void insert(Widget w, int beforeIndex) {
     checkIndexBoundsForInsertion(beforeIndex);
 
     Element tr = DOM.createTR();
     Element td = createAlignedTd();
     DOM.appendChild(tr, td);
+
     /*
      * The case where we reinsert an already existing child is tricky.
      * 

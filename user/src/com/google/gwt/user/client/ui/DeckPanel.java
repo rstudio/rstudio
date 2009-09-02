@@ -31,7 +31,7 @@ import com.google.gwt.user.client.Element;
  * cleared.
  * </p>
  */
-public class DeckPanel extends ComplexPanel implements HasAnimation {
+public class DeckPanel extends ComplexPanel implements HasAnimation, InsertPanel {
   /**
    * The duration of the animation.
    */
@@ -244,11 +244,6 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
     setElement(DOM.createDiv());
   }
 
-  /**
-   * Adds the specified widget to the deck.
-   * 
-   * @param w the widget to be added
-   */
   @Override
   public void add(Widget w) {
     Element container = createWidgetContainer();
@@ -276,14 +271,6 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
     return getWidgetIndex(visibleWidget);
   }
 
-  /**
-   * Inserts a widget before the specified index.
-   * 
-   * @param w the widget to be inserted
-   * @param beforeIndex the index before which it will be inserted
-   * @throws IndexOutOfBoundsException if <code>beforeIndex</code> is out of
-   *           range
-   */
   public void insert(Widget w, int beforeIndex) {
     Element container = createWidgetContainer();
     DOM.insertChild(getElement(), container, beforeIndex);

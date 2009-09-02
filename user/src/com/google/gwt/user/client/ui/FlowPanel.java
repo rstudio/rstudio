@@ -26,7 +26,7 @@ import com.google.gwt.user.client.DOM;
  * <img class='gallery' src='FlowPanel.png'/>
  * </p>
  */
-public class FlowPanel extends ComplexPanel {
+public class FlowPanel extends ComplexPanel implements InsertPanel {
 
   /**
    * Creates an empty flow panel.

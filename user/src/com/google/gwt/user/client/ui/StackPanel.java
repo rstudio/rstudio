@@ -38,7 +38,7 @@ import com.google.gwt.user.client.Event;
  * {@example com.google.gwt.examples.StackPanelExample}
  * </p>
  */
-public class StackPanel extends ComplexPanel {
+public class StackPanel extends ComplexPanel implements InsertPanel {
   private static final String DEFAULT_STYLENAME = "gwt-StackPanel";
   private static final String DEFAULT_ITEM_STYLENAME = DEFAULT_STYLENAME
       + "Item";
@@ -62,11 +62,6 @@ public class StackPanel extends ComplexPanel {
     setStyleName(DEFAULT_STYLENAME);
   }
 
-  /**
-   * Adds a new child with the given widget.
-   * 
-   * @param w the widget to be added
-   */
   @Override
   public void add(Widget w) {
     insert(w, getWidgetCount());
@@ -104,14 +99,6 @@ public class StackPanel extends ComplexPanel {
     return visibleStack;
   }
 
-  /**
-   * Inserts a widget before the specified index.
-   * 
-   * @param w the widget to be inserted
-   * @param beforeIndex the index before which it will be inserted
-   * @throws IndexOutOfBoundsException if <code>beforeIndex</code> is out of
-   *           range
-   */
   public void insert(Widget w, int beforeIndex) {
     // header
     Element trh = DOM.createTR();

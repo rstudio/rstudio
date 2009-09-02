@@ -34,7 +34,7 @@ import com.google.gwt.user.client.Element;
  * the widget may be modified by the panel.
  * </p>
  */
-public class AbsolutePanel extends ComplexPanel {
+public class AbsolutePanel extends ComplexPanel implements InsertPanel {
 
   /**
    * Changes a DOM element's positioning to static.
@@ -70,11 +70,6 @@ public class AbsolutePanel extends ComplexPanel {
     setElement(elem);
   }
 
-  /**
-   * Adds a child widget to this panel.
-   * 
-   * @param w the child widget to be added
-   */
   @Override
   public void add(Widget w) {
     super.add(w, getElement());
@@ -95,8 +90,9 @@ public class AbsolutePanel extends ComplexPanel {
     // The Widget should be removed from its parent before any positional
     // changes are made to prevent flickering.
     w.removeFromParent();
+    int beforeIndex = getWidgetCount();
     setWidgetPositionImpl(w, left, top);
-    add(w);
+    insert(w, beforeIndex);
   }
 
   /**
@@ -123,6 +119,33 @@ public class AbsolutePanel extends ComplexPanel {
     checkWidgetParent(w);
     return DOM.getAbsoluteTop(w.getElement())
         - DOM.getAbsoluteTop(getElement());
+  }
+
+  public void insert(Widget w, int beforeIndex) {
+    insert(w, getElement(), beforeIndex, true);
+  }
+
+  /**
+   * Inserts a child widget at the specified position before the specified
+   * index. Setting a position of <code>(-1, -1)</code> will cause the child
+   * widget to be positioned statically. If the widget is already a child of
+   * this panel, it will be moved to the specified index.
+   * 
+   * @param w the child widget to be inserted
+   * @param left the widget's left position
+   * @param top the widget's top position
+   * @param beforeIndex the index before which it will be inserted
+   * @throws IndexOutOfBoundsException if <code>beforeIndex</code> is out of
+   *           range
+   */
+  public void insert(Widget w, int left, int top, int beforeIndex) {
+    // In order to avoid the potential for a flicker effect, it is necessary
+    // to set the position of the widget before adding it to the AbsolutePanel.
+    // The Widget should be removed from its parent before any positional
+    // changes are made to prevent flickering.
+    w.removeFromParent();
+    setWidgetPositionImpl(w, left, top);
+    insert(w, beforeIndex);
   }
 
   /**
