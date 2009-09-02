@@ -54,7 +54,6 @@ public class Button extends ButtonBase {
     assert Document.get().getBody().isOrHasChild(element);
 
     Button button = new Button(element);
-    assert "button".equalsIgnoreCase(button.getButtonElement().getType());
 
     // Mark it attached and remember it for cleanup.
     button.onAttach();
