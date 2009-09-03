@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
+import com.google.gwt.uibinder.rebind.model.ImplicitBundle;
 
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -55,15 +56,25 @@ public class UiBinderGenerator extends Generator {
 
     MessagesWriter messages = uiWriter.getMessages();
     if (messages.hasMessages()) {
-      PrintWriter mpw = genCtx.tryCreate(logger, packageName,
+      PrintWriter messagesPrintWriter = genCtx.tryCreate(logger, packageName,
           messages.getMessagesClassName());
-      if (mpw == null) {
+      if (messagesPrintWriter == null) {
         throw new RuntimeException("Tried to gen messages twice.");
       }
 
-      messages.write(mpw);
-      genCtx.commit(logger, mpw);
+      messages.write(messagesPrintWriter);
+      genCtx.commit(logger, messagesPrintWriter);
     }
+
+    ImplicitBundle bundleClass = uiWriter.getBundleClass();
+    PrintWriter bundlePrintWriter = genCtx.tryCreate(logger, packageName,
+        bundleClass.getClassName());
+    if (bundlePrintWriter == null) {
+      throw new RuntimeException("Tried to gen bundle twice.");
+    }
+
+    new BundleWriter(bundleClass, bundlePrintWriter, genCtx.getTypeOracle()).write();
+    genCtx.commit(logger, bundlePrintWriter);
   }
 
   @Override

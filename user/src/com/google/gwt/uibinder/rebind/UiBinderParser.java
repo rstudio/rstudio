@@ -18,7 +18,11 @@ package com.google.gwt.uibinder.rebind;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
+import com.google.gwt.uibinder.rebind.model.CssResourceGetter;
+import com.google.gwt.uibinder.rebind.model.ImplicitBundle;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
 
 /**
@@ -27,53 +31,76 @@ import com.google.gwt.uibinder.rebind.model.OwnerField;
  */
 public class UiBinderParser {
   // TODO(rjrjr) Make all the ElementParsers receive their dependencies via
-  // constructor like this one does, and make this an ElementParser
+  // constructor like this one does, and make this an ElementParser. I want
+  // guice!!!
 
   private final UiBinderWriter writer;
+  private final TypeOracle oracle;
   private final MessagesWriter messagesWriter;
   private final FieldManager fieldManager;
+  private final ImplicitBundle bundleClass;
 
   public UiBinderParser(UiBinderWriter writer, MessagesWriter messagesWriter,
-      FieldManager fieldManager) {
+      FieldManager fieldManager, TypeOracle oracle, ImplicitBundle bundleClass) {
     this.writer = writer;
+    this.oracle = oracle;
     this.messagesWriter = messagesWriter;
     this.fieldManager = fieldManager;
+    this.bundleClass = bundleClass;
   }
 
   /**
    * Parses the root UiBinder element, and kicks off the parsing of the rest of
    * the document.
    */
-  public String parse(XMLElement elem)
-      throws UnableToCompleteException {
+  public String parse(XMLElement elem) throws UnableToCompleteException {
+    // TODO(rjrjr) Clearly need to break these find* methods out into their own
+    // parsers, need registration scheme for ui binder's own parsers
+    findStyles(elem);
     findResources(elem);
     messagesWriter.findMessagesConfig(elem);
     XMLElement uiRoot = elem.consumeSingleChildElement();
     return writer.parseElementToField(uiRoot);
   }
 
-  /**
-   * Interprets <ui:with> elements.
-   */
-  private void createResource(XMLElement elem)
+  private JClassType consumeCssResourceType(XMLElement elem)
       throws UnableToCompleteException {
-    String resourceName = elem.consumeRequiredAttribute("name");
+    JClassType publicType = consumeTypeAttribute(elem);
+    JClassType cssResourceType = oracle.findType(CssResource.class.getCanonicalName());
+    if (!publicType.isAssignableTo(cssResourceType)) {
+      writer.die("In %s, type %s does not extend %s", elem, publicType.getQualifiedSourceName(),
+          cssResourceType.getQualifiedSourceName());
+    }
+    return publicType;
+  }
+
+  private JClassType consumeTypeAttribute(XMLElement elem)
+      throws UnableToCompleteException {
     String resourceTypeName = elem.consumeRequiredAttribute("type");
 
-    JClassType resourceType = writer.getOracle().findType(resourceTypeName);
+    JClassType resourceType = oracle.findType(resourceTypeName);
     if (resourceType == null) {
       writer.die("In %s, no such type %s", elem, resourceTypeName);
     }
 
+    return resourceType;
+  }
+
+  /**
+   * Interprets <ui:with> elements.
+   */
+  private void createResource(XMLElement elem) throws UnableToCompleteException {
+    String resourceName = elem.consumeRequiredAttribute("field");
+    JClassType resourceType = consumeTypeAttribute(elem);
     if (elem.getAttributeCount() > 0) {
-      writer.die("In %s, should only find attributes \"name\" and \"type\"");
+      writer.die("In %s, should only find attributes \"field\" and \"type\"");
     }
 
-    FieldWriter fieldWriter = fieldManager.registerField(resourceTypeName,
+    FieldWriter fieldWriter = fieldManager.registerField(resourceType,
         resourceName);
     OwnerField ownerField = writer.getOwnerClass().getUiField(resourceName);
 
-    // Perhaps it is provided via @UiField
+    /* Perhaps it is provided via @UiField */
 
     if (ownerField != null) {
       if (!resourceType.equals(ownerField.getType().getRawType())) {
@@ -86,7 +113,7 @@ public class UiBinderParser {
       }
     }
 
-    // Nope. Maybe a @UiFactory will make it
+    /* Nope. Maybe a @UiFactory will make it */
 
     JMethod factoryMethod = writer.getOwnerClass().getUiFactoryMethod(
         resourceType);
@@ -95,8 +122,24 @@ public class UiBinderParser {
           factoryMethod.getName()));
     }
 
-    // If neither of the above, the FieldWriter's default GWT.create call will
-    // do just fine.
+    /*
+     * If neither of the above, the FieldWriter's default GWT.create call will
+     * do just fine.
+     */
+  }
+
+  private void createStyle(XMLElement elem) throws UnableToCompleteException {
+    // Won't be required for long
+    String source = elem.consumeRequiredAttribute("source");
+    String name = elem.consumeAttribute("field", "style");
+    JClassType publicType = consumeCssResourceType(elem);
+
+    CssResourceGetter cssMethod = bundleClass.createCssResource(name, source,
+        publicType);
+    FieldWriter field = fieldManager.registerField(publicType,
+        cssMethod.getName());
+    field.setInitializer(String.format("%s.%s()", bundleClass.getFieldName(),
+        cssMethod.getName()));
   }
 
   private void findResources(XMLElement binderElement)
@@ -104,8 +147,7 @@ public class UiBinderParser {
     binderElement.consumeChildElements(new XMLElement.Interpreter<Boolean>() {
       public Boolean interpretElement(XMLElement elem)
           throws UnableToCompleteException {
-        if (!(writer.isBinderElement(elem)
-            && "with".equals(elem.getLocalName()))) {
+        if (!(writer.isBinderElement(elem) && "with".equals(elem.getLocalName()))) {
           return false; // Not of interest, do not consume
         }
 
@@ -116,4 +158,19 @@ public class UiBinderParser {
     });
   }
 
+  private void findStyles(XMLElement binderElement)
+      throws UnableToCompleteException {
+    binderElement.consumeChildElements(new XMLElement.Interpreter<Boolean>() {
+      public Boolean interpretElement(XMLElement elem)
+          throws UnableToCompleteException {
+        if (!(writer.isBinderElement(elem) && "style".equals(elem.getLocalName()))) {
+          return false; // Not of interest, do not consume
+        }
+
+        createStyle(elem);
+
+        return true; // consume
+      }
+    });
+  }
 }

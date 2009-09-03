@@ -15,16 +15,14 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JType;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Models a field to be written in the generated binder code. Note that this is
  * not necessarily a field that the user has declared. It's basically any
- * instance variable the generator will need.
+ * variable the generated UiBinder#createAndBindUi implementation will need.
  * <p>
  * A field can have a custom initialization statement, set via
  * {@link #setInitializer}. Without one it will be initialized via a
@@ -35,56 +33,33 @@ import java.util.Set;
  * that one can be initialized via reference to another. Circular references are
  * not supported, nor detected.
  */
-public class FieldWriter {
-  private final JClassType type;
-  private final String name;
-  private final Set<FieldWriter> needs = new HashSet<FieldWriter>();
+public interface FieldWriter {
 
-  private String initializer;
-  private boolean written;
+  String getQualifiedSourceName();
 
   /**
-   * Package protected, only TemplateWriter is allowed to instantiate
-   * FieldWriters.
-   * <p>
-   * Public for testing only
+   * @return the type of this field, or null if this field is of a type that has
+   *         not yet been generated
    */
-  FieldWriter(JClassType type, String name) {
-    this.type = type;
-    this.name = name;
-  }
+  JClassType getType();
 
   /**
-   * @return the type of this field
+   * Declares that the receiver depends upon the given field.
    */
-  public JClassType getType() {
-    return type;
-  }
-
-  /**
-   * Declares that the receiver depends upon the give field.
-   */
-  public void needs(FieldWriter f) {
-    needs.add(f);
-  }
+  void needs(FieldWriter f);
 
   /**
    * Used to provide an initializer string to use instead of a
    * {@link com.google.gwt.core.client.GWT#create()} call. Note that this is an
    * RHS expression. Don't include the leading '=', and don't end it with ';'.
+   * <p>
+   * TODO(rjrjr) Should be able to make this a constructor argument when
+   * BundleAttributeParser dies.
    *
+   * @throws UnableToCompleteException
    * @throws IllegalStateException on second attempt to set the initializer
    */
-  public void setInitializer(String initializer) {
-    // TODO(rjrjr) Should be able to make this a constructor argument
-    // when BundleAttributeParser dies
-    if (this.initializer != null) {
-      throw new IllegalStateException(String.format(
-          "Second attempt to set initializer for field \"%s\", "
-              + "from \"%s\" to \"%s\"", name, this.initializer, initializer));
-    }
-    this.initializer = initializer;
-  }
+  void setInitializer(String initializer);
 
   /**
    * @deprecated needed only by
@@ -94,49 +69,13 @@ public class FieldWriter {
    *           earlier call
    */
   @Deprecated
-  public void setInitializerMaybe(String initializer) {
-    if (this.initializer != null && !this.initializer.equals(initializer)) {
-      throw new IllegalStateException(String.format(
-          "Attempt to change initializer for field \"%s\", "
-              + "from \"%s\" to \"%s\"", name, this.initializer, initializer));
-    }
-    this.initializer = initializer;
-  }
+  void setInitializerMaybe(String initializer);
 
   /**
    * Write the field delcaration.
    *
-   * @return false if unable to write for lack of a default constructor
+   * @param logger
    */
-  // TODO(rjrjr) This return code thing is silly. We should
-  // just be calling {@link TemplateWriter#die}, but that's made complicated
-  // by an unfortunate override in UiBinderWriter. Fix this when that
-  // subclassing goes away.
-  public boolean write(IndentedWriter w) {
-    if (written) {
-      return true;
-    }
-
-    for (FieldWriter f : needs) {
-      // TODO(rdamazio, rjrjr) This is simplistic, and will fail when
-      // we support more interesting contexts (e.g. the same need being used
-      // inside two different
-      // LazyPanels)
-      f.write(w);
-    }
-
-    if (initializer == null) {
-      if ((type.isInterface() == null)
-          && (type.findConstructor(new JType[0]) == null)) {
-        return false;
-      }
-      initializer = String.format("(%1$s) GWT.create(%1$s.class)",
-          type.getQualifiedSourceName());
-    }
-
-    w.write("%s %s = %s;", type.getQualifiedSourceName(), name, initializer);
-
-    this.written = true;
-    return true;
-  }
+  void write(IndentedWriter w, TreeLogger logger)
+      throws UnableToCompleteException;
 }

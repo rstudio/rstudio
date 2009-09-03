@@ -18,7 +18,6 @@ package com.google.gwt.uibinder.sample.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Demonstration of templated UI. Used by UiBinderTest
@@ -27,8 +26,8 @@ public class UiBinderDemo implements EntryPoint {
 
   public void onModuleLoad() {
     DomBasedUi boundUi = new DomBasedUi("Mr. User Man");
-    Document.get().getBody().appendChild((boundUi).getRoot());
-    
-    RootPanel.get().add((Widget) new WidgetBasedUi());
+    Document.get().getBody().appendChild(boundUi.root);
+
+    RootPanel.get().add(new WidgetBasedUi());
   }
 }

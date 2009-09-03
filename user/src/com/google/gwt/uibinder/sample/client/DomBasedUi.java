@@ -69,8 +69,4 @@ public class DomBasedUi {
     binder.createAndBindUi(this);
     nameSpan.setInnerText(yourNameHere);
   }
-
-  public Element getRoot() {
-    return root;
-  }
 }

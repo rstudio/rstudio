@@ -38,7 +38,6 @@ public class MessagesWriter {
 
   public static final String ATTRIBUTE = "attribute";
 
-  private static final String MESSAGES_URI = "urn:messages:com.google.gwt.i18n";
   private static final String NAME = "name";
   private static final String[] EMPTY_ARRAY = {};
 
@@ -58,20 +57,15 @@ public class MessagesWriter {
       new HashMap<XMLElement, Collection<AttributeMessage>>();
 
   public MessagesWriter(String nameSpaceUri, TreeLogger logger, String generatedFrom,
-      String packageName, String implClassName) {
+      String packageName, String uiBinderImplClassName) {
     this.messagesNamespaceURI = nameSpaceUri;
     this.generatedFrom = generatedFrom;
     this.packageName = packageName;
 
     // Localizable classes cannot have underscores in their names.
-    this.messagesClassName = implClassName.replaceAll("_", "") + "GenMessages";
+    this.messagesClassName = uiBinderImplClassName.replaceAll("_", "") + "GenMessages";
 
     this.logger = logger;
-  }
-
-  public MessagesWriter(TreeLogger logger, String generatedFrom,
-      String packageName, String implClassName) {
-    this(MESSAGES_URI, logger, generatedFrom, packageName, implClassName);
   }
 
   /**

@@ -52,8 +52,26 @@
   ui:generateFilename="myapp_translate_source"
   ui:generateLocales="default"
 >
-<ui:with name='res' type='com.google.gwt.uibinder.sample.client.WidgetBasedUiResources' />
-<ui:with name='values' type='com.google.gwt.uibinder.sample.client.FakeBundle' />
+
+<ui:with field='external' type='com.google.gwt.uibinder.sample.client.WidgetBasedUiExternalResources'>
+  (This text is ignored, but it's a handy place to document a resource.)
+  
+  external is used to test receiving a resource from the owner via
+  @UiField(provided = true), particularly useful for dependency
+  injection via Gin and the like
+</ui:with>
+
+<ui:with field='values' type='com.google.gwt.uibinder.sample.client.FakeBundle'>
+  Tests the default creation of a resource via GWT.create(), and also the ability
+  for a resource to provide arbitrary objects to arbitrary attributes (look for FooLabel)
+</ui:with>
+
+<!-- 
+  Tests creating a CssResource from an external file.
+ -->
+<!--<ui:style field='myStyle' source='WidgetBasedUi.css' type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'/>-->
+<ui:style field='myStyle' source='WidgetBasedUi.css' type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'/>
+
 <gwt:DockPanel ui:field="root" width="100%">
   <gwt:Dock direction='NORTH'>
     <gwt:HTML>
@@ -112,7 +130,7 @@
           Of course, it could just as easily be a Tree under a MenuBar...
         </ui:msg>
       </p>
-      <div class="{res.style.menuBar}">
+      <div class="{myStyle.menuBar}">
         <gwt:MenuBar ui:field="topMenuBar" vertical="false">
           <gwt:MenuItem>
             <div id="higgledy">
@@ -120,7 +138,7 @@
                 Higgeldy
                </ui:msg>
             </div>
-            <gwt:MenuBar vertical="true" styleName="{res.style.menuBar}">
+            <gwt:MenuBar vertical="true" styleName="{myStyle.menuBar}">
               <gwt:MenuItem>able</gwt:MenuItem>
               <gwt:MenuItem>baker</gwt:MenuItem>
               <gwt:MenuItem>charlie</gwt:MenuItem>
@@ -132,7 +150,7 @@
                 Piggledy
               </ui:msg>
               </div>
-            <gwt:MenuBar vertical="true" styleName="{res.style.menuBar}">
+            <gwt:MenuBar vertical="true" styleName="{myStyle.menuBar}">
               <gwt:MenuItem>delta</gwt:MenuItem>
               <gwt:MenuItem>echo</gwt:MenuItem>
               <gwt:MenuItem>foxtrot</gwt:MenuItem>
@@ -143,7 +161,7 @@
               <ui:msg description="Last 7 Day Period">Pop</ui:msg>
             </div>
             <gwt:MenuBar vertical="true" ui:field="dropdownMenuBar" 
-              styleName="{res.style.menuBar}">
+              styleName="{myStyle.menuBar}">
               <gwt:MenuItem ui:field='menuItemCustomDateRange'>
                 <ui:msg description="Custom date range">
                   the Dog
@@ -182,11 +200,13 @@
       <gwt:StackPanel stylePrimaryName="myStyle" width="280px" ui:field='myStackPanel'>
         <gwt:Label text="Stack One Text"  gwt:StackPanel-text="Stack One"
             ui:field='myStackPanelItem'>
-          <!-- ui:attribute name="gwt:StackPanel-text" description="Label for Stack One"/ -->
+          <!-- ui:attribute name="gwt:StackPanel-text" description="Label for Stack One"/
+-->
           <ui:attribute name="text" description="Content for Stack One Text"/>
         </gwt:Label>
         <gwt:HTMLPanel gwt:StackPanel-text="Stack Two">
-          <!-- ui:attribute name="gwt:StackPanel-text" description="Label for Stack Two"/ -->
+          <!-- ui:attribute name="gwt:StackPanel-text" description="Label for Stack Two"/
+-->
           <div>
             <ui:msg description="Describe div content">Some other content</ui:msg>
           </div>
@@ -239,8 +259,8 @@
        Templates work with what is now called ImmutableResourceBundle, but
        which you will soon come to know and love as ClientBundle. For example,
        this label gets its text from somplace tricky and its style from a resource:</p>
-      <gwt:Label ui:field='bundledLabel' text="{values.helloText}" styleName="{res.style.prettyText}"/>
-      <p class="{res.style.prettyText}" id='prettyPara'>
+      <gwt:Label ui:field='bundledLabel' text="{values.helloText}" styleName="{external.style.prettyText}"/>
+      <p class="{external.style.prettyText}" id='prettyPara'>
         This stylish paragraph also gets its good looks from a
         resource.
       </p>
@@ -288,18 +308,18 @@
       <h2>Placeholders in localizables</h2>
       <p><ui:msg>When you mark up your text for translation, there will be bits
       that you don't want the translators to mess with. You can protect
-      these with <span id="placeholdersSpan" style="font-weight:bold" class="{res.style.prettyText}"
+      these with <span id="placeholdersSpan" style="font-weight:bold" class="{external.style.prettyText}"
         ui:ph="boldSpan">placeholders</span><ui:ph name="tm"><sup ui:field="tmElement"
-        class="{res.style.tmText}">TM</sup></ui:ph>.</ui:msg></p>
+        class="{external.style.tmText}">TM</sup></ui:ph>.</ui:msg></p>
 
       <p><ui:msg>You may also need to have <span ui:field="spanInMsg"
-      style="font-weight:bold" class="{res.style.prettyText}">named
-      portions</span> of <span class="{res.style.prettyText}">translatable text</span></ui:msg></p>
+      style="font-weight:bold" class="{external.style.prettyText}">named
+      portions</span> of <span class="{external.style.prettyText}">translatable text</span></ui:msg></p>
 
       <p><ui:msg>Of course you'll want to be able to do this kind of thing
       with widgets <demo:MyDatePicker/> as well, whether they <gwt:Label>HasText<ui:ph name="tm">*TM*</ui:ph></gwt:Label>
       or <gwt:HTML>HasHTML<ui:ph name="TM2"><sup ui:field="tmElementJr"
-        class="{res.style.tmText}">TM</sup></ui:ph></gwt:HTML></ui:msg></p> 
+        class="{external.style.tmText}">TM</sup></ui:ph></gwt:HTML></ui:msg></p> 
 
       <h2>Any Widget You Like</h2>
       <p><demo:AnnotatedStrictLabel text="This widget is not default instantiable." ui:field="strictLabel"/></p>

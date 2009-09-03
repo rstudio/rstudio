@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -47,15 +47,15 @@ public class XMLElement {
   public interface Interpreter<T> {
     /**
      * Given an XMLElement, return its filtered value.
-     *
+     * 
      * @throws UnableToCompleteException on error
      */
     T interpretElement(XMLElement elem) throws UnableToCompleteException;
   }
 
   /**
-   * Extends {@link Interpreter} with a method to be called after
-   * all elements have been processed.
+   * Extends {@link Interpreter} with a method to be called after all elements
+   * have been processed.
    */
   public interface PostProcessingInterpreter<T> extends Interpreter<T> {
     String postProcess(String consumedText) throws UnableToCompleteException;
@@ -85,7 +85,7 @@ public class XMLElement {
   private final UiBinderWriter writer;
 
   private final Element elem;
-  
+
   private final String debugString;
 
   {
@@ -143,7 +143,7 @@ public class XMLElement {
 
   /**
    * Consumes the given attribute as a boolean value.
-   *
+   * 
    * @throws UnableToCompleteException
    */
   public boolean consumeBooleanAttribute(String attr)
@@ -164,8 +164,8 @@ public class XMLElement {
    */
   public Iterable<XMLElement> consumeChildElements() {
     try {
-      Iterable<XMLElement> rtn =
-          consumeChildElements(new NoBrainInterpeter<Boolean>(true));
+      Iterable<XMLElement> rtn = consumeChildElements(new NoBrainInterpeter<Boolean>(
+          true));
       clearChildren(elem);
       return rtn;
     } catch (UnableToCompleteException e) {
@@ -177,7 +177,7 @@ public class XMLElement {
    * Consumes and returns all child elements selected by the interpreter. Note
    * that text nodes are not elements, and so are not presented for
    * interpretation, and are not consumed.
-   *
+   * 
    * @param interpreter Should return true for any child that should be consumed
    *          and returned.
    * @throws UnableToCompleteException
@@ -217,7 +217,7 @@ public class XMLElement {
    * The odds are you want to use
    * {@link com.google.gwt.templates.parsers.HtmlInterpreter} for an HTML value,
    * or {@link com.google.gwt.templates.parsers.TextInterpreter} for text.
-   *
+   * 
    * @param interpreter Called for each element, expected to return a string
    *          replacement for it, or null if it should be left as is
    */
@@ -250,7 +250,7 @@ public class XMLElement {
    * This call requires an interpreter to make sense of any special children.
    * The odds are you want to use
    * {@link com.google.gwt.templates.parsers.TextInterpreter}
-   *
+   * 
    * @throws UnableToCompleteException If any elements present are not consumed
    *           by the interpreter
    */
@@ -268,8 +268,7 @@ public class XMLElement {
       if (child.hasChildNodes() || child.getAttributeCount() > 0) {
         // TODO(rjrjr) This is not robust enough, and consumeInnerHtml needs
         // a similar check
-        writer.die("Text value of \"%s\" has illegal child \"%s\"", this,
-            child);
+        writer.die("Text value of \"%s\" has illegal child \"%s\"", this, child);
       }
     }
 
@@ -288,8 +287,8 @@ public class XMLElement {
   }
 
   /**
-     * Consumes all attributes, and returns a string representing the
-     * entire opening tag. E.g., "<div able='baker'>"
+   * Consumes all attributes, and returns a string representing the entire
+   * opening tag. E.g., "<div able='baker'>"
    */
   public String consumeOpeningTag() {
     String rtn = getOpeningTag();
@@ -373,8 +372,8 @@ public class XMLElement {
   }
 
   /**
-   * @return the parent element, or null if parent is null or a node type
-   * other than Element
+   * @return the parent element, or null if parent is null or a node type other
+   *         than Element
    */
   public XMLElement getParent() {
     Node parent = elem.getParentNode();

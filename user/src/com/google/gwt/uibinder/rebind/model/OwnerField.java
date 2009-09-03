@@ -74,7 +74,7 @@ public class OwnerField {
   }
 
   /**
-   * Returns a descriptor for the type of the field. 
+   * Returns a descriptor for the type of the field.
    */
   public OwnerFieldClass getType() {
     return fieldType;
@@ -87,7 +87,7 @@ public class OwnerField {
   public boolean isProvided() {
     return isProvided;
   }
-  
+
   @Override
   public String toString() {
     return String.format("%s.%s#%s", fieldType.getRawType().getPackage(),

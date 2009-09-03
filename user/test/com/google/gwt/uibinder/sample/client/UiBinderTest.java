@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.uibinder.client;
+package com.google.gwt.uibinder.sample.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
@@ -24,13 +24,6 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.uibinder.sample.client.ArbitraryPojo;
-import com.google.gwt.uibinder.sample.client.ClickyLink;
-import com.google.gwt.uibinder.sample.client.DomBasedUi;
-import com.google.gwt.uibinder.sample.client.FakeBundle;
-import com.google.gwt.uibinder.sample.client.FooLabel;
-import com.google.gwt.uibinder.sample.client.WidgetBasedUi;
-import com.google.gwt.uibinder.sample.client.WidgetBasedUiResources;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.DockPanel;
@@ -59,10 +52,10 @@ public class UiBinderTest extends GWTTestCase {
     super.gwtSetUp();
     RootPanel.get().clear();
     domUi = new DomBasedUi("Cherished User");
-    Document.get().getBody().appendChild(domUi.getRoot());
+    Document.get().getBody().appendChild(domUi.root);
 
     widgetUi = new WidgetBasedUi();
-    root = widgetUi.getRoot();
+    root = widgetUi.root;
     RootPanel.get().add(widgetUi);
   }
 
@@ -73,7 +66,7 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void testAccessToNonStandardElement() {
-    Element elm = widgetUi.getNonStandardElement();
+    Element elm = widgetUi.nonStandardElement;
     assertEquals("I", elm.getTagName());
   }
 
@@ -86,13 +79,13 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void testBundle() {
-    assertEquals(getCenter(), widgetUi.getBundledLabel().getParent());
+    assertEquals(getCenter(), widgetUi.bundledLabel.getParent());
     assertEquals(new FakeBundle().helloText(),
-        widgetUi.getBundledLabel().getText());
-    WidgetBasedUiResources resources = GWT.create(WidgetBasedUiResources.class);
+        widgetUi.bundledLabel.getText());
+    WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
     assertEquals("bundledLabel should have styleName",
         resources.style().prettyText(),
-        widgetUi.getBundledLabel().getStyleName());
+        widgetUi.bundledLabel.getStyleName());
 
     Element pretty = DOM.getElementById("prettyPara");
     assertEquals(resources.style().prettyText(), pretty.getClassName());
@@ -100,7 +93,7 @@ public class UiBinderTest extends GWTTestCase {
     ArbitraryPojo pojo = new ArbitraryPojo();
     FooLabel foo = new FooLabel();
     foo.setPojo(pojo);
-    assertEquals(foo.getText(), widgetUi.getTheFoo().getText());
+    assertEquals(foo.getText(), widgetUi.theFoo.getText());
   }
 
   public void testCenter() {
@@ -114,30 +107,30 @@ public class UiBinderTest extends GWTTestCase {
     assertTrue(html.contains("Button with"));
     assertTrue(html.contains("Of course"));
 
-    assertEquals(center, widgetUi.getMyButton().getParent());
+    assertEquals(center, widgetUi.myButton.getParent());
   }
 
   public void testComputedAttributeInPlaceholderedElement() {
-    WidgetBasedUiResources resources = GWT.create(WidgetBasedUiResources.class);
+    WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
     assertEquals(resources.style().prettyText(),
-        widgetUi.getSpanInMsg().getClassName());
+        widgetUi.spanInMsg.getClassName());
   }
 
   public void testComputedStyleInAPlaceholder() {
-    WidgetBasedUiResources resources = GWT.create(WidgetBasedUiResources.class);
+    WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
     assertEquals(resources.style().tmText(),
-        widgetUi.getTmElement().getClassName());
+        widgetUi.tmElement.getClassName());
   }
 
   public void testDomAccessAndComputedAttributeOnPlaceholderedElement() {
-    WidgetBasedUiResources resources = GWT.create(WidgetBasedUiResources.class);
+    WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
     Element elem = DOM.getElementById("placeholdersSpan");
     assertEquals("bold", elem.getStyle().getProperty("fontWeight"));
     assertEquals(resources.style().prettyText(), elem.getClassName());
   }
 
   public void testDomAccessInHtml() {
-    DivElement sideBar = widgetUi.getSideBar();
+    DivElement sideBar = widgetUi.sideBar;
     assertTrue("sideBar should start: \"This could\"",
         sideBar.getInnerText().startsWith("This could"));
     assertTrue("sideBar should end: \"example:\"",
@@ -146,7 +139,7 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void testDomAccessInHtmlPanel() {
-    SpanElement messageInMain = widgetUi.getMessageInMain();
+    SpanElement messageInMain = widgetUi.messageInMain;
     String text = messageInMain.getInnerText().trim();
     assertTrue("sideBar should start: \"This is the main area\"",
         text.startsWith("This is the main area"));
@@ -155,28 +148,28 @@ public class UiBinderTest extends GWTTestCase {
 
   public void testDomAttributeMessageWithFunnyChars() {
     ParagraphElement p =
-      widgetUi.getFunnyCharsMessageDomAttributeParagraph();
+      widgetUi.funnyCharsMessageDomAttributeParagraph;
     String t = p.getAttribute("title");
     assertEquals("funny characters \" ' ' & < > > { }", t);
   }
 
   public void testDomAttributeNoMessageWithFunnyChars() {
-    ParagraphElement p = widgetUi.getFunnyCharsDomAttributeParagraph();
+    ParagraphElement p = widgetUi.funnyCharsDomAttributeParagraph;
     String t = p.getAttribute("title");
     assertEquals("funny characters \" ' ' & < > > { }", t);
   }
 
   public void testDomTextMessageWithFunnyChars() {
-    String t = widgetUi.getFunnyCharsMessageParagraph().getInnerText();
+    String t = widgetUi.funnyCharsMessageParagraph.getInnerText();
     assertEquals("They might show up in body text that has been marked for "
         + "translation: funny characters \" \" ' ' & < > > { }",
         t);
   }
 
   public void suppressedForSafari3Fail_testDomTextNoMessageWithFunnyChars() {
-    ParagraphElement p = widgetUi.getFunnyCharsParagraph();
+    ParagraphElement p = widgetUi.funnyCharsParagraph;
     // WebKit does \n replace thing, so let's do it everywhere
-    String t = p.getInnerHTML().replace("\n", " ").toLowerCase(); 
+    String t = p.getInnerHTML().replace("\n", " ").toLowerCase();
     String expected = "Templates can be marked up for <b>localization</b>, which presents alls "
         + "kinds of exciting opportunities for bugs related to character escaping. "
         + "Consider these funny characters \" \" ' ' &amp; &lt; &gt; &gt; { }, and "
@@ -187,41 +180,40 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void testFieldAttribute() {
-    assertEquals(getCenter(), widgetUi.getGwtFieldLabel().getParent());
+    assertEquals(getCenter(), widgetUi.gwtFieldLabel.getParent());
   }
 
   public void testFieldInPlaceholderedElement() {
-    assertEquals("named portions", widgetUi.getSpanInMsg().getInnerText());
+    assertEquals("named portions", widgetUi.spanInMsg.getInnerText());
   }
 
   public void testMenuAttributes() {
-    WidgetBasedUiResources resources = GWT.create(WidgetBasedUiResources.class);
-    assertEquals(widgetUi.getDropdownMenuBar().getStyleName(),
-        resources.style().menuBar());
+    assertEquals(widgetUi.dropdownMenuBar.getStyleName(),
+        widgetUi.myStyle.menuBar());
   }
 
   public void testMenuItems() {
     // Has a legacy MenuItemHTML in its midst
     assertEquals("The pig's in a hurry",
-        widgetUi.getMenuItemLegacy().getElement().getInnerText());
+        widgetUi.menuItemLegacy.getElement().getInnerText());
     assertTrue("Style should include \"moppy\"",
-        widgetUi.getMenuItemMop().getStyleName().contains("moppy"));
+        widgetUi.menuItemMop.getStyleName().contains("moppy"));
   }
 
   public void testMessageTrimming() {
     assertEquals("Title area, specified largely in HTML.",
-        widgetUi.getTrimmedMessage().getInnerHTML());
+        widgetUi.trimmedMessage.getInnerHTML());
     assertEquals("Tommy can you hear me? Can you field me near you?",
-        widgetUi.getGwtFieldLabel().getText());
+        widgetUi.gwtFieldLabel.getText());
   }
-  
+
   public void testMinimalDom() {
     assertEquals("Expect no wrapper div around root", widgetUi.getElement(),
         root.getElement());
   }
 
   public void testNamedElementInAPlaceholder() {
-    assertEquals("TM", widgetUi.getTmElement().getInnerText());
+    assertEquals("TM", widgetUi.tmElement.getInnerText());
   }
 
   public void testNestedBundle() {
@@ -229,12 +221,12 @@ public class UiBinderTest extends GWTTestCase {
       GWT.create(DomBasedUi.Resources.class);
     assertEquals(resources.style().bodyColor()
         + " " + resources.style().bodyFont() ,
-        domUi.getRoot().getClassName());
+        domUi.root.getClassName());
   }
 
   public void suppressedForIEfail_testNonXmlEntities() {
     // This fragment includes both translated and non-translated strings
-    ParagraphElement mainParagraph = widgetUi.getMain();
+    ParagraphElement mainParagraph = widgetUi.main;
     final String innerHTML = mainParagraph.getInnerHTML().trim();
     assertTrue(innerHTML.contains(" \u261E \u2022 XHTML \u2022 \u261C"));
     assertTrue(innerHTML.startsWith("\u261E&nbsp;<span>"));
@@ -250,8 +242,8 @@ public class UiBinderTest extends GWTTestCase {
 
   @DoNotRunWith(Platform.Htmlunit)
   public void testRadioButton() {
-    RadioButton able = widgetUi.getMyRadioAble();
-    RadioButton baker = widgetUi.getMyRadioBaker();
+    RadioButton able = widgetUi.myRadioAble;
+    RadioButton baker = widgetUi.myRadioBaker;
     assertTrue("able should be checked", able.getValue());
     assertFalse("baker should not be checked", baker.getValue());
     assertEquals("radios", able.getName());
@@ -259,9 +251,9 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void testStackPanel() {
-    StackPanel p = widgetUi.getMyStackPanel();
+    StackPanel p = widgetUi.myStackPanel;
     assertNotNull("Panel exists", p);
-    Widget w = widgetUi.getMyStackPanelItem();
+    Widget w = widgetUi.myStackPanelItem;
     assertNotNull("Widget exists", w);
     boolean containsWidget = false;
     for (int i = 0; i < p.getWidgetCount(); i++) {
@@ -273,9 +265,9 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void testDisclosurePanel() {
-    DisclosurePanel p = widgetUi.getMyDisclosurePanel();
+    DisclosurePanel p = widgetUi.myDisclosurePanel;
     assertNotNull("Panel exists", p);
-    Widget w = widgetUi.getMyDisclosurePanelItem();
+    Widget w = widgetUi.myDisclosurePanelItem;
     assertNotNull("Widget exists", w);
     assertEquals("Panel contains widget", w, p.getContent());
   }
@@ -283,7 +275,7 @@ public class UiBinderTest extends GWTTestCase {
   public void testStringAttributeIgnoresStaticSetter() {
     // Assumes setPopupText() is overloaded such that there is a static
     // setPopupText(Foo, String) method.
-    ClickyLink clicky = widgetUi.getCustomLinkWidget();
+    ClickyLink clicky = widgetUi.customLinkWidget;
     assertEquals("overloaded setter should have been called",
                  "That tickles!", clicky.getPopupText());
   }
@@ -301,32 +293,32 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void testWidgetAttributeMessageWithFunnyChars() {
-    ClickyLink clicky = widgetUi.getFunnyCharsMessageAttributeWidget();
+    ClickyLink clicky = widgetUi.funnyCharsMessageAttributeWidget;
     String t = clicky.getPopupText();
     assertEquals("funny characters \" ' ' & < > > { }", t);
   }
 
   public void testWidgetAttributeNoMessageWithFunnyChars() {
-    ClickyLink clicky = widgetUi.getFunnyCharsAttributeWidget();
+    ClickyLink clicky = widgetUi.funnyCharsAttributeWidget;
     String t = clicky.getPopupText();
     assertEquals("funny characters \" ' ' & < > > { }", t);
   }
-  
+
   public void suppressForIEfail_testBizarrelyElementedWidgets() {
-    assertInOrder(widgetUi.getWidgetCrazyTable().getInnerHTML().toLowerCase(),
+    assertInOrder(widgetUi.widgetCrazyTable.getInnerHTML().toLowerCase(),
         "<td>they have been known</td>", "<td>to write widgets</td>",
         "<td>that masquerade</td>", "<td>as table cells,</td>",
         "<td>just like these.</td>", "<td>burma shave</td>");
 
-    assertInOrder(widgetUi.getWidgetCrazyOrderedList().getInnerHTML(),
+    assertInOrder(widgetUi.widgetCrazyOrderedList.getInnerHTML(),
         "<li>similar</li>", "<li>things</li>");
 
-    assertInOrder(widgetUi.getWidgetCrazyDefinitionList().getInnerHTML(),
+    assertInOrder(widgetUi.widgetCrazyDefinitionList.getInnerHTML(),
         "<dt>Being</dt>", "<dd>done</dd>", "<dd>with</dd>", "<dd>lists</dd>");
   }
 
   public void testCustomHtmlPanelTag() {
-    assertInOrder(widgetUi.getCustomTagHtmlPanel().getElement().getInnerHTML(),
+    assertInOrder(widgetUi.customTagHtmlPanel.getElement().getInnerHTML(),
         "<td>Even HTMLPanel gets in on the game</td>",
         "<td>Lately, anyway.</td>");
   }
@@ -340,7 +332,7 @@ public class UiBinderTest extends GWTTestCase {
     body = body.toLowerCase();
     int lastIndex = 0;
     String lastExpected = "";
-    
+
     for (String next : expected) {
       next = next.toLowerCase();
       int index = body.indexOf(next);

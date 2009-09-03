@@ -31,6 +31,8 @@ import com.google.gwt.uibinder.parsers.BundleAttributeParser;
 import com.google.gwt.uibinder.parsers.ElementParser;
 import com.google.gwt.uibinder.parsers.StrictAttributeParser;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
+import com.google.gwt.uibinder.rebind.model.CssResourceGetter;
+import com.google.gwt.uibinder.rebind.model.ImplicitBundle;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
 
@@ -50,7 +52,9 @@ import java.util.Map;
  * Writer for UiBinder generated classes.
  *
  * TODO(rdamazio): Refactor this, extract model classes, improve ordering
- * guarantees, etc. TODO(rjrjr): Improve error messages
+ * guarantees, etc.
+ *
+ * TODO(rjrjr): Improve error messages
  */
 @SuppressWarnings("deprecation")
 public class UiBinderWriter {
@@ -59,6 +63,10 @@ public class UiBinderWriter {
   private static final String PACKAGE_URI_SCHEME = "urn:import:";
 
   private static int domId = 0;
+
+  // TODO(rjrjr) Another place that we need a general anonymous field
+  // mechanism
+  private static final String CLIENT_BUNDLE_FIELD = "clientBundleFieldNameUnlikelyToCollideWithUserSpecifiedFieldOkay";
 
   public static String asCommaSeparatedList(String... args) {
     StringBuilder b = new StringBuilder();
@@ -170,15 +178,6 @@ public class UiBinderWriter {
     return list;
   }
 
-  private static String getFullTypeName(JClassType type) {
-    StringBuilder b = new StringBuilder(type.getPackage().getName());
-    if (b.length() > 0) {
-      b.append(".");
-    }
-    b.append(type.getName());
-    return b.toString();
-  }
-
   /**
    * Class names of parsers for values of attributes with no namespace prefix,
    * keyed by method parameter signatures.
@@ -187,25 +186,24 @@ public class UiBinderWriter {
    * the only thing that uses them.
    */
   private final Map<String, String> attributeParsers = new HashMap<String, String>();
-
   /**
    * Class names of parsers for various ui types, keyed by the classname of the
    * UI class they can build.
    */
   private final Map<String, String> elementParsers = new HashMap<String, String>();
+
   /**
    * Map of bundle parsers, keyed by bundle class name.
    */
   private final Map<String, BundleAttributeParser> bundleParsers = new HashMap<String, BundleAttributeParser>();
 
   private final List<String> initStatements = new ArrayList<String>();
-
   private final List<String> statements = new ArrayList<String>();
   private final HandlerEvaluator handlerEvaluator;
   private final MessagesWriter messages;
   private final Tokenator tokenator = new Tokenator();
-  private final TreeLogger logger;
 
+  private final TreeLogger logger;
   private final String templatePath;
   private final TypeOracle oracle;
   /**
@@ -216,6 +214,7 @@ public class UiBinderWriter {
    * The name of the class we're creating, e.g. MyUiBinderImpl
    */
   private final String implClassName;
+
   private final JClassType uiOwnerType;
 
   private final JClassType uiRootType;
@@ -223,6 +222,8 @@ public class UiBinderWriter {
   private final OwnerClass ownerClass;
 
   private final FieldManager fieldManager;
+
+  private final ImplicitBundle bundleClass;
 
   private int fieldIndex;
 
@@ -238,7 +239,8 @@ public class UiBinderWriter {
     this.oracle = oracle;
     this.logger = logger;
     this.templatePath = templatePath;
-    this.messages = createMessagesWriter(templatePath, logger);
+    this.messages = new MessagesWriter(BINDER_URI, logger, templatePath,
+        baseClass.getPackage().getName(), this.implClassName);
 
     JClassType uiBinderType = baseClass.getImplementedInterfaces()[0];
     JClassType[] typeArgs = uiBinderType.isParameterized().getTypeArgs();
@@ -246,8 +248,10 @@ public class UiBinderWriter {
     uiOwnerType = typeArgs[1];
 
     ownerClass = new OwnerClass(uiOwnerType);
+    bundleClass = new ImplicitBundle(baseClass.getPackage().getName(),
+        this.implClassName, CLIENT_BUNDLE_FIELD);
     handlerEvaluator = new HandlerEvaluator(ownerClass, logger, oracle);
-    fieldManager = new FieldManager(oracle, logger);
+    fieldManager = new FieldManager(logger);
   }
 
   /**
@@ -306,8 +310,8 @@ public class UiBinderWriter {
    */
   public String declareDomIdHolder() throws UnableToCompleteException {
     String domHolderName = "domId" + domId++;
-    FieldWriter domField = fieldManager.registerField("java.lang.String",
-        domHolderName);
+    FieldWriter domField = fieldManager.registerField(
+        oracle.findType(String.class.getName()), domHolderName);
     domField.setInitializer("com.google.gwt.dom.client.Document.get().createUniqueId()");
     return domHolderName;
   }
@@ -319,11 +323,20 @@ public class UiBinderWriter {
    */
   public String declareField(String typeName, XMLElement elem)
       throws UnableToCompleteException {
+    JClassType type = oracle.findType(typeName);
+    if (type == null) {
+      die("In %s, unknown type %s", elem, typeName);
+    }
+
     String fieldName = getFieldName(elem);
     if (fieldName == null) {
+      // TODO(rjrjr) could collide with user declared name, as is
+      // also a worry in HandlerEvaluator. Need a general scheme for
+      // anonymous fields. See the note in HandlerEvaluator and do
+      // something like that, but in FieldManager.
       fieldName = ("f_" + elem.getLocalName() + (++fieldIndex));
     }
-    fieldManager.registerField(typeName, fieldName);
+    fieldManager.registerField(type, fieldName);
     return fieldName;
   }
 
@@ -338,8 +351,7 @@ public class UiBinderWriter {
       throws UnableToCompleteException {
     String fieldName = getFieldName(elem);
     if (fieldName != null) {
-      String typeName = findFieldType(elem).getQualifiedSourceName();
-      fieldManager.registerField(typeName, fieldName);
+      fieldManager.registerField(findFieldType(elem), fieldName);
     }
     return fieldName;
   }
@@ -386,7 +398,7 @@ public class UiBinderWriter {
     String tagName = elem.getLocalName();
 
     if (!isWidgetElement(elem)) {
-      return findElementTypeForTag(tagName);
+      return findGwtDomElementTypeForTag(tagName);
     }
 
     String ns = elem.getNamespaceUri();
@@ -447,7 +459,8 @@ public class UiBinderWriter {
    * Find and return an appropriate attribute parser for an attribute and set of
    * parameters, or return null.
    * <p>
-   * If params is of size one, a parser of some kind is guaranteed to be returned.
+   * If params is of size one, a parser of some kind is guaranteed to be
+   * returned.
    */
   public AttributeParser getAttributeParser(XMLAttribute attribute,
       JParameter... params) throws UnableToCompleteException {
@@ -481,19 +494,19 @@ public class UiBinderWriter {
     String bundleClassName = attributePrefixUri.substring(BUNDLE_URI_SCHEME.length());
     BundleAttributeParser parser = bundleParsers.get(bundleClassName);
     if (parser == null) {
-      JClassType bundleClass = getOracle().findType(bundleClassName);
-      if (bundleClass == null) {
-        die("No such bundle class: " + bundleClassName);
+      JClassType bundleClassType = getOracle().findType(bundleClassName);
+      if (bundleClassType == null) {
+        die("No such resource class: " + bundleClassName);
       }
-      parser = createBundleParser(bundleClass, attribute);
+      parser = createBundleParser(bundleClassType, attribute);
       bundleParsers.put(bundleClassName, parser);
     }
 
     return parser;
   }
 
-  public String getGwtFieldAttributeName() {
-    return gwtPrefix + ":field";
+  public ImplicitBundle getBundleClass() {
+    return bundleClass;
   }
 
   /**
@@ -514,6 +527,10 @@ public class UiBinderWriter {
     return ownerClass;
   }
 
+  public String getUiFieldAttributeName() {
+    return gwtPrefix + ":field";
+  }
+
   public boolean isBinderElement(XMLElement elem) {
     String uri = elem.getNamespaceUri();
     return uri != null && BINDER_URI.equals(uri);
@@ -526,12 +543,15 @@ public class UiBinderWriter {
 
   /**
    * Parses the object associated with the specified element, and returns the
-   * name of the field (possibly private) that will hold it.
+   * name of the field (possibly private) that will hold it. The element is
+   * likely to make recursive calls back to this method to have its children
+   * parsed.
    *
    * @param elem the xml element to be parsed
    * @return the name of the field containing the parsed widget
    */
-  public String parseElementToField(XMLElement elem) throws UnableToCompleteException {
+  public String parseElementToField(XMLElement elem)
+      throws UnableToCompleteException {
     if (elementParsers.isEmpty()) {
       registerParsers();
     }
@@ -574,7 +594,7 @@ public class UiBinderWriter {
   public void setFieldInitializerAsConstructor(String fieldName,
       JClassType type, String... args) {
     setFieldInitializer(fieldName, String.format("new %s(%s)",
-        getFullTypeName(type), asCommaSeparatedList(args)));
+        type.getQualifiedSourceName(), asCommaSeparatedList(args)));
   }
 
   /**
@@ -631,14 +651,14 @@ public class UiBinderWriter {
     attributeParsers.put(signature, className);
   }
 
-  private void addParser(String gwtClass, String parser) {
+  private void addElementParser(String gwtClass, String parser) {
     elementParsers.put(gwtClass, parser);
   }
 
   private void addWidgetParser(String className) {
     String gwtClass = "com.google.gwt.user.client.ui." + className;
     String parser = "com.google.gwt.uibinder.parsers." + className + "Parser";
-    addParser(gwtClass, parser);
+    addElementParser(gwtClass, parser);
   }
 
   /**
@@ -683,12 +703,6 @@ public class UiBinderWriter {
         + bundleClass.getName().replace('.', '_') + "Instance", true);
   }
 
-  private MessagesWriter createMessagesWriter(String templatePath,
-      TreeLogger logger) {
-    return new MessagesWriter(BINDER_URI, logger, templatePath, getPackageName(),
-        this.implClassName);
-  }
-
   /**
    * Outputs a bundle resource for a given bundle attribute parser.
    */
@@ -708,9 +722,10 @@ public class UiBinderWriter {
   }
 
   /**
-   * Given a DOM tag name, return the corresponding Element subclass.
+   * Given a DOM tag name, return the corresponding
+   * {@link com.google.gwt.dom.client.Element} subclass.
    */
-  private JClassType findElementTypeForTag(String tag) {
+  private JClassType findGwtDomElementTypeForTag(String tag) {
     JClassType elementClass = oracle.findType("com.google.gwt.dom.client.Element");
     JClassType[] types = elementClass.getSubtypes();
     for (JClassType type : types) {
@@ -745,17 +760,13 @@ public class UiBinderWriter {
               + "Please switch to gwt:field=\"%1$s\" instead. "
               + "This will soon be a compile error!", fieldName));
     }
-    if (elem.hasAttribute(getGwtFieldAttributeName())) {
+    if (elem.hasAttribute(getUiFieldAttributeName())) {
       if (hasOldSchoolId) {
         die("Cannot declare both id and field on the same element: " + elem);
       }
-      fieldName = elem.consumeAttribute(getGwtFieldAttributeName());
+      fieldName = elem.consumeAttribute(getUiFieldAttributeName());
     }
     return fieldName;
-  }
-
-  private String getPackageName() {
-    return baseClass.getPackage().getName();
   }
 
   /**
@@ -850,14 +861,17 @@ public class UiBinderWriter {
   }
 
   /**
-   * Parse the document element and return the source of the Java
-   * class that will implement its UiBinder.
+   * Parse the document element and return the source of the Java class that
+   * will implement its UiBinder.
    */
   private String parseDocumentElement(XMLElement elem)
       throws UnableToCompleteException {
+    fieldManager.registerFieldOfGeneratedType(bundleClass.getPackageName(),
+        bundleClass.getClassName(), bundleClass.getFieldName());
+    // Allow GWT.create() to init the field, the default behavior
 
-    String rootField = new UiBinderParser(this, messages, fieldManager).parse(
-        elem);
+    String rootField = new UiBinderParser(this, messages, fieldManager, oracle,
+        bundleClass).parse(elem);
 
     StringWriter stringWriter = new StringWriter();
     IndentedWriter niceWriter = new IndentedWriter(
@@ -893,7 +907,7 @@ public class UiBinderWriter {
     // TODO(rjrjr): Allow third-party parsers to register themselves
     // automagically, according to http://b/issue?id=1867118
 
-    addParser("com.google.gwt.dom.client.Element",
+    addElementParser("com.google.gwt.dom.client.Element",
         "com.google.gwt.uibinder.parsers.DomElementParser");
 
     // Register widget parsers.
@@ -940,19 +954,7 @@ public class UiBinderWriter {
   }
 
   /**
-   * Writes a binder that creates the entire ui in {@link UiBinder#createUiRoot}
-   * and does nothing but fill the clients fields in {@link UiBinder#bindUi}.
-   * <p>
-   * Because UiBinder instances tend to be static and reused, createUiRoot
-   * creates an object with references to the generated ui's fields, and stores
-   * it in a hash map keyed by the root UI object. This binding object is
-   * removed from the map during the call to bindUi and used to fill the
-   * client's <code>{@literal @}UiField</code>s. I would prefer to find a way to do
-   * without the map, but am stumped.
-   * <p>
-   * See a sample in {@link "http://go/gwt-eager-binder"}
-   *
-   * @throws UnableToCompleteException
+   * Writes the UiBinder's source.
    */
   private void writeBinder(IndentedWriter w, String rootField)
       throws UnableToCompleteException {
@@ -966,8 +968,8 @@ public class UiBinderWriter {
     w.newline();
 
     // createAndBindUi method
-    w.write("public %s createAndBindUi(final %s owner) {", uiRootType.getName(),
-        uiOwnerType.getName());
+    w.write("public %s createAndBindUi(final %s owner) {",
+        uiRootType.getName(), uiOwnerType.getName());
     w.indent();
     w.newline();
 
@@ -985,6 +987,8 @@ public class UiBinderWriter {
 
     writeFieldSetters(w);
 
+    writeCssInjectors(w);
+
     w.write("return %s;", rootField);
     w.outdent();
     w.write("}");
@@ -995,9 +999,18 @@ public class UiBinderWriter {
   }
 
   private void writeClassOpen(IndentedWriter w) {
-    w.write("public class %s implements UiBinder<%s, %s>, %s {", implClassName,
-        uiRootType.getName(), uiOwnerType.getName(), baseClass.getName());
+    w.write("public class %s extends AbstractUiBinder<%s, %s> implements %s {",
+        implClassName, uiRootType.getName(), uiOwnerType.getName(),
+        baseClass.getName());
     w.indent();
+  }
+
+  private void writeCssInjectors(IndentedWriter w) {
+    for (CssResourceGetter css : bundleClass.getCssMethods()) {
+      w.write("ensureCssInjected(%s.%s());", bundleClass.getFieldName(),
+          css.getName());
+    }
+    w.newline();
   }
 
   /**
@@ -1005,10 +1018,9 @@ public class UiBinderWriter {
    */
   private void writeFieldSetters(IndentedWriter niceWriter)
       throws UnableToCompleteException {
-    // For each owner field
-    Collection<OwnerField> ownerFields = getOwnerClass().getUiFields();
-    for (OwnerField ownerField : ownerFields) {
-      FieldWriter fieldWriter = fieldManager.lookup(ownerField.getName());
+    for (OwnerField ownerField : getOwnerClass().getUiFields()) {
+      String fieldName = ownerField.getName();
+      FieldWriter fieldWriter = fieldManager.lookup(fieldName);
 
       BundleAttributeParser bundleParser = bundleParsers.get(ownerField.getType().getRawType().getQualifiedSourceName());
 
@@ -1019,14 +1031,22 @@ public class UiBinderWriter {
 
       } else if (fieldWriter != null) {
         // ownerField is a widget.
-        maybeWriteFieldSetter(niceWriter, ownerField, fieldWriter.getType(),
-            ownerField.getName());
+        JClassType type = fieldWriter.getType();
+        if (type != null) {
+          maybeWriteFieldSetter(niceWriter, ownerField, fieldWriter.getType(),
+              fieldName);
+        } else {
+          // Must be a generated type
+          if (!ownerField.isProvided()) {
+            niceWriter.write("owner.%1$s = %1$s;", fieldName);
+          }
+        }
 
       } else {
         // ownerField was not found as bundle resource or widget, must die.
         die("Template %s has no %s attribute for %s.%s#%s", templatePath,
-            getGwtFieldAttributeName(), uiOwnerType.getPackage().getName(),
-            uiOwnerType.getName(), ownerField.getName());
+            getUiFieldAttributeName(), uiOwnerType.getPackage().getName(),
+            uiOwnerType.getName(), fieldName);
       }
     }
   }
@@ -1068,7 +1088,7 @@ public class UiBinderWriter {
 
   private void writeImports(IndentedWriter w) {
     w.write("import com.google.gwt.core.client.GWT;");
-    w.write("import com.google.gwt.uibinder.client.UiBinder;");
+    w.write("import com.google.gwt.uibinder.client.AbstractUiBinder;");
     w.write("import com.google.gwt.uibinder.client.UiBinderUtil;");
     w.write("import %s.%s;", uiRootType.getPackage().getName(),
         uiRootType.getName());
@@ -1100,7 +1120,7 @@ public class UiBinderWriter {
    */
   private void writeStaticBundleInstances(IndentedWriter niceWriter) {
     // TODO(rjrjr) It seems bad that this method has special
-    // knowledge of BundleAttributeParser
+    // knowledge of BundleAttributeParser, but that'll die soon so...
     for (String key : bundleParsers.keySet()) {
       String declaration = declareStaticField(bundleParsers.get(key));
       if (declaration != null) {
