@@ -203,8 +203,7 @@ abstract class DOMImplTrident extends DOMImpl {
     String tagName = getTagNameInternal(elem);
     String scopeName = getScopeNameInternal(elem);
 
-    if ("html".equalsIgnoreCase(scopeName)
-        || "undefined".equalsIgnoreCase(scopeName)) {
+    if ((scopeName == null) || "html".equalsIgnoreCase(scopeName)) {
       return tagName;
     }
 
