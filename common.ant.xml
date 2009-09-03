@@ -178,6 +178,7 @@
     <attribute name="test.reports" default="@{test.out}/reports" />
     <attribute name="test.emma.coverage" default="@{test.out}/emma-coverage" />
     <attribute name="test.cases" default="" />
+    <attribute name="haltonfailure" default="true" />
     <element name="extraclasspaths" optional="true" />
     <sequential>
       <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
@@ -245,7 +246,13 @@
         </report>
       </emma>
 
-      <fail message="One or more junit tests failed" if="junit.failure" />
+      <condition property="junit.stop.build" value="true"> 
+        <and>
+          <istrue value="@{haltonfailure}"/>
+          <isset property="${junit.failure}"/>
+        </and>
+      </condition>
+      <fail message="One or more junit tests failed" if="junit.stop.build" />
     </sequential>
   </macrodef>
 
