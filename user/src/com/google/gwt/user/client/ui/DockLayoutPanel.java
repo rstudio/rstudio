@@ -61,6 +61,9 @@ public class DockLayoutPanel extends ComplexPanel implements RequiresLayout,
     NORTH, EAST, SOUTH, WEST, CENTER, LINE_START, LINE_END
   }
 
+  /**
+   * Layout data associated with each widget.
+   */
   protected static class LayoutData {
     public Direction direction;
     public double oldSize, size;
@@ -107,6 +110,28 @@ public class DockLayoutPanel extends ComplexPanel implements RequiresLayout,
   }
 
   /**
+   * TODO(jgw): Is this really the best way to do this?
+   */
+  public Element getContainerElementFor(Widget widget) {
+    assertIsChild(widget);
+    return ((LayoutData)widget.getLayoutData()).layer.getContainerElement();
+  }
+
+  /**
+   * Gets the layout direction of the given child widget.
+   * 
+   * @param w the widget to be queried
+   * @return the widget's layout direction, or <code>null</code> if it is not a
+   *         child of this panel
+   */
+  public Direction getWidgetDirection(Widget w) {
+    if (w.getParent() != this) {
+      return null;
+    }
+    return ((LayoutData) w.getLayoutData()).direction;
+  }
+
+  /**
    * Adds a widget to the specified edge of the dock. If the widget is already a
    * child of this panel, this method behaves as though {@link #remove(Widget)}
    * had already been called.
@@ -147,62 +172,6 @@ public class DockLayoutPanel extends ComplexPanel implements RequiresLayout,
 
     // Adopt.
     adopt(widget);
-  }
-
-  /**
-   * Gets the layout direction of the given child widget.
-   * 
-   * @param w the widget to be queried
-   * @return the widget's layout direction, or <code>null</code> if it is not a
-   *         child of this panel
-   */
-  public Direction getWidgetDirection(Widget w) {
-    if (w.getParent() != this) {
-      return null;
-    }
-    return ((LayoutData) w.getLayoutData()).direction;
-  }
-
-  public void onResize() {
-    for (Widget child : getChildren()) {
-      if (child instanceof RequiresResize) {
-        ((RequiresResize) child).onResize();
-      }
-    }
-  }
-
-  @Override
-  public boolean remove(Widget w) {
-    boolean removed = super.remove(w);
-    if (removed) {
-      // Clear the center widget.
-      if (w == center) {
-        center = null;
-      }
-
-      LayoutData data = (LayoutData) w.getLayoutData();
-      layout.removeChild(data.layer);
-    }
-
-    return removed;
-  }
-
-  protected Widget getCenter() {
-    return center;
-  }
-
-  protected Unit getUnit() {
-    return unit;
-  }
-
-  @Override
-  protected void onLoad() {
-    layout.onAttach();
-  }
-
-  @Override
-  protected void onUnload() {
-    layout.onDetach();
   }
 
   public void layout() {
@@ -282,12 +251,46 @@ public class DockLayoutPanel extends ComplexPanel implements RequiresLayout,
     });
   }
 
-  /**
-   * TODO(jgw): Is this really the best way to do this?
-   */
-  public Element getContainerElementFor(Widget widget) {
-    assertIsChild(widget);
-    return ((LayoutData)widget.getLayoutData()).layer.getContainerElement();
+  public void onResize() {
+    for (Widget child : getChildren()) {
+      if (child instanceof RequiresResize) {
+        ((RequiresResize) child).onResize();
+      }
+    }
+  }
+
+  @Override
+  public boolean remove(Widget w) {
+    boolean removed = super.remove(w);
+    if (removed) {
+      // Clear the center widget.
+      if (w == center) {
+        center = null;
+      }
+
+      LayoutData data = (LayoutData) w.getLayoutData();
+      layout.removeChild(data.layer);
+    }
+
+    return removed;
+  }
+
+  protected Widget getCenter() {
+    return center;
+  }
+
+  protected Unit getUnit() {
+    return unit;
+  }
+
+  @Override
+  protected void onLoad() {
+    layout.onAttach();
+  }
+
+  @Override
+  protected void onUnload() {
+    layout.onDetach();
   }
 
   private void assertIsChild(Widget widget) {
