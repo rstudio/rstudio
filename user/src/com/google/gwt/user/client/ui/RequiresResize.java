@@ -16,20 +16,20 @@
 package com.google.gwt.user.client.ui;
 
 /**
- * A {@link Composite} implementation that implements {@link RequiresResize} and
- * automatically delegates that interface's methods to its wrapped widget, which
- * must itself implement {@link RequiresResize}.
+ * This interface designates that its implementor needs to be informed whenever
+ * its size is modified.
+ * 
+ * <p>
+ * Widgets that implement this interface should only be added to those that
+ * implement {@link ProvidesResize}. Failure to do so will usually result in
+ * {@link #onResize()} not being called.
+ * </p>
  */
-public abstract class LayoutComposite extends Composite implements RequiresResize {
+public interface RequiresResize {
 
-  @Override
-  protected void initWidget(Widget widget) {
-    assert widget instanceof RequiresResize :
-      "LayoutComposite requires that its wrapped widget implement HasLayout";
-    super.initWidget(widget);
-  }
-
-  public void onResize() {
-    ((RequiresResize) getWidget()).onResize();
-  }
+  /**
+   * This method must be called whenever the implementor's size has been
+   * modified.
+   */
+  void onResize();
 }

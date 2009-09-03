@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.layout.client.Layout.Layer;
@@ -60,20 +61,21 @@ class LayoutImpl {
 
   protected DivElement relativeRuler;
 
-  public Element attachChild(Element parent, Element child) {
+  public Element attachChild(Element parent, Element child, Element before) {
     DivElement container = Document.get().createDivElement();
     container.appendChild(child);
 
-    container.getStyle().setProperty("position", "absolute");
-    container.getStyle().setProperty("overflow", "hidden");
+    container.getStyle().setPosition(Position.ABSOLUTE);
+    container.getStyle().setOverflow(Overflow.HIDDEN);
 
     fillParent(child);
 
-    Style style = child.getStyle();
-    style.setWidth(100, Unit.PCT);
-    style.setHeight(100, Unit.PCT);
-
-    parent.appendChild(container);
+    Element beforeContainer = null;
+    if (before != null) {
+      beforeContainer = before.getParentElement();
+      assert beforeContainer.getParentElement() == parent : "Element to insert before must be a sibling";
+    }
+    parent.insertBefore(container, beforeContainer);
     return container;
   }
 
@@ -118,7 +120,7 @@ class LayoutImpl {
   }
 
   public void initParent(Element parent) {
-    parent.getStyle().setProperty("position", "relative");
+    parent.getStyle().setPosition(Position.RELATIVE);
     parent.appendChild(relativeRuler = createRuler(EM, EX));
   }
 

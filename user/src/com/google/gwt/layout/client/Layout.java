@@ -328,11 +328,46 @@ public class Layout {
    * </p>
    * 
    * @param child the child to be attached
+   * @param before the child element before which to insert
+   * @return the {@link Layer} associated with the element
+   */
+  public Layer attachChild(Element child, Element before) {
+    return attachChild(child, before, null);
+  }
+
+  /**
+   * Attaches a child element to this layout.
+   * 
+   * <p>
+   * This method will attach the child to the layout, removing it from its
+   * current parent element. Use the {@link Layer} it returns to manipulate the
+   * child.
+   * </p>
+   * 
+   * @param child the child to be attached
    * @param userObject an arbitrary object to be associated with this layer
    * @return the {@link Layer} associated with the element
    */
   public Layer attachChild(Element child, Object userObject) {
-    Element container = impl.attachChild(parentElem, child);
+    return attachChild(child, null, userObject);
+  }
+
+  /**
+   * Attaches a child element to this layout.
+   * 
+   * <p>
+   * This method will attach the child to the layout, removing it from its
+   * current parent element. Use the {@link Layer} it returns to manipulate the
+   * child.
+   * </p>
+   * 
+   * @param child the child to be attached
+   * @param before the child element before which to insert
+   * @param userObject an arbitrary object to be associated with this layer
+   * @return the {@link Layer} associated with the element
+   */
+  public Layer attachChild(Element child, Element before, Object userObject) {
+    Element container = impl.attachChild(parentElem, child, before);
     Layer layer = new Layer(container, child, userObject);
     layers.add(layer);
     return layer;

@@ -24,7 +24,7 @@ import com.google.gwt.user.client.Window;
  * to the document body (i.e. {@link RootPanel#get()}).
  * 
  * <p>
- * This panel automatically calls {@link RequiresLayout#layout()} on itself when
+ * This panel automatically calls {@link RequiresResize#layout()} on itself when
  * initially created, and whenever the window is resized.
  * </p>
  * 
@@ -44,7 +44,7 @@ import com.google.gwt.user.client.Window;
  * {@example com.google.gwt.examples.LayoutPanelExample}
  * </p>
  */
-public class RootLayoutPanel extends LayoutPanel implements ProvidesLayout {
+public class RootLayoutPanel extends LayoutPanel {
 
   private static RootLayoutPanel singleton;
 
@@ -70,11 +70,11 @@ public class RootLayoutPanel extends LayoutPanel implements ProvidesLayout {
   private RootLayoutPanel() {
     Window.addResizeHandler(new ResizeHandler() {
       public void onResize(ResizeEvent event) {
-        onLayout();
+        RootLayoutPanel.this.onResize();
       }
     });
 
-    // TODO: We need notification of font-size changes as well.
+    // TODO(jgw): We need notification of font-size changes as well.
     // I believe there's a hidden iframe trick that we can use to get
     // a font-size-change event (really an em-definition-change event).
   }

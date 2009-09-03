@@ -17,24 +17,24 @@ package com.google.gwt.user.client.ui;
 
 /**
  * This tag interface specifies that the implementing widget will call
- * {@link RequiresLayout#onLayout()} on its children whenever their size may
+ * {@link RequiresResize#onResize()} on its children whenever their size may
  * have changed.
  * 
  * <p>
  * With limited exceptions (such as {@link RootLayoutPanel}), widgets that
- * implement this interface will also implement {@link RequiresLayout}. A typical
- * widget will implement {@link RequiresLayout#onLayout()} like this:
+ * implement this interface will also implement {@link RequiresResize}. A typical
+ * widget will implement {@link RequiresResize#onResize()} like this:
  * 
  * <code>
- * public void onLayout() {
+ * public void onResize() {
  *   for (Widget child : getChildren()) {
- *     if (child instanceof RequiresLayout) {
- *       ((RequiresLayout) child).onLayout();
+ *     if (child instanceof RequiresResize) {
+ *       ((RequiresResize) child).onResize();
  *     }
  *   }
  * }
  * </code>
  * </p>
  */
-public interface ProvidesLayout {
+public interface ProvidesResize {
 }

@@ -15,20 +15,54 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.layout.client.Layout;
+
 /**
- * This interface designates that its implementor needs to be informed whenever
- * its size is modified.
+ * Designates that a widget requires a method to be explicitly called after its
+ * children are modified.
  * 
  * <p>
- * Widgets that implement this interface should only be added to those that
- * implement {@link ProvidesLayout}. Failure to do so will usually result in
- * {@link #onLayout()} not being called.
+ * Widgets that implement this interface perform some layout work that will not
+ * be fully realized until {@link #layout()} or one of its overloads is called.
+ * This is required after adding or removing child widgets, and after any other
+ * operations that the implementor designates as requiring layout. Note that
+ * only <em>one</em> call to {@link #layout()} is required after any number of
+ * modifications.
  * </p>
  */
 public interface RequiresLayout {
 
   /**
-   * Update the layout immediately.
+   * Layout children immediately.
+   * 
+   * @see #layout(int)
+   * @see #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)
    */
-  void onLayout();
+  void layout();
+
+  /**
+   * Layout children, animating over the specified period of time.
+   * 
+   * @param duration the animation duration, in milliseconds
+   * 
+   * @see #layout()
+   * @see #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)
+   */
+  void layout(int duration);
+
+  /**
+   * Layout children, animating over the specified period of time.
+   * 
+   * <p>
+   * This method provides a callback that will be informed of animation updates.
+   * This can be used to create more complex animation effects.
+   * </p>
+   * 
+   * @param duration the animation duration, in milliseconds
+   * @param callback the animation callback
+   * 
+   * @see #layout()
+   * @see #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)
+   */
+  void layout(int duration, final Layout.AnimationCallback callback);
 }

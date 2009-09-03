@@ -24,8 +24,15 @@ import com.google.gwt.layout.client.Layout.Layer;
  * using the {@link Layout} class.
  * 
  * <p>
- * NOTE: This widget will <em>only</em> work in standards mode, which requires
- * that the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
+ * Whenever children are added to, or removed from, this panel, you must call
+ * one of {@link #layout()}, {@link #layout(int)}, or
+ * {@link #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)}
+ * to update the panel's layout.
+ * </p>
+ * 
+ * <p>
+ * This widget will <em>only</em> work in standards mode, which requires that
+ * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
  * declaration.
  * </p>
  * 
@@ -40,7 +47,7 @@ import com.google.gwt.layout.client.Layout.Layer;
  * </p>
  */
 public class LayoutPanel extends ComplexPanel implements RequiresLayout,
-    ProvidesLayout {
+    RequiresResize, ProvidesResize {
 
   private final Layout layout;
 
@@ -84,7 +91,7 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
    * 
    * <p>
    * After you have made changes to any of the child widgets' constraints, you
-   * must call one of the {@link HasAnimatedLayout} methods for those changes to
+   * must call one of the {@link RequiresLayout} methods for those changes to
    * be reflected visually.
    * </p>
    * 
@@ -96,52 +103,14 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
     return (Layout.Layer) child.getLayoutData();
   }
 
-  /**
-   * This method, or one of its overloads, must be called whenever any of the
-   * {@link Layout.Layer layers} associated with its children is modified.
-   * 
-   * @see #layout(int)
-   * @see #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)
-   */
   public void layout() {
     layout.layout();
   }
 
-  /**
-   * This method, or one of its overloads, must be called whenever any of the
-   * {@link Layout.Layer layers} associated with its children is modified.
-   * 
-   * <p>
-   * This overload will cause the layout to be updated by animating over a
-   * specified period of time.
-   * </p>
-   * 
-   * @param duration the animation duration, in milliseconds
-   * 
-   * @see #layout()
-   * @see #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)
-   */
   public void layout(int duration) {
     layout.layout(duration);
   }
 
-  /**
-   * This method, or one of its overloads, must be called whenever any of the
-   * {@link Layout.Layer layers} associated with its children is modified.
-   * 
-   * <p>
-   * This overload will cause the layout to be updated by animating over a
-   * specified period of time. In addition, it provides a callback that will be
-   * informed of updates to the layers. This can be used to create more complex
-   * animation effects.
-   * </p>
-   * 
-   * @param duration the animation duration, in milliseconds
-   * @param callback the animation callback
-   * 
-   * @see #layout()
-   * @see #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)
-   */
   public void layout(int duration, final Layout.AnimationCallback callback) {
     layout.layout(duration, new Layout.AnimationCallback() {
       public void onAnimationComplete() {
@@ -155,8 +124,8 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
         // Inform the child associated with this layer that its size may have
         // changed.
         Widget child = (Widget) layer.getUserObject();
-        if (child instanceof RequiresLayout) {
-          ((RequiresLayout) child).onLayout();
+        if (child instanceof RequiresResize) {
+          ((RequiresResize) child).onResize();
         }
 
         // Chain to the passed callback.
@@ -167,10 +136,10 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
     });
   }
 
-  public void onLayout() {
+  public void onResize() {
     for (Widget child : getChildren()) {
-      if (child instanceof RequiresLayout) {
-        ((RequiresLayout) child).onLayout();
+      if (child instanceof RequiresResize) {
+        ((RequiresResize) child).onResize();
       }
     }
   }

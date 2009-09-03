@@ -15,28 +15,24 @@
  */
 package com.google.gwt.examples;
 
-import static com.google.gwt.dom.client.Style.Unit.PCT;
-
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.layout.client.Layout.Layer;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.DockLayoutPanel.Direction;
 
-public class LayoutPanelExample implements EntryPoint {
+public class DockLayoutPanelExample implements EntryPoint {
 
   public void onModuleLoad() {
-    // Attach two child widgets to a LayoutPanel, laying them out horizontally,
-    // splitting at 50%.
-    Widget childOne = new HTML("left"), childTwo = new HTML("right");
-    LayoutPanel p = new LayoutPanel();
-    p.add(childOne);
-    p.add(childTwo);
-
-    Layer layerOne = p.getLayer(childOne), layerTwo = p.getLayer(childTwo);
-    layerOne.setLeftWidth(0, PCT, 50, PCT);
-    layerTwo.setRightWidth(0, PCT, 50, PCT);
+    // Attach five widgets to a DockLayoutPanel, one in each direction. Lay
+    // them out in 'em' units.
+    DockLayoutPanel p = new DockLayoutPanel(Unit.EM);
+    p.add(new HTML("north"), Direction.NORTH, 2);
+    p.add(new HTML("south"), Direction.SOUTH, 2);
+    p.add(new HTML("east"), Direction.EAST, 2);
+    p.add(new HTML("west"), Direction.WEST, 2);
+    p.add(new HTML("center"), Direction.CENTER, 2);
 
     // Note the explicit call to layout(). This is required for the layout to
     // take effect.
