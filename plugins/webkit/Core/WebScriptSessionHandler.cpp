@@ -92,12 +92,12 @@ WebScriptSessionHandler::~WebScriptSessionHandler() {
 }
 
 void WebScriptSessionHandler::fatalError(HostChannel& channel,
-    const std::string& messsage) {
+    const std::string& message) {
   // TODO: better way of reporting error?
   Debug::log(Debug::Error) << "Fatal error: " << message << Debug::flush;
 }
 
-void WebScriptSessionHandler::freeJavaObjects() {
+void WebScriptSessionHandler::sendFreeValues(HostChannel& channel) {
   pthread_mutex_lock(&javaObjectsLock);
   int idCount = javaObjectsToFree.size();
   if (idCount == 0) {
@@ -110,7 +110,7 @@ void WebScriptSessionHandler::freeJavaObjects() {
   for (int i = 0; i < idCount; it++) {
     ids[i++] = *it;
   }
-  if (!ServerMethods::freeJava(*channel, this, idCount, ids)) {
+  if (!ServerMethods::freeJava(channel, this, idCount, ids)) {
     Debug::log(Debug::Error) << "Unable to free Java ids" << Debug::flush;
   } else {
     Debug::log(Debug::Debugging) << "Freed " << idCount << " Java ids" << Debug::flush;
@@ -188,9 +188,6 @@ bool WebScriptSessionHandler::invoke(HostChannel& channel, const Value& thisObj,
   JSValueRef retVal = JSObjectCallAsFunction(contextRef, functionJS,
                                              thisObjJs, numArgs, argsJS,
                                              &localException);
-
-  // It's safe to free remote objects before sending an Invoke or a Return message
-  freeJavaObjects();
 
   if (localException) {
     Debug::log(Debug::Spam) << "Returning exception to server" << Debug::flush;

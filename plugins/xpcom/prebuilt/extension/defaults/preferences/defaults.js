@@ -1,0 +1,1 @@
+pref("gwt-dmp.accessList", "");

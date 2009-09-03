@@ -51,7 +51,8 @@ static NS_IMETHODIMP registerSelf(nsIComponentManager *aCompMgr, nsIFile *aPath,
     const char *aLoaderStr, const char *aType,
     const nsModuleComponentInfo *aInfo) {
 
-  Debug::log(Debug::Info) << "Registered GWT hosted mode plugin"
+  Debug::log(Debug::Info)
+      << "  successfully registered GWT Development Mode plugin"
       << Debug::flush;
   nsresult rv;
   nsCOMPtr<nsICategoryManager> categoryManager =
@@ -78,7 +79,7 @@ static NS_IMETHODIMP factoryDestructor(void) {
 static NS_IMETHODIMP unregisterSelf(nsIComponentManager *aCompMgr,
     nsIFile *aPath, const char *aLoaderStr,
     const nsModuleComponentInfo *aInfo) {
-  Debug::log(Debug::Debugging) << "ModuleOOPHM unRegisterSelf()"
+  Debug::log(Debug::Info) << "Unregistered GWT Development Mode plugin"
       << Debug::flush;
   return NS_OK;
 }
@@ -111,7 +112,7 @@ static nsModuleInfo const kModuleInfo = {
 
 NSGETMODULE_ENTRY_POINT(ExternalWrapperModule) (nsIComponentManager *servMgr,
     nsIFile* location, nsIModule** result) {
-  Debug::log(Debug::Debugging) << "OOPHM ExternalWrapperModule entry point"
+  Debug::log(Debug::Debugging) << "GWT DMP ExternalWrapperModule entry point"
       << Debug::flush;
 
   // CURRENTLY BUILT AS SEPARATE PLUGINS FOR FF1.5/2 and FF3, so the below
@@ -129,7 +130,8 @@ NSGETMODULE_ENTRY_POINT(ExternalWrapperModule) (nsIComponentManager *servMgr,
 
   nsCString gecko_version;
   app_info->GetPlatformVersion(gecko_version);
-  Debug::log(Debug::Info) << "  gecko version = "
+  Debug::log(Debug::Info)
+      << "Initializing GWT Development Mode Plugin - gecko version = "
       << gecko_version.BeginReading() << Debug::flush;
 #if defined(BROWSER_FF2)
   if (strncmp(gecko_version.BeginReading(), "1.8", 3) != 0) {

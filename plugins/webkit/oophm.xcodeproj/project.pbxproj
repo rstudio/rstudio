@@ -35,6 +35,11 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		45283765103BCCB100153ABF /* CheckVersionsMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 45283764103BCCB100153ABF /* CheckVersionsMessage.cpp */; };
+		4528376F103BCCDF00153ABF /* ChooseTransportMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 45283767103BCCDF00153ABF /* ChooseTransportMessage.cpp */; };
+		45283770103BCCDF00153ABF /* FatalErrorMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 45283769103BCCDF00153ABF /* FatalErrorMessage.cpp */; };
+		45283771103BCCDF00153ABF /* ProtocolVersionMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4528376B103BCCDF00153ABF /* ProtocolVersionMessage.cpp */; };
+		45283772103BCCDF00153ABF /* SwitchTransportMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4528376D103BCCDF00153ABF /* SwitchTransportMessage.cpp */; };
 		480DDCAA0E381E22000711F4 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = 48A23BB50DD0E688004EF5CA /* AppController.m */; };
 		480DDCAB0E381E23000711F4 /* BrowserWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 48A23C770DD0F545004EF5CA /* BrowserWindow.m */; };
 		480DDCAC0E381E28000711F4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 48A23BB60DD0E688004EF5CA /* main.m */; };
@@ -105,6 +110,16 @@
 		089C167FFE841241C02AAC07 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		32DBCF630370AF2F00C91783 /* oophm_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = oophm_Prefix.pch; sourceTree = "<group>"; };
+		45283764103BCCB100153ABF /* CheckVersionsMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CheckVersionsMessage.cpp; sourceTree = "<group>"; };
+		45283766103BCCDF00153ABF /* CheckVersionsMessage.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CheckVersionsMessage.h; sourceTree = "<group>"; };
+		45283767103BCCDF00153ABF /* ChooseTransportMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ChooseTransportMessage.cpp; sourceTree = "<group>"; };
+		45283768103BCCDF00153ABF /* ChooseTransportMessage.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ChooseTransportMessage.h; sourceTree = "<group>"; };
+		45283769103BCCDF00153ABF /* FatalErrorMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FatalErrorMessage.cpp; sourceTree = "<group>"; };
+		4528376A103BCCDF00153ABF /* FatalErrorMessage.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FatalErrorMessage.h; sourceTree = "<group>"; };
+		4528376B103BCCDF00153ABF /* ProtocolVersionMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ProtocolVersionMessage.cpp; sourceTree = "<group>"; };
+		4528376C103BCCDF00153ABF /* ProtocolVersionMessage.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ProtocolVersionMessage.h; sourceTree = "<group>"; };
+		4528376D103BCCDF00153ABF /* SwitchTransportMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SwitchTransportMessage.cpp; sourceTree = "<group>"; };
+		4528376E103BCCDF00153ABF /* SwitchTransportMessage.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SwitchTransportMessage.h; sourceTree = "<group>"; };
 		48108DDB0E2C15BD007FA76C /* AllowedConnections.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AllowedConnections.cpp; sourceTree = "<group>"; };
 		48108DDC0E2C15BD007FA76C /* AllowedConnections.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AllowedConnections.h; sourceTree = "<group>"; };
 		48108DDD0E2C15BD007FA76C /* Socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Socket.cpp; sourceTree = "<group>"; };
@@ -174,7 +189,7 @@
 		48FD99530DC6349F00E011A2 /* OophmWebScriptObject.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = OophmWebScriptObject.mm; sourceTree = "<group>"; };
 		48FFCFC80DD35DA900805659 /* Platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Platform.h; sourceTree = "<group>"; };
 		8D5B49B6048680CD000E48DA /* oophm.webplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = oophm.webplugin; sourceTree = BUILT_PRODUCTS_DIR; };
-		8D5B49B7048680CD000E48DA /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Info.plist; sourceTree = "<group>"; };
+		8D5B49B7048680CD000E48DA /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D2F7E65807B2D6F200F64583 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
@@ -305,6 +320,15 @@
 		4856DF730DCF95B8000BF47C /* common */ = {
 			isa = PBXGroup;
 			children = (
+				45283766103BCCDF00153ABF /* CheckVersionsMessage.h */,
+				45283767103BCCDF00153ABF /* ChooseTransportMessage.cpp */,
+				45283768103BCCDF00153ABF /* ChooseTransportMessage.h */,
+				45283769103BCCDF00153ABF /* FatalErrorMessage.cpp */,
+				4528376A103BCCDF00153ABF /* FatalErrorMessage.h */,
+				4528376B103BCCDF00153ABF /* ProtocolVersionMessage.cpp */,
+				4528376C103BCCDF00153ABF /* ProtocolVersionMessage.h */,
+				4528376D103BCCDF00153ABF /* SwitchTransportMessage.cpp */,
+				4528376E103BCCDF00153ABF /* SwitchTransportMessage.h */,
 				48C9EA440E37863700E691C6 /* FreeValueMessage.cpp */,
 				48C9EA450E37863700E691C6 /* FreeValueMessage.h */,
 				48C9EA460E37863700E691C6 /* InvokeSpecialMessage.cpp */,
@@ -335,6 +359,7 @@
 				4856DF850DCF95B8000BF47C /* ServerMethods.h */,
 				4856DF860DCF95B8000BF47C /* SessionHandler.h */,
 				4856DF880DCF95B8000BF47C /* Value.h */,
+				45283764103BCCB100153ABF /* CheckVersionsMessage.cpp */,
 			);
 			name = common;
 			path = ../common;
@@ -370,8 +395,8 @@
 				48FD988E0DC62E7400E011A2 /* OophmPlugin.h */,
 				48FD988F0DC62E7400E011A2 /* OophmPlugin.mm */,
 				48FD99520DC6349F00E011A2 /* OophmWebScriptObject.h */,
-				48FD99530DC6349F00E011A2 /* OophmWebScriptObject.mm */,
 				485505EB0DCD475C0009536F /* SlowScriptProxy.h */,
+				48FD99530DC6349F00E011A2 /* OophmWebScriptObject.mm */,
 				485505EC0DCD475C0009536F /* SlowScriptProxy.m */,
 				48FD989B0DC62F8800E011A2 /* WebFrameNonTigerHeaders.h */,
 				48547F490DD88D110047AC8A /* NSMutableString+HtmlReplacement.h */,
@@ -492,8 +517,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -x\n# This is because the PackageMaker definition has \"Release\" hard-coded into it\nif [ \"${CONFIGURATION}\" != \"Release\" ]; then\n  echo error: Must be in Release configuration to build disk image\n  exit 1\nfi\n\n/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker --doc \"${PROJECT_DIR}/oophm.pmdoc\" --out \"${TEMP_FILES_DIR}/oophm.mpkg\"\n\nhdiutil create -ov -srcfolder \"${TEMP_FILES_DIR}/oophm.mpkg\" -format UDBZ \"${BUILT_PRODUCTS_DIR}/oophm.dmg\"\nhdiutil internet-enable \"${BUILT_PRODUCTS_DIR}/oophm.dmg\"";
-			showEnvVarsInLog = 0;
+			shellScript = "#set -x\n## This is because the PackageMaker definition has \"Release\" hard-coded into it\n#if [ \"${CONFIGURATION}\" != \"Release\" ]; then\n#  echo error: Must be in Release configuration to build disk image\n#  exit 1\n#fi\n#\n#/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker --doc \"${PROJECT_DIR}/oophm.pmdoc\" --out \"${TEMP_FILES_DIR}/oophm.mpkg\"\n#\n#hdiutil create -ov -srcfolder \"${TEMP_FILES_DIR}/oophm.mpkg\" -format UDBZ \"${BUILT_PRODUCTS_DIR}/oophm.dmg\"\n#hdiutil internet-enable \"${BUILT_PRODUCTS_DIR}/oophm.dmg\"";
 		};
 		48547E020DD882170047AC8A /* Make symlink */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -509,8 +533,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -x\nln -sf \"${BUILT_PRODUCTS_DIR}/oophm.webplugin\" \"${USER_LIBRARY_DIR}/Internet Plug-Ins/.\"";
-			showEnvVarsInLog = 0;
+			shellScript = "#set -x\n#ln -sf \"${BUILT_PRODUCTS_DIR}/oophm.webplugin\" \"${USER_LIBRARY_DIR}/Internet Plug-Ins/.\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -549,6 +572,11 @@
 				48C9EA4A0E37863700E691C6 /* FreeValueMessage.cpp in Sources */,
 				48C9EA4B0E37863700E691C6 /* InvokeSpecialMessage.cpp in Sources */,
 				48C9EA4C0E37863700E691C6 /* LoadJsniMessage.cpp in Sources */,
+				45283765103BCCB100153ABF /* CheckVersionsMessage.cpp in Sources */,
+				4528376F103BCCDF00153ABF /* ChooseTransportMessage.cpp in Sources */,
+				45283770103BCCDF00153ABF /* FatalErrorMessage.cpp in Sources */,
+				45283771103BCCDF00153ABF /* ProtocolVersionMessage.cpp in Sources */,
+				45283772103BCCDF00153ABF /* SwitchTransportMessage.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

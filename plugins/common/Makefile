@@ -42,7 +42,9 @@ $(LIBCOMMON): $(OBJS)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 $(OBJDIR)/%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(BASECFLAGS) $(ALLARCHCFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: DebugLevel.h
 
 .PHONY: clean depend testdebug
 

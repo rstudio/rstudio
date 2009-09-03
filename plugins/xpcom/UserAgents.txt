@@ -1,0 +1,8 @@
+User agents that work with ff3 XPI:
+===================================
+Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.13) Gecko/2009080315 Ubuntu/9.04 (jaunty) Firefox/3.08
+
+User agents that work with ff3+ XPI:
+====================================
+Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.0.12) Gecko/2009072110 Fedora/3.0.12-1.fc10 Firefox/3.0.12
+

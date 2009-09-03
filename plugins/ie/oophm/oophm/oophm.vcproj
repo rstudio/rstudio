@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="oophm"
 	ProjectGUID="{EB69BDFE-9380-4C51-99E8-C3EB25AE36A2}"
 	RootNamespace="oophm"
 	Keyword="AtlProj"
-	TargetFrameworkVersion="196613"
 	>
 	<Platforms>
 		<Platform
@@ -80,6 +79,7 @@
 				RegisterOutput="true"
 				IgnoreImportLibrary="true"
 				AdditionalDependencies="comsuppw.lib ws2_32.lib"
+				OutputFile="..\..\prebuilt\$(ProjectName).dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile=".\oophm.def"
 				GenerateDebugInformation="true"
@@ -103,6 +103,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -197,6 +200,9 @@
 				Name="VCAppVerifierTool"
 			/>
 			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -209,6 +215,10 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
+			<File
+				RelativePath=".\AllowDialog.cpp"
+				>
+			</File>
 			<File
 				RelativePath=".\dlldatax.c"
 				>
@@ -282,6 +292,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Preferences.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -309,7 +323,19 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\common\CheckVersionsMessage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\common\ChooseTransportMessage.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\common\Debug.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\common\FatalErrorMessage.cpp"
 					>
 				</File>
 				<File
@@ -337,6 +363,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\common\ProtocolVersionMessage.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\common\ReturnMessage.cpp"
 					>
 				</File>
@@ -348,6 +378,10 @@
 					RelativePath="..\..\..\common\Socket.cpp"
 					>
 				</File>
+				<File
+					RelativePath="..\..\..\common\SwitchTransportMessage.cpp"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
@@ -355,6 +389,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\AllowDialog.h"
+				>
+			</File>
 			<File
 				RelativePath=".\dlldatax.h"
 				>
@@ -368,6 +406,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\common\FatalErrorMessage.h"
+				>
+			</File>
+			<File
 				RelativePath=".\IESessionHandler.h"
 				>
 			</File>
@@ -377,6 +419,10 @@
 			</File>
 			<File
 				RelativePath=".\plugin.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Preferences.h"
 				>
 			</File>
 			<File
@@ -404,6 +450,14 @@
 				</File>
 				<File
 					RelativePath="..\..\..\common\BrowserChannel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\common\CheckVersionsMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\common\ChooseTransportMessage.h"
 					>
 				</File>
 				<File
@@ -451,6 +505,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\..\common\ProtocolVersionMessage.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\..\common\QuitMessage.h"
 					>
 				</File>
@@ -468,6 +526,10 @@
 				</File>
 				<File
 					RelativePath="..\..\..\common\Socket.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\..\common\SwitchTransportMessage.h"
 					>
 				</File>
 				<File

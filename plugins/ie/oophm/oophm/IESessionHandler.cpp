@@ -46,7 +46,7 @@ IESessionHandler::~IESessionHandler(void) {
 }
 
 void IESessionHandler::fatalError(HostChannel& channel,
-    const std::string& messsage) {
+    const std::string& message) {
   // TODO: better way of reporting error?
   Debug::log(Debug::Error) << "Fatal error: " << message << Debug::flush;
 }
@@ -59,7 +59,7 @@ void IESessionHandler::freeJavaObject(unsigned int objId) {
   javaObjectsToFree.insert(objId);
 }
 
-void IESessionHandler::freeJavaObjects() {
+void IESessionHandler::sendFreeValues(HostChannel& channel) {
   int idCount = javaObjectsToFree.size();
   if (idCount == 0) {
     return;
@@ -73,7 +73,7 @@ void IESessionHandler::freeJavaObjects() {
     ids[i++] = *it;
   }
 
-  if (!ServerMethods::freeJava(*channel, this, idCount, ids.get())) {
+  if (!ServerMethods::freeJava(channel, this, idCount, ids.get())) {
     Debug::log(Debug::Error) << "Unable to free Java ids on server" << Debug::flush;
   }
   javaObjectsToFree.clear();
@@ -179,9 +179,6 @@ bool IESessionHandler::invoke(HostChannel& channel, const Value& thisObj,
     // Success
     makeValue(*returnValue, retVal);
   }
-
-  // Free previously-collected Java ids on the server to enable re-use
-  freeJavaObjects();
   return exceptionFlag != 0;
 }
 

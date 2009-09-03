@@ -1,12 +1,11 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="ff3-xpcom"
 	ProjectGUID="{6BF0C2CE-CB0C-421B-A67C-1E448371D24C}"
 	RootNamespace="ff3-xpcom"
 	Keyword="Win32Proj"
-	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -18,8 +17,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory="Debug3"
+			IntermediateDirectory="Debug3"
 			ConfigurationType="2"
 			UseOfMFC="1"
 			>
@@ -46,6 +45,7 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
+				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -72,8 +72,6 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)\$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -96,13 +94,16 @@
 				Name="VCAppVerifierTool"
 			/>
 			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
+			OutputDirectory="Release3"
+			IntermediateDirectory="Release3"
 			ConfigurationType="2"
 			>
 			<Tool
@@ -124,10 +125,11 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;..\..\common&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;&quot;..\prebuilt\ff3\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpconnect&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3"
 				ExceptionHandling="1"
 				RuntimeLibrary="2"
+				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
@@ -155,8 +157,6 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				ImportLibrary="$(IntDir)\$(TargetName).lib"
 				TargetMachine="1"
 			/>
@@ -177,6 +177,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -790,6 +793,14 @@
 						GeneratePreprocessedFile="0"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Preferences.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\Preferences.h"
+				>
 			</File>
 			<File
 				RelativePath="..\..\common\ProtocolVersionMessage.cpp"

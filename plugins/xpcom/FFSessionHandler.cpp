@@ -24,9 +24,11 @@
 #include "RootedObject.h"
 #include "InvokeMessage.h"
 #include "ServerMethods.h"
+#include "AllowedConnections.h"
 
 #include "jsapi.h"
 #include "nsCOMPtr.h"
+#include "nsStringAPI.h"
 #include "nsIJSContextStack.h"
 #include "nsIPrincipal.h"
 #include "nsServiceManagerUtils.h"
@@ -45,8 +47,9 @@ static JSContext* getJSContext() {
   }
 
   if (cx == nsnull) {
-    Debug::log(Debug::Error) << "Null context" << Debug::flush;
-  }  
+    // TODO(jat): figure out why this can be null at plugin unload time
+    Debug::log(Debug::Error) << "GWT DMP: Null JS context" << Debug::flush;
+  }
 
   return cx;
 }

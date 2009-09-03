@@ -22,6 +22,7 @@
 #include "nsCOMPtr.h"
 #include "nsMemory.h"
 #include "nsServiceManagerUtils.h"
+#include "nsIPromptService.h"
 
 #ifndef NS_IMPL_ISUPPORTS2_CI
 #include "nsIClassInfoImpl.h" // 1.9 only
@@ -30,11 +31,20 @@
 #include "LoadModuleMessage.h"
 #include "ServerMethods.h"
 #include "BrowserChannel.h"
+#include "AllowedConnections.h"
 
 NS_IMPL_ISUPPORTS2_CI(ExternalWrapper, IOOPHM, nsISecurityCheckedComponent)
 
 ExternalWrapper::ExternalWrapper() {
-  Debug::log(Debug::Spam) << "ExternalWrapper::ExternalWrapper()" << Debug::flush;
+  Debug::log(Debug::Spam) << "ExternalWrapper::ExternalWrapper()"
+      << Debug::flush;
+  preferences = new Preferences();
+  windowWatcher = do_GetService(NS_WINDOWWATCHER_CONTRACTID);
+  if (!windowWatcher) {
+    Debug::log(Debug::Warning) << "Can't get WindowWatcher service"
+        << Debug::flush;
+    return;
+  }
 }
 
 ExternalWrapper::~ExternalWrapper() {
@@ -59,11 +69,58 @@ static nsresult getUserAgent(std::string& userAgent) {
   return NS_OK;
 }
 
-// TODO: handle context object passed in (currently nsIDOMWindow below)
-NS_IMETHODIMP ExternalWrapper::Init(nsIDOMWindow* domWindow, PRBool *_retval) {
+std::string ExternalWrapper::computeTabIdentity() {
+  std::string returnVal;
+  if (!windowWatcher) {
+    return returnVal;
+  }
+  nsCOMPtr<nsIDOMWindow> topWindow(domWindow);
+  if (topWindow->GetTop(getter_AddRefs(topWindow)) != NS_OK) {
+    Debug::log(Debug::Warning) << "Unable to get top window" << Debug::flush;
+    return returnVal;
+  }
+  nsCOMPtr<nsIWebBrowserChrome> chrome;
+  if (windowWatcher->GetChromeForWindow(topWindow.get(),
+      getter_AddRefs(chrome)) != NS_OK) {
+    Debug::log(Debug::Warning) << "Unable to get browser chrome for window"
+        << Debug::flush;
+    return returnVal;
+  }
+  Debug::log(Debug::Debugging) << "computeTabIdentity: browserChrome = "
+      << (void*) chrome.get() << Debug::flush;
+  // TODO(jat): find a way to get the tab from the chrome window
+  return returnVal;
+}
+
+NS_IMETHODIMP ExternalWrapper::Init(nsIDOMWindow* domWindow,
+    PRBool *_retval) {
   Debug::log(Debug::Spam) << "Init" << Debug::flush;
+  this->domWindow = domWindow;
   *_retval = true;
   return NS_OK;
+}
+
+bool ExternalWrapper::askUserToAllow(const std::string& url) {
+  nsCOMPtr<nsIPromptService> promptService = do_GetService(
+      "@mozilla.org/embedcomp/prompt-service;1");
+  if (!promptService) {
+    return false;
+  }
+  NS_ConvertASCIItoUTF16 title("Allow GWT Development Mode Connection");
+  NS_ConvertASCIItoUTF16 text("This web server is requesting a GWT "
+      "development mode connection -- do you want to allow it?");
+  NS_ConvertASCIItoUTF16 checkMsg("Remember this decision for this server "
+      "(change in GWT plugin preferences)");
+  PRBool remember = false;
+  PRBool include = true;
+  if (promptService->ConfirmCheck(domWindow.get(), title.get(), text.get(),
+      checkMsg.get(), &remember, &include) != NS_OK) {
+    return false;
+  }
+  if (remember) {
+    preferences->addNewRule(AllowedConnections::getHostFromUrl(url), !include);
+  }
+  return include;
 }
 
 NS_IMETHODIMP ExternalWrapper::Connect(const nsACString& url,
@@ -81,6 +138,17 @@ NS_IMETHODIMP ExternalWrapper::Connect(const nsACString& url,
   nsCString moduleAutoStr(aModuleName);
   nsCString hostedHtmlVersionAutoStr(hostedHtmlVersion);
   std::string hostedUrl(addrAutoStr.get());
+  std::string urlStr(urlAutoStr.get());
+
+  bool allowed = false;
+  if (!AllowedConnections::matchesRule(urlStr, &allowed)) {
+    // If we didn't match an existing rule, prompt the user
+    allowed = askUserToAllow(urlStr);
+  }
+  if (!allowed) {
+    *_retval = false;
+    return NS_OK;
+  }
 
   size_t index = hostedUrl.find(':');
   if (index == std::string::npos) {
@@ -120,8 +188,7 @@ NS_IMETHODIMP ExternalWrapper::Connect(const nsACString& url,
     return res;
   }
 
-  std::string urlStr(urlAutoStr.get());
-  std::string tabKeyStr(""); // TODO(jat): add support for tab identity
+  std::string tabKeyStr = computeTabIdentity();
   std::string sessionKeyStr(sessionKeyAutoStr.get());
 
   LoadModuleMessage::send(*channel, urlStr, tabKeyStr, sessionKeyStr,

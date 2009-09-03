@@ -69,16 +69,24 @@ endif
 MARCH=$(ARCH)
 ifeq ($(ARCH),x86)
 MARCH=i386
+OMARCH=ppc
+endif
+ifeq ($(ARCH),ppc)
+OMARCH=i386
 endif
 
 # Set OS as well as CFLAGS, CXX, and other common make variables
 ifeq ($(shell uname),Linux)
 OS=linux
-CFLAGS= -g -O2 -fPIC $(INC) -rdynamic -m$(FLAG32BIT)
+BASECFLAGS= -g -O2 -fPIC $(INC) -rdynamic
+ARCHCFLAGS=-m$(FLAG32BIT)
+ALLARCHCFLAGS=$(ARCHCFLAGS)
 endif
 ifeq ($(shell uname),Darwin)
 OS=mac
-CFLAGS= -g -O2 -fPIC $(INC) -D__mac -arch $(MARCH)
+BASECFLAGS= -g -O2 -fPIC $(INC) -D__mac
+ARCHCFLAGS=-arch $(MARCH)
+ALLARCHCFLAGS=-arch i386 -arch ppc
 AR=libtool
 ARFLAGS=-static -o
 endif
@@ -88,7 +96,10 @@ OS=sun
 # SunC appears to miscompile Socket::writeByte by not incrementing the
 # buffer pointer, so no optimization for now
 #CFLAGS=-g -Kpic $(INC) -Bdynamic -noex
-CFLAGS= -g0 -Kpic -noex -xO1 -xlibmil -xlibmopt -features=tmplife -xbuiltin=%all -mt $(INC)
+BASECFLAGS= -g0 -Kpic -noex -xO1 -xlibmil -xlibmopt -features=tmplife -xbuiltin=%all -mt $(INC)
+ARCHCFLAGS=
+ALLARCHCFLAGS=
 CXX= CC
 endif
-CXXFLAGS = $(CFLAGS)
+CFLAGS=$(BASECFLAGS) $(ARCHCFLAGS)
+CXXFLAGS = $(CFLAGS) 

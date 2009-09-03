@@ -14,7 +14,7 @@
 
 include ../config.mk
 
-# Make variables intended to be settable fromthe command line:
+# Make variables intended to be settable from the command line:
 #   DEFAULT_FIREFOX_LIBS	points to /usr/lib/firefox or equivalent
 #   PLUGIN_SDKS			points to GWT /plugin-sdks directory
 #   GECKO_PLATFORM		XPCOM ABI (ie, Linux_x86_64-gcc3)
@@ -24,8 +24,8 @@ ifeq ($(OS),mac)
 DEFAULT_FIREFOX_LIBS ?= /Applications/Firefox.app/Contents/MacOS
 RUN_PATH_FLAG = -executable_path
 DLL_SUFFIX = .dylib
-DLLFLAGS = -bundle -arch i386 -arch ppc
-TARGET_PLATFORM = Darwin_x86-gcc3
+DLLFLAGS = -bundle -arch $(MARCH)
+TARGET_PLATFORM = Darwin_$(ARCH)-gcc3
 # Mac puts multiple architectures into the same files
 GECKO_PLATFORM = Darwin-gcc3
 else
@@ -47,7 +47,7 @@ endif
 export FLAG32BIT
 
 ifeq ($(BROWSER),)
-$(warning Defaulting to FF3 build)
+$(warning Defaulting to FF3 build [set with BROWSER=ff2, ff3, ff3+, or ff35])
 BROWSER=ff3
 endif
 
@@ -89,8 +89,8 @@ OBJ_OUTDIR        = build/$(TARGET_PLATFORM)-$(BROWSER)
 EXTENSION_OUTDIR  = prebuilt/extension-$(BROWSER)
 FF_PLATFORM_DIR   = $(EXTENSION_OUTDIR)/platform/$(TARGET_PLATFORM)
 
-INSTALLER_XPI     = prebuilt/oophm-xpcom-$(BROWSER).xpi
-FF_DLL            = $(OBJ_OUTDIR)/liboophm_$(BROWSER)$(DLL_SUFFIX)
+INSTALLER_XPI     = prebuilt/gwt-dmp-$(BROWSER).xpi
+FF_DLL            = $(OBJ_OUTDIR)/libgwt_dmp_$(BROWSER)$(DLL_SUFFIX)
 #FF_TYPELIB        = build/IOOPHM.xpt
 #FF_HEADER         = $(OBJ_OUTDIR)/IOOPHM.h
 FF_TYPELIB        = prebuilt/extension/components/IOOPHM.xpt
@@ -158,6 +158,7 @@ SRCS =	\
 		FFSessionHandler.cpp \
 		JavaObject.cpp \
 		JSRunner.cpp \
+		Preferences.cpp \
 		XpcomDebug.cpp
 
 FF_OBJS = $(patsubst %.cpp,$(OBJ_OUTDIR)/%.o,$(SRCS))
@@ -183,10 +184,10 @@ $(FF_DLL): $(FF_OBJS) $(COMMON)
 	$(CXX) -m$(FLAG32BIT) -o $@ $(FF_OBJS) $(COMMON) $(DLLFLAGS) 
 	@mkdir -p $(FF_PLATFORM_DIR)/components
 	cp $(FF_DLL) $(FF_PLATFORM_DIR)/components/
-ifeq ($(OS),mac)
-	@mkdir -p $(subst x86,ppc,$(FF_PLATFORM_DIR))/components
-	cp $(FF_DLL) $(subst x86,ppc,$(FF_PLATFORM_DIR))/components/
-endif
+#ifeq ($(OS),mac)
+#	@mkdir -p $(subst x86,ppc,$(FF_PLATFORM_DIR))/components
+#	cp $(FF_DLL) $(subst x86,ppc,$(FF_PLATFORM_DIR))/components/
+#endif
 
 $(OBJ_OUTDIR)/%.o: %.cpp $(FF_HEADER)
 	$(CXX) $(CXXFLAGS) -c -o $@ -I. -I../common $<

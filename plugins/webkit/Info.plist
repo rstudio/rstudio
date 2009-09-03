@@ -23,16 +23,16 @@
 	<key>NSPrincipalClass</key>
 	<string>OophmPlugin</string>
 	<key>WebPluginDescription</key>
-	<string>Google Web Toolkit Out-Of-Process Hosted Mode plugin</string>
+	<string>Google Web Toolkit Development Mode plugin</string>
 	<key>WebPluginMIMETypes</key>
 	<dict>
 		<key>application/x-gwt-hosted-mode</key>
 		<dict>
 			<key>WebPluginTypeDescription</key>
-			<string>Google Web Toolkit Out-of-Process hosted mode.</string>
+			<string>Google Web Toolkit Development Mode</string>
 		</dict>
 	</dict>
 	<key>WebPluginName</key>
-	<string>GWT OOPHM</string>
+	<string>GWT DMP</string>
 </dict>
 </plist>

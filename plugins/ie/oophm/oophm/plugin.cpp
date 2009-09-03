@@ -24,13 +24,15 @@
 #include "IESessionHandler.h"
 #include "LoadModuleMessage.h"
 #include "ServerMethods.h"
+#include "AllowedConnections.h"
+#include "Preferences.h"
+#include "AllowDialog.h"
 
 // Cplugin
 
-STDMETHODIMP Cplugin::connect(BSTR burl, BSTR sessionKey, BSTR bhostedServer,
+STDMETHODIMP Cplugin::connect(BSTR burl, BSTR bsessionKey, BSTR bhostedServer,
     BSTR bmoduleName, BSTR bhostedHtmlVersion, VARIANT_BOOL* ret)
 {
-  // TODO: Add your implementation code here
   LPOLECLIENTSITE site;
   IOleContainer* container = NULL;
   IHTMLDocument2* doc = NULL;
@@ -43,6 +45,23 @@ STDMETHODIMP Cplugin::connect(BSTR burl, BSTR sessionKey, BSTR bhostedServer,
 
   doc->get_parentWindow(&window);
   doc->Release();
+
+  std::string url = BSTRToUTF8(burl);
+  Debug::log(Debug::Debugging) << "OOPHM connect(url=" << url << ")" << Debug::flush;
+  Preferences::loadAccessList();
+  bool allowed = false;
+  if (!AllowedConnections::matchesRule(url, &allowed)) {
+    bool remember;
+    allowed = AllowDialog::askUserToAllow(&remember);
+    if (remember) {
+      std::string host = AllowedConnections::getHostFromUrl(url);
+      Preferences::addNewRule(host, !allowed);
+    }
+  }
+  if (!allowed) {
+    *ret = false;
+    return S_OK;
+  }
 
   std::string hostedServer = BSTRToUTF8(bhostedServer);
   size_t index = hostedServer.find(':');
@@ -73,7 +92,6 @@ STDMETHODIMP Cplugin::connect(BSTR burl, BSTR sessionKey, BSTR bhostedServer,
     return S_OK;
   }
 
-  std::string url = BSTRToUTF8(burl);
   std::string tabKey = ""; // TODO(jat): add support for tab identity
   std::string sessionKey = BSTRToUTF8(bsessionKey);
   std::string moduleName = BSTRToUTF8(bmoduleName);
@@ -92,7 +110,8 @@ STDMETHODIMP Cplugin::connect(BSTR burl, BSTR sessionKey, BSTR bhostedServer,
   return S_OK;
 }
 
-STDMETHODIMP CPlugin::init(IDispatch* jsniContext, VARIANT_BOOL* ret) {
+STDMETHODIMP Cplugin::init(IDispatch* jsniContext, VARIANT_BOOL* ret) {
+  Debug::log(Debug::Debugging) << "OOPHM init called" << Debug::flush;
   *ret = true;
   return S_OK;
 }

@@ -88,13 +88,14 @@ public:
   JSValueRef makeException(const char* message);
 
 protected:
-  virtual void fatalError(HostChannel& channel, const std::string& messsage);
+  virtual void fatalError(HostChannel& channel, const std::string& message);
   virtual void freeValue(HostChannel& channel, int idCount, const int* ids);
   virtual void loadJsni(HostChannel& channel, const std::string& js);
   virtual bool invoke(HostChannel& channel, const Value& thisObj, const std::string& methodName,
                       int numArgs, const Value* const args, Value* returnValue);
   virtual bool invokeSpecial(HostChannel& channel, SpecialMethodId method, int numArgs,
                              const Value* const args, Value* returnValue);
+  virtual void sendFreeValues(HostChannel& channel);
 
 private:
   CrashHandlerRef const crashHandler;

@@ -56,7 +56,7 @@ STDAPI DllRegisterServer(void)
         return hr;
     hr = PrxDllRegisterServer();
 #endif
-	return hr;
+    return hr;
 }
 
 
@@ -72,7 +72,7 @@ STDAPI DllUnregisterServer(void)
         return hr;
     hr = PrxDllUnregisterServer();
 #endif
-	return hr;
+    return hr;
 }
 
 // DllInstall - Adds/Removes entries to the system registry per user
@@ -80,6 +80,8 @@ STDAPI DllUnregisterServer(void)
 STDAPI DllInstall(BOOL bInstall, LPCWSTR pszCmdLine)
 {
     HRESULT hr = E_FAIL;
+#if 0
+    // TODO(jat): consider adding this back
     static const wchar_t szUserSwitch[] = _T("user");
 
     if (pszCmdLine != NULL)
@@ -89,6 +91,7 @@ STDAPI DllInstall(BOOL bInstall, LPCWSTR pszCmdLine)
     		AtlSetPerUserRegistration(true);
     	}
     }
+#endif
 
     if (bInstall)
     {	

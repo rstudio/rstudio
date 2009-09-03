@@ -2,13 +2,13 @@
 #define _H_ExternalWrapper
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,11 +22,16 @@
 
 #include "IOOPHM.h"
 
+#include "Preferences.h"
 #include "FFSessionHandler.h"
 #include "Debug.h"
 #include "scoped_ptr/scoped_ptr.h"
+
+#include "nsCOMPtr.h"
 #include "nsISecurityCheckedComponent.h"
 #include "nsStringAPI.h"
+#include "nsIWindowWatcher.h"
+#include "nsIDOMWindow.h"
 
 class nsIDOMWindow;
 
@@ -45,9 +50,28 @@ class ExternalWrapper : public IOOPHM,
   NS_DECL_NSISECURITYCHECKEDCOMPONENT
 
   ExternalWrapper();
-  virtual ~ExternalWrapper(); 
+  virtual ~ExternalWrapper();
+
 private:
+  nsCOMPtr<nsIDOMWindow> domWindow;
+  nsCOMPtr<Preferences> preferences;
   scoped_ptr<FFSessionHandler> sessionHandler;
+  nsCOMPtr<nsIWindowWatcher> windowWatcher;
+
+  /**
+   * Prompt the user whether a connection should be allowed, and optionally
+   * update the preferences.
+   */
+  bool askUserToAllow(const std::string& url);
+
+  /**
+   * Compute a stable tab identity value for the DOM window.
+   *
+   * @return a unique tab identifier which is stable across reloads, or an
+   *     empty string if it cannot be computed
+   */
+  std::string computeTabIdentity();
+
 };
 
 inline Debug::DebugStream& operator<<(Debug::DebugStream& dbg, const nsACString& str) {

@@ -21,6 +21,7 @@
 
 #include "mozincludes.h"
 #include "SessionData.h"
+#include "Preferences.h"
 
 #include "jsapi.h"
 

@@ -25,6 +25,7 @@
 #import "LoadModuleMessage.h"
 #import "OophmWebScriptObject.h"
 #import "SessionHandler.h"
+#import "AllowedConnections.h"
 
 /*
  * This is a helper shim to bridge crash events from the core cpp code to the
@@ -50,8 +51,12 @@ private:
 - (void)connectAlertDidEnd: (NSAlert*)alert
                 returnCode: (int)returnCode
                contextInfo: (void*)contextInfo;
-- (BOOL)doConnectWithHost: (NSString*) host
-               withModule: (NSString*) moduleName;
+- (BOOL)doConnectWithUrl: (NSString*) url
+          withSessionKey: (NSString*) sessionKey
+                withHost: (NSString*) host
+              withModule: (NSString*) moduleName
+   withHostedHtmlVersion: (NSString*) hostedHtmlVersion;
+	
 @end
 
 @implementation OophmWebScriptObject
@@ -106,30 +111,48 @@ private:
               withHost: (NSString*) host
         withModuleName: (NSString*) moduleName
  withHostedHtmlVersion: (NSString*) hostedHtmlVersion {
-  
-  // TODO remove this for production builds
-  Debug::log(Debug::Warning) << "ACLs are currently disabled" << Debug::flush;
-  return [self doConnectWithUrl:url withSessonKey: withHost:host
-       withModule:moduleName withHostedHtmlVersion];
 
   NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
 
   // See if authentication has been bypassed
   if ([defaults boolForKey:@"allowAll"]) {
-    return [self doConnectWithUrl:url withSessonKey: withHost:host
-        withModule:moduleName withHostedHtmlVersion];
+    return [self doConnectWithUrl:url withSessionKey:sessionKey withHost:host
+        withModule:moduleName withHostedHtmlVersion:hostedHtmlVersion];
   }
   
-  // Otherwise, check for an explicit entry
+  // TODO(jat): do this only once, refactor to a separate method
   NSArray* allowedHosts = [defaults arrayForKey:@"allowedHosts"];
   if (allowedHosts != nil) {
-    NSArray* hostParts = [host componentsSeparatedByString:@":"];
-    if ([allowedHosts containsObject:[hostParts objectAtIndex:0]]) {
-      return [self doConnectWithHost:host withModule:moduleName];
+    AllowedConnections::clearRules();
+    int n = [allowedHosts count];
+    for (int i = 0; i < n; ++i) {
+      NSString* entry = [allowedHosts objectAtIndex:i];
+      std::string hostName = [entry UTF8String];
+      int len = hostName.length();
+      bool exclude = false;
+      if (len > 0) {
+        if (len > 1 && hostName[0] == '!') {
+          exclude = true;
+          hostName = hostName.substr(1);
+        }
+        AllowedConnections::addRule(hostName, exclude);
+      }
     }
   }
-  
+
+  const std::string urlStr = [url UTF8String];
+  bool allowed = false;
+  if (AllowedConnections::matchesRule(urlStr, &allowed)) {
+    if (allowed) {
+      return [self doConnectWithUrl:url withSessionKey:sessionKey withHost:host
+          withModule:moduleName withHostedHtmlVersion:hostedHtmlVersion];
+    } else {
+      return YES;
+    }
+  }
+
   // Otherwise, bring up an alert dialog
+  // TODO(jat): add an include/exclude option, currently treat as only include
   NSAlert* alert = [NSAlert alertWithMessageText:@"Initiate hosted-mode session"
                                    defaultButton:@"Deny"
                                  alternateButton:nil
@@ -138,14 +161,15 @@ private:
   
   if ([alert respondsToSelector:@selector(setShowsSuppressionButton:)]) {
     [alert setShowsSuppressionButton:YES];
-    [[alert suppressionButton] setTitle:@"Always allow connections to this host"];
+    [[alert suppressionButton] setTitle:@"Remember this decision for this server"];
   } else {
     [[alert addButtonWithTitle:@"Always allow"] setTag:NSAlertAlternateReturn];
   }
   
   NSBundle* bundle = [NSBundle bundleForClass:[OophmWebScriptObject class]];
-  NSArray* contextArray = [[NSArray arrayWithObjects:[host retain],
-                            [moduleName retain], nil] retain];
+	NSArray* contextArray = [[NSArray arrayWithObjects:[url retain],
+      [sessionKey retain], [host retain], [moduleName retain],
+      [hostedHtmlVersion retain], nil] retain];
   NSString* imagePath = [bundle pathForImageResource:@"gwtlogo"];
   if (imagePath != nil) {
     NSImage* img = [[[NSImage alloc] initByReferencingFile:imagePath] autorelease];
@@ -245,20 +269,28 @@ private:
                 returnCode:(int)returnCode
                contextInfo:(void *)contextInfo {
   NSArray* contextArray = (NSArray*) contextInfo;
-  NSString* host = [[contextArray objectAtIndex:0] autorelease];
-  NSString* moduleName = [[contextArray objectAtIndex:1] autorelease];
+  NSString* url = [[contextArray objectAtIndex:0] autorelease];
+  NSString* sessionKey = [[contextArray objectAtIndex:1] autorelease];
+  NSString* host = [[contextArray objectAtIndex:2] autorelease];
+  NSString* moduleName = [[contextArray objectAtIndex:3] autorelease];
+  NSString* hostedHtmlVersion = [[contextArray objectAtIndex:4] autorelease];
   [contextArray release];
   
   if (returnCode == NSAlertDefaultReturn) {
     return;
   } else if (returnCode == NSAlertAlternateReturn ||
-             [alert respondsToSelector:@selector(suppressionButton)] &&
-             [[alert suppressionButton] state] == NSOnState) {
-    NSArray* hostParts = [host componentsSeparatedByString:@":"];
-    [self addAllowedHost:[hostParts objectAtIndex:0]];
+      [alert respondsToSelector:@selector(suppressionButton)] &&
+      [[alert suppressionButton] state] == NSOnState) {
+    // TODO(jat): simplify, handle errors
+    // Get the host part of the URL and store that
+    NSString* server = [[[[[[url componentsSeparatedByString:@"://"]
+        objectAtIndex:1] componentsSeparatedByString:@"/"] objectAtIndex:0]
+        componentsSeparatedByString:@":"] objectAtIndex:0];
+    [self addAllowedHost:server];
   }
 
-  [self doConnectWithHost:host withModule:moduleName];
+  [self doConnectWithUrl:url withSessionKey:sessionKey withHost:host
+      withModule:moduleName withHostedHtmlVersion:hostedHtmlVersion];
 }
 
 - (BOOL)doConnectWithUrl: (NSString*) url
@@ -321,7 +353,7 @@ private:
     
   if (!LoadModuleMessage::send(*_hostChannel, urlStr, tabKeyStr, 
                                sessionKeyStr, moduleNameStr,
-                               "Safari OOPHM", _sessionHandler)) {
+                               "Safari DMP", _sessionHandler)) {
     _hostChannel->disconnectFromHost();
     delete _hostChannel;
     _hostChannel = NULL;

@@ -43,6 +43,8 @@ protected:
       int numArgs, const Value* const args, Value* returnValue);
   virtual bool invokeSpecial(HostChannel& channel, SpecialMethodId method, int numArgs,
       const Value* const args, Value* returnValue);
+  virtual void sendFreeValues(HostChannel& channel);
+
 
 private:
   int jsObjectId;
@@ -64,17 +66,12 @@ private:
   std::map<IUnknown*, int> jsIdsByObject;
 
   /*
-  * Send freed Java ids back to the server.
-  */
-  void IESessionHandler::freeJavaObjects();
-
-  /*
-  * Create a JavaScript Error object with the given message.
-  */
+   * Create a JavaScript Error object with the given message.
+   */
   void makeException(_variant_t& value, const char* message);
 
   /*
-  * Create a exception Value that contains the given message.
-  */
+   * Create a exception Value that contains the given message.
+   */
   void makeExceptionValue(Value& value, const char* message);
 };

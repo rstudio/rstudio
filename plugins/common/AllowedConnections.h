@@ -17,6 +17,8 @@
  */
 
 #include <string>
+#include <vector>
+#include <utility>
 
 /**
  * Manages rules to control access to other sites from the plugin.  This is
@@ -26,26 +28,75 @@
  */
 class AllowedConnections {
 public:
-  AllowedConnections() {
-    init();
-  }
+  /**
+   * Add a rule to match new requests against.
+   *
+   * @param pattern pattern to match
+   * @param exclude true if matches should be excluded instead of included
+   */
+  static void addRule(const std::string& pattern, bool exclude = false);
 
-  AllowedConnections(const std::string& rule) {
-    init();
-    parseRule(rule);
+  /**
+   * Clear all rules.
+   */
+  static void clearRules();
+
+  /**
+   * Get the host portion of the URL, not including the port.
+   *
+   * @return the host portion of the URL, or the unmodified URL if it does not
+   *     appear to be valid
+   */
+  static std::string getHostFromUrl(const std::string& url);
+
+  /**
+   * Clear any existing rules and reinitialize from the supplied access list.
+   *
+   * This access list is of the form:
+   *    [!]pattern,[!]pattern...
+   * where the optional exclamation indicates the following pattern is to be
+   * excluded, and an arbitrary number of patterns may be supplied with the
+   * first match being used.  Each pattern currently is only an exact literal
+   * match against the host name, but will be extended to support simple
+   * wildcard patterns.
+   */
+  static void initFromAccessList(const std::string& accessList);
+
+  /**
+   * Returns true if the server for the requested URL matched any rule in
+   * our access list, and sets a flag based on whether that rule permits or
+   * denies the request.  A host name of localhost or 127.0.0.1 is always
+   * allowed.
+   *
+   * @param url url of page initiating connection
+   * @param allowed pointer to return value indiciating that this URL should
+   *     be allowed to initiate GWT development mode connections
+   * @return true if url matched a rule
+   */
+  static bool matchesRule(const std::string& url, bool* allowed);
+
+private:
+  AllowedConnections() {
   }
 
   /**
-   * Returns true if a connection to the requested target is allowed.
-   *
-   * @param host name or address to connect to
-   * @param port TCP port to connect to
+   * Internal class used for representing a rule.
    */
-  bool isAllowed(const char* host, int port);
+  class Rule : std::pair<std::string, bool> {
+  public:
+    Rule(const std::string& pattern, bool exclude)
+        : std::pair<std::string, bool>(pattern, exclude) {}
 
-private:
-  void init();
-  void parseRule(const std::string& rule);
+    const std::string& getPattern() const {
+      return first;
+    }
+
+    bool isExcluded() const {
+      return second;
+    }
+  };
+
+  static std::vector<Rule> rules;
 };
 
 #endif

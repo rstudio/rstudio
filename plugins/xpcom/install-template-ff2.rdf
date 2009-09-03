@@ -3,7 +3,7 @@
      xmlns:em="http://www.mozilla.org/2004/em-rdf#">
 
   <Description about="urn:mozilla:install-manifest">
-    <em:id>oophm-xpcom-ff2@gwt.google.com</em:id>
+    <em:id>gwt-dmp-ff2@gwt.google.com</em:id>
     <em:name>GWT Development Mode Plugin (XPCOM) for FF v1.5-2.x</em:name>
     <em:version>GWT_OOPHM_VERSION</em:version>
     <em:type>2</em:type>
@@ -16,20 +16,22 @@
     </em:targetApplication>
 
     <!-- Front End MetaData -->
-    <em:description>A plugin to support development-mode development of GWT applications</em:description>
+    <em:description>A plugin to support GWT development-mode in XPCOM-based browsers</em:description>
     <em:creator>Google, Inc.</em:creator>
     <em:homepageURL>http://code.google.com/webtoolkit/</em:homepageURL>
-    <em:iconURL>chrome://gwt-oophm/skin/icon.png</em:iconURL>
+    <em:iconURL>chrome://gwt-dmp/skin/icon.png</em:iconURL>
 
     <em:targetPlatform>Linux_x86-gcc3</em:targetPlatform>
     <em:targetPlatform>Linux_x86_64-gcc3</em:targetPlatform>
     <em:targetPlatform>Darwin_x86-gcc3</em:targetPlatform>
+    <em:targetPlatform>Darwin_ppc-gcc3</em:targetPlatform>
+
+    <em:optionsURL>chrome://gwt-dmp/content/options.xul</em:optionsURL>
 
     <!-- TODO
-    # prefs dialog
 
     # replace default about dialog
-    <em:aboutURL>chrome://gwt-oophm/content/about.xul</em:aboutURL>
+    <em:aboutURL>chrome://gwt-dmp/content/about.xul</em:aboutURL>
 
     # updates, see http://developer.mozilla.org/en/docs/Extension_Versioning%2C_Update_and_Compatibility#Update_RDF_Format
     <em:updateURL>https://xxx.google.com/.../update.rdf</em:updateURL>
@@ -37,7 +39,6 @@
 
     # platforms - any others?
     <em:targetPlatform>WINNT_x86-msvc</em:targetPlatform>
-    <em:targetPlatform>Darwin_ppc-gcc3</em:targetPlatform>
     <em:targetPlatform>SunOS_sparc-sunc</em:targetPlatform>
     <em:targetPlatform>SunOS_x86-sunc</em:targetPlatform>
     -->

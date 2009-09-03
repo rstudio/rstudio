@@ -24,7 +24,6 @@
 
 #include "ByteOrder.h"
 #include "Socket.h"
-#include "AllowedConnections.h"
 #include "Platform.h"
 #include "Message.h"
 #include "ReturnMessage.h"
@@ -33,7 +32,6 @@
 
 class HostChannel {
   Socket sock;
-  AllowedConnections whitelist;
   static ByteOrder byteOrder;
 
 public:

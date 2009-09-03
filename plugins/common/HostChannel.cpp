@@ -57,23 +57,20 @@ using namespace std;
 ByteOrder HostChannel::byteOrder;
 
 bool HostChannel::connectToHost(const char* host, unsigned port) {
-  Debug::log(Debug::Info) << "Initiating GWT hosted mode connection to host "
-      << host << ", port " << port << Debug::flush;
   if (!port) {
     port = 9997;
   }
-  if (!whitelist.isAllowed(host, port)) {
-    Debug::log(Debug::Error) << "Permission to connect to " << host << ":" << port
-        << " denied" << Debug::flush;
-    return false;
-  }
+  Debug::log(Debug::Info)
+      << "Initiating GWT Development Mode connection to host " << host
+      << ", port " << port << Debug::flush;
   return sock.connect(host, port);
 }
 
 bool HostChannel::init(SessionHandler* handler, int minProtoVers,
     int maxProtoVers, const std::string& hostedHtmlVers) {
-  Debug::log(Debug::Info) << "initializing connection: proto=" << minProtoVers
-      << "-" << maxProtoVers << ", hostedHtmlVersion=" << hostedHtmlVers
+  Debug::log(Debug::Debugging)
+      << "  negotiating versions - we support protocol " << minProtoVers
+      << " through " << maxProtoVers << ", hostedHtmlVersion=" << hostedHtmlVers
       << Debug::flush;
   // TODO(jat): support transport selection
   CheckVersionsMessage::send(*this, minProtoVers, maxProtoVers, hostedHtmlVers);
