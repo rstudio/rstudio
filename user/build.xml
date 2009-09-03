@@ -219,7 +219,6 @@
       <antcall target="test.noserver"/>
       <antcall target="test.web"/>
       <antcall target="test.web.disableClassMetadata"/>
-      <antcall target="test.web.htmlunit"/>
       <antcall target="test.web.draft"/>
     </parallel>
     </limit>

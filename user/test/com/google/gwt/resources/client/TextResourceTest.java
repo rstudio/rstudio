@@ -61,8 +61,8 @@ public class TextResourceTest extends GWTTestCase {
       }
     };
 
-    r.helloWorldExternal().getText(c);
     delayTestFinish(2000);
+    r.helloWorldExternal().getText(c);
   }
 
   public void testInline() {

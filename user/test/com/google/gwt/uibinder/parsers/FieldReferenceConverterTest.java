@@ -17,6 +17,9 @@ package com.google.gwt.uibinder.parsers;
 
 import junit.framework.TestCase;
 
+/**
+ * Tests for {@link FieldReferenceConverter}.
+ */
 public class FieldReferenceConverterTest extends TestCase {
 
   FieldReferenceConverter.Delegate provider = new FieldReferenceConverter.Delegate() {
