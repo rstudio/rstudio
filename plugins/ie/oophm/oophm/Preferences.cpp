@@ -14,7 +14,7 @@
  * the License.
  */
 
-#include "stdafx.cpp"
+#include "stdafx.h"
 #include <winnt.h>
 #include <winreg.h>
 #include "Debug.h"
