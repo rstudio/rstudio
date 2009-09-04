@@ -56,6 +56,7 @@ public class EchoServlet extends HttpServlet {
           value = "";
         }
         res.getWriter().println(callback + "(" + value + ");");
+        res.getWriter().flush();
         break;
       }
 
@@ -64,11 +65,13 @@ public class EchoServlet extends HttpServlet {
         String error = req.getParameter("error");
         if (failureCallback != null) {
           res.getWriter().println(failureCallback + "('" + error + "');");
+          res.getWriter().flush();
         } else {
           // If no failure callback is defined, send the error through the
           // success callback.
           String callback = req.getParameter("callback");
           res.getWriter().println(callback + "('" + error + "');");
+          res.getWriter().flush();
         }
         break;
       }
