@@ -460,14 +460,12 @@ public class JettyLauncher extends ServletContainerLauncher {
 
   @Override
   public String getIconPath() {
-    return JettyLauncher.class.getPackage().getName().replace('.', '/')
-        + "/icon24.png";
+    return null;
   }
 
   @Override
   public String getName() {
-    // Use only the icon for the tab.
-    return null;
+    return "Jetty";
   }
 
   @Override

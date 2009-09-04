@@ -226,26 +226,36 @@ public class ModuleTabPanel extends JPanel {
   }
 
   /**
-   * Renderer used to show entries in the session dropdown box.
+   * Holds information about the browser used in the UI.
    */
-  private static class SessionRenderer extends BasicComboBoxRenderer {
-  
-    @Override
-    public Component getListCellRendererComponent(JList list, Object value,
-        int index, boolean isSelected, boolean cellHasFocus) {
-      // the superclass just returns this, so we don't save the result and
-      // cast it back to a label
-      super.getListCellRendererComponent(list, value, index,
-          isSelected, cellHasFocus);
-      if (value instanceof Session) {
-        Session session = (Session) value;
-        if (!session.hasActiveModules()) {
-          setForeground(DISCONNECTED_DROPDOWN_COLOR);
-          setFont(getFont().deriveFont(Font.ITALIC));
-        }
-        // TODO(jat): set font to bold/etc if new modules were added
-      }
-      return this;
+  private static class BrowserInfo {
+
+    private final ImageIcon icon;
+    private final String shortName;
+
+    /**
+     * Create a BrowserInfo instance.
+     * 
+     * @param icon
+     * @param shortName
+     */
+    public BrowserInfo(ImageIcon icon, String shortName) {
+      this.icon = icon;
+      this.shortName = shortName;
+    }
+
+    /**
+     * @return the icon used to identify this browser, or null if none.
+     */
+    public ImageIcon getIcon() {
+      return icon;
+    }
+
+    /**
+     * @return the short name used to identify this browser, or null if none.
+     */
+    public String getShortName() {
+      return shortName;
     }
   }
 
@@ -273,6 +283,30 @@ public class ModuleTabPanel extends JPanel {
     }
   }
 
+  /**
+   * Renderer used to show entries in the session dropdown box.
+   */
+  private static class SessionRenderer extends BasicComboBoxRenderer {
+  
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value,
+        int index, boolean isSelected, boolean cellHasFocus) {
+      // the superclass just returns this, so we don't save the result and
+      // cast it back to a label
+      super.getListCellRendererComponent(list, value, index,
+          isSelected, cellHasFocus);
+      if (value instanceof Session) {
+        Session session = (Session) value;
+        if (!session.hasActiveModules()) {
+          setForeground(DISCONNECTED_DROPDOWN_COLOR);
+          setFont(getFont().deriveFont(Font.ITALIC));
+        }
+        // TODO(jat): set font to bold/etc if new modules were added
+      }
+      return this;
+    }
+  }
+
   public static final Color DISCONNECTED_DROPDOWN_COLOR = Color.decode("0x808080");
 
   private CardLayout cardLayout;
@@ -282,11 +316,11 @@ public class ModuleTabPanel extends JPanel {
   private JPanel deckPanel;
 
   private JComboBox moduleDropdown;
-  
+
   private JComboBox sessionDropdown;
 
   private final Map<String, Session> sessions = new HashMap<String, Session>();
-  
+
   private final TabPanelCollection tabPanelCollection;
 
   private JPanel topPanel;
@@ -294,7 +328,7 @@ public class ModuleTabPanel extends JPanel {
   private JPanel sessionDropdownPanel;
 
   private JPanel moduleDropdownPanel;
-  
+
   /**
    * Create a panel which will be a top-level tab in the OOPHM UI.  Each of
    * these tabs will contain one or more sessions, and within that one or
@@ -350,7 +384,7 @@ public class ModuleTabPanel extends JPanel {
     cardLayout = new CardLayout();
     deckPanel.setLayout(cardLayout);
     add(deckPanel);
-    ImageIcon browserIcon = chooseBrowserIcon(userAgent);
+    BrowserInfo browserInfo = getBrowserInfo(userAgent);
     
     // Construct the tab title and tooltip
     String tabTitle = url;
@@ -379,6 +413,13 @@ public class ModuleTabPanel extends JPanel {
       }
     }
 
+    ImageIcon browserIcon = browserInfo.getIcon();
+    String shortName = browserInfo.getShortName();
+    if (browserIcon == null) {
+      if (shortName != null) {
+        tabTitle += " (" + shortName + ")";
+      }
+    }
     tabPanelCollection.addTab(this, browserIcon, tabTitle, url + "from "
         + remoteSocket + " on " + userAgent);
   }
@@ -402,27 +443,6 @@ public class ModuleTabPanel extends JPanel {
     selectSession(session);
   }
 
-  /**
-   * Choose an icon appropriate for this browser, or null if none.
-   * 
-   * @param userAgent User-Agent string from browser
-   * @return icon or null if none
-   */
-  private ImageIcon chooseBrowserIcon(String userAgent) {
-    ImageIcon browserIcon = null;
-    String lcAgent = userAgent.toLowerCase();
-    if (lcAgent.contains("msie")) {
-      browserIcon = Icons.getIE24();
-    } else if (lcAgent.contains("chrome")) {
-      browserIcon = Icons.getChrome24();
-    } else if (lcAgent.contains("webkit") || lcAgent.contains("safari")) {
-      browserIcon = Icons.getSafari24();
-    } else if (lcAgent.contains("firefox")) {
-      browserIcon = Icons.getFirefox24();
-    }
-    return browserIcon;
-  }
-  
   private synchronized void closeSession(Session session) {
     sessionDropdown.removeItem(session);
     sessions.remove(session.getSessionKey());
@@ -442,7 +462,7 @@ public class ModuleTabPanel extends JPanel {
           sessionDropdown.getItemCount() - 1));
     }
   }
-
+  
   /**
    * Return the proper Session object for this session, creating it if needed.
    * 
@@ -457,6 +477,32 @@ public class ModuleTabPanel extends JPanel {
       addSession(session);
     }
     return session;
+  }
+
+  /**
+   * Choose an icon appropriate for this browser, or null if none.
+   * 
+   * @param userAgent User-Agent string from browser
+   * @return icon or null if none
+   */
+  private BrowserInfo getBrowserInfo(String userAgent) {
+    ImageIcon browserIcon = null;
+    String shortName = null;
+    String lcAgent = userAgent.toLowerCase();
+    if (lcAgent.contains("msie")) {
+      browserIcon = Icons.getIE24();
+      shortName = "IE";
+    } else if (lcAgent.contains("chrome")) {
+      browserIcon = Icons.getChrome24();
+      shortName = "Chrome";
+    } else if (lcAgent.contains("webkit") || lcAgent.contains("safari")) {
+      browserIcon = Icons.getSafari24();
+      shortName = "Safari";
+    } else if (lcAgent.contains("firefox")) {
+      browserIcon = Icons.getFirefox24();
+      shortName = "FF";
+    }
+    return new BrowserInfo(browserIcon, shortName);
   }
 
   private String getTabTitle(URL parsedUrl) {

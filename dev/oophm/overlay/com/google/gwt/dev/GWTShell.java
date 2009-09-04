@@ -267,7 +267,7 @@ public class GWTShell extends OophmHostedModeBase {
 
   @Override
   protected ImageIcon getWebServerIcon() {
-    return loadImageIcon("tomcat24.png");
+    return null;
   }
 
   @Override

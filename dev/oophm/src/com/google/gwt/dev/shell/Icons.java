@@ -42,28 +42,33 @@ public class Icons {
   private static final Icon LOG_ITEM_SPAM = loadIcon(
       AbstractTreeLogger.class, "log-item-spam.gif");
 
-  // browser icons
-  private static final ImageIcon CHROME_24 = loadIcon("chrome24.png");
-  private static final ImageIcon FIREFOX_24 = loadIcon("firefox24.png");
-  private static final ImageIcon IE_24 = loadIcon("ie24.png");
-  private static final ImageIcon SAFARI_24 = loadIcon("safari24.png");
+  // browser icons left out for now
 
   private static final ImageIcon CLOSE = loadIcon("close.png");
   
+  /**
+   * @return a *x24 icon suitable for identifying Chrome, or null if none.
+   */
   public static ImageIcon getChrome24() {
-    return CHROME_24;
+    return null;
   }
 
   public static ImageIcon getClose() {
     return CLOSE;
   }
 
+  /**
+   * @return a *x24 icon suitable for identifying Firefox, or null if none.
+   */
   public static ImageIcon getFirefox24() {
-    return FIREFOX_24;
+    return null;
   }
 
+  /**
+   * @return a *x24 icon suitable for identifying IE, or null if none.
+   */
   public static ImageIcon getIE24() {
-    return IE_24;
+    return null;
   }
 
   public static Icon getLogItemDebug() {
@@ -90,8 +95,11 @@ public class Icons {
     return LOG_ITEM_WARNING;
   }
 
+  /**
+   * @return a *x24 icon suitable for identifying Safari, or null if none.
+   */
   public static ImageIcon getSafari24() {
-    return SAFARI_24;
+    return null;
   }
 
   private static ImageIcon loadIcon(Class<?> clazz, String name) {
