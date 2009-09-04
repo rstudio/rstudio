@@ -20,12 +20,27 @@
 #include "InvokeMessage.h"
 #include "ReturnMessage.h"
 #include "ServerMethods.h"
+#include "AllowedConnections.h"
 #include "mozincludes.h"
 #include "scoped_ptr/scoped_ptr.h"
 #include "NPVariantWrapper.h"
 
 using std::string;
 using std::endl;
+
+static inline string convertToString(const NPString& str) {
+  return string(GetNPStringUTF8Characters(str), GetNPStringUTF8Length(str));
+}
+
+static bool askUserToAllow(const std::string& url, bool* remember) {
+  // TODO(jat): implement, for now allow anything but don't remember
+  *remember = false;
+  return true;
+}
+
+string ScriptableInstance::computeTabIdentity() {
+  return "";
+}
 
 void ScriptableInstance::dumpObjectBytes(NPObject* obj) {
   char buf[20];
@@ -46,6 +61,7 @@ ScriptableInstance::ScriptableInstance(NPP npp) : NPObjectWrapper<ScriptableInst
     _channel(new HostChannel()),
     localObjects(),
     _connectId(NPN_GetStringIdentifier("connect")),
+    initID(NPN_GetStringIdentifier("init")),
     toStringID(NPN_GetStringIdentifier("toString")),
     connectedID(NPN_GetStringIdentifier("connected")),
     statsID(NPN_GetStringIdentifier("stats")),
@@ -177,7 +193,7 @@ bool ScriptableInstance::setProperty(NPIdentifier name, const NPVariant* variant
 bool ScriptableInstance::hasMethod(NPIdentifier name) {
   Debug::log(Debug::Debugging) << "ScriptableInstance::hasMethod(name=" << NPN_UTF8FromIdentifier(name) << ")"
       << Debug::flush; 
-  if (name == _connectId || name == toStringID) {
+  if (name == _connectId || name == initID || name == toStringID) {
     return true;
   }
   return false;
@@ -191,6 +207,8 @@ bool ScriptableInstance::invoke(NPIdentifier name, const NPVariant* args, unsign
   VOID_TO_NPVARIANT(*result);
   if (name == _connectId) {
     connect(args, argCount, result);
+  } else if (name == initID) {
+    init(args, argCount, result);
   } else if (name == toStringID) {
     // TODO(jat): figure out why this doesn't show in Firebug
     string val("[GWT OOPHM Plugin: connected=");
@@ -224,10 +242,33 @@ bool ScriptableInstance::enumeration(NPIdentifier** propReturn, uint32_t* count)
 // internal methods
 //=====================================================================================
 
+void ScriptableInstance::init(const NPVariant* args, unsigned argCount, NPVariant* result) {
+  if (argCount != 1 || !NPVariantProxy::isObject(args[0])) {
+    // TODO: better failure?
+    Debug::log(Debug::Error) << "ScriptableInstance::init called with incorrect arguments:\n";
+    for (unsigned i = 0; i < argCount; ++i) {
+      Debug::log(Debug::Error) << " " << i << " " << NPVariantProxy::toString(args[i]) << "\n";
+    }
+    Debug::log(Debug::Error) << Debug::flush;
+    result->type = NPVariantType_Void;
+    return;
+  }
+  if (window) {
+    NPN_ReleaseObject(window);
+  }
+  // replace our window object with that passed by the caller
+  window = NPVariantProxy::getAsObject(args[0]);
+  NPN_RetainObject(window);
+  BOOLEAN_TO_NPVARIANT(true, *result);
+  result->type = NPVariantType_Bool;
+}
+
 void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVariant* result) {
-  if (argCount < 2 || argCount > 4 || !NPVariantProxy::isString(args[0])
+  if (argCount != 5 || !NPVariantProxy::isString(args[0])
       || !NPVariantProxy::isString(args[1])
-      || (argCount == 3 && !NPVariantProxy::isObject(args[2]))) {
+      || !NPVariantProxy::isString(args[2])
+      || !NPVariantProxy::isString(args[3])
+      || !NPVariantProxy::isString(args[4])) {
     // TODO: better failure?
     Debug::log(Debug::Error) << "ScriptableInstance::connect called with incorrect arguments:\n";
     for (unsigned i = 0; i < argCount; ++i) {
@@ -237,18 +278,32 @@ void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVar
     result->type = NPVariantType_Void;
     return;
   }
-  const NPString hostAddr = args[0].value.stringValue;
-  const NPString moduleName = args[1].value.stringValue;
-  if (argCount >= 3) {
-    if (window) {
-      NPN_ReleaseObject(window);
+  const NPString url = args[0].value.stringValue;
+  const NPString sessionKey = args[1].value.stringValue;
+  const NPString hostAddr = args[2].value.stringValue;
+  const NPString moduleName = args[3].value.stringValue;
+  const NPString hostedHtmlVersion = args[4].value.stringValue;
+  Debug::log(Debug::Info) << "ScriptableInstance::connect(url=" << NPVariantProxy::toString(args[0])
+      << ",sessionKey=" << NPVariantProxy::toString(args[1]) << ",host=" << NPVariantProxy::toString(args[2])
+      << ",module=" << NPVariantProxy::toString(args[3]) << ",hostedHtmlVers=" << NPVariantProxy::toString(args[4])
+      << ")" << Debug::flush;
+  const std::string urlStr = convertToString(url);
+  bool allowed = false;
+  // TODO(jat): load access list
+  if (!AllowedConnections::matchesRule(urlStr, &allowed)) {
+    // If we didn't match an existing rule, prompt the user
+    bool remember = false;
+    allowed = askUserToAllow(urlStr, &remember);
+    if (remember) {
+      // TODO(jat): update access list
     }
-    // replace our window object with that passed by the caller
-    window = NPVariantProxy::getAsObject(args[2]);
-    NPN_RetainObject(window);
   }
-  Debug::log(Debug::Info) << "ScriptableInstance::connect(host=" << NPVariantProxy::toString(args[0])
-      << ",module=" << NPVariantProxy::toString(args[1]) << ")" << Debug::flush;
+  if (!allowed) {
+    BOOLEAN_TO_NPVARIANT(false, *result);
+    result->type = NPVariantType_Bool;
+    return;
+  }
+
   bool connected = false;
   unsigned port = 9997;  // TODO(jat): should there be a default?
   int n = GetNPStringUTF8Length(hostAddr);
@@ -264,13 +319,34 @@ void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVar
     port = atoi(s + 1);
   }
   Debug::log(Debug::Info) << "  host=" << host.get() << ",port=" << port << Debug::flush;
-  if (_channel->connectToHost(host.get(), port)) {
-    Debug::log(Debug::Debugging) << "  connected, sending loadModule" << Debug::flush;
-    connected = LoadModuleMessage::send(*_channel, VERSION, GetNPStringUTF8Characters(moduleName),
-        GetNPStringUTF8Length(moduleName), NPN_UserAgent(getNPP()), this);
+
+
+  if (!_channel->connectToHost(host.get(), port)) {
+    BOOLEAN_TO_NPVARIANT(false, *result);
+    result->type = NPVariantType_Bool;
   }
+
+  string hostedHtmlVersionStr = convertToString(hostedHtmlVersion);
+  if (!_channel->init(this, BROWSERCHANNEL_PROTOCOL_VERSION,
+      BROWSERCHANNEL_PROTOCOL_VERSION, hostedHtmlVersionStr)) {
+    BOOLEAN_TO_NPVARIANT(false, *result);
+    result->type = NPVariantType_Bool;
+  }
+
+  string moduleNameStr = convertToString(moduleName);
+  string userAgent(NPN_UserAgent(getNPP()));
+  string tabKeyStr = computeTabIdentity();
+  string sessionKeyStr = convertToString(sessionKey);
+  Debug::log(Debug::Debugging) << "  connected, sending loadModule" << Debug::flush;
+  connected = LoadModuleMessage::send(*_channel, urlStr, tabKeyStr, sessionKeyStr,
+      moduleNameStr, userAgent, this);
   BOOLEAN_TO_NPVARIANT(connected, *result);
   result->type = NPVariantType_Bool;
+}
+
+void ScriptableInstance::fatalError(HostChannel& channel, const std::string& message) {
+  // TODO(jat): better error handling
+  Debug::log(Debug::Error) << "Fatal error: " << message << Debug::flush;
 }
 
 void ScriptableInstance::dupString(const char* str, NPString& npString) {

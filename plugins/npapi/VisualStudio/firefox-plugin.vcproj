@@ -63,7 +63,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
 				ShowProgress="2"
-				OutputFile="$(ProjectDir)\..\extension\platform\WINNT_x86-msvc\plugins\npOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\prebuilt\WINNT_x86-msvc\npOOPHM.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="$(ProjectDir)\..\npOOPHM.def"
 				GenerateDebugInformation="true"
@@ -199,11 +199,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\CheckVersionsMessage.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\ChooseTransportMessage.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\Debug.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\common\DebugLevel.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\FatalErrorMessage.h"
 				>
 			</File>
 			<File
@@ -279,6 +291,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\ProtocolVersionMessage.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\QuitMessage.h"
 				>
 			</File>
@@ -311,6 +327,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\SwitchTransportMessage.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\Value.h"
 				>
 			</File>
@@ -335,7 +355,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\CheckVersionsMessage.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\ChooseTransportMessage.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\Debug.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\FatalErrorMessage.cpp"
 				>
 			</File>
 			<File
@@ -387,6 +419,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\ProtocolVersionMessage.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\ReturnMessage.cpp"
 				>
 			</File>
@@ -400,6 +436,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\Socket.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\SwitchTransportMessage.cpp"
 				>
 			</File>
 		</Filter>

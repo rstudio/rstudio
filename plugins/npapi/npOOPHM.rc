@@ -1,7 +1,7 @@
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
-#include "mfc/afxres.h"
+#include "windows.h"
 #undef APSTUDIO_READONLY_SYMBOLS
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)

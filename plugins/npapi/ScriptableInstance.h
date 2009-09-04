@@ -87,6 +87,7 @@ private:
 
   // Identifiers
   const NPIdentifier _connectId;
+  const NPIdentifier initID;
   const NPIdentifier toStringID;
   
   const NPIdentifier connectedID;
@@ -114,8 +115,10 @@ private:
   virtual void freeValue(HostChannel& channel, int idCount, const int* ids);
   virtual void sendFreeValues(HostChannel& channel);
   virtual void loadJsni(HostChannel& channel, const std::string& js);
+  virtual void fatalError(HostChannel& channel, const std::string& message);
 
   void connect(const NPVariant* args, unsigned argCount, NPVariant* result);
+  void init(const NPVariant* args, unsigned argCount, NPVariant* result);
   
   Value clientMethod_getProperty(HostChannel& channel, int numArgs, const Value* const args);
   Value clientMethod_setProperty(HostChannel& channel, int numArgs, const Value* const args);
@@ -126,6 +129,9 @@ private:
   bool JavaObject_getProperty(int objectId, int dispId, NPVariant* result);
   bool JavaObject_setProperty(int objectId, int dispId, const NPVariant* value);
   bool JavaObject_getToStringTearOff(NPVariant* result);
+
+private:
+  std::string computeTabIdentity();
 };
 
 #endif
