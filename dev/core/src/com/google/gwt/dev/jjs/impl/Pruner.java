@@ -189,12 +189,7 @@ public class Pruner {
         // This must be a static method
         assert method.isStatic();
 
-        JMethodCall newCall = new JMethodCall(x.getSourceInfo(),
-            x.getInstance(), method);
-        if (!x.canBePolymorphic()) {
-          newCall.setCannotBePolymorphic();
-        }
-
+        JMethodCall newCall = new JMethodCall(x, x.getInstance());
         List<JParameter> originalParams = methodToOriginalParamsMap.get(method);
         JMultiExpression currentMulti = null;
         for (int i = 0, c = x.getArgs().size(); i < c; ++i) {

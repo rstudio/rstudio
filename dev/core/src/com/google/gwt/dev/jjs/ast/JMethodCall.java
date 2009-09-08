@@ -33,22 +33,26 @@ public class JMethodCall extends JExpression {
   private final JType overrideReturnType;
   private boolean staticDispatchOnly = false;
 
+  /**
+   * Initialize a new method call equivalent to another one. A new instance must
+   * be specified, and the new object has not arguments on initialization. This
+   * forces the caller to potentially deal with cloning objects if needed.
+   */
+  public JMethodCall(JMethodCall other, JExpression instance) {
+    super(other.getSourceInfo());
+    this.instance = instance;
+    this.cannotBePolymorphic = other.cannotBePolymorphic;
+    this.method = other.method;
+    this.overrideReturnType = other.overrideReturnType;
+    this.staticDispatchOnly = other.staticDispatchOnly;
+  }
+
   public JMethodCall(SourceInfo info, JExpression instance, JMethod method) {
     super(info);
     assert (method != null);
     assert (instance != null || method.isStatic());
     this.instance = instance;
     this.method = method;
-    this.staticDispatchOnly = false;
-    this.overrideReturnType = null;
-  }
-
-  public JMethodCall(SourceInfo info, JExpression instance, JMethod method,
-      boolean staticDispatchOnly) {
-    super(info);
-    this.instance = instance;
-    this.method = method;
-    this.staticDispatchOnly = staticDispatchOnly;
     this.overrideReturnType = null;
   }
 
@@ -66,6 +70,8 @@ public class JMethodCall extends JExpression {
   public JMethodCall(SourceInfo info, JExpression instance, JMethod method,
       JType overrideReturnType) {
     super(info);
+    assert (method != null);
+    assert (instance != null || method.isStatic());
     this.instance = instance;
     this.method = method;
     assert (overrideReturnType != null);
