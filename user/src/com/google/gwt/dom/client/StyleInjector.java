@@ -95,7 +95,7 @@ public class StyleInjector {
     @Override
     public StyleElement injectStyleSheet(String contents) {
       int idx = STYLE_ELEMENTS.length();
-      if (idx < MAX_STYLE_SHEETS) {
+      if (getDocumentStyleCount() < MAX_STYLE_SHEETS) {
         // Just create a new style element and add it to the list
         StyleElement style = createElement();
         setContents(style, contents);
@@ -115,6 +115,14 @@ public class StyleInjector {
             shortestIdx = i;
           }
         }
+
+        /**
+         * This assertion can fail if the max number of style elements exist
+         * before this module can inject any style elements, so STYLE_ELEMENTS
+         * will be empty. However, the fix would degrade performance for the
+         * general case.
+         * TODO(jlabanca): Can we handle this scenario efficiently?
+         */
         assert shortestIdx != -1;
 
         StyleElement style = STYLE_ELEMENTS.get(shortestIdx);
@@ -164,6 +172,10 @@ public class StyleInjector {
 
     private native StyleElement createElement() /*-{
       return $doc.createStyleSheet();
+    }-*/;
+
+    private native int getDocumentStyleCount() /*-{
+      return $doc.styleSheets.length;
     }-*/;
   }
 
