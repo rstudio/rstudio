@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <map>
 
 #include "Debug.h"
 
@@ -29,6 +30,7 @@ private:
 
   int nextFree;
   std::vector<NPObject*> objects;
+  std::map<void*, int> objectIndex;
   bool dontFree;
 
   bool isFree(int id) {
@@ -41,6 +43,16 @@ private:
     objects[id] = reinterpret_cast<NPObject*>((nextFree << 1) | 1LL);
     nextFree = id;
   }
+
+  int findIndex(void* ptr) {
+    std::map<void*, int>::iterator it = objectIndex.find(ptr);
+    if (it == objectIndex.end()) {
+      return -1;
+    }
+    return it->second;
+  }
+
+  static void* getIdentityFrom(NPObject* obj);
 public:
   LocalObjectTable() {
     nextFree = -1;
@@ -51,7 +63,8 @@ public:
   virtual ~LocalObjectTable();
 
   int add(NPObject* obj) {
-    int id = find(obj);
+    void* objId = getIdentityFrom(obj);
+    int id = findIndex(objId);
     if (id >= 0) {
       Debug::log(Debug::Spam) << "LocalObjectTable::add(obj=" << obj
           << "): returning old id=" << id << Debug::flush;
@@ -65,6 +78,7 @@ public:
       id = static_cast<int>(objects.size());
       objects.push_back(obj);
     }
+    objectIndex[objId] = id;
     Debug::log(Debug::Spam) << "LocalObjectTable::add(obj=" << obj << "): id=" << id
         << Debug::flush;
     // keep track that we hold a reference in the table
@@ -72,13 +86,9 @@ public:
     return id;
   }
 
-  // TODO(jat): sublinear search
   int find(NPObject* obj) {
-    std::vector<NPObject*>::iterator it = std::find(objects.begin(), objects.end(), obj);
-    if (it == objects.end()) {
-      return -1;
-    }
-    return static_cast<int>(it - objects.begin());
+    void* objId = getIdentityFrom(obj);
+    return findIndex(objId);
   }
 
   void free(int id) {
