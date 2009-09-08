@@ -729,7 +729,7 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<tr>");
         outFile.println("<td class=\"barlabel\">" + size + "</td>");
         outFile.println("<td class=\"barlabel\">" + perc + "%</td>");
-        if (dependencyLink != null) {
+        if ((settings.displayDependencies) && (dependencyLink != null)) {
           outFile.println("<td class=\"barlabel\"><a href=\"" + dependencyLink
               + "\" target=\"_top\">" + className + "</a></td>");
         } else {
@@ -1007,15 +1007,17 @@ public class MakeTopLevelHtmlForPerm {
 
   private void addLefttoversStatus(String className, String packageName,
       PrintWriter out, String permutationId) {
-    out.println("<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\""
-        + dependenciesFileName("total", packageName, permutationId) + "#"
-        + className + "\">See why it's live</a></td></tr>");
-    for (int sp = 1; sp <= globalInformation.getNumSplitPoints(); sp++) {
+    if (settings.displayDependencies) {
       out.println("<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\""
-          + dependenciesFileName("sp" + sp, packageName, permutationId) + "#"
-          + className + "\">See why it's not exclusive to s.p. #" + sp + " ("
-          + globalInformation.getSplitPointToLocation().get(sp)
-          + ")</a></td></tr>");
+          + dependenciesFileName("total", packageName, permutationId) + "#"
+          + className + "\">See why it's live</a></td></tr>");
+      for (int sp = 1; sp <= globalInformation.getNumSplitPoints(); sp++) {
+        out.println("<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\""
+            + dependenciesFileName("sp" + sp, packageName, permutationId) + "#"
+            + className + "\">See why it's not exclusive to s.p. #" + sp + " ("
+            + globalInformation.getSplitPointToLocation().get(sp)
+            + ")</a></td></tr>");
+      }
     }
   }
 
@@ -1386,9 +1388,14 @@ public class MakeTopLevelHtmlForPerm {
     out.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
 
     if (globalInformation.getInitialCodeBreakdown().classToSize.containsKey(className)) {
-      out.println("<tr><td>Some code is initial (<a href=\""
-          + dependenciesFileName("initial", packageName, permutationId) + "#"
-          + className + "\">see why</a>)</td></tr>");
+      if (settings.displayDependencies) {
+        out.println("<tr><td>Some code is initial (<a href=\""
+            + dependenciesFileName("initial", packageName, permutationId) + "#"
+            + className + "\">see why</a>)</td></tr>");
+      }
+      else {
+        out.println("<tr><td>Some code is initial</td></tr>");
+      }
     }
     for (int sp : splitPointsWithClass(className)) {
       out.println("<tr><td>Some code downloads with s.p. #" + sp + " ("
