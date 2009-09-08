@@ -230,16 +230,19 @@ public class Settings {
         while ((sc.hasNextLine()) && (lineCount < 2)) {
 
           String curLine = sc.nextLine();
-          curLine = curLine.replace("# {", "");
-          curLine = curLine.replace("}", "");
           curLine = curLine.trim();
 
-          if (lineCount == 0) {
-            permutationId = curLine;
-          } else {
-            permutationInfo = curLine;
+          if (curLine.startsWith("# {")) {
+            curLine = curLine.replace("# {", "");
+            curLine = curLine.replace("}", "");
+            curLine = curLine.trim();
+            if (lineCount == 0) {
+              permutationId = curLine;
+            } else {
+              permutationInfo = curLine;
+            }
+            lineCount++;
           }
-          lineCount++;
         }
         allPermsInfo.put(permutationId, permutationInfo);
       }
