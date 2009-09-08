@@ -21,6 +21,7 @@ import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.jdt.BasicWebModeCompiler;
+import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -98,6 +99,8 @@ public class JavaAstConstructor {
       code.append("public final class GWT {\n");
       code.append("  public boolean isClient() { return true; };\n");
       code.append("  public boolean isScript() { return true; };\n");
+      code.append("  public static void runAsync(Object callback) { }\n");
+      code.append("  public static void runAsync(Class<?> name, Object callback) { }\n");
       code.append("}\n");
       return code;
     }
@@ -131,6 +134,16 @@ public class JavaAstConstructor {
     //
     JavaToJavaScriptCompiler.checkForErrors(logger, goldenCuds, false);
 
+    /*
+     * FindDeferredBindingSitesVisitor detects errors in usage of magic methods
+     * in the GWT class.
+     */
+    for (CompilationUnitDeclaration jdtCud : goldenCuds) {
+      jdtCud.traverse(new FindDeferredBindingSitesVisitor(), jdtCud.scope);
+    }
+
+    JavaToJavaScriptCompiler.checkForErrors(logger, goldenCuds, true);
+    
     CorrelationFactory correlator = new DummyCorrelationFactory();
     JProgram jprogram = new JProgram(correlator);
     JsProgram jsProgram = new JsProgram(correlator);

@@ -204,34 +204,20 @@ public final class GWT {
   }
 
   /**
+   * The same as {@link #runAsync(RunAsyncCallback)}, except with an extra
+   * parameter to provide a name for the call. The name parameter should be
+   * supplied with a class literal. No two runAsync calls in the same program
+   * should use the same name.
+   */
+  public static void runAsync(Class<?> name, RunAsyncCallback callback) {
+    runAsyncWithoutCodeSplitting(callback);
+  }
+
+  /**
    * Run the specified callback once the necessary code for it has been loaded.
    */
   public static void runAsync(RunAsyncCallback callback) {
-    /*
-     * By default, just call the callback. This allows using
-     * <code>runAsync</code> in code that might or might not run in a web
-     * browser.
-     */
-    if (isScript()) {
-      /*
-       * It's possible that the code splitter does not run, even for a
-       * production build. Signal a lightweight event, anyway, just so that
-       * there isn't a complete lack of lightweight events for runAsync.
-       */
-      AsyncFragmentLoader.BROWSER_LOADER.logEventProgress("noDownloadNeeded", "begin");
-      AsyncFragmentLoader.BROWSER_LOADER.logEventProgress("noDownloadNeeded", "end");
-    }
-
-    UncaughtExceptionHandler handler = sUncaughtExceptionHandler;
-    if (handler == null) {
-      callback.onSuccess();
-    } else {
-      try {
-        callback.onSuccess();
-      } catch (Throwable e) {
-        handler.onUncaughtException(e);
-      }
-    }
+    runAsyncWithoutCodeSplitting(callback);
   }
 
   /**
@@ -261,4 +247,36 @@ public final class GWT {
   private static native String getVersion0() /*-{
     return $gwt_version;
   }-*/;
+
+  /**
+   * This implementation of runAsync simply calls the callback. It is only used
+   * when no code splitting has occurred.
+   */
+  private static void runAsyncWithoutCodeSplitting(RunAsyncCallback callback) {
+    /*
+     * By default, just call the callback. This allows using
+     * <code>runAsync</code> in code that might or might not run in a web
+     * browser.
+     */
+    if (isScript()) {
+      /*
+       * It's possible that the code splitter does not run, even for a
+       * production build. Signal a lightweight event, anyway, just so that
+       * there isn't a complete lack of lightweight events for runAsync.
+       */
+      AsyncFragmentLoader.BROWSER_LOADER.logEventProgress("noDownloadNeeded", "begin");
+      AsyncFragmentLoader.BROWSER_LOADER.logEventProgress("noDownloadNeeded", "end");
+    }
+
+    UncaughtExceptionHandler handler = sUncaughtExceptionHandler;
+    if (handler == null) {
+      callback.onSuccess();
+    } else {
+      try {
+        callback.onSuccess();
+      } catch (Throwable e) {
+        handler.onUncaughtException(e);
+      }
+    }
+  }
 }

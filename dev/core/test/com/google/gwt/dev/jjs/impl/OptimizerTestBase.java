@@ -77,8 +77,8 @@ public abstract class OptimizerTestBase extends TestCase {
 
   /**
    * Finds a type by name. The type name may be short, e.g. <code>"Foo"</code>,
-   * or fully-qualified, e.g. <code>"com.google.example.Foo"</code>. If a
-   * short name is used, it must be unambiguous.
+   * or fully-qualified, e.g. <code>"com.google.example.Foo"</code>. If a short
+   * name is used, it must be unambiguous.
    */
   public static JDeclaredType findType(JProgram program, String typeName) {
     JDeclaredType type = program.getFromTypeMap(typeName);
@@ -117,9 +117,9 @@ public abstract class OptimizerTestBase extends TestCase {
     return TreeLogger.NULL;
   }
 
-  protected final MockResourceOracle sourceOracle = new MockResourceOracle();
+  protected TreeLogger logger = createTreeLogger();
 
-  private final TreeLogger logger = createTreeLogger();
+  protected final MockResourceOracle sourceOracle = new MockResourceOracle();
 
   private final Set<String> snippetClassDecls = new TreeSet<String>();
 
@@ -133,19 +133,20 @@ public abstract class OptimizerTestBase extends TestCase {
   }
 
   /**
+   * Adds a snippet of code, for example a field declaration, to the class that
+   * encloses the snippet subsequently passed to
+   * {@link #compileSnippet(String, String)}.
+   */
+  protected void addSnippetClassDecl(String fieldDecl) {
+    snippetClassDecls.add(fieldDecl);
+  }
+
+  /**
    * Adds an import statement for any code subsequently passed to
    * {@link #compileSnippet(String, String)}.
    */
   protected void addSnippetImport(String typeName) {
     snippetImports.add(typeName);
-  }
-
-  /**
-   * Adds a local field declaration for code subsequently passed to
-   * {@link #compileSnippet(String, String)}.
-   */
-  protected void addSnippetClassDecl(String fieldDecl) {
-    snippetClassDecls.add(fieldDecl);
   }
 
   /**

@@ -80,7 +80,7 @@ public class SplitPointRecorder {
         htmlOut.printRaw(curLine);
         htmlOut.newline();
       }
-      
+
       if (!jprogram.getSplitPointInitialSequence().isEmpty()) {
         curLine = "<initialseq>";
         htmlOut.printRaw(curLine);
@@ -92,7 +92,7 @@ public class SplitPointRecorder {
           htmlOut.printRaw(curLine);
           htmlOut.newline();
         }
-        
+
         htmlOut.indentOut();
         curLine = "</initialseq>";
         htmlOut.printRaw(curLine);
@@ -127,13 +127,19 @@ public class SplitPointRecorder {
     Map<String, Integer> counts = new HashMap<String, Integer>();
     for (RunAsyncReplacement replacement : program.getRunAsyncReplacements().values()) {
       int entryNumber = replacement.getNumber();
-      String methodDescription = fullMethodDescription(replacement.getEnclosingMethod());
-      if (counts.containsKey(methodDescription)) {
-        counts.put(methodDescription, counts.get(methodDescription) + 1);
-        methodDescription += "#"
-            + Integer.toString(counts.get(methodDescription));
+      String methodDescription;
+      if (replacement.getName() != null) {
+        methodDescription = replacement.getName();
       } else {
-        counts.put(methodDescription, 1);
+        methodDescription = "@"
+            + fullMethodDescription(replacement.getEnclosingMethod());
+        if (counts.containsKey(methodDescription)) {
+          counts.put(methodDescription, counts.get(methodDescription) + 1);
+          methodDescription += "#"
+              + Integer.toString(counts.get(methodDescription));
+        } else {
+          counts.put(methodDescription, 1);
+        }
       }
 
       names.put(entryNumber, methodDescription);

@@ -16,7 +16,9 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -34,6 +36,8 @@ import java.util.Map;
 /**
  * Replaces calls to
  * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback)}
+ * and
+ * {@link com.google.gwt.core.client.GWT#runAsync(Class, com.google.gwt.core.client.RunAsyncCallback)
  * by calls to a fragment loader.
  */
 public class ReplaceRunAsyncs {
@@ -44,12 +48,15 @@ public class ReplaceRunAsyncs {
   public static class RunAsyncReplacement implements Serializable {
     private final JMethod enclosingMethod;
     private final JMethod loadMethod;
+    private final String name;
     private final int number;
 
-    RunAsyncReplacement(int number, JMethod enclosingMethod, JMethod loadMethod) {
+    RunAsyncReplacement(int number, JMethod enclosingMethod,
+        JMethod loadMethod, String name) {
       this.number = number;
       this.enclosingMethod = enclosingMethod;
       this.loadMethod = loadMethod;
+      this.name = name;
     }
 
     /**
@@ -65,6 +72,15 @@ public class ReplaceRunAsyncs {
      */
     public JMethod getLoadMethod() {
       return loadMethod;
+    }
+
+    /**
+     * Return the name of this runAsync, which is specified by a class literal
+     * in the two-argument version of runAsync(). Returns <code>null</code> if
+     * there is no name for the call.
+     */
+    public String getName() {
+      return name;
     }
 
     /**
@@ -87,16 +103,29 @@ public class ReplaceRunAsyncs {
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
-      if (method == program.getIndexedMethod("GWT.runAsync")) {
-        assert (x.getArgs().size() == 1);
-        JExpression asyncCallback = x.getArgs().get(0);
+      if (isRunAsyncMethod(method)) {
+        JExpression asyncCallback;
+        String name;
+        switch (x.getArgs().size()) {
+          case 1:
+            name = null;
+            asyncCallback = x.getArgs().get(0);
+            break;
+          case 2:
+            name = ((JClassLiteral) x.getArgs().get(0)).getRefType().getName();
+            asyncCallback = x.getArgs().get(1);
+            break;
+          default:
+            throw new InternalCompilerException(
+                "runAsync call found with neither 1 nor 2 arguments: " + x);
+        }
 
         int entryNumber = entryCount++;
         JClassType loader = getFragmentLoader(entryNumber);
         JMethod loadMethod = getRunAsyncMethod(loader);
         assert loadMethod != null;
         runAsyncReplacements.put(entryNumber, new RunAsyncReplacement(
-            entryNumber, currentMethod, loadMethod));
+            entryNumber, currentMethod, loadMethod, name));
 
         JMethodCall methodCall = new JMethodCall(x.getSourceInfo(), null,
             loadMethod);
@@ -112,6 +141,14 @@ public class ReplaceRunAsyncs {
     public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
       return true;
+    }
+
+    private boolean isRunAsyncMethod(JMethod method) {
+      /*
+       * The method is overloaded, so check the enclosing type plus the name.
+       */
+      return method.getEnclosingType() == program.getIndexedType("GWT")
+          && method.getName().equals("runAsync");
     }
   }
 
@@ -133,6 +170,7 @@ public class ReplaceRunAsyncs {
   }
 
   private JProgram program;
+
   private Map<Integer, RunAsyncReplacement> runAsyncReplacements = new HashMap<Integer, RunAsyncReplacement>();
 
   private ReplaceRunAsyncs(JProgram program) {

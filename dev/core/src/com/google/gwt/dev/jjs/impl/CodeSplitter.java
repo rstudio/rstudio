@@ -260,6 +260,74 @@ public class CodeSplitter {
     dependencyRecorder.close();
   }
 
+  /**
+   * Find a split point as designated in the {@link #PROP_INITIAL_SEQUENCE}
+   * configuration property.
+   */
+  public static int findSplitPoint(String refString, JProgram program,
+      TreeLogger branch) throws UnableToCompleteException {
+    Map<JMethod, List<Integer>> methodToSplitPoint = reverseByEnclosingMethod(program.getRunAsyncReplacements());
+    Map<String, List<Integer>> nameToSplitPoint = reverseByName(program.getRunAsyncReplacements());
+
+    if (refString.startsWith("@")) {
+      JsniRef jsniRef = JsniRef.parse(refString);
+      if (jsniRef == null) {
+        branch.log(TreeLogger.ERROR, "Badly formatted JSNI reference in "
+            + PROP_INITIAL_SEQUENCE + ": " + refString);
+        throw new UnableToCompleteException();
+      }
+      final String lookupErrorHolder[] = new String[1];
+      HasEnclosingType referent = JsniRefLookup.findJsniRefTarget(jsniRef,
+          program, new JsniRefLookup.ErrorReporter() {
+            public void reportError(String error) {
+              lookupErrorHolder[0] = error;
+            }
+          });
+      if (referent == null) {
+        TreeLogger resolveLogger = branch.branch(TreeLogger.ERROR,
+            "Could not resolve JSNI reference: " + jsniRef);
+        resolveLogger.log(TreeLogger.ERROR, lookupErrorHolder[0]);
+        throw new UnableToCompleteException();
+      }
+
+      if (!(referent instanceof JMethod)) {
+        branch.log(TreeLogger.ERROR, "Not a method: " + referent);
+        throw new UnableToCompleteException();
+      }
+
+      JMethod method = (JMethod) referent;
+      List<Integer> splitPoints = methodToSplitPoint.get(method);
+      if (splitPoints == null) {
+        branch.log(TreeLogger.ERROR,
+            "Method does not enclose a runAsync call: " + jsniRef);
+        throw new UnableToCompleteException();
+      }
+      if (splitPoints.size() > 1) {
+        branch.log(TreeLogger.ERROR,
+            "Method includes multiple runAsync calls, "
+                + "so it's ambiguous which one is meant: " + jsniRef);
+        throw new UnableToCompleteException();
+      }
+
+      return splitPoints.get(0);
+    }
+
+    // Assume it's a raw class name
+    List<Integer> splitPoints = nameToSplitPoint.get(refString);
+    if (splitPoints == null || splitPoints.size() == 0) {
+      branch.log(TreeLogger.ERROR, "No runAsync call is labelled with class "
+          + refString);
+      throw new UnableToCompleteException();
+    }
+    if (splitPoints.size() > 1) {
+      branch.log(TreeLogger.ERROR,
+          "More than one runAsync call is labelled with class " + refString);
+      throw new UnableToCompleteException();
+    }
+
+    return splitPoints.get(0);
+  }
+
   public static int getExclusiveFragmentNumber(int splitPoint,
       int numSplitPoints) {
     return splitPoint;
@@ -295,8 +363,6 @@ public class CodeSplitter {
       JProgram program, Properties properties) throws UnableToCompleteException {
     TreeLogger branch = logger.branch(TreeLogger.TRACE,
         "Looking up initial load sequence for split points");
-    Map<JMethod, List<Integer>> reversedRunAsyncMap = reverse(program.getRunAsyncReplacements());
-
     LinkedHashSet<Integer> initialLoadSequence = new LinkedHashSet<Integer>();
 
     ConfigurationProperty prop;
@@ -314,8 +380,7 @@ public class CodeSplitter {
     }
 
     for (String refString : prop.getValues()) {
-      int splitPoint = findSplitPoint(refString, program, branch,
-          reversedRunAsyncMap);
+      int splitPoint = findSplitPoint(refString, program, branch);
       if (initialLoadSequence.contains(splitPoint)) {
         branch.log(TreeLogger.ERROR, "Split point specified more than once: "
             + refString);
@@ -323,8 +388,6 @@ public class CodeSplitter {
       initialLoadSequence.add(splitPoint);
     }
 
-    // TODO(spoon) create an artifact in the aux dir describing the choice, so
-    // that SOYC can use it
     logInitialLoadSequence(logger, initialLoadSequence);
     installInitialLoadSequenceField(program, initialLoadSequence);
     program.setSplitPointInitialSequence(new ArrayList<Integer>(
@@ -393,63 +456,6 @@ public class CodeSplitter {
 
     dependencyRecorder.endDependencyGraph();
     return cfa;
-  }
-
-  /**
-   * Find a split point as designated in the {@link #PROP_INITIAL_SEQUENCE}
-   * configuration property.
-   * 
-   * TODO(spoon) accept a labeled runAsync call, once runAsyncs can be labeled
-   */
-  private static int findSplitPoint(String refString, JProgram program,
-      TreeLogger branch, Map<JMethod, List<Integer>> reversedRunAsyncMap)
-      throws UnableToCompleteException {
-    if (refString.startsWith("@")) {
-      JsniRef jsniRef = JsniRef.parse(refString);
-      if (jsniRef == null) {
-        branch.log(TreeLogger.ERROR, "Badly formatted JSNI reference in "
-            + PROP_INITIAL_SEQUENCE + ": " + refString);
-        throw new UnableToCompleteException();
-      }
-      final String lookupErrorHolder[] = new String[1];
-      HasEnclosingType referent = JsniRefLookup.findJsniRefTarget(jsniRef,
-          program, new JsniRefLookup.ErrorReporter() {
-            public void reportError(String error) {
-              lookupErrorHolder[0] = error;
-            }
-          });
-      if (referent == null) {
-        TreeLogger resolveLogger = branch.branch(TreeLogger.ERROR,
-            "Could not resolve JSNI reference: " + jsniRef);
-        resolveLogger.log(TreeLogger.ERROR, lookupErrorHolder[0]);
-        throw new UnableToCompleteException();
-      }
-
-      if (!(referent instanceof JMethod)) {
-        branch.log(TreeLogger.ERROR, "Not a method: " + referent);
-        throw new UnableToCompleteException();
-      }
-
-      JMethod method = (JMethod) referent;
-      List<Integer> splitPoints = reversedRunAsyncMap.get(method);
-      if (splitPoints == null) {
-        branch.log(TreeLogger.ERROR,
-            "Method does not enclose a runAsync call: " + jsniRef);
-        throw new UnableToCompleteException();
-      }
-      if (splitPoints.size() != 1) {
-        branch.log(TreeLogger.ERROR,
-            "Method includes multiple runAsync calls, "
-                + "so it's ambiguous which one is meant: " + jsniRef);
-        throw new UnableToCompleteException();
-      }
-
-      return splitPoints.get(0);
-    }
-
-    branch.log(TreeLogger.ERROR, "Unrecognized designation of a split point: "
-        + refString);
-    throw new UnableToCompleteException();
   }
 
   private static String fullNameString(JField field) {
@@ -527,7 +533,7 @@ public class CodeSplitter {
    * Reverses a runAsync map, returning a map from methods to the split point
    * numbers invoked from within that method.
    */
-  private static Map<JMethod, List<Integer>> reverse(
+  private static Map<JMethod, List<Integer>> reverseByEnclosingMethod(
       Map<Integer, RunAsyncReplacement> runAsyncMap) {
     Map<JMethod, List<Integer>> revmap = new HashMap<JMethod, List<Integer>>();
     for (RunAsyncReplacement replacement : runAsyncMap.values()) {
@@ -538,6 +544,23 @@ public class CodeSplitter {
         revmap.put(method, list);
       }
       list.add(replacement.getNumber());
+    }
+    return revmap;
+  }
+
+  private static Map<String, List<Integer>> reverseByName(
+      Map<Integer, RunAsyncReplacement> runAsyncReplacements) {
+    Map<String, List<Integer>> revmap = new HashMap<String, List<Integer>>();
+    for (RunAsyncReplacement replacement : runAsyncReplacements.values()) {
+      String name = replacement.getName();
+      if (name != null) {
+        List<Integer> list = revmap.get(name);
+        if (list == null) {
+          list = new ArrayList<Integer>();
+          revmap.put(name, list);
+        }
+        list.add(replacement.getNumber());
+      }
     }
     return revmap;
   }

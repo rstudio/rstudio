@@ -59,8 +59,7 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
   public static final String REBIND_MAGIC_METHOD = "create";
   public static final String ASYNC_MAGIC_METHOD = "runAsync";
 
-  public static void reportRebindProblem(MessageSendSite site,
-      String message) {
+  public static void reportRebindProblem(MessageSendSite site, String message) {
     MessageSend messageSend = site.messageSend;
     Scope scope = site.scope;
     // Safe since CUS.referenceContext is set in its constructor.
@@ -111,10 +110,17 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
       }
     } else {
       assert asyncMagicMethod;
-      if (args.length != 1) {
+      if (args.length != 1 && args.length != 2) {
         reportRebindProblem(site,
-            "GWT.runAsync() should take exactly one argument");
+            "GWT.runAsync() should take one or two arguments");
         return;
+      }
+      if (args.length == 2) {
+        if (!(args[0] instanceof ClassLiteralAccess)) {
+          reportRebindProblem(site,
+              "Only class literals may be used to name a call to GWT.runAsync()");
+          return;
+        }
       }
     }
 

@@ -21,5 +21,5 @@
   <extend-configuration-property name="compiler.splitpoint.initial.sequence"
     value="@com.google.gwt.dev.jjs.test.InitialLoadSequenceTest::callback1()" />
   <extend-configuration-property name="compiler.splitpoint.initial.sequence"
-    value="@com.google.gwt.dev.jjs.test.InitialLoadSequenceTest::callback2()" />
+    value="com.google.gwt.dev.jjs.test.InitialLoadSequenceTest$Callback2Marker" />
 </module>

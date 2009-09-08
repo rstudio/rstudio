@@ -26,6 +26,13 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class InitialLoadSequenceTest extends GWTTestCase {
   private static final int TIMEOUT = 10000;
+
+  /**
+   * This class is used to mark the second runAsync call.
+   */
+  public static class Callback2Marker {
+  }
+
   /**
    * The number of callbacks outstanding. When this gets to zero, the test
    * finishes.
@@ -58,7 +65,7 @@ public class InitialLoadSequenceTest extends GWTTestCase {
   }
 
   private void callback2() {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(Callback2Marker.class, new RunAsyncCallback() {
       public void onFailure(Throwable reason) {
         fail(reason.toString());
       }
