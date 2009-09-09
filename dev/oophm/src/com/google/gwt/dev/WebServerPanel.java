@@ -21,6 +21,7 @@ import com.google.gwt.dev.shell.log.SwingLoggerPanel;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -38,14 +39,15 @@ public class WebServerPanel extends JPanel {
   
   private SwingLoggerPanel logWindow;
 
-  public WebServerPanel(int serverPort, TreeLogger.Type maxLevel) {
-    this(serverPort, maxLevel, null);
+  public WebServerPanel(int serverPort, TreeLogger.Type maxLevel,
+      File logFile) {
+    this(serverPort, maxLevel, logFile, null);
   }
 
   public WebServerPanel(int serverPort, TreeLogger.Type maxLevel,
-      final RestartAction restartServerAction) {
+      File logFile, final RestartAction restartServerAction) {
     super(new BorderLayout());
-    logWindow = new SwingLoggerPanel(maxLevel);
+    logWindow = new SwingLoggerPanel(maxLevel, logFile);
     if (restartServerAction != null) {
       JPanel panel = new JPanel();
       JButton restartButton = new JButton("Restart Server");

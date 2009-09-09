@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell.log;
 
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.shell.LowLevel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 
@@ -42,10 +43,10 @@ public class DetachedTreeLoggerWindow implements Runnable {
    */
   public static synchronized DetachedTreeLoggerWindow getInstance(
       final String caption, final int width, final int height,
-      final boolean autoScroll) {
+      final boolean autoScroll, Type logLevel) {
     if (singleton == null) {
       singleton = new DetachedTreeLoggerWindow(caption, width, height,
-          autoScroll);
+          autoScroll, logLevel);
     }
     return singleton;
   }
@@ -55,7 +56,7 @@ public class DetachedTreeLoggerWindow implements Runnable {
   private boolean isRunning = false;
 
   private DetachedTreeLoggerWindow(final String caption, final int width,
-      final int height, final boolean autoScroll) {
+      final int height, final boolean autoScroll, Type logLevel) {
 
     shell = new Shell(Display.getCurrent());
     shell.setText(caption);
@@ -64,7 +65,8 @@ public class DetachedTreeLoggerWindow implements Runnable {
     fillLayout.marginHeight = 0;
     shell.setLayout(fillLayout);
 
-    final TreeLoggerWidget treeLoggerWidget = new TreeLoggerWidget(shell);
+    final TreeLoggerWidget treeLoggerWidget = new TreeLoggerWidget(shell, null,
+        logLevel);
     treeLoggerWidget.setAutoScroll(autoScroll);
     logger = treeLoggerWidget.getLogger();
 

@@ -86,6 +86,37 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   /**
+   * Handles the -logdir command line option.
+   */
+  protected static class ArgHandlerLogDir extends ArgHandlerString {
+    private final OptionLogDir options;
+
+    public ArgHandlerLogDir(OptionLogDir options) {
+      this.options = options;
+    }
+
+    @Override
+    public String getPurpose() {
+      return "Logs to a file in the given directory, as well as graphically";
+    }
+
+    @Override
+    public String getTag() {
+      return "-logdir";
+    }
+    @Override
+    public String[] getTagArgs() {
+      return new String[] {"directory"};
+    }
+
+    @Override
+    public boolean setString(String value) {
+      options.setLogFile(value);
+      return true;
+    }
+  }
+
+  /**
    * Handles the -noserver command line flag.
    */
   protected static class ArgHandlerNoServerFlag extends ArgHandlerFlag {
@@ -232,8 +263,9 @@ abstract class HostedModeBase implements BrowserWindowController {
     }
   }
 
-  protected interface HostedModeBaseOptions extends JJSOptions, OptionLogLevel,
-      OptionGenDir, OptionNoServer, OptionPort, OptionStartupURLs {
+  protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir,
+      OptionLogLevel, OptionGenDir, OptionNoServer, OptionPort,
+      OptionStartupURLs {
 
     /**
      * The base shell work directory.
@@ -248,11 +280,26 @@ abstract class HostedModeBase implements BrowserWindowController {
       PrecompileOptionsImpl implements HostedModeBaseOptions {
 
     private boolean isNoServer;
+    private File logDir;
     private int port;
     private final List<String> startupURLs = new ArrayList<String>();
 
     public void addStartupURL(String url) {
       startupURLs.add(url);
+    }
+
+    public boolean alsoLogToFile() {
+      return logDir != null;
+    }
+
+    public File getLogDir() {
+      return logDir;
+    }
+    public File getLogFile(String sublog) {
+      if (logDir == null) {
+        return null;
+      }
+      return new File(logDir, sublog);
     }
 
     public int getPort() {
@@ -271,6 +318,10 @@ abstract class HostedModeBase implements BrowserWindowController {
       return isNoServer;
     }
 
+    public void setLogFile(String filename) {
+      logDir = new File(filename);
+    }
+
     public void setNoServer(boolean isNoServer) {
       this.isNoServer = isNoServer;
     }
@@ -278,6 +329,20 @@ abstract class HostedModeBase implements BrowserWindowController {
     public void setPort(int port) {
       this.port = port;
     }
+  }
+
+  /**
+   * Controls whether and where to log data to file.
+   * 
+   */
+  protected interface OptionLogDir {
+    boolean alsoLogToFile();
+
+    File getLogDir();
+
+    File getLogFile(String subfile);
+
+    void setLogFile(String filename);
   }
 
   /**
@@ -317,6 +382,7 @@ abstract class HostedModeBase implements BrowserWindowController {
       registerHandler(new ArgHandlerPort(options));
       registerHandler(new ArgHandlerWhitelist());
       registerHandler(new ArgHandlerBlacklist());
+      registerHandler(new ArgHandlerLogDir(options));
       registerHandler(new ArgHandlerLogLevel(options));
       registerHandler(new ArgHandlerGenDir(options));
       registerHandler(new ArgHandlerScriptStyle(options));
@@ -480,7 +546,7 @@ abstract class HostedModeBase implements BrowserWindowController {
     // Initialize the logger.
     //
     initializeLogger();
-    
+
     // Check for updates
     final TreeLogger logger = getTopLogger();
     final CheckForUpdates updateChecker

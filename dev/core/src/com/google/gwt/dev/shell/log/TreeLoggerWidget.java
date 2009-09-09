@@ -15,10 +15,14 @@
  */
 package com.google.gwt.dev.shell.log;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.log.TreeItemLogger.LogEvent;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
+import com.google.gwt.dev.util.log.CompositeTreeLogger;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
@@ -43,6 +47,8 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
@@ -57,11 +63,19 @@ public class TreeLoggerWidget extends Composite implements TreeListener,
 
   private final Text details;
 
-  private final TreeItemLogger logger;
+  private final AbstractTreeLogger logger;
+  
+  private final TreeItemLogger uiLogger;
 
   private final Tree tree;
 
-  public TreeLoggerWidget(Composite parent) {
+  /**
+   * Creates a graphical widget, and optionally logging to file as well.
+   * 
+   * @param parent the graphical interface parent
+   * @param logFile the file to log to
+   */
+  public TreeLoggerWidget(Composite parent, File logFile, Type logLevel) {
     super(parent, SWT.NONE);
 
     setLayout(new FillLayout());
@@ -97,7 +111,21 @@ public class TreeLoggerWidget extends Composite implements TreeListener,
       }
     });
 
-    logger = new TreeItemLogger();
+    uiLogger = new TreeItemLogger();
+    AbstractTreeLogger bestLogger = uiLogger;
+    if (logFile != null) {
+      try {
+        PrintWriterTreeLogger fileLogger = new PrintWriterTreeLogger(logFile);
+        bestLogger = new CompositeTreeLogger(uiLogger, fileLogger);
+        fileLogger.setMaxDetail(logLevel);
+        uiLogger.setMaxDetail(logLevel);
+      } catch (IOException ex) {
+        uiLogger.log(TreeLogger.ERROR, "Can't log to " +
+            logFile.getAbsolutePath(), ex);
+      }
+    }
+    logger = bestLogger;
+    logger.setMaxDetail(logLevel);
 
     // The detail
     details = new Text(sash, SWT.MULTI | SWT.WRAP | SWT.READ_ONLY | SWT.BORDER
@@ -238,7 +266,7 @@ public class TreeLoggerWidget extends Composite implements TreeListener,
           return;
         }
 
-        if (logger.uiFlush(tree)) {
+        if (uiLogger.uiFlush(tree)) {
           // Sync to the end of the tree.
           //
           if (autoScroll) {

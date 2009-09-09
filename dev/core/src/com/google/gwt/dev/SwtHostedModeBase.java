@@ -285,7 +285,9 @@ abstract class SwtHostedModeBase extends HostedModeBase {
     shell.setImages(ShellMainWindow.getIcons());
 
     mainWnd = new ShellMainWindow(this, shell, getTitleText(),
-        options.isNoServer() ? 0 : getPort());
+        options.isNoServer() ? 0 : getPort(), 
+        options.alsoLogToFile() ? options.getLogFile("hosted.log") : null,
+        options.getLogLevel());
 
     shell.setSize(700, 600);
     if (!isHeadless()) {

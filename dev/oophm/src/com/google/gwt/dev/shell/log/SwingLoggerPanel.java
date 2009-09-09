@@ -21,6 +21,8 @@ import com.google.gwt.dev.shell.CloseButton;
 import com.google.gwt.dev.shell.CloseButton.Callback;
 import com.google.gwt.dev.shell.log.SwingTreeLogger.LogEvent;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
+import com.google.gwt.dev.util.log.CompositeTreeLogger;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -35,6 +37,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
@@ -264,7 +268,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
   
   private boolean disconnected = false;
 
-  public SwingLoggerPanel(TreeLogger.Type maxLevel) {
+  public SwingLoggerPanel(TreeLogger.Type maxLevel, File logFile) {
     super(new BorderLayout());
     regexFilter = "";
     levelFilter = maxLevel;
@@ -368,8 +372,22 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
     treeView.setMinimumSize(minSize);
     splitter.setDividerLocation(0.80);
     add(splitter);
-    logger = new SwingTreeLogger(this);
-    logger.setMaxDetail(maxLevel);
+    
+    AbstractTreeLogger uiLogger = new SwingTreeLogger(this);
+    AbstractTreeLogger bestLogger = uiLogger;
+    if (logFile != null) {
+      try {
+        PrintWriterTreeLogger fileLogger = new PrintWriterTreeLogger(logFile);
+        bestLogger = new CompositeTreeLogger(bestLogger, fileLogger);
+        fileLogger.setMaxDetail(maxLevel);
+        uiLogger.setMaxDetail(maxLevel);
+      } catch (IOException ex) {
+        bestLogger.log(TreeLogger.ERROR, "Can't log to file "
+            + logFile.getAbsolutePath(), ex);
+      }
+    }
+    bestLogger.setMaxDetail(maxLevel);
+    logger = bestLogger;
     KeyStroke key = KeyStroke.getKeyStroke(KeyEvent.VK_F,
         InputEvent.CTRL_DOWN_MASK);
     getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(key, "find");

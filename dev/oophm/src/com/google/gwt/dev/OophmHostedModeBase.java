@@ -27,6 +27,7 @@ import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.OophmSessionHandler;
 import com.google.gwt.dev.shell.ShellMainWindow;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
+import com.google.gwt.dev.util.BrowserInfo;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -35,6 +36,7 @@ import com.google.gwt.util.tools.ArgHandlerString;
 import java.awt.Cursor;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -185,7 +187,10 @@ abstract class OophmHostedModeBase extends HostedModeBase {
       if (!isHeadless()) {
         tabPanel = findModuleTab(userAgent, remoteSocket, url, tabKey,
             moduleName);
-        tab = tabPanel.addModuleSession(maxLevel, moduleName, sessionKey);
+        String agentTag = BrowserInfo.getShortName(userAgent).toLowerCase();
+        tab = tabPanel.addModuleSession(maxLevel, moduleName, sessionKey,
+            options.getLogFile(String.format("%s-%s-%d.log", moduleName,
+                agentTag, getNextSessionCounter(options.getLogDir()))));
         logger = tab.getLogger();
         TreeLogger branch = logger.branch(TreeLogger.INFO, "Loading module "
             + moduleName);
@@ -276,6 +281,8 @@ abstract class OophmHostedModeBase extends HostedModeBase {
 
   private static final Random RNG = new Random();
   
+  private static int sessionCounter = 0;
+
   /**
    * Produce a random string that has low probability of collisions.
    * 
@@ -448,6 +455,23 @@ abstract class OophmHostedModeBase extends HostedModeBase {
     return browserHost;
   }
 
+  protected int getNextSessionCounter(File logdir) {
+    if (sessionCounter == 0) {
+      // first time only, figure out the "last" session count already in use
+      for (String filename : logdir.list()) {
+        if (filename.matches("^[A-Za-z0-9_$]*-[a-z]*-[0-9]*.log$")) {
+          String substring = filename.substring(filename.lastIndexOf('-') + 1,
+              filename.length() - 4);
+          int number = Integer.parseInt(substring);
+          if (number > sessionCounter) {
+            sessionCounter = number;
+          }
+        }
+      }
+    }
+    return ++sessionCounter;
+  }
+
   /**
    * @return the icon to use for the web server tab
    */
@@ -498,10 +522,15 @@ abstract class OophmHostedModeBase extends HostedModeBase {
     ImageIcon gwtIcon = loadImageIcon("icon24.png");
     frame = new JFrame("GWT Development Mode");
     tabs = new JTabbedPane();
-    mainWnd = new ShellMainWindow(options.getLogLevel());
+    if (options.alsoLogToFile()) {
+      options.getLogDir().mkdirs();
+    }
+    mainWnd = new ShellMainWindow(options.getLogLevel(),
+        options.getLogFile("main.log"));
     tabs.addTab("Development Mode", gwtIcon, mainWnd, "GWT Development mode");
     if (!options.isNoServer()) {
       webServerLog = new WebServerPanel(getPort(), options.getLogLevel(),
+          options.getLogFile("webserver.log"),
           new RestartAction() {
             public void restartServer(TreeLogger logger) {
               try {

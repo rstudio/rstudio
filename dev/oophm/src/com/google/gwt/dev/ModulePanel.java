@@ -24,6 +24,7 @@ import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -41,7 +42,7 @@ public class ModulePanel extends JPanel implements Disconnectable {
   private boolean disconnected;
 
   public ModulePanel(Type maxLevel, String moduleName,
-      Session session) {
+      Session session, File logFile) {
     super(new BorderLayout());
     this.session = session;
     if (false) {
@@ -57,7 +58,7 @@ public class ModulePanel extends JPanel implements Disconnectable {
       topPanel.add(compileButton);
       add(topPanel, BorderLayout.NORTH);
     }
-    loggerPanel = new SwingLoggerPanel(maxLevel);
+    loggerPanel = new SwingLoggerPanel(maxLevel, logFile);
     add(loggerPanel);
     session.addModule(moduleName, this);
   }
