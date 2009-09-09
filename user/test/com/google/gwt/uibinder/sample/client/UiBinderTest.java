@@ -166,6 +166,17 @@ public class UiBinderTest extends GWTTestCase {
         t);
   }
 
+  public void testProtectedDomTextMessageWithFunnyChars() {
+    String t = widgetUi.funnyCharsProtectedMessageParagraph.getInnerText();
+    assertEquals("Don't forget about protected untranslatable blocks: "
+        + "funny characters \" \" ' ' & < > > { }", t);
+  }
+
+  public void testDomTextInNamedElementMessageWithFunnyChars() {
+    String t = widgetUi.funnyCharsMessageChildSpan.getInnerText();
+    assertEquals("funny characters \" \" ' ' & < > > { }", t);
+  }
+
   public void suppressedForSafari3Fail_testDomTextNoMessageWithFunnyChars() {
     ParagraphElement p = widgetUi.funnyCharsParagraph;
     // WebKit does \n replace thing, so let's do it everywhere

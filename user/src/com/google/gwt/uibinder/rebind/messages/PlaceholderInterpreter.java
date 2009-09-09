@@ -40,15 +40,14 @@ public abstract class PlaceholderInterpreter implements
 
   public String interpretElement(XMLElement elem)
       throws UnableToCompleteException {
-
     if (isPlaceholderElement(elem)) {
       /*
-       * The innerHTML or innerText of the <m:ph> will be provided as the value
+       * The innerHTML or innerText of the <ui:ph> will be provided as the value
        * of the appropriate parameter when the Messages method is called.
        *
        * E.g.
        *
-       *   <m:msg>Able <m:ph name="foo" example"baz">baker</m:ph> charlie</m:msg>
+       *   <ui:msg>Able <ui:ph name="foo" example"baz">baker</ui:ph> charlie</ui:msg>
        *
        * becomes
        *
@@ -78,11 +77,10 @@ public abstract class PlaceholderInterpreter implements
       }
 
       /*
-       * Again, if there are TemplateWriter tokens in the value string, we need
-       * it to have it replace them with the real expresions.
+       * Likewise, if there are tokens from the UiWriter in the value string, we
+       * need it to replace them with the real expresions.
        */
       value = uiWriter.detokenate(value);
-
       return nextPlaceholder(name, example, value);
     }
 
@@ -94,9 +92,10 @@ public abstract class PlaceholderInterpreter implements
 
   /**
    * Called by various {@link XMLElement} consumeInner*() methods after all
-   * elements have been handed to {@link #interpretElement}. Performs escaping
-   * on the consumed text to make it safe for use as a Messages {@literal @}Default
-   * value.
+   * elements have been handed to {@link #interpretElement}.
+   * <p>
+   * Performs escaping on the consumed text to make it safe for use as a
+   * Messages {@literal @}Default value
    */
   public String postProcess(String consumed) throws UnableToCompleteException {
     return tokenator.detokenate(MessageWriter.escapeMessageFormat(consumed));
@@ -105,10 +104,29 @@ public abstract class PlaceholderInterpreter implements
   protected abstract String consumePlaceholderInnards(XMLElement elem)
       throws UnableToCompleteException;
 
+  /**
+   * To be called from {@link #interpretElement(XMLElement)}. Creates the next
+   * placeholder in the {@link MessageWriter} we're building, and returns the
+   * text to stand in its place.
+   *
+   * @param name
+   * @param example
+   * @param value
+   * @return
+   */
   protected String nextPlaceholder(String name, String example, String value) {
     message.addPlaceholder(new PlaceholderWriter(name, example, value));
-    return tokenator.nextToken(String.format("{%d}",
-        message.getPlaceholderCount() - 1));
+
+    /*
+     * We can't just return the {0} placeholder text, because it will be
+     * clobbered by the escaping performed in postProcess. We use a tokenator to
+     * hide the placeholder from the escaping step, and postProcess resolves the
+     * tokens when the escaping is done.
+     */
+    String placeholder = String.format("{%d}",
+        message.getPlaceholderCount() - 1);
+
+    return tokenator.nextToken(placeholder);
   }
 
   protected String stripTokens(String value) {

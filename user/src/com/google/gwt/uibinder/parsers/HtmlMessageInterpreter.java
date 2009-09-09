@@ -23,7 +23,7 @@ import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 import com.google.gwt.uibinder.rebind.messages.PlaceholderInterpreter;
 
 /**
- * Processes <m:msg> elements inside HTML values, which themselves
+ * Processes <ui:msg> elements inside HTML values, which themselves
  * are allowed to contain HTML. That HTML may hold elements with
  * ui:field attributes and computed attributes, which must be
  * replaced by placeholders in the generated message.
@@ -52,7 +52,7 @@ public class HtmlMessageInterpreter implements XMLElement.Interpreter<String> {
 
   /**
    * Build a normally configured HtmlMessageInterpreter, able to handle
-   * put placeholders around dom elements with m:ph attributes and computed
+   * put placeholders around dom elements with ui:ph attributes and computed
    * attributes.
    */
   public HtmlMessageInterpreter(final UiBinderWriter uiWriter,

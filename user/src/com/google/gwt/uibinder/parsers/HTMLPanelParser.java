@@ -32,14 +32,14 @@ public class HTMLPanelParser implements ElementParser {
       final UiBinderWriter writer) throws UnableToCompleteException {
     String customTag =
       UiBinderWriter.escapeTextForJavaStringLiteral(elem.consumeAttribute("tag"));
-    
+
     /*
      * Gathers up elements that indicate nested widgets (but only those
      * that are not inside msg elements).
      */
     WidgetInterpreter widgetInterpreter = new WidgetInterpreter(fieldName, writer);
 
-    /* 
+    /*
      * Handles non-widget elements like msg, and dom elements with ui:field
      * attributes. There may be widgets inside a msg, which is why
      * the construction in makeHtmlInterpreter is so complicated.
@@ -65,7 +65,7 @@ public class HTMLPanelParser implements ElementParser {
 
   /**
    * Creates an HtmlInterpreter with our specialized placeholder interpreter,
-   * which will allow widget instances to be declared inside of m:msg elements.
+   * which will allow widget instances to be declared inside of ui:msg elements.
    */
   private HtmlInterpreter makeHtmlInterpreter(final String fieldName,
       final UiBinderWriter uiWriter) {

@@ -74,7 +74,9 @@ public class WidgetBasedUi extends Composite {
   @UiField ClickyLink funnyCharsMessageAttributeWidget;
   @UiField ParagraphElement funnyCharsMessageDomAttributeParagraph;
   @UiField ParagraphElement funnyCharsMessageParagraph;
+  @UiField SpanElement funnyCharsMessageChildSpan;
   @UiField ParagraphElement funnyCharsParagraph;
+  @UiField ParagraphElement funnyCharsProtectedMessageParagraph;
   @UiField Label gwtFieldLabel;
   @UiField ParagraphElement main;
   @UiField Button myButton;

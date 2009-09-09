@@ -60,7 +60,11 @@ class HtmlPlaceholderInterpreter extends PlaceholderInterpreter {
           nextPlaceholder(name + "Begin", stripTokens(openTag),
               uiWriter.detokenate(openTag));
 
-      String body = elem.consumeInnerHtml(this);
+      /*
+       * This recursive innerHtml call has already been escaped. Hide it in a
+       * token to avoid double escaping
+       */
+      String body = tokenator.nextToken(elem.consumeInnerHtml(this));
 
       String closeTag = elem.getClosingTag();
       String closePlaceholder =
@@ -79,7 +83,13 @@ class HtmlPlaceholderInterpreter extends PlaceholderInterpreter {
   }
 
   /**
-   * @return true if it has an m:ph attribute, or has a token in any attribute
+   * An element will require a placeholder if the user has called it out with a
+   * ui:ph attribute, or if it will require run time swizzling (e.g. has a
+   * ui:field). These latter we can identify easily because they'll have an
+   * attribute that holds a tokenator token that was vended by
+   * {@link UiBinderWriter}, typically in id.
+   *
+   * @return true if it has an ui:ph attribute, or has a token in any attribute
    */
   private boolean isDomPlaceholder(XMLElement elem) {
     MessagesWriter mw = uiWriter.getMessages();

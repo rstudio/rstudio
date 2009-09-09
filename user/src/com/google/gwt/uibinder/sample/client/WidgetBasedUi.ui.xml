@@ -99,7 +99,7 @@
   </gwt:Dock>
   <gwt:Dock direction='CENTER'>
     <gwt:HTMLPanel>
-      <p><ui:msg>This is a demonstration and test bed of GWT's UiBinder
+      <p><ui:msg>This is a demonstration and test bed of GWT's shiny UiBinder
       package. At the moment it works mainly as described in
       <a href="http://code.google.com/p/google-web-toolkit-incubator/wiki/DeclarativeUi"
         ui:ph="oldBlogLink">
@@ -279,6 +279,8 @@
       untranslated paragraph.</p>
       <p ui:field="funnyCharsMessageParagraph"><ui:msg>They might show up
       in body text that has been <b>marked for translation</b>: funny characters " &quot; ' &#39; &amp; &lt; &gt; > { }</ui:msg></p>
+      <p><ui:msg>Or perhaps in a subelement with a ui:field: <span ui:field='funnyCharsMessageChildSpan'>funny characters " &quot; ' &#39; &amp; &lt; &gt; > { }</span></ui:msg></p>
+      <p ui:field="funnyCharsProtectedMessageParagraph"><ui:msg>Don't forget about protected untranslatable blocks: <ui:ph name='francine'>funny characters " &quot; ' &#39; &amp; &lt; &gt; > { }</ui:ph></ui:msg></p>
       <p ui:field="funnyCharsMessageDomAttributeParagraph" title="funny characters &quot; ' &#39; &amp; &lt; &gt; > { }">
         <ui:attribute name="title"/>
         Attributes of dom elements can be translated too, like the
