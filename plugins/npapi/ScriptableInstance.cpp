@@ -259,6 +259,7 @@ void ScriptableInstance::init(const NPVariant* args, unsigned argCount, NPVarian
   // replace our window object with that passed by the caller
   window = NPVariantProxy::getAsObject(args[0]);
   NPN_RetainObject(window);
+  LocalObjectTable::setWrappedObjectClass(window->_class);
   BOOLEAN_TO_NPVARIANT(true, *result);
   result->type = NPVariantType_Bool;
 }

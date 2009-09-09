@@ -32,6 +32,7 @@ private:
   std::vector<NPObject*> objects;
   std::map<void*, int> objectIndex;
   bool dontFree;
+  static NPClass* wrappedObjectClass;
 
   bool isFree(int id) {
     // low bit is set for free pointers, object pointers can't be odd
@@ -61,6 +62,10 @@ public:
   }
 
   virtual ~LocalObjectTable();
+
+  static void setWrappedObjectClass(NPClass* clazz) {
+    wrappedObjectClass = clazz;
+  }
 
   int add(NPObject* obj) {
     void* objId = getIdentityFrom(obj);

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual C++ Express 2005
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "firefox-plugin", "firefox-plugin.vcproj", "{6BF0C2CE-CB0C-421B-A67C-1E448371D24A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "npapi-plugin", "npapi-plugin.vcproj", "{6BF0C2CE-CB0C-421B-A67C-1E448371D24A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="firefox-plugin"
+	Name="npapi-plugin"
 	ProjectGUID="{6BF0C2CE-CB0C-421B-A67C-1E448371D24A}"
-	RootNamespace="firefox-plugin"
+	RootNamespace="npapi-plugin"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -40,7 +40,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -123,7 +123,7 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="&quot;..\..\common&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS"
 				ExceptionHandling="1"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
