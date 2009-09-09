@@ -63,7 +63,7 @@ public:
   
   void dumpJSresult(const char* js);
   
-  int getLocalObjectRef(NPObject* obj) { return localObjects.add(obj); }
+  int getLocalObjectRef(NPObject* obj);
   NPObject* getLocalObject(int refid) { return localObjects.get(refid); }
   
   bool tryGetStringPrimitive(NPObject* obj, NPVariant& result);
@@ -92,7 +92,7 @@ private:
   
   const NPIdentifier connectedID;
   const NPIdentifier statsID;
-  const NPIdentifier savedID;
+  const NPIdentifier gwtId;
 
   const NPIdentifier jsInvokeID;
   const NPIdentifier jsResultID;

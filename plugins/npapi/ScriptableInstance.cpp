@@ -65,7 +65,7 @@ ScriptableInstance::ScriptableInstance(NPP npp) : NPObjectWrapper<ScriptableInst
     toStringID(NPN_GetStringIdentifier("toString")),
     connectedID(NPN_GetStringIdentifier("connected")),
     statsID(NPN_GetStringIdentifier("stats")),
-    savedID(NPN_GetStringIdentifier("saved")),
+    gwtId(NPN_GetStringIdentifier("__gwt_ObjectId")),
     jsInvokeID(NPN_GetStringIdentifier("__gwt_jsInvoke")),
     jsResultID(NPN_GetStringIdentifier("__gwt_makeResult")),
     jsTearOffID(NPN_GetStringIdentifier("__gwt_makeTearOff")),
@@ -145,7 +145,7 @@ bool ScriptableInstance::hasProperty(NPIdentifier name) {
     return true;
   }
   // TODO: special-case toString tear-offs
-  return name == statsID || name == connectedID || name == savedID;
+  return name == statsID || name == connectedID;
 }
 
 bool ScriptableInstance::getProperty(NPIdentifier name, NPVariant* variant) {
@@ -158,13 +158,6 @@ bool ScriptableInstance::getProperty(NPIdentifier name, NPVariant* variant) {
     retVal = true;
   } else if (name == statsID) {
     NPVariantProxy::assignFrom(*variant, "<stats data>");
-    retVal = true;
-  } else if (name == savedID) {
-    if (savedValueIdx >= 0) {
-      NPObject* npObj = localObjects.get(savedValueIdx);
-      OBJECT_TO_NPVARIANT(npObj, *variant);
-      NPN_RetainObject(npObj);
-    }
     retVal = true;
   }
   if (retVal) {
@@ -179,14 +172,6 @@ bool ScriptableInstance::setProperty(NPIdentifier name, const NPVariant* variant
   Debug::log(Debug::Debugging) << "ScriptableInstance::setProperty(name="
       << NPN_UTF8FromIdentifier(name) << ", value=" << *variant << ")"
       << Debug::flush; 
-  if (NPN_IdentifierIsString(name)) {
-    if (name == savedID && NPVariantProxy::isObject(*variant)) {
-      Debug::log(Debug::Debugging) << " set saved value" << Debug::flush;
-      savedValueIdx = localObjects.add(NPVariantProxy::getAsObject(*variant));
-      return true;
-    }
-    return false;
-  }
   return false;
 }
 
@@ -259,7 +244,6 @@ void ScriptableInstance::init(const NPVariant* args, unsigned argCount, NPVarian
   // replace our window object with that passed by the caller
   window = NPVariantProxy::getAsObject(args[0]);
   NPN_RetainObject(window);
-  LocalObjectTable::setWrappedObjectClass(window->_class);
   BOOLEAN_TO_NPVARIANT(true, *result);
   result->type = NPVariantType_Bool;
 }
@@ -343,6 +327,22 @@ void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVar
       moduleNameStr, userAgent, this);
   BOOLEAN_TO_NPVARIANT(connected, *result);
   result->type = NPVariantType_Bool;
+}
+
+int ScriptableInstance::getLocalObjectRef(NPObject* obj) {
+  NPVariantWrapper wrappedRetVal(*this);
+  int id;
+  if (NPN_GetProperty(getNPP(), obj, gwtId, wrappedRetVal.addressForReturn())
+      && wrappedRetVal.isInt()) {
+    id = wrappedRetVal.getAsInt();
+  } else {
+    id = localObjects.add(obj);
+    wrappedRetVal = id;
+    if (!NPN_SetProperty(getNPP(), obj, gwtId, wrappedRetVal.address())) {
+      Debug::log(Debug::Error) << "Setting GWT id on object failed" << Debug::flush;
+    }
+  }
+  return id;
 }
 
 void ScriptableInstance::fatalError(HostChannel& channel, const std::string& message) {

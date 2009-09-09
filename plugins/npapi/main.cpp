@@ -280,11 +280,11 @@ extern "C" {
     Debug::log(Debug::Info) << "NP_GetValue(var=" << variable << ")" << Debug::flush;
     switch (variable) {
       case NPPVpluginNameString:
-        *static_cast<const char **>(value) = "GWT Hosted-mode Plugin";
+        *static_cast<const char **>(value) = "GWT Development-Mode Plugin";
         break;
       case NPPVpluginDescriptionString:
         *static_cast<const char **>(value) = "Plugin to enable debugging of Google Web Toolkit "
-            "applications in hosted mode.";
+            "applications in development mode.";
         break;
       default:
         Debug::log(Debug::Info) << "NPP_GetValue(var=" << variable
