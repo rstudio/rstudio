@@ -15,7 +15,6 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 
@@ -42,13 +41,13 @@ class FieldManager {
    */
   private final LinkedList<FieldWriter> parsedFieldStack = new LinkedList<FieldWriter>();
 
-  private TreeLogger logger;
+  private MortalLogger logger;
 
   /**
    * Basic constructor just injects an oracle instance.
    */
-  public FieldManager(TreeLogger logger) {
-    this.logger = logger;
+  public FieldManager(MortalLogger logger2) {
+    this.logger = logger2;
   }
 
   /**
@@ -116,7 +115,7 @@ class FieldManager {
   public FieldWriter registerFieldOfGeneratedType(String typePackage,
       String typeName, String fieldName) throws UnableToCompleteException {
     FieldWriter field = new FieldWriterOfGeneratedType(typePackage, typeName,
-        fieldName);
+        fieldName, logger);
     return registerField(fieldName, field);
   }
 
@@ -130,7 +129,7 @@ class FieldManager {
       String ownerTypeName) throws UnableToCompleteException {
     Collection<FieldWriter> fields = fieldsMap.values();
     for (FieldWriter field : fields) {
-      field.write(writer, logger);
+      field.write(writer);
     }
   }
 
@@ -148,9 +147,7 @@ class FieldManager {
 
   private void requireUnique(String fieldName) throws UnableToCompleteException {
     if (fieldsMap.containsKey(fieldName)) {
-      Object[] params = {fieldName};
-      logger.log(TreeLogger.ERROR, String.format(DUPLICATE_FIELD_ERROR, params));
-      throw new UnableToCompleteException();
+      logger.die(DUPLICATE_FIELD_ERROR, fieldName);
     }
   }
 }

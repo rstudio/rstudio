@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.uibinder.rebind.MortalLogger;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,12 +62,16 @@ public class OwnerClass {
    */
   private final List<JMethod> uiHandlers = new ArrayList<JMethod>();
 
+  private final MortalLogger logger;
+
   /**
    * Constructor.
    *
    * @param ownerType the type of the owner class
+   * @param logger
    */
-  public OwnerClass(JClassType ownerType) throws UnableToCompleteException {
+  public OwnerClass(JClassType ownerType, MortalLogger logger) throws UnableToCompleteException {
+    this.logger = logger;
     findUiFields(ownerType);
     findUiFactories(ownerType);
     findUiHandlers(ownerType);
@@ -105,7 +110,7 @@ public class OwnerClass {
    * @return the field descriptor
    * @deprecated This will die with {@link com.google.gwt.uibinder.parsers.BundleAttributeParser}
    */
-  @Deprecated 
+  @Deprecated
   public OwnerField getUiFieldForType(JClassType type) {
     return uiFieldTypes.get(type);
   }
@@ -127,9 +132,9 @@ public class OwnerClass {
   /**
    * Scans the owner class to find all methods annotated with @UiFactory, and
    * puts them in {@link #uiFactories}.
-   * 
+   *
    * @param ownerType the type of the owner class
-   * @throws UnableToCompleteException 
+   * @throws UnableToCompleteException
    */
   private void findUiFactories(JClassType ownerType)
       throws UnableToCompleteException {
@@ -139,18 +144,14 @@ public class OwnerClass {
         JClassType factoryType = method.getReturnType().isClassOrInterface();
 
         if (factoryType == null) {
-          // TODO(rdamazio): proper logging
-          System.out.println("Factory return type is not a class in method "
+          logger.die("Factory return type is not a class in method "
               + method.getName());
-          throw new UnableToCompleteException();
         }
 
         if (uiFactories.containsKey(factoryType)) {
-          // TODO(rdamazio): proper logging
-          System.out.println("Duplicate factory in class "
+          logger.die("Duplicate factory in class "
               + method.getEnclosingType().getName() + " for type "
               + factoryType.getName());
-          throw new UnableToCompleteException();
         }
 
         uiFactories.put(factoryType, method);
@@ -167,7 +168,7 @@ public class OwnerClass {
   /**
    * Scans the owner class to find all fields annotated with @UiField, and puts
    * them in {@link #uiFields} and {@link #uiFieldTypes}.
-   * 
+   *
    * @param ownerType the type of the owner class
    */
   private void findUiFields(JClassType ownerType)
@@ -178,13 +179,11 @@ public class OwnerClass {
         JClassType ownerFieldType = field.getType().isClassOrInterface();
 
         if (ownerFieldType == null) {
-          // TODO(rdamazio): proper logging
-          System.out.println("Field type is not a class in field "
+          logger.die("Field type is not a class in field "
               + field.getName());
-          throw new UnableToCompleteException();
         }
 
-        OwnerField ownerField = new OwnerField(field);
+        OwnerField ownerField = new OwnerField(field, logger);
         String ownerFieldName = field.getName();
 
         uiFields.put(ownerFieldName, ownerField);

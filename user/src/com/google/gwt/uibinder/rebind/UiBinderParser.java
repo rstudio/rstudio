@@ -21,8 +21,8 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
-import com.google.gwt.uibinder.rebind.model.CssResourceGetter;
-import com.google.gwt.uibinder.rebind.model.ImplicitBundle;
+import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
+import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
 
 /**
@@ -38,10 +38,11 @@ public class UiBinderParser {
   private final TypeOracle oracle;
   private final MessagesWriter messagesWriter;
   private final FieldManager fieldManager;
-  private final ImplicitBundle bundleClass;
+  private final ImplicitClientBundle bundleClass;
 
   public UiBinderParser(UiBinderWriter writer, MessagesWriter messagesWriter,
-      FieldManager fieldManager, TypeOracle oracle, ImplicitBundle bundleClass) {
+      FieldManager fieldManager, TypeOracle oracle,
+      ImplicitClientBundle bundleClass) {
     this.writer = writer;
     this.oracle = oracle;
     this.messagesWriter = messagesWriter;
@@ -68,7 +69,8 @@ public class UiBinderParser {
     JClassType publicType = consumeTypeAttribute(elem);
     JClassType cssResourceType = oracle.findType(CssResource.class.getCanonicalName());
     if (!publicType.isAssignableTo(cssResourceType)) {
-      writer.die("In %s, type %s does not extend %s", elem, publicType.getQualifiedSourceName(),
+      writer.die("In %s, type %s does not extend %s", elem,
+          publicType.getQualifiedSourceName(),
           cssResourceType.getQualifiedSourceName());
     }
     return publicType;
@@ -134,9 +136,10 @@ public class UiBinderParser {
     String name = elem.consumeAttribute("field", "style");
     JClassType publicType = consumeCssResourceType(elem);
 
-    CssResourceGetter cssMethod = bundleClass.createCssResource(name, source,
+    ImplicitCssResource cssMethod = bundleClass.createCssResource(name, source,
         publicType);
-    FieldWriter field = fieldManager.registerField(publicType,
+    FieldWriter field = fieldManager.registerFieldOfGeneratedType(
+        cssMethod.getPackageName(), cssMethod.getClassName(),
         cssMethod.getName());
     field.setInitializer(String.format("%s.%s()", bundleClass.getFieldName(),
         cssMethod.getName()));

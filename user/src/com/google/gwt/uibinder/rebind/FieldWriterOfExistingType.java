@@ -15,7 +15,6 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 
 /**
@@ -24,10 +23,10 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
  */
 class FieldWriterOfExistingType extends AbstractFieldWriter {
   final JClassType type;
-  final TreeLogger logger;
+  final MortalLogger logger;
 
-  FieldWriterOfExistingType(JClassType type, String name, TreeLogger logger) {
-    super(name);
+  FieldWriterOfExistingType(JClassType type, String name, MortalLogger logger) {
+    super(name, logger);
     this.logger = logger;
     if (type == null) {
       throw new RuntimeException("type cannot be null");

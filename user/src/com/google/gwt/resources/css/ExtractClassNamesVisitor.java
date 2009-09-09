@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,6 +29,15 @@ import java.util.regex.Matcher;
  * Collect all CSS class names in a stylesheet.
  */
 public class ExtractClassNamesVisitor extends CssVisitor {
+  /**
+   * Extract all CSS class names in the provided stylesheet.
+   */
+  public static Set<String> exec(CssStylesheet sheet) {
+    ExtractClassNamesVisitor v = new ExtractClassNamesVisitor();
+    v.accept(sheet);
+    return v.found;
+  }
+
   private final Set<String> found = new HashSet<String>();
 
   /**
@@ -51,17 +60,8 @@ public class ExtractClassNamesVisitor extends CssVisitor {
   }
 
   /**
-   * Extract all CSS class names in the provided stylesheet.
-   */
-  public Set<String> exec(CssStylesheet sheet) {
-    ExtractClassNamesVisitor v = new ExtractClassNamesVisitor();
-    v.accept(sheet);
-    return v.found;
-  }
-
-  /**
    * Package-protected for testing.
-   * 
+   *
    * @return
    */
   Set<String> getFoundClasses() {

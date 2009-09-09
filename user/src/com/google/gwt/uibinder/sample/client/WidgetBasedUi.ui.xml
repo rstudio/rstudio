@@ -69,7 +69,6 @@
 <!-- 
   Tests creating a CssResource from an external file.
  -->
-<!--<ui:style field='myStyle' source='WidgetBasedUi.css' type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'/>-->
 <ui:style field='myStyle' source='WidgetBasedUi.css' type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'/>
 
 <gwt:DockPanel ui:field="root" width="100%">
@@ -256,13 +255,17 @@
  
       <h2>Stylish</h2>
       <p>
-       Templates work with what is now called ImmutableResourceBundle, but
-       which you will soon come to know and love as ClientBundle. For example,
-       this label gets its text from somplace tricky and its style from a resource:</p>
+       Templates work with ClientBundle. For example,
+       this label gets its text from somplace tricky and its style from a ClientBundle
+       defined outside of this UI:</p>
       <gwt:Label ui:field='bundledLabel' text="{values.helloText}" styleName="{external.style.prettyText}"/>
+      <!-- Note use of id rather than ui:field, to test that ids work on dom elements -->
       <p class="{external.style.prettyText}" id='prettyPara'>
-        This stylish paragraph also gets its good looks from a
-        resource.
+        This stylish paragraph also gets its good looks from the
+        external ClientBundle.
+      </p>
+      <p ui:field='privateStyleParagraph' class='{myStyle.privateStyle}'>
+        This one is has a private style, visible only inside the ui.xml file.
       </p>
       <h2>Evolving</h2>
       <p>

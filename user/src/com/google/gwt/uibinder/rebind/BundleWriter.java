@@ -15,31 +15,47 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource.Strict;
-import com.google.gwt.uibinder.rebind.model.ImplicitBundle;
-import com.google.gwt.uibinder.rebind.model.CssResourceGetter;
-
-import java.io.PrintWriter;
+import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
+import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
 
 /**
- * Writes source implementing a {@link ImplicitBundle} to a {@link PrintWriter}.
+ * Writes source implementing an {@link ImplicitClientBundle}.
  */
 public class BundleWriter {
 
-  private final ImplicitBundle bundleClass;
+  private final ImplicitClientBundle bundleClass;
   private final IndentedWriter writer;
+  private final PrintWriterManager writerManager;
   private final TypeOracle oracle;
+  private final String clientBundleType;
+  private final String strictAnnotationType;
 
-  public BundleWriter(ImplicitBundle bundleClass, PrintWriter printWriter,
-      TypeOracle oracle) {
+  public BundleWriter(ImplicitClientBundle bundleClass,
+      PrintWriterManager writerManager, TypeOracle oracle,
+      PrintWriterManager printWriterProvider) {
     this.bundleClass = bundleClass;
-    this.writer = new IndentedWriter(printWriter);
+    this.writer = new IndentedWriter(
+        writerManager.makePrintWriterFor(bundleClass.getClassName()));
+    this.writerManager = writerManager;
     this.oracle = oracle;
+
+     clientBundleType = oracle.findType(ClientBundle.class.getName()).getQualifiedSourceName();
+     strictAnnotationType = oracle.findType(Strict.class.getCanonicalName()).getQualifiedSourceName();
   }
 
-  public void write() {
+  public void write() throws UnableToCompleteException {
+    writeBundleClass();
+    for (ImplicitCssResource css : bundleClass.getCssMethods()) {
+      new CssResourceWriter(css, oracle,
+          writerManager.makePrintWriterFor(css.getClassName())).write();
+    }
+  }
+
+  private void writeBundleClass() {
     // Package declaration
     String packageName = bundleClass.getPackageName();
     if (packageName.length() > 0) {
@@ -49,9 +65,8 @@ public class BundleWriter {
 
     // Imports
     writer.write("import %s;",
-        oracle.findType(ClientBundle.class.getName()).getQualifiedSourceName());
-    writer.write("import %s;",
-        oracle.findType(Strict.class.getCanonicalName()).getQualifiedSourceName());
+        clientBundleType);
+    writer.write("import %s;", strictAnnotationType);
     writer.newline();
 
     // Open interface
@@ -60,9 +75,9 @@ public class BundleWriter {
     writer.indent();
 
     // Write css methods
-    for (CssResourceGetter css : bundleClass.getCssMethods()) {
-      writer.write("@Strict @Source(\"%s\")",css.getSource());
-      writer.write("%s %s();", css.getExtendedInterface().getQualifiedSourceName(), css.getName());
+    for (ImplicitCssResource css : bundleClass.getCssMethods()) {
+      writer.write("@Strict @Source(\"%s\")", css.getSource());
+      writer.write("%s %s();", css.getClassName(), css.getName());
       writer.newline();
     }
 

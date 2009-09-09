@@ -25,6 +25,7 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.CssResource.Shared;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
@@ -50,6 +51,7 @@ public class WidgetBasedUi extends Composite {
    * This CssResource is a requirement of the WidgetBasedUi, to be provided by
    * its ui.xml template.
    */
+  @Shared
   public interface Style extends CssResource {
     String menuBar();
   }
@@ -108,6 +110,7 @@ public class WidgetBasedUi extends Composite {
   @UiField OListElement widgetCrazyOrderedList;
   @UiField DListElement widgetCrazyDefinitionList;
   @UiField HTMLPanel customTagHtmlPanel;
+  @UiField ParagraphElement privateStyleParagraph;
 
   public WidgetBasedUi() {
     this.bundledLabel = new Label();
