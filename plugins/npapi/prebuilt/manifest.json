@@ -1,0 +1,11 @@
+{
+  "name": "GWT Development Mode Plugin",
+  "version": "0.9.0",
+  "description": "A plugin to enable debugging with GWT's Development Mode",
+  "icons": {
+    "32": "gwt32.png"
+  },
+  "plugins": [
+    { "path": "winnt_x86-msvc/npOOPHM.dll", "public": true }
+  ]
+}
