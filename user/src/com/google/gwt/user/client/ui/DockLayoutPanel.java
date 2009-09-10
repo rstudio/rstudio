@@ -101,6 +101,7 @@ public class DockLayoutPanel extends ComplexPanel implements RequiresLayout,
    * 
    * @param widget the widget to be added
    * @param direction the widget's direction in the dock
+   * @param size the child widget's size
    * 
    * @throws IllegalArgumentException when adding to the {@link #CENTER} and
    *           there is already a different widget there
@@ -114,7 +115,7 @@ public class DockLayoutPanel extends ComplexPanel implements RequiresLayout,
    */
   public Element getContainerElementFor(Widget widget) {
     assertIsChild(widget);
-    return ((LayoutData)widget.getLayoutData()).layer.getContainerElement();
+    return ((LayoutData) widget.getLayoutData()).layer.getContainerElement();
   }
 
   /**
