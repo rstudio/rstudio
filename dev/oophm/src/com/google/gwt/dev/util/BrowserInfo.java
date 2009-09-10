@@ -46,7 +46,7 @@ public class BrowserInfo {
     } else if (shortName.equals(CHROME)) {
       browserIcon = Icons.getChrome24();
     } else if (shortName.equals(OPERA)) {
-      browserIcon = Icons.getOpera24();
+      // no icon for Opera
     } else if (shortName.equals(SAFARI)) {
       browserIcon = Icons.getSafari24();
     } else if (shortName.equals(FIREFOX)) {
