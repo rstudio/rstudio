@@ -58,6 +58,7 @@ public class RunStyleHtmlUnit extends RunStyleRemote {
       this.browser = browser;
       this.url = url;
       this.treeLogger = treeLogger;
+      this.setName("htmlUnit client thread");
     }
 
     public void handleAlert(Page page, String message) {
@@ -93,7 +94,7 @@ public class RunStyleHtmlUnit extends RunStyleRemote {
         // TODO(jat): is this necessary?
         webClient.waitForBackgroundJavaScriptStartingBefore(2000);
         page.getEnclosingWindow().getJobManager().waitForJobs(60000);
-        treeLogger.log(TreeLogger.DEBUG, "getPage returned "
+        treeLogger.log(TreeLogger.SPAM, "getPage returned "
             + ((HtmlPage) page).asXml());
         // TODO(amitmanjhi): call webClient.closeAllWindows()
       } catch (FailingHttpStatusCodeException e) {
@@ -182,7 +183,8 @@ public class RunStyleHtmlUnit extends RunStyleRemote {
 
   protected HtmlUnitThread createHtmlUnitThread(BrowserVersion browser,
       String url) {
-    return new HtmlUnitThread(browser, url, shell.getTopLogger());
+    return new HtmlUnitThread(browser, url, shell.getTopLogger().branch(
+        TreeLogger.SPAM, "logging for HtmlUnit thread"));
   }
 
   private Set<BrowserVersion> getBrowserSet(String[] targetsIn) {

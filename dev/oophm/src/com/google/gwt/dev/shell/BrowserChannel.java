@@ -69,11 +69,16 @@ public abstract class BrowserChannel {
    * Class representing a reference to a JS object.
    */
   public static class JsObjectRef {
-    private int refId;
-
-    public JsObjectRef(int refId) {
+    
+    // TODO: refactor and remove this method.
+    public static void checkIdMap(int refId) {
       assert !JSOBJECT_ID_MAP.get().containsKey(refId)
-          || (JSOBJECT_ID_MAP.get().get(refId).get() == null);
+      || (JSOBJECT_ID_MAP.get().get(refId).get() == null);
+    }
+
+    private int refId;
+    
+    public JsObjectRef(int refId) {
       this.refId = refId;
     }
 
@@ -1325,6 +1330,7 @@ public abstract class BrowserChannel {
       }
     }
 
+    JsObjectRef.checkIdMap(refId);
     JsObjectRef toReturn = new JsObjectRef(refId);
     Reference<JsObjectRef> ref = new WeakReference<JsObjectRef>(toReturn,
         JSOBJECT_REF_QUEUE.get());

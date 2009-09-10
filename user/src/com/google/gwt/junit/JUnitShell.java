@@ -43,6 +43,7 @@ import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
+import java.awt.GraphicsEnvironment;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -209,6 +210,32 @@ public class JUnitShell extends GWTShell {
           String[] targets = str.split(",");
           numClients = targets.length;
           runStyle = RunStyleSelenium.create(JUnitShell.this, targets);
+          return runStyle != null;
+        }
+      });
+
+      registerHandler(new ArgHandlerString() {
+        @Override
+        public String getPurpose() {
+          return "Runs hosted mode via HTMLUnit given a list of browsers; "
+              + "e.g. IE6,IE7,FF2,FF3...";
+        }
+
+        @Override
+        public String getTag() {
+          return "-htmlunithosted";
+        }
+
+        @Override
+        public String[] getTagArgs() {
+          return new String[] {"browserNames"};
+        }
+
+        @Override
+        public boolean setString(String str) {
+          String[] targets = str.split(",");
+          runStyle = new RunStyleHtmlUnitHosted(JUnitShell.this, targets);
+          numClients = ((RunStyleHtmlUnit) runStyle).numBrowsers();
           return runStyle != null;
         }
       });
@@ -400,7 +427,7 @@ public class JUnitShell extends GWTShell {
    * begin running the test. "Contacted" does not necessarily mean "the test has
    * begun," e.g. for linker errors stopping the test initialization.
    */
-  private static final int TEST_BEGIN_TIMEOUT_MILLIS = 60000;
+  private static final int TEST_BEGIN_TIMEOUT_MILLIS = 6000000;
 
   /**
    * The amount of time to wait for all clients to complete a single test
@@ -590,7 +617,8 @@ public class JUnitShell extends GWTShell {
    */
   private JUnitShell() {
     setRunTomcat(true);
-    setHeadless(true);
+    setHeadless(false);
+    setHeadless(GraphicsEnvironment.isHeadless());
 
     // Legacy: -Dgwt.hybrid runs web mode
     if (System.getProperty(PROP_JUNIT_HYBRID_MODE) != null) {
@@ -619,7 +647,8 @@ public class JUnitShell extends GWTShell {
   protected void initializeLogger() {
     if (isHeadless()) {
       consoleLogger = new PrintWriterTreeLogger();
-      consoleLogger.setMaxDetail(getCompilerOptions().getLogLevel());
+      // TODO (amitmanjhi): GwtShell overlay fix.
+      consoleLogger.setMaxDetail(TreeLogger.INFO);
     } else {
       super.initializeLogger();
     }
@@ -683,18 +712,9 @@ public class JUnitShell extends GWTShell {
     return !messageQueue.hasResult();
   }
 
-  @Override
+  // TODO (amitmanjhi): GwtShell overlay fix, removed Override.
   protected boolean shouldAutoGenerateResources() {
     return runStyle.shouldAutoGenerateResources();
-  }
-
-  @Override
-  protected void sleep() {
-    if (runStyle.isLocal()) {
-      super.sleep();
-    } else {
-      messageQueue.waitForResults(1000);
-    }
   }
 
   void compileForWebMode(String moduleName, String... userAgents)
@@ -881,7 +901,9 @@ public class JUnitShell extends GWTShell {
       testBeginTime = System.currentTimeMillis();
       testBeginTimeout = testBeginTime + TEST_BEGIN_TIMEOUT_MILLIS;
       testMethodTimeout = 0; // wait until test execution begins
-      pumpEventLoop();
+      while (notDone()) {
+        messageQueue.waitForResults(1000);
+      }
     } catch (TimeoutException e) {
       lastLaunchFailed = true;
       testResult.addError(testCase, e);
