@@ -362,7 +362,12 @@ void ScriptableInstance::freeValue(HostChannel& channel, int idCount, const int*
   Debug::log(Debug::Debugging) << "freeValue(#ids=" << idCount << ")" << Debug::flush;
   for (int i = 0; i < idCount; ++i) {
 	  Debug::log(Debug::Spam) << " id=" << ids[i] << Debug::flush;
-    localObjects.free(ids[i]);
+    NPObject* obj = localObjects.get(ids[i]);
+    if (!NPN_RemoveProperty(getNPP(), obj, gwtId)) {
+      Debug::log(Debug::Error) << "Unable to remove GWT ID from object " << ids[i] << Debug::flush;
+    } else {
+      localObjects.free(ids[i]);
+    }
   }
 }
 
