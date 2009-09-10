@@ -5,6 +5,7 @@
   "icons": {
     "16": "gwt16.png",
     "32": "gwt32.png",
+    "48": "gwt48.png",
     "64": "gwt64.png",
     "128": "gwt128.png"
   },
