@@ -20,8 +20,14 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.resources.css.ExtractClassNamesVisitor;
 import com.google.gwt.resources.css.GenerateCssAst;
 import com.google.gwt.resources.css.ast.CssStylesheet;
+import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Set;
 
@@ -36,16 +42,33 @@ public class ImplicitCssResource {
   private final String name;
   private final String source;
   private final JClassType extendedInterface;
+  private final String body;
   private final MortalLogger logger;
+  private File generatedFile;
 
   public ImplicitCssResource(String packageName, String className, String name,
-      String source, JClassType extendedInterface, MortalLogger logger) {
+      String source, JClassType extendedInterface, String body,
+      MortalLogger logger) {
     this.packageName = packageName;
     this.className = className;
     this.name = name;
-    this.source = source;
     this.extendedInterface = extendedInterface;
+    this.body = body;
     this.logger = logger;
+
+    if (body.length() > 0) {
+      assert "".equals(source); // Enforced for real by the parser
+
+      /*
+       * We're going to write the inline body to a temporary File and register
+       * it with the CssResource world under the name in this.source, via
+       * ResourceGeneratorUtil.addNamedFile(). When CssResourceGenerator sees
+       * this name in an @Source annotation it will know to use the registered
+       * file rather than load a resource.
+       */
+      source = String.format("uibinder:%s.%s.css", packageName, className);
+    }
+    this.source = source;
   }
 
   /**
@@ -58,29 +81,20 @@ public class ImplicitCssResource {
   /**
    * @return the set of CSS classnames in the underlying .css files
    *
-   * @throws UnableToCompleteException if the user has called for a .css file we can't find.
+   * @throws UnableToCompleteException if the user has called for a .css file we
+   *           can't find.
    */
   public Set<String> getCssClassNames() throws UnableToCompleteException {
-    /*
-     * TODO(rjrjr,bobv) refactor ResourceGeneratorUtil.findResources so we can
-     * find them the same way ClientBundle does. For now, just look relative to
-     * this package
-     */
+    URL[] urls;
 
-    ClassLoader classLoader = ImplicitCssResource.class.getClassLoader();
-    String path = packageName.replace(".", "/");
-
-    String[] sources = source.split(" ");
-    URL[] urls = new URL[sources.length];
-    int i = 0;
-
-    for (String s : sources) {
-      String resourcePath = path + '/' + s;
-      URL found = classLoader.getResource(resourcePath);
-      if (null == found) {
-        logger.die("Unable to find resource: " + resourcePath);
+    if (body.length() == 0) {
+      urls = getExternalCss();
+    } else {
+      try {
+        urls = new URL[] {getGeneratedFile().toURL()};
+      } catch (MalformedURLException e) {
+        throw new RuntimeException(e);
       }
-      urls[i++] = found;
     }
 
     CssStylesheet sheet = GenerateCssAst.exec(logger.getTreeLogger(), urls);
@@ -111,9 +125,52 @@ public class ImplicitCssResource {
   }
 
   /**
-   * @return the user declared names of the associated .css files
+   * @return the name of the .css file(s), separate by white space
    */
   public String getSource() {
     return source;
+  }
+
+  private URL[] getExternalCss() throws UnableToCompleteException {
+    /*
+     * TODO(rjrjr,bobv) refactor ResourceGeneratorUtil.findResources so we can
+     * find them the same way ClientBundle does. For now, just look relative to
+     * this package
+     */
+
+    ClassLoader classLoader = ImplicitCssResource.class.getClassLoader();
+    String path = packageName.replace(".", "/");
+
+    String[] sources = source.split(" ");
+    URL[] urls = new URL[sources.length];
+    int i = 0;
+
+    for (String s : sources) {
+      String resourcePath = path + '/' + s;
+      URL found = classLoader.getResource(resourcePath);
+      if (null == found) {
+        logger.die("Unable to find resource: " + resourcePath);
+      }
+      urls[i++] = found;
+    }
+    return urls;
+  }
+
+  private File getGeneratedFile() {
+    if (generatedFile == null) {
+      try {
+        File f = File.createTempFile(String.format("uiBinder_%s_%s",
+            packageName, className), ".css");
+
+        BufferedWriter out = new BufferedWriter(new FileWriter(f));
+        out.write(body);
+        out.close();
+        generatedFile = f;
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      ResourceGeneratorUtil.addNamedFile(getSource(), generatedFile);
+    }
+    return generatedFile;
   }
 }

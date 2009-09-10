@@ -44,8 +44,8 @@ public class ImplicitClientBundle {
   public ImplicitClientBundle(String packageName, String uiBinderImplClassName,
       String fieldName, MortalLogger logger) {
     this.packageName = packageName;
-    this.className = uiBinderImplClassName + "GenBundle";
-    this.cssBaseName = uiBinderImplClassName + "GenCss";
+    this.className = uiBinderImplClassName + "_GenBundle";
+    this.cssBaseName = uiBinderImplClassName + "_GenCss";
     this.fieldName = fieldName;
     this.logger = logger;
   }
@@ -57,12 +57,13 @@ public class ImplicitClientBundle {
    * @param source path to the .css file resource
    * @param extendedInterface the public interface implemented by this
    *          CssResource, or null
+   * @param body the inline css text
    * @return
    */
   public ImplicitCssResource createCssResource(String name, String source,
-      JClassType extendedInterface) {
+      JClassType extendedInterface, String body) {
     ImplicitCssResource css = new ImplicitCssResource(packageName, cssBaseName
-        + name, name, source, extendedInterface, logger);
+        + name, name, source, extendedInterface, body, logger);
     cssMethods.add(css);
     return css;
   }

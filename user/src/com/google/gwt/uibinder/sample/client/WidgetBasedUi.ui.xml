@@ -69,7 +69,30 @@
 <!-- 
   Tests creating a CssResource from an external file.
  -->
-<ui:style field='myStyle' source='WidgetBasedUi.css' type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'/>
+<ui:style field='myStyle' source='WidgetBasedUi.css' 
+    type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'/>
+
+<ui:style field='myOtherStyle' type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'>
+  /* because we extend WidgetBasedUi.Style and it's tagged @Shared, we can refine the menubar 
+     style defined in other files */
+  
+  .menuBar.psychedelic {
+    background-color: Yellow;
+  }
+
+  /* Visible only to this template  */
+  .privateColor {
+    color: Purple;
+  }
+</ui:style>
+
+<ui:style field='myTotallyPrivateStyle'>
+  /* An inline style tied to no public type */
+  
+  .superPrivateColor {
+    background-color: Gold;
+  }
+</ui:style>
 
 <gwt:DockPanel ui:field="root" width="100%">
   <gwt:Dock direction='NORTH'>
@@ -149,7 +172,7 @@
                 Piggledy
               </ui:msg>
               </div>
-            <gwt:MenuBar vertical="true" styleName="{myStyle.menuBar}">
+            <gwt:MenuBar vertical="true" styleName="{myStyle.menuBar} {myOtherStyle.psychedelic}">
               <gwt:MenuItem>delta</gwt:MenuItem>
               <gwt:MenuItem>echo</gwt:MenuItem>
               <gwt:MenuItem>foxtrot</gwt:MenuItem>
@@ -264,8 +287,14 @@
         This stylish paragraph also gets its good looks from the
         external ClientBundle.
       </p>
-      <p ui:field='privateStyleParagraph' class='{myStyle.privateStyle}'>
-        This one is has a private style, visible only inside the ui.xml file.
+      <p ui:field='privateStyleParagraph' class='{myStyle.privateColor}'>
+        This one is has a private style, defined out in WidgetBaseUi.css and used only by this ui.xml file.
+      </p>
+      <p ui:field='reallyPrivateStyleParagraph' class='{myOtherStyle.privateColor}'>
+        And this style is defined right here inside the ui.xml file. 
+        <span ui:field='totallyPrivateStyleSpan' class='{myTotallyPrivateStyle.superPrivateColor}'>
+          (This one too, but even more so.)
+        </span>
       </p>
       <h2>Evolving</h2>
       <p>

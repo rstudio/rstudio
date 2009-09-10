@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.uibinder.parsers.NullInterpreter;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
@@ -39,6 +40,7 @@ public class UiBinderParser {
   private final MessagesWriter messagesWriter;
   private final FieldManager fieldManager;
   private final ImplicitClientBundle bundleClass;
+  private final JClassType cssResourceType;
 
   public UiBinderParser(UiBinderWriter writer, MessagesWriter messagesWriter,
       FieldManager fieldManager, TypeOracle oracle,
@@ -48,7 +50,8 @@ public class UiBinderParser {
     this.messagesWriter = messagesWriter;
     this.fieldManager = fieldManager;
     this.bundleClass = bundleClass;
-  }
+    this.cssResourceType = oracle.findType(CssResource.class.getCanonicalName());
+ }
 
   /**
    * Parses the root UiBinder element, and kicks off the parsing of the rest of
@@ -56,7 +59,7 @@ public class UiBinderParser {
    */
   public String parse(XMLElement elem) throws UnableToCompleteException {
     // TODO(rjrjr) Clearly need to break these find* methods out into their own
-    // parsers, need registration scheme for ui binder's own parsers
+    // parsers, an so need a registration scheme for uibinder-specific parsers
     findStyles(elem);
     findResources(elem);
     messagesWriter.findMessagesConfig(elem);
@@ -66,8 +69,16 @@ public class UiBinderParser {
 
   private JClassType consumeCssResourceType(XMLElement elem)
       throws UnableToCompleteException {
-    JClassType publicType = consumeTypeAttribute(elem);
-    JClassType cssResourceType = oracle.findType(CssResource.class.getCanonicalName());
+    String typeName = elem.consumeAttribute("type", null);
+    if (typeName == null) {
+      return cssResourceType;
+    }
+
+    JClassType publicType = oracle.findType(typeName);
+    if (publicType == null) {
+      writer.die("In %s, no such type %s", elem, typeName);
+    }
+
     if (!publicType.isAssignableTo(cssResourceType)) {
       writer.die("In %s, type %s does not extend %s", elem,
           publicType.getQualifiedSourceName(),
@@ -131,13 +142,18 @@ public class UiBinderParser {
   }
 
   private void createStyle(XMLElement elem) throws UnableToCompleteException {
-    // Won't be required for long
-    String source = elem.consumeRequiredAttribute("source");
+    String body =  elem.consumeInnerText(new NullInterpreter<String>());
+    if (body.length() > 0 && elem.hasAttribute("source")) {
+      writer.die("In %s, cannot use both a source attribute and inline css text.", elem);
+    }
+
+    String source = elem.consumeAttribute("source");
     String name = elem.consumeAttribute("field", "style");
     JClassType publicType = consumeCssResourceType(elem);
 
     ImplicitCssResource cssMethod = bundleClass.createCssResource(name, source,
-        publicType);
+        publicType, body);
+
     FieldWriter field = fieldManager.registerFieldOfGeneratedType(
         cssMethod.getPackageName(), cssMethod.getClassName(),
         cssMethod.getName());

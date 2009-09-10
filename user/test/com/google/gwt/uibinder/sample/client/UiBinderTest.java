@@ -265,9 +265,20 @@ public class UiBinderTest extends GWTTestCase {
     assertTrue(((HTML) north).getHTML().contains("Title area"));
   }
 
-  public void testPrivateStyle() {
+  public void testPrivateStyleFromExternalCss() {
     ParagraphElement p = widgetUi.privateStyleParagraph;
     assertTrue("Some kind of class should be set", p.getClassName().length() > 0);
+  }
+
+  public void testPrivateStylesFromInlineCss() {
+    ParagraphElement p = widgetUi.reallyPrivateStyleParagraph;
+    assertTrue("Some kind of class should be set",
+        p.getClassName().length() > 0);
+    assertFalse("Should be a different style than privateStyleParagraph's",
+        widgetUi.privateStyleParagraph.getClassName().equals(p.getClassName()));
+
+    assertTrue("Some kind of class should be set",
+        widgetUi.totallyPrivateStyleSpan.getClassName().length() > 0);
   }
 
   @DoNotRunWith(Platform.Htmlunit)

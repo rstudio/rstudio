@@ -111,6 +111,8 @@ public class WidgetBasedUi extends Composite {
   @UiField DListElement widgetCrazyDefinitionList;
   @UiField HTMLPanel customTagHtmlPanel;
   @UiField ParagraphElement privateStyleParagraph;
+  @UiField ParagraphElement reallyPrivateStyleParagraph;
+  @UiField SpanElement totallyPrivateStyleSpan;
 
   public WidgetBasedUi() {
     this.bundledLabel = new Label();
