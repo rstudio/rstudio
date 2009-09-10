@@ -63,7 +63,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
 				ShowProgress="2"
-				OutputFile="$(ProjectDir)\..\prebuilt\WINNT_x86-msvc\npOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\prebuilt\gwtdmp\WINNT_x86-msvc\npOOPHM.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="$(ProjectDir)\..\npOOPHM.def"
 				GenerateDebugInformation="true"

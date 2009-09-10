@@ -9,6 +9,6 @@
     "128": "gwt128.png"
   },
   "plugins": [
-    { "path": "winnt_x86-msvc/npOOPHM.dll", "public": true }
+    { "path": "WINNT_x86-msvc/npOOPHM.dll", "public": true }
   ]
 }
