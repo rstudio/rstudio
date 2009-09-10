@@ -456,7 +456,7 @@ abstract class OophmHostedModeBase extends HostedModeBase {
   }
 
   protected int getNextSessionCounter(File logdir) {
-    if (sessionCounter == 0) {
+    if (sessionCounter == 0 && logdir != null) {
       // first time only, figure out the "last" session count already in use
       for (String filename : logdir.list()) {
         if (filename.matches("^[A-Za-z0-9_$]*-[a-z]*-[0-9]*.log$")) {
