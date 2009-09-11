@@ -30,6 +30,8 @@
       <classpath>
         <pathelement location="${gwt.tools.lib}/sun/swingworker/swing-worker-1.1.jar" />
         <pathelement location="${gwt.core.build}/bin" />
+        <pathelement location="${gwt.tools.lib}/htmlunit/htmlunit-2.5.jar" />
+        <pathelement location="${gwt.tools.lib}/htmlunit/htmlunit-core-js-2.5.jar" />
       </classpath>
     </gwt.javac>
   </target>
