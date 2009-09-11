@@ -21,6 +21,9 @@
 #include "ReturnMessage.h"
 #include "ServerMethods.h"
 #include "AllowedConnections.h"
+#include "Preferences.h"
+#include "AllowDialog.h"
+
 #include "mozincludes.h"
 #include "scoped_ptr/scoped_ptr.h"
 #include "NPVariantWrapper.h"
@@ -30,12 +33,6 @@ using std::endl;
 
 static inline string convertToString(const NPString& str) {
   return string(GetNPStringUTF8Characters(str), GetNPStringUTF8Length(str));
-}
-
-static bool askUserToAllow(const std::string& url, bool* remember) {
-  // TODO(jat): implement, for now allow anything but don't remember
-  *remember = false;
-  return true;
 }
 
 string ScriptableInstance::computeTabIdentity() {
@@ -273,14 +270,15 @@ void ScriptableInstance::connect(const NPVariant* args, unsigned argCount, NPVar
       << ",module=" << NPVariantProxy::toString(args[3]) << ",hostedHtmlVers=" << NPVariantProxy::toString(args[4])
       << ")" << Debug::flush;
   const std::string urlStr = convertToString(url);
+
+  Preferences::loadAccessList();
   bool allowed = false;
-  // TODO(jat): load access list
   if (!AllowedConnections::matchesRule(urlStr, &allowed)) {
-    // If we didn't match an existing rule, prompt the user
     bool remember = false;
-    allowed = askUserToAllow(urlStr, &remember);
+    allowed = AllowDialog::askUserToAllow(&remember);
     if (remember) {
-      // TODO(jat): update access list
+      std::string host = AllowedConnections::getHostFromUrl(urlStr);
+      Preferences::addNewRule(host, !allowed);
     }
   }
   if (!allowed) {

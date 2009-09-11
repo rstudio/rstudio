@@ -16,7 +16,10 @@
  * the License.
  */
 
-#include "stdafx.h"
+#ifdef _WINDOWS
+#include <windows.h>
+#include <winnt.h>
+#include <windef.h>
 
 class AllowDialog {
 public:
@@ -34,5 +37,6 @@ public:
 private:
   static HINSTANCE hInstance;
 };
+#endif
 
 #endif

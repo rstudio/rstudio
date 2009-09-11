@@ -17,11 +17,13 @@
 #include "Plugin.h"
 #include "ScriptableInstance.h"
 #include "scoped_ptr/scoped_ptr.h"
+#include "AllowDialog.h"
 
 #ifdef _WINDOWS
 #include <windows.h>
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ulReasonForCall, LPVOID lpReserved) {
+  AllowDialog::setHInstance(hModule);
   switch (ulReasonForCall) {
     case DLL_PROCESS_ATTACH:
     case DLL_THREAD_ATTACH:

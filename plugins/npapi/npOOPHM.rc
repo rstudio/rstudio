@@ -2,6 +2,7 @@
 
 #define APSTUDIO_READONLY_SYMBOLS
 #include "windows.h"
+#include "winres.h"
 #undef APSTUDIO_READONLY_SYMBOLS
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
@@ -11,8 +12,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #endif
 
 1 VERSIONINFO
-  FILEVERSION 0,1,1,0
-  PRODUCTVERSION 0,1,1,0
+  FILEVERSION 0,9,0,0
+  PRODUCTVERSION 0,9,0,0
   FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
   FILEFLAGS 0x1L
@@ -28,18 +29,18 @@ BEGIN
   	BLOCK "040904e4"
   	BEGIN
   	  VALUE "CompanyName", 		"Google Inc"
-  	  VALUE "FileDescription",	"GWT OOPHM Plugin"
+  	  VALUE "FileDescription",	"GWT Development Mode Plugin"
 #if 0
   	  VALUE "FileExtents",		""
 #endif
   	  VALUE "FileOpenName",		"Plugin to allow debugging of GWT applications in hosted mode."
-  	  VALUE "FileVersion",		"0.1a"
-  	  VALUE "InternalName",		"GWT OOPHM Plugin"
-  	  VALUE "LegalCopyright",	"Copyright © 2008 Google Inc.  All rights reserved."
+  	  VALUE "FileVersion",		"0.9.0"
+  	  VALUE "InternalName",		"GWT DMP"
+  	  VALUE "LegalCopyright",	"Copyright © 2009 Google Inc.  All rights reserved."
   	  VALUE "MIMEType",			"application/x-gwt-hosted-mode"
   	  VALUE "OriginalFilename",	"npOOPHM.dll"
-  	  VALUE "ProductName",		"GWT OOPHM Plugin"
-  	  VALUE "ProductVersion",	"0.1a"
+  	  VALUE "ProductName",		"GWT DMP Plugin"
+  	  VALUE "ProductVersion",	"0.9.0"
   	END
   END
   BLOCK "VarFileInfo"
@@ -67,6 +68,43 @@ BEGIN
 END
 
 #endif
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ALLOW_DIALOG DIALOGEX 0, 0, 188, 73
+STYLE DS_SYSMODAL | DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_POPUP | WS_CAPTION
+EXSTYLE WS_EX_TOPMOST
+CAPTION "GWT Plugin Security Alert"
+FONT 10, "Microsoft Sans Serif", 400, 0, 0x0
+BEGIN
+    CONTROL         "Remember this decision for this server",IDC_REMEMBER_CHECKBOX,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,30,31,129,10
+    LTEXT           "This web server is trying to initiate a GWT Development\r\nMode Conncetion -- should it be allowed?",IDC_STATIC,10,7,167,19
+    PUSHBUTTON      "Allow",IDC_ALLOW_BUTTON,37,50,50,14
+    DEFPUSHBUTTON   "Deny",IDCANCEL,100,50,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_ALLOW_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 181
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 66
+    END
+END
+#endif    // APSTUDIO_INVOKED
 
 #else
 
