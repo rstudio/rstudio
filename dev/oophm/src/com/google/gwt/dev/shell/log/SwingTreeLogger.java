@@ -113,7 +113,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
       // Show the exception info for anything other than "UnableToComplete".
       //
       if (exceptionDetail != null) {
-        sb.append(htmlEscape(exceptionDetail));
+        sb.append("<pre>" + htmlEscape(exceptionDetail) + "</pre>");
       }
       if (helpInfo != null) {
         URL url = helpInfo.getURL();
