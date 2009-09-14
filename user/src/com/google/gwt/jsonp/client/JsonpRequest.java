@@ -142,7 +142,6 @@ public class JsonpRequest<T> {
     script.setType("text/javascript");
     script.setId(callbackId);
     script.setSrc(uri.toString());
-    getHeadElement().appendChild(script);
     timer = new Timer() {
       @Override
       public void run() {
@@ -150,6 +149,7 @@ public class JsonpRequest<T> {
       }
     };
     timer.schedule(timeout);
+    getHeadElement().appendChild(script);
   }
 
   @SuppressWarnings("unused") // used by JSNI
