@@ -856,7 +856,12 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<body>");
     outFile.println("<div class='abs mainHeader'>");
     outFile.println("<h2>Story of Your Compile Dashboard</h2>");
-
+    String permutationInfo = settings.allPermsInfo.get(permutationId);
+    outFile.print("<h3>Permutation " + permutationId);
+    if (permutationInfo.length() > 0) {
+      outFile.println(" (" + permutationInfo + ")");
+    }
+    outFile.println("</h3>");
     outFile.println("<hr>");
     outFile.println("<center>");
     if (globalInformation.getSplitPointToLocation().size() > 1) {
