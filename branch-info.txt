@@ -1,0 +1,8 @@
+Created from trunk@6101
+========================
+svn copy -r6101 https://google-web-toolkit.googlecode.com/svn/trunk \
+    https://google-web-toolkit.googlecode.com/svn/branches/farewelSwt
+
+
+Merged from trunk
+================
