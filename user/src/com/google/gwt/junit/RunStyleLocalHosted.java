@@ -32,6 +32,15 @@ class RunStyleLocalHosted extends RunStyle {
     super(shell);
   }
 
+  /**
+   * We need to open the browser window in the same thread as {@link JUnitShell}
+   * or SWT will throw an error.
+   */
+  @Override
+  public void init() throws UnableToCompleteException {
+    browserWindow = shell.openNewBrowserWindow();
+  }
+
   @Override
   public boolean isLocal() {
     return true;

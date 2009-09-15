@@ -16,11 +16,9 @@
 package com.google.gwt.benchmarks;
 
 import com.google.gwt.benchmarks.client.Benchmark;
-import com.google.gwt.benchmarks.client.impl.BenchmarkResults;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.junit.JUnitShell;
-import com.google.gwt.junit.JUnitShell.Strategy;
-import com.google.gwt.junit.client.impl.JUnitResult;
+import com.google.gwt.junit.client.GWTTestCase;
 
 import junit.framework.TestCase;
 import junit.framework.TestResult;
@@ -34,22 +32,6 @@ import java.util.Date;
  * @see JUnitShell
  */
 public class BenchmarkShell {
-
-  private static class BenchmarkStrategy implements Strategy {
-    public String getModuleInherit() {
-      return "com.google.gwt.benchmarks.Benchmarks";
-    }
-
-    public String getSyntheticModuleExtension() {
-      return "Benchmarks";
-    }
-
-    public void processResult(TestCase testCase, JUnitResult result) {
-      if (result instanceof BenchmarkResults) {
-        report.addBenchmarkResults(testCase, (BenchmarkResults) result);
-      }
-    }
-  }
 
   /**
    * Executes shutdown logic for JUnitShell
@@ -94,14 +76,26 @@ public class BenchmarkShell {
     return report;
   }
 
+  /**
+   * @deprecated use {@link #runTest(GWTTestCase, TestResult)} instead
+   */
+  @Deprecated
   public static void runTest(String moduleName, TestCase testCase,
       TestResult testResult) throws UnableToCompleteException {
     if (!shutdownHookSet) {
       shutdownHookSet = true;
       Runtime.getRuntime().addShutdownHook(new Thread(new Shutdown()));
     }
-    JUnitShell.runTest(moduleName, testCase, testResult,
-        new BenchmarkStrategy());
+    JUnitShell.runTest(moduleName, testCase, testResult);
+  }
+
+  public static void runTest(GWTTestCase testCase,
+      TestResult testResult) throws UnableToCompleteException {
+    if (!shutdownHookSet) {
+      shutdownHookSet = true;
+      Runtime.getRuntime().addShutdownHook(new Thread(new Shutdown()));
+    }
+    JUnitShell.runTest(testCase, testResult);
   }
 
   private BenchmarkShell() {

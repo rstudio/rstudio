@@ -38,7 +38,9 @@ abstract class RunStyleRemote extends RunStyle {
   @Override
   public void maybeCompileModule(String moduleName)
       throws UnableToCompleteException {
-    shell.compileForWebMode(moduleName, null);
+    System.out.println("Compiling " + moduleName + "...");
+    shell.compileForWebMode(moduleName, JUnitShell.getRemoteUserAgents());
+    System.out.println(" success.");
   }
 
   protected String getMyUrl(String moduleName) {

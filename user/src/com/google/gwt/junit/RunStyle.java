@@ -36,6 +36,23 @@ abstract class RunStyle {
   }
 
   /**
+   * Initialize the RunStyle after the shell has finished loading.
+   * 
+   * @throws UnableToCompleteException
+   */
+  public void init() throws UnableToCompleteException {
+    // nothing to do
+  }
+
+  /**
+   * Returns true if clients are not known before the tests start and can
+   * connect after a delay. 
+   */
+  public boolean isClientConnectionDelayed() {
+    return false;
+  }
+
+  /**
    * Returns whether or not the local UI event loop needs to be pumped.
    */
   public abstract boolean isLocal();

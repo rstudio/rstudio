@@ -50,10 +50,10 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
 
   /**
    * A maximum timeout to wait for the test system to respond with the next
-   * test. Practically speaking, the test system should respond nearly instantly
-   * if there are further tests to run.
+   * test. The test system should respond nearly instantly if there are further
+   * tests to run, unless the tests have not yet been compiled.
    */
-  private static final int TIME_TO_WAIT_FOR_TESTNAME = 30000;
+  private static final int TIME_TO_WAIT_FOR_TESTNAME = 300000;
 
   /**
    * Tries to grab the GWTUnitTestShell sHost environment to communicate with
@@ -81,13 +81,15 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
     fld.set(obj, value);
   }
 
-  public TestInfo[] getFirstMethod() throws TimeoutException {
-    return getHost().getNextTestBlock(getClientId(getThreadLocalRequest()),
-        TIME_TO_WAIT_FOR_TESTNAME);
+  public TestBlock getTestBlock(int blockIndex, String userAgent)
+      throws TimeoutException {
+    return getHost().getTestBlock(getClientId(getThreadLocalRequest()),
+        userAgent, blockIndex, TIME_TO_WAIT_FOR_TESTNAME);
   }
 
-  public TestInfo[] reportResultsAndGetNextMethod(
-      HashMap<TestInfo, JUnitResult> results) throws TimeoutException {
+  public TestBlock reportResultsAndGetTestBlock(
+      HashMap<TestInfo, JUnitResult> results, int testBlock, String userAgent)
+      throws TimeoutException {
     for (JUnitResult result : results.values()) {
       initResult(getThreadLocalRequest(), result);
       ExceptionWrapper ew = result.getExceptionWrapper();
@@ -95,8 +97,9 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
     }
     JUnitMessageQueue host = getHost();
     String clientId = getClientId(getThreadLocalRequest());
-    host.reportResults(clientId, results);
-    return host.getNextTestBlock(clientId, TIME_TO_WAIT_FOR_TESTNAME);
+    host.reportResults(clientId, userAgent, results);
+    return host.getTestBlock(clientId, userAgent, testBlock,
+        TIME_TO_WAIT_FOR_TESTNAME);
   }
 
   @Override
@@ -108,7 +111,7 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
       JUnitResult result = new JUnitResult();
       initResult(request, result);
       result.setException(new JUnitFatalLaunchException(requestPayload));
-      getHost().reportFatalLaunch(getClientId(request), result);
+      getHost().reportFatalLaunch(getClientId(request), null, result);
     } else {
       super.service(request, response);
     }

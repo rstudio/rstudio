@@ -106,8 +106,9 @@
 
   <target name="test.remoteweb" description="Run a remoteweb test at the given host and path" if="gwt.remote.browsers">
     <echo message="Performing remote browser testing at ${gwt.remote.browsers}" />
+    <property name="test.remoteweb.args" value="${test.args}" />
     <fileset id="test.remoteweb.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -remoteweb ${gwt.remote.browsers} -batch module" test.out="${junit.out}/remoteweb" test.cases="test.remoteweb.tests" >
+    <gwt.junit test.args="${test.remoteweb.args} -out www -remoteweb ${gwt.remote.browsers} -batch module -precompile parallel" test.out="${junit.out}/remoteweb" test.cases="test.remoteweb.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -120,8 +121,9 @@
 
   <target name="test.selenium" description="Run a remote test using Selenium RC test at the given host and path" if="gwt.selenium.hosts">
     <echo message="Performing remote browser testing using Selenium RC at ${gwt.selenium.hosts}" />
+    <property name="test.selenium.args" value="${test.args}" />
     <fileset id="test.selenium.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -selenium ${gwt.selenium.hosts} -batch module" test.out="${junit.out}/selenium" test.cases="test.selenium.tests" >
+    <gwt.junit test.args="${test.selenium.args} -out www -selenium ${gwt.selenium.hosts} -batch module -precompile parallel" test.out="${junit.out}/selenium" test.cases="test.selenium.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>

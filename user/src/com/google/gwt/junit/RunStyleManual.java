@@ -31,6 +31,11 @@ class RunStyleManual extends RunStyleRemote {
   }
 
   @Override
+  public boolean isClientConnectionDelayed() {
+    return true;
+  }
+
+  @Override
   public boolean isLocal() {
     return false;
   }
@@ -44,13 +49,5 @@ class RunStyleManual extends RunStyleRemote {
           + " browsers to this URL:");
     }
     System.out.println(getMyUrl(moduleName));
-  }
-
-  @Override
-  public void maybeCompileModule(String moduleName)
-      throws UnableToCompleteException {
-    System.out.print("Compiling " + moduleName + "...");
-    super.maybeCompileModule(moduleName);
-    System.out.println(" success.");
   }
 }

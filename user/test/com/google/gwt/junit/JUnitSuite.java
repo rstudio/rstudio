@@ -28,6 +28,10 @@ public class JUnitSuite {
     GWTTestSuite suite = new GWTTestSuite("Test for suite for com.google.gwt.junit");
 
     suite.addTestSuite(FakeMessagesMakerTest.class);
+    suite.addTestSuite(BatchingStrategyTest.class);
+    suite.addTestSuite(JUnitMessageQueueTest.class);
+    suite.addTestSuite(GWTTestCaseNoClientTest.class);
+    suite.addTestSuite(BenchmarkNoClientTest.class);
 
     // client
     // Suppressed due to flakiness on Linux

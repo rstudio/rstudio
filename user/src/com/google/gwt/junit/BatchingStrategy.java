@@ -18,50 +18,89 @@ package com.google.gwt.junit;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
- * An interface that specifies how tests should be batched.
+ * An interface that specifies how tests should be batched. A single batch
+ * should never include tests from more than one module, or the browser will
+ * load the new module and lose results from existing tests.
  */
-public interface BatchingStrategy {
+public abstract class BatchingStrategy {
 
   /**
-   * Returns the list of tests that should be executed along with this test.
+   * Returns an ordered list of all tests blocks that should be executed for the
+   * specified module. Each test block is an array of {@link TestInfo}.
+   * 
+   * @param syntheticModuleName the name of the synthetic module
+   * @return an ordered list of test blocks to run
    */
-  TestInfo[] getTestBlock(TestInfo currentTest);
+  public abstract List<TestInfo[]> getTestBlocks(String syntheticModuleName);
 }
 
 /**
  * 
  * Strategy that does not batch tests.
  */
-class NoBatchingStrategy implements BatchingStrategy {
-  public TestInfo[] getTestBlock(TestInfo currentTest) {
-    return new TestInfo[] {currentTest};
+class NoBatchingStrategy extends BatchingStrategy {
+  @Override
+  public List<TestInfo[]> getTestBlocks(String syntheticModuleName) {
+    Set<TestInfo> allTestsInModule = GWTTestCase.getTestsForModule(
+        syntheticModuleName).getTests();
+    List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>();
+    for (TestInfo testInfo : allTestsInModule) {
+      testBlocks.add(new TestInfo[] {testInfo});
+    }
+    return testBlocks;
+  }
+}
+
+/**
+ * Strategy that batches all tests belonging to one class.
+ */
+class ClassBatchingStrategy extends BatchingStrategy {
+  @Override
+  public List<TestInfo[]> getTestBlocks(String syntheticModuleName) {
+    Set<TestInfo> allTestsInModule = GWTTestCase.getTestsForModule(
+        syntheticModuleName).getTests();
+    List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>();
+    String lastTestClass = null;
+    List<TestInfo> lastTestBlock = null;
+    for (TestInfo testInfo : allTestsInModule) {
+      String testClass = testInfo.getTestClass();
+      if (!testClass.equals(lastTestClass)) {
+        // Add the last test block to the collection.
+        if (lastTestBlock != null) {
+          testBlocks.add(lastTestBlock.toArray(new TestInfo[lastTestBlock.size()]));
+        }
+
+        // Start a new test block.
+        lastTestClass = testClass;
+        lastTestBlock = new ArrayList<TestInfo>();
+      }
+      lastTestBlock.add(testInfo);
+    }
+
+    // Add the last test block.
+    if (lastTestBlock != null) {
+      testBlocks.add(lastTestBlock.toArray(new TestInfo[lastTestBlock.size()]));
+    }
+    return testBlocks;
   }
 }
 
 /**
  * Strategy that batches all tests belonging to one module.
  */
-class ModuleBatchingStrategy implements BatchingStrategy {
-
-  /**
-   * Returns the list of all tests belonging to the module of
-   * <code>currentTest</code>.
-   */
-  public TestInfo[] getTestBlock(TestInfo currentTest) {
-    String moduleName = currentTest.getTestModule();
-    if (moduleName.endsWith(".JUnit")) {
-      moduleName = moduleName.substring(0, moduleName.length()
-          - ".JUnit".length());
-    }
-    Set<TestInfo> allTestsInModule = GWTTestCase.ALL_GWT_TESTS.get(moduleName);
-    if (allTestsInModule != null) {
-      assert allTestsInModule.size() > 0;
-      return allTestsInModule.toArray(new TestInfo[allTestsInModule.size()]);
-    }
-    // No data, default to just this test.
-    return new TestInfo[] {currentTest};
+class ModuleBatchingStrategy extends BatchingStrategy {
+  @Override
+  public List<TestInfo[]> getTestBlocks(String syntheticModuleName) {
+    Set<TestInfo> allTestsInModule = GWTTestCase.getTestsForModule(
+        syntheticModuleName).getTests();
+    TestInfo[] testBlock = allTestsInModule.toArray(new TestInfo[allTestsInModule.size()]);
+    List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>();
+    testBlocks.add(testBlock);
+    return testBlocks;
   }
 }

@@ -20,12 +20,14 @@ import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.junit.client.GWTTestCase.TestModuleInfo;
 import com.google.gwt.junit.client.impl.GWTRunner;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -86,9 +88,20 @@ public class GWTRunnerGenerator extends Generator {
       throw new UnableToCompleteException();
     }
 
+    String userAgent;
+    try {
+      SelectionProperty prop = context.getPropertyOracle().getSelectionProperty(
+          logger, "user.agent");
+      userAgent = prop.getCurrentValue();
+    } catch (BadPropertyValueException e) {
+      logger.log(TreeLogger.ERROR, "Could not resolve user.agent property", e);
+      throw new UnableToCompleteException();
+    }
+
     // Get the stub class name, and see if its source file exists.
     //
-    String generatedClass = requestedClass.getName().replace('.', '_') + "Impl";
+    String generatedClass = requestedClass.getName().replace('.', '_') + "Impl"
+        + userAgent;
     String packageName = requestedClass.getPackage().getName();
     String qualifiedStubClassName = packageName + "." + generatedClass;
 
@@ -97,7 +110,8 @@ public class GWTRunnerGenerator extends Generator {
 
     if (sourceWriter != null) {
       // Check the global set of active tests for this module.
-      Set<TestInfo> moduleTests = GWTTestCase.ALL_GWT_TESTS.get(moduleName);
+      TestModuleInfo moduleInfo = GWTTestCase.getTestsForModule(moduleName);
+      Set<TestInfo> moduleTests = (moduleInfo == null) ? null : moduleInfo.getTests();
       Set<String> testClasses;
       if (moduleTests == null || moduleTests.isEmpty()) {
         // Fall back to pulling in all types in the module.
@@ -111,6 +125,7 @@ public class GWTRunnerGenerator extends Generator {
         }
       }
       writeCreateNewTestCaseMethod(testClasses, sourceWriter);
+      writeGetUserAgentPropertyMethod(userAgent, sourceWriter);
       sourceWriter.commit(logger);
     }
 
@@ -192,6 +207,15 @@ public class GWTRunnerGenerator extends Generator {
       sw.println("}");
     }
     sw.println("return null;");
+    sw.outdent();
+    sw.println("}");
+  }
+
+  private void writeGetUserAgentPropertyMethod(String userAgent, SourceWriter sw) {
+    sw.println();
+    sw.println("protected final String getUserAgentProperty() {");
+    sw.indent();
+    sw.println("return \"" + userAgent + "\";");
     sw.outdent();
     sw.println("}");
   }

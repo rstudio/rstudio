@@ -30,6 +30,33 @@ public interface JUnitHost extends RemoteService {
   /**
    * Returned from the server to tell the system what test to run next.
    */
+  public static class TestBlock implements IsSerializable {
+    private TestInfo[] tests;
+    private int index;
+
+    public TestBlock(TestInfo[] tests, int index) {
+      this.tests = tests;
+      this.index = index;
+    }
+
+    /**
+     * Constructor for serialization.
+     */
+    TestBlock() {
+    }
+
+    public int getIndex() {
+      return index;
+    }
+
+    public TestInfo[] getTests() {
+      return tests;
+    }
+  }
+
+  /**
+   * Returned from the server to tell the system what test to run next.
+   */
   public static class TestInfo implements IsSerializable {
     private String testClass;
     private String testMethod;
@@ -82,21 +109,26 @@ public interface JUnitHost extends RemoteService {
   }
 
   /**
-   * Gets the name of next method to run.
+   * Gets a specific block of tests to run.
    * 
-   * @return the next test to run
+   * @param blockIndex the index of the test block to retrieve
+   * @param userAgent the user agent property of this client
+   * @return the test block
    * @throws TimeoutException if the wait for the next method times out.
    */
-  TestInfo[] getFirstMethod() throws TimeoutException;
+  TestBlock getTestBlock(int blockIndex, String userAgent) throws TimeoutException;
 
   /**
    * Reports results for the last method run and gets the name of next method to
    * run.
    * 
    * @param results the results of executing the test
-   * @return the next test to run
+   * @param blockIndex the index of the test block to retrieve
+   * @param userAgent the user agent property of this client
+   * @return the next test block
    * @throws TimeoutException if the wait for the next method times out.
    */
-  TestInfo[] reportResultsAndGetNextMethod(
-      HashMap<TestInfo, JUnitResult> results) throws TimeoutException;
+  TestBlock reportResultsAndGetTestBlock(
+      HashMap<TestInfo, JUnitResult> results, int blockIndex, String userAgent)
+      throws TimeoutException;
 }
