@@ -41,6 +41,32 @@ public class JavaObject extends ScriptableObject implements Function {
         javaRef.getRefid(), context);
   }
 
+  static Object getReturnValueFromJavaMethod(Context cx,
+      HtmlUnitSessionHandler sessionHandler, BrowserChannel channel,
+      int dispatchId, Value thisValue, Value valueArgs[]) {
+    ReturnMessage returnMessage = null;
+    synchronized (sessionHandler.getHtmlPage()) {
+      try {
+        new InvokeOnServerMessage(channel, dispatchId, thisValue, valueArgs).send();
+      } catch (IOException e) {
+        return Undefined.instance;
+      }
+      try {
+        returnMessage = ((BrowserChannelClient) channel).reactToMessagesWhileWaitingForReturn(sessionHandler);
+      } catch (IOException e) {
+        return Undefined.instance;
+      } catch (BrowserChannelException e) {
+        return Undefined.instance;
+      }
+    }
+    Value returnValue = returnMessage.getReturnValue();
+    if (returnMessage.isException()) {
+      throw new RuntimeException("JavaObject.call failed, returnMessage: "
+          + returnValue.toString());
+    }
+    return sessionHandler.makeJsvalFromValue(cx, returnValue);
+  }
+
   static boolean isJavaObject(Context jsContext, ScriptableObject javaObject) {
     return javaObject instanceof JavaObject;
   }
@@ -87,34 +113,15 @@ public class JavaObject extends ScriptableObject implements Function {
         args[1]);
     int dispatchId = ((Number) args[0]).intValue();
 
-    ReturnMessage returnMessage = null;
-    synchronized (sessionData.getSessionHandler().getHtmlPage()) {
-      try {
-        new InvokeOnServerMessage(sessionData.getChannel(), dispatchId,
-            thisValue, valueArgs).send();
-      } catch (IOException e) {
-        return Undefined.instance;
-      }
-      try {
-        returnMessage = ((BrowserChannelClient) sessionData.getChannel()).reactToMessagesWhileWaitingForReturn(sessionData.getSessionHandler());
-      } catch (IOException e) {
-        return Undefined.instance;
-      } catch (BrowserChannelException e) {
-        return Undefined.instance;
-      }
-    }
-    Value returnValue = returnMessage.getReturnValue();
-    if (returnMessage.isException()) {
-      throw new RuntimeException("JavaObject.call failed, returnMessage: "
-          + returnValue.toString());
-    }
     /*
      * Return a object array ret. ret[0] is a boolean indicating whether an
      * exception was thrown or not. ret[1] is the exception or the return value.
+     * If there is an exception, a RuntimeException is thrown.
      */
     Object ret[] = new Object[2];
     ret[0] = Boolean.FALSE;
-    ret[1] = sessionData.getSessionHandler().makeJsvalFromValue(cx, returnValue);
+    ret[1] = getReturnValueFromJavaMethod(cx, sessionData.getSessionHandler(),
+        sessionData.getChannel(), dispatchId, thisValue, valueArgs);
     return ret;
   }
 
@@ -125,9 +132,17 @@ public class JavaObject extends ScriptableObject implements Function {
 
   // ignoring the 'start' argument.
   @Override
+  public Object get(int index, Scriptable start) {
+    Value value = ServerMethods.getProperty(sessionData.getChannel(),
+        sessionData.getSessionHandler(), objectRef, index);
+    return sessionData.getSessionHandler().makeJsvalFromValue(jsContext, value);
+  }
+
+  // ignoring the 'start' argument.
+  @Override
   public Object get(String name, Scriptable start) {
     if ("toString".equals(name)) {
-      return sessionData.getToStringTearOff();
+      return sessionData.getSessionHandler().getToStringTearOff(jsContext);
     }
     if ("id".equals(name)) {
       return objectRef;
@@ -137,14 +152,6 @@ public class JavaObject extends ScriptableObject implements Function {
     }
     System.err.println("Unknown property name in get " + name);
     return Undefined.instance;
-  }
-
-  // ignoring the 'start' argument.
-  @Override
-  public Object get(int index, Scriptable start) {
-    Value value = ServerMethods.getProperty(sessionData.getChannel(),
-        sessionData.getSessionHandler(), objectRef, index);
-    return sessionData.getSessionHandler().makeJsvalFromValue(jsContext, value);
   }
 
   @Override

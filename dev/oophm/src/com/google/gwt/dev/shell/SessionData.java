@@ -35,8 +35,4 @@ public class SessionData {
     return sessionHandler;
   }
   
-  public Object getToStringTearOff() {
-    // TODO Auto-generated method stub
-    return null;
-  }
 }

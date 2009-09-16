@@ -46,24 +46,61 @@ import java.util.Set;
  */
 public class HtmlUnitSessionHandler extends SessionHandler {
 
+  private class ToStringMethod extends ScriptableObject implements Function {
+
+    private static final int EXPECTED_NUM_ARGS = 0;
+    private static final long serialVersionUID = 1592865718416163348L;
+
+    public Object call(Context context, Scriptable scope, Scriptable thisObj,
+        Object[] args) {
+      // Allow extra arguments for forward compatibility
+      if (args.length < EXPECTED_NUM_ARGS) {
+        throw Context.reportRuntimeError("Bad number of parameters for function"
+            + " toString: expected "
+            + EXPECTED_NUM_ARGS
+            + ", got "
+            + args.length);
+      }
+      // thisObj is the javaObject.
+      Value thisValue = makeValueFromJsval(context, thisObj);
+      return JavaObject.getReturnValueFromJavaMethod(context,
+          HtmlUnitSessionHandler.this, sessionData.getChannel(),
+          TO_STRING_DISPATCH_ID, thisValue, EMPTY_VALUES);
+    }
+
+    public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
+      throw Context.reportRuntimeError("Function connect can't be used as a "
+          + "constructor");
+    }
+
+    @Override
+    public String getClassName() {
+      return "function toString";
+    }
+  }
+
+  private static final Value EMPTY_VALUES[] = new Value[0];
+  private static final int TO_STRING_DISPATCH_ID = 0;
+
   Map<Integer, JavaObject> javaObjectCache;
-  int nextId;
 
   /**
    * The htmlPage is also used to synchronize calls to Java code.
    */
   private HtmlPage htmlPage;
-
   private Set<Integer> javaObjectsToFree;
-  private JavaScriptEngine jsEngine;
-  private IdentityHashMap<Scriptable, Integer> jsObjectToRef;
 
+  private JavaScriptEngine jsEngine;
+
+  private IdentityHashMap<Scriptable, Integer> jsObjectToRef;
   private final PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
 
   private int nextRefId = 1;
   private Map<Integer, Scriptable> refToJsObject;
-
   private SessionData sessionData;
+
+  private final ToStringMethod toStringMethod = new ToStringMethod();
+
   private final Window window;
 
   HtmlUnitSessionHandler(Window window) {
@@ -78,9 +115,8 @@ public class HtmlUnitSessionHandler extends SessionHandler {
     javaObjectsToFree = new HashSet<Integer>();
     nextRefId = 1;
     refToJsObject = new HashMap<Integer, Scriptable>();
-    
+
     // related to JavaObject cache.
-    nextId = 1; // skipping zero, reserved.
     javaObjectCache = new HashMap<Integer, JavaObject>();
   }
 
@@ -101,7 +137,7 @@ public class HtmlUnitSessionHandler extends SessionHandler {
   public JavaObject getOrCreateJavaObject(int refId, Context context) {
     JavaObject javaObject = javaObjectCache.get(refId);
     if (javaObject == null) {
-      javaObject = new JavaObject(context, sessionData, nextId++);
+      javaObject = new JavaObject(context, sessionData, refId);
       javaObjectCache.put(refId, javaObject);
     }
     return javaObject;
@@ -112,6 +148,10 @@ public class HtmlUnitSessionHandler extends SessionHandler {
       int dispId) {
     throw new UnsupportedOperationException(
         "getProperty should not be called on the client-side");
+  }
+
+  public Object getToStringTearOff(Context jsContext) {
+    return toStringMethod;
   }
 
   public String getUserAgent() {
@@ -202,6 +242,17 @@ public class HtmlUnitSessionHandler extends SessionHandler {
       return returnVal;
     }
     if (value instanceof Scriptable) {
+      if (value instanceof ScriptableObject) {
+        /*
+         * HACK: check for native types like NativeString. NativeString is
+         * package-protected. What other types do we need to check?
+         */
+        ScriptableObject scriptableValue = (ScriptableObject) value;
+        String className = scriptableValue.getClassName();
+        if (className.equals("String")) {
+          return new Value(scriptableValue.toString());
+        }
+      }
       Integer refId = jsObjectToRef.get((Scriptable) value);
       if (refId == null) {
         refId = nextRefId++;
