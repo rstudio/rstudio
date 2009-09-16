@@ -16,6 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.InitializeEvent;
+import com.google.gwt.event.logical.shared.InitializeHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RichTextArea.BasicFormatter;
@@ -146,6 +148,20 @@ public class RichTextAreaTest extends GWTTestCase {
         finishTest();
       }
     }.schedule(500);
+  }
+
+  /** 
+   * See that the custom InitializeEvent fires.
+   */
+  public void testRichTextInitializeEvent() {
+    delayTestFinish(3000);
+    final RichTextArea richTextArea = new RichTextArea();
+    richTextArea.addInitializeHandler(new InitializeHandler() {
+      public void onInitialize(InitializeEvent event) {
+        finishTest();
+      }
+    });
+    RootPanel.get().add(richTextArea);
   }
 
   /**
