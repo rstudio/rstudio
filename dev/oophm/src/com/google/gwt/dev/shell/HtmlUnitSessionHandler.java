@@ -30,6 +30,7 @@ import com.gargoylesoftware.htmlunit.javascript.host.Window;
 
 import net.sourceforge.htmlunit.corejs.javascript.Context;
 import net.sourceforge.htmlunit.corejs.javascript.Function;
+import net.sourceforge.htmlunit.corejs.javascript.JavaScriptException;
 import net.sourceforge.htmlunit.corejs.javascript.Scriptable;
 import net.sourceforge.htmlunit.corejs.javascript.ScriptableObject;
 import net.sourceforge.htmlunit.corejs.javascript.Undefined;
@@ -63,9 +64,11 @@ public class HtmlUnitSessionHandler extends SessionHandler {
       }
       // thisObj is the javaObject.
       Value thisValue = makeValueFromJsval(context, thisObj);
-      return JavaObject.getReturnValueFromJavaMethod(context,
-          HtmlUnitSessionHandler.this, sessionData.getChannel(),
+      ExceptionOrReturnValue returnValue = JavaObject.getReturnFromJavaMethod(
+          context, HtmlUnitSessionHandler.this, sessionData.getChannel(),
           TO_STRING_DISPATCH_ID, thisValue, EMPTY_VALUES);
+      return HtmlUnitSessionHandler.this.makeJsvalFromValue(context,
+          returnValue.getReturnValue());
     }
 
     public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
@@ -200,6 +203,11 @@ public class HtmlUnitSessionHandler extends SessionHandler {
     try {
       result = jsEngine.callFunction(htmlPage, jsFunction, jsContext, window,
           jsThis, jsArgs);
+    } catch (JavaScriptException ex) {
+      logger.log(TreeLogger.INFO, "INVOKE: JavaScriptException " + ex
+          + ", message: " + ex.getMessage() + " when invoking " + methodName);
+      return new ExceptionOrReturnValue(true, makeValueFromJsval(jsContext,
+          ex.getValue()));
     } catch (Exception ex) {
       logger.log(TreeLogger.ERROR, "INVOKE: exception " + ex + ", message: "
           + ex.getMessage() + " when invoking " + methodName);

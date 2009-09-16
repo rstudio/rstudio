@@ -19,6 +19,7 @@ import com.google.gwt.dev.shell.BrowserChannel.InvokeOnServerMessage;
 import com.google.gwt.dev.shell.BrowserChannel.JavaObjectRef;
 import com.google.gwt.dev.shell.BrowserChannel.ReturnMessage;
 import com.google.gwt.dev.shell.BrowserChannel.Value;
+import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.ExceptionOrReturnValue;
 
 import net.sourceforge.htmlunit.corejs.javascript.Context;
 import net.sourceforge.htmlunit.corejs.javascript.Function;
@@ -34,6 +35,8 @@ import java.io.IOException;
 public class JavaObject extends ScriptableObject implements Function {
 
   private static final long serialVersionUID = -7923090130737830902L;
+  private static final ExceptionOrReturnValue DEFAULT_VALUE = new ExceptionOrReturnValue(
+      true, new Value());
 
   public static JavaObject getOrCreateJavaObject(JavaObjectRef javaRef,
       SessionData sessionData, Context context) {
@@ -41,30 +44,26 @@ public class JavaObject extends ScriptableObject implements Function {
         javaRef.getRefid(), context);
   }
 
-  static Object getReturnValueFromJavaMethod(Context cx,
+  static ExceptionOrReturnValue getReturnFromJavaMethod(Context cx,
       HtmlUnitSessionHandler sessionHandler, BrowserChannel channel,
       int dispatchId, Value thisValue, Value valueArgs[]) {
-    ReturnMessage returnMessage = null;
+
     synchronized (sessionHandler.getHtmlPage()) {
       try {
         new InvokeOnServerMessage(channel, dispatchId, thisValue, valueArgs).send();
       } catch (IOException e) {
-        return Undefined.instance;
+        return DEFAULT_VALUE;
       }
       try {
-        returnMessage = ((BrowserChannelClient) channel).reactToMessagesWhileWaitingForReturn(sessionHandler);
+        ReturnMessage returnMessage = ((BrowserChannelClient) channel).reactToMessagesWhileWaitingForReturn(sessionHandler);
+        return new ExceptionOrReturnValue(returnMessage.isException(),
+            returnMessage.getReturnValue());
       } catch (IOException e) {
-        return Undefined.instance;
+        return DEFAULT_VALUE;
       } catch (BrowserChannelException e) {
-        return Undefined.instance;
+        return DEFAULT_VALUE;
       }
     }
-    Value returnValue = returnMessage.getReturnValue();
-    if (returnMessage.isException()) {
-      throw new RuntimeException("JavaObject.call failed, returnMessage: "
-          + returnValue.toString());
-    }
-    return sessionHandler.makeJsvalFromValue(cx, returnValue);
   }
 
   static boolean isJavaObject(Context jsContext, ScriptableObject javaObject) {
@@ -113,15 +112,17 @@ public class JavaObject extends ScriptableObject implements Function {
         args[1]);
     int dispatchId = ((Number) args[0]).intValue();
 
+    ExceptionOrReturnValue returnValue = getReturnFromJavaMethod(cx,
+        sessionData.getSessionHandler(), sessionData.getChannel(), dispatchId,
+        thisValue, valueArgs);
     /*
      * Return a object array ret. ret[0] is a boolean indicating whether an
      * exception was thrown or not. ret[1] is the exception or the return value.
-     * If there is an exception, a RuntimeException is thrown.
      */
     Object ret[] = new Object[2];
-    ret[0] = Boolean.FALSE;
-    ret[1] = getReturnValueFromJavaMethod(cx, sessionData.getSessionHandler(),
-        sessionData.getChannel(), dispatchId, thisValue, valueArgs);
+    ret[0] = returnValue.isException();
+    ret[1] = sessionData.getSessionHandler().makeJsvalFromValue(cx,
+        returnValue.getReturnValue());
     return ret;
   }
 
