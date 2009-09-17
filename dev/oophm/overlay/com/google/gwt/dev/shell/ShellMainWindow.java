@@ -21,6 +21,7 @@ import com.google.gwt.dev.util.log.AbstractTreeLogger;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.io.File;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -33,7 +34,7 @@ public class ShellMainWindow extends JPanel {
 
   private SwingLoggerPanel logWindow;
 
-  public ShellMainWindow(TreeLogger.Type maxLevel) {
+  public ShellMainWindow(TreeLogger.Type maxLevel, File logFile) {
     super(new BorderLayout());
     // TODO(jat): add back when we have real options
     if (false) {
@@ -49,7 +50,7 @@ public class ShellMainWindow extends JPanel {
       panel.add(launchPanel);
       add(panel, BorderLayout.NORTH);
     }
-    logWindow = new SwingLoggerPanel(maxLevel);
+    logWindow = new SwingLoggerPanel(maxLevel, logFile);
     add(logWindow);
   }
 

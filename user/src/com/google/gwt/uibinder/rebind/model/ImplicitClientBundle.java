@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.rebind.model;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.MortalLogger;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -24,24 +25,29 @@ import java.util.Set;
 /**
  * Models the ClientBundle to be generated from a ui.xml.
  */
-public class ImplicitBundle {
+public class ImplicitClientBundle {
 
-  private final Set<CssResourceGetter> cssMethods = new HashSet<CssResourceGetter>();
+  private final Set<ImplicitCssResource> cssMethods = new HashSet<ImplicitCssResource>();
   private final String packageName;
   private final String className;
   private final String fieldName;
+  private final String cssBaseName;
+  private final MortalLogger logger;
 
   /**
    * @param packageName Where the bundle should live
    * @param uiBinderImplClassName The name of the generated ui binder
    *          implementation that owns the bundle
    * @param fieldName The bundle's field name
+   * @param logger TODO
    */
-  public ImplicitBundle(String packageName, String uiBinderImplClassName,
-      String fieldName) {
+  public ImplicitClientBundle(String packageName, String uiBinderImplClassName,
+      String fieldName, MortalLogger logger) {
     this.packageName = packageName;
-    this.className = uiBinderImplClassName + "GenBundle";
+    this.className = uiBinderImplClassName + "_GenBundle";
+    this.cssBaseName = uiBinderImplClassName + "_GenCss";
     this.fieldName = fieldName;
+    this.logger = logger;
   }
 
   /**
@@ -51,11 +57,13 @@ public class ImplicitBundle {
    * @param source path to the .css file resource
    * @param extendedInterface the public interface implemented by this
    *          CssResource, or null
+   * @param body the inline css text
    * @return
    */
-  public CssResourceGetter createCssResource(String name, String source,
-      JClassType extendedInterface) {
-    CssResourceGetter css = new CssResourceGetter(name, source, extendedInterface);
+  public ImplicitCssResource createCssResource(String name, String source,
+      JClassType extendedInterface, String body) {
+    ImplicitCssResource css = new ImplicitCssResource(packageName, cssBaseName
+        + name, name, source, extendedInterface, body, logger);
     cssMethods.add(css);
     return css;
   }
@@ -64,7 +72,7 @@ public class ImplicitBundle {
     return className;
   }
 
-  public Set<CssResourceGetter> getCssMethods() {
+  public Set<ImplicitCssResource> getCssMethods() {
     return Collections.unmodifiableSet(cssMethods);
   }
 

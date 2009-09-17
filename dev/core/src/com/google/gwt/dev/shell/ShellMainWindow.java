@@ -17,6 +17,7 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.shell.BrowserWindowController.WebServerRestart;
 import com.google.gwt.dev.shell.log.TreeLoggerWidget;
 import com.google.gwt.dev.util.Util;
@@ -37,6 +38,8 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolItem;
+
+import java.io.File;
 
 /**
  * Implements the GWTShell's main window control.
@@ -201,7 +204,8 @@ public class ShellMainWindow extends Composite implements DisposeListener,
   private Toolbar toolbar;
 
   public ShellMainWindow(BrowserWindowController browserWindowController,
-      Shell parent, String titleText, int serverPort) {
+      Shell parent, String titleText, int serverPort, File logFile,
+      Type logLevel) {
     super(parent, SWT.NONE);
     this.browserWindowController = browserWindowController;
 
@@ -235,7 +239,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
 
     // Create the log pane.
     {
-      logPane = new TreeLoggerWidget(this);
+      logPane = new TreeLoggerWidget(this, logFile, logLevel);
       GridData data = new GridData();
       data.grabExcessHorizontalSpace = true;
       data.grabExcessVerticalSpace = true;

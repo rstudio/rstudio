@@ -39,7 +39,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\platform\Win&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\..\..\common&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -63,7 +63,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
 				ShowProgress="2"
-				OutputFile="$(ProjectDir)\..\prebuilt\WINNT_x86-msvc\npOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\prebuilt\gwtdmp\WINNT_x86-msvc\npOOPHM.dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="$(ProjectDir)\..\npOOPHM.def"
 				GenerateDebugInformation="true"
@@ -122,7 +122,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;..\..\common&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\platform\Win&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\..\..\common&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS"
 				ExceptionHandling="1"
 				RuntimeLibrary="2"
@@ -144,7 +144,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
 				ShowProgress="2"
-				OutputFile="..\extension\platform\WINNT_x86-msvc\plugins\npOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\prebuilt\gwtdmp\WINNT_x86-msvc\npOOPHM.dll"
 				LinkIncremental="0"
 				AdditionalLibraryDirectories=""
 				ModuleDefinitionFile="..\npOOPHM.def"
@@ -190,6 +190,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath="..\..\platform\Win\AllowDialog.h"
+				>
+			</File>
 			<File
 				RelativePath="..\..\common\AllowedConnections.h"
 				>
@@ -291,6 +295,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\platform\Win\Preferences.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\ProtocolVersionMessage.h"
 				>
 			</File>
@@ -350,6 +358,10 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
+			<File
+				RelativePath="..\..\platform\Win\AllowDialog.cpp"
+				>
+			</File>
 			<File
 				RelativePath="..\..\common\AllowedConnections.cpp"
 				>
@@ -416,6 +428,10 @@
 			</File>
 			<File
 				RelativePath="..\Plugin.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\platform\Win\Preferences.cpp"
 				>
 			</File>
 			<File

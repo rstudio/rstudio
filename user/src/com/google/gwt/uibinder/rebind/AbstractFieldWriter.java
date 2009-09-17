@@ -15,9 +15,7 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 
@@ -38,12 +36,14 @@ abstract class AbstractFieldWriter implements FieldWriter {
   private final Set<FieldWriter> needs = new HashSet<FieldWriter>();
   private String initializer;
   private boolean written;
+  private MortalLogger logger;
 
-  public AbstractFieldWriter(String name) {
+  public AbstractFieldWriter(String name, MortalLogger logger) {
     if (name == null) {
       throw new RuntimeException("name cannot be null");
     }
     this.name = name;
+    this.logger = logger;
   }
 
   public void needs(FieldWriter f) {
@@ -69,7 +69,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
     this.initializer = initializer;
   }
 
-  public void write(IndentedWriter w, TreeLogger logger)
+  public void write(IndentedWriter w)
       throws UnableToCompleteException {
     if (written) {
       return;
@@ -80,7 +80,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
       // we support more interesting contexts (e.g. the same need being used
       // inside two different
       // LazyPanels)
-      f.write(w, logger);
+      f.write(w);
     }
 
     if (initializer == null) {
@@ -88,9 +88,8 @@ abstract class AbstractFieldWriter implements FieldWriter {
       if (type != null) {
         if ((type.isInterface() == null)
             && (type.findConstructor(new JType[0]) == null)) {
-          logger.log(Type.ERROR, String.format(NO_DEFAULT_CTOR_ERROR,
-              type.getQualifiedSourceName(), type.getName()));
-          throw new UnableToCompleteException();
+          logger.die(NO_DEFAULT_CTOR_ERROR,
+              type.getQualifiedSourceName(), type.getName());
         }
       }
     }

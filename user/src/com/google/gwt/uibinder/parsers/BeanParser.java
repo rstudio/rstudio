@@ -54,7 +54,8 @@ public class BeanParser implements ElementParser {
     final Map<String, JParameter> unfilledRequiredParams =
         new HashMap<String, JParameter>();
 
-    final OwnerFieldClass ownerFieldClass = OwnerFieldClass.getFieldClass(type);
+    final OwnerFieldClass ownerFieldClass = OwnerFieldClass.getFieldClass(type,
+        writer.getLogger());
 
     // See if there's a factory method
     JAbstractMethod creator = writer.getOwnerClass().getUiFactoryMethod(type);
@@ -142,7 +143,7 @@ public class BeanParser implements ElementParser {
         JParameter[] params = setter.getParameters();
 
         AttributeParser parser = writer.getAttributeParser(attribute, params);
-        
+
         if (parser == null) {
           writer.die("In %s, unable to parse %s.", elem, attribute);
         }

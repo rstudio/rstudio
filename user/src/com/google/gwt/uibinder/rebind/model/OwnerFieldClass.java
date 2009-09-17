@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.client.UiConstructor;
+import com.google.gwt.uibinder.rebind.MortalLogger;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,31 +33,31 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Descriptor for a class which can be used as a @UiField.
- * This is usually a widget, but can also be a resource (such as Messages or
- * an ImageBundle). Also notice that the existence of an OwnerFieldClass doesn't
- * mean the class is actually present as a field in the owner.
+ * Descriptor for a class which can be used as a @UiField. This is usually a
+ * widget, but can also be a resource (such as Messages or an ImageBundle). Also
+ * notice that the existence of an OwnerFieldClass doesn't mean the class is
+ * actually present as a field in the owner.
  */
 public class OwnerFieldClass {
 
   /**
-   * Global map of field classes.
-   * This serves as a cache so each class is only processed once.
+   * Global map of field classes. This serves as a cache so each class is only
+   * processed once.
    */
-  private static final Map<JClassType, OwnerFieldClass> FIELD_CLASSES =
-      new HashMap<JClassType, OwnerFieldClass>();
+  private static final Map<JClassType, OwnerFieldClass> FIELD_CLASSES = new HashMap<JClassType, OwnerFieldClass>();
 
   /**
    * Gets or creates the descriptor for the given field class.
    *
    * @param forType the field type to get a descriptor for
+   * @param logger TODO
    * @return the descriptor
    */
-  public static OwnerFieldClass getFieldClass(JClassType forType)
-      throws UnableToCompleteException {
+  public static OwnerFieldClass getFieldClass(JClassType forType,
+      MortalLogger logger) throws UnableToCompleteException {
     OwnerFieldClass clazz = FIELD_CLASSES.get(forType);
     if (clazz == null) {
-      clazz = new OwnerFieldClass(forType);
+      clazz = new OwnerFieldClass(forType, logger);
       FIELD_CLASSES.put(forType, clazz);
     }
     return clazz;
@@ -66,16 +67,19 @@ public class OwnerFieldClass {
   private final Map<String, JMethod> setters = new HashMap<String, JMethod>();
   private Set<String> ambiguousSetters;
   private JConstructor uiConstructor;
+  private final MortalLogger logger;
 
   /**
-   * Default constructor.
-   * This is package-visible for testing only.
+   * Default constructor. This is package-visible for testing only.
    *
    * @param forType the type of the field class
+   * @param logger
    * @throws UnableToCompleteException if the class is not valid
    */
-  OwnerFieldClass(JClassType forType) throws UnableToCompleteException {
+  OwnerFieldClass(JClassType forType, MortalLogger logger)
+      throws UnableToCompleteException {
     this.rawType = forType;
+    this.logger = logger;
 
     findUiConstructor(forType);
     findSetters(forType);
@@ -101,10 +105,8 @@ public class OwnerFieldClass {
     // when CheckBox#setChecked will go away and CheckBox#setValue must be used
 
     if (ambiguousSetters != null && ambiguousSetters.contains(propertyName)) {
-      // TODO(rdamazio): proper logging
-      System.out.println("Ambiguous setter requested: " + rawType.getName()
-          + "." + propertyName);
-      throw new UnableToCompleteException();
+      logger.die("Ambiguous setter requested: " + rawType.getName() + "."
+          + propertyName);
     }
 
     return setters.get(propertyName);
@@ -120,9 +122,8 @@ public class OwnerFieldClass {
 
   /**
    * Given a collection of setters for the same property, picks which one to
-   * use.
-   * Not having a proper setter is not an error unless of course the user tries
-   * to use it.
+   * use. Not having a proper setter is not an error unless of course the user
+   * tries to use it.
    *
    * @param propertySetters the collection of setters
    * @return the setter to use, or null if none is good enough
@@ -167,8 +168,7 @@ public class OwnerFieldClass {
    * @param fieldType the leaf type to look at
    * @return a multimap of property name to the setter methods
    */
-  private Map<String, Collection<JMethod>> findAllSetters(
-      JClassType fieldType) {
+  private Map<String, Collection<JMethod>> findAllSetters(JClassType fieldType) {
     Map<String, Collection<JMethod>> allSetters;
 
     // First, get all setters from the parent class, recursively.
@@ -246,10 +246,8 @@ public class OwnerFieldClass {
     for (JConstructor ctor : fieldType.getConstructors()) {
       if (ctor.getAnnotation(UiConstructor.class) != null) {
         if (uiConstructor != null) {
-          // TODO(rdamazio): proper logging
-          System.out.println(fieldType.getName()
+          logger.die(fieldType.getName()
               + " has more than one constructor annotated with @UiConstructor");
-          throw new UnableToCompleteException();
         }
         uiConstructor = ctor;
       }
@@ -257,9 +255,8 @@ public class OwnerFieldClass {
   }
 
   /**
-   * Checks whether the given method qualifies as a setter.
-   * This looks at the method qualifiers, name and return type, but not at the
-   * parameter types.
+   * Checks whether the given method qualifies as a setter. This looks at the
+   * method qualifiers, name and return type, but not at the parameter types.
    *
    * @param method the method to look at
    * @return whether it's a setter

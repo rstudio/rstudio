@@ -17,11 +17,13 @@
 #include "Plugin.h"
 #include "ScriptableInstance.h"
 #include "scoped_ptr/scoped_ptr.h"
+#include "AllowDialog.h"
 
 #ifdef _WINDOWS
 #include <windows.h>
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ulReasonForCall, LPVOID lpReserved) {
+  AllowDialog::setHInstance(hModule);
   switch (ulReasonForCall) {
     case DLL_PROCESS_ATTACH:
     case DLL_THREAD_ATTACH:
@@ -280,11 +282,11 @@ extern "C" {
     Debug::log(Debug::Info) << "NP_GetValue(var=" << variable << ")" << Debug::flush;
     switch (variable) {
       case NPPVpluginNameString:
-        *static_cast<const char **>(value) = "GWT Hosted-mode Plugin";
+        *static_cast<const char **>(value) = "GWT Development-Mode Plugin";
         break;
       case NPPVpluginDescriptionString:
         *static_cast<const char **>(value) = "Plugin to enable debugging of Google Web Toolkit "
-            "applications in hosted mode.";
+            "applications in development mode.";
         break;
       default:
         Debug::log(Debug::Info) << "NPP_GetValue(var=" << variable

@@ -281,24 +281,36 @@ public class MakeTopLevelHtmlForPerm {
     }
     String inputFileName = "roundedCorners.css";
     File inputFile = new File(classPath + RESOURCES_PATH + inputFileName);
+    if (!inputFile.exists()) {
+      inputFile = new File(classPath + inputFileName);
+    }
     File outputFile = getOutFile("roundedCorners.css");
     copyFileOrDirectory(inputFile, outputFile, classPath, RESOURCES_PATH
         + inputFileName, false);
 
     inputFileName = "classLevel.css";
     File inputFile2 = new File(classPath + RESOURCES_PATH + inputFileName);
+    if (!inputFile2.exists()) {
+      inputFile2 = new File(classPath + inputFileName);
+    }
     File outputFile2 = getOutFile("classLevel.css");
     copyFileOrDirectory(inputFile2, outputFile2, classPath, RESOURCES_PATH
         + inputFileName, false);
 
     inputFileName = "common.css";
     File inputFile3 = new File(classPath + RESOURCES_PATH + inputFileName);
+    if (!inputFile3.exists()) {
+      inputFile3 = new File(classPath + inputFileName);
+    }
     File outputFile3 = getOutFile("common.css");
     copyFileOrDirectory(inputFile3, outputFile3, classPath, RESOURCES_PATH
         + inputFileName, false);
 
     inputFileName = "images";
     File inputDir = new File(classPath + RESOURCES_PATH + "images");
+    if (!inputDir.exists()) {
+      inputDir = new File(classPath + "images");
+    }
     File outputDir = getOutFile("images");
     copyFileOrDirectory(inputDir, outputDir, classPath, inputFileName, true);
 
@@ -856,7 +868,12 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<body>");
     outFile.println("<div class='abs mainHeader'>");
     outFile.println("<h2>Story of Your Compile Dashboard</h2>");
-
+    String permutationInfo = settings.allPermsInfo.get(permutationId);
+    outFile.print("<h3>Permutation " + permutationId);
+    if (permutationInfo.length() > 0) {
+      outFile.println(" (" + permutationInfo + ")");
+    }
+    outFile.println("</h3>");
     outFile.println("<hr>");
     outFile.println("<center>");
     if (globalInformation.getSplitPointToLocation().size() > 1) {

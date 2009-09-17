@@ -490,6 +490,12 @@ public:
     return *this;
   }
 
+  // Convenience method for C++ code
+  NPVariantWrapper& operator=(int intval) {
+    NPVariantProxy::assignFrom(variant, intval);
+    return *this;
+  }
+
   void release() {
     NPVariantProxy::release(variant);
   }

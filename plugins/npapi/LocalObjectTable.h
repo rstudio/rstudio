@@ -18,7 +18,6 @@
 
 #include <vector>
 #include <algorithm>
-#include <map>
 
 #include "Debug.h"
 
@@ -30,9 +29,7 @@ private:
 
   int nextFree;
   std::vector<NPObject*> objects;
-  std::map<void*, int> objectIndex;
   bool dontFree;
-  static NPClass* wrappedObjectClass;
 
   bool isFree(int id) {
     // low bit is set for free pointers, object pointers can't be odd
@@ -45,15 +42,6 @@ private:
     nextFree = id;
   }
 
-  int findIndex(void* ptr) {
-    std::map<void*, int>::iterator it = objectIndex.find(ptr);
-    if (it == objectIndex.end()) {
-      return -1;
-    }
-    return it->second;
-  }
-
-  static void* getIdentityFrom(NPObject* obj);
 public:
   LocalObjectTable() {
     nextFree = -1;
@@ -63,18 +51,11 @@ public:
 
   virtual ~LocalObjectTable();
 
-  static void setWrappedObjectClass(NPClass* clazz) {
-    wrappedObjectClass = clazz;
-  }
-
+  /**
+   * Add a new object, which must not be in the table, and return a new id for it.
+   */
   int add(NPObject* obj) {
-    void* objId = getIdentityFrom(obj);
-    int id = findIndex(objId);
-    if (id >= 0) {
-      Debug::log(Debug::Spam) << "LocalObjectTable::add(obj=" << obj
-          << "): returning old id=" << id << Debug::flush;
-      return id;
-    }
+    int id;
     if (nextFree >= 0) {
       id = nextFree;
       nextFree = int(reinterpret_cast<long long>(objects[nextFree])) >> 1;
@@ -83,17 +64,11 @@ public:
       id = static_cast<int>(objects.size());
       objects.push_back(obj);
     }
-    objectIndex[objId] = id;
     Debug::log(Debug::Spam) << "LocalObjectTable::add(obj=" << obj << "): id=" << id
         << Debug::flush;
     // keep track that we hold a reference in the table
     NPN_RetainObject(obj);
     return id;
-  }
-
-  int find(NPObject* obj) {
-    void* objId = getIdentityFrom(obj);
-    return findIndex(objId);
   }
 
   void free(int id) {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -47,7 +47,7 @@ public class XMLElement {
   public interface Interpreter<T> {
     /**
      * Given an XMLElement, return its filtered value.
-     * 
+     *
      * @throws UnableToCompleteException on error
      */
     T interpretElement(XMLElement elem) throws UnableToCompleteException;
@@ -115,7 +115,7 @@ public class XMLElement {
   /**
    * Consumes the given attribute and returns its trimmed value, or null if it
    * was unset. The returned string is not escaped.
-   * 
+   *
    * @param name the attribute's full name (including prefix)
    * @return the attribute's value, or null
    */
@@ -128,7 +128,7 @@ public class XMLElement {
   /**
    * Consumes the given attribute and returns its trimmed value, or the given
    * default value if it was unset. The returned string is not escaped.
-   * 
+   *
    * @param name the attribute's full name (including prefix)
    * @param defaultValue the value to return if the attribute was unset
    * @return the attribute's value, or defaultValue
@@ -143,7 +143,7 @@ public class XMLElement {
 
   /**
    * Consumes the given attribute as a boolean value.
-   * 
+   *
    * @throws UnableToCompleteException
    */
   public boolean consumeBooleanAttribute(String attr)
@@ -177,9 +177,9 @@ public class XMLElement {
    * Consumes and returns all child elements selected by the interpreter. Note
    * that text nodes are not elements, and so are not presented for
    * interpretation, and are not consumed.
-   * 
+   *
    * @param interpreter Should return true for any child that should be consumed
-   *          and returned.
+   *          and returned by the consumeChildElements call
    * @throws UnableToCompleteException
    */
   public Collection<XMLElement> consumeChildElements(
@@ -217,7 +217,7 @@ public class XMLElement {
    * The odds are you want to use
    * {@link com.google.gwt.templates.parsers.HtmlInterpreter} for an HTML value,
    * or {@link com.google.gwt.templates.parsers.TextInterpreter} for text.
-   * 
+   *
    * @param interpreter Called for each element, expected to return a string
    *          replacement for it, or null if it should be left as is
    */
@@ -250,7 +250,7 @@ public class XMLElement {
    * This call requires an interpreter to make sense of any special children.
    * The odds are you want to use
    * {@link com.google.gwt.templates.parsers.TextInterpreter}
-   * 
+   *
    * @throws UnableToCompleteException If any elements present are not consumed
    *           by the interpreter
    */
@@ -292,7 +292,7 @@ public class XMLElement {
    */
   public String consumeOpeningTag() {
     String rtn = getOpeningTag();
-  
+
     for (int i = getAttributeCount() - 1; i >= 0; i--) {
       getAttribute(i).consumeValue();
     }
@@ -306,7 +306,7 @@ public class XMLElement {
       throws UnableToCompleteException {
     String value = consumeAttribute(name);
     if ("".equals(value)) {
-      writer.die("In %s, missing required attribute name\"%s\"", this);
+      writer.die("In %s, missing required attribute name\"%s\"", this, name);
     }
     return value;
   }
@@ -319,8 +319,9 @@ public class XMLElement {
     XMLElement ret = null;
     for (XMLElement child : consumeChildElements()) {
       if (ret != null) {
-        throw new RuntimeException(getLocalName()
-            + " may only contain a single child element.");
+        throw new RuntimeException(String.format(
+            "%s may only contain a single child element, but found"
+                + "%s and %s.", getLocalName(), ret, child));
       }
 
       ret = child;

@@ -46,7 +46,8 @@ public class CompileTaskRunner {
     if (options.isUseGuiLogger()) {
       // Initialize a tree logger window.
       DetachedTreeLoggerWindow loggerWindow = DetachedTreeLoggerWindow.getInstance(
-          "Build Output for " + options.getModuleNames(), 800, 600, true);
+          "Build Output for " + options.getModuleNames(), 800, 600, true,
+          options.getLogLevel());
 
       // Eager AWT initialization for OS X to ensure safe coexistence with SWT.
       BootStrapPlatform.initGui();

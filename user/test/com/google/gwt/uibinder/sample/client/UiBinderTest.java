@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.DockPanel;
@@ -235,6 +236,19 @@ public class UiBinderTest extends GWTTestCase {
         domUi.root.getClassName());
   }
 
+  interface Bundle extends ClientBundle {
+    @Source("WidgetBasedUi.css")
+    public WidgetBasedUi.Style style();
+  }
+
+  public void testNoOverrideInheritedSharedCssClasses() {
+    Bundle bundle = GWT.create(Bundle.class);
+    WidgetBasedUi ui = GWT.create(WidgetBasedUi.class);
+    String publicStyle = bundle.style().menuBar();
+    String privateStyle = ui.myStyle.menuBar();
+    assertEquals(publicStyle, privateStyle);
+  }
+
   public void suppressedForIEfail_testNonXmlEntities() {
     // This fragment includes both translated and non-translated strings
     ParagraphElement mainParagraph = widgetUi.main;
@@ -249,6 +263,22 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals(DockPanel.NORTH, root.getWidgetDirection(north));
     assertEquals(HTML.class, north.getClass());
     assertTrue(((HTML) north).getHTML().contains("Title area"));
+  }
+
+  public void testPrivateStyleFromExternalCss() {
+    ParagraphElement p = widgetUi.privateStyleParagraph;
+    assertTrue("Some kind of class should be set", p.getClassName().length() > 0);
+  }
+
+  public void testPrivateStylesFromInlineCss() {
+    ParagraphElement p = widgetUi.reallyPrivateStyleParagraph;
+    assertTrue("Some kind of class should be set",
+        p.getClassName().length() > 0);
+    assertFalse("Should be a different style than privateStyleParagraph's",
+        widgetUi.privateStyleParagraph.getClassName().equals(p.getClassName()));
+
+    assertTrue("Some kind of class should be set",
+        widgetUi.totallyPrivateStyleSpan.getClassName().length() > 0);
   }
 
   @DoNotRunWith(Platform.Htmlunit)

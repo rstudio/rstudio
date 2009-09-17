@@ -15,7 +15,6 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 
@@ -73,9 +72,7 @@ public interface FieldWriter {
 
   /**
    * Write the field delcaration.
-   *
-   * @param logger
    */
-  void write(IndentedWriter w, TreeLogger logger)
+  void write(IndentedWriter w)
       throws UnableToCompleteException;
 }

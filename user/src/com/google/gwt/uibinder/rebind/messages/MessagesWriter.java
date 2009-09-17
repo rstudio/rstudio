@@ -15,9 +15,9 @@
  */
 package com.google.gwt.uibinder.rebind.messages;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.uibinder.rebind.IndentedWriter;
+import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -44,7 +44,7 @@ public class MessagesWriter {
   private final String messagesNamespaceURI;
   private final String packageName;
   private final String messagesClassName;
-  private final TreeLogger logger;
+  private final MortalLogger logger;
   private final List<MessageWriter> messages = new ArrayList<MessageWriter>();
   private final String generatedFrom;
 
@@ -56,7 +56,7 @@ public class MessagesWriter {
   private Map<XMLElement, Collection<AttributeMessage>> elemToAttributeMessages =
       new HashMap<XMLElement, Collection<AttributeMessage>>();
 
-  public MessagesWriter(String nameSpaceUri, TreeLogger logger, String generatedFrom,
+  public MessagesWriter(String nameSpaceUri, MortalLogger mortalLogger, String generatedFrom,
       String packageName, String uiBinderImplClassName) {
     this.messagesNamespaceURI = nameSpaceUri;
     this.generatedFrom = generatedFrom;
@@ -65,7 +65,7 @@ public class MessagesWriter {
     // Localizable classes cannot have underscores in their names.
     this.messagesClassName = uiBinderImplClassName.replaceAll("_", "") + "GenMessages";
 
-    this.logger = logger;
+    this.logger = mortalLogger;
   }
 
   /**
@@ -108,10 +108,10 @@ public class MessagesWriter {
     for (XMLElement child : messageChildren) {
       String attributeName = consumeMessageElementAttribute(NAME, child);
       if (attributeName.length() == 0) {
-        die(String.format("Missing name attribute in %s", child));
+        logger.die("Missing name attribute in %s", child);
       }
       if (!elem.hasAttribute(attributeName)) {
-        die(String.format("%s has no attribute matching %s", elem, child));
+        logger.die("%s has no attribute matching %s", elem, child);
       }
 
       String defaultMessage =
@@ -183,7 +183,7 @@ public class MessagesWriter {
 
   /**
    * Confirm existence of an m:blah attribute on a non-message element, e.g.
-   * {@code <span m:ph="fnord"/>}
+   * {@code <span ui:ph="fnord"/>}
    */
   public boolean hasMessageAttribute(String attName, XMLElement elem) {
     String fullAttName = getMessagesPrefix() + ":" + attName;
@@ -268,9 +268,9 @@ public class MessagesWriter {
     String fullAttName = getMessagesPrefix() + ":" + attName;
     if (elem.hasAttribute(fullAttName)) {
       String value = elem.consumeAttribute(fullAttName);
-      logger.log(TreeLogger.WARN, String.format(
+      logger.warn(
           "In %s, deprecated prefix \"%s:\" on \"%s\". Use \"%s\" instead.",
-          elem, getMessagesPrefix(), fullAttName, attName));
+          elem, getMessagesPrefix(), fullAttName, attName);
       return value;
     }
 
@@ -281,7 +281,7 @@ public class MessagesWriter {
       XMLElement elem) throws UnableToCompleteException {
     String value = consumeMessageElementAttribute(attName, elem);
     if ("".equals(value)) {
-      die("%s does not have required attribute %s", elem, attName);
+      logger.die("%s does not have required attribute %s", elem, attName);
     }
     return value;
   }
@@ -302,25 +302,6 @@ public class MessagesWriter {
     return declareMessage(newMessage);
   }
 
-  private void die(String message) throws UnableToCompleteException {
-    // TODO(rjrjr) copied from TemplateWriter. Move to common superclass or
-    // something
-    logger.log(TreeLogger.ERROR, message);
-    throw new UnableToCompleteException();
-  }
-
-  /**
-   * Post an error message and halt processing. This method always throws an
-   * {@link UnableToCompleteException}
-   */
-  private void die(String message, Object... params)
-      throws UnableToCompleteException {
-    // TODO(rjrjr) copied from TemplateWriter. Move to common superclass or
-    // something
-    logger.log(TreeLogger.ERROR, String.format(message, params));
-    throw new UnableToCompleteException();
-  }
-
   private void genInterfaceAnnotations(IndentedWriter pw) {
     pw.write("@GeneratedFrom(\"%s\")", generatedFrom);
     if (defaultLocale.length() > 0) {
@@ -339,7 +320,7 @@ public class MessagesWriter {
           throws UnableToCompleteException {
         if (isAttributeMessage(child)) {
           if (child.hasChildNodes()) {
-            die(String.format("Illegal body for %s in %s.", child, elem));
+            logger.die("Illegal body for %s in %s.", child, elem);
           }
           return true;
         }

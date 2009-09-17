@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.rebind.MortalLogger;
 
 /**
  * Descriptor for a field of the owner class.
@@ -38,29 +39,26 @@ public class OwnerField {
    * Constructor.
    *
    * @param field the field of the owner class
+   * @param logger
    */
-  public OwnerField(JField field) throws UnableToCompleteException {
+  public OwnerField(JField field, MortalLogger logger) throws UnableToCompleteException {
     this.name = field.getName();
 
     // Get the field type and ensure it's a class or interface
     JClassType fieldClassType = field.getType().isClassOrInterface();
 
     if (fieldClassType == null) {
-      // TODO(rdamazio): proper logging
-      System.out.println("Type for field " + name + " is not a class: "
+      logger.die("Type for field " + name + " is not a class: "
           + field.getType().getSimpleSourceName());
-      throw new UnableToCompleteException();
     }
 
-    this.fieldType = OwnerFieldClass.getFieldClass(fieldClassType);
+    this.fieldType = OwnerFieldClass.getFieldClass(fieldClassType, logger);
 
     // Get the UiField annotation and process it
     UiField annotation = field.getAnnotation(UiField.class);
 
     if (annotation == null) {
-      // TODO(rdamazio): proper logging
-      System.out.println("Field " + name + " is not annotated with @UiField");
-      throw new UnableToCompleteException();
+      logger.die("Field " + name + " is not annotated with @UiField");
     }
 
     isProvided = annotation.provided();

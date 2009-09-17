@@ -27,11 +27,8 @@ class FieldWriterOfGeneratedType extends AbstractFieldWriter implements
   private final String typePackage;
   private final String typeName;
 
-  /**
-   * @param name
-   */
-  public FieldWriterOfGeneratedType(String typePackage, String typeName, String name) {
-    super(name);
+  public FieldWriterOfGeneratedType(String typePackage, String typeName, String name, MortalLogger logger) {
+    super(name, logger);
     if (typeName == null) {
       throw new RuntimeException("typeName must not be null");
     }

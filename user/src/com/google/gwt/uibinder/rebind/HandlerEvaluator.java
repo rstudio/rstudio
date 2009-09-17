@@ -15,7 +15,6 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
@@ -33,7 +32,9 @@ import com.google.gwt.uibinder.rebind.model.OwnerClass;
  * annotated with {@link com.google.gwt.uibinder.client.UiHandler} so that the
  * user doesn't need to worry about writing code to implement these bindings.
  *
- * <p>For instance, the class defined below:
+ * <p>
+ * For instance, the class defined below:
+ *
  * <pre>
  *   public class MyClass {
  *     @UiField Label label;
@@ -46,6 +47,7 @@ import com.google.gwt.uibinder.rebind.model.OwnerClass;
  * </pre>
  *
  * will generate a piece of code like:
+ *
  * <pre>
  *    ClickHandler handler0 = new ClickHandler() {
  *      @Override
@@ -63,12 +65,10 @@ import com.google.gwt.uibinder.rebind.model.OwnerClass;
  */
 class HandlerEvaluator {
 
-  private static final String HANDLER_BASE_NAME =
-    "handlerMethodWithNameVeryUnlikelyToCollideWithUserFieldNames";
+  private static final String HANDLER_BASE_NAME = "handlerMethodWithNameVeryUnlikelyToCollideWithUserFieldNames";
   /*
    * TODO(rjrjr) The correct fix is to put the handlers in a locally defined
-   * class, making the generated code look like this:
-   *
+   * class, making the generated code look like this
    *
    * http://docs.google.com/Doc?docid=0AQfnKgX9tAdgZGZ2cTM5YjdfMmQ4OTk0eGhz&hl=en
    *
@@ -77,7 +77,7 @@ class HandlerEvaluator {
    */
   private int varCounter = 0;
 
-  private final TreeLogger logger;
+  private final MortalLogger logger;
 
   private final JClassType handlerRegistrationJClass;
   private final JClassType eventHandlerJClass;
@@ -90,23 +90,12 @@ class HandlerEvaluator {
    * @param logger the logger for warnings and errors
    * @param oracle the type oracle
    */
-  HandlerEvaluator(OwnerClass ownerClass, TreeLogger logger, TypeOracle oracle) {
+  HandlerEvaluator(OwnerClass ownerClass, MortalLogger logger, TypeOracle oracle) {
     this.ownerClass = ownerClass;
     this.logger = logger;
 
     handlerRegistrationJClass = oracle.findType(HandlerRegistration.class.getName());
     eventHandlerJClass = oracle.findType(EventHandler.class.getName());
-  }
-
-  /**
-   * Post an error message and throws an {@link UnableToCompleteException}.
-   *
-   * @param message the error message
-   * @param params the format params
-   */
-  public void die(String message, Object... params) throws UnableToCompleteException {
-    logger.log(TreeLogger.ERROR, String.format(message, params));
-    throw new UnableToCompleteException();
   }
 
   /**
@@ -125,24 +114,27 @@ class HandlerEvaluator {
       // Evaluate the method.
       String boundMethod = method.getName();
       if (method.isPrivate()) {
-        die("Method '%s' cannot be private.", boundMethod);
+        logger.die("Method '%s' cannot be private.", boundMethod);
       }
 
       // Retrieves both event and handler types.
       JParameter[] parameters = method.getParameters();
       if (parameters.length != 1) {
-        die("Method '%s' must have a single event parameter defined.", boundMethod);
+        logger.die("Method '%s' must have a single event parameter defined.",
+            boundMethod);
       }
       JClassType eventType = parameters[0].getType().isClass();
 
       JClassType handlerType = getHandlerForEvent(eventType);
       if (handlerType == null) {
-        die("Parameter '%s' is not an event (subclass of GwtEvent).", eventType.getName());
+        logger.die("Parameter '%s' is not an event (subclass of GwtEvent).",
+            eventType.getName());
       }
 
       // Cool to add the handler in the output.
       String handlerVarName = HANDLER_BASE_NAME + (++varCounter);
-      writeHandler(writer, uiOwner, handlerVarName, handlerType, eventType, boundMethod);
+      writeHandler(writer, uiOwner, handlerVarName, handlerType, eventType,
+          boundMethod);
 
       // Adds the handler created above.
       UiHandler annotation = method.getAnnotation(UiHandler.class);
@@ -150,33 +142,24 @@ class HandlerEvaluator {
         // Is the field object valid?
         FieldWriter fieldWriter = fieldManager.lookup(objectName);
         if (fieldWriter == null) {
-          die("Method '%s' can not be bound. You probably missed ui:field='%s' "
-              + "in the template.", boundMethod, objectName);
+          logger.die(
+              ("Method '%s' can not be bound. You probably missed ui:field='%s' "
+                  + "in the template."), boundMethod, objectName);
         }
 
         // Retrieves the "add handler" method in the object.
         JMethod addHandlerMethodType = getAddHandlerMethodForObject(
             fieldWriter.getType(), handlerType);
         if (addHandlerMethodType == null) {
-          die("Field '%s' does not have an 'add%s' method associated.",
+          logger.die("Field '%s' does not have an 'add%s' method associated.",
               objectName, handlerType.getName());
         }
 
         // Cool to tie the handler into the object.
-        writeAddHandler(writer, handlerVarName,
-            addHandlerMethodType.getName(), objectName);
+        writeAddHandler(writer, handlerVarName, addHandlerMethodType.getName(),
+            objectName);
       }
     }
-  }
-
-  /**
-   * Post a warning message.
-   *
-   * @param message the error message
-   * @param params the format params
-   */
-  public void warn(String message, Object... params) {
-    logger.log(TreeLogger.WARN, String.format(message, params));
   }
 
   /**
@@ -189,30 +172,32 @@ class HandlerEvaluator {
    * @param eventType the event associated with the handler
    * @param boundMethod the method bound in the handler
    */
-  protected void writeHandler(IndentedWriter writer, String uiOwner, String handlerVarName,
-      JClassType handlerType, JClassType eventType, String boundMethod)
-      throws UnableToCompleteException {
+  protected void writeHandler(IndentedWriter writer, String uiOwner,
+      String handlerVarName, JClassType handlerType, JClassType eventType,
+      String boundMethod) throws UnableToCompleteException {
 
     // Retrieves the single method (usually 'onSomething') related to all
     // handlers. Ex: onClick in ClickHandler, onBlur in BlurHandler ...
     JMethod[] methods = handlerType.getMethods();
     if (methods.length != 1) {
-      die("'%s' has more than one method defined.", handlerType.getName());
+      logger.die("'%s' has more than one method defined.",
+          handlerType.getName());
     }
 
     // Checks if the method has an Event as parameter. Ex: ClickEvent in
     // onClick, BlurEvent in onBlur ...
     JParameter[] parameters = methods[0].getParameters();
     if (parameters.length != 1 || parameters[0].getType() != eventType) {
-      die("Method '%s' needs '%s' as parameter", methods[0].getName(), eventType.getName());
+      logger.die("Method '%s' needs '%s' as parameter", methods[0].getName(),
+          eventType.getName());
     }
 
     writer.newline();
     writer.write("final %1$s %2$s = new %1$s() {",
         handlerType.getParameterizedQualifiedSourceName(), handlerVarName);
     writer.indent();
-    writer.write("public void %1$s(%2$s event) {",
-        methods[0].getName(), eventType.getParameterizedQualifiedSourceName());
+    writer.write("public void %1$s(%2$s event) {", methods[0].getName(),
+        eventType.getParameterizedQualifiedSourceName());
     writer.indent();
     writer.write("%1$s.%2$s(event);", uiOwner, boundMethod);
     writer.outdent();
@@ -226,14 +211,14 @@ class HandlerEvaluator {
    *
    * @param writer the writer used to output the results
    * @param handlerVarName the name of the handler variable
-   * @param addHandlerMethodName the "add handler" method name associated
-   *        with the object
+   * @param addHandlerMethodName the "add handler" method name associated with
+   *          the object
    * @param objectName the name of the object we want to tie the handler
    */
   void writeAddHandler(IndentedWriter writer, String handlerVarName,
       String addHandlerMethodName, String objectName) {
-    writer.write("%1$s.%2$s(%3$s);", objectName,
-        addHandlerMethodName, handlerVarName);
+    writer.write("%1$s.%2$s(%3$s);", objectName, addHandlerMethodName,
+        handlerVarName);
   }
 
   /**
@@ -242,8 +227,10 @@ class HandlerEvaluator {
    * {@link com.google.gwt.event.shared.HandlerRegistration} and receives a
    * single input parameter of the same type of handlerType.
    *
-   * <p>Output an error in case more than one method match the conditions
-   * described above.</p>
+   * <p>
+   * Output an error in case more than one method match the conditions described
+   * above.
+   * </p>
    *
    * <pre>
    *   <b>Examples:</b>
@@ -256,11 +243,11 @@ class HandlerEvaluator {
    * @param objectType the object type we want to check
    * @param handlerType the handler type we want to check in the object
    *
-   * @return the method that adds handlerType into objectType, or <b>null</b>
-   *         if no method was found
+   * @return the method that adds handlerType into objectType, or <b>null</b> if
+   *         no method was found
    */
   private JMethod getAddHandlerMethodForObject(JClassType objectType,
-        JClassType handlerType) throws UnableToCompleteException {
+      JClassType handlerType) throws UnableToCompleteException {
     JMethod handlerMethod = null;
     for (JMethod method : objectType.getOverridableMethods()) {
 
@@ -269,12 +256,14 @@ class HandlerEvaluator {
 
         // Condition 2: single parameter of the same type of handlerType?
         JParameter[] parameters = method.getParameters();
-        if ((parameters.length == 1) && handlerType.equals(parameters[0].getType())) {
+        if ((parameters.length == 1)
+            && handlerType.equals(parameters[0].getType())) {
 
           // Condition 3: does more than one method match the condition?
           if (handlerMethod != null) {
-            die("This handler cannot be generated. Methods '%s' and '%s' are "
-                + "ambiguous. Which one to pick?", method, handlerMethod);
+            logger.die(
+                ("This handler cannot be generated. Methods '%s' and '%s' are "
+                    + "ambiguous. Which one to pick?"), method, handlerMethod);
           }
 
           handlerMethod = method;
@@ -295,11 +284,11 @@ class HandlerEvaluator {
     // All handlers event must have an overrided method getAssociatedType().
     // We take advantage of this information to get the associated handler.
     // Ex:
-    //  com.google.gwt.event.dom.client.ClickEvent
-    //    ---> com.google.gwt.event.dom.client.ClickHandler
+    // com.google.gwt.event.dom.client.ClickEvent
+    // ---> com.google.gwt.event.dom.client.ClickHandler
     //
-    //  com.google.gwt.event.dom.client.BlurEvent
-    //    ---> com.google.gwt.event.dom.client.BlurHandler
+    // com.google.gwt.event.dom.client.BlurEvent
+    // ---> com.google.gwt.event.dom.client.BlurHandler
 
     if (eventType == null) {
       return null;
@@ -307,29 +296,34 @@ class HandlerEvaluator {
 
     JMethod method = eventType.findMethod("getAssociatedType", new JType[0]);
     if (method == null) {
-      warn("Method 'getAssociatedType()' could not be found in the event '%s'.",
+      logger.warn(
+          "Method 'getAssociatedType()' could not be found in the event '%s'.",
           eventType.getName());
       return null;
     }
 
     JType returnType = method.getReturnType();
     if (returnType == null) {
-      warn("The method 'getAssociatedType()' in the event '%s' returns void.",
+      logger.warn(
+          "The method 'getAssociatedType()' in the event '%s' returns void.",
           eventType.getName());
       return null;
     }
 
     JParameterizedType isParameterized = returnType.isParameterized();
     if (isParameterized == null) {
-      warn("The method 'getAssociatedType()' in '%s' does not return Type<? extends EventHandler>.",
-        eventType.getName());
+      logger.warn(
+          "The method 'getAssociatedType()' in '%s' does not return Type<? extends EventHandler>.",
+          eventType.getName());
       return null;
     }
 
     JClassType[] argTypes = isParameterized.getTypeArgs();
-    if ((argTypes.length != 1) && !argTypes[0].isAssignableTo(eventHandlerJClass)) {
-      warn("The method 'getAssociatedType()' in '%s' does not return Type<? extends EventHandler>.",
-        eventType.getName());
+    if ((argTypes.length != 1)
+        && !argTypes[0].isAssignableTo(eventHandlerJClass)) {
+      logger.warn(
+          "The method 'getAssociatedType()' in '%s' does not return Type<? extends EventHandler>.",
+          eventType.getName());
       return null;
     }
 

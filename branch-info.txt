@@ -6,3 +6,4 @@ svn copy -r6101 https://google-web-toolkit.googlecode.com/svn/trunk \
 
 Merged from trunk
 ================
+svn merge https://google-web-toolkit.googlecode.com/svn/trunk -r6101:6142

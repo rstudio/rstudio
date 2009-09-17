@@ -17,7 +17,7 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.OophmHostedModeBase.TabPanelCollection;
-import com.google.gwt.dev.shell.Icons;
+import com.google.gwt.dev.util.BrowserInfo;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -26,6 +26,7 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DateFormat;
@@ -226,40 +227,6 @@ public class ModuleTabPanel extends JPanel {
   }
 
   /**
-   * Holds information about the browser used in the UI.
-   */
-  private static class BrowserInfo {
-
-    private final ImageIcon icon;
-    private final String shortName;
-
-    /**
-     * Create a BrowserInfo instance.
-     * 
-     * @param icon
-     * @param shortName
-     */
-    public BrowserInfo(ImageIcon icon, String shortName) {
-      this.icon = icon;
-      this.shortName = shortName;
-    }
-
-    /**
-     * @return the icon used to identify this browser, or null if none.
-     */
-    public ImageIcon getIcon() {
-      return icon;
-    }
-
-    /**
-     * @return the short name used to identify this browser, or null if none.
-     */
-    public String getShortName() {
-      return shortName;
-    }
-  }
-
-  /**
    * Renderer used to show entries in the module dropdown box.
    */
   private static class SessionModuleRenderer extends BasicComboBoxRenderer {
@@ -384,7 +351,7 @@ public class ModuleTabPanel extends JPanel {
     cardLayout = new CardLayout();
     deckPanel.setLayout(cardLayout);
     add(deckPanel);
-    BrowserInfo browserInfo = getBrowserInfo(userAgent);
+    BrowserInfo browserInfo = BrowserInfo.getBrowserInfo(userAgent);
     
     // Construct the tab title and tooltip
     String tabTitle = url;
@@ -426,10 +393,11 @@ public class ModuleTabPanel extends JPanel {
 
   public synchronized ModulePanel addModuleSession(Type maxLevel,
       String moduleName,
-      String sessionKey) {
+      String sessionKey,
+      File logFile) {
     Session session = findOrCreateSession(sessionKey);
     
-    ModulePanel panel = new ModulePanel(maxLevel, moduleName, session);
+    ModulePanel panel = new ModulePanel(maxLevel, moduleName, session, logFile);
     return panel;
   }
 
@@ -477,32 +445,6 @@ public class ModuleTabPanel extends JPanel {
       addSession(session);
     }
     return session;
-  }
-
-  /**
-   * Choose an icon appropriate for this browser, or null if none.
-   * 
-   * @param userAgent User-Agent string from browser
-   * @return icon or null if none
-   */
-  private BrowserInfo getBrowserInfo(String userAgent) {
-    ImageIcon browserIcon = null;
-    String shortName = null;
-    String lcAgent = userAgent.toLowerCase();
-    if (lcAgent.contains("msie")) {
-      browserIcon = Icons.getIE24();
-      shortName = "IE";
-    } else if (lcAgent.contains("chrome")) {
-      browserIcon = Icons.getChrome24();
-      shortName = "Chrome";
-    } else if (lcAgent.contains("webkit") || lcAgent.contains("safari")) {
-      browserIcon = Icons.getSafari24();
-      shortName = "Safari";
-    } else if (lcAgent.contains("firefox")) {
-      browserIcon = Icons.getFirefox24();
-      shortName = "FF";
-    }
-    return new BrowserInfo(browserIcon, shortName);
   }
 
   private String getTabTitle(URL parsedUrl) {

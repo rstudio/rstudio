@@ -85,14 +85,14 @@ public abstract class AbstractTreeLogger extends TreeLogger {
   }
 
   public int indexWithinMyParent;
+  
+  protected TreeLogger.Type logLevel = TreeLogger.ALL;
 
-  private TreeLogger.Type logLevel = TreeLogger.ALL;
+  protected AbstractTreeLogger parent;
 
   private int nextChildIndex;
 
   private final Object nextChildIndexLock = new Object();
-
-  private AbstractTreeLogger parent;
 
   private UncommittedBranchData uncommitted;
 
@@ -226,6 +226,38 @@ public abstract class AbstractTreeLogger extends TreeLogger {
     return getLoggerId();
   }
 
+  protected int allocateNextChildIndex() {
+    synchronized (nextChildIndexLock) {
+      // postincrement because we want indices to start at 0
+      return nextChildIndex++;
+    }
+  }
+
+  /**
+   * Commits the branch after ensuring that the parent logger (if there is one)
+   * has been committed first.
+   */
+  protected synchronized void commitMyBranchEntryInMyParentLogger() {
+    // (Only the root logger doesn't have a parent.)
+    //
+    if (parent != null) {
+      if (uncommitted != null) {
+        // Commit the parent first.
+        //
+        parent.commitMyBranchEntryInMyParentLogger();
+  
+        // Let the subclass do its thing to commit this branch.
+        //
+        parent.doCommitBranch(this, uncommitted.type, uncommitted.message,
+            uncommitted.caught, uncommitted.helpInfo);
+  
+        // Release the uncommitted state.
+        //
+        uncommitted = null;
+      }
+    }
+  }
+
   /**
    * Derived classes should override this method to return a branched logger.
    */
@@ -267,13 +299,6 @@ public abstract class AbstractTreeLogger extends TreeLogger {
   protected abstract void doLog(int indexOfLogEntryWithinParentLogger,
       TreeLogger.Type type, String msg, Throwable caught, HelpInfo helpInfo);
 
-  private int allocateNextChildIndex() {
-    synchronized (nextChildIndexLock) {
-      // postincrement because we want indices to start at 0
-      return nextChildIndex++;
-    }
-  }
-
   /**
    * Scans <code>t</code> and its causes for {@link OutOfMemoryError}.
    * 
@@ -291,31 +316,6 @@ public abstract class AbstractTreeLogger extends TreeLogger {
     }
 
     return false;
-  }
-
-  /**
-   * Commits the branch after ensuring that the parent logger (if there is one)
-   * has been committed first.
-   */
-  private synchronized void commitMyBranchEntryInMyParentLogger() {
-    // (Only the root logger doesn't have a parent.)
-    //
-    if (parent != null) {
-      if (uncommitted != null) {
-        // Commit the parent first.
-        //
-        parent.commitMyBranchEntryInMyParentLogger();
-
-        // Let the subclass do its thing to commit this branch.
-        //
-        parent.doCommitBranch(this, uncommitted.type, uncommitted.message,
-            uncommitted.caught, uncommitted.helpInfo);
-
-        // Release the uncommitted state.
-        //
-        uncommitted = null;
-      }
-    }
   }
 
   private String getLoggerId() {

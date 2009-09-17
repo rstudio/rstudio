@@ -124,7 +124,7 @@ public class HTMLPanelTest extends GWTTestCase {
    */
   public void testCustomRootTagAsTable() {
     HTMLPanel hp = new HTMLPanel("table",
-        "<tr><td>Hello <span id='labelHere'></span></td></tr></table>");
+        "<tr><td>Hello <span id='labelHere'></span></td></tr>");
     InlineLabel label = new InlineLabel("World");
     hp.addAndReplaceElement(label, "labelHere");
 

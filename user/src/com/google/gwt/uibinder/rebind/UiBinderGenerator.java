@@ -24,22 +24,9 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
-import com.google.gwt.uibinder.rebind.model.ImplicitBundle;
+import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
-import java.net.URL;
-import java.util.Enumeration;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Generator for implementations of
@@ -49,77 +36,12 @@ public class UiBinderGenerator extends Generator {
 
   private static final String TEMPLATE_SUFFIX = ".ui.xml";
 
-  private static void commit(TreeLogger logger, GeneratorContext genCtx,
-      String packageName, PrintWriter pw, UiBinderWriter uiWriter) {
-    uiWriter.write(pw);
-    genCtx.commit(logger, pw);
-
-    MessagesWriter messages = uiWriter.getMessages();
-    if (messages.hasMessages()) {
-      PrintWriter messagesPrintWriter = genCtx.tryCreate(logger, packageName,
-          messages.getMessagesClassName());
-      if (messagesPrintWriter == null) {
-        throw new RuntimeException("Tried to gen messages twice.");
-      }
-
-      messages.write(messagesPrintWriter);
-      genCtx.commit(logger, messagesPrintWriter);
-    }
-
-    ImplicitBundle bundleClass = uiWriter.getBundleClass();
-    PrintWriter bundlePrintWriter = genCtx.tryCreate(logger, packageName,
-        bundleClass.getClassName());
-    if (bundlePrintWriter == null) {
-      throw new RuntimeException("Tried to gen bundle twice.");
-    }
-
-    new BundleWriter(bundleClass, bundlePrintWriter, genCtx.getTypeOracle()).write();
-    genCtx.commit(logger, bundlePrintWriter);
-  }
-
-  @Override
-  public String generate(TreeLogger logger, GeneratorContext genCtx,
-      String fqInterfaceName) throws UnableToCompleteException {
-    TypeOracle oracle = genCtx.getTypeOracle();
-    JClassType interfaceType;
-    try {
-      interfaceType = oracle.getType(fqInterfaceName);
-    } catch (NotFoundException e) {
-      throw new RuntimeException(e);
-    }
-
-    String implName = interfaceType.getName();
-    implName = implName.replace('.', '_') + "Impl";
-
-    String packageName = interfaceType.getPackage().getName();
-    PrintWriter printWriter = genCtx.tryCreate(logger, packageName, implName);
-
-    if (printWriter != null) {
-      String templateName = deduceTemplateFile(logger, interfaceType);
-
-      Document document;
-      try {
-        document = parseXmlResource(logger, templateName);
-      } catch (SAXParseException e) {
-        logger.log(TreeLogger.ERROR, "Error parsing XML (line "
-            + e.getLineNumber() + "): " + e.getMessage(), e);
-        throw new UnableToCompleteException();
-      }
-
-      UiBinderWriter uiBinderWriter = new UiBinderWriter(interfaceType,
-          implName, templateName, oracle, logger);
-      uiBinderWriter.parseDocument(document);
-      commit(logger, genCtx, packageName, printWriter, uiBinderWriter);
-    }
-    return packageName + "." + implName;
-  }
-
   /**
    * Given a UiBinder interface, return the path to its ui.xml file, suitable
    * for any classloader to find it as a resource.
    */
-  private String deduceTemplateFile(TreeLogger logger, JClassType interfaceType)
-      throws UnableToCompleteException {
+  private static String deduceTemplateFile(MortalLogger logger,
+      JClassType interfaceType) throws UnableToCompleteException {
     String templateName = null;
     UiTemplate annotation = interfaceType.getAnnotation(UiTemplate.class);
     if (annotation == null) {
@@ -132,9 +54,8 @@ public class UiBinderGenerator extends Generator {
     } else {
       templateName = annotation.value();
       if (!templateName.endsWith(TEMPLATE_SUFFIX)) {
-        logger.log(TreeLogger.ERROR, "Template file name must end with "
+        logger.die("Template file name must end with "
             + TEMPLATE_SUFFIX);
-        throw new UnableToCompleteException();
       }
 
       /*
@@ -153,48 +74,54 @@ public class UiBinderGenerator extends Generator {
     return templateName;
   }
 
-  private Document parseXmlResource(TreeLogger logger, final String resourcePath)
-      throws SAXParseException, UnableToCompleteException {
-    // Get the document builder. We need namespaces, and automatic expanding
-    // of entity references (the latter of which makes life somewhat easier
-    // for XMLElement).
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    factory.setNamespaceAware(true);
-    factory.setExpandEntityReferences(true);
-    DocumentBuilder builder;
-    try {
-      builder = factory.newDocumentBuilder();
-    } catch (ParserConfigurationException e) {
-      throw new RuntimeException(e);
-    }
-
-    try {
-      ClassLoader classLoader = UiBinderGenerator.class.getClassLoader();
-      Enumeration<URL> urls = classLoader.getResources(resourcePath);
-      if (!urls.hasMoreElements()) {
-        logger.log(TreeLogger.ERROR, "Unable to find resource: " + resourcePath);
-        throw new UnableToCompleteException();
-      }
-      URL url = urls.nextElement();
-
-      InputStream stream = url.openStream();
-      InputSource input = new InputSource(stream);
-      input.setSystemId(url.toExternalForm());
-
-      builder.setEntityResolver(new GwtResourceEntityResolver());
-
-      return builder.parse(input);
-    } catch (SAXParseException e) {
-      // Let SAXParseExceptions through.
-      throw e;
-    } catch (SAXException e) {
-      throw new RuntimeException(e);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  private static String slashify(String s) {
+    return s.replace(".", "/");
   }
 
-  private String slashify(String s) {
-    return s.replace(".", "/");
+  @Override
+  public String generate(TreeLogger logger, GeneratorContext genCtx,
+      String fqInterfaceName) throws UnableToCompleteException {
+    TypeOracle oracle = genCtx.getTypeOracle();
+    JClassType interfaceType;
+    try {
+      interfaceType = oracle.getType(fqInterfaceName);
+    } catch (NotFoundException e) {
+      throw new RuntimeException(e);
+    }
+
+    String implName = interfaceType.getName().replace('.', '_') + "Impl";
+    String packageName = interfaceType.getPackage().getName();
+    PrintWriterManager writers = new PrintWriterManager(genCtx, logger,
+        packageName);
+    PrintWriter printWriter = writers.tryToMakePrintWriterFor(implName);
+
+    if (printWriter != null) {
+      generateOnce(interfaceType, implName, packageName, printWriter, logger,
+          oracle, writers);
+    }
+    return packageName + "." + implName;
+  }
+
+  private void generateOnce(JClassType interfaceType, String implName,
+      String packageName, PrintWriter binderPrintWrier, TreeLogger treeLogger,
+      TypeOracle oracle, PrintWriterManager writerManager)
+      throws UnableToCompleteException {
+
+    MortalLogger logger = new MortalLogger(treeLogger);
+    String templatePath = deduceTemplateFile(logger, interfaceType);
+
+    UiBinderWriter uiBinderWriter = new UiBinderWriter(interfaceType, implName,
+        templatePath, oracle, logger);
+    uiBinderWriter.parseDocument(binderPrintWrier);
+
+    MessagesWriter messages = uiBinderWriter.getMessages();
+    if (messages.hasMessages()) {
+      messages.write(writerManager.makePrintWriterFor(messages.getMessagesClassName()));
+    }
+
+    ImplicitClientBundle bundleClass = uiBinderWriter.getBundleClass();
+    new BundleWriter(bundleClass, writerManager, oracle, writerManager).write();
+
+    writerManager.commit();
   }
 }
