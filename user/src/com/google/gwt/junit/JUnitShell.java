@@ -427,7 +427,7 @@ public class JUnitShell extends GWTShell {
    * begin running the test. "Contacted" does not necessarily mean "the test has
    * begun," e.g. for linker errors stopping the test initialization.
    */
-  private static final int TEST_BEGIN_TIMEOUT_MILLIS = 6000000;
+  private static final int TEST_BEGIN_TIMEOUT_MILLIS = 60000;
 
   /**
    * The amount of time to wait for all clients to complete a single test
@@ -617,7 +617,6 @@ public class JUnitShell extends GWTShell {
    */
   private JUnitShell() {
     setRunTomcat(true);
-    setHeadless(false);
     setHeadless(GraphicsEnvironment.isHeadless());
 
     // Legacy: -Dgwt.hybrid runs web mode
@@ -647,8 +646,8 @@ public class JUnitShell extends GWTShell {
   protected void initializeLogger() {
     if (isHeadless()) {
       consoleLogger = new PrintWriterTreeLogger();
-      // TODO (amitmanjhi): GwtShell overlay fix.
-      consoleLogger.setMaxDetail(TreeLogger.INFO);
+      // previously, in legacy hosted mode, the call was:
+      // consoleLogger.setMaxDetail(getCompilerOptions().getLogLevel());
     } else {
       super.initializeLogger();
     }
