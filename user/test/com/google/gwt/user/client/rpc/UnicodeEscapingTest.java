@@ -16,6 +16,8 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.UnicodeEscapingService.InvalidCharacterException;
 
@@ -181,11 +183,29 @@ public class UnicodeEscapingTest extends GWTTestCase {
    * 
    * Note that this does not test all possible combinations, which might be an
    * issue, particularly with combining marks, though they should be logically
-   * equivalent in that case.
+   * equivalent in that case.  Surrogate characters are also not tested here,
+   * see {@link #testServerToClientBMPSurrogates()}.
    */
   public void testServerToClientBMP() {
     delayTestFinish(TEST_FINISH_DELAY_MS);
     serverToClientVerify(Character.MIN_CODE_POINT,
+        Character.MIN_SURROGATE, CHARACTER_BLOCK_SIZE,
+        CHARACTER_BLOCK_SIZE);
+  }
+
+  /**
+   * Requests strings of CHARACTER_RANGE_SIZE from the server and validates that
+   * the returned string length matches CHARACTER_RANGE_SIZE and that all of the
+   * characters remain intact.  This test checks the range of surrogate
+   * characters, which are used to encode non-BMP characters as pairs of UTF16
+   * characters.
+   * 
+   * Note that this does not test all possible combinations.
+   */
+  @DoNotRunWith(Platform.Htmlunit)
+  public void testServerToClientBMPSurrogates() {
+    delayTestFinish(TEST_FINISH_DELAY_MS);
+    serverToClientVerify(Character.MIN_SURROGATE,
         Character.MIN_SUPPLEMENTARY_CODE_POINT, CHARACTER_BLOCK_SIZE,
         CHARACTER_BLOCK_SIZE);
   }
