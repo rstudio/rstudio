@@ -794,8 +794,8 @@ public class JavaToJavaScriptCompiler {
       if (resultTypes.size() == 1) {
         block.addStmt(entryCalls.get(0).makeStatement());
       } else {
-        JReboundEntryPoint reboundEntryPoint = new JReboundEntryPoint(null,
-            mainType, resultTypes, entryCalls);
+        JReboundEntryPoint reboundEntryPoint = new JReboundEntryPoint(
+            mainType.getSourceInfo(), mainType, resultTypes, entryCalls);
         block.addStmt(reboundEntryPoint);
       }
     }
