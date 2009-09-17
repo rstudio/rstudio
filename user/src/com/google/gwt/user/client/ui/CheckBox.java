@@ -399,7 +399,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
     // Setup the new element
     Event.sinkEvents(inputElem, sunkEvents);
     inputElem.setId(uid);
-    if (!accessKey.equals("")) {
+    if (!"".equals(accessKey)) {
       inputElem.setAccessKey(accessKey);
     }
     setTabIndex(tabIndex);
