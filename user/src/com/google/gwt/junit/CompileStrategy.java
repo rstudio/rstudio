@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.junit.JUnitShell.Strategy;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.GWTTestCase.TestModuleInfo;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * An interface that specifies how modules should be compiled.
@@ -37,9 +39,10 @@ import java.util.Map;
 public abstract class CompileStrategy {
 
   /**
-   * The number of modules that have been compiled.
+   * The list of modules that have already been compiled. We use this to avoid
+   * adding test batches that have already been added.
    */
-  private int compiledModuleCount;
+  private Set<String> compiledModuleNames = new HashSet<String>();
 
   /**
    * Let the compile strategy compile another module. This is called while
@@ -101,11 +104,14 @@ public abstract class CompileStrategy {
 
     runStyle.maybeCompileModule(syntheticModuleName);
 
-    // Add all test blocks for the module.
-    compiledModuleCount++;
-    boolean isFinalModule = compiledModuleCount == GWTTestCase.getModuleCount();
-    List<TestInfo[]> testBlocks = batchingStrategy.getTestBlocks(syntheticModuleName);
-    JUnitShell.getMessageQueue().addTestBlocks(testBlocks, isFinalModule);
+    // Add all test blocks for the module if we haven't seen this module before.
+    if (!compiledModuleNames.contains(syntheticModuleName)) {
+      compiledModuleNames.add(syntheticModuleName);
+      boolean isFinalModule = compiledModuleNames.size() == GWTTestCase.getModuleCount();
+      List<TestInfo[]> testBlocks = batchingStrategy.getTestBlocks(syntheticModuleName);
+      JUnitShell.getMessageQueue().addTestBlocks(testBlocks, isFinalModule);
+    }
+
     return moduleDef;
   }
 }
