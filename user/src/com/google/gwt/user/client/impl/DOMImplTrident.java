@@ -31,6 +31,23 @@ public abstract class DOMImplTrident extends DOMImpl {
   @SuppressWarnings("unused")
   private static JavaScriptObject dispatchDblClickEvent;
 
+  /**
+   * Let every GWT app on the page preview the current event. If any app cancels
+   * the event, the event will be canceled for all apps.
+   * 
+   * @return <code>false</code> to cancel the event
+   */
+  @SuppressWarnings("unused")
+  private static native boolean previewEventImpl() /*-{
+    var isCancelled = false; 
+    for (var i = 0; i < $wnd.__gwt_globalEventArray.length; i++) {
+      if (!$wnd.__gwt_globalEventArray[i]()) {
+        isCancelled = true;
+      }
+    }
+    return !isCancelled;
+  }-*/;
+
   @Override
   public native Element eventGetFromElement(Event evt) /*-{
     // Prefer 'relatedTarget' if it's set (see createMouseEvent(), which
@@ -68,6 +85,24 @@ public abstract class DOMImplTrident extends DOMImpl {
 
   @Override
   public native void initEventSystem() /*-{
+    // All GWT apps on the page register themselves with the globelEventArray
+    // so that the first app to handle an event can allow all apps on the page
+    // to preview it. See issue 3892 for more details.
+    //
+    // Apps cannot just mark the event as they visit it for a few reasons.
+    // First, window level event handlers fire last in IE, so the first app to
+    // cancel the event will be the last to see it. Second, window events do
+    // not support arbitrary attributes, and the only writable field is the
+    // returnValue, which has another use. Finally, window events are not
+    // comparable (ex. a=event; b=event; a!=b), so we cannot keep a list of
+    // events that have already been previewed by the current app.
+    if ($wnd.__gwt_globalEventArray == null) {
+      $wnd.__gwt_globalEventArray = new Array();
+    }
+    $wnd.__gwt_globalEventArray[$wnd.__gwt_globalEventArray.length] = function() {
+      return @com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)($wnd.event);
+    }
+
     @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent = function() {
       // IE doesn't define event.currentTarget, so we squirrel it away here. It
       // also seems that IE won't allow you to add expandos to the event object,
@@ -76,9 +111,12 @@ public abstract class DOMImplTrident extends DOMImpl {
       var oldEventTarget = @com.google.gwt.dom.client.DOMImplTrident::currentEventTarget;
       @com.google.gwt.dom.client.DOMImplTrident::currentEventTarget = this;
 
+      // The first GWT app on the page to handle the event allows all apps to
+      // preview it before continuing or cancelling, which is consistent with
+      // other browsers.
       if ($wnd.event.returnValue == null) {
         $wnd.event.returnValue = true;
-        if (!@com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)($wnd.event)) {
+        if (!@com.google.gwt.user.client.impl.DOMImplTrident::previewEventImpl()()) {
           @com.google.gwt.dom.client.DOMImplTrident::currentEventTarget = oldEventTarget;
           return;
         }
@@ -109,7 +147,7 @@ public abstract class DOMImplTrident extends DOMImpl {
       } else if ($wnd.event.returnValue == null) {
         // Ensure that we preview the event even if we aren't handling it.
         $wnd.event.returnValue = true;
-        @com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)($wnd.event);
+        @com.google.gwt.user.client.impl.DOMImplTrident::previewEventImpl()();
       }
     };
 
