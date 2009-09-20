@@ -42,12 +42,6 @@ public interface BrowserWidgetHost {
   void compile(String[] modules) throws UnableToCompleteException;
 
   /**
-   * For SWT.
-   */
-  ModuleSpaceHost createModuleSpaceHost(TreeLogger logger,
-      BrowserWidget widget, String moduleName) throws UnableToCompleteException;
-
-  /**
    * For OOPHM.
    * 
    * @param logger
@@ -90,10 +84,6 @@ public interface BrowserWidgetHost {
 
   String normalizeURL(String whatTheUserTyped);
 
-  /**
-   * For SWT.
-   */
-  BrowserWidget openNewBrowserWindow() throws UnableToCompleteException;
 
   /**
    * For OOPHM.

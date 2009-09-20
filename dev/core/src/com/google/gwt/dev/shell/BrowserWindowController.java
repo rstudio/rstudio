@@ -37,7 +37,5 @@ public interface BrowserWindowController {
 
   String normalizeURL(String string);
 
-  BrowserWidget openNewBrowserWindow() throws UnableToCompleteException;
-
   void restartServer(TreeLogger logger) throws UnableToCompleteException;
 }

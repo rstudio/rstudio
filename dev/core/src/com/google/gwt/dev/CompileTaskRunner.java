@@ -17,7 +17,7 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.shell.log.DetachedTreeLoggerWindow;
+import com.google.gwt.dev.shell.log.SwingLoggerPanel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -43,11 +43,11 @@ public class CompileTaskRunner {
     // Set any platform specific system properties.
     BootStrapPlatform.applyPlatformHacks();
 
-    if (options.isUseGuiLogger()) {
+    // TODO(jat): add support for GUI logger back
+    if (false && options.isUseGuiLogger()) {
       // Initialize a tree logger window.
-      DetachedTreeLoggerWindow loggerWindow = DetachedTreeLoggerWindow.getInstance(
-          "Build Output for " + options.getModuleNames(), 800, 600, true,
-          options.getLogLevel());
+      SwingLoggerPanel loggerWindow = new SwingLoggerPanel(
+          options.getLogLevel(), null);
 
       // Eager AWT initialization for OS X to ensure safe coexistence with SWT.
       BootStrapPlatform.initGui();
@@ -66,8 +66,8 @@ public class CompileTaskRunner {
 
       compilerThread.setName("GWTCompiler Thread");
       compilerThread.start();
-      loggerWindow.run();
-
+      // TODO(jat): create an app frame for loggerWindow
+      
       // Even if the tree logger window is closed, we wait for the compiler
       // to finish.
       waitForThreadToTerminate(compilerThread);

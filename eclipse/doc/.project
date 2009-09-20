@@ -18,7 +18,7 @@
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<location>GWT_ROOT/doc</location>
+			<locationURI>GWT_ROOT/doc</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

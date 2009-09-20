@@ -213,7 +213,7 @@ public final class WebAppCreator {
     // Figure out the installation directory
     String installPath = Utility.getInstallPath();
     String gwtUserPath = installPath + '/' + "gwt-user.jar";
-    String gwtDevPath = installPath + '/' + Utility.getDevJarName();
+    String gwtDevPath = installPath + '/' + "gwt-dev.jar";
     String gwtServletPath = installPath + '/' + "gwt-servlet.jar";
     String gwtOophmPath = installPath + '/' + "gwt-dev-oophm.jar";
 

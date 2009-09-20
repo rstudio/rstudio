@@ -22,7 +22,6 @@ import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.dev.GWTCompiler.GWTCompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
-import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.WorkDirs;
 import com.google.gwt.dev.shell.tomcat.EmbeddedTomcatServer;
 import com.google.gwt.dev.util.Util;
@@ -188,11 +187,6 @@ public class GWTShell extends OophmHostedModeBase {
 
   public WebServerRestart hasWebServer() {
     return WebServerRestart.NONE;
-  }
-
-  @Override
-  public BrowserWidget openNewBrowserWindow() throws UnableToCompleteException {
-    throw new UnableToCompleteException();
   }
 
   public void restartServer(TreeLogger logger) throws UnableToCompleteException {

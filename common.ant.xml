@@ -100,7 +100,7 @@
   </condition>
 
   <!-- JUnit support -->
-  <property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${build.host.platform}-${gwt.version}/gwt-dev-${build.host.platform}.jar" />
+  <property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${gwt.version}/gwt-dev.jar" />
   <property name="gwt.junit.port" value="8888" />
   <property name="gwt.junit.testcase.includes" value="**/*Suite.class"/>
 
@@ -208,7 +208,6 @@
         <jvmarg value="-Demma.coverage.out.merge=true" />
         <sysproperty key="gwt.args" value="${junit.notheadless.arg} @{test.args}" />
         <sysproperty key="java.awt.headless" value="${junit.headless}" />
-        <sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
         <classpath>
           <path refid="project.classpath.src" />
           <pathelement location="${gwt.root}/${project.tail}/super" />

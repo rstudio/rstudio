@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>I18N</name>
+	<name>gwt-dev</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -10,21 +10,30 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
-		<buildCommand>
-			<name>com.atlassw.tools.eclipse.checkstyle.CheckstyleBuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
-		<nature>com.atlassw.tools.eclipse.checkstyle.CheckstyleNature</nature>
 	</natures>
 	<linkedResources>
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<locationURI>GWT_ROOT/samples/i18n</locationURI>
+			<locationURI>GWT_ROOT/dev/core</locationURI>
+		</link>
+		<link>
+			<name>core/oophm</name>
+			<type>2</type>
+			<locationURI>GWT_ROOT/dev/oophm/src</locationURI>
+		</link>
+		<link>
+			<name>core/oophm-test</name>
+			<type>2</type>
+			<locationURI>GWT_ROOT/dev/oophm/test</locationURI>
+		</link>
+		<link>
+			<name>core/overlay</name>
+			<type>2</type>
+			<locationURI>GWT_ROOT/dev/oophm/overlay</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

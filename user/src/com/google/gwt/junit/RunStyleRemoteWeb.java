@@ -32,7 +32,7 @@ import java.rmi.server.RMISocketFactory;
  * Runs in web mode via browsers managed over RMI. This feature is experimental
  * and is not officially supported.
  */
-class RunStyleRemoteWeb extends RunStyleRemote {
+class RunStyleRemoteWeb extends RunStyle {
 
   static class RMISocketFactoryWithTimeouts extends RMISocketFactory {
     private static boolean initialized;
@@ -197,14 +197,9 @@ class RunStyleRemoteWeb extends RunStyleRemote {
   }
 
   @Override
-  public boolean isLocal() {
-    return false;
-  }
-
-  @Override
   public synchronized void launchModule(String moduleName)
       throws UnableToCompleteException {
-    String url = getMyUrl(moduleName);
+    String url = shell.getModuleUrl(moduleName);
 
     for (RemoteBrowser remoteBrowser : remoteBrowsers) {
       long callStart = System.currentTimeMillis();

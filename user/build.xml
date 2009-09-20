@@ -37,7 +37,7 @@
   </path>
 
   <!-- Platform shouldn't matter here, just picking one -->
-  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-${build.host.platform}.jar" />
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
 
   <target name="compile" description="Compile all class files">
     <mkdir dir="${javac.out}" />
@@ -49,7 +49,6 @@
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
         <pathelement location="${gwt.tools.lib}/w3c/sac/sac-1.3.jar" />
         <pathelement location="${gwt.tools.lib}/w3c/flute/flute-1.3.jar" />
-        <pathelement location="${gwt.build.lib}/gwt-dev-oophm.jar" />
         <pathelement location="${gwt.dev.jar}" />
       </classpath>
     </gwt.javac>
@@ -108,7 +107,7 @@
   <target name="test.remoteweb" description="Run a remoteweb test at the given host and path" if="gwt.remote.browsers">
     <echo message="Performing remote browser testing at ${gwt.remote.browsers}" />
     <fileset id="test.remoteweb.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -remoteweb ${gwt.remote.browsers} -batch module" test.out="${junit.out}/remoteweb" test.cases="test.remoteweb.tests" >
+    <gwt.junit test.args="${test.args} -out www -runStyle RemoteWeb:${gwt.remote.browsers} -batch module" test.out="${junit.out}/remoteweb" test.cases="test.remoteweb.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -122,7 +121,7 @@
   <target name="test.selenium" description="Run a remote test using Selenium RC test at the given host and path" if="gwt.selenium.hosts">
     <echo message="Performing remote browser testing using Selenium RC at ${gwt.selenium.hosts}" />
     <fileset id="test.selenium.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -selenium ${gwt.selenium.hosts} -batch module" test.out="${junit.out}/selenium" test.cases="test.selenium.tests" >
+    <gwt.junit test.args="${test.args} -out www -runStyle Selenium:${gwt.selenium.hosts} -batch module" test.out="${junit.out}/selenium" test.cases="test.selenium.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -157,7 +156,7 @@
 
   <target name="test.noserver" depends="compile, compile.tests" description="Run noserver hosted-mode tests for this project.">
     <fileset id="test.noserver.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.noserver.includes}" excludes="${gwt.junit.testcase.noserver.excludes}" />
-    <gwt.junit test.args="${test.args} -noserver -batch module" test.out="${junit.out}/${build.host.platform}-noserver-mode" test.cases="test.noserver.tests">
+    <gwt.junit test.args="${test.args} -web -noserver -batch module" test.out="${junit.out}/${build.host.platform}-noserver-mode" test.cases="test.noserver.tests">
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -173,16 +172,6 @@
     </gwt.junit>
   </target>
 
-  <target name="test.web.htmlunit" depends="compile, compile.tests" description="Run htmlunit web-mode tests for this project.">
-    <!-- TODO: add more browsers later -->
-    <fileset id="test.web.htmlunit.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -htmlunit FF3" test.out="${junit.out}/${build.host.platform}-htmlunit-web-mode" test.cases="test.web.htmlunit.tests" >
-      <extraclasspaths>
-        <path refid="test.extraclasspath" />
-      </extraclasspaths>
-    </gwt.junit>
-  </target>
-  
   <target name="test.web.disableClassMetadata" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
     <fileset id="test.web.disableClassMetadata.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -web -batch module" test.out="${junit.out}/${build.host.platform}-web-mode-disableClassMetadata" test.cases="test.web.disableClassMetadata.tests" >

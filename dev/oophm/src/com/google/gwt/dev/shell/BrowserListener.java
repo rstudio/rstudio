@@ -102,6 +102,14 @@ public class BrowserListener {
     }
   }
 
+  public int getSocketPort() throws UnableToCompleteException {
+    if (listenSocket == null) {
+      // If we failed to initialize our socket, just bail here.
+      throw new UnableToCompleteException();
+    }
+    return listenSocket.getLocalPort();
+  }
+
   public void start() {
     if (listenThread != null) {
       listenThread.start();

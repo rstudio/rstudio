@@ -1,5 +1,0 @@
-<project name="dev-windows" default="build" basedir=".">
-  <property name="project.tail" value="dev/windows" />
-  <property name="gwt.dev.swt.jar" value="org.eclipse.swt.win32-win32-3.2.1.jar"/>
-  <import file="../common.ant.xml" />
-</project>

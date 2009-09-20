@@ -35,7 +35,6 @@ import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.GWTRunner;
 import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
-import com.google.gwt.util.tools.ArgHandler;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 
@@ -43,8 +42,11 @@ import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
-import java.awt.GraphicsEnvironment;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -98,6 +100,7 @@ public class JUnitShell extends GWTShell {
     void processResult(TestCase testCase, JUnitResult result);
   }
 
+  @SuppressWarnings("deprecation")
   class ArgProcessor extends GWTShell.ArgProcessor {
 
     public ArgProcessor() {
@@ -108,6 +111,14 @@ public class JUnitShell extends GWTShell {
         @Override
         public String[] getDefaultArgs() {
           return new String[] {"-port", "auto"};
+        }
+      });
+
+      // Override port to set auto by default.
+      registerHandler(new ArgHandlerPortHosted(options) {
+        @Override
+        public String[] getDefaultArgs() {
+          return new String[] {"-portHosted", "auto"};
         }
       });
 
@@ -132,8 +143,7 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public boolean setFlag() {
-          runStyle = new RunStyleNoServerHosted(JUnitShell.this);
-          numClients = 1;
+          shouldAutoGenerateResources = false;
           return true;
         }
       });
@@ -151,8 +161,7 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public boolean setFlag() {
-          runStyle = new RunStyleLocalWeb(JUnitShell.this);
-          numClients = 1;
+          developmentMode = false;
           return true;
         }
       });
@@ -160,144 +169,65 @@ public class JUnitShell extends GWTShell {
       registerHandler(new ArgHandlerString() {
         @Override
         public String getPurpose() {
-          return "Runs web mode via RMI to a set of BrowserManagerServers; "
-              + "e.g. rmi://localhost/ie6,rmi://localhost/firefox";
+          return "Selects the runstyle to use for this test.  The name is "
+              + "a suffix of com.google.gwt.junit.RunStyle or is a fully "
+              + "qualified class name, and may be followed with a colon and "
+              + "an argument for this runstyle.";
         }
 
         @Override
         public String getTag() {
-          return "-remoteweb";
+          return "-runStyle";
         }
 
         @Override
         public String[] getTagArgs() {
-          return new String[] {"rmiUrl"};
+          return new String[] {"runstyle[:args]"};
         }
 
         @Override
         public boolean isUndocumented() {
-          return true;
+          return false;
         }
 
         @Override
-        public boolean setString(String str) {
-          String[] urls = str.split(",");
-          runStyle = RunStyleRemoteWeb.create(JUnitShell.this, urls);
-          numClients = urls.length;
-          return runStyle != null;
-        }
-      });
-
-      registerHandler(new ArgHandlerString() {
-        @Override
-        public String getPurpose() {
-          return "Runs web mode via HTTP to a set of Selenium servers; "
-              + "e.g. localhost:4444/*firefox,remotehost:4444/*iexplore";
-        }
-
-        @Override
-        public String getTag() {
-          return "-selenium";
-        }
-
-        @Override
-        public String[] getTagArgs() {
-          return new String[] {"seleniumHost"};
-        }
-
-        @Override
-        public boolean setString(String str) {
-          String[] targets = str.split(",");
-          numClients = targets.length;
-          runStyle = RunStyleSelenium.create(JUnitShell.this, targets);
-          return runStyle != null;
-        }
-      });
-
-      registerHandler(new ArgHandlerString() {
-        @Override
-        public String getPurpose() {
-          return "Runs hosted mode via HTMLUnit given a list of browsers; "
-              + "e.g. IE6,IE7,FF2,FF3...";
-        }
-
-        @Override
-        public String getTag() {
-          return "-htmlunithosted";
-        }
-
-        @Override
-        public String[] getTagArgs() {
-          return new String[] {"browserNames"};
-        }
-
-        @Override
-        public boolean setString(String str) {
-          String[] targets = str.split(",");
-          runStyle = new RunStyleHtmlUnitHosted(JUnitShell.this, targets);
-          numClients = ((RunStyleHtmlUnit) runStyle).numBrowsers();
-          return runStyle != null;
-        }
-      });
-
-      registerHandler(new ArgHandlerString() {
-        @Override
-        public String getPurpose() {
-          return "Runs web mode via HTMLUnit given a list of browsers; "
-              + "e.g. " + RunStyleHtmlUnit.getBrowserList();
-        }
-
-        @Override
-        public String getTag() {
-          return "-htmlunit";
-        }
-
-        @Override
-        public String[] getTagArgs() {
-          return new String[] {"browserNames"};
-        }
-
-        @Override
-        public boolean setString(String str) {
-          String[] targets = str.split(",");
-          try {
-            runStyle = new RunStyleHtmlUnit(JUnitShell.this, targets);
-            numClients = ((RunStyleHtmlUnit) runStyle).numBrowsers();
-            return true;
-          } catch (IllegalArgumentException ex) {
-            System.err.println(ex.getMessage());
-            return false;
+        public boolean setString(String runStyleArg) {
+          String runStyleName = runStyleArg;
+          String args = null;
+          int colon = runStyleArg.indexOf(':');
+          if (colon >= 0) {
+            runStyleName = runStyleArg.substring(0, colon);
+            args = runStyleArg.substring(colon + 1);
           }
-        }
-      });
-
-      registerHandler(new ArgHandlerString() {
-        @Override
-        public String getPurpose() {
-          return "Run external browsers in web mode (pass a comma separated list of executables.)";
-        }
-
-        @Override
-        public String getTag() {
-          return "-externalbrowser";
-        }
-
-        @Override
-        public String[] getTagArgs() {
-          return new String[] {"browserPaths"};
-        }
-
-        @Override
-        public boolean isUndocumented() {
-          return true;
-        }
-
-        @Override
-        public boolean setString(String str) {
-          String[] paths = str.split(",");
-          runStyle = new RunStyleExternalBrowser(JUnitShell.this, paths);
-          numClients = paths.length;
-          return runStyle != null;
+          if (runStyleName.indexOf('.') < 0) {
+            runStyleName = RunStyle.class.getName() + runStyleName;
+          }
+          Throwable caught = null;
+          try {
+            Class<?> clazz = Class.forName(runStyleName);
+            Class<? extends RunStyle> runStyleClass = clazz.asSubclass(
+                RunStyle.class);
+            Constructor<? extends RunStyle> ctor = runStyleClass.getConstructor(
+                JUnitShell.class);
+            runStyle = ctor.newInstance(JUnitShell.this);
+            return runStyle.initialize(args);
+          } catch (ClassNotFoundException e) {
+            caught = e;
+          } catch (SecurityException e) {
+            caught = e;
+          } catch (NoSuchMethodException e) {
+            caught = e;
+          } catch (IllegalArgumentException e) {
+            caught = e;
+          } catch (InstantiationException e) {
+            caught = e;
+          } catch (IllegalAccessException e) {
+            caught = e;
+          } catch (InvocationTargetException e) {
+            caught = e;
+          }
+          throw new RuntimeException("Unable to create runStyle " + runStyleArg,
+              caught);
         }
       });
 
@@ -329,52 +259,6 @@ public class JUnitShell extends GWTShell {
             batchingStrategy = new ModuleBatchingStrategy();
           }
           return true;
-        }
-      });
-
-      registerHandler(new ArgHandler() {
-        @Override
-        public String[] getDefaultArgs() {
-          return null;
-        }
-
-        @Override
-        public String getPurpose() {
-          return "Causes the system to wait for a remote browser to connect";
-        }
-
-        @Override
-        public String getTag() {
-          return "-manual";
-        }
-
-        @Override
-        public String[] getTagArgs() {
-          return new String[] {"[numClients]"};
-        }
-
-        @Override
-        public int handle(String[] args, int tagIndex) {
-          int value = 1;
-          if (tagIndex + 1 < args.length) {
-            try {
-              // See if the next item is an integer.
-              value = Integer.parseInt(args[tagIndex + 1]);
-              if (value >= 1) {
-                setInt(value);
-                return 1;
-              }
-            } catch (NumberFormatException e) {
-              // fall-through
-            }
-          }
-          setInt(1);
-          return 0;
-        }
-
-        public void setInt(int value) {
-          runStyle = new RunStyleManual(JUnitShell.this, value);
-          numClients = value;
         }
       });
 
@@ -415,12 +299,6 @@ public class JUnitShell extends GWTShell {
    * This is a system property that, when set, emulates command line arguments.
    */
   private static final String PROP_GWT_ARGS = "gwt.args";
-
-  /**
-   * This legacy system property, when set, causes us to run in web mode.
-   * (Superceded by passing "-web" into gwt.args).
-   */
-  private static final String PROP_JUNIT_HYBRID_MODE = "gwt.hybrid";
 
   /**
    * The amount of time to wait for all clients to have contacted the server and
@@ -524,6 +402,7 @@ public class JUnitShell extends GWTShell {
       if (!argProcessor.processArgs(args)) {
         throw new JUnitFatalLaunchException("Error processing shell arguments");
       }
+      unitTestShell.finalizeArguments();
 
       unitTestShell.messageQueue = new JUnitMessageQueue(
           unitTestShell.numClients);
@@ -588,7 +467,12 @@ public class JUnitShell extends GWTShell {
   /**
    * What type of test we're running; Local hosted, local web, or remote web.
    */
-  private RunStyle runStyle = new RunStyleLocalHosted(this);
+  private RunStyle runStyle = null;
+
+  /**
+   * True if we are running the test in hosted mode
+   */
+  private boolean developmentMode = true;
 
   /**
    * The time the test actually began.
@@ -611,17 +495,28 @@ public class JUnitShell extends GWTShell {
 
   private Map<TestInfo, Map<String, JUnitResult>> cachedResults = new HashMap<TestInfo, Map<String, JUnitResult>>();
 
+  private boolean shouldAutoGenerateResources = true;
+
   /**
    * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
    * server mode and disables processing extra arguments as URLs to be shown.
    */
   private JUnitShell() {
     setRunTomcat(true);
-    setHeadless(GraphicsEnvironment.isHeadless());
+    setHeadless(true);
+  }
 
-    // Legacy: -Dgwt.hybrid runs web mode
-    if (System.getProperty(PROP_JUNIT_HYBRID_MODE) != null) {
-      runStyle = new RunStyleLocalWeb(this);
+  public String getModuleUrl(String moduleName) {
+    try {
+      String localhost = InetAddress.getLocalHost().getHostAddress();
+      String url = "http://" + localhost + ":" + getPort() + "/"
+          + moduleName + "/junit.html";
+      if (developmentMode) {
+        url += "?gwt.hosted=localhost:" + codeServerPort;
+      }
+      return url;
+    } catch (UnknownHostException e) {
+      throw new RuntimeException("Unable to determine my ip address", e);
     }
   }
 
@@ -640,6 +535,21 @@ public class JUnitShell extends GWTShell {
   @Override
   protected long checkForUpdatesInterval() {
     return CheckForUpdates.ONE_MINUTE;
+  }
+
+  @Override
+  protected boolean doStartup() {
+    // TODO(jat): refactor so we can avoid startup up the OOPHM listener if we
+    //    aren't running in development mode
+    if (!super.doStartup()) {
+      return false;
+    }
+    if (!runStyle.setupMode(getTopLogger(), developmentMode)) {
+      getTopLogger().log(TreeLogger.ERROR, "Run style does not support "
+          + (developmentMode ? "development" : "production") + " mode");
+      return false;
+    }
+    return true;
   }
 
   @Override
@@ -711,9 +621,8 @@ public class JUnitShell extends GWTShell {
     return !messageQueue.hasResult();
   }
 
-  // TODO (amitmanjhi): GwtShell overlay fix, removed Override.
   protected boolean shouldAutoGenerateResources() {
-    return runStyle.shouldAutoGenerateResources();
+    return shouldAutoGenerateResources;
   }
 
   void compileForWebMode(String moduleName, String... userAgents)
@@ -731,6 +640,17 @@ public class JUnitShell extends GWTShell {
       }
     }
     super.compile(getTopLogger(), module);
+  }
+
+  /**
+   * Finish processing command line arguments.
+   */
+  private void finalizeArguments() {
+    if (runStyle == null) {
+      // Default to HtmlUnit runstyle with no args
+      runStyle = new RunStyleHtmlUnit(this);
+      runStyle.initialize(null);
+    }
   }
 
   /**
@@ -758,7 +678,7 @@ public class JUnitShell extends GWTShell {
     return bannedSet;
   }
 
-  private boolean mostNotExecuteTest(Set<Platform> bannedPlatforms) {
+  private boolean mustNotExecuteTest(Set<Platform> bannedPlatforms) {
     // TODO (amitmanjhi): Remove this hard-coding. A RunStyle somehow needs to
     // specify how it interacts with the platforms.
     return runStyle instanceof RunStyleHtmlUnit
@@ -775,7 +695,7 @@ public class JUnitShell extends GWTShell {
    */
   private boolean mustNotExecuteTest(TestCase testCase) {
     // TODO: collect stats on tests that were not run
-    return mostNotExecuteTest(getBannedPlatforms(testCase));
+    return mustNotExecuteTest(getBannedPlatforms(testCase));
   }
 
   private void processTestResult(TestInfo testInfo, TestCase testCase,
@@ -859,7 +779,9 @@ public class JUnitShell extends GWTShell {
       ConfigurationProperty moduleNameProp = currentModule.getProperties().createConfiguration(
           "junit.moduleName", false);
       moduleNameProp.setValue(moduleName);
-      runStyle.maybeCompileModule(syntheticModuleName);
+      if (!developmentMode || !shouldAutoGenerateResources) {
+        compileForWebMode(syntheticModuleName);
+      }
     }
 
     JUnitFatalLaunchException launchException = checkTestClassInCurrentModule(

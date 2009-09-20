@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 /**
  * Runs in web mode via browsers managed by Selenium.
  */
-public class RunStyleSelenium extends RunStyleRemote {
+public class RunStyleSelenium extends RunStyle {
 
   private static class RCSelenium {
     final String browser;
@@ -138,11 +138,12 @@ public class RunStyleSelenium extends RunStyleRemote {
     // Startup all the selenia and point them at the module url.
     for (RCSelenium remote : remotes) {
       try {
+        String url = shell.getModuleUrl(moduleName);
         shell.getTopLogger().log(TreeLogger.TRACE,
-            "Starting with domain: " + domain + " Opening URL: " + getMyUrl(moduleName));
+            "Starting with domain: " + domain + " Opening URL: " + url);
         remote.createSelenium(domain);
         remote.getSelenium().start();
-        remote.getSelenium().open(getMyUrl(moduleName));
+        remote.getSelenium().open(url);
       } catch (Exception e) {
         shell.getTopLogger().log(TreeLogger.ERROR,
             "Error launching browser via Selenium-RC at " + remote.getHost(), e);

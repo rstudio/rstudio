@@ -23,7 +23,6 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
-import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
 import com.google.gwt.dev.shell.BrowserWindowController;
@@ -236,10 +235,6 @@ abstract class HostedModeBase implements BrowserWindowController {
       }
     }
 
-    public abstract ModuleSpaceHost createModuleSpaceHost(TreeLogger logger,
-        BrowserWidget widget, String moduleName)
-        throws UnableToCompleteException;
-
     public TreeLogger getLogger() {
       return getTopLogger();
     }
@@ -255,11 +250,6 @@ abstract class HostedModeBase implements BrowserWindowController {
 
     public String normalizeURL(String whatTheUserTyped) {
       return HostedModeBase.this.normalizeURL(whatTheUserTyped);
-    }
-
-    public BrowserWidget openNewBrowserWindow()
-        throws UnableToCompleteException {
-      return HostedModeBase.this.openNewBrowserWindow();
     }
   }
 
@@ -538,8 +528,6 @@ abstract class HostedModeBase implements BrowserWindowController {
   protected abstract void doShutDownServer();
 
   protected boolean doStartup() {
-    loadRequiredNativeLibs();
-
     // Create the main app window.
     openAppWindow();
 
@@ -612,8 +600,6 @@ abstract class HostedModeBase implements BrowserWindowController {
     assert (moduleDef != null) : "Required module state is absent";
     return moduleDef;
   }
-
-  protected abstract void loadRequiredNativeLibs();
 
   protected abstract boolean notDone();
 

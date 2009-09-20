@@ -132,7 +132,7 @@ public final class JUnitCreator extends ToolBase {
     // Figure out the installation directory
     String installPath = Utility.getInstallPath();
     String gwtUserPath = installPath + '/' + "gwt-user.jar";
-    String gwtDevPath = installPath + '/' + Utility.getDevJarName();
+    String gwtDevPath = installPath + '/' + "gwt-dev.jar";
 
     // Check to see that the passed extra path/module arguments are valid.
     if (!CreatorUtilities.validatePathsAndModules(gwtUserPath, extraClassPaths,

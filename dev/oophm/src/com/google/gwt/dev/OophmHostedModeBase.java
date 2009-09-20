@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.WebServerPanel.RestartAction;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.BrowserListener;
-import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.OophmSessionHandler;
@@ -105,7 +104,7 @@ abstract class OophmHostedModeBase extends HostedModeBase {
     }
   }
 
-  interface OptionPortHosted {
+  protected interface OptionPortHosted {
     int getPortHosted();
 
     void setPortHosted(int portHosted);
@@ -114,7 +113,7 @@ abstract class OophmHostedModeBase extends HostedModeBase {
   /**
    * Handles the -portHosted command line flag.
    */
-  private static class ArgHandlerPortHosted extends ArgHandlerString {
+  protected static class ArgHandlerPortHosted extends ArgHandlerString {
 
     private final OptionPortHosted options;
 
@@ -162,13 +161,6 @@ abstract class OophmHostedModeBase extends HostedModeBase {
     private final Map<ModuleSpaceHost, ModulePanel> moduleTabs = new IdentityHashMap<ModuleSpaceHost, ModulePanel>();
     private final Map<DevelModeTabKey, ModuleTabPanel> tabPanels = new HashMap<DevelModeTabKey, ModuleTabPanel>();
     
-    @Override
-    public ModuleSpaceHost createModuleSpaceHost(TreeLogger logger,
-        BrowserWidget widget, String moduleName)
-        throws UnableToCompleteException {
-      throw new UnsupportedOperationException();
-    }
-
     public ModuleSpaceHost createModuleSpaceHost(TreeLogger mainLogger,
         String moduleName, String userAgent, String url, String tabKey,
         String sessionKey, String remoteSocket)
@@ -358,6 +350,8 @@ abstract class OophmHostedModeBase extends HostedModeBase {
 
   private AbstractTreeLogger topLogger;
 
+  protected int codeServerPort;
+
   public OophmHostedModeBase() {
     super();
   }
@@ -427,10 +421,6 @@ abstract class OophmHostedModeBase extends HostedModeBase {
     System.err.println("  " + url);
     getTopLogger().log(TreeLogger.INFO,
         "Waiting for browser connection to " + url, null);
-  }
-
-  public BrowserWidget openNewBrowserWindow() throws UnableToCompleteException {
-    throw new UnableToCompleteException();
   }
 
   /**
@@ -508,17 +498,15 @@ abstract class OophmHostedModeBase extends HostedModeBase {
   }
 
   @Override
-  protected void loadRequiredNativeLibs() {
-    // no native libraries are needed with OOPHM
-  }
-
-  @Override
   protected synchronized boolean notDone() {
     return !mainWindowClosed;
   }
 
   @Override
   protected void openAppWindow() {
+    if (isHeadless()) {
+      return;
+    }
     ImageIcon gwtIcon = loadImageIcon("icon24.png");
     frame = new JFrame("GWT Development Mode");
     tabs = new JTabbedPane();
@@ -566,9 +554,16 @@ abstract class OophmHostedModeBase extends HostedModeBase {
 
   private void ensureOophmListener() {
     if (listener == null) {
-      listener = new BrowserListener(getTopLogger(), options.getPortHosted(),
+      codeServerPort = options.getPortHosted();
+      listener = new BrowserListener(getTopLogger(), codeServerPort,
           new OophmSessionHandler(browserHost));
       listener.start();
+      try {
+        // save the port we actually used if it was auto
+        codeServerPort = listener.getSocketPort();
+      } catch (UnableToCompleteException e) {
+        // ignore errors listening, we will catch them later
+      }
     }
   }
 }

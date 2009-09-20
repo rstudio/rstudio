@@ -3,8 +3,57 @@
   <property name="project.tail" value="distro-source" />
   <import file="${gwt.root}/platforms.ant.xml" />
 
+  <import file="common.ant.xml" />
+
+  <property name="project.dist" location="${gwt.build.dist}/${project.distname}.zip" />
+
   <target name="clean" description="Cleans this project's intermediate and output files">
     <delete dir="${gwt.build.dist}" failonerror="false" />
     <delete dir="${gwt.build.staging}" failonerror="false" />
+    <delete file="${project.dist}" failonerror="false" />
+  </target>
+
+  <target name="build" depends="filter" description="Packages the distro">
+    <!-- TODO: figure out how to share most of this across platforms -->
+    <mkdir dir="${gwt.build.dist}" />
+    <mkdir dir="${gwt.build.out}/samples-scripts"/>
+    <zip destfile="${project.dist}">
+      <!-- jars -->
+      <zipfileset file="${gwt.build.lib}/gwt-dev.jar" prefix="${project.distname}" />
+      <zipfileset file="${gwt.build.lib}/gwt-user.jar" prefix="${project.distname}" />
+      <zipfileset file="${gwt.build.lib}/gwt-servlet.jar" prefix="${project.distname}" />
+      <zipfileset file="${gwt.build.lib}/gwt-benchmark-viewer.war" prefix="${project.distname}" />
+      <zipfileset file="${gwt.build.lib}/gwt-soyc-vis.jar" prefix="${project.distname}" />
+      <zipfileset file="${gwt.build.lib}/gwt-api-checker.jar" prefix="${project.distname}" />
+
+      <!-- raw files -->
+      <zipfileset dir="${dist.resources}" prefix="${project.distname}" />
+      <zipfileset dir="src" prefix="${project.distname}" />
+
+      <!-- doc -->
+      <zipfileset dir="${gwt.build.out}" prefix="${project.distname}">
+        <include name="doc" />
+        <include name="doc/html/**" />
+        <include name="doc/css/**" />
+        <include name="doc/javadoc/**" />
+      </zipfileset>
+
+      <!-- samples -->
+      <zipfileset dir="${gwt.build.out}" prefix="${project.distname}">
+        <include name="samples" />
+        <include name="samples/*" />
+        <include name="samples/*/src/**" />
+        <include name="samples/*/war/**" />
+      </zipfileset>
+      <zipfileset dir="${gwt.build.out}/samples-scripts" prefix="${project.distname}/samples">
+        <include name="*/*" />
+      </zipfileset>
+    </zip>
+
+    <!--
+      Unzip distro into the staging directory.
+    -->
+    <mkdir dir="${gwt.build.staging}" />
+    <unzip src="${project.dist}" dest="${gwt.build.staging}" />
   </target>
 </project>

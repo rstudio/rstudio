@@ -17,11 +17,8 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.util.tools.Utility;
 
-import org.eclipse.swt.graphics.Image;
-
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 
 /**
@@ -106,29 +103,6 @@ public class LowLevel {
         throw new UnsatisfiedLinkError(sb.toString());
       }
       sInitialized = true;
-    }
-  }
-
-  /**
-   * Loads an image from the classpath.
-   */
-  public static Image loadImage(String name) {
-    ClassLoader cl = LowLevel.class.getClassLoader();
-    InputStream is = cl.getResourceAsStream(LowLevel.PACKAGE_PATH + name);
-    if (is != null) {
-      try {
-        Image image = new Image(null, is);
-        return image;
-      } finally {
-        try {
-          is.close();
-        } catch (IOException e) {
-        }
-      }
-    } else {
-      // Bad image.
-      //
-      return new Image(null, 1, 1);
     }
   }
 

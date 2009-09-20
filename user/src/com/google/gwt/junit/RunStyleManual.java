@@ -21,18 +21,26 @@ import com.google.gwt.core.ext.UnableToCompleteException;
  * Runs in web mode waiting for the user to contact the server with their own
  * browser.
  */
-class RunStyleManual extends RunStyleRemote {
+class RunStyleManual extends RunStyle {
 
-  private final int numClients;
+  private int numClients;
 
-  public RunStyleManual(JUnitShell shell, int numClients) {
+  public RunStyleManual(JUnitShell shell) {
     super(shell);
-    this.numClients = numClients;
   }
 
   @Override
-  public boolean isLocal() {
-    return false;
+  public boolean initialize(String args) {
+    numClients = 1;
+    if (args != null) {
+      try {
+        numClients = Integer.parseInt(args);
+      } catch (NumberFormatException e) {
+        throw new RuntimeException("Error parsing argument \"" + args + "\"",
+            e);
+      }
+    }
+    return true;
   }
 
   @Override
@@ -43,14 +51,6 @@ class RunStyleManual extends RunStyleRemote {
       System.out.println("Please navigate " + numClients
           + " browsers to this URL:");
     }
-    System.out.println(getMyUrl(moduleName));
-  }
-
-  @Override
-  public void maybeCompileModule(String moduleName)
-      throws UnableToCompleteException {
-    System.out.print("Compiling " + moduleName + "...");
-    super.maybeCompileModule(moduleName);
-    System.out.println(" success.");
+    System.out.println(shell.getModuleUrl(moduleName));
   }
 }
