@@ -27,7 +27,6 @@ import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
 import com.google.gwt.dev.shell.BrowserWindowController;
 import com.google.gwt.dev.shell.CheckForUpdates;
-import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;

@@ -1409,8 +1409,7 @@ public class MakeTopLevelHtmlForPerm {
         out.println("<tr><td>Some code is initial (<a href=\""
             + dependenciesFileName("initial", packageName, permutationId) + "#"
             + className + "\">see why</a>)</td></tr>");
-      }
-      else {
+      } else {
         out.println("<tr><td>Some code is initial</td></tr>");
       }
     }

@@ -77,39 +77,6 @@ abstract class OophmHostedModeBase extends HostedModeBase {
     void removeTab(ModuleTabPanel tabPanel);
   }
 
-  abstract static class ArgProcessor extends HostedModeBase.ArgProcessor {
-    public ArgProcessor(OophmHostedModeBaseOptions options, boolean forceServer) {
-      super(options, forceServer);
-      registerHandler(new ArgHandlerPortHosted(options));
-    }
-  }
-  
-  interface OophmHostedModeBaseOptions extends HostedModeBaseOptions,
-      OptionPortHosted {
-  }
-
-  /**
-   * Concrete class to implement all shell options.
-   */
-  static class OophmHostedModeBaseOptionsImpl extends HostedModeBaseOptionsImpl
-      implements OophmHostedModeBaseOptions {
-    private int portHosted;
-
-    public int getPortHosted() {
-      return portHosted;
-    }
-
-    public void setPortHosted(int port) {
-      portHosted = port;
-    }
-  }
-
-  protected interface OptionPortHosted {
-    int getPortHosted();
-
-    void setPortHosted(int portHosted);
-  }
-
   /**
    * Handles the -portHosted command line flag.
    */
@@ -154,6 +121,39 @@ abstract class OophmHostedModeBase extends HostedModeBase {
         }
       }
       return true;
+    }
+  }
+  
+  protected interface OptionPortHosted {
+    int getPortHosted();
+
+    void setPortHosted(int portHosted);
+  }
+
+  abstract static class ArgProcessor extends HostedModeBase.ArgProcessor {
+    public ArgProcessor(OophmHostedModeBaseOptions options, boolean forceServer) {
+      super(options, forceServer);
+      registerHandler(new ArgHandlerPortHosted(options));
+    }
+  }
+
+  interface OophmHostedModeBaseOptions extends HostedModeBaseOptions,
+      OptionPortHosted {
+  }
+
+  /**
+   * Concrete class to implement all shell options.
+   */
+  static class OophmHostedModeBaseOptionsImpl extends HostedModeBaseOptionsImpl
+      implements OophmHostedModeBaseOptions {
+    private int portHosted;
+
+    public int getPortHosted() {
+      return portHosted;
+    }
+
+    public void setPortHosted(int port) {
+      portHosted = port;
     }
   }
   
@@ -326,6 +326,8 @@ abstract class OophmHostedModeBase extends HostedModeBase {
     }
   }
 
+  protected int codeServerPort;
+
   protected BrowserListener listener;
 
   /**
@@ -349,8 +351,6 @@ abstract class OophmHostedModeBase extends HostedModeBase {
   private JTabbedPane tabs;
 
   private AbstractTreeLogger topLogger;
-
-  protected int codeServerPort;
 
   public OophmHostedModeBase() {
     super();
