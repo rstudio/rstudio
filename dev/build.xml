@@ -18,7 +18,8 @@
 
   <target name="compile.tests" depends="build, compile.emma" description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
-    <gwt.javac destdir="${javac.junit.out}">
+    <gwt.javac srcdir="" destdir="${javac.junit.out}">
+      <src path="core/src" />
       <src path="core/test" />
       <src path="oophm/src" />
       <src path="oophm/overlay" />
