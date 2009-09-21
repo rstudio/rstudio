@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.util.tools.Utility;
-
 import java.lang.reflect.Field;
 
 /**
