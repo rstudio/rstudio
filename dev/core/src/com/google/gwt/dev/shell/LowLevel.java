@@ -17,8 +17,6 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.util.tools.Utility;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
 
 /**
