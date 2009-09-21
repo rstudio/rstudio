@@ -63,7 +63,7 @@
     Compile test code for dev/core to pick up TypeOracleTestUtils and others.
   -->
   <target name="compile.dev.core.tests" description="Compiles test dependencies in dev/core">
-    <gwt.ant dir="../dev/core" target="compile.tests" />
+    <gwt.ant dir="../dev" target="compile.tests" />
   </target>
 
   <target name="compile.tests" depends="compile.dev.core.tests, compile.emma" description="Compiles the test code for this project">
