@@ -45,14 +45,6 @@ abstract class RunStyle {
   }
 
   /**
-   * Returns true if clients are not known before the tests start and can
-   * connect after a delay. 
-   */
-  public boolean isClientConnectionDelayed() {
-    return false;
-  }
-
-  /**
    * Returns whether or not the local UI event loop needs to be pumped.
    */
   public abstract boolean isLocal();

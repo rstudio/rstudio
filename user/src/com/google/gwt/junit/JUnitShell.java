@@ -495,6 +495,18 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
+   * Checks if a testCase should not be executed. Currently, a test is either
+   * executed on all clients (mentioned in this test) or on no clients.
+   * 
+   * @param testCase current testCase.
+   * @return true iff the test should not be executed on any of the specified
+   *         clients.
+   */
+  public static boolean mustNotExecuteTest(TestCase testCase) {
+    return getUnitTestShell().mustNotExecuteTest(getBannedPlatforms(testCase));
+  }
+
+  /**
    * Entry point for {@link com.google.gwt.junit.client.GWTTestCase}. Gets or
    * creates the singleton {@link JUnitShell} and invokes its
    * {@link #runTestImpl(GWTTestCase, TestResult)}.
@@ -568,6 +580,31 @@ public class JUnitShell extends GWTShell {
           + "' appears to be valid, but no corresponding type was found in TypeOracle; please contact GWT support";
     }
     return new JUnitFatalLaunchException(errMsg);
+  }
+
+  /**
+   * returns the set of banned {@code Platform} for a test method.
+   */
+  private static Set<Platform> getBannedPlatforms(TestCase testCase) {
+    Class<?> testClass = testCase.getClass();
+    Set<Platform> bannedSet = EnumSet.noneOf(Platform.class);
+    if (testClass.isAnnotationPresent(DoNotRunWith.class)) {
+      bannedSet.addAll(Arrays.asList(testClass.getAnnotation(DoNotRunWith.class).value()));
+    }
+    try {
+      Method testMethod = testClass.getMethod(testCase.getName());
+      if (testMethod.isAnnotationPresent(DoNotRunWith.class)) {
+        bannedSet.addAll(Arrays.asList(testMethod.getAnnotation(
+            DoNotRunWith.class).value()));
+      }
+    } catch (SecurityException e) {
+      // should not happen
+      e.printStackTrace();
+    } catch (NoSuchMethodException e) {
+      // should not happen
+      e.printStackTrace();
+    }
+    return bannedSet;
   }
 
   /**
@@ -843,49 +880,11 @@ public class JUnitShell extends GWTShell {
     super.compile(getTopLogger(), module);
   }
 
-  /**
-   * returns the set of banned {@code Platform} for a test method.
-   */
-  private Set<Platform> getBannedPlatforms(TestCase testCase) {
-    Class<?> testClass = testCase.getClass();
-    Set<Platform> bannedSet = EnumSet.noneOf(Platform.class);
-    if (testClass.isAnnotationPresent(DoNotRunWith.class)) {
-      bannedSet.addAll(Arrays.asList(testClass.getAnnotation(DoNotRunWith.class).value()));
-    }
-    try {
-      Method testMethod = testClass.getMethod(testCase.getName());
-      if (testMethod.isAnnotationPresent(DoNotRunWith.class)) {
-        bannedSet.addAll(Arrays.asList(testMethod.getAnnotation(
-            DoNotRunWith.class).value()));
-      }
-    } catch (SecurityException e) {
-      // should not happen
-      e.printStackTrace();
-    } catch (NoSuchMethodException e) {
-      // should not happen
-      e.printStackTrace();
-    }
-    return bannedSet;
-  }
-
-  private boolean mostNotExecuteTest(Set<Platform> bannedPlatforms) {
+  private boolean mustNotExecuteTest(Set<Platform> bannedPlatforms) {
     // TODO (amitmanjhi): Remove this hard-coding. A RunStyle somehow needs to
     // specify how it interacts with the platforms.
     return runStyle instanceof RunStyleHtmlUnit
         && bannedPlatforms.contains(Platform.Htmlunit);
-  }
-
-  /**
-   * Checks if a testCase should not be executed. Currently, a test is either
-   * executed on all clients (mentioned in this test) or on no clients.
-   * 
-   * @param testCase current testCase.
-   * @return true iff the test should not be executed on any of the specified
-   *         clients.
-   */
-  private boolean mustNotExecuteTest(TestCase testCase) {
-    // TODO: collect stats on tests that were not run
-    return mostNotExecuteTest(getBannedPlatforms(testCase));
   }
 
   private void processTestResult(TestCase testCase, TestResult testResult,

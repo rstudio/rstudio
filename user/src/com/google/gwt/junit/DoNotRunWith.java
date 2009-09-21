@@ -26,8 +26,6 @@ import java.lang.annotation.Target;
  * the specified platforms. We chose DoNotRunWith instead of RunWith because we
  * want each exception to be listed separately here.
  * 
- * TODO(amitmanjhi): Make this work with batching of test cases. 
- * 
  * <pre>
  * &#064;DoNotRunWith({HtmlUnit})
  * public class EmulSuite {

@@ -31,11 +31,6 @@ class RunStyleManual extends RunStyleRemote {
   }
 
   @Override
-  public boolean isClientConnectionDelayed() {
-    return true;
-  }
-
-  @Override
   public boolean isLocal() {
     return false;
   }

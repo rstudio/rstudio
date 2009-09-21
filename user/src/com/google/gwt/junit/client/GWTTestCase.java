@@ -273,6 +273,11 @@ public abstract class GWTTestCase extends TestCase {
   public void setName(String name) {
     super.setName(name);
 
+    // If we can't run this test, don't add it to the map of all tests to batch.
+    if (JUnitShell.mustNotExecuteTest(this)) {
+      return;
+    }
+
     synchronized (ALL_GWT_TESTS_LOCK) {
       // Once the name is set, we can add ourselves to the global set.
       String syntheticModuleName = getSyntheticModuleName();

@@ -177,7 +177,7 @@
   <target name="test.web.htmlunit" depends="compile, compile.tests" description="Run htmlunit web-mode tests for this project.">
     <!-- TODO: add more browsers later -->
     <fileset id="test.web.htmlunit.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -htmlunit FF3" test.out="${junit.out}/${build.host.platform}-htmlunit-web-mode" test.cases="test.web.htmlunit.tests" >
+    <gwt.junit test.args="${test.args} -htmlunit FF3 -batch module" test.out="${junit.out}/${build.host.platform}-htmlunit-web-mode" test.cases="test.web.htmlunit.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
