@@ -106,7 +106,7 @@ public class UiBinderParser {
     String resourceName = elem.consumeRequiredAttribute("field");
     JClassType resourceType = consumeTypeAttribute(elem);
     if (elem.getAttributeCount() > 0) {
-      writer.die("In %s, should only find attributes \"field\" and \"type\"");
+      writer.die("In %s, should only find attributes \"field\" and \"type\"", elem);
     }
 
     FieldWriter fieldWriter = fieldManager.registerField(resourceType,
@@ -117,7 +117,7 @@ public class UiBinderParser {
 
     if (ownerField != null) {
       if (!resourceType.equals(ownerField.getType().getRawType())) {
-        writer.die("In %s, type must match %s", ownerField);
+        writer.die("In %s, type must match %s", elem, ownerField);
       }
 
       if (ownerField.isProvided()) {

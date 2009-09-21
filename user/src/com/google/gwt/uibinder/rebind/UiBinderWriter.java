@@ -686,7 +686,7 @@ public class UiBinderWriter {
     final String templateResourceName = attribute.getName().split(":")[0];
     warn("The %1$s mechanism is deprecated. Instead, declare the following "
         + "%2$s:with element as a child of your %2$s:UiBinder element: "
-        + "<%2$s:with name='%3$s' type='%4$s.%5$s' />", BUNDLE_URI_SCHEME,
+        + "<%2$s:with field='%3$s' type='%4$s.%5$s' />", BUNDLE_URI_SCHEME,
         gwtPrefix, templateResourceName, bundleClass.getPackage().getName(),
         bundleClass.getName());
 
