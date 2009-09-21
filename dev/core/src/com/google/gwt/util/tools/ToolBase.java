@@ -17,8 +17,6 @@ package com.google.gwt.util.tools;
 
 import com.google.gwt.dev.About;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -49,17 +47,6 @@ import java.util.Set;
 public abstract class ToolBase {
 
   private static final String PROPERTY_NOWARN_LEGACY_TOOLS = "gwt.nowarn.legacy.tools";
-
-  static {
-    String installPath = Utility.getInstallPath();
-    try {
-      // try to make absolute
-      installPath = new File(installPath).getCanonicalPath();
-    } catch (IOException e) {
-      // ignore problems, failures will occur when the libs try to load
-    }
-    System.setProperty("swt.library.path", installPath + '/');
-  }
 
   public static void legacyWarn(Class<?> legacy, Class<?> replacement) {
     if (System.getProperty(PROPERTY_NOWARN_LEGACY_TOOLS) == null) {

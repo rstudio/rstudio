@@ -84,24 +84,7 @@ public class LowLevel {
 
   public static synchronized void init() {
     if (!sInitialized) {
-      String libName = "gwt-ll";
-      try {
-        String installPath = Utility.getInstallPath();
-        try {
-          // try to make absolute
-          installPath = new File(installPath).getCanonicalPath();
-        } catch (IOException e) {
-          // ignore problems, failures will occur when the libs try to load
-        }
-        System.load(installPath + '/' + System.mapLibraryName(libName));
-      } catch (UnsatisfiedLinkError e) {
-        StringBuffer sb = new StringBuffer();
-        sb.append("Unable to load required native library '" + libName
-            + "'.  Detailed error:\n");
-        sb.append(e.getMessage() + ")\n\n");
-        sb.append("Your GWT installation may be corrupt");
-        throw new UnsatisfiedLinkError(sb.toString());
-      }
+      // TODO(jat): load native code for IE proxy handling?
       sInitialized = true;
     }
   }

@@ -309,9 +309,7 @@ public class GWTShellServlet extends HttpServlet {
       String moduleName) throws IOException {
 
     if (partialPath.equals(moduleName + ".nocache.js")) {
-      // If the '?compiled' request property is specified, don't auto-generate.
-      String compiledParam = request.getParameter("compiled");
-      if (compiledParam == null) {
+      if (request.getParameter("compiled") == null) {
         // Generate the .js file.
         try {
           String js = genSelectionScript(logger, moduleName);

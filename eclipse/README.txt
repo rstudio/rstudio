@@ -145,15 +145,14 @@ libraries.
 Window->Preferences->Run/Debug->String Substitution->New...
 Set the Name to "gwt_devjar".
 Set the Value to the approprate path for your install -- for example:
-  <path-to-trunk>\trunk\build\staging\gwt-windows-0.0.0\gwt-dev-windows.jar
-  <path-to-trunk>/trunk/build/staging/gwt-linux-0.0.0/gwt-dev-linux.jar
-  <path-to-trunk>/trunk/build/staging/gwt-mac-0.0.0/gwt-dev-mac.jar
+  <path-to-trunk>\trunk\build\staging\gwt-0.0.0\gwt-dev.jar
+  <path-to-trunk>/trunk/build/staging/gwt-0.0.0/gwt-dev.jar
 Description can be left blank.
 
 
 == Importing the GWT core projects ==
 
-1) Import the 'gwt-dev-<platform>' and 'gwt-user' projects
+1) Import the 'gwt-dev' and 'gwt-user' projects
 
   File->Import->General->Existing Projects into Workspace->Next
   Browse to the 'trunk/eclipse' folder and select it
@@ -162,19 +161,13 @@ Description can be left blank.
   Inside this folder are a number of .projects files, only a few of
   which you will need to get started. You may import others later.
 
-  Select 'gwt-dev-<platform>' appropriate to your OS
+  Select 'gwt-dev'
   Select 'gwt-user'
   Select any of the GWT samples as you want.  The most useful ones are:
     - Hello: very simple project useful as a little playground
     - Showcase: complex UI application
     - DynaTable: uses RPC
   Then press the Finish button.
-  
-  Non-windows users: By default, gwt-user depends on gwt-dev-windows, which you
-  will not have imported.  You must update the gwt-user project configuration
-  to depend on gwt-dev-linux or gwt-dev-mac (whichever one you imported).  This
-  can be done by editing gwt-user's .classpath file directly, or through the IDE
-  under Project->Properties->Java Build Path->Projects.
 
 2) Dismiss the welcome tab if you are setting up an Eclipse workspace
   for the first time.
@@ -222,21 +215,7 @@ following instructions help you do just that.
   Deselect All
   Select 'Hello'
 
-2) Non-windows users: Replace the gwt-dev-windows project dependency and paths.
-
-  Run->Open Run Dialog...->Java Application->Hello
-  Select the 'Classpath' tab
-  Remove gwt-dev-windows paths
-  Select 'User Entries'
-  Advanced->Add Folder-> Add gwt-dev-<platform>/core/super
-  Select the (default classpath) item and use the 'Down' button
-    to make it the last item in the list.
-  You could also just edit Hello.launch and search/replace "windows" with
-    "linux" or "mac".
-
-3) Repeat step 2 for the 'Hello compile' project.
-
-4) Now you should be able to run the 'Hello' project from the
+2) Now you should be able to run the 'Hello' project from the
   Run dialog!
 
 
@@ -311,7 +290,7 @@ Classpath:
   <project>/src
   gwt-user/core/src
   gwt-user/core/super
-  gwt-dev-<platform>/core/super
+  gwt-dev/core/super
 
   Now, select the default classpath (Hello) and move it all the way
   to the bottom of the list using the 'Down' button.
