@@ -31,7 +31,7 @@
     Classpaths added for test cases
   -->
   <path id="test.extraclasspath">
-    <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+    <pathelement location="${gwt.build}/out/dev/bin-test" />
     <pathelement location="test-super" />
     <pathelement location="test_i18n_${gwt.i18n.test.InnerClassChar}" />
   </path>
@@ -60,18 +60,18 @@
   </target>
 
   <!--
-    Compile test code for dev/core to pick up TypeOracleTestUtils and others.
+    Compile test code for dev to pick up TypeOracleTestUtils and others.
   -->
-  <target name="compile.dev.core.tests" description="Compiles test dependencies in dev/core">
+  <target name="compile.dev.tests" description="Compiles test dependencies in dev/core">
     <gwt.ant dir="../dev" target="compile.tests" />
   </target>
 
-  <target name="compile.tests" depends="compile.dev.core.tests, compile.emma" description="Compiles the test code for this project">
+  <target name="compile.tests" depends="compile.dev.tests, compile.emma" description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**" destdir="${javac.junit.out}">
       <classpath>
         <pathelement location="${javac.out}" />
-        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+        <pathelement location="${gwt.build}/out/dev/bin-test" />
         <pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" />
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
