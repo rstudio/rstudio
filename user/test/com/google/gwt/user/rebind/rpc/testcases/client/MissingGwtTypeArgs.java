@@ -25,6 +25,7 @@ import java.util.List;
  * will pull in the all of the serializable subtypes of Object if an unparameterized
  * type is used.
  */
+@SuppressWarnings("rpc-validation")
 public interface MissingGwtTypeArgs extends RemoteService {
   List getList();
 }

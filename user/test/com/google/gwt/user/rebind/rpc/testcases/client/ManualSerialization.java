@@ -26,6 +26,7 @@ import com.google.gwt.user.client.rpc.SerializationStreamWriter;
  * will not fail if a manually serialized type has a field that is not 
  * serializables.
  */
+@SuppressWarnings("rpc-validation")
 public interface ManualSerialization extends RemoteService {
   /**
    * Manually serialized.  Field b is not serializable.

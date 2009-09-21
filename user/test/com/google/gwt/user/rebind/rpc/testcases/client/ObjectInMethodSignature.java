@@ -23,6 +23,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
  * {@link com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilder SerializableTypeOracleBuilder}
  * will not fail if Object is used in a method signature.
  */
+@SuppressWarnings("rpc-validation")
 public interface ObjectInMethodSignature extends RemoteService {
   Object getObject();
 }

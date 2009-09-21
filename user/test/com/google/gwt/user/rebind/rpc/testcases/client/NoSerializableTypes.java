@@ -22,6 +22,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
  * {@link com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilder SerializableTypeOracleBuilder}
  * will fail if a root type is not serializable.
  */
+@SuppressWarnings("rpc-validation")
 public interface NoSerializableTypes extends RemoteService {
   /**
    * 
