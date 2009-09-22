@@ -21,19 +21,9 @@
 			<locationURI>GWT_ROOT/dev/core</locationURI>
 		</link>
 		<link>
-			<name>core/oophm</name>
+			<name>oophm</name>
 			<type>2</type>
-			<locationURI>GWT_ROOT/dev/oophm/src</locationURI>
-		</link>
-		<link>
-			<name>core/oophm-test</name>
-			<type>2</type>
-			<locationURI>GWT_ROOT/dev/oophm/test</locationURI>
-		</link>
-		<link>
-			<name>core/overlay</name>
-			<type>2</type>
-			<locationURI>GWT_ROOT/dev/oophm/overlay</locationURI>
+			<locationURI>GWT_ROOT/dev/oophm</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
