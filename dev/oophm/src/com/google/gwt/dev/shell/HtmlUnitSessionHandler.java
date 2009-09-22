@@ -209,7 +209,7 @@ public class HtmlUnitSessionHandler extends SessionHandler {
       return new ExceptionOrReturnValue(true, makeValueFromJsval(jsContext,
           ex.getValue()));
     } catch (Exception ex) {
-      logger.log(TreeLogger.ERROR, "INVOKE: exception " + ex + ", message: "
+      logger.log(TreeLogger.INFO, "INVOKE: exception " + ex + ", message: "
           + ex.getMessage() + " when invoking " + methodName);
       return new ExceptionOrReturnValue(true, makeValueFromJsval(jsContext,
           Undefined.instance));
