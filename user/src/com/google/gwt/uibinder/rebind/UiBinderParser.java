@@ -31,6 +31,9 @@ import com.google.gwt.uibinder.rebind.model.OwnerField;
  * document.
  */
 public class UiBinderParser {
+  private static final String FIELD_ATTRIBUTE = "field";
+  private static final String SOURCE_ATTRIBUTE = "src";
+
   // TODO(rjrjr) Make all the ElementParsers receive their dependencies via
   // constructor like this one does, and make this an ElementParser. I want
   // guice!!!
@@ -103,7 +106,7 @@ public class UiBinderParser {
    * Interprets <ui:with> elements.
    */
   private void createResource(XMLElement elem) throws UnableToCompleteException {
-    String resourceName = elem.consumeRequiredAttribute("field");
+    String resourceName = elem.consumeRequiredAttribute(FIELD_ATTRIBUTE);
     JClassType resourceType = consumeTypeAttribute(elem);
     if (elem.getAttributeCount() > 0) {
       writer.die("In %s, should only find attributes \"field\" and \"type\"", elem);
@@ -143,12 +146,12 @@ public class UiBinderParser {
 
   private void createStyle(XMLElement elem) throws UnableToCompleteException {
     String body =  elem.consumeInnerText(new NullInterpreter<String>());
-    if (body.length() > 0 && elem.hasAttribute("source")) {
+    if (body.length() > 0 && elem.hasAttribute(SOURCE_ATTRIBUTE)) {
       writer.die("In %s, cannot use both a source attribute and inline css text.", elem);
     }
 
-    String source = elem.consumeAttribute("source");
-    String name = elem.consumeAttribute("field", "style");
+    String source = elem.consumeAttribute(SOURCE_ATTRIBUTE);
+    String name = elem.consumeAttribute(FIELD_ATTRIBUTE, "style");
     JClassType publicType = consumeCssResourceType(elem);
 
     ImplicitCssResource cssMethod = bundleClass.createCssResource(name, source,
