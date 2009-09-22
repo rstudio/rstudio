@@ -15,20 +15,29 @@
  */
 package com.google.gwt.sample.mail.client;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.LayoutComposite;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 
 /**
  * A composite that displays a list of emails that can be selected.
  */
-public class MailList extends Composite implements ClickHandler {
+public class MailList extends LayoutComposite implements ClickHandler {
 
-  private static final int VISIBLE_EMAIL_COUNT = 10;
+  private static final int VISIBLE_EMAIL_COUNT = 20;
+
+  public interface Listener {
+    void onItemSelected(MailItem item);
+  }
+
+  private Listener listener;
 
   private HTML countLabel = new HTML();
   private HTML newerButton = new HTML("<a href='javascript:;'>&lt; newer</a>",
@@ -36,6 +45,7 @@ public class MailList extends Composite implements ClickHandler {
   private HTML olderButton = new HTML("<a href='javascript:;'>older &gt;</a>",
       true);
   private int startIndex, selectedRow = -1;
+  private FlexTable header = new FlexTable();
   private FlexTable table = new FlexTable();
   private HorizontalPanel navBar = new HorizontalPanel();
 
@@ -61,7 +71,13 @@ public class MailList extends Composite implements ClickHandler {
     navBar.add(innerNavBar);
     navBar.setWidth("100%");
 
-    initWidget(table);
+    DockLayoutPanel dock = new DockLayoutPanel(Unit.EM);
+    dock.addNorth(header, 2);
+    dock.add(new ScrollPanel(table));
+    header.setWidth("100%");
+    table.setWidth("100%");
+    dock.layout();
+    initWidget(dock);
     setStyleName("mail-List");
 
     initTable();
@@ -95,10 +111,23 @@ public class MailList extends Composite implements ClickHandler {
       Cell cell = table.getCellForEvent(event);
       if (cell != null) {
         int row = cell.getRowIndex();
-        if (row > 0) {
-          selectRow(row - 1);
-        }
+        selectRow(row);
       }
+    }
+  }
+
+  /**
+   * Sets the listener that will be notified when an item is selected.
+   */
+  public void setListener(Listener listener) {
+    this.listener = listener;
+  }
+
+  @Override
+  protected void onLoad() {
+    // Select the first row if none is selected.
+    if (selectedRow == -1) {
+      selectRow(0);
     }
   }
 
@@ -107,22 +136,35 @@ public class MailList extends Composite implements ClickHandler {
    * emails. Also creates the images that will be used as 'read' flags.
    */
   private void initTable() {
-    // Create the header row.
-    table.setText(0, 0, "Sender");
-    table.setText(0, 1, "Email");
-    table.setText(0, 2, "Subject");
-    table.setWidget(0, 3, navBar);
-    table.getRowFormatter().setStyleName(0, "mail-ListHeader");
+    // Create the header.
+    header.getRowFormatter().setStyleName(0, "mail-ListHeader");
+    header.getElement().getStyle().setProperty("tableLayout", "fixed");
+    header.setCellSpacing(0);
 
-    // Initialize the rest of the rows.
+    header.getColumnFormatter().setWidth(0, "96px");
+    header.getColumnFormatter().setWidth(1, "160px");
+    header.getColumnFormatter().setWidth(3, "256px");
+
+    header.setText(0, 0, "Sender");
+    header.setText(0, 1, "Email");
+    header.setText(0, 2, "Subject");
+    header.setWidget(0, 3, navBar);
+
+    // Initialize the table.
+    table.getElement().getStyle().setProperty("tableLayout", "fixed");
+    header.setCellSpacing(0);
+
+    table.getColumnFormatter().setWidth(0, "96px");
+    table.getColumnFormatter().setWidth(1, "160px");
+
     for (int i = 0; i < VISIBLE_EMAIL_COUNT; ++i) {
-      table.setText(i + 1, 0, "");
-      table.setText(i + 1, 1, "");
-      table.setText(i + 1, 2, "");
-      table.getCellFormatter().setWordWrap(i + 1, 0, false);
-      table.getCellFormatter().setWordWrap(i + 1, 1, false);
-      table.getCellFormatter().setWordWrap(i + 1, 2, false);
-      table.getFlexCellFormatter().setColSpan(i + 1, 2, 2);
+      table.setText(i, 0, "");
+      table.setText(i, 1, "");
+      table.setText(i, 2, "");
+      table.getCellFormatter().setWordWrap(i, 0, false);
+      table.getCellFormatter().setWordWrap(i, 1, false);
+      table.getCellFormatter().setWordWrap(i, 2, false);
+      table.getFlexCellFormatter().setColSpan(i, 2, 2);
     }
   }
 
@@ -144,15 +186,18 @@ public class MailList extends Composite implements ClickHandler {
 
     item.read = true;
     selectedRow = row;
-    Mail.get().displayItem(item);
+
+    if (listener != null) {
+      listener.onItemSelected(item);
+    }
   }
 
   private void styleRow(int row, boolean selected) {
     if (row != -1) {
       if (selected) {
-        table.getRowFormatter().addStyleName(row + 1, "mail-SelectedRow");
+        table.getRowFormatter().addStyleName(row, "mail-SelectedRow");
       } else {
-        table.getRowFormatter().removeStyleName(row + 1, "mail-SelectedRow");
+        table.getRowFormatter().removeStyleName(row, "mail-SelectedRow");
       }
     }
   }
@@ -181,21 +226,16 @@ public class MailList extends Composite implements ClickHandler {
 
       // Add a new row to the table, then set each of its columns to the
       // email's sender and subject values.
-      table.setText(i + 1, 0, item.sender);
-      table.setText(i + 1, 1, item.email);
-      table.setText(i + 1, 2, item.subject);
+      table.setText(i, 0, item.sender);
+      table.setText(i, 1, item.email);
+      table.setText(i, 2, item.subject);
     }
 
     // Clear any remaining slots.
     for (; i < VISIBLE_EMAIL_COUNT; ++i) {
-      table.setHTML(i + 1, 0, "&nbsp;");
-      table.setHTML(i + 1, 1, "&nbsp;");
-      table.setHTML(i + 1, 2, "&nbsp;");
-    }
-
-    // Select the first row if none is selected.
-    if (selectedRow == -1) {
-      selectRow(0);
+      table.setHTML(i, 0, "&nbsp;");
+      table.setHTML(i, 1, "&nbsp;");
+      table.setHTML(i, 2, "&nbsp;");
     }
   }
 }

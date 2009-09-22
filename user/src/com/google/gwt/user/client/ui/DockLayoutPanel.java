@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.layout.client.Layout;
 import com.google.gwt.layout.client.Layout.Layer;
@@ -95,23 +96,69 @@ public class DockLayoutPanel extends ComplexPanel implements RequiresLayout,
   }
 
   /**
-   * Adds a widget to the specified edge of the dock. If the widget is already a
-   * child of this panel, this method behaves as though {@link #remove(Widget)}
-   * had already been called.
+   * Adds a widget at the center of the dock. No further widgets may be added
+   * after this one.
    * 
    * @param widget the widget to be added
-   * @param direction the widget's direction in the dock
-   * @param size the child widget's size
-   * 
-   * @throws IllegalArgumentException when adding to the {@link #CENTER} and
-   *           there is already a different widget there
    */
-  public void add(Widget widget, Direction direction, double size) {
-    insert(widget, direction, size, null);
+  @Override
+  public void add(Widget widget) {
+    insert(widget, Direction.CENTER, 0, null);
   }
 
   /**
+   * Adds a widget to the east edge of the dock.
+   * 
+   * @param widget the widget to be added
+   * @param size the child widget's size
+   */
+  public void addEast(Widget widget, double size) {
+    insert(widget, Direction.EAST, size, null);
+  }
+
+  /**
+   * Adds a widget to the north edge of the dock.
+   * 
+   * @param widget the widget to be added
+   * @param size the child widget's size
+   */
+  public void addNorth(Widget widget, double size) {
+    insert(widget, Direction.NORTH, size, null);
+  }
+
+  /**
+   * Adds a widget to the south edge of the dock.
+   * 
+   * @param widget the widget to be added
+   * @param size the child widget's size
+   */
+  public void addSouth(Widget widget, double size) {
+    insert(widget, Direction.SOUTH, size, null);
+  }
+
+  /**
+   * Adds a widget to the west edge of the dock.
+   * 
+   * @param widget the widget to be added
+   * @param size the child widget's size
+   */
+  public void addWest(Widget widget, double size) {
+    insert(widget, Direction.WEST, size, null);
+  }
+
+  /**
+   * Gets the container element associated with the given child widget.
+   * 
+   * <p>
+   * The container element is created by the {@link Layout} class. This should
+   * be used with certain styles, such as {@link Style#setZIndex(int)}, that
+   * must be applied to the container, rather than directly to the child widget.
+   * </p>
+   * 
    * TODO(jgw): Is this really the best way to do this?
+   * 
+   * @param widget the widget whose container element is to be retrieved
+   * @return the widget's container element
    */
   public Element getContainerElementFor(Widget widget) {
     assertIsChild(widget);
@@ -133,46 +180,55 @@ public class DockLayoutPanel extends ComplexPanel implements RequiresLayout,
   }
 
   /**
-   * Adds a widget to the specified edge of the dock. If the widget is already a
-   * child of this panel, this method behaves as though {@link #remove(Widget)}
-   * had already been called.
+   * Adds a widget to the east edge of the dock, inserting it before an
+   * existing widget.
    * 
    * @param widget the widget to be added
-   * @param direction the widget's direction in the dock
+   * @param size the child widget's size
    * @param before the widget before which to insert the new child, or
    *          <code>null</code> to append
-   * 
-   * @throws IllegalArgumentException when adding to the {@link #CENTER} and
-   *           there is already a different widget there
    */
-  public void insert(Widget widget, Direction direction, double size,
-      Widget before) {
-    assertIsChild(before);
+  public void insertEast(Widget widget, double size, Widget before) {
+    insert(widget, Direction.EAST, size, before);
+  }
 
-    // Validation.
-    if (before == null) {
-      assert center == null : "No widget may be added after the CENTER widget";
-    } else {
-      assert direction != Direction.CENTER : "A CENTER widget must always be added last";
-    }
+  /**
+   * Adds a widget to the north edge of the dock, inserting it before an
+   * existing widget.
+   * 
+   * @param widget the widget to be added
+   * @param size the child widget's size
+   * @param before the widget before which to insert the new child, or
+   *          <code>null</code> to append
+   */
+  public void insertNorth(Widget widget, double size, Widget before) {
+    insert(widget, Direction.NORTH, size, before);
+  }
 
-    // Detach new child.
-    widget.removeFromParent();
+  /**
+   * Adds a widget to the south edge of the dock, inserting it before an
+   * existing widget.
+   * 
+   * @param widget the widget to be added
+   * @param size the child widget's size
+   * @param before the widget before which to insert the new child, or
+   *          <code>null</code> to append
+   */
+  public void insertSouth(Widget widget, double size, Widget before) {
+    insert(widget, Direction.SOUTH, size, before);
+  }
 
-    // Logical attach.
-    getChildren().add(widget);
-    if (direction == Direction.CENTER) {
-      center = widget;
-    }
-
-    // Physical attach.
-    Layer layer = layout.attachChild(widget.getElement(),
-        (before != null) ? before.getElement() : null, widget);
-    LayoutData data = new LayoutData(direction, size, layer);
-    widget.setLayoutData(data);
-
-    // Adopt.
-    adopt(widget);
+  /**
+   * Adds a widget to the west edge of the dock, inserting it before an
+   * existing widget.
+   * 
+   * @param widget the widget to be added
+   * @param size the child widget's size
+   * @param before the widget before which to insert the new child, or
+   *          <code>null</code> to append
+   */
+  public void insertWest(Widget widget, double size, Widget before) {
+    insert(widget, Direction.WEST, size, before);
   }
 
   public void layout() {
@@ -284,6 +340,46 @@ public class DockLayoutPanel extends ComplexPanel implements RequiresLayout,
     return unit;
   }
 
+  /**
+   * Adds a widget to the specified edge of the dock. If the widget is already a
+   * child of this panel, this method behaves as though {@link #remove(Widget)}
+   * had already been called.
+   * 
+   * @param widget the widget to be added
+   * @param direction the widget's direction in the dock
+   * @param before the widget before which to insert the new child, or
+   *          <code>null</code> to append
+   */
+  protected void insert(Widget widget, Direction direction, double size,
+      Widget before) {
+    assertIsChild(before);
+
+    // Validation.
+    if (before == null) {
+      assert center == null : "No widget may be added after the CENTER widget";
+    } else {
+      assert direction != Direction.CENTER : "A CENTER widget must always be added last";
+    }
+
+    // Detach new child.
+    widget.removeFromParent();
+
+    // Logical attach.
+    getChildren().add(widget);
+    if (direction == Direction.CENTER) {
+      center = widget;
+    }
+
+    // Physical attach.
+    Layer layer = layout.attachChild(widget.getElement(),
+        (before != null) ? before.getElement() : null, widget);
+    LayoutData data = new LayoutData(direction, size, layer);
+    widget.setLayoutData(data);
+
+    // Adopt.
+    adopt(widget);
+  }
+
   @Override
   protected void onLoad() {
     layout.onAttach();
@@ -295,6 +391,6 @@ public class DockLayoutPanel extends ComplexPanel implements RequiresLayout,
   }
 
   private void assertIsChild(Widget widget) {
-    assert (widget == null) || (widget.getParent() == this) : "TODO";
+    assert (widget == null) || (widget.getParent() == this) : "The specified widget is not a child of this panel";
   }
 }

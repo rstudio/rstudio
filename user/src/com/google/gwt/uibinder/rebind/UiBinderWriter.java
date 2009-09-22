@@ -341,6 +341,7 @@ public class UiBinderWriter {
       // something like that, but in FieldManager.
       fieldName = ("f_" + elem.getLocalName() + (++fieldIndex));
     }
+    fieldName = normalizeFieldName(fieldName);
     fieldManager.registerField(type, fieldName);
     return fieldName;
   }
@@ -874,6 +875,13 @@ public class UiBinderWriter {
     }
   }
 
+  private String normalizeFieldName(String fieldName) {
+    // If a field name has a '.' in it, replace it with '$' to make it a legal
+    // identifier. This can happen with the field names associated with nested
+    // classes.
+    return fieldName.replace('.', '$');
+  }
+
   /**
    * Parse the document element and return the source of the Java class that
    * will implement its UiBinder.
@@ -978,6 +986,9 @@ public class UiBinderWriter {
     addWidgetParser("RadioButton");
     addWidgetParser("CellPanel");
     addWidgetParser("CustomButton");
+
+    addWidgetParser("DockLayoutPanel");
+    addWidgetParser("StackLayoutPanel");
 
     addAttributeParser("boolean",
         "com.google.gwt.uibinder.parsers.BooleanAttributeParser");

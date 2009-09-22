@@ -206,6 +206,54 @@ public class XMLElement {
   }
 
   /**
+   * Consumes the given attribute as a double value.
+   * 
+   * @param attr the attribute's full name (including prefix)
+   * @return the attribute's value as a double
+   * @throws UnableToCompleteException
+   */
+  public double consumeDoubleAttribute(String attr)
+      throws UnableToCompleteException {
+    try {
+      return Double.parseDouble(consumeAttribute(attr));
+    } catch (NumberFormatException e) {
+      writer.die(String.format("Error parsing \"%s\" attribute of \"%s\" "
+          + "as a double value", attr, this));
+      return 0; // unreachable line for happy compiler
+    }
+  }
+
+  /**
+   * Consumes the given attribute as an enum value.
+   * 
+   * @param attr the attribute's full name (including prefix)
+   * @param type the enumerated type of which this attribute must be a member
+   * @return the attribute's value
+   * @throws UnableToCompleteException
+   */
+  public <T extends Enum<T>> T consumeEnumAttribute(String attr, Class<T> type)
+      throws UnableToCompleteException {
+    String strValue = consumeAttribute(attr);
+
+    // Get the enum value. Enum.valueOf() throws IAE if the specified string is
+    // not valid.
+    T value = null;
+    try {
+      // Enum.valueOf() doesn't accept null arguments.
+      if (strValue != null) {
+        value = Enum.valueOf(type, strValue);
+      }
+    } catch (IllegalArgumentException e) {
+    }
+
+    if (value == null) {
+      writer.die(String.format("Error parsing \"%s\" attribute of \"%s\" "
+          + "as a %s enum", attr, this, type.getSimpleName()));
+    }
+    return value;
+  }
+
+  /**
    * Consumes all child elements, and returns an HTML interpretation of them.
    * Trailing and leading whitespace is trimmed.
    * <p>
@@ -287,6 +335,23 @@ public class XMLElement {
   }
 
   /**
+   * Consumes the given attribute as an int value.
+   * 
+   * @param attr the attribute's full name (including prefix)
+   * @return the attribute's value as an int
+   * @throws UnableToCompleteException
+   */
+  public int consumeIntAttribute(String attr) throws UnableToCompleteException {
+    try {
+      return Integer.parseInt(consumeAttribute(attr));
+    } catch (NumberFormatException e) {
+      writer.die(String.format("Error parsing \"%s\" attribute of \"%s\" "
+          + "as an int value", attr, this));
+      return 0; // unreachable line for happy compiler
+    }
+  }
+
+  /**
    * Consumes all attributes, and returns a string representing the entire
    * opening tag. E.g., "<div able='baker'>"
    */
@@ -306,7 +371,7 @@ public class XMLElement {
       throws UnableToCompleteException {
     String value = consumeAttribute(name);
     if ("".equals(value)) {
-      writer.die("In %s, missing required attribute name\"%s\"", this, name);
+      writer.die("In %s, missing required attribute name \"%s\"", this, name);
     }
     return value;
   }

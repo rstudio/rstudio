@@ -212,10 +212,10 @@ public class SplitLayoutPanel extends DockLayoutPanel {
   }
 
   @Override
-  public void add(Widget child, Direction direction, double size) {
-    super.add(child, direction, size);
+  public void insert(Widget child, Direction direction, double size, Widget before) {
+    super.insert(child, direction, size, before);
     if (direction != Direction.CENTER) {
-      addSplitter();
+      insertSplitter(before);
     }
   }
 
@@ -251,13 +251,13 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     splitter.setMinSize(minSize);
   }
 
-  private void addSplitter() {
+  private void insertSplitter(Widget before) {
     assert getChildren().size() > 0 : "Can't add a splitter before any children";
     assert getCenter() == null : "Can't add a splitter after the CENTER widget";
 
     Widget lastChild = getChildren().get(getChildren().size() - 1);
     LayoutData lastChildLayout = (LayoutData) lastChild.getLayoutData();
-    Splitter splitter;
+    Splitter splitter = null;
     switch (lastChildLayout.direction) {
       case WEST:
         splitter = new HSplitter(lastChild, false);
@@ -273,10 +273,9 @@ public class SplitLayoutPanel extends DockLayoutPanel {
         break;
       default:
         assert false : "Unexpected direction";
-        return;
     }
 
-    super.add(splitter, lastChildLayout.direction, SPLITTER_SIZE);
+    super.insert(splitter, lastChildLayout.direction, SPLITTER_SIZE, before);
   }
 
   private Splitter getAssociatedSplitter(Widget child) {

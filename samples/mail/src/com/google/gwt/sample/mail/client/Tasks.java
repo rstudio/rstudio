@@ -17,7 +17,6 @@ package com.google.gwt.sample.mail.client;
 
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
@@ -26,17 +25,14 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 public class Tasks extends Composite {
 
   public Tasks() {
-    SimplePanel panel = new SimplePanel();
     VerticalPanel list = new VerticalPanel();
-    panel.setWidget(list);
     list.add(new CheckBox("Get groceries"));
     list.add(new CheckBox("Walk the dog"));
     list.add(new CheckBox("Start Web 2.0 company"));
     list.add(new CheckBox("Write cool app in GWT"));
     list.add(new CheckBox("Get funding"));
     list.add(new CheckBox("Take a vacation"));
-    initWidget(panel);
+    initWidget(list);
     setStyleName("mail-Tasks");
   }
-
 }
