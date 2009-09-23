@@ -2,9 +2,9 @@
 <classpath>
 	<classpathentry kind="src" path="core/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev-linux"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-user"/>
-	<classpathentry sourcepath="/GWT_TOOLS/lib/junit/junit-3.8.1-src.zip" kind="var" path="GWT_TOOLS/lib/junit/junit-3.8.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-3.8.1.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-3.8.1-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/servlet-api-2.4.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
