@@ -25,7 +25,7 @@ import junit.framework.TestSuite;
 /**
  * Tests that a normal test suite will run even if modules are out of order.
  */
-public class TestSuiteTest {
+public class NonGwtTestSuite {
 
   public static Test suite() {
     // This is intentionally not a GWTTestSuite.
