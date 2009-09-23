@@ -33,6 +33,9 @@ public class MailList extends LayoutComposite implements ClickHandler {
 
   private static final int VISIBLE_EMAIL_COUNT = 20;
 
+  /**
+   * Callback when mail items are selected. 
+   */
   public interface Listener {
     void onItemSelected(MailItem item);
   }
