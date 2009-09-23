@@ -948,14 +948,16 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     }
 
     // Orphan.
-    orphan(widget);
-
-    // Physical detach.
-    Element elem = widget.getElement();
-    DOM.removeChild(DOM.getParent(elem), elem);
-
-    // Logical detach.
-    widgetMap.removeByElement(elem);
+    try {
+      orphan(widget);
+    } finally {
+      // Physical detach.
+      Element elem = widget.getElement();
+      DOM.removeChild(DOM.getParent(elem), elem);
+  
+      // Logical detach.
+      widgetMap.removeByElement(elem);
+    }
     return true;
   }
 

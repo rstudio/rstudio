@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder;
 
 /**
  * Tests {@link CaptionPanel}.
@@ -29,14 +30,17 @@ public class CaptionPanelTest extends GWTTestCase {
   }
 
   public void testHasWidgets() {
+    WidgetAdder adder = new HasWidgetsTester.DefaultWidgetAdder();
+
     // With no caption.
-    HasWidgetsTester.testAll(new CaptionPanel());
+    HasWidgetsTester.testAll(new CaptionPanel(), adder, false);
 
     // With a text caption.
-    HasWidgetsTester.testAll(new CaptionPanel("some text"));
+    HasWidgetsTester.testAll(new CaptionPanel("some text"), adder, false);
 
     // With a complex HTML caption.
-    HasWidgetsTester.testAll(new CaptionPanel("<legend>not the <i>actual</i> legend<legend>", true));
+    HasWidgetsTester.testAll(new CaptionPanel(
+        "<legend>not the <i>actual</i> legend<legend>", true), adder, false);
   }
 
   public void testCaptionAcceptsEmptyStringAndRemovesLegendElement() {

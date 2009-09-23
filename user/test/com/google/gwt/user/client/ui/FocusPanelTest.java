@@ -15,18 +15,13 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.junit.client.GWTTestCase;
-
 /**
  * Test the FocusPanel widget.
  */
-public class FocusPanelTest extends GWTTestCase {
+public class FocusPanelTest extends SimplePanelTestBase<FocusPanel> {
 
-  public String getModuleName() {
-    return "com.google.gwt.user.User";
-  }
-
-  public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(new FocusPanel());
+  @Override
+  protected FocusPanel createPanel() {
+    return new FocusPanel();
   }
 }

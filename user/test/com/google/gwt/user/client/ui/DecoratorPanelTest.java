@@ -16,14 +16,14 @@
 
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
  * Test for {@link DecoratorPanel}.
  */
-public class DecoratorPanelTest extends GWTTestCase {
+public class DecoratorPanelTest extends SimplePanelTestBase<DecoratorPanel> {
+
   /**
    * Assert that an element has the specified class name.
    * 
@@ -32,11 +32,6 @@ public class DecoratorPanelTest extends GWTTestCase {
    */
   private static void assertStyleName(Element elem, String styleName) {
     assertEquals(styleName, DOM.getElementProperty(elem, "className"));
-  }
-
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.user.User";
   }
 
   /**
@@ -95,5 +90,10 @@ public class DecoratorPanelTest extends GWTTestCase {
 
     // Check the container element
     assertTrue(panel.getCellElement(1, 1) == panel.getContainerElement());
+  }
+
+  @Override
+  protected DecoratorPanel createPanel() {
+    return new DecoratorPanel();
   }
 }

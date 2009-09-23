@@ -22,11 +22,7 @@ import java.util.Iterator;
 /**
  * A test for {@link HorizontalPanel}.
  */
-public class HorizontalPanelTest extends AbstractCellPanelTest {
-
-  public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(new HorizontalPanel());
-  }
+public class HorizontalPanelTest extends AbstractCellPanelTest<HorizontalPanel> {
 
   public void testDebugId() {
     HorizontalPanel p = new HorizontalPanel();
@@ -90,5 +86,10 @@ public class HorizontalPanelTest extends AbstractCellPanelTest {
     p.add(new Label("b"));
     p.add(new Label("c"));
     return p;
+  }
+
+  @Override
+  protected HorizontalPanel createPanel() {
+    return new HorizontalPanel();
   }
 }

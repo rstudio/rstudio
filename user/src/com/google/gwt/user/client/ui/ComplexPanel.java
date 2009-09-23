@@ -27,6 +27,11 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel {
 
   private WidgetCollection children = new WidgetCollection(this);
 
+  /**
+   * The command used to orphan children. 
+   */
+  private AttachDetachException.Command orphanCommand;
+
   public Widget getWidget(int index) {
     return getChildren().get(index);
   }
@@ -54,14 +59,16 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel {
       return false;
     }
     // Orphan.
-    orphan(w);
-
-    // Physical detach.
-    Element elem = w.getElement();
-    DOM.removeChild(DOM.getParent(elem), elem);
-
-    // Logical detach.
-    getChildren().remove(w);
+    try {
+      orphan(w);
+    } finally {
+      // Physical detach.
+      Element elem = w.getElement();
+      DOM.removeChild(DOM.getParent(elem), elem);
+  
+      // Logical detach.
+      getChildren().remove(w);
+    }
     return true;
   }
 
@@ -199,10 +206,22 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel {
   }
 
   void doLogicalClear() {
-    int size = children.size();
-    for (int i = 0; i < size; i++) {
-      orphan(children.get(i));
+    // TODO(jgw): When Layout work has landed, deprecate FlowPanel (the only
+    // caller of this method in our code), and deprecate this method with an eye
+    // to making it private down the road.
+
+    // Only use one orphan command per panel to avoid object creation.
+    if (orphanCommand == null) {
+      orphanCommand = new AttachDetachException.Command() {
+        public void execute(Widget w) {
+          orphan(w);
+        }
+      };
     }
-    children = new WidgetCollection(this);
+    try {
+      AttachDetachException.tryCommand(this, orphanCommand);
+    } finally {
+      children = new WidgetCollection(this);
+    }
   }
 }

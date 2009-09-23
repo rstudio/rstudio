@@ -38,4 +38,35 @@ public class TreeItemTest extends GWTTestCase {
     item.setWidget(null);
     assertEquals("Test", widget.getText());
   }
+
+  public void testSetWidgetNullWithError() {
+    // Create a widget that will throw an exception onUnload.
+    BadWidget badWidget = new BadWidget();
+    badWidget.setFailOnUnload(true);
+
+    // Add the widget to a panel.
+    TreeItem item = new TreeItem(badWidget);
+    assertFalse(badWidget.isAttached());
+
+    // Attach the widget.
+    Tree tree = new Tree();
+    tree.addItem(item);
+    RootPanel.get().add(tree);
+    assertTrue(badWidget.isAttached());
+
+    // Remove the widget from the panel.
+    try {
+      item.setWidget(null);
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+    assertFalse(badWidget.isAttached());
+    assertNull(badWidget.getParent());
+    assertNull(badWidget.getElement().getParentElement());
+    assertNull(item.getWidget());
+
+    // Detach the panel.
+    RootPanel.get().remove(tree);
+  }
 }

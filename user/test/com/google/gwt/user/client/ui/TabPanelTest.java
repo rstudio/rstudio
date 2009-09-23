@@ -59,7 +59,7 @@ public class TabPanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(createTabPanel(), new Adder());
+    HasWidgetsTester.testAll(createTabPanel(), new Adder(), true);
   }
 
   public void testDebugId() {

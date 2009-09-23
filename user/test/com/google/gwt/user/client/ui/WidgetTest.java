@@ -58,4 +58,118 @@ public class WidgetTest extends GWTTestCase {
     assertEquals(0, a.getHandlerCount(ClickEvent.getType()));
   }
 
+  public void testOnAttachWithErrorDoAttachChildren() {
+    // Create a panel that will throw an exception doAttachChildren
+    BadWidget w = new BadWidget();
+    w.setFailAttachChildren(true);
+    assertFalse(w.isAttached());
+    assertNull(w.getParent());
+
+    // Attach the widget.
+    try {
+      RootPanel.get().add(w);
+      fail("Expected AttachDetachException");
+    } catch (AttachDetachException e) {
+      // Expected.
+    }
+    assertTrue(w.isAttached());
+    assertEquals(RootPanel.get(), w.getParent());
+
+    // Detach the widget.
+    RootPanel.get().remove(w);
+    assertFalse(w.isAttached());
+    assertNull(w.getParent());
+  }
+
+  public void testOnAttachWithErrorOnLoad() {
+    // Create a widget that will throw an exception onLoad.
+    BadWidget w = new BadWidget();
+    w.setFailOnLoad(true);
+    assertFalse(w.isAttached());
+    assertNull(w.getParent());
+
+    // Attach the widget.
+    try {
+      RootPanel.get().add(w);
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+    assertTrue(w.isAttached());
+    assertEquals(RootPanel.get(), w.getParent());
+
+    // Detach the widget.
+    RootPanel.get().remove(w);
+    assertFalse(w.isAttached());
+    assertNull(w.getParent());
+  }
+
+  public void testOnDetachWithErrorDoDetachChildren() {
+    // Create a widget that will throw an exception onUnload.
+    BadWidget w = new BadWidget();
+    w.setFailDetachChildren(true);
+    assertFalse(w.isAttached());
+    assertNull(w.getParent());
+
+    // Attach the widget.
+    RootPanel.get().add(w);
+    assertTrue(w.isAttached());
+    assertEquals(RootPanel.get(), w.getParent());
+
+    // Detach the widget.
+    try {
+      RootPanel.get().remove(w);
+      fail("Expected AttachDetachException");
+    } catch (AttachDetachException e) {
+      // Expected.
+    }
+    assertFalse(w.isAttached());
+    assertNull(w.getParent());
+  }
+
+  public void testOnDetachWithErrorOnUnload() {
+    // Create a widget that will throw an exception onUnload.
+    BadWidget w = new BadWidget();
+    w.setFailOnUnload(true);
+    assertFalse(w.isAttached());
+    assertNull(w.getParent());
+
+    // Attach the widget.
+    RootPanel.get().add(w);
+    assertTrue(w.isAttached());
+    assertEquals(RootPanel.get(), w.getParent());
+
+    // Detach the widget.
+    try {
+      RootPanel.get().remove(w);
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+    assertFalse(w.isAttached());
+    assertNull(w.getParent());
+  }
+
+  public void testSetParentWithErrorOnUnload() {
+    // Create a widget that will throw an exception onUnload.
+    BadWidget w = new BadWidget();
+    w.setFailOnUnload(true);
+    assertFalse(w.isAttached());
+    assertNull(w.getParent());
+
+    // Attach the widget.
+    RootPanel.get().add(w);
+    assertTrue(w.isAttached());
+    assertEquals(RootPanel.get(), w.getParent());
+
+    // Detach the widget.
+    try {
+      w.removeFromParent();
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+    assertFalse(w.isAttached());
+    assertNull(w.getParent());
+  }
 }

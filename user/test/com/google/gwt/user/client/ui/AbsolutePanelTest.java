@@ -18,21 +18,12 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Window;
 
 /**
  * Tests for {@link AbsolutePanel}.
  */
-public class AbsolutePanelTest extends GWTTestCase {
-
-  public String getModuleName() {
-    return "com.google.gwt.user.User";
-  }
-
-  public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(new AbsolutePanel());
-  }
+public class AbsolutePanelTest extends PanelTestBase<AbsolutePanel> {
 
   /**
    * AbsolutePanel once had a bug where calling
@@ -81,5 +72,10 @@ public class AbsolutePanelTest extends GWTTestCase {
     assertEquals("absX should be 103. This will fail in WebKit if run headless", 
         3 + 100, absX);
     assertEquals(7 + 200, absY);
+  }
+
+  @Override
+  protected AbsolutePanel createPanel() {
+    return new AbsolutePanel();
   }
 }

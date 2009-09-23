@@ -63,7 +63,8 @@ public class DisclosurePanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(new DisclosurePanel());
+    HasWidgetsTester.testAll(new DisclosurePanel(),
+        new HasWidgetsTester.DefaultWidgetAdder(), false);
   }
 
   public void testDebugId() {

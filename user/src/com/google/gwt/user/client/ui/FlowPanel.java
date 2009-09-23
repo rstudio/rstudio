@@ -47,13 +47,15 @@ public class FlowPanel extends ComplexPanel implements InsertPanel {
 
   @Override
   public void clear() {
-    doLogicalClear();
-
-    // Remove all existing child nodes.
-    Node child = getElement().getFirstChild();
-    while (child != null) {
-      getElement().removeChild(child);
-      child = getElement().getFirstChild();
+    try {
+      doLogicalClear();
+    } finally {
+      // Remove all existing child nodes.
+      Node child = getElement().getFirstChild();
+      while (child != null) {
+        getElement().removeChild(child);
+        child = getElement().getFirstChild();
+      }
     }
   }
 

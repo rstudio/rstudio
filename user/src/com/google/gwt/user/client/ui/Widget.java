@@ -251,10 +251,16 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   }
 
   /**
+   * <p>
    * This method is called when a widget is attached to the browser's document.
    * To receive notification after a Widget has been added to the document,
    * override the {@link #onLoad} method.
-   * 
+   * </p>
+   * <p>
+   * It is strongly recommended that you override {@link #onLoad()} or
+   * {@link #doAttachChildren()} instead of this method to avoid
+   * inconsistencies between logical and physical attachment states. 
+   * </p>
    * <p>
    * Subclasses that override this method must call
    * <code>super.onAttach()</code> to ensure that the Widget has been attached
@@ -262,6 +268,8 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
    * </p>
    * 
    * @throws IllegalStateException if this widget is already attached
+   * @see #onLoad()
+   * @see #doAttachChildren()
    */
   protected void onAttach() {
     if (isAttached()) {
@@ -287,10 +295,16 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   }
 
   /**
+   * <p>
    * This method is called when a widget is detached from the browser's
    * document. To receive notification before a Widget is removed from the
    * document, override the {@link #onUnload} method.
-   * 
+   * </p>
+   * <p>
+   * It is strongly recommended that you override {@link #onUnload()} or
+   * {@link #doDetachChildren()} instead of this method to avoid
+   * inconsistencies between logical and physical attachment states. 
+   * </p>
    * <p>
    * Subclasses that override this method must call
    * <code>super.onDetach()</code> to ensure that the Widget has been detached
@@ -300,6 +314,8 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
    * </p>
    * 
    * @throws IllegalStateException if this widget is already detached
+   * @see #onUnload()
+   * @see #doDetachChildren()
    */
   protected void onDetach() {
     if (!isAttached()) {
@@ -313,9 +329,13 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
       onUnload();
     } finally {
       // Put this in a finally, just in case onUnload throws an exception.
-      doDetachChildren();
-      DOM.setEventListener(getElement(), null);
-      attached = false;
+      try {
+        doDetachChildren();
+      } finally {
+        // Put this in a finally, in case doDetachChildren throws an exception.
+        DOM.setEventListener(getElement(), null);
+        attached = false;
+      }
     }
   }
 
@@ -377,12 +397,16 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   void setParent(Widget parent) {
     Widget oldParent = this.parent;
     if (parent == null) {
-      if (oldParent != null && oldParent.isAttached()) {
-        onDetach();
-        assert !isAttached() : "Failure of " + this.getClass().getName()
-            + " to call super.onDetach()";
+      try {
+        if (oldParent != null && oldParent.isAttached()) {
+          onDetach();
+          assert !isAttached() : "Failure of " + this.getClass().getName()
+              + " to call super.onDetach()";
+        }
+      } finally {
+        // Put this in a finally in case onDetach throws an exception.
+        this.parent = null;
       }
-      this.parent = null;
     } else {
       if (oldParent != null) {
         throw new IllegalStateException(

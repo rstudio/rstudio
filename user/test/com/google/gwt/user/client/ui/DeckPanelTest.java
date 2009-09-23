@@ -18,16 +18,11 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
-import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * Test for {@link DeckPanel}.
  */
-public class DeckPanelTest extends GWTTestCase {
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.user.User";
-  }
+public class DeckPanelTest extends PanelTestBase<DeckPanel> {
 
   /**
    * Test that the {@link DeckPanel} calls widget.setVisible(true) on the
@@ -107,5 +102,10 @@ public class DeckPanelTest extends GWTTestCase {
 
     // Verify content.onLoad was actually called
     assertEquals("attached", content.getText());
+  }
+
+  @Override
+  protected DeckPanel createPanel() {
+    return new DeckPanel();
   }
 }

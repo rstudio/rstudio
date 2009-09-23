@@ -159,20 +159,12 @@ public abstract class Panel extends Widget implements HasWidgets {
 
   @Override
   protected void doAttachChildren() {
-    // Ensure that all child widgets are attached.
-    for (Iterator<Widget> it = iterator(); it.hasNext();) {
-      Widget child = it.next();
-      child.onAttach();
-    }
+    AttachDetachException.tryCommand(this, AttachDetachException.attachCommand);
   }
 
   @Override
   protected void doDetachChildren() {
-    // Ensure that all child widgets are detached.
-    for (Iterator<Widget> it = iterator(); it.hasNext();) {
-      Widget child = it.next();
-      child.onDetach();
-    }
+    AttachDetachException.tryCommand(this, AttachDetachException.detachCommand);
   }
 
   /**
@@ -196,12 +188,19 @@ public abstract class Panel extends Widget implements HasWidgets {
   }
 
   /**
+   * <p>
    * This method must be called as part of the remove method of any Panel. It
    * ensures that the Widget's parent is cleared. This method should be called
    * after verifying that the child Widget is an existing child of the Panel,
    * but before physically removing the child Widget from the DOM. The child
    * will now fire its {@link Widget#onDetach()} event if this Panel is
    * currently attached.
+   * </p>
+   * <p>
+   * Calls to {@link #orphan(Widget)} should be wrapped in a try/finally block
+   * to ensure that the widget is physically detached even if orphan throws an
+   * exception.
+   * </p>
    * 
    * @param child the widget to be disowned
    * @see #add(Widget)

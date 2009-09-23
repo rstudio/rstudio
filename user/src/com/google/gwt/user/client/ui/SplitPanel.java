@@ -404,12 +404,16 @@ abstract class SplitPanel extends Panel {
     // Remove the old child.
     if (oldWidget != null) {
       // Orphan old.
-      orphan(oldWidget);
-      // Physical detach old.
-      DOM.removeChild(elements[index], oldWidget.getElement());
+      try {
+        orphan(oldWidget);
+      } finally {
+        // Physical detach old.
+        DOM.removeChild(elements[index], oldWidget.getElement());
+        widgets[index] = null;
+      }
     }
 
-    // Logical detach old / attach new.
+    // Logical attach new.
     widgets[index] = w;
 
     if (w != null) {

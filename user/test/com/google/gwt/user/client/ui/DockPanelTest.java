@@ -114,7 +114,7 @@ public class DockPanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(new DockPanel(), new Adder());
+    HasWidgetsTester.testAll(new DockPanel(), new Adder(), true);
   }
 
   public void testDebugId() {
