@@ -26,9 +26,12 @@ import com.google.gwt.uibinder.rebind.MortalLogger;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Model class with all attributes of the owner class.
@@ -40,7 +43,7 @@ public class OwnerClass {
    * Map from field name to model.
    */
   private final Map<String, OwnerField> uiFields =
-      new HashMap<String, OwnerField>();
+      new TreeMap<String, OwnerField>();
 
   /**
    * Map from field type to model.
