@@ -18,6 +18,8 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.InitializeEvent;
 import com.google.gwt.event.logical.shared.InitializeHandler;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RichTextArea.BasicFormatter;
@@ -26,7 +28,8 @@ import com.google.gwt.user.client.ui.RichTextArea.BasicFormatter;
  * Tests the {@link RichTextArea} widget.
  */
 public class RichTextAreaTest extends GWTTestCase {
-
+  static final int RICH_TEXT_ASYNC_DELAY = 3000;
+  
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
@@ -37,17 +40,12 @@ public class RichTextAreaTest extends GWTTestCase {
    * IE actually preserves dynamically-created iframe contents across DOM
    * removal/re-adding).
    */
+  @DoNotRunWith(Platform.Htmlunit)
   public void testAddEditRemoveAdd() {
     final RichTextArea area = new RichTextArea();
-    RootPanel.get().add(area);
-    area.setHTML("foo");
-
-    // This has to be done on a timer because the rta can take some time to
-    // finish initializing (on some browsers).
-    this.delayTestFinish(1000);
-    new Timer() {
-      @Override
-      public void run() {
+    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
+    area.addInitializeHandler(new InitializeHandler() {
+      public void onInitialize(InitializeEvent event) {
         RootPanel.get().remove(area);
         RootPanel.get().add(area);
 
@@ -56,7 +54,9 @@ public class RichTextAreaTest extends GWTTestCase {
         assertEquals("foo", area.getHTML());
         finishTest();
       }
-    }.schedule(500);
+    });
+    RootPanel.get().add(area);
+    area.setHTML("foo");
   }
 
   /**
@@ -89,16 +89,13 @@ public class RichTextAreaTest extends GWTTestCase {
     }
   }
 
+  @DoNotRunWith(Platform.Htmlunit)
   public void testFormatAfterInitialize() {
     final RichTextArea area = new RichTextArea();
-    RootPanel.get().add(area);
 
-    // This has to be done on a timer because the rta can take some time to
-    // finish initializing (on some browsers).
-    this.delayTestFinish(1000);
-    new Timer() {
-      @Override
-      public void run() {
+    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
+    area.addInitializeHandler(new InitializeHandler() {
+      public void onInitialize(InitializeEvent event) {
         BasicFormatter formatter = area.getBasicFormatter();
         if (formatter != null) {
           formatter.toggleBold();
@@ -106,7 +103,8 @@ public class RichTextAreaTest extends GWTTestCase {
         RootPanel.get().remove(area);
         finishTest();
       }
-    }.schedule(500);
+    });
+    RootPanel.get().add(area);
   }
 
   public void testFormatBeforeAttach() {
@@ -128,16 +126,12 @@ public class RichTextAreaTest extends GWTTestCase {
     }
   }
 
+  @DoNotRunWith(Platform.Htmlunit)
   public void testFormatWhenHidden() {
     final RichTextArea area = new RichTextArea();
-    RootPanel.get().add(area);
-
-    // This has to be done on a timer because the rta can take some time to
-    // finish initializing (on some browsers).
-    this.delayTestFinish(1000);
-    new Timer() {
-      @Override
-      public void run() {
+    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
+    area.addInitializeHandler(new InitializeHandler() {
+      public void onInitialize(InitializeEvent event) {
         area.setVisible(false);
         BasicFormatter formatter = area.getBasicFormatter();
         if (formatter != null) {
@@ -147,14 +141,16 @@ public class RichTextAreaTest extends GWTTestCase {
         RootPanel.get().remove(area);
         finishTest();
       }
-    }.schedule(500);
+    });
+    RootPanel.get().add(area);
   }
 
-  /** 
+  /**
    * See that the custom InitializeEvent fires.
    */
+  @DoNotRunWith(Platform.Htmlunit)
   public void testRichTextInitializeEvent() {
-    delayTestFinish(3000);
+    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     final RichTextArea richTextArea = new RichTextArea();
     richTextArea.addInitializeHandler(new InitializeHandler() {
       public void onInitialize(InitializeEvent event) {
@@ -168,73 +164,78 @@ public class RichTextAreaTest extends GWTTestCase {
    * Test that a delayed set of HTML is reflected. Some platforms have timing
    * subtleties that need to be tested.
    */
+  @DoNotRunWith(Platform.Htmlunit)
   public void testSetHTMLAfterInit() {
-    final RichTextArea richTextArea = new RichTextArea();
-    RootPanel.get().add(richTextArea);
-    new Timer() {
-      @Override
-      public void run() {
+    final RichTextArea richTextArea = new RichTextArea();    
+    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
+    richTextArea.addInitializeHandler(new InitializeHandler() {
+      public void onInitialize(InitializeEvent event) {
         richTextArea.setHTML("<b>foo</b>");
         assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
         finishTest();
       }
-    }.schedule(200);
-    delayTestFinish(1000);
+    });
+    RootPanel.get().add(richTextArea);
   }
 
   /**
-   * Test that an immediate set of HTML is reflected immediately and after a
-   * delay. Some platforms have timing subtleties that need to be tested.
+   * Test that an immediate set of HTML is reflected immediately and after the
+   * area loads. Some platforms have timing subtleties that need to be tested.
    */
+  @DoNotRunWith(Platform.Htmlunit)
   public void testSetHTMLBeforeInit() {
     final RichTextArea richTextArea = new RichTextArea();
-    RootPanel.get().add(richTextArea);
-    richTextArea.setHTML("<b>foo</b>");
-    assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
-    new Timer() {
-      @Override
-      public void run() {
-        assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
-        finishTest();
+    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
+    richTextArea.addInitializeHandler(new InitializeHandler() {
+      public void onInitialize(InitializeEvent event) {
+        new Timer() {
+          @Override
+          public void run() {
+            assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
+            finishTest();
+          }
+        }.schedule(100);
       }
-    }.schedule(200);
-    delayTestFinish(1000);
+    });
+    richTextArea.setHTML("<b>foo</b>");
+    RootPanel.get().add(richTextArea);
+    assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
   }
 
   /**
    * Test that delayed set of text is reflected. Some platforms have timing
    * subtleties that need to be tested.
    */
+  @DoNotRunWith(Platform.Htmlunit)
   public void testSetTextAfterInit() {
     final RichTextArea richTextArea = new RichTextArea();
-    RootPanel.get().add(richTextArea);
-    new Timer() {
-      @Override
-      public void run() {
+    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
+    richTextArea.addInitializeHandler(new InitializeHandler() {
+      public void onInitialize(InitializeEvent event) {
         richTextArea.setText("foo");
         assertEquals("foo", richTextArea.getText());
         finishTest();
       }
-    }.schedule(200);
-    delayTestFinish(1000);
+    });
+    RootPanel.get().add(richTextArea);
   }
 
   /**
-   * Test that an immediate set of text is reflected immediately and after a
-   * delay. Some platforms have timing subtleties that need to be tested.
+   * Test that an immediate set of text is reflected immediately and after the
+   * area loads. Some platforms have timing subtleties that need to be tested.
    */
+  @DoNotRunWith(Platform.Htmlunit)
   public void testSetTextBeforeInit() {
     final RichTextArea richTextArea = new RichTextArea();
-    RootPanel.get().add(richTextArea);
     richTextArea.setText("foo");
-    assertEquals("foo", richTextArea.getText());
-    new Timer() {
-      @Override
-      public void run() {
+    richTextArea.addInitializeHandler(new InitializeHandler() {
+      public void onInitialize(InitializeEvent event) {
         assertEquals("foo", richTextArea.getText());
         finishTest();
       }
-    }.schedule(200);
-    delayTestFinish(1000);
+    });
+    RootPanel.get().add(richTextArea);
+    assertEquals("foo", richTextArea.getText());
+    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
   }
 }
