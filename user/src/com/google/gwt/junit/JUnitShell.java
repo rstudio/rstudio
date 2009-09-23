@@ -556,8 +556,7 @@ public class JUnitShell extends GWTShell {
   protected void initializeLogger() {
     if (isHeadless()) {
       consoleLogger = new PrintWriterTreeLogger();
-      // previously, in legacy hosted mode, the call was:
-      // consoleLogger.setMaxDetail(getCompilerOptions().getLogLevel());
+      consoleLogger.setMaxDetail(options.getLogLevel());
     } else {
       super.initializeLogger();
     }

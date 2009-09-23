@@ -91,7 +91,7 @@ public class GWTShell extends OophmHostedModeBase {
   /**
    * Concrete class to implement all shell options.
    */
-  static class ShellOptionsImpl extends OophmHostedModeBaseOptionsImpl
+  protected static class ShellOptionsImpl extends OophmHostedModeBaseOptionsImpl
       implements HostedModeBaseOptions, WorkDirs, LegacyCompilerOptions,
       OptionPortHosted {
     private int localWorkers;
