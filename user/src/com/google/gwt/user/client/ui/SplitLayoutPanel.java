@@ -251,6 +251,19 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     splitter.setMinSize(minSize);
   }
 
+  private Splitter getAssociatedSplitter(Widget child) {
+    // If a widget has a next sibling, it must be a splitter, because the only
+    // widget that *isn't* followed by a splitter must be the CENTER, which has
+    // no associated splitter.
+    int idx = getWidgetIndex(child);
+    if (idx < getWidgetCount() - 2) {
+      Widget splitter = getWidget(idx + 1);
+      assert splitter instanceof Splitter : "Expected child widget to be splitter";
+      return (Splitter) splitter;
+    }
+    return null;
+  }
+
   private void insertSplitter(Widget before) {
     assert getChildren().size() > 0 : "Can't add a splitter before any children";
     assert getCenter() == null : "Can't add a splitter after the CENTER widget";
@@ -276,18 +289,5 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     }
 
     super.insert(splitter, lastChildLayout.direction, SPLITTER_SIZE, before);
-  }
-
-  private Splitter getAssociatedSplitter(Widget child) {
-    // If a widget has a next sibling, it must be a splitter, because the only
-    // widget that *isn't* followed by a splitter must be the CENTER, which has
-    // no associated splitter.
-    int idx = getWidgetIndex(child);
-    if (idx < getWidgetCount() - 2) {
-      Widget splitter = getWidget(idx + 1);
-      assert splitter instanceof Splitter : "Expected child widget to be splitter";
-      return (Splitter) splitter;
-    }
-    return null;
   }
 }

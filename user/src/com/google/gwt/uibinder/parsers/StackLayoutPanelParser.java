@@ -34,9 +34,9 @@ public class StackLayoutPanelParser implements ElementParser {
       UiBinderWriter writer) throws UnableToCompleteException {
     // StackLayoutPanel requires a unit ctor.
     Unit unit = elem.consumeEnumAttribute("unit", Unit.class);
-    writer.setFieldInitializerAsConstructor(fieldName, writer.getOracle()
-        .findType(StackLayoutPanel.class.getName()), DockLayoutPanelParser
-        .getFullyQualifiedEnumName(unit));
+    writer.setFieldInitializerAsConstructor(fieldName,
+        writer.getOracle().findType(StackLayoutPanel.class.getName()),
+        DockLayoutPanelParser.getFullyQualifiedEnumName(unit));
 
     // Parse children.
     for (XMLElement child : elem.consumeChildElements()) {

@@ -17,7 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.layout.client.Layout;
 import com.google.gwt.layout.client.Layout.Layer;
@@ -55,8 +54,8 @@ public class DockLayoutPanel extends ComplexPanel implements RequiresLayout,
     RequiresResize, ProvidesResize {
 
   /**
-   * Used in {@link DockLayoutPanel#add(Widget, Direction, double)} to specify
-   * the direction in which a child widget will be added.
+   * Used in {@link DockLayoutPanel#addEast(Widget, double)} et al to
+   * specify the direction in which a child widget will be added.
    */
   public enum Direction {
     NORTH, EAST, SOUTH, WEST, CENTER, LINE_START, LINE_END
@@ -151,8 +150,9 @@ public class DockLayoutPanel extends ComplexPanel implements RequiresLayout,
    * 
    * <p>
    * The container element is created by the {@link Layout} class. This should
-   * be used with certain styles, such as {@link Style#setZIndex(int)}, that
-   * must be applied to the container, rather than directly to the child widget.
+   * be used with certain styles, such as
+   * {@link com.google.gwt.dom.client.Style#setZIndex(int)}, that must be
+   * applied to the container, rather than directly to the child widget.
    * </p>
    * 
    * TODO(jgw): Is this really the best way to do this?

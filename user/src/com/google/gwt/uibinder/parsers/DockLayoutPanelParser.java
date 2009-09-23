@@ -70,8 +70,8 @@ public class DockLayoutPanelParser implements ElementParser {
     // (Don't generate a ctor for the SplitLayoutPanel; it's implicitly PX).
     if (type != getSplitLayoutPanelType(writer)) {
       Unit unit = elem.consumeEnumAttribute("unit", Unit.class);
-      writer.setFieldInitializerAsConstructor(fieldName, writer.getOracle()
-          .findType(DockLayoutPanel.class.getName()),
+      writer.setFieldInitializerAsConstructor(fieldName,
+          writer.getOracle().findType(DockLayoutPanel.class.getName()),
           getFullyQualifiedEnumName(unit));
     }
 
@@ -79,7 +79,9 @@ public class DockLayoutPanelParser implements ElementParser {
     for (XMLElement child : elem.consumeChildElements()) {
       // Make sure the element is one of the fixed set of valid directions.
       if (!isValidChildElement(elem, child)) {
-        writer.die("In %s, child must be one of {north, south, east, west, center}", elem);
+        writer.die(
+            "In %s, child must be one of {north, south, east, west, center}",
+            elem);
       }
 
       // Consume the single widget element.
