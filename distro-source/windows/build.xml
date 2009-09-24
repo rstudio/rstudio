@@ -19,9 +19,6 @@
 
       <!-- jni libs-->
       <zipfileset dir="${gwt.build.jni}/${dist.platform}" prefix="${project.distname}" />
-      <zipfileset dir="${gwt.tools.lib}/eclipse" prefix="${project.distname}">
-        <include name="swt-*win32-3235.dll" />
-      </zipfileset>
 
       <!-- raw files -->
       <zipfileset dir="${dist.resources}" prefix="${project.distname}" />

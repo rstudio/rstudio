@@ -19,11 +19,6 @@
 
       <!-- jni libs-->
       <tarfileset dir="${gwt.build.jni}/${dist.platform}" prefix="${project.distname}" />
-      <tarfileset dir="${gwt.tools.lib}/eclipse" prefix="${project.distname}">
-        <include name="libswt-*carbon-3235.jnilib" />
-        <!-- Use our modified version instead of this stock version -->
-        <exclude name="libswt-webkit-carbon-3235.jnilib" />
-      </tarfileset>
 
       <!-- raw files -->
       <tarfileset dir="${dist.resources}" prefix="${project.distname}" mode="755">
