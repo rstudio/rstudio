@@ -293,6 +293,9 @@ public class DOMTest extends GWTTestCase {
    * Tests that {@link DOM#setInnerText(Element, String)} works consistently
    * across browsers.
    */
+  // TODO (amitmanjhi): Remove annotation after updating HtmlUnit. kprobst says
+  // the issue has been fixed in htmlUnit trunk
+  @DoNotRunWith({Platform.Htmlunit})
   public void testSetInnerText() {
     Element tableElem = DOM.createTable();
 
