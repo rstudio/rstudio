@@ -142,7 +142,7 @@
     <property name="gwt.junit.testcase.hosted.includes" value="${gwt.junit.testcase.includes}" />
     <property name="gwt.junit.testcase.hosted.excludes" value="${gwt.junit.testcase.excludes}" />
     <fileset id="test.hosted.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.hosted.includes}" excludes="${gwt.junit.testcase.hosted.excludes}" />
-    <gwt.junit test.args="${test.args} -batch module" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="test.hosted.tests" >
+    <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="test.hosted.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -165,7 +165,7 @@
 
   <target name="test.web" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
     <fileset id="test.web.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -web -batch module" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="test.web.tests">
+    <gwt.junit test.args="${test.args} -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="test.web.tests">
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
