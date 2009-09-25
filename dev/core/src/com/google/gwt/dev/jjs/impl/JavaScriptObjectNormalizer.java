@@ -58,7 +58,8 @@ public class JavaScriptObjectNormalizer {
     public void endVisit(JCastOperation x, Context ctx) {
       JType newType = translate(x.getCastType());
       if (newType != x.getCastType()) {
-        ctx.replaceMe(new JCastOperation(x.getSourceInfo(), newType, x.getExpr()));
+        ctx.replaceMe(new JCastOperation(x.getSourceInfo(), newType,
+            x.getExpr()));
       }
     }
 
@@ -135,8 +136,8 @@ public class JavaScriptObjectNormalizer {
           CloneExpressionVisitor cloner = new CloneExpressionVisitor(program);
 
           // instance.jsoMethod(arg, arg)
-          JMethodCall jsoCall = new JMethodCall(info, cloner.cloneExpression(instance),
-              jsoMethod);
+          JMethodCall jsoCall = new JMethodCall(info,
+              cloner.cloneExpression(instance), jsoMethod);
           jsoCall.addArgs(cloner.cloneExpressions(x.getArgs()));
 
           // Cast.isJavaScriptObject() ? instance.jsoMethod() :
@@ -152,7 +153,8 @@ public class JavaScriptObjectNormalizer {
            * ... otherwise, if there's only a JSO implementation, we'll just
            * call that directly.
            */
-          JMethodCall jsoCall = new JMethodCall(info, x.getInstance(), jsoMethod);
+          JMethodCall jsoCall = new JMethodCall(info, x.getInstance(),
+              jsoMethod);
           jsoCall.addArgs(x.getArgs());
           ctx.replaceMe(jsoCall);
         }
@@ -213,7 +215,8 @@ public class JavaScriptObjectNormalizer {
         JExpression notJsoExpr) {
       // Cast.isJavaScriptObjectOrString(instance)
       JMethod isJavaScriptObjectMethod = program.getIndexedMethod("Cast.isJavaScriptObjectOrString");
-      JMethodCall isJavaScriptObjectExpr = new JMethodCall(info, null, isJavaScriptObjectMethod);
+      JMethodCall isJavaScriptObjectExpr = new JMethodCall(info, null,
+          isJavaScriptObjectMethod);
       isJavaScriptObjectExpr.addArg(instance);
       return new JConditional(info, conditionalType, isJavaScriptObjectExpr,
           isJsoExpr, notJsoExpr);
