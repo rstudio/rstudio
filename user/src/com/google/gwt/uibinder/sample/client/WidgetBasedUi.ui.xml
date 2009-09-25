@@ -14,7 +14,7 @@
 -->
 
 <!DOCTYPE ui:UiBinder 
-  SYSTEM "http://google-web-toolkit.googlecode.com/svn/resources/xhtml.ent"
+  SYSTEM "http://google-web-toolkit.googlecode.com/files/xhtml.ent"
   [
     <!ENTITY % MyEntities SYSTEM "MyEntities.ent">
     %MyEntities;
@@ -26,13 +26,15 @@
   
   First, this bit:
   
-    SYSTEM "http://google-web-toolkit.googlecode.com/svn/trunk/resources/xhtml.ent"
+    SYSTEM "http://google-web-toolkit.googlecode.com/files/xhtml.ent"
  
   allows you to use familiar HTML entities like %nbsp; and &bull;, 
   which are not part of XML.
     
-  Next, the bit in square brackets pulls in additional definitions for
-  &point-left; and &point-right; from local file MyEntities.ent.
+  Next, the bit in square brackets is even more optional. It shows how
+  to add your own entities, in this case pulling in additional
+  definitions for &point-left; and &point-right; from local file
+  MyEntities.ent.
 
   You don't have to be so verbose to include a local file! For
   example, you might instead grab your own copy of xhtml.ent
