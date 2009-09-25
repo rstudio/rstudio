@@ -177,13 +177,21 @@ public class JavaScriptObjectNormalizer {
 
     private JMethod findConcreteImplementation(JMethod method,
         JClassType concreteType) {
-      for (JMethod m : concreteType.getMethods()) {
-        if (program.typeOracle.getAllOverrides(m).contains(method)) {
-          if (!m.isAbstract()) {
-            return m;
+      /*
+       * Search supertypes for virtual overrides via subclass. See the javadoc
+       * on JTypeOracle.getAllVirtualOverrides for an example.
+       */
+      while (concreteType != null) {
+        for (JMethod m : concreteType.getMethods()) {
+          if (program.typeOracle.getAllOverrides(m).contains(method)) {
+            if (!m.isAbstract()) {
+              return m;
+            }
           }
         }
+        concreteType = concreteType.getSuperClass();
       }
+
       return null;
     }
 

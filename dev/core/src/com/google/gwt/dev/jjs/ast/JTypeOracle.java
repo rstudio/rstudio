@@ -448,7 +448,6 @@ public class JTypeOracle implements Serializable {
             }
           }
         }
-        jsoSubType.clearImplements();
       }
     }
 

@@ -24,6 +24,16 @@ import com.google.gwt.junit.client.GWTTestCase;
 public class TypeHierarchyTest extends GWTTestCase {
 
   /**
+   * Used with PlainJso and PlainJsoWithInterface to mix interfaces into
+   * existing base classes.
+   */
+  interface Arrayish {
+    int getLength();
+
+    JavaScriptObject getObject(int i);
+  }
+
+  /**
    * The bottom type for a non-trivial diamond-shaped inheritance pattern.
    */
   static class DiamondImpl extends JavaScriptObject implements IDiamond2A,
@@ -57,6 +67,35 @@ public class TypeHierarchyTest extends GWTTestCase {
    * The right type for a non-trivial diamond-shaped inheritance pattern.
    */
   interface IDiamond2B extends IDiamond1 {
+  }
+
+  /**
+   * This is a base class that is used to test adding interfaces to a JSO via a
+   * subclass.
+   */
+  static class PlainJso extends JavaScriptObject {
+    protected PlainJso() {
+    }
+
+    public final native int getLength()/*-{
+      return this.length;
+    }-*/;
+
+    public final native JavaScriptObject getObject(int i) /*-{
+      return this[i];
+    }-*/;
+  }
+
+  /**
+   * We'll mix in an interface into PlainJso.
+   */
+  static class PlainJsoWithInterface extends PlainJso implements Arrayish {
+    public static PlainJsoWithInterface create() {
+      return JavaScriptObject.createArray().cast();
+    }
+
+    protected PlainJsoWithInterface() {
+    }
   }
 
   @Override
@@ -106,5 +145,11 @@ public class TypeHierarchyTest extends GWTTestCase {
 
     IDiamond2B d2b = DiamondImpl.create();
     assertEquals(42, d2b.size());
+  }
+
+  public void testVirtualOverrides() {
+    Arrayish array = PlainJsoWithInterface.create();
+    assertEquals(0, array.getLength());
+    assertNull(array.getObject(0));
   }
 }

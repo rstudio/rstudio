@@ -36,9 +36,9 @@ import com.google.gwt.dev.shell.rewrite.HasAnnotation;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOracle;
 import com.google.gwt.dev.util.JsniRef;
-import com.google.gwt.dev.util.Name.SourceOrBinaryName;
-import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.Name.InternalName;
+import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.util.tools.Utility;
 
 import org.apache.commons.collections.map.AbstractReferenceMap;
@@ -911,6 +911,21 @@ public final class CompilingClassLoader extends ClassLoader implements
         String mangledName = getBinaryName(type).replace('.', '_') + "_"
             + m.getName();
 
+        JType[] parameterTypes = new JType[m.getParameters().length];
+        for (int i = 0; i < parameterTypes.length; i++) {
+          parameterTypes[i] = m.getParameters()[i].getType();
+        }
+
+        /*
+         * Handle virtual overrides by finding the method that we would normally
+         * invoke and using its declaring class as the dispatch target.
+         */
+        while (implementingType.findMethod(m.getName(), parameterTypes) == null) {
+          implementingType = implementingType.getSuperclass();
+        }
+        assert implementingType != null : "Unable to find virtual override for "
+            + m.toString();
+
         /*
          * Cook up the a pseudo-method declaration for the concrete type. This
          * should look something like
@@ -921,9 +936,9 @@ public final class CompilingClassLoader extends ClassLoader implements
          */
         String decl = getBinaryOrPrimitiveName(m.getReturnType()) + " "
             + m.getName() + "$ (" + getBinaryOrPrimitiveName(implementingType);
-        for (JParameter p : m.getParameters()) {
+        for (JType paramType : parameterTypes) {
           decl += ",";
-          decl += getBinaryOrPrimitiveName(p.getType());
+          decl += getBinaryOrPrimitiveName(paramType);
         }
         decl += ")";
 
