@@ -144,7 +144,6 @@ public class JsValueOOPHM extends JsValue {
    * @param jsRefId pointer to underlying JsRootedValue as an integer.
    */
   public JsValueOOPHM(int jsRefId) {
-    JsObjectRef.checkIdMap(jsRefId);
     this.value = new JsObjectRef(jsRefId);
   }
 

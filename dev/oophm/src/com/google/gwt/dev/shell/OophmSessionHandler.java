@@ -48,7 +48,7 @@ public class OophmSessionHandler extends SessionHandler {
   @Override
   public void freeValue(BrowserChannel channel, int[] ids) {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
-    ObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
+    ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
     for (int id : ids) {
       localObjects.free(id);
     }
@@ -60,7 +60,7 @@ public class OophmSessionHandler extends SessionHandler {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
     ModuleSpace moduleSpace = moduleMap.get(serverChannel);
     assert moduleSpace != null;
-    ObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
+    ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
     try {
       JsValueOOPHM obj = new JsValueOOPHM();
       DispatchObject dispObj;
@@ -91,7 +91,7 @@ public class OophmSessionHandler extends SessionHandler {
   public ExceptionOrReturnValue invoke(BrowserChannel channel, Value thisVal,
       int methodDispatchId, Value[] args) {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
-    ObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
+    ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
     ModuleSpace moduleSpace = moduleMap.get(serverChannel);
     assert moduleSpace != null;
     CompilingClassLoader cl = moduleSpace.getIsolatedClassLoader();
@@ -190,7 +190,7 @@ public class OophmSessionHandler extends SessionHandler {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
     ModuleSpace moduleSpace = moduleMap.get(serverChannel);
     assert moduleSpace != null;
-    ObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
+    ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
     try {
       JsValueOOPHM obj = new JsValueOOPHM();
       DispatchObject dispObj;

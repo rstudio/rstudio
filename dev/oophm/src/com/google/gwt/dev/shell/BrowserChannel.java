@@ -29,16 +29,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
 import java.net.Socket;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.Collections;
 import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * 
@@ -48,7 +41,7 @@ public abstract class BrowserChannel {
   /**
    * Class representing a reference to a Java object.
    */
-  public static class JavaObjectRef {
+  public static class JavaObjectRef implements RemoteObjectRef {
     private int refId;
 
     public JavaObjectRef(int refId) {
@@ -60,6 +53,15 @@ public abstract class BrowserChannel {
     }
 
     @Override
+    public int hashCode() {
+      return refId;
+    }
+
+    public boolean isException() {
+      return refId < 0;
+    }
+
+    @Override
     public String toString() {
       return "JavaObjectRef(ref=" + refId + ")";
     }
@@ -68,14 +70,8 @@ public abstract class BrowserChannel {
   /**
    * Class representing a reference to a JS object.
    */
-  public static class JsObjectRef {
+  public static class JsObjectRef implements RemoteObjectRef  {
     
-    // TODO: refactor and remove this method.
-    public static void checkIdMap(int refId) {
-      assert !JSOBJECT_ID_MAP.get().containsKey(refId)
-      || (JSOBJECT_ID_MAP.get().get(refId).get() == null);
-    }
-
     private int refId;
     
     public JsObjectRef(int refId) {
@@ -110,13 +106,77 @@ public abstract class BrowserChannel {
   /**
    * Enumeration of message type ids.
    * 
-   * NOTE: order is important as this defines the ordinals used in the wire
-   * protocol.
+   * <p>Ids are used instead of relying on the ordinal to avoid sychronization
+   * problems with the client.
    */
   public enum MessageType {
-    INVOKE, RETURN, OLD_LOAD_MODULE, QUIT, LOAD_JSNI, INVOKE_SPECIAL, FREE_VALUE,
-    FATAL_ERROR, CHECK_VERSIONS, PROTOCOL_VERSION, CHOOSE_TRANSPORT,
-    SWITCH_TRANSPORT, LOAD_MODULE;
+    /**
+     * A message to invoke a method on the other side of the wire.  Note that
+     * the messages are asymmetric -- see {@link InvokeOnClientMessage} and
+     * {@link InvokeOnServerMessage}.
+     */
+    INVOKE(0),
+    
+    /**
+     * Returns the result of an INVOKE, INVOKE_SPECIAL, or LOAD_MODULE message. 
+     */
+    RETURN(1),
+    
+    /**
+     * v1 LOAD_MODULE message.
+     */
+    OLD_LOAD_MODULE(2),
+    
+    /**
+     * Normal closure of the connection.
+     */
+    QUIT(3),
+    
+    /**
+     * A request by the server to load JSNI source into the client's JS engine.
+     */
+    LOAD_JSNI(4),
+    
+    INVOKE_SPECIAL(5),
+    
+    FREE_VALUE(6),
+    
+    /**
+     * Abnormal termination of the connection.
+     */
+    FATAL_ERROR(7),
+    
+    CHECK_VERSIONS(8),
+    
+    PROTOCOL_VERSION(9),
+    
+    CHOOSE_TRANSPORT(10),
+    
+    SWITCH_TRANSPORT(11),
+    
+    LOAD_MODULE(12);
+    
+    private final int id;
+    
+    private MessageType(int id) {
+      this.id = id;
+    }
+    
+    public int getId() {
+      return id;
+    }
+  }
+
+  /**
+   * Represents an object on the other side of the channel, known to this side
+   * by an reference ID.
+   */
+  public interface RemoteObjectRef {
+    
+    /**
+      * Return the reference ID for this object.
+      */
+    int getRefid();
   }
 
   /**
@@ -149,10 +209,23 @@ public abstract class BrowserChannel {
     /**
      * Enumeration of dispatch IDs on object 0 (the ServerMethods object).
      * 
+     * <p>Ids are set specifically rather than relying on the ordinal to avoid
+     * synchronization problems with the client.
+     * 
      * TODO: hasMethod/hasProperty no longer used, remove them!
      */
     public enum SpecialDispatchId {
-      HasMethod, HasProperty, GetProperty, SetProperty,
+      HasMethod(0), HasProperty(1), GetProperty(2), SetProperty(3);
+      
+      private final int id;
+
+      private SpecialDispatchId(int id) {
+        this.id = id;
+      }
+      
+      public int getId() {
+        return id;
+      }
     }
 
     public abstract void freeValue(BrowserChannel channel, int[] ids);
@@ -197,24 +270,28 @@ public abstract class BrowserChannel {
       /**
        * Primitive values.
        */
-      NULL, BOOLEAN, BYTE, CHAR, SHORT, INT, LONG, FLOAT, DOUBLE, STRING,
+      NULL(0), BOOLEAN(1), BYTE(2), CHAR(3), SHORT(4), INT(5), LONG(6),
+      FLOAT(7), DOUBLE(8), STRING(9),
 
       /**
        * Representations of Java or JS objects, sent as an index into a table
        * kept on the side holding the actual object.
        */
-      JAVA_OBJECT, JS_OBJECT,
+      JAVA_OBJECT(10), JS_OBJECT(11),
 
       /**
        * A Javascript undef value, also used for void returns.
        */
-      UNDEFINED;
+      UNDEFINED(12);
 
-      ValueType() {
+      private final int id;
+
+      private ValueType(int id) {
+        this.id = id;
       }
 
       byte getTag() {
-        return (byte) this.ordinal();
+        return (byte) id;
       }
     }
 
@@ -556,11 +633,11 @@ public abstract class BrowserChannel {
           hostedHtmlVersion);
     }
 
-    private final int minVersion;
+    private final String hostedHtmlVersion;
 
     private final int maxVersion;
 
-    private final String hostedHtmlVersion;
+    private final int minVersion;
 
     public CheckVersionsMessage(BrowserChannel channel, int minVersion,
         int maxVersion, String hostedHtmlVersion) {
@@ -585,7 +662,7 @@ public abstract class BrowserChannel {
     @Override
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
-      stream.writeByte(MessageType.CHECK_VERSIONS.ordinal());
+      stream.writeByte(MessageType.CHECK_VERSIONS.getId());
       stream.writeInt(minVersion);
       stream.writeInt(maxVersion);
       writeUtf8String(stream, hostedHtmlVersion);
@@ -625,7 +702,7 @@ public abstract class BrowserChannel {
     @Override
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
-      stream.writeByte(MessageType.CHOOSE_TRANSPORT.ordinal());
+      stream.writeByte(MessageType.CHOOSE_TRANSPORT.getId());
       stream.writeInt(transports.length);
       for (String transport : transports) {
         writeUtf8String(stream, transport);
@@ -660,7 +737,7 @@ public abstract class BrowserChannel {
     @Override
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
-      stream.writeByte(MessageType.FATAL_ERROR.ordinal());
+      stream.writeByte(MessageType.FATAL_ERROR.getId());
       writeUtf8String(stream, error);
     }
   }
@@ -686,7 +763,7 @@ public abstract class BrowserChannel {
     public static void send(BrowserChannel channel, int[] ids)
         throws IOException {
       DataOutputStream stream = channel.getStreamToOtherSide();
-      stream.writeByte(MessageType.FREE_VALUE.ordinal());
+      stream.writeByte(MessageType.FREE_VALUE.getId());
       stream.writeInt(ids.length);
       for (int id : ids) {
         stream.writeInt(id);
@@ -730,19 +807,18 @@ public abstract class BrowserChannel {
       DataInputStream stream = channel.getStreamFromOtherSide();
       // NOTE: Tag has already been read.
       String methodName = readUtf8String(stream);
-      Value thisRef = readValue(stream);
+      Value thisRef = channel.readValue(stream);
       int argLen = stream.readInt();
       Value[] args = new Value[argLen];
       for (int i = 0; i < argLen; i++) {
-        args[i] = readValue(stream);
+        args[i] = channel.readValue(stream);
       }
       return new InvokeOnClientMessage(channel, methodName, thisRef, args);
     }
 
-    private final String methodName;
-
-    private final Value thisRef;
     private final Value[] args;
+    private final String methodName;
+    private final Value thisRef;
 
     public InvokeOnClientMessage(BrowserChannel channel, String methodName,
         Value thisRef, Value[] args) {
@@ -768,12 +844,12 @@ public abstract class BrowserChannel {
     public void send() throws IOException {
       final DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
 
-      stream.writeByte(MessageType.INVOKE.ordinal());
+      stream.writeByte(MessageType.INVOKE.getId());
       writeUtf8String(stream, methodName);
-      writeValue(stream, thisRef);
+      getBrowserChannel().writeValue(stream, thisRef);
       stream.writeInt(args.length);
       for (int i = 0; i < args.length; i++) {
-        writeValue(stream, args[i]);
+        getBrowserChannel().writeValue(stream, args[i]);
       }
       stream.flush();
     }
@@ -793,19 +869,19 @@ public abstract class BrowserChannel {
       DataInputStream stream = channel.getStreamFromOtherSide();
       // NOTE: Tag has already been read.
       int methodDispatchId = stream.readInt();
-      Value thisRef = readValue(stream);
+      Value thisRef = channel.readValue(stream);
       int argLen = stream.readInt();
       Value[] args = new Value[argLen];
       for (int i = 0; i < argLen; i++) {
-        args[i] = readValue(stream);
+        args[i] = channel.readValue(stream);
       }
       return new InvokeOnServerMessage(channel, methodDispatchId, thisRef,
           args);
     }
 
+    private final Value[] args;
     private final int methodDispatchId;
     private final Value thisRef;
-    private final Value[] args;
 
     public InvokeOnServerMessage(BrowserChannel channel, int methodDispatchId,
         Value thisRef, Value[] args) {
@@ -831,12 +907,12 @@ public abstract class BrowserChannel {
     public void send() throws IOException {
       final DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
 
-      stream.writeByte(MessageType.INVOKE.ordinal());
+      stream.writeByte(MessageType.INVOKE.getId());
       stream.writeInt(methodDispatchId);
-      writeValue(stream, thisRef);
+      getBrowserChannel().writeValue(stream, thisRef);
       stream.writeInt(args.length);
       for (int i = 0; i < args.length; i++) {
-        writeValue(stream, args[i]);
+        getBrowserChannel().writeValue(stream, args[i]);
       }
       stream.flush();
     }
@@ -860,13 +936,13 @@ public abstract class BrowserChannel {
       final int argLen = stream.readInt();
       final Value[] args = new Value[argLen];
       for (int i = 0; i < argLen; i++) {
-        args[i] = readValue(stream);
+        args[i] = channel.readValue(stream);
       }
       return new InvokeSpecialMessage(channel, dispatchId, args);
     }
 
-    private final SpecialDispatchId dispatchId;
     private final Value[] args;
+    private final SpecialDispatchId dispatchId;
 
     public InvokeSpecialMessage(BrowserChannel channel,
         SpecialDispatchId dispatchId, Value[] args) {
@@ -887,11 +963,11 @@ public abstract class BrowserChannel {
     public void send() throws IOException {
       final DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
 
-      stream.writeByte(MessageType.INVOKE_SPECIAL.ordinal());
-      stream.writeByte(dispatchId.ordinal());
+      stream.writeByte(MessageType.INVOKE_SPECIAL.getId());
+      stream.writeByte(dispatchId.getId());
       stream.writeInt(args.length);
       for (int i = 0; i < args.length; i++) {
-        writeValue(stream, args[i]);
+        getBrowserChannel().writeValue(stream, args[i]);
       }
       stream.flush();
     }
@@ -913,7 +989,7 @@ public abstract class BrowserChannel {
     public static void send(BrowserChannel channel, String js)
         throws IOException {
       DataOutputStream stream = channel.getStreamToOtherSide();
-      stream.write(MessageType.LOAD_JSNI.ordinal());
+      stream.write(MessageType.LOAD_JSNI.getId());
       writeUtf8String(stream, js);
       stream.flush();
     }
@@ -959,13 +1035,13 @@ public abstract class BrowserChannel {
 
     private final String moduleName;
 
-    private final String userAgent;
-
-    private final String url;
-    
     private final String sessionKey;
 
     private final String tabKey;
+    
+    private final String url;
+
+    private final String userAgent;
 
     /**
      * Creates a LoadModule message to be sent to the server.
@@ -1017,7 +1093,7 @@ public abstract class BrowserChannel {
     @Override
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
-      stream.writeByte(MessageType.LOAD_MODULE.ordinal());
+      stream.writeByte(MessageType.LOAD_MODULE.getId());
       writeUtf8String(stream, url);
       writeUtf8String(stream, tabKey);
       writeUtf8String(stream, sessionKey);
@@ -1069,6 +1145,20 @@ public abstract class BrowserChannel {
   }
 
   /**
+   * Provides a way of allocating JS and Java object ids without knowing
+   * which one is the remote type, so code can be shared between client and
+   * server.
+   */
+  protected interface ObjectRefFactory {
+
+    JavaObjectRef getJavaObjectRef(int refId);
+
+    JsObjectRef getJsObjectRef(int refId);
+
+    Set<Integer> getRefIdsForCleanup();
+  }
+
+  /**
    * A request from the client that the server load and initialize a given
    * module (original v1 version).
    */
@@ -1085,9 +1175,9 @@ public abstract class BrowserChannel {
 
     private final String moduleName;
 
-    private final String userAgent;
-
     private final int protoVersion;
+
+    private final String userAgent;
     
     public OldLoadModuleMessage(BrowserChannel channel, int protoVersion,
         String moduleName, String userAgent) {
@@ -1112,7 +1202,7 @@ public abstract class BrowserChannel {
     @Override
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
-      stream.writeByte(MessageType.OLD_LOAD_MODULE.ordinal());
+      stream.writeByte(MessageType.OLD_LOAD_MODULE.getId());
       stream.writeInt(protoVersion);
       writeUtf8String(stream, moduleName);
       writeUtf8String(stream, userAgent);
@@ -1146,7 +1236,7 @@ public abstract class BrowserChannel {
     @Override
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
-      stream.writeByte(MessageType.PROTOCOL_VERSION.ordinal());
+      stream.writeByte(MessageType.PROTOCOL_VERSION.getId());
       stream.writeInt(protocolVersion);
       stream.flush();
     }
@@ -1162,7 +1252,7 @@ public abstract class BrowserChannel {
 
     public static void send(BrowserChannel channel) throws IOException {
       final DataOutputStream stream = channel.getStreamToOtherSide();
-      stream.writeByte(MessageType.QUIT.ordinal());
+      stream.writeByte(MessageType.QUIT.getId());
       stream.flush();
     }
 
@@ -1184,16 +1274,16 @@ public abstract class BrowserChannel {
         throws IOException {
       final DataInputStream stream = channel.getStreamFromOtherSide();
       final boolean isException = stream.readBoolean();
-      final Value returnValue = readValue(stream);
+      final Value returnValue = channel.readValue(stream);
       return new ReturnMessage(channel, isException, returnValue);
     }
 
     public static void send(BrowserChannel channel, boolean isException,
         Value returnValue) throws IOException {
       final DataOutputStream stream = channel.getStreamToOtherSide();
-      stream.writeByte(MessageType.RETURN.ordinal());
+      stream.writeByte(MessageType.RETURN.getId());
       stream.writeBoolean(isException);
-      writeValue(stream, returnValue);
+      channel.writeValue(stream, returnValue);
       stream.flush();
     }
 
@@ -1203,8 +1293,8 @@ public abstract class BrowserChannel {
           returnOrException.getReturnValue());
     }
 
-    private final Value returnValue;
     private final boolean isException;
+    private final Value returnValue;
 
     public ReturnMessage(BrowserChannel channel, boolean isException,
         Value returnValue) {
@@ -1270,7 +1360,7 @@ public abstract class BrowserChannel {
     @Override
     public void send() throws IOException {
       DataOutputStream stream = getBrowserChannel().getStreamToOtherSide();
-      stream.writeByte(MessageType.SWITCH_TRANSPORT.ordinal());
+      stream.writeByte(MessageType.SWITCH_TRANSPORT.getId());
       writeUtf8String(stream, transport);
       writeUtf8String(stream, transportArgs);
     }
@@ -1282,61 +1372,8 @@ public abstract class BrowserChannel {
 
   public static final int SPECIAL_SERVERMETHODS_OBJECT = 0;
 
-  /**
-   * This accumulates JsObjectRefs that are no longer referenced in the JVM.
-   */
-  private static final ThreadLocal<ReferenceQueue<JsObjectRef>> JSOBJECT_REF_QUEUE = new ThreadLocal<ReferenceQueue<JsObjectRef>>() {
-    @Override
-    protected ReferenceQueue<JsObjectRef> initialValue() {
-      return new ReferenceQueue<JsObjectRef>();
-    }
-  };
-
-  /**
-   * This map associates a JS reference id with a Reference to the JSObjectRef
-   * that currently represents that id.
-   */
-  private static final ThreadLocal<Map<Integer, Reference<JsObjectRef>>> JSOBJECT_ID_MAP = new ThreadLocal<Map<Integer, Reference<JsObjectRef>>>() {
-    @Override
-    protected Map<Integer, Reference<JsObjectRef>> initialValue() {
-      return new TreeMap<Integer, Reference<JsObjectRef>>();
-    }
-  };
-
-  /**
-   * This maps References to JsObjectRefs back to the original refId. Because we
-   * need the refId of the JsValueRef after it's been garbage-collected, this
-   * state must be stored externally.
-   */
-  private static final ThreadLocal<Map<Reference<JsObjectRef>, Integer>> REFERENCE_ID_MAP = new ThreadLocal<Map<Reference<JsObjectRef>, Integer>>() {
-    @Override
-    protected Map<Reference<JsObjectRef>, Integer> initialValue() {
-      return new IdentityHashMap<Reference<JsObjectRef>, Integer>();
-    }
-  };
-
-  /**
-   * Obtain the JsObjectRef that is currently in use to act as a proxy for the
-   * given JS object id.
-   */
-  protected static JsObjectRef getJsObjectRef(int refId) {
-    // Access is implicitly synchronous due to ThreadLocal
-    Map<Integer, Reference<JsObjectRef>> map = JSOBJECT_ID_MAP.get();
-    if (map.containsKey(refId)) {
-      Reference<JsObjectRef> ref = map.get(refId);
-      JsObjectRef toReturn = ref.get();
-      if (toReturn != null) {
-        return toReturn;
-      }
-    }
-
-    JsObjectRef.checkIdMap(refId);
-    JsObjectRef toReturn = new JsObjectRef(refId);
-    Reference<JsObjectRef> ref = new WeakReference<JsObjectRef>(toReturn,
-        JSOBJECT_REF_QUEUE.get());
-    map.put(refId, ref);
-    REFERENCE_ID_MAP.get().put(ref, refId);
-    return toReturn;
+  protected static JavaObjectRef getJavaObjectRef(int refId) {
+    return new JavaObjectRef(refId);
   }
 
   protected static String readUtf8String(DataInputStream stream)
@@ -1345,60 +1382,6 @@ public abstract class BrowserChannel {
     final byte[] data = new byte[len];
     stream.readFully(data);
     return new String(data, "UTF8");
-  }
-
-  protected static Value readValue(DataInputStream stream) throws IOException {
-    ValueType tag;
-    try {
-      tag = readValueType(stream);
-    } catch (BrowserChannelException e) {
-      IOException ee = new IOException();
-      ee.initCause(e);
-      throw ee;
-    }
-    Value value = new Value();
-    switch (tag) {
-      case NULL:
-        value.setNull();
-        break;
-      case UNDEFINED:
-        value.setUndefined();
-        break;
-      case BOOLEAN:
-        value.setBoolean(stream.readByte() != 0);
-        break;
-      case BYTE:
-        value.setByte(stream.readByte());
-        break;
-      case CHAR:
-        value.setChar(stream.readChar());
-        break;
-      case FLOAT:
-        value.setFloat(stream.readFloat());
-        break;
-      case INT:
-        value.setInt(stream.readInt());
-        break;
-      case LONG:
-        value.setLong(stream.readLong());
-        break;
-      case DOUBLE:
-        value.setDouble(stream.readDouble());
-        break;
-      case SHORT:
-        value.setShort(stream.readShort());
-        break;
-      case STRING:
-        value.setString(readUtf8String(stream));
-        break;
-      case JS_OBJECT:
-        value.setJsObject(getJsObjectRef(stream.readInt()));
-        break;
-      case JAVA_OBJECT:
-        value.setJavaObject(new JavaObjectRef(stream.readInt()));
-        break;
-    }
-    return value;
   }
 
   protected static ValueType readValueType(DataInputStream stream)
@@ -1487,7 +1470,186 @@ public abstract class BrowserChannel {
     }
   }
 
-  protected static void writeValue(DataOutputStream stream, Value value)
+  private static void writeUndefined(DataOutputStream stream)
+      throws IOException {
+    stream.writeByte(ValueType.UNDEFINED.getTag());
+  }
+
+  private final ObjectRefFactory objectRefFactory;
+
+  private Socket socket;
+
+  private final DataInputStream streamFromOtherSide;
+
+  private final DataOutputStream streamToOtherSide;
+
+  public BrowserChannel(Socket socket, ObjectRefFactory objectRefFactory)
+      throws IOException {
+    this(new BufferedInputStream(socket.getInputStream()),
+        new BufferedOutputStream(socket.getOutputStream()),
+        objectRefFactory);
+    this.socket = socket;
+  }
+
+  protected BrowserChannel(InputStream inputStream, OutputStream outputStream,
+      ObjectRefFactory objectRefFactory)
+      throws IOException {
+    streamFromOtherSide = new DataInputStream(inputStream);
+    streamToOtherSide = new DataOutputStream(outputStream);
+    socket = null;
+    this.objectRefFactory = objectRefFactory;
+  }
+
+  public void endSession() {
+    Utility.close(streamFromOtherSide);
+    Utility.close(streamToOtherSide);
+    Utility.close(socket);
+  }
+
+  /**
+   * @return a set of remote object reference IDs to be freed.
+   */
+  public Set<Integer> getRefIdsForCleanup() {
+    return objectRefFactory.getRefIdsForCleanup();
+  }
+
+  public String getRemoteEndpoint() {
+    if (socket == null) {
+      return "";
+    }
+    return socket.getInetAddress().getCanonicalHostName() + ":"
+        + socket.getPort();
+  }
+
+  public Value invoke(String methodName, Value vthis, Value[] vargs,
+      SessionHandler handler) throws IOException, BrowserChannelException {
+    new InvokeOnClientMessage(this, methodName, vthis, vargs).send();
+    final ReturnMessage msg = reactToMessagesWhileWaitingForReturn(handler);
+    return msg.returnValue;
+  }
+
+  public void reactToMessages(SessionHandler handler) throws IOException,
+      BrowserChannelException {
+    do {
+      getStreamToOtherSide().flush();
+      MessageType messageType = Message.readMessageType(getStreamFromOtherSide());
+      switch (messageType) {
+        case FREE_VALUE:
+          final FreeMessage freeMsg = FreeMessage.receive(this);
+          handler.freeValue(this, freeMsg.getIds());
+          break;
+        case INVOKE:
+          final InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
+          ExceptionOrReturnValue result = handler.invoke(this, imsg.getThis(),
+              imsg.getMethodDispatchId(), imsg.getArgs());
+          sendFreedValues();
+          ReturnMessage.send(this, result);
+          break;
+        case INVOKE_SPECIAL:
+          handleInvokeSpecial(handler);
+          break;
+        case QUIT:
+          return;
+        default:
+          throw new BrowserChannelException("Invalid message type "
+              + messageType);
+      }
+    } while (true);
+  }
+
+  public ReturnMessage reactToMessagesWhileWaitingForReturn(
+      SessionHandler handler) throws IOException, BrowserChannelException {
+    do {
+      getStreamToOtherSide().flush();
+      MessageType messageType = Message.readMessageType(getStreamFromOtherSide());
+      switch (messageType) {
+        case FREE_VALUE:
+          final FreeMessage freeMsg = FreeMessage.receive(this);
+          handler.freeValue(this, freeMsg.getIds());
+          break;
+        case RETURN:
+          return ReturnMessage.receive(this);
+        case INVOKE:
+          final InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
+          ExceptionOrReturnValue result = handler.invoke(this, imsg.getThis(),
+              imsg.getMethodDispatchId(), imsg.getArgs());
+          sendFreedValues();
+          ReturnMessage.send(this, result);
+          break;
+        case INVOKE_SPECIAL:
+          handleInvokeSpecial(handler);
+          break;
+        default:
+          throw new BrowserChannelException("Invalid message type "
+              + messageType + " received waiting for return.");
+      }
+    } while (true);
+  }
+
+  protected DataInputStream getStreamFromOtherSide() {
+    return streamFromOtherSide;
+  }
+
+  protected DataOutputStream getStreamToOtherSide() {
+    return streamToOtherSide;
+  }
+
+  protected Value readValue(DataInputStream stream) throws IOException {
+    ValueType tag;
+    try {
+      tag = readValueType(stream);
+    } catch (BrowserChannelException e) {
+      IOException ee = new IOException();
+      ee.initCause(e);
+      throw ee;
+    }
+    Value value = new Value();
+    switch (tag) {
+      case NULL:
+        value.setNull();
+        break;
+      case UNDEFINED:
+        value.setUndefined();
+        break;
+      case BOOLEAN:
+        value.setBoolean(stream.readByte() != 0);
+        break;
+      case BYTE:
+        value.setByte(stream.readByte());
+        break;
+      case CHAR:
+        value.setChar(stream.readChar());
+        break;
+      case FLOAT:
+        value.setFloat(stream.readFloat());
+        break;
+      case INT:
+        value.setInt(stream.readInt());
+        break;
+      case LONG:
+        value.setLong(stream.readLong());
+        break;
+      case DOUBLE:
+        value.setDouble(stream.readDouble());
+        break;
+      case SHORT:
+        value.setShort(stream.readShort());
+        break;
+      case STRING:
+        value.setString(readUtf8String(stream));
+        break;
+      case JS_OBJECT:
+        value.setJsObject(objectRefFactory.getJsObjectRef(stream.readInt()));
+        break;
+      case JAVA_OBJECT:
+        value.setJavaObject(objectRefFactory.getJavaObjectRef(
+            stream.readInt()));
+        break;
+    }
+    return value;
+  }
+
+  protected void writeValue(DataOutputStream stream, Value value)
       throws IOException {
     if (value.isNull()) {
       writeNull(stream);
@@ -1518,147 +1680,6 @@ public abstract class BrowserChannel {
     }
   }
 
-  private static void writeUndefined(DataOutputStream stream)
-      throws IOException {
-    stream.writeByte(ValueType.UNDEFINED.getTag());
-  }
-
-  private final DataInputStream streamFromOtherSide;
-
-  private final DataOutputStream streamToOtherSide;
-
-  private Socket socket;
-
-  public BrowserChannel(Socket socket) throws IOException {
-    this(new BufferedInputStream(socket.getInputStream()),
-        new BufferedOutputStream(socket.getOutputStream()));
-    this.socket = socket;
-  }
-
-  protected BrowserChannel(InputStream inputStream, OutputStream outputStream)
-      throws IOException {
-    streamFromOtherSide = new DataInputStream(inputStream);
-    streamToOtherSide = new DataOutputStream(outputStream);
-    socket = null;
-  }
-
-  public void endSession() {
-    Utility.close(streamFromOtherSide);
-    Utility.close(streamToOtherSide);
-    Utility.close(socket);
-  }
-
-  public Set<Integer> getRefIdsForCleanup() {
-    // Access to these objects is inherently synchronous
-    Map<Integer, Reference<JsObjectRef>> objectMap = JSOBJECT_ID_MAP.get();
-    Map<Reference<JsObjectRef>, Integer> refIdMap = REFERENCE_ID_MAP.get();
-    ReferenceQueue<JsObjectRef> q = JSOBJECT_REF_QUEUE.get();
-    Set<Integer> toReturn = new HashSet<Integer>();
-
-    // Find all refIds associated with previous garbage collection cycles
-    Reference<? extends JsObjectRef> ref;
-    while ((ref = q.poll()) != null) {
-      Integer i = refIdMap.remove(ref);
-      assert i != null;
-      toReturn.add(i);
-    }
-
-    /*
-     * Check for liveness. This is necessary because the last reference to a
-     * JsObjectRef could have been cleared and a new reference to that refId
-     * created before this method has been called.
-     */
-    for (Iterator<Integer> i = toReturn.iterator(); i.hasNext();) {
-      Integer refId = i.next();
-      if (objectMap.containsKey(refId)) {
-        if (objectMap.get(refId).get() != null) {
-          i.remove();
-        } else {
-          objectMap.remove(refId);
-        }
-      }
-    }
-
-    return toReturn;
-  }
-
-  public String getRemoteEndpoint() {
-    if (socket == null) {
-      return "";
-    }
-    return socket.getInetAddress().getCanonicalHostName() + ":"
-        + socket.getPort();
-  }
-
-  public Value invoke(String methodName, Value vthis, Value[] vargs,
-      SessionHandler handler) throws IOException, BrowserChannelException {
-    new InvokeOnClientMessage(this, methodName, vthis, vargs).send();
-    final ReturnMessage msg = reactToMessagesWhileWaitingForReturn(handler);
-    return msg.returnValue;
-  }
-
-  public void reactToMessages(SessionHandler handler) throws IOException,
-      BrowserChannelException {
-    do {
-      getStreamToOtherSide().flush();
-      MessageType messageType = Message.readMessageType(getStreamFromOtherSide());
-      switch (messageType) {
-        case FREE_VALUE:
-          final FreeMessage freeMsg = FreeMessage.receive(this);
-          handler.freeValue(this, freeMsg.getIds());
-          break;
-        case INVOKE:
-          final InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
-          ReturnMessage.send(this, handler.invoke(this, imsg.getThis(),
-              imsg.getMethodDispatchId(), imsg.getArgs()));
-          break;
-        case INVOKE_SPECIAL:
-          handleInvokeSpecial(handler);
-          break;
-        case QUIT:
-          return;
-        default:
-          throw new BrowserChannelException("Invalid message type "
-              + messageType);
-      }
-    } while (true);
-  }
-
-  public ReturnMessage reactToMessagesWhileWaitingForReturn(
-      SessionHandler handler) throws IOException, BrowserChannelException {
-    do {
-      getStreamToOtherSide().flush();
-      MessageType messageType = Message.readMessageType(getStreamFromOtherSide());
-      switch (messageType) {
-        case FREE_VALUE:
-          final FreeMessage freeMsg = FreeMessage.receive(this);
-          handler.freeValue(this, freeMsg.getIds());
-          break;
-        case RETURN:
-          return ReturnMessage.receive(this);
-        case INVOKE:
-          final InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
-          ReturnMessage.send(this, handler.invoke(this, imsg.getThis(),
-              imsg.getMethodDispatchId(), imsg.getArgs()));
-          break;
-        case INVOKE_SPECIAL:
-          handleInvokeSpecial(handler);
-          break;
-        default:
-          throw new BrowserChannelException("Invalid message type "
-              + messageType + " received waiting for return.");
-      }
-    } while (true);
-  }
-
-  protected DataInputStream getStreamFromOtherSide() {
-    return streamFromOtherSide;
-  }
-
-  protected DataOutputStream getStreamToOtherSide() {
-    return streamToOtherSide;
-  }
-
   private void handleInvokeSpecial(SessionHandler handler) throws IOException,
       BrowserChannelException {
     final InvokeSpecialMessage ismsg = InvokeSpecialMessage.receive(this);
@@ -1679,5 +1700,18 @@ public abstract class BrowserChannel {
             + ismsg.getDispatchId());
     }
     ReturnMessage.send(this, retExc);
+  }
+
+  private void sendFreedValues() throws IOException {
+    Set<Integer> freed = objectRefFactory.getRefIdsForCleanup();
+    int n = freed.size();
+    if (n > 0) {
+      int[] ids = new int[n];
+      int i = 0;
+      for (Integer id : freed) {
+        ids[i++] = id;
+      }
+      FreeMessage.send(this, ids);
+    }
   }
 }

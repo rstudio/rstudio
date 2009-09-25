@@ -33,10 +33,7 @@ abstract class RunStyle {
    * the same signature since this will be how the RunStyle is created via
    * reflection.
    * 
-   * @param logger TreeLogger instance
    * @param shell the containing shell
-   * @param args arguments (after the colon in the argument to -runStyle)
-   *     may be null if no argument is supplied
    */
   public RunStyle(JUnitShell shell) {
     this.shell = shell;

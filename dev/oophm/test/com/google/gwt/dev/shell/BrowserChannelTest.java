@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Set;
 
 /**
  * Test for {@link BrowserChannel}.
@@ -55,7 +56,22 @@ public class BrowserChannelTest extends TestCase {
   private class TestBrowserChannel extends BrowserChannel {
     public TestBrowserChannel(InputStream inputStream,
         OutputStream outputStream) throws IOException {
-      super(inputStream, outputStream);
+      super(inputStream, outputStream, new ObjectRefFactory() {
+        public JavaObjectRef getJavaObjectRef(int refId) {
+          fail("getJavaObjectRef mocked");
+          return null;
+        }
+
+        public JsObjectRef getJsObjectRef(int refId) {
+          fail("getJsObjectRef mocked");
+          return null;
+        }
+
+        public Set<Integer> getRefIdsForCleanup() {
+          fail("getRefIdsForCleanup mocked");
+          return null;
+        }
+      });
     }
     
     public MessageType readMessageType() throws IOException,
@@ -80,13 +96,13 @@ public class BrowserChannelTest extends TestCase {
   public void testBooleanValue() throws IOException {
     Value val = new Value();
     val.setBoolean(true);
-    BrowserChannel.writeValue(oStr, val);
-    val = BrowserChannel.readValue(iStr);
+    channel.writeValue(oStr, val);
+    val = channel.readValue(iStr);
     assertEquals(ValueType.BOOLEAN, val.getType());
     assertEquals(true, val.getBoolean());
     val.setBoolean(false);
-    BrowserChannel.writeValue(oStr, val);
-    val = BrowserChannel.readValue(iStr);
+    channel.writeValue(oStr, val);
+    val = channel.readValue(iStr);
     assertEquals(ValueType.BOOLEAN, val.getType());
     assertEquals(false, val.getBoolean());
   }

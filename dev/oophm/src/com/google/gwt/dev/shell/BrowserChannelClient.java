@@ -21,6 +21,7 @@ import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Set;
 
 /**
  * Implementation of the BrowserChannel for the client side.
@@ -28,7 +29,32 @@ import java.net.Socket;
  */
 public class BrowserChannelClient extends BrowserChannel {
 
-  private static final int PROTOCOL_VERSION = 2;
+  private static class ClientObjectRefFactory implements ObjectRefFactory {
+
+    private final RemoteObjectTable<JavaObjectRef> remoteObjectTable;
+
+    public ClientObjectRefFactory() {
+      remoteObjectTable = new RemoteObjectTable<JavaObjectRef>();
+    }
+
+    public JavaObjectRef getJavaObjectRef(int refId) {
+      JavaObjectRef objectRef = remoteObjectTable.getRemoteObjectRef(refId);
+      if (objectRef == null) {
+        objectRef = new JavaObjectRef(refId);
+        remoteObjectTable.putRemoteObjectRef(refId, objectRef);
+      }
+      return objectRef;
+    }
+
+    public JsObjectRef getJsObjectRef(int refId) {
+      return new JsObjectRef(refId);
+    }
+
+    public Set<Integer> getRefIdsForCleanup() {
+      return remoteObjectTable.getRefIdsForCleanup();
+    }
+  }
+
   private final HtmlUnitSessionHandler htmlUnitSessionHandler;
   private final PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
   private final String moduleName;
@@ -41,7 +67,8 @@ public class BrowserChannelClient extends BrowserChannel {
   public BrowserChannelClient(String addressParts[], String url,
       String sessionKey, String moduleName, String versionString,
       HtmlUnitSessionHandler htmlUnitSessionHandler) throws IOException {
-    super(new Socket(addressParts[0], Integer.parseInt(addressParts[1])));
+    super(new Socket(addressParts[0], Integer.parseInt(addressParts[1])),
+        new ClientObjectRefFactory());
     connected = true;
     this.url = url;
     this.sessionKey = sessionKey;
@@ -108,8 +135,8 @@ public class BrowserChannelClient extends BrowserChannel {
   private boolean init() throws IOException, BrowserChannelException {
     logger.log(TreeLogger.DEBUG, "sending " + MessageType.CHECK_VERSIONS
         + " message");
-    new CheckVersionsMessage(this, PROTOCOL_VERSION, PROTOCOL_VERSION,
-        versionString).send();
+    new CheckVersionsMessage(this, BROWSERCHANNEL_PROTOCOL_VERSION,
+        BROWSERCHANNEL_PROTOCOL_VERSION, versionString).send();
     MessageType type = Message.readMessageType(getStreamFromOtherSide());
     switch (type) {
       case PROTOCOL_VERSION:

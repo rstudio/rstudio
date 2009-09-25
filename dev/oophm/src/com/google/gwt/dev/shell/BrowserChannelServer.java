@@ -20,6 +20,7 @@ import com.google.gwt.dev.shell.JsValue.DispatchObject;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Set;
 
 /**
  * 
@@ -27,11 +28,37 @@ import java.net.Socket;
 public final class BrowserChannelServer extends BrowserChannel
     implements Runnable {
 
+  private static class ServerObjectRefFactory implements ObjectRefFactory {
+
+    private final RemoteObjectTable<JsObjectRef> remoteObjectTable;
+    
+    public ServerObjectRefFactory() {
+      remoteObjectTable = new RemoteObjectTable<JsObjectRef>();
+    }
+
+    public JavaObjectRef getJavaObjectRef(int refId) {
+      return new JavaObjectRef(refId);
+    }
+
+    public JsObjectRef getJsObjectRef(int refId) {
+      JsObjectRef objectRef = remoteObjectTable.getRemoteObjectRef(refId);
+      if (objectRef == null) {
+        objectRef = new JsObjectRef(refId);
+        remoteObjectTable.putRemoteObjectRef(refId, objectRef);
+      }
+      return objectRef;
+    }
+
+    public Set<Integer> getRefIdsForCleanup() {
+      return remoteObjectTable.getRefIdsForCleanup();
+    }
+  }
+
   public static final String JSO_CLASS = "com.google.gwt.core.client.JavaScriptObject";
 
   private SessionHandler handler;
 
-  private final ObjectsTable javaObjectsInBrowser = new ObjectsTable();
+  private final ServerObjectsTable javaObjectsInBrowser = new ServerObjectsTable();
 
   private TreeLogger logger;
 
@@ -43,7 +70,7 @@ public final class BrowserChannelServer extends BrowserChannel
 
   public BrowserChannelServer(TreeLogger initialLogger, Socket socket,
       SessionHandler handler) throws IOException {
-    super(socket);
+    super(socket, new ServerObjectRefFactory());
     this.handler = handler;
     this.logger = initialLogger;
     Thread thread = new Thread(this);
@@ -62,7 +89,7 @@ public final class BrowserChannelServer extends BrowserChannel
     }
   }
 
-  public ObjectsTable getJavaObjectsExposedInBrowser() {
+  public ServerObjectsTable getJavaObjectsExposedInBrowser() {
     return javaObjectsInBrowser;
   }
 
@@ -84,7 +111,7 @@ public final class BrowserChannelServer extends BrowserChannel
   public void invokeJavascript(CompilingClassLoader ccl, JsValueOOPHM jsthis,
       String methodName, JsValueOOPHM[] args, JsValueOOPHM returnJsValue)
       throws Throwable {
-    final ObjectsTable remoteObjects = getJavaObjectsExposedInBrowser();
+    final ServerObjectsTable remoteObjects = getJavaObjectsExposedInBrowser();
     Value vthis = convertFromJsValue(remoteObjects, jsthis);
     Value[] vargs = new Value[args.length];
     for (int i = 0; i < args.length; ++i) {
@@ -175,7 +202,7 @@ public final class BrowserChannelServer extends BrowserChannel
    * @param jsval value to convert
    * @return jsval as a Value object.
    */
-  Value convertFromJsValue(ObjectsTable localObjects, JsValueOOPHM jsval) {
+  Value convertFromJsValue(ServerObjectsTable localObjects, JsValueOOPHM jsval) {
     Value value = new Value();
     if (jsval.isNull()) {
       value.setNull();
@@ -214,7 +241,7 @@ public final class BrowserChannelServer extends BrowserChannel
    * @param val Value to convert
    * @param jsval JsValue object to receive converted value.
    */
-  void convertToJsValue(CompilingClassLoader ccl, ObjectsTable localObjects,
+  void convertToJsValue(CompilingClassLoader ccl, ServerObjectsTable localObjects,
       Value val, JsValueOOPHM jsval) {
     switch (val.getType()) {
       case NULL:

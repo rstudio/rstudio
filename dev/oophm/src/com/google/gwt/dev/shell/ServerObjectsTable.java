@@ -23,7 +23,7 @@ import java.util.TreeMap;
  * A class that keeps track of Java objects which have been exposed to the other
  * side and assigns unique ids.
  */
-public class ObjectsTable {
+public class ServerObjectsTable {
 
   /**
    * A type that records the next-available free id slot to use, without itself
@@ -64,9 +64,10 @@ public class ObjectsTable {
   }
 
   public void free(int id) {
-    assert objects.get(id) != null : "Trying to free never-used id " + id;
-    assert !(objects.get(id) instanceof Tombstone) : "Duplicate free " + id;
-    refMap.remove(objects.get(id));
+    Object object = objects.get(id);
+    assert object != null : "Trying to free never-used id " + id;
+    assert !(object instanceof Tombstone) : "Duplicate free " + id;
+    refMap.remove(object);
     objects.put(id, new Tombstone(nextFree));
     nextFree = id;
   }
