@@ -131,11 +131,42 @@ class RunStyleRemoteWeb extends RunStyle {
 
   private static final int RESPONSE_TIMEOUT_MS = 10000;
 
-  public static RunStyle create(JUnitShell shell, String[] urls) {
+  private RemoteBrowser[] remoteBrowsers;
+
+  /**
+   * Whether one of the remote browsers was interrupted.
+   */
+  private boolean wasInterrupted;
+
+  /**
+   * A separate lock to control access to {@link #wasInterrupted}. This keeps
+   * the main thread calls into {@link #wasInterrupted()} from having to
+   * synchronized on the containing instance and potentially block on RPC calls.
+   * It is okay to take the {@link #wasInterruptedLock} while locking the
+   * containing instance; it is NOT okay to do the opposite or deadlock could
+   * occur.
+   */
+  private final Object wasInterruptedLock = new Object();
+
+  /**
+   * @param shell the containing shell
+   */
+  public RunStyleRemoteWeb(JUnitShell shell) {
+    super(shell);
+  }
+  
+  @Override
+  public boolean initialize(String args) {
+    if (args == null || args.length() == 0) {
+      throw new JUnitFatalLaunchException(
+          "RemoteWeb runstyle requires comma-separated RMI URLs");
+    }
+    String[] urls = args.split(",");
     try {
       RMISocketFactoryWithTimeouts.init();
     } catch (IOException e) {
-      throw new JUnitFatalLaunchException("Error initializing RMISocketFactory", e);
+      throw new JUnitFatalLaunchException("Error initializing RMISocketFactory",
+          e);
     }
     int numClients = urls.length;
     BrowserManager[] browserManagers = new BrowserManager[numClients];
@@ -157,36 +188,6 @@ class RunStyleRemoteWeb extends RunStyle {
         throw new JUnitFatalLaunchException(message, cause);
       }
     }
-    return new RunStyleRemoteWeb(shell, browserManagers, urls);
-  }
-
-  private final RemoteBrowser[] remoteBrowsers;
-
-  /**
-   * Whether one of the remote browsers was interrupted.
-   */
-  private boolean wasInterrupted;
-
-  /**
-   * A separate lock to control access to {@link #wasInterrupted}. This keeps
-   * the main thread calls into {@link #wasInterrupted()} from having to
-   * synchronized on the containing instance and potentially block on RPC calls.
-   * It is okay to take the {@link #wasInterruptedLock} while locking the
-   * containing instance; it is NOT okay to do the opposite or deadlock could
-   * occur.
-   */
-  private final Object wasInterruptedLock = new Object();
-
-  /**
-   * @param shell the containing shell
-   * @param browserManagers a populated array of RMI remote interfaces to each
-   *          remote BrowserManagerServer
-   * @param urls the URLs for each BrowserManager - used for error reporting
-   *          only
-   */
-  private RunStyleRemoteWeb(JUnitShell shell, BrowserManager[] browserManagers,
-      String[] urls) {
-    super(shell);
     synchronized (this) {
       this.remoteBrowsers = new RemoteBrowser[browserManagers.length];
       for (int i = 0; i < browserManagers.length; ++i) {
@@ -194,6 +195,7 @@ class RunStyleRemoteWeb extends RunStyle {
       }
     }
     Runtime.getRuntime().addShutdownHook(new ShutdownCb());
+    return true;
   }
 
   @Override
