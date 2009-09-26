@@ -58,13 +58,11 @@ public class BrowserChannelTest extends TestCase {
         OutputStream outputStream) throws IOException {
       super(inputStream, outputStream, new ObjectRefFactory() {
         public JavaObjectRef getJavaObjectRef(int refId) {
-          fail("getJavaObjectRef mocked");
-          return null;
+          return new JavaObjectRef(refId);
         }
 
         public JsObjectRef getJsObjectRef(int refId) {
-          fail("getJsObjectRef mocked");
-          return null;
+          return new JsObjectRef(refId);
         }
 
         public Set<Integer> getRefIdsForCleanup() {
@@ -347,7 +345,7 @@ public class BrowserChannelTest extends TestCase {
     new QuitMessage(channel).send();
     MessageType type = channel.readMessageType();
     assertEquals(MessageType.QUIT, type);
-    QuitMessage message = QuitMessage.receive(channel);
+    QuitMessage.receive(channel);
   }
   
   public void testReturnMessage() throws IOException,
