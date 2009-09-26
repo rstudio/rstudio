@@ -189,6 +189,12 @@
           <path refid="project.classpath.src" />
           <pathelement location="${gwt.root}/${project.tail}/super" />
           <pathelement location="${gwt.root}/${project.tail}/test" />
+          <pathelement location="${gwt.root}/${project.tail}/core/src" />
+          <pathelement location="${gwt.root}/${project.tail}/core/super" />
+          <pathelement location="${gwt.root}/${project.tail}/core/test" />
+          <pathelement location="${gwt.root}/${project.tail}/oophm/src" />
+          <pathelement location="${gwt.root}/${project.tail}/oophm/overlay" />
+          <pathelement location="${gwt.root}/${project.tail}/oophm/test" />
           <pathelement location="${javac.junit.out}" />
           <!-- javac.emma.out is empty unless emma is enabled. -->
           <pathelement location="${javac.emma.out}" />
