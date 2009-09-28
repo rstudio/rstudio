@@ -232,6 +232,16 @@
     <gwt.junit test.out="${junit.out}" test.cases="tests.dev.core" >
       <extraclasspaths>
         <pathelement location="${alldeps.jar}" />
+        <!-- TODO: the following six items are needed because dev (alone) does
+            not adhere to the .../{src,super,test} convention, having a split
+            between core, oophm, and (historically) the OS platforms.  When
+            that unifies, these should go away. -->
+        <pathelement location="${gwt.root}/${project.tail}/core/src" />
+        <pathelement location="${gwt.root}/${project.tail}/core/super" />
+        <pathelement location="${gwt.root}/${project.tail}/core/test" />
+        <pathelement location="${gwt.root}/${project.tail}/oophm/src" />
+        <pathelement location="${gwt.root}/${project.tail}/oophm/overlay" />
+        <pathelement location="${gwt.root}/${project.tail}/oophm/test" />
         <!-- Pull in gwt-dev and gwt-user sources for .gwt.xml files -->
         <pathelement location="${gwt.root}/user/src/" />
         <pathelement location="${gwt.root}/user/super/" />

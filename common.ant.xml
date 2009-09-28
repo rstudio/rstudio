@@ -150,7 +150,10 @@
   </macrodef>
 
   <macrodef name="gwt.junit">
-    <!-- TODO: make this more generic / refactor so it can be used from dev/core -->
+    <!-- TODO: Because dev has core, oophm splits, the "common pattern" here doesn't work
+         for it (and we use extraclasspaths entries instead).  Once we lose SWT, we can
+         consolidate dev/core and dev/oophm, and that can instead more to the normal
+         pattern. -->
     <attribute name="test.args" default="" />
     <attribute name="test.out" default="" />
     <attribute name="test.reports" default="@{test.out}/reports" />
@@ -177,7 +180,6 @@
         <isset property="emma.enabled" />
       </condition>
 
-      <echo message="${javac.out} ${javac.junit.out}" />
       <junit dir="@{test.out}" fork="yes" printsummary="yes"
              failureproperty="junit.failure" tempdir="@{test.out}">
         <jvmarg line="-Xmx768m" />
@@ -189,12 +191,6 @@
           <path refid="project.classpath.src" />
           <pathelement location="${gwt.root}/${project.tail}/super" />
           <pathelement location="${gwt.root}/${project.tail}/test" />
-          <pathelement location="${gwt.root}/${project.tail}/core/src" />
-          <pathelement location="${gwt.root}/${project.tail}/core/super" />
-          <pathelement location="${gwt.root}/${project.tail}/core/test" />
-          <pathelement location="${gwt.root}/${project.tail}/oophm/src" />
-          <pathelement location="${gwt.root}/${project.tail}/oophm/overlay" />
-          <pathelement location="${gwt.root}/${project.tail}/oophm/test" />
           <pathelement location="${javac.junit.out}" />
           <!-- javac.emma.out is empty unless emma is enabled. -->
           <pathelement location="${javac.emma.out}" />
@@ -231,7 +227,7 @@
       <condition property="junit.stop.build" value="true"> 
         <and>
           <istrue value="@{haltonfailure}"/>
-          <isset property="${junit.failure}"/>
+          <isset property="junit.failure"/>
         </and>
       </condition>
       <fail message="One or more junit tests failed" if="junit.stop.build" />
