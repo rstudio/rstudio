@@ -56,6 +56,10 @@ class MethodDispatch implements DispatchMethod {
     if (method.needsThis()) {
       jthis = JsValueGlue.get(jsthis, classLoader, method.getDeclaringClass(),
           "invoke this");
+      if (jthis == null) {
+        throw ModuleSpace.createJavaScriptException(classLoader,
+            "Invoking an instance method on a null instance");
+      }
     }
     for (int i = 0; i < argc; ++i) {
       args[i] = JsValueGlue.get(jsargs[i], classLoader, paramTypes[i],
