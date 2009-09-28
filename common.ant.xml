@@ -199,7 +199,6 @@
         <isset property="emma.enabled" />
       </condition>
 
-      <echo message="${javac.out} ${javac.junit.out}" />
       <junit dir="@{test.out}" fork="yes" printsummary="yes"
              failureproperty="junit.failure" tempdir="@{test.out}">
         <jvmarg line="${junit.platform.args}" />
@@ -249,7 +248,7 @@
       <condition property="junit.stop.build" value="true"> 
         <and>
           <istrue value="@{haltonfailure}"/>
-          <isset property="${junit.failure}"/>
+          <isset property="junit.failure"/>
         </and>
       </condition>
       <fail message="One or more junit tests failed" if="junit.stop.build" />
