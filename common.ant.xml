@@ -153,7 +153,7 @@
     <!-- TODO: Because dev has core, oophm splits, the "common pattern" here doesn't work
          for it (and we use extraclasspaths entries instead).  Once we lose SWT, we can
          consolidate dev/core and dev/oophm, and that can instead more to the normal
-         pattern. -->
+         pattern.  Note also special casing regarding (dev/) core/test. -->
     <attribute name="test.args" default="" />
     <attribute name="test.out" default="" />
     <attribute name="test.reports" default="@{test.out}/reports" />
@@ -191,6 +191,10 @@
           <path refid="project.classpath.src" />
           <pathelement location="${gwt.root}/${project.tail}/super" />
           <pathelement location="${gwt.root}/${project.tail}/test" />
+          <!-- TODO: this is here because e.g. ClassPathEntryTest otherwise fails,
+               expecting the src entry (core/test) to be earlier than the bin entry
+               (${javac.junit.out}). -->
+          <pathelement location="${gwt.root}/${project.tail}/core/test" />
           <pathelement location="${javac.junit.out}" />
           <!-- javac.emma.out is empty unless emma is enabled. -->
           <pathelement location="${javac.emma.out}" />
