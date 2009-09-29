@@ -21,10 +21,10 @@ import com.google.gwt.resources.client.ImageResourceNoInliningTest;
 import com.google.gwt.resources.client.ImageResourceTest;
 import com.google.gwt.resources.client.NestedBundleTest;
 import com.google.gwt.resources.client.TextResourceTest;
+import com.google.gwt.resources.css.CssNodeClonerTest;
+import com.google.gwt.resources.css.CssReorderTest;
+import com.google.gwt.resources.css.CssRtlTest;
 import com.google.gwt.resources.css.ExtractClassNamesVisitorTest;
-import com.google.gwt.resources.rg.CssNodeClonerTest;
-import com.google.gwt.resources.rg.CssReorderTest;
-import com.google.gwt.resources.rg.CssRtlTest;
 
 import junit.framework.Test;
 

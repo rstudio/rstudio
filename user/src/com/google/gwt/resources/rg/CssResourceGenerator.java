@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.PropertyOracle;
-import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -33,41 +32,36 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.DataResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.CssResource.ClassName;
 import com.google.gwt.resources.client.CssResource.Import;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.resources.client.CssResource.Shared;
 import com.google.gwt.resources.client.CssResource.Strict;
-import com.google.gwt.resources.client.ImageResource.ImageOptions;
-import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.resources.css.ClassRenamer;
 import com.google.gwt.resources.css.CssGenerationVisitor;
+import com.google.gwt.resources.css.DefsCollector;
+import com.google.gwt.resources.css.ExternalClassesCollector;
 import com.google.gwt.resources.css.GenerateCssAst;
+import com.google.gwt.resources.css.IfEvaluator;
+import com.google.gwt.resources.css.MergeIdenticalSelectorsVisitor;
+import com.google.gwt.resources.css.MergeRulesByContentVisitor;
+import com.google.gwt.resources.css.RequirementsCollector;
+import com.google.gwt.resources.css.RtlVisitor;
+import com.google.gwt.resources.css.SplitRulesVisitor;
+import com.google.gwt.resources.css.Spriter;
+import com.google.gwt.resources.css.SubstitutionCollector;
+import com.google.gwt.resources.css.SubstitutionReplacer;
 import com.google.gwt.resources.css.ast.CollapsedNode;
-import com.google.gwt.resources.css.ast.Context;
 import com.google.gwt.resources.css.ast.CssCompilerException;
 import com.google.gwt.resources.css.ast.CssDef;
-import com.google.gwt.resources.css.ast.CssEval;
-import com.google.gwt.resources.css.ast.CssExternalSelectors;
 import com.google.gwt.resources.css.ast.CssIf;
-import com.google.gwt.resources.css.ast.CssMediaRule;
-import com.google.gwt.resources.css.ast.CssModVisitor;
-import com.google.gwt.resources.css.ast.CssNoFlip;
 import com.google.gwt.resources.css.ast.CssNode;
-import com.google.gwt.resources.css.ast.CssNodeCloner;
 import com.google.gwt.resources.css.ast.CssProperty;
 import com.google.gwt.resources.css.ast.CssRule;
-import com.google.gwt.resources.css.ast.CssSelector;
-import com.google.gwt.resources.css.ast.CssSprite;
 import com.google.gwt.resources.css.ast.CssStylesheet;
-import com.google.gwt.resources.css.ast.CssUrl;
-import com.google.gwt.resources.css.ast.CssVisitor;
 import com.google.gwt.resources.css.ast.HasNodes;
 import com.google.gwt.resources.css.ast.CssProperty.DotPathValue;
-import com.google.gwt.resources.css.ast.CssProperty.ExpressionValue;
-import com.google.gwt.resources.css.ast.CssProperty.IdentValue;
 import com.google.gwt.resources.css.ast.CssProperty.ListValue;
 import com.google.gwt.resources.css.ast.CssProperty.NumberValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
@@ -79,995 +73,29 @@ import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.regex.Matcher;
 import java.util.zip.Adler32;
 
 /**
  * Provides implementations of CSSResources.
  */
 public final class CssResourceGenerator extends AbstractResourceGenerator {
-  static class ClassRenamer extends CssVisitor {
-
-    /**
-     * A tag to indicate that an externally-defined CSS class has no JMethod
-     * that is used to access it.
-     */
-    private static final Replacement UNREFERENCED_EXTERNAL = new Replacement(
-        null, null);
-
-    /*
-     * TODO: Replace with Pair<A, B>.
-     */
-    private static class Replacement {
-
-      private JMethod method;
-      private String obfuscatedClassName;
-
-      public Replacement(JMethod method, String obfuscatedClassName) {
-        this.method = method;
-        this.obfuscatedClassName = obfuscatedClassName;
-      }
-
-      public JMethod getMethod() {
-        return method;
-      }
-
-      public String getObfuscatedClassName() {
-        return obfuscatedClassName;
-      }
-
-      /**
-       * For debugging use only.
-       */
-      public String toString() {
-        if (this == UNREFERENCED_EXTERNAL) {
-          return "Unreferenced external class name";
-        } else {
-          return method.getName() + "=" + obfuscatedClassName;
-        }
-      }
-    }
-
-    /**
-     * Records replacements that have actually been performed.
-     */
-    private final Map<JMethod, String> actualReplacements = new IdentityHashMap<JMethod, String>();
-    private final Set<String> cssDefs = new HashSet<String>();
-
-    /**
-     * The task-list of replacements to perform in the stylesheet.
-     */
-    private final Map<String, Replacement> potentialReplacements;
-    private final TreeLogger logger;
-    private final Set<JMethod> missingClasses;
-    private final boolean strict;
-    private final Set<String> unknownClasses = new HashSet<String>();
-
-    public ClassRenamer(TreeLogger logger,
-        Map<String, Map<JMethod, String>> classReplacementsWithPrefix,
-        boolean strict, Set<String> externalClasses) {
-      this.logger = logger.branch(TreeLogger.DEBUG, "Replacing CSS class names");
-      this.strict = strict;
-
-      potentialReplacements = computeReplacements(classReplacementsWithPrefix,
-          externalClasses);
-
-      // Require a definition for all classes in the default namespace
-      assert classReplacementsWithPrefix.containsKey("");
-      missingClasses = new HashSet<JMethod>(
-          classReplacementsWithPrefix.get("").keySet());
-    }
-
-    @Override
-    public void endVisit(CssDef x, Context ctx) {
-      cssDefs.add(x.getKey());
-    }
-
-    @Override
-    public void endVisit(CssSelector x, Context ctx) {
-
-      String sel = x.getSelector();
-      int originalLength = sel.length();
-
-      Matcher ma = CssSelector.CLASS_SELECTOR_PATTERN.matcher(sel);
-      StringBuilder sb = new StringBuilder(originalLength);
-      int start = 0;
-
-      while (ma.find()) {
-        String sourceClassName = ma.group(1);
-
-        Replacement entry = potentialReplacements.get(sourceClassName);
-
-        if (entry == null) {
-          unknownClasses.add(sourceClassName);
-          continue;
-
-        } else if (entry == UNREFERENCED_EXTERNAL) {
-          // An @external without an accessor method. This is OK.
-          continue;
-        }
-
-        JMethod method = entry.getMethod();
-        String obfuscatedClassName = entry.getObfuscatedClassName();
-
-        // Consume the interstitial portion of the original selector
-        sb.append(sel.subSequence(start, ma.start(1)));
-        sb.append(obfuscatedClassName);
-        start = ma.end(1);
-
-        actualReplacements.put(method, obfuscatedClassName);
-        missingClasses.remove(method);
-      }
-
-      if (start != 0) {
-        // Consume the remainder and update the selector
-        sb.append(sel.subSequence(start, originalLength));
-        x.setSelector(sb.toString());
-      }
-    }
-
-    @Override
-    public void endVisit(CssStylesheet x, Context ctx) {
-      boolean stop = false;
-
-      // Skip names corresponding to @def entries. They too can be declared as
-      // String accessors.
-      List<JMethod> toRemove = new ArrayList<JMethod>();
-      for (JMethod method : missingClasses) {
-        if (cssDefs.contains(method.getName())) {
-          toRemove.add(method);
-        }
-      }
-      for (JMethod method : toRemove) {
-        missingClasses.remove(method);
-      }
-
-      if (!missingClasses.isEmpty()) {
-        stop = true;
-        TreeLogger errorLogger = logger.branch(TreeLogger.INFO,
-            "The following obfuscated style classes were missing from "
-                + "the source CSS file:");
-        for (JMethod m : missingClasses) {
-          String name = m.getName();
-          ClassName className = m.getAnnotation(ClassName.class);
-          if (className != null) {
-            name = className.value();
-          }
-          errorLogger.log(TreeLogger.ERROR, name + ": Fix by adding ." + name
-              + "{}");
-        }
-      }
-
-      if (strict && !unknownClasses.isEmpty()) {
-        stop = true;
-        TreeLogger errorLogger = logger.branch(TreeLogger.ERROR,
-            "The following unobfuscated classes were present in a strict CssResource:");
-        for (String s : unknownClasses) {
-          errorLogger.log(TreeLogger.ERROR, s);
-        }
-        errorLogger.log(TreeLogger.INFO, "Fix by adding String accessor "
-            + "method(s) to the CssResource interface for obfuscated classes, "
-            + "or using an @external declaration for unobfuscated classes.");
-      }
-
-      if (stop) {
-        throw new CssCompilerException("Missing a CSS replacement");
-      }
-    }
-
-    /**
-     * Reports the replacements that were actually performed by this visitor.
-     */
-    public Map<JMethod, String> getReplacements() {
-      return actualReplacements;
-    }
-
-    /**
-     * Flatten class name lookups to speed selector rewriting.
-     * 
-     * @param classReplacementsWithPrefix a map of local prefixes to the
-     *          obfuscated names of imported methods. If a CssResource makes use
-     *          of the {@link Import} annotation, the keys of this map will
-     *          correspond to the {@link ImportedWithPrefix} value defined on
-     *          the imported CssResource. The zero-length string key holds the
-     *          obfuscated names for the CssResource that is being generated.
-     * @return A flattened version of the classReplacementWithPrefix map, where
-     *         the keys are the source class name (with prefix included), and
-     *         values have the obfuscated class name and associated JMethod.
-     */
-    private Map<String, Replacement> computeReplacements(
-        Map<String, Map<JMethod, String>> classReplacementsWithPrefix,
-        Set<String> externalClasses) {
-
-      Map<String, Replacement> toReturn = new HashMap<String, Replacement>();
-
-      for (String externalClass : externalClasses) {
-        toReturn.put(externalClass, UNREFERENCED_EXTERNAL);
-      }
-
-      for (Map.Entry<String, Map<JMethod, String>> outerEntry : classReplacementsWithPrefix.entrySet()) {
-        String prefix = outerEntry.getKey();
-
-        for (Map.Entry<JMethod, String> entry : outerEntry.getValue().entrySet()) {
-          JMethod method = entry.getKey();
-          String sourceClassName = method.getName();
-          String obfuscatedClassName = entry.getValue();
-
-          ClassName className = method.getAnnotation(ClassName.class);
-          if (className != null) {
-            sourceClassName = className.value();
-          }
-
-          sourceClassName = prefix + sourceClassName;
-
-          if (externalClasses.contains(sourceClassName)) {
-            /*
-             * It simplifies the sanity-checking logic to treat external classes
-             * as though they were simply obfuscated to exactly the value the
-             * user wants.
-             */
-            obfuscatedClassName = sourceClassName;
-          }
-
-          toReturn.put(sourceClassName, new Replacement(method,
-              obfuscatedClassName));
-        }
-      }
-      return Collections.unmodifiableMap(toReturn);
-    }
-  }
-
-  static class DefsCollector extends CssVisitor {
-    private final Set<String> defs = new HashSet<String>();
-
-    @Override
-    public void endVisit(CssDef x, Context ctx) {
-      defs.add(x.getKey());
-    }
-  }
-
-  /**
-   * Collects all {@code @external} declarations in the stylesheet.
-   */
-  static class ExternalClassesCollector extends CssVisitor {
-    private final Set<String> classes = new HashSet<String>();
-
-    @Override
-    public void endVisit(CssExternalSelectors x, Context ctx) {
-      classes.addAll(x.getClasses());
-    }
-
-    public Set<String> getClasses() {
-      return classes;
-    }
-  }
-
-  /**
-   * Statically evaluates {@literal @if} rules.
-   */
-  static class IfEvaluator extends CssModVisitor {
-    private final TreeLogger logger;
-    private final PropertyOracle oracle;
-
-    public IfEvaluator(TreeLogger logger, PropertyOracle oracle) {
-      this.logger = logger.branch(TreeLogger.DEBUG,
-          "Replacing property-based @if blocks");
-      this.oracle = oracle;
-    }
-
-    @Override
-    public void endVisit(CssIf x, Context ctx) {
-      if (x.getExpression() != null) {
-        // This gets taken care of by the runtime substitution visitor
-      } else {
-        try {
-          String propertyName = x.getPropertyName();
-          String propValue = null;
-          try {
-            SelectionProperty selProp = oracle.getSelectionProperty(logger,
-                propertyName);
-            propValue = selProp.getCurrentValue();
-          } catch (BadPropertyValueException e) {
-            ConfigurationProperty confProp = oracle.getConfigurationProperty(propertyName);
-            propValue = confProp.getValues().get(0);
-          }
-
-          /*
-           * If the deferred binding property's value is in the list of values
-           * in the @if rule, move the rules into the @if's context.
-           */
-          if (Arrays.asList(x.getPropertyValues()).contains(propValue)
-              ^ x.isNegated()) {
-            for (CssNode n : x.getNodes()) {
-              ctx.insertBefore(n);
-            }
-          } else {
-            // Otherwise, move the else block into the if statement's position
-            for (CssNode n : x.getElseNodes()) {
-              ctx.insertBefore(n);
-            }
-          }
-
-          // Always delete @if rules that we can statically evaluate
-          ctx.removeMe();
-        } catch (BadPropertyValueException e) {
-          logger.log(TreeLogger.ERROR, "Unable to evaluate @if block", e);
-          throw new CssCompilerException("Unable to parse CSS", e);
-        }
-      }
-    }
-  }
 
   @SuppressWarnings("serial")
   static class JClassOrderComparator implements Comparator<JClassType>,
       Serializable {
     public int compare(JClassType o1, JClassType o2) {
       return o1.getQualifiedSourceName().compareTo(o2.getQualifiedSourceName());
-    }
-  }
-
-  /**
-   * Merges rules that have matching selectors.
-   */
-  static class MergeIdenticalSelectorsVisitor extends CssModVisitor {
-    private final Map<String, CssRule> canonicalRules = new HashMap<String, CssRule>();
-    private final List<CssRule> rulesInOrder = new ArrayList<CssRule>();
-
-    @Override
-    public boolean visit(CssIf x, Context ctx) {
-      visitInNewContext(x.getNodes());
-      visitInNewContext(x.getElseNodes());
-      return false;
-    }
-
-    @Override
-    public boolean visit(CssMediaRule x, Context ctx) {
-      visitInNewContext(x.getNodes());
-      return false;
-    }
-
-    @Override
-    public boolean visit(CssRule x, Context ctx) {
-      // Assumed to run immediately after SplitRulesVisitor
-      assert x.getSelectors().size() == 1;
-      CssSelector sel = x.getSelectors().get(0);
-
-      if (canonicalRules.containsKey(sel.getSelector())) {
-        CssRule canonical = canonicalRules.get(sel.getSelector());
-
-        // Check everything between the canonical rule and this rule for common
-        // properties. If there are common properties, it would be unsafe to
-        // promote the rule.
-        boolean hasCommon = false;
-        int index = rulesInOrder.indexOf(canonical) + 1;
-        assert index != 0;
-
-        for (Iterator<CssRule> i = rulesInOrder.listIterator(index); i.hasNext()
-            && !hasCommon;) {
-          hasCommon = haveCommonProperties(i.next(), x);
-        }
-
-        if (!hasCommon) {
-          // It's safe to promote the rule
-          canonical.getProperties().addAll(x.getProperties());
-          ctx.removeMe();
-          return false;
-        }
-      }
-
-      canonicalRules.put(sel.getSelector(), x);
-      rulesInOrder.add(x);
-      return false;
-    }
-
-    private void visitInNewContext(List<CssNode> nodes) {
-      MergeIdenticalSelectorsVisitor v = new MergeIdenticalSelectorsVisitor();
-      v.acceptWithInsertRemove(nodes);
-      rulesInOrder.addAll(v.rulesInOrder);
-    }
-  }
-
-  /**
-   * Merges rules that have identical content.
-   */
-  static class MergeRulesByContentVisitor extends CssModVisitor {
-    private Map<String, CssRule> rulesByContents = new HashMap<String, CssRule>();
-    private final List<CssRule> rulesInOrder = new ArrayList<CssRule>();
-
-    @Override
-    public boolean visit(CssIf x, Context ctx) {
-      visitInNewContext(x.getNodes());
-      visitInNewContext(x.getElseNodes());
-      return false;
-    }
-
-    @Override
-    public boolean visit(CssMediaRule x, Context ctx) {
-      visitInNewContext(x.getNodes());
-      return false;
-    }
-
-    @Override
-    public boolean visit(CssRule x, Context ctx) {
-      StringBuilder b = new StringBuilder();
-      for (CssProperty p : x.getProperties()) {
-        b.append(p.getName()).append(":").append(p.getValues().getExpression());
-      }
-
-      String content = b.toString();
-      CssRule canonical = rulesByContents.get(content);
-
-      // Check everything between the canonical rule and this rule for common
-      // properties. If there are common properties, it would be unsafe to
-      // promote the rule.
-      if (canonical != null) {
-        boolean hasCommon = false;
-        int index = rulesInOrder.indexOf(canonical) + 1;
-        assert index != 0;
-
-        for (Iterator<CssRule> i = rulesInOrder.listIterator(index); i.hasNext()
-            && !hasCommon;) {
-          hasCommon = haveCommonProperties(i.next(), x);
-        }
-
-        if (!hasCommon) {
-          canonical.getSelectors().addAll(x.getSelectors());
-          ctx.removeMe();
-          return false;
-        }
-      }
-
-      rulesByContents.put(content, x);
-      rulesInOrder.add(x);
-      return false;
-    }
-
-    private void visitInNewContext(List<CssNode> nodes) {
-      MergeRulesByContentVisitor v = new MergeRulesByContentVisitor();
-      v.acceptWithInsertRemove(nodes);
-      rulesInOrder.addAll(v.rulesInOrder);
-    }
-  }
-
-  static class RequirementsCollector extends CssVisitor {
-    private final TreeLogger logger;
-    private final ClientBundleRequirements requirements;
-
-    public RequirementsCollector(TreeLogger logger,
-        ClientBundleRequirements requirements) {
-      this.logger = logger.branch(TreeLogger.DEBUG,
-          "Scanning CSS for requirements");
-      this.requirements = requirements;
-    }
-
-    @Override
-    public void endVisit(CssIf x, Context ctx) {
-      String propertyName = x.getPropertyName();
-      if (propertyName != null) {
-        try {
-          requirements.addPermutationAxis(propertyName);
-        } catch (BadPropertyValueException e) {
-          logger.log(TreeLogger.ERROR, "Unknown deferred-binding property "
-              + propertyName, e);
-          throw new CssCompilerException("Unknown deferred-binding property", e);
-        }
-      }
-    }
-  }
-
-  static class RtlVisitor extends CssModVisitor {
-    /**
-     * Records if we're currently visiting a CssRule whose only selector is
-     * "body".
-     */
-    private boolean inBodyRule;
-
-    @Override
-    public void endVisit(CssProperty x, Context ctx) {
-      String name = x.getName();
-
-      if (name.equalsIgnoreCase("left")) {
-        x.setName("right");
-      } else if (name.equalsIgnoreCase("right")) {
-        x.setName("left");
-      } else if (name.endsWith("-left")) {
-        int len = name.length();
-        x.setName(name.substring(0, len - 4) + "right");
-      } else if (name.endsWith("-right")) {
-        int len = name.length();
-        x.setName(name.substring(0, len - 5) + "left");
-      } else if (name.contains("-right-")) {
-        x.setName(name.replace("-right-", "-left-"));
-      } else if (name.contains("-left-")) {
-        x.setName(name.replace("-left-", "-right-"));
-      } else {
-        List<Value> values = new ArrayList<Value>(x.getValues().getValues());
-        invokePropertyHandler(x.getName(), values);
-        x.setValue(new CssProperty.ListValue(values));
-      }
-    }
-
-    @Override
-    public boolean visit(CssNoFlip x, Context ctx) {
-      return false;
-    }
-
-    @Override
-    public boolean visit(CssRule x, Context ctx) {
-      inBodyRule = x.getSelectors().size() == 1
-          && x.getSelectors().get(0).getSelector().equals("body");
-      return true;
-    }
-
-    void propertyHandlerBackground(List<Value> values) {
-      /*
-       * The first numeric value will be treated as the left position only if we
-       * havn't seen any value that could potentially be the left value.
-       */
-      boolean seenLeft = false;
-
-      for (ListIterator<Value> it = values.listIterator(); it.hasNext();) {
-        Value v = it.next();
-        Value maybeFlipped = flipLeftRightIdentValue(v);
-        NumberValue nv = v.isNumberValue();
-        if (v != maybeFlipped) {
-          it.set(maybeFlipped);
-          seenLeft = true;
-
-        } else if (isIdent(v, "center")) {
-          seenLeft = true;
-
-        } else if (!seenLeft && (nv != null)) {
-          seenLeft = true;
-          if ("%".equals(nv.getUnits())) {
-            float position = 100f - nv.getValue();
-            it.set(new NumberValue(position, "%"));
-            break;
-          }
-        }
-      }
-    }
-
-    void propertyHandlerBackgroundPosition(List<Value> values) {
-      propertyHandlerBackground(values);
-    }
-
-    Value propertyHandlerBackgroundPositionX(Value v) {
-      ArrayList<Value> list = new ArrayList<Value>(1);
-      list.add(v);
-      propertyHandlerBackground(list);
-      return list.get(0);
-    }
-
-    /**
-     * Note there should be no propertyHandlerBorder(). The CSS spec states that
-     * the border property must set all values at once.
-     */
-    void propertyHandlerBorderColor(List<Value> values) {
-      swapFour(values);
-    }
-
-    void propertyHandlerBorderStyle(List<Value> values) {
-      swapFour(values);
-    }
-
-    void propertyHandlerBorderWidth(List<Value> values) {
-      swapFour(values);
-    }
-
-    Value propertyHandlerClear(Value v) {
-      return propertyHandlerFloat(v);
-    }
-
-    Value propertyHandlerCursor(Value v) {
-      IdentValue identValue = v.isIdentValue();
-      if (identValue == null) {
-        return v;
-      }
-
-      String ident = identValue.getIdent().toLowerCase();
-      if (!ident.endsWith("-resize")) {
-        return v;
-      }
-
-      StringBuffer newIdent = new StringBuffer();
-
-      if (ident.length() == 9) {
-        if (ident.charAt(0) == 'n') {
-          newIdent.append('n');
-          ident = ident.substring(1);
-        } else if (ident.charAt(0) == 's') {
-          newIdent.append('s');
-          ident = ident.substring(1);
-        } else {
-          return v;
-        }
-      }
-
-      if (ident.length() == 8) {
-        if (ident.charAt(0) == 'e') {
-          newIdent.append("w-resize");
-        } else if (ident.charAt(0) == 'w') {
-          newIdent.append("e-resize");
-        } else {
-          return v;
-        }
-        return new IdentValue(newIdent.toString());
-      } else {
-        return v;
-      }
-    }
-
-    Value propertyHandlerDirection(Value v) {
-      if (inBodyRule) {
-        if (isIdent(v, "ltr")) {
-          return new IdentValue("rtl");
-        } else if (isIdent(v, "rtl")) {
-          return new IdentValue("ltr");
-        }
-      }
-      return v;
-    }
-
-    Value propertyHandlerFloat(Value v) {
-      return flipLeftRightIdentValue(v);
-    }
-
-    void propertyHandlerMargin(List<Value> values) {
-      swapFour(values);
-    }
-
-    void propertyHandlerPadding(List<Value> values) {
-      swapFour(values);
-    }
-
-    Value propertyHandlerPageBreakAfter(Value v) {
-      return flipLeftRightIdentValue(v);
-    }
-
-    Value propertyHandlerPageBreakBefore(Value v) {
-      return flipLeftRightIdentValue(v);
-    }
-
-    Value propertyHandlerTextAlign(Value v) {
-      return flipLeftRightIdentValue(v);
-    }
-
-    private Value flipLeftRightIdentValue(Value v) {
-      if (isIdent(v, "right")) {
-        return new IdentValue("left");
-
-      } else if (isIdent(v, "left")) {
-        return new IdentValue("right");
-      }
-      return v;
-    }
-
-    /**
-     * Reflectively invokes a propertyHandler method for the named property.
-     * Dashed names are transformed into camel-case names; only letters
-     * following a dash will be capitalized when looking for a method to prevent
-     * <code>fooBar<code> and <code>foo-bar</code> from colliding.
-     */
-    private void invokePropertyHandler(String name, List<Value> values) {
-      // See if we have a property-handler function
-      try {
-        String[] parts = name.toLowerCase().split("-");
-        StringBuffer methodName = new StringBuffer("propertyHandler");
-        for (String part : parts) {
-          methodName.append(Character.toUpperCase(part.charAt(0)));
-          methodName.append(part, 1, part.length());
-        }
-
-        try {
-          // Single-arg for simplicity
-          Method m = getClass().getDeclaredMethod(methodName.toString(),
-              Value.class);
-          assert Value.class.isAssignableFrom(m.getReturnType());
-          Value newValue = (Value) m.invoke(this, values.get(0));
-          values.set(0, newValue);
-        } catch (NoSuchMethodException e) {
-          // OK
-        }
-
-        try {
-          // Or the whole List for completeness
-          Method m = getClass().getDeclaredMethod(methodName.toString(),
-              List.class);
-          m.invoke(this, values);
-        } catch (NoSuchMethodException e) {
-          // OK
-        }
-
-      } catch (SecurityException e) {
-        throw new CssCompilerException(
-            "Unable to invoke property handler function for " + name, e);
-      } catch (IllegalArgumentException e) {
-        throw new CssCompilerException(
-            "Unable to invoke property handler function for " + name, e);
-      } catch (IllegalAccessException e) {
-        throw new CssCompilerException(
-            "Unable to invoke property handler function for " + name, e);
-      } catch (InvocationTargetException e) {
-        throw new CssCompilerException(
-            "Unable to invoke property handler function for " + name, e);
-      }
-    }
-
-    private boolean isIdent(Value value, String query) {
-      IdentValue v = value.isIdentValue();
-      return v != null && v.getIdent().equalsIgnoreCase(query);
-    }
-
-    /**
-     * Swaps the second and fourth values in a list of four values.
-     */
-    private void swapFour(List<Value> values) {
-      if (values.size() == 4) {
-        Collections.swap(values, 1, 3);
-      }
-    }
-  }
-
-  /**
-   * Splits rules with compound selectors into multiple rules.
-   */
-  static class SplitRulesVisitor extends CssModVisitor {
-    @Override
-    public void endVisit(CssRule x, Context ctx) {
-      if (x.getSelectors().size() == 1) {
-        return;
-      }
-
-      for (CssSelector sel : x.getSelectors()) {
-        CssRule newRule = new CssRule();
-        newRule.getSelectors().add(sel);
-        newRule.getProperties().addAll(
-            CssNodeCloner.clone(CssProperty.class, x.getProperties()));
-        ctx.insertBefore(newRule);
-      }
-      ctx.removeMe();
-      return;
-    }
-  }
-
-  /**
-   * Replaces CssSprite nodes with CssRule nodes that will display the sprited
-   * image. The real trick with spriting the images is to reuse the
-   * ImageResource processing framework by requiring the sprite to be defined in
-   * terms of an ImageResource.
-   */
-  static class Spriter extends CssModVisitor {
-    private final ResourceContext context;
-    private final TreeLogger logger;
-
-    public Spriter(TreeLogger logger, ResourceContext context) {
-      this.logger = logger.branch(TreeLogger.DEBUG,
-          "Creating image sprite classes");
-      this.context = context;
-    }
-
-    @Override
-    public void endVisit(CssSprite x, Context ctx) {
-      JClassType bundleType = context.getClientBundleType();
-      String functionName = x.getResourceFunction();
-
-      if (functionName == null) {
-        logger.log(TreeLogger.ERROR, "The @sprite rule " + x.getSelectors()
-            + " must specify the " + CssSprite.IMAGE_PROPERTY_NAME
-            + " property");
-        throw new CssCompilerException("No image property specified");
-      }
-
-      // Find the image accessor method
-      JMethod imageMethod = null;
-      JMethod[] allMethods = bundleType.getOverridableMethods();
-      for (int i = 0; imageMethod == null && i < allMethods.length; i++) {
-        JMethod candidate = allMethods[i];
-        // If the function name matches and takes no parameters
-        if (candidate.getName().equals(functionName)
-            && candidate.getParameters().length == 0) {
-          // We have a match
-          imageMethod = candidate;
-        }
-      }
-
-      // Method unable to be located
-      if (imageMethod == null) {
-        logger.log(TreeLogger.ERROR, "Unable to find ImageResource method "
-            + functionName + " in " + bundleType.getQualifiedSourceName());
-        throw new CssCompilerException("Cannot find image function");
-      }
-
-      JClassType imageResourceType = context.getGeneratorContext().getTypeOracle().findType(
-          ImageResource.class.getName());
-      assert imageResourceType != null;
-
-      if (!imageResourceType.isAssignableFrom(imageMethod.getReturnType().isClassOrInterface())) {
-        logger.log(TreeLogger.ERROR, "The return type of " + functionName
-            + " is not assignable to "
-            + imageResourceType.getSimpleSourceName());
-        throw new CssCompilerException("Incorrect return type for "
-            + CssSprite.IMAGE_PROPERTY_NAME + " method");
-      }
-
-      ImageOptions options = imageMethod.getAnnotation(ImageOptions.class);
-      RepeatStyle repeatStyle;
-      if (options != null) {
-        repeatStyle = options.repeatStyle();
-      } else {
-        repeatStyle = RepeatStyle.None;
-      }
-
-      String instance = "(" + context.getImplementationSimpleSourceName()
-          + ".this." + functionName + "())";
-
-      CssRule replacement = new CssRule();
-      replacement.getSelectors().addAll(x.getSelectors());
-      List<CssProperty> properties = replacement.getProperties();
-
-      if (repeatStyle == RepeatStyle.None
-          || repeatStyle == RepeatStyle.Horizontal) {
-        properties.add(new CssProperty("height", new ExpressionValue(instance
-            + ".getHeight() + \"px\""), false));
-      }
-
-      if (repeatStyle == RepeatStyle.None
-          || repeatStyle == RepeatStyle.Vertical) {
-        properties.add(new CssProperty("width", new ExpressionValue(instance
-            + ".getWidth() + \"px\""), false));
-      }
-      properties.add(new CssProperty("overflow", new IdentValue("hidden"),
-          false));
-
-      String repeatText;
-      switch (repeatStyle) {
-        case None:
-          repeatText = " no-repeat";
-          break;
-        case Horizontal:
-          repeatText = " repeat-x";
-          break;
-        case Vertical:
-          repeatText = " repeat-y";
-          break;
-        case Both:
-          repeatText = " repeat";
-          break;
-        default:
-          throw new RuntimeException("Unknown repeatStyle " + repeatStyle);
-      }
-
-      String backgroundExpression = "\"url(\\\"\" + " + instance
-          + ".getURL() + \"\\\") -\" + " + instance
-          + ".getLeft() + \"px -\" + " + instance + ".getTop() + \"px "
-          + repeatText + "\"";
-      properties.add(new CssProperty("background", new ExpressionValue(
-          backgroundExpression), false));
-
-      // Retain any user-specified properties
-      properties.addAll(x.getProperties());
-
-      ctx.replaceMe(replacement);
-    }
-  }
-
-  static class SubstitutionCollector extends CssVisitor {
-    private final Map<String, CssDef> substitutions = new HashMap<String, CssDef>();
-
-    @Override
-    public void endVisit(CssDef x, Context ctx) {
-      substitutions.put(x.getKey(), x);
-    }
-
-    @Override
-    public void endVisit(CssEval x, Context ctx) {
-      substitutions.put(x.getKey(), x);
-    }
-
-    @Override
-    public void endVisit(CssUrl x, Context ctx) {
-      substitutions.put(x.getKey(), x);
-    }
-  }
-
-  /**
-   * Substitute symbolic replacements into string values.
-   */
-  static class SubstitutionReplacer extends CssVisitor {
-    private final ResourceContext context;
-    private final TreeLogger logger;
-    private final Map<String, CssDef> substitutions;
-
-    public SubstitutionReplacer(TreeLogger logger, ResourceContext context,
-        Map<String, CssDef> substitutions) {
-      this.context = context;
-      this.logger = logger;
-      this.substitutions = substitutions;
-    }
-
-    @Override
-    public void endVisit(CssProperty x, Context ctx) {
-      if (x.getValues() == null) {
-        // Nothing to do
-        return;
-      }
-
-      List<Value> values = new ArrayList<Value>(x.getValues().getValues());
-
-      for (ListIterator<Value> i = values.listIterator(); i.hasNext();) {
-        IdentValue v = i.next().isIdentValue();
-
-        if (v == null) {
-          // Don't try to substitute into anything other than idents
-          continue;
-        }
-
-        String value = v.getIdent();
-        CssDef def = substitutions.get(value);
-
-        if (def == null) {
-          continue;
-        } else if (def instanceof CssUrl) {
-          assert def.getValues().size() == 1;
-          assert def.getValues().get(0).isIdentValue() != null;
-          String functionName = def.getValues().get(0).isIdentValue().getIdent();
-
-          // Find the method
-          JMethod methods[] = context.getClientBundleType().getOverridableMethods();
-          boolean foundMethod = false;
-          if (methods != null) {
-            for (JMethod method : methods) {
-              if (method.getName().equals(functionName)) {
-                foundMethod = true;
-                break;
-              }
-            }
-          }
-
-          if (!foundMethod) {
-            logger.log(TreeLogger.ERROR, "Unable to find DataResource method "
-                + functionName + " in "
-                + context.getClientBundleType().getQualifiedSourceName());
-            throw new CssCompilerException("Cannot find data function");
-          }
-
-          String instance = "((" + DataResource.class.getName() + ")("
-              + context.getImplementationSimpleSourceName() + ".this."
-              + functionName + "()))";
-
-          StringBuilder expression = new StringBuilder();
-          expression.append("\"url('\" + ");
-          expression.append(instance).append(".getUrl()");
-          expression.append(" + \"')\"");
-          i.set(new ExpressionValue(expression.toString()));
-
-        } else {
-          i.remove();
-          for (Value defValue : def.getValues()) {
-            i.add(defValue);
-          }
-        }
-      }
-
-      x.setValue(new ListValue(values));
     }
   }
 
@@ -1096,13 +124,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
   private static final String KEY_CLASS_PREFIX = "prefix";
   private static final String KEY_CLASS_COUNTER = "counter";
 
-  public static void main(String[] args) {
-    for (int i = 0; i < 1000; i++) {
-      System.out.println(makeIdent(i));
-    }
-  }
-
-  static boolean haveCommonProperties(CssRule a, CssRule b) {
+  public static boolean haveCommonProperties(CssRule a, CssRule b) {
     if (a.getProperties().size() == 0 || b.getProperties().size() == 0) {
       return false;
     }
@@ -1147,6 +169,12 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     }
 
     return false;
+  }
+
+  public static void main(String[] args) {
+    for (int i = 0; i < 1000; i++) {
+      System.out.println(makeIdent(i));
+    }
   }
 
   /**
@@ -1763,7 +791,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
       SubstitutionCollector collector = new SubstitutionCollector();
       collector.accept(sheet);
 
-      (new SubstitutionReplacer(logger, context, collector.substitutions)).accept(sheet);
+      (new SubstitutionReplacer(logger, context, collector.getSubstitutions())).accept(sheet);
 
       // Evaluate @if statements based on deferred binding properties
       (new IfEvaluator(logger,
@@ -1834,7 +862,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     String name = toImplement.getName();
     // TODO: Annotation for override
 
-    CssDef def = collector.substitutions.get(name);
+    CssDef def = collector.getSubstitutions().get(name);
     if (def == null) {
       logger.log(TreeLogger.ERROR, "No @def rule for name " + name);
       throw new UnableToCompleteException();
@@ -1895,6 +923,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     // Get list of @defs
     DefsCollector collector = new DefsCollector();
     collector.accept(sheet);
+    Set<String> defs = collector.getDefs();
 
     for (JMethod toImplement : methods) {
       String name = toImplement.getName();
@@ -1903,14 +932,13 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
       }
 
       // Bomb out if there is a collision between @def and a style name
-      if (collector.defs.contains(name)
-          && obfuscatedClassNames.containsKey(toImplement)) {
+      if (defs.contains(name) && obfuscatedClassNames.containsKey(toImplement)) {
         logger.log(TreeLogger.ERROR, "@def shadows CSS class name: " + name
             + ". Fix by renaming the @def name or the CSS class name.");
         throw new UnableToCompleteException();
       }
 
-      if (collector.defs.contains(toImplement.getName())
+      if (defs.contains(toImplement.getName())
           && toImplement.getParameters().length == 0) {
         writeDefAssignment(logger, sw, toImplement, sheet);
       } else if (toImplement.getReturnType().equals(stringType)
