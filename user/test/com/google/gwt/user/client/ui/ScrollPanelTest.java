@@ -15,18 +15,13 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.junit.client.GWTTestCase;
-
 /**
  * Tests the ScrollPanel widget.
  */
-public class ScrollPanelTest extends GWTTestCase {
+public class ScrollPanelTest extends SimplePanelTestBase<ScrollPanel> {
 
-  public String getModuleName() {
-    return "com.google.gwt.user.User";
-  }
-
-  public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(new ScrollPanel());
+  @Override
+  protected ScrollPanel createPanel() {
+    return new ScrollPanel();
   }
 }

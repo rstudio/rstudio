@@ -95,7 +95,7 @@ public class RunStyleSelenium extends RunStyle {
     String[] targetsIn = args.split(",");
     RCSelenium targets[] = new RCSelenium[targetsIn.length];
 
-    Pattern pattern = Pattern.compile("([\\w\\.-]+):([\\d]+)/([\\w\\s\\*]+)");
+    Pattern pattern = Pattern.compile("([\\w\\.-]+):([\\d]+)/([\\w\\s\\*(/\\w+)*]+)");
     for (int i = 0; i < targets.length; ++i) {
       Matcher matcher = pattern.matcher(targetsIn[i]);
       if (!matcher.matches()) {

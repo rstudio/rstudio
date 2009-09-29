@@ -15,10 +15,11 @@
  */
 package com.google.gwt.sample.mail.client;
 
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.DecoratedStackPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.LayoutComposite;
+import com.google.gwt.user.client.ui.StackLayoutPanel;
 
 /**
  * A composite that contains the shortcut stack panel on the left side. The
@@ -27,67 +28,29 @@ import com.google.gwt.user.client.ui.Widget;
  * {@link com.google.gwt.user.client.ui.StackPanel},
  * {@link com.google.gwt.user.client.ui.Tree}, and other custom widgets.
  */
-public class Shortcuts extends Composite {
+public class Shortcuts extends LayoutComposite {
 
-  /**
-   * An image bundle specifying the images for this Widget and aggragating
-   * images needed in child widgets.
-   */
-  public interface Images extends Contacts.Images, Mailboxes.Images {
-    AbstractImagePrototype contactsgroup();
+  interface Binder extends UiBinder<StackLayoutPanel, Shortcuts> { }
+  private static final Binder binder = GWT.create(Binder.class);
 
-    AbstractImagePrototype mailgroup();
+  private StackLayoutPanel stackPanel;
 
-    AbstractImagePrototype tasksgroup();
-  }
-
-  private int nextHeaderIndex = 0;
-  private DecoratedStackPanel stackPanel = new DecoratedStackPanel();
+  @UiField Mailboxes mailboxes;
+  @UiField Tasks tasks;
+  @UiField Contacts contacts;
 
   /**
    * Constructs a new shortcuts widget using the specified images.
    * 
    * @param images a bundle that provides the images for this widget
    */
-  public Shortcuts(Images images) {
-    // Create the groups within the stack panel.
-    add(new Mailboxes(images), images.mailgroup(), "Mail");
-    add(new Tasks(), images.tasksgroup(), "Tasks");
-    add(new Contacts(images), images.contactsgroup(), "Contacts");
-
-    initWidget(stackPanel);
+  public Shortcuts() {
+    initWidget(stackPanel = binder.createAndBindUi(this));
   }
 
   @Override
   protected void onLoad() {
     // Show the mailboxes group by default.
-    stackPanel.showStack(0);
-  }
-
-  private void add(Widget widget, AbstractImagePrototype imageProto,
-      String caption) {
-    widget.addStyleName("mail-StackContent");
-    stackPanel.add(widget, createHeaderHTML(imageProto, caption), true);
-  }
-
-  /**
-   * Creates an HTML fragment that places an image & caption together, for use
-   * in a group header.
-   * 
-   * @param imageProto an image prototype for an image
-   * @param caption the group caption
-   * @return the header HTML fragment
-   */
-  private String createHeaderHTML(AbstractImagePrototype imageProto,
-      String caption) {
-    nextHeaderIndex++;
-
-    String captionHTML = "<table class='caption' cellpadding='0' cellspacing='0'>"
-        + "<tr><td class='lcaption'>"
-        + imageProto.getHTML()
-        + "</td><td class='rcaption'><b style='white-space:nowrap'>"
-        + caption
-        + "</b></td></tr></table>";
-    return captionHTML;
+    stackPanel.showWidget(mailboxes);
   }
 }

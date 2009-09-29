@@ -16,7 +16,12 @@
 package com.google.gwt.benchmarks.client;
 
 import com.google.gwt.benchmarks.BenchmarkShell;
+import com.google.gwt.benchmarks.client.impl.BenchmarkResults;
+import com.google.gwt.junit.JUnitShell.Strategy;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.junit.client.impl.JUnitResult;
+
+import junit.framework.TestCase;
 
 /**
  * A type of {@link com.google.gwt.junit.client.GWTTestCase} which specifically
@@ -100,17 +105,48 @@ public abstract class Benchmark extends GWTTestCase {
   public static final String REPORT_PATH = "com.google.gwt.junit.reportPath";
 
   /**
+   * The {@link Strategy} used for benchmarking.
+   */
+  private static Strategy BENCHMARK_STRATEGY = new Strategy() {
+    public String getModuleInherit() {
+      return "com.google.gwt.benchmarks.Benchmarks";
+    }
+
+    public String getSyntheticModuleExtension() {
+      return "Benchmarks";
+    }
+
+    public void processResult(TestCase testCase, JUnitResult result) {
+      if (result instanceof BenchmarkResults) {
+        BenchmarkShell.getReport().addBenchmarkResults(testCase,
+            (BenchmarkResults) result);
+      }
+    }
+  };
+
+  /**
+   * Get the {@link Strategy} to use when compiling and running this test.
+   *  
+   * @return the test {@link Strategy}
+   */
+  @Override
+  public Strategy getStrategy() {
+    return BENCHMARK_STRATEGY;
+  }
+
+  /**
    * Runs the test via the {@link com.google.gwt.benchmarks.BenchmarkShell}
    * environment. Do not override or call this method.
    */
   @Override
   protected final void runTest() throws Throwable {
-    BenchmarkShell.runTest(getModuleName(), this, testResult);
+    BenchmarkShell.runTest(this, testResult);
   }
 
   /**
    * Benchmarks do not support asynchronous mode.
    */
+  @Override
   protected final boolean supportsAsync() {
     return false;
   }

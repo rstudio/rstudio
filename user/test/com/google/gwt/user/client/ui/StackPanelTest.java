@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
@@ -24,7 +23,7 @@ import com.google.gwt.user.client.Element;
 /**
  * Test cases for {@link StackPanel}.
  */
-public class StackPanelTest extends GWTTestCase {
+public class StackPanelTest extends PanelTestBase<StackPanel> {
 
   static class Adder implements HasWidgetsTester.WidgetAdder {
     public void addChild(HasWidgets container, Widget child) {
@@ -50,8 +49,9 @@ public class StackPanelTest extends GWTTestCase {
     return accum;
   }
 
+  @Override
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(createStackPanel(), new Adder());
+    HasWidgetsTester.testAll(createStackPanel(), new Adder(), true);
   }
 
   public void testDebugId() {
@@ -161,5 +161,10 @@ public class StackPanelTest extends GWTTestCase {
    */
   protected StackPanel createStackPanel() {
     return new StackPanel();
+  }
+
+  @Override
+  protected StackPanel createPanel() {
+    return createStackPanel();
   }
 }

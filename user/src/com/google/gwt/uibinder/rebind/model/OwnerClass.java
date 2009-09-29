@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Model class with all attributes of the owner class.
@@ -40,7 +41,7 @@ public class OwnerClass {
    * Map from field name to model.
    */
   private final Map<String, OwnerField> uiFields =
-      new HashMap<String, OwnerField>();
+      new TreeMap<String, OwnerField>();
 
   /**
    * Map from field type to model.

@@ -22,7 +22,7 @@ import java.util.ArrayList;
  */
 public class MailItems {
 
-  private static final int NUM_ITEMS = 37;
+  private static final int NUM_ITEMS = 64;
   private static final int FRAGMENTS_PER_EMAIL = 10;
 
   private static final String[] senders = new String[] {

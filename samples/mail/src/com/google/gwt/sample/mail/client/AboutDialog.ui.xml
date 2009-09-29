@@ -1,0 +1,27 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
+
+  <ui:style>
+  .aboutText {
+    width: 24em;
+    padding: 10px;
+    text-align: left;
+  }
+  </ui:style>
+
+  <g:DockPanel>
+    <g:Dock direction='SOUTH'>
+      <g:Button text='Close' ui:field='closeButton' />
+    </g:Dock>
+    <g:Dock direction='CENTER'>
+      <g:HTML styleName='{style.aboutText}'>
+        This sample application demonstrates the
+        construction of a complex user interface using GWT's built-in
+        widgets. Have a look at the code to see how easy it is to build
+        your own apps!
+      </g:HTML>
+    </g:Dock>
+  </g:DockPanel>
+
+</ui:UiBinder>

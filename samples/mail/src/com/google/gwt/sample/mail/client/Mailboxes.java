@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.mail.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ImageBundle;
@@ -55,7 +56,9 @@ public class Mailboxes extends Composite {
    * 
    * @param images a bundle that provides the images for this widget
    */
-  public Mailboxes(Images images) {
+  public Mailboxes() {
+    Images images = GWT.create(Images.class);
+
     tree = new Tree(images);
     TreeItem root = new TreeItem(
         imageItemHTML(images.home(), "foo@example.com"));

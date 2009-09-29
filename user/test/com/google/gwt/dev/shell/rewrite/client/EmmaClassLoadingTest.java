@@ -16,7 +16,6 @@
 package com.google.gwt.dev.shell.rewrite.client;
 
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.Timer;
 
 import junit.framework.TestCase;
 
@@ -109,10 +108,11 @@ public class EmmaClassLoadingTest extends GWTTestCase {
         @com.google.gwt.dev.shell.rewrite.client.EmmaClassLoadingTest::log(Ljava/lang/String;)("1e foo");
       }-*/;
     };
+    e.foo();
   }
 
   public void test2() {
-    SecondTopLevelClass second = new SecondTopLevelClass();
+//    SecondTopLevelClass second = new SecondTopLevelClass();
     SecondTopLevelClass.InnerClass.test();
   }
 
@@ -138,6 +138,7 @@ class FourthTopLevelClass extends TestCase {
 
   private static int logCount = 0;
 
+  @SuppressWarnings("unused") // used by JSNI
   private static void log(String msg) {
     assertEquals(messages[logCount++], msg);
   }
@@ -171,6 +172,7 @@ class FourthTopLevelClass extends TestCase {
    * Added a test3() method so that when the test fails, it fails quickly.
    * Instead of timing out, the AssertEquals fails
    */
+  @SuppressWarnings("unused")
   private void test3() {
     class Foo {
       public native void foo() /*-{
@@ -248,6 +250,7 @@ class SecondTopLevelClass extends TestCase {
           @com.google.gwt.dev.shell.rewrite.client.SecondTopLevelClass::log(Ljava/lang/String;)("2e foo");
         }-*/;
       };
+      e.foo();
     }
   }
 
@@ -271,28 +274,17 @@ class ThirdTopLevelClass extends TestCase {
 
   private static int logCount = 0;
 
+  @SuppressWarnings("unused") // called by JSNI
   private static void log(String msg) {
     assertEquals(messages[logCount++], msg);
   }
 
   void test() {
-    Timer t1 = new Timer() {
-      @Override
-      public void run() {
-      }
-    };
-
     EmmaClassLoadingTest.TestInterface a = new EmmaClassLoadingTest.TestInterface() {
       public native void foo() /*-{
         @com.google.gwt.dev.shell.rewrite.client.ThirdTopLevelClass::log(Ljava/lang/String;)("3a foo");
       }-*/;
     };
     a.foo();
-
-    Timer t2 = new Timer() {
-      @Override
-      public void run() {
-      }
-    };
   }
 }

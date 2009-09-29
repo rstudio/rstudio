@@ -19,7 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -33,7 +33,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
     + " @UiConstructor.";
 
   private final String name;
-  private final Set<FieldWriter> needs = new HashSet<FieldWriter>();
+  private final Set<FieldWriter> needs = new LinkedHashSet<FieldWriter>();
   private String initializer;
   private boolean written;
   private MortalLogger logger;

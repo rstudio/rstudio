@@ -353,21 +353,25 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
 
   @Override
   protected void doAttachChildren() {
-    super.doAttachChildren();
-
-    // See comment in doDetachChildren for an explanation of this call
-    caption.onAttach();
+    try {
+      super.doAttachChildren();
+    } finally {
+      // See comment in doDetachChildren for an explanation of this call
+      caption.onAttach();
+    }
   }
 
   @Override
   protected void doDetachChildren() {
-    super.doDetachChildren();
-
-    // We need to detach the caption specifically because it is not part of the
-    // iterator of Widgets that the {@link SimplePanel} super class returns.
-    // This is similar to a {@link ComplexPanel}, but we do not want to expose
-    // the caption widget, as its just an internal implementation.
-    caption.onDetach();
+    try {
+      super.doDetachChildren();
+    } finally {
+      // We need to detach the caption specifically because it is not part of the
+      // iterator of Widgets that the {@link SimplePanel} super class returns.
+      // This is similar to a {@link ComplexPanel}, but we do not want to expose
+      // the caption widget, as its just an internal implementation.
+      caption.onDetach();
+    }
   }
 
   /**

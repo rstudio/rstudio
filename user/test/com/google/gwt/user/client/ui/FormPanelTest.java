@@ -19,27 +19,21 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
-import com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder;
 
 /**
  * Tests the FormPanel.
  * 
  * @see com.google.gwt.user.server.ui.FormPanelTestServlet
  */
-public class FormPanelTest extends GWTTestCase {
+public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
   public static boolean clicked = false;
 
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.FormPanelTest";
-  }
-
-  public void testAttachDetachOrder(HasWidgets container, WidgetAdder adder) {
-    HasWidgetsTester.testAll(new FormPanel());
   }
 
   public void testCancelSubmit() {
@@ -349,6 +343,11 @@ public class FormPanelTest extends GWTTestCase {
     });
 
     form.submit();
+  }
+
+  @Override
+  protected FormPanel createPanel() {
+    return new FormPanel();
   }
 
   private native boolean isHappyDivPresent(Element iframe) /*-{

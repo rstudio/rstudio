@@ -577,12 +577,15 @@ public class TreeItem extends UIObject implements HasHTML {
 
     // Detach old child from tree.
     if (widget != null) {
-      if (tree != null) {
-        tree.orphan(widget);
+      try {
+        if (tree != null) {
+          tree.orphan(widget);
+        }
+      } finally {
+        // Physical detach old child.
+        contentElem.removeChild(widget.getElement());
+        widget = null;
       }
-
-      // Physical detach old child.
-      contentElem.removeChild(widget.getElement());
     }
 
     // Clear out any existing content before adding a widget.

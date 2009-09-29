@@ -24,6 +24,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
  * 
  * TODO(mmendez): check that the warnings are emitted.
  */
+@SuppressWarnings("rpc-validation")
 public interface AbstractSerializableTypes extends RemoteService { 
   /**
    * Regular interface.

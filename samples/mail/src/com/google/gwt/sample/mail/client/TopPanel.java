@@ -15,71 +15,43 @@
  */
 package com.google.gwt.sample.mail.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.ImageBundle;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * The top panel, which contains the 'welcome' message and various links.
  */
-public class TopPanel extends Composite implements ClickHandler {
+public class TopPanel extends Composite {
 
-  /**
-   * An image bundle for this widgets images.
-   */
-  public interface Images extends ImageBundle {
-    AbstractImagePrototype logo();
+  interface Binder extends UiBinder<Widget, TopPanel> { }
+  private static final Binder binder = GWT.create(Binder.class);
+
+  @UiField Anchor signOutLink;
+  @UiField Anchor aboutLink;
+
+  public TopPanel() {
+    initWidget(binder.createAndBindUi(this));
   }
 
-  private HTML signOutLink = new HTML("<a href='javascript:;'>Sign Out</a>");
-  private HTML aboutLink = new HTML("<a href='javascript:;'>About</a>");
-
-  public TopPanel(Images images) {
-    HorizontalPanel outer = new HorizontalPanel();
-    VerticalPanel inner = new VerticalPanel();
-
-    outer.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
-    inner.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
-
-    HorizontalPanel links = new HorizontalPanel();
-    links.setSpacing(4);
-    links.add(signOutLink);
-    links.add(aboutLink);
-
-    final Image logo = images.logo().createImage();
-    outer.add(logo);
-    outer.setCellHorizontalAlignment(logo, HorizontalPanel.ALIGN_LEFT);
-
-    outer.add(inner);
-    inner.add(new HTML("<b>Welcome back, foo@example.com</b>"));
-    inner.add(links);
-
-    signOutLink.addClickHandler(this);
-    aboutLink.addClickHandler(this);
-
-    initWidget(outer);
-    setStyleName("mail-TopPanel");
-    links.setStyleName("mail-TopPanelLinks");
+  @UiHandler("aboutLink")
+  void onAboutClicked(ClickEvent event) {
+    // When the 'About' item is selected, show the AboutDialog.
+    // Note that showing a dialog box does not block -- execution continues
+    // normally, and the dialog fires an event when it is closed.
+    AboutDialog dlg = new AboutDialog();
+    dlg.show();
+    dlg.center();
   }
 
-  public void onClick(ClickEvent event) {
-    Object sender = event.getSource();
-    if (sender == signOutLink) {
-      Window.alert("If this were implemented, you would be signed out now.");
-    } else if (sender == aboutLink) {
-      // When the 'About' item is selected, show the AboutDialog.
-      // Note that showing a dialog box does not block -- execution continues
-      // normally, and the dialog fires an event when it is closed.
-      AboutDialog dlg = new AboutDialog();
-      dlg.show();
-      dlg.center();
-    }
+  @UiHandler("signOutLink")
+  void onSignOutClicked(ClickEvent event) {
+    Window.alert("If this were implemented, you would be signed out now.");
   }
 }

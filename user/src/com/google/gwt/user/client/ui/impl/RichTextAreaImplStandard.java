@@ -334,13 +334,13 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     initializing = false;
     isReady = true;
 
-    super.onElementInitialized();
-
     // When the iframe is ready, ensure cached content is set.
     if (beforeInitPlaceholder != null) {
       setHTMLImpl(DOM.getInnerHTML(beforeInitPlaceholder));
       beforeInitPlaceholder = null;
     }
+    
+    super.onElementInitialized();
   }
 
   protected native void setHTMLImpl(String html) /*-{

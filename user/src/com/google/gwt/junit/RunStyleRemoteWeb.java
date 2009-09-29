@@ -27,6 +27,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.rmi.Naming;
 import java.rmi.server.RMISocketFactory;
+import java.security.Permission;
 
 /**
  * Runs in web mode via browsers managed over RMI. This feature is experimental
@@ -168,6 +169,15 @@ class RunStyleRemoteWeb extends RunStyle {
       throw new JUnitFatalLaunchException("Error initializing RMISocketFactory",
           e);
     }
+    System.setSecurityManager(new SecurityManager() {
+      @Override
+      public void checkPermission(Permission perm) {
+      }
+
+      @Override
+      public void checkPermission(Permission perm, Object context) {
+      }
+    });
     int numClients = urls.length;
     BrowserManager[] browserManagers = new BrowserManager[numClients];
     for (int i = 0; i < numClients; ++i) {

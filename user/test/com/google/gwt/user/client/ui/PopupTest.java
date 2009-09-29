@@ -31,6 +31,15 @@ import com.google.gwt.user.client.Window;
 public class PopupTest extends GWTTestCase {
 
   /**
+   * The Widget adder used to set the widget in a {@link PopupPanel}.
+   */
+  private static class Adder implements HasWidgetsTester.WidgetAdder {
+    public void addChild(HasWidgets container, Widget child) {
+      ((PopupPanel) container).setWidget(child);
+    }
+  }
+
+  /**
    * Expose otherwise private or protected methods.
    */
   private static class TestablePopupPanel extends PopupPanel {
@@ -99,6 +108,10 @@ public class PopupTest extends GWTTestCase {
     assertTrue(popup.isShowing());
     popup.hide();
     assertFalse(popup.isShowing());
+  }
+
+  public void testAttachDetachOrder() {
+    HasWidgetsTester.testAll(createPopupPanel(), new Adder(), false);
   }
 
   public void testAutoHidePartner() {

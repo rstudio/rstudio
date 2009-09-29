@@ -15,30 +15,23 @@
  */
 package com.google.gwt.sample.mail.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiTemplate;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.ImageBundle;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * A component that displays a list of contacts.
  */
 public class Contacts extends Composite {
-
-  /**
-   * An image bundle for this widget and an example of the use of @Resource.
-   */
-  public interface Images extends ImageBundle {
-    @Resource("default_photo.jpg")
-    AbstractImagePrototype defaultPhoto();
-  }
 
   /**
    * Simple data structure representing a contact.
@@ -56,30 +49,27 @@ public class Contacts extends Composite {
   /**
    * A simple popup that displays a contact's information.
    */
-  private class ContactPopup extends PopupPanel {
+  static class ContactPopup extends PopupPanel {
+    @UiTemplate("ContactPopup.ui.xml")
+    interface Binder extends UiBinder<Widget, ContactPopup> { }
+    private static final Binder binder = GWT.create(Binder.class);
+
+    @UiField Element nameDiv;
+    @UiField Element emailDiv;
 
     public ContactPopup(Contact contact) {
       // The popup's constructor's argument is a boolean specifying that it
       // auto-close itself when the user clicks outside of it.
       super(true);
+      add(binder.createAndBindUi(this));
 
-      VerticalPanel inner = new VerticalPanel();
-      Label nameLabel = new Label(contact.name);
-      Label emailLabel = new Label(contact.email);
-      inner.add(nameLabel);
-      inner.add(emailLabel);
-
-      HorizontalPanel hp = new HorizontalPanel();
-      hp.setSpacing(4);
-      hp.add(images.defaultPhoto().createImage());
-      hp.add(inner);
-
-      add(hp);
-      setStyleName("mail-ContactPopup");
-      nameLabel.setStyleName("mail-ContactPopupName");
-      emailLabel.setStyleName("mail-ContactPopupEmail");
+      nameDiv.setInnerText(contact.name);
+      emailDiv.setInnerText(contact.email);
     }
   }
+
+  interface Binder extends UiBinder<VerticalPanel, Contacts> { }
+  private static final Binder binder = GWT.create(Binder.class);
 
   private Contact[] contacts = new Contact[] {
       new Contact("Benoit Mandelbrot", "benoit@example.com"),
@@ -91,26 +81,19 @@ public class Contacts extends Composite {
       new Contact("Alan Turing", "alan@example.com"),
       new Contact("John von Neumann", "john@example.com")};
 
-  private VerticalPanel panel = new VerticalPanel();
-  private final Images images;
+  private VerticalPanel panel;
 
-  public Contacts(Images images) {
-    SimplePanel outer = new SimplePanel();
-    outer.setWidget(panel);
+  public Contacts() {
+    initWidget(panel = binder.createAndBindUi(this));
 
-    this.images = images;
     // Add all the contacts to the list.
     for (int i = 0; i < contacts.length; ++i) {
       addContact(contacts[i]);
     }
-
-    initWidget(outer);
-    setStyleName("mail-Contacts");
   }
 
   private void addContact(final Contact contact) {
-    final HTML link = new HTML("<a href='javascript:;'>" + contact.name
-        + "</a>");
+    final Anchor link = new Anchor(contact.name);
     panel.add(link);
 
     // Add a click handler that displays a ContactPopup when it is clicked.

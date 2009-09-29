@@ -69,7 +69,7 @@
 <!-- 
   Tests creating a CssResource from an external file.
  -->
-<ui:style field='myStyle' source='WidgetBasedUi.css' 
+<ui:style field='myStyle' src='WidgetBasedUi.css' 
     type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'/>
 
 <ui:style field='myOtherStyle' type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'>

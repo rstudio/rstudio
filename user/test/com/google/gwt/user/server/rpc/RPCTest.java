@@ -55,6 +55,7 @@ public class RPCTest extends TestCase {
     C c();
   }
 
+  @SuppressWarnings("rpc-validation")
   private static interface A extends RemoteService {
     void method1() throws SerializableException;
 

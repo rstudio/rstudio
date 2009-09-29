@@ -20,7 +20,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
-import com.google.gwt.user.client.ui.DockLayoutPanel.Direction;
 
 public class DockLayoutPanelExample implements EntryPoint {
 
@@ -28,11 +27,11 @@ public class DockLayoutPanelExample implements EntryPoint {
     // Attach five widgets to a DockLayoutPanel, one in each direction. Lay
     // them out in 'em' units.
     DockLayoutPanel p = new DockLayoutPanel(Unit.EM);
-    p.add(new HTML("north"), Direction.NORTH, 2);
-    p.add(new HTML("south"), Direction.SOUTH, 2);
-    p.add(new HTML("east"), Direction.EAST, 2);
-    p.add(new HTML("west"), Direction.WEST, 2);
-    p.add(new HTML("center"), Direction.CENTER, 2);
+    p.addNorth(new HTML("north"), 2);
+    p.addSouth(new HTML("south"), 2);
+    p.addEast(new HTML("east"), 2);
+    p.addWest(new HTML("west"), 2);
+    p.add(new HTML("center"));
 
     // Note the explicit call to layout(). This is required for the layout to
     // take effect.

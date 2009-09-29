@@ -17,128 +17,58 @@ package com.google.gwt.sample.mail.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.logical.shared.ResizeEvent;
-import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.DockPanel;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.RootLayoutPanel;
 
 /**
  * This application demonstrates how to construct a relatively complex user
  * interface, similar to many common email readers. It has no back-end,
  * populating its components with hard-coded data.
  */
-public class Mail implements EntryPoint, ResizeHandler {
+public class Mail implements EntryPoint {
 
-  private static Mail singleton;
+  interface Binder extends UiBinder<DockLayoutPanel, Mail> { }
+  private static final Binder binder = GWT.create(Binder.class);
 
-  /**
-   * Instantiate an application-level image bundle. This object will provide
-   * programmatic access to all the images needed by widgets.
-   */
-  private static final Images images = GWT.create(Images.class);
-
-  /**
-   * An aggregate image bundle that pulls together all the images for this
-   * application into a single bundle.
-   */
-  public interface Images extends Shortcuts.Images, TopPanel.Images {
-  }
-
-  /**
-   * Gets the singleton Mail instance.
-   */
-  public static Mail get() {
-    return singleton;
-  }
-
-  private TopPanel topPanel = new TopPanel(images);
-  private VerticalPanel rightPanel = new VerticalPanel();
-  private MailList mailList;
-  private MailDetail mailDetail = new MailDetail();
-  private Shortcuts shortcuts = new Shortcuts(images);
-
-  /**
-   * Displays the specified item.
-   * 
-   * @param item
-   */
-  public void displayItem(MailItem item) {
-    mailDetail.setItem(item);
-  }
+  @UiField TopPanel topPanel;
+  @UiField MailList mailList;
+  @UiField MailDetail mailDetail;
+  @UiField Shortcuts shortcuts;
 
   /**
    * This method constructs the application user interface by instantiating
    * controls and hooking up event handler.
    */
   public void onModuleLoad() {
-    singleton = this;
-
-    topPanel.setWidth("100%");
-
-    // MailList uses Mail.get() in its constructor, so initialize it after
-    // 'singleton'.
-    mailList = new MailList();
-    mailList.setWidth("100%");
-
-    // Create the right panel, containing the email list & details.
-    rightPanel.add(mailList);
-    rightPanel.add(mailDetail);
-    mailList.setWidth("100%");
-    mailDetail.setWidth("100%");
-
-    // Create a dock panel that will contain the menu bar at the top,
-    // the shortcuts to the left, and the mail list & details taking the rest.
-    DockPanel outer = new DockPanel();
-    outer.add(topPanel, DockPanel.NORTH);
-    outer.add(shortcuts, DockPanel.WEST);
-    outer.add(rightPanel, DockPanel.CENTER);
-    outer.setWidth("100%");
-
-    outer.setSpacing(4);
-    outer.setCellWidth(rightPanel, "100%");
-
-    // Hook the window resize event, so that we can adjust the UI.
-    Window.addResizeHandler(this);
+    DockLayoutPanel outer = binder.createAndBindUi(this);
 
     // Get rid of scrollbars, and clear out the window's built-in margin,
     // because we want to take advantage of the entire client area.
     Window.enableScrolling(false);
     Window.setMargin("0px");
 
-    // Finally, add the outer panel to the RootPanel, so that it will be
-    // displayed.
-    RootPanel.get().add(outer);
+    // Special-case stuff to make topPanel overhang a bit.
+    Element topElem = outer.getContainerElementFor(topPanel);
+    topElem.getStyle().setZIndex(2);
+    topElem.getStyle().setOverflow(Overflow.VISIBLE);
 
-    // Call the window resized handler to get the initial sizes setup. Doing
-    // this in a deferred command causes it to occur after all widgets' sizes
-    // have been computed by the browser.
-    DeferredCommand.addCommand(new Command() {
-      public void execute() {
-        onWindowResized(Window.getClientWidth(), Window.getClientHeight());
+    // Listen for item selection, displaying the currently-selected item in
+    // the detail area.
+    mailList.setListener(new MailList.Listener() {
+      public void onItemSelected(MailItem item) {
+        mailDetail.setItem(item);
       }
     });
 
-    onWindowResized(Window.getClientWidth(), Window.getClientHeight());
-  }
-
-  public void onResize(ResizeEvent event) {
-    onWindowResized(event.getWidth(), event.getHeight());
-  }
-
-  public void onWindowResized(int width, int height) {
-    // Adjust the shortcut panel and detail area to take up the available room
-    // in the window.
-    int shortcutHeight = height - shortcuts.getAbsoluteTop() - 8;
-    if (shortcutHeight < 1) {
-      shortcutHeight = 1;
-    }
-    shortcuts.setHeight(shortcutHeight + "px");
-
-    // Give the mail detail widget a chance to resize itself as well.
-    mailDetail.adjustSize(width, height);
+    // Add the outer panel to the RootLayoutPanel, so that it will be
+    // displayed.
+    RootLayoutPanel root = RootLayoutPanel.get();
+    root.add(outer);
+    root.layout();
   }
 }

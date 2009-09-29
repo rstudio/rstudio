@@ -1,0 +1,41 @@
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
+
+  <ui:style>
+  .popup {
+    background: #fff;
+    border: 1px solid #666;
+    padding: 0.5em;
+    width: 14em;
+    height: 2.5em;
+  }
+
+  .photo {
+    float: left;
+    margin-right: 4px;
+
+    background: url(default_photo.jpg);
+    width: 32px;
+    height: 32px;
+  }
+
+  .right {
+    white-space: nowrap;
+  }
+
+  .email {
+    font-style:italic;
+  }
+  </ui:style>
+
+  <g:HTMLPanel styleName='{style.popup}'>
+    <div class='{style.photo}'/>
+    <div class='{style.right}'>
+      <div ui:field='nameDiv' />
+      <div ui:field='emailDiv' class='{style.email}'/>
+    </div>
+  </g:HTMLPanel>
+
+</ui:UiBinder>

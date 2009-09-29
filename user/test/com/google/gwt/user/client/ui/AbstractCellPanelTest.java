@@ -16,12 +16,13 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * Base tests for {@link CellPanel}.
+ * 
+ * @param <T> the panel type
  */
-public abstract class AbstractCellPanelTest extends GWTTestCase {
+public abstract class AbstractCellPanelTest<T extends CellPanel> extends PanelTestBase<T> {
 
   @Override
   public String getModuleName() {

@@ -30,6 +30,42 @@ public class RootPanelTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  public void testDetachNowWithErrorOnDetach() {
+    BadWidget w = BadWidget.wrap(createAttachedDivElement());
+    w.setFailOnUnload(true);
+    assertTrue(RootPanel.isInDetachList(w));
+    assertTrue(RootPanel.getBodyElement().isOrHasChild(w.getElement()));
+
+    try {
+      RootPanel.detachNow(w);
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+    assertFalse(RootPanel.isInDetachList(w));
+  }
+
+  public void testDetachWidgetsWithErrorOnDetach() {
+    BadWidget bad0 = BadWidget.wrap(createAttachedDivElement());
+    bad0.setFailOnUnload(true);
+    BadWidget bad1 = BadWidget.wrap(createAttachedDivElement());
+    bad1.setFailOnUnload(true);
+    assertTrue(RootPanel.isInDetachList(bad0));
+    assertTrue(RootPanel.isInDetachList(bad1));
+    assertTrue(RootPanel.getBodyElement().isOrHasChild(bad0.getElement()));
+    assertTrue(RootPanel.getBodyElement().isOrHasChild(bad1.getElement()));
+
+    try {
+      RootPanel.detachWidgets();
+      fail("Expected AttachDetachException");
+    } catch (AttachDetachException e) {
+      // Expected.
+      assertEquals(2, e.getCauses().size());
+    }
+    assertFalse(RootPanel.isInDetachList(bad0));
+    assertFalse(RootPanel.isInDetachList(bad1));
+  }
+
   /**
    * Ensures that {@link RootPanel#get(String)} behaves properly.
    */
@@ -62,5 +98,37 @@ public class RootPanelTest extends GWTTestCase {
 
     RootPanel newARoot = RootPanel.get("a");
     assertNotSame("New RootPanel should not be same as old", newARoot, aRoot);
+  }
+
+  public void testRemoveWithError() {
+    // Create a widget that will throw an exception onUnload.
+    BadWidget badWidget = new BadWidget();
+    badWidget.setFailOnUnload(true);
+
+    // Add the widget to a panel.
+    RootPanel.get().add(badWidget);
+    assertTrue(badWidget.isAttached());
+
+    // Remove the widget from the panel.
+    try {
+      RootPanel.get().remove(badWidget);
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+    assertFalse(badWidget.isAttached());
+    assertNull(badWidget.getParent());
+    assertNull(badWidget.getElement().getParentElement());
+  }
+
+  /**
+   * Create a div and attach it to the {@link RootPanel}.
+   * 
+   * @return the new div
+   */
+  private Element createAttachedDivElement() {
+    DivElement elem = Document.get().createDivElement();
+    RootPanel.getBodyElement().appendChild(elem);
+    return elem;
   }
 }

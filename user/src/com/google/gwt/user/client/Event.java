@@ -72,13 +72,27 @@ public class Event extends NativeEvent {
      */
     private static boolean fire(HandlerManager handlers, NativeEvent nativeEvent) {
       if (TYPE != null && handlers != null && handlers.isEventHandled(TYPE)) {
+        // Cache the current values in the singleton in case we are in the
+        // middle of handling another event.
+        boolean lastIsCanceled = singleton.isCanceled;
+        boolean lastIsConsumed = singleton.isConsumed;
+        boolean lastIsFirstHandler = singleton.isFirstHandler;
+        NativeEvent lastNativeEvent = singleton.nativeEvent;
+
         // Revive the event
         singleton.revive();
         singleton.setNativeEvent(nativeEvent);
 
         // Fire the event
         handlers.fireEvent(singleton);
-        return !(singleton.isCanceled() && !singleton.isConsumed());
+        boolean ret = !(singleton.isCanceled() && !singleton.isConsumed());
+
+        // Restore the state of the singleton.
+        singleton.isCanceled = lastIsCanceled;
+        singleton.isConsumed = lastIsConsumed;
+        singleton.isFirstHandler = lastIsFirstHandler;
+        singleton.nativeEvent = lastNativeEvent;
+        return ret;
       }
       return true;
     }

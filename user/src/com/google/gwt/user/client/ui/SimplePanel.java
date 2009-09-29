@@ -103,13 +103,15 @@ public class SimplePanel extends Panel {
     }
 
     // Orphan.
-    orphan(w);
-
-    // Physical detach.
-    getContainerElement().removeChild(w.getElement());
-
-    // Logical detach.
-    widget = null;
+    try {
+      orphan(w);
+    } finally {
+      // Physical detach.
+      getContainerElement().removeChild(w.getElement());
+  
+      // Logical detach.
+      widget = null;
+    }
     return true;
   }
 

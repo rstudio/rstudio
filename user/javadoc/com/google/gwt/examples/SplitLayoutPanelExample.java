@@ -19,16 +19,15 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
-import com.google.gwt.user.client.ui.DockLayoutPanel.Direction;
 
 public class SplitLayoutPanelExample implements EntryPoint {
 
   public void onModuleLoad() {
     // Create a three-pane layout with splitters. 
     SplitLayoutPanel p = new SplitLayoutPanel();
-    p.add(new HTML("navigation"), Direction.WEST, 128);
-    p.add(new HTML("list"), Direction.NORTH, 384);
-    p.add(new HTML("details"), Direction.CENTER, 0);
+    p.addWest(new HTML("navigation"), 128);
+    p.addNorth(new HTML("list"), 384);
+    p.add(new HTML("details"));
 
     // Note the explicit call to layout(). This is required for the layout to
     // take effect.

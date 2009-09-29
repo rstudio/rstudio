@@ -63,6 +63,17 @@ public class RootPanel extends AbsolutePanel {
     }
   }
 
+  /**
+   * The singleton command used to detach widgets.
+   */
+  private static final AttachDetachException.Command maybeDetachCommand = new AttachDetachException.Command() {
+    public void execute(Widget w) {
+      if (w.isAttached()) {
+        w.onDetach();
+      }
+    }
+  };
+
   private static Map<String, RootPanel> rootPanels = new HashMap<String, RootPanel>();
   private static Set<Widget> widgetsToDetach = new HashSet<Widget>();
 
@@ -90,8 +101,11 @@ public class RootPanel extends AbsolutePanel {
     assert widgetsToDetach.contains(widget) : "detachNow() called on a widget "
         + "not currently in the detach list";
 
-    widget.onDetach();
-    widgetsToDetach.remove(widget);
+    try {
+      widget.onDetach();
+    } finally {
+      widgetsToDetach.remove(widget);
+    }
   }
 
   /**
@@ -222,19 +236,17 @@ public class RootPanel extends AbsolutePanel {
     // When the window is closing, detach all widgets that need to be
     // cleaned up. This will cause all of their event listeners
     // to be unhooked, which will avoid potential memory leaks.
-    for (Widget widget : widgetsToDetach) {
-      if (widget.isAttached()) {
-        widget.onDetach();
-      }
+    try {
+      AttachDetachException.tryCommand(widgetsToDetach, maybeDetachCommand);
+    } finally {
+      widgetsToDetach.clear();
+
+      // Clear the RootPanel cache, since we've "detached" all RootPanels at
+      // this point. This would be pointless, since it only happens on unload,
+      // but it is very helpful for unit tests, because it allows
+      // RootPanel.get() to work properly even after a synthesized "unload".
+      rootPanels.clear();
     }
-
-    widgetsToDetach.clear();
-
-    // Clear the RootPanel cache, since we've "detached" all RootPanels at this
-    // point. This would be pointless, since it only happens on unload, but it
-    // is very helpful for unit tests, because it allows RootPanel.get() to work
-    // properly even after a synthesized "unload".
-    rootPanels.clear();
   }
 
   /**

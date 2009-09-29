@@ -1,0 +1,44 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
+
+  <ui:style>
+  .detail {
+    border: 1px solid #666;
+    background-color: white;
+  }
+
+  .header {
+    background: #eee;
+    border-bottom: 1px solid #666;
+    padding: 0.5em;
+  }
+
+  .headerItem {
+    margin-bottom:0.5em;
+  }
+
+  .body {
+    line-height: 150%;
+    padding: 20px 40px 20px 10px;
+    font-family: 'Times New Roman', Times, serif;
+  }
+  </ui:style>
+
+  <g:DockLayoutPanel unit='EM' styleName='{style.detail}'>
+    <g:north size='6'>
+      <g:HTMLPanel styleName='{style.header}'>
+        <div class='{style.headerItem}' ui:field='subject'/>
+        <div class='{style.headerItem}'><b>From:</b> <span ui:field='sender'/></div>
+        <div class='{style.headerItem}'><b>To:</b> <span ui:field='recipient'/></div>
+      </g:HTMLPanel>
+    </g:north>
+
+    <g:center>
+      <g:ScrollPanel>
+        <g:HTML styleName='{style.body}' ui:field='body' wordWrap='true'/>
+      </g:ScrollPanel>
+    </g:center>
+  </g:DockLayoutPanel>
+
+</ui:UiBinder>

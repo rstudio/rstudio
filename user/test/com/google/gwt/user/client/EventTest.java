@@ -326,6 +326,29 @@ public class EventTest extends GWTTestCase {
 
   /**
    * Test that {@link Event#fireNativePreviewEvent(NativeEvent)} returns the
+   * correct value even if another event is fired while handling the current
+   * event.
+   */
+  public void testFireNativePreviewEventWithInterupt() {
+    NativePreviewHandler handler = new NativePreviewHandler() {
+      private boolean first = true;
+
+      public void onPreviewNativeEvent(NativePreviewEvent event) {
+        if (first) {
+          event.cancel();
+          first = false;
+          assertTrue(Event.fireNativePreviewEvent(null));
+          assertTrue(event.isCanceled());
+        }
+      }
+    };
+    HandlerRegistration reg = Event.addNativePreviewHandler(handler);
+    assertFalse(Event.fireNativePreviewEvent(null));
+    reg.removeHandler();
+  }
+
+  /**
+   * Test that {@link Event#fireNativePreviewEvent(NativeEvent)} returns the
    * correct value if the native event is not canceled.
    */
   public void testFireNativePreviewEventWithoutCancel() {
@@ -524,6 +547,6 @@ public class EventTest extends GWTTestCase {
   }
 
   private native boolean isInternetExplorer() /*-{
-     return navigator.userAgent.toLowerCase().indexOf("msie") != -1;
-   }-*/;
+    return navigator.userAgent.toLowerCase().indexOf("msie") != -1;
+  }-*/;
 }

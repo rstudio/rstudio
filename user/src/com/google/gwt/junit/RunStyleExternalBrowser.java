@@ -45,16 +45,34 @@ class RunStyleExternalBrowser extends RunStyle {
     }
   }
 
-  private ExternalBrowser[] externalBrowsers;
+  /**
+   * Registered as a shutdown hook to make sure that any browsers that were not
+   * finished are killed.
+   */
+  private class ShutdownCb extends Thread {
 
+    @Override
+    public void run() {
+      for (ExternalBrowser browser : externalBrowsers) {
+        try {
+          browser.getProcess().exitValue();
+        } catch (IllegalThreadStateException e) {
+          // The process is still active. Kill it.
+          browser.getProcess().destroy();
+        }
+      }
+    }
+  }
+
+  private ExternalBrowser[] externalBrowsers;
+  
   /**
    * @param shell the containing shell
-   * @param browsers an array of path names pointing to browser executables.
    */
   public RunStyleExternalBrowser(JUnitShell shell) {
     super(shell);
   }
-  
+
   @Override
   public boolean initialize(String args) {
     if (args == null || args.length() == 0) {
@@ -114,24 +132,5 @@ class RunStyleExternalBrowser extends RunStyle {
       return true;
     }
     return false;
-  }
-
-  /**
-   * Registered as a shutdown hook to make sure that any browsers that were not
-   * finished are killed.
-   */
-  private class ShutdownCb extends Thread {
-
-    @Override
-    public void run() {
-      for (ExternalBrowser browser : externalBrowsers) {
-        try {
-          browser.getProcess().exitValue();
-        } catch (IllegalThreadStateException e) {
-          // The process is still active. Kill it.
-          browser.getProcess().destroy();
-        }
-      }
-    }
   }
 }

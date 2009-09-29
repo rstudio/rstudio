@@ -73,6 +73,32 @@ public class HostedModePluginObject extends ScriptableObject {
   }
 
   /**
+   * Function object which implements the disconnect method on the hosted-mode
+   * plugin.
+   */
+  private class DisconnectMethod extends ScriptableObject implements Function {
+
+    private static final long serialVersionUID = -8799481412144519779L;
+    private static final int EXPECTED_NUM_ARGS = 0;
+
+    public Object call(Context context, Scriptable scope, Scriptable thisObj,
+        Object[] args) {
+      // Allow extra arguments for forward compatibility
+      return disconnect();
+    }
+
+    public Scriptable construct(Context context, Scriptable scope, Object[] args) {
+      throw Context.reportRuntimeError("Function disconnect can't be used as a "
+          + "constructor");
+    }
+
+    @Override
+    public String getClassName() {
+      return "function HostedModePluginObject.disconnect";
+    }
+  }
+
+  /**
    * Function object which implements the init method on the hosted-mode plugin.
    */
   private class InitMethod extends ScriptableObject implements Function {
@@ -111,8 +137,11 @@ public class HostedModePluginObject extends ScriptableObject {
   private static final long serialVersionUID = -1815031145376726799L;
 
   private Scriptable connectMethod;
+  private Scriptable disconnectMethod;
   private Scriptable initMethod;
   private Window window;
+
+  private BrowserChannelClient browserChannelClient;
 
   /**
    * Initiate a hosted mode connection to the requested port and load the
@@ -138,7 +167,7 @@ public class HostedModePluginObject extends ScriptableObject {
 
     try {
       HtmlUnitSessionHandler htmlUnitSessionHandler = new HtmlUnitSessionHandler(window);
-      BrowserChannelClient browserChannelClient = new BrowserChannelClient(
+      browserChannelClient = new BrowserChannelClient(
           addressParts, url, sessionKey, module, version,
           htmlUnitSessionHandler);
       htmlUnitSessionHandler.setSessionData(new SessionData(
@@ -153,6 +182,14 @@ public class HostedModePluginObject extends ScriptableObject {
     }
   }
 
+  public boolean disconnect() {
+    try {
+      return browserChannelClient.disconnectFromHost();
+    } catch (IOException e) {
+      return false;
+    }
+  }
+
   @Override
   public Object get(String name, Scriptable start) {
     if ("connect".equals(name)) {
@@ -160,6 +197,11 @@ public class HostedModePluginObject extends ScriptableObject {
         connectMethod = new ConnectMethod();
       }
       return connectMethod;
+    } else if ("disconnect".equals(name)) {
+      if (disconnectMethod == null) {
+        disconnectMethod = new DisconnectMethod();
+      }
+      return disconnectMethod;
     } else if ("init".equals(name)) {
       if (initMethod == null) {
         initMethod = new InitMethod();

@@ -16,23 +16,15 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Tests the FlowPanel widget.
  */
-public class FlowPanelTest extends GWTTestCase {
-
-  public String getModuleName() {
-    return "com.google.gwt.user.User";
-  }
-
-  public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(new FlowPanel());
-  }
+public class FlowPanelTest extends PanelTestBase<FlowPanel> {
 
   public void testClear() {
     int size = 10;
@@ -60,6 +52,45 @@ public class FlowPanelTest extends GWTTestCase {
     }
   }
 
+  public void testClearWithError() {
+    // Create a widget that will throw an exception onUnload.
+    BadWidget badWidget = new BadWidget();
+    badWidget.setFailOnUnload(true);
+    Label label0 = new Label();
+    Label label1 = new Label();
+
+    // Add the widget to a panel.
+    FlowPanel panel = createPanel();
+    panel.add(label0);
+    panel.add(badWidget);
+    panel.add(label1);
+    assertFalse(label0.isAttached());
+    assertFalse(badWidget.isAttached());
+    assertFalse(label1.isAttached());
+
+    // Attach the widget.
+    RootPanel.get().add(panel);
+    assertTrue(label0.isAttached());
+    assertTrue(badWidget.isAttached());
+    assertTrue(label1.isAttached());
+
+    // Remove the widget from the panel.
+    try {
+      panel.clear();
+    } catch (AttachDetachException e) {
+      // Expected.
+      Set<Throwable> causes = e.getCauses();
+      assertEquals(1, causes.size());
+      Throwable[] throwables = causes.toArray(new Throwable[1]);
+      assertTrue(throwables[0] instanceof IllegalArgumentException);
+    }
+    assertFalse(label0.isAttached());
+    assertFalse(badWidget.isAttached());
+    assertFalse(label1.isAttached());
+    assertNull(badWidget.getParent());
+    assertNull(badWidget.getElement().getParentElement());
+  }
+
   public void testClearWithNestedChildren() {
     FlowPanel target = new FlowPanel();
     FlowPanel child0 = new FlowPanel();
@@ -76,5 +107,10 @@ public class FlowPanelTest extends GWTTestCase {
     target.clear();
 
     assertEquals(child1Elem, child0Elem.getFirstChildElement());
+  }
+
+  @Override
+  protected FlowPanel createPanel() {
+    return new FlowPanel();
   }
 }

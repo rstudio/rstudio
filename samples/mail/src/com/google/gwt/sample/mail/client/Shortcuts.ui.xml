@@ -1,0 +1,45 @@
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
+
+  <ui:style>
+  .shortcuts {
+    border-left: 1px solid #666;
+    border-right: 1px solid #666;
+  }
+
+  .stackHeader {
+    background: #c1eec8 url(gradient.gif) repeat-x 0px -1px;
+    padding-top: 1em;
+    font-weight: bold;
+    text-align: center;
+    border-top: 1px solid #666;
+    border-bottom: 1px solid #666;  
+  }
+  </ui:style>
+
+  <g:StackLayoutPanel styleName='{style.shortcuts}' unit='EM'>
+    <g:stack>
+      <g:header size='4'>
+        <g:Label styleName='{style.stackHeader}'>Mailboxes</g:Label>
+      </g:header>
+      <mail:Mailboxes ui:field='mailboxes'/>
+    </g:stack>
+
+    <g:stack>
+      <g:header size='4'>
+        <g:Label styleName='{style.stackHeader}'>Tasks</g:Label>
+      </g:header>
+      <mail:Tasks ui:field='tasks'/>
+    </g:stack>
+
+    <g:stack>
+      <g:header size='4'>
+        <g:Label styleName='{style.stackHeader}'>Contacts</g:Label>
+      </g:header>
+      <mail:Contacts ui:field='contacts'/>
+    </g:stack>
+  </g:StackLayoutPanel>
+
+</ui:UiBinder>

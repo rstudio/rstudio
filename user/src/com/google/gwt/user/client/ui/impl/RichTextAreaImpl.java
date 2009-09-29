@@ -15,13 +15,15 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
+import com.google.gwt.event.logical.shared.InitializeEvent;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.RichTextArea;
 
 /**
- * Base class for RichText platform implementations. The default version
- * simply creates a text area with no rich text support.
+ * Base class for RichText platform implementations. The default version simply
+ * creates a text area with no rich text support.
  * 
  * This is not currently used by any user-agent, but will provide a
  * &lt;textarea&gt; fallback in the event a future browser fails to implement
@@ -30,6 +32,7 @@ import com.google.gwt.user.client.Event;
 public class RichTextAreaImpl {
 
   protected Element elem;
+  protected RichTextArea richTextWidget;
 
   public RichTextAreaImpl() {
     elem = createElement();
@@ -56,7 +59,7 @@ public class RichTextAreaImpl {
       this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.focus();
     } else {
       this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.blur();
-    } 
+    }
   }-*/;
 
   public void setHTML(String html) {
@@ -65,6 +68,10 @@ public class RichTextAreaImpl {
 
   public void setText(String text) {
     DOM.setElementProperty(elem, "value", text);
+  }
+
+  public void setWidget(RichTextArea richTextWidget) {
+    this.richTextWidget = richTextWidget;
   }
 
   public void uninitElement() {
@@ -76,10 +83,13 @@ public class RichTextAreaImpl {
 
   protected void hookEvents() {
     DOM.sinkEvents(elem, Event.MOUSEEVENTS | Event.KEYEVENTS | Event.ONCHANGE
-      | Event.ONCLICK | Event.FOCUSEVENTS);
+        | Event.ONCLICK | Event.FOCUSEVENTS);
   }
 
   protected void onElementInitialized() {
     hookEvents();
+    if (richTextWidget != null) {
+      InitializeEvent.fire(richTextWidget);
+    }
   }
 }

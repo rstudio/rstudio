@@ -1,0 +1,13 @@
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
+
+  <ui:style>
+  .contacts {
+    padding: 0.5em;
+  }
+  </ui:style>
+
+  <g:VerticalPanel styleName='{style.contacts}'/>
+</ui:UiBinder>

@@ -718,22 +718,22 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   @Override
   protected void doAttachChildren() {
-    // Ensure that all child widgets are attached.
-    for (Iterator<Widget> it = iterator(); it.hasNext();) {
-      Widget child = it.next();
-      child.onAttach();
+    try {
+      AttachDetachException.tryCommand(this,
+          AttachDetachException.attachCommand);
+    } finally {
+      DOM.setEventListener(focusable, this);
     }
-    DOM.setEventListener(focusable, this);
   }
 
   @Override
   protected void doDetachChildren() {
-    // Ensure that all child widgets are detached.
-    for (Iterator<Widget> it = iterator(); it.hasNext();) {
-      Widget child = it.next();
-      child.onDetach();
+    try {
+      AttachDetachException.tryCommand(this,
+          AttachDetachException.detachCommand);
+    } finally {
+      DOM.setEventListener(focusable, null);
     }
-    DOM.setEventListener(focusable, null);
   }
 
   /**
@@ -816,10 +816,12 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     assert (widget.getParent() == this);
 
     // Orphan.
-    widget.setParent(null);
-
-    // Logical detach.
-    childWidgets.remove(widget);
+    try {
+      widget.setParent(null);
+    } finally {
+      // Logical detach.
+      childWidgets.remove(widget);
+    }
   }
 
   /**
