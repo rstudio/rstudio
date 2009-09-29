@@ -512,7 +512,7 @@ public class JUnitShell extends GWTShell {
       String url = "http://" + localhost + ":" + getPort() + "/"
           + moduleName + "/junit.html";
       if (developmentMode) {
-        url += "?gwt.hosted=localhost:" + codeServerPort;
+        url += "?gwt.hosted=" + localhost + ":" + codeServerPort;
       }
       return url;
     } catch (UnknownHostException e) {
