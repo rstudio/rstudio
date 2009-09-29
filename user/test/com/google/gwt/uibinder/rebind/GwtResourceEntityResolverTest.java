@@ -27,7 +27,8 @@ import java.io.InputStream;
  * Text of GwtResourceEntityResolver.
  */
 public class GwtResourceEntityResolverTest extends TestCase {
-  
+  private static final String SYSTEM_ID = "http://google-web-toolkit.googlecode.com/files/xhtml.ent";
+
   private static class MockResourceLoader implements
       GwtResourceEntityResolver.ResourceLoader {
     String fetched;
@@ -37,7 +38,7 @@ public class GwtResourceEntityResolverTest extends TestCase {
       return stream;
     }
   }
-  
+
   private GwtResourceEntityResolver resolver;
   private MockResourceLoader loader;
 
@@ -46,27 +47,31 @@ public class GwtResourceEntityResolverTest extends TestCase {
     super.setUp();
     loader = new MockResourceLoader();
     resolver = new GwtResourceEntityResolver(loader);
+
+    loader.stream = new InputStream() {
+      @Override
+      public int read() throws IOException {
+        throw new UnsupportedOperationException();
+      }
+    };
   }
 
   public void testNotOurProblem() throws SAXException, IOException {
     assertNull(resolver.resolveEntity(null, "http://arbitrary"));
     assertNull(resolver.resolveEntity("meaningless", "http://arbitrary"));
     assertNull(resolver.resolveEntity(null, "arbitrary/relative"));
+
+    String almostCorrectAndOnceWorked = SYSTEM_ID.replace("files", "filesss");
+    assertNull(resolver.resolveEntity("meaningless", almostCorrectAndOnceWorked));
+    assertNull(resolver.resolveEntity(null, almostCorrectAndOnceWorked));
   }
 
   public void testOursGood() throws SAXException, IOException {
     String publicId = "some old public thing";
-    String systemId = "http://google-web-toolkit.googlecode.com/svn/resources/xhtml.ent";
-    loader.stream = new InputStream() {
-      @Override
-      public int read() throws IOException {
-        throw new UnsupportedOperationException();
-      }      
-    };
-    
-    InputSource s = resolver.resolveEntity(publicId, systemId);
+
+    InputSource s = resolver.resolveEntity(publicId, SYSTEM_ID);
     assertEquals(publicId, s.getPublicId());
-    assertEquals(systemId, s.getSystemId());
+    assertEquals(SYSTEM_ID, s.getSystemId());
     assertEquals(loader.stream, s.getByteStream());
   }
 }

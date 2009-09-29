@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,13 +25,13 @@ import java.io.InputStream;
 /**
  * Does special handling of external entities encountered by sax xml parser,
  * e.g. the uri in
- * 
+ *
  * <pre>
- * &lt;!DOCTYPE gwt:UiBinder 
-  SYSTEM "http://google-web-toolkit.googlecode.com/svn/resources/xhtml.ent"></pre>
+ * &lt;!DOCTYPE gwt:UiBinder
+  SYSTEM "http://google-web-toolkit.googlecode.com/files/xhtml.ent"></pre>
  * <p>
  * Specifically, if the requested uri starts with
- * <code>http://google-web-toolkit.googlecode.com/svn/resources</code>, provide
+ * <code>http://google-web-toolkit.googlecode.com/files</code>, provide
  * the contents from a built in resource rather than allowing sax to make a
  * network request.
  */
@@ -40,9 +40,9 @@ class GwtResourceEntityResolver implements EntityResolver {
     InputStream fetch(String name);
   }
 
-  private static final String EXTERNAL_ENTITY_PREFIX = "http://google-web-toolkit.googlecode.com/svn/resources";
+  private static final String EXTERNAL_ENTITY_PREFIX = "http://google-web-toolkit.googlecode.com/files/";
 
-  private static final String RESOURCES = "com/google/gwt/uibinder/resources";
+  private static final String RESOURCES = "com/google/gwt/uibinder/resources/";
 
   private final ResourceLoader resourceLoader;
 

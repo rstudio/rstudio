@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -97,7 +97,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.Adler32;
 
 /**
@@ -105,21 +104,59 @@ import java.util.zip.Adler32;
  */
 public final class CssResourceGenerator extends AbstractResourceGenerator {
   static class ClassRenamer extends CssVisitor {
-    private final Map<JMethod, String> actualReplacements = new IdentityHashMap<JMethod, String>();
 
     /**
-     * This is a map of local prefixes to the obfuscated names of imported
-     * methods. If a CssResource makes use of the {@link Import} annotation, the
-     * keys of this map will correspond to the {@link ImportedWithPrefix} value
-     * defined on the imported CssResource. The zero-length string key holds the
-     * obfuscated names for the CssResource that is being generated.
+     * A tag to indicate that an externally-defined CSS class has no JMethod
+     * that is used to access it.
      */
-    private final Map<String, Map<JMethod, String>> classReplacementsWithPrefix;
+    private static final Replacement UNREFERENCED_EXTERNAL = new Replacement(
+        null, null);
+
+    /*
+     * TODO: Replace with Pair<A, B>.
+     */
+    private static class Replacement {
+
+      private JMethod method;
+      private String obfuscatedClassName;
+
+      public Replacement(JMethod method, String obfuscatedClassName) {
+        this.method = method;
+        this.obfuscatedClassName = obfuscatedClassName;
+      }
+
+      public JMethod getMethod() {
+        return method;
+      }
+
+      public String getObfuscatedClassName() {
+        return obfuscatedClassName;
+      }
+
+      /**
+       * For debugging use only.
+       */
+      public String toString() {
+        if (this == UNREFERENCED_EXTERNAL) {
+          return "Unreferenced external class name";
+        } else {
+          return method.getName() + "=" + obfuscatedClassName;
+        }
+      }
+    }
+
+    /**
+     * Records replacements that have actually been performed.
+     */
+    private final Map<JMethod, String> actualReplacements = new IdentityHashMap<JMethod, String>();
     private final Set<String> cssDefs = new HashSet<String>();
-    private final Set<String> externalClasses;
+
+    /**
+     * The task-list of replacements to perform in the stylesheet.
+     */
+    private final Map<String, Replacement> potentialReplacements;
     private final TreeLogger logger;
     private final Set<JMethod> missingClasses;
-    private final Set<String> replacedClasses = new HashSet<String>();
     private final boolean strict;
     private final Set<String> unknownClasses = new HashSet<String>();
 
@@ -127,9 +164,10 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
         Map<String, Map<JMethod, String>> classReplacementsWithPrefix,
         boolean strict, Set<String> externalClasses) {
       this.logger = logger.branch(TreeLogger.DEBUG, "Replacing CSS class names");
-      this.classReplacementsWithPrefix = classReplacementsWithPrefix;
       this.strict = strict;
-      this.externalClasses = externalClasses;
+
+      potentialReplacements = computeReplacements(classReplacementsWithPrefix,
+          externalClasses);
 
       // Require a definition for all classes in the default namespace
       assert classReplacementsWithPrefix.containsKey("");
@@ -144,56 +182,45 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
 
     @Override
     public void endVisit(CssSelector x, Context ctx) {
+
       String sel = x.getSelector();
+      int originalLength = sel.length();
 
-      // TODO This would be simplified by having a class hierarchy for selectors
-      for (Map.Entry<String, Map<JMethod, String>> outerEntry : classReplacementsWithPrefix.entrySet()) {
-        String prefix = outerEntry.getKey();
-        for (Map.Entry<JMethod, String> entry : outerEntry.getValue().entrySet()) {
-          JMethod method = entry.getKey();
-          String sourceClassName = method.getName();
-          String obfuscatedClassName = entry.getValue();
+      Matcher ma = CssSelector.CLASS_SELECTOR_PATTERN.matcher(sel);
+      StringBuilder sb = new StringBuilder(originalLength);
+      int start = 0;
 
-          ClassName className = method.getAnnotation(ClassName.class);
-          if (className != null) {
-            sourceClassName = className.value();
-          }
+      while (ma.find()) {
+        String sourceClassName = ma.group(1);
 
-          sourceClassName = prefix + sourceClassName;
+        Replacement entry = potentialReplacements.get(sourceClassName);
 
-          Pattern p = Pattern.compile("(.*)\\.("
-              + Pattern.quote(sourceClassName) + ")([ :>+#.].*|$)");
-          Matcher m = p.matcher(sel);
-          if (m.find()) {
-            if (externalClasses.contains(sourceClassName)) {
-              actualReplacements.put(method, sourceClassName);
-            } else {
-              sel = m.group(1) + "." + obfuscatedClassName + m.group(3);
-              actualReplacements.put(method, obfuscatedClassName);
-            }
+        if (entry == null) {
+          unknownClasses.add(sourceClassName);
+          continue;
 
-            missingClasses.remove(method);
-            if (strict) {
-              replacedClasses.add(obfuscatedClassName);
-            }
-          }
+        } else if (entry == UNREFERENCED_EXTERNAL) {
+          // An @external without an accessor method. This is OK.
+          continue;
         }
+
+        JMethod method = entry.getMethod();
+        String obfuscatedClassName = entry.getObfuscatedClassName();
+
+        // Consume the interstitial portion of the original selector
+        sb.append(sel.subSequence(start, ma.start(1)));
+        sb.append(obfuscatedClassName);
+        start = ma.end(1);
+
+        actualReplacements.put(method, obfuscatedClassName);
+        missingClasses.remove(method);
       }
 
-      sel = sel.trim();
-
-      if (strict) {
-        Matcher m = CssSelector.CLASS_SELECTOR_PATTERN.matcher(sel);
-        while (m.find()) {
-          String classSelector = m.group(1);
-          if (!replacedClasses.contains(classSelector)
-              && !externalClasses.contains(classSelector)) {
-            unknownClasses.add(classSelector);
-          }
-        }
+      if (start != 0) {
+        // Consume the remainder and update the selector
+        sb.append(sel.subSequence(start, originalLength));
+        x.setSelector(sb.toString());
       }
-
-      x.setSelector(sel);
     }
 
     @Override
@@ -245,8 +272,65 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
       }
     }
 
+    /**
+     * Reports the replacements that were actually performed by this visitor.
+     */
     public Map<JMethod, String> getReplacements() {
       return actualReplacements;
+    }
+
+    /**
+     * Flatten class name lookups to speed selector rewriting.
+     * 
+     * @param classReplacementsWithPrefix a map of local prefixes to the
+     *          obfuscated names of imported methods. If a CssResource makes use
+     *          of the {@link Import} annotation, the keys of this map will
+     *          correspond to the {@link ImportedWithPrefix} value defined on
+     *          the imported CssResource. The zero-length string key holds the
+     *          obfuscated names for the CssResource that is being generated.
+     * @return A flattened version of the classReplacementWithPrefix map, where
+     *         the keys are the source class name (with prefix included), and
+     *         values have the obfuscated class name and associated JMethod.
+     */
+    private Map<String, Replacement> computeReplacements(
+        Map<String, Map<JMethod, String>> classReplacementsWithPrefix,
+        Set<String> externalClasses) {
+
+      Map<String, Replacement> toReturn = new HashMap<String, Replacement>();
+
+      for (String externalClass : externalClasses) {
+        toReturn.put(externalClass, UNREFERENCED_EXTERNAL);
+      }
+
+      for (Map.Entry<String, Map<JMethod, String>> outerEntry : classReplacementsWithPrefix.entrySet()) {
+        String prefix = outerEntry.getKey();
+
+        for (Map.Entry<JMethod, String> entry : outerEntry.getValue().entrySet()) {
+          JMethod method = entry.getKey();
+          String sourceClassName = method.getName();
+          String obfuscatedClassName = entry.getValue();
+
+          ClassName className = method.getAnnotation(ClassName.class);
+          if (className != null) {
+            sourceClassName = className.value();
+          }
+
+          sourceClassName = prefix + sourceClassName;
+
+          if (externalClasses.contains(sourceClassName)) {
+            /*
+             * It simplifies the sanity-checking logic to treat external classes
+             * as though they were simply obfuscated to exactly the value the
+             * user wants.
+             */
+            obfuscatedClassName = sourceClassName;
+          }
+
+          toReturn.put(sourceClassName, new Replacement(method,
+              obfuscatedClassName));
+        }
+      }
+      return Collections.unmodifiableMap(toReturn);
     }
   }
 
@@ -1086,7 +1170,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
      * Very large concatenation expressions using '+' cause the GWT compiler to
      * overflow the stack due to deep AST nesting. The workaround for now is to
      * force it to be more balanced using intermediate concatenation groupings.
-     *
+     * 
      * This variable is used to track the number of subexpressions within the
      * current parenthetical expression.
      */
@@ -1159,7 +1243,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
   /**
    * Check if number of concat expressions currently exceeds limit and either
    * append '+' if the limit isn't reached or ') + (' if it is.
-   *
+   * 
    * @return numExpressions + 1 or 0 if limit was exceeded.
    */
   private static int concatOp(int numExpressions, StringBuilder b) {
@@ -1439,7 +1523,8 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
           name = classNameOverride.value();
         }
 
-        String obfuscatedClassName = classPrefix + makeIdent(classCounter.next());
+        String obfuscatedClassName = classPrefix
+            + makeIdent(classCounter.next());
         if (prettyOutput) {
           obfuscatedClassName += "-"
               + type.getQualifiedSourceName().replaceAll("[.$]", "-") + "-"
@@ -1571,7 +1656,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
      * result regardless of the order in which the generators fired. (It no
      * longer behaves that way, as that scheme prevented the generation of new
      * CssResource interfaces, but the complexity lives on.)
-     *
+     * 
      * TODO(rjrjr,bobv) These days scottb tells us we're guaranteed that the
      * recompiling the same code will fire the generators in a consistent order,
      * so the old gymnastics aren't really justified anyway. It would probably
@@ -1657,7 +1742,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
   /**
    * Create a Java expression that evaluates to the string representation of the
    * stylesheet resource.
-   *
+   * 
    * @param actualReplacements An out parameter that will be populated by the
    *          obfuscated class names that should be used for the particular
    *          instance of the CssResource, based on any substitution

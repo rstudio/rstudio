@@ -6,12 +6,22 @@
 -->
 
 <!--
-  This is the complete set of named character entites defined in XHTML1.0. It's
-  essentially a union of:
+  This is the complete set of named character entites defined in
+  XHTML1.0.  Though this file was created for the convenience of users
+  of the Google Web Toolkit, it should be useful for any XML
+  document. It's essentially a union of:
 
     http://www.w3.org/TR/xhtml1/DTD/xhtml-lat1.ent
     http://www.w3.org/TR/xhtml1/DTD/xhtml-special.ent
     http://www.w3.org/TR/xhtml1/DTD/xhtml-symbol.ent
+
+  Sample usage:
+  <!DOCTYPE ui:UiBinder
+    SYSTEM "http://google-web-toolkit.googlecode.com/files/xhtml.ent">
+
+  This file is maintained at
+  <http://google-web-toolkit.googlecode.com/svn/trunk/user/src/com/google/gwt/uibinder/resources/xhtml.ent>. Changes
+  made to it must be propagated to the URL in the sample above.
 -->
 
 <!-- Latin-1 characters -->
@@ -208,7 +218,7 @@
        existing ISO 8879 entity names. ISO 10646 character numbers
        are given for each character, in hex. values are decimal
        conversions of the ISO 10646 values and refer to the document
-       character set. Names are Unicode names. 
+       character set. Names are Unicode names.
   -->
 
   <!-- C0 Controls and Basic Latin -->
@@ -394,7 +404,7 @@
   <!ENTITY uArr     "&#8657;"> <!-- upwards double arrow, U+21D1 ISOamsa -->
   <!ENTITY rArr     "&#8658;"> <!-- rightwards double arrow,
                                        U+21D2 ISOtech -->
-  <!-- Unicode does not say this is the 'implies' character but does not have 
+  <!-- Unicode does not say this is the 'implies' character but does not have
        another character with this function so rArr can be used for 'implies'
        as ISOtech suggests -->
   <!ENTITY dArr     "&#8659;"> <!-- downwards double arrow, U+21D3 ISOamsa -->
@@ -467,11 +477,11 @@
   <!ENTITY rfloor   "&#8971;"> <!-- right floor, U+230B ISOamsc  -->
   <!ENTITY lang     "&#9001;"> <!-- left-pointing angle bracket = bra,
                                        U+2329 ISOtech -->
-  <!-- lang is NOT the same character as U+003C 'less than sign' 
+  <!-- lang is NOT the same character as U+003C 'less than sign'
        or U+2039 'single left-pointing angle quotation mark' -->
   <!ENTITY rang     "&#9002;"> <!-- right-pointing angle bracket = ket,
                                        U+232A ISOtech -->
-  <!-- rang is NOT the same character as U+003E 'greater than sign' 
+  <!-- rang is NOT the same character as U+003E 'greater than sign'
        or U+203A 'single right-pointing angle quotation mark' -->
 
   <!-- Geometric Shapes -->

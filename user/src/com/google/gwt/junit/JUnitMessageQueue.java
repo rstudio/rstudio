@@ -306,7 +306,7 @@ public class JUnitMessageQueue {
           buf.append('\n');
         }
 
-        if (!results.containsKey(clientStatus.clientId)) {
+        if (results == null || !results.containsKey(clientStatus.clientId)) {
           buf.append(" - NO RESPONSE: ");
         } else {
           buf.append(" - (ok): ");

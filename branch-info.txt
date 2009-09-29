@@ -11,3 +11,5 @@ svn merge https://google-web-toolkit.googlecode.com/svn/trunk \
 svn merge --ignore-ancestry -r6142:6200 \
     https://google-web-toolkit.googlecode.com/svn/trunk
     (via changes/jat/noswt-merge6200)
+svn merge https://google-web-toolkit.googlecode.com/svn/trunk \
+  -r6200:6239 .
