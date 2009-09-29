@@ -108,6 +108,7 @@ public class RunStyleSelenium extends RunStyle {
     }
 
     this.remotes = targets;
+    shell.setNumClients(targets.length);
 
     // Install a shutdown hook that will close all of our outstanding Selenium
     // sessions.

@@ -179,6 +179,7 @@ class RunStyleRemoteWeb extends RunStyle {
       }
     });
     int numClients = urls.length;
+    shell.setNumClients(numClients);
     BrowserManager[] browserManagers = new BrowserManager[numClients];
     for (int i = 0; i < numClients; ++i) {
       long callStart = System.currentTimeMillis();

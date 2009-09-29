@@ -40,6 +40,7 @@ class RunStyleManual extends RunStyle {
             e);
       }
     }
+    shell.setNumClients(numClients);
     return true;
   }
 

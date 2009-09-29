@@ -743,7 +743,11 @@ public class JUnitShell extends GWTShell {
     }
 
     long currentTimeMillis = System.currentTimeMillis();
-    if (activeClients == numClients) {
+    if (activeClients >= numClients) {
+      if (activeClients > numClients) {
+        getTopLogger().log(TreeLogger.WARN, "Too many clients: expected "
+            + numClients + ", found " + activeClients);
+      }
       firstLaunch = false;
 
       /*
@@ -815,6 +819,17 @@ public class JUnitShell extends GWTShell {
     if (!developmentMode || !shouldAutoGenerateResources) {
       compileForWebMode(moduleName, userAgents);
     }
+  }
+
+  /**
+   * Set the expected number of clients.
+   * 
+   * <p>Should only be called by RunStyle subtypes.
+   * 
+   * @param numClients
+   */
+  void setNumClients(int numClients) {
+    this.numClients = numClients;
   }
 
   /**
