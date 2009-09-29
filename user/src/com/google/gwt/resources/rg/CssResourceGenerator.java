@@ -30,6 +30,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ClassName;
@@ -405,6 +406,10 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
       }
     }
 
+    // Methods defined by CssResource interface
+    writeEnsureInjected(sw);
+    writeGetName(method, sw);
+
     sw.println("public String getText() {");
     sw.indent();
     boolean strict = isStrict(logger, context, method);
@@ -413,12 +418,6 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
         stylesheetMap.get(method), replacementsWithPrefix, strict,
         actualReplacements);
     sw.println("return " + cssExpression + ";");
-    sw.outdent();
-    sw.println("}");
-
-    sw.println("public String getName() {");
-    sw.indent();
-    sw.println("return \"" + method.getName() + "\";");
     sw.outdent();
     sw.println("}");
 
@@ -912,6 +911,28 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     sw.println("}");
   }
 
+  private void writeEnsureInjected(SourceWriter sw) {
+    sw.println("private boolean injected;");
+    sw.println("public boolean ensureInjected() {");
+    sw.indent();
+    sw.println("if (!injected) {");
+    sw.indentln("injected = true;");
+    sw.indentln(StyleInjector.class.getName() + ".injectStylesheet(getText());");
+    sw.indentln("return true;");
+    sw.println("}");
+    sw.println("return false;");
+    sw.outdent();
+    sw.println("}");
+  }
+
+  private void writeGetName(JMethod method, SourceWriter sw) {
+    sw.println("public String getName() {");
+    sw.indent();
+    sw.println("return \"" + method.getName() + "\";");
+    sw.outdent();
+    sw.println("}");
+  }
+
   /**
    * Write all of the user-defined methods in the CssResource subtype.
    */
@@ -927,7 +948,8 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
 
     for (JMethod toImplement : methods) {
       String name = toImplement.getName();
-      if ("getName".equals(name) || "getText".equals(name)) {
+      if ("getName".equals(name) || "getText".equals(name)
+          || "ensureInjected".equals(name)) {
         continue;
       }
 
