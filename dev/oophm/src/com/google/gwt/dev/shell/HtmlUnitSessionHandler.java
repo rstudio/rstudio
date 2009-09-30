@@ -211,7 +211,7 @@ public class HtmlUnitSessionHandler extends SessionHandler {
         if (!newUrl.equals(currentUrl)) {
           // TODO: removeAllJobs for all windows?
           window.getWebWindow().getTopWindow().getJobManager().removeAllJobs();
-          ((BrowserChannelClient) channel).shouldDisconnect = true;
+          ((BrowserChannelClient) channel).setShouldDisconnect();
         }
       }
       result = jsEngine.callFunction(htmlPage, jsFunction, jsContext, window,

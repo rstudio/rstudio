@@ -63,7 +63,7 @@ public class BrowserChannelClient extends BrowserChannel {
   private final String url;
   private final String versionString;
   private boolean connected = false;
-  boolean shouldDisconnect = false;
+  private boolean shouldDisconnect = false;
 
   public BrowserChannelClient(String addressParts[], String url,
       String sessionKey, String moduleName, String versionString,
@@ -135,6 +135,10 @@ public class BrowserChannelClient extends BrowserChannel {
     return returnMessage;
   }
 
+  void setShouldDisconnect() {
+    shouldDisconnect = true;
+  }
+  
   /*
    * Perform the initial interaction. Return true if interaction succeeds, false
    * if it fails. Do a check protocol versions, expected with 2.0+ oophm
