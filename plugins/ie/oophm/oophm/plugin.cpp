@@ -92,12 +92,7 @@ STDMETHODIMP Cplugin::connect(BSTR burl, BSTR bsessionKey, BSTR bhostedServer,
     return S_OK;
   }
 
-  // Use the current thread ID as a proxy for tab ID.
-  DWORD threadId = GetCurrentThreadId();
-  char buf[20];
-  snprintf(buf, sizeof(buf), "%lu", threadId);
-  std::string tabKey = buf;
-
+  std::string tabKey = ""; // TODO(jat): add support for tab identity
   std::string sessionKey = BSTRToUTF8(bsessionKey);
   std::string moduleName = BSTRToUTF8(bmoduleName);
   IOmNavigator* navigator;

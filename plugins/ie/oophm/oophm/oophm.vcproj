@@ -56,7 +56,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;../../../platform/Win;../../../common"
+				AdditionalIncludeDirectories="../../../common"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GWT_DEBUGLEVEL=Spam"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -151,7 +151,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;../../../platform/Win;../../../common"
+				AdditionalIncludeDirectories="../../../common"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GWT_DEBUGLEVEL=Spam"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -342,7 +342,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;../../../platform/Win;../../../common"
+				AdditionalIncludeDirectories="../../../platform/Win;../../../common"
 				PreprocessorDefinitions="_WINDOWS;GWT_DEBUGDISABLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
