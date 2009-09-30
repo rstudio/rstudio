@@ -201,7 +201,7 @@ public class RunStyleHtmlUnit extends RunStyleRemote {
   private String[] getUserAgents() {
     Map<BrowserVersion, String> userAgentMap = new HashMap<BrowserVersion, String>();
     userAgentMap.put(BrowserVersion.FIREFOX_2, "gecko1_8");
-    userAgentMap.put(BrowserVersion.FIREFOX_3, "gecko");
+    userAgentMap.put(BrowserVersion.FIREFOX_3, "gecko1_8");
     userAgentMap.put(BrowserVersion.INTERNET_EXPLORER_6, "ie6");
     userAgentMap.put(BrowserVersion.INTERNET_EXPLORER_7, "ie6");
 
