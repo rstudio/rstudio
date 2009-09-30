@@ -36,15 +36,6 @@ abstract class RunStyle {
   }
 
   /**
-   * Initialize the RunStyle after the shell has finished loading.
-   * 
-   * @throws UnableToCompleteException
-   */
-  public void init() throws UnableToCompleteException {
-    // nothing to do
-  }
-
-  /**
    * Returns whether or not the local UI event loop needs to be pumped.
    */
   public abstract boolean isLocal();

@@ -491,19 +491,34 @@ public class JUnitShell extends GWTShell {
    * @return the list of remote user agents
    */
   public static String[] getRemoteUserAgents() {
-    return getUnitTestShell().remoteUserAgents;
+    if (unitTestShell == null) {
+      return null;
+    }
+    return unitTestShell.remoteUserAgents;
   }
 
   /**
    * Checks if a testCase should not be executed. Currently, a test is either
    * executed on all clients (mentioned in this test) or on no clients.
    * 
-   * @param testCase current testCase.
+   * @param testInfo the test info to check
    * @return true iff the test should not be executed on any of the specified
    *         clients.
    */
-  public static boolean mustNotExecuteTest(TestCase testCase) {
-    return getUnitTestShell().mustNotExecuteTest(getBannedPlatforms(testCase));
+  public static boolean mustNotExecuteTest(TestInfo testInfo) {
+    if (unitTestShell == null) {
+      throw new IllegalStateException(
+          "mustNotExecuteTest cannot be called before runTest()");
+    }
+    try {
+      Class<?> testClass = TestCase.class.getClassLoader().loadClass(
+          testInfo.getTestClass());
+      return unitTestShell.mustNotExecuteTest(getBannedPlatforms(testClass,
+          testInfo.getTestMethod()));
+    } catch (ClassNotFoundException e) {
+      throw new IllegalArgumentException("Could not load test class: "
+          + testInfo.getTestClass());
+    }
   }
 
   /**
@@ -583,16 +598,19 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
-   * returns the set of banned {@code Platform} for a test method.
+   * Returns the set of banned {@code Platform} for a test method.
+   * 
+   * @param testClass the testClass
+   * @param methodName the name of the test method
    */
-  private static Set<Platform> getBannedPlatforms(TestCase testCase) {
-    Class<?> testClass = testCase.getClass();
+  private static Set<Platform> getBannedPlatforms(Class<?> testClass,
+      String methodName) {
     Set<Platform> bannedSet = EnumSet.noneOf(Platform.class);
     if (testClass.isAnnotationPresent(DoNotRunWith.class)) {
       bannedSet.addAll(Arrays.asList(testClass.getAnnotation(DoNotRunWith.class).value()));
     }
     try {
-      Method testMethod = testClass.getMethod(testCase.getName());
+      Method testMethod = testClass.getMethod(methodName);
       if (testMethod.isAnnotationPresent(DoNotRunWith.class)) {
         bannedSet.addAll(Arrays.asList(testMethod.getAnnotation(
             DoNotRunWith.class).value()));
@@ -629,6 +647,10 @@ public class JUnitShell extends GWTShell {
       }
       // TODO: install a shutdown hook? Not necessary with GWTShell.
       unitTestShell.lastLaunchFailed = false;
+    }
+    if (unitTestShell.thread != Thread.currentThread()) {
+      throw new IllegalThreadStateException(
+          "JUnitShell can only be accessed from the thread that created it.");
     }
 
     return unitTestShell;
@@ -727,10 +749,16 @@ public class JUnitShell extends GWTShell {
   private long testMethodTimeout;
 
   /**
+   * The thread that created the JUnitShell.
+   */
+  private Thread thread;
+
+  /**
    * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
    * server mode and disables processing extra arguments as URLs to be shown.
    */
   private JUnitShell() {
+    thread = Thread.currentThread();
     setRunTomcat(true);
     setHeadless(true);
 
@@ -937,7 +965,8 @@ public class JUnitShell extends GWTShell {
   private void runTestImpl(GWTTestCase testCase, TestResult testResult)
       throws UnableToCompleteException {
 
-    if (mustNotExecuteTest(testCase)) {
+    if (mustNotExecuteTest(getBannedPlatforms(testCase.getClass(),
+        testCase.getName()))) {
       return;
     }
 
