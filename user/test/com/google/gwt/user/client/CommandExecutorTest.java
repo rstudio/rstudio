@@ -114,13 +114,13 @@ public class CommandExecutorTest extends GWTTestCase {
           }
         });
 
+        delayTestFinish(TEST_FINISH_DELAY_MILLIS);
         ce.submit(new Command() {
           public void execute() {
             finishTest();
           }
         });
 
-        delayTestFinish(TEST_FINISH_DELAY_MILLIS);
         ce.doExecuteCommands(Duration.currentTimeMillis());
       }
     };

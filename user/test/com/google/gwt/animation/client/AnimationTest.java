@@ -141,6 +141,7 @@ public class AnimationTest extends GWTTestCase {
   public void testCancelBeforeStarted() {
     final TestAnimation anim = new TestAnimation();
     double curTime = Duration.currentTimeMillis();
+    delayTestFinish(20 * DELAY_MULTIPLIER);
     anim.run(10 * DELAY_MULTIPLIER, curTime + 10 * DELAY_MULTIPLIER);
 
     // Check progress
@@ -168,9 +169,6 @@ public class AnimationTest extends GWTTestCase {
         finishTest();
       }
     }.schedule(15 * DELAY_MULTIPLIER);
-
-    // Wait for test to finish
-    delayTestFinish(20 * DELAY_MULTIPLIER);
   }
 
   /**
@@ -178,6 +176,7 @@ public class AnimationTest extends GWTTestCase {
    */
   public void testCancelWhenComplete() {
     final TestAnimation anim = new TestAnimation();
+    delayTestFinish(25 * DELAY_MULTIPLIER);
     anim.run(10 * DELAY_MULTIPLIER);
 
     // Check progress
@@ -204,9 +203,6 @@ public class AnimationTest extends GWTTestCase {
         finishTest();
       }
     }.schedule(20 * DELAY_MULTIPLIER);
-
-    // Wait for test to finish
-    delayTestFinish(25 * DELAY_MULTIPLIER);
   }
 
   /**
@@ -214,6 +210,7 @@ public class AnimationTest extends GWTTestCase {
    */
   public void testCancelWhileRunning() {
     final TestAnimation anim = new TestAnimation();
+    delayTestFinish(20 * DELAY_MULTIPLIER);
     anim.run(50 * DELAY_MULTIPLIER);
 
     // Check progress
@@ -239,9 +236,6 @@ public class AnimationTest extends GWTTestCase {
         finishTest();
       }
     }.schedule(15 * DELAY_MULTIPLIER);
-
-    // Wait for test to finish
-    delayTestFinish(20 * DELAY_MULTIPLIER);
   }
 
   /**
@@ -328,6 +322,7 @@ public class AnimationTest extends GWTTestCase {
     final TestAnimation animPast = new TestAnimation();
     final TestAnimation animFuture = new TestAnimation();
 
+    delayTestFinish(50 * DELAY_MULTIPLIER);
     // Run animations
     double curTime = Duration.currentTimeMillis();
     animNow.run(30 * DELAY_MULTIPLIER);
@@ -416,8 +411,6 @@ public class AnimationTest extends GWTTestCase {
         animFuture.assertStarted(true);
         animFuture.assertCompleted(false);
         animFuture.assertProgressRange(0.0, 1.0);
-
-        finishTest();
       }
     }.schedule(35 * DELAY_MULTIPLIER);
 
@@ -440,8 +433,5 @@ public class AnimationTest extends GWTTestCase {
         finishTest();
       }
     }.schedule(45 * DELAY_MULTIPLIER);
-
-    // Wait for the test to finish
-    delayTestFinish(50 * DELAY_MULTIPLIER);
   }
 }

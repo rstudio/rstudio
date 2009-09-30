@@ -102,6 +102,7 @@ public class DialogBoxTest extends PopupTest {
     UIObjectTest.assertDebugId("myDialogBox-content",
         DOM.getParent(content.getElement()));
 
+    delayTestFinish(250);
     // Check the header IDs
     DeferredCommand.addCommand(new Command() {
       public void execute() {
@@ -110,7 +111,6 @@ public class DialogBoxTest extends PopupTest {
         finishTest();
       }
     });
-    delayTestFinish(250);
   }
 
   @Override

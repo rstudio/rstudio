@@ -236,6 +236,7 @@ public class MenuBarTest extends GWTTestCase {
     bar.ensureDebugId("myMenu");
     UIObjectTest.assertDebugId("myMenu", bar.getElement());
 
+    delayTestFinish(250);
     DeferredCommand.addCommand(new Command() {
       public void execute() {
         UIObjectTest.assertDebugIdContents("myMenu-item0", "top0");
@@ -248,7 +249,6 @@ public class MenuBarTest extends GWTTestCase {
         finishTest();
       }
     });
-    delayTestFinish(250);
   }
 
   /**

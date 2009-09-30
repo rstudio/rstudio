@@ -180,6 +180,7 @@ public class InheritanceTest extends GWTTestCase {
   }
 
   public void testSerializationExceptionPreventsCall() {
+    delayTestFinish(TEST_DELAY);
     final boolean serializationExceptionCaught[] = new boolean[1];
     new Timer() {
       @Override
@@ -189,7 +190,6 @@ public class InheritanceTest extends GWTTestCase {
         finishTest();
       }
     }.schedule(TEST_DELAY / 2);
-    delayTestFinish(TEST_DELAY);
 
     InheritanceTestServiceAsync service = getServiceAsync();
     service.echo(new AnonymousClassInterface() {

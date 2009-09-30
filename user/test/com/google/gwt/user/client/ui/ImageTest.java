@@ -99,6 +99,7 @@ public class ImageTest extends GWTTestCase {
     final Image image = new Image("counting-forwards.png", 12, 13, 8, 8);
     assertEquals("clipped", getCurrentImageStateName(image));
 
+    delayTestFinish(5000);
     image.addLoadListener(new LoadListener() {
       private int onLoadEventCount = 0;
 
@@ -121,7 +122,6 @@ public class ImageTest extends GWTTestCase {
       }
     });
 
-    delayTestFinish(5000);
     RootPanel.get().add(image);
   }
 
@@ -134,6 +134,7 @@ public class ImageTest extends GWTTestCase {
     final Image image = new Image("counting-forwards.png");
     assertEquals("unclipped", getCurrentImageStateName(image));
 
+    delayTestFinish(5000);
     image.addLoadListener(new LoadListener() {
       private int onLoadEventCount = 0;
 
@@ -157,7 +158,6 @@ public class ImageTest extends GWTTestCase {
       }
     });
 
-    delayTestFinish(5000);
     RootPanel.get().add(image);
   }
 
@@ -169,6 +169,7 @@ public class ImageTest extends GWTTestCase {
   public void disabledTestCreateImage() {
     final Image image = new Image("counting-forwards.png");
 
+    delayTestFinish(5000);
     image.addLoadListener(new LoadListener() {
       private int onLoadEventCount = 0;
 
@@ -185,7 +186,6 @@ public class ImageTest extends GWTTestCase {
       }
     });
 
-    delayTestFinish(5000);
     RootPanel.get().add(image);
     assertEquals(0, image.getOriginLeft());
     assertEquals(0, image.getOriginTop());
@@ -202,6 +202,7 @@ public class ImageTest extends GWTTestCase {
   public void disabledTestSetUrlAndLoadEventsOnUnclippedImage() {
     final Image image = new Image();
 
+    delayTestFinish(5000);
     image.addLoadListener(new LoadListener() {
       private int onLoadEventCount = 0;
 
@@ -218,7 +219,6 @@ public class ImageTest extends GWTTestCase {
       }
     });
 
-    delayTestFinish(5000);
     RootPanel.get().add(image);
     image.setUrl("counting-backwards.png");
   }
@@ -233,6 +233,7 @@ public class ImageTest extends GWTTestCase {
   public void disabledTestSetUrlAndVisibleRectOnUnclippedImage() {
     final Image image = new Image("counting-backwards.png");
 
+    delayTestFinish(5000);
     image.addLoadListener(new LoadListener() {
       private int onLoadEventCount = 0;
 
@@ -256,7 +257,6 @@ public class ImageTest extends GWTTestCase {
       }
     });
 
-    delayTestFinish(5000);
     RootPanel.get().add(image);
     assertEquals("unclipped", getCurrentImageStateName(image));
   }
@@ -273,6 +273,7 @@ public class ImageTest extends GWTTestCase {
   public void testCreateClippedImage() {
     final Image image = new Image("counting-forwards.png", 16, 16, 16, 16);
 
+    delayTestFinish(5000);
     final TestLoadListener listener = new TestLoadListener(image) {
       private int onLoadEventCount = 0;
 
@@ -303,7 +304,6 @@ public class ImageTest extends GWTTestCase {
     });
     image.addErrorHandler(new TestErrorHandler(image));
 
-    delayTestFinish(5000);
     RootPanel.get().add(image);
     assertEquals(16, image.getOriginLeft());
     assertEquals(16, image.getOriginTop());
@@ -344,6 +344,7 @@ public class ImageTest extends GWTTestCase {
   @DoNotRunWith({Platform.Htmlunit})
   public void testSetUrlAndVisibleRectOnClippedImage() {
     final Image image = new Image("counting-backwards.png", 12, 12, 12, 12);
+    delayTestFinish(5000);
 
     final TestLoadListener listener = new TestLoadListener(image) {
       private int onLoadEventCount = 0;
@@ -381,7 +382,6 @@ public class ImageTest extends GWTTestCase {
     });
     image.addErrorHandler(new TestErrorHandler(image));
 
-    delayTestFinish(5000);
     RootPanel.get().add(image);
     assertEquals("clipped", getCurrentImageStateName(image));
     image.setUrlAndVisibleRect("counting-forwards.png", 0, 16, 16, 16);
@@ -396,6 +396,7 @@ public class ImageTest extends GWTTestCase {
   public void testSetVisibleRectAndLoadEventsOnClippedImage() {
     final Image image = new Image("counting-backwards.png", 16, 16, 16, 16);
 
+    delayTestFinish(5000);
     final TestLoadListener listener = new TestLoadListener(image) {
       private int onLoadEventCount = 0;
 
@@ -422,7 +423,6 @@ public class ImageTest extends GWTTestCase {
     });
     image.addErrorHandler(new TestErrorHandler(image));
 
-    delayTestFinish(5000);
     RootPanel.get().add(image);
     image.setVisibleRect(0, 0, 16, 16);
     image.setVisibleRect(0, 0, 16, 16);

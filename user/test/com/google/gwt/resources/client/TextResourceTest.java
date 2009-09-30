@@ -47,6 +47,8 @@ public class TextResourceTest extends GWTTestCase {
   public void testExternal() throws ResourceException {
     final Resources r = GWT.create(Resources.class);
 
+    delayTestFinish(2000);
+
     ResourceCallback<TextResource> c = new ResourceCallback<TextResource>() {
 
       public void onError(ResourceException e) {
@@ -61,7 +63,6 @@ public class TextResourceTest extends GWTTestCase {
       }
     };
 
-    delayTestFinish(2000);
     r.helloWorldExternal().getText(c);
   }
 

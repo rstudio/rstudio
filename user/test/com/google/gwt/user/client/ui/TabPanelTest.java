@@ -202,6 +202,7 @@ public class TabPanelTest extends GWTTestCase {
     p.add(new Button("foo"), "foo");
     p.add(new Button("bar"), "bar");
 
+    this.delayTestFinish(1000);
     // Make sure selecting a tab fires both events in the right order.
     p.addTabListener(new TabListener() {
       private boolean onBeforeFired;
@@ -217,7 +218,6 @@ public class TabPanelTest extends GWTTestCase {
       }
     });
 
-    this.delayTestFinish(1000);
     p.selectTab(1);
   }
 

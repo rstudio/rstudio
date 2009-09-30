@@ -49,6 +49,7 @@ public class ListBoxTest extends GWTTestCase {
     list.ensureDebugId("myList");
     UIObjectTest.assertDebugId("myList", list.getElement());
 
+    delayTestFinish(250);
     DeferredCommand.addCommand(new Command() {
       public void execute() {
         UIObjectTest.assertDebugIdContents("myList-item0", "option0");   
@@ -58,7 +59,6 @@ public class ListBoxTest extends GWTTestCase {
         finishTest();
       }
     });
-    delayTestFinish(250);
   }
 
   public void testInsert() {

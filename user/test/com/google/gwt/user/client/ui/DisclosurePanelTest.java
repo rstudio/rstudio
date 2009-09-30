@@ -48,6 +48,7 @@ public class DisclosurePanelTest extends GWTTestCase {
 
     panel.setOpen(true);
 
+    delayTestFinish(500);
     // Allow the animation time to finish
     Timer t = new Timer() {
       @Override
@@ -59,7 +60,6 @@ public class DisclosurePanelTest extends GWTTestCase {
       }
     };
     t.schedule(450);
-    delayTestFinish(500);
   }
 
   public void testAttachDetachOrder() {

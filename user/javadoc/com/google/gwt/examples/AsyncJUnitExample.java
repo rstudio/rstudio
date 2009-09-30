@@ -30,6 +30,11 @@ public class AsyncJUnitExample extends GWTTestCase {
    * Tests the Timer class asynchronously.
    */
   public void testTimer() {
+
+    // Set a delay period significantly longer than the
+    // event is expected to take.
+    delayTestFinish(500);
+
     // Setup an asynchronous event handler.
     Timer timer = new Timer() {
       @Override
@@ -40,10 +45,6 @@ public class AsyncJUnitExample extends GWTTestCase {
         finishTest();
       }
     };
-
-    // Set a delay period significantly longer than the
-    // event is expected to take.
-    delayTestFinish(500);
 
     // Schedule the event and return control to the test system.
     timer.schedule(100);

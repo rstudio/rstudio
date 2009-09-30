@@ -333,6 +333,7 @@ public class PopupTest extends GWTTestCase {
       }
     }.schedule(1000);
 
+    delayTestFinish(5000);
     // Give time for any errors to occur
     new Timer() {
       @Override
@@ -340,7 +341,5 @@ public class PopupTest extends GWTTestCase {
         finishTest();
       }
     }.schedule(2000);
-
-    delayTestFinish(5000);
   }
 }
