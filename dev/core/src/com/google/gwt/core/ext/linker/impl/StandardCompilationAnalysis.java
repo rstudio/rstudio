@@ -19,6 +19,8 @@ import com.google.gwt.core.ext.linker.CompilationAnalysis;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.core.linker.SoycReportLinker;
 
+import java.util.List;
+
 /**
  * An implementation of CompilationAnalysis. This class transforms SourceInfos
  * and related data into an API suitable for public consumption via the Linker
@@ -48,9 +50,9 @@ public class StandardCompilationAnalysis extends CompilationAnalysis {
   private SoycArtifact detailedStoriesFile;
 
   /**
-   * File containing split points.
+   * Files containing the HTML dashboard.
    */
-  private SoycArtifact splitPointsFile;
+  private List<SoycArtifact> reportFiles;
 
   /**
    * File containing size maps.
@@ -58,16 +60,22 @@ public class StandardCompilationAnalysis extends CompilationAnalysis {
   private SoycArtifact sizeMapsFile;
 
   /**
+   * File containing split points.
+   */
+  private SoycArtifact splitPointsFile;
+
+  /**
    * Constructed by PermutationCompiler.
    */
   public StandardCompilationAnalysis(SoycArtifact dependencies,
       SoycArtifact sizeMaps, SoycArtifact splitPoints,
-      SoycArtifact detailedStories) {
+      SoycArtifact detailedStories, List<SoycArtifact> reportFiles) {
     super(StandardLinkerContext.class);
     this.depFile = dependencies;
     this.sizeMapsFile = sizeMaps;
     this.splitPointsFile = splitPoints;
     this.detailedStoriesFile = detailedStories;
+    this.reportFiles = reportFiles;
   }
 
   @Override
@@ -78,6 +86,11 @@ public class StandardCompilationAnalysis extends CompilationAnalysis {
   @Override
   public SoycArtifact getDetailedStoriesFile() {
     return detailedStoriesFile;
+  }
+
+  @Override
+  public List<SoycArtifact> getReportFiles() {
+    return reportFiles;
   }
 
   @Override

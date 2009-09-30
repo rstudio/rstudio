@@ -14,13 +14,9 @@
   </target>
 
   <target name="compile">
-    <mkdir dir="${javac.out}/com/google/gwt/soyc/resources/images"/>
-    <copy todir="${javac.out}/com/google/gwt/soyc/resources/images">
-      <fileset dir="images"/>
+    <copy todir="${javac.out}/com/google/gwt/soyc/resources">
+        <fileset dir="${gwt.root}/dev/core/src/com/google/gwt/soyc/resources"/>
     </copy>
-    <copy file="classLevel.css" tofile="${javac.out}/com/google/gwt/soyc/resources/classLevel.css"/>
-    <copy file="roundedCorners.css" tofile="${javac.out}/com/google/gwt/soyc/resources/roundedCorners.css"/>
-    <copy file="common.css" tofile="${javac.out}/com/google/gwt/soyc/resources/common.css"/>
   </target>
 
   <target name="build" depends="compile">

@@ -40,7 +40,7 @@ public class SplitPointRecorder {
       TreeLogger logger) {
 
     logger = logger.branch(TreeLogger.TRACE,
-        "Creating Split Point Map file for SOYC");
+        "Creating split point map file for the compile report");
 
     try {
       OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(

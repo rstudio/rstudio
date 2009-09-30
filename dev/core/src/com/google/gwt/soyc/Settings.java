@@ -16,15 +16,10 @@
 package com.google.gwt.soyc;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.TreeMap;
 
 /**
  * Command-line settings for SOYC.
@@ -123,10 +118,6 @@ public class Settings {
       break; // No setting wanted the remaining arguments
     }
 
-    if (settings.resources.get() == null) {
-      throw new ArgumentListException("The -resources option is required");
-    }
-
     if ((settings.soycDir.get() == null)
         && (settings.symbolMapsDir.get() == null)) {
 
@@ -184,17 +175,16 @@ public class Settings {
     return help.toString();
   }
 
-  public Map<String, String> allPermsInfo = new TreeMap<String, String>();
   public String depFileName;
-  public Boolean displayDependencies = false;
-  public Boolean displaySplitPoints = false;
 
   public final Setting<String> out = addSetting(new StringSetting("-out",
       "dir", ".", "output directory"));
 
   public final Setting<String> resources = addSetting(new StringSetting(
-      "-resources", "jarfile", null,
-      " directory or jar file with CSS, etc., resources"));
+      "-resources",
+      "dir",
+      null,
+      "present only for backwards compatibility; directory or jar file with CSS, etc., resources"));
 
   public final Setting<String> soycDir = addSetting(new StringSetting(
       "-soycDir", "dir", null, " directory for soyc files"));
@@ -207,47 +197,6 @@ public class Settings {
       "-symbolMapsDir", "dir", null, " directory or symbol maps files"));
 
   private List<Setting<?>> allSettings;
-  public void readPermutationInfo() throws FileNotFoundException {
-
-    if (symbolMapsDir.get() == null) {
-      // get the permutation id from settings
-      String permutationId = storiesFileName;
-      permutationId = permutationId.replaceAll(".*/stories", "");
-      permutationId = permutationId.replaceAll("\\.xml(\\.gz)?", "");
-      allPermsInfo.put(permutationId, "");
-    } else {
-      File dir = new File(symbolMapsDir.get());
-      String files[] = dir.list();
-      for (Integer i = 0; i < files.length; i++) {
-        String permFileName = symbolMapsDir.get() + "/" + files[i];
-        FileReader fir = new FileReader(permFileName);
-
-        Scanner sc = new Scanner(fir);
-
-        String permutationId = "";
-        String permutationInfo = "";
-        int lineCount = 0;
-        while ((sc.hasNextLine()) && (lineCount < 2)) {
-
-          String curLine = sc.nextLine();
-          curLine = curLine.trim();
-
-          if (curLine.startsWith("# {")) {
-            curLine = curLine.replace("# {", "");
-            curLine = curLine.replace("}", "");
-            curLine = curLine.trim();
-            if (lineCount == 0) {
-              permutationId = curLine;
-            } else {
-              permutationInfo = curLine;
-            }
-            lineCount++;
-          }
-        }
-        allPermsInfo.put(permutationId, permutationInfo);
-      }
-    }
-  }
 
   private <T> Setting<T> addSetting(Setting<T> setting) {
     if (allSettings == null) {

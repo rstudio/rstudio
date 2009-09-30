@@ -29,7 +29,7 @@ public class ArgHandlerSoycDetailed extends ArgHandlerFlag {
 
   @Override
   public String getPurpose() {
-    return "Emit extra, detailed SOYC information at the expense of compile time";
+    return "Emit extra, detailed compile-report information at the expense of compile time";
   }
 
   @Override

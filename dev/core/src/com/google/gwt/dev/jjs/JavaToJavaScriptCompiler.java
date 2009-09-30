@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis;
@@ -57,7 +58,6 @@ import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
-import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
@@ -85,6 +85,7 @@ import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
+import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
@@ -110,12 +111,16 @@ import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
+import com.google.gwt.soyc.SoycDashboard;
+import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
+import org.xml.sax.SAXException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
@@ -130,13 +135,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.zip.GZIPInputStream;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Compiles the Java <code>JProgram</code> representation into its corresponding
  * JavaScript source.
  */
 public class JavaToJavaScriptCompiler {
-
   private static class PermutationResultImpl implements PermutationResult {
     private final ArtifactSet artifacts = new ArtifactSet();
     private final byte[][] js;
@@ -318,7 +325,7 @@ public class JavaToJavaScriptCompiler {
       // Work around an IE7 bug,
       // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
       // note, JsIEBlockTextTransformer now handles restructuring top level
-      // blocks, this class now handles non-top level blocks only. 
+      // blocks, this class now handles non-top level blocks only.
       SelectionProperty userAgentProperty = null;
       for (PropertyOracle oracle : propertyOracles) {
         userAgentProperty = oracle.getSelectionProperty(logger, "user.agent");
@@ -327,9 +334,8 @@ public class JavaToJavaScriptCompiler {
         }
       }
       // if user agent is known or ie6, split overly large blocks
-      boolean splitBlocks = userAgentProperty == null || (
-          userAgentProperty != null &&
-              "ie6".equals(userAgentProperty.getCurrentValue()));
+      boolean splitBlocks = userAgentProperty == null
+          || (userAgentProperty != null && "ie6".equals(userAgentProperty.getCurrentValue()));
 
       if (splitBlocks) {
         JsIEBlockSizeVisitor.exec(jsProgram);
@@ -853,7 +859,7 @@ public class JavaToJavaScriptCompiler {
         v = new JsSourceGenerationVisitorWithSizeBreakdown(out, jjsMap);
       }
       v.accept(jsProgram.getFragmentBlock(i));
-      
+
       /**
        * Reorder function decls to improve compression ratios. Also restructures
        * the top level blocks into sub-blocks if they exceed 32767 statements.
@@ -929,10 +935,10 @@ public class JavaToJavaScriptCompiler {
       SizeBreakdown[] sizeBreakdowns,
       List<Map<Range, SourceInfo>> sourceInfoMaps, SoycArtifact dependencies,
       JavaToJavaScriptMap jjsmap, Map<JsName, String> obfuscateMap)
-      throws IOException {
+      throws IOException, UnableToCompleteException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-    PerfLogger.start("Recording SOYC output");
+    PerfLogger.start("Recording compile report output");
 
     PerfLogger.start("Record split points");
     SplitPointRecorder.recordSplitPoints(jprogram, baos, logger);
@@ -964,8 +970,34 @@ public class JavaToJavaScriptCompiler {
 
     PerfLogger.end();
 
+    List<SoycArtifact> reportArtifacts = Lists.create();
+    if (sizeBreakdowns != null) {
+      PerfLogger.start("Generating compile report");
+      ArtifactsOutputDirectory outDir = new ArtifactsOutputDirectory();
+      SoycDashboard dashboard = new SoycDashboard(outDir);
+      dashboard.startNewPermutation(Integer.toString(permutationId));
+      try {
+        dashboard.readSplitPoints(openWithGunzip(splitPoints));
+        if (sizeMaps != null) {
+          dashboard.readSizeMaps(openWithGunzip(sizeMaps));
+        }
+        if (dependencies != null) {
+          dashboard.readDependencies(openWithGunzip(dependencies));
+        }
+      } catch (ParserConfigurationException e) {
+        throw new InternalCompilerException(
+            "Error reading compile report information that was just generated", e);
+      } catch (SAXException e) {
+        throw new InternalCompilerException(
+            "Error reading compile report information that was just generated", e);
+      }
+      dashboard.generateForOnePermutation();
+      reportArtifacts = outDir.getArtifacts();
+      PerfLogger.end();
+    }
+
     return new StandardCompilationAnalysis(dependencies, sizeMaps, splitPoints,
-        detailedStories);
+        detailedStories, reportArtifacts);
   }
 
   /**
@@ -1029,6 +1061,14 @@ public class JavaToJavaScriptCompiler {
         e.printStackTrace();
       }
     }
+  }
+
+  /**
+   * Open an emitted artifact and gunzip its contents.
+   */
+  private static GZIPInputStream openWithGunzip(EmittedArtifact artifact)
+      throws IOException, UnableToCompleteException {
+    return new GZIPInputStream(artifact.getContents(TreeLogger.NULL));
   }
 
   /**

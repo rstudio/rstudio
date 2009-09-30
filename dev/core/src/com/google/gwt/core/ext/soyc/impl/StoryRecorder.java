@@ -108,7 +108,7 @@ public class StoryRecorder {
   protected void recordStoriesImpl(TreeLogger logger, OutputStream out,
       List<Map<Range, SourceInfo>> sourceInfoMaps, String[] js) {
 
-    logger = logger.branch(TreeLogger.INFO, "Creating Stories file for SOYC");
+    logger = logger.branch(TreeLogger.INFO, "Creating Stories file for the compile report");
 
     this.js = js;
 

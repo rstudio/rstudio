@@ -4,7 +4,6 @@
 
   <property.ensure name="gwt.core.root" location="../core" />
   <property.ensure name="gwt.core.build" location="${project.build}/../core" />
-  <property.ensure name="gwt.tools.soyc" location="${gwt.root}/tools/soyc-vis" />
 
   <target name="compile" description="Compile all java files">
     <mkdir dir="${javac.out}" />
@@ -31,9 +30,6 @@
         <fileset dir="${gwt.core.build}/bin" />
         <fileset file="${gwt.tools.lib}/eclipse/${gwt.dev.swt.jar}" />
         <fileset file="${gwt.core.build}/alldeps.jar" />
-        <fileset dir="${gwt.tools.soyc}/images"/>
-        <fileset file="${gwt.tools.soyc}/classLevel.css"/>
-        <fileset file="${gwt.tools.soyc}/roundedCorners.css"/>
       </sourcefiles>
       <targetfiles>
         <fileset file="${project.lib}"/>
@@ -50,10 +46,6 @@
           <fileset dir="${gwt.core.build}/bin" />
           <zipfileset src="${gwt.tools.lib}/eclipse/${gwt.dev.swt.jar}" />
           <zipfileset src="${gwt.core.build}/alldeps.jar" />
-
-          <zipfileset dir="${gwt.tools.soyc}/images" prefix="com/google/gwt/soyc/resources/images"/>
-          <zipfileset file="${gwt.tools.soyc}/classLevel.css" prefix="com/google/gwt/soyc/resources/"/>
-          <zipfileset file="${gwt.tools.soyc}/roundedCorners.css" prefix="com/google/gwt/soyc/resources/"/>
 
           <manifest>
             <attribute name="Main-Class" value="com.google.gwt.dev.GWTMain" />

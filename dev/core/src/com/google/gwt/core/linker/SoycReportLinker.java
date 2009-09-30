@@ -20,9 +20,17 @@ import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis;
+import com.google.gwt.soyc.SoycDashboard;
+import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Converts SOYC report files into emitted private artifacts.
@@ -32,13 +40,15 @@ public class SoycReportLinker extends Linker {
 
   @Override
   public String getDescription() {
-    return "Emit SOYC artifacts";
+    return "Emit compile report artifacts";
   }
 
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
       ArtifactSet artifacts) throws UnableToCompleteException {
     ArtifactSet results = new ArtifactSet(artifacts);
+    boolean foundReports = false;
+
     for (StandardCompilationAnalysis soycFiles : artifacts.find(StandardCompilationAnalysis.class)) {
       if (soycFiles.getDepFile() != null) {
         results.add(soycFiles.getDepFile());
@@ -50,8 +60,42 @@ public class SoycReportLinker extends Linker {
         results.add(soycFiles.getDetailedStoriesFile());
       }
       results.add(soycFiles.getSplitPointsFile());
+      if (!soycFiles.getReportFiles().isEmpty()) {
+        results.addAll(soycFiles.getReportFiles());
+        foundReports = true;
+      }
+    }
+
+    if (foundReports) {
+      // run the final step of the dashboard to generate top-level files
+      ArtifactsOutputDirectory out = new ArtifactsOutputDirectory();
+      try {
+        new SoycDashboard(out).generateCrossPermutationFiles(extractPermutationDescriptions(artifacts));
+      } catch (IOException e) {
+        logger.log(TreeLogger.ERROR,
+            "Error while generating a Story of Your Compile", e);
+        e.printStackTrace();
+      }
+      results.addAll(out.getArtifacts());
     }
     return results;
   }
 
+  private Map<String, String> extractPermutationDescriptions(
+      ArtifactSet artifacts) {
+    Map<String, String> permDescriptions = new TreeMap<String, String>();
+
+    for (CompilationResult res : artifacts.find(CompilationResult.class)) {
+      String permId = Integer.toString(res.getPermutationId());
+      /*
+       * TODO(kprobst,spoon) support permutations that collapsed to the same
+       * compilation result
+       */
+      Map<SelectionProperty, String> propertyMap = res.getPropertyMap().iterator().next();
+      String permDesc = SymbolMapsLinker.propertyMapToString(propertyMap);
+      permDescriptions.put(permId, permDesc);
+    }
+
+    return permDescriptions;
+  }
 }
