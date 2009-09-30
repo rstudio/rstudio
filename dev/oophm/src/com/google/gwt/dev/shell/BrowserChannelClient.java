@@ -63,6 +63,7 @@ public class BrowserChannelClient extends BrowserChannel {
   private final String url;
   private final String versionString;
   private boolean connected = false;
+  boolean shouldDisconnect = false;
 
   public BrowserChannelClient(String addressParts[], String url,
       String sessionKey, String moduleName, String versionString,
@@ -114,6 +115,9 @@ public class BrowserChannelClient extends BrowserChannel {
       new LoadModuleMessage(this, url, tabKey, sessionKey, moduleName,
           htmlUnitSessionHandler.getUserAgent()).send();
       returnMessage = reactToMessages(htmlUnitSessionHandler, true);
+      if (shouldDisconnect) {
+        disconnectFromHost();
+      }
     }
     logger.log(TreeLogger.DEBUG, "loaded module, returnValue: "
         + returnMessage.getReturnValue() + ", isException: "
@@ -124,7 +128,11 @@ public class BrowserChannelClient extends BrowserChannel {
   public ReturnMessage reactToMessagesWhileWaitingForReturn(
       HtmlUnitSessionHandler handler) throws IOException,
       BrowserChannelException {
-    return reactToMessages(handler, true);
+    ReturnMessage returnMessage = reactToMessages(handler, true);
+    if (shouldDisconnect) {
+      disconnectFromHost();
+    }
+    return returnMessage;
   }
 
   /*
@@ -174,7 +182,7 @@ public class BrowserChannelClient extends BrowserChannel {
                 invokeMessage.getArgs());
             htmlUnitSessionHandler.sendFreeValues(this);
             new ReturnMessage(this, returnValue.isException(),
-                returnValue.getReturnValue()).send();
+                returnValue.getReturnValue()).send();           
             break;
           case INVOKE_SPECIAL:
             InvokeSpecialMessage invokeSpecialMessage = InvokeSpecialMessage.receive(this);

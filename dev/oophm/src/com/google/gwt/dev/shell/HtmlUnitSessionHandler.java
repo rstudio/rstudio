@@ -83,6 +83,7 @@ public class HtmlUnitSessionHandler extends SessionHandler {
   }
 
   private static final Value EMPTY_VALUES[] = new Value[0];
+  private static final String REPLACE_METHOD_SIGNATURE = "@com.google.gwt.user.client.Window$Location::replace(Ljava/lang/String;)";
   private static final int TO_STRING_DISPATCH_ID = 0;
 
   Map<Integer, JavaObject> javaObjectCache;
@@ -201,8 +202,20 @@ public class HtmlUnitSessionHandler extends SessionHandler {
     }
     Object result = null;
     try {
+      if (args.length == 1
+          && methodName.indexOf(REPLACE_METHOD_SIGNATURE) != -1) {
+        // getUrl() is not visible
+        String currentUrl = window.jsxGet_location().toString();
+        currentUrl = getUrlBeforeHash(currentUrl);
+        String newUrl = getUrlBeforeHash((String) args[0].getValue());
+        if (!newUrl.equals(currentUrl)) {
+          // TODO: removeAllJobs for all windows?
+          window.getWebWindow().getTopWindow().getJobManager().removeAllJobs();
+          ((BrowserChannelClient) channel).shouldDisconnect = true;
+        }
+      }
       result = jsEngine.callFunction(htmlPage, jsFunction, jsContext, window,
-          jsThis, jsArgs);
+          jsThis, jsArgs);     
     } catch (JavaScriptException ex) {
       logger.log(TreeLogger.INFO, "INVOKE: JavaScriptException " + ex
           + ", message: " + ex.getMessage() + " when invoking " + methodName);
@@ -344,6 +357,14 @@ public class HtmlUnitSessionHandler extends SessionHandler {
         return Undefined.instance;
     }
     return null;
+  }
+
+  private String getUrlBeforeHash(String currentUrl) {
+    int hashIndex = -1;
+    if ((hashIndex = currentUrl.indexOf("#")) != -1) {
+      currentUrl = currentUrl.substring(0, hashIndex);
+    }
+    return currentUrl;
   }
 
 }
