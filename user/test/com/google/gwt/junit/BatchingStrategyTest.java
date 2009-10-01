@@ -79,22 +79,28 @@ public class BatchingStrategyTest extends TestCase {
       FAKE_MODULE_SYNTHETIC_NAME, TestClass2.class.getName(), "testMethod5");
 
   public void testClassBatchingStrategy() {
+    BatchingStrategy strategy = new ClassBatchingStrategy();
+    assertFalse(strategy.isSingleTestOnly());
     List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>();
     testBlocks.add(new TestInfo[] {TEST_INFO_0_0, TEST_INFO_0_1});
     testBlocks.add(new TestInfo[] {TEST_INFO_1_2, TEST_INFO_1_3, TEST_INFO_1_4});
     testBlocks.add(new TestInfo[] {TEST_INFO_2_5});
-    testBatchingStrategy(new ClassBatchingStrategy(), testBlocks);
+    testBatchingStrategy(strategy, testBlocks);
   }
 
   public void testModuleBatchingStrategy() {
+    BatchingStrategy strategy = new ModuleBatchingStrategy();
+    assertFalse(strategy.isSingleTestOnly());
     List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>();
     testBlocks.add(new TestInfo[] {
         TEST_INFO_0_0, TEST_INFO_0_1, TEST_INFO_1_2, TEST_INFO_1_3,
         TEST_INFO_1_4, TEST_INFO_2_5});
-    testBatchingStrategy(new ModuleBatchingStrategy(), testBlocks);
+    testBatchingStrategy(strategy, testBlocks);
   }
 
   public void testNoBatchingStrategy() {
+    BatchingStrategy strategy = new NoBatchingStrategy();
+    assertTrue(strategy.isSingleTestOnly());
     List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>();
     testBlocks.add(new TestInfo[] {TEST_INFO_0_0});
     testBlocks.add(new TestInfo[] {TEST_INFO_0_1});
@@ -102,7 +108,7 @@ public class BatchingStrategyTest extends TestCase {
     testBlocks.add(new TestInfo[] {TEST_INFO_1_3});
     testBlocks.add(new TestInfo[] {TEST_INFO_1_4});
     testBlocks.add(new TestInfo[] {TEST_INFO_2_5});
-    testBatchingStrategy(new NoBatchingStrategy(), testBlocks);
+    testBatchingStrategy(strategy, testBlocks);
   }
 
   /**

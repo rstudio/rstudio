@@ -1005,6 +1005,7 @@ public class JUnitShell extends GWTShell {
       processTestResult(testCase, testResult, strategy);
       return;
     }
+    compileStrategy.maybeAddTestBlockForCurrentTest(testCase, batchingStrategy);
 
     try {
       if (firstLaunch) {

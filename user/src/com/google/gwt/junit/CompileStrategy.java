@@ -45,6 +45,23 @@ public abstract class CompileStrategy {
   private Set<String> compiledModuleNames = new HashSet<String>();
 
   /**
+   * Maybe add a test block for the currently executed test case.
+   * 
+   * @param testCase the test case being run
+   * @param batchingStrategy the batching strategy
+   */
+  public void maybeAddTestBlockForCurrentTest(GWTTestCase testCase,
+      BatchingStrategy batchingStrategy) {
+    if (batchingStrategy.isSingleTestOnly()) {
+      TestInfo testInfo = new TestInfo(testCase.getSyntheticModuleName(),
+          testCase.getClass().getName(), testCase.getName());
+      List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>(1);
+      testBlocks.add(new TestInfo[] {testInfo});
+      getMessageQueue().addTestBlocks(testBlocks, false);
+    }
+  }
+
+  /**
    * Let the compile strategy compile another module. This is called while
    * {@link JUnitShell} is waiting for the current test to complete.
    * 
@@ -85,6 +102,57 @@ public abstract class CompileStrategy {
       BatchingStrategy batchingStrategy, TreeLogger treeLogger)
       throws UnableToCompleteException {
 
+    // Let the runstyle compile the module.
+    ModuleDef moduleDef = maybeCompileModuleImpl2(moduleName,
+        syntheticModuleName, strategy, runStyle, treeLogger);
+
+    // Add all test blocks for the module if we haven't seen this module before.
+    if (!compiledModuleNames.contains(syntheticModuleName)) {
+      compiledModuleNames.add(syntheticModuleName);
+      if (!batchingStrategy.isSingleTestOnly()) {
+        // Use >= so we can mock getModuleCount and force isFinalModule to true
+        boolean isFinalModule = compiledModuleNames.size() >= getModuleCount();
+        List<TestInfo[]> testBlocks = batchingStrategy.getTestBlocks(syntheticModuleName);
+        getMessageQueue().addTestBlocks(testBlocks, isFinalModule);
+      }
+    }
+
+    return moduleDef;
+  }
+
+  /**
+   * Visible for testing and mocking.
+   * 
+   * @return the {@link JUnitMessageQueue}
+   */
+  JUnitMessageQueue getMessageQueue() {
+    return JUnitShell.getMessageQueue();
+  }
+
+  /**
+   * Visible for testing and mocking.
+   * 
+   * @return the number of modules to test
+   */
+  int getModuleCount() {
+    return GWTTestCase.getModuleCount();
+  }
+
+  /**
+   * Let the {@link RunStyle} compile the module if needed
+   * 
+   * Visible for testing and mocking.
+   * 
+   * @param moduleName the module name
+   * @param syntheticModuleName the synthetic module name
+   * @param strategy the strategy
+   * @param runStyle the run style
+   * @param treeLogger the logger
+   * @return the {@link ModuleDef} describing the synthetic module
+   */
+  ModuleDef maybeCompileModuleImpl2(String moduleName,
+      String syntheticModuleName, Strategy strategy, RunStyle runStyle,
+      TreeLogger treeLogger) throws UnableToCompleteException {
     /*
      * Synthesize a synthetic module that derives from the user-specified module
      * but also includes JUnit support.
@@ -103,14 +171,6 @@ public abstract class CompileStrategy {
     moduleNameProp.setValue(syntheticModuleName);
 
     runStyle.maybeCompileModule(syntheticModuleName);
-
-    // Add all test blocks for the module if we haven't seen this module before.
-    if (!compiledModuleNames.contains(syntheticModuleName)) {
-      compiledModuleNames.add(syntheticModuleName);
-      boolean isFinalModule = compiledModuleNames.size() == GWTTestCase.getModuleCount();
-      List<TestInfo[]> testBlocks = batchingStrategy.getTestBlocks(syntheticModuleName);
-      JUnitShell.getMessageQueue().addTestBlocks(testBlocks, isFinalModule);
-    }
 
     return moduleDef;
   }

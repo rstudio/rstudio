@@ -25,7 +25,8 @@ import junit.framework.Test;
  */
 public class JUnitSuite {
   public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite("Test for suite for com.google.gwt.junit");
+    GWTTestSuite suite = new GWTTestSuite(
+        "Test for suite for com.google.gwt.junit");
 
     // client
     // Suppressed due to flakiness on Linux
@@ -34,6 +35,7 @@ public class JUnitSuite {
 
     // Must run after a GWTTestCase so JUnitShell is initialized.
     suite.addTestSuite(BatchingStrategyTest.class);
+    suite.addTestSuite(CompileStrategyTest.class);
 
     suite.addTestSuite(FakeMessagesMakerTest.class);
     suite.addTestSuite(JUnitMessageQueueTest.class);

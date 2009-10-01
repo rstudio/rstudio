@@ -40,6 +40,21 @@ public abstract class BatchingStrategy {
   public abstract List<TestInfo[]> getTestBlocks(String syntheticModuleName);
 
   /**
+   * Check if this batching strategy only supports execution of a single test at
+   * a time.
+   * 
+   * If this method returns true, test methods will be executed on the client as
+   * they are run by JUnit. If it returns false, test methods will be batched
+   * and sent to the clients in groups. If you are using a test runner that
+   * shards test methods across multiple clients, you should use a strategy that
+   * returns false (such as {@link NoBatchingStrategy}) or all tests will be
+   * executed on all clients.
+   * 
+   * @return true if batches never contain more than one test
+   */
+  public abstract boolean isSingleTestOnly();
+
+  /**
    * Get the set of tests for this module, minus tests that should not be
    * executed.
    * 
@@ -71,6 +86,11 @@ class NoBatchingStrategy extends BatchingStrategy {
       testBlocks.add(new TestInfo[] {testInfo});
     }
     return testBlocks;
+  }
+
+  @Override
+  public boolean isSingleTestOnly() {
+    return true;
   }
 }
 
@@ -105,6 +125,11 @@ class ClassBatchingStrategy extends BatchingStrategy {
     }
     return testBlocks;
   }
+
+  @Override
+  public boolean isSingleTestOnly() {
+    return false;
+  }
 }
 
 /**
@@ -120,5 +145,10 @@ class ModuleBatchingStrategy extends BatchingStrategy {
       testBlocks.add(testBlock);
     }
     return testBlocks;
+  }
+
+  @Override
+  public boolean isSingleTestOnly() {
+    return false;
   }
 }
