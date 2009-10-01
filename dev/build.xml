@@ -264,7 +264,6 @@
         <fileset dir="${javac.out}" />
         <fileset dir="${project.build}/bin" />
         <fileset file="${project.build}/alldeps.jar" />
-        <fileset dir="${gwt.tools.soyc}/images"/>
         <fileset file="${gwt.tools.soyc}/classLevel.css"/>
         <fileset file="${gwt.tools.soyc}/roundedCorners.css"/>
       </sourcefiles>
@@ -283,7 +282,6 @@
           <fileset dir="${javac.out}" />
           <zipfileset src="${alldeps.jar}" />
 
-          <zipfileset dir="${gwt.tools.soyc}/images" prefix="com/google/gwt/soyc/resources/images"/>
           <zipfileset file="${gwt.tools.soyc}/classLevel.css" prefix="com/google/gwt/soyc/resources/"/>
           <zipfileset file="${gwt.tools.soyc}/roundedCorners.css" prefix="com/google/gwt/soyc/resources/"/>
 
