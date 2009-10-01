@@ -16,6 +16,7 @@
 package com.google.gwt.core.ext.linker;
 
 import com.google.gwt.core.ext.Linker;
+import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis.SoycArtifact;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -39,6 +40,12 @@ public abstract class CompilationAnalysis extends Artifact<CompilationAnalysis> 
    * @return a file with detailed story information
    */
   public abstract EmittedArtifact getDetailedStoriesFile();
+
+  /**
+   * Files containing the HTML dashboard.
+   */
+
+  public abstract List<SoycArtifact> getReportFiles();
 
   /**
    * @return a file of size maps
@@ -69,9 +76,12 @@ public abstract class CompilationAnalysis extends Artifact<CompilationAnalysis> 
         allFiles());
     LinkedList<EmittedArtifact> otherFiles = new LinkedList<EmittedArtifact>(
         o.allFiles());
-    assert (myFiles.size() == otherFiles.size());
 
     while (!myFiles.isEmpty()) {
+      if (otherFiles.isEmpty()) {
+        return 1;
+      }
+
       EmittedArtifact myFile = myFiles.removeFirst();
       EmittedArtifact otherFile = otherFiles.removeFirst();
       if (myFile == null && otherFile == null) {
@@ -93,6 +103,10 @@ public abstract class CompilationAnalysis extends Artifact<CompilationAnalysis> 
       }
     }
 
+    if (!otherFiles.isEmpty()) {
+      return -1;
+    }
+
     return 0;
   }
 
@@ -107,6 +121,7 @@ public abstract class CompilationAnalysis extends Artifact<CompilationAnalysis> 
     files.add(getDepFile());
     files.add(getSizeMapsFile());
     files.add(getDetailedStoriesFile());
+    files.addAll(getReportFiles());
     return files;
   }
 }

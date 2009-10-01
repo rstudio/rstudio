@@ -38,13 +38,17 @@ import java.util.Map;
  * modifications to the CSS AST.
  */
 public class CssTestCase extends TestCase {
+  /*
+   * NB: This class is in the resources.rg package so that it can acess
+   * package-protected methods in CssResourceGenerator.
+   */
 
   /**
    * Triggers an assertion if a CssNode is traversed more than once.
    * 
    * @see CssTestCase#assertNoAliasing(CssNode)
    */
-  protected static class AliasDetector extends CssVisitor {
+  public static class AliasDetector extends CssVisitor {
     private final Map<CssNode, Void> seen = new IdentityHashMap<CssNode, Void>();
 
     @Override

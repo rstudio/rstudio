@@ -113,6 +113,7 @@ public class ImageResourceTest extends GWTTestCase {
     assertEquals(a.getLeft(), b.getTop());
     assertEquals(a.getLeft(), c.getTop());
 
+    delayTestFinish(1000);
     // See if the size of the image strip is what we expect
     Image i = new Image(a.getURL());
     i.addLoadHandler(new LoadHandler() {
@@ -127,7 +128,6 @@ public class ImageResourceTest extends GWTTestCase {
     });
 
     RootPanel.get().add(i);
-    delayTestFinish(1000);
   }
 
   public void testPacking() {

@@ -125,6 +125,7 @@ public class HistoryTest extends GWTTestCase {
    * Verify that no events are issued via newItem if there were not reqeuested.
    */
   public void testNoEvents() {
+    delayTestFinish(5000);
     addHistoryListenerImpl(new HistoryListener() {
       {
         timer = new Timer() {
@@ -139,7 +140,6 @@ public class HistoryTest extends GWTTestCase {
         fail("onHistoryChanged should not have been called");
       }
     });
-    delayTestFinish(5000);
     History.newItem("testNoEvents", false);
   }
 
@@ -197,9 +197,10 @@ public class HistoryTest extends GWTTestCase {
    * called once per {@link History#newItem(String)}. 
    */
   public void testHistoryChangedCount() {
+    delayTestFinish(5000);
     timer = new Timer() {
       private int count = 0;
-
+      
       public void run() {
         if (count++ == 0) {
           // verify that duplicates don't issue another event
@@ -222,7 +223,6 @@ public class HistoryTest extends GWTTestCase {
         timer.schedule(500);
       }
     });
-    delayTestFinish(5000);
     History.newItem("testHistoryChangedCount");
   }
 

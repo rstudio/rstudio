@@ -27,16 +27,18 @@ public class JUnitSuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite("Test for suite for com.google.gwt.junit");
 
-    suite.addTestSuite(FakeMessagesMakerTest.class);
-    suite.addTestSuite(BatchingStrategyTest.class);
-    suite.addTestSuite(JUnitMessageQueueTest.class);
-    suite.addTestSuite(GWTTestCaseNoClientTest.class);
-    suite.addTestSuite(BenchmarkNoClientTest.class);
-
     // client
     // Suppressed due to flakiness on Linux
     // suite.addTestSuite(BenchmarkTest.class);
     suite.addTestSuite(GWTTestCaseTest.class);
+
+    // Must run after a GWTTestCase so JUnitShell is initialized.
+    suite.addTestSuite(BatchingStrategyTest.class);
+
+    suite.addTestSuite(FakeMessagesMakerTest.class);
+    suite.addTestSuite(JUnitMessageQueueTest.class);
+    suite.addTestSuite(GWTTestCaseNoClientTest.class);
+    suite.addTestSuite(BenchmarkNoClientTest.class);
 
     // These two are intended only to be run manually. See class comments
     // suite.addTestSuite(ParallelRemoteTest.class);

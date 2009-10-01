@@ -108,7 +108,7 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
   protected void recordDependenciesImpl(TreeLogger logger, JProgram jprogram) {
 
     logger = logger.branch(TreeLogger.INFO,
-        "Creating Dependencies file for SOYC");
+        "Creating dependencies file for the compile report");
 
     ControlFlowAnalyzer dependencyAnalyzer = new ControlFlowAnalyzer(jprogram);
     dependencyAnalyzer.setDependencyRecorder(this);

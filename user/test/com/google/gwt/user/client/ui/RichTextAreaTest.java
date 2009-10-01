@@ -228,6 +228,7 @@ public class RichTextAreaTest extends GWTTestCase {
   public void testSetTextBeforeInit() {
     final RichTextArea richTextArea = new RichTextArea();
     richTextArea.setText("foo");
+    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     richTextArea.addInitializeHandler(new InitializeHandler() {
       public void onInitialize(InitializeEvent event) {
         assertEquals("foo", richTextArea.getText());
@@ -236,6 +237,5 @@ public class RichTextAreaTest extends GWTTestCase {
     });
     RootPanel.get().add(richTextArea);
     assertEquals("foo", richTextArea.getText());
-    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
   }
 }

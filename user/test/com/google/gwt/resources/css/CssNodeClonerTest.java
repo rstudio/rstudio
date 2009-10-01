@@ -13,16 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.resources.rg;
+package com.google.gwt.resources.css;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.resources.css.GenerateCssAst;
 import com.google.gwt.resources.css.ast.CssNode;
 import com.google.gwt.resources.css.ast.CssNodeCloner;
 import com.google.gwt.resources.css.ast.CssProperty;
 import com.google.gwt.resources.css.ast.CssSelector;
 import com.google.gwt.resources.css.ast.CssStylesheet;
+import com.google.gwt.resources.rg.CssTestCase;
 
 import java.net.URL;
 import java.util.List;

@@ -16,6 +16,8 @@
 <module>
   <!-- Pull in the necessary base support, including user.agent detection -->
   <inherits name="com.google.gwt.core.Core" />
+  <!-- Pull in StyleInjector for CssResource -->
+  <inherits name="com.google.gwt.dom.DOM" />
   <!-- Used by ExternalTextResource -->
   <inherits name="com.google.gwt.http.HTTP" />
 

@@ -135,6 +135,10 @@ public class CSSResourceTest extends GWTTestCase {
     @Strict
     HasDescendants descendants();
 
+    // Make sure an empty, no-op CssResource works
+    @Strict
+    CssResource empty();
+
     @Source("16x16.png")
     ImageResource spriteMethod();
   }
@@ -290,6 +294,17 @@ public class CSSResourceTest extends GWTTestCase {
     assertNotNull(defines.overrideIntClass());
     assertFalse("10px".equals(defines.overrideIntClass()));
     assertFalse("10".equals(defines.overrideIntClass()));
+  }
+
+  public void testEnsureInjected() {
+    Resources r = GWT.create(Resources.class);
+    assertTrue(r.empty().ensureInjected());
+
+    r = GWT.create(Resources.class);
+    assertFalse(r.empty().ensureInjected());
+
+    r = GWT.create(ChildResources.class);
+    assertTrue(r.empty().ensureInjected());
   }
 
   public void testMultipleBundles() {

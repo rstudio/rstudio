@@ -46,7 +46,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
   }
   
   // Repeated runAsync using a Timer
-  public void runAsync1(final int attempt) {
+  private void runAsync1(final int attempt) {
     log("runAsync1: attempt = " + attempt);
     GWT.runAsync(new MyRunAsyncCallback() {
       public void onFailure(Throwable caught) {

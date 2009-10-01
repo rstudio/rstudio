@@ -29,6 +29,7 @@ import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -46,6 +47,33 @@ public class SymbolMapsLinker extends AbstractLinker {
    * the symbol map's filename.
    */
   public static final String STRONG_NAME_SUFFIX = ".symbolMap";
+
+  public static String propertyMapToString(
+      Map<SelectionProperty, String> propertyMap) {
+    StringWriter writer = new StringWriter();
+    PrintWriter pw = new PrintWriter(writer);
+    printPropertyMap(pw, propertyMap);
+    pw.flush();
+    return writer.toString();
+  }
+
+  private static void printPropertyMap(PrintWriter pw,
+      Map<SelectionProperty, String> map) {
+    boolean needsComma = false;
+    for (Map.Entry<SelectionProperty, String> entry : map.entrySet()) {
+      if (needsComma) {
+        pw.print(" , ");
+      } else {
+        needsComma = true;
+      }
+
+      pw.print("'");
+      pw.print(entry.getKey().getName());
+      pw.print("' : '");
+      pw.print(entry.getValue());
+      pw.print("'");
+    }
+  }
 
   @Override
   public String getDescription() {
@@ -89,26 +117,11 @@ public class SymbolMapsLinker extends AbstractLinker {
    */
   protected void doWriteSymbolMap(TreeLogger logger, CompilationResult result,
       PrintWriter pw) throws UnableToCompleteException {
-    
     pw.println("# { " + result.getPermutationId() + " }");
-    
+
     for (SortedMap<SelectionProperty, String> map : result.getPropertyMap()) {
       pw.print("# { ");
-
-      boolean needsComma = false;
-      for (Map.Entry<SelectionProperty, String> entry : map.entrySet()) {
-        if (needsComma) {
-          pw.print(" , ");
-        } else {
-          needsComma = true;
-        }
-
-        pw.print("'");
-        pw.print(entry.getKey().getName());
-        pw.print("' : '");
-        pw.print(entry.getValue());
-        pw.print("'");
-      }
+      printPropertyMap(pw, map);
       pw.println(" }");
     }
 

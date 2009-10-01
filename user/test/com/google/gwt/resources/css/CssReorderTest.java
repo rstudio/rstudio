@@ -13,14 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.resources.rg;
+package com.google.gwt.resources.css;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.resources.css.ast.CssVisitor;
-import com.google.gwt.resources.rg.CssResourceGenerator.MergeIdenticalSelectorsVisitor;
-import com.google.gwt.resources.rg.CssResourceGenerator.MergeRulesByContentVisitor;
-import com.google.gwt.resources.rg.CssResourceGenerator.SplitRulesVisitor;
+import com.google.gwt.resources.rg.CssTestCase;
 
 /**
  * Tests CSS reordering visitors.

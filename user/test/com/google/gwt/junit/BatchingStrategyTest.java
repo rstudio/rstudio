@@ -26,9 +26,34 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Tests of {@link BatchingStrategy}.
+ * Tests of {@link BatchingStrategy}. This test must run after a
+ * {@link GWTTestCase} to ensure that JUnitShell is already initialized.
  */
 public class BatchingStrategyTest extends TestCase {
+
+  private static class TestClass0 {
+    public void testMethod0() {
+    }
+
+    public void testMethod1() {
+    }
+  }
+
+  private static class TestClass1 {
+    public void testMethod2() {
+    }
+
+    public void testMethod3() {
+    }
+
+    public void testMethod4() {
+    }
+  }
+
+  private static class TestClass2 {
+    public void testMethod5() {
+    }
+  }
 
   /**
    * The synthetic name of the module used for this test.
@@ -41,17 +66,17 @@ public class BatchingStrategyTest extends TestCase {
   private static TestModuleInfo fakeModuleInfo;
 
   private static final TestInfo TEST_INFO_0_0 = new TestInfo(
-      FAKE_MODULE_SYNTHETIC_NAME, "testClass0", "testMethod0");
+      FAKE_MODULE_SYNTHETIC_NAME, TestClass0.class.getName(), "testMethod0");
   private static final TestInfo TEST_INFO_0_1 = new TestInfo(
-      FAKE_MODULE_SYNTHETIC_NAME, "testClass0", "testMethod1");
+      FAKE_MODULE_SYNTHETIC_NAME, TestClass0.class.getName(), "testMethod1");
   private static final TestInfo TEST_INFO_1_2 = new TestInfo(
-      FAKE_MODULE_SYNTHETIC_NAME, "testClass1", "testMethod2");
+      FAKE_MODULE_SYNTHETIC_NAME, TestClass1.class.getName(), "testMethod2");
   private static final TestInfo TEST_INFO_1_3 = new TestInfo(
-      FAKE_MODULE_SYNTHETIC_NAME, "testClass1", "testMethod3");
+      FAKE_MODULE_SYNTHETIC_NAME, TestClass1.class.getName(), "testMethod3");
   private static final TestInfo TEST_INFO_1_4 = new TestInfo(
-      FAKE_MODULE_SYNTHETIC_NAME, "testClass1", "testMethod4");
+      FAKE_MODULE_SYNTHETIC_NAME, TestClass1.class.getName(), "testMethod4");
   private static final TestInfo TEST_INFO_2_5 = new TestInfo(
-      FAKE_MODULE_SYNTHETIC_NAME, "testClass2", "testMethod5");
+      FAKE_MODULE_SYNTHETIC_NAME, TestClass2.class.getName(), "testMethod5");
 
   public void testClassBatchingStrategy() {
     List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>();

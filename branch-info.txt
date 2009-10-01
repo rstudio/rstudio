@@ -15,3 +15,5 @@ svn merge https://google-web-toolkit.googlecode.com/svn/trunk \
   -r6200:6239 .
 svn merge https://google-web-toolkit.googlecode.com/svn/trunk \
   -r6239:6249 .
+svn merge https://google-web-toolkit.googlecode.com/svn/trunk \
+  --ignore-ancestry -r6249:6270 .

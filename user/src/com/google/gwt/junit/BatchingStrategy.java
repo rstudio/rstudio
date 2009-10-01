@@ -19,6 +19,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -37,6 +38,24 @@ public abstract class BatchingStrategy {
    * @return an ordered list of test blocks to run
    */
   public abstract List<TestInfo[]> getTestBlocks(String syntheticModuleName);
+
+  /**
+   * Get the set of tests for this module, minus tests that should not be
+   * executed.
+   * 
+   * @return the set of tests to execute
+   */
+  protected final Set<TestInfo> getTestsForModule(String syntheticModuleName) {
+    Set<TestInfo> toExecute = GWTTestCase.getTestsForModule(syntheticModuleName).getTests();
+    Set<TestInfo> toRemove = new HashSet<TestInfo>();
+    for (TestInfo info : toExecute) {
+      if (JUnitShell.mustNotExecuteTest(info)) {
+        toRemove.add(info);
+      }
+    }
+    toExecute.removeAll(toRemove);
+    return toExecute;
+  }
 }
 
 /**
@@ -46,8 +65,7 @@ public abstract class BatchingStrategy {
 class NoBatchingStrategy extends BatchingStrategy {
   @Override
   public List<TestInfo[]> getTestBlocks(String syntheticModuleName) {
-    Set<TestInfo> allTestsInModule = GWTTestCase.getTestsForModule(
-        syntheticModuleName).getTests();
+    Set<TestInfo> allTestsInModule = getTestsForModule(syntheticModuleName);
     List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>();
     for (TestInfo testInfo : allTestsInModule) {
       testBlocks.add(new TestInfo[] {testInfo});
@@ -62,8 +80,7 @@ class NoBatchingStrategy extends BatchingStrategy {
 class ClassBatchingStrategy extends BatchingStrategy {
   @Override
   public List<TestInfo[]> getTestBlocks(String syntheticModuleName) {
-    Set<TestInfo> allTestsInModule = GWTTestCase.getTestsForModule(
-        syntheticModuleName).getTests();
+    Set<TestInfo> allTestsInModule = getTestsForModule(syntheticModuleName);
     List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>();
     String lastTestClass = null;
     List<TestInfo> lastTestBlock = null;
@@ -96,11 +113,12 @@ class ClassBatchingStrategy extends BatchingStrategy {
 class ModuleBatchingStrategy extends BatchingStrategy {
   @Override
   public List<TestInfo[]> getTestBlocks(String syntheticModuleName) {
-    Set<TestInfo> allTestsInModule = GWTTestCase.getTestsForModule(
-        syntheticModuleName).getTests();
-    TestInfo[] testBlock = allTestsInModule.toArray(new TestInfo[allTestsInModule.size()]);
+    Set<TestInfo> allTestsInModule = getTestsForModule(syntheticModuleName);
     List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>();
-    testBlocks.add(testBlock);
+    if (allTestsInModule.size() > 0) {
+      TestInfo[] testBlock = allTestsInModule.toArray(new TestInfo[allTestsInModule.size()]);
+      testBlocks.add(testBlock);
+    }
     return testBlocks;
   }
 }

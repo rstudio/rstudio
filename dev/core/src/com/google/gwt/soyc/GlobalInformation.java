@@ -25,10 +25,11 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * Information global to the entire SOYC report generator.
+ * SOYC information about a compiled module.
  */
 public class GlobalInformation {
   private static final SizeBreakdown[] EMPTY_SIZE_BREAKDOWN = new SizeBreakdown[0];
+  public Map<String, Map<String, String>> dependencies = null;
   private HashMap<String, String> classToPackage = new HashMap<String, String>();
   private HashMap<String, HashSet<String>> classToWhatItDependsOn = new HashMap<String, HashSet<String>>();
   private Map<Integer, SizeBreakdown> exclusiveCodeBreakdowns = new HashMap<Integer, SizeBreakdown>();
@@ -38,10 +39,15 @@ public class GlobalInformation {
       "Leftovers code, code not in any other category", "leftovers");
   private int numSplitPoints = 0;
   private Map<String, TreeSet<String>> packageToClasses = new TreeMap<String, TreeSet<String>>();
+  private final String permutationId;
   private ArrayList<Integer> splitPointInitialLoadSequence = new ArrayList<Integer>();
   private HashMap<Integer, String> splitPointToLocation = new HashMap<Integer, String>();
   private SizeBreakdown totalCodeBreakdown = new SizeBreakdown("Total program",
       "total");
+
+  public GlobalInformation(String permutationId) {
+    this.permutationId = permutationId;
+  }
 
   public SizeBreakdown[] allSizeBreakdowns() {
     List<SizeBreakdown> breakdowns = new ArrayList<SizeBreakdown>();
@@ -126,6 +132,10 @@ public class GlobalInformation {
    */
   public final Map<String, TreeSet<String>> getPackageToClasses() {
     return packageToClasses;
+  }
+
+  public String getPermutationId() {
+    return permutationId;
   }
 
   /**
