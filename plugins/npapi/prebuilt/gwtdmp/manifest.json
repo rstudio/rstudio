@@ -9,6 +9,13 @@
     "64": "gwt64.png",
     "128": "gwt128.png"
   },
+  "background_page": "background.html",
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*", "file:///*"],
+      "js": ["record_tab_id.js"]
+    }
+  ],
   "plugins": [
     { "path": "WINNT_x86-msvc/npOOPHM.dll", "public": true }
   ]

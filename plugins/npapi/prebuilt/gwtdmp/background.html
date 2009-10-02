@@ -1,0 +1,10 @@
+<html>
+<head>
+<script>
+  chrome.extension.onConnect.addListener(function(port) {
+    // Tell my caller his tabId
+    port.postMessage( { name:"tabId", tabId:port.tab.id } );
+  });
+</script>
+</head>
+</html>
