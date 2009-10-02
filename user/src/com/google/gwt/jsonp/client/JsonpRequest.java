@@ -225,7 +225,10 @@ public class JsonpRequest<T> {
       public void execute() {
         unregisterCallbacks(CALLBACKS);
         Node script = Document.get().getElementById(callbackId);
-        getHeadElement().removeChild(script);
+        if (script != null) {
+          // The script may have already been deleted
+          getHeadElement().removeChild(script);
+        }
       }
     });
   }
