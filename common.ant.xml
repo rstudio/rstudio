@@ -192,7 +192,7 @@
       <echo message="Writing test results to @{test.reports} for @{test.cases}" />
       <mkdir dir="@{test.reports}" />
 
-      <antcall target="-create.emma.coverage">
+      <antcall target="-create.emma.coverage.if.enabled">
     	  <param name="test.emma.coverage" value="@{test.emma.coverage}"/>
       </antcall>
       <condition property="emma.lib" value="${emma.dir}/emma-2.0.5312-patched.jar" else="">
@@ -357,7 +357,7 @@
 
   <taskdef resource="emma_ant.properties" classpathref="emma.taskdef.lib" />
 
-  <target name="compile.emma" description="Instruments emma classes" unless="emma.compiled">
+  <target name="compile.emma.if.enabled" description="Instruments emma classes" unless="emma.compiled">
     <delete dir="${javac.emma.out}" />
     <property name="emma.compiled" value="true" />
     <antcall target="-compile.emma.if.enabled" />
@@ -376,7 +376,7 @@
     </emma>
   </target>
 
-  <target name="-create.emma.coverage" description="Create the emma coverage directory" if="emma.enabled">
+  <target name="-create.emma.coverage.if.enabled" description="Create the emma coverage directory" if="emma.enabled">
     <delete dir="${test.emma.coverage}" />
     <mkdir dir="${test.emma.coverage}" />
   </target>

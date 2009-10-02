@@ -22,7 +22,7 @@
     </gwt.javac>
   </target>
 
-  <target name="compile.tests" depends="compile.emma" description="Compiles the test code for this project">
+  <target name="compile.tests" depends="compile.emma.if.enabled" description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" destdir="${javac.junit.out}">
       <classpath>

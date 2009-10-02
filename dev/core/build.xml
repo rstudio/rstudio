@@ -7,7 +7,7 @@
   <property name="gwt.junit.testcase.dev.core.includes" value="**/com/google/**/*Test.class" />
   <property name="gwt.junit.testcase.dev.core.excludes" value="" />
 
-  <target name="compile.tests" depends="build, compile.emma" description="Compiles the test code for this project">
+  <target name="compile.tests" depends="build, compile.emma.if.enabled" description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" destdir="${javac.junit.out}">
       <classpath>

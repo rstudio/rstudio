@@ -66,7 +66,7 @@
     <gwt.ant dir="../dev/core" target="compile.tests" />
   </target>
 
-  <target name="compile.tests" depends="compile.dev.core.tests, compile.emma" description="Compiles the test code for this project">
+  <target name="compile.tests" depends="compile.dev.core.tests, compile.emma.if.enabled" description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**" destdir="${javac.junit.out}">
       <classpath>
