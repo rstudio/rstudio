@@ -523,7 +523,10 @@ public class ElementTest extends GWTTestCase {
 
   /**
    * innerText.
+   * 
+   * TODO(amitmanjhi): Remove DoNotRunWith after updating to HtmlUnit-2.7. 
    */
+  @DoNotRunWith(Platform.Htmlunit)
   public void testSetInnerText() {
     Document doc = Document.get();
 

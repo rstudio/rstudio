@@ -292,7 +292,10 @@ public class DOMTest extends GWTTestCase {
   /**
    * Tests that {@link DOM#setInnerText(Element, String)} works consistently
    * across browsers.
+   * 
+   * TODO(amitmanjhi): Remove DoNotRunWith after updating to HtmlUnit-2.7. 
    */
+  @DoNotRunWith(Platform.Htmlunit)
   public void testSetInnerText() {
     Element tableElem = DOM.createTable();
 
