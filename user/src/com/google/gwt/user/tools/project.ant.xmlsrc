@@ -55,21 +55,6 @@
       <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
       <arg value="@moduleName"/>
     </java>
-  </target>
-
-  <target name="oophm" depends="javac" description="Run OOPHM hosted mode">
-    <java failonerror="true" fork="true" classname="@shellClass">
-      <classpath>
-        <pathelement location="${gwt.sdk}/gwt-dev-oophm.jar"/>
-        <pathelement location="src"/>
-        <path refid="project.class.path"/>
-      </classpath>
-      <jvmarg value="-Xmx256M"/>
-      <arg value="-startupUrl"/>
-      <arg value="@startupUrl"/>
-      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
-      <arg value="@moduleName"/>
-    </java>
   </target>@antEclipseRule
 
   <target name="build" depends="gwtc" description="Build this project" />
