@@ -79,17 +79,17 @@
       <outofdate>
         <sourcefiles />
         <targetfiles>
-          <pathelement location="${samples.scripts}/@{platform}/${sample.upper}/build.xml" />
+          <pathelement location="${samples.scripts}/${sample.upper}/build.xml" />
         </targetfiles>
         <sequential>
-          <mkdir dir="${samples.scripts}/@{platform}/${sample.upper}" />
+          <mkdir dir="${samples.scripts}/${sample.upper}" />
           <java classname="com.google.gwt.user.tools.WebAppCreator" classpath="${gwt.user.jar}:${gwt.dev.jar}" failonerror="true">
             <!-- Relative path is important! Paths will be relative in final distro -->
-            <sysproperty key="gwt.devjar" value="../../gwt-dev-@{platform}.jar" />
+            <sysproperty key="gwt.devjar" value="../../gwt-dev.jar" />
             <arg value="-XnoEclipse" />
             <arg value="-overwrite" />
             <arg value="-out" />
-            <arg file="${samples.scripts}/@{platform}/${sample.upper}" />
+            <arg file="${samples.scripts}/${sample.upper}" />
             <arg value="com.google.gwt.sample.${sample.lower}.${sample.upper}" />
           </java>
         </sequential>
