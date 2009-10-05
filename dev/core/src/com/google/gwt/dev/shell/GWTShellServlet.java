@@ -382,7 +382,7 @@ public class GWTShellServlet extends HttpServlet {
     writer.println("<iframe src=\"javascript:''\" id='__gwt_historyFrame' "
         + "style='position:absolute;width:0;height:0;border:0'></iframe>");
     writer.println("<noscript>");
-    writer.println("  <div style=\"width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; border: 1px solid red; padding: 4px; font-family: sans-serif\">");
+    writer.println("  <div style=\"width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif\">");
     writer.println("    Your web browser must have JavaScript enabled");
     writer.println("    in order for this application to display correctly.");
     writer.println("  </div>");
