@@ -436,6 +436,7 @@ public class AnnotationsResource extends AbstractResource {
           + clazz.getQualifiedSourceName() + " doesn't match " + locale);
       return;
     }
+    matchLocale = defLocale;
     for (JMethod method : clazz.getMethods()) {
       String meaningString = null;
       Meaning meaning = method.getAnnotation(Meaning.class);

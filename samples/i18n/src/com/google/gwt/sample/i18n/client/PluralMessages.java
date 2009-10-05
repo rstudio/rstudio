@@ -22,7 +22,7 @@ import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
  * Internationalized messages used by {@link MessagesExampleController}.
  * Used to demonstrate plural forms support.
  */
-@DefaultLocale("en_US")
+@DefaultLocale("en")
 public interface PluralMessages extends Messages {
   @DefaultMessage("You have {0} trees.")
   @PluralText({"one", "You have one tree."})

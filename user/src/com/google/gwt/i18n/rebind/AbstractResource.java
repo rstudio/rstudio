@@ -51,10 +51,10 @@ public abstract class AbstractResource {
    * Exception indicating a required resource was not found.
    */
   public static class MissingResourceException extends RuntimeException {
+    private String during;
     private String key;
     private String method;
     private List<AbstractResource> searchedResources;
-    private String during;
 
     public MissingResourceException(String key,
         List<AbstractResource> searchedResources) {
@@ -96,9 +96,9 @@ public abstract class AbstractResource {
 
     private List<AbstractResource> list = new ArrayList<AbstractResource>();
 
-    private Set<AbstractResource> set = new HashSet<AbstractResource>();
-    
     private Map<String, PluralForm[]> pluralForms = new HashMap<String, PluralForm[]>();
+    
+    private Set<AbstractResource> set = new HashSet<AbstractResource>();
 
     @Override
     public boolean add(AbstractResource element) {
@@ -338,7 +338,7 @@ public abstract class AbstractResource {
     return key;
   }
 
-  private final GwtLocale matchLocale;
+  protected GwtLocale matchLocale;
 
   private Set<String> keySet;
 
@@ -380,6 +380,10 @@ public abstract class AbstractResource {
   }
 
   /**
+   * Get a key.
+   * 
+   * @param key key to lookup
+   * @return the string for the given key or null if not found
    * @see java.util.ResourceBundle#getString(java.lang.String)
    */
   public final String getString(String key) {
