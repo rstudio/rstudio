@@ -34,6 +34,10 @@
     <pathelement location="${gwt.build}/out/dev/core/bin-test" />
     <pathelement location="test-super" />
     <pathelement location="test_i18n_${gwt.i18n.test.InnerClassChar}" />
+       <pathelement location="${gwt.tools.lib}/cglib/cglib-2.2.jar"/>
+       <pathelement location="${gwt.tools.lib}/easymock/easymock.jar"/>
+       <pathelement location="${gwt.tools.lib}/easymock/easymockclassextension.jar"/>
+       <pathelement location="${gwt.tools.lib}/objectweb/asm-3.1.jar"/>
   </path>
 
   <!-- Platform shouldn't matter here, just picking one -->
@@ -75,6 +79,10 @@
         <pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" />
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
+       <pathelement location="${gwt.tools.lib}/cglib/cglib-2.2.jar"/>
+       <pathelement location="${gwt.tools.lib}/easymock/easymock.jar"/>
+       <pathelement location="${gwt.tools.lib}/easymock/easymockclassextension.jar"/>
+       <pathelement location="${gwt.tools.lib}/objectweb/asm-3.1.jar"/>
         <pathelement location="${gwt.dev.jar}" />
       </classpath>
     </gwt.javac>

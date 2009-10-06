@@ -26,7 +26,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 public class MortalLogger {
   private final TreeLogger logger;
 
-  MortalLogger(TreeLogger logger) {
+  public MortalLogger(TreeLogger logger) {
     this.logger = logger;
   }
 
