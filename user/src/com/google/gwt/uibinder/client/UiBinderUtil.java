@@ -26,12 +26,49 @@ import com.google.gwt.user.client.ui.UIObject;
  * so please don't use them for non-UiBinder code.
  */
 public class UiBinderUtil {
+  /**
+   * Temporary attachment record that keeps track of where an element was
+   * before attachment.  Use the detach method to put things back.
+   *
+   */
+  public static class TempAttachment {
+    private final Element element;
+    private final Element origParent;
+    private final Element origSibling;    
+    
+    private TempAttachment(Element origParent, Element origSibling, 
+        Element element) {
+      this.origParent = origParent;
+      this.origSibling = origSibling;
+      this.element = element;
+    }
+    
+    /**
+     * Restore to previous DOM state before attachment.
+     */
+    public void detach() {
+      // Put the panel's element back where it was.
+      if (origParent != null) {
+        origParent.insertBefore(element, origSibling);
+      } else {
+        orphan(element);
+      }
+    }
+  }  
+  
   private static Element hiddenDiv;
-
-  public static Element attachToDomAndGetChild(Element element, String id) {
+  
+  /**
+   * Attaches the element to the dom temporarily.  Keeps track of where it is 
+   * attached so that things can be put back latter.
+   * 
+   * @return attachment record which can be used for reverting back to previous
+   *         DOM state
+   */
+  public static TempAttachment attachToDom(Element element) {
     // TODO(rjrjr) This is copied from HTMLPanel. Reconcile
     ensureHiddenDiv();
-
+    
     // Hang on to the panel's original parent and sibling elements so that it
     // can be replaced.
     Element origParent = element.getParentElement();
@@ -39,19 +76,10 @@ public class UiBinderUtil {
 
     // Attach the panel's element to the hidden div.
     hiddenDiv.appendChild(element);
-
-    // Now that we're attached to the DOM, we can use getElementById.
-    Element child = Document.get().getElementById(id);
-
-    // Put the panel's element back where it was.
-    if (origParent != null) {
-      origParent.insertBefore(element, origSibling);
-    } else {
-      orphan(element);
-    }
-
-    return child;
+    
+    return new TempAttachment(origParent, origSibling, element);
   }
+ 
 
   public static Element fromHtml(String html) {
     ensureHiddenDiv();

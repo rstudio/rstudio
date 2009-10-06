@@ -241,6 +241,22 @@ public class UiBinderWriter {
 
   private String rendered;
 
+  /**
+   * Stack of element variable names that have been attached.
+   */
+  private final LinkedList<String> attachSectionElements = new LinkedList<String>();
+  /**
+   * Maps from field element name to the temporary attach record variable name.
+   */
+  private final Map<String, String> attachedVars = new HashMap<String, String>();
+  private int nextAttachVar = 0;
+
+  /**
+   * Stack of statements to be executed after we detach the current attach
+   * section.
+   */
+  private final LinkedList<List<String>> detachStatementsStack = new LinkedList<List<String>>();
+
   UiBinderWriter(JClassType baseClass, String implClassName,
       String templatePath, TypeOracle oracle, MortalLogger logger)
       throws UnableToCompleteException {
@@ -266,6 +282,18 @@ public class UiBinderWriter {
   }
 
   /**
+   * Statements to be excuted right after the current attached element is
+   * detached. This is useful for doing things that might be expensive while the
+   * element is attached to the DOM.
+   *
+   * @param format
+   * @param args
+   */
+  public void addDetachStatement(String format, Object... args) {
+    detachStatementsStack.getFirst().add(String.format(format, args));
+  }
+
+  /**
    * Add a statement to be run after everything has been instantiated, in the
    * style of {@link String#format}
    */
@@ -279,6 +307,17 @@ public class UiBinderWriter {
    */
   public void addStatement(String format, Object... args) {
     statements.add(String.format(format, args));
+  }
+
+  /**
+   * Begin a section where a new attachable element is being parsed. Note that
+   * attachment is only done when actually needed.
+   *
+   * @param element to be attached for this section
+   */
+  public void beginAttachedSection(String element) {
+    attachSectionElements.addFirst(element);
+    detachStatementsStack.addFirst(new ArrayList<String>());
   }
 
   /**
@@ -298,11 +337,12 @@ public class UiBinderWriter {
    */
   public String declareDomField(String fieldName, String parentElementExpression)
       throws UnableToCompleteException {
+    ensureAttached(parentElementExpression);
     String name = declareDomIdHolder();
     setFieldInitializer(fieldName, "null");
     addInitStatement(
-        "%s = UiBinderUtil.attachToDomAndGetChild(%s, %s).cast();", fieldName,
-        parentElementExpression, name);
+        "%s = com.google.gwt.dom.client.Document.get().getElementById(%s).cast();",
+        fieldName, name);
     addInitStatement("%s.removeAttribute(\"id\");", fieldName);
     return tokenForExpression(name);
   }
@@ -388,6 +428,48 @@ public class UiBinderWriter {
   public void die(String message, Object... params)
       throws UnableToCompleteException {
     logger.die(message, params);
+  }
+
+  /**
+   * End the current attachable section. This will detach the element if it was
+   * ever attached and execute any detach statements.
+   */
+  public void endAttachedSection() {
+    String elementVar = attachSectionElements.removeFirst();
+    List<String> detachStatements = detachStatementsStack.removeFirst();
+    if (attachedVars.containsKey(elementVar)) {
+      String attachedVar = attachedVars.remove(elementVar);
+      addInitStatement("%s.detach();", attachedVar);
+      for (String statement : detachStatements) {
+        addInitStatement(statement);
+      }
+    }
+  }
+
+  /**
+   * Ensure that the specified element is attached to the DOM.
+   *
+   * @param element variable name of element to be attached
+   */
+  public void ensureAttached(String element) {
+    String attachSectionElement = attachSectionElements.getFirst();
+    if (!attachedVars.containsKey(attachSectionElement)) {
+      String attachedVar = "attachRecord" + nextAttachVar;
+      addInitStatement(
+          "UiBinderUtil.TempAttachment %s = UiBinderUtil.attachToDom(%s);",
+          attachedVar, attachSectionElement);
+      attachedVars.put(attachSectionElement, attachedVar);
+      nextAttachVar++;
+    }
+  }
+
+  /**
+   * Ensure that the specified field is attached to the DOM.
+   *
+   * @param field variable name of the field to be attached
+   */
+  public void ensureFieldAttached(String field) {
+    ensureAttached(field + ".getElement()");
   }
 
   /**
@@ -738,6 +820,23 @@ public class UiBinderWriter {
   }
 
   /**
+   * Ensures that all of the internal data structures are cleaned up correctly
+   * at the end of parsing the document.
+   *
+   * @throws UnableToCompleteException
+   */
+  private void ensureAttachmentCleanedUp() throws UnableToCompleteException {
+    if (!attachSectionElements.isEmpty()) {
+      throw new IllegalStateException("Attachments not cleaned up: "
+          + attachSectionElements);
+    }
+    if (!detachStatementsStack.isEmpty()) {
+      throw new IllegalStateException("Detach not cleaned up: "
+          + detachStatementsStack);
+    }
+  }
+
+  /**
    * Given a DOM tag name, return the corresponding
    * {@link com.google.gwt.dom.client.Element} subclass.
    */
@@ -898,9 +997,9 @@ public class UiBinderWriter {
     StringWriter stringWriter = new StringWriter();
     IndentedWriter niceWriter = new IndentedWriter(
         new PrintWriter(stringWriter));
-
     writeBinder(niceWriter, rootField);
 
+    ensureAttachmentCleanedUp();
     return stringWriter.toString();
   }
 
@@ -986,7 +1085,6 @@ public class UiBinderWriter {
     addWidgetParser("RadioButton");
     addWidgetParser("CellPanel");
     addWidgetParser("CustomButton");
-
     addWidgetParser("DockLayoutPanel");
     addWidgetParser("StackLayoutPanel");
 

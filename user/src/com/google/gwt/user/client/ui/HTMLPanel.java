@@ -108,6 +108,20 @@ public class HTMLPanel extends ComplexPanel {
   }
 
   /**
+   * Adds a child widget to the panel, replacing the HTML element.
+   * 
+   * @param widget the widget to be added
+   * @param toReplace the element to be replaced by the widget
+   */
+  public void addAndReplaceElement(Widget widget, Element toReplace) {
+    // Logic pulled from super.add(), replacing the element rather than adding.
+    widget.removeFromParent();
+    getChildren().add(widget);
+    toReplace.getParentNode().replaceChild(widget.getElement(), toReplace);
+    adopt(widget);
+  }
+  
+  /**
    * Adds a child widget to the panel, replacing the HTML element specified by a
    * given id.
    * 
@@ -120,14 +134,10 @@ public class HTMLPanel extends ComplexPanel {
     if (toReplace == null) {
       throw new NoSuchElementException(id);
     }
-
-    // Logic pulled from super.add(), replacing the element rather than adding.
-    widget.removeFromParent();
-    getChildren().add(widget);
-    toReplace.getParentNode().replaceChild(widget.getElement(), toReplace);
-    adopt(widget);
+    
+    addAndReplaceElement(widget, toReplace);
   }
-
+  
   /**
    * Finds an {@link Element element} within this panel by its id.
    * 

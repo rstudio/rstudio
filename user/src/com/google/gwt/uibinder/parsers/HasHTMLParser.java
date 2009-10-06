@@ -30,8 +30,9 @@ public class HasHTMLParser implements ElementParser {
 
     HtmlInterpreter interpreter =
       HtmlInterpreter.newInterpreterForUiObject(writer, fieldName);
+    writer.beginAttachedSection(fieldName + ".getElement()");
     String html = elem.consumeInnerHtml(interpreter);
-
+    writer.endAttachedSection();
     // TODO(jgw): throw an error if there's a conflicting 'html' attribute.
     if (html.trim().length() > 0) {
       writer.genStringPropertySet(fieldName, "HTML", html);

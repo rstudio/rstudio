@@ -120,6 +120,27 @@ public class HTMLPanelTest extends GWTTestCase {
   }
 
   /**
+   * Ensures that addAndReplaceChild() puts the widget in exactly the right place in the DOM.
+   */
+  public void testAddAndReplaceElementForElement() {
+    HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
+
+    RootPanel.get().add(hp);
+    com.google.gwt.user.client.Element placeholder = hp.getElementById("placeholder");
+
+    Button button = new Button("my button");
+    hp.addAndReplaceElement(button, placeholder);
+
+    assertEquals("parent", button.getElement().getParentElement().getId());
+
+    Node prev = button.getElement().getPreviousSibling();
+    assertEquals("foo", prev.getNodeValue());
+
+    Node next = button.getElement().getNextSibling();
+    assertEquals("bar", next.getNodeValue());
+  }
+
+  /**
    * Tests table root tag.
    */
   public void testCustomRootTagAsTable() {

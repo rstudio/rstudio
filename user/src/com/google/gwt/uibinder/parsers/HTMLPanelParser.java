@@ -46,8 +46,10 @@ public class HTMLPanelParser implements ElementParser {
      */
     HtmlInterpreter htmlInterpreter = makeHtmlInterpreter(fieldName, writer);
 
+    writer.beginAttachedSection(fieldName + ".getElement()");
     String html = elem.consumeInnerHtml(InterpreterPipe.newPipe(widgetInterpreter,
         htmlInterpreter));
+    writer.endAttachedSection();
 
     /*
      * HTMLPanel has no no-arg ctor, so we have to generate our own, using the

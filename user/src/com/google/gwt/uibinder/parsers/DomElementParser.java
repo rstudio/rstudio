@@ -23,22 +23,24 @@ import com.google.gwt.uibinder.rebind.XMLElement;
 /**
  * Parses a dom element and all of its children. Note that this parser does not
  * make recursive calls to parse child elements, unlike what goes on with widget
- * parsers. Instead, we consume the inner html of the given element into
- * a single string literal, used to instantiate the dom tree at run time.
+ * parsers. Instead, we consume the inner html of the given element into a
+ * single string literal, used to instantiate the dom tree at run time.
  */
 public class DomElementParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
-    HtmlInterpreter interpreter =
-        new HtmlInterpreter(writer, fieldName, new HtmlMessageInterpreter(writer,
-            fieldName));
+    HtmlInterpreter interpreter = new HtmlInterpreter(writer, fieldName,
+        new HtmlMessageInterpreter(writer, fieldName));
 
     interpreter.interpretElement(elem);
 
+    writer.beginAttachedSection(fieldName);
     String html = elem.consumeOpeningTag() + elem.consumeInnerHtml(interpreter)
-      + elem.getClosingTag();
+        + elem.getClosingTag();
+    writer.endAttachedSection();
     writer.setFieldInitializer(fieldName, String.format(
-        "(%1$s) UiBinderUtil.fromHtml(\"%2$s\")", type.getQualifiedSourceName(), html));
+        "(%1$s) UiBinderUtil.fromHtml(\"%2$s\")",
+        type.getQualifiedSourceName(), html));
   }
 }
