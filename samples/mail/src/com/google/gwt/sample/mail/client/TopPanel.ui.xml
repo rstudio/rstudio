@@ -1,3 +1,6 @@
+<!DOCTYPE ui:UiBinder 
+  SYSTEM "http://google-web-toolkit.googlecode.com/files/xhtml.ent"
+>
 <ui:UiBinder
   xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
@@ -31,6 +34,7 @@
 
       <div class='{style.linksDiv}'>
         <g:Anchor href='javascript:;' ui:field='signOutLink'>Sign Out</g:Anchor>
+        &nbsp;
         <g:Anchor href='javascript:;' ui:field='aboutLink'>About</g:Anchor>
       </div>
     </div>

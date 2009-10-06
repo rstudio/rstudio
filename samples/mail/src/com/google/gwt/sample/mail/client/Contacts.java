@@ -23,9 +23,9 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.ComplexPanel;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -68,7 +68,7 @@ public class Contacts extends Composite {
     }
   }
 
-  interface Binder extends UiBinder<VerticalPanel, Contacts> { }
+  interface Binder extends UiBinder<Widget, Contacts> { }
   private static final Binder binder = GWT.create(Binder.class);
 
   private Contact[] contacts = new Contact[] {
@@ -81,10 +81,10 @@ public class Contacts extends Composite {
       new Contact("Alan Turing", "alan@example.com"),
       new Contact("John von Neumann", "john@example.com")};
 
-  private VerticalPanel panel;
+  @UiField ComplexPanel panel;
 
   public Contacts() {
-    initWidget(panel = binder.createAndBindUi(this));
+    initWidget(binder.createAndBindUi(this));
 
     // Add all the contacts to the list.
     for (int i = 0; i < contacts.length; ++i) {

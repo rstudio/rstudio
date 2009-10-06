@@ -54,8 +54,12 @@ class LayoutImpl {
     style.setPosition(Position.ABSOLUTE);
     style.setZIndex(-32767);
     style.setLeft(-10000, PX);
-    style.setWidth(1, widthUnit);
-    style.setHeight(1, heightUnit);
+
+    // Note that we are making the ruler element 10x10, because some browsers
+    // generate non-integral ratios (e.g., 1em == 13.3px), so we need a little
+    // extra precision.
+    style.setWidth(10, widthUnit);
+    style.setHeight(10, heightUnit);
     return ruler;
   }
 
@@ -100,19 +104,19 @@ class LayoutImpl {
       case PCT:
         return (vertical ? parent.getClientHeight() : parent.getClientWidth()) / 100.0;
       case EM:
-        return relativeRuler.getOffsetWidth();
+        return relativeRuler.getOffsetWidth() / 10.0;
       case EX:
-        return relativeRuler.getOffsetHeight();
+        return relativeRuler.getOffsetHeight() / 10.0;
       case CM:
-        return fixedRuler.getOffsetWidth();
-      case MM:
         return fixedRuler.getOffsetWidth() / 10.0;
+      case MM:
+        return fixedRuler.getOffsetWidth() / 100.0;
       case IN:
-        return fixedRuler.getOffsetWidth() / 2.54;
+        return fixedRuler.getOffsetWidth() / 25.4;
       case PT:
-        return fixedRuler.getOffsetWidth() / 28.4;
+        return fixedRuler.getOffsetWidth() / 284;
       case PC:
-        return fixedRuler.getOffsetWidth() / 2.36;
+        return fixedRuler.getOffsetWidth() / 23.6;
       default:
       case PX:
         return 1;

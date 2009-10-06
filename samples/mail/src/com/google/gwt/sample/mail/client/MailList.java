@@ -56,7 +56,6 @@ public class MailList extends LayoutComposite implements ClickHandler {
     // Setup the table.
     table.setCellSpacing(0);
     table.setCellPadding(0);
-    table.setWidth("100%");
 
     // Hook up events.
     table.addClickHandler(this);

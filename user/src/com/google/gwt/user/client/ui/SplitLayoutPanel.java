@@ -99,6 +99,11 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       setElement(Document.get().createDivElement());
       sinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONMOUSEMOVE
           | Event.ONDBLCLICK);
+
+      // TODO: This is a temporary hack to work around the fact that IE6/7
+      // don't send mouse events for transparent elements. Whatever solution
+      // we come up with for styling splitters must take this into account.
+      getElement().getStyle().setBackgroundColor("white");
     }
 
     @Override
@@ -126,7 +131,6 @@ public class SplitLayoutPanel extends DockLayoutPanel {
             } else {
               size = getEventPosition(event) - getTargetPosition() - offset;
             }
-
             setAssociatedWidgetSize(size);
             event.preventDefault();
           }
