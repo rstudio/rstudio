@@ -1,0 +1,34 @@
+The purpose of this temporary directory is to hold the HtmlUnit jars while
+we upgrade to HtmlUnit-2.7 and beyond, and revisit all the Gwt tests that are
+currently ignored on HtmlUnit.
+
+The htmlunit jar names are to be removed of all identifying information because
+we don't want multiple copies. 
+
+For updating HtmlUnit, here is the algorithm to use (vetted by HtmlUnit
+committers): 
+
+* Check the main Cl page (http://build.canoo.com/htmlunit/). Find the last
+build that was successful. Find the svn revision (click on the "XML Log File"
+tab, and scroll down to the last "revision" XML tag. search for <revision>).
+Download the htmlunit.jar, htmlunit-sources.jar and htmlunit-core-js.jar (and
+other dependencies if they have changed) from the artifacts page. Note that
+SNAPSHOT artifacts only get generated if all unit tests pass. So the artifacts
+correspond to the last successful build. 
+
+* Download the htmlunit-core-js-sources.jar from 
+http://htmlunit.sourceforge.net/m2-repo-snapshots/net/sourceforge/htmlunit/htmlunit-core-js/2.7-SNAPSHOT/  
+(verify that the core-js.jar are the same as in the previous step). 
+
+
+Files in this dir 
+ htmlunit.jar
+ htmlunit-sources.jar
+ htmlunit-core-js.jar
+ htmlunit-core-js-sources.jar
+
+HtmlUnit's dependencies (not already in GWT_TOOLS/lib):
+ nekohtml-1.9.13.jar
+
+svn revision: 5053
+ 

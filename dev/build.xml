@@ -7,6 +7,7 @@
   <property name="alldeps.jar" location="${project.build}/alldeps.jar" />
   <property name="gwt.junit.testcase.dev.core.includes" value="**/com/google/**/*Test.class" />
   <property name="gwt.junit.testcase.dev.core.excludes" value="" />
+  <property name="htmlunit.libs.temp" location="${gwt.root}/tools/do-not-commit-to-trunk" />
 
   <target name="clean" description="Cleans this project's intermediate and output files">
     <delete dir="${project.build}" failonerror="false" />
@@ -74,9 +75,6 @@
           <include name="apache/commons/commons-io-1.4.jar" />
           <include name="apache/commons/commons-lang-2.4.jar" />
           <include name="cssparser/cssparser-0.9.5.jar" />
-          <include name="htmlunit/htmlunit-2.5.jar" />
-          <include name="htmlunit/htmlunit-core-js-2.5.jar" />
-          <include name="nekohtml/nekohtml-1.9.12.jar" />
           <include name="xalan/xalan-2.7.1.jar" />
           <include name="xerces/xerces-2_9_1/serializer.jar" />
           <include name="xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar" />
@@ -86,6 +84,11 @@
           <include name="sun/swingworker/swing-worker-1.1.jar" />
         </fileset>
         <fileset file="build.xml"/>
+        <fileset dir="${htmlunit.libs.temp}">
+          <include name="htmlunit.jar" />
+          <include name="htmlunit-core-js.jar" />
+          <include name="nekohtml-1.9.13.jar" />
+        </fileset>
       </sourcefiles>
       <targetfiles>
         <fileset file="${alldeps.jar}"/>
@@ -129,9 +132,9 @@
           <zipfileset src="${gwt.tools.lib}/apache/commons/commons-io-1.4.jar" />
           <zipfileset src="${gwt.tools.lib}/apache/commons/commons-lang-2.4.jar" />
           <zipfileset src="${gwt.tools.lib}/cssparser/cssparser-0.9.5.jar" />
-          <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-2.5.jar" />
-          <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-core-js-2.5.jar" />
-          <zipfileset src="${gwt.tools.lib}/nekohtml/nekohtml-1.9.12.jar" />
+          <zipfileset src="${htmlunit.libs.temp}/htmlunit.jar" />
+          <zipfileset src="${htmlunit.libs.temp}/htmlunit-core-js.jar" />
+          <zipfileset src="${htmlunit.libs.temp}/nekohtml-1.9.13.jar" />
           <zipfileset src="${gwt.tools.lib}/xalan/xalan-2.7.1.jar" />
           <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/serializer.jar" />
           <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar" />
