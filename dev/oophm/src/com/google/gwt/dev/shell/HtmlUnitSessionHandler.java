@@ -107,10 +107,10 @@ public class HtmlUnitSessionHandler extends SessionHandler {
 
   private final Window window;
 
-  HtmlUnitSessionHandler(Window window) {
+  HtmlUnitSessionHandler(Window window, JavaScriptEngine jsEngine) {
     this.window = window;
     logger.setMaxDetail(TreeLogger.ERROR);
-    jsEngine = this.window.getJavaScriptEngine();
+    this.jsEngine = jsEngine;
     htmlPage = (HtmlPage) this.window.getWebWindow().getEnclosedPage();
     logger.log(TreeLogger.INFO, "jsEngine = " + jsEngine + ", HtmlPage = "
         + htmlPage);

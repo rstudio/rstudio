@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine;
 import com.gargoylesoftware.htmlunit.javascript.host.Window;
 
 import net.sourceforge.htmlunit.corejs.javascript.Context;
@@ -140,8 +141,18 @@ public class HostedModePluginObject extends ScriptableObject {
   private Scriptable disconnectMethod;
   private Scriptable initMethod;
   private Window window;
+  private JavaScriptEngine jsEngine;
 
   private BrowserChannelClient browserChannelClient;
+
+  /**
+   * Creates a HostedModePluginObject with the passed-in JavaScriptEngine.
+   * 
+   * @param jsEngine The JavaScriptEngine.
+   */
+  public HostedModePluginObject(JavaScriptEngine jsEngine) {
+    this.jsEngine = jsEngine;
+  }
 
   /**
    * Initiate a hosted mode connection to the requested port and load the
@@ -166,10 +177,10 @@ public class HostedModePluginObject extends ScriptableObject {
         + version + "), window=" + System.identityHashCode(window) + ")");
 
     try {
-      HtmlUnitSessionHandler htmlUnitSessionHandler = new HtmlUnitSessionHandler(window);
-      browserChannelClient = new BrowserChannelClient(
-          addressParts, url, sessionKey, module, version,
-          htmlUnitSessionHandler);
+      HtmlUnitSessionHandler htmlUnitSessionHandler = new HtmlUnitSessionHandler(
+          window, jsEngine);
+      browserChannelClient = new BrowserChannelClient(addressParts, url,
+          sessionKey, module, version, htmlUnitSessionHandler);
       htmlUnitSessionHandler.setSessionData(new SessionData(
           htmlUnitSessionHandler, browserChannelClient));
       return browserChannelClient.process();

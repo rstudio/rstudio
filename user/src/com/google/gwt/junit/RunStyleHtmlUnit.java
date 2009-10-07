@@ -122,7 +122,7 @@ public class RunStyleHtmlUnit extends RunStyle {
         webClient.setJavaScriptEngine(hostedEngine);
       }
     }
-}
+  }
 
   /**
    * JavaScriptEngine subclass that provides a hook of initializing the
@@ -143,7 +143,7 @@ public class RunStyleHtmlUnit extends RunStyle {
       super.initialize(webWindow);
       Window window = (Window) webWindow.getScriptObject();
       window.defineProperty("__gwt_HostedModePlugin",
-          new HostedModePluginObject(), ScriptableObject.READONLY);
+          new HostedModePluginObject(this), ScriptableObject.READONLY);
     }
   }
 
@@ -184,7 +184,7 @@ public class RunStyleHtmlUnit extends RunStyle {
   public RunStyleHtmlUnit(JUnitShell shell) {
     super(shell);
   }
-  
+
   @Override
   public boolean initialize(String args) {
     if (args == null || args.length() == 0) {
@@ -203,7 +203,7 @@ public class RunStyleHtmlUnit extends RunStyle {
     browsers = Collections.unmodifiableSet(browserSet);
     return true;
   }
-  
+
   @Override
   public void launchModule(String moduleName) {
     for (BrowserVersion browser : browsers) {
