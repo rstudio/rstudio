@@ -51,6 +51,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -298,7 +299,7 @@ public class UiBinderWriter {
    * style of {@link String#format}
    */
   public void addInitStatement(String format, Object... params) {
-    initStatements.add(String.format(format, params));
+    initStatements.add(formatCode(format, params));
   }
 
   /**
@@ -306,7 +307,7 @@ public class UiBinderWriter {
    * of {@link String#format}
    */
   public void addStatement(String format, Object... args) {
-    statements.add(String.format(format, args));
+    statements.add(formatCode(format, args));
   }
 
   /**
@@ -687,7 +688,7 @@ public class UiBinderWriter {
    */
   public void setFieldInitializerAsConstructor(String fieldName,
       JClassType type, String... args) {
-    setFieldInitializer(fieldName, String.format("new %s(%s)",
+    setFieldInitializer(fieldName, formatCode("new %s(%s)",
         type.getQualifiedSourceName(), asCommaSeparatedList(args)));
   }
 
@@ -855,6 +856,15 @@ public class UiBinderWriter {
     }
 
     return elementClass;
+  }
+
+  /**
+   * Use this method to format code. It forces the use of the en-US locale,
+   * so that things like decimal format don't get mangled.
+   */
+  private String formatCode(String format, Object... params) {
+    String r = String.format(Locale.US, format, params);
+    return r;
   }
 
   /**
@@ -1197,7 +1207,7 @@ public class UiBinderWriter {
         // (would that be a user error or a runtime error? Not sure)
         if (fieldWriter != null) {
           fieldManager.lookup(fieldName).setInitializerMaybe(
-              String.format("owner.%1$s", fieldName));
+              formatCode("owner.%1$s", fieldName));
         }
       }
     }
@@ -1301,5 +1311,4 @@ public class UiBinderWriter {
     writeStaticMessagesInstance(w);
     writeStaticBundleInstances(w);
   }
-
 }
