@@ -1,0 +1,48 @@
+<!--
+  Build file for the Windows IE Plugin installer. This build should only be
+  run on a Windows system with WIX installed. You can download WIX at:
+  http://wix.sourceforge.net/ 
+-->
+<project name="ieInstaller" default="build" basedir=".">
+  <property name="gwt.root" location="../../../" />
+  <property name="project.tail" value="plugins/ie/installer" />
+  <import file="../../../common.ant.xml" />
+
+  <property name="wix.bin" location="C:/Program Files/Windows Installer XML v3/bin" />
+  <property name="wix.log" location="${project.build}/wix.log" />
+  <property name="gwt.oophmIeInstallerName" value="GwtDevModeIePluginInstaller.msi" />
+
+  <target name="build" description="Build the installer">
+    <mkdir dir="${project.build}" />
+
+    <echo message="Preparing WIX script for oophm.dll" />
+    <exec executable="${wix.bin}/heat.exe" failonerror="yes" output="${wix.log}">
+      <arg line="file ..\prebuilt\oophm.dll" />
+      <arg line="-out ${project.build}/oophm.wxs.xml" />
+      <arg line="-ag -g1" />
+      <arg line="-dr INSTALLDIR" />
+      <arg line="-cg oophmDll" />
+      <arg line="-var var.PluginIeDir" />
+    </exec>
+
+    <echo message="Compiling WIX scripts" />
+    <exec executable="${wix.bin}/candle.exe" failonerror="yes" output="${wix.log}" append="true">
+      <arg line="-out ${project.build}/" />
+      <arg line="-dPluginIeDir=..\\" />
+      <arg line="${project.build}/oophm.wxs.xml" />
+      <arg line="installer.wxs.xml" />
+    </exec>
+
+    <echo message="Generating Windows Installer" />
+    <exec executable="${wix.bin}/light.exe" failonerror="yes" output="${wix.log}" append="true">
+      <arg line="-o ${project.build}/${gwt.oophmIeInstallerName}" />
+      <arg line="-ext WixUIExtension" />
+      <arg line="${project.build}/oophm.wxs.wixobj" />
+      <arg line="${project.build}/installer.wxs.wixobj" />
+    </exec>
+
+    <echo message="Copying Windows Installer to installer directory" />
+    <copy file="${project.build}/${gwt.oophmIeInstallerName}" tofile="${gwt.oophmIeInstallerName}" />
+  </target>
+
+</project>
