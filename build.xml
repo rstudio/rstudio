@@ -171,10 +171,6 @@
 	
   <target name="apicheck-nobuild" 
     description="[action] Checks API compatibility to prior GWT revision">
-    <copy tofile="${gwt.build.out}/userApi.conf" filtering="false"
-          file="${gwt.apicheck.config}"
-          overwrite="true">
-    </copy>
     <java failonerror="true" fork="true"
           classname="com.google.gwt.tools.apichecker.ApiCompatibilityChecker">
       <jvmarg line="-Xmx512m" />
@@ -188,7 +184,7 @@
       <arg value="-refJar"/>
       <arg path="${gwt.root}/tools/api-checker/reference/gwt-dev-modified.jar:${gwt.root}/tools/api-checker/reference/gwt-user-modified.jar"/>
       <arg value="-configFile"/>
-      <arg file="${gwt.build.out}/userApi.conf"/>
+      <arg file="${gwt.apicheck.config}"/>
       <arg value="-logLevel"/>
       <arg value="ERROR"/>
     </java>
