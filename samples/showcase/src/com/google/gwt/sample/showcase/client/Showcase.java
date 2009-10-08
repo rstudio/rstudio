@@ -29,6 +29,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsWithLookupExample;
@@ -69,6 +70,7 @@ import com.google.gwt.sample.showcase.client.content.widgets.CwRadioButton;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -149,29 +151,6 @@ public class Showcase implements EntryPoint {
    * The current style theme.
    */
   static String CUR_THEME = ShowcaseConstants.STYLE_THEMES[0];
-
-  /**
-   * Get the URL of the page, without an hash of query string.
-   * 
-   * @return the location of the page
-   */
-  private static native String getHostPageLocation()
-  /*-{
-    var s = $doc.location.href;
-
-    // Pull off any hash.
-    var i = s.indexOf('#');
-    if (i != -1)
-      s = s.substring(0, i);
-
-    // Pull off any query string.
-    i = s.indexOf('?');
-    if (i != -1)
-      s = s.substring(0, i);
-
-    // Ensure a final slash if non-empty.
-    return s;
-  }-*/;
 
   /**
    * The {@link Application}.
@@ -449,8 +428,9 @@ public class Showcase implements EntryPoint {
     localeBox.addChangeHandler(new ChangeHandler() {
       public void onChange(ChangeEvent event) {
         String localeName = localeBox.getValue(localeBox.getSelectedIndex());
-        Window.open(getHostPageLocation() + "?locale=" + localeName, "_self",
-            "");
+        UrlBuilder builder = Location.createUrlBuilder().setParameter("locale",
+            localeName);
+        Window.Location.replace(builder.buildString());
       }
     });
     HorizontalPanel localeWrapper = new HorizontalPanel();
