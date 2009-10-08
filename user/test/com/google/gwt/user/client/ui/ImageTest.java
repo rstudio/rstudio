@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ErrorEvent;
@@ -24,6 +25,8 @@ import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 
 /**
  * Tests for the Image widget. Images in both clipped mode and unclipped mode
@@ -31,6 +34,10 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 @SuppressWarnings("deprecation")
 public class ImageTest extends GWTTestCase {
+  interface Bundle extends ClientBundle {
+    ImageResource prettyPiccy();
+  }
+
   private static class TestErrorHandler implements ErrorHandler {
     private Image image;
 
@@ -75,7 +82,7 @@ public class ImageTest extends GWTTestCase {
    * Helper method that allows us to 'peek' at the private <code>state</code>
    * field in the Image object, and call the <code>state.getStateName()</code>
    * method.
-   * 
+   *
    * @param image The image instance
    * @return "unclipped" if image is in the unclipped state, or "clipped" if the
    *         image is in the clipped state
@@ -91,7 +98,7 @@ public class ImageTest extends GWTTestCase {
 
   /**
    * Tests the transition from the clipped state to the unclipped state.
-   * 
+   *
    * Disabled because of issue #863 & #864. It fails intermittently in linux
    * hosted mode tests.
    */
@@ -127,7 +134,7 @@ public class ImageTest extends GWTTestCase {
 
   /**
    * Tests the transition from the unclipped state to the clipped state.
-   * 
+   *
    * Disabled because of issue #863.
    */
   public void disabledTestChangeImageToClipped() {
@@ -163,7 +170,7 @@ public class ImageTest extends GWTTestCase {
 
   /**
    * Tests the creation of an image in unclipped mode.
-   * 
+   *
    * Disabled because of issue #863 & #864.
    */
   public void disabledTestCreateImage() {
@@ -196,7 +203,7 @@ public class ImageTest extends GWTTestCase {
    * Tests the firing of onload events when
    * {@link com.google.gwt.user.client.ui.Image#setUrl(String)} is called on an
    * unclipped image.
-   * 
+   *
    * Disabled because of issue #863
    */
   public void disabledTestSetUrlAndLoadEventsOnUnclippedImage() {
@@ -227,7 +234,7 @@ public class ImageTest extends GWTTestCase {
    * Tests the behavior of
    * <code>setUrlAndVisibleRect(String, int, int, int, int)</code> method on
    * an unclipped image, which causes a state transition to the clipped state.
-   * 
+   *
    * Disabled because of issue #863.
    */
   public void disabledTestSetUrlAndVisibleRectOnUnclippedImage() {
@@ -334,6 +341,19 @@ public class ImageTest extends GWTTestCase {
     });
     assertEquals(1, firedLoad);
     assertEquals(1, firedError);
+  }
+
+  public void testResourceConstructor() {
+    Bundle b = GWT.create(Bundle.class);
+    Image image = new Image(b.prettyPiccy());
+    assertResourceWorked(image, b.prettyPiccy());
+  }
+
+  public void testSetResource() {
+    Bundle b = GWT.create(Bundle.class);
+    Image image = new Image();
+    image.setResource(b.prettyPiccy());
+    assertResourceWorked(image, b.prettyPiccy());
   }
 
   /**
@@ -454,5 +474,13 @@ public class ImageTest extends GWTTestCase {
     assertEquals(16, image.getWidth());
     assertEquals(16, image.getHeight());
     assertEquals("clipped", getCurrentImageStateName(image));
+  }
+
+  private void assertResourceWorked(Image image, ImageResource prettyPiccy) {
+    assertEquals(prettyPiccy.getURL(), image.getUrl());
+    assertEquals(prettyPiccy.getTop(), image.getOriginTop());
+    assertEquals(prettyPiccy.getHeight(), image.getHeight());
+    assertEquals(prettyPiccy.getLeft(), image.getOriginLeft());
+    assertEquals(prettyPiccy.getWidth(), image.getWidth());
   }
 }

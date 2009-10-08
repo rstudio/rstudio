@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -42,6 +42,7 @@ import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.dom.client.MouseWheelHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.ClippedImageImpl;
 
@@ -56,16 +57,16 @@ import java.util.HashMap;
  * image is constructed, and how it is transformed after construction. Methods
  * will operate differently depending on the mode that the image is in. These
  * differences are detailed in the documentation for each method.
- * 
+ *
  * <p>
  * If an image transitions between clipped mode and unclipped mode, any
  * {@link Element}-specific attributes added by the user (including style
  * attributes, style names, and style modifiers), except for event listeners,
  * will be lost.
  * </p>
- * 
+ *
  * <h3>CSS Style Rules</h3> <ul class="css"> <li>.gwt-Image { }</li> </ul>
- * 
+ *
  * Tranformations between clipped and unclipped state will result in a loss of
  * any style names that were set/added; the only style names that are preserved
  * are those that are mentioned in the static CSS style rules. Due to
@@ -74,7 +75,7 @@ import java.util.HashMap;
  * expected when an image is in clipped mode. These limitations can usually be
  * easily worked around by encapsulating the image in a container widget that
  * can itself be styled.
- * 
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.ImageExample}
@@ -304,7 +305,7 @@ public class Image extends Widget implements SourcesLoadEvents,
 
   /**
    * Causes the browser to pre-fetch the image at a given URL.
-   * 
+   *
    * @param url the URL of the image to be prefetched
    */
   public static void prefetch(String url) {
@@ -315,11 +316,11 @@ public class Image extends Widget implements SourcesLoadEvents,
 
   /**
    * Creates a Image widget that wraps an existing &lt;img&gt; element.
-   * 
+   *
    * This element must already be attached to the document. If the element is
    * removed from the document, you must call
    * {@link RootPanel#detachNow(Widget)}.
-   * 
+   *
    * @param element the element to be wrapped
    */
   public static Image wrap(Element element) {
@@ -347,9 +348,19 @@ public class Image extends Widget implements SourcesLoadEvents,
   }
 
   /**
+   * Creates an image whose size and content are defined by an ImageResource.
+   *
+   * @param resource the ImageResource to be displayed
+   */
+  public Image(ImageResource resource) {
+    this(resource.getURL(), resource.getLeft(),
+         resource.getTop(), resource.getWidth(), resource.getHeight());
+  }
+
+  /**
    * Creates an image with a specified URL. The load event will be fired once
    * the image at the given URL has been retrieved by the browser.
-   * 
+   *
    * @param url the URL of the image to be displayed
    */
   public Image(String url) {
@@ -366,7 +377,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * the width and height are specified explicitly by the user, this behavior
    * will not cause problems with retrieving the width and height of a clipped
    * image in a load event handler.
-   * 
+   *
    * @param url the URL of the image to be displayed
    * @param left the horizontal co-ordinate of the upper-left vertex of the
    *          visibility rectangle
@@ -383,7 +394,7 @@ public class Image extends Widget implements SourcesLoadEvents,
   /**
    * This constructor may be used by subclasses to explicitly use an existing
    * element. This element must be an &lt;img&gt; element.
-   * 
+   *
    * @param element the element to be used
    */
   protected Image(Element element) {
@@ -466,7 +477,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * Gets the height of the image. When the image is in the unclipped state, the
    * height of the image is not known until the image has been loaded (i.e. load
    * event has been fired for the image).
-   * 
+   *
    * @return the height of the image, or 0 if the height is unknown
    */
   public int getHeight() {
@@ -478,7 +489,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * visibility rectangle. If the image is in the unclipped state, then the
    * visibility rectangle is assumed to be the rectangle which encompasses the
    * entire image, which has an upper-left vertex of (0,0).
-   * 
+   *
    * @return the horizontal co-ordinate of the upper-left vertex of the image's
    *         visibility rectangle
    */
@@ -491,7 +502,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * visibility rectangle. If the image is in the unclipped state, then the
    * visibility rectangle is assumed to be the rectangle which encompasses the
    * entire image, which has an upper-left vertex of (0,0).
-   * 
+   *
    * @return the vertical co-ordinate of the upper-left vertex of the image's
    *         visibility rectangle
    */
@@ -503,7 +514,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * Gets the URL of the image. The URL that is returned is not necessarily the
    * URL that was passed in by the user. It may have been transformed to an
    * absolute URL.
-   * 
+   *
    * @return the image URL
    */
   public String getUrl() {
@@ -514,7 +525,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * Gets the width of the image. When the image is in the unclipped state, the
    * width of the image is not known until the image has been loaded (i.e. load
    * event has been fired for the image).
-   * 
+   *
    * @return the width of the image, or 0 if the width is unknown
    */
   public int getWidth() {
@@ -522,7 +533,7 @@ public class Image extends Widget implements SourcesLoadEvents,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on
    * the object returned by {@link #addClickHandler} instead
    */
   @Deprecated
@@ -559,11 +570,26 @@ public class Image extends Widget implements SourcesLoadEvents,
   }
 
   /**
+   * Sets the url and the visibility rectangle for the image at the same time,
+   * based on an ImageResource instance. A single load event will be fired if
+   * either the incoming url or visiblity rectangle co-ordinates differ from the
+   * image's current url or current visibility rectangle co-ordinates. If the
+   * image is currently in the unclipped state, a call to this method will cause
+   * a transition to the clipped state.
+   *
+   * @param resource the ImageResource to display
+   */
+  public void setResource(ImageResource resource) {
+    setUrlAndVisibleRect(resource.getURL(), resource.getLeft(),
+        resource.getTop(), resource.getWidth(), resource.getHeight());
+  }
+
+  /**
    * Sets the URL of the image to be displayed. If the image is in the clipped
    * state, a call to this method will cause a transition of the image to the
    * unclipped state. Regardless of whether or not the image is in the clipped
    * or unclipped state, a load event will be fired.
-   * 
+   *
    * @param url the image URL
    */
   public void setUrl(String url) {
@@ -577,7 +603,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * visibility rectangle co-ordinates. If the image is currently in the
    * unclipped state, a call to this method will cause a transition to the
    * clipped state.
-   * 
+   *
    * @param url the image URL
    * @param left the horizontal coordinate of the upper-left vertex of the
    *          visibility rectangle
@@ -600,7 +626,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * is in the unclipped state, a call to this method will cause a transition of
    * the image to the clipped state. This transition will cause a load event to
    * fire.
-   * 
+   *
    * @param left the horizontal coordinate of the upper-left vertex of the
    *          visibility rectangle
    * @param top the vertical coordinate of the upper-left vertex of the
