@@ -103,6 +103,15 @@ public class ArtificialRescueChecker {
         referencedTypes = Lists.add(referencedTypes, className);
       }
 
+      boolean isArray = false;
+      while (className.endsWith("[]")) {
+        className = className.substring(0, className.length() - 2);
+        if (collectTypes) {
+          referencedTypes = Lists.add(referencedTypes, className);
+        }
+        isArray = true;
+      }
+
       if (!reportErrors) {
         // Nothing else to do
         return;
@@ -110,11 +119,6 @@ public class ArtificialRescueChecker {
 
       // Goal (2)
       // Strip off any array-like extensions and just find base type
-      boolean isArray = false;
-      while (className.endsWith("[]")) {
-        className = className.substring(0, className.length() - 2);
-        isArray = true;
-      }
 
       // Fix JSNI primitive type names to something JDT will understand
       if (isArray && className.length() == 1) {

@@ -314,7 +314,7 @@ public class CommandServerSerializationStreamReader implements
   }
 
   public String readString() throws SerializationException {
-    return readNextCommand(StringValueCommand.class).getValue();
+    return (String) readObject();
   }
 
   private <T extends ValueCommand> T readNextCommand(Class<T> clazz)

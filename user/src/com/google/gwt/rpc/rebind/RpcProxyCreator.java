@@ -113,6 +113,11 @@ public class RpcProxyCreator extends ProxyCreator {
   }
 
   @Override
+  protected void generateStreamWriterOverride(SourceWriter srcWriter) {
+    // Intentional no-op. Called if elideTypeNames is on, which is ignored
+  }
+
+  @Override
   protected void generateTypeHandlers(TreeLogger logger, GeneratorContext ctx,
       SerializableTypeOracle serializationSto,
       SerializableTypeOracle deserializationSto)
