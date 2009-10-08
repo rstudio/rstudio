@@ -74,26 +74,26 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
   /**
    * Creates an anchor for scripting.
    * 
-   * The anchor's href is set to <code>javascript:</code>, based on the
+   * The anchor's href is set to <code>javascript:;</code>, based on the
    * expectation that listeners will be added to the anchor.
    * 
    * @param text the anchor's text
    */
   public Anchor(String text) {
-    this(text, "javascript:");
+    this(text, "javascript:;");
   }
 
   /**
    * Creates an anchor for scripting.
    * 
-   * The anchor's href is set to <code>javascript:</code>, based on the
+   * The anchor's href is set to <code>javascript:;</code>, based on the
    * expectation that listeners will be added to the anchor.
    * 
    * @param text the anchor's text
    * @param asHtml <code>true</code> to treat the specified text as html
    */
   public Anchor(String text, boolean asHtml) {
-    this(text, asHtml, "javascript:");
+    this(text, asHtml, "javascript:;");
   }
 
   /**

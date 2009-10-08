@@ -124,7 +124,7 @@ public class AnchorTest extends GWTTestCase {
     assertEquals(1, DOM.getChildCount(p.getElement()));
     assertEquals("A", DOM.getChild(p.getElement(), 0).getTagName());
     assertEquals("Foo", anchor.getText());
-    assertAttributeHasValue("javascript:", anchor.getElement(), "href");
+    assertAttributeHasValue("javascript:;", anchor.getElement(), "href");
 
     for (String attribute : new String[] {"name", "id", "rel", "ref", "target"}) {
       assertAttributeNotPresent(attribute, anchor.getElement());
@@ -140,7 +140,7 @@ public class AnchorTest extends GWTTestCase {
     assertEquals(1, DOM.getChildCount(p.getElement()));
     assertEquals("A", DOM.getChild(p.getElement(), 0).getTagName());
     assertEquals("SPAN", DOM.getChild(anchor.getElement(), 0).getTagName());
-    assertAttributeHasValue("javascript:", anchor.getElement(), "href");
+    assertAttributeHasValue("javascript:;", anchor.getElement(), "href");
 
     for (String attribute : new String[] {"name", "id", "rel", "ref", "target"}) {
       assertAttributeNotPresent(attribute, anchor.getElement());
