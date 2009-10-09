@@ -32,7 +32,9 @@ import java.net.URL;
 import java.util.Set;
 
 /**
- * Models a method returning a CssResource on a generated ClientBundle.
+ * Models a method returning a CssResource on a generated ClientBundle. At the
+ * moment, they must be tied to an external .css file. That should improve in
+ * the next day or so.
  */
 public class ImplicitCssResource {
   private final String packageName;

@@ -96,29 +96,6 @@
   }
 </ui:style>
 
-<ui:style field='mySpritelyStyle'>
-  @sprite .simpleSprite { 
-    gwt-image: "prettyImage"; 
-  }
-
-  @sprite .tilingSprite { 
-    gwt-image: "prettyTilingImage"; 
-  }
-  
-  .garish {
-    color: Purple;
-    font-weight: bold;
-    font-family: sans-serif;
-    text-shadow: white 1px 1px 1px;
-   }
-
-   .garish.tilingSprite {
-      font-size: 1.5em; 
-    }
-</ui:style>
-<ui:image field='prettyImage' />
-<ui:image field='prettyTilingImage' src='prettyImage.png' flipRtl='true' repeatStyle='Both'/>
-
 <gwt:DockPanel ui:field="root" width="100%">
   <gwt:Dock direction='NORTH'>
     <gwt:HTML>
@@ -172,21 +149,6 @@
         <demo:ClickyLink text="hyperlink based on a custom widget"
           ui:field="customLinkWidget" popupText="That tickles! "/>.
       </p>
-
-      <p>I bet you like babies in your Image widgets.</p>
-      <gwt:Image ui:field='babyWidget' resource='{prettyImage}'/>
-
-      <p ui:field='simpleSpriteParagraph' 
-          class='{mySpritelyStyle.simpleSprite} {mySpritelyStyle.garish}' >
-        And sprites too
-      </p>
-
-      <p class='{mySpritelyStyle.tilingSprite} {mySpritelyStyle.garish}'>
-        Well how do you like  <br/>
-        tiled sprited images...of babies!! <br/>
-        Well of course you do. Who wouldn't? 
-      </p>
-
       <p>
         <ui:msg description="">
           Of course, it could just as easily be a Tree under a MenuBar...
@@ -427,24 +389,17 @@
     xmlns:gwt='urn:import:com.google.gwt.user.client.ui'&gt;
 
     &lt;gwt:FlowPanel&gt;
-      &lt;gwt:Label ui:field="lblDebugId" debugId="joe" 
-          addStyleNames="newStyle, anotherStyle" 
-          addStyleDependentNames="dependentStyle, anotherDependentStyle" 
-          text="a label with debug id" /&gt;
+      &lt;gwt:Label ui:field="lblDebugId" debugId="joe" addStyleNames="newStyle, anotherStyle" addStyleDependentNames="dependentStyle, anotherDependentStyle" text="a label with debug id" /&gt;
 
       &lt;!-- A button that only adds a single style name, no comma's needed --&gt;
-      &lt;gwt:Button ui:field="btnGo" debugId="myButton" 
-          addStyleNames="buttonStyle" text="a button with extra attributes" /&gt;
+      &lt;gwt:Button ui:field="btnGo" debugId="myButton" addStyleNames="buttonStyle" text="a button with extra attributes" /&gt;
     &lt;/gwt:FlowPanel>
 
   &lt;/ui:UiBinder&gt;</pre>
 
     <b>HTML:</b>
     <pre style="border: 1px dashed #666; padding: 5px 0;">
-  &lt;div id="gwt-debug-joe" 
-      class="gwt-Label newStyle anotherStyle gwt-Label-dependentStyle gwt-Label-anotherDependentStyle"&gt;
-    A label with a debug id
-  &lt;/div&gt;
+  &lt;div id="gwt-debug-joe" class="gwt-Label newStyle anotherStyle gwt-Label-dependentStyle gwt-Label-anotherDependentStyle"&gt;A label with a debug id&lt;/div&gt;
   &lt;button id="gwt-debug-myButton" class="gwt-Button buttonStyle" tabindex="0" type="button"&gt;Go&lt;/button&gt;</pre>
 
     <gwt:FlowPanel>
@@ -550,7 +505,6 @@
     <tr><td>Even HTMLPanel gets in on the game</td></tr>
     <tr><td>Lately, anyway.</td></tr>
   </gwt:HTMLPanel>
-  
     </gwt:HTMLPanel>
   </gwt:Dock>
 </gwt:DockPanel>

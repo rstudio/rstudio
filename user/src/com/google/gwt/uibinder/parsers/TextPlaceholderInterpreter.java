@@ -34,6 +34,6 @@ public final class TextPlaceholderInterpreter extends PlaceholderInterpreter {
 
   @Override protected String consumePlaceholderInnards(XMLElement elem)
       throws UnableToCompleteException {
-    return elem.consumeInnerTextEscapedAsHtmlStringLiteral(new NullInterpreter<String>());
+    return elem.consumeInnerText(new NullInterpreter<String>());
   }
 }

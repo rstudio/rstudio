@@ -23,7 +23,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
-class GetEscapedInnerTextVisitor implements NodeVisitor {
+class GetInnerTextVisitor implements NodeVisitor {
 
   /**
    * Gathers a text representation of the children of the given Elem, and stuffs
@@ -33,7 +33,7 @@ class GetEscapedInnerTextVisitor implements NodeVisitor {
   public static void getEscapedInnerText(Element elem, StringBuffer buffer,
       Interpreter<String> interpreter, UiBinderWriter writer)
       throws UnableToCompleteException {
-    new ChildWalker().accept(elem, new GetEscapedInnerTextVisitor(buffer, interpreter,
+    new ChildWalker().accept(elem, new GetInnerTextVisitor(buffer, interpreter,
         writer));
   }
 
@@ -41,7 +41,7 @@ class GetEscapedInnerTextVisitor implements NodeVisitor {
   protected final Interpreter<String> interpreter;
   protected final UiBinderWriter writer;
 
-  protected GetEscapedInnerTextVisitor(StringBuffer buffer,
+  protected GetInnerTextVisitor(StringBuffer buffer,
       Interpreter<String> interpreter, UiBinderWriter writer) {
     this.buffer = buffer;
     this.interpreter = interpreter;
@@ -73,7 +73,6 @@ class GetEscapedInnerTextVisitor implements NodeVisitor {
 
     boolean preserveWhitespace =
         parent != null && "pre".equals(parent.getTagName());
-    // TODO(rjrjr) What about script blocks?
     return preserveWhitespace;
   }
 }
