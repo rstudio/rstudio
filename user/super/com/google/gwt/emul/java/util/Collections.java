@@ -148,6 +148,10 @@ public class Collections {
     public T set(int index, T element) {
       throw new UnsupportedOperationException();
     }
+
+    public List<T> subList(int fromIndex, int toIndex) {
+      return new UnmodifiableList<T>(list.subList(fromIndex, toIndex));
+    }
   }
 
   static class UnmodifiableMap<K, V> implements Map<K, V> {

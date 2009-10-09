@@ -28,6 +28,8 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
     List<E>, Queue<E>, Serializable {
   /*
    * This implementation uses a doubly-linked circular list with a header node.
+   * 
+   * TODO(jat): add more efficient subList implementation.
    */
 
   /**
@@ -301,11 +303,6 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
   public int size() {
     return size;
   }
-
-  // TODO(jat): implement
-//  @Override
-//  List<E> subList(final int fromIndex, final int toIndex) {
-//  }
 
   private void addBefore(E o, Node<E> target) {
     new Node<E>(o, target);

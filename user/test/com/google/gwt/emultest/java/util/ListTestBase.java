@@ -17,9 +17,12 @@ package com.google.gwt.emultest.java.util;
 
 import org.apache.commons.collections.TestArrayList;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
+
 
 /**
  * Tests List, and, by extension AbstractList. Uses inheritance to inherit all
@@ -181,5 +184,102 @@ public abstract class ListTestBase extends TestArrayList {
       } catch (ArrayStoreException e) {
       }
     }
+  }
+
+  public void testSubList() {
+    List<Integer> wrappedList = createListWithContent(new int[]{1, 2, 3, 4, 5});
+    List<Integer> testList = wrappedList.subList(1, 4);
+    assertEquals(3, testList.size());
+    
+    assertEquals(testList, Arrays.asList(2, 3, 4));
+    checkListSizeAndContent(testList, new int[]{2, 3, 4});
+    testList.add(1, 6);
+    assertEquals(testList, Arrays.asList(2, 6, 3, 4));
+    checkListSizeAndContent(testList, new int[]{2, 6, 3, 4});
+    assertEquals(wrappedList, Arrays.asList(1, 2, 6, 3, 4, 5));
+    checkListSizeAndContent(wrappedList, new int[]{1, 2, 6, 3, 4, 5});
+    testList.remove(2);
+    assertEquals(testList, Arrays.asList(2, 6, 4));
+    checkListSizeAndContent(testList, new int[]{2, 6, 4});
+
+    try {
+      testList.remove(3);
+      fail("Expected remove to fail");
+    } catch (IndexOutOfBoundsException e) {
+    }
+
+    checkListSizeAndContent(wrappedList, new int[]{1, 2, 6, 4, 5});
+    testList.set(0, 7);
+    checkListSizeAndContent(testList, new int[]{7, 6, 4});
+    checkListSizeAndContent(wrappedList, new int[]{1, 7, 6, 4, 5}); 
+    
+    try {
+      wrappedList.subList(-1, 5);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+
+    try {
+      wrappedList.subList(0, 15);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+    
+    try {
+      wrappedList.subList(5, 1);
+      fail("expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+    }
+ 
+    try {
+      wrappedList.subList(0, 1).add(2, 5);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+    
+    try {
+      wrappedList.subList(0, 1).add(-1, 5);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+
+    try {
+      wrappedList.subList(0, 1).get(1);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+    
+    try {
+      wrappedList.subList(0, 1).get(-1);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+    
+    try {
+      wrappedList.subList(0, 1).set(2, 2);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+
+    try {
+      wrappedList.subList(0, 1).set(-1, 5);
+      fail("expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+    }
+  }
+  
+  private void checkListSizeAndContent(List<Integer> in, int[] expected) {
+    assertEquals(expected.length, in.size());
+    for (int i = 0; i < expected.length; i++) {
+      assertEquals(expected[i], (int) in.get(i));
+    }
+  }
+  
+  private List<Integer> createListWithContent(int[] in) {
+    List<Integer> results = new ArrayList<Integer>();
+    for (int i = 0; i < in.length; i++) {
+      results.add(in[i]);
+    }
+    return results;
   }
 }

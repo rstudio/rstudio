@@ -110,6 +110,74 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     }
   }
 
+  private static class SubList<E> extends AbstractList<E> {
+    private final List<E> wrapped;
+    private final int fromIndex;
+    private int size;
+
+    public SubList(List<E> wrapped, int fromIndex, int toIndex) {
+      this.wrapped = wrapped;
+      this.fromIndex = fromIndex;
+      size = getSize(fromIndex, toIndex);
+      if (fromIndex > toIndex) {
+        throw new IllegalArgumentException("fromIndex: " + fromIndex + 
+            " > toIndex: " + toIndex);
+      }
+      if (fromIndex < 0) {
+        throw new IndexOutOfBoundsException("fromIndex: " + fromIndex + 
+            " < 0");
+      }
+      if (toIndex > wrapped.size()) {
+        throw new IndexOutOfBoundsException("toIndex: " + toIndex +
+            " > wrapped.size() " + wrapped.size());
+      }
+    }
+
+    @Override
+    public void add(int index, E element) {
+      checkIndexForAdd(index);
+      size++;
+      wrapped.add(fromIndex + index, element);   
+    }
+
+    @Override
+    public E get(int index) {
+      checkIndex(index);
+      return wrapped.get(fromIndex + index);
+    }
+
+    @Override
+    public E remove(int index) {
+      checkIndex(index);
+      E result = wrapped.remove(fromIndex + index);
+      size--;
+      return result;
+    }
+
+    @Override
+    public E set(int index, E element) {
+      checkIndex(index);
+      return wrapped.set(fromIndex + index, element);
+    }
+
+    @Override
+    public int size() {
+      return size;
+    }
+    
+    private void checkIndex(int index) {
+      checkIndex(index, size);
+    }
+        
+    private void checkIndexForAdd(int index) {
+      checkIndex(index, size - 1);
+    }
+
+    private int getSize(int fromIndex, int toIndex) {
+      return toIndex - fromIndex;
+    }
+  }
+
   protected static void checkIndex(int index, int size) {
     if (index < 0 || index >= size) {
       indexOutOfBounds(index, size);
@@ -233,9 +301,9 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     throw new UnsupportedOperationException("Set not supported on this list");
   }
 
-  // TODO(jat): implement
-//  public List<E> subList(int fromIndex, int toIndex) {
-//  }
+  public List<E> subList(int fromIndex, int toIndex) {
+    return new SubList<E>(this, fromIndex, toIndex);
+  }
 
   protected void removeRange(int fromIndex, int endIndex) {
     ListIterator<E> iter = listIterator(fromIndex);

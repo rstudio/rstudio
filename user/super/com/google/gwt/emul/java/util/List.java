@@ -67,8 +67,7 @@ public interface List<E> extends Collection<E> {
 
   int size();
 
-  // TODO(jat): add back when we implement in all List
-  // List<E> subList(int fromIndex, int toIndex);
+  List<E> subList(int fromIndex, int toIndex);
 
   Object[] toArray();
 

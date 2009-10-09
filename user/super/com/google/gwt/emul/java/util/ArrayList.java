@@ -276,11 +276,6 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     size = newSize;
   }
 
-  // TODO(jat): implement
-//  @Override
-//  List<E> subList(int fromIndex, int toIndex) {
-//  }
-
   @SuppressWarnings("unchecked")
   private void clearImpl() {
     array = (E[]) new Object[0];
