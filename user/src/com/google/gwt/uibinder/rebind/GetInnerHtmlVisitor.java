@@ -20,7 +20,7 @@ import com.google.gwt.uibinder.rebind.XMLElement.Interpreter;
 
 import org.w3c.dom.Element;
 
-class GetInnerHtmlVisitor extends GetInnerTextVisitor {
+class GetInnerHtmlVisitor extends GetEscapedInnerTextVisitor {
 
   /**
    * Recursively gathers an HTML representation of the children of the given

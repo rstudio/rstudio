@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,6 +22,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,7 +48,7 @@ public class XMLElement {
   public interface Interpreter<T> {
     /**
      * Given an XMLElement, return its filtered value.
-     *
+     * 
      * @throws UnableToCompleteException on error
      */
     T interpretElement(XMLElement elem) throws UnableToCompleteException;
@@ -115,7 +116,7 @@ public class XMLElement {
   /**
    * Consumes the given attribute and returns its trimmed value, or null if it
    * was unset. The returned string is not escaped.
-   *
+   * 
    * @param name the attribute's full name (including prefix)
    * @return the attribute's value, or null
    */
@@ -128,7 +129,7 @@ public class XMLElement {
   /**
    * Consumes the given attribute and returns its trimmed value, or the given
    * default value if it was unset. The returned string is not escaped.
-   *
+   * 
    * @param name the attribute's full name (including prefix)
    * @param defaultValue the value to return if the attribute was unset
    * @return the attribute's value, or defaultValue
@@ -143,7 +144,7 @@ public class XMLElement {
 
   /**
    * Consumes the given attribute as a boolean value.
-   *
+   * 
    * @throws UnableToCompleteException
    */
   public boolean consumeBooleanAttribute(String attr)
@@ -177,7 +178,7 @@ public class XMLElement {
    * Consumes and returns all child elements selected by the interpreter. Note
    * that text nodes are not elements, and so are not presented for
    * interpretation, and are not consumed.
-   *
+   * 
    * @param interpreter Should return true for any child that should be consumed
    *          and returned by the consumeChildElements call
    * @throws UnableToCompleteException
@@ -265,7 +266,7 @@ public class XMLElement {
    * The odds are you want to use
    * {@link com.google.gwt.templates.parsers.HtmlInterpreter} for an HTML value,
    * or {@link com.google.gwt.templates.parsers.TextInterpreter} for text.
-   *
+   * 
    * @param interpreter Called for each element, expected to return a string
    *          replacement for it, or null if it should be left as is
    */
@@ -292,24 +293,37 @@ public class XMLElement {
   }
 
   /**
+   * Refines {@link #consumeInnerTextEscapedAsHtmlStringLiteral(Interpreter)} to
+   * handle PostProcessingInterpreter.
+   */
+  public String consumeInnerText(PostProcessingInterpreter<String> interpreter)
+      throws UnableToCompleteException {
+    String text = consumeInnerTextEscapedAsHtmlStringLiteral((Interpreter<String>) interpreter);
+    return interpreter.postProcess(text);
+  }
+
+  /**
    * Consumes all child text nodes, and asserts that this element held only
-   * text. Trailing and leading whitespace is trimmed.
+   * text. Trailing and leading whitespace is trimmed, and escaped for use as a
+   * string literal. Notice that HTML entities in the text are also escaped--is
+   * this a source of errors?
    * <p>
    * This call requires an interpreter to make sense of any special children.
    * The odds are you want to use
    * {@link com.google.gwt.templates.parsers.TextInterpreter}
-   *
+   * 
    * @throws UnableToCompleteException If any elements present are not consumed
    *           by the interpreter
    */
-  public String consumeInnerText(Interpreter<String> interpreter)
-      throws UnableToCompleteException {
+  public String consumeInnerTextEscapedAsHtmlStringLiteral(
+      Interpreter<String> interpreter) throws UnableToCompleteException {
     if (interpreter == null) {
       throw new NullPointerException("interpreter must not be null");
     }
     StringBuffer buf = new StringBuffer();
 
-    GetInnerTextVisitor.getEscapedInnerText(elem, buf, interpreter, writer);
+    GetEscapedInnerTextVisitor.getEscapedInnerText(elem, buf, interpreter,
+        writer);
 
     // Make sure there are no children left but empty husks
     for (XMLElement child : consumeChildElements()) {
@@ -322,16 +336,6 @@ public class XMLElement {
 
     clearChildren(elem);
     return buf.toString().trim();
-  }
-
-  /**
-   * Refines {@link #consumeInnerText(Interpreter)} to handle
-   * PostProcessingInterpreter.
-   */
-  public String consumeInnerText(PostProcessingInterpreter<String> interpreter)
-      throws UnableToCompleteException {
-    String text = consumeInnerText((Interpreter<String>) interpreter);
-    return interpreter.postProcess(text);
   }
 
   /**
@@ -379,20 +383,44 @@ public class XMLElement {
   /**
    * Consumes a single child element, ignoring any text nodes and throwing an
    * exception if more than one child element is found.
+   * 
+   * @throws UnableToCompleteException
    */
-  public XMLElement consumeSingleChildElement() {
+  public XMLElement consumeSingleChildElement()
+      throws UnableToCompleteException {
     XMLElement ret = null;
     for (XMLElement child : consumeChildElements()) {
       if (ret != null) {
-        throw new RuntimeException(String.format(
-            "%s may only contain a single child element, but found"
-                + "%s and %s.", getLocalName(), ret, child));
+        writer.die("%s may only contain a single child element, but found"
+            + "%s and %s.", getLocalName(), ret, child);
       }
 
       ret = child;
     }
 
     return ret;
+  }
+
+  /**
+   * Returns the unprocessed, unescaped, raw inner text of the receiver. Dies if
+   * the receiver has non-text children.
+   * <p>
+   * You probably want to use
+   * {@link #consumeInnerTextEscapedAsHtmlStringLiteral} instead.
+   * 
+   * @return the text
+   * @throws UnableToCompleteException if it held anything other than text nodes
+   */
+  public String consumeUnescapedInnerText() throws UnableToCompleteException {
+    final NodeList children = elem.getChildNodes();
+    if (children.getLength() < 1) {
+      return "";
+    }
+    if (children.getLength() > 1 || Node.TEXT_NODE != children.item(0).getNodeType()) {
+      writer.die("%s must contain only text", this);
+    }
+    Text t = (Text) children.item(0);
+    return t.getTextContent();
   }
 
   /**

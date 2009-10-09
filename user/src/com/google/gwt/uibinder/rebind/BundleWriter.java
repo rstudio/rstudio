@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,11 +16,16 @@
 package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.CssResource.Strict;
+import com.google.gwt.resources.client.ImageResource.ImageOptions;
+import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
+import com.google.gwt.uibinder.rebind.model.ImplicitImageResource;
 
 /**
  * Writes source implementing an {@link ImplicitClientBundle}.
@@ -31,8 +36,12 @@ public class BundleWriter {
   private final IndentedWriter writer;
   private final PrintWriterManager writerManager;
   private final TypeOracle oracle;
-  private final String clientBundleType;
-  private final String strictAnnotationType;
+
+  private final JClassType clientBundleType;
+  private final JClassType strictAnnotationType;
+  private final JClassType imageOptionType;
+  private final JClassType imageResourceType;
+  private final JClassType repeatStyleType;
 
   public BundleWriter(ImplicitClientBundle bundleClass,
       PrintWriterManager writerManager, TypeOracle oracle,
@@ -43,8 +52,11 @@ public class BundleWriter {
     this.writerManager = writerManager;
     this.oracle = oracle;
 
-     clientBundleType = oracle.findType(ClientBundle.class.getName()).getQualifiedSourceName();
-     strictAnnotationType = oracle.findType(Strict.class.getCanonicalName()).getQualifiedSourceName();
+    clientBundleType = oracle.findType(ClientBundle.class.getName());
+    strictAnnotationType = oracle.findType(Strict.class.getCanonicalName());
+    imageOptionType = oracle.findType(ImageOptions.class.getCanonicalName());
+    imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
+    repeatStyleType = oracle.findType(RepeatStyle.class.getCanonicalName());
   }
 
   public void write() throws UnableToCompleteException {
@@ -64,9 +76,10 @@ public class BundleWriter {
     }
 
     // Imports
-    writer.write("import %s;",
-        clientBundleType);
-    writer.write("import %s;", strictAnnotationType);
+    writer.write("import %s;", imageResourceType.getQualifiedSourceName());
+    writer.write("import %s;", imageOptionType.getQualifiedSourceName());
+    writer.write("import %s;", clientBundleType.getQualifiedSourceName());
+    writer.write("import %s;", strictAnnotationType.getQualifiedSourceName());
     writer.newline();
 
     // Open interface
@@ -81,8 +94,41 @@ public class BundleWriter {
       writer.newline();
     }
 
+    writer.newline();
+    writeImageMethods();
+
     // Close interface.
     writer.outdent();
     writer.write("}");
+  }
+
+  private void writeImageMethods() {
+    for (ImplicitImageResource image : bundleClass.getImageMethods()) {
+      if (null != image.getSource()) {
+        writer.write("@Source(\"%s\")", image.getSource());
+      }
+
+      writeImageOptionsAnnotation(image.getFlipRtl(), image.getRepeatStyle());
+      writer.write("%s %s();", imageResourceType.getName(), image.getName());
+    }
+  }
+
+  private void writeImageOptionsAnnotation(Boolean flipRtl,
+      RepeatStyle repeatStyle) {
+    if (flipRtl != null || repeatStyle != null) {
+      StringBuilder b = new StringBuilder("@ImageOptions(");
+      if (null != flipRtl) {
+        b.append("flipRtl=").append(flipRtl);
+        if (repeatStyle != null) {
+          b.append(", ");
+        }
+      }
+      if (repeatStyle != null) {
+        b.append(String.format("repeatStyle=%s.%s", repeatStyleType.getName(),
+            repeatStyle.toString()));
+      }
+      b.append(")");
+      writer.write(b.toString());
+    }
   }
 }

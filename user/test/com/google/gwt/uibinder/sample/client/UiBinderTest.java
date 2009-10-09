@@ -344,6 +344,18 @@ public class UiBinderTest extends GWTTestCase {
     String t = clicky.getPopupText();
     assertEquals("funny characters \" ' ' & < > > { }", t);
   }
+  
+  public void testImageResourceInImageWidget() {
+    assertEquals(widgetUi.prettyImage.getWidth(), widgetUi.babyWidget.getOffsetWidth());
+    assertEquals(widgetUi.prettyImage.getHeight(), widgetUi.babyWidget.getOffsetHeight());
+    assertEquals(widgetUi.prettyImage.getTop(), widgetUi.babyWidget.getOriginTop());
+    assertEquals(widgetUi.prettyImage.getLeft(), widgetUi.babyWidget.getOriginLeft());
+  }
+
+  public void testSpritedElement() {
+    assertEquals(widgetUi.prettyImage.getWidth(), widgetUi.simpleSpriteParagraph.getOffsetWidth());
+    assertEquals(widgetUi.prettyImage.getHeight(), widgetUi.simpleSpriteParagraph.getOffsetHeight());
+  }
 
   public void suppressForIEfail_testBizarrelyElementedWidgets() {
     assertInOrder(widgetUi.widgetCrazyTable.getInnerHTML().toLowerCase(),
