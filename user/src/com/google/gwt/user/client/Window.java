@@ -30,7 +30,6 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.impl.WindowImpl;
 
 import java.util.ArrayList;
@@ -131,39 +130,6 @@ public class Window {
     public static native void assign(String newURL) /*-{
       $wnd.location.assign(newURL);
     }-*/;
-
-    /**
-     * Create a {@link UrlBuilder} based on this {@link Location}.
-     * 
-     * @return the new builder
-     */
-    public static UrlBuilder createUrlBuilder() {
-      UrlBuilder builder = new UrlBuilder();
-      builder.setProtocol(getProtocol());
-      builder.setHost(getHost());
-      String path = getPath();
-      if (path != null && path.length() > 0) {
-        builder.setPath(path);
-      }
-      String hash = getHash();
-      if (hash != null && hash.length() > 0) {
-        builder.setHash(hash);
-      }
-      String port = getPort();
-      if (port != null && port.length() > 0) {
-        builder.setPort(Integer.parseInt(port));
-      }
-
-      // Add query parameters.
-      Map<String, List<String>> params = getParameterMap();
-      for (Map.Entry<String, List<String>> entry : params.entrySet()) {
-        List<String> values = new ArrayList<String>(entry.getValue());
-        builder.setParameter(entry.getKey(),
-            values.toArray(new String[values.size()]));
-      }
-
-      return builder;
-    }
 
     /**
      * Gets the string to the right of the URL's hash.
@@ -434,7 +400,7 @@ public class Window {
   private static boolean resizeHandlersInitialized;
   private static int lastResizeWidth;
   private static int lastResizeHeight;
-
+  
   private static final WindowImpl impl = GWT.create(WindowImpl.class);
 
   /**
@@ -512,8 +478,7 @@ public class Window {
    * Adds a listener to receive window scroll events.
    * 
    * @param listener the listener to be informed when the window is scrolled
-   * @deprecated use {@link Window#addWindowScrollHandler(ScrollHandler)}
-   *             instead
+   * @deprecated use {@link Window#addWindowScrollHandler(ScrollHandler)} instead
    */
   @Deprecated
   public static void addWindowScrollListener(WindowScrollListener listener) {

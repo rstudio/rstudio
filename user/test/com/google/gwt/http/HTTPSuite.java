@@ -20,7 +20,6 @@ import com.google.gwt.http.client.RequestBuilderTest;
 import com.google.gwt.http.client.RequestTest;
 import com.google.gwt.http.client.ResponseTest;
 import com.google.gwt.http.client.URLTest;
-import com.google.gwt.http.client.UrlBuilderTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -39,7 +38,6 @@ public class HTTPSuite {
     suite.addTestSuite(RequestBuilderTest.class);
     suite.addTestSuite(RequestTest.class);
     suite.addTestSuite(ResponseTest.class);
-    suite.addTestSuite(UrlBuilderTest.class);
 
     return suite;
   }
