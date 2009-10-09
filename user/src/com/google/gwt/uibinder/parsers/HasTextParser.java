@@ -28,7 +28,7 @@ public class HasTextParser implements ElementParser {
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
     // Widgets that implement HasText will use their elements' inner text.
-    String text = elem.consumeInnerText(new TextInterpreter(writer));
+    String text = elem.consumeInnerTextEscapedAsHtmlStringLiteral(new TextInterpreter(writer));
     if (text.trim().length() > 0) {
       writer.genStringPropertySet(fieldName, "text", text);
     }
