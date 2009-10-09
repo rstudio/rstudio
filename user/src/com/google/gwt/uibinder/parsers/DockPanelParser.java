@@ -37,6 +37,8 @@ public class DockPanelParser implements ElementParser {
     values.put("EAST", "com.google.gwt.user.client.ui.DockPanel.EAST");
     values.put("WEST", "com.google.gwt.user.client.ui.DockPanel.WEST");
     values.put("CENTER", "com.google.gwt.user.client.ui.DockPanel.CENTER");
+    values.put("LINE_START", "com.google.gwt.user.client.ui.DockPanel.LINE_START");
+    values.put("LINE_END", "com.google.gwt.user.client.ui.DockPanel.LINE_END");
   }
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
