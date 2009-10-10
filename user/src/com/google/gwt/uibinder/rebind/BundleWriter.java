@@ -19,14 +19,12 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.CssResource.Strict;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
-import com.google.gwt.uibinder.rebind.model.ImplicitDataResource;
 import com.google.gwt.uibinder.rebind.model.ImplicitImageResource;
 
 /**
@@ -40,11 +38,10 @@ public class BundleWriter {
   private final TypeOracle oracle;
 
   private final JClassType clientBundleType;
-  private final JClassType dataResourceType;
+  private final JClassType strictAnnotationType;
   private final JClassType imageOptionType;
   private final JClassType imageResourceType;
   private final JClassType repeatStyleType;
-  private final JClassType strictAnnotationType;
 
   public BundleWriter(ImplicitClientBundle bundleClass,
       PrintWriterManager writerManager, TypeOracle oracle,
@@ -56,11 +53,10 @@ public class BundleWriter {
     this.oracle = oracle;
 
     clientBundleType = oracle.findType(ClientBundle.class.getName());
-    dataResourceType = oracle.findType(DataResource.class.getCanonicalName());
+    strictAnnotationType = oracle.findType(Strict.class.getCanonicalName());
     imageOptionType = oracle.findType(ImageOptions.class.getCanonicalName());
     imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
     repeatStyleType = oracle.findType(RepeatStyle.class.getCanonicalName());
-    strictAnnotationType = oracle.findType(Strict.class.getCanonicalName());
   }
 
   public void write() throws UnableToCompleteException {
@@ -80,34 +76,25 @@ public class BundleWriter {
     }
 
     // Imports
-    writer.write("import %s;", clientBundleType.getQualifiedSourceName());
-    // TODO(rjrjr,bobv) Remove the strict import when strict becomes default, RSN
-    writer.write("import %s;", strictAnnotationType.getQualifiedSourceName());
-    writer.write("import %s;", dataResourceType.getQualifiedSourceName());
     writer.write("import %s;", imageResourceType.getQualifiedSourceName());
     writer.write("import %s;", imageOptionType.getQualifiedSourceName());
+    writer.write("import %s;", clientBundleType.getQualifiedSourceName());
+    writer.write("import %s;", strictAnnotationType.getQualifiedSourceName());
     writer.newline();
 
     // Open interface
     writer.write("public interface %s extends ClientBundle {",
         bundleClass.getClassName());
     writer.indent();
-    
+
     // Write css methods
     for (ImplicitCssResource css : bundleClass.getCssMethods()) {
-      // TODO(rjrjr,bobv) Remove the @Strict when strict becomes default, RSN
       writer.write("@Strict @Source(\"%s\")", css.getSource());
       writer.write("%s %s();", css.getClassName(), css.getName());
       writer.newline();
     }
-    
-    // Write data methods
-    for (ImplicitDataResource data : bundleClass.getDataMethods()) {
-      writer.write("@Source(\"%s\")", data.getSource());
-      writer.write("%s %s();", dataResourceType.getName(), data.getName());
-      writer.newline();
-    }
 
+    writer.newline();
     writeImageMethods();
 
     // Close interface.

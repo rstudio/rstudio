@@ -26,7 +26,7 @@ public class ImplicitImageResource {
   private final Boolean flipRtl;
   private final RepeatStyle repeatStyle;
 
-  ImplicitImageResource(
+  public ImplicitImageResource(
       String name, String source, Boolean flipRtl, RepeatStyle repeatStyle) {
     this.name = name;
     this.source = source;

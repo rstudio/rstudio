@@ -96,14 +96,6 @@
   }
 </ui:style>
 
-<ui:style field='cursorifficStyle'>
-  @url cursor heartCursorResource;
-  .cursor {
-    cursor:cursor,pointer;
-  }
-</ui:style>
-<ui:data field='heartCursorResource' src='heart.cur'/>
-
 <ui:style field='mySpritelyStyle'>
   @sprite .simpleSprite { 
     gwt-image: "prettyImage"; 
@@ -182,18 +174,14 @@
       </p>
 
       <p>I bet you like babies in your Image widgets.</p>
-      <div class='{cursorifficStyle.cursor}'>
       <gwt:Image ui:field='babyWidget' resource='{prettyImage}'/>
-      </div>
 
       <p ui:field='simpleSpriteParagraph' 
-          class='{mySpritelyStyle.simpleSprite} {mySpritelyStyle.garish}
-            {cursorifficStyle.cursor}' >
+          class='{mySpritelyStyle.simpleSprite} {mySpritelyStyle.garish}' >
         And sprites too
       </p>
 
-      <p class='{mySpritelyStyle.tilingSprite} {mySpritelyStyle.garish}
-          {cursorifficStyle.cursor}'>
+      <p class='{mySpritelyStyle.tilingSprite} {mySpritelyStyle.garish}'>
         Well how do you like  <br/>
         tiled sprited images...of babies!! <br/>
         Well of course you do. Who wouldn't? 
@@ -454,12 +442,10 @@
     <b>HTML:</b>
     <pre style="border: 1px dashed #666; padding: 5px 0;">
   &lt;div id="gwt-debug-joe" 
-      class="gwt-Label newStyle anotherStyle gwt-Label-dependentStyle 
-        gwt-Label-anotherDependentStyle"&gt;
+      class="gwt-Label newStyle anotherStyle gwt-Label-dependentStyle gwt-Label-anotherDependentStyle"&gt;
     A label with a debug id
   &lt;/div&gt;
-  &lt;button id="gwt-debug-myButton" class="gwt-Button buttonStyle" tabindex="0" 
-    type="button"&gt;Go&lt;/button&gt;</pre>
+  &lt;button id="gwt-debug-myButton" class="gwt-Button buttonStyle" tabindex="0" type="button"&gt;Go&lt;/button&gt;</pre>
 
     <gwt:FlowPanel>
       <gwt:Label ui:field="lblDebugId" debugId="joe" addStyleNames="newStyle, anotherStyle" addStyleDependentNames="dependentStyle, anotherDependentStyle">

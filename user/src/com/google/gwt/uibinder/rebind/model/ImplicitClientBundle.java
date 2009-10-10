@@ -20,17 +20,16 @@ import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 
 import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Models the ClientBundle to be generated from a ui.xml.
  */
 public class ImplicitClientBundle {
-  // LinkedHashSets for consistent order across recompiles
-  private final LinkedHashSet<ImplicitCssResource> cssMethods = new LinkedHashSet<ImplicitCssResource>();
-  private final LinkedHashSet<ImplicitImageResource> imageMethods = new LinkedHashSet<ImplicitImageResource>();
-  private final LinkedHashSet<ImplicitDataResource> dataMethods =  new LinkedHashSet<ImplicitDataResource>();
+
+  private final Set<ImplicitCssResource> cssMethods = new HashSet<ImplicitCssResource>();
+  private final Set<ImplicitImageResource> imageMethods = new HashSet<ImplicitImageResource>();
   private final String packageName;
   private final String className;
   private final String fieldName;
@@ -55,7 +54,7 @@ public class ImplicitClientBundle {
   /**
    * Called to declare a new CssResource accessor on this bundle.
    * 
-   * @param name the method name and the ui:field name
+   * @param name the method name
    * @param source path to the .css file resource
    * @param extendedInterface the public interface implemented by this
    *          CssResource, or null
@@ -71,24 +70,10 @@ public class ImplicitClientBundle {
   }
 
   /**
-   * Called to declare a new DataResource accessor on this bundle. 
-   * All params must be non-null
-   * 
-   * @param name the method name and the ui:field name
-   * @param source path to the resource
-   * @return
-   */
-  public ImplicitDataResource createDataResource(String name, String source) {
-    ImplicitDataResource data = new ImplicitDataResource(name, source);
-    dataMethods.add(data);
-    return data;
-  }
-
-  /**
    * Called to declare a new ImageResource accessor on this bundle.
    * 
-   * @param name the method name and the ui:field name
-   * @param source path to the image resource, or null if none was specified
+   * @param name the method name
+   * @param source path the image resource, or null if none was specified
    * @param flipRtl value for the flipRtl ImageOption, or null if none was
    *          specified
    * @param repeatStyle value of the RepeatStyle ImageOption, or null if none
@@ -110,14 +95,10 @@ public class ImplicitClientBundle {
     return Collections.unmodifiableSet(cssMethods);
   }
 
-  public Set<ImplicitDataResource> getDataMethods() {
-    return Collections.unmodifiableSet(dataMethods);
-  }
-
   public String getFieldName() {
     return fieldName;
   }
-  
+
   public Set<ImplicitImageResource> getImageMethods() {
     return Collections.unmodifiableSet(imageMethods);
   }
