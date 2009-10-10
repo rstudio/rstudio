@@ -44,7 +44,7 @@ public class ImplicitCssResource {
   private final MortalLogger logger;
   private File generatedFile;
 
-  public ImplicitCssResource(String packageName, String className, String name,
+  ImplicitCssResource(String packageName, String className, String name,
       String source, JClassType extendedInterface, String body,
       MortalLogger logger) {
     this.packageName = packageName;

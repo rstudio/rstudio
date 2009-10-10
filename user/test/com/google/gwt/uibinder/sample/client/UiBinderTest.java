@@ -25,6 +25,7 @@ import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.DockPanel;
@@ -352,6 +353,16 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals(widgetUi.prettyImage.getLeft(), widgetUi.babyWidget.getOriginLeft());
   }
 
+  interface HeartBundle extends ClientBundle {
+    @Source("heart.cur")
+    DataResource heart();
+  }
+  
+  public void testDataResource() {
+    HeartBundle b = GWT.create(HeartBundle.class);
+    assertEquals(b.heart().getUrl(), widgetUi.heartCursorResource.getUrl());
+  }
+  
   public void testSpritedElement() {
     assertEquals(widgetUi.prettyImage.getWidth(), widgetUi.simpleSpriteParagraph.getOffsetWidth());
     assertEquals(widgetUi.prettyImage.getHeight(), widgetUi.simpleSpriteParagraph.getOffsetHeight());
