@@ -117,7 +117,7 @@ public class Minify extends ToolBase {
     }
 
     try {
-      CssStylesheet sheet = GenerateCssAst.exec(logger, new URL[] {source});
+      CssStylesheet sheet = GenerateCssAst.exec(logger, source);
       TextOutput out = new DefaultTextOutput(!pretty);
       (new CssGenerationVisitor(out)).accept(sheet);
       System.out.println(out.toString());

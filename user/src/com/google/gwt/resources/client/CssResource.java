@@ -136,6 +136,10 @@ import java.lang.annotation.Target;
  * 
  * If a <code>String foo()</code> method were defined in <code>MyCss</code>, it
  * would return the string value "<code>foo</code>".
+ * <p>
+ * The utility tool <code>com.google.gwt.resources.css.InterfaceGenerator</code>
+ * can be used to automatically generate a Java interface from a
+ * CssResource-compatible CSS file.
  * 
  * @see <a href="http://code.google.com/p/google-web-toolkit/wiki/CssResource"
  *      >CssResource design doc</a>

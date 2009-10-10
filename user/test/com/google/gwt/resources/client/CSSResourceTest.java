@@ -19,14 +19,12 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.CssResource.Import;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
-import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.resources.client.CssResource.Shared;
 
 /**
  * Contains various full-stack tests of the CssResource system.
  */
 public class CSSResourceTest extends GWTTestCase {
-
   interface ChildResources extends Resources {
     ChildResources INSTANCE = GWT.create(ChildResources.class);
 
@@ -62,6 +60,63 @@ public class CSSResourceTest extends GWTTestCase {
     float rawFloat();
 
     int rawInt();
+  }
+
+  /**
+   * Regenerate this interface by running InterfaceGenerator over test.css.
+   */
+  interface FullTestCss extends CssResource {
+    String affectedBySprite();
+
+    String blahA();
+
+    String css3Color();
+
+    String externalA();
+
+    String externalB();
+
+    String externalC();
+
+    String extraSpriteClass();
+
+    @ClassName("FAIL")
+    String fAIL();
+
+    @ClassName("may-combine")
+    String mayCombine();
+
+    @ClassName("may-combine2")
+    String mayCombine2();
+
+    @ClassName("may-merge")
+    String mayMerge();
+
+    @ClassName("may-not-combine")
+    String mayNotCombine();
+
+    @ClassName("may-not-combine2")
+    String mayNotCombine2();
+
+    @ClassName("may-not-merge")
+    String mayNotMerge();
+
+    @ClassName("may-not-merge-or-combine-because-of-this")
+    String mayNotMergeOrCombineBecauseOfThis();
+
+    String multiClassA();
+
+    String multiClassB();
+
+    String replacement();
+
+    @ClassName("replacement-not-java-ident")
+    String replacementNotJavaIdent();
+
+    String spriteClass();
+
+    @ClassName("this-does-not-matter")
+    String thisDoesNotMatter();
   }
 
   interface HasDescendants extends CssResource {
@@ -116,8 +171,7 @@ public class CSSResourceTest extends GWTTestCase {
     MyCssResourceB b();
 
     @Source("test.css")
-    @NotStrict
-    MyCssResourceWithSprite css();
+    FullTestCss css();
 
     @Source("32x32.png")
     DataResource dataMethod();
@@ -186,7 +240,7 @@ public class CSSResourceTest extends GWTTestCase {
   }
 
   public void testCss() {
-    MyCssResourceWithSprite css = Resources.INSTANCE.css();
+    FullTestCss css = Resources.INSTANCE.css();
     String text = css.getText();
     report(text);
 
@@ -202,7 +256,7 @@ public class CSSResourceTest extends GWTTestCase {
     assertFalse("replacement".equals(css.replacement()));
     assertTrue(text.contains("." + css.replacement()));
     assertTrue(text.contains("." + css.replacement() + ":after"));
-    assertTrue(text.contains("." + css.nameOverride()));
+    assertTrue(text.contains("." + css.replacementNotJavaIdent()));
 
     // Make sure renaming for multi-class selectors (.foo.bar) works
     assertFalse("multiClassA".equals(css.multiClassA()));
@@ -218,8 +272,8 @@ public class CSSResourceTest extends GWTTestCase {
 
     // Check interestingly-named idents
     assertTrue(text.contains("\\-some-wacky-extension"));
-    assertTrue(text.contains(".ns\\:tag"));
-    assertTrue(text.contains(".ns\\:tag:pseudo"));
+    assertTrue(text.contains("ns\\:tag"));
+    assertTrue(text.contains("ns\\:tag:pseudo"));
 
     // Check escaped string values
     assertTrue(text.contains("\"Hello\\\\\\\" world\""));
@@ -247,12 +301,14 @@ public class CSSResourceTest extends GWTTestCase {
     assertTrue(text.indexOf("static:PASSED") < text.indexOf("runtime:PASSED"));
     assertTrue(text.indexOf("before:merge") != -1);
     assertTrue(text.indexOf("before:merge") < text.indexOf("after:merge"));
-    assertTrue(text.indexOf(".may-combine,.may-combine2") != -1);
+    assertTrue(text.indexOf("." + css.mayCombine() + ",." + css.mayCombine2()) != -1);
     assertTrue(text.indexOf("merge:merge") != -1);
-    assertTrue(text.indexOf("merge:merge") < text.indexOf("may-not-combine"));
+    assertTrue(text.indexOf("merge:merge") < text.indexOf("."
+        + css.mayNotCombine()));
     assertTrue(text.indexOf("may-not-combine") < text.indexOf("prevent:true"));
     assertTrue(text.indexOf("prevent:true") < text.indexOf("prevent-merge:true"));
-    assertTrue(text.indexOf("prevent:true") < text.indexOf("may-not-combine2"));
+    assertTrue(text.indexOf("prevent:true") < text.indexOf("."
+        + css.mayNotCombine2()));
 
     // Check commonly-used CSS3 constructs
     assertTrue(text.contains("background-color:rgba(0,0,0,0.5);"));

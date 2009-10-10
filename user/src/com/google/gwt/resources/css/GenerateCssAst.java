@@ -614,9 +614,11 @@ public class GenerateCssAst {
   private static final String VALUE_FUNCTION_NAME = "value";
 
   /**
-   * Create a CssStylesheet from the contents of a URL.
+   * Create a CssStylesheet from the contents of one or more URLs. If multiple
+   * URLs are provided, the generated stylesheet will be created as though the
+   * contents of the URLs had been concatenated.
    */
-  public static CssStylesheet exec(TreeLogger logger, URL[] stylesheets)
+  public static CssStylesheet exec(TreeLogger logger, URL... stylesheets)
       throws UnableToCompleteException {
     Parser p = new Parser();
     Errors errors = new Errors(logger);
@@ -652,8 +654,8 @@ public class GenerateCssAst {
    * Expresses an rgb function as a hex expression.
    * 
    * @param colors a sequence of LexicalUnits, assumed to be
-   *          <code>(VAL COMMA VAL COMMA VAL)</code>
-   *     where VAL can be an INT or a PERCENT (which is then converted to INT)
+   *          <code>(VAL COMMA VAL COMMA VAL)</code> where VAL can be an INT or
+   *          a PERCENT (which is then converted to INT)
    * @return the minimal hex expression for the RGB color values
    */
   private static Value colorValue(LexicalUnit colors) {
@@ -745,11 +747,11 @@ public class GenerateCssAst {
   /**
    * Return an integer value from 0-255 for a component of an RGB color.
    * 
-   * @param color typed value from the CSS parser, which may be an INTEGER or
-   *     a PERCENTAGE
+   * @param color typed value from the CSS parser, which may be an INTEGER or a
+   *          PERCENTAGE
    * @return integer value from 0-255
    * @throws IllegalArgumentException if the color is not an INTEGER or
-   *     PERCENTAGE value
+   *           PERCENTAGE value
    */
   private static int getRgbComponentValue(LexicalUnit color) {
     switch (color.getLexicalUnitType()) {

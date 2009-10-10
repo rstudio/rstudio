@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -78,7 +78,7 @@ public class ImplicitCssResource {
 
   /**
    * @return the set of CSS classnames in the underlying .css files
-   *
+   * 
    * @throws UnableToCompleteException if the user has called for a .css file we
    *           can't find.
    */
@@ -89,7 +89,7 @@ public class ImplicitCssResource {
       urls = getExternalCss();
     } else {
       try {
-        urls = new URL[] {getGeneratedFile().toURL()};
+        urls = new URL[] {getGeneratedFile().toURI().toURL()};
       } catch (MalformedURLException e) {
         throw new RuntimeException(e);
       }

@@ -112,11 +112,11 @@ div-with-literal {
   top: literal("expression(document.compatMode==\"CSS1Compat\" ? documentElement.scrollTop:document.body.scrollTop \\ 2)");
 }
 
-.ns\:tag {
+ns\:tag {
   border: red;
 }
 
-.ns\:tag:pseudo {
+ns\:tag:pseudo {
   content : "blah";
 }
 

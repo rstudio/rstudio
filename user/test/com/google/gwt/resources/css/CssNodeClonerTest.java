@@ -24,7 +24,6 @@ import com.google.gwt.resources.css.ast.CssSelector;
 import com.google.gwt.resources.css.ast.CssStylesheet;
 import com.google.gwt.resources.rg.CssTestCase;
 
-import java.net.URL;
 import java.util.List;
 
 /**
@@ -34,8 +33,8 @@ public class CssNodeClonerTest extends CssTestCase {
 
   public void testClone() throws UnableToCompleteException {
     CssStylesheet sheet = GenerateCssAst.exec(TreeLogger.NULL,
-        new URL[] {getClass().getClassLoader().getResource(
-            "com/google/gwt/resources/client/test.css")});
+        getClass().getClassLoader().getResource(
+            "com/google/gwt/resources/client/test.css"));
 
     CssStylesheet cloned = CssNodeCloner.clone(CssStylesheet.class, sheet);
 
@@ -45,8 +44,8 @@ public class CssNodeClonerTest extends CssTestCase {
 
   public void testCloneList() throws UnableToCompleteException {
     CssStylesheet sheet = GenerateCssAst.exec(TreeLogger.NULL,
-        new URL[] {getClass().getClassLoader().getResource(
-            "com/google/gwt/resources/client/test.css")});
+        getClass().getClassLoader().getResource(
+            "com/google/gwt/resources/client/test.css"));
 
     List<CssNode> cloned = CssNodeCloner.clone(CssNode.class, sheet.getNodes());
 

@@ -144,8 +144,8 @@ public class CssTestCase extends TestCase {
     CssStylesheet testSheet = null;
 
     try {
-      expectedSheet = GenerateCssAst.exec(logger, new URL[] {expected});
-      testSheet = GenerateCssAst.exec(logger, new URL[] {test});
+      expectedSheet = GenerateCssAst.exec(logger, expected);
+      testSheet = GenerateCssAst.exec(logger, test);
     } catch (UnableToCompleteException e) {
       fail("Unable to parse stylesheet");
     }
