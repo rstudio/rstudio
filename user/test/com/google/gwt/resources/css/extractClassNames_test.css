@@ -21,6 +21,10 @@
 .selector2 .selector3 {
 }
 
+.prefixed-selector {
+}
+
+/* This is not a class selector */
 fail {
 }
 

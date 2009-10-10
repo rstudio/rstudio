@@ -125,6 +125,19 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
   private static final String KEY_CLASS_PREFIX = "prefix";
   private static final String KEY_CLASS_COUNTER = "counter";
 
+  /**
+   * Returns the import prefix for a type, including the trailing hyphen.
+   */
+  public static String getImportPrefix(JClassType importType) {
+    String prefix = importType.getSimpleSourceName();
+    ImportedWithPrefix exp = importType.getAnnotation(ImportedWithPrefix.class);
+    if (exp != null) {
+      prefix = exp.value();
+    }
+
+    return prefix + "-";
+  }
+
   public static boolean haveCommonProperties(CssRule a, CssRule b) {
     if (a.getProperties().size() == 0 || b.getProperties().size() == 0) {
       return false;
@@ -369,6 +382,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
   public String createAssignment(TreeLogger logger, ResourceContext context,
       JMethod method) throws UnableToCompleteException {
 
+    TypeOracle typeOracle = context.getGeneratorContext().getTypeOracle();
     SourceWriter sw = new StringSourceWriter();
     // Write the expression to create the subtype.
     sw.println("new " + method.getReturnType().getQualifiedSourceName()
@@ -385,16 +399,14 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     if (imp != null) {
       boolean fail = false;
       for (Class<? extends CssResource> clazz : imp.value()) {
-        JClassType importType = context.getGeneratorContext().getTypeOracle().findType(
-            clazz.getName().replace('$', '.'));
-        assert importType != null;
-        String prefix = importType.getSimpleSourceName();
-        ImportedWithPrefix exp = importType.getAnnotation(ImportedWithPrefix.class);
-        if (exp != null) {
-          prefix = exp.value();
-        }
+        JClassType importType = typeOracle.findType(clazz.getName().replace(
+            '$', '.'));
+        assert importType != null : "TypeOracle does not have type "
+            + clazz.getName();
 
-        if (replacementsWithPrefix.put(prefix + "-",
+        String prefix = getImportPrefix(importType);
+
+        if (replacementsWithPrefix.put(prefix,
             computeReplacementsForType(importType)) != null) {
           logger.log(TreeLogger.ERROR,
               "Multiple imports that would use the prefix " + prefix);

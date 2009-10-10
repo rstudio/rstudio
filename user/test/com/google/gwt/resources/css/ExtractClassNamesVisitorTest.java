@@ -29,7 +29,23 @@ import java.util.TreeSet;
 public class ExtractClassNamesVisitorTest extends CssTestCase {
 
   public void test() throws UnableToCompleteException {
-    ExtractClassNamesVisitor v = new ExtractClassNamesVisitor();
+    ExtractClassNamesVisitor v = new ExtractClassNamesVisitor(
+        new TreeSet<String>());
+
+    test(TreeLogger.NULL, "extractClassNames", false, v);
+
+    Set<String> expected = new TreeSet<String>(Arrays.asList("selector1",
+        "selector2", "selector3", "external1", "external2", "external3",
+        "prefixed-selector"));
+    Set<String> actual = new TreeSet<String>(v.getFoundClasses());
+
+    assertEquals(expected, actual);
+  }
+
+  public void testImportedClasses() throws UnableToCompleteException {
+    ExtractClassNamesVisitor v = new ExtractClassNamesVisitor(
+        new TreeSet<String>(Arrays.asList("blah-selector-", "prefixed-",
+            "postfixed-")));
 
     test(TreeLogger.NULL, "extractClassNames", false, v);
 
