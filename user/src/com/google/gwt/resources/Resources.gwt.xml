@@ -84,12 +84,6 @@
   <define-configuration-property name="CssResource.mergeEnabled" is-multi-valued="false" />
   <set-configuration-property name="CssResource.mergeEnabled" value="true" />
 
-  <!-- This forces all CssResource accessor functions to have the @Strict -->
-  <!-- annotation. This is intended primarily for application developers and -->
-  <!-- the library test code. -->
-  <define-configuration-property name="CssResource.strictAccessors" is-multi-valued="false" />
-  <set-configuration-property name="CssResource.strictAccessors" value="false" />
-
   <!-- This allows the developer to use shorter obfuscated class names. -->
   <!-- Is is valid to extend this property to use a custom name. -->
   <define-configuration-property name="CssResource.obfuscationPrefix" is-multi-valued="false" />

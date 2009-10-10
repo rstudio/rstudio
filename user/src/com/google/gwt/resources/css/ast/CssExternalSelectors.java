@@ -22,8 +22,6 @@ import java.util.Set;
  * An AST node that allows the developer to indicate that certain class
  * selectors appearing in the stylesheet should be considered external and not
  * subject to obfuscation requirements.
- * 
- * @see CssResource.Strict
  */
 public class CssExternalSelectors extends CssNode {
 

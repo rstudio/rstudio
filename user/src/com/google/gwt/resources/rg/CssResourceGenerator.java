@@ -713,54 +713,27 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     computeObfuscatedNames(logger, classPrefix, cssResourceSubtypes);
   }
 
+  /**
+   * Check for the presence of the NotStrict annotation on the method. This will
+   * also perform some limited sanity-checking for the now-deprecated Strict
+   * annotation.
+   */
+  @SuppressWarnings("deprecation")
   private boolean isStrict(TreeLogger logger, ResourceContext context,
       JMethod method) {
     Strict strictAnnotation = method.getAnnotation(Strict.class);
     NotStrict nonStrictAnnotation = method.getAnnotation(NotStrict.class);
-    boolean strict = false;
+    boolean strict = true;
 
     if (strictAnnotation != null && nonStrictAnnotation != null) {
       // Both annotations
       logger.log(TreeLogger.WARN, "Contradictory annotations "
           + Strict.class.getName() + " and " + NotStrict.class.getName()
           + " applied to the CssResource accessor method; assuming strict");
-      strict = true;
-
-    } else if (strictAnnotation == null && nonStrictAnnotation == null) {
-      // Neither annotation
-
-      /*
-       * Fall back to using the to-be-deprecated strictAccessor property.
-       */
-      try {
-        PropertyOracle propertyOracle = context.getGeneratorContext().getPropertyOracle();
-        ConfigurationProperty prop = propertyOracle.getConfigurationProperty("CssResource.strictAccessors");
-        String propertyValue = prop.getValues().get(0);
-        if (Boolean.valueOf(propertyValue)) {
-          logger.log(TreeLogger.WARN,
-              "CssResource.strictAccessors is true, but " + method.getName()
-                  + "() is missing the @Strict annotation.");
-          strict = true;
-        }
-      } catch (BadPropertyValueException e) {
-        // Ignore
-      }
-
-      if (!strict) {
-        // This is a temporary warning during the transitional phase
-        logger.log(TreeLogger.WARN, "Accessor does not specify "
-            + Strict.class.getName() + " or " + NotStrict.class.getName()
-            + ". The default behavior will change from non-strict "
-            + "to strict in a future revision.");
-      }
 
     } else if (nonStrictAnnotation != null) {
       // Only the non-strict annotation
       strict = false;
-
-    } else if (strictAnnotation != null) {
-      // Only the strict annotation
-      strict = true;
     }
 
     return strict;

@@ -21,7 +21,6 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.CssResource.Strict;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 
@@ -34,7 +33,6 @@ public class DomBasedUi {
    * Resources for this template.
    */
   public interface Resources extends ClientBundle {
-    @Strict
     @Source("DomBasedUi.css")
     Style style();
   }

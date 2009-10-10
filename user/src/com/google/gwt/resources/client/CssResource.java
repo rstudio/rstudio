@@ -50,8 +50,8 @@ import java.lang.annotation.Target;
  * <li>{@code @eval NAME Java-expression; .myClass background: NAME;} Define a
  * constant based on a Java expression.</li>
  * <li>{@code @external class-name, class-name, ...;} Disable obfuscation for
- * specific class selectors and exclude those class selectors from
- * {@link Strict} requirements.</li>
+ * specific class selectors and exclude those class selectors from strictness
+ * requirements.</li>
  * <li><code>{@literal @if} [!]property list of values {ruleBlock}</code> Include or
  * exclude CSS rules based on the value of a deferred-binding property. Also
  * {@code @elif} and {@code @else} follow the same pattern.<br/>
@@ -91,6 +91,51 @@ import java.lang.annotation.Target;
  * </pre>
  * </li>
  * </ul>
+ * 
+ * <p>
+ * Any class selectors that do not correspond with a String accessor method in
+ * the return type will trigger a compilation error. This ensures that the
+ * CssResource does not contribute any unobfuscated class selectors into the
+ * global CSS namespace. Strict mode can be disabled by annotating the
+ * ClientBundle method declaration with {@link NotStrict}, however this is only
+ * recommended for interacting with legacy CSS.
+ * 
+ * <p>
+ * Given these interfaces:
+ * 
+ * <pre>
+ * interface MyCss extends CssResource {
+ *   String someClass();
+ * }
+ * 
+ * interface MyBundle extends ClientBundle {
+ *  {@literal @Source("my.css")}
+ *   MyCss css();
+ * }
+ * </pre>
+ * 
+ * the source CSS will fail to compile if it does not contain exactly the one
+ * class selector defined in the MyCss type.
+ * <p>
+ * The {@code @external} at-rule can be used in strict mode to indicate that
+ * certain class selectors are exempt from the strict semantics. Class selectors
+ * marked as external will not be obfuscated and are not required to have string
+ * accessor functions. Consider the following example in conjunction with the
+ * above <code>MyCss</code> interface:
+ * 
+ * <pre>
+   * {@literal @external} .foo, .bar;
+   * .foo .someClass .bar { .... }
+   * </pre>
+ * 
+ * The resulting CSS would look like:
+ * 
+ * <pre>
+   * .foo .A1234 .bar { .... }
+   * </pre>
+ * 
+ * If a <code>String foo()</code> method were defined in <code>MyCss</code>, it
+ * would return the string value "<code>foo</code>".
  * 
  * @see <a href="http://code.google.com/p/google-web-toolkit/wiki/CssResource"
  *      >CssResource design doc</a>
@@ -183,6 +228,14 @@ public interface CssResource extends ResourcePrototype {
    * method in the return type or an {@code @external} declaration should not
    * trigger a compilation error. This annotation is not recommended for new
    * code.
+   * 
+   * <pre>
+   * interface Resources extends ClientBundle {
+   *  {@literal @NotStrict}
+   *  {@literal @Source}("legacy.css")
+   *   CssResource css();
+   * }
+   * </pre>
    */
   @Documented
   @Target(ElementType.METHOD)
@@ -234,52 +287,11 @@ public interface CssResource extends ResourcePrototype {
   }
 
   /**
-   * The presence of this annotation on a CssResource accessor method indicates
-   * that any class selectors that do not correspond with a String accessor
-   * method in the return type should trigger a compilation error. In the
-   * default case, any unobfuscatable class selectors will be emitted as-is.
-   * This annotation ensures that the CssResource does not contribute any
-   * unobfuscated class selectors into the global CSS namespace and is
-   * recommended as the default behavior for CssResources.
-   * <p>
-   * Given these interfaces:
+   * This annotation is a no-op.
    * 
-   * <pre>
-   * interface MyCss extends CssResource {
-   *   String someClass();
-   * }
-   * 
-   * interface MyBundle extends ClientBundle {
-   *  {@literal @Source("my.css")}
-   *  {@literal @Strict}
-   *   MyCss css();
-   * }
-   * </pre>
-   * 
-   * the source CSS will fail to compile if it does not contain exactly the one
-   * class selector defined in the MyCss type.
-   * <p>
-   * The {@code @external} at-rule can be used in strict mode to indicate that
-   * certain class selectors are exempt from the strict semantics. Class
-   * selectors marked as external will not be obfuscated and are not required to
-   * have string accessor functions. Consider the following example in
-   * conjunction with the above <code>MyCss</code> interface:
-   * 
-   * <pre>
-   * {@literal @external} .foo, .bar;
-   * .foo .someClass .bar { .... }
-   * </pre>
-   * 
-   * The resulting CSS would look like:
-   * 
-   * <pre>
-   * .foo .A1234 .bar { .... }
-   * </pre>
-   * 
-   * If a <code>String foo()</code> method were defined in <code>MyCss</code>,
-   * it would return the string value "<code>foo</code>".
+   * @deprecated Strict mode is now the default behavior for CssResource
    */
-  @Documented
+  @Deprecated
   @Target(ElementType.METHOD)
   public @interface Strict {
   }

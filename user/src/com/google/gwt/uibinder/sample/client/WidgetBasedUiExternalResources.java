@@ -17,7 +17,6 @@ package com.google.gwt.uibinder.sample.client;
 
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.CssResource.Strict;
 
 /**
  * Sample external resources used by {@link WidgetBasedUi}, to test
@@ -34,6 +33,5 @@ public interface WidgetBasedUiExternalResources extends ClientBundle {
   }
 
   @Source("WidgetBasedUiExternal.css")
-  @Strict
   MyCss style();
 }

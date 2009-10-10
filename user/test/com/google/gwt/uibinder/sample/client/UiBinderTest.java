@@ -25,6 +25,7 @@ import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.DockPanel;
@@ -238,7 +239,8 @@ public class UiBinderTest extends GWTTestCase {
 
   interface Bundle extends ClientBundle {
     @Source("WidgetBasedUi.css")
-    public WidgetBasedUi.Style style();
+    @NotStrict
+    WidgetBasedUi.Style style();
   }
 
   public void testNoOverrideInheritedSharedCssClasses() {

@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.resources.client.CssResource.Strict;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
@@ -38,7 +37,6 @@ public class BundleWriter {
   private final TypeOracle oracle;
 
   private final JClassType clientBundleType;
-  private final JClassType strictAnnotationType;
   private final JClassType imageOptionType;
   private final JClassType imageResourceType;
   private final JClassType repeatStyleType;
@@ -53,7 +51,6 @@ public class BundleWriter {
     this.oracle = oracle;
 
     clientBundleType = oracle.findType(ClientBundle.class.getName());
-    strictAnnotationType = oracle.findType(Strict.class.getCanonicalName());
     imageOptionType = oracle.findType(ImageOptions.class.getCanonicalName());
     imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
     repeatStyleType = oracle.findType(RepeatStyle.class.getCanonicalName());
@@ -79,7 +76,6 @@ public class BundleWriter {
     writer.write("import %s;", imageResourceType.getQualifiedSourceName());
     writer.write("import %s;", imageOptionType.getQualifiedSourceName());
     writer.write("import %s;", clientBundleType.getQualifiedSourceName());
-    writer.write("import %s;", strictAnnotationType.getQualifiedSourceName());
     writer.newline();
 
     // Open interface
@@ -89,7 +85,7 @@ public class BundleWriter {
 
     // Write css methods
     for (ImplicitCssResource css : bundleClass.getCssMethods()) {
-      writer.write("@Strict @Source(\"%s\")", css.getSource());
+      writer.write("@Source(\"%s\")", css.getSource());
       writer.write("%s %s();", css.getClassName(), css.getName());
       writer.newline();
     }
