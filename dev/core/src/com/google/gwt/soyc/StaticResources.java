@@ -34,12 +34,7 @@ public class StaticResources {
    * cannot be iterated over.
    */
   private static String[] resourceNames = new String[] {
-      "classLevel.css", "common.css", "roundedCorners.css", "images/1bl.gif",
-      "images/1br.gif", "images/1tl.gif", "images/1tr.gif", "images/bb.gif",
-      "images/blc.gif", "images/brc.gif", "images/l.gif", "images/r.gif",
-      "images/roundedbox_lo.gif", "images/roundedbox_lu.gif",
-      "images/roundedbox_ro.gif", "images/roundedbox_ru.gif", "images/tb.gif",
-      "images/tlc.gif", "images/trc.gif",};
+      "soycStyling.css",};
 
   public static void emit(OutputDirectory outDir) throws IOException {
     String prefix = StaticResources.class.getPackage().getName().replace('.',

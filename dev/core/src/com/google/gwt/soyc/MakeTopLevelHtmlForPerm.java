@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -102,7 +103,7 @@ public class MakeTopLevelHtmlForPerm {
    */
   private static final Pattern PATTERN_SP_INT = Pattern.compile("sp([0-9]+)");
 
-  public static String escapeXml(String unescaped) {
+  private static String escapeXml(String unescaped) {
     String escaped = unescaped.replaceAll("\\&", "&amp;");
     escaped = escaped.replaceAll("\\<", "&lt;");
     escaped = escaped.replaceAll("\\>", "&gt;");
@@ -115,24 +116,7 @@ public class MakeTopLevelHtmlForPerm {
       Map<String, String> allPermsInfo, OutputDirectory outDir)
       throws IOException {
     PrintWriter outFile = new PrintWriter(outDir.getOutputStream("index.html"));
-
-    outFile.println("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML//EN\">");
-    outFile.println("<html>");
-    outFile.println("<head>");
-    outFile.println("  <title>Story of Your Compile - Top Level Dashboard for all Permutations</title>");
-    outFile.println("<style type=\"text/css\">");
-    outFile.println("body {background-color: #728FCE}");
-    outFile.println("h2 {background-color: transparent}");
-    outFile.println("</style>");
-    outFile.println("</head>");
-
-    outFile.println("<body>");
-    outFile.println("<center>");
-    outFile.println("<h1>Story of Your Compile</h1>");
-    outFile.println("<hr>");
-    outFile.println("<h3>Story of Your Compile - Overview of Permutations</h3>");
-    outFile.println("<hr>");
-
+    addStandardHtmlProlog(outFile, "Compile report", "Overview of permutations");
     outFile.println("<div style='overflow:auto; background-color:white'>");
     outFile.println("<center>");
     for (String permutationId : allPermsInfo.keySet()) {
@@ -146,23 +130,8 @@ public class MakeTopLevelHtmlForPerm {
       }
     }
     outFile.println("</center>");
-    outFile.println("</div>");
     addStandardHtmlEnding(outFile);
     outFile.close();
-  }
-
-  private static void addCenteredHeader(final PrintWriter outFile, String header) {
-    outFile.println("<hr>");
-    outFile.println("<b>" + header + "</b>");
-    outFile.println("<hr>");
-  }
-
-  /**
-   * Adds a header line indicating which breakdown is being analyzed.
-   */
-  private static void addHeaderWithBreakdownContext(SizeBreakdown breakdown,
-      final PrintWriter outFile) {
-    addCenteredHeader(outFile, headerLineForBreakdown(breakdown));
   }
 
   private static void addStandardHtmlEnding(final PrintWriter out) {
@@ -171,29 +140,34 @@ public class MakeTopLevelHtmlForPerm {
     out.println("</html>");
   }
 
-  private static void addStandardHtmlProlog(final PrintWriter out,
-      String title, String header) {
-    out.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-    out.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-    out.println("<html>");
-    out.println("<head>");
-    out.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    out.println("<title>" + title + "</title>");
-    out.println("</head>");
-
-    out.println("<style type=\"text/css\">");
-    out.println("body {background-color: #728FCE}");
-    out.println("h2 {background-color: transparent}");
-    out.println("p {background-color: fuchsia}");
-    out.println("</style>");
-
-    out.println("<body>");
-    out.println("<center>");
-    out.println("<h2>" + title + "</h2>");
-    if (header != null) {
-      addCenteredHeader(out, header);
+  private static void addStandardHtmlProlog(final PrintWriter outFile, String header,
+      String barText) {
+    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+    outFile.println("<html>");
+    outFile.println("<head>");
+    if ((header != null) && (header.compareTo("") != 0)) {
+      outFile.println("<title>" + header + "</title>");
+    } else {
+      outFile.println("<title/>");
     }
-    out.println("</center>");
+    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;chars  et=ISO-8859-1\">");
+    outFile.println("<link rel=\"stylesheet\" href=\"soycStyling.css\" media=\"screen\">");
+    outFile.println("</head>");
+    outFile.println("<body> ");
+    outFile.println("<div>");
+    outFile.println("<h2 id='header'>");
+    outFile.println("<img id='logo' src=\"http://code.google.com/webtoolkit/images/gwt-logo.png\"/>");
+    outFile.println(header);
+    outFile.println("</h2>");
+    outFile.println("</div>");
+    if ((barText != null) && (barText.compareTo("") != 0)) {
+      outFile.println("<div id=\"topBar\">");
+      outFile.println(barText);
+      outFile.println("</div>");
+    } else {
+      outFile.println("<div id=\"topBar\"><br></div>");
+    }
   }
 
   private static String classesInPackageFileName(SizeBreakdown breakdown,
@@ -236,6 +210,14 @@ public class MakeTopLevelHtmlForPerm {
     this.outDir = outDir;
   }
 
+  /**
+   * Adds a header line indicating which breakdown is being analyzed.
+   */
+  private void addHeaderWithBreakdownContext(SizeBreakdown breakdown,
+      final PrintWriter outFile, String header) {
+    addStandardHtmlProlog(outFile, header, headerLineForBreakdown(breakdown));
+  }
+
   public void makeBreakdownShell(SizeBreakdown breakdown) throws IOException {
     Map<String, CodeCollection> nameToCodeColl = breakdown.nameToCodeColl;
     Map<String, LiteralsCollection> nameToLitColl = breakdown.nameToLitColl;
@@ -247,54 +229,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<html>");
     outFile.println("<head>");
     outFile.println("  <title>Story of Your Compile - Top Level Dashboard for Permutation</title>");
-    outFile.println("  <link rel=\"stylesheet\" href=\"common.css\">");
-    outFile.println("  <style type=\"text/css\">");
-    outFile.println(" body {");
-    outFile.println("   background-color: #728FCE;");
-    outFile.println(" }");
-
-    outFile.println(".abs {");
-    outFile.println("  position: absolute;");
-    outFile.println(" overflow: hidden;");
-    outFile.println(" }");
-
-    outFile.println(" .mainHeader {");
-    outFile.println("   left:0; right: 0;");
-    outFile.println("   top:0; height: 6em;");
-    outFile.println("  text-align: center;");
-    outFile.println("}");
-
-    outFile.println(".mainContent {");
-    outFile.println("  left:0; right: 0;");
-    outFile.println("  top: 6em; bottom: 0;");
-    outFile.println("}");
-
-    outFile.println(".header {");
-    outFile.println("  left:0; right: 0;");
-    outFile.println(" top:0; height: 5em;");
-    outFile.println("  padding: 0.5em;");
-    outFile.println("}");
-
-    outFile.println(".innerContent {");
-    outFile.println("   left:0; right: 0;");
-    outFile.println("  top: 2em; bottom: 0;");
-    outFile.println("}");
-
-    outFile.println(".frame {");
-    outFile.println(" width: 100%; height: 100%;");
-    outFile.println("  border: 0px;");
-    outFile.println("}");
-
-    outFile.println(".packages {");
-    outFile.println(" left:0; right: 0;");
-    outFile.println(" top:0; bottom: 50%;");
-    outFile.println("}");
-
-    outFile.println(".codeType {");
-    outFile.println("left:0; right: 0;");
-    outFile.println("top:50%; bottom: 0;");
-    outFile.println("}");
-    outFile.println("</style>");
+    outFile.println("  <link rel=\"stylesheet\" href=\"soycStyling.css\">");
     outFile.println("</head>");
 
     outFile.println("<body>");
@@ -303,7 +238,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<center>");
     outFile.println("<h3>Story of Your Compile Dashboard</h3>");
 
-    addHeaderWithBreakdownContext(breakdown, outFile);
+    addHeaderWithBreakdownContext(breakdown, outFile, "Compile report");
 
     outFile.println("</center>");
 
@@ -369,67 +304,8 @@ public class MakeTopLevelHtmlForPerm {
       }
 
       final PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
-
-      outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-      outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-      outFile.println("<html>");
-      outFile.println("<head>");
-      outFile.println("<title>Classes in package \"" + codeType + "\"</title>");
-      outFile.println("  <meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-      outFile.println("  <link rel=\"stylesheet\" href=\"common.css\" media=\"screen\">");
-
-      outFile.println("  <style type=\"text/css\">");
-
-      outFile.println(".abs {");
-      outFile.println("  position: absolute;");
-      outFile.println(" overflow: hidden;");
-      outFile.println(" }");
-
-      outFile.println(" .mainHeader {");
-      outFile.println("   left:0; right: 0;");
-      outFile.println("   top:0; height: 6em;");
-      outFile.println("  text-align: center;");
-      outFile.println("background-color: #728FCE;");
-      outFile.println("}");
-
-      outFile.println(".mainContent {");
-      outFile.println("  left:0; right: 0;");
-      outFile.println("  top: 6em; bottom: 0;");
-      outFile.println("}");
-
-      outFile.println(".header {");
-      outFile.println("  left:0; right: 0;");
-      outFile.println(" top:0; height: 2em;");
-      outFile.println("  padding: 0.5em;");
-      outFile.println("}");
-
-      outFile.println(".innerContent {");
-      outFile.println("   left:0; right: 0;");
-      outFile.println("  top: 2em; bottom: 0;");
-      outFile.println("}");
-
-      outFile.println(".frame {");
-      outFile.println(" width: 100%; height: 100%;");
-      outFile.println("  border: 0px;");
-      outFile.println("}");
-
-      outFile.println(".packages {");
-      outFile.println(" left:0; right: 0;");
-      outFile.println(" top:0; bottom: 50%;");
-      outFile.println("}");
-
-      outFile.println(".codeType {");
-      outFile.println("left:0; right: 0;");
-      outFile.println("top:50%; bottom: 0;");
-      outFile.println("}");
-      outFile.println("</style>");
-      outFile.println("</head>");
-
-      outFile.println("<body>");
-      outFile.println("<div class='abs mainHeader'>");
-      outFile.println("<h2>Classes in package \"" + codeType + "\"</h2>");
-      addHeaderWithBreakdownContext(breakdown, outFile);
-      outFile.println("</center>");
+      addHeaderWithBreakdownContext(breakdown, outFile, "Classes in package "
+          + codeType);
       outFile.println("<hr>");
       outFile.println("</div>");
       outFile.println("<div class='abs mainContent' style='overflow:auto'>");
@@ -443,13 +319,10 @@ public class MakeTopLevelHtmlForPerm {
       for (Float size : sortedClasses.keySet()) {
 
         String className = sortedClasses.get(size);
-
         float ratio = (size / maxSize) * 85;
-
-        if (ratio < 5) {
-          ratio = 5;
+        if (ratio < 1) {
+          ratio = 1;
         }
-
         outFile.println("<tr>");
         outFile.println("<td class=\"barlabel\">" + size + "</td>");
         outFile.println("<td class=\"barlabel\">" + className + "</td>");
@@ -488,27 +361,8 @@ public class MakeTopLevelHtmlForPerm {
       String outFileName = literalType + "-" + getPermutationId() + "Lits.html";
       final PrintWriter outFile = new PrintWriter(getOutFile(breakdown.getId()
           + "_" + outFileName));
-
-      outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-      outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-      outFile.println("<html>");
-      outFile.println("<head>");
-      outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-      outFile.println("<title>Literals of type \"" + literalType + "\"</title>");
-      outFile.println("</head>");
-
-      outFile.println("<style type=\"text/css\">");
-      outFile.println("body {background-color: #728FCE}");
-      outFile.println("h2 {background-color: transparent}");
-      outFile.println("p {background-color: fuchsia}");
-      outFile.println("</style>");
-
-      outFile.println("<body>");
-      outFile.println("<center>");
-      outFile.println("<h2>Literals of type \"" + literalType + "\"</h2>");
-      addHeaderWithBreakdownContext(breakdown, outFile);
-      outFile.println("</center>");
-
+      addHeaderWithBreakdownContext(breakdown, outFile, "Literals of type "
+          + literalType);
       outFile.println("<center>");
       outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
 
@@ -577,67 +431,8 @@ public class MakeTopLevelHtmlForPerm {
           getOutFile(classesInPackageFileName(breakdown, packageName,
               getPermutationId())));
 
-      outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-      outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-      outFile.println("<html>");
-      outFile.println("<head>");
-      outFile.println("<title>Classes in package \"" + packageName
-          + "\"</title>");
-      outFile.println("  <meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-      outFile.println("  <link rel=\"stylesheet\" href=\"common.css\" media=\"screen\">");
-
-      outFile.println("  <style type=\"text/css\">");
-
-      outFile.println(".abs {");
-      outFile.println("  position: absolute;");
-      outFile.println(" overflow: hidden;");
-      outFile.println(" }");
-
-      outFile.println(" .mainHeader {");
-      outFile.println("   left:0; right: 0;");
-      outFile.println("   top:0; height: 6em;");
-      outFile.println("  text-align: center;");
-      outFile.println("background-color: #728FCE;");
-      outFile.println("}");
-
-      outFile.println(".mainContent {");
-      outFile.println("  left:0; right: 0;");
-      outFile.println("  top: 6em; bottom: 0;");
-      outFile.println("}");
-
-      outFile.println(".header {");
-      outFile.println("  left:0; right: 0;");
-      outFile.println(" top:0; height: 2em;");
-      outFile.println("  padding: 0.5em;");
-      outFile.println("}");
-
-      outFile.println(".innerContent {");
-      outFile.println("   left:0; right: 0;");
-      outFile.println("  top: 2em; bottom: 0;");
-      outFile.println("}");
-
-      outFile.println(".frame {");
-      outFile.println(" width: 100%; height: 100%;");
-      outFile.println("  border: 0px;");
-      outFile.println("}");
-
-      outFile.println(".packages {");
-      outFile.println(" left:0; right: 0;");
-      outFile.println(" top:0; bottom: 50%;");
-      outFile.println("}");
-
-      outFile.println(".codeType {");
-      outFile.println("left:0; right: 0;");
-      outFile.println("top:50%; bottom: 0;");
-      outFile.println("}");
-      outFile.println("</style>");
-      outFile.println("</head>");
-
-      outFile.println("<body>");
-      outFile.println("<div class='abs mainHeader'>");
-      outFile.println("<h2>Classes in package \"" + packageName + "\"</h2>");
-      addHeaderWithBreakdownContext(breakdown, outFile);
-      outFile.println("</center>");
+      addHeaderWithBreakdownContext(breakdown, outFile, "Classes in package "
+          + packageName);
       outFile.println("<hr>");
       outFile.println("</div>");
       outFile.println("<div class='abs mainContent' style='overflow:auto'>");
@@ -652,15 +447,16 @@ public class MakeTopLevelHtmlForPerm {
       for (Float size : sortedClasses.keySet()) {
         String className = sortedClasses.get(size);
         float ratio = (size / maxSize) * 85;
-        if (ratio < 5) {
-          ratio = 5;
+        if (ratio < 1) {
+          ratio = 1;
         }
         float perc = (size / sumSize) * 100;
 
         String dependencyLink = depLinker.dependencyLinkForClass(className);
         outFile.println("<tr>");
         outFile.println("<td class=\"barlabel\">" + size + "</td>");
-        outFile.println("<td class=\"barlabel\">" + perc + "%</td>");
+        outFile.println("<td class=\"barlabel\">" + formatNumber(perc)
+            + "%</td>");
         if (dependencyLink != null) {
           outFile.println("<td class=\"barlabel\"><a href=\"" + dependencyLink
               + "\" target=\"_top\">" + className + "</a></td>");
@@ -668,9 +464,8 @@ public class MakeTopLevelHtmlForPerm {
           outFile.println("<td class=\"barlabel\">" + className + "</td>");
         }
         outFile.println("<td class=\"box\">");
-        outFile.println("  <div style=\"width:"
-            + ratio
-            + "%;\" class=\"lb\"><div class=\"rb\"><div class=\"bb\"><div class=\"blc\"><div class=\"brc\"><div class=\"tb\"><div class=\"tlc\"><div class=\"trc\"><div class=\"content\"></div></div></div></div></div></div></div></div>");
+        outFile.println("  <div style=\"width:" + ratio
+            + "%;\" class=\"sizebar\"/>");
         outFile.println("</td>");
         outFile.println("</tr>");
       }
@@ -688,77 +483,15 @@ public class MakeTopLevelHtmlForPerm {
   }
 
   public void makeTopLevelShell() throws IOException {
+    
+    String permutationId = getPermutationId();
     PrintWriter outFile = new PrintWriter(getOutFile("SoycDashboard" + "-"
         + getPermutationId() + "-index.html"));
 
-    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-    outFile.println("<html>");
-    outFile.println("<head>");
-    outFile.println("<title>Story of Your Compile - Top Level Dashboard for Permutation</title>");
-    outFile.println("  <meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    outFile.println("  <link rel=\"stylesheet\" href=\"common.css\" media=\"screen\">");
+    
+    addStandardHtmlProlog(outFile, "Compile report", "Permutation "
+        + permutationId);
 
-    outFile.println("  <style type=\"text/css\">");
-
-    outFile.println(".abs {");
-    outFile.println("  position: absolute;");
-    outFile.println(" overflow: hidden;");
-    outFile.println(" }");
-
-    outFile.println(" .mainHeader {");
-    outFile.println("   left:0; right: 0;");
-    outFile.println("   top:0; height: 6em;");
-    outFile.println("  text-align: center;");
-    outFile.println("background-color: #728FCE;");
-    outFile.println("}");
-
-    outFile.println(".mainContent {");
-    outFile.println("  left:0; right: 0;");
-    outFile.println("  top: 6em; bottom: 0;");
-    outFile.println("}");
-
-    outFile.println(".header {");
-    outFile.println("  left:0; right: 0;");
-    outFile.println(" top:0; height: 2em;");
-    outFile.println("  padding: 0.5em;");
-    outFile.println("}");
-
-    outFile.println(".innerContent {");
-    outFile.println("   left:0; right: 0;");
-    outFile.println("  top: 2em; bottom: 0;");
-    outFile.println("}");
-
-    outFile.println(".frame {");
-    outFile.println(" width: 100%; height: 100%;");
-    outFile.println("  border: 0px;");
-    outFile.println("}");
-
-    outFile.println(".packages {");
-    outFile.println(" left:0; right: 0;");
-    outFile.println(" top:0; bottom: 50%;");
-    outFile.println("}");
-
-    outFile.println(".codeType {");
-    outFile.println("left:0; right: 0;");
-    outFile.println("top:50%; bottom: 0;");
-    outFile.println("}");
-    outFile.println("</style>");
-    outFile.println("</head>");
-
-    outFile.println("<body>");
-    outFile.println("<div class='abs mainHeader'>");
-    outFile.println("<h2>Story of Your Compile Dashboard</h2>");
-    // String permutationInfo = settings.allPermsInfo.get(getPermutationId());
-    String permutationInfo = ""; // TODO(spoon) pass in permutation information
-    // here
-    outFile.print("<h3>Permutation " + getPermutationId());
-    if (permutationInfo.length() > 0) {
-      outFile.println(" (" + permutationInfo + ")");
-    }
-    outFile.println("</h3>");
-    outFile.println("<hr>");
-    outFile.println("<center>");
     if (globalInformation.getSplitPointToLocation().size() > 1) {
       outFile.println("<b>Initial download size: <span style=\"color:maroon\">"
           + globalInformation.getInitialCodeBreakdown().sizeAllCode
@@ -768,8 +501,6 @@ public class MakeTopLevelHtmlForPerm {
         + globalInformation.getTotalCodeBreakdown().sizeAllCode
         + "</span></span></b>");
 
-    outFile.println("<hr>");
-    outFile.println("Available code subsets to analyze");
     outFile.println("<hr>");
     outFile.println("</div>");
 
@@ -814,28 +545,27 @@ public class MakeTopLevelHtmlForPerm {
       String drillDownFileName = shellFileName(breakdown, getPermutationId());
       String splitPointDescription = breakdown.getDescription();
 
-      int size = breakdown.sizeAllCode;
+      float size = breakdown.sizeAllCode;
       float ratio;
       if (globalInformation.getInitialCodeBreakdown().sizeAllCode > 0) {
         ratio = (size / globalInformation.getInitialCodeBreakdown().sizeAllCode) * 79;
       } else {
         ratio = (size / maxSize) * 79;
       }
-      if (ratio < 5) {
-        ratio = 5;
+      if (ratio < 1) {
+        ratio = 1;
       }
       float perc = (size / maxSize) * 100;
 
       outFile.println("<tr>");
       outFile.println("<td class=\"barlabel\">" + size + "</td>");
-      outFile.println("<td class=\"barlabel\">" + perc + "%</td>");
+      outFile.println("<td class=\"barlabel\">" + formatNumber(perc) + "%</td>");
       outFile.println("<td class=\"barlabel\"><a href=\"" + drillDownFileName
           + "\" target=\"_top\">" + splitPointDescription + "</a></td>");
       outFile.println("<td class=\"box\">");
       if (splitPointDescription.compareTo("Total program") != 0) {
-        outFile.println("<div style=\"width:"
-            + ratio
-            + "%;\" class=\"lb\"><div class=\"rb\"><div class=\"bb\"><div class=\"blc\"><div class=\"brc\"><div class=\"tb\"><div class=\"tlc\"><div class=\"trc\"><div class=\"content\"></div></div></div></div></div></div></div></div>");
+        outFile.println("<div style=\"width:" + ratio
+            + "%;\" class=\"sizebar\"/>");
       }
       outFile.println("</td>");
       outFile.println("</tr>");
@@ -847,54 +577,7 @@ public class MakeTopLevelHtmlForPerm {
 
   private void addDependenciesHtmlProlog(final PrintWriter out, String title,
       String header) {
-    out.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-    out.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-    out.println("<html>");
-
-    out.println("<head>");
-    out.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    out.println("<title>" + title + "</title>");
-    out.println("<link rel=\"stylesheet\" href=\"common.css\">");
-    out.println("<style type=\"text/css\">");
-    out.println("body {background-color: #728FCE}");
-    out.println("h2 {background-color: transparent}");
-    out.println("p {background-color: fuchsia}");
-    out.println(".calledBy {");
-    out.println("  color: green;");
-    out.println("}");
-    out.println(".toggle {");
-    out.println("cursor: pointer;");
-    out.println("}");
-    out.println(".main {");
-    out.println("background-color: white;");
-    out.println("padding: 8px;");
-    out.println("}");
-    out.println("</style>");
-    out.println("<script>");
-    out.println("function nextSiblingElement(a) {");
-    out.println("var ul = a.nextSibling;");
-    out.println("while (ul && ul.nodeType != 1) { // 1==element");
-    out.println("  ul = ul.nextSibling;");
-    out.println("}");
-    out.println("return ul;");
-    out.println("}");
-    out.println("function toggle() {");
-    out.println("var ul = nextSiblingElement(this);");
-    out.println("if (ul) {");
-    out.println(" ul.style.display = (ul.style.display == 'none') ? '' : 'none';");
-    out.println("}");
-    out.println("}");
-    out.println("</script>");
-
-    out.println("</head>");
-
-    out.println("<body>");
-    out.println("<center>");
-    out.println("<h2>" + title + "</h2>");
-    if (header != null) {
-      addCenteredHeader(out, header);
-    }
-    out.println("</center>");
+    addStandardHtmlProlog(out, title, header);
   }
 
   private void addLefttoversStatus(String className, String packageName,
@@ -913,9 +596,23 @@ public class MakeTopLevelHtmlForPerm {
     }
   }
 
+  /**
+   * Returns a file name for the dependencies list.
+   */
   private String dependenciesFileName(String depGraphName, String packageName) {
     return "methodDependencies-" + depGraphName + "-" + filename(packageName)
         + "-" + getPermutationId() + ".html";
+  }
+
+  /**
+   * Format floating point number to two decimal points.
+   * 
+   * @param number
+   * @return formatted number
+   */
+  private String formatNumber(float number) {
+    DecimalFormat formatBy = new DecimalFormat("#.##");
+    return formatBy.format(number);
   }
 
   /**
@@ -959,16 +656,37 @@ public class MakeTopLevelHtmlForPerm {
         + depGraphName);
   }
 
+  /**
+   * Returns whether a split point is initial or not.
+   * 
+   * @param splitPoint
+   * @returns true of the split point is initial, false otherwise
+   */
   private boolean isInitialSplitPoint(int splitPoint) {
     return globalInformation.getSplitPointInitialLoadSequence().contains(
         splitPoint);
   }
 
+  /**
+   * Makes a file name for a leftovers status file.
+   * 
+   * @param className
+   * @return the file name of the leftovers status file
+   */
   private String leftoversStatusFileName(String className) {
     return "leftoverStatus-" + filename(className) + "-" + getPermutationId()
         + ".html";
   }
 
+  /**
+   * Produces an HTML file that breaks down by code type.
+   * 
+   * @param breakdown
+   * @param nameToCodeColl
+   * @param nameToLitColl
+   * @return the name of the produced file
+   * @throws IOException
+   */
   private String makeCodeTypeHtml(SizeBreakdown breakdown,
       Map<String, CodeCollection> nameToCodeColl,
       Map<String, LiteralsCollection> nameToLitColl) throws IOException {
@@ -998,7 +716,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<html>");
     outFile.println("<head>");
     outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    outFile.println("<link rel=\"stylesheet\" href=\"common.css\" media=\"screen\">");
+    outFile.println("<link rel=\"stylesheet\" href=\"soycStyling.css\" media=\"screen\">");
     outFile.println("</head>");
 
     outFile.println("<body>");
@@ -1026,13 +744,12 @@ public class MakeTopLevelHtmlForPerm {
 
       outFile.println("<tr>");
       outFile.println("<td class=\"barlabel\">" + size + "</td>");
-      outFile.println("<td class=\"barlabel\">" + perc + "%</td>");
+      outFile.println("<td class=\"barlabel\">" + formatNumber(perc) + "%</td>");
       outFile.println("<td class=\"barlabel\"><a href=\"" + drillDownFileName
           + "\" target=\"_top\">" + codeType + "</a></td>");
       outFile.println("<td class=\"box\">");
-      outFile.println("<div style=\"width:"
-          + ratio
-          + "%;\" class=\"lb\"><div class=\"rb\"><div class=\"bb\"><div class=\"blc\"><div class=\"brc\"><div class=\"tb\"><div class=\"tlc\"><div class=\"trc\"><div class=\"content\"></div></div></div></div></div></div></div></div>");
+      outFile.println("<div style=\"width:" + ratio
+          + "%;\" class=\"sizebar\"/>");
       outFile.println("</td>");
       outFile.println("</tr>");
     }
@@ -1063,13 +780,13 @@ public class MakeTopLevelHtmlForPerm {
       float ratio = (size / maxSize) * 79;
       float perc = (size / sumSize) * 100;
 
-      if (ratio < 5) {
-        ratio = 5;
+      if (ratio < 1) {
+        ratio = 1;
       }
 
       outFile.println("<tr>");
       outFile.println("<td class=\"barlabel\">" + size + "</td>");
-      outFile.println("<td class=\"barlabel\">" + perc + "%</td>");
+      outFile.println("<td class=\"barlabel\">" + formatNumber(perc) + "%</td>");
       outFile.println("<td class=\"barlabel\"><a href=\"" + drillDownFileName
           + "\" target=\"_top\">" + literal + "</a></td>");
       outFile.println("<td class=\"box\">");
@@ -1088,6 +805,13 @@ public class MakeTopLevelHtmlForPerm {
     return outFileName;
   }
 
+  /**
+   * Produces an HTML file that displays dependencies.
+   * 
+   * @param name of dependency graph
+   * @param map of dependencies
+   * @throws IOException
+   */
   private void makeDependenciesHtml(String depGraphName,
       Map<String, String> dependencies) throws IOException {
     String depGraphDescription = inferDepGraphDescription(depGraphName);
@@ -1127,13 +851,13 @@ public class MakeTopLevelHtmlForPerm {
       if (curClassName.compareTo(className) != 0) {
         name = className;
         curClassName = className;
-        outFile.println("<h3>Class: " + curClassName + "</h3>");
+        outFile.println("<h3><a name=\"" + name + "\"/>Class: " + curClassName + "</h3>");
       }
 
       outFile.println("<div class='main'>");
-      outFile.println("<a class='toggle' onclick='toggle.call(this)' name="
-          + name + "><span class='calledBy'> Call stack: </span>" + name
-          + "</a>");
+      outFile.println("<a class='toggle' onclick='toggle.call(this)'> " +
+          "<span class='calledBy'> Call stack: </span>"
+          + name + "</a>");
       outFile.println("<ul>");
 
       String depMethod = dependencies.get(method);
@@ -1151,6 +875,12 @@ public class MakeTopLevelHtmlForPerm {
     outFile.close();
   }
 
+  /**
+   * Produces an HTML file for leftovers status.
+   * 
+   * @param className
+   * @throws IOException
+   */
   private void makeLeftoversStatusPage(String className) throws IOException {
     String packageName = globalInformation.getClassToPackage().get(className);
     PrintWriter out = new PrintWriter(
@@ -1170,6 +900,13 @@ public class MakeTopLevelHtmlForPerm {
     out.close();
   }
 
+  /**
+   * Produces an HTML file that shows information about a package.
+   * 
+   * @param breakdown
+   * @return the name of the HTML file
+   * @throws IOException
+   */
   private String makePackageHtml(SizeBreakdown breakdown) throws IOException {
     String outFileName = breakdown.getId() + "-" + getPermutationId() + "_"
         + "packageBreakdown.html";
@@ -1193,7 +930,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<html>");
     outFile.println("<head>");
     outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    outFile.println("<link rel=\"stylesheet\" href=\"common.css\" media=\"screen\">");
+    outFile.println("<link rel=\"stylesheet\" href=\"soycStyling.css\" media=\"screen\">");
     outFile.println("</head>");
     outFile.println("<body>");
     outFile.println("<table style='width:100%'>");
@@ -1211,20 +948,20 @@ public class MakeTopLevelHtmlForPerm {
           packageName, getPermutationId());
 
       float ratio = (size / maxSize) * 79;
-      if (ratio < 5) {
-        ratio = 5;
+      if (ratio < 1) {
+        ratio = 1;
       }
       float perc = (size / sumSize) * 100;
 
       outFile.println("<tr>");
       outFile.println("<td class='barlabel'>" + size + "</td>");
-      outFile.println("<td class='barlabel'>" + perc + "</td>");
+      outFile.println("<td class='barlabel'>" + formatNumber(perc) + "%</td>");
       outFile.println("<td class='barlabel'><a href=\"" + drillDownFileName
           + "\" target=\"_top\">" + packageName + "</a></td>");
       outFile.println("<td class=\"box\">");
       outFile.println("<div style=\"width:"
           + ratio
-          + "%;\" class=\"lb\"><div class=\"rb\"><div class=\"bb\"><div class=\"blc\"><div class=\"brc\"><div class=\"tb\"><div class=\"tlc\"><div class=\"trc\"><div class=\"content\"></div></div></div></div></div></div></div></div>");
+          + "%;\" class=\"sizebar\"/>");
       outFile.println("</td>");
       outFile.println("</tr>");
     }
@@ -1242,7 +979,7 @@ public class MakeTopLevelHtmlForPerm {
     PrintWriter out = new PrintWriter(
         getOutFile(splitStatusFileName(className)));
 
-    addStandardHtmlProlog(out, "Split point status for " + className, null);
+    addStandardHtmlProlog(out, "Split point status for " + className, "");
 
     out.println("<center>");
     out.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
