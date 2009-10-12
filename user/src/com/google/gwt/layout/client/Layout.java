@@ -78,6 +78,27 @@ import java.util.List;
 public class Layout {
 
   /**
+   * Used to specify the alignment of child elements within a layer.
+   */
+  public enum Alignment {
+
+    /**
+     * Positions an element at the beginning of a given axis.
+     */
+    BEGIN,
+
+    /**
+     * Positions an element at the beginning of a given axis.
+     */
+    END,
+
+    /**
+     * Stretches an element to fill the layer on a given axis.
+     */
+    STRETCH;
+  }
+
+  /**
    * Callback interface used by {@link Layout#layout(int, AnimationCallback)}
    * to provide updates on animation progress.
    */
@@ -123,7 +144,6 @@ public class Layout {
    */
   public class Layer {
     final Element container, child;
-
     Object userObject;
 
     boolean setLeft, setRight, setTop, setBottom, setWidth, setHeight;
@@ -137,6 +157,8 @@ public class Layout {
         sourceHeight;
     double targetLeft, targetTop, targetRight, targetBottom, targetWidth,
         targetHeight;
+
+    Alignment hPos = Alignment.STRETCH, vPos = Alignment.STRETCH;
 
     Layer(Element container, Element child, Object userObject) {
       this.container = container;
@@ -184,6 +206,24 @@ public class Layout {
       this.targetHeight = height;
       this.targetBottomUnit = bottomUnit;
       this.targetHeightUnit = heightUnit;
+    }
+
+    /**
+     * Sets the child element's horizontal position within the layer.
+     * 
+     * @param position
+     */
+    public void setChildHorizontalPosition(Alignment position) {
+      this.hPos = position;
+    }
+
+    /**
+     * Sets the child element's vertical position within the layer.
+     * 
+     * @param position
+     */
+    public void setChildVerticalPosition(Alignment position) {
+      this.vPos = position;
     }
 
     /**

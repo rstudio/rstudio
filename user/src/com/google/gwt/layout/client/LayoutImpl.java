@@ -143,6 +143,35 @@ class LayoutImpl {
         ? (layer.width + layer.widthUnit.getType()) : "");
     style.setProperty("height", layer.setHeight
         ? (layer.height + layer.heightUnit.getType()) : "");
+
+    style = layer.child.getStyle();
+    switch (layer.hPos) {
+      case BEGIN:
+        style.clearLeft();
+        break;
+      case END:
+        style.clearLeft();
+        style.setRight(0, Unit.PX);
+        break;
+      case STRETCH:
+        style.setLeft(0, Unit.PX);
+        style.setRight(0, Unit.PX);
+        break;
+    }
+
+    switch (layer.vPos) {
+      case BEGIN:
+        style.clearTop();
+        break;
+      case END:
+        style.clearTop();
+        style.setBottom(0, Unit.PX);
+        break;
+      case STRETCH:
+        style.setTop(0, Unit.PX);
+        style.setBottom(0, Unit.PX);
+        break;
+    }
   }
 
   public void onAttach(Element parent) {

@@ -323,6 +323,11 @@ class LayoutImplIE6 extends LayoutImpl {
       var _rightUnit = layer.@com.google.gwt.layout.client.Layout.Layer::rightUnit;
       var _bottomUnit = layer.@com.google.gwt.layout.client.Layout.Layer::bottomUnit;
 
+      var _hPos = layer.@com.google.gwt.layout.client.Layout.Layer::hPos
+                  .@com.google.gwt.layout.client.Layout.Alignment::ordinal()();
+      var _vPos = layer.@com.google.gwt.layout.client.Layout.Layer::vPos
+                  .@com.google.gwt.layout.client.Layout.Alignment::ordinal()();
+
       // Apply the requested position & size values to the element's style.
       var style = container.style;
       style.left = _setLeft ? (_left + _leftUnit.@com.google.gwt.dom.client.Style.Unit::getType()()) : "";
@@ -366,16 +371,43 @@ class LayoutImplIE6 extends LayoutImpl {
         }
       }
 
-      // Resize the child to take up all of its container's width and height.
+      // Resize and position the child based on the layer's [hv]Pos.
       var child = container.firstChild;
       @com.google.gwt.layout.client.LayoutImplIE6::measureDecoration(Lcom/google/gwt/dom/client/Element;)(child);
       var childDecoWidth = child.__decoWidth;
       var childDecoHeight = child.__decoHeight;
+
       if (container.offsetWidth > childDecoWidth) {
-        child.style.width = (container.offsetWidth - childDecoWidth) + 'px';
+        switch (_hPos) {
+          case 0: // BEGIN
+            child.style.left = '0px';
+            child.style.width = '';
+            break;
+          case 1: // END
+            child.style.width = '';
+            child.style.left = (container.offsetWidth - childDecoWidth - child.offsetWidth) + 'px';
+            break;
+          case 2: // STRETCH
+            child.style.left = '0px';
+            child.style.width = (container.offsetWidth - childDecoWidth) + 'px';
+            break;
+        }
       }
       if (container.offsetHeight > childDecoHeight) {
-        child.style.height = (container.offsetHeight - childDecoHeight) + 'px';
+        switch (_vPos) {
+          case 0: // BEGIN
+            child.style.top = '0px';
+            child.style.height = '';
+            break;
+          case 1: // END
+            child.style.height = '';
+            child.style.top = (container.offsetHeight - childDecoHeight - child.offsetHeight) + 'px';
+            break;
+          case 2: // STRETCH
+            child.style.top = '0px';
+            child.style.height = (container.offsetHeight - childDecoHeight) + 'px';
+            break;
+        }
       }
     }
   }-*/;

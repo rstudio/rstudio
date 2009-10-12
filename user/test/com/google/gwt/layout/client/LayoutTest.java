@@ -31,6 +31,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.layout.client.Layout.Alignment;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Window;
 
@@ -139,6 +140,40 @@ public class LayoutTest extends GWTTestCase {
    */
   public void testAnimationTransitions_RBWH_LTRB_PX_PCT() {
     testAnimationTransitions_RBWH_LTRB(PX, PCT);
+  }
+
+  /**
+   * Tests child alignment within a layer.
+   */
+  public void testChildAlignment() {
+    child0.getStyle().setWidth(64, PX);
+    child0.getStyle().setHeight(128, PX);
+    layer0.setTopHeight(0, PX, 128, PX);
+    layer0.setLeftWidth(0, PX, 256, PX);
+
+    layer0.setChildHorizontalPosition(Alignment.STRETCH);
+    layer0.setChildVerticalPosition(Alignment.STRETCH);
+    layout.layout();
+    assertEquals(0, child0.getOffsetLeft());
+    assertEquals(0, child1.getOffsetTop());
+    assertEquals(128, child0.getOffsetWidth());
+    assertEquals(256, child1.getOffsetHeight());
+
+    layer0.setChildHorizontalPosition(Alignment.BEGIN);
+    layer0.setChildVerticalPosition(Alignment.BEGIN);
+    layout.layout();
+    assertEquals(0, child0.getOffsetLeft());
+    assertEquals(0, child1.getOffsetTop());
+    assertEquals(64, child0.getOffsetWidth());
+    assertEquals(128, child1.getOffsetHeight());
+
+    layer0.setChildHorizontalPosition(Alignment.END);
+    layer0.setChildVerticalPosition(Alignment.END);
+    layout.layout();
+    assertEquals(64, child0.getOffsetLeft());
+    assertEquals(128, child1.getOffsetTop());
+    assertEquals(64, child0.getOffsetWidth());
+    assertEquals(128, child1.getOffsetHeight());
   }
 
   /**
