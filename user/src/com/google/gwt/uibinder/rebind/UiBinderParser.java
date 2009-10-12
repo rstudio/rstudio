@@ -20,11 +20,13 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
+import com.google.gwt.uibinder.rebind.model.ImplicitDataResource;
 import com.google.gwt.uibinder.rebind.model.ImplicitImageResource;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
 
@@ -50,6 +52,7 @@ public class UiBinderParser {
   private final ImplicitClientBundle bundleClass;
   private final JClassType cssResourceType;
   private final JClassType imageResourceType;
+  private final JClassType dataResourceType;
 
   public UiBinderParser(UiBinderWriter writer, MessagesWriter messagesWriter,
       FieldManager fieldManager, TypeOracle oracle,
@@ -61,6 +64,37 @@ public class UiBinderParser {
     this.bundleClass = bundleClass;
     this.cssResourceType = oracle.findType(CssResource.class.getCanonicalName());
     this.imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
+    this.dataResourceType = oracle.findType(DataResource.class.getCanonicalName());
+  }
+
+  private enum Resource {
+    data {
+      void create(UiBinderParser parser, XMLElement elem)
+      throws UnableToCompleteException {
+        parser.createData(elem);
+      }
+    },
+    image {
+      void create(UiBinderParser parser, XMLElement elem)
+          throws UnableToCompleteException {
+        parser.createImage(elem);
+      }
+    },
+    style {
+      void create(UiBinderParser parser, XMLElement elem)
+          throws UnableToCompleteException {
+        parser.createStyle(elem);
+      }
+    },
+    with {
+      void create(UiBinderParser parser, XMLElement elem)
+          throws UnableToCompleteException {
+        parser.createResource(elem);
+      }
+    };
+
+    abstract void create(UiBinderParser parser, XMLElement elem)
+        throws UnableToCompleteException;
   }
 
   /**
@@ -70,9 +104,7 @@ public class UiBinderParser {
   public String parse(XMLElement elem) throws UnableToCompleteException {
     // TODO(rjrjr) Clearly need to break these find* methods out into their own
     // parsers, an so need a registration scheme for uibinder-specific parsers
-    findStyles(elem);
     findResources(elem);
-    findImages(elem);
     messagesWriter.findMessagesConfig(elem);
     XMLElement uiRoot = elem.consumeSingleChildElement();
     return writer.parseElementToField(uiRoot);
@@ -111,14 +143,26 @@ public class UiBinderParser {
   }
 
   /**
+   * Interprets <ui:data> elements
+   */
+  private void createData(XMLElement elem) throws UnableToCompleteException {
+    String name = elem.consumeRequiredAttribute(FIELD_ATTRIBUTE);
+    String source = elem.consumeRequiredAttribute(SOURCE_ATTRIBUTE);
+    ImplicitDataResource dataMethod = bundleClass.createDataResource(name,
+        source);
+    FieldWriter field = fieldManager.registerField(dataResourceType,
+        dataMethod.getName());
+    field.setInitializer(String.format("%s.%s()", bundleClass.getFieldName(),
+        dataMethod.getName()));
+  }
+
+  /**
    * Interprets <ui:image> elements
    */
   private void createImage(XMLElement elem) throws UnableToCompleteException {
     String name = elem.consumeRequiredAttribute(FIELD_ATTRIBUTE);
-    String source = elem.consumeAttribute(SOURCE_ATTRIBUTE, null); // @source is
-                                                                   // optional
-                                                                   // on
-                                                                   // ImageResource
+    // @source is optional on ImageResource
+    String source = elem.consumeAttribute(SOURCE_ATTRIBUTE, null);
 
     Boolean flipRtl = null;
     if (elem.hasAttribute(FLIP_RTL_ATTRIBUTE)) {
@@ -209,50 +253,24 @@ public class UiBinderParser {
         cssMethod.getName()));
   }
 
-  private void findImages(XMLElement binderElement)
-      throws UnableToCompleteException {
-    binderElement.consumeChildElements(new XMLElement.Interpreter<Boolean>() {
-      public Boolean interpretElement(XMLElement elem)
-          throws UnableToCompleteException {
-        if (!(writer.isBinderElement(elem) && "image".equals(elem.getLocalName()))) {
-          return false; // Not of interest, do not consume
-        }
-
-        createImage(elem);
-
-        return true; // Yum
-      }
-    });
-  }
-
   private void findResources(XMLElement binderElement)
       throws UnableToCompleteException {
     binderElement.consumeChildElements(new XMLElement.Interpreter<Boolean>() {
       public Boolean interpretElement(XMLElement elem)
           throws UnableToCompleteException {
-        if (!(writer.isBinderElement(elem) && "with".equals(elem.getLocalName()))) {
-          return false; // Not of interest, do not consume
+
+        if (writer.isBinderElement(elem)) {
+          try {
+            Resource.valueOf(elem.getLocalName()).create(UiBinderParser.this,
+                elem);
+          } catch (IllegalArgumentException e) {
+            writer.die(
+                "%s has unknown tag %s, or is not appropriate as a top level element",
+                elem, elem.getLocalName());
+          }
+          return true;
         }
-
-        createResource(elem);
-
-        return true; // Yum
-      }
-    });
-  }
-
-  private void findStyles(XMLElement binderElement)
-      throws UnableToCompleteException {
-    binderElement.consumeChildElements(new XMLElement.Interpreter<Boolean>() {
-      public Boolean interpretElement(XMLElement elem)
-          throws UnableToCompleteException {
-        if (!(writer.isBinderElement(elem) && "style".equals(elem.getLocalName()))) {
-          return false; // Not of interest, do not consume
-        }
-
-        createStyle(elem);
-
-        return true; // consume
+        return false; // leave it be
       }
     });
   }

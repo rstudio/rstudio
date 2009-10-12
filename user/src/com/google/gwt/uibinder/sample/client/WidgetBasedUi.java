@@ -25,6 +25,7 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.CssResource.Shared;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -119,6 +120,7 @@ public class WidgetBasedUi extends Composite {
   @UiField ImageResource prettyTilingImage;
   @UiField Image babyWidget;
   @UiField ParagraphElement simpleSpriteParagraph;
+  @UiField DataResource heartCursorResource;
 
   public WidgetBasedUi() {
     this.bundledLabel = new Label();

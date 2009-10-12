@@ -19,11 +19,13 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
+import com.google.gwt.uibinder.rebind.model.ImplicitDataResource;
 import com.google.gwt.uibinder.rebind.model.ImplicitImageResource;
 
 /**
@@ -37,6 +39,7 @@ public class BundleWriter {
   private final TypeOracle oracle;
 
   private final JClassType clientBundleType;
+  private final JClassType dataResourceType;
   private final JClassType imageOptionType;
   private final JClassType imageResourceType;
   private final JClassType repeatStyleType;
@@ -51,6 +54,7 @@ public class BundleWriter {
     this.oracle = oracle;
 
     clientBundleType = oracle.findType(ClientBundle.class.getName());
+    dataResourceType = oracle.findType(DataResource.class.getCanonicalName());
     imageOptionType = oracle.findType(ImageOptions.class.getCanonicalName());
     imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
     repeatStyleType = oracle.findType(RepeatStyle.class.getCanonicalName());
@@ -76,6 +80,7 @@ public class BundleWriter {
     writer.write("import %s;", imageResourceType.getQualifiedSourceName());
     writer.write("import %s;", imageOptionType.getQualifiedSourceName());
     writer.write("import %s;", clientBundleType.getQualifiedSourceName());
+    writer.write("import %s;", dataResourceType.getQualifiedSourceName());
     writer.newline();
 
     // Open interface
@@ -89,8 +94,14 @@ public class BundleWriter {
       writer.write("%s %s();", css.getClassName(), css.getName());
       writer.newline();
     }
+    
+    // Write data methods
+    for (ImplicitDataResource data : bundleClass.getDataMethods()) {
+      writer.write("@Source(\"%s\")", data.getSource());
+      writer.write("%s %s();", dataResourceType.getName(), data.getName());
+      writer.newline();
+    }
 
-    writer.newline();
     writeImageMethods();
 
     // Close interface.

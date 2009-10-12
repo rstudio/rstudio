@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -82,12 +82,10 @@ public class UiBinderTest extends GWTTestCase {
 
   public void testBundle() {
     assertEquals(getCenter(), widgetUi.bundledLabel.getParent());
-    assertEquals(new FakeBundle().helloText(),
-        widgetUi.bundledLabel.getText());
+    assertEquals(new FakeBundle().helloText(), widgetUi.bundledLabel.getText());
     WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
     assertEquals("bundledLabel should have styleName",
-        resources.style().prettyText(),
-        widgetUi.bundledLabel.getStyleName());
+        resources.style().prettyText(), widgetUi.bundledLabel.getStyleName());
 
     Element pretty = DOM.getElementById("prettyPara");
     assertEquals(resources.style().prettyText(), pretty.getClassName());
@@ -120,8 +118,7 @@ public class UiBinderTest extends GWTTestCase {
 
   public void testComputedStyleInAPlaceholder() {
     WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
-    assertEquals(resources.style().tmText(),
-        widgetUi.tmElement.getClassName());
+    assertEquals(resources.style().tmText(), widgetUi.tmElement.getClassName());
   }
 
   public void testDomAccessAndComputedAttributeOnPlaceholderedElement() {
@@ -149,8 +146,7 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void testDomAttributeMessageWithFunnyChars() {
-    ParagraphElement p =
-      widgetUi.funnyCharsMessageDomAttributeParagraph;
+    ParagraphElement p = widgetUi.funnyCharsMessageDomAttributeParagraph;
     String t = p.getAttribute("title");
     assertEquals("funny characters \" ' ' & < > > { }", t);
   }
@@ -164,8 +160,7 @@ public class UiBinderTest extends GWTTestCase {
   public void testDomTextMessageWithFunnyChars() {
     String t = widgetUi.funnyCharsMessageParagraph.getInnerText();
     assertEquals("They might show up in body text that has been marked for "
-        + "translation: funny characters \" \" ' ' & < > > { }",
-        t);
+        + "translation: funny characters \" \" ' ' & < > > { }", t);
   }
 
   public void testProtectedDomTextMessageWithFunnyChars() {
@@ -230,11 +225,9 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void testNestedBundle() {
-    DomBasedUi.Resources resources =
-      GWT.create(DomBasedUi.Resources.class);
-    assertEquals(resources.style().bodyColor()
-        + " " + resources.style().bodyFont() ,
-        domUi.root.getClassName());
+    DomBasedUi.Resources resources = GWT.create(DomBasedUi.Resources.class);
+    assertEquals(resources.style().bodyColor() + " "
+        + resources.style().bodyFont(), domUi.root.getClassName());
   }
 
   interface Bundle extends ClientBundle {
@@ -269,7 +262,8 @@ public class UiBinderTest extends GWTTestCase {
 
   public void testPrivateStyleFromExternalCss() {
     ParagraphElement p = widgetUi.privateStyleParagraph;
-    assertTrue("Some kind of class should be set", p.getClassName().length() > 0);
+    assertTrue("Some kind of class should be set",
+        p.getClassName().length() > 0);
   }
 
   public void testPrivateStylesFromInlineCss() {
@@ -319,8 +313,8 @@ public class UiBinderTest extends GWTTestCase {
     // Assumes setPopupText() is overloaded such that there is a static
     // setPopupText(Foo, String) method.
     ClickyLink clicky = widgetUi.customLinkWidget;
-    assertEquals("overloaded setter should have been called",
-                 "That tickles!", clicky.getPopupText());
+    assertEquals("overloaded setter should have been called", "That tickles!",
+        clicky.getPopupText());
   }
 
   public void testStringAttributeWithFormatChars() {
@@ -346,17 +340,27 @@ public class UiBinderTest extends GWTTestCase {
     String t = clicky.getPopupText();
     assertEquals("funny characters \" ' ' & < > > { }", t);
   }
-  
+
   public void testImageResourceInImageWidget() {
-    assertEquals(widgetUi.prettyImage.getWidth(), widgetUi.babyWidget.getOffsetWidth());
-    assertEquals(widgetUi.prettyImage.getHeight(), widgetUi.babyWidget.getOffsetHeight());
-    assertEquals(widgetUi.prettyImage.getTop(), widgetUi.babyWidget.getOriginTop());
-    assertEquals(widgetUi.prettyImage.getLeft(), widgetUi.babyWidget.getOriginLeft());
+    assertEquals(widgetUi.prettyImage.getWidth(),
+        widgetUi.babyWidget.getOffsetWidth());
+    assertEquals(widgetUi.prettyImage.getHeight(),
+        widgetUi.babyWidget.getOffsetHeight());
+    assertEquals(widgetUi.prettyImage.getTop(),
+        widgetUi.babyWidget.getOriginTop());
+    assertEquals(widgetUi.prettyImage.getLeft(),
+        widgetUi.babyWidget.getOriginLeft());
+  }
+
+  public void testDataResource() {
+    assertNotNull(widgetUi.heartCursorResource.getUrl());
   }
 
   public void testSpritedElement() {
-    assertEquals(widgetUi.prettyImage.getWidth(), widgetUi.simpleSpriteParagraph.getOffsetWidth());
-    assertEquals(widgetUi.prettyImage.getHeight(), widgetUi.simpleSpriteParagraph.getOffsetHeight());
+    assertEquals(widgetUi.prettyImage.getWidth(),
+        widgetUi.simpleSpriteParagraph.getOffsetWidth());
+    assertEquals(widgetUi.prettyImage.getHeight(),
+        widgetUi.simpleSpriteParagraph.getOffsetHeight());
   }
 
   public void suppressForIEfail_testBizarrelyElementedWidgets() {
