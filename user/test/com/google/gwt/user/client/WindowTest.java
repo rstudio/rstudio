@@ -16,9 +16,11 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 
@@ -32,8 +34,8 @@ import java.util.Map;
 public class WindowTest extends GWTTestCase {
 
   private static native String getNodeName(Element elem) /*-{
-     return (elem.nodeName || "").toLowerCase();
-   }-*/;
+    return (elem.nodeName || "").toLowerCase();
+  }-*/;
 
   /**
    * Removes all elements in the body, except scripts and iframes.
@@ -85,6 +87,46 @@ public class WindowTest extends GWTTestCase {
     assertEquals(href, protocol + "//" + host + path + query + hash);
   }
 
+  public void testLocationCreateUrlBuilder() {
+    History.newItem("theHash");
+    String expected = Location.getHref();
+
+    // Build the string with the builder.
+    UrlBuilder builder = Location.createUrlBuilder();
+    String actual = builder.buildString();
+
+    // Check the hash.
+    {
+      String[] expectedParts = expected.split("#");
+      String[] actualParts = actual.split("#");
+      assertEquals(2, actualParts.length);
+      assertEquals(expectedParts[1], actualParts[1]);
+      expected = expectedParts[0];
+      actual = actualParts[0];
+    }
+
+    // Check the query parameters.
+    {
+      String[] expectedParts = expected.split("[?]");
+      String[] actualParts = actual.split("[?]");
+      if (expectedParts.length > 1) {
+        assertEquals(2, actualParts.length);
+        String[] expectedPairs = expectedParts[1].split("&");
+        String[] actualPairs = actualParts[1].split("&");
+        assertEquals(expectedPairs.length, actualPairs.length);
+        for (String actualPair : actualPairs) {
+          String[] kv = actualPair.split("=");
+          assertEquals(Location.getParameter(kv[0]), kv.length > 1 ? kv[1] : "");
+        }
+      }
+      expected = expectedParts[0];
+      actual = actualParts[0];
+    }
+
+    // Check everything but the query params and hash/
+    assertEquals(expected, actual);
+  }
+
   public void testLocationParsing() {
     Map<String, List<String>> map;
 
@@ -93,23 +135,22 @@ public class WindowTest extends GWTTestCase {
     assertEquals(map.size(), 3);
     assertEquals(map.get("foo").get(0), "bar");
     assertEquals(map.get("fuzzy").get(0), "bunnies");
-    
+
     // multiple values for the same parameter
     map = Window.Location.buildListParamMap(
         "?fuzzy=bunnies&foo=bar&num=42&foo=baz");
     assertEquals(map.size(), 3);
     assertEquals(map.get("foo").get(0), "bar");
     assertEquals(map.get("foo").get(1), "baz");
-    
+
     // no query parameters.
     map = Window.Location.buildListParamMap("");
     assertEquals(map.size(), 0);
-    
+
     // blank keys should be ignored, but blank values are OK. Also,
     // keys can contain whitespace. (but the browser may give whitespace
     // back as escaped).
-    map = Window.Location.buildListParamMap(
-        "?&& &a&b=&c=c&d=d=d&=e&f=2&f=1&");
+    map = Window.Location.buildListParamMap("?&& &a&b=&c=c&d=d=d&=e&f=2&f=1&");
     assertEquals(map.size(), 6);
     assertEquals(map.get(" ").get(0), "");
     assertEquals(map.get("a").get(0), "");
@@ -120,8 +161,7 @@ public class WindowTest extends GWTTestCase {
     assertEquals(map.get("f").get(1), "1");
 
     // Values escaped with hex codes should work too.
-    map = Window.Location.buildListParamMap(
-    "?foo=bar%20baz%3aqux");
+    map = Window.Location.buildListParamMap("?foo=bar%20baz%3aqux");
     assertEquals(map.get("foo").get(0), "bar baz:qux");
   }
 
@@ -190,7 +230,7 @@ public class WindowTest extends GWTTestCase {
   @SuppressWarnings("deprecation")
   static class ListenerTester implements WindowResizeListener {
     static int resize = 0;
- 
+
     public void onWindowResized(int width, int height) {
       ++resize;
     }
@@ -216,7 +256,7 @@ public class WindowTest extends GWTTestCase {
     Window.removeWindowResizeListener(r1);
     ListenerTester.fire();
     assertEquals(ListenerTester.resize, 1);
-    
+
     Window.removeWindowResizeListener(r2);
     ListenerTester.fire();
     assertEquals(ListenerTester.resize, 0);

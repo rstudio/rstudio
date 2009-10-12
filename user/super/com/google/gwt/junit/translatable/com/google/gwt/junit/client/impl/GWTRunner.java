@@ -17,6 +17,7 @@ package com.google.gwt.junit.client.impl;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
@@ -257,18 +258,11 @@ public abstract class GWTRunner implements EntryPoint {
        * We're being asked to run a test in a different module. We must navigate
        * the browser to a new URL which will run that other module.
        */
-      String href = Window.Location.getHref();
-      if (href.contains("?")) {
-        href = href.substring(0, href.indexOf("?"));
-      } else if (href.contains("#")) {
-        href = href.substring(0, href.indexOf("#"));
-      }
-      String newHref = href.replace(currentModule, newModule);
-      newHref += "?" + BLOCKINDEX_QUERY_PARAM + "=" + currentBlock.getIndex();
-      if (maxRetryCount >= 0) {
-        newHref += "&" + RETRYCOUNT_QUERY_PARAM + "=" + maxRetryCount;
-      }
-      Window.Location.replace(newHref);
+      UrlBuilder builder = Window.Location.createUrlBuilder();
+      builder.setParameter(BLOCKINDEX_QUERY_PARAM,
+          Integer.toString(currentBlock.getIndex())).setPath(
+          newModule + "/junit.html");
+      Window.Location.replace(builder.buildString());
       currentBlock = null;
       currentTestIndex = 0;
     }
