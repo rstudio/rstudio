@@ -108,11 +108,8 @@
     </gwt.checkstyle>
   </target>
 
-  <target name="remoteweb-test" depends="test.remoteweb">
-    <echo message="DEPRECATED: remoteweb-test has been renamed test.remoteweb"/>
-  </target>
-
-  <target name="test.remoteweb" description="Run a remoteweb test at the given host and path" if="gwt.remote.browsers">
+  <target name="test.remoteweb" depends="compile, compile.tests" 
+          description="Run a remoteweb test at the given host and path" if="gwt.remote.browsers">
     <echo message="Performing remote browser testing at ${gwt.remote.browsers}" />
     <property name="test.remoteweb.args" value="${test.args}" />
     <fileset id="test.remoteweb.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
@@ -123,11 +120,8 @@
     </gwt.junit>
   </target>
 
-  <target name="selenium-test" depends="test.selenium">
-    <echo message="DEPRECATED: selenium-test has been renamed test.selenium"/>
-  </target>
-
-  <target name="test.selenium" description="Run a remote test using Selenium RC test at the given host and path" if="gwt.selenium.hosts">
+  <target name="test.selenium" depends="compile, compile.tests" 
+        description="Run a remote test using Selenium RC test at the given host and path" if="gwt.selenium.hosts">
     <echo message="Performing remote browser testing using Selenium RC at ${gwt.selenium.hosts}" />
     <property name="test.selenium.args" value="${test.args}" />
     <fileset id="test.selenium.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
