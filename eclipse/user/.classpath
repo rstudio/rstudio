@@ -16,7 +16,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-logging-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-io-1.4.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/cssparser/cssparser-0.9.5.jar"/>
-	<classpathentry kind="var" path="GWT_TRUNK/tools/do-not-commit-to-trunk/nekohtml-1.9.13.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.13.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/selenium/selenium-java-client-driver.jar" sourcepath="/GWT_TOOLS/lib/selenium/selenium-java-client-driver-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/xalan/xalan-2.7.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/serializer.jar"/>
@@ -25,7 +25,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/w3c/sac/sac-1.3.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/w3c/flute/flute-1.3.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
-	<classpathentry kind="var" path="GWT_TRUNK/tools/do-not-commit-to-trunk/htmlunit-core-js.jar" sourcepath="/GWT_TRUNK/tools/do-not-commit-to-trunk/htmlunit-core-js-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TRUNK/tools/do-not-commit-to-trunk/htmlunit.jar" sourcepath="/GWT_TRUNK/tools/do-not-commit-to-trunk/htmlunit-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5070.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5070-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-core-js-r5070.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-core-js-r5070-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

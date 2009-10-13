@@ -40,7 +40,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-jk2-2.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-util-5.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/sun/swingworker/swing-worker-1.1.jar"/>
-	<classpathentry kind="var" path="GWT_TRUNK/tools/do-not-commit-to-trunk/htmlunit-core-js.jar" sourcepath="/GWT_TRUNK/tools/do-not-commit-to-trunk/htmlunit-core-js-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TRUNK/tools/do-not-commit-to-trunk/htmlunit.jar" sourcepath="/GWT_TRUNK/tools/do-not-commit-to-trunk/htmlunit-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-core-js-r5070.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-core-js-r5070-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5070.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5070-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
