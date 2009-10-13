@@ -15,6 +15,7 @@
  */
 package com.google.gwt.junit;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
 /**
@@ -36,8 +37,9 @@ class RunStyleManual extends RunStyle {
       try {
         numClients = Integer.parseInt(args);
       } catch (NumberFormatException e) {
-        throw new RuntimeException("Error parsing argument \"" + args + "\"",
-            e);
+        getLogger().log(TreeLogger.ERROR, "Error parsing argument \""
+            + args + "\"", e);
+        return false;
       }
     }
     shell.setNumClients(numClients);

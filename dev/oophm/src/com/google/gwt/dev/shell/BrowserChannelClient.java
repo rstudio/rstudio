@@ -64,6 +64,7 @@ public class BrowserChannelClient extends BrowserChannel {
   private final String versionString;
   private boolean connected = false;
   private boolean shouldDisconnect = false;
+  private int protocolVersion;
 
   public BrowserChannelClient(String addressParts[], String url,
       String sessionKey, String moduleName, String versionString,
@@ -93,6 +94,14 @@ public class BrowserChannelClient extends BrowserChannel {
     endSession();
     connected = false;
     return true;
+  }
+
+  /**
+   * @return the negotiated protocol version -- only valid after {@link #init}
+   * has returned.
+   */
+  public int getProtocolVersion() {
+    return protocolVersion;
   }
 
   public boolean isConnected() {
@@ -138,7 +147,7 @@ public class BrowserChannelClient extends BrowserChannel {
   void setShouldDisconnect() {
     shouldDisconnect = true;
   }
-  
+
   /*
    * Perform the initial interaction. Return true if interaction succeeds, false
    * if it fails. Do a check protocol versions, expected with 2.0+ oophm
@@ -147,15 +156,15 @@ public class BrowserChannelClient extends BrowserChannel {
   private boolean init() throws IOException, BrowserChannelException {
     logger.log(TreeLogger.DEBUG, "sending " + MessageType.CHECK_VERSIONS
         + " message");
-    new CheckVersionsMessage(this, BROWSERCHANNEL_PROTOCOL_VERSION,
-        BROWSERCHANNEL_PROTOCOL_VERSION, versionString).send();
+    new CheckVersionsMessage(this, PROTOCOL_VERSION_OLDEST,
+        PROTOCOL_VERSION_CURRENT, versionString).send();
     MessageType type = Message.readMessageType(getStreamFromOtherSide());
     switch (type) {
       case PROTOCOL_VERSION:
         ProtocolVersionMessage protocolMessage = ProtocolVersionMessage.receive(this);
+        protocolVersion = protocolMessage.getProtocolVersion();
         logger.log(TreeLogger.DEBUG, MessageType.PROTOCOL_VERSION
-            + ": protocol version = " + protocolMessage.getProtocolVersion());
-        // TODO(jat) : save selected protocol version when a range is supported.
+            + ": protocol version = " + protocolVersion);
         break;
       case FATAL_ERROR:
         FatalErrorMessage errorMessage = FatalErrorMessage.receive(this);
@@ -211,6 +220,11 @@ public class BrowserChannelClient extends BrowserChannel {
             String jsniString = loadJsniMessage.getJsni();
             htmlUnitSessionHandler.loadJsni(this, jsniString);
             // no response
+            break;
+          case REQUEST_ICON:
+            RequestIconMessage.receive(this);
+            // no need for icon here 
+            UserAgentIconMessage.send(this, null);
             break;
           case RETURN:
             if (!expectReturn) {

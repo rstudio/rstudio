@@ -28,9 +28,17 @@ public abstract class TreeLogger {
    * information is interpreted and displayed is implementation-dependent.
    */
   public abstract static class HelpInfo {
+
     /**
-     * If non-null, provides a URL containing extra information about the
-     * problem.
+     * @return the text to use for an anchor if not null and getURL is non-null.
+     */
+    public String getAnchorText() {
+      return null;
+    }
+
+    /**
+     * @return a URL containing extra information about the problem, or null if
+     *     none.
      */
     public URL getURL() {
       return null;

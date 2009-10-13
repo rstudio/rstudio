@@ -29,7 +29,6 @@ import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
-import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.JUnitResult;
@@ -190,42 +189,8 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public boolean setString(String runStyleArg) {
-          String runStyleName = runStyleArg;
-          String args = null;
-          int colon = runStyleArg.indexOf(':');
-          if (colon >= 0) {
-            runStyleName = runStyleArg.substring(0, colon);
-            args = runStyleArg.substring(colon + 1);
-          }
-          if (runStyleName.indexOf('.') < 0) {
-            runStyleName = RunStyle.class.getName() + runStyleName;
-          }
-          Throwable caught = null;
-          try {
-            Class<?> clazz = Class.forName(runStyleName);
-            Class<? extends RunStyle> runStyleClass = clazz.asSubclass(
-                RunStyle.class);
-            Constructor<? extends RunStyle> ctor = runStyleClass.getConstructor(
-                JUnitShell.class);
-            runStyle = ctor.newInstance(JUnitShell.this);
-            return runStyle.initialize(args);
-          } catch (ClassNotFoundException e) {
-            caught = e;
-          } catch (SecurityException e) {
-            caught = e;
-          } catch (NoSuchMethodException e) {
-            caught = e;
-          } catch (IllegalArgumentException e) {
-            caught = e;
-          } catch (InstantiationException e) {
-            caught = e;
-          } catch (IllegalAccessException e) {
-            caught = e;
-          } catch (InvocationTargetException e) {
-            caught = e;
-          }
-          throw new RuntimeException("Unable to create runStyle " + runStyleArg,
-              caught);
+          runStyleName = runStyleArg;
+          return true;
         }
       });
 
@@ -279,7 +244,7 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public boolean setFlag() {
-          setHeadless(false);
+          setHeadlessAccessor(false);
           return true;
         }
       });
@@ -543,8 +508,6 @@ public class JUnitShell extends GWTShell {
       if (!argProcessor.processArgs(args)) {
         throw new JUnitFatalLaunchException("Error processing shell arguments");
       }
-      unitTestShell.finalizeArguments();
-
       unitTestShell.messageQueue = new JUnitMessageQueue(
           unitTestShell.numClients);
 
@@ -553,10 +516,6 @@ public class JUnitShell extends GWTShell {
       }
       // TODO: install a shutdown hook? Not necessary with GWTShell.
       unitTestShell.lastLaunchFailed = false;
-    }
-    if (unitTestShell.thread != Thread.currentThread()) {
-      throw new IllegalThreadStateException(
-          "JUnitShell can only be accessed from the thread that created it.");
     }
 
     return unitTestShell;
@@ -572,11 +531,6 @@ public class JUnitShell extends GWTShell {
    */
   private CompileStrategy compileStrategy = new SimpleCompileStrategy(
       JUnitShell.this);
-
-  /**
-   * When headless, all logging goes to the console.
-   */
-  private PrintWriterTreeLogger consoleLogger;
 
   /**
    * Name of the module containing the current/last module to run.
@@ -641,6 +595,12 @@ public class JUnitShell extends GWTShell {
    */
   private RunStyle runStyle = null;
 
+  /**
+   * The argument passed to -runStyle.  This is parsed later so we can pass in
+   * a logger.
+   */
+  private String runStyleName = null;
+
   private boolean shouldAutoGenerateResources = true;
 
   /**
@@ -663,16 +623,10 @@ public class JUnitShell extends GWTShell {
   private long testMethodTimeout;
 
   /**
-   * The thread that created the JUnitShell.
-   */
-  private Thread thread;
-
-  /**
    * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
    * server mode and disables processing extra arguments as URLs to be shown.
    */
   private JUnitShell() {
-    thread = Thread.currentThread();
     setRunTomcat(true);
     setHeadless(true);
   }
@@ -693,15 +647,6 @@ public class JUnitShell extends GWTShell {
     }
   }
 
-  @Override
-  public TreeLogger getTopLogger() {
-    if (consoleLogger != null) {
-      return consoleLogger;
-    } else {
-      return super.getTopLogger();
-    }
-  }
-
   /**
    * Check for updates once a minute.
    */
@@ -712,11 +657,14 @@ public class JUnitShell extends GWTShell {
 
   @Override
   protected boolean doStartup() {
-    // TODO(jat): refactor so we can avoid startup up the OOPHM listener if we
-    //    aren't running in development mode
     if (!super.doStartup()) {
       return false;
     }
+    if (!createRunStyle()) {
+      // RunStyle already logged reasons for its failure
+      return false;
+    }
+
     if (!runStyle.setupMode(getTopLogger(), developmentMode)) {
       getTopLogger().log(TreeLogger.ERROR, "Run style does not support "
           + (developmentMode ? "development" : "production") + " mode");
@@ -726,20 +674,16 @@ public class JUnitShell extends GWTShell {
   }
 
   @Override
-  protected void initializeLogger() {
-    if (isHeadless()) {
-      consoleLogger = new PrintWriterTreeLogger();
-      consoleLogger.setMaxDetail(options.getLogLevel());
-    } else {
-      super.initializeLogger();
+  protected void ensureCodeServerListener() {
+    if (developmentMode) {
+      super.ensureCodeServerListener();
+      listener.setIgnoreRemoteDeath(true);
     }
   }
 
   /**
-   * Overrides {@link GWTShell#notDone()} to wait for the currently-running test
-   * to complete.
+   * Checks to see if this test run is complete.
    */
-  @Override
   protected boolean notDone() {
     int activeClients = messageQueue.getNumClientsRetrievedTest(currentTestInfo);
     if (firstLaunch && runStyle instanceof RunStyleManual) {
@@ -766,7 +710,8 @@ public class JUnitShell extends GWTShell {
         }
         userAgentList += remoteUserAgents[i];
       }
-      System.out.println("All clients connected (Limiting future permutations to: "
+      getTopLogger().log(TreeLogger.INFO,
+          "All clients connected (Limiting future permutations to: "
           + userAgentList + ")");
     }
 
@@ -850,6 +795,16 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
+   * Accessor method to HostedModeBase.setHeadless -- without this, we get
+   * IllegalAccessError from the -notHeadless arg handler.  Compiler bug?
+   *  
+   * @param headlessMode
+   */
+  void setHeadlessAccessor(boolean headlessMode) {
+    setHeadless(headlessMode);
+  }
+
+  /**
    * Set the expected number of clients.
    * 
    * <p>Should only be called by RunStyle subtypes.
@@ -861,13 +816,52 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
-   * Finish processing command line arguments.
+   * Create the specified (or default) runStyle.
+   * 
+   * @return true if the runStyle was successfully created/initialized
    */
-  private void finalizeArguments() {
-    if (runStyle == null) {
+  private boolean createRunStyle() {
+    if (runStyleName == null) {
       // Default to HtmlUnit runstyle with no args
       runStyle = new RunStyleHtmlUnit(this);
-      runStyle.initialize(null);
+      return runStyle.initialize(null);
+    } else {
+      String args = null;
+      String name = runStyleName;
+      int colon = name.indexOf(':');
+      if (colon >= 0) {
+        args = name.substring(colon + 1);
+        name = name.substring(0, colon);
+      }
+      if (name.indexOf('.') < 0) {
+        name = RunStyle.class.getName() + name;
+      }
+      Throwable caught = null;
+      try {
+        Class<?> clazz = Class.forName(name);
+        Class<? extends RunStyle> runStyleClass = clazz.asSubclass(
+            RunStyle.class);
+        Constructor<? extends RunStyle> ctor = runStyleClass.getConstructor(
+            JUnitShell.class);
+        runStyle = ctor.newInstance(JUnitShell.this);
+        return runStyle.initialize(args);
+      } catch (ClassNotFoundException e) {
+        caught = e;
+      } catch (SecurityException e) {
+        caught = e;
+      } catch (NoSuchMethodException e) {
+        caught = e;
+      } catch (IllegalArgumentException e) {
+        caught = e;
+      } catch (InstantiationException e) {
+        caught = e;
+      } catch (IllegalAccessException e) {
+        caught = e;
+      } catch (InvocationTargetException e) {
+        caught = e;
+      }
+      throw new RuntimeException("Unable to create runStyle " + runStyleName,
+          caught);
     }
   }
 

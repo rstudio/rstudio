@@ -38,6 +38,17 @@ import java.util.Set;
 public abstract class BrowserChannel {
 
   /**
+   * An error indicating that the remote side died and we should unroll the
+   * call stack as painlessly as possible to allow cleanup.
+   */
+  public static class RemoteDeathError extends Error {
+
+    public RemoteDeathError(Throwable cause) {
+      super("Remote connection lost", cause);
+    }
+  }
+
+  /**
    * Class representing a reference to a Java object.
    */
   public static class JavaObjectRef implements RemoteObjectRef {
@@ -153,7 +164,13 @@ public abstract class BrowserChannel {
     
     SWITCH_TRANSPORT(11),
     
-    LOAD_MODULE(12);
+    LOAD_MODULE(12),
+    
+    REQUEST_ICON(13),
+    
+    USER_AGENT_ICON(14),
+    
+    REQUEST_PLUGIN(15);
     
     private final int id;
     
@@ -173,7 +190,7 @@ public abstract class BrowserChannel {
   public interface RemoteObjectRef {
     
     /**
-      * Return the reference ID for this object.
+      * @return the reference ID for this object.
       */
     int getRefid();
   }
@@ -246,11 +263,13 @@ public abstract class BrowserChannel {
      * @param tabKey opaque key of the tab, may be empty if the plugin can't
      *     distinguish tabs or null if using an old plugin
      * @param sessionKey opaque key for this session, null if using an old plugin
+     * @param userAgentIcon byte array containing an icon (which fits within
+     *     24x24) representing the user agent or null if unavailable
      * @return a TreeLogger to use for the module's logs
      */
     public abstract TreeLogger loadModule(TreeLogger logger,
         BrowserChannel channel, String moduleName, String userAgent, String url,
-        String tabKey, String sessionKey);
+        String tabKey, String sessionKey, byte[] userAgentIcon);
 
     public abstract ExceptionOrReturnValue setProperty(BrowserChannel channel,
         int refId, int dispId, Value newValue);
@@ -1266,6 +1285,33 @@ public abstract class BrowserChannel {
   }
 
   /**
+   * A message asking the client to send an icon suitable for use in the UI.
+   * <p>See {@link UserAgentIconMessage}.
+   */
+  protected static class RequestIconMessage extends Message {
+    public static RequestIconMessage receive(BrowserChannel channel)
+        throws IOException {
+      return new RequestIconMessage(channel);
+    }
+
+    public static void send(BrowserChannel channel)
+        throws IOException {
+      DataOutputStream stream = channel.getStreamToOtherSide();
+      stream.writeByte(MessageType.REQUEST_ICON.getId());
+      stream.flush();
+    }
+
+    public RequestIconMessage(BrowserChannel channel) {
+      super(channel);
+    }
+
+    @Override
+    public void send() throws IOException {
+      send(getBrowserChannel());
+    }
+  }
+
+  /**
    * Signifies a return from a previous invoke.
    */
   protected static class ReturnMessage extends Message {
@@ -1365,8 +1411,73 @@ public abstract class BrowserChannel {
     }
   }
 
-  public static final int BROWSERCHANNEL_PROTOCOL_VERSION = 2;
+  /**
+   * A message supplying an icon, which fits in 24x24 and in a standard image
+   * format such as PNG or GIF, suitable for use in the UI.
+   * <p>See {@link RequestIconMessage}.
+   */
+  protected static class UserAgentIconMessage extends Message {
+    public static UserAgentIconMessage receive(BrowserChannel channel)
+        throws IOException {
+      byte[] iconBytes = null;
+      DataInputStream stream = channel.getStreamFromOtherSide();
+      int len = stream.readInt();
+      if (len > 0) {
+        iconBytes = new byte[len];
+        for (int i = 0; i < len; ++i) {
+          iconBytes[i] = stream.readByte();
+        }
+      }
+      return new UserAgentIconMessage(channel, iconBytes);
+    }
 
+    public static void send(BrowserChannel channel, byte[] iconBytes)
+        throws IOException {
+      DataOutputStream stream = channel.getStreamToOtherSide();
+      stream.writeByte(MessageType.USER_AGENT_ICON.getId());
+      if (iconBytes == null) {
+        stream.writeInt(0);
+      } else {
+        stream.writeInt(iconBytes.length);
+        for (byte b : iconBytes) {
+          stream.writeByte(b);
+        }
+      }
+      stream.flush();
+    }
+
+    private byte[] iconBytes;
+
+    public UserAgentIconMessage(BrowserChannel channel, byte[] iconBytes) {
+      super(channel);
+      this.iconBytes = iconBytes;
+    }
+
+    public byte[] getIconBytes() {
+      return iconBytes;
+    }
+
+    @Override
+    public void send() throws IOException {
+      send(getBrowserChannel(), iconBytes);
+    }
+  }
+
+  /**
+   * The current version of the protocol
+   */
+  public static final int PROTOCOL_VERSION_CURRENT = 3;
+
+  /**
+   * The oldest protocol version supported by this code.
+   */
+  public static final int PROTOCOL_VERSION_OLDEST = 2;
+  
+  /**
+   * The protocol version that added the GetIcon message.
+   */
+  public static final int PROTOCOL_VERSION_GET_ICON = 3;
+  
   public static final int SPECIAL_CLIENTMETHODS_OBJECT = 0;
 
   public static final int SPECIAL_SERVERMETHODS_OBJECT = 0;
@@ -1527,60 +1638,89 @@ public abstract class BrowserChannel {
     return msg.returnValue;
   }
 
-  public void reactToMessages(SessionHandler handler) throws IOException,
-      BrowserChannelException {
+  /**
+   * React to messages from the other side, where no return value is expected.
+   * 
+   * @param handler
+   * @throws RemoteDeathError
+   */
+  public void reactToMessages(SessionHandler handler) {
     do {
-      getStreamToOtherSide().flush();
-      MessageType messageType = Message.readMessageType(getStreamFromOtherSide());
-      switch (messageType) {
-        case FREE_VALUE:
-          final FreeMessage freeMsg = FreeMessage.receive(this);
-          handler.freeValue(this, freeMsg.getIds());
-          break;
-        case INVOKE:
-          final InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
-          ExceptionOrReturnValue result = handler.invoke(this, imsg.getThis(),
-              imsg.getMethodDispatchId(), imsg.getArgs());
-          sendFreedValues();
-          ReturnMessage.send(this, result);
-          break;
-        case INVOKE_SPECIAL:
-          handleInvokeSpecial(handler);
-          break;
-        case QUIT:
-          return;
-        default:
-          throw new BrowserChannelException("Invalid message type "
-              + messageType);
+      try {
+        getStreamToOtherSide().flush();
+        MessageType messageType = Message.readMessageType(
+            getStreamFromOtherSide());
+        switch (messageType) {
+          case FREE_VALUE:
+            final FreeMessage freeMsg = FreeMessage.receive(this);
+            handler.freeValue(this, freeMsg.getIds());
+            break;
+          case INVOKE:
+            InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
+            ExceptionOrReturnValue result = handler.invoke(this, imsg.getThis(),
+                imsg.getMethodDispatchId(), imsg.getArgs());
+            sendFreedValues();
+            ReturnMessage.send(this, result);
+            break;
+          case INVOKE_SPECIAL:
+            handleInvokeSpecial(handler);
+            break;
+          case QUIT:
+            return;
+          default:
+            throw new RemoteDeathError(new BrowserChannelException(
+                "Invalid message type " + messageType));
+        }
+      } catch (IOException e) {
+        throw new RemoteDeathError(e);
+      } catch (BrowserChannelException e) {
+        throw new RemoteDeathError(e);
       }
     } while (true);
   }
 
+  /**
+   * React to messages from the other side, where a return value is expected.
+   * 
+   * @param handler
+   * @throws RemoteDeathError
+   */
   public ReturnMessage reactToMessagesWhileWaitingForReturn(
-      SessionHandler handler) throws IOException, BrowserChannelException {
+      SessionHandler handler) {
     do {
-      getStreamToOtherSide().flush();
-      MessageType messageType = Message.readMessageType(getStreamFromOtherSide());
-      switch (messageType) {
-        case FREE_VALUE:
-          final FreeMessage freeMsg = FreeMessage.receive(this);
-          handler.freeValue(this, freeMsg.getIds());
-          break;
-        case RETURN:
-          return ReturnMessage.receive(this);
-        case INVOKE:
-          final InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
-          ExceptionOrReturnValue result = handler.invoke(this, imsg.getThis(),
-              imsg.getMethodDispatchId(), imsg.getArgs());
-          sendFreedValues();
-          ReturnMessage.send(this, result);
-          break;
-        case INVOKE_SPECIAL:
-          handleInvokeSpecial(handler);
-          break;
-        default:
-          throw new BrowserChannelException("Invalid message type "
-              + messageType + " received waiting for return.");
+      try {
+        getStreamToOtherSide().flush();
+        MessageType messageType = Message.readMessageType(
+            getStreamFromOtherSide());
+        switch (messageType) {
+          case FREE_VALUE:
+            final FreeMessage freeMsg = FreeMessage.receive(this);
+            handler.freeValue(this, freeMsg.getIds());
+            break;
+          case RETURN:
+            return ReturnMessage.receive(this);
+          case INVOKE:
+            InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
+            ExceptionOrReturnValue result = handler.invoke(this, imsg.getThis(),
+                imsg.getMethodDispatchId(), imsg.getArgs());
+            sendFreedValues();
+            ReturnMessage.send(this, result);
+            break;
+          case INVOKE_SPECIAL:
+            handleInvokeSpecial(handler);
+            break;
+          case QUIT:
+            // if we got an unexpected QUIT here, the remote plugin probably
+            // realized it was dying and had time to close the socket properly.
+            throw new RemoteDeathError(null);
+          default:
+            throw new BrowserChannelException("Invalid message type "
+                + messageType + " received waiting for return.");
+        }
+      } catch (IOException e) {
+        throw new RemoteDeathError(e);
+      } catch (BrowserChannelException e) {
+        throw new RemoteDeathError(e);
       }
     } while (true);
   }

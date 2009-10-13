@@ -89,8 +89,9 @@ public class RunStyleSelenium extends RunStyle {
   @Override
   public boolean initialize(String args) {
     if (args == null || args.length() == 0) {
-      throw new JUnitFatalLaunchException(
+      getLogger().log(TreeLogger.ERROR,
           "Selenium runstyle requires comma-separated Selenium-RC targets");
+      return false;
     }
     String[] targetsIn = args.split(",");
     RCSelenium targets[] = new RCSelenium[targetsIn.length];
@@ -99,8 +100,9 @@ public class RunStyleSelenium extends RunStyle {
     for (int i = 0; i < targets.length; ++i) {
       Matcher matcher = pattern.matcher(targetsIn[i]);
       if (!matcher.matches()) {
-        throw new JUnitFatalLaunchException("Unable to parse Selenium target "
+        getLogger().log(TreeLogger.ERROR, "Unable to parse Selenium target "
             + targetsIn[i] + " (expected format is [host]:[port]/[browser])");
+        return false;
       }
       RCSelenium instance = new RCSelenium(matcher.group(3), matcher.group(1),
           Integer.parseInt(matcher.group(2)));

@@ -195,10 +195,13 @@ public class RunStyleHtmlUnit extends RunStyle {
     for (String browserName : args.split(",")) {
       BrowserVersion browser = BROWSER_MAP.get(browserName);
       if (browser == null) {
-        throw new IllegalArgumentException("Expected browser name: one of "
-            + BROWSER_MAP.keySet() + ", actual name: " + browserName);
+        getLogger().log(TreeLogger.ERROR, "RunStyleHtmlUnit: Unknown browser "
+            + "name " + browserName + ", expected browser name: one of "
+            + BROWSER_MAP.keySet());
+        return false;
+      } else {
+        browserSet.add(browser);
       }
-      browserSet.add(browser);
     }
     browsers = Collections.unmodifiableSet(browserSet);
     return true;

@@ -4,8 +4,8 @@ svn copy -r6226 \
     https://google-web-toolkit.googlecode.com/svn/branches/farewellSwt \
     https://google-web-toolkit.googlecode.com/svn/changes/jat/noswt-merge6200
 
-Merged from trunk
-================
+Merges
+======
 svn merge https://google-web-toolkit.googlecode.com/svn/trunk \
     -r6101:6142
 svn merge --ignore-ancestry -r6142:6200 \
@@ -17,3 +17,5 @@ svn merge https://google-web-toolkit.googlecode.com/svn/trunk \
   -r6239:6249 .
 svn merge https://google-web-toolkit.googlecode.com/svn/trunk \
   --ignore-ancestry -r6249:6270 .
+svn merge --ignore-ancestry -r6280:6359 \
+    https://google-web-toolkit.googlecode.com/svn/changes/jat/abstractui

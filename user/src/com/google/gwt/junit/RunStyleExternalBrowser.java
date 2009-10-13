@@ -76,9 +76,10 @@ class RunStyleExternalBrowser extends RunStyle {
   @Override
   public boolean initialize(String args) {
     if (args == null || args.length() == 0) {
-      throw new IllegalArgumentException("ExternalBrowser runstyle requires an "
+      getLogger().log(TreeLogger.ERROR, "ExternalBrowser runstyle requires an "
           + "argument listing one or more executables of external browsers to "
           + "launch");
+      return false;
     }
     String browsers[] = args.split(",");
     synchronized (this) {

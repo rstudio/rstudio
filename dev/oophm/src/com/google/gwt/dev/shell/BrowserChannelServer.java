@@ -19,13 +19,17 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.JsValue.DispatchObject;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * 
+ * Server-side of the browser channel protocol.
  */
-public final class BrowserChannelServer extends BrowserChannel
+public class BrowserChannelServer extends BrowserChannel
     implements Runnable {
 
   private static class ServerObjectRefFactory implements ObjectRefFactory {
@@ -56,7 +60,13 @@ public final class BrowserChannelServer extends BrowserChannel
 
   public static final String JSO_CLASS = "com.google.gwt.core.client.JavaScriptObject";
 
-  private SessionHandler handler;
+  private static Map<String, byte[]> iconCache = new HashMap<String, byte[]>();
+  
+  private static final Object cacheLock = new Object();
+
+  private final SessionHandler handler;
+
+  private final boolean ignoreRemoteDeath;
 
   private final ServerObjectsTable javaObjectsInBrowser = new ServerObjectsTable();
 
@@ -69,14 +79,21 @@ public final class BrowserChannelServer extends BrowserChannel
   private int protocolVersion = -1;
 
   public BrowserChannelServer(TreeLogger initialLogger, Socket socket,
-      SessionHandler handler) throws IOException {
+      SessionHandler handler, boolean ignoreRemoteDeath) throws IOException {
     super(socket, new ServerObjectRefFactory());
     this.handler = handler;
-    this.logger = initialLogger;
-    Thread thread = new Thread(this);
-    thread.setDaemon(true);
-    thread.setName("Hosted mode worker");
-    thread.start();
+    this.ignoreRemoteDeath = ignoreRemoteDeath;
+    init(initialLogger);
+  }
+
+  // @VisibleForTesting
+  BrowserChannelServer(TreeLogger initialLogger, InputStream inputStream,
+      OutputStream outputStream, SessionHandler handler,
+      boolean ignoreRemoteDeath) throws IOException {
+    super(inputStream, outputStream, new ServerObjectRefFactory());
+    this.handler = handler;
+    this.ignoreRemoteDeath = ignoreRemoteDeath;
+    init(initialLogger);
   }
 
   public void freeJsValue(int[] ids) {
@@ -194,6 +211,140 @@ public final class BrowserChannelServer extends BrowserChannel
     QuitMessage.send(this);
   }
 
+  // @VisibleForTesting
+  protected void processConnection() throws IOException, BrowserChannelException {
+    MessageType type = Message.readMessageType(getStreamFromOtherSide());
+    // TODO(jat): add support for getting the a shim plugin downloading the
+    //    real plugin via a GetRealPlugin message before CheckVersions
+    String url = null;
+    String tabKey = null;
+    String sessionKey = null;
+    byte[] iconBytes = null;
+    switch (type) {
+      case OLD_LOAD_MODULE:
+        // v1 client
+        OldLoadModuleMessage oldLoadModule = OldLoadModuleMessage.receive(this);
+        if (oldLoadModule.getProtoVersion() != 1) {
+          // This message type was only used in v1, so something is really
+          // broken here.
+          throw new BrowserChannelException(
+              "Old LoadModule message used, but not v1 protocol");
+        }
+        moduleName = oldLoadModule.getModuleName();
+        userAgent = oldLoadModule.getUserAgent();
+        protocolVersion = 1;
+        logger.log(TreeLogger.WARN, "Connection from old browser plugin -- "
+            + "please upgrade to a later version for full functionality");
+        break;
+      case CHECK_VERSIONS:
+        String connectError = null;
+        CheckVersionsMessage hello = CheckVersionsMessage.receive(this);
+        int minVersion = hello.getMinVersion();
+        int maxVersion = hello.getMaxVersion();
+        String hostedHtmlVersion = hello.getHostedHtmlVersion();
+        if (minVersion > PROTOCOL_VERSION_CURRENT
+            || maxVersion < PROTOCOL_VERSION_OLDEST) {
+          connectError = "Client supported protocol version range "
+              + minVersion + " - " + maxVersion + "; server "
+              + PROTOCOL_VERSION_OLDEST + " - " + PROTOCOL_VERSION_CURRENT;
+        } else {
+          if (!HostedHtmlVersion.validHostedHtmlVersion(logger,
+              hostedHtmlVersion)) {
+            new FatalErrorMessage(this,
+                "Invalid hosted.html version - check log window").send();
+            return;
+          }
+        }
+        if (connectError != null) {
+          logger.log(TreeLogger.ERROR, "Connection error: " + connectError,
+              null);
+          new FatalErrorMessage(this, connectError).send();
+          return;
+        }
+        protocolVersion = Math.min(PROTOCOL_VERSION_CURRENT, maxVersion);
+        new ProtocolVersionMessage(this, protocolVersion).send();
+        type = Message.readMessageType(getStreamFromOtherSide());
+        
+        // Optionally allow client to request switch of transports.  Inband is
+        // always supported, so a return of an empty transport string requires
+        // the client to stay in this channel.
+        if (type == MessageType.CHOOSE_TRANSPORT) {
+          ChooseTransportMessage chooseTransport = ChooseTransportMessage.receive(this);
+          String transport = selectTransport(chooseTransport.getTransports());
+          String transportArgs = null;
+          if (transport != null) {
+            transportArgs = createTransport(transport);
+          }
+          new SwitchTransportMessage(this, transport, transportArgs).send();
+          type = Message.readMessageType(getStreamFromOtherSide());
+        }
+        
+        // Now we expect a LoadModule message to load a GWT module.
+        if (type != MessageType.LOAD_MODULE) {
+          logger.log(TreeLogger.ERROR, "Unexpected message type " + type
+              + "; expecting LoadModule");
+          return;
+        }
+        LoadModuleMessage loadModule = LoadModuleMessage.receive(this);
+        url = loadModule.getUrl();
+        tabKey = loadModule.getTabKey();
+        sessionKey = loadModule.getSessionKey();
+        moduleName = loadModule.getModuleName();
+        userAgent = loadModule.getUserAgent();
+        break;
+      case REQUEST_PLUGIN:
+        logger.log(TreeLogger.ERROR, "Plugin download not supported yet");
+        // We can't clear the socket since we don't know how to interpret this
+        // message yet -- it is only here now so we can give a better error
+        // message with mixed versions once it is supported.
+        new FatalErrorMessage(this, "Plugin download not supported").send();
+        return;
+      default:
+        logger.log(TreeLogger.ERROR, "Unexpected message type " + type
+            + "; expecting CheckVersions");
+        return;
+    }
+    if (protocolVersion >= PROTOCOL_VERSION_GET_ICON) {
+      synchronized (cacheLock) {
+        if (iconCache.containsKey(userAgent)) {
+          iconBytes = iconCache.get(userAgent);
+        } else {
+          RequestIconMessage.send(this);
+          type = Message.readMessageType(getStreamFromOtherSide());
+          if (type != MessageType.USER_AGENT_ICON) {
+            logger.log(TreeLogger.ERROR, "Unexpected message type " + type
+                + "; expecting UserAgentIcon");
+            return;
+          }
+          UserAgentIconMessage uaIconMessage = UserAgentIconMessage.receive(
+              this);
+          iconBytes = uaIconMessage.getIconBytes();
+          iconCache.put(userAgent, iconBytes);
+        }
+      }
+    }
+    Thread.currentThread().setName(
+        "Hosting " + moduleName + " for " + userAgent + " on " + url + " @ "
+        + sessionKey);
+    logger = handler.loadModule(logger, this, moduleName, userAgent, url,
+        tabKey, sessionKey, iconBytes);
+    try {
+      // send LoadModule response
+      try {
+        ReturnMessage.send(this, false, new Value());
+      } catch (IOException e) {
+        throw new RemoteDeathError(e);
+      }
+      reactToMessages(handler);
+    } catch (RemoteDeathError e) {
+      if (!ignoreRemoteDeath) {
+        logger.log(TreeLogger.ERROR, e.getMessage(), e);
+      }
+    } finally {
+      handler.unloadModule(this, moduleName);
+    }
+  }
+
   /**
    * Convert a JsValue into a BrowserChannel Value.
    * 
@@ -302,101 +453,12 @@ public final class BrowserChannelServer extends BrowserChannel
         "No alternate transports supported");
   }
 
-  private void processConnection() throws IOException, BrowserChannelException {
-    MessageType type = Message.readMessageType(getStreamFromOtherSide());
-    // TODO(jat): add support for getting the a shim plugin downloading the
-    //    real plugin via a GetRealPlugin message before CheckVersions
-    String url = null;
-    String tabKey = null;
-    String sessionKey = null;
-    switch (type) {
-      case OLD_LOAD_MODULE:
-        // v1 client
-        OldLoadModuleMessage oldLoadModule = OldLoadModuleMessage.receive(this);
-        if (oldLoadModule.getProtoVersion() != 1) {
-          // This message type was only used in v1, so something is really
-          // broken here.
-          throw new BrowserChannelException(
-              "Old LoadModule message used, but not v1 protocol");
-        }
-        moduleName = oldLoadModule.getModuleName();
-        userAgent = oldLoadModule.getUserAgent();
-        protocolVersion = 1;
-        logger.log(TreeLogger.WARN, "Connection from old browser plugin -- "
-            + "please upgrade to a later version for full functionality");
-        break;
-      case CHECK_VERSIONS:
-        String connectError = null;
-        CheckVersionsMessage hello = CheckVersionsMessage.receive(this);
-        int minVersion = hello.getMinVersion();
-        int maxVersion = hello.getMaxVersion();
-        String hostedHtmlVersion = hello.getHostedHtmlVersion();
-        if (minVersion > BROWSERCHANNEL_PROTOCOL_VERSION
-            || maxVersion < BROWSERCHANNEL_PROTOCOL_VERSION) {
-          connectError = "No supported protocol version in range " + minVersion
-          + " - " + maxVersion;
-        } else {
-          if (!HostedHtmlVersion.validHostedHtmlVersion(logger,
-              hostedHtmlVersion)) {
-            new FatalErrorMessage(this,
-                "Invalid hosted.html version - check log window").send();
-            return;
-          }
-        }
-        if (connectError != null) {
-          logger.log(TreeLogger.ERROR, "Connection error: " + connectError,
-              null);
-          new FatalErrorMessage(this, connectError).send();
-          return;
-        }
-        protocolVersion = BROWSERCHANNEL_PROTOCOL_VERSION;
-        new ProtocolVersionMessage(this, protocolVersion).send();
-        type = Message.readMessageType(getStreamFromOtherSide());
-        
-        // Optionally allow client to request switch of transports.  Inband is
-        // always supported, so a return of an empty transport string requires
-        // the client to stay in this channel.
-        if (type == MessageType.CHOOSE_TRANSPORT) {
-          ChooseTransportMessage chooseTransport = ChooseTransportMessage.receive(this);
-          String transport = selectTransport(chooseTransport.getTransports());
-          String transportArgs = null;
-          if (transport != null) {
-            transportArgs = createTransport(transport);
-          }
-          new SwitchTransportMessage(this, transport, transportArgs).send();
-          type = Message.readMessageType(getStreamFromOtherSide());
-        }
-        
-        // Now we expect a LoadModule message to load a GWT module.
-        if (type != MessageType.LOAD_MODULE) {
-          logger.log(TreeLogger.ERROR, "Unexpected message type " + type
-              + "; expecting LoadModule");
-          return;
-        }
-        LoadModuleMessage loadModule = LoadModuleMessage.receive(this);
-        url = loadModule.getUrl();
-        tabKey = loadModule.getTabKey();
-        sessionKey = loadModule.getSessionKey();
-        moduleName = loadModule.getModuleName();
-        userAgent = loadModule.getUserAgent();
-        break;
-      default:
-        logger.log(TreeLogger.ERROR, "Unexpected message type " + type
-            + "; expecting CheckVersions");
-        return;
-    }
-    Thread.currentThread().setName(
-        "Hosting " + moduleName + " for " + userAgent + " on " + url + " @ "
-        + sessionKey);
-    logger = handler.loadModule(logger, this, moduleName, userAgent, url,
-        tabKey, sessionKey);
-    try {
-      // send LoadModule response
-      ReturnMessage.send(this, false, new Value());
-      reactToMessages(handler);
-    } finally {
-      handler.unloadModule(this, moduleName);
-    }
+  private void init(TreeLogger initialLogger) {
+    this.logger = initialLogger;
+    Thread thread = new Thread(this);
+    thread.setDaemon(true);
+    thread.setName("Hosted mode worker");
+    thread.start();
   }
 
   /**

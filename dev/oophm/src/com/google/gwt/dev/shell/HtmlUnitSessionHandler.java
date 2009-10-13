@@ -181,12 +181,12 @@ public class HtmlUnitSessionHandler extends SessionHandler {
     Context jsContext = Context.getCurrentContext();
     ScriptableObject jsThis;
     if (thisObj.getType() == ValueType.NULL) {
-      jsThis = (ScriptableObject) window;
+      jsThis = window;
     } else {
       jsThis = (ScriptableObject) makeJsvalFromValue(jsContext, thisObj);
     }
     Object functionObject = ScriptableObject.getProperty(
-        (ScriptableObject) window, methodName);
+        window, methodName);
     if (functionObject == ScriptableObject.NOT_FOUND) {
       logger.log(TreeLogger.ERROR, "function " + methodName
           + " NOT FOUND, thisObj: " + jsThis + ", methodName: " + methodName);
@@ -248,7 +248,7 @@ public class HtmlUnitSessionHandler extends SessionHandler {
   @Override
   public TreeLogger loadModule(TreeLogger logger, BrowserChannel channel,
       String moduleName, String userAgent, String url, String tabKey,
-      String sessionKey) {
+      String sessionKey, byte[] userAgentIcon) {
     throw new UnsupportedOperationException("loadModule must not be called");
   }
 
@@ -274,7 +274,7 @@ public class HtmlUnitSessionHandler extends SessionHandler {
           return new Value(scriptableValue.toString());
         }
       }
-      Integer refId = jsObjectToRef.get((Scriptable) value);
+      Integer refId = jsObjectToRef.get(value);
       if (refId == null) {
         refId = nextRefId++;
         jsObjectToRef.put((Scriptable) value, refId);

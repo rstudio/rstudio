@@ -27,7 +27,7 @@ public class HostedHtmlVersion {
    * The version number that should be passed into gwtOnLoad. Must match the
    * version in hosted.html.
    */
-  private static final String EXPECTED_GWT_ONLOAD_VERSION = "2.0";
+  public static final String EXPECTED_GWT_ONLOAD_VERSION = "2.0";
 
   /**
    * Validate that the supplied hosted.html version matches.

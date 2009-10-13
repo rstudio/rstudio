@@ -15,10 +15,6 @@
  */
 package com.google.gwt.dev.util;
 
-import com.google.gwt.dev.shell.Icons;
-
-import javax.swing.ImageIcon;
-
 /**
  * Holds information about the browser used in the UI.
  */
@@ -32,29 +28,12 @@ public class BrowserInfo {
   private static final String IE = "IE";
 
   /**
-   * Choose an icon and short name appropriate for this browser.  The icon
-   * may be null.
+   * Retrieve a short name, suitable for use in a tab or filename, for a given
+   * user agent.
    * 
-   * @param userAgent User-Agent string from browser
-   * @return icon or null if none
+   * @param userAgent
+   * @return short name of user agent
    */
-  public static BrowserInfo getBrowserInfo(String userAgent) {
-    ImageIcon browserIcon = null;
-    String shortName = getShortName(userAgent);
-    if (shortName.equals(IE)) {
-      browserIcon = Icons.getIE24();
-    } else if (shortName.equals(CHROME)) {
-      browserIcon = Icons.getChrome24();
-    } else if (shortName.equals(OPERA)) {
-      // no icon for Opera
-    } else if (shortName.equals(SAFARI)) {
-      browserIcon = Icons.getSafari24();
-    } else if (shortName.equals(FIREFOX)) {
-      browserIcon = Icons.getFirefox24();
-    }
-    return new BrowserInfo(browserIcon, shortName);
-  }
-
   public static String getShortName(String userAgent) {
     String lcAgent = userAgent.toLowerCase();
     if (lcAgent.contains("msie")) {
@@ -70,31 +49,7 @@ public class BrowserInfo {
     }
     return UNKNOWN;
   }
-  private final ImageIcon icon;
-  private final String shortName;
 
-  /**
-   * Create a BrowserInfo instance.
-   * 
-   * @param icon
-   * @param shortName
-   */
-  private BrowserInfo(ImageIcon icon, String shortName) {
-    this.icon = icon;
-    this.shortName = shortName;
-  }
-
-  /**
-   * @return the icon used to identify this browser, or null if none.
-   */
-  public ImageIcon getIcon() {
-    return icon;
-  }
-
-  /**
-   * @return the short name used to identify this browser, or null if none.
-   */
-  public String getShortName() {
-    return shortName;
+  private BrowserInfo() {
   }
 }

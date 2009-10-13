@@ -25,6 +25,8 @@ import com.google.gwt.dev.Compiler.CompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
+import com.google.gwt.dev.ui.RestartServerCallback;
+import com.google.gwt.dev.ui.RestartServerEvent;
 import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
@@ -41,14 +43,13 @@ import java.net.BindException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.ImageIcon;
-
 /**
  * The main executable class for the hosted mode shell. NOTE: the public API for
  * this class is to be determined. Consider this class as having <b>no</b>
  * public API other than {@link #main(String[])}.
  */
-public class HostedMode extends OophmHostedModeBase {
+public class HostedMode extends HostedModeBase
+    implements RestartServerCallback {
 
   /**
    * Handles the -server command line flag.
@@ -142,7 +143,7 @@ public class HostedMode extends OophmHostedModeBase {
     }
   }
 
-  static class ArgProcessor extends OophmHostedModeBase.ArgProcessor {
+  static class ArgProcessor extends HostedModeBase.ArgProcessor {
     public ArgProcessor(HostedModeOptions options) {
       super(options, false);
       registerHandler(new ArgHandlerServer(options));
@@ -165,7 +166,7 @@ public class HostedMode extends OophmHostedModeBase {
     }
   }
 
-  interface HostedModeOptions extends OophmHostedModeBaseOptions,
+  interface HostedModeOptions extends HostedModeBaseOptions,
       CompilerOptions {
     ServletContainerLauncher getServletContainerLauncher();
 
@@ -175,7 +176,7 @@ public class HostedMode extends OophmHostedModeBase {
   /**
    * Concrete class to implement all hosted mode options.
    */
-  static class HostedModeOptionsImpl extends OophmHostedModeBaseOptionsImpl
+  static class HostedModeOptionsImpl extends HostedModeBaseOptionsImpl
       implements HostedModeOptions {
     private File extraDir;
     private int localWorkers;
@@ -286,13 +287,15 @@ public class HostedMode extends OophmHostedModeBase {
   HostedMode() {
   }
 
-  public WebServerRestart hasWebServer() {
-    return options.isNoServer() ? WebServerRestart.DISABLED
-        : WebServerRestart.ENABLED;
-  }
-
-  public void restartServer(TreeLogger logger) throws UnableToCompleteException {
-    server.refresh();
+  /**
+   * Called by the UI on a restart server event.
+   */
+  public void onRestartServer(TreeLogger logger) {
+    try {
+      server.refresh();
+    } catch (UnableToCompleteException e) {
+      // ignore, problem already logged
+    }
   }
 
   @Override
@@ -382,7 +385,9 @@ public class HostedMode extends OophmHostedModeBase {
   @Override
   protected int doStartUpServer() {
     try {
-      TreeLogger serverLogger = webServerLog.getLogger();
+      ui.setCallback(RestartServerEvent.getType(), this);
+      // TODO(jat): find a safe way to get an icon for the servlet container
+      TreeLogger serverLogger = ui.getWebServerLogger(getWebServerName(), null);
       serverLogger.log(TreeLogger.INFO, "Starting HTTP on port " + getPort(),
           null);
       server = options.getServletContainerLauncher().start(serverLogger,
@@ -397,6 +402,8 @@ public class HostedMode extends OophmHostedModeBase {
       System.err.println("Unable to start embedded HTTP server");
       e.printStackTrace();
     }
+    // Clear the callback if we failed to start the server
+    ui.setCallback(RestartServerEvent.getType(), null);
     return -1;
   }
 
@@ -408,13 +415,6 @@ public class HostedMode extends OophmHostedModeBase {
     return super.getHost();
   }
 
-  @Override
-  protected ImageIcon getWebServerIcon() {
-    return loadImageIcon(options.getServletContainerLauncher().getIconPath(),
-        false);
-  }
-
-  @Override
   protected String getWebServerName() {
     return options.getServletContainerLauncher().getName();
   }
@@ -457,14 +457,16 @@ public class HostedMode extends OophmHostedModeBase {
     return module;
   }
 
+  protected void restartServer(TreeLogger logger) throws UnableToCompleteException {
+    server.refresh();
+  }
+
   /**
    * Perform an initial hosted mode link, without overwriting newer or
    * unmodified files in the output folder.
    * 
    * @param logger the logger to use
    * @param module the module to link
-   * @param includePublicFiles if <code>true</code>, include public files in
-   *          the link, otherwise do not include them
    * @throws UnableToCompleteException
    */
   private void link(TreeLogger logger, ModuleDef module)

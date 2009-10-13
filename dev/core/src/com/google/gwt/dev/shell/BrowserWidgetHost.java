@@ -51,14 +51,14 @@ public interface BrowserWidgetHost {
    * @param tabKey opaque key for the tab, may be empty string if the plugin
    *     can't distinguish tabs or null if using an old browser plugin 
    * @param sessionKey unique session key, may be null for old browser plugins
-   * @param remoteEndpoint
-   * 
-   * TODO(jat): change remoteEndpoint to be a BrowserChannelServer instance
-   *    when we remove the SWT implementation
+   * @param serverChannel connection from the client
+   * @param userAgentIcon byte array containing an icon (which fits in 24x24)
+   *     for this user agent or null if unavailable
    */
   ModuleSpaceHost createModuleSpaceHost(TreeLogger logger, String moduleName,
       String userAgent, String url, String tabKey, String sessionKey,
-      String remoteEndpoint) throws UnableToCompleteException;
+      BrowserChannelServer serverChannel, byte[] userAgentIcon)
+      throws UnableToCompleteException;
 
   TreeLogger getLogger();
 

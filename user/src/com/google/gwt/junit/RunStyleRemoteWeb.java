@@ -27,7 +27,6 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.rmi.Naming;
 import java.rmi.server.RMISocketFactory;
-import java.security.Permission;
 
 /**
  * Runs in web mode via browsers managed over RMI. This feature is experimental
@@ -159,25 +158,18 @@ class RunStyleRemoteWeb extends RunStyle {
   @Override
   public boolean initialize(String args) {
     if (args == null || args.length() == 0) {
-      throw new JUnitFatalLaunchException(
+      getLogger().log(TreeLogger.ERROR,
           "RemoteWeb runstyle requires comma-separated RMI URLs");
+      return false;
     }
     String[] urls = args.split(",");
     try {
       RMISocketFactoryWithTimeouts.init();
     } catch (IOException e) {
-      throw new JUnitFatalLaunchException("Error initializing RMISocketFactory",
-          e);
+      getLogger().log(TreeLogger.ERROR,
+          "RemoteWeb: Error initializing RMISocketFactory", e);
+      return false;
     }
-    System.setSecurityManager(new SecurityManager() {
-      @Override
-      public void checkPermission(Permission perm) {
-      }
-
-      @Override
-      public void checkPermission(Permission perm, Object context) {
-      }
-    });
     int numClients = urls.length;
     shell.setNumClients(numClients);
     BrowserManager[] browserManagers = new BrowserManager[numClients];
@@ -186,7 +178,8 @@ class RunStyleRemoteWeb extends RunStyle {
       try {
         browserManagers[i] = (BrowserManager) Naming.lookup(urls[i]);
       } catch (Exception e) {
-        String message = "Error connecting to browser manager at " + urls[i];
+        String message = "RemoteWeb: Error connecting to browser manager at "
+            + urls[i];
         Throwable cause = e;
         if (e.getCause() instanceof SocketTimeoutException) {
           long elapsed = System.currentTimeMillis() - callStart;
@@ -194,9 +187,8 @@ class RunStyleRemoteWeb extends RunStyle {
               + "ms waiting to connect to browser manager.";
           cause = e.getCause();
         }
-        System.err.println(message);
-        cause.printStackTrace();
-        throw new JUnitFatalLaunchException(message, cause);
+        getLogger().log(TreeLogger.ERROR, message, cause);
+        return false;
       }
     }
     synchronized (this) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,29 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.shell;
-
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
+package com.google.gwt.dev.ui;
 
 /**
- * Interface to the browser window controller.
+ * Callback for "done" from the UI. 
  */
-public interface BrowserWindowController {
+public interface DoneCallback extends UiCallback {
+  
   /**
-   * Whether to display server control(s).
+   * The UI is closing.
    */
-  enum WebServerRestart {
-    DISABLED, ENABLED, NONE
-  }
-
-  void closeAllBrowserWindows();
-
-  boolean hasBrowserWindowsOpen();
-
-  WebServerRestart hasWebServer();
-
-  String normalizeURL(String string);
-
-  void restartServer(TreeLogger logger) throws UnableToCompleteException;
+  void onDone();
 }

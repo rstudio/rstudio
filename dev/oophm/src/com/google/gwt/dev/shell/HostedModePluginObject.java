@@ -172,9 +172,6 @@ public class HostedModePluginObject extends ScriptableObject {
       return false;
     }
     // TODO: add whitelist and default-port support?
-    System.out.println("connect(url=" + url + ", sessionKey=" + sessionKey
-        + ", address=" + address + ", module=" + module + ", version="
-        + version + "), window=" + System.identityHashCode(window) + ")");
 
     try {
       HtmlUnitSessionHandler htmlUnitSessionHandler = new HtmlUnitSessionHandler(

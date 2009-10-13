@@ -156,17 +156,15 @@ public class OophmSessionHandler extends SessionHandler {
   @Override
   public TreeLogger loadModule(TreeLogger loadModuleLogger,
       BrowserChannel channel, String moduleName, String userAgent, String url,
-      String tabKey, String sessionKey) {
+      String tabKey, String sessionKey, byte[] userAgentIcon) {
     logger = loadModuleLogger;
     try {
       // Attach a new ModuleSpace to make it programmable.
       //
-      // TODO(jat): pass serverChannel to createModuleSpaceHost instead
-      // of the remote endpoint when we remove SWT
       BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
       ModuleSpaceHost msh = host.createModuleSpaceHost(loadModuleLogger,
-          moduleName, userAgent, url, tabKey, sessionKey,
-          channel.getRemoteEndpoint());
+          moduleName, userAgent, url, tabKey, sessionKey, serverChannel,
+          userAgentIcon);
       logger = msh.getLogger();
       ModuleSpace moduleSpace = new ModuleSpaceOOPHM(msh, moduleName,
           serverChannel);

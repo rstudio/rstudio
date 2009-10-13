@@ -16,7 +16,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.dev.OophmHostedModeBase.TabPanelCollection;
+import com.google.gwt.dev.SwingUI.TabPanelCollection;
 import com.google.gwt.dev.util.BrowserInfo;
 
 import java.awt.BorderLayout;
@@ -304,12 +304,14 @@ public class ModuleTabPanel extends JPanel {
    * @param userAgent
    * @param remoteSocket
    * @param url
+   * @param agentIconBytes 
    * @param tabPanelCollection
    * @param moduleName used just for the tab name in the event that the plugin
    *     is an older version that doesn't supply the url
    */
   public ModuleTabPanel(String userAgent, String remoteSocket, String url,
-      TabPanelCollection tabPanelCollection, String moduleName) {
+      byte[] agentIconBytes, TabPanelCollection tabPanelCollection,
+      String moduleName) {
     super(new BorderLayout());
     this.tabPanelCollection = tabPanelCollection;
     topPanel = new JPanel();
@@ -351,7 +353,6 @@ public class ModuleTabPanel extends JPanel {
     cardLayout = new CardLayout();
     deckPanel.setLayout(cardLayout);
     add(deckPanel);
-    BrowserInfo browserInfo = BrowserInfo.getBrowserInfo(userAgent);
     
     // Construct the tab title and tooltip
     String tabTitle = url;
@@ -380,8 +381,11 @@ public class ModuleTabPanel extends JPanel {
       }
     }
 
-    ImageIcon browserIcon = browserInfo.getIcon();
-    String shortName = browserInfo.getShortName();
+    ImageIcon browserIcon = null;
+    if (agentIconBytes != null) {
+      browserIcon = new ImageIcon(agentIconBytes);
+    }
+    String shortName = BrowserInfo.getShortName(userAgent);
     if (browserIcon == null) {
       if (shortName != null) {
         tabTitle += " (" + shortName + ")";
