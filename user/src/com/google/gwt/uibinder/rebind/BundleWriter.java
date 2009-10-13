@@ -21,12 +21,15 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.CssResource.Import;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
 import com.google.gwt.uibinder.rebind.model.ImplicitDataResource;
 import com.google.gwt.uibinder.rebind.model.ImplicitImageResource;
+
+import java.util.Set;
 
 /**
  * Writes source implementing an {@link ImplicitClientBundle}.
@@ -43,6 +46,7 @@ public class BundleWriter {
   private final JClassType imageOptionType;
   private final JClassType imageResourceType;
   private final JClassType repeatStyleType;
+  private final JClassType importAnnotationType;
 
   public BundleWriter(ImplicitClientBundle bundleClass,
       PrintWriterManager writerManager, TypeOracle oracle,
@@ -58,6 +62,7 @@ public class BundleWriter {
     imageOptionType = oracle.findType(ImageOptions.class.getCanonicalName());
     imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
     repeatStyleType = oracle.findType(RepeatStyle.class.getCanonicalName());
+    importAnnotationType =  oracle.findType(Import.class.getCanonicalName());
   }
 
   public void write() throws UnableToCompleteException {
@@ -77,20 +82,22 @@ public class BundleWriter {
     }
 
     // Imports
-    writer.write("import %s;", imageResourceType.getQualifiedSourceName());
-    writer.write("import %s;", imageOptionType.getQualifiedSourceName());
     writer.write("import %s;", clientBundleType.getQualifiedSourceName());
     writer.write("import %s;", dataResourceType.getQualifiedSourceName());
+    writer.write("import %s;", imageResourceType.getQualifiedSourceName());
+    writer.write("import %s;", imageOptionType.getQualifiedSourceName());
+    writer.write("import %s;", importAnnotationType.getQualifiedSourceName());
     writer.newline();
 
     // Open interface
     writer.write("public interface %s extends ClientBundle {",
         bundleClass.getClassName());
     writer.indent();
-
+    
     // Write css methods
     for (ImplicitCssResource css : bundleClass.getCssMethods()) {
       writer.write("@Source(\"%s\")", css.getSource());
+      writeCssImports(css);
       writer.write("%s %s();", css.getClassName(), css.getName());
       writer.newline();
     }
@@ -107,6 +114,26 @@ public class BundleWriter {
     // Close interface.
     writer.outdent();
     writer.write("}");
+  }
+
+  private void writeCssImports(ImplicitCssResource css) {
+    Set<JClassType> importTypes = css.getImports();
+    int numImports = importTypes.size();
+    if (numImports > 0) {
+      if (numImports == 1) {
+        writer.write("@Import(%s.class)",
+            importTypes.iterator().next().getQualifiedSourceName());
+      } else {
+        StringBuffer b = new StringBuffer();
+        for (JClassType importType : importTypes) {
+          if (b.length() > 0) {
+            b.append(", ");
+          }
+          b.append(importType.getQualifiedSourceName()).append(".class");
+        }
+        writer.write("@Import({%s})", b);
+      }
+    }
   }
 
   private void writeImageMethods() {

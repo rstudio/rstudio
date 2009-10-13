@@ -58,7 +58,7 @@ public class WidgetBasedUi extends Composite {
   public interface Style extends CssResource {
     String menuBar();
   }
-
+  
   interface Binder extends UiBinder<Widget, WidgetBasedUi> {
   }
   private static final Binder binder = GWT.create(Binder.class);
@@ -121,6 +121,7 @@ public class WidgetBasedUi extends Composite {
   @UiField Image babyWidget;
   @UiField ParagraphElement simpleSpriteParagraph;
   @UiField DataResource heartCursorResource;
+  @UiField CssImportScopeSample cssImportScopeSample;
 
   public WidgetBasedUi() {
     this.bundledLabel = new Label();

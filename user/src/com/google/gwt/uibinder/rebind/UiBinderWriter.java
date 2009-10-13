@@ -1191,7 +1191,7 @@ public class UiBinderWriter {
   }
 
   private void writeClassOpen(IndentedWriter w) {
-    w.write("public class %s extends AbstractUiBinder<%s, %s> implements %s {",
+    w.write("public class %s implements UiBinder<%s, %s>, %s {",
         implClassName, uiRootType.getName(), uiOwnerType.getName(),
         baseClass.getName());
     w.indent();
@@ -1199,7 +1199,7 @@ public class UiBinderWriter {
 
   private void writeCssInjectors(IndentedWriter w) {
     for (ImplicitCssResource css : bundleClass.getCssMethods()) {
-      w.write("ensureCssInjected(%s.%s());", bundleClass.getFieldName(),
+      w.write("%s.%s().ensureInjected();", bundleClass.getFieldName(),
           css.getName());
     }
     w.newline();
@@ -1242,7 +1242,7 @@ public class UiBinderWriter {
 
   private void writeImports(IndentedWriter w) {
     w.write("import com.google.gwt.core.client.GWT;");
-    w.write("import com.google.gwt.uibinder.client.AbstractUiBinder;");
+    w.write("import com.google.gwt.uibinder.client.UiBinder;");
     w.write("import com.google.gwt.uibinder.client.UiBinderUtil;");
     w.write("import %s.%s;", uiRootType.getPackage().getName(),
         uiRootType.getName());

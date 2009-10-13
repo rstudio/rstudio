@@ -30,7 +30,7 @@ public class ImplicitClientBundle {
   // LinkedHashSets for consistent order across recompiles
   private final LinkedHashSet<ImplicitCssResource> cssMethods = new LinkedHashSet<ImplicitCssResource>();
   private final LinkedHashSet<ImplicitImageResource> imageMethods = new LinkedHashSet<ImplicitImageResource>();
-  private final LinkedHashSet<ImplicitDataResource> dataMethods = new LinkedHashSet<ImplicitDataResource>();
+  private final LinkedHashSet<ImplicitDataResource> dataMethods =  new LinkedHashSet<ImplicitDataResource>();
   private final String packageName;
   private final String className;
   private final String fieldName;
@@ -60,12 +60,14 @@ public class ImplicitClientBundle {
    * @param extendedInterface the public interface implemented by this
    *          CssResource, or null
    * @param body the inline css text
+   * @param importTypes for the {@literal @}Import annotation, if any. LinkedHashSet
+   *          to enforce deterministic order across recompiles
    * @return
    */
   public ImplicitCssResource createCssResource(String name, String source,
-      JClassType extendedInterface, String body) {
+      JClassType extendedInterface, String body, LinkedHashSet<JClassType> importTypes) {
     ImplicitCssResource css = new ImplicitCssResource(packageName, cssBaseName
-        + name, name, source, extendedInterface, body, logger);
+        + name, name, source, extendedInterface, body, logger, importTypes);
     cssMethods.add(css);
     return css;
   }

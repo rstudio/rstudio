@@ -25,6 +25,7 @@ import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.DisclosurePanel;
@@ -354,6 +355,11 @@ public class UiBinderTest extends GWTTestCase {
 
   public void testDataResource() {
     assertNotNull(widgetUi.heartCursorResource.getUrl());
+  }
+
+  @DoNotRunWith(Platform.Htmlunit)
+  public void testCssImportedScopes() {
+    assertEquals(100, widgetUi.cssImportScopeSample.inner.getOffsetWidth());
   }
 
   public void testSpritedElement() {

@@ -30,42 +30,13 @@ import com.google.gwt.uibinder.rebind.model.ImplicitDataResource;
 import com.google.gwt.uibinder.rebind.model.ImplicitImageResource;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
 
+import java.util.LinkedHashSet;
+
 /**
  * Parses the root UiBinder element, and kicks of the parsing of the rest of the
  * document.
  */
 public class UiBinderParser {
-
-  private static final String FLIP_RTL_ATTRIBUTE = "flipRtl";
-  private static final String FIELD_ATTRIBUTE = "field";
-  private static final String SOURCE_ATTRIBUTE = "src";
-  private static final String REPEAT_STYLE_ATTRIBUTE = "repeatStyle";
-
-  // TODO(rjrjr) Make all the ElementParsers receive their dependencies via
-  // constructor like this one does, and make this an ElementParser. I want
-  // guice!!!
-
-  private final UiBinderWriter writer;
-  private final TypeOracle oracle;
-  private final MessagesWriter messagesWriter;
-  private final FieldManager fieldManager;
-  private final ImplicitClientBundle bundleClass;
-  private final JClassType cssResourceType;
-  private final JClassType imageResourceType;
-  private final JClassType dataResourceType;
-
-  public UiBinderParser(UiBinderWriter writer, MessagesWriter messagesWriter,
-      FieldManager fieldManager, TypeOracle oracle,
-      ImplicitClientBundle bundleClass) {
-    this.writer = writer;
-    this.oracle = oracle;
-    this.messagesWriter = messagesWriter;
-    this.fieldManager = fieldManager;
-    this.bundleClass = bundleClass;
-    this.cssResourceType = oracle.findType(CssResource.class.getCanonicalName());
-    this.imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
-    this.dataResourceType = oracle.findType(DataResource.class.getCanonicalName());
-  }
 
   private enum Resource {
     data {
@@ -96,14 +67,44 @@ public class UiBinderParser {
     abstract void create(UiBinderParser parser, XMLElement elem)
         throws UnableToCompleteException;
   }
+  private static final String FLIP_RTL_ATTRIBUTE = "flipRtl";
+  private static final String FIELD_ATTRIBUTE = "field";
+  private static final String SOURCE_ATTRIBUTE = "src";
+  private static final String REPEAT_STYLE_ATTRIBUTE = "repeatStyle";
+
+  // TODO(rjrjr) Make all the ElementParsers receive their dependencies via
+  // constructor like this one does, and make this an ElementParser. I want
+  // guice!!!
+
+  private static final String IMPORT_ATTRIBUTE = "import";
+  private final UiBinderWriter writer;
+  private final TypeOracle oracle;
+  private final MessagesWriter messagesWriter;
+  private final FieldManager fieldManager;
+  private final ImplicitClientBundle bundleClass;
+  private final JClassType cssResourceType;
+  private final JClassType imageResourceType;
+
+  private final JClassType dataResourceType;
+
+  public UiBinderParser(UiBinderWriter writer, MessagesWriter messagesWriter,
+      FieldManager fieldManager, TypeOracle oracle,
+      ImplicitClientBundle bundleClass) {
+    this.writer = writer;
+    this.oracle = oracle;
+    this.messagesWriter = messagesWriter;
+    this.fieldManager = fieldManager;
+    this.bundleClass = bundleClass;
+    this.cssResourceType = oracle.findType(CssResource.class.getCanonicalName());
+    this.imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
+    this.dataResourceType = oracle.findType(DataResource.class.getCanonicalName());
+  }
 
   /**
    * Parses the root UiBinder element, and kicks off the parsing of the rest of
    * the document.
    */
   public String parse(XMLElement elem) throws UnableToCompleteException {
-    // TODO(rjrjr) Clearly need to break these find* methods out into their own
-    // parsers, an so need a registration scheme for uibinder-specific parsers
     findResources(elem);
     messagesWriter.findMessagesConfig(elem);
     XMLElement uiRoot = elem.consumeSingleChildElement();
@@ -117,17 +118,7 @@ public class UiBinderParser {
       return cssResourceType;
     }
 
-    JClassType publicType = oracle.findType(typeName);
-    if (publicType == null) {
-      writer.die("In %s, no such type %s", elem, typeName);
-    }
-
-    if (!publicType.isAssignableTo(cssResourceType)) {
-      writer.die("In %s, type %s does not extend %s", elem,
-          publicType.getQualifiedSourceName(),
-          cssResourceType.getQualifiedSourceName());
-    }
-    return publicType;
+    return findCssResourceType(elem, typeName);
   }
 
   private JClassType consumeTypeAttribute(XMLElement elem)
@@ -243,14 +234,38 @@ public class UiBinderParser {
     String name = elem.consumeAttribute(FIELD_ATTRIBUTE, "style");
     JClassType publicType = consumeCssResourceType(elem);
 
+    String importTypeNames = elem.consumeAttribute(IMPORT_ATTRIBUTE, null);
+    LinkedHashSet<JClassType> importTypes = new LinkedHashSet<JClassType>();
+    if (importTypeNames != null) {
+      String[] typeNames = importTypeNames.split("\\s+");
+      for (String type : typeNames) {
+        importTypes.add(findCssResourceType(elem, type));
+      }
+    }
+
     ImplicitCssResource cssMethod = bundleClass.createCssResource(name, source,
-        publicType, body);
+        publicType, body, importTypes);
 
     FieldWriter field = fieldManager.registerFieldOfGeneratedType(
         cssMethod.getPackageName(), cssMethod.getClassName(),
         cssMethod.getName());
     field.setInitializer(String.format("%s.%s()", bundleClass.getFieldName(),
         cssMethod.getName()));
+  }
+
+  private JClassType findCssResourceType(XMLElement elem, String typeName)
+      throws UnableToCompleteException {
+    JClassType publicType = oracle.findType(typeName);
+    if (publicType == null) {
+      writer.die("In %s, no such type %s", elem, typeName);
+    }
+
+    if (!publicType.isAssignableTo(cssResourceType)) {
+      writer.die("In %s, type %s does not extend %s", elem,
+          publicType.getQualifiedSourceName(),
+          cssResourceType.getQualifiedSourceName());
+    }
+    return publicType;
   }
 
   private void findResources(XMLElement binderElement)

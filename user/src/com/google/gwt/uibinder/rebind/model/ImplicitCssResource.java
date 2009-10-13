@@ -29,6 +29,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -42,17 +44,19 @@ public class ImplicitCssResource {
   private final JClassType extendedInterface;
   private final String body;
   private final MortalLogger logger;
+  private final Set<JClassType> imports;
   private File generatedFile;
 
   ImplicitCssResource(String packageName, String className, String name,
       String source, JClassType extendedInterface, String body,
-      MortalLogger logger) {
+      MortalLogger logger, HashSet<JClassType> importTypes) {
     this.packageName = packageName;
     this.className = className;
     this.name = name;
     this.extendedInterface = extendedInterface;
     this.body = body;
     this.logger = logger;
+    this.imports = Collections.unmodifiableSet(importTypes);
 
     if (body.length() > 0) {
       assert "".equals(source); // Enforced for real by the parser
@@ -96,7 +100,7 @@ public class ImplicitCssResource {
     }
 
     CssStylesheet sheet = GenerateCssAst.exec(logger.getTreeLogger(), urls);
-    return ExtractClassNamesVisitor.exec(sheet);
+    return ExtractClassNamesVisitor.exec(sheet, imports.toArray(new JClassType[imports.size()]));
   }
 
   /**
@@ -104,6 +108,10 @@ public class ImplicitCssResource {
    */
   public JClassType getExtendedInterface() {
     return extendedInterface;
+  }
+
+  public Set<JClassType> getImports() {
+    return imports;
   }
 
   /**

@@ -348,6 +348,9 @@
           (This one too, but even more so.)
         </span>
       </p>
+      <demo:CssImportScopeSample ui:field='cssImportScopeSample' wrappedText='Please use it.'>
+        And this one relies on CssResource's imported scopes feature
+      </demo:CssImportScopeSample>
       <h2>Evolving</h2>
       <p>
         Things change. This label uses the new ui:field attribute to declare
