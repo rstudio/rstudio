@@ -42,7 +42,8 @@
     </exec>
 
     <echo message="Copying Windows Installer to installer directory" />
-    <copy file="${project.build}/${gwt.oophmIeInstallerName}" tofile="${gwt.oophmIeInstallerName}" />
+    <copy file="${project.build}/${gwt.oophmIeInstallerName}"
+      tofile="../prebuilt/${gwt.oophmIeInstallerName}" />
   </target>
 
 </project>

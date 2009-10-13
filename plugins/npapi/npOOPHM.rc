@@ -82,7 +82,7 @@ FONT 10, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
     CONTROL         "Remember this decision for this server",IDC_REMEMBER_CHECKBOX,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,30,31,129,10
-    LTEXT           "This web server is trying to initiate a GWT Development\r\nMode Conncetion -- should it be allowed?",IDC_STATIC,10,7,167,19
+    LTEXT           "This web server is trying to initiate a GWT Development\r\nMode Connection -- should it be allowed?",IDC_STATIC,10,7,167,19
     PUSHBUTTON      "Allow",IDC_ALLOW_BUTTON,37,50,50,14
     DEFPUSHBUTTON   "Deny",IDCANCEL,100,50,50,14
 END
