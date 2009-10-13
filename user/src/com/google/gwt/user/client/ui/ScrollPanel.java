@@ -27,15 +27,26 @@ import com.google.gwt.user.client.Element;
  */
 @SuppressWarnings("deprecation")
 public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
-    HasScrollHandlers {
+    HasScrollHandlers, RequiresResize, ProvidesResize {
+
+  private Element containerElem;
 
   /**
    * Creates an empty scroll panel.
    */
   public ScrollPanel() {
     setAlwaysShowScrollBars(false);
+
+    containerElem = DOM.createDiv();
+    getElement().appendChild(containerElem);
+
     // Prevent IE standard mode bug when a AbsolutePanel is contained.
-    DOM.setStyleAttribute(getElement(), "position", "relative");
+    DOM.setStyleAttribute(containerElem, "position", "relative");
+
+    // Hack to account for the IE6/7 scrolling bug described here:
+    //   http://stackoverflow.com/questions/139000/div-with-overflowauto-and-a-100-wide-table-problem
+    DOM.setStyleAttribute(getElement(), "zoom", "1");
+    DOM.setStyleAttribute(containerElem, "zoom", "1");
   }
 
   /**
@@ -88,6 +99,13 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
    */
   public int getScrollPosition() {
     return DOM.getElementPropertyInt(getElement(), "scrollTop");
+  }
+
+  public void onResize() {
+    Widget child = getWidget();
+    if ((child != null) && (child instanceof RequiresResize)) {
+      ((RequiresResize) child).onResize();
+    }
   }
 
   /**
@@ -193,6 +211,10 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
   @Override
   public void setWidth(String width) {
     super.setWidth(width);
+  }
+
+  protected Element getContainerElement() {
+    return containerElem;
   }
 
   private native void ensureVisibleImpl(Element scroll, Element e) /*-{
