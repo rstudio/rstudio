@@ -541,7 +541,9 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         // Currently, the way we're using image bundles causes extraneous events
         // to be sunk on individual items' open/close images. This leads to an
         // extra event reaching the Tree, which we will ignore here.
-        if (DOM.eventGetCurrentTarget(event) == getElement()) {
+        // Also, ignore middle and right clicks here.
+        if ((DOM.eventGetCurrentTarget(event) == getElement())
+            && (event.getButton() == Event.BUTTON_LEFT)) {
           elementClicked(DOM.eventGetTarget(event));
         }
         break;
