@@ -1086,8 +1086,9 @@ public class JavaToJavaScriptCompiler {
     ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(program);
     cfa.setDependencyRecorder(deps);
     for (List<JMethod> entryList : program.entryMethods) {
-      for (JMethod entry : entryList)
+      for (JMethod entry : entryList) {
         cfa.traverseFrom(entry);
+      }
     }
 
     deps.endDependencyGraph();

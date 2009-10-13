@@ -6,8 +6,7 @@
   <property name="project.tail" value="tools/soyc-vis" />
   <import file="${gwt.root}/common.ant.xml" />
   
-  <!-- Platform shouldn't matter here, just picking one -->
-  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-${build.host.platform}.jar" />
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
 
   <target name="clean">
     <delete dir="build"/>

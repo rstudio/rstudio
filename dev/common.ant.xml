@@ -9,7 +9,6 @@
     <mkdir dir="${javac.out}" />
     <gwt.javac>
       <classpath>
-        <pathelement location="${gwt.tools.lib}/eclipse/${gwt.dev.swt.jar}" />
         <pathelement location="${gwt.core.build}/bin" />
         <pathelement location="${gwt.core.build}/alldeps.jar" />
       </classpath>
@@ -28,7 +27,6 @@
         <fileset dir="${gwt.core.root}/super" excludes="**/package.html" />
         <fileset dir="${javac.out}" />
         <fileset dir="${gwt.core.build}/bin" />
-        <fileset file="${gwt.tools.lib}/eclipse/${gwt.dev.swt.jar}" />
         <fileset file="${gwt.core.build}/alldeps.jar" />
       </sourcefiles>
       <targetfiles>
@@ -44,7 +42,6 @@
           <fileset dir="${gwt.core.root}/super" excludes="**/package.html" />
           <fileset dir="${javac.out}" />
           <fileset dir="${gwt.core.build}/bin" />
-          <zipfileset src="${gwt.tools.lib}/eclipse/${gwt.dev.swt.jar}" />
           <zipfileset src="${gwt.core.build}/alldeps.jar" />
 
           <manifest>

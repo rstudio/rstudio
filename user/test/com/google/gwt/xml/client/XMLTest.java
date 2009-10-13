@@ -279,12 +279,10 @@ public class XMLTest extends GWTTestCase {
   public void testNavigation() {
     Document d = createTestDocument();
     Element documentElement = d.getDocumentElement();
-    // TODO (amitmanjhi): investigate why these tests are failing just in batch
-    // mode for both web and hosted mode tests.
-//    assertEquals("getPreviousSibling", documentElement.getPreviousSibling(),
-//        d.getChildNodes().item(0));
-//    assertEquals("getNextSibling", documentElement.getNextSibling(),
-//        d.getChildNodes().item(2));
+    assertEquals("getPreviousSibling", documentElement.getPreviousSibling(),
+        d.getChildNodes().item(0));
+    assertEquals("getNextSibling", documentElement.getNextSibling(),
+        d.getChildNodes().item(2));
     assertEquals("getDocumentElement", documentElement, d.getChildNodes().item(
         1));
     assertEquals("getTagName", documentElement.getTagName(), "doc");
@@ -321,9 +319,7 @@ public class XMLTest extends GWTTestCase {
     assertEquals(top.getChildNodes().getLength(), 1);
     Comment commentNode = ns.createComment("comment ccc");
     top.replaceChild(commentNode, yyy);
-    // TODO (amitmanjhi): investigate why this test is failing just in batch
-    // mode for both web and hosted mode tests.
-    // assertEquals(top.getFirstChild(), commentNode);
+    assertEquals(top.getFirstChild(), commentNode);
     assertEquals(top.getChildNodes().getLength(), 1);
   }
 

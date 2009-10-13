@@ -7,7 +7,7 @@
 
   <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
   <!-- Platform shouldn't matter here, just picking one -->
-  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-${build.host.platform}.jar" />
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
 
   <property name="USER_PKGS"
           value="com.google.gwt.animation.client;com.google.gwt.benchmarks.client;com.google.gwt.core.client;com.google.gwt.core.ext;com.google.gwt.core.ext.soyc;com.google.gwt.core.ext.linker;com.google.gwt.core.ext.typeinfo;com.google.gwt.debug.client;com.google.gwt.dom.client;com.google.gwt.event.dom.client;com.google.gwt.event.logical.shared;com.google.gwt.event.shared;com.google.gwt.http.client;com.google.gwt.i18n.client;com.google.gwt.i18n.client.constants;com.google.gwt.i18n.rebind.format;com.google.gwt.i18n.rebind.keygen;com.google.gwt.json.client;com.google.gwt.junit.client;com.google.gwt.benchmarks.client;com.google.gwt.resources.client;com.google.gwt.resources.ext;com.google.gwt.user.client;com.google.gwt.user.client.rpc;com.google.gwt.user.client.ui;com.google.gwt.user.datepicker.client;com.google.gwt.user.server.rpc;com.google.gwt.xml.client"/>

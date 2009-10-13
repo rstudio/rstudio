@@ -8,6 +8,9 @@ If you use Eclipse, you can simply import the generated project into Eclipse.
 We've tested against Eclipse 3.3 and 3.4.  Later versions will likely also
 work, earlier versions may not.
 
+If the directory containing this file does not have a .classpath or .project
+file, generate them by running 'ant eclipse.generate'
+
 In Eclipse, go to the File menu and choose:
 
   File -> Import... -> Existing Projects into Workspace

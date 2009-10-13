@@ -159,13 +159,6 @@ public final class Utility {
     return file;
   }
 
-  public static String getDevJarName() {
-    if (sDevJarName == null) {
-      computeInstallationPath();
-    }
-    return sDevJarName;
-  }
-
   /**
    * @param parent Parent directory of the requested directory.
    * @param dirName Requested name for the directory.

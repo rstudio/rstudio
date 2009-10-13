@@ -18,7 +18,7 @@ package com.google.gwt.uibinder.rebind.model;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
-import com.google.gwt.dev.shell.log.TreeItemLogger;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.rebind.JClassTypeAdapter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
@@ -40,7 +40,7 @@ public class OwnerFieldTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    logger = new MortalLogger(new TreeItemLogger());
+    logger = new MortalLogger(new PrintWriterTreeLogger());
     gwtTypeAdapter = new JClassTypeAdapter();
     ownerType = gwtTypeAdapter.adaptJavaClass(this.getClass());
   }

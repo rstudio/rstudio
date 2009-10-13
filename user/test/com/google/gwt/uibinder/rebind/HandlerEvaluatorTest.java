@@ -17,7 +17,7 @@ package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.shell.log.TreeItemLogger;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
@@ -49,7 +49,7 @@ public class HandlerEvaluatorTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    logger = new MortalLogger(new TreeItemLogger());
+    logger = new MortalLogger(new PrintWriterTreeLogger());
 
     // Creates all needed mocks.
     mockControl = EasyMock.createControl();

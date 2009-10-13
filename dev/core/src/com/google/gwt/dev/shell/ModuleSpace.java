@@ -499,8 +499,6 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
    */
   protected final JsValue invokeNative(String name, Object jthis,
       Class<?>[] types, Object[] args) throws Throwable {
-    // Whenever a native method is invoked, release any enqueued cleanup objects
-    JsValue.mainThreadCleanup();
     JsValue result = doInvoke(name, jthis, types, args);
     // Is an exception active?
     Throwable thrown = sCaughtJavaExceptionObject.get();

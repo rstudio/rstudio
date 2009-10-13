@@ -22,7 +22,6 @@ import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.dev.GWTCompiler.GWTCompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
-import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.WorkDirs;
 import com.google.gwt.dev.shell.tomcat.EmbeddedTomcatServer;
 import com.google.gwt.dev.util.Util;
@@ -32,14 +31,12 @@ import com.google.gwt.util.tools.ArgHandlerExtra;
 import java.io.File;
 import java.util.Set;
 
-import javax.swing.ImageIcon;
-
 /**
  * The main executable class for the hosted mode shell.
  */
 @SuppressWarnings("deprecation")
 @Deprecated
-public class GWTShell extends OophmHostedModeBase {
+public class GWTShell extends HostedModeBase {
 
   /**
    * Handles the list of startup urls that can be passed at the end of the
@@ -73,7 +70,7 @@ public class GWTShell extends OophmHostedModeBase {
   /**
    * The GWTShell argument processor.
    */
-  protected static class ArgProcessor extends OophmHostedModeBase.ArgProcessor {
+  protected static class ArgProcessor extends HostedModeBase.ArgProcessor {
     public ArgProcessor(ShellOptionsImpl options, boolean forceServer,
         boolean noURLs) {
       super(options, forceServer);
@@ -92,7 +89,7 @@ public class GWTShell extends OophmHostedModeBase {
   /**
    * Concrete class to implement all shell options.
    */
-  static class ShellOptionsImpl extends OophmHostedModeBaseOptionsImpl
+  protected static class ShellOptionsImpl extends HostedModeBaseOptionsImpl
       implements HostedModeBaseOptions, WorkDirs, LegacyCompilerOptions,
       OptionPortHosted {
     private int localWorkers;
@@ -186,15 +183,6 @@ public class GWTShell extends OophmHostedModeBase {
 
   protected File outDir;
 
-  public WebServerRestart hasWebServer() {
-    return WebServerRestart.NONE;
-  }
-
-  @Override
-  public BrowserWidget openNewBrowserWindow() throws UnableToCompleteException {
-    throw new UnableToCompleteException();
-  }
-
   public void restartServer(TreeLogger logger) throws UnableToCompleteException {
     // Unimplemented.
   }
@@ -254,24 +242,16 @@ public class GWTShell extends OophmHostedModeBase {
 
   @Override
   protected int doStartUpServer() {
+    // TODO(jat): find a safe way to get an icon for Tomcat
+    TreeLogger logger = ui.getWebServerLogger("Tomcat", null);
     // TODO(bruce): make tomcat work in terms of the modular launcher
     String whyFailed = EmbeddedTomcatServer.start(isHeadless() ? getTopLogger()
-        : webServerLog.getLogger(), getPort(), options);
+        : logger, getPort(), options);
 
     if (whyFailed != null) {
       getTopLogger().log(TreeLogger.ERROR, "Starting Tomcat: " + whyFailed);
       return -1;
     }
     return EmbeddedTomcatServer.getPort();
-  }
-
-  @Override
-  protected ImageIcon getWebServerIcon() {
-    return null;
-  }
-
-  @Override
-  protected String getWebServerName() {
-    return "Tomcat";
   }
 }

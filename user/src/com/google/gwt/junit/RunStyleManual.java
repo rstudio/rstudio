@@ -15,24 +15,35 @@
  */
 package com.google.gwt.junit;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
 /**
  * Runs in web mode waiting for the user to contact the server with their own
  * browser.
  */
-class RunStyleManual extends RunStyleRemote {
+class RunStyleManual extends RunStyle {
 
-  private final int numClients;
+  private int numClients;
 
-  public RunStyleManual(JUnitShell shell, int numClients) {
+  public RunStyleManual(JUnitShell shell) {
     super(shell);
-    this.numClients = numClients;
   }
 
   @Override
-  public boolean isLocal() {
-    return false;
+  public boolean initialize(String args) {
+    numClients = 1;
+    if (args != null) {
+      try {
+        numClients = Integer.parseInt(args);
+      } catch (NumberFormatException e) {
+        getLogger().log(TreeLogger.ERROR, "Error parsing argument \""
+            + args + "\"", e);
+        return false;
+      }
+    }
+    shell.setNumClients(numClients);
+    return true;
   }
 
   @Override
@@ -43,6 +54,6 @@ class RunStyleManual extends RunStyleRemote {
       System.out.println("Please navigate " + numClients
           + " browsers to this URL:");
     }
-    System.out.println(getMyUrl(moduleName));
+    System.out.println(shell.getModuleUrl(moduleName));
   }
 }

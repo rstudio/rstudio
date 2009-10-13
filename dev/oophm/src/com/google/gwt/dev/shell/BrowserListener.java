@@ -36,6 +36,8 @@ public class BrowserListener {
 
   private Thread listenThread;
 
+  private boolean ignoreRemoteDeath = false;
+
   /**
    * Listens for new connections from browsers.
    */
@@ -64,7 +66,7 @@ public class BrowserListener {
               }
 
               BrowserChannelServer server = new BrowserChannelServer(branch,
-                  sock, handler);
+                  sock, handler, ignoreRemoteDeath);
               /*
                * This object is special-cased by the SessionHandler, used for
                * methods needed by the client like hasMethod/hasProperty/etc.
@@ -89,6 +91,12 @@ public class BrowserListener {
     }
   }
 
+  /**
+   * @return the endpoint identifier of the listener, of the form host:port
+   * (where host may be an IP address as well).
+   * 
+   * @throws UnableToCompleteException if the listener is not running
+   */
   public String getEndpointIdentifier() throws UnableToCompleteException {
     if (listenSocket == null) {
       // If we failed to initialize our socket, just bail here.
@@ -102,6 +110,33 @@ public class BrowserListener {
     }
   }
 
+  /**
+   * @return the port number of the listening socket.
+   * 
+   * @throws UnableToCompleteException if the listener is not running
+   */
+  public int getSocketPort() throws UnableToCompleteException {
+    if (listenSocket == null) {
+      // If we failed to initialize our socket, just bail here.
+      throw new UnableToCompleteException();
+    }
+    return listenSocket.getLocalPort();
+  }
+
+  /**
+   * Set any created BrowserChannelServers to ignore remote deaths.
+   * 
+   * <p>This is most commonly wanted by JUnitShell.
+   * 
+   * @param ignoreRemoteDeath
+   */
+  public void setIgnoreRemoteDeath(boolean ignoreRemoteDeath) {
+    this.ignoreRemoteDeath  = ignoreRemoteDeath;
+  }
+
+  /**
+   * Start the listener thread.
+   */
   public void start() {
     if (listenThread != null) {
       listenThread.start();

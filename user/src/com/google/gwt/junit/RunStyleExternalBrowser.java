@@ -45,14 +45,43 @@ class RunStyleExternalBrowser extends RunStyle {
     }
   }
 
-  private final ExternalBrowser[] externalBrowsers;
+  /**
+   * Registered as a shutdown hook to make sure that any browsers that were not
+   * finished are killed.
+   */
+  private class ShutdownCb extends Thread {
 
+    @Override
+    public void run() {
+      for (ExternalBrowser browser : externalBrowsers) {
+        try {
+          browser.getProcess().exitValue();
+        } catch (IllegalThreadStateException e) {
+          // The process is still active. Kill it.
+          browser.getProcess().destroy();
+        }
+      }
+    }
+  }
+
+  private ExternalBrowser[] externalBrowsers;
+  
   /**
    * @param shell the containing shell
-   * @param browsers an array of path names pointing to browser executables.
    */
-  public RunStyleExternalBrowser(JUnitShell shell, String browsers[]) {
+  public RunStyleExternalBrowser(JUnitShell shell) {
     super(shell);
+  }
+
+  @Override
+  public boolean initialize(String args) {
+    if (args == null || args.length() == 0) {
+      getLogger().log(TreeLogger.ERROR, "ExternalBrowser runstyle requires an "
+          + "argument listing one or more executables of external browsers to "
+          + "launch");
+      return false;
+    }
+    String browsers[] = args.split(",");
     synchronized (this) {
       this.externalBrowsers = new ExternalBrowser[browsers.length];
       for (int i = 0; i < browsers.length; ++i) {
@@ -60,11 +89,7 @@ class RunStyleExternalBrowser extends RunStyle {
       }
     }
     Runtime.getRuntime().addShutdownHook(new ShutdownCb());
-  }
-
-  @Override
-  public boolean isLocal() {
-    return false;
+    return true;
   }
 
   @Override
@@ -72,8 +97,7 @@ class RunStyleExternalBrowser extends RunStyle {
       throws UnableToCompleteException {
     String commandArray[] = new String[2];
     // construct the URL for the browser to hit
-    commandArray[1] = "http://" + "localhost" + ":" + shell.getPort() + "/"
-        + getUrlSuffix(moduleName);
+    commandArray[1] = shell.getModuleUrl(moduleName);
 
     Process child = null;
     for (ExternalBrowser browser : externalBrowsers) {
@@ -110,30 +134,4 @@ class RunStyleExternalBrowser extends RunStyle {
     }
     return false;
   }
-
-  /**
-   * Registered as a shutdown hook to make sure that any browsers that were not
-   * finished are killed.
-   */
-  private class ShutdownCb extends Thread {
-
-    @Override
-    public void run() {
-      for (ExternalBrowser browser : externalBrowsers) {
-        try {
-          browser.getProcess().exitValue();
-        } catch (IllegalThreadStateException e) {
-          // The process is still active. Kill it.
-          browser.getProcess().destroy();
-        }
-      }
-    }
-  }
-
-  @Override
-  public void maybeCompileModule(String moduleName)
-      throws UnableToCompleteException {
-    shell.compileForWebMode(moduleName, null);
-  }
-
 }

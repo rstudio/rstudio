@@ -22,7 +22,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.dev.shell.log.TreeItemLogger;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.uibinder.rebind.JClassTypeAdapter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
@@ -42,7 +42,7 @@ public class OwnerFieldClassTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    logger = new MortalLogger(new TreeItemLogger());
+    logger = new MortalLogger(new PrintWriterTreeLogger());
     gwtTypeAdapter = new JClassTypeAdapter();
   }
 

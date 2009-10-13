@@ -7,6 +7,6 @@
 	<classpathentry kind="src" path="user/super/com/google/gwt/junit/translatable"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-user"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev-windows"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

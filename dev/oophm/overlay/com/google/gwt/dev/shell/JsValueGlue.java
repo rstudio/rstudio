@@ -170,7 +170,12 @@ public final class JsValueGlue {
     }
 
     // Just don't know what do to with this.
-    throw new HostedModeException(msgPrefix + ": JS value of type "
+    /*
+     * TODO (amitmanjhi): does throwing a HostedModeException here and catching
+     * a RuntimeException in user test
+     * com.google.gwt.dev.jjs.test.HostedTest::testObjectReturns() make sense
+     */
+    throw new IllegalArgumentException(msgPrefix + ": JS value of type "
         + value.getTypeString() + ", expected "
         + TypeInfo.getSourceRepresentation(type));
   }

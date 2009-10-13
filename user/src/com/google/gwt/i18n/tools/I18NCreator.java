@@ -133,7 +133,7 @@ public final class I18NCreator extends ToolBase {
     // Figure out the installation directory
     String installPath = Utility.getInstallPath();
     String gwtUserPath = installPath + '/' + "gwt-user.jar";
-    String gwtDevPath = installPath + '/' + Utility.getDevJarName();
+    String gwtDevPath = installPath + '/' + "gwt-dev.jar";
 
     // Figure out what platform we're on
     // 

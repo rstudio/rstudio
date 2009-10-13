@@ -53,14 +53,6 @@ public abstract class JsValue {
   }
 
   /**
-   * The main thread should call this from time to time to release hosted-mode
-   * objects that Java is no longer referencing.
-   */
-  public static void mainThreadCleanup() {
-    // Do nothing in OOPHM.
-  }
-
-  /**
    * Get the value of the object as a boolean. May attempt to convert the value
    * to a boolean if it is not a boolean.
    * 

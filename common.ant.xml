@@ -95,32 +95,10 @@
   </condition>
   <fail unless="build.host.platform" message="Building on ${os.name} is not supported" />
 
-  <condition property="junit.platform.args" value="-XstartOnFirstThread" else="">
-    <isset property="build.host.ismac" />
-  </condition>
-
   <!-- JUnit support -->
-  <property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${build.host.platform}-${gwt.version}/gwt-dev-${build.host.platform}.jar" />
+  <property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${gwt.version}/gwt-dev.jar" />
   <property name="gwt.junit.port" value="8888" />
   <property name="gwt.junit.testcase.includes" value="**/*Suite.class"/>
-
-  <!-- Headless mode keeps the hosted mode browser and log window
-       from popping up during a unit test run. This is usually desirable,
-       but the WebKit layout engine performs some optimizations in
-       headless mode that causes some GWT unit tests to break.  The 
-       solution for the time being is to turn off headless mode on
-       the mac.
-    -->
-  <condition property="junit.headless">
-    <not>
-         <isset property="build.host.ismac" />
-    </not>
-  </condition>
-  <condition property="junit.notheadless.arg" value="-notHeadless" else="">
-    <not>
-         <isset property="junit.headless" />
-    </not>
-  </condition>
 
   <!-- Shared class paths -->
   <path id="project.classpath.class">
@@ -172,7 +150,10 @@
   </macrodef>
 
   <macrodef name="gwt.junit">
-    <!-- TODO: make this more generic / refactor so it can be used from dev/core -->
+    <!-- TODO: Because dev has core, oophm splits, the "common pattern" here doesn't work
+         for it (and we use extraclasspaths entries instead).  Once we lose SWT, we can
+         consolidate dev/core and dev/oophm, and that can instead more to the normal
+         pattern.  Note also special casing regarding (dev/) core/test. -->
     <attribute name="test.args" default="" />
     <attribute name="test.out" default="" />
     <attribute name="test.reports" default="@{test.out}/reports" />
@@ -201,17 +182,19 @@
 
       <junit dir="@{test.out}" fork="yes" printsummary="yes"
              failureproperty="junit.failure" tempdir="@{test.out}">
-        <jvmarg line="${junit.platform.args}" />
         <jvmarg line="-Xmx768m" />
         <jvmarg value="-Demma.coverage.out.file=@{test.emma.coverage}/coverage.emma" />
         <jvmarg value="-Demma.coverage.out.merge=true" />
-        <sysproperty key="gwt.args" value="${junit.notheadless.arg} @{test.args}" />
-        <sysproperty key="java.awt.headless" value="${junit.headless}" />
-        <sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
+        <sysproperty key="gwt.args" value="@{test.args}" />
+        <sysproperty key="java.awt.headless" value="true" />
         <classpath>
           <path refid="project.classpath.src" />
           <pathelement location="${gwt.root}/${project.tail}/super" />
           <pathelement location="${gwt.root}/${project.tail}/test" />
+          <!-- TODO: this is here because e.g. ClassPathEntryTest otherwise fails,
+               expecting the src entry (core/test) to be earlier than the bin entry
+               (${javac.junit.out}). -->
+          <pathelement location="${gwt.root}/${project.tail}/core/test" />
           <pathelement location="${javac.junit.out}" />
           <!-- javac.emma.out is empty unless emma is enabled. -->
           <pathelement location="${javac.emma.out}" />

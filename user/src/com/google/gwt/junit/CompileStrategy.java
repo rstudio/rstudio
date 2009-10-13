@@ -44,6 +44,17 @@ public abstract class CompileStrategy {
    */
   private Set<String> compiledModuleNames = new HashSet<String>();
 
+  private final JUnitShell junitShell;
+
+  /**
+   * Construct a CompileStrategy.
+   * 
+   * @param junitShell
+   */
+  public CompileStrategy(JUnitShell junitShell) {
+    this.junitShell = junitShell;
+  }
+
   /**
    * Maybe add a test block for the currently executed test case.
    * 
@@ -80,6 +91,7 @@ public abstract class CompileStrategy {
    * @param batchingStrategy the batching strategy
    * @param treeLogger the logger
    * @return the {@link ModuleDef} describing the synthetic module
+   * @throws UnableToCompleteException
    */
   public abstract ModuleDef maybeCompileModule(String moduleName,
       String syntheticModuleName, Strategy strategy, RunStyle runStyle,
@@ -170,68 +182,9 @@ public abstract class CompileStrategy {
         "junit.moduleName", false);
     moduleNameProp.setValue(syntheticModuleName);
 
-    runStyle.maybeCompileModule(syntheticModuleName);
+    junitShell.maybeCompileForWebMode(syntheticModuleName);
 
     return moduleDef;
-  }
-}
-
-/**
- * 
- * Strategy that compiles only one module at a time. Optimizes memory usage.
- */
-class SimpleCompileStrategy extends CompileStrategy {
-  @Override
-  public ModuleDef maybeCompileModule(String moduleName,
-      String syntheticModuleName, Strategy strategy, RunStyle runStyle,
-      BatchingStrategy batchingStrategy, TreeLogger treeLogger)
-      throws UnableToCompleteException {
-    return maybeCompileModuleImpl(moduleName, syntheticModuleName, strategy,
-        runStyle, batchingStrategy, treeLogger);
-  }
-}
-
-/**
- * Strategy that compiles all modules before returning results. Optimizes test
- * system usage.
- */
-class PreCompileStrategy extends CompileStrategy {
-  /**
-   * A mapping of synthetic module names to their precompiled synthetic module
-   * defs.
-   */
-  Map<String, ModuleDef> preCompiledModuleDefs;
-
-  @Override
-  public ModuleDef maybeCompileModule(String moduleName,
-      String syntheticModuleName, Strategy strategy, RunStyle runStyle,
-      BatchingStrategy batchingStrategy, TreeLogger treeLogger)
-      throws UnableToCompleteException {
-    maybePrecompileModules(runStyle, batchingStrategy, treeLogger);
-
-    // Since all test blocks from a module are added to the queue at the
-    // same time, we can safely take the module out of the hash map at
-    // this point.
-    return preCompiledModuleDefs.get(syntheticModuleName);
-  }
-
-  /**
-   * Precompile all modules if needed.
-   */
-  private void maybePrecompileModules(RunStyle runStyle,
-      BatchingStrategy batchingStrategy, TreeLogger treeLogger)
-      throws UnableToCompleteException {
-    if (preCompiledModuleDefs == null) {
-      preCompiledModuleDefs = new HashMap<String, ModuleDef>();
-      for (String moduleName : GWTTestCase.getAllTestModuleNames()) {
-        TestModuleInfo moduleInfo = GWTTestCase.getTestsForModule(moduleName);
-        String syntheticModuleName = moduleInfo.getSyntheticModuleName();
-        ModuleDef moduleDef = maybeCompileModuleImpl(
-            moduleInfo.getModuleName(), syntheticModuleName,
-            moduleInfo.getStrategy(), runStyle, batchingStrategy, treeLogger);
-        preCompiledModuleDefs.put(syntheticModuleName, moduleDef);
-      }
-    }
   }
 }
 
@@ -262,6 +215,10 @@ class ParallelCompileStrategy extends PreCompileStrategy {
    * compilation and is the same across all compilations.
    */
   private TreeLogger treeLogger;
+
+  public ParallelCompileStrategy(JUnitShell junitShell) {
+    super(junitShell);
+  }
 
   @Override
   public void maybeCompileAhead() throws UnableToCompleteException {
@@ -311,5 +268,72 @@ class ParallelCompileStrategy extends PreCompileStrategy {
         syntheticModuleName, strategy, runStyle, batchingStrategy, treeLogger);
     preCompiledModuleDefs.put(syntheticModuleName, moduleDef);
     return moduleDef;
+  }
+}
+
+/**
+ * Strategy that compiles all modules before returning results. Optimizes test
+ * system usage.
+ */
+class PreCompileStrategy extends CompileStrategy {
+  /**
+   * A mapping of synthetic module names to their precompiled synthetic module
+   * defs.
+   */
+  Map<String, ModuleDef> preCompiledModuleDefs;
+
+  public PreCompileStrategy(JUnitShell junitShell) {
+    super(junitShell);
+  }
+
+  @Override
+  public ModuleDef maybeCompileModule(String moduleName,
+      String syntheticModuleName, Strategy strategy, RunStyle runStyle,
+      BatchingStrategy batchingStrategy, TreeLogger treeLogger)
+      throws UnableToCompleteException {
+    maybePrecompileModules(runStyle, batchingStrategy, treeLogger);
+
+    // Since all test blocks from a module are added to the queue at the
+    // same time, we can safely take the module out of the hash map at
+    // this point.
+    return preCompiledModuleDefs.get(syntheticModuleName);
+  }
+
+  /**
+   * Precompile all modules if needed.
+   */
+  private void maybePrecompileModules(RunStyle runStyle,
+      BatchingStrategy batchingStrategy, TreeLogger treeLogger)
+      throws UnableToCompleteException {
+    if (preCompiledModuleDefs == null) {
+      preCompiledModuleDefs = new HashMap<String, ModuleDef>();
+      for (String moduleName : GWTTestCase.getAllTestModuleNames()) {
+        TestModuleInfo moduleInfo = GWTTestCase.getTestsForModule(moduleName);
+        String syntheticModuleName = moduleInfo.getSyntheticModuleName();
+        ModuleDef moduleDef = maybeCompileModuleImpl(
+            moduleInfo.getModuleName(), syntheticModuleName,
+            moduleInfo.getStrategy(), runStyle, batchingStrategy, treeLogger);
+        preCompiledModuleDefs.put(syntheticModuleName, moduleDef);
+      }
+    }
+  }
+}
+
+/**
+ * 
+ * Strategy that compiles only one module at a time. Optimizes memory usage.
+ */
+class SimpleCompileStrategy extends CompileStrategy {
+  public SimpleCompileStrategy(JUnitShell junitShell) {
+    super(junitShell);
+  }
+
+  @Override
+  public ModuleDef maybeCompileModule(String moduleName,
+      String syntheticModuleName, Strategy strategy, RunStyle runStyle,
+      BatchingStrategy batchingStrategy, TreeLogger treeLogger)
+      throws UnableToCompleteException {
+    return maybeCompileModuleImpl(moduleName, syntheticModuleName, strategy,
+        runStyle, batchingStrategy, treeLogger);
   }
 }

@@ -233,8 +233,16 @@ if ($legacyHosted) {
       }
       loadIframe("http://google-web-toolkit.googlecode.com/svn/trunk/plugins/MissingBrowserPlugin.html");
     } else {
-      if (!plugin.connect(url, topWin.__gwt_SessionID, $hosted, $moduleName,
+      if (plugin.connect(url, topWin.__gwt_SessionID, $hosted, $moduleName,
           $hostedHtmlVersion)) {
+        window.onUnload = function() {
+          try {
+            // wrap in try/catch since plugins are not required to supply this
+            plugin.disconnect();
+          } catch (e) {
+          }
+        };
+      } else {
         if (errFn) {
           errFn(modName);
         } else {

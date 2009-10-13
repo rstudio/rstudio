@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="core/src"/>
+	<classpathentry kind="src" path="core/test_i18n_dollar"/>
+	<classpathentry kind="src" path="core/test_i18n_bar"/>
 	<classpathentry kind="src" path="core/javadoc"/>
 	<classpathentry kind="src" path="core/test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
@@ -13,21 +15,21 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-lang-2.4.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-logging-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-io-1.4.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/cssparser/cssparser-0.9.5.jar" />
-	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.5.jar" />
-	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-core-js-2.5.jar" />
-	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.12.jar" />
-	<classpathentry kind="var" path="GWT_TOOLS/lib/selenium/selenium-java-client-driver.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/xalan/xalan-2.7.1.jar" />
-	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/serializer.jar" />
-	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar" />
-	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/xml-apis.jar" />
+	<classpathentry kind="var" path="GWT_TOOLS/lib/cssparser/cssparser-0.9.5.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.13.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/selenium/selenium-java-client-driver.jar" sourcepath="/GWT_TOOLS/lib/selenium/selenium-java-client-driver-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xalan/xalan-2.7.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/serializer.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/xml-apis.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/w3c/sac/sac-1.3.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/w3c/flute/flute-1.3.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/cglib/cglib-2.2.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/easymock/easymock.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/easymock/easymockclassextension.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/objectweb/asm-3.1.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev-windows"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5070.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5070-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-core-js-r5070.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-core-js-r5070-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

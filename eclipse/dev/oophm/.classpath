@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-	<classpathentry excluding="**/.svn" kind="src" path="oophm/src"/>
-	<classpathentry kind="src" path="oophm/overlay"/>
-	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/sun/swingworker/swing-worker-1.1.jar" sourcepath="/GWT_TOOLS/lib/sun/swingworker/swing-worker-1.1-src.zip"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev-windows"/>
-	<classpathentry kind="output" path="bin"/>
-</classpath>

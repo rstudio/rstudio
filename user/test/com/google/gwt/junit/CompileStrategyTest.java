@@ -43,16 +43,7 @@ public class CompileStrategyTest extends TestCase {
     }
 
     @Override
-    public boolean isLocal() {
-      return true;
-    }
-
-    @Override
     public void launchModule(String moduleName) {
-    }
-
-    @Override
-    public void maybeCompileModule(String moduleName) {
     }
   }
 
@@ -122,6 +113,7 @@ public class CompileStrategyTest extends TestCase {
      * @param mockModuleCount the number of modules
      */
     public MockCompileStrategy(int mockModuleCount) {
+      super(null);
       this.mockModuleCount = mockModuleCount;
     }
 

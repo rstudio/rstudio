@@ -29,6 +29,10 @@ abstract class RunStyle {
   protected final JUnitShell shell;
 
   /**
+   * Constructor for RunStyle.  Any subclass must provide a constructor with
+   * the same signature since this will be how the RunStyle is created via
+   * reflection.
+   * 
    * @param shell the containing shell
    */
   public RunStyle(JUnitShell shell) {
@@ -36,9 +40,15 @@ abstract class RunStyle {
   }
 
   /**
-   * Returns whether or not the local UI event loop needs to be pumped.
+   * Initialize the runstyle with any supplied arguments.
+   * 
+   * @param args arguments passed in -runStyle option, null if none supplied
+   * @return true if this runstyle is initialized successfully, false if it
+   *     was unsuccessful
    */
-  public abstract boolean isLocal();
+  public boolean initialize(String args) {
+    return true;
+  }
 
   /**
    * Requests initial launch of the browser. This should only be called once per
@@ -51,13 +61,17 @@ abstract class RunStyle {
       throws UnableToCompleteException;
 
   /**
-   * Possibly causes a compilation on the specified module.
+   * Setup this RunStyle for the selected mode. 
    * 
-   * @param moduleName the module to compile
-   * @throws UnableToCompleteException
+   * @param logger TreeLogger to use for any messages 
+   * @param developmentMode true if we are running in development mode
+   *     rather that web/production mode
+   * @return false if we should abort processing due to an unsupported mode
+   *     or an error setting up for that mode
    */
-  public abstract void maybeCompileModule(String moduleName)
-      throws UnableToCompleteException;
+  public boolean setupMode(TreeLogger logger, boolean developmentMode) {
+    return true;
+  }
 
   /**
    * Whether the embedded server should ever generate resources.  Hosted mode
@@ -84,13 +98,4 @@ abstract class RunStyle {
     return shell.getTopLogger();
   }
 
-  /**
-   * Gets the suffix of the URL to load.
-   * 
-   * @param moduleName the module to run
-   * @return a URL suffix that should be loaded
-   */
-  protected String getUrlSuffix(String moduleName) {
-    return moduleName + "/junit.html";
-  }
 }

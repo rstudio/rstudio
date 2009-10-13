@@ -24,7 +24,7 @@
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<location>GWT_ROOT/build-tools/doctool</location>
+			<locationURI>GWT_ROOT/build-tools/doctool</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

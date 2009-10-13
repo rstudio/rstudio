@@ -39,6 +39,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
@@ -58,8 +59,11 @@ import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.HyperlinkEvent.EventType;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
@@ -74,7 +78,8 @@ import javax.swing.tree.TreeSelectionModel;
  * This class should not be serialized.
  * </p>
  */
-public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
+public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
+    HyperlinkListener {
 
   /**
    * Callback interface for optional close button behavior.
@@ -363,6 +368,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
     details.setEditable(false);
     details.setContentType("text/html");
     details.setForeground(Color.BLACK);
+    details.addHyperlinkListener(this);
     JScrollPane msgView = new JScrollPane(details);
     JSplitPane splitter = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
     splitter.setTopComponent(treeView);
@@ -458,6 +464,21 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
     return logger;
   }
 
+  public void hyperlinkUpdate(HyperlinkEvent event) {
+    EventType eventType = event.getEventType();
+    if (eventType == HyperlinkEvent.EventType.ACTIVATED) {
+      URL url = event.getURL();
+      // TODO(jat): how best to display the URL?  We could either figure out
+      // how to run the user's browser, create a mini-browser in Swing, or just
+      // re-use the details pane as we do here, but this is rather poor.
+      try {
+        details.setPage(url);
+      } catch (IOException e) {
+        logger.log(TreeLogger.ERROR, "Unable to follow link to " + url, e);
+      }
+    }
+  }
+
   public void notifyChange(DefaultMutableTreeNode node) {
     treeModel.nodeChanged(node);
   }
@@ -520,7 +541,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
         JOptionPane.WARNING_MESSAGE);
     return response != JOptionPane.YES_OPTION;
   }
-
+  
   protected ArrayList<DefaultMutableTreeNode> doFind(String search) {
     @SuppressWarnings("unchecked")
     Enumeration<DefaultMutableTreeNode> children = root.preorderEnumeration();
@@ -541,7 +562,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
     tree.invalidate();
     return matches;
   }
-  
+
   protected void hideFindBox() {
     findBox.hideBox();
   }

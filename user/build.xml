@@ -31,7 +31,7 @@
     Classpaths added for test cases
   -->
   <path id="test.extraclasspath">
-    <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+    <pathelement location="${gwt.build}/out/dev/bin-test" />
     <pathelement location="test-super" />
     <pathelement location="test_i18n_${gwt.i18n.test.InnerClassChar}" />
        <pathelement location="${gwt.tools.lib}/cglib/cglib-2.2.jar"/>
@@ -41,7 +41,7 @@
   </path>
 
   <!-- Platform shouldn't matter here, just picking one -->
-  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-${build.host.platform}.jar" />
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
 
   <target name="compile" description="Compile all class files">
     <mkdir dir="${javac.out}" />
@@ -64,18 +64,20 @@
   </target>
 
   <!--
-    Compile test code for dev/core to pick up TypeOracleTestUtils and others.
+    Compile test code for dev to pick up TypeOracleTestUtils and others.
   -->
-  <target name="compile.dev.core.tests" description="Compiles test dependencies in dev/core">
-    <gwt.ant dir="../dev/core" target="compile.tests" />
+  <target name="compile.dev.tests" description="Compiles test dependencies in dev/core">
+    <gwt.ant dir="../dev" target="compile.tests" />
   </target>
 
-  <target name="compile.tests" depends="compile.dev.core.tests, compile.emma.if.enabled" description="Compiles the test code for this project">
+  <target name="compile.tests"
+    depends="compile.dev.tests, compile.emma.if.enabled"
+    description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**" destdir="${javac.junit.out}">
       <classpath>
         <pathelement location="${javac.out}" />
-        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+        <pathelement location="${gwt.build}/out/dev/bin-test" />
         <pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" />
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
@@ -113,7 +115,7 @@
     <echo message="Performing remote browser testing at ${gwt.remote.browsers}" />
     <property name="test.remoteweb.args" value="${test.args}" />
     <fileset id="test.remoteweb.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.remoteweb.args} -out www -remoteweb ${gwt.remote.browsers} -batch module -precompile parallel" test.out="${junit.out}/remoteweb" test.cases="test.remoteweb.tests" >
+    <gwt.junit test.args="${test.args} -out www -web -runStyle RemoteWeb:${gwt.remote.browsers} -batch module -precompile parallel" test.out="${junit.out}/remoteweb" test.cases="test.remoteweb.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -125,7 +127,7 @@
     <echo message="Performing remote browser testing using Selenium RC at ${gwt.selenium.hosts}" />
     <property name="test.selenium.args" value="${test.args}" />
     <fileset id="test.selenium.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.selenium.args} -out www -selenium ${gwt.selenium.hosts} -batch module -precompile parallel" test.out="${junit.out}/selenium" test.cases="test.selenium.tests" >
+    <gwt.junit test.args="${test.args} -out www -web -runStyle Selenium:${gwt.selenium.hosts} -batch module -precompile parallel" test.out="${junit.out}/selenium" test.cases="test.selenium.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -134,7 +136,7 @@
 
   <target name="test.hosted.emma" depends="compile, compile.tests" description="Run all hosted-mode tests in emma mode.">
     <fileset id="test.hosted.emma.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.hosted.emma.includes}" excludes="${gwt.junit.testcase.hosted.emma.excludes}" />
-    <gwt.junit test.args="${test.args} -batch module" test.out="${junit.out}/${build.host.platform}-hosted-mode-emma" test.cases="test.hosted.emma.tests" >
+    <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode-emma" test.cases="test.hosted.emma.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
         <pathelement location="${gwt.tools.redist}/emma/emma.jar" />
@@ -146,7 +148,7 @@
     <property name="gwt.junit.testcase.hosted.includes" value="${gwt.junit.testcase.includes}" />
     <property name="gwt.junit.testcase.hosted.excludes" value="${gwt.junit.testcase.excludes}" />
     <fileset id="test.hosted.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.hosted.includes}" excludes="${gwt.junit.testcase.hosted.excludes}" />
-    <gwt.junit test.args="${test.args} -batch module" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="test.hosted.tests" >
+    <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="test.hosted.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -160,7 +162,7 @@
 
   <target name="test.noserver" depends="compile, compile.tests" description="Run noserver hosted-mode tests for this project.">
     <fileset id="test.noserver.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.noserver.includes}" excludes="${gwt.junit.testcase.noserver.excludes}" />
-    <gwt.junit test.args="${test.args} -noserver -batch module" test.out="${junit.out}/${build.host.platform}-noserver-mode" test.cases="test.noserver.tests">
+    <gwt.junit test.args="${test.args} -web -noserver" test.out="${junit.out}/${build.host.platform}-noserver-mode" test.cases="test.noserver.tests">
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -169,26 +171,16 @@
 
   <target name="test.web" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
     <fileset id="test.web.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -web -batch module" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="test.web.tests">
+    <gwt.junit test.args="${test.args} -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="test.web.tests">
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
     </gwt.junit>
   </target>
 
-  <target name="test.web.htmlunit" depends="compile, compile.tests" description="Run htmlunit web-mode tests for this project.">
-    <!-- TODO: add more browsers later -->
-    <fileset id="test.web.htmlunit.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -htmlunit FF3 -batch module" test.out="${junit.out}/${build.host.platform}-htmlunit-web-mode" test.cases="test.web.htmlunit.tests" >
-      <extraclasspaths>
-        <path refid="test.extraclasspath" />
-      </extraclasspaths>
-    </gwt.junit>
-  </target>
-  
   <target name="test.web.disableClassMetadata" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
     <fileset id="test.web.disableClassMetadata.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -web -batch module" test.out="${junit.out}/${build.host.platform}-web-mode-disableClassMetadata" test.cases="test.web.disableClassMetadata.tests" >
+    <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode-disableClassMetadata" test.cases="test.web.disableClassMetadata.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -197,7 +189,7 @@
 
   <target name="test.web.draft" depends="compile, compile.tests" description="Run only web-mode tests for this project, not batching tests on purpose.">
     <fileset id="test.web.draft.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -draftCompile -out www -web -batch module" test.out="${junit.out}/${build.host.platform}-web-mode-draft" test.cases="test.web.draft.tests" >
+    <gwt.junit test.args="${test.args} -draftCompile -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode-draft" test.cases="test.web.draft.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>

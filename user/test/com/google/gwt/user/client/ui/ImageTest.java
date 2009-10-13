@@ -453,7 +453,13 @@ public class ImageTest extends GWTTestCase {
   /**
    * Tests that wrapping an existing DOM element works if you call
    * setUrlAndVisibleRect() on it.
+   *<p>
+   * Disabled it on HtmlUnit because of a HtmlUnit bug.
+   * 
+   * @see <a
+   *      href="https://sourceforge.net/tracker/?func=detail&aid=2861064&group_id=47038&atid=448266">bug_report</a>
    */
+  @DoNotRunWith({Platform.Htmlunit})
   public void testWrapThenSetUrlAndVisibleRect() {
     String uid = Document.get().createUniqueId();
     DivElement div = Document.get().createDivElement();

@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 /**
  * Runs in web mode via browsers managed by Selenium.
  */
-public class RunStyleSelenium extends RunStyleRemote {
+public class RunStyleSelenium extends RunStyle {
 
   private static class RCSelenium {
     final String browser;
@@ -65,26 +65,6 @@ public class RunStyleSelenium extends RunStyleRemote {
     }
   }
 
-  public static RunStyle create(JUnitShell shell, String[] targetsIn) {
-    RCSelenium targets[] = new RCSelenium[targetsIn.length];
-
-    Pattern pattern = Pattern.compile("([\\w\\.-]+):([\\d]+)/([\\w\\s\\*]+)");
-    for (int i = 0; i < targets.length; ++i) {
-      Matcher matcher = pattern.matcher(targetsIn[i]);
-      if (!matcher.matches()) {
-        throw new JUnitFatalLaunchException("Unable to parse Selenium target " + targetsIn[i]
-            + " (expected format is [host]:[port]/[browser])");
-      }
-      RCSelenium instance =
-          new RCSelenium(matcher.group(3), matcher.group(1), Integer.parseInt(matcher.group(2)));
-      targets[i] = instance;
-    }
-
-    RunStyleSelenium runStyle = new RunStyleSelenium(shell, targets);
-    runStyle.start();
-    return runStyle;
-  }
-
   private RCSelenium remotes[];
 
   /**
@@ -102,9 +82,35 @@ public class RunStyleSelenium extends RunStyleRemote {
    */
   private final Object wasInterruptedLock = new Object();
 
-  protected RunStyleSelenium(final JUnitShell shell, RCSelenium targets[]) {
+  public RunStyleSelenium(final JUnitShell shell) {
     super(shell);
+  }
+  
+  @Override
+  public boolean initialize(String args) {
+    if (args == null || args.length() == 0) {
+      getLogger().log(TreeLogger.ERROR,
+          "Selenium runstyle requires comma-separated Selenium-RC targets");
+      return false;
+    }
+    String[] targetsIn = args.split(",");
+    RCSelenium targets[] = new RCSelenium[targetsIn.length];
+
+    Pattern pattern = Pattern.compile("([\\w\\.-]+):([\\d]+)/([\\w\\s\\*(/\\w+)*]+)");
+    for (int i = 0; i < targets.length; ++i) {
+      Matcher matcher = pattern.matcher(targetsIn[i]);
+      if (!matcher.matches()) {
+        getLogger().log(TreeLogger.ERROR, "Unable to parse Selenium target "
+            + targetsIn[i] + " (expected format is [host]:[port]/[browser])");
+        return false;
+      }
+      RCSelenium instance = new RCSelenium(matcher.group(3), matcher.group(1),
+          Integer.parseInt(matcher.group(2)));
+      targets[i] = instance;
+    }
+
     this.remotes = targets;
+    shell.setNumClients(targets.length);
 
     // Install a shutdown hook that will close all of our outstanding Selenium
     // sessions.
@@ -116,12 +122,15 @@ public class RunStyleSelenium extends RunStyleRemote {
             try {
               remote.getSelenium().stop();
             } catch (SeleniumException se) {
-              shell.getTopLogger().log(TreeLogger.WARN, "Error stoping selenium session", se);
+              shell.getTopLogger().log(TreeLogger.WARN,
+                  "Error stopping selenium session", se);
             }
           }
         }
       }
     });
+    start();
+    return true;
   }
 
   @Override
@@ -138,11 +147,12 @@ public class RunStyleSelenium extends RunStyleRemote {
     // Startup all the selenia and point them at the module url.
     for (RCSelenium remote : remotes) {
       try {
+        String url = shell.getModuleUrl(moduleName);
         shell.getTopLogger().log(TreeLogger.TRACE,
-            "Starting with domain: " + domain + " Opening URL: " + getMyUrl(moduleName));
+            "Starting with domain: " + domain + " Opening URL: " + url);
         remote.createSelenium(domain);
         remote.getSelenium().start();
-        remote.getSelenium().open(getMyUrl(moduleName));
+        remote.getSelenium().open(url);
       } catch (Exception e) {
         shell.getTopLogger().log(TreeLogger.ERROR,
             "Error launching browser via Selenium-RC at " + remote.getHost(), e);

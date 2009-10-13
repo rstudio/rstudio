@@ -4,6 +4,7 @@
 	<classpathentry kind="src" path="core/test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/gwt-dev-windows"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/gwt-dev"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.7.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

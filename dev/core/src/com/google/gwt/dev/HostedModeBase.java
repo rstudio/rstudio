@@ -23,13 +23,19 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
-import com.google.gwt.dev.shell.BrowserWidget;
+import com.google.gwt.dev.shell.BrowserChannelServer;
+import com.google.gwt.dev.shell.BrowserListener;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
-import com.google.gwt.dev.shell.BrowserWindowController;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
+import com.google.gwt.dev.shell.OophmSessionHandler;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
+import com.google.gwt.dev.ui.DevModeUI;
+import com.google.gwt.dev.ui.DoneCallback;
+import com.google.gwt.dev.ui.DoneEvent;
+import com.google.gwt.dev.ui.DevModeUI.ModuleHandle;
+import com.google.gwt.dev.util.BrowserInfo;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
@@ -45,20 +51,110 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 
 /**
  * The main executable class for the hosted mode shell. This class must not have
  * any GUI dependencies.
- * 
- * TODO: remove BrowserWidget references (which reference SWT via inheritance,
- * though it doesn't appear to cause any harm currently.
  */
-abstract class HostedModeBase implements BrowserWindowController {
+abstract class HostedModeBase implements DoneCallback {
+
+  /**
+   * Implementation of BrowserWidgetHost that supports the abstract UI
+   * interface.
+   */
+  public class UiBrowserWidgetHostImpl implements BrowserWidgetHost {
+
+    public void compile() throws UnableToCompleteException {
+      if (isLegacyMode()) {
+        throw new UnsupportedOperationException();
+      }
+      HostedModeBase.this.compile(getLogger());
+    }
+
+    @Deprecated
+    public void compile(String[] moduleNames) throws UnableToCompleteException {
+      if (!isLegacyMode()) {
+        throw new UnsupportedOperationException();
+      }
+      for (int i = 0; i < moduleNames.length; i++) {
+        String moduleName = moduleNames[i];
+        ModuleDef moduleDef = loadModule(getLogger(), moduleName, true);
+        HostedModeBase.this.compile(getLogger(), moduleDef);
+      }
+    }
+
+    public ModuleSpaceHost createModuleSpaceHost(TreeLogger mainLogger,
+        String moduleName, String userAgent, String url, String tabKey,
+        String sessionKey, BrowserChannelServer serverChannel,
+        byte[] userAgentIcon) throws UnableToCompleteException {
+      if (sessionKey == null) {
+        // if we don't have a unique session key, make one up
+        sessionKey = randomString();
+      }
+      TreeLogger logger = mainLogger;
+      TreeLogger.Type maxLevel = options.getLogLevel();
+      String agentTag = BrowserInfo.getShortName(userAgent);
+      String remoteSocket = serverChannel.getRemoteEndpoint();
+      ModuleHandle module = ui.loadModule(userAgent, remoteSocket, url, tabKey,
+          moduleName, sessionKey, agentTag, userAgentIcon, maxLevel);
+      // TODO(jat): add support for closing an active module
+      logger = module.getLogger();
+      try {
+        // Try to find an existing loaded version of the module def.
+        ModuleDef moduleDef = loadModule(logger, moduleName, true);
+        assert (moduleDef != null);
+
+        // Create a sandbox for the module.
+        // TODO(jat): consider multiple instances of the same module open at
+        // once
+        TypeOracle typeOracle = moduleDef.getTypeOracle(logger);
+        ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(logger,
+            typeOracle, moduleDef);
+
+        loadedModules.put(host, module);
+        return host;
+      } catch (RuntimeException e) {
+        logger.log(TreeLogger.ERROR, "Exception initializing module", e);
+        ui.unloadModule(module);
+        throw e;
+      }
+    }
+
+    public TreeLogger getLogger() {
+      return getTopLogger();
+    }
+
+    public boolean initModule(String moduleName) {
+      return HostedModeBase.this.initModule(moduleName);
+    }
+
+    @Deprecated
+    public boolean isLegacyMode() {
+      return HostedModeBase.this instanceof GWTShell;
+    }
+
+    public String normalizeURL(String whatTheUserTyped) {
+      return HostedModeBase.this.normalizeURL(whatTheUserTyped);
+    }
+
+    public void unloadModule(ModuleSpaceHost moduleSpaceHost) {
+      ModuleHandle module = loadedModules.remove(moduleSpaceHost);
+      if (module != null) {
+        ui.unloadModule(module);
+      }
+    }
+  }
 
   /**
    * Handles the -blacklist command line argument.
@@ -191,6 +287,53 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   /**
+   * Handles the -portHosted command line flag.
+   */
+  protected static class ArgHandlerPortHosted extends ArgHandlerString {
+
+    private final OptionPortHosted options;
+
+    public ArgHandlerPortHosted(OptionPortHosted options) {
+      this.options = options;
+    }
+
+    @Override
+    public String[] getDefaultArgs() {
+      return new String[] {"-portHosted", "9997"};
+    }
+
+    @Override
+    public String getPurpose() {
+      return "Listens on the specified port for hosted mode connections";
+    }
+
+    @Override
+    public String getTag() {
+      return "-portHosted";
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[] {"port-number | \"auto\""};
+    }
+
+    @Override
+    public boolean setString(String value) {
+      if (value.equals("auto")) {
+        options.setPortHosted(0);
+      } else {
+        try {
+          options.setPortHosted(Integer.parseInt(value));
+        } catch (NumberFormatException e) {
+          System.err.println("A port must be an integer or \"auto\"");
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  /**
    * Handles the -whitelist command line flag.
    */
   protected static class ArgHandlerWhitelist extends ArgHandlerString {
@@ -215,60 +358,15 @@ abstract class HostedModeBase implements BrowserWindowController {
     }
   }
 
-  protected abstract class BrowserWidgetHostImpl implements BrowserWidgetHost {
-
-    public void compile() throws UnableToCompleteException {
-      if (isLegacyMode()) {
-        throw new UnsupportedOperationException();
-      }
-      HostedModeBase.this.compile(getLogger());
-    }
-
-    @Deprecated
-    public void compile(String[] moduleNames) throws UnableToCompleteException {
-      if (!isLegacyMode()) {
-        throw new UnsupportedOperationException();
-      }
-      for (int i = 0; i < moduleNames.length; i++) {
-        String moduleName = moduleNames[i];
-        ModuleDef moduleDef = loadModule(getLogger(), moduleName, true);
-        HostedModeBase.this.compile(getLogger(), moduleDef);
-      }
-    }
-
-    public abstract ModuleSpaceHost createModuleSpaceHost(TreeLogger logger,
-        BrowserWidget widget, String moduleName)
-        throws UnableToCompleteException;
-
-    public TreeLogger getLogger() {
-      return getTopLogger();
-    }
-
-    public boolean initModule(String moduleName) {
-      return HostedModeBase.this.initModule(moduleName);
-    }
-
-    @Deprecated
-    public boolean isLegacyMode() {
-      return HostedModeBase.this instanceof GWTShell;
-    }
-
-    public String normalizeURL(String whatTheUserTyped) {
-      return HostedModeBase.this.normalizeURL(whatTheUserTyped);
-    }
-
-    public BrowserWidget openNewBrowserWindow()
-        throws UnableToCompleteException {
-      return HostedModeBase.this.openNewBrowserWindow();
-    }
-  }
-
   protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir,
       OptionLogLevel, OptionGenDir, OptionNoServer, OptionPort,
-      OptionStartupURLs {
+      OptionPortHosted, OptionStartupURLs {
 
     /**
      * The base shell work directory.
+     * 
+     * @param moduleDef 
+     * @return working directory base 
      */
     File getShellBaseWorkDir(ModuleDef moduleDef);
   }
@@ -282,6 +380,7 @@ abstract class HostedModeBase implements BrowserWindowController {
     private boolean isNoServer;
     private File logDir;
     private int port;
+    private int portHosted;
     private final List<String> startupURLs = new ArrayList<String>();
 
     public void addStartupURL(String url) {
@@ -295,6 +394,7 @@ abstract class HostedModeBase implements BrowserWindowController {
     public File getLogDir() {
       return logDir;
     }
+
     public File getLogFile(String sublog) {
       if (logDir == null) {
         return null;
@@ -304,6 +404,10 @@ abstract class HostedModeBase implements BrowserWindowController {
 
     public int getPort() {
       return port;
+    }
+
+    public int getPortHosted() {
+      return portHosted;
     }
 
     public File getShellBaseWorkDir(ModuleDef moduleDef) {
@@ -329,6 +433,10 @@ abstract class HostedModeBase implements BrowserWindowController {
     public void setPort(int port) {
       this.port = port;
     }
+
+    public void setPortHosted(int port) {
+      portHosted = port;
+    }
   }
 
   /**
@@ -344,6 +452,7 @@ abstract class HostedModeBase implements BrowserWindowController {
 
     void setLogFile(String filename);
   }
+
 
   /**
    * Controls whether to run a server or not.
@@ -363,6 +472,12 @@ abstract class HostedModeBase implements BrowserWindowController {
     int getPort();
 
     void setPort(int port);
+  }
+
+  protected interface OptionPortHosted {
+    int getPortHosted();
+
+    void setPortHosted(int portHosted);
   }
 
   /**
@@ -391,8 +506,13 @@ abstract class HostedModeBase implements BrowserWindowController {
       registerHandler(new ArgHandlerDisableClassMetadata(options));
       registerHandler(new ArgHandlerDisableCastChecking(options));
       registerHandler(new ArgHandlerDraftCompile(options));
+      registerHandler(new ArgHandlerPortHosted(options));
+      // TODO(rdayal): implement
+      // registerHandler(new ArgHandlerRemoteUI(options));
     }
   }
+
+  private static final Random RNG = new Random();
 
   public static String normalizeURL(String unknownUrlText, int port, String host) {
     if (unknownUrlText.indexOf(":") != -1) {
@@ -415,7 +535,34 @@ abstract class HostedModeBase implements BrowserWindowController {
     }
   }
 
+  /**
+   * Produce a random string that has low probability of collisions.
+   * 
+   * <p>In this case, we use 16 characters, each drawn from a pool of 94,
+   * so the number of possible values is 94^16, leading to an expected number
+   * of values used before a collision occurs as sqrt(pi/2) * 94^8 (treated the
+   * same as a birthday attack), or a little under 10^16.
+   * 
+   * <p>This algorithm is also implemented in hosted.html, though it is not
+   * technically important that they match.
+   * 
+   * @return a random string
+   */
+  protected static String randomString() {
+    StringBuilder buf = new StringBuilder(16);
+    for (int i = 0; i < 16; ++i) {
+      buf.append((char) RNG.nextInt('~' - '!' + 1) + '!');
+    }
+    return buf.toString();
+  }
+
+  protected int codeServerPort;
+
+  protected BrowserListener listener;
+
   protected final HostedModeBaseOptions options;
+
+  protected DevModeUI ui = null;
 
   /**
    * Cheat on the first load's refresh by assuming the module loaded by
@@ -425,9 +572,17 @@ abstract class HostedModeBase implements BrowserWindowController {
    */
   private Set<String> alreadySeenModules = new HashSet<String>();
 
+  private final Semaphore blockUntilDone = new Semaphore(0);
+
+  private BrowserWidgetHost browserHost = new UiBrowserWidgetHostImpl();
+
   private boolean headlessMode = false;
 
+  private final Map<ModuleSpaceHost, ModuleHandle> loadedModules = new IdentityHashMap<ModuleSpaceHost, ModuleHandle>();
+
   private boolean started;
+
+  private TreeLogger topLogger;
 
   public HostedModeBase() {
     // Set any platform specific system properties.
@@ -440,29 +595,48 @@ abstract class HostedModeBase implements BrowserWindowController {
     options.addStartupURL(url);
   }
 
-  public abstract void closeAllBrowserWindows();
-
   public final int getPort() {
     return options.getPort();
   }
 
-  public abstract TreeLogger getTopLogger();
-
-  public abstract boolean hasBrowserWindowsOpen();
-
+  public TreeLogger getTopLogger() {
+    return topLogger;
+  }
+  
   /**
    * Launch the arguments as Urls in separate windows.
+   * 
+   * @param logger TreeLogger instance to use 
    */
-  public abstract void launchStartupUrls(final TreeLogger logger);
+  public void launchStartupUrls(final TreeLogger logger) {
+    ensureCodeServerListener();
+    String startupURL = "";
+    try {
+      for (String prenormalized : options.getStartupURLs()) {
+        startupURL = normalizeURL(prenormalized);
+        logger.log(TreeLogger.INFO, "Starting URL: " + startupURL, null);
+        launchURL(startupURL);
+      }
+    } catch (UnableToCompleteException e) {
+      logger.log(TreeLogger.ERROR,
+          "Unable to open new window for startup URL: " + startupURL, null);
+    }
+  }
 
   public final String normalizeURL(String unknownUrlText) {
     return normalizeURL(unknownUrlText, getPort(), getHost());
   }
+ 
+  /**
+   * Callback for the UI to indicate it is done.
+   */
+  public void onDone() {
+    setDone();
+  }
 
   /**
    * Sets up all the major aspects of running the shell graphically, including
-   * creating the main window and optionally starting the embedded Tomcat
-   * server.
+   * creating the main window and optionally starting an embedded web server.
    */
   public final void run() {
     try {
@@ -470,11 +644,11 @@ abstract class HostedModeBase implements BrowserWindowController {
         // Eager AWT init for OS X to ensure safe coexistence with SWT.
         BootStrapPlatform.initGui();
 
-        // Tomcat's running now, so launch browsers for startup urls now.
+        // The web server is running now, so launch browsers for startup urls.
         launchStartupUrls(getTopLogger());
       }
 
-      pumpEventLoop();
+      blockUntilDone.acquire();
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
@@ -537,16 +711,23 @@ abstract class HostedModeBase implements BrowserWindowController {
 
   protected abstract void doShutDownServer();
 
+  /**
+   * Perform any startup tasks, including initializing the UI (if any) and the
+   * logger, updates checker, and the development mode code server.
+   * 
+   * <p>Subclasses that override this method should be careful what facilities
+   * are used before the super implementation is called.
+   * 
+   * @return true if startup was successful
+   */
   protected boolean doStartup() {
-    loadRequiredNativeLibs();
-
     // Create the main app window.
-    openAppWindow();
+    ui.initialize(options.getLogLevel());
+    topLogger = ui.getTopLogger();
 
-    // Initialize the logger.
-    //
-    initializeLogger();
-
+    // Set done callback
+    ui.setCallback(DoneEvent.getType(), this);
+    
     // Check for updates
     final TreeLogger logger = getTopLogger();
     final CheckForUpdates updateChecker
@@ -562,16 +743,33 @@ abstract class HostedModeBase implements BrowserWindowController {
       checkerThread.setDaemon(true);
       checkerThread.start();
     }
+
+    // Accept connections from OOPHM clients
+    ensureCodeServerListener();
+
     return true;
   }
 
   protected abstract int doStartUpServer();
 
+  protected void ensureCodeServerListener() {
+    if (listener == null) {
+      codeServerPort = options.getPortHosted();
+      listener = new BrowserListener(getTopLogger(), codeServerPort,
+          new OophmSessionHandler(browserHost));
+      listener.start();
+      try {
+        // save the port we actually used if it was auto
+        codeServerPort = listener.getSocketPort();
+      } catch (UnableToCompleteException e) {
+        // ignore errors listening, we will catch them later
+      }
+    }
+  }
+
   protected String getHost() {
     return "localhost";
   }
-
-  protected abstract void initializeLogger();
 
   /**
    * Called from a selection script as it begins to load in hosted mode. This
@@ -583,7 +781,15 @@ abstract class HostedModeBase implements BrowserWindowController {
    *         will trigger a full-page refresh by the calling (out of date)
    *         selection script
    */
-  protected abstract boolean initModule(String moduleName);
+  protected boolean initModule(String moduleName) {
+    /*
+     * Not used in legacy mode due to GWTShellServlet playing this role.
+     * 
+     * TODO: something smarter here and actually make GWTShellServlet less
+     * magic?
+     */
+    return false;
+  }
 
   /**
    * By default we will open the application window.
@@ -592,6 +798,40 @@ abstract class HostedModeBase implements BrowserWindowController {
    */
   protected final boolean isHeadless() {
     return headlessMode;
+  }
+
+  protected void launchURL(String url) throws UnableToCompleteException {
+    /*
+     * TODO(jat): properly support launching arbitrary browsers; waiting on
+     * Freeland's work with BrowserScanner and the trunk merge to get it.
+     */
+    try {
+      URL parsedUrl = new URL(url);
+      String path = parsedUrl.getPath();
+      String query = parsedUrl.getQuery();
+      String hash = parsedUrl.getRef();
+      String hostedParam =  "gwt.hosted=" + listener.getEndpointIdentifier();
+      if (query == null) {
+        query = hostedParam;
+      } else {
+        query += '&' + hostedParam;
+      }
+      path += '?' + query;
+      if (hash != null) {
+        path += '#' + hash;
+      }
+      url = new URL(parsedUrl.getProtocol(), parsedUrl.getHost(),
+          parsedUrl.getPort(), path).toExternalForm();
+    } catch (MalformedURLException e) {
+      getTopLogger().log(TreeLogger.ERROR, "Invalid URL " + url, e);
+      throw new UnableToCompleteException();
+    }
+    System.err.println(
+        "Using a browser with the GWT Development Plugin, please browse to");
+    System.err.println("the following URL:");
+    System.err.println("  " + url);
+    getTopLogger().log(TreeLogger.INFO,
+        "Waiting for browser connection to " + url, null);
   }
 
   /**
@@ -613,28 +853,8 @@ abstract class HostedModeBase implements BrowserWindowController {
     return moduleDef;
   }
 
-  protected abstract void loadRequiredNativeLibs();
-
-  protected abstract boolean notDone();
-
-  protected abstract void openAppWindow();
-
-  protected abstract void processEvents() throws Exception;
-
-  protected final void pumpEventLoop() {
-    TreeLogger logger = getTopLogger();
-
-    // Run the event loop. When there are no open shells, quit.
-    //
-    while (notDone()) {
-      try {
-        processEvents();
-      } catch (Throwable e) {
-        String msg = e.getMessage();
-        msg = (msg != null ? msg : e.getClass().getName());
-        logger.log(TreeLogger.ERROR, msg, e);
-      }
-    }
+  protected final void setDone() {
+    blockUntilDone.release();
   }
 
   protected final void setHeadless(boolean headlessMode) {
@@ -651,6 +871,15 @@ abstract class HostedModeBase implements BrowserWindowController {
   protected final boolean startUp() {
     if (started) {
       throw new IllegalStateException("Startup code has already been run");
+    }
+
+    // If no UI was specified by command-line args, then create one.
+    if (ui == null) {
+      if (headlessMode) {
+        ui = new HeadlessUI(options);
+      } else {
+        ui = new SwingUI(options);
+      }
     }
 
     started = true;

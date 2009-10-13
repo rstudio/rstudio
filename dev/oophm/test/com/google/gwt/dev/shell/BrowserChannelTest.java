@@ -33,70 +33,50 @@ import com.google.gwt.dev.shell.BrowserChannel.LoadModuleMessage;
 import com.google.gwt.dev.shell.BrowserChannel.OldLoadModuleMessage;
 import com.google.gwt.dev.shell.BrowserChannel.ProtocolVersionMessage;
 import com.google.gwt.dev.shell.BrowserChannel.QuitMessage;
+import com.google.gwt.dev.shell.BrowserChannel.RequestIconMessage;
 import com.google.gwt.dev.shell.BrowserChannel.ReturnMessage;
 import com.google.gwt.dev.shell.BrowserChannel.SwitchTransportMessage;
+import com.google.gwt.dev.shell.BrowserChannel.UserAgentIconMessage;
 
 import junit.framework.TestCase;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Arrays;
 
 /**
  * Test for {@link BrowserChannel}.
  */
 public class BrowserChannelTest extends TestCase {
-
+  // TODO(jat): add more tests for Value types
+  
   private TemporaryBufferStream bufferStream = new TemporaryBufferStream();
 
-  private class TestBrowserChannel extends BrowserChannel {
-    public TestBrowserChannel(InputStream inputStream,
-        OutputStream outputStream) throws IOException {
-      super(inputStream, outputStream);
-    }
-    
-    public MessageType readMessageType() throws IOException,
-        BrowserChannelException {
-      getStreamToOtherSide().flush();
-      return Message.readMessageType(getStreamFromOtherSide());
-    }
-  }
-  
   private DataInputStream iStr = new DataInputStream(
       bufferStream.getInputStream());
   private DataOutputStream oStr = new DataOutputStream(
       bufferStream.getOutputStream());
   private TestBrowserChannel channel;
 
-  @Override
-  protected void setUp() throws Exception {
-    channel = new TestBrowserChannel(bufferStream.getInputStream(),
-        bufferStream.getOutputStream()); 
-  }
-
   public void testBooleanValue() throws IOException {
     Value val = new Value();
     val.setBoolean(true);
-    BrowserChannel.writeValue(oStr, val);
-    val = BrowserChannel.readValue(iStr);
+    channel.writeValue(oStr, val);
+    val = channel.readValue(iStr);
     assertEquals(ValueType.BOOLEAN, val.getType());
     assertEquals(true, val.getBoolean());
     val.setBoolean(false);
-    BrowserChannel.writeValue(oStr, val);
-    val = BrowserChannel.readValue(iStr);
+    channel.writeValue(oStr, val);
+    val = channel.readValue(iStr);
     assertEquals(ValueType.BOOLEAN, val.getType());
     assertEquals(false, val.getBoolean());
   }
-  
-  // TODO(jat): add more tests for Value types
-  
+
   public void testCheckVersions() throws IOException, BrowserChannelException {
-    int minVersion = 1;
-    int maxVersion = 2;
-    String hostedHtmlVersion = "2.0";
+    int minVersion = BrowserChannel.PROTOCOL_VERSION_OLDEST;
+    int maxVersion = BrowserChannel.PROTOCOL_VERSION_CURRENT;
+    String hostedHtmlVersion = HostedHtmlVersion.EXPECTED_GWT_ONLOAD_VERSION;
     new CheckVersionsMessage(channel, minVersion, maxVersion,
         hostedHtmlVersion).send();
     MessageType type = channel.readMessageType();
@@ -106,7 +86,7 @@ public class BrowserChannelTest extends TestCase {
     assertEquals(maxVersion, message.getMaxVersion());
     assertEquals(hostedHtmlVersion, message.getHostedHtmlVersion());
   }
-  
+
   public void testChooseTransport() throws IOException,
       BrowserChannelException {
     String[] transports = new String[] { "shm" };
@@ -117,7 +97,7 @@ public class BrowserChannelTest extends TestCase {
     String[] transportsRecv = message.getTransports();
     assertTrue(Arrays.equals(transports, transportsRecv));
   }
-  
+
   public void testFatalErrorMessage() throws IOException,
       BrowserChannelException {
     String error = "Fatal error";
@@ -127,7 +107,7 @@ public class BrowserChannelTest extends TestCase {
     FatalErrorMessage message = FatalErrorMessage.receive(channel);
     assertEquals(error, message.getError());
   }
-  
+
   public void testFreeMessage() throws IOException, BrowserChannelException {
     int[] ids = new int[] { 42, 1024 };
     new FreeMessage(channel, ids).send();
@@ -137,7 +117,7 @@ public class BrowserChannelTest extends TestCase {
     int[] idsRecv = message.getIds();
     assertTrue(Arrays.equals(ids, idsRecv));
   }
-  
+
   public void testInvokeOnClientMessage() throws IOException,
       BrowserChannelException {
     String methodName = "fooMethod";
@@ -163,7 +143,7 @@ public class BrowserChannelTest extends TestCase {
       assertEquals(i, argsRecv[i].getInt());
     }
   }
-  
+
   public void testInvokeOnServerMessage() throws IOException,
       BrowserChannelException {
     int methodId = -1;
@@ -189,7 +169,7 @@ public class BrowserChannelTest extends TestCase {
       assertEquals(i, argsRecv[i].getInt());
     }
   }
-  
+
   public void testInvokeSpecialMessage() throws IOException,
       BrowserChannelException {
     Value[] args = new Value[] {
@@ -209,7 +189,7 @@ public class BrowserChannelTest extends TestCase {
       assertEquals(i, argsRecv[i].getInt());
     }
   }
-  
+
   public void testLoadJsniMessage() throws IOException,
       BrowserChannelException {
     String jsni = "function foo() { }";
@@ -219,7 +199,7 @@ public class BrowserChannelTest extends TestCase {
     LoadJsniMessage message = LoadJsniMessage.receive(channel);
     assertEquals(jsni, message.getJsni());
   }
-  
+
   public void testLoadModuleMessage() throws IOException,
       BrowserChannelException {
     String url = "http://www.google.com";
@@ -267,7 +247,7 @@ public class BrowserChannelTest extends TestCase {
     } catch (Exception expected) {
       // will be AssertionError if assertions are turned on, otherwise NPE
     }
-    
+
     try {
       new LoadModuleMessage(trashableChannel, url, null, sessionKey, moduleName,
           userAgent).send();
@@ -275,7 +255,7 @@ public class BrowserChannelTest extends TestCase {
     } catch (Exception expected) {
       // will be AssertionError if assertions are turned on, otherwise NPE
     }
-    
+
     try {
       new LoadModuleMessage(trashableChannel, url, tabKey, null, moduleName,
           userAgent).send();
@@ -283,7 +263,7 @@ public class BrowserChannelTest extends TestCase {
     } catch (Exception expected) {
       // will be AssertionError if assertions are turned on, otherwise NPE
     }
-    
+
     try {
       new LoadModuleMessage(trashableChannel, url, tabKey, sessionKey, null,
           userAgent).send();
@@ -291,7 +271,7 @@ public class BrowserChannelTest extends TestCase {
     } catch (Exception expected) {
       // will be AssertionError if assertions are turned on, otherwise NPE
     }
-    
+
     try {
       new LoadModuleMessage(trashableChannel, url, tabKey, sessionKey, moduleName,
           null).send();
@@ -300,7 +280,7 @@ public class BrowserChannelTest extends TestCase {
       // will be AssertionError if assertions are turned on, otherwise NPE
     }
   }
-  
+
   public void testOldLoadModuleMessage() throws IOException,
       BrowserChannelException {
     int protoVersion = 42;
@@ -315,7 +295,7 @@ public class BrowserChannelTest extends TestCase {
     assertEquals(moduleName, message.getModuleName());
     assertEquals(userAgent, message.getUserAgent());
   }
-  
+
   public void testProtocolVersionMessage() throws IOException,
       BrowserChannelException {
     int protoVersion = 42;
@@ -325,15 +305,24 @@ public class BrowserChannelTest extends TestCase {
     ProtocolVersionMessage message = ProtocolVersionMessage.receive(channel);
     assertEquals(protoVersion, message.getProtocolVersion());
   }
-  
+
   public void testQuitMessage() throws IOException,
       BrowserChannelException {
     new QuitMessage(channel).send();
     MessageType type = channel.readMessageType();
     assertEquals(MessageType.QUIT, type);
-    QuitMessage message = QuitMessage.receive(channel);
+    QuitMessage.receive(channel);
   }
-  
+
+  public void testRequestIconMessage() throws IOException,
+      BrowserChannelException {
+    RequestIconMessage.send(channel);
+    MessageType type = channel.readMessageType();
+    assertEquals(MessageType.REQUEST_ICON, type);
+    RequestIconMessage message = RequestIconMessage.receive(channel);
+    assertFalse(message.isAsynchronous());
+  }
+
   public void testReturnMessage() throws IOException,
       BrowserChannelException {
     Value val = new Value();
@@ -347,7 +336,7 @@ public class BrowserChannelTest extends TestCase {
     assertEquals(ValueType.INT, valRecv.getType());
     assertEquals(42, valRecv.getInt());
   }
-  
+
   public void testSwitchTransportMessage() throws IOException,
       BrowserChannelException {
     String transport = "shm";
@@ -358,5 +347,41 @@ public class BrowserChannelTest extends TestCase {
     SwitchTransportMessage message = SwitchTransportMessage.receive(channel);
     assertEquals(transport, message.getTransport());
     assertEquals(transportArgs, message.getTransportArgs());
+  }
+
+  public void testUserAgentIconMessage() throws IOException,
+      BrowserChannelException {
+    UserAgentIconMessage.send(channel, null);
+    MessageType type = channel.readMessageType();
+    assertEquals(MessageType.USER_AGENT_ICON, type);
+    UserAgentIconMessage message = UserAgentIconMessage.receive(channel);
+    assertFalse(message.isAsynchronous());
+    assertNull(message.getIconBytes());
+
+    UserAgentIconMessage.send(channel, new byte[0]);
+    type = channel.readMessageType();
+    assertEquals(MessageType.USER_AGENT_ICON, type);
+    message = UserAgentIconMessage.receive(channel);
+    assertFalse(message.isAsynchronous());
+    assertNull(message.getIconBytes());
+
+    byte[] bytes = new byte[] { 0, 1, 2, 3, 4 };
+    UserAgentIconMessage.send(channel, bytes);
+    type = channel.readMessageType();
+    assertEquals(MessageType.USER_AGENT_ICON, type);
+    message = UserAgentIconMessage.receive(channel);
+    assertFalse(message.isAsynchronous());
+    byte[] receivedBytes = message.getIconBytes();
+    assertNotNull(receivedBytes);
+    assertEquals(bytes.length, receivedBytes.length);
+    for (int i = 0; i < bytes.length; ++i) {
+      assertEquals(bytes[i], receivedBytes[i]);
+    }
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    channel = new TestBrowserChannel(bufferStream.getInputStream(),
+        bufferStream.getOutputStream()); 
   }
 }

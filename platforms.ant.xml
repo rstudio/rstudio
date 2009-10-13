@@ -1,10 +1,6 @@
 <project name="platforms">
   <import file="${gwt.root}/common.ant.xml" />
 
-  <condition property="oophm.exists" value="true">
-    <available file="oophm" />
-  </condition>
-
   <!-- "build" is the default when subprojects are directly targetted -->
   <property name="target" value="build" />
 
@@ -13,24 +9,7 @@
     <gwt.ant dir="core" />
   </target>
 
-  <target name="linux" depends="core" description="Run linux">
-    <gwt.ant dir="linux" />
-  </target>
-
-  <target name="oophm" depends="core" description="OOPHM overlay"
-    if="oophm.exists">
-    <gwt.ant dir="oophm" />
-  </target>
-
-  <target name="windows" depends="core" description="Run windows">
-    <gwt.ant dir="windows" />
-  </target>
-
-  <target name="mac" depends="core" description="Run mac">
-    <gwt.ant dir="mac" />
-  </target>
-
-  <target name="-do" depends="linux, windows, mac, oophm" description="Run all platforms" />
+  <target name="-do" depends="core" description="Run all platforms" />
 
   <target name="build" description="Build each platforms">
     <antcall target="-do">

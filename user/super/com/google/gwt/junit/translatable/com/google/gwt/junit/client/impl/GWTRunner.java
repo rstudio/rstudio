@@ -41,7 +41,7 @@ public abstract class GWTRunner implements EntryPoint {
 
   /**
    * The RPC callback object for {@link GWTRunner#junitHost}. When
-   * {@link #onSuccess(Object)} is called, it's time to run the next test case.
+   * {@link #onSuccess} is called, it's time to run the next test case.
    */
   private final class JUnitHostListener implements AsyncCallback<TestBlock> {
 
@@ -293,8 +293,7 @@ public abstract class GWTRunner implements EntryPoint {
     }
     return defaultValue;
   }
-  
-  
+
   private void runTest() {
     // Dynamically create a new test case.
     TestInfo currentTest = getCurrentTest();

@@ -21,7 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.shell.log.TreeItemLogger;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.dom.client.TagName;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.parsers.AttributeMessageParser;
@@ -290,7 +290,7 @@ public class UiBinderWriter {
     this.baseClass = null;
     this.implClassName = null;
     this.oracle = null;
-    this.logger = new MortalLogger(new TreeItemLogger());
+    this.logger = new MortalLogger(new PrintWriterTreeLogger());
     this.templatePath = null;
     this.messages = null;
     uiRootType = null;
@@ -316,7 +316,7 @@ public class UiBinderWriter {
 
   /**
    * Add a statement to be run after everything has been instantiated, in the
-   * style of {@link String#format}
+   * style of {@link String#format}.
    */
   public void addInitStatement(String format, Object... params) {
     initStatements.add(formatCode(format, params));
@@ -324,7 +324,7 @@ public class UiBinderWriter {
 
   /**
    * Adds a statement to the block run after fields are declared, in the style
-   * of {@link String#format}
+   * of {@link String#format}.
    */
   public void addStatement(String format, Object... args) {
     statements.add(formatCode(format, args));

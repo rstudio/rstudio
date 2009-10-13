@@ -35,22 +35,17 @@
 
   <target name="buildonly"
           description="[action] Minimal one-platform devel build, without distro packaging">
-    <call-subproject subproject="dev-one" subtarget="build" />
+    <call-subproject subproject="dev" subtarget="build" />
     <call-subproject subproject="user" subtarget="build" />
     <call-subproject subproject="servlet" subtarget="build" />
-    <call-subproject subproject="jni-one" subtarget="build" />
   </target>
 
   <target name="dist" depends="build, doc" description="[action] Make all the distributions">
     <gwt.ant dir="distro-source" />
   </target>
 
-  <target name="dist-one" depends="buildonly, tools, samples, doc" description="[action] Make only this platform's distribution">
-    <gwt.ant dir="distro-source" target="${build.host.platform}" />
-  </target>
-
   <target name="dist-dev" depends="buildonly" description="[action] Make this platform's distribution, minus doc and samples">
-    <gwt.ant dir="distro-source" target="${build.host.platform}" />
+    <gwt.ant dir="distro-source" target="build" />
   </target>
 
   <target name="dev" description="[subdir] Builds (or runs ${target} if set) all the dev libraries">
@@ -58,14 +53,8 @@
     <gwt.ant dir="dev" />
   </target>
 
-  <target name="dev-one" description="[subdir] Builds only the dev library for this platform">
-    <call-subproject subproject="buildtools" subtarget="build" />
-    <gwt.ant dir="dev" target="${build.host.platform}"/>
-    <gwt.ant dir="dev" target="oophm"/>
-  </target>
-
   <target name="user" description="[subdir] Builds (or runs ${target} if set) only the user library">
-    <call-subproject subproject="dev-one" subtarget="build"/>
+    <call-subproject subproject="dev" subtarget="build"/>
     <gwt.ant dir="user" />
   </target>
 
@@ -77,14 +66,6 @@
   <target name="servlet" description="[subdir] Builds (or runs ${target} if set) only the servlet jar">
     <call-subproject subproject="user" subtarget="build" />
     <gwt.ant dir="servlet" />
-  </target>
-
-  <target name="jni" description="[subdir] Builds (or runs ${target} if set) jni for all platforms">
-    <gwt.ant dir="jni" />
-  </target>
-
-  <target name="jni-one" description="[subdir] Builds jni for only this platform">
-    <gwt.ant dir="jni" target="${build.host.platform}" />
   </target>
 
   <target name="doc" description="[subdir] Builds (or runs ${target} if set) the doc">
@@ -106,7 +87,6 @@
      <call-subproject subproject="user" subtarget="build"/>
      <call-subproject subproject="servlet" subtarget="build"/>
      <call-subproject subproject="tools" subtarget="build"/>
-     <call-subproject subproject="jni" subtarget="build"/>
      <call-subproject subproject="samples" subtarget="build"/>
   </target>
 
@@ -166,18 +146,17 @@
   </target>
 
   <target name ="presubmit" description="[action] Deprecated for test, which now does checkstyle and apicheck"
-          depends="test">		
+          depends="test">
   </target>
-	
+
   <target name="apicheck-nobuild" 
     description="[action] Checks API compatibility to prior GWT revision">
     <java failonerror="true" fork="true"
           classname="com.google.gwt.tools.apichecker.ApiCompatibilityChecker">
       <jvmarg line="-Xmx512m" />
-      <sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
       <classpath>
         <pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
-        <fileset dir="${gwt.build.lib}" includes="gwt-user.jar,gwt-dev-*.jar" />
+        <fileset dir="${gwt.build.lib}" includes="gwt-user.jar,gwt-dev.jar" />
         <pathelement path="${java.class.path}"/>
         <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
       </classpath>
@@ -189,8 +168,8 @@
       <arg value="ERROR"/>
     </java>
   </target>
-  
+
   <target name="apicheck" depends="buildonly,tools,apicheck-nobuild" 
           description="[action] Builds GWT and checks API compatiblity to prior release"/>
- 
+
 </project>

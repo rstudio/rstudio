@@ -19,7 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
-import com.google.gwt.dev.shell.log.TreeItemLogger;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.uibinder.client.UiFactory;
@@ -49,7 +49,7 @@ public class OwnerClassTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    logger = new MortalLogger(new TreeItemLogger());
+    logger = new MortalLogger(new PrintWriterTreeLogger());
     gwtTypeAdapter = new JClassTypeAdapter();
   }
 
@@ -58,6 +58,7 @@ public class OwnerClassTest extends TestCase {
    */
   private static class EmptyOwnerClass { }
 
+  @SuppressWarnings("deprecation")
   public void testOwnerClass_empty() throws Exception {
     JClassType ownerType = gwtTypeAdapter.adaptJavaClass(EmptyOwnerClass.class);
     JClassType labelType = gwtTypeAdapter.adaptJavaClass(Label.class);
@@ -158,6 +159,7 @@ public class OwnerClassTest extends TestCase {
     Button button1;
   }
 
+  @SuppressWarnings("deprecation")
   public void testOwnerClass_uiFields() throws Exception {
     JClassType ownerType = gwtTypeAdapter.adaptJavaClass(UiFieldsClass.class);
     JClassType labelType = gwtTypeAdapter.adaptJavaClass(Label.class);
@@ -311,6 +313,7 @@ public class OwnerClassTest extends TestCase {
     }
   }
 
+  @SuppressWarnings("deprecation")
   public void testOwnerClass_withParent() throws Exception {
     JClassType ownerType =
         gwtTypeAdapter.adaptJavaClass(ChildUiBinderClass.class);

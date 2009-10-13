@@ -48,7 +48,7 @@ public class OophmSessionHandler extends SessionHandler {
   @Override
   public void freeValue(BrowserChannel channel, int[] ids) {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
-    ObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
+    ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
     for (int id : ids) {
       localObjects.free(id);
     }
@@ -60,7 +60,7 @@ public class OophmSessionHandler extends SessionHandler {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
     ModuleSpace moduleSpace = moduleMap.get(serverChannel);
     assert moduleSpace != null;
-    ObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
+    ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
     try {
       JsValueOOPHM obj = new JsValueOOPHM();
       DispatchObject dispObj;
@@ -91,7 +91,7 @@ public class OophmSessionHandler extends SessionHandler {
   public ExceptionOrReturnValue invoke(BrowserChannel channel, Value thisVal,
       int methodDispatchId, Value[] args) {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
-    ObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
+    ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
     ModuleSpace moduleSpace = moduleMap.get(serverChannel);
     assert moduleSpace != null;
     CompilingClassLoader cl = moduleSpace.getIsolatedClassLoader();
@@ -156,17 +156,15 @@ public class OophmSessionHandler extends SessionHandler {
   @Override
   public TreeLogger loadModule(TreeLogger loadModuleLogger,
       BrowserChannel channel, String moduleName, String userAgent, String url,
-      String tabKey, String sessionKey) {
+      String tabKey, String sessionKey, byte[] userAgentIcon) {
     logger = loadModuleLogger;
     try {
       // Attach a new ModuleSpace to make it programmable.
       //
-      // TODO(jat): pass serverChannel to createModuleSpaceHost instead
-      // of the remote endpoint when we remove SWT
       BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
       ModuleSpaceHost msh = host.createModuleSpaceHost(loadModuleLogger,
-          moduleName, userAgent, url, tabKey, sessionKey,
-          channel.getRemoteEndpoint());
+          moduleName, userAgent, url, tabKey, sessionKey, serverChannel,
+          userAgentIcon);
       logger = msh.getLogger();
       ModuleSpace moduleSpace = new ModuleSpaceOOPHM(msh, moduleName,
           serverChannel);
@@ -190,7 +188,7 @@ public class OophmSessionHandler extends SessionHandler {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
     ModuleSpace moduleSpace = moduleMap.get(serverChannel);
     assert moduleSpace != null;
-    ObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
+    ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
     try {
       JsValueOOPHM obj = new JsValueOOPHM();
       DispatchObject dispObj;

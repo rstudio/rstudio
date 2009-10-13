@@ -32,7 +32,7 @@ import java.rmi.server.RMISocketFactory;
  * Runs in web mode via browsers managed over RMI. This feature is experimental
  * and is not officially supported.
  */
-class RunStyleRemoteWeb extends RunStyleRemote {
+class RunStyleRemoteWeb extends RunStyle {
 
   static class RMISocketFactoryWithTimeouts extends RMISocketFactory {
     private static boolean initialized;
@@ -131,36 +131,7 @@ class RunStyleRemoteWeb extends RunStyleRemote {
 
   private static final int RESPONSE_TIMEOUT_MS = 10000;
 
-  public static RunStyle create(JUnitShell shell, String[] urls) {
-    try {
-      RMISocketFactoryWithTimeouts.init();
-    } catch (IOException e) {
-      throw new JUnitFatalLaunchException("Error initializing RMISocketFactory", e);
-    }
-    int numClients = urls.length;
-    BrowserManager[] browserManagers = new BrowserManager[numClients];
-    for (int i = 0; i < numClients; ++i) {
-      long callStart = System.currentTimeMillis();
-      try {
-        browserManagers[i] = (BrowserManager) Naming.lookup(urls[i]);
-      } catch (Exception e) {
-        String message = "Error connecting to browser manager at " + urls[i];
-        Throwable cause = e;
-        if (e.getCause() instanceof SocketTimeoutException) {
-          long elapsed = System.currentTimeMillis() - callStart;
-          message += " - Timeout " + elapsed
-              + "ms waiting to connect to browser manager.";
-          cause = e.getCause();
-        }
-        System.err.println(message);
-        cause.printStackTrace();
-        throw new JUnitFatalLaunchException(message, cause);
-      }
-    }
-    return new RunStyleRemoteWeb(shell, browserManagers, urls);
-  }
-
-  private final RemoteBrowser[] remoteBrowsers;
+  private RemoteBrowser[] remoteBrowsers;
 
   /**
    * Whether one of the remote browsers was interrupted.
@@ -179,14 +150,47 @@ class RunStyleRemoteWeb extends RunStyleRemote {
 
   /**
    * @param shell the containing shell
-   * @param browserManagers a populated array of RMI remote interfaces to each
-   *          remote BrowserManagerServer
-   * @param urls the URLs for each BrowserManager - used for error reporting
-   *          only
    */
-  private RunStyleRemoteWeb(JUnitShell shell, BrowserManager[] browserManagers,
-      String[] urls) {
+  public RunStyleRemoteWeb(JUnitShell shell) {
     super(shell);
+  }
+  
+  @Override
+  public boolean initialize(String args) {
+    if (args == null || args.length() == 0) {
+      getLogger().log(TreeLogger.ERROR,
+          "RemoteWeb runstyle requires comma-separated RMI URLs");
+      return false;
+    }
+    String[] urls = args.split(",");
+    try {
+      RMISocketFactoryWithTimeouts.init();
+    } catch (IOException e) {
+      getLogger().log(TreeLogger.ERROR,
+          "RemoteWeb: Error initializing RMISocketFactory", e);
+      return false;
+    }
+    int numClients = urls.length;
+    shell.setNumClients(numClients);
+    BrowserManager[] browserManagers = new BrowserManager[numClients];
+    for (int i = 0; i < numClients; ++i) {
+      long callStart = System.currentTimeMillis();
+      try {
+        browserManagers[i] = (BrowserManager) Naming.lookup(urls[i]);
+      } catch (Exception e) {
+        String message = "RemoteWeb: Error connecting to browser manager at "
+            + urls[i];
+        Throwable cause = e;
+        if (e.getCause() instanceof SocketTimeoutException) {
+          long elapsed = System.currentTimeMillis() - callStart;
+          message += " - Timeout " + elapsed
+              + "ms waiting to connect to browser manager.";
+          cause = e.getCause();
+        }
+        getLogger().log(TreeLogger.ERROR, message, cause);
+        return false;
+      }
+    }
     synchronized (this) {
       this.remoteBrowsers = new RemoteBrowser[browserManagers.length];
       for (int i = 0; i < browserManagers.length; ++i) {
@@ -194,17 +198,13 @@ class RunStyleRemoteWeb extends RunStyleRemote {
       }
     }
     Runtime.getRuntime().addShutdownHook(new ShutdownCb());
-  }
-
-  @Override
-  public boolean isLocal() {
-    return false;
+    return true;
   }
 
   @Override
   public synchronized void launchModule(String moduleName)
       throws UnableToCompleteException {
-    String url = getMyUrl(moduleName);
+    String url = shell.getModuleUrl(moduleName);
 
     for (RemoteBrowser remoteBrowser : remoteBrowsers) {
       long callStart = System.currentTimeMillis();

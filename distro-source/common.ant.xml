@@ -3,7 +3,7 @@
   <property name="project.tail" value="distro-source/${dist.platform}" />
   <import file="${gwt.root}/common.ant.xml" />
 
-  <property name="project.distname" value="gwt-${dist.platform}-${gwt.version}" />
+  <property name="project.distname" value="gwt-${gwt.version}" />
   <property name="project.staging" location="${gwt.build.staging}/${project.distname}" />
   <property name="dist.resources" location="${project.build}/resources" />
 
@@ -23,7 +23,7 @@
       <and>
         <available file="${filter.sentinel}" />
         <uptodate>
-          <srcfiles dir="../core/src" />
+          <srcfiles dir="core/src" />
           <globmapper from="*" to="${dist.resources}/*" />
         </uptodate>
       </and>
@@ -33,7 +33,7 @@
  
   <target name="-filter.props" unless="filter.uptodate">
     <gwt.revfilter todir="${dist.resources}" >
-      <fileset dir="../core/src" />
+      <fileset dir="core/src" />
     </gwt.revfilter>
     <touch file="${filter.sentinel}" />
   </target>
