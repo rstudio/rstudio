@@ -382,9 +382,9 @@ public class XMLElement {
 
   /**
    * Consumes a single child element, ignoring any text nodes and throwing an
-   * exception if more than one child element is found.
+   * exception if no child is found, or more than one child element is found.
    * 
-   * @throws UnableToCompleteException
+   * @throws UnableToCompleteException on no children, or too many
    */
   public XMLElement consumeSingleChildElement()
       throws UnableToCompleteException {
@@ -396,6 +396,10 @@ public class XMLElement {
       }
 
       ret = child;
+    }
+    
+    if (ret == null) {
+      writer.die("%s must have a single child element", this);
     }
 
     return ret;

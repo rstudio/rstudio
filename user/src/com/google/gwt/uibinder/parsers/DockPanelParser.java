@@ -68,9 +68,6 @@ public class DockPanelParser implements ElementParser {
 
       // And they can only have a single child widget.
       XMLElement widget = child.consumeSingleChildElement();
-      if (widget == null) {
-        writer.die("Dock must contain a single child widget.");
-      }
       String childFieldName = writer.parseElementToField(widget);
       writer.addStatement("%1$s.add(%2$s, %3$s);", fieldName, childFieldName, translated);
 

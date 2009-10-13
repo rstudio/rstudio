@@ -87,9 +87,6 @@ public class CellPanelParser implements ElementParser {
       if (ns.equals(elem.getNamespaceUri()) && tagName.equals(CELL_TAG)) {
         // It's a cell element, so parse its single child as a widget.
         XMLElement widget = child.consumeSingleChildElement();
-        if (widget == null) {
-          writer.die("Cell must contain a single child widget");
-        }
         String childFieldName = writer.parseElementToField(widget);
         writer.addStatement("%1$s.add(%2$s);", fieldName, childFieldName);
 

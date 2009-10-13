@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.shell.log.TreeItemLogger;
 import com.google.gwt.dom.client.TagName;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.parsers.AttributeMessageParser;
@@ -60,10 +61,10 @@ import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Writer for UiBinder generated classes.
- *
+ * 
  * TODO(rdamazio): Refactor this, extract model classes, improve ordering
  * guarantees, etc.
- *
+ * 
  * TODO(rjrjr): Improve error messages
  */
 @SuppressWarnings("deprecation")
@@ -160,7 +161,7 @@ public class UiBinderWriter {
   /**
    * Returns a list of the given type and all its superclasses and implemented
    * interfaces in a breadth-first traversal.
-   *
+   * 
    * @param type the base type
    * @return a breadth-first collection of its type hierarchy
    */
@@ -193,7 +194,7 @@ public class UiBinderWriter {
   /**
    * Class names of parsers for values of attributes with no namespace prefix,
    * keyed by method parameter signatures.
-   *
+   * 
    * TODO(rjrjr) Seems like the attribute parsers belong in BeanParser, which is
    * the only thing that uses them.
    */
@@ -282,11 +283,30 @@ public class UiBinderWriter {
     fieldManager = new FieldManager(logger);
   }
 
+  /** 
+   * Hack for testing. Die method works, nothing else does 
+   */
+  UiBinderWriter() {
+    this.baseClass = null;
+    this.implClassName = null;
+    this.oracle = null;
+    this.logger = new MortalLogger(new TreeItemLogger());
+    this.templatePath = null;
+    this.messages = null;
+    uiRootType = null;
+    uiOwnerType = null;
+
+    ownerClass = null;
+    bundleClass = null;
+    handlerEvaluator = null;
+    fieldManager = null;
+  }
+
   /**
    * Statements to be excuted right after the current attached element is
    * detached. This is useful for doing things that might be expensive while the
    * element is attached to the DOM.
-   *
+   * 
    * @param format
    * @param args
    */
@@ -313,7 +333,7 @@ public class UiBinderWriter {
   /**
    * Begin a section where a new attachable element is being parsed. Note that
    * attachment is only done when actually needed.
-   *
+   * 
    * @param element to be attached for this section
    */
   public void beginAttachedSection(String element) {
@@ -330,7 +350,7 @@ public class UiBinderWriter {
    * generate a unique dom id at runtime. Further code will be generated to be
    * run after widgets are instantiated, to use that dom id in a getElementById
    * call and assign the Element instance to its field.
-   *
+   * 
    * @param fieldName The name of the field being declared
    * @param parentElementExpression an expression to be evaluated at runtime,
    *          which will return an Element that is an ancestor of this one
@@ -351,7 +371,7 @@ public class UiBinderWriter {
   /**
    * Declare a variable that will be filled at runtime with a unique id, safe
    * for use as a dom element's id attribute.
-   *
+   * 
    * @return that variable's name.
    */
   public String declareDomIdHolder() throws UnableToCompleteException {
@@ -391,7 +411,7 @@ public class UiBinderWriter {
    * If this element has a gwt:field attribute, create a field for it of the
    * appropriate type, and return the field name. If no gwt:field attribute is
    * found, do nothing and return null
-   *
+   * 
    * @return The new field name, or null if no field is created
    */
   public String declareFieldIfNeeded(XMLElement elem)
@@ -449,7 +469,7 @@ public class UiBinderWriter {
 
   /**
    * Ensure that the specified element is attached to the DOM.
-   *
+   * 
    * @param element variable name of element to be attached
    */
   public void ensureAttached(String element) {
@@ -466,7 +486,7 @@ public class UiBinderWriter {
 
   /**
    * Ensure that the specified field is attached to the DOM.
-   *
+   * 
    * @param field variable name of the field to be attached
    */
   public void ensureFieldAttached(String field) {
@@ -476,7 +496,7 @@ public class UiBinderWriter {
   /**
    * Finds the JClassType that corresponds to this XMLElement, which must be a
    * Widget or an Element.
-   *
+   * 
    * @throws UnableToCompleteException If no such widget class exists
    * @throws RuntimeException if asked to handle a non-widget, non-DOM element
    */
@@ -561,7 +581,7 @@ public class UiBinderWriter {
   /**
    * Finds an attribute {@link BundleAttributeParser} for the given xml
    * attribute, if any, based on its namespace uri.
-   *
+   * 
    * @return the parser or null
    * @deprecated exists only to support {@link BundleAttributeParser}, which
    *             will be leaving us soon.
@@ -641,7 +661,7 @@ public class UiBinderWriter {
    * name of the field (possibly private) that will hold it. The element is
    * likely to make recursive calls back to this method to have its children
    * parsed.
-   *
+   * 
    * @param elem the xml element to be parsed
    * @return the name of the field containing the parsed widget
    */
@@ -675,7 +695,7 @@ public class UiBinderWriter {
   /**
    * Gives the writer the initializer to use for this field instead of the
    * default GWT.create call.
-   *
+   * 
    * @throws IllegalStateException if an initializer has already been set
    */
   public void setFieldInitializer(String fieldName, String factoryMethod) {
@@ -699,7 +719,7 @@ public class UiBinderWriter {
    * token, surrounded by plus signs. This is useful in strings to be handed to
    * setInnerHTML() and setText() calls, to allow a unique dom id attribute or
    * other runtime expression in the string.
-   *
+   * 
    * @param expression
    */
   public String tokenForExpression(String expression) {
@@ -823,7 +843,7 @@ public class UiBinderWriter {
   /**
    * Ensures that all of the internal data structures are cleaned up correctly
    * at the end of parsing the document.
-   *
+   * 
    * @throws UnableToCompleteException
    */
   private void ensureAttachmentCleanedUp() throws UnableToCompleteException {
@@ -859,8 +879,8 @@ public class UiBinderWriter {
   }
 
   /**
-   * Use this method to format code. It forces the use of the en-US locale,
-   * so that things like decimal format don't get mangled.
+   * Use this method to format code. It forces the use of the en-US locale, so
+   * that things like decimal format don't get mangled.
    */
   private String formatCode(String format, Object... params) {
     String r = String.format(Locale.US, format, params);
@@ -870,7 +890,7 @@ public class UiBinderWriter {
   /**
    * Inspects this element for a gwt:field attribute. If one is found, the
    * attribute is consumed and its value returned.
-   *
+   * 
    * @return The field name declared by an element, or null if none is declared
    */
   private String getFieldName(XMLElement elem) throws UnableToCompleteException {
@@ -927,7 +947,7 @@ public class UiBinderWriter {
 
   /**
    * Find a set of element parsers for the given ui type.
-   *
+   * 
    * The list of parsers will be returned in order from most- to least-specific.
    */
   private Iterable<ElementParser> getParsersForClass(JClassType type) {
@@ -936,7 +956,7 @@ public class UiBinderWriter {
     /*
      * Let this non-widget parser go first (it finds <m:attribute/> elements).
      * Any other such should land here too.
-     *
+     * 
      * TODO(rjrjr) Need a scheme to associate these with a namespace uri or
      * something?
      */
@@ -1015,7 +1035,7 @@ public class UiBinderWriter {
 
   /**
    * Parses a package uri (i.e. package://com.google...).
-   *
+   * 
    * @throws UnableToCompleteException on bad package name
    */
   private JPackage parseNamespacePackage(String ns)
@@ -1190,7 +1210,7 @@ public class UiBinderWriter {
    * gwt:field in the template. For those that have not had constructor
    * generation suppressed, emit GWT.create() calls instantiating them (or die
    * if they have no default constructor).
-   *
+   * 
    * @throws UnableToCompleteException on constructor problem
    */
   private void writeGwtFields(IndentedWriter niceWriter)
