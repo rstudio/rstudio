@@ -101,7 +101,7 @@ public class CoverageTest extends CoverageBase {
        * see Google's internal issue 1628473. This is likely to be an hindrance
        * if and when GWT attempts to read bytecode directly.
        */
-      new NamedLocal().new NamedLocalSub().foo();
+      // new NamedLocal().new NamedLocalSub().foo();
     }
 
     public void bar() {
