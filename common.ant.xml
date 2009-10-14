@@ -340,13 +340,15 @@
 
   <taskdef resource="emma_ant.properties" classpathref="emma.taskdef.lib" />
 
-  <target name="compile.emma.if.enabled" description="Instruments emma classes" unless="emma.compiled">
+  <!-- Instruments emma classes -->
+  <target name="compile.emma.if.enabled" unless="emma.compiled">
     <delete dir="${javac.emma.out}" />
     <property name="emma.compiled" value="true" />
     <antcall target="-compile.emma.if.enabled" />
   </target>
 
-  <target name="-compile.emma.if.enabled" description="Instruments emma classes" if="emma.enabled">
+  <!-- Instruments emma classes -->
+  <target name="-compile.emma.if.enabled" if="emma.enabled">
     <mkdir dir="${javac.emma.out}" />
     <path id="emma.classpath">
       <pathelement location="${javac.out}" />
@@ -359,7 +361,8 @@
     </emma>
   </target>
 
-  <target name="-create.emma.coverage.if.enabled" description="Create the emma coverage directory" if="emma.enabled">
+  <!-- Create the emma coverage directory -->
+  <target name="-create.emma.coverage.if.enabled" if="emma.enabled">
     <delete dir="${test.emma.coverage}" />
     <mkdir dir="${test.emma.coverage}" />
   </target>
@@ -367,7 +370,8 @@
   <!-- Default implementations of the required targets; projects should
   override the ones that matter -->
   <target name="all" depends="verify" />
-  <target name="verify" depends="checkstyle, test" description="Runs tests and checkstyle static analysis" />
+  <target name="verify" depends="checkstyle, test"
+      description="Runs tests and checkstyle static analysis" />
   <target name="checkstyle" />
   <target name="test" depends="build" />
   <target name="build" />
