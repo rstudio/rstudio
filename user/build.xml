@@ -187,7 +187,7 @@
     <echo message="Performing draft remote testing at ${gwt.hosts.web.remote}" />
     <property name="test.draft.remote.args" value="${test.args}" />
     <fileset id="test.draft.remote.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -draft -web -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module -precompile parallel" test.out="${junit.out}/draft-remote" test.cases="test.draft.remote.tests" >
+    <gwt.junit test.args="${test.args} -draftCompile -web -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module -precompile parallel" test.out="${junit.out}/draft-remote" test.cases="test.draft.remote.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -257,7 +257,7 @@
     <echo message="Performing draft testing using Selenium RC at ${gwt.hosts.web.selenium}" />
     <property name="test.selenium.args" value="${test.args}" />
     <fileset id="test.draft.selenium.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -draft -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module -precompile parallel" test.out="${junit.out}/draft-selenium" test.cases="test.draft.selenium.tests" >
+    <gwt.junit test.args="${test.args} -draftCompile -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module -precompile parallel" test.out="${junit.out}/draft-selenium" test.cases="test.draft.selenium.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
