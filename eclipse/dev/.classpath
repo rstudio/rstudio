@@ -2,10 +2,11 @@
 <classpath>
 	<classpathentry kind="src" path="core/src"/>
 	<classpathentry kind="src" path="core/test"/>
-	<classpathentry kind="src" path="linux/src"/>
+	<classpathentry kind="src" path="oophm/overlay"/>
+	<classpathentry kind="src" path="oophm/src"/>
+	<classpathentry kind="src" path="oophm/test"/>
 	<classpathentry excluding="com/google/gwt/dev/jjs/intrinsic/" kind="src" path="core/super"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/org.eclipse.swt.gtk-linux-3.2.1.jar" sourcepath="/GWT_TOOLS/lib/eclipse/org.eclipse.swt.gtk-linux-3.2.1.src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.6.5.jar" sourcepath="/GWT_TOOLS/lib/apache/ant-1.6.5-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdt-3.4.2.jar" sourcepath="/GWT_TOOLS/lib/eclipse/jdt-3.4.2-src.zip"/>
@@ -35,8 +36,11 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/servlets-default-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/servlets-invoker-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-coyote-1.0.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-http11-1.0.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-http11-1.0.jar" sourcepath="/GWT_TOOLS/lib/tomcat/tomcat-http11-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-jk2-2.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-util-5.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/sun/swingworker/swing-worker-1.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-core-js-r5070.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-core-js-r5070-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5070.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5070-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

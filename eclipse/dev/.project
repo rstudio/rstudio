@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>gwt-dev-linux</name>
+	<name>gwt-dev</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -10,26 +10,20 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
-		<buildCommand>
-			<name>com.atlassw.tools.eclipse.checkstyle.CheckstyleBuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
-		<nature>com.atlassw.tools.eclipse.checkstyle.CheckstyleNature</nature>
 	</natures>
 	<linkedResources>
 		<link>
-			<name>linux</name>
-			<type>2</type>
-			<location>GWT_ROOT/dev/linux</location>
-		</link>
-		<link>
 			<name>core</name>
 			<type>2</type>
-			<location>GWT_ROOT/dev/core</location>
+			<locationURI>GWT_ROOT/dev/core</locationURI>
+		</link>
+		<link>
+			<name>oophm</name>
+			<type>2</type>
+			<locationURI>GWT_ROOT/dev/oophm</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
