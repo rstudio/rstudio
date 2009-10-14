@@ -417,14 +417,14 @@
     <property.ensure name="distro.built" location="${gwt.dev.staging.jar}"
         message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
     <limit failonerror="true" hours="${test.timeout}">
-    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
+    <sequential>
       <antcall target="test.dev"/>
       <antcall target="test.emma"/>
       <antcall target="test.web"/>
       <antcall target="test.draft"/>
       <antcall target="test.nometa"/>
       <antcall target="test.noserver"/>
-    </parallel>
+    </sequential>
     </limit>
   </target>
 
