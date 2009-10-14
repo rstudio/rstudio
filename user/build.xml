@@ -28,13 +28,6 @@
   <property name="gwt.junit.testcase.dev.excludes" value="" />
 
   <!--
-    CoverageTest.java fails due to a javac bug in sun/OpenJDK's Java. See the
-    file contents for details
-  -->
-  <property name="gwt.junit.testcase.dev.emma.includes" value="**/*Suite.class,com/google/gwt/dev/jjs/test/*Test.class" />
-  <property name="gwt.junit.testcase.dev.emma.excludes" value="**/CoverageTest.class,**/CompilerSuite.class" />
-
-  <!--
     Only IFrameLinker actually supports -noserver mode; run the other linker
     tests if and when they are supported
   -->
@@ -153,7 +146,7 @@
   </target>
 
   <target name="test.dev.remote"
-      depends="compile, compile.tests, -test.dev.includes"
+      depends="compile, compile.tests"
       description="Run dev-mode tests with remote browsers"
       if="gwt.hosts.dev.remote">
     <echo message="Performing dev-mode remote testing at ${gwt.remote.browsers}" />
@@ -171,14 +164,14 @@
   </target>
 
   <target name="test.emma.remote"
-      depends="compile, compile.tests, -test.dev.includes"
+      depends="compile, compile.tests"
       description="Run emma tests with remote browsers"
       if="gwt.hosts.dev.remote">
     <echo message="Performing emma remote testing at ${gwt.hosts.dev.remote}" />
     <property name="test.emma.remote.args" value="${test.args}" />
     <fileset id="test.emma.remote.tests" dir="${javac.junit.out}"
-        includes="${gwt.junit.testcase.dev.emma.includes}"
-        excludes="${gwt.junit.testcase.dev.emma.excludes}" />
+        includes="${gwt.junit.testcase.dev.includes}"
+        excludes="${gwt.junit.testcase.dev.excludes}" />
       <gwt.junit test.args="${test.args} -out www -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module -precompile parallel"
           test.out="${junit.out}/emma-remote"
           test.cases="test.emma.remote.tests" >
@@ -190,14 +183,14 @@
   </target>
 
   <target name="test.emma.selenium"
-      depends="compile, compile.tests, -test.dev.includes"
+      depends="compile, compile.tests"
       description="Run emma tests with Selenium-RC servers"
       if="gwt.hosts.dev.selenium">
     <echo message="Performing emma selenium testing at ${gwt.hosts.dev.selenium}" />
     <property name="test.emma.remote.args" value="${test.args}" />
     <fileset id="test.emma.selenium.tests" dir="${javac.junit.out}"
-        includes="${gwt.junit.testcase.dev.emma.includes}"
-        excludes="${gwt.junit.testcase.dev.emma.excludes}" />
+        includes="${gwt.junit.testcase.dev.includes}"
+        excludes="${gwt.junit.testcase.dev.excludes}" />
     <gwt.junit test.args="${test.args} -out www -runStyle Selenium:${gwt.hosts.dev.selenium} -batch module -precompile parallel"
         test.out="${junit.out}/emma-selenium"
         test.cases="test.emma.selenium.tests" >
@@ -266,7 +259,7 @@
   </target>
 
   <target name="test.dev.selenium"
-      depends="compile, compile.tests, -test.dev.includes"
+      depends="compile, compile.tests"
       description="Run dev-mode tests using Selenium RC servers"
       if="gwt.hosts.dev.selenium">
     <echo message="Performing dev-mode testing using Selenium RC at ${gwt.hosts.dev.selenium}" />
@@ -321,8 +314,8 @@
       depends="compile, compile.tests"
       description="Run emma tests with HtmlUnit">
       <fileset id="test.emma.htmlunit.tests" dir="${javac.junit.out}"
-          includes="${gwt.junit.testcase.dev.emma.includes}"
-          excludes="${gwt.junit.testcase.dev.emma.excludes}" />
+          includes="${gwt.junit.testcase.dev.includes}"
+          excludes="${gwt.junit.testcase.dev.excludes}" />
       <gwt.junit test.args="${test.args}"
           test.out="${junit.out}/emma-htmlunit"
           test.cases="test.emma.htmlunit.tests" >
@@ -334,7 +327,7 @@
   </target>
 
   <target name="test.dev.htmlunit"
-      depends="compile, compile.tests, -test.dev.includes"
+      depends="compile, compile.tests"
       description="Run dev-mode tests with HtmlUnit.">
     <property name="gwt.junit.testcase.dev.includes"
         value="${gwt.junit.testcase.includes}" />
@@ -357,13 +350,6 @@
 
   <target name="test.hosted" depends="test.dev">
     <echo message="DEPRECATED: test.hosted has been renamed test.dev"/>
-  </target>
-
-  <target name="-test.dev.includes" if="emma.enabled">
-    <property name="gwt.junit.testcase.dev.includes"
-        value="${gwt.junit.testcase.dev.emma.includes}" />
-    <property name="gwt.junit.testcase.dev.excludes"
-        value="${gwt.junit.testcase.dev.emma.excludes}" />
   </target>
 
   <target name="test.noserver"
