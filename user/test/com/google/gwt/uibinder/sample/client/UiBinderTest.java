@@ -236,6 +236,7 @@ public class UiBinderTest extends GWTTestCase {
     WidgetBasedUi.Style style();
   }
 
+  @DoNotRunWith(Platform.Htmlunit)
   public void testNoOverrideInheritedSharedCssClasses() {
     Bundle bundle = GWT.create(Bundle.class);
     WidgetBasedUi ui = GWT.create(WidgetBasedUi.class);
