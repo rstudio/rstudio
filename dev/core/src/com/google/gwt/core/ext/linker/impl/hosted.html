@@ -30,7 +30,16 @@ try {
 function getTopWindow() {
   var topWin = window.top;
   while (topWin.opener) {
-    topWin = topWin.opener.top;
+    // Check that we can access the url of the opener. If we can't, then return
+    // the window up to the current point. This happens with selenium because
+    // the parent window is a file, but the child window is the hosted URL.
+    var nextTopWin = topWin.opener.top;
+    try {
+      nextTopWin.location.href;
+    } catch (e) {
+      return topWin;
+    }
+    topWin = nextTopWin;
   }
   return topWin;
 }
