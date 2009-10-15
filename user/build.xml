@@ -329,10 +329,6 @@
   <target name="test.dev.htmlunit"
       depends="compile, compile.tests"
       description="Run dev-mode tests with HtmlUnit.">
-    <property name="gwt.junit.testcase.dev.includes"
-        value="${gwt.junit.testcase.includes}" />
-    <property name="gwt.junit.testcase.dev.excludes"
-        value="${gwt.junit.testcase.excludes}" />
     <fileset id="test.dev.htmlunit.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
