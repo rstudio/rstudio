@@ -50,6 +50,9 @@ public class JsArrayTest extends GWTTestCase {
     JsPoint p1 = jsArray.get(1);
     JsPoint p2 = jsArray.get(2);
 
+    assertEquals("JsPoint,JsPoint,JsPoint", jsArray.join());
+    assertEquals("JsPoint:JsPoint:JsPoint", jsArray.join(":"));
+
     assertEquals(0, p0.x());
     assertEquals(1, p0.y());
     assertEquals(2, p1.x());
@@ -77,6 +80,9 @@ public class JsArrayTest extends GWTTestCase {
       } catch (Throwable e) {
       }
     }
+
+    jsArray.setLength(0);
+    assertEquals(0, jsArray.length());
   }
 
   public void testJsArrayBoolean() {
@@ -88,6 +94,9 @@ public class JsArrayTest extends GWTTestCase {
     assertEquals(true, jsArray.get(0));
     assertEquals(false, jsArray.get(1));
     assertEquals(true, jsArray.get(2));
+
+    assertEquals("true,false,true", jsArray.join());
+    assertEquals("true:false:true", jsArray.join(":"));
 
     // Make sure getting the '3' element throws an exception in hosted mode
     // (this won't happen in web mode).
@@ -114,7 +123,20 @@ public class JsArrayTest extends GWTTestCase {
         fail("Expected an exception getting an invalid value in hosted mode");
       } catch (Throwable e) {
       }
+    } else {
+      // Keep the length of the array sane for the remainer of the test
+      jsArray.set(4, false);
     }
+
+    // Add an element to the beginning of the array
+    jsArray.unshift(true);
+    assertEquals(6, jsArray.length());
+    assertTrue(jsArray.get(0));
+    assertTrue(jsArray.shift());
+    assertEquals(5, jsArray.length());
+
+    jsArray.setLength(0);
+    assertEquals(0, jsArray.length());
   }
 
   public void testJsArrayInteger() {
@@ -126,6 +148,9 @@ public class JsArrayTest extends GWTTestCase {
     assertEquals(0, jsArray.get(0));
     assertEquals(1, jsArray.get(1));
     assertEquals(2, jsArray.get(2));
+
+    assertEquals("0,1,2", jsArray.join());
+    assertEquals("0:1:2", jsArray.join(":"));
 
     // Make sure getting the '3' element throws an exception in hosted mode
     // (this won't happen in web mode).
@@ -152,7 +177,20 @@ public class JsArrayTest extends GWTTestCase {
         fail("Expected an exception getting an invalid value in hosted mode");
       } catch (Throwable e) {
       }
+    } else {
+      // Keep the length of the array sane for the remainer of the test
+      jsArray.set(4, 33);
     }
+
+    // Add an element to the beginning of the array
+    jsArray.unshift(42);
+    assertEquals(6, jsArray.length());
+    assertEquals(42, jsArray.get(0));
+    assertEquals(42, jsArray.shift());
+    assertEquals(5, jsArray.length());
+
+    jsArray.setLength(0);
+    assertEquals(0, jsArray.length());
   }
 
   public void testJsArrayNumber() {
@@ -164,6 +202,9 @@ public class JsArrayTest extends GWTTestCase {
     assertEquals(0.0, jsArray.get(0));
     assertEquals(1.1, jsArray.get(1));
     assertEquals(2.2, jsArray.get(2));
+
+    assertEquals("0,1.1,2.2", jsArray.join());
+    assertEquals("0:1.1:2.2", jsArray.join(":"));
 
     // Make sure getting the '3' element throws an exception in hosted mode
     // (this won't happen in web mode).
@@ -190,7 +231,20 @@ public class JsArrayTest extends GWTTestCase {
         fail("Expected an exception getting an invalid value in hosted mode");
       } catch (Throwable e) {
       }
+    } else {
+      // Keep the length of the array sane for the remainer of the test
+      jsArray.set(4, 4.4);
     }
+
+    // Add an element to the beginning of the array
+    jsArray.unshift(42.0);
+    assertEquals(6, jsArray.length());
+    assertEquals(42.0, jsArray.get(0));
+    assertEquals(42.0, jsArray.shift());
+    assertEquals(5, jsArray.length());
+
+    jsArray.setLength(0);
+    assertEquals(0, jsArray.length());
   }
 
   public void testJsArrayString() {
@@ -206,6 +260,9 @@ public class JsArrayTest extends GWTTestCase {
     assertEquals("foo", s0);
     assertEquals("bar", s1);
     assertEquals("baz", s2);
+
+    assertEquals("foo,bar,baz", jsArray.join());
+    assertEquals("foo:bar:baz", jsArray.join(":"));
 
     // Make sure the '3' element is null.
     assertNull(jsArray.get(3));
@@ -225,14 +282,27 @@ public class JsArrayTest extends GWTTestCase {
         fail("Expected an exception getting an invalid value in hosted mode");
       } catch (Throwable e) {
       }
+    } else {
+      // Keep the length of the array sane for the remainer of the test
+      jsArray.set(4, "quux");
     }
+
+    // Add an element to the beginning of the array
+    jsArray.unshift("42");
+    assertEquals(6, jsArray.length());
+    assertEquals("42", jsArray.get(0));
+    assertEquals("42", jsArray.shift());
+    assertEquals(5, jsArray.length());
+
+    jsArray.setLength(0);
+    assertEquals(0, jsArray.length());
   }
 
   private native JsArray<JsPoint> makeJsArray() /*-{
     return [
-      { x: 0, y: 1},
-      { x: 2, y: 3},
-      { x: 4, y: 5},
+      { x: 0, y: 1, toString: function() { return 'JsPoint';} },
+      { x: 2, y: 3, toString: function() { return 'JsPoint';} },
+      { x: 4, y: 5, toString: function() { return 'JsPoint';} },
     ];
   }-*/;
 
