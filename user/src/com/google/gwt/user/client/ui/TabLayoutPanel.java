@@ -1,0 +1,449 @@
+/*
+ * Copyright 2009 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.user.client.ui;
+
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
+import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
+import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.layout.client.Layout.Alignment;
+import com.google.gwt.layout.client.Layout.Layer;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+
+/**
+ * A panel that represents a tabbed set of pages, each of which contains another
+ * widget. Its child widgets are shown as the user selects the various tabs
+ * associated with them. The tabs can contain arbitrary text, HTML, or widgets.
+ * 
+ * <p>
+ * This widget will <em>only</em> work in standards mode, which requires
+ * that the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
+ * declaration.
+ * </p>
+ * 
+ * <p>
+ * NOTE: This class is still very new, and its interface may change without
+ * warning. Use at your own risk.
+ * </p>
+ * 
+ * <p>
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.TabLayoutPanelExample}
+ * </p>
+ * 
+ * TODO:
+ * - Aria, RTL, DebugId
+ * - Update style mechanism (gwt-Tab, etc. not really sufficient).
+ */
+public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
+    RequiresResize, ProvidesResize, IndexedPanel,
+    HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
+
+  private static class Tab extends SimplePanel {
+    private Element anchor;
+
+    public Tab(Widget child) {
+      super(Document.get().createSpanElement());
+      getElement().appendChild(anchor = Document.get().createAnchorElement());
+
+      setWidget(child);
+      setStyleName("gwt-Tab");
+      anchor.setClassName("gwt-TabInner");
+
+      // TODO: float:left may not be enough. If there are tabs of differeing
+      // heights, the shorter ones will top-align, rather than bottom-align,
+      // which is what we would want. display:inline-block fixes this, but
+      // needs lots of cross-browser hacks to work properly.
+      getElement().getStyle().setProperty("float", "left");
+    }
+
+    public HandlerRegistration addClickHandler(ClickHandler handler) {
+      return addDomHandler(handler, ClickEvent.getType());
+    }
+
+    public Widget asWidget() {
+      return this;
+    }
+
+    public void setSelected(boolean selected) {
+      if (selected) {
+        addStyleDependentName("selected");
+      } else {
+        removeStyleDependentName("selected");
+      }
+    }
+
+    @Override
+    protected com.google.gwt.user.client.Element getContainerElement() {
+      return anchor.cast();
+    }
+  }
+
+  private WidgetCollection children = new WidgetCollection(this);
+  private FlowPanel tabBar = new FlowPanel();
+  private ArrayList<Tab> tabs = new ArrayList<Tab>();
+  private final double tabBarSize;
+  private final Unit tabBarUnit;
+  private LayoutPanel panel;
+  private int selectedIndex = -1;
+
+  /**
+   * Creates an empty tab panel. 
+   * 
+   * @param tabBarSize the size of the tab bar
+   * @param tabBarUnit the unit in which the tab bar size is specified
+   */
+  public TabLayoutPanel(double tabBarSize, Unit tabBarUnit) {
+    this.tabBarSize = tabBarSize;
+    this.tabBarUnit = tabBarUnit;
+
+    panel = new LayoutPanel();
+    initWidget(panel);
+
+    panel.add(tabBar);
+    Layer layer = panel.getLayer(tabBar);
+    layer.setLeftRight(0, Unit.PX, 0, Unit.PX);
+    layer.setTopHeight(0, Unit.PX, tabBarSize, tabBarUnit);
+    panel.layout();
+
+    panel.getLayer(tabBar).setChildVerticalPosition(Alignment.END);
+
+    tabBar.setStyleName("gwt-TabLayoutPanelTabs");
+    setStyleName("gwt-TabLayoutPanel");
+  }
+
+  public void add(Widget w) {
+    insert(w, getWidgetCount());
+  }
+
+  /**
+   * Adds a widget to the panel. If the Widget is already attached, it will be
+   * moved to the right-most index.
+   * 
+   * @param child the widget to be added
+   * @param tabText the text to be shown on its tab
+   */
+  public void add(Widget child, String text) {
+    insert(child, text, getWidgetCount());
+  }
+
+  /**
+   * Adds a widget to the panel. If the Widget is already attached, it will be
+   * moved to the right-most index.
+   * 
+   * @param child the widget to be added
+   * @param tabText the text to be shown on its tab
+   * @param asHtml <code>true</code> to treat the specified text as HTML
+   */
+  public void add(Widget w, String text, boolean asHtml) {
+    insert(w, text, asHtml, getWidgetCount());
+  }
+
+  /**
+   * Adds a widget to the panel. If the Widget is already attached, it will be
+   * moved to the right-most index.
+   * 
+   * @param child the widget to be added
+   * @param tab the widget to be placed in the associated tab
+   */
+  public void add(Widget child, Widget tab) {
+    insert(child, tab, getWidgetCount());
+  }
+
+  public HandlerRegistration addBeforeSelectionHandler(
+      BeforeSelectionHandler<Integer> handler) {
+    return addHandler(handler, BeforeSelectionEvent.getType());
+  }
+
+  public HandlerRegistration addSelectionHandler(
+      SelectionHandler<Integer> handler) {
+    return addHandler(handler, SelectionEvent.getType());
+  }
+
+  public void clear() {
+    Iterator<Widget> it = iterator();
+    while (it.hasNext()) {
+      it.next();
+      it.remove();
+    }
+  }
+
+  /**
+   * Gets the index of the currently-selected tab.
+   * 
+   * @return the selected index, or <code>-1</code> if none is selected.
+   */
+  public int getSelectedIndex() {
+    return selectedIndex;
+  }
+
+  /**
+   * Gets the widget in the tab at the given index.
+   * 
+   * @param index the index of the tab to be retrieved
+   * @return the tab's widget
+   */
+  public Widget getTabWidget(int index) {
+    checkIndex(index);
+    return tabs.get(index).getWidget();
+  }
+
+  /**
+   * Gets the widget in the tab associated with the given child widget.
+   * 
+   * @param child the child whose tab is to be retrieved
+   * @return the tab's widget
+   */
+  public Widget getTabWidget(Widget child) {
+    checkChild(child);
+    return getTabWidget(getWidgetIndex(child));
+  }
+
+  public Widget getWidget(int index) {
+    checkIndex(index);
+    return children.get(index);
+  }
+
+  public int getWidgetCount() {
+    return children.size();
+  }
+
+  public int getWidgetIndex(Widget child) {
+    return children.indexOf(child);
+  }
+
+  /**
+   * Inserts a widget into the panel. If the Widget is already attached, it will
+   * be moved to the requested index.
+   * 
+   * @param child the widget to be added
+   * @param tab the widget to be placed in the associated tab
+   * @param beforeIndex the index before which it will be inserted
+   */
+  public void insert(Widget w, int beforeIndex) {
+    insert(w, "", beforeIndex);
+  }
+
+  /**
+   * Inserts a widget into the panel. If the Widget is already attached, it will be
+   * moved to the requested index.
+   * 
+   * @param child the widget to be added
+   * @param tabText the text to be shown on its tab
+   * @param asHtml <code>true</code> to treat the specified text as HTML
+   * @param beforeIndex the index before which it will be inserted
+   */
+  public void insert(Widget w, String text, boolean asHtml, int beforeIndex) {
+    Widget contents;
+    if (asHtml) {
+      contents = new HTML(text);
+    } else {
+      contents = new Label(text);
+    }
+    insert(w, contents, beforeIndex);
+  }
+
+  /**
+   * Inserts a widget into the panel. If the Widget is already attached, it will be
+   * moved to the requested index.
+   * 
+   * @param child the widget to be added
+   * @param tabText the text to be shown on its tab
+   * @param beforeIndex the index before which it will be inserted
+   */
+  public void insert(Widget child, String text, int beforeIndex) {
+    insert(child, text, false, beforeIndex);
+  }
+
+  /**
+   * Inserts a widget into the panel. If the Widget is already attached, it will be
+   * moved to the requested index.
+   * 
+   * @param child the widget to be added
+   * @param tab the widget to be placed in the associated tab
+   * @param beforeIndex the index before which it will be inserted
+   */
+  public void insert(Widget child, Widget tab, int beforeIndex) {
+    insert(child, new Tab(tab), beforeIndex);
+  }
+
+  public Iterator<Widget> iterator() {
+    return children.iterator();
+  }
+
+  public boolean remove(int index) {
+    if ((index < 0) || (index >= getWidgetCount())) {
+      return false;
+    }
+
+    tabBar.remove(index);
+    panel.remove(children.get(index));
+
+    children.remove(index);
+    tabs.remove(index);
+
+    if (index == selectedIndex) {
+      // If the selected tab is being removed, select the first tab (if there
+      // is one).
+      selectedIndex = -1;
+      if (getWidgetCount() > 0) {
+        selectTab(0);
+      }
+    } else if (index < selectedIndex) {
+      // If the selectedIndex is greater than the one being removed, it needs
+      // to be adjusted.
+      --selectedIndex;
+    }
+    return true;
+  }
+
+  public boolean remove(Widget w) {
+    int index = children.indexOf(w);
+    if (index == -1) {
+      return false;
+    }
+
+    return remove(index);
+  }
+
+  /**
+   * Programmatically selects the specified tab.
+   * 
+   * @param index the index of the tab to be selected
+   */
+  public void selectTab(int index) {
+    checkIndex(index);
+    if (index == selectedIndex) {
+      return;
+    }
+
+    // Fire the before selection event, giving the recipients a chance to
+    // cancel the selection.
+    BeforeSelectionEvent<Integer> event = BeforeSelectionEvent
+        .fire(this, index);
+    if ((event != null) && event.isCanceled()) {
+      return;
+    }
+
+    // Update the tabs being selected and unselected.
+    if (selectedIndex != -1) {
+      Layer layer = panel.getLayer(children.get(selectedIndex));
+      layer.getContainerElement().getStyle().setVisibility(Visibility.HIDDEN);
+      tabs.get(selectedIndex).setSelected(false);
+    }
+
+    Layer layer = panel.getLayer(children.get(index));
+    layer.getContainerElement().getStyle().setVisibility(Visibility.VISIBLE);
+    tabs.get(index).setSelected(true);
+    selectedIndex = index;
+
+    // Fire the selection event.
+    SelectionEvent.fire(this, index);
+  }
+
+  /**
+   * Programmatically selects the specified tab.
+   * 
+   * @param child the child whose tab is to be selected
+   */
+  public void selectTab(Widget child) {
+    selectTab(getWidgetIndex(child));
+  }
+
+  /**
+   * Sets a tab's HTML contents.
+   * 
+   * Use care when setting an object's HTML; it is an easy way to expose
+   * script-based security problems. Consider using
+   * {@link #setTabText(int, String)} whenever possible.
+   * 
+   * @param index the index of the tab whose HTML is to be set
+   * @param html the tab's new HTML contents
+   */
+  public void setTabHTML(int index, String text) {
+    checkIndex(index);
+    tabs.get(index).setWidget(new HTML(text));
+  }
+
+  /**
+   * Sets a tab's text contents.
+   * 
+   * @param index the index of the tab whose text is to be set
+   * @param text the object's new text
+   */
+  public void setTabText(int index, String text) {
+    checkIndex(index);
+    tabs.get(index).setWidget(new Label(text));
+  }
+
+  private void checkChild(Widget child) {
+    assert children.contains(child);
+  }
+
+  private void checkIndex(int index) {
+    assert (index >= 0) && (index < children.size()) : "Index out of bounds";
+  }
+
+  private void insert(final Widget child, Tab tab, int beforeIndex) {
+    assert (beforeIndex >= 0) && (beforeIndex <= getWidgetCount()) : "beforeIndex out of bounds";
+
+    // Check to see if the TabPanel already contains the Widget. If so,
+    // remove it and see if we need to shift the position to the left.
+    int idx = getWidgetIndex(child);
+    if (idx != -1) {
+      remove(child);
+      if (idx < beforeIndex) {
+        beforeIndex--;
+      }
+    }
+
+    children.insert(child, beforeIndex);
+    tabs.add(beforeIndex, tab);
+
+    tabBar.insert(tab.asWidget(), beforeIndex);
+    tab.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        selectTab(child);
+      }
+    });
+
+    panel.insert(child, beforeIndex);
+    layoutChild(child);
+
+    if (selectedIndex == -1) {
+      selectTab(0);
+    }
+  }
+
+  private void layoutChild(Widget child) {
+    Layer layer = panel.getLayer(child);
+    layer.setLeftRight(0, Unit.PX, 0, Unit.PX);
+    layer.setTopBottom(tabBarSize, tabBarUnit, 0, Unit.PX);
+    layer.getContainerElement().getStyle().setVisibility(Visibility.HIDDEN);
+    panel.layout();
+  }
+}

@@ -45,6 +45,8 @@ import com.google.gwt.layout.client.Layout.Layer;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.LayoutPanelExample}
  * </p>
+ * 
+ * TODO: implements IndexedPanel (I think)
  */
 public class LayoutPanel extends ComplexPanel implements RequiresLayout,
     RequiresResize, ProvidesResize {
@@ -71,18 +73,7 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
    * @param widget the widget to be added
    */
   public void add(Widget widget) {
-    // Detach new child.
-    widget.removeFromParent();
-
-    // Logical attach.
-    getChildren().add(widget);
-
-    // Physical attach.
-    Layer layer = layout.attachChild(widget.getElement(), widget);
-    widget.setLayoutData(layer);
-
-    // Adopt.
-    adopt(widget);
+    insert(widget, getWidgetCount());
   }
 
   /**
@@ -101,6 +92,41 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
   public Layout.Layer getLayer(Widget child) {
     assert child.getParent() == this : "The requested widget is not a child of this panel";
     return (Layout.Layer) child.getLayoutData();
+  }
+
+  /**
+   * Inserts a widget before the specified index.
+   * 
+   * <p>
+   * By default, each child will fill the panel. To build more interesting
+   * layouts, use {@link #getLayer(Widget)} to get the {@link Layout.Layer}
+   * associated with each child, and set its layout constraints as desired.
+   * </p>
+   * 
+   * <p>
+   * Inserting a widget in this way has no effect on the DOM structure, but can
+   * be useful for other panels that wrap LayoutPanel to maintain insertion
+   * order.
+   * </p>
+   * 
+   * @param widget the widget to be inserted
+   * @param beforeIndex the index before which it will be inserted
+   * @throws IndexOutOfBoundsException if <code>beforeIndex</code> is out of
+   *           range
+   */
+  public void insert(Widget widget, int beforeIndex) {
+    // Detach new child.
+    widget.removeFromParent();
+
+    // Logical attach.
+    getChildren().insert(widget, beforeIndex);
+
+    // Physical attach.
+    Layer layer = layout.attachChild(widget.getElement(), widget);
+    widget.setLayoutData(layer);
+
+    // Adopt.
+    adopt(widget);
   }
 
   public void layout() {
