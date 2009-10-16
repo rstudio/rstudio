@@ -902,7 +902,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
     sw.indent();
     sw.println("if (!injected) {");
     sw.indentln("injected = true;");
-    sw.indentln(StyleInjector.class.getName() + ".injectStylesheet(getText());");
+    sw.indentln(StyleInjector.class.getName() + ".inject(getText());");
     sw.indentln("return true;");
     sw.println("}");
     sw.println("return false;");

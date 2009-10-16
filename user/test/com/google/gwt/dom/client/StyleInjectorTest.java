@@ -26,13 +26,16 @@ import com.google.gwt.user.client.DeferredCommand;
  */
 public class StyleInjectorTest extends GWTTestCase {
 
+  private static final int TEST_DELAY = 500;
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.dom.DOMTest";
   }
 
-  @DoNotRunWith({Platform.Htmlunit})
-  public void testStyleInjector() {
+  @DoNotRunWith(value = {Platform.Htmlunit})
+  @SuppressWarnings("deprecation")
+  public void testOldMethods() {
     final DivElement elt = Document.get().createDivElement();
     elt.setId("styleInjectorTest");
     elt.setInnerHTML("Hello StyleInjector!");
@@ -43,7 +46,7 @@ public class StyleInjectorTest extends GWTTestCase {
     StyleInjector.injectStylesheetAtEnd("#styleInjectorTest {height: 100px;}");
 
     // We need to allow the document to be redrawn
-    delayTestFinish(500);
+    delayTestFinish(TEST_DELAY);
 
     DeferredCommand.addCommand(new Command() {
       public void execute() {
@@ -59,8 +62,9 @@ public class StyleInjectorTest extends GWTTestCase {
   /**
    * Ensure that the IE createStyleSheet compatibility code is exercised.
    */
-  @DoNotRunWith({Platform.Htmlunit})
-  public void testLotsOfStyles() {
+  @DoNotRunWith(value = {Platform.Htmlunit})
+  @SuppressWarnings("deprecation")
+  public void testOldMethodsWithLotsOfStyles() {
     StyleElement[] elements = new StyleElement[100];
     for (int i = 0, j = elements.length; i < j; i++) {
       elements[i] = StyleInjector.injectStylesheet("#styleInjectorTest" + i
@@ -78,7 +82,7 @@ public class StyleInjectorTest extends GWTTestCase {
     Document.get().getBody().appendChild(elt);
 
     // We need to allow the document to be redrawn
-    delayTestFinish(500);
+    delayTestFinish(TEST_DELAY);
 
     DeferredCommand.addCommand(new Command() {
       public void execute() {
@@ -88,5 +92,50 @@ public class StyleInjectorTest extends GWTTestCase {
         finishTest();
       }
     });
+  }
+
+  @DoNotRunWith(value = {Platform.Htmlunit})
+  public void testStyleInjectorBatched() {
+    testStyleInjector("testStyleInjectorBatched", false);
+  }
+
+  @DoNotRunWith(value = {Platform.Htmlunit})
+  public void testStyleInjectorImmediate() {
+    testStyleInjector("testStyleInjectorImmediate", true);
+  }
+
+  private void testStyleInjector(String testName, final boolean immediate) {
+
+    final DivElement elt = Document.get().createDivElement();
+    elt.setId(testName);
+    elt.setInnerHTML("Hello");
+    Document.get().getBody().appendChild(elt);
+
+    StyleInjector.inject("#" + testName
+        + " {position: absolute; left: 100px; width: 50px; height 50px;}",
+        immediate);
+    StyleInjector.injectAtStart("#" + testName
+        + " {left: 25px; width: 100px !important;}", immediate);
+    StyleInjector.injectAtEnd("#" + testName + " {height: 100px;}", immediate);
+
+    Command command = new Command() {
+      public void execute() {
+        assertEquals(100, elt.getOffsetLeft());
+        assertEquals(100, elt.getClientHeight());
+        assertEquals(100, elt.getClientWidth());
+
+        if (!immediate) {
+          finishTest();
+        }
+      }
+    };
+
+    if (immediate) {
+      command.execute();
+    } else {
+      DeferredCommand.addCommand(command);
+      // We need to allow the BatchedCommands to execute
+      delayTestFinish(TEST_DELAY);
+    }
   }
 }

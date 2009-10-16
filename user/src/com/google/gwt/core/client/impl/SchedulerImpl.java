@@ -177,7 +177,8 @@ public class SchedulerImpl extends Scheduler {
   }-*/;
 
   public static void scheduleIncrementalImpl(RepeatingCommand cmd) {
-    INCREMENTAL_COMMANDS.push(Task.create(cmd));
+    // Push repeating commands onto the same initial queue for relative order
+    DEFERRED_COMMANDS.push(Task.create(cmd));
     maybeSchedulePostEventPumpCommands();
   }
 
