@@ -229,7 +229,7 @@
         excludes="${gwt.junit.testcase.web.excludes}" />
       <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module -precompile parallel"
           test.out="${junit.out}/nometa-remote"
-          test.cases="test.remoteweb.tests" >
+          test.cases="test.nometa.remote.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
