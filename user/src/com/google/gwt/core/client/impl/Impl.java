@@ -155,15 +155,22 @@ public final class Impl {
   }-*/;
 
   /**
+   * Called by ModuleSpace in hosted mode when running onModuleLoads.
+   */
+  private static boolean enter() {
+    assert entryDepth >= 0 : "Negative entryDepth value at entry " + entryDepth;
+
+    // We want to disable some actions in the reentrant case
+    return entryDepth++ == 0;
+  }
+
+  /**
    * Implements {@link #entry(JavaScriptObject)}.
    */
   @SuppressWarnings("unused")
   private static Object entry0(Object jsFunction, Object thisObj,
       Object arguments) throws Throwable {
-    assert entryDepth >= 0 : "Negative entryDepth value at entry " + entryDepth;
-
-    // We want to disable some actions in the reentrant case
-    boolean initialEntry = entryDepth++ == 0;
+    boolean initialEntry = enter();
 
     try {
       /*
@@ -188,12 +195,23 @@ public final class Impl {
         return apply(jsFunction, thisObj, arguments);
       }
     } finally {
-      if (initialEntry) {
-        // TODO(bobv) FinallyCommand.flush() goes here
-      }
-      entryDepth--;
-      assert entryDepth >= 0 : "Negative entryDepth value at exit "
-          + entryDepth;
+      exit(initialEntry);
+    }
+  }
+
+  /**
+   * Called by ModuleSpace in hosted mode when running onModuleLoads.
+   */
+  private static void exit(boolean initialEntry) {
+    if (initialEntry) {
+      SchedulerImpl.flushFinallyCommands();
+    }
+
+    // Decrement after we call flush
+    entryDepth--;
+    assert entryDepth >= 0 : "Negative entryDepth value at exit " + entryDepth;
+    if (initialEntry) {
+      assert entryDepth == 0 : "Depth not 0" + entryDepth;
     }
   }
 

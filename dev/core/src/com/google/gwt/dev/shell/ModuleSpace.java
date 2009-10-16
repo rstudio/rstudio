@@ -342,36 +342,47 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     String entryPointTypeName = null;
     try {
       // Set up GWT-entry code
-      Class<?> clazz = loadClassFromSourceName("com.google.gwt.core.client.impl.Impl");
-      Method registerEntry = clazz.getMethod("registerEntry");
+      Class<?> implClass = loadClassFromSourceName("com.google.gwt.core.client.impl.Impl");
+      Method registerEntry = implClass.getDeclaredMethod("registerEntry");
+      registerEntry.setAccessible(true);
       registerEntry.invoke(null);
+
+      Method enter = implClass.getDeclaredMethod("enter");
+      enter.setAccessible(true);
+      enter.invoke(null);
 
       String[] entryPoints = host.getEntryPointTypeNames();
       if (entryPoints.length > 0) {
-        for (int i = 0; i < entryPoints.length; i++) {
-          entryPointTypeName = entryPoints[i];
-          clazz = loadClassFromSourceName(entryPointTypeName);
-          Method onModuleLoad = null;
-          try {
-            onModuleLoad = clazz.getMethod("onModuleLoad");
-            if (!Modifier.isStatic(onModuleLoad.getModifiers())) {
-              // it's non-static, so we need to rebind the class
-              onModuleLoad = null;
+        try {
+          for (int i = 0; i < entryPoints.length; i++) {
+            entryPointTypeName = entryPoints[i];
+            Class<?> clazz = loadClassFromSourceName(entryPointTypeName);
+            Method onModuleLoad = null;
+            try {
+              onModuleLoad = clazz.getMethod("onModuleLoad");
+              if (!Modifier.isStatic(onModuleLoad.getModifiers())) {
+                // it's non-static, so we need to rebind the class
+                onModuleLoad = null;
+              }
+            } catch (NoSuchMethodException e) {
+              // okay, try rebinding it; maybe the rebind result will have one
             }
-          } catch (NoSuchMethodException e) {
-            // okay, try rebinding it; maybe the rebind result will have one
+            Object module = null;
+            if (onModuleLoad == null) {
+              module = rebindAndCreate(entryPointTypeName);
+              onModuleLoad = module.getClass().getMethod("onModuleLoad");
+              // Record the rebound name of the class for stats (below).
+              entryPointTypeName = module.getClass().getName().replace('$', '.');
+            }
+            onModuleLoad.setAccessible(true);
+            invokeNativeVoid("fireOnModuleLoadStart", null,
+                new Class[] {String.class}, new Object[] {entryPointTypeName});
+            onModuleLoad.invoke(module);
           }
-          Object module = null;
-          if (onModuleLoad == null) {
-            module = rebindAndCreate(entryPointTypeName);
-            onModuleLoad = module.getClass().getMethod("onModuleLoad");
-            // Record the rebound name of the class for stats (below).
-            entryPointTypeName = module.getClass().getName().replace('$', '.');
-          }
-          onModuleLoad.setAccessible(true);
-          invokeNativeVoid("fireOnModuleLoadStart", null,
-              new Class[] {String.class}, new Object[] {entryPointTypeName});
-          onModuleLoad.invoke(module);
+        } finally {
+          Method exit = implClass.getDeclaredMethod("exit", boolean.class);
+          exit.setAccessible(true);
+          exit.invoke(null, true);
         }
       } else {
         logger.log(
