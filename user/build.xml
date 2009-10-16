@@ -19,7 +19,7 @@
 
   <import file="${gwt.root}/common.ant.xml" />
 
-  <property name="test.timeout" value="3" />
+  <property name="test.timeout" value="4" />
   <property name="emma.merged.out" value="${junit.out}/emma-coverage" />
   <property name="gwt.junit.testcase.web.includes" value="${gwt.junit.testcase.includes}" />
   <property name="gwt.junit.testcase.web.excludes" value="" />
