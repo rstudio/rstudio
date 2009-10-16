@@ -169,6 +169,7 @@
       <include name="com/google/gwt/dev/js/**"/>
       <include name="com/google/gwt/dev/resource/**"/>
       <include name="com/google/gwt/dev/util/**"/>
+      <include name="com/google/gwt/soyc/**"/>
       <include name="com/google/gwt/util/tools/**"/>
       <classpath>
           <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
