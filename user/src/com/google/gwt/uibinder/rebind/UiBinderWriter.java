@@ -1117,6 +1117,7 @@ public class UiBinderWriter {
     addWidgetParser("CustomButton");
     addWidgetParser("DockLayoutPanel");
     addWidgetParser("StackLayoutPanel");
+    addWidgetParser("TabLayoutPanel");
 
     addAttributeParser("boolean",
         "com.google.gwt.uibinder.parsers.BooleanAttributeParser");

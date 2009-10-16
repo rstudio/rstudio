@@ -63,6 +63,8 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
     RequiresResize, ProvidesResize, IndexedPanel,
     HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
 
+  private static final int BIG_ENOUGH_TO_NOT_WRAP = 16384;
+
   private static class Tab extends SimplePanel {
     private Element anchor;
 
@@ -106,20 +108,20 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
   private WidgetCollection children = new WidgetCollection(this);
   private FlowPanel tabBar = new FlowPanel();
   private ArrayList<Tab> tabs = new ArrayList<Tab>();
-  private final double tabBarSize;
-  private final Unit tabBarUnit;
+  private final double barHeight;
+  private final Unit barUnit;
   private LayoutPanel panel;
   private int selectedIndex = -1;
 
   /**
    * Creates an empty tab panel. 
    * 
-   * @param tabBarSize the size of the tab bar
-   * @param tabBarUnit the unit in which the tab bar size is specified
+   * @param barHeight the size of the tab bar
+   * @param barUnit the unit in which the tab bar size is specified
    */
-  public TabLayoutPanel(double tabBarSize, Unit tabBarUnit) {
-    this.tabBarSize = tabBarSize;
-    this.tabBarUnit = tabBarUnit;
+  public TabLayoutPanel(double barHeight, Unit barUnit) {
+    this.barHeight = barHeight;
+    this.barUnit = barUnit;
 
     panel = new LayoutPanel();
     initWidget(panel);
@@ -127,10 +129,14 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
     panel.add(tabBar);
     Layer layer = panel.getLayer(tabBar);
     layer.setLeftRight(0, Unit.PX, 0, Unit.PX);
-    layer.setTopHeight(0, Unit.PX, tabBarSize, tabBarUnit);
+    layer.setTopHeight(0, Unit.PX, barHeight, barUnit);
     panel.layout();
 
     panel.getLayer(tabBar).setChildVerticalPosition(Alignment.END);
+
+    // Make the tab bar extremely wide so that tabs themselves never wrap.
+    // (Its layout container is overflow:hidden)
+    tabBar.getElement().getStyle().setWidth(BIG_ENOUGH_TO_NOT_WRAP, Unit.PX);
 
     tabBar.setStyleName("gwt-TabLayoutPanelTabs");
     setStyleName("gwt-TabLayoutPanel");
@@ -145,7 +151,7 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
    * moved to the right-most index.
    * 
    * @param child the widget to be added
-   * @param tabText the text to be shown on its tab
+   * @param text the text to be shown on its tab
    */
   public void add(Widget child, String text) {
     insert(child, text, getWidgetCount());
@@ -156,11 +162,11 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
    * moved to the right-most index.
    * 
    * @param child the widget to be added
-   * @param tabText the text to be shown on its tab
+   * @param text the text to be shown on its tab
    * @param asHtml <code>true</code> to treat the specified text as HTML
    */
-  public void add(Widget w, String text, boolean asHtml) {
-    insert(w, text, asHtml, getWidgetCount());
+  public void add(Widget child, String text, boolean asHtml) {
+    insert(child, text, asHtml, getWidgetCount());
   }
 
   /**
@@ -241,11 +247,10 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
    * be moved to the requested index.
    * 
    * @param child the widget to be added
-   * @param tab the widget to be placed in the associated tab
    * @param beforeIndex the index before which it will be inserted
    */
-  public void insert(Widget w, int beforeIndex) {
-    insert(w, "", beforeIndex);
+  public void insert(Widget child, int beforeIndex) {
+    insert(child, "", beforeIndex);
   }
 
   /**
@@ -253,18 +258,18 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
    * moved to the requested index.
    * 
    * @param child the widget to be added
-   * @param tabText the text to be shown on its tab
+   * @param text the text to be shown on its tab
    * @param asHtml <code>true</code> to treat the specified text as HTML
    * @param beforeIndex the index before which it will be inserted
    */
-  public void insert(Widget w, String text, boolean asHtml, int beforeIndex) {
+  public void insert(Widget child, String text, boolean asHtml, int beforeIndex) {
     Widget contents;
     if (asHtml) {
       contents = new HTML(text);
     } else {
       contents = new Label(text);
     }
-    insert(w, contents, beforeIndex);
+    insert(child, contents, beforeIndex);
   }
 
   /**
@@ -272,7 +277,7 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
    * moved to the requested index.
    * 
    * @param child the widget to be added
-   * @param tabText the text to be shown on its tab
+   * @param text the text to be shown on its tab
    * @param beforeIndex the index before which it will be inserted
    */
   public void insert(Widget child, String text, int beforeIndex) {
@@ -343,8 +348,8 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
 
     // Fire the before selection event, giving the recipients a chance to
     // cancel the selection.
-    BeforeSelectionEvent<Integer> event = BeforeSelectionEvent
-        .fire(this, index);
+    BeforeSelectionEvent<Integer> event =
+      BeforeSelectionEvent.fire(this, index);
     if ((event != null) && event.isCanceled()) {
       return;
     }
@@ -384,9 +389,9 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
    * @param index the index of the tab whose HTML is to be set
    * @param html the tab's new HTML contents
    */
-  public void setTabHTML(int index, String text) {
+  public void setTabHTML(int index, String html) {
     checkIndex(index);
-    tabs.get(index).setWidget(new HTML(text));
+    tabs.get(index).setWidget(new HTML(html));
   }
 
   /**
@@ -442,7 +447,7 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
   private void layoutChild(Widget child) {
     Layer layer = panel.getLayer(child);
     layer.setLeftRight(0, Unit.PX, 0, Unit.PX);
-    layer.setTopBottom(tabBarSize, tabBarUnit, 0, Unit.PX);
+    layer.setTopBottom(barHeight, barUnit, 0, Unit.PX);
     layer.getContainerElement().getStyle().setVisibility(Visibility.HIDDEN);
     panel.layout();
   }
