@@ -4,7 +4,7 @@
 //    separate functions.
 var $wnd = parent;
 var $doc = $wnd.document;
-var $moduleName, $moduleBase
+var $moduleName, $moduleBase, $entry
 ,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;
 // Lightweight metrics
 if ($stats) {

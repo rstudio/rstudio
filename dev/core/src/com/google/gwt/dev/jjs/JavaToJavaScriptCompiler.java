@@ -760,6 +760,11 @@ public class JavaToJavaScriptCompiler {
 
     JMethodBody body = (JMethodBody) bootStrapMethod.getBody();
     JBlock block = body.getBlock();
+
+    // Also remember $entry, which we'll handle specially in GenerateJsAst
+    JMethod registerEntry = program.getIndexedMethod("Impl.registerEntry");
+    program.addEntryMethod(registerEntry);
+
     for (String mainClassName : mainClassNames) {
       block.addStmt(makeStatsCalls(program, mainClassName));
       JDeclaredType mainType = program.getFromTypeMap(mainClassName);
@@ -986,10 +991,12 @@ public class JavaToJavaScriptCompiler {
         }
       } catch (ParserConfigurationException e) {
         throw new InternalCompilerException(
-            "Error reading compile report information that was just generated", e);
+            "Error reading compile report information that was just generated",
+            e);
       } catch (SAXException e) {
         throw new InternalCompilerException(
-            "Error reading compile report information that was just generated", e);
+            "Error reading compile report information that was just generated",
+            e);
       }
       dashboard.generateForOnePermutation();
       reportArtifacts = outDir.getArtifacts();

@@ -1453,23 +1453,37 @@ public class GenerateJavaScriptAST {
         List<JsStatement> globalStmts) {
       /**
        * <pre>
+       * var $entry = Impl.registerEntry();
        * function gwtOnLoad(errFn, modName, modBase){
        *   $moduleName = modName;
        *   $moduleBase = modBase;
        *   if (errFn) {
        *     try {
-       *       init();
+       *       $entry(init)();
        *     } catch(e) {
        *       errFn(modName);
        *     }
        *   } else {
-       *     init();
+       *     $entry(init)();
        *   }
        * }
        * </pre>
        */
       SourceInfo sourceInfo = program.createSourceInfoSynthetic(
           GenerateJavaScriptAST.class, "gwtOnLoad");
+
+      JsName entryName = topScope.findExistingName("$entry");
+      entryName.setObfuscatable(true);
+      JsVar entryVar = new JsVar(sourceInfo, entryName);
+      JsInvocation registerEntryCall = new JsInvocation(sourceInfo);
+      JsFunction registerEntryFunction = indexedFunctions.get("Impl.registerEntry");
+      registerEntryCall.setQualifier(registerEntryFunction.getName().makeRef(
+          sourceInfo));
+      entryVar.setInitExpr(registerEntryCall);
+      JsVars entryVars = new JsVars(sourceInfo);
+      entryVars.add(entryVar);
+      globalStmts.add(entryVars);
+
       JsName gwtOnLoadName = topScope.declareName("gwtOnLoad");
       gwtOnLoadName.setObfuscatable(false);
       JsFunction gwtOnLoad = new JsFunction(sourceInfo, topScope,
@@ -1501,10 +1515,15 @@ public class GenerateJavaScriptAST {
       jsIf.setElseStmt(callBlock);
       jsTry.setTryBlock(callBlock);
       for (JsFunction func : entryFuncs) {
-        if (func != null) {
+        if (func == registerEntryFunction) {
+          continue;
+        } else if (func != null) {
           JsInvocation call = new JsInvocation(sourceInfo);
-          call.setQualifier(func.getName().makeRef(sourceInfo));
-          callBlock.getStatements().add(call.makeStmt());
+          call.setQualifier(entryName.makeRef(sourceInfo));
+          call.getArguments().add(func.getName().makeRef(sourceInfo));
+          JsInvocation entryCall = new JsInvocation(sourceInfo);
+          entryCall.setQualifier(call);
+          callBlock.getStatements().add(entryCall.makeStmt());
         }
       }
       JsCatch jsCatch = new JsCatch(sourceInfo, fnScope, "e");

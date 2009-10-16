@@ -100,7 +100,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     try {
       Class<?> javaScriptExceptionClass = Class.forName(
           "com.google.gwt.core.client.JavaScriptException", true, cl);
-      
+
       if (!javaScriptExceptionClass.isInstance(javaScriptException)) {
         // Not a JavaScriptException
         return null;
@@ -341,11 +341,16 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     //
     String entryPointTypeName = null;
     try {
+      // Set up GWT-entry code
+      Class<?> clazz = loadClassFromSourceName("com.google.gwt.core.client.impl.Impl");
+      Method registerEntry = clazz.getMethod("registerEntry");
+      registerEntry.invoke(null);
+
       String[] entryPoints = host.getEntryPointTypeNames();
       if (entryPoints.length > 0) {
         for (int i = 0; i < entryPoints.length; i++) {
           entryPointTypeName = entryPoints[i];
-          Class<?> clazz = loadClassFromSourceName(entryPointTypeName);
+          clazz = loadClassFromSourceName(entryPointTypeName);
           Method onModuleLoad = null;
           try {
             onModuleLoad = clazz.getMethod("onModuleLoad");

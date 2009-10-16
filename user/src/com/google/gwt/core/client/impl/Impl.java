@@ -16,6 +16,7 @@
 package com.google.gwt.core.client.impl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 
 /**
  * Private implementation class for GWT core. This API is should not be
@@ -23,7 +24,38 @@ import com.google.gwt.core.client.GWT;
  */
 public final class Impl {
 
+  /**
+   * Used by {@link #entry0(Object, Object)} to handle reentrancy.
+   */
+  private static int entryDepth = 0;
   private static int sNextHashId = 0;
+
+  /**
+   * This method should be used whenever GWT code is entered from a JS context
+   * and there is no GWT code in the same module on the call stack. Examples
+   * include event handlers, exported methods, and module initialization.
+   * <p>
+   * The GWT compiler and hosted mode will provide a module-scoped variable,
+   * <code>$entry</code>, which is an alias for this method.
+   * <p>
+   * This method can be called reentrantly, which will simply delegate to the
+   * function.
+   * <p>
+   * The function passed to this method will be invoked via
+   * <code>Function.apply()</code> with the current <code>this</code> value and
+   * the invocation arguments passed to <code>$entry</code>.
+   * 
+   * @param jsFunction a JS function to invoke, which is typically a JSNI
+   *          reference to a static Java method
+   * @return the value returned when <code>jsFunction</code> is invoked, or
+   *         <code>undefined</code> if the UncaughtExceptionHandler catches an
+   *         exception raised by <code>jsFunction</code>
+   */
+  public static native JavaScriptObject entry(JavaScriptObject jsFunction) /*-{
+    return function() {
+      return @com.google.gwt.core.client.impl.Impl::entry0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)(jsFunction, this, arguments);
+    };
+  }-*/;
 
   /**
    * Gets an identity-based hash code on the passed-in Object by adding an
@@ -96,6 +128,76 @@ public final class Impl {
   }-*/;
 
   /**
+   * Implicitly called by JavaToJavaScriptCompiler.findEntryPoints().
+   */
+  public static native JavaScriptObject registerEntry() /*-{
+    if (@com.google.gwt.core.client.GWT::isScript()()) {
+      // Assignment to $entry is done by the compiler
+      return @com.google.gwt.core.client.impl.Impl::entry(Lcom/google/gwt/core/client/JavaScriptObject;);
+    } else {
+      // But we have to do in in hosted mode
+      return $entry = @com.google.gwt.core.client.impl.Impl::entry(Lcom/google/gwt/core/client/JavaScriptObject;);
+    }
+  }-*/;
+
+  private static native Object apply(Object jsFunction, Object thisObj,
+      Object arguments) /*-{
+    if (@com.google.gwt.core.client.GWT::isScript()()) {
+      return jsFunction.apply(thisObj, arguments);
+    } else {
+      _ = jsFunction.apply(thisObj, arguments);
+      if (_ != null) {
+        // Wrap for hosted mode
+        _ = Object(_);
+      }
+      return _;
+    }
+  }-*/;
+
+  /**
+   * Implements {@link #entry(JavaScriptObject)}.
+   */
+  @SuppressWarnings("unused")
+  private static Object entry0(Object jsFunction, Object thisObj,
+      Object arguments) throws Throwable {
+    assert entryDepth >= 0 : "Negative entryDepth value at entry " + entryDepth;
+
+    // We want to disable some actions in the reentrant case
+    boolean initialEntry = entryDepth++ == 0;
+
+    try {
+      /*
+       * Always invoke the UCE if we have one so that the exception never
+       * percolates up to the browser's event loop, even in a reentrant
+       * situation.
+       */
+      if (GWT.getUncaughtExceptionHandler() != null) {
+        /*
+         * This try block is guarded by the if statement so that we don't molest
+         * the exception object traveling up the stack unless we're capable of
+         * doing something useful with it.
+         */
+        try {
+          return apply(jsFunction, thisObj, arguments);
+        } catch (Throwable t) {
+          GWT.getUncaughtExceptionHandler().onUncaughtException(t);
+          return undefined();
+        }
+      } else {
+        // Can't handle any exceptions, let them percolate normally
+        return apply(jsFunction, thisObj, arguments);
+      }
+    } finally {
+      if (initialEntry) {
+        // TODO(bobv) FinallyCommand.flush() goes here
+      }
+      entryDepth--;
+      assert entryDepth >= 0 : "Negative entryDepth value at exit "
+          + entryDepth;
+    }
+  }
+
+  /**
    * Called from JSNI. Do not change this implementation without updating:
    * <ul>
    * <li>{@link com.google.gwt.user.client.rpc.impl.SerializerBase}</li>
@@ -105,4 +207,9 @@ public final class Impl {
   private static int getNextHashId() {
     return ++sNextHashId;
   }
+
+  private static native Object undefined() /*-{
+    // Intentionally not returning a value
+    return;
+  }-*/;
 }

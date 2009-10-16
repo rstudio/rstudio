@@ -110,7 +110,7 @@ public final class JsRootScope extends JsScope {
         "JavaArray", "JavaMember",
 
         // GWT-defined identifiers
-        "$wnd", "$doc", "$moduleName", "$moduleBase", "$gwt_version",
+        "$wnd", "$doc", "$entry", "$moduleName", "$moduleBase", "$gwt_version",
 
         // Identifiers used by JsStackEmulator; later set to obfuscatable
         "$stack", "$stackDepth", "$location",
