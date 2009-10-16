@@ -1,12 +1,12 @@
 /*
- * Copyright 2007 Google Inc.
- *
+ * Copyright 2009 Google Inc.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,100 +19,134 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
-import com.google.gwt.user.client.ui.DisclosurePanel;
 
 /**
  * Parses {@link com.google.gwt.user.client.ui.DisclosurePanel} widgets.
  */
 public class DisclosurePanelParser implements ElementParser {
 
-  private static final String ATTRIBUTE_HEADER_WIDGET = "DisclosurePanel-header";
-
-  private static final String ATTRIBUTE_HEADER_BUNDLE = "imageBundle";
-
-  private static final String ATTRIBUTE_INITIALLY_OPEN = "initiallyOpen";
-
-  private static final String ATTRIBUTE_ENABLE_ANIMATION = "enableAnimation";
-
-  /**
-   * @return the type oracle's DisclosurePanel class
-   */
-  private static JClassType getDisclosurePanelClass(UiBinderWriter w) {
-    return w.getOracle().findType(DisclosurePanel.class.getName());
+  private static class Children {
+    XMLElement body;
+    XMLElement header;
+    XMLElement customHeader;
   }
 
-  public void parse(XMLElement elem, String fieldName, JClassType type,
-      UiBinderWriter writer) throws UnableToCompleteException {
+  private static final String CUSTOM = "customHeader";
+  private static final String HEADER = "header";
+  private static final String OPEN_IMAGE = "openImage";
 
-    String text = null;
-    // They must specify a label
-    if (elem.hasAttribute("text")) {
-      text = elem.consumeAttribute("text");
-      text = '"' + UiBinderWriter.escapeTextForJavaStringLiteral(text) + '"';
-    }
+  private static final String CLOSED_IMAGE = "closedImage";
 
-    // They may specify an image bundle
-    String imageBundle = null;
-    if (elem.hasAttribute(ATTRIBUTE_HEADER_BUNDLE)) {
-      imageBundle = elem.consumeAttribute(ATTRIBUTE_HEADER_BUNDLE);
-    }
+  public void parse(final XMLElement panelElem, String panelField,
+      JClassType type, final UiBinderWriter writer)
+      throws UnableToCompleteException {
+    Children children = findChildren(panelElem, writer);
 
-    // They may specify an initial closed state
-    String initiallyOpen = "false";
-    if (elem.hasAttribute(ATTRIBUTE_INITIALLY_OPEN)) {
-      initiallyOpen = elem.consumeAttribute(ATTRIBUTE_INITIALLY_OPEN);
-    }
-
-    // They may enable animation
-    String enableAnimation = "true";
-    if (elem.hasAttribute(ATTRIBUTE_ENABLE_ANIMATION)) {
-      enableAnimation = elem.consumeAttribute(ATTRIBUTE_ENABLE_ANIMATION);
-    }
-
-    String childFieldName = null;
-    String headerFieldName = null;
-
-    for (XMLElement child : elem.consumeChildElements()) {
-      // Disclosure panel header optionally comes from the DisclosurePanel-header attribute of the
-      // child
-      boolean childIsHeader = false;
-      String headerAttributeName = elem.getPrefix() + ":" + ATTRIBUTE_HEADER_WIDGET;
-      if (child.hasAttribute(headerAttributeName)) {
-        if (headerFieldName != null) {
-          writer.die("In %s, DisclosurePanel cannot contain more than one header widget.", elem);
-        }
-        child.consumeAttribute(headerAttributeName);
-        headerFieldName = writer.parseElementToField(child);
-        childIsHeader = true;
+    if (null != children.body) {
+      if (!writer.isWidgetElement(children.body)) {
+        writer.die("In %s, %s must be a widget", panelElem, children.body);
       }
-      if (!childIsHeader) {
-        if (childFieldName != null) {
-          writer.die("In %s, DisclosurePanel cannot contain more than one content widget.", elem);
-        }
-        childFieldName = writer.parseElementToField(child);
-      }
+
+      String bodyField = writer.parseElementToField(children.body);
+      writer.addInitStatement("%s.add(%s);", panelField, bodyField);
     }
 
-    // To use the image bundle, you must provide a text header.
-    if (imageBundle != null) {
-      writer.setFieldInitializerAsConstructor(fieldName,
-          getDisclosurePanelClass(writer), imageBundle, (text != null ? text : "\"\""),
-          initiallyOpen);
-    } else {
-      JClassType panelClass = getDisclosurePanelClass(writer);
-      if (text != null) {
-        writer.setFieldInitializerAsConstructor(fieldName, panelClass, text);
+    if (null != children.customHeader) {
+      XMLElement headerElement = children.customHeader.consumeSingleChildElement();
+
+      if (!writer.isWidgetElement(headerElement)) {
+        writer.die("In %s of %s, %s is not a widget", children.customHeader,
+            panelElem, headerElement);
+      }
+
+      String headerField = writer.parseElementToField(headerElement);
+      writer.addInitStatement("%s.setHeader(%s);", panelField, headerField);
+    }
+
+    if (null != children.header) {
+      String openImage = getAttribute(OPEN_IMAGE, children.header, writer);
+      String closedImage = getAttribute(CLOSED_IMAGE, children.header, writer);
+      String headerText = children.header.consumeInnerTextEscapedAsHtmlStringLiteral(new TextInterpreter(
+          writer));
+
+      if ((openImage == null || closedImage == null)
+          && !(openImage == closedImage)) {
+        writer.die("In %s of %s, both %s and %s must be specified, or neither",
+            children.header, panelElem, OPEN_IMAGE, CLOSED_IMAGE);
+      }
+
+      String panelTypeName = type.getQualifiedSourceName();
+      if (openImage != null) {
+        writer.setFieldInitializer(panelField, String.format(
+            "new %s(%s, %s, \"%s\")", panelTypeName, openImage, closedImage,
+            headerText));
       } else {
-        writer.setFieldInitializerAsConstructor(fieldName, panelClass);
+        writer.setFieldInitializer(panelField, String.format("new %s(\"%s\")",
+            panelTypeName, headerText));
       }
     }
-    if (childFieldName != null) {
-      writer.addStatement("%1$s.setContent(%2$s);", fieldName, childFieldName);
+  }
+
+  private Children findChildren(final XMLElement elem,
+      final UiBinderWriter writer) throws UnableToCompleteException {
+    final Children children = new Children();
+
+    elem.consumeChildElements(new XMLElement.Interpreter<Boolean>() {
+      public Boolean interpretElement(XMLElement child)
+          throws UnableToCompleteException {
+
+        if (hasAttribute(child, HEADER)) {
+          assertFirstHeader();
+          children.header = child;
+          return true;
+        }
+
+        if (hasAttribute(child, CUSTOM)) {
+          assertFirstHeader();
+          children.customHeader = child;
+          return true;
+        }
+
+        // Must be the body, then
+        if (null != children.body) {
+          writer.die("In %s, may have only one body element", elem);
+        }
+
+        children.body = child;
+        return true;
+      }
+
+      void assertFirstHeader() throws UnableToCompleteException {
+        if ((null != children.header) && (null != children.customHeader)) {
+          writer.die("In %1$s, may have only one %2$s:header "
+              + "or %2$s:customHeader", elem, elem.getPrefix());
+        }
+      }
+
+      private boolean hasAttribute(XMLElement child, final String attribute) {
+        return rightNamespace(child) && child.getLocalName().equals(attribute);
+      }
+
+      private boolean rightNamespace(XMLElement child) {
+        return child.getNamespaceUri().equals(elem.getNamespaceUri());
+      }
+    });
+
+    return children;
+  }
+
+  /**
+   * @return a field reference or a null string if the attribute is unset
+   * @throws UnableToCompleteException on bad value
+   */
+  private String getAttribute(String attribute, XMLElement headerElem,
+      UiBinderWriter writer) throws UnableToCompleteException {
+    // TODO(rjrjr) parser should come from XMLElement
+
+    String value = headerElem.consumeAttribute(attribute, null);
+    if (value != null) {
+      value = new StrictAttributeParser().parse(value, writer);
     }
-    if (headerFieldName != null) {
-      writer.addStatement("%1$s.setHeader(%2$s);", fieldName, headerFieldName);
-    }
-    writer.addStatement("%1$s.setAnimationEnabled(%2$s);", fieldName, enableAnimation);
-    writer.addStatement("%1$s.setOpen(%2$s);", fieldName, initiallyOpen);
+    return value;
   }
 }

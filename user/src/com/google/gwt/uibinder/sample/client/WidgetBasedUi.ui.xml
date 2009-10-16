@@ -126,6 +126,8 @@
 </ui:style>
 <ui:image field='prettyImage' />
 <ui:image field='prettyTilingImage' src='prettyImage.png' flipRtl='true' repeatStyle='Both'/>
+<ui:image field='right'/>
+<ui:image field='down'/>
 
 <gwt:DockPanel ui:field="root" width="100%">
   <gwt:Dock direction='NORTH'>
@@ -257,6 +259,7 @@
         <gwt:Tree ui:field='myTree' width="100px" />
 
       <p>...TextBoxes...</p>
+      
       <gwt:TextBox maxLength="21">21 chars only, please</gwt:TextBox>
 
       <p>...or perhaps a handful of RadioButtons:</p>
@@ -270,7 +273,9 @@
         text="Charlie (this one is a subclass of RadioButton)">
         <ui:attribute name="text" description="radio button name"/>
       </demo:PointlessRadioButtonSubclass>
+      
       <p> ... a StackPanel ... </p>
+      
       <gwt:StackPanel stylePrimaryName="myStyle" width="280px" ui:field='myStackPanel'>
         <gwt:Label text="Stack One Text"  gwt:StackPanel-text="Stack One"
             ui:field='myStackPanelItem'>
@@ -287,47 +292,94 @@
         </gwt:HTMLPanel>
         <gwt:Label text="Stack Three Text"  gwt:StackPanel-text="Stack Three" />
       </gwt:StackPanel>
+      
       <p> ... a DisclosurePanel with a text header ... </p>
-      <gwt:DisclosurePanel text="I just have a text header" ui:field='myDisclosurePanel'>
-        <!--ui:attribute name="text" description="Label for Disclosure One"/ -->
-        <gwt:Label text="Disclosure Text" ui:field='myDisclosurePanelItem'>
-          <ui:attribute name="text" description="Content for Disclosure One Text"/>
-        </gwt:Label>
+      
+      <gwt:DisclosurePanel ui:field='myDisclosurePanel' animationEnabled='true'>
+        <gwt:header>
+          <ui:msg description="Label for Disclosure One">I just have a text header</ui:msg>
+        </gwt:header>
+
+
+          <gwt:Label ui:field='myDisclosurePanelItem'>
+            <ui:msg  description="Content for Disclosure One Text">Disclosure Text</ui:msg>
+          </gwt:Label>
+
       </gwt:DisclosurePanel>
+      
       <p> ... a DisclosurePanel with a widget header ... </p>
-      <gwt:DisclosurePanel>
-        <gwt:Label text="Disclosure Header - closed" gwt:DisclosurePanel-header="true">
-          <ui:attribute name="text" description="Content for Disclosure Two Text"/>
-        </gwt:Label>
-        <gwt:Label text="Disclosure Two - closed">
-          <ui:attribute name="text" description="Content for Disclosure Two"/>
-        </gwt:Label>
+      
+      <gwt:DisclosurePanel animationEnabled='true'>
+        <gwt:customHeader>
+          <gwt:Label>
+            <ui:msg description="Content for Disclosure Two Text">Disclosure Header - closed</ui:msg>
+          </gwt:Label>
+        </gwt:customHeader>
+
+
+          <gwt:Label>
+            <ui:msg description="Content for Disclosure Two">Disclosure Two - closed</ui:msg>
+          </gwt:Label>
+
       </gwt:DisclosurePanel>
+
       <p> ... an open DisclosurePanel with a widget header ... </p>
-      <gwt:DisclosurePanel initiallyOpen="true">
-        <gwt:Label text="Disclosure Header - open" gwt:DisclosurePanel-header="true">
-          <ui:attribute name="text" description="Content for Disclosure Two Text"/>
-        </gwt:Label>
-        <gwt:Label text="Disclosure Two - open">
-          <ui:attribute name="text" description="Content for Disclosure Two"/>
-        </gwt:Label>
+
+      <gwt:DisclosurePanel open='true' animationEnabled='true'>
+        <gwt:customHeader>
+          <gwt:Label>
+            <ui:msg description="Content for Disclosure Two Text">Disclosure Header - open</ui:msg>
+          </gwt:Label>
+        </gwt:customHeader>
+
+
+          <gwt:Label>
+            <ui:msg description="Content for Disclosure Two">Disclosure Two - open</ui:msg>
+          </gwt:Label>
+
       </gwt:DisclosurePanel>
+
       <p> ... a DisclosurePanel with no header ... </p>
-      <gwt:DisclosurePanel initiallyOpen="true">
-        <gwt:Label text="Disclosure Three">
-          <ui:attribute name="text" description="Content for Disclosure Three"/>
-        </gwt:Label>
+
+      <gwt:DisclosurePanel open="true" animationEnabled='true'>
+
+          <gwt:Label>
+            <ui:msg description="Content for Disclosure Three">Disclosure Three</ui:msg>
+          </gwt:Label>
+
       </gwt:DisclosurePanel>
+
       <p> ... an open DisclosurePanel with a text label and no animation</p>
-      <gwt:DisclosurePanel text="Disclosure Three - open" initiallyOpen="true"
-          enableAnimation="false">
-        <gwt:Label text="Disclosure Three">
-          <ui:attribute name="text" description="Content for Disclosure Three"/>
-        </gwt:Label>
+
+      <gwt:DisclosurePanel open="true" >
+        <gwt:header><ui:msg>Disclosure Three - open</ui:msg></gwt:header>
+
+
+          <gwt:Label>
+            <ui:msg description="Content for Disclosure Three">Disclosure Three</ui:msg>
+          </gwt:Label>
+
       </gwt:DisclosurePanel>
+
       <p> ... a DisclosurePanel with no content ... </p>
-      <gwt:DisclosurePanel text="I just have a text header" />
- 
+
+      <gwt:DisclosurePanel>
+        <gwt:header><ui:msg>"I just have a text header"</ui:msg></gwt:header>
+      </gwt:DisclosurePanel>
+      
+      <p> ... a DisclosurePanel with custom images ... </p>
+      
+      <gwt:DisclosurePanel open='false' animationEnabled='true'>
+        <gwt:header openImage='{down}' closedImage='{right}'>
+          <ui:msg description="Content for Disclosure Two Text">Custom images header</ui:msg>
+        </gwt:header>
+
+          <gwt:Label>
+            <ui:msg description="Content for Disclosure Two">Custom images body</ui:msg>
+          </gwt:Label>
+
+      </gwt:DisclosurePanel>
+      
       <h2>Stylish</h2>
       <p>
        Templates work with ClientBundle. For example,

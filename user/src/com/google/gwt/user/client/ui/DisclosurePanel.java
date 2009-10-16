@@ -24,7 +24,8 @@ import com.google.gwt.event.logical.shared.HasOpenHandlers;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -35,11 +36,10 @@ import java.util.Iterator;
  * A widget that consists of a header and a content panel that discloses the
  * content when a user clicks on the header.
  * 
- * <h3>CSS Style Rules</h3>
- * <ul class="css">
- * <li>.gwt-DisclosurePanel { the panel's primary style }</li>
- * <li>.gwt-DisclosurePanel-open { dependent style set when panel is open }</li>
- * <li>.gwt-DisclosurePanel-closed { dependent style set when panel is closed }</li>
+ * <h3>CSS Style Rules</h3> <ul class="css"> <li>.gwt-DisclosurePanel { the
+ * panel's primary style }</li> <li>.gwt-DisclosurePanel-open { dependent style
+ * set when panel is open }</li> <li>.gwt-DisclosurePanel-closed { dependent
+ * style set when panel is closed }</li>
  * 
  * <p>
  * <img class='gallery' src='DisclosurePanel.png'/>
@@ -47,17 +47,51 @@ import java.util.Iterator;
  * 
  * <p>
  * The header and content sections can be easily selected using css with a child
- * selector:<br/> .gwt-DisclosurePanel-open .header { ... }
+ * selector:<br/>
+ * .gwt-DisclosurePanel-open .header { ... }
  * </p>
  */
 @SuppressWarnings("deprecation")
 public final class DisclosurePanel extends Composite implements
     FiresDisclosureEvents, HasWidgets, HasAnimation,
     HasOpenHandlers<DisclosurePanel>, HasCloseHandlers<DisclosurePanel> {
+  interface DefaultImages extends ClientBundle {
+    ImageResource disclosurePanelClosed();
+
+    ImageResource disclosurePanelOpen();
+  }
+
+  private static final DefaultImages DEFAULT_IMAGES = GWT.create(DefaultImages.class);
+
   /**
-   * The duration of the animation.
+   * Used to wrap widgets in the header to provide click support. Effectively
+   * wraps the widget in an <code>anchor</code> to get automatic keyboard
+   * access.
    */
-  private static final int ANIMATION_DURATION = 350;
+  private final class ClickableHeader extends SimplePanel {
+
+    private ClickableHeader() {
+      // Anchor is used to allow keyboard access.
+      super(DOM.createAnchor());
+      Element elem = getElement();
+      DOM.setElementProperty(elem, "href", "javascript:void(0);");
+      // Avoids layout problems from having blocks in inlines.
+      DOM.setStyleAttribute(elem, "display", "block");
+      sinkEvents(Event.ONCLICK);
+      setStyleName(STYLENAME_HEADER);
+    }
+
+    @Override
+    public void onBrowserEvent(Event event) {
+      // no need to call super.
+      switch (DOM.eventGetType(event)) {
+        case Event.ONCLICK:
+          // Prevent link default action.
+          DOM.eventPreventDefault(event);
+          setOpen(!isOpen);
+      }
+    }
+  }
 
   /**
    * An {@link Animation} used to open the content.
@@ -91,7 +125,7 @@ public final class DisclosurePanel extends Composite implements
       } else {
         panel.contentWrapper.setVisible(panel.isOpen);
         if (panel.isOpen) {
-          // Special treatment on the visible case to ensure LazyPanel works 
+          // Special treatment on the visible case to ensure LazyPanel works
           panel.getContent().setVisible(true);
         }
       }
@@ -112,9 +146,9 @@ public final class DisclosurePanel extends Composite implements
       super.onStart();
       if (opening) {
         curPanel.contentWrapper.setVisible(true);
-        // Special treatment on the visible case to ensure LazyPanel works 
+        // Special treatment on the visible case to ensure LazyPanel works
         curPanel.getContent().setVisible(true);
-     }
+      }
     }
 
     @Override
@@ -134,36 +168,6 @@ public final class DisclosurePanel extends Composite implements
   }
 
   /**
-   * Used to wrap widgets in the header to provide click support. Effectively
-   * wraps the widget in an <code>anchor</code> to get automatic keyboard
-   * access.
-   */
-  private final class ClickableHeader extends SimplePanel {
-
-    private ClickableHeader() {
-      // Anchor is used to allow keyboard access.
-      super(DOM.createAnchor());
-      Element elem = getElement();
-      DOM.setElementProperty(elem, "href", "javascript:void(0);");
-      // Avoids layout problems from having blocks in inlines.
-      DOM.setStyleAttribute(elem, "display", "block");
-      sinkEvents(Event.ONCLICK);
-      setStyleName(STYLENAME_HEADER);
-    }
-
-    @Override
-    public void onBrowserEvent(Event event) {
-      // no need to call super.
-      switch (DOM.eventGetType(event)) {
-        case Event.ONCLICK:
-          // Prevent link default action.
-          DOM.eventPreventDefault(event);
-          setOpen(!isOpen);
-      }
-    }
-  }
-
-  /**
    * The default header widget used within a {@link DisclosurePanel}.
    */
   private class DefaultHeader extends Widget implements HasText,
@@ -176,13 +180,27 @@ public final class DisclosurePanel extends Composite implements
     private final Element labelTD;
 
     private final Image iconImage;
-    private final DisclosurePanelImages images;
+    private final Imager imager;
 
-    private DefaultHeader(DisclosurePanelImages images, String text) {
-      this.images = images;
+    private DefaultHeader(final DisclosurePanelImages images, String text) {
+      this(new Imager() {
+        public Image makeImage() {
+          return images.disclosurePanelClosed().createImage();
+        }
 
-      iconImage = isOpen ? images.disclosurePanelOpen().createImage()
-          : images.disclosurePanelClosed().createImage();
+        public void updateImage(boolean open, Image image) {
+          if (open) {
+            images.disclosurePanelOpen().applyTo(image);
+          } else {
+            images.disclosurePanelClosed().applyTo(image);
+          }
+        }
+      }, text);
+    }
+
+    private DefaultHeader(Imager imager, String text) {
+      this.imager = imager;
+      iconImage = imager.makeImage();
 
       // I do not need any Widgets here, just a DOM structure.
       Element root = DOM.createTable();
@@ -212,6 +230,23 @@ public final class DisclosurePanel extends Composite implements
       setStyle();
     }
 
+    private DefaultHeader(final ImageResource openImage,
+        final ImageResource closedImage, String text) {
+      this(new Imager() {
+        public Image makeImage() {
+          return new Image(closedImage);
+        }
+
+        public void updateImage(boolean open, Image image) {
+          if (open) {
+            image.setResource(openImage);
+          } else {
+            image.setResource(closedImage);
+          }
+        }
+      }, text);
+    }
+
     public final String getText() {
       return DOM.getInnerText(labelTD);
     }
@@ -229,13 +264,20 @@ public final class DisclosurePanel extends Composite implements
     }
 
     private void setStyle() {
-      if (isOpen) {
-        images.disclosurePanelOpen().applyTo(iconImage);
-      } else {
-        images.disclosurePanelClosed().applyTo(iconImage);
-      }
+      imager.updateImage(isOpen, iconImage);
     }
   }
+
+  private interface Imager {
+    Image makeImage();
+
+    void updateImage(boolean open, Image image);
+  }
+
+  /**
+   * The duration of the animation.
+   */
+  private static final int ANIMATION_DURATION = 350;
 
   // Stylename constants.
   private static final String STYLENAME_DEFAULT = "gwt-DisclosurePanel";
@@ -252,13 +294,6 @@ public final class DisclosurePanel extends Composite implements
    * The {@link Animation} used to open and close the content.
    */
   private static ContentAnimation contentAnimation;
-
-  private static DisclosurePanelImages createDefaultImages() {
-    if (LocaleInfo.getCurrentLocale().isRTL()) {
-      return GWT.create(DisclosurePanelImagesRTL.class);
-    }
-    return GWT.create(DisclosurePanelImages.class);
-  }
 
   /**
    * top level widget. The first child will be a reference to {@link #header}.
@@ -284,7 +319,34 @@ public final class DisclosurePanel extends Composite implements
    * Creates an empty DisclosurePanel that is initially closed.
    */
   public DisclosurePanel() {
-    init(false);
+    initWidget(mainPanel);
+    mainPanel.add(header);
+    mainPanel.add(contentWrapper);
+    DOM.setStyleAttribute(contentWrapper.getElement(), "padding", "0px");
+    DOM.setStyleAttribute(contentWrapper.getElement(), "overflow", "hidden");
+    setStyleName(STYLENAME_DEFAULT);
+    setContentDisplay(false);
+  }
+
+  /**
+   * Creates a DisclosurePanel with the specified header text, an initial
+   * open/close state and a bundle of images to be used in the default header
+   * widget.
+   * 
+   * @param images a bundle that provides disclosure panel specific images
+   * @param headerText the text to be displayed in the header
+   * @param isOpen the initial open/close state of the content panel
+   * 
+   * @deprecated use
+   *             {@link #DisclosurePanel(ImageResource, ImageResource, String)
+   *             and {@link #setOpen(boolean)}
+   */
+  @Deprecated
+  public DisclosurePanel(DisclosurePanelImages images, String headerText,
+      boolean isOpen) {
+    this();
+    setOpen(isOpen);
+    setHeader(new DefaultHeader(images, headerText));
   }
 
   /**
@@ -296,10 +358,10 @@ public final class DisclosurePanel extends Composite implements
    * @param headerText the text to be displayed in the header
    * @param isOpen the initial open/close state of the content panel
    */
-  public DisclosurePanel(DisclosurePanelImages images, String headerText,
-      boolean isOpen) {
-    init(isOpen);
-    setHeader(new DefaultHeader(images, headerText));
+  public DisclosurePanel(ImageResource openImage, ImageResource closedImage,
+      String headerText) {
+    this();
+    setHeader(new DefaultHeader(openImage, closedImage, headerText));
   }
 
   /**
@@ -309,7 +371,8 @@ public final class DisclosurePanel extends Composite implements
    * @param headerText the text to be displayed in the header
    */
   public DisclosurePanel(String headerText) {
-    this(createDefaultImages(), headerText, false);
+    this(DEFAULT_IMAGES.disclosurePanelOpen(),
+        DEFAULT_IMAGES.disclosurePanelClosed(), headerText);
   }
 
   /**
@@ -318,9 +381,14 @@ public final class DisclosurePanel extends Composite implements
    * 
    * @param headerText the text to be displayed in the header
    * @param isOpen the initial open/close state of the content panel
+   * @deprecated use {@link #DisclosurePanel(String)} and
+   *             {@link #setOpen(boolean)}
    */
+  @Deprecated
   public DisclosurePanel(String headerText, boolean isOpen) {
-    this(createDefaultImages(), headerText, isOpen);
+    this(DEFAULT_IMAGES.disclosurePanelOpen(),
+        DEFAULT_IMAGES.disclosurePanelClosed(), headerText);
+    this.setOpen(isOpen);
   }
 
   /**
@@ -328,9 +396,11 @@ public final class DisclosurePanel extends Composite implements
    * the header.
    * 
    * @param header the widget to be used as a header
+   * @deprecated use {@link #DisclosurePanel()} and {@link #setHeader(Widget)}
    */
   public DisclosurePanel(Widget header) {
-    this(header, false);
+    this();
+    setHeader(header);
   }
 
   /**
@@ -339,10 +409,14 @@ public final class DisclosurePanel extends Composite implements
    * 
    * @param header the widget to be used as a header
    * @param isOpen the initial open/close state of the content panel
+   * @deprecated use {@link #DisclosurePanel()}, {@link #setOpen(boolean)} and
+   *             {@link #setHeader(Widget)} instead
    */
+  @Deprecated
   public DisclosurePanel(Widget header, boolean isOpen) {
-    init(isOpen);
+    this();
     setHeader(header);
+    setOpen(isOpen);
   }
 
   public void add(Widget w) {
@@ -365,7 +439,7 @@ public final class DisclosurePanel extends Composite implements
    * 
    * @param handler the handler to be added (should not be null)
    * @deprecated Use {@link DisclosurePanel#addOpenHandler(OpenHandler)} and
-   * {@link DisclosurePanel#addCloseHandler(CloseHandler)} instead
+   *             {@link DisclosurePanel#addCloseHandler(CloseHandler)} instead
    */
   @Deprecated
   public void addEventHandler(final DisclosureHandler handler) {
@@ -403,7 +477,7 @@ public final class DisclosurePanel extends Composite implements
    * the header widget does provide such access.
    * 
    * @return a reference to the header widget if it implements {@link HasText},
-   * <code>null</code> otherwise
+   *         <code>null</code> otherwise
    */
   public HasText getHeaderTextAccessor() {
     Widget widget = header.getWidget();
@@ -440,8 +514,8 @@ public final class DisclosurePanel extends Composite implements
    * Removes an event handler from the panel.
    * 
    * @param handler the handler to be removed
-   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
-   * the object returned by an add*Handler method instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by an add*Handler method instead
    */
   @Deprecated
   public void removeEventHandler(DisclosureHandler handler) {
@@ -488,7 +562,7 @@ public final class DisclosurePanel extends Composite implements
    * Changes the visible state of this <code>DisclosurePanel</code>.
    * 
    * @param isOpen <code>true</code> to open the panel, <code>false</code> to
-   * close
+   *          close
    */
   public void setOpen(boolean isOpen) {
     if (this.isOpen != isOpen) {
@@ -518,17 +592,6 @@ public final class DisclosurePanel extends Composite implements
     } else {
       CloseEvent.fire(this, this);
     }
-  }
-
-  private void init(boolean isOpen) {
-    initWidget(mainPanel);
-    mainPanel.add(header);
-    mainPanel.add(contentWrapper);
-    DOM.setStyleAttribute(contentWrapper.getElement(), "padding", "0px");
-    DOM.setStyleAttribute(contentWrapper.getElement(), "overflow", "hidden");
-    this.isOpen = isOpen;
-    setStyleName(STYLENAME_DEFAULT);
-    setContentDisplay(false);
   }
 
   private void setContentDisplay(boolean animate) {

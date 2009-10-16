@@ -20,6 +20,7 @@ package com.google.gwt.user.client.ui;
  * only need to override the disclosurePanelClosed() method, as the image that we provide
  * for disclosurePanelOpen() is direction-agnostic.
  */
+@Deprecated
 public interface DisclosurePanelImagesRTL extends DisclosurePanelImages {
   /**
    * An image indicating a closed disclosure panel for a RTL context.

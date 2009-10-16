@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 /**
  * An {@link ImageBundle} that provides images for {@link DisclosurePanel}.
  */
+@Deprecated
 public interface DisclosurePanelImages extends ImageBundle {
 
   /**
