@@ -137,8 +137,12 @@
       if="gwt.hosts.web.remote">
     <echo message="Performing web remote testing at ${gwt.hosts.web.remote}" />
     <property name="test.web.remote.args" value="${test.args}" />
-    <fileset id="test.web.remote.tests" dir="${javac.junit.out}" includes="${gwt.junit.testcase.web.includes}" excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -web -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module -precompile parallel" test.out="${junit.out}/web-remote" test.cases="test.web.remote.tests" >
+    <fileset id="test.web.remote.tests" dir="${javac.junit.out}"
+        includes="${gwt.junit.testcase.web.includes}"
+        excludes="${gwt.junit.testcase.web.excludes}" />
+    <gwt.junit test.args="${test.args} -out www -web -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module -precompile parallel"
+        test.out="${junit.out}/web-remote"
+        test.cases="test.web.remote.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -224,7 +228,7 @@
       if="gwt.hosts.web.remote">
     <echo message="Performing nometa remote testing at ${gwt.hosts.web.remote}" />
     <property name="test.nometa.remote.args" value="${test.args}" />
-    <fileset id="test.web.remote.tests" dir="${javac.junit.out}"
+    <fileset id="test.nometa.remote.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
       <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module -precompile parallel"
