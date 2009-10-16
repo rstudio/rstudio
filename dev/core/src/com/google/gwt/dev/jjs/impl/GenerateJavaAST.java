@@ -1948,7 +1948,12 @@ public class GenerateJavaAST {
         JExpression expr, JClassType classType) {
       if (classType.getFields().size() > 0) {
         JField field = classType.getFields().get(0);
-        if (field.getName().startsWith("this$")) {
+        /* In some circumstances, the outer this ref can be captured as a local
+         * value (val$this), in other cases, as a this ref (this$).
+         * TODO: investigate using more JDT node information as an alternative
+         */
+        if (field.getName().startsWith("this$") ||
+            field.getName().startsWith("val$this$")) {
           list.add(new JFieldRef(expr.getSourceInfo(), expr, field,
               currentClass));
         }
