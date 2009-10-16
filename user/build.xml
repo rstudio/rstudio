@@ -56,7 +56,8 @@
   <!-- Platform shouldn't matter here, just picking one -->
   <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
 
-  <target name="compile" description="Compile all class files">
+  <target name="compile" description="Compile all class files"
+      unless="compile.complete">
     <mkdir dir="${javac.out}" />
     <gwt.javac>
       <classpath>
@@ -88,7 +89,8 @@
       Compiles the test code for this project
   -->
   <target name="compile.tests"
-      depends="compile.dev.tests, compile.emma.if.enabled">
+      depends="compile.dev.tests, compile.emma.if.enabled"
+      unless="compile.tests.complete">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**"
         destdir="${javac.junit.out}">
@@ -134,7 +136,8 @@
 
   <target name="test.web.remote"
       description="Run web test with remote browsers"
-      if="gwt.hosts.web.remote">
+      if="gwt.hosts.web.remote"
+      unless="test.web.remote.disable">
     <echo message="Performing web remote testing at ${gwt.hosts.web.remote}" />
     <property name="test.web.remote.args" value="${test.args}" />
     <fileset id="test.web.remote.tests" dir="${javac.junit.out}"
@@ -152,7 +155,8 @@
   <target name="test.dev.remote"
       depends="compile, compile.tests"
       description="Run dev-mode tests with remote browsers"
-      if="gwt.hosts.dev.remote">
+      if="gwt.hosts.dev.remote"
+      unless="test.dev.remote.disable">
     <echo message="Performing dev-mode remote testing at ${gwt.remote.browsers}" />
     <property name="test.dev.remote.args" value="${test.args}" />
     <fileset id="test.dev.remote.tests" dir="${javac.junit.out}"
@@ -170,7 +174,8 @@
   <target name="test.emma.remote"
       depends="compile, compile.tests"
       description="Run emma tests with remote browsers"
-      if="gwt.hosts.dev.remote">
+      if="gwt.hosts.dev.remote"
+      unless="test.emma.remote.disable">
     <echo message="Performing emma remote testing at ${gwt.hosts.dev.remote}" />
     <property name="test.emma.remote.args" value="${test.args}" />
     <fileset id="test.emma.remote.tests" dir="${javac.junit.out}"
@@ -189,7 +194,8 @@
   <target name="test.emma.selenium"
       depends="compile, compile.tests"
       description="Run emma tests with Selenium-RC servers"
-      if="gwt.hosts.dev.selenium">
+      if="gwt.hosts.dev.selenium"
+      unless="test.emma.selenium.disable">
     <echo message="Performing emma selenium testing at ${gwt.hosts.dev.selenium}" />
     <property name="test.emma.remote.args" value="${test.args}" />
     <fileset id="test.emma.selenium.tests" dir="${javac.junit.out}"
@@ -208,7 +214,8 @@
   <target name="test.draft.remote"
       depends="compile, compile.tests"
       description="Run draft compiled tests with remote browsers"
-      if="gwt.hosts.web.remote">
+      if="gwt.hosts.web.remote"
+      unless="test.draft.remote.disable">
     <echo message="Performing draft remote testing at ${gwt.hosts.web.remote}" />
     <property name="test.draft.remote.args" value="${test.args}" />
     <fileset id="test.draft.remote.tests" dir="${javac.junit.out}"
@@ -225,7 +232,8 @@
 
   <target name="test.nometa.remote"
       description="Run -XdisableClassMetadata tests with remote browsers"
-      if="gwt.hosts.web.remote">
+      if="gwt.hosts.web.remote"
+      unless="test.nometa.remote.disable">
     <echo message="Performing nometa remote testing at ${gwt.hosts.web.remote}" />
     <property name="test.nometa.remote.args" value="${test.args}" />
     <fileset id="test.nometa.remote.tests" dir="${javac.junit.out}"
@@ -247,7 +255,8 @@
   <target name="test.web.selenium"
       depends="compile, compile.tests"
       description="Run web tests using Selenium RC"
-      if="gwt.hosts.web.selenium">
+      if="gwt.hosts.web.selenium"
+      unless="test.web.selenium.disable">
     <echo message="Performing web testing using Selenium RC at ${gwt.hosts.web.selenium}" />
     <property name="test.selenium.args" value="${test.args}" />
     <fileset id="test.web.selenium.tests" dir="${javac.junit.out}"
@@ -265,7 +274,8 @@
   <target name="test.dev.selenium"
       depends="compile, compile.tests"
       description="Run dev-mode tests using Selenium RC servers"
-      if="gwt.hosts.dev.selenium">
+      if="gwt.hosts.dev.selenium"
+      unless="test.dev.selenium.disable">
     <echo message="Performing dev-mode testing using Selenium RC at ${gwt.hosts.dev.selenium}" />
     <property name="test.selenium.args" value="${test.args}" />
     <fileset id="test.dev.selenium.tests" dir="${javac.junit.out}"
@@ -282,7 +292,8 @@
 
   <target name="test.nometa.selenium"
       description="Run nometa tests using Selenium RC"
-      if="gwt.hosts.web.selenium">
+      if="gwt.hosts.web.selenium"
+      unless="test.nometa.selenium.disable">
     <echo message="Performing nometa testing using Selenium RC at ${gwt.hosts.web.selenium}" />
     <property name="test.selenium.args" value="${test.args}" />
     <fileset id="test.nometa.selenium.tests" dir="${javac.junit.out}"
@@ -299,7 +310,8 @@
 
   <target name="test.draft.selenium"
       description="Run draft compiled tests using Selenium RC"
-      if="gwt.hosts.web.selenium">
+      if="gwt.hosts.web.selenium"
+      unless="test.draft.selenium.disable">
     <echo message="Performing draft testing using Selenium RC at ${gwt.hosts.web.selenium}" />
     <property name="test.selenium.args" value="${test.args}" />
     <fileset id="test.draft.selenium.tests" dir="${javac.junit.out}"
@@ -316,7 +328,8 @@
 
   <target name="test.emma.htmlunit"
       depends="compile, compile.tests"
-      description="Run emma tests with HtmlUnit">
+      description="Run emma tests with HtmlUnit"
+      unless="test.emma.htmlunit.disable">
       <fileset id="test.emma.htmlunit.tests" dir="${javac.junit.out}"
           includes="${gwt.junit.testcase.dev.includes}"
           excludes="${gwt.junit.testcase.dev.excludes}" />
@@ -332,7 +345,8 @@
 
   <target name="test.dev.htmlunit"
       depends="compile, compile.tests"
-      description="Run dev-mode tests with HtmlUnit.">
+      description="Run dev-mode tests with HtmlUnit."
+      unless="test.dev.htmlunit.disable">
     <fileset id="test.dev.htmlunit.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
@@ -354,7 +368,8 @@
 
   <target name="test.noserver"
       depends="compile, compile.tests"
-      description="Run noserver tests for this project.">
+      description="Run noserver tests for this project."
+      unless="test.noserver.disable">
     <fileset id="test.noserver.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.noserver.includes}"
         excludes="${gwt.junit.testcase.noserver.excludes}" />
@@ -368,7 +383,8 @@
 
   <target name="test.web.htmlunit"
       depends="compile, compile.tests"
-      description="Run web-mode tests with HtmlUnit.">
+      description="Run web-mode tests with HtmlUnit."
+      unless="test.web.htmlunit.disable">
     <fileset id="test.web.htmlunit.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
@@ -383,7 +399,8 @@
 
   <target name="test.nometa.htmlunit"
       depends="compile, compile.tests"
-      description="Run -XdisableClassMetadata tests with HtmlUnit.">
+      description="Run -XdisableClassMetadata tests with HtmlUnit."
+      unless="test.nometa.htmlunit.disable">
     <fileset id="test.nometa.htmlunit.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
@@ -398,7 +415,8 @@
 
   <target name="test.draft.htmlunit"
       depends="compile, compile.tests"
-      description="Run draft compiled HtmlUnit tests (no batching on purpose)">
+      description="Run draft compiled HtmlUnit tests (no batching on purpose)"
+      unless="test.draft.htmlunit.disable">
     <fileset id="test.draft.htmlunit.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
@@ -414,17 +432,38 @@
   <target name="test"
       depends="compile, compile.tests"
       description="Run all tests for this project.">
+    <!-- Prevent compilation for every target. -->
+    <property name="compile.complete" value="true"/>
+    <property name="compile.tests.complete" value="true"/>
+
     <property.ensure name="distro.built" location="${gwt.dev.staging.jar}"
         message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
     <limit failonerror="true" hours="${test.timeout}">
-    <sequential>
-      <antcall target="test.dev"/>
-      <antcall target="test.emma"/>
-      <antcall target="test.web"/>
-      <antcall target="test.draft"/>
-      <antcall target="test.nometa"/>
+    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
+      <!--
+        The remote targets must be run sequentially or BrowserManager will queue
+        requests, which will cause some tests to timeout while waiting.
+      -->
+      <sequential>
+        <antcall target="test.dev.remote"/>
+        <antcall target="test.emma.remote"/>
+        <antcall target="test.web.remote"/>
+        <antcall target="test.draft.remote"/>
+        <antcall target="test.nometa.remote"/>
+      </sequential>
+      <antcall target="test.dev.selenium"/>
+      <antcall target="test.emma.selenium"/>
+      <antcall target="test.web.selenium"/>
+      <antcall target="test.draft.selenium"/>
+      <antcall target="test.nometa.selenium"/>
       <antcall target="test.noserver"/>
-    </sequential>
+      <!-- TODO(jlabanca): Enable htmlunit tests when they are stable. -->
+      <!-- <antcall target="test.dev.htmlunit"/> -->
+      <!-- <antcall target="test.emma.htmlunit"/> -->
+      <!-- <antcall target="test.web.htmlunit"/> -->
+      <!-- <antcall target="test.draft.htmlunit"/> -->
+      <!-- <antcall target="test.nometa.htmlunit"/> -->
+    </parallel>
     </limit>
   </target>
 
