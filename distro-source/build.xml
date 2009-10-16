@@ -26,6 +26,9 @@
       <zipfileset file="${gwt.build.lib}/gwt-soyc-vis.jar" prefix="${project.distname}" />
       <zipfileset file="${gwt.build.lib}/gwt-api-checker.jar" prefix="${project.distname}" />
 
+      <!-- jni libs-->
+      <zipfileset dir="${gwt.build.jni}/windows" prefix="${project.distname}" />
+
       <!-- raw files -->
       <zipfileset dir="${dist.resources}" prefix="${project.distname}" />
       <zipfileset dir="src" prefix="${project.distname}" />

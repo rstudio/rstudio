@@ -18,6 +18,7 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.dev.About;
+import com.google.gwt.dev.shell.ie.CheckForUpdatesIE6;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -34,7 +35,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -190,15 +190,6 @@ public class CheckForUpdates {
   // The real URL that should be used.
   private static final String QUERY_URL = "http://tools.google.com/webtoolkit/currentversion.xml";
 
-  /**
-   * All of these classes must extend CheckForUpdates. Note that currently only
-   * IE has a custom implementation (to handle proxies) and that CheckForUpdates
-   * must be the last one in the list.
-   */
-  private static final String[] updaterClassNames = new String[] {
-      "com.google.gwt.dev.shell.ie.CheckForUpdatesIE6",
-      "com.google.gwt.dev.shell.CheckForUpdates"};
-
   public static FutureTask<UpdateResult> checkForUpdatesInBackgroundThread(
       final TreeLogger logger, final long minCheckMillis) {
     final String entryPoint = computeEntryPoint();
@@ -243,25 +234,12 @@ public class CheckForUpdates {
 
   public static CheckForUpdates createUpdateChecker(TreeLogger logger,
       String entryPoint) {
-    try {
-      for (int i = 0; i < updaterClassNames.length; i++) {
-        try {
-          Class<? extends CheckForUpdates> clazz = Class.forName(
-              updaterClassNames[i]).asSubclass(CheckForUpdates.class);
-          Constructor<? extends CheckForUpdates> ctor = clazz.getDeclaredConstructor(new Class[] {
-              TreeLogger.class, String.class});
-          CheckForUpdates checker = ctor.newInstance(new Object[] {
-              logger, entryPoint});
-          return checker;
-        } catch (Exception e) {
-          // Other exceptions can occur besides ClassNotFoundException,
-          // so ignore them all so we can find a functional updater.
-        }
-      }
-    } catch (Throwable e) {
-      // silently ignore any errors
+    // Windows has a custom implementation to handle proxies.
+    if (System.getProperty("os.name").toLowerCase().contains("win")) {
+      return new CheckForUpdatesIE6(logger, entryPoint);
+    } else {
+      return new CheckForUpdates(logger, entryPoint);
     }
-    return null;
   }
 
   public static void logUpdateAvailable(TreeLogger logger,
@@ -323,16 +301,6 @@ public class CheckForUpdates {
   private TreeLogger logger;
 
   private GwtVersion myVersion;
-
-  /**
-   * Create an update checker which will poll a server URL and log a message
-   * about an update if available.
-   * 
-   * @param logger TreeLogger to use
-   */
-  public CheckForUpdates(TreeLogger logger) {
-    this(logger, null);
-  }
 
   /**
    * Create an update checker which will poll a server URL and log a message

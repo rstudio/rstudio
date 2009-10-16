@@ -1,0 +1,9 @@
+<project name="jni" default="build" basedir=".">
+  <property name="gwt.root" location=".." />
+  <property name="project.tail" value="jni" />
+  <import file="${gwt.root}/common.ant.xml" />
+
+  <target name="build" description="Build each platforms">
+    <gwt.ant dir="windows" target="build"/>
+  </target>
+</project>
