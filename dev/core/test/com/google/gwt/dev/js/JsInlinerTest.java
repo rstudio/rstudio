@@ -28,6 +28,7 @@ import com.google.gwt.dev.js.ast.JsProgram;
 public class JsInlinerTest extends OptimizerTestBase {
 
   private static class FixStaticRefsVisitor extends JsModVisitor {
+
     public static void exec(JsProgram program) {
       (new FixStaticRefsVisitor()).accept(program);
     }
@@ -35,13 +36,35 @@ public class JsInlinerTest extends OptimizerTestBase {
     @Override
     public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
       JsName name = x.getName();
-      name.setStaticRef(x);
+      if (name != null) { 
+        name.setStaticRef(x);
+      }
     }
   }
 
+  public void testInlineArrayLiterals() throws Exception {
+    String input = "function a1(arg, x) { arg.x = x; return arg; }"
+        + "function b1() { var x=a1([], 10); } b1();";
+    compare(input, input);
+  }
+
+  public void testInlineFunctionLiterals() throws Exception {
+    String input = "function a1(arg, x) { arg.x = x; return arg; }"
+        + "function b1() { var x=a1(function (){}, 10); } b1();";
+    compare(input, input);
+    String input2 = "function a1(arg, x) { arg.x = x; return arg; }"
+        + "function b1() { var x=a1(function blah(){}, 10); } b1();";
+    compare(input2, input2);
+  }
+  
+  public void testInlineObjectLiterals() throws Exception {
+    String input = "function a1(arg, x) { arg.x = x; return arg; }"
+        + "function b1() { var x=a1({}, 10); } b1();";
+    compare(input, input);
+  }
   /**
    * A test for mutually-recursive functions. Setup:
-   * 
+   *
    * <pre>
    * a -> b, c
    * b -> a, c
@@ -71,6 +94,7 @@ public class JsInlinerTest extends OptimizerTestBase {
     input = optimize(input, JsSymbolResolver.class, FixStaticRefsVisitor.class,
         JsInliner.class, JsUnusedFunctionRemover.class);
     expected = optimize(expected);
+    System.err.println("Input vs ");
     assertEquals(expected, input);
   }
 }

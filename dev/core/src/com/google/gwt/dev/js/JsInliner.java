@@ -98,6 +98,16 @@ public class JsInliner {
     }
 
     @Override
+    public void endVisit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
+      affectedBySideEffects = true;
+    }
+
+    @Override
+    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+      affectedBySideEffects = true;
+    }
+
+    @Override
     public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
       /*
        * We could make this more accurate by analyzing the function that's being
@@ -124,6 +134,11 @@ public class JsInliner {
        * We can make this more accurate if we had single-assignment information
        * (e.g. static final fields).
        */
+      affectedBySideEffects = true;
+    }
+    
+    @Override
+    public void endVisit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
       affectedBySideEffects = true;
     }
   }
