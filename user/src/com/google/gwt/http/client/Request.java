@@ -15,8 +15,6 @@
  */
 package com.google.gwt.http.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.xhr.client.XMLHttpRequest;
 
@@ -148,7 +146,7 @@ public class Request {
    * and set this field to null.
    */
   private XMLHttpRequest xmlHttpRequest;
-  
+
   /**
    * Only used for building a
    * {@link com.google.gwt.user.client.rpc.impl.FailedRequest}.
@@ -265,33 +263,6 @@ public class Request {
    * reaches 4 (LOADED).
    */
   void fireOnResponseReceived(RequestCallback callback) {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      fireOnResponseReceivedAndCatch(handler, callback);
-    } else {
-      fireOnResponseReceivedImpl(callback);
-    }
-  }
-
-  /*
-   * Stops the current HTTPRequest timer if there is one.
-   */
-  private void cancelTimer() {
-    if (timer != null) {
-      timer.cancel();
-    }
-  }
-
-  private void fireOnResponseReceivedAndCatch(UncaughtExceptionHandler handler,
-      RequestCallback callback) {
-    try {
-      fireOnResponseReceivedImpl(callback);
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-    }
-  }
-
-  private void fireOnResponseReceivedImpl(RequestCallback callback) {
     if (xmlHttpRequest == null) {
       // the request has timed out at this point
       return;
@@ -318,6 +289,15 @@ public class Request {
   }
 
   /*
+   * Stops the current HTTPRequest timer if there is one.
+   */
+  private void cancelTimer() {
+    if (timer != null) {
+      timer.cancel();
+    }
+  }
+
+  /*
    * Method called when this request times out.
    * 
    * NOTE: this method is called from JSNI
@@ -340,22 +320,20 @@ public class Request {
    * <ol>
    * <li>On Mozilla, after a network error, attempting to read the status code
    * results in an exception being thrown. See <a
-   * href="https://bugzilla.mozilla.org/show_bug.cgi?id=238559">https://bugzilla.mozilla.org/show_bug.cgi?id=238559</a>.
-   * </li>
-   * <li>On Safari, if the HTTP response does not include any response text.
-   * See <a
-   * href="http://bugs.webkit.org/show_bug.cgi?id=3810">http://bugs.webkit.org/show_bug.cgi?id=3810</a>.
-   * </li>
+   * href="https://bugzilla.mozilla.org/show_bug.cgi?id=238559"
+   * >https://bugzilla.mozilla.org/show_bug.cgi?id=238559</a>.</li>
+   * <li>On Safari, if the HTTP response does not include any response text. See
+   * <a
+   * href="http://bugs.webkit.org/show_bug.cgi?id=3810">http://bugs.webkit.org
+   * /show_bug.cgi?id=3810</a>.</li>
    * </ol>
    * 
-   * @param xhr the JavaScript <code>XmlHttpRequest</code> object
-   *          to test
+   * @param xhr the JavaScript <code>XmlHttpRequest</code> object to test
    * @return a String message containing an error message if the
    *         <code>XmlHttpRequest.status</code> code is unreadable or null if
    *         the status code could be successfully read.
    */
-  private native String getBrowserSpecificFailure(
-      XMLHttpRequest xhr) /*-{
+  private native String getBrowserSpecificFailure(XMLHttpRequest xhr) /*-{
     try {
       if (xhr.status === undefined) {
         return "XmlHttpRequest.status == undefined, please see Safari bug " +

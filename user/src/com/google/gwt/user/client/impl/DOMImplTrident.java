@@ -99,11 +99,11 @@ public abstract class DOMImplTrident extends DOMImpl {
     if ($wnd.__gwt_globalEventArray == null) {
       $wnd.__gwt_globalEventArray = new Array();
     }
-    $wnd.__gwt_globalEventArray[$wnd.__gwt_globalEventArray.length] = function() {
+    $wnd.__gwt_globalEventArray[$wnd.__gwt_globalEventArray.length] = $entry(function() {
       return @com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)($wnd.event);
-    }
+    });
 
-    @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent = function() {
+    @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent = $entry(function() {
       // IE doesn't define event.currentTarget, so we squirrel it away here. It
       // also seems that IE won't allow you to add expandos to the event object,
       // so we have to store it in a global. This is ok because only one event
@@ -134,9 +134,9 @@ public abstract class DOMImplTrident extends DOMImpl {
       }
 
       @com.google.gwt.dom.client.DOMImplTrident::currentEventTarget = oldEventTarget;
-    };
+    });
 
-    @com.google.gwt.user.client.impl.DOMImplTrident::dispatchDblClickEvent = function() {
+    @com.google.gwt.user.client.impl.DOMImplTrident::dispatchDblClickEvent = $entry(function() {
       var newEvent = $doc.createEventObject();
       // Synthesize a click event if one hasn't already been synthesized.
       if ($wnd.event.returnValue == null) {
@@ -149,13 +149,13 @@ public abstract class DOMImplTrident extends DOMImpl {
         $wnd.event.returnValue = true;
         @com.google.gwt.user.client.impl.DOMImplTrident::previewEventImpl()();
       }
-    };
+    });
 
     // We need to create these delegate functions to fix up the 'this' context.
     // Normally, 'this' is the firing element, but this is only true for
     // 'onclick = ...' event handlers, not for handlers setup via attachEvent().
-    var bodyDispatcher = function() { @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent.call($doc.body); };
-    var bodyDblClickDispatcher = function() { @com.google.gwt.user.client.impl.DOMImplTrident::dispatchDblClickEvent.call($doc.body); };
+    var bodyDispatcher = $entry(function() { @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent.call($doc.body); });
+    var bodyDblClickDispatcher = $entry(function() { @com.google.gwt.user.client.impl.DOMImplTrident::dispatchDblClickEvent.call($doc.body); });
 
     $doc.body.attachEvent('onclick', bodyDispatcher);
     $doc.body.attachEvent('onmousedown', bodyDispatcher);

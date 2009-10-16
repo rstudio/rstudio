@@ -16,7 +16,6 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.OptionElement;
@@ -1261,12 +1260,7 @@ public class DOM {
     Event prevCurrentEvent = currentEvent;
     currentEvent = evt;
 
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      dispatchEventAndCatch(evt, elem, listener, handler);
-    } else {
-      dispatchEventImpl(evt, elem, listener);
-    }
+    dispatchEventImpl(evt, elem, listener);
 
     currentEvent = prevCurrentEvent;
   }
@@ -1297,15 +1291,6 @@ public class DOM {
     }
 
     return ret;
-  }
-
-  private static void dispatchEventAndCatch(Event evt, Element elem,
-      EventListener listener, UncaughtExceptionHandler handler) {
-    try {
-      dispatchEventImpl(evt, elem, listener);
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-    }
   }
 
   private static void dispatchEventImpl(Event evt, Element elem,

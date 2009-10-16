@@ -251,9 +251,9 @@ public class XMLHttpRequest extends JavaScriptObject {
     // The 'this' context is always supposed to point to the xhr object in the
     // onreadystatechange handler, but we reference it via closure to be extra sure.
     var _this = this;
-    this.onreadystatechange = function() {
+    this.onreadystatechange = $entry(function() {
       handler.@com.google.gwt.xhr.client.ReadyStateChangeHandler::onReadyStateChange(Lcom/google/gwt/xhr/client/XMLHttpRequest;)(_this);
-    };
+    });
   }-*/;
 
   /**

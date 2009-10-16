@@ -290,9 +290,9 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
     private native void addResizeListener(Element container) /*-{
       var self = this;
-      container.onresize = function() {
+      container.onresize = $entry(function() {
         self.@com.google.gwt.user.client.ui.HorizontalSplitPanel$ImplIE6::onResize()();
-      };
+      });
     }-*/;
 
     private void onResize() {

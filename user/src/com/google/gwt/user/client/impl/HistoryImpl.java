@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client.impl;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -27,16 +25,15 @@ import com.google.gwt.event.shared.HasHandlers;
 
 /**
  * Native implementation associated with
- * {@link com.google.gwt.user.client.History}.
- * User classes should not use this class directly.
+ * {@link com.google.gwt.user.client.History}. User classes should not use this
+ * class directly.
  * 
  * <p>
  * This base version uses the HTML5 standard window.onhashchange event to
  * determine when the URL hash identifier changes.
  * </p>
  */
-public class HistoryImpl implements HasValueChangeHandlers<String>,
-    HasHandlers {
+public class HistoryImpl implements HasValueChangeHandlers<String>, HasHandlers {
 
   public static native String getToken() /*-{
     return $wnd.__gwt_historyToken || "";
@@ -45,11 +42,11 @@ public class HistoryImpl implements HasValueChangeHandlers<String>,
   /**
    * Sets whether the IE6 history implementation will update the URL hash when
    * creating a new item. This should be used only for applications with large
-   * DOM structures that are suffering from performance problems when creating
-   * a new history item on IE6 and 7.
-   *
+   * DOM structures that are suffering from performance problems when creating a
+   * new history item on IE6 and 7.
+   * 
    * @deprecated This is no longer necessary, as the underlying performance
-   * problem has been solved. It is now a no-op.
+   *             problem has been solved. It is now a no-op.
    */
   @Deprecated
   public static void setUpdateHashOnIE6(boolean updateHash) {
@@ -99,14 +96,14 @@ public class HistoryImpl implements HasValueChangeHandlers<String>,
     @com.google.gwt.user.client.impl.HistoryImpl::setToken(Ljava/lang/String;)(token);
 
     var historyImpl = this;
-    $wnd.onhashchange = function() {
+    $wnd.onhashchange = $entry(function() {
       var token = '', hash = $wnd.location.hash;
       if (hash.length > 0) {
         token = historyImpl.@com.google.gwt.user.client.impl.HistoryImpl::decodeFragment(Ljava/lang/String;)(hash.substring(1));
       }
 
       historyImpl.@com.google.gwt.user.client.impl.HistoryImpl::newItemOnEvent(Ljava/lang/String;)(token);
-    };
+    });
 
     return true;
   }-*/;
@@ -127,7 +124,7 @@ public class HistoryImpl implements HasValueChangeHandlers<String>,
     if (!historyToken.equals(getToken())) {
       setToken(historyToken);
       nativeUpdateOnEvent(historyToken);
-      fireHistoryChanged(historyToken);
+      fireHistoryChangedImpl(historyToken);
     }
   }
 
@@ -151,23 +148,5 @@ public class HistoryImpl implements HasValueChangeHandlers<String>,
 
   protected void nativeUpdateOnEvent(String historyToken) {
     // Do nothing, the hash is already updated.
-  }
-
-  private void fireHistoryChanged(String newToken) {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      fireHistoryChangedAndCatch(newToken, handler);
-    } else {
-      fireHistoryChangedImpl(newToken);
-    }
-  }
-
-  private void fireHistoryChangedAndCatch(String newToken,
-      UncaughtExceptionHandler handler) {
-    try {
-      fireHistoryChangedImpl(newToken);
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-    }
   }
 }

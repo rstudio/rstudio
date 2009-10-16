@@ -43,7 +43,7 @@ class DOMImplMozilla extends DOMImplStandard {
   private native void initSyntheticMouseUpEvents() /*-{
     $wnd.addEventListener(
       'mouseout',
-      function(evt) {
+      $entry(function(evt) {
         var cap = $wnd.__captureElem;
         if (cap && !evt.relatedTarget) {
           // Mozilla has the interesting habit of sending a mouseout event
@@ -59,7 +59,7 @@ class DOMImplMozilla extends DOMImplStandard {
             cap.dispatchEvent(muEvent);
           }
         }
-      },
+      }),
       true
     );
 

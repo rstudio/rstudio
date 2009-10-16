@@ -63,23 +63,23 @@ public class FormPanelImpl {
   public native void hookEvents(Element iframe, Element form,
       FormPanelImplHost listener) /*-{
     if (iframe) {
-      iframe.onload = function() {
+      iframe.onload = $entry(function() {
         // If there is no __formAction yet, this is a spurious onload
         // generated when the iframe is first added to the DOM.
         if (!iframe.__formAction)
           return;
 
         listener.@com.google.gwt.user.client.ui.impl.FormPanelImplHost::onFrameLoad()();
-      };
+      });
     }
 
-    form.onsubmit = function() {
+    form.onsubmit = $entry(function() {
       // Hang on to the form's action url, needed in the
       // onload/onreadystatechange handler.
       if (iframe)
         iframe.__formAction = form.action;
       return listener.@com.google.gwt.user.client.ui.impl.FormPanelImplHost::onFormSubmit()();
-    };
+    });
   }-*/;
 
   /**

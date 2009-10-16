@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 
@@ -53,13 +51,13 @@ public abstract class Timer {
 
   private static native int createInterval(Timer timer, int period) /*-{
     return $wnd.setInterval(
-      function() { timer.@com.google.gwt.user.client.Timer::fire()(); },
+      $entry(function() { timer.@com.google.gwt.user.client.Timer::fire()(); }),
       period);
   }-*/;
 
   private static native int createTimeout(Timer timer, int delay) /*-{
     return $wnd.setTimeout(
-      function() { timer.@com.google.gwt.user.client.Timer::fire()(); },
+      $entry(function() { timer.@com.google.gwt.user.client.Timer::fire()(); }),
       delay);
   }-*/;
 
@@ -133,23 +131,6 @@ public abstract class Timer {
    * Called by native code when this timer fires.
    */
   final void fire() {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      fireAndCatch(handler);
-    } else {
-      fireImpl();
-    }
-  }
-
-  private void fireAndCatch(UncaughtExceptionHandler handler) {
-    try {
-      fireImpl();
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-    }
-  }
-
-  private void fireImpl() {
     // If this is a one-shot timer, remove it from the timer list. This will
     // allow it to be garbage collected.
     if (!isRepeating) {

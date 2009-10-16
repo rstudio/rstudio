@@ -33,10 +33,14 @@ public class WindowImpl {
     var oldOnBeforeUnload = $wnd.onbeforeunload;
     var oldOnUnload = $wnd.onunload;
     
+    // Old mozilla doesn't like $entry's explicit return statement and
+    // will always pop up a confirmation dialog.  This is worked around by
+    // just wrapping the call to onClosing(), which still has the semantics
+    // that we want.
     $wnd.onbeforeunload = function(evt) {
       var ret, oldRet;
       try {
-        ret = @com.google.gwt.user.client.Window::onClosing()();
+        ret = $entry(@com.google.gwt.user.client.Window::onClosing())();
       } finally {
         oldRet = oldOnBeforeUnload && oldOnBeforeUnload(evt);
       }
@@ -51,7 +55,7 @@ public class WindowImpl {
       // returns undefined.
     };
     
-    $wnd.onunload = function(evt) {
+    $wnd.onunload = $entry(function(evt) {
       try {
         @com.google.gwt.user.client.Window::onClosed()();
       } finally {
@@ -61,28 +65,28 @@ public class WindowImpl {
         $wnd.onbeforeunload = null;
         $wnd.onunload = null;
       }
-    };
+    });
   }-*/;
 
   public native void initWindowResizeHandler() /*-{
     var oldOnResize = $wnd.onresize;
-    $wnd.onresize = function(evt) {
+    $wnd.onresize = $entry(function(evt) {
       try {
         @com.google.gwt.user.client.Window::onResize()();
       } finally {
         oldOnResize && oldOnResize(evt);
       }
-    };
+    });
   }-*/;
 
   public native void initWindowScrollHandler() /*-{
     var oldOnScroll = $wnd.onscroll;
-    $wnd.onscroll = function(evt) {
+    $wnd.onscroll = $entry(function(evt) {
       try {
         @com.google.gwt.user.client.Window::onScroll()();
       } finally {
         oldOnScroll && oldOnScroll(evt);
       }
-    };
+    });
   }-*/;
 }

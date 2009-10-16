@@ -143,7 +143,7 @@ abstract class DOMImplStandard extends DOMImpl {
 
   @Override
   protected native void initEventSystem() /*-{
-    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent = function(evt) {
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent = $entry(function(evt) {
       if ((@com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent)(evt)) {
         var cap = @com.google.gwt.user.client.impl.DOMImplStandard::captureElem;
         if (cap && cap.__listener) {
@@ -153,9 +153,9 @@ abstract class DOMImplStandard extends DOMImpl {
           }
         }
       }  
-    };
+    });
 
-    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent = function(evt) {
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent = $entry(function(evt) {
       if (!@com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)(evt)) {
         evt.stopPropagation();
         evt.preventDefault();
@@ -163,9 +163,9 @@ abstract class DOMImplStandard extends DOMImpl {
       }
 
       return true;
-    };
+    });
 
-    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent = function(evt) {
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent = $entry(function(evt) {
       var listener, curElem = this;
       while (curElem && !(listener = curElem.__listener)) {
         curElem = curElem.parentNode;
@@ -180,7 +180,7 @@ abstract class DOMImplStandard extends DOMImpl {
           @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, curElem, listener);
         }
       }
-    };
+    });
 
     $wnd.addEventListener('click', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
     $wnd.addEventListener('dblclick', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);

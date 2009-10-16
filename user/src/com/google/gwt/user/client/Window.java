@@ -16,7 +16,6 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -705,38 +704,37 @@ public class Window {
   }-*/;
 
   static void onClosed() {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      fireClosedAndCatch(handler);
-    } else {
-      fireClosedImpl();
+    if (closeHandlersInitialized) {
+      CloseEvent.fire(getHandlers(), null);
     }
   }
 
   static String onClosing() {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      return fireClosingAndCatch(handler);
-    } else {
-      return fireClosingImpl();
+    if (closeHandlersInitialized) {
+      Window.ClosingEvent event = new Window.ClosingEvent();
+      fireEvent(event);
+      return event.getMessage();
     }
+    return null;
   }
 
   static void onResize() {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      fireResizedAndCatch(handler);
-    } else {
-      fireResizedImpl();
+    if (resizeHandlersInitialized) {
+      // On webkit and IE we sometimes get duplicate window resize events.
+      // Here, we manually filter them.
+      int width = getClientWidth();
+      int height = getClientHeight();
+      if (lastResizeWidth != width || lastResizeHeight != height) {
+        lastResizeWidth = width;
+        lastResizeHeight = height;
+        ResizeEvent.fire(getHandlers(), width, height);
+      }
     }
   }
 
   static void onScroll() {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      fireScrollAndCatch(handler);
-    } else {
-      fireScrollImpl();
+    if (scrollHandlersInitialized) {
+      fireEvent(new Window.ScrollEvent(getScrollLeft(), getScrollTop()));
     }
   }
 
@@ -753,38 +751,6 @@ public class Window {
     return getHandlers().addHandler(type, handler);
   }
 
-  private static void fireClosedAndCatch(UncaughtExceptionHandler handler) {
-    try {
-      fireClosedImpl();
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-    }
-  }
-
-  private static void fireClosedImpl() {
-    if (closeHandlersInitialized) {
-      CloseEvent.fire(getHandlers(), null);
-    }
-  }
-
-  private static String fireClosingAndCatch(UncaughtExceptionHandler handler) {
-    try {
-      return fireClosingImpl();
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-      return null;
-    }
-  }
-
-  private static String fireClosingImpl() {
-    if (closeHandlersInitialized) {
-      Window.ClosingEvent event = new Window.ClosingEvent();
-      fireEvent(event);
-      return event.getMessage();
-    }
-    return null;
-  }
-
   /**
    * Fires an event.
    * 
@@ -793,42 +759,6 @@ public class Window {
   private static void fireEvent(GwtEvent<?> event) {
     if (handlers != null) {
       handlers.fireEvent(event);
-    }
-  }
-
-  private static void fireResizedAndCatch(UncaughtExceptionHandler handler) {
-    try {
-      fireResizedImpl();
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-    }
-  }
-
-  private static void fireResizedImpl() {
-    if (resizeHandlersInitialized) {
-      // On webkit and IE we sometimes get duplicate window resize events.
-      // Here, we manually filter them.
-      int width = getClientWidth();
-      int height = getClientHeight();
-      if (lastResizeWidth != width || lastResizeHeight != height) {
-        lastResizeWidth = width;
-        lastResizeHeight = height;
-        ResizeEvent.fire(getHandlers(), width, height);
-      }
-    }
-  }
-
-  private static void fireScrollAndCatch(UncaughtExceptionHandler handler) {
-    try {
-      fireScrollImpl();
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-    }
-  }
-
-  private static void fireScrollImpl() {
-    if (scrollHandlersInitialized) {
-      fireEvent(new Window.ScrollEvent(getScrollLeft(), getScrollTop()));
     }
   }
 

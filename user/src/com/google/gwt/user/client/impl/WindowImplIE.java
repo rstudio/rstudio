@@ -133,28 +133,20 @@ public class WindowImplIE extends WindowImpl {
 
   private native void initWindowCloseHandlerImpl() /*-{
     $wnd.__gwt_initWindowCloseHandler(
-      function() {
-        return @com.google.gwt.user.client.Window::onClosing()();
-      },
-      function() {
-        @com.google.gwt.user.client.Window::onClosed()();
-      }
+      $entry(@com.google.gwt.user.client.Window::onClosing()),
+      $entry(@com.google.gwt.user.client.Window::onClosed())
     );
   }-*/;
 
   private native void initWindowResizeHandlerImpl() /*-{
     $wnd.__gwt_initWindowResizeHandler(
-      function() {
-        @com.google.gwt.user.client.Window::onResize()();
-      }
+      $entry(@com.google.gwt.user.client.Window::onResize())
     );
   }-*/;
 
   private native void initWindowScrollHandlerImpl() /*-{
     $wnd.__gwt_initWindowScrollHandler(
-      function() {
-        @com.google.gwt.user.client.Window::onScroll()();
-      }
+      $entry(@com.google.gwt.user.client.Window::onScroll())
     );
   }-*/;
 

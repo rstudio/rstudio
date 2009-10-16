@@ -25,7 +25,7 @@ public class FormPanelImplIE6 extends FormPanelImpl {
   @Override
   public native void hookEvents(Element iframe, Element form, FormPanelImplHost listener) /*-{
     if (iframe) {
-      iframe.onreadystatechange = function() {
+      iframe.onreadystatechange = $entry(function() {
         // If there is no __formAction yet, this is a spurious onreadystatechange
         // generated when the iframe is first added to the DOM.
         if (!iframe.__formAction)
@@ -36,16 +36,16 @@ public class FormPanelImplIE6 extends FormPanelImpl {
           // url, then it must be an error, so we ignore it.
           listener.@com.google.gwt.user.client.ui.impl.FormPanelImplHost::onFrameLoad()();
         }
-      };
+      });
     }
 
-    form.onsubmit = function() {
+    form.onsubmit = $entry(function() {
       // Hang on to the form's action url, needed in the
       // onload/onreadystatechange handler.
       if (iframe)
         iframe.__formAction = form.action;
       return listener.@com.google.gwt.user.client.ui.impl.FormPanelImplHost::onFormSubmit()();
-    };
+    });
   }-*/;
 
   @Override

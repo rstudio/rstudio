@@ -35,7 +35,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     var _this = this;
     _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initializing = true;
 
-    setTimeout(function() {
+    setTimeout($entry(function() {
       if (_this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initializing == false) {
         return;
       }
@@ -57,7 +57,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
 
       // Send notification that the iframe has reached design mode.
       _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
-    }, 1);
+    }, 1));
   }-*/;
 
   @Override
@@ -91,14 +91,14 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var body = elem.contentWindow.document.body;
 
-    var handler = function() {
+    var handler = $entry(function() {
       if (elem.__listener) {
         // Weird: this code has the context of the script frame, but we need the
         // event from the edit iframe's window.
         var evt = elem.contentWindow.event;
         elem.__listener.@com.google.gwt.user.client.ui.Widget::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
       }
-    };
+    });
 
     body.onkeydown =
     body.onkeyup =

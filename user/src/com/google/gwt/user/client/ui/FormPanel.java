@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.FormElement;
@@ -310,8 +309,8 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * 'text/html', meaning that the text returned will be treated as HTML. If any
    * other content-type is specified by the server, then the result HTML sent in
    * the onFormSubmit event will be unpredictable across browsers, and the
-   * {@link SubmitCompleteHandler#onSubmitComplete(com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent) onSubmitComplete} event
-   * may not fire at all.
+   * {@link SubmitCompleteHandler#onSubmitComplete(com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent)
+   * onSubmitComplete} event may not fire at all.
    * </p>
    * 
    * @tip The initial implementation of FormPanel specified that the server
@@ -404,7 +403,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   /**
    * @deprecated Use {@link #addSubmitCompleteHandler} and
-   * {@link #addSubmitHandler} instead
+   *             {@link #addSubmitHandler} instead
    */
   @Deprecated
   public void addFormHandler(FormHandler handler) {
@@ -479,26 +478,16 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * @return true if the form is submitted, false if canceled
    */
   public boolean onFormSubmit() {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      return onFormSubmitAndCatch(handler);
-    } else {
-      return onFormSubmitImpl();
-    }
+    return onFormSubmitImpl();
   }
 
   public void onFrameLoad() {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      onFrameLoadAndCatch(handler);
-    } else {
-      onFrameLoadImpl();
-    }
+    onFrameLoadImpl();
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by and add*Handler method instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by and add*Handler method instead
    */
   @Deprecated
   public void removeFormHandler(FormHandler handler) {
@@ -624,28 +613,11 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     return getElement().cast();
   }
 
-  private boolean onFormSubmitAndCatch(UncaughtExceptionHandler handler) {
-    try {
-      return onFormSubmitImpl();
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-      return false;
-    }
-  }
-
   /**
    * @return true if the form is submitted, false if canceled
    */
   private boolean onFormSubmitImpl() {
     return fireSubmitEvent();
-  }
-
-  private void onFrameLoadAndCatch(UncaughtExceptionHandler handler) {
-    try {
-      onFrameLoadImpl();
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-    }
   }
 
   private void onFrameLoadImpl() {

@@ -148,7 +148,7 @@ class HistoryImplIE6 extends HistoryImpl {
     // nasty bug that totally mangles its history stack and causes the location
     // bar in the UI to stop working under these circumstances.
     var historyImplRef = this;
-    var urlChecker = function() {
+    var urlChecker = $entry(function() {
       $wnd.setTimeout(urlChecker, 250);
 
       // Reset the hash if the user cancels a window reload triggered by the 
@@ -173,16 +173,16 @@ class HistoryImplIE6 extends HistoryImpl {
           historyImplRef.@com.google.gwt.user.client.impl.HistoryImplIE6::reloadWindow()();
         }
       }
-    };
+    });
     urlChecker();
   }-*/;
 
   private native void injectGlobalHandler() /*-{
     var historyImplRef = this;
 
-    $wnd.__gwt_onHistoryLoad = function(token) {
+    $wnd.__gwt_onHistoryLoad = $entry(function(token) {
       historyImplRef.@com.google.gwt.user.client.impl.HistoryImpl::newItemOnEvent(Ljava/lang/String;)(token);
-    };
+    });
   }-*/;
 
   private native void navigateFrame(String token) /*-{

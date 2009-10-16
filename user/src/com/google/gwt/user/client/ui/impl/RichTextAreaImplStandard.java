@@ -90,13 +90,13 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     // just fine.
     var _this = this;
     _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initializing = true;
-    setTimeout(function() {
+    setTimeout($entry(function() {
       // Turn on design mode.
       _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.designMode = 'On';
 
       // Send notification that the iframe has reached design mode.
       _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
-    }, 1);
+    }), 1);
   }-*/;
 
   public void insertHorizontalRule() {
@@ -286,11 +286,11 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var wnd = elem.contentWindow;
 
-    elem.__gwt_handler = function(evt) {
+    elem.__gwt_handler = $entry(function(evt) {
       if (elem.__listener) {
         elem.__listener.@com.google.gwt.user.client.ui.Widget::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
       }
-    };
+    });
 
     elem.__gwt_focusHandler = function(evt) {
       if (elem.__gwt_isFocused) {

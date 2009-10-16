@@ -242,6 +242,10 @@ class LayoutImplIE6 extends LayoutImpl {
     resize();
   }-*/;
 
+  /**
+   * This does not call $entry() because no user code is reachable from
+   * resizeHandler.
+   */
   private native void initResizeHandler(Element parent) /*-{
     // Potential leak: This is cleaned up in detach().
     var self = this;
@@ -250,6 +254,10 @@ class LayoutImplIE6 extends LayoutImpl {
     };
   }-*/;
 
+  /**
+   * This does not call $entry() because no user code is reachable from
+   * resizeHandler.
+   */
   private native void initUnitChangeHandler(Element parent, Element ruler) /*-{
     // Potential leak: This is cleaned up in detach().
     var self = this;

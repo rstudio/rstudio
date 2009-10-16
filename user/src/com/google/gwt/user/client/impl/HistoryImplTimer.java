@@ -35,7 +35,7 @@ class HistoryImplTimer extends HistoryImpl {
 
     // Create the timer that checks the browser's url hash every 1/4 s.
     var historyImpl = this;
-    $wnd.__checkHistory = function() {
+    $wnd.__checkHistory = $entry(function() {
       $wnd.setTimeout($wnd.__checkHistory, 250);
 
       var token = '', hash = $wnd.location.hash;
@@ -44,7 +44,7 @@ class HistoryImplTimer extends HistoryImpl {
       }
 
       historyImpl.@com.google.gwt.user.client.impl.HistoryImpl::newItemOnEvent(Ljava/lang/String;)(token);
-    };
+    });
 
     // Kick off the timer.
     $wnd.__checkHistory();

@@ -28,7 +28,7 @@ public class RichTextAreaImplMozilla extends RichTextAreaImplStandard {
     var iframe = _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initializing = true;
 
-    iframe.onload = function() {
+    iframe.onload = $entry(function() {
       // Some Mozillae have the nasty habit of calling onload again when you set
       // designMode, so let's avoid doing it more than once.
       iframe.onload = null;
@@ -58,7 +58,7 @@ public class RichTextAreaImplMozilla extends RichTextAreaImplStandard {
         iframe.contentWindow.onmouseover = null;
         iframe.contentWindow.document.designMode = 'On';
       };
-    };
+    });
   }-*/;
 
   @Override
