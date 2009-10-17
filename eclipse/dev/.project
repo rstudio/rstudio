@@ -20,10 +20,5 @@
 			<type>2</type>
 			<locationURI>GWT_ROOT/dev/core</locationURI>
 		</link>
-		<link>
-			<name>oophm</name>
-			<type>2</type>
-			<locationURI>GWT_ROOT/dev/oophm</locationURI>
-		</link>
 	</linkedResources>
 </projectDescription>

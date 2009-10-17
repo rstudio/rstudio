@@ -21,9 +21,6 @@
     <gwt.javac srcdir="" destdir="${javac.junit.out}">
       <src path="core/src" />
       <src path="core/test" />
-      <src path="oophm/src" />
-      <src path="oophm/overlay" />
-      <src path="oophm/test" />
       <classpath>
         <pathelement location="${javac.out}" />
         <pathelement location="${alldeps.jar}" />
@@ -184,8 +181,6 @@
   <target name="compile" depends="compiler.standalone, build.alldeps.jar" description="Compiles this project">
     <gwt.javac srcdir="" excludes="${filter.pattern}">
       <src path="core/src" />
-      <src path="oophm/src" />
-      <src path="oophm/overlay" />
       <classpath>
         <pathelement location="${alldeps.jar}" />
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
@@ -217,9 +212,6 @@
         <filename name="org/eclipse/**/*.java" negate="yes" />
         <filename name="org/apache/**/*.java" negate="yes" />
       </fileset>
-      <fileset dir="oophm/src" />
-      <fileset dir="oophm/overlay" />
-      <fileset dir="oophm/test" />
     </gwt.checkstyle>
 
     <gwt.checkstyle>
@@ -235,14 +227,11 @@
         <pathelement location="${alldeps.jar}" />
         <!-- TODO: the following six items are needed because dev (alone) does
             not adhere to the .../{src,super,test} convention, having a split
-            between core, oophm, and (historically) the OS platforms.  When
+            between core and (historically) oophm and the OS platforms.  When
             that unifies, these should go away. -->
         <pathelement location="${gwt.root}/${project.tail}/core/src" />
         <pathelement location="${gwt.root}/${project.tail}/core/super" />
         <pathelement location="${gwt.root}/${project.tail}/core/test" />
-        <pathelement location="${gwt.root}/${project.tail}/oophm/src" />
-        <pathelement location="${gwt.root}/${project.tail}/oophm/overlay" />
-        <pathelement location="${gwt.root}/${project.tail}/oophm/test" />
         <!-- Pull in gwt-dev and gwt-user sources for .gwt.xml files -->
         <pathelement location="${gwt.root}/user/src/" />
         <pathelement location="${gwt.root}/user/super/" />
@@ -255,8 +244,6 @@
     <mkdir dir="${gwt.build.lib}" />
     <outofdate>
       <sourcefiles>
-        <fileset dir="oophm/src" excludes="**/package.html"/>
-        <fileset dir="oophm/overlay" excludes="**/package.html"/>
         <fileset dir="core/src">
           <exclude name="**/package.html"/>
           <exclude name="**/*.properties"/> <!-- copied and/or filtered into bin -->
@@ -273,8 +260,6 @@
       </targetfiles>
       <sequential>
         <gwt.jar>
-          <fileset dir="oophm/src" excludes="**/package.html"/>
-          <fileset dir="oophm/overlay" excludes="**/package.html"/>
           <fileset dir="core/src">
             <exclude name="**/package.html"/>
             <exclude name="**/*.properties"/> <!-- copied and/or filtered into bin -->

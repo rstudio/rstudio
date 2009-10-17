@@ -2,9 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="core/src"/>
 	<classpathentry kind="src" path="core/test"/>
-	<classpathentry kind="src" path="oophm/overlay"/>
-	<classpathentry kind="src" path="oophm/src"/>
-	<classpathentry kind="src" path="oophm/test"/>
 	<classpathentry excluding="com/google/gwt/dev/jjs/intrinsic/" kind="src" path="core/super"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.6.5.jar" sourcepath="/GWT_TOOLS/lib/apache/ant-1.6.5-src.zip"/>
