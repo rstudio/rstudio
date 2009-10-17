@@ -63,7 +63,6 @@ public class BrowserChannelClient extends BrowserChannel {
   private final String url;
   private final String versionString;
   private boolean connected = false;
-  private boolean shouldDisconnect = false;
   private int protocolVersion;
 
   public BrowserChannelClient(String addressParts[], String url,
@@ -124,9 +123,6 @@ public class BrowserChannelClient extends BrowserChannel {
       new LoadModuleMessage(this, url, tabKey, sessionKey, moduleName,
           htmlUnitSessionHandler.getUserAgent()).send();
       returnMessage = reactToMessages(htmlUnitSessionHandler, true);
-      if (shouldDisconnect) {
-        disconnectFromHost();
-      }
     }
     logger.log(TreeLogger.DEBUG, "loaded module, returnValue: "
         + returnMessage.getReturnValue() + ", isException: "
@@ -138,14 +134,7 @@ public class BrowserChannelClient extends BrowserChannel {
       HtmlUnitSessionHandler handler) throws IOException,
       BrowserChannelException {
     ReturnMessage returnMessage = reactToMessages(handler, true);
-    if (shouldDisconnect) {
-      disconnectFromHost();
-    }
     return returnMessage;
-  }
-
-  void setShouldDisconnect() {
-    shouldDisconnect = true;
   }
 
   /*
