@@ -143,7 +143,7 @@
     <fileset id="test.web.remote.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -web -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module -precompile parallel"
+    <gwt.junit test.args="${test.args} -out www -web -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
         test.out="${junit.out}/web-remote"
         test.cases="test.web.remote.tests" >
       <extraclasspaths>
@@ -163,7 +163,7 @@
       includes="${gwt.junit.testcase.dev.includes}"
       excludes="${gwt.junit.testcase.dev.excludes}" />
     <gwt.junit
-        test.args="${test.args} -out www -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module -precompile parallel"
+        test.args="${test.args} -out www -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module"
         test.out="${junit.out}/dev-remote" test.cases="test.dev.remote.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
@@ -181,7 +181,7 @@
     <fileset id="test.emma.remote.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
-      <gwt.junit test.args="${test.args} -out www -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module -precompile parallel"
+      <gwt.junit test.args="${test.args} -out www -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module"
           test.out="${junit.out}/emma-remote"
           test.cases="test.emma.remote.tests" >
       <extraclasspaths>
@@ -201,7 +201,7 @@
     <fileset id="test.emma.selenium.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -runStyle Selenium:${gwt.hosts.dev.selenium} -batch module -precompile parallel"
+    <gwt.junit test.args="${test.args} -out www -runStyle Selenium:${gwt.hosts.dev.selenium} -batch module"
         test.out="${junit.out}/emma-selenium"
         test.cases="test.emma.selenium.tests" >
       <extraclasspaths>
@@ -221,7 +221,7 @@
     <fileset id="test.draft.remote.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-      <gwt.junit test.args="${test.args} -draftCompile -web -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module -precompile parallel"
+      <gwt.junit test.args="${test.args} -draftCompile -web -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
           test.out="${junit.out}/draft-remote"
           test.cases="test.draft.remote.tests" >
       <extraclasspaths>
@@ -239,7 +239,7 @@
     <fileset id="test.nometa.remote.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-      <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module -precompile parallel"
+      <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
           test.out="${junit.out}/nometa-remote"
           test.cases="test.nometa.remote.tests" >
       <extraclasspaths>
@@ -262,7 +262,7 @@
     <fileset id="test.web.selenium.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module -precompile parallel"
+    <gwt.junit test.args="${test.args} -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module"
         test.out="${junit.out}/web-selenium"
         test.cases="test.web.selenium.tests" >
       <extraclasspaths>
@@ -281,7 +281,7 @@
     <fileset id="test.dev.selenium.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -runStyle Selenium:${gwt.hosts.dev.selenium} -batch module -precompile parallel"
+    <gwt.junit test.args="${test.args} -out www -runStyle Selenium:${gwt.hosts.dev.selenium} -batch module"
         test.out="${junit.out}/dev-selenium"
         test.cases="test.dev.selenium.tests" >
       <extraclasspaths>
@@ -299,7 +299,7 @@
     <fileset id="test.nometa.selenium.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -XdisableClassMetadata -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module -precompile parallel"
+    <gwt.junit test.args="${test.args} -XdisableClassMetadata -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module"
         test.out="${junit.out}/nometa-selenium"
         test.cases="test.nometa.selenium.tests" >
       <extraclasspaths>
@@ -317,7 +317,7 @@
     <fileset id="test.draft.selenium.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -draftCompile -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module -precompile parallel"
+    <gwt.junit test.args="${test.args} -draftCompile -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module"
         test.out="${junit.out}/draft-selenium"
         test.cases="test.draft.selenium.tests" >
       <extraclasspaths>
