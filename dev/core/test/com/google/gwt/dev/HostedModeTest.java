@@ -18,7 +18,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.ServletContainer;
 import com.google.gwt.core.ext.ServletContainerLauncher;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.HostedMode.HostedModeOptionsImpl;
+import com.google.gwt.dev.DevMode.HostedModeOptionsImpl;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
 
@@ -26,7 +26,7 @@ import java.io.File;
 import java.net.BindException;
 
 /**
- * Test for {@link HostedMode}.
+ * Test for {@link DevMode}.
  */
 public class HostedModeTest extends ArgProcessorTestBase {
 
@@ -38,11 +38,11 @@ public class HostedModeTest extends ArgProcessorTestBase {
     }
   }
 
-  private final HostedMode.ArgProcessor argProcessor;
+  private final DevMode.ArgProcessor argProcessor;
   private final HostedModeOptionsImpl options = new HostedModeOptionsImpl();
 
   public HostedModeTest() {
-    argProcessor = new HostedMode.ArgProcessor(options);
+    argProcessor = new DevMode.ArgProcessor(options);
   }
 
   public void testAllValidArgs() {

@@ -36,7 +36,7 @@ import java.util.Set;
  */
 @SuppressWarnings("deprecation")
 @Deprecated
-public class GWTShell extends HostedModeBase {
+public class GWTShell extends DevModeBase {
 
   /**
    * Handles the list of startup urls that can be passed at the end of the
@@ -70,7 +70,7 @@ public class GWTShell extends HostedModeBase {
   /**
    * The GWTShell argument processor.
    */
-  protected static class ArgProcessor extends HostedModeBase.ArgProcessor {
+  protected static class ArgProcessor extends DevModeBase.ArgProcessor {
     public ArgProcessor(ShellOptionsImpl options, boolean forceServer,
         boolean noURLs) {
       super(options, forceServer);

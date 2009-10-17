@@ -31,7 +31,7 @@ public class GWTMain {
       System.err.println(About.getGwtVersion());
     }
     System.err.println("Available main classes:");
-    System.err.println(addSpaces(HostedMode.class.getName(),
+    System.err.println(addSpaces(DevMode.class.getName(),
         "runs the development shell"));
     System.err.println(addSpaces(Compiler.class.getName(),
         "compiles a GWT module"));

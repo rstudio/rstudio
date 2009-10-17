@@ -17,7 +17,7 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.dev.HostedModeBase.HostedModeBaseOptions;
+import com.google.gwt.dev.DevModeBase.HostedModeBaseOptions;
 import com.google.gwt.dev.WebServerPanel.RestartAction;
 import com.google.gwt.dev.shell.ShellMainWindow;
 import com.google.gwt.dev.ui.DevModeUI;

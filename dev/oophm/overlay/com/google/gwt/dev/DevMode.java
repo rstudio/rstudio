@@ -48,7 +48,7 @@ import java.util.Map;
  * this class is to be determined. Consider this class as having <b>no</b>
  * public API other than {@link #main(String[])}.
  */
-public class HostedMode extends HostedModeBase
+public class DevMode extends DevModeBase
     implements RestartServerCallback {
 
   /**
@@ -143,7 +143,7 @@ public class HostedMode extends HostedModeBase
     }
   }
 
-  static class ArgProcessor extends HostedModeBase.ArgProcessor {
+  static class ArgProcessor extends DevModeBase.ArgProcessor {
     public ArgProcessor(HostedModeOptions options) {
       super(options, false);
       registerHandler(new ArgHandlerServer(options));
@@ -162,7 +162,7 @@ public class HostedMode extends HostedModeBase
 
     @Override
     protected String getName() {
-      return HostedMode.class.getName();
+      return DevMode.class.getName();
     }
   }
 
@@ -243,7 +243,7 @@ public class HostedMode extends HostedModeBase
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    HostedMode hostedMode = new HostedMode();
+    DevMode hostedMode = new DevMode();
     if (new ArgProcessor(hostedMode.options).processArgs(args)) {
       hostedMode.run();
       // Exit w/ success code.
@@ -284,7 +284,7 @@ public class HostedMode extends HostedModeBase
   /**
    * Default constructor for testing; no public API yet.
    */
-  HostedMode() {
+  DevMode() {
   }
 
   /**

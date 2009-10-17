@@ -18,7 +18,7 @@ package com.google.gwt.user.tools;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.dev.Compiler;
-import com.google.gwt.dev.HostedMode;
+import com.google.gwt.dev.DevMode;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.user.tools.util.ArgHandlerIgnore;
 import com.google.gwt.user.tools.util.ArgHandlerOverwrite;
@@ -259,7 +259,7 @@ public final class WebAppCreator {
     replacements.put("@gwtOophmPath", gwtOophmPath);
     replacements.put("@gwtVersion", About.getGwtVersionNum());
     replacements.put("@gwtModuleDtd", gwtModuleDtd);
-    replacements.put("@shellClass", HostedMode.class.getName());
+    replacements.put("@shellClass", DevMode.class.getName());
     replacements.put("@compileClass", Compiler.class.getName());
     replacements.put("@startupUrl", moduleShortName + ".html");
     replacements.put("@antVmargs", isMacOsX

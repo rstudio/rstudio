@@ -67,7 +67,7 @@ import java.util.concurrent.Semaphore;
  * The main executable class for the hosted mode shell. This class must not have
  * any GUI dependencies.
  */
-abstract class HostedModeBase implements DoneCallback {
+abstract class DevModeBase implements DoneCallback {
 
   /**
    * Implementation of BrowserWidgetHost that supports the abstract UI
@@ -79,7 +79,7 @@ abstract class HostedModeBase implements DoneCallback {
       if (isLegacyMode()) {
         throw new UnsupportedOperationException();
       }
-      HostedModeBase.this.compile(getLogger());
+      DevModeBase.this.compile(getLogger());
     }
 
     @Deprecated
@@ -90,7 +90,7 @@ abstract class HostedModeBase implements DoneCallback {
       for (int i = 0; i < moduleNames.length; i++) {
         String moduleName = moduleNames[i];
         ModuleDef moduleDef = loadModule(getLogger(), moduleName, true);
-        HostedModeBase.this.compile(getLogger(), moduleDef);
+        DevModeBase.this.compile(getLogger(), moduleDef);
       }
     }
 
@@ -136,16 +136,16 @@ abstract class HostedModeBase implements DoneCallback {
     }
 
     public boolean initModule(String moduleName) {
-      return HostedModeBase.this.initModule(moduleName);
+      return DevModeBase.this.initModule(moduleName);
     }
 
     @Deprecated
     public boolean isLegacyMode() {
-      return HostedModeBase.this instanceof GWTShell;
+      return DevModeBase.this instanceof GWTShell;
     }
 
     public String normalizeURL(String whatTheUserTyped) {
-      return HostedModeBase.this.normalizeURL(whatTheUserTyped);
+      return DevModeBase.this.normalizeURL(whatTheUserTyped);
     }
 
     public void unloadModule(ModuleSpaceHost moduleSpaceHost) {
@@ -584,7 +584,7 @@ abstract class HostedModeBase implements DoneCallback {
 
   private TreeLogger topLogger;
 
-  public HostedModeBase() {
+  public DevModeBase() {
     // Set any platform specific system properties.
     BootStrapPlatform.initHostedMode();
     BootStrapPlatform.applyPlatformHacks();

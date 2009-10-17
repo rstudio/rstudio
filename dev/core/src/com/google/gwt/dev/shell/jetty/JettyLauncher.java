@@ -405,7 +405,7 @@ public class JettyLauncher extends ServletContainerLauncher {
     private final TreeLogger logger;
 
     /**
-     * In the usual case of launching {@link com.google.gwt.dev.HostedMode},
+     * In the usual case of launching {@link com.google.gwt.dev.DevMode},
      * this will always by the system app ClassLoader.
      */
     private final ClassLoader systemClassLoader = Thread.currentThread().getContextClassLoader();
