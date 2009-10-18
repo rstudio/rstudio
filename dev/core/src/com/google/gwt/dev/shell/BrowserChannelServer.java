@@ -171,13 +171,9 @@ public class BrowserChannelServer extends BrowserChannel
             returnValue.getValue().toString());
       }
     } catch (IOException e) {
-      // TODO(jat): error handling?
-      e.printStackTrace();
-      throw new HostedModeException("I/O error communicating with client");
+      throw new RemoteDeathError(e);
     } catch (BrowserChannelException e) {
-      // TODO(jat): error handling?
-      e.printStackTrace();
-      throw new HostedModeException("I/O error communicating with client");
+      throw new RemoteDeathError(e);
     }
   }
 
@@ -187,9 +183,7 @@ public class BrowserChannelServer extends BrowserChannel
       jsniMessage.send();
       // we do not wait for a return value
     } catch (IOException e) {
-      // TODO(jat): error handling?
-      e.printStackTrace();
-      throw new HostedModeException("I/O error communicating with client");
+      throw new RemoteDeathError(e);
     }
   }
 
