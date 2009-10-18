@@ -31,6 +31,12 @@ public class TypeHierarchyTest extends GWTTestCase {
     int getLength();
 
     JavaScriptObject getObject(int i);
+
+    /**
+     * Used to test virtual override where the implementation has a narrower
+     * return type.
+     */
+    Wide wide();
   }
 
   /**
@@ -70,6 +76,15 @@ public class TypeHierarchyTest extends GWTTestCase {
   }
 
   /**
+   * Used for testing virtual overrides.
+   */
+  static class Narrow extends Wide {
+    public String toString() {
+      return "Narrow";
+    }
+  }
+
+  /**
    * This is a base class that is used to test adding interfaces to a JSO via a
    * subclass.
    */
@@ -84,6 +99,10 @@ public class TypeHierarchyTest extends GWTTestCase {
     public final native JavaScriptObject getObject(int i) /*-{
       return this[i];
     }-*/;
+
+    public final Narrow wide() {
+      return new Narrow();
+    }
   }
 
   /**
@@ -96,6 +115,12 @@ public class TypeHierarchyTest extends GWTTestCase {
 
     protected PlainJsoWithInterface() {
     }
+  }
+
+  /**
+   * Used for testing virtual overrides.
+   */
+  static class Wide {
   }
 
   @Override
@@ -151,5 +176,6 @@ public class TypeHierarchyTest extends GWTTestCase {
     Arrayish array = PlainJsoWithInterface.create();
     assertEquals(0, array.getLength());
     assertNull(array.getObject(0));
+    assertEquals("Narrow", array.wide().toString());
   }
 }

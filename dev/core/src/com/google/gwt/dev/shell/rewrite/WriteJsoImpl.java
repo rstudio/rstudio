@@ -23,9 +23,9 @@ import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOracle;
+import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.SingleJsoImplData;
 
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -58,13 +58,13 @@ abstract class WriteJsoImpl extends ClassAdapter {
      * <code>JavaScriptObject</code> and all subclasses.
      */
     private final Set<String> jsoDescriptors;
-    private final Map<String, Method> methodsToImplement;
+    private final SingleJsoImplData jsoData;
 
     public ForJsoDollar(ClassVisitor cv, Set<String> jsoDescriptors,
-        InstanceMethodOracle mapper, Map<String, Method> methodsToImplement) {
+        InstanceMethodOracle mapper, SingleJsoImplData jsoData) {
       super(cv, mapper);
       this.jsoDescriptors = jsoDescriptors;
-      this.methodsToImplement = methodsToImplement;
+      this.jsoData = jsoData;
     }
 
     @Override
@@ -89,8 +89,9 @@ abstract class WriteJsoImpl extends ClassAdapter {
       }
 
       // Implement the trampoline methods
-      for (Map.Entry<String, Method> entry : methodsToImplement.entrySet()) {
-        writeTrampoline(entry.getKey(), entry.getValue());
+      for (String mangledName : jsoData.getMangledNames()) {
+        writeTrampoline(mangledName, jsoData.getDeclaration(mangledName),
+            jsoData.getImplementation(mangledName));
       }
     }
 
@@ -113,24 +114,31 @@ abstract class WriteJsoImpl extends ClassAdapter {
      * In Java, it might look like:
      * 
      * <pre>
-     * public String com_google_Interface_someMethod(int a, double b) {
-     *   return com.google.MyJso$.someMethod$(this, a, b);
+     * interface Interface {
+     *   String someMethod(int a, double b);
+     * }
+     * 
+     * class J extends JSO implements I {
+     *   public String com_google_Interface_someMethod(int a, double b) {
+     *     return com.google.MyJso$.someMethod$(this, a, b);
+     *   }
      * }
      * </pre>
      * 
      * @param mangledName {@code com_google_gwt_sample_hello_client_Interface_a}
+     * @param interfaceMethod {@code java.lang.String a(int, double)}
      * @param implementingMethod {@code static final java.lang.String
      *          a$(com.google.gwt.sample.hello.client.Jso, ...);}
      */
-    private void writeTrampoline(String mangledName, Method implementingMethod) {
-      /*
-       * We derive the local descriptor by simply removing the first argument
-       * from the static method we want to call.
-       */
+    private void writeTrampoline(String mangledName, Method interfaceMethod,
+        Method implementingMethod) {
       assert implementingMethod.getArgumentTypes().length > 0;
-      String localDescriptor = "("
-          + implementingMethod.getDescriptor().substring(
-              1 + implementingMethod.getArgumentTypes()[0].getDescriptor().length());
+
+      /*
+       * The local descriptor is the same as the descriptor from the abstract
+       * method in the interface.
+       */
+      String localDescriptor = interfaceMethod.getDescriptor();
       Method localMethod = new Method(mangledName, localDescriptor);
 
       /*
@@ -217,10 +225,10 @@ abstract class WriteJsoImpl extends ClassAdapter {
    */
   public static ClassVisitor create(ClassVisitor cv, String classDescriptor,
       Set<String> jsoDescriptors, InstanceMethodOracle mapper,
-      Map<String, Method> methodsToImplement) {
+      SingleJsoImplData singleJsoImplData) {
 
     if (classDescriptor.equals(HostedModeClassRewriter.JAVASCRIPTOBJECT_IMPL_DESC)) {
-      return new ForJsoDollar(cv, jsoDescriptors, mapper, methodsToImplement);
+      return new ForJsoDollar(cv, jsoDescriptors, mapper, singleJsoImplData);
     } else {
       return new ForJsoInterface(cv, mapper);
     }

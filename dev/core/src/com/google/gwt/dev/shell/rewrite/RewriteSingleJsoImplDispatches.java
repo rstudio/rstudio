@@ -24,6 +24,7 @@ import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.commons.Method;
+import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.SingleJsoImplData;
 import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.dev.util.collect.Sets;
 
@@ -67,11 +68,10 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
     public void visitMethodInsn(int opcode, String owner, String name,
         String desc) {
       if (opcode == Opcodes.INVOKEINTERFACE) {
-        if (singleJsoImplTypes.contains(owner)) {
+        if (jsoData.getSingleJsoIntfTypes().contains(owner)) {
           // Simple case; referring directly to a SingleJso interface.
           name = owner.replace('/', '_') + "_" + name;
-          assert mangledNamesToImplementations.containsKey(name) : "Missing "
-              + name;
+          assert jsoData.getMangledNames().contains(name) : "Missing " + name;
 
         } else {
           /*
@@ -86,7 +86,7 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
            * void bar() { ((IB) object).foo(); }
            */
           for (String intf : computeAllInterfaces(owner)) {
-            if (singleJsoImplTypes.contains(intf)) {
+            if (jsoData.getSingleJsoIntfTypes().contains(intf)) {
               /*
                * Check that it really should be mangled and is not a reference
                * to a method defined in a non-singleJso super-interface. If
@@ -95,7 +95,7 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
                * is undefined.
                */
               String maybeMangled = intf.replace('/', '_') + "_" + name;
-              Method method = mangledNamesToImplementations.get(maybeMangled);
+              Method method = jsoData.getImplementation(maybeMangled);
               if (method != null) {
                 /*
                  * Found a method with the right name, but we need to check the
@@ -127,17 +127,14 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
   private final Set<String> implementedMethods = new HashSet<String>();
   private boolean inSingleJsoImplInterfaceType;
   private Map<String, Set<String>> intfNamesToAllInterfaces = Maps.create();
-  private final SortedMap<String, Method> mangledNamesToImplementations;
-  private final Set<String> singleJsoImplTypes;
+  private final SingleJsoImplData jsoData;
   private final TypeOracle typeOracle;
 
   public RewriteSingleJsoImplDispatches(ClassVisitor v, TypeOracle typeOracle,
-      Set<String> singleJsoImplTypes,
-      SortedMap<String, Method> mangledNamesToImplementations) {
+      SingleJsoImplData jsoData) {
     super(v);
     this.typeOracle = typeOracle;
-    this.singleJsoImplTypes = Collections.unmodifiableSet(singleJsoImplTypes);
-    this.mangledNamesToImplementations = Collections.unmodifiableSortedMap(mangledNamesToImplementations);
+    this.jsoData = jsoData;
   }
 
   @Override
@@ -156,7 +153,8 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
     }
 
     currentTypeName = name;
-    inSingleJsoImplInterfaceType = singleJsoImplTypes.contains(name);
+    inSingleJsoImplInterfaceType = jsoData.getSingleJsoIntfTypes().contains(
+        name);
 
     /*
      * Implements objective #2: non-JSO types that implement a SingleJsoImpl
@@ -166,7 +164,7 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
      */
     if (interfaces != null && (access & Opcodes.ACC_INTERFACE) == 0) {
       Set<String> toStub = computeAllInterfaces(interfaces);
-      toStub.retainAll(singleJsoImplTypes);
+      toStub.retainAll(jsoData.getSingleJsoIntfTypes());
 
       for (String stubIntr : toStub) {
         writeTrampoline(stubIntr);
@@ -261,8 +259,11 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
     String name = typeName.replace('/', '_');
     String prefix = name + "_";
     String suffix = name + "`";
-    SortedMap<String, Method> toReturn = new TreeMap<String, Method>(
-        mangledNamesToImplementations.subMap(prefix, suffix));
+    SortedMap<String, Method> toReturn = new TreeMap<String, Method>();
+
+    for (String mangledName : jsoData.getMangledNames().subSet(prefix, suffix)) {
+      toReturn.put(mangledName, jsoData.getImplementation(mangledName));
+    }
     toReturn.keySet().removeAll(implementedMethods);
     return toReturn;
   }

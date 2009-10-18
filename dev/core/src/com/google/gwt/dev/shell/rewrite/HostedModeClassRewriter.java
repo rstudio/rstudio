@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
+import java.util.SortedSet;
 
 /**
  * This class performs any and all byte code rewriting needed to make hosted
@@ -86,6 +86,33 @@ public class HostedModeClassRewriter {
     String findOriginalDeclaringClass(String declaredClass, String signature);
   }
 
+  /**
+   * Contains data about how SingleJsoImpl methods are to be dispatched.
+   */
+  public interface SingleJsoImplData {
+    /**
+     * Returns a Method corresponding to the declaration of the abstract method
+     * in an interface type.
+     */
+    Method getDeclaration(String mangledName);
+
+    /**
+     * Return a Method corresponding to the concrete implementation of the
+     * method in a JSO type.
+     */
+    Method getImplementation(String mangledName);
+
+    /**
+     * Returns all of the mangled method names for SingleJsoImpl methods.
+     */
+    SortedSet<String> getMangledNames();
+
+    /**
+     * Returns the internal names of all interface types implemented by JSOs.
+     */
+    Set<String> getSingleJsoIntfTypes();
+  }
+
   static final String JAVASCRIPTOBJECT_DESC = JsValueGlue.JSO_CLASS.replace(
       '.', '/');
 
@@ -114,6 +141,8 @@ public class HostedModeClassRewriter {
    */
   private final Set<String> jsoIntfDescs;
 
+  private final SingleJsoImplData jsoData;
+
   /**
    * Records the superclass of every JSO for generating empty JSO interfaces.
    */
@@ -124,10 +153,6 @@ public class HostedModeClassRewriter {
    */
   private InstanceMethodOracle mapper;
 
-  private final SortedMap<String, Method> mangledNamesToImplementations;
-
-  private final Set<String> singleJsoImplTypes;
-
   /**
    * Creates a new {@link HostedModeClassRewriter} for a specified set of
    * subclasses of JavaScriptObject.
@@ -137,9 +162,8 @@ public class HostedModeClassRewriter {
    * @param mapper maps methods to the class in which they are declared
    */
   public HostedModeClassRewriter(Set<String> jsoSubtypes,
-      Map<String, List<String>> jsoSuperTypes,
-      SortedMap<String, Method> mangledNamesToImplementations,
-      Set<String> singleJsoImplTypes, InstanceMethodOracle mapper) {
+      Map<String, List<String>> jsoSuperTypes, SingleJsoImplData jsoData,
+      InstanceMethodOracle mapper) {
     Set<String> buildJsoIntfDescs = new HashSet<String>();
     Set<String> buildJsoImplDescs = new HashSet<String>();
     Map<String, List<String>> buildJsoSuperDescs = new HashMap<String, List<String>>();
@@ -160,8 +184,7 @@ public class HostedModeClassRewriter {
     this.jsoIntfDescs = Collections.unmodifiableSet(buildJsoIntfDescs);
     this.jsoImplDescs = Collections.unmodifiableSet(buildJsoImplDescs);
     this.jsoSuperDescs = Collections.unmodifiableMap(buildJsoSuperDescs);
-    this.mangledNamesToImplementations = Collections.unmodifiableSortedMap(mangledNamesToImplementations);
-    this.singleJsoImplTypes = Collections.unmodifiableSet(singleJsoImplTypes);
+    this.jsoData = jsoData;
     this.mapper = mapper;
   }
 
@@ -202,14 +225,12 @@ public class HostedModeClassRewriter {
     // v = new CheckClassAdapter(v);
     // v = new TraceClassVisitor(v, new PrintWriter(System.out));
 
-    v = new RewriteSingleJsoImplDispatches(v, typeOracle, singleJsoImplTypes,
-        mangledNamesToImplementations);
+    v = new RewriteSingleJsoImplDispatches(v, typeOracle, jsoData);
 
     v = new RewriteRefsToJsoClasses(v, jsoIntfDescs, mapper);
 
     if (jsoImplDescs.contains(desc)) {
-      v = WriteJsoImpl.create(v, desc, jsoIntfDescs, mapper,
-          mangledNamesToImplementations);
+      v = WriteJsoImpl.create(v, desc, jsoIntfDescs, mapper, jsoData);
     }
 
     v = new RewriteJsniMethods(v, anonymousClassMap);
