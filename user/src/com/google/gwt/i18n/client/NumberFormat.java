@@ -1076,8 +1076,12 @@ public class NumberFormat {
       }
     }
 
-    // parseDouble could throw NumberFormatException, let it do it.
-    ret = Double.parseDouble(normalizedText.toString());
+    // parseDouble could throw NumberFormatException, rethrow with correct text.
+    try {
+      ret = Double.parseDouble(normalizedText.toString());
+    } catch (NumberFormatException e) {
+      throw new NumberFormatException(text);
+    }
     ret = ret / scale;
     return ret;
   }

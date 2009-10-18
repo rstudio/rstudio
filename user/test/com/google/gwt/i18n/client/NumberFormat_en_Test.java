@@ -286,6 +286,15 @@ public class NumberFormat_en_Test extends GWTTestCase {
     assertEquals("-1,014.34 X", str);
   }
 
+  public void testParseNotANumber() {
+    try {
+      double d = NumberFormat.getDecimalFormat().parse("blue");
+      fail("Expected a NumberFormatException");
+    } catch (NumberFormatException e) {
+      assertEquals("blue", e.getMessage());
+    }
+  }
+
   public void testPercent() {
     String str;
 
