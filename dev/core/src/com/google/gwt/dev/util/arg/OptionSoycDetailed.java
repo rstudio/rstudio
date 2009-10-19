@@ -30,10 +30,4 @@ public interface OptionSoycDetailed {
    * information.
    */
   void setSoycExtra(boolean soycExtra);
-
-  /**
-   * Sets whether or not the compiler should record and emit SOYC information
-   * and build the dashboard.
-   */
-  void setSoycEnabled(boolean enabled);
 }

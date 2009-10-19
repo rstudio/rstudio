@@ -43,7 +43,6 @@ import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.arg.ArgHandlerCompileReport;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
@@ -106,7 +105,6 @@ public class Precompile {
       registerHandler(new ArgHandlerDisableUpdateCheck(options));
       registerHandler(new ArgHandlerDumpSignatures(options));
       registerHandler(new ArgHandlerMaxPermsPerPrecompile(options));
-      registerHandler(new ArgHandlerCompileReport(options));
       registerHandler(new ArgHandlerSoyc(options));
       registerHandler(new ArgHandlerSoycDetailed(options));
     }

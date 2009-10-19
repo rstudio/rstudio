@@ -45,7 +45,6 @@ public class ArgHandlerSoycDetailed extends ArgHandlerFlag {
   @Override
   public boolean setFlag() {
     options.setSoycExtra(true);
-    options.setSoycEnabled(true);
     return true;
   }
 }
