@@ -43,7 +43,9 @@
   <property name="gwt.build.jni" location="${gwt.build}/jni" />
   <property name="gwt.build.staging" location="${gwt.build}/staging" />
   <property name="gwt.build.dist" location="${gwt.build}/dist" />
+  <!-- gwt.threadsPerProcessor supercedes gwt.threadCount unless set to 0 --> 
   <property name="gwt.threadsPerProcessor" value="1" />
+  <property name="gwt.threadCount" value="1" />
   <property name="project.build" location="${gwt.build.out}/${project.tail}" />
   <property name="project.lib" location="${gwt.build.lib}/gwt-${ant.project.name}.jar" />
   <property name="project.jni" location="${gwt.build}/${project.tail}" />

@@ -439,7 +439,8 @@
     <property.ensure name="distro.built" location="${gwt.dev.staging.jar}"
         message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
     <limit failonerror="true" hours="${test.timeout}">
-    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
+    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
+        threadCount="${gwt.threadCount}">
       <!--
         The remote targets must be run sequentially or BrowserManager will queue
         requests, which will cause some tests to timeout while waiting.
@@ -473,7 +474,8 @@
     <property.ensure name="distro.built" location="${gwt.dev.staging.jar}"
         message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
     <limit failonerror="true" hours="${test.timeout}">
-    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
+    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
+        threadCount="${gwt.threadCount}">
       <antcall target="test.dev.htmlunit"/>
       <antcall target="test.emma.htmlunit"/>
       <antcall target="test.web.htmlunit"/>
@@ -488,7 +490,8 @@
       depends="compile, compile.tests"
       description="Run dev-mode tests for this project.">
     <limit failonerror="true" hours="${test.timeout}">
-    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
+    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
+        threadCount="${gwt.threadCount}">
       <!-- disable HtmlUnit until it is reliable
       <antcall target="test.dev.htmlunit"/>
       -->
@@ -504,7 +507,8 @@
       depends="compile, compile.tests"
       description="Run web-mode tests for this project.">
     <limit failonerror="true" hours="${test.timeout}">
-    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
+    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
+        threadCount="${gwt.threadCount}">
       <!-- disable HtmlUnit until it is reliable
       <antcall target="test.web.htmlunit"/>
       -->
@@ -520,7 +524,8 @@
       depends="compile, compile.tests"
       description="Run emma tests for this project.">
     <limit failonerror="true" hours="${test.timeout}">
-    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
+    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
+        threadCount="${gwt.threadCount}">
       <!-- disable HtmlUnit until it is reliable
       <antcall target="test.emma.htmlunit"/>
       -->
@@ -536,7 +541,8 @@
       depends="compile, compile.tests"
       description="Run draft compiled tests for this project.">
     <limit failonerror="true" hours="${test.timeout}">
-    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
+    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
+        threadCount="${gwt.threadCount}">
       <!-- disable HtmlUnit until it is reliable
       <antcall target="test.draft.htmlunit"/>
       -->
@@ -552,7 +558,8 @@
       depends="compile, compile.tests"
       description="Run -XdisableClassMetadata tests for this project.">
     <limit failonerror="true" hours="${test.timeout}">
-    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
+    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
+        threadCount="${gwt.threadCount}">
       <!-- disable HtmlUnit until it is reliable
       <antcall target="test.web.htmlunit"/>
       -->
