@@ -15,25 +15,32 @@
  */
 package com.google.gwt.dev.util.arg;
 
+import com.google.gwt.util.tools.ArgHandlerFlag;
+
 /**
- * Option to request extra SOYC output at the expense of more compile time.
+ * An ArgHandler that enables Story Of Your Compile data-collection.
  */
-public interface OptionSoycDetailed {
+public class ArgHandlerCompileReport extends ArgHandlerFlag {
 
-  /**
-   * Returns true if the compiler should record and emit extra SOYC information.
-   */
-  boolean isSoycExtra();
+  private final OptionSoycEnabled options;
 
-  /**
-   * Sets whether or not the compiler should record and emit extra SOYC
-   * information.
-   */
-  void setSoycExtra(boolean soycExtra);
+  public ArgHandlerCompileReport(OptionSoycEnabled options) {
+    this.options = options;
+  }
 
-  /**
-   * Sets whether or not the compiler should record and emit SOYC information
-   * and build the dashboard.
-   */
-  void setSoycEnabled(boolean enabled);
+  @Override
+  public String getPurpose() {
+    return "Enable Compile Report (Story of Your Compile)";
+  }
+
+  @Override
+  public String getTag() {
+    return "-compileReport";
+  }
+
+  @Override
+  public boolean setFlag() {
+    options.setSoycEnabled(true);
+    return true;
+  }
 }

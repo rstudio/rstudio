@@ -39,6 +39,11 @@ public class ArgHandlerSoyc extends ArgHandlerFlag {
   }
 
   @Override
+  public boolean isUndocumented() {
+    return true;
+  }
+
+  @Override
   public boolean setFlag() {
     options.setSoycEnabled(true);
     return true;
