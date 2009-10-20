@@ -15,7 +15,9 @@
  */
 package com.google.gwt.junit.client;
 
+import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.junit.JUnitShell;
+import com.google.gwt.junit.PropertyDefiningStrategy;
 import com.google.gwt.junit.JUnitShell.Strategy;
 import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
@@ -43,6 +45,25 @@ import java.util.Set;
  * </p>
  */
 public abstract class GWTTestCase extends TestCase {
+
+  /**
+   * The base class for strategies to use for tests.
+   */
+  public static class BaseStrategy implements Strategy {
+    public String getModuleInherit() {
+      return "com.google.gwt.junit.JUnit";
+    }
+
+    public String getSyntheticModuleExtension() {
+      return "JUnit";
+    }
+
+    public void processModule(ModuleDef module) {
+    }
+
+    public void processResult(TestCase testCase, JUnitResult result) {
+    }
+  }
 
   /**
    * Information about a synthetic module used for testing.
@@ -104,22 +125,6 @@ public abstract class GWTTestCase extends TestCase {
   private static final Object ALL_GWT_TESTS_LOCK = new Object();
 
   /**
-   * The default strategy to use for tests.
-   */
-  private static final Strategy DEFAULT_STRATEGY = new Strategy() {
-    public String getModuleInherit() {
-      return "com.google.gwt.junit.JUnit";
-    }
-
-    public String getSyntheticModuleExtension() {
-      return "JUnit";
-    }
-
-    public void processResult(TestCase testCase, JUnitResult result) {
-    }
-  };
-
-  /**
    * Get the names of all test modules.
    * 
    * @return all test module names
@@ -157,6 +162,11 @@ public abstract class GWTTestCase extends TestCase {
    * Object that collects the results of this test case execution.
    */
   protected TestResult testResult = null;
+
+  /**
+   * The {@link Strategy} used by this test.
+   */
+  private Strategy strategy;
 
   /**
    * A new instance of your subclass is constructed for each test method that is
@@ -246,7 +256,10 @@ public abstract class GWTTestCase extends TestCase {
    * @return the test {@link Strategy}
    */
   public Strategy getStrategy() {
-    return DEFAULT_STRATEGY;
+    if (strategy == null) {
+      strategy = createStrategy();
+    }
+    return strategy;
   }
 
   /**
@@ -288,6 +301,13 @@ public abstract class GWTTestCase extends TestCase {
       moduleInfo.getTests().add(
           new TestInfo(syntheticModuleName, getClass().getName(), getName()));
     }
+  }
+
+  /**
+   * Creates the test strategy to use (see {@link #getStrategy()}).
+   */
+  protected Strategy createStrategy() {
+    return new PropertyDefiningStrategy(this);
   }
 
   /**

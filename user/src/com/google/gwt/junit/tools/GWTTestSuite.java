@@ -80,7 +80,7 @@ public class GWTTestSuite extends TestSuite {
 
     if (test instanceof GWTTestCase) {
       GWTTestCase gwtTest = (GWTTestCase) test;
-      String moduleName = gwtTest.getModuleName();
+      String moduleName = gwtTest.getSyntheticModuleName();
       if (moduleName != null) {
         TestSuite suite = moduleSuites.get(moduleName);
         if (suite == null) {

@@ -94,6 +94,8 @@ public class JUnitShell extends GWTShell {
 
     String getSyntheticModuleExtension();
 
+    void processModule(ModuleDef module);
+
     void processResult(TestCase testCase, JUnitResult result);
   }
 

@@ -16,6 +16,7 @@
 package com.google.gwt.junit;
 
 import com.google.gwt.junit.client.GWTTestCaseTest;
+import com.google.gwt.junit.client.PropertyDefiningGWTTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -49,6 +50,9 @@ public class JUnitSuite {
     // remote
     // Run manually only, launches servers that die on port contention
     // suite.addTestSuite(BrowserManagerServerTest.class);
+
+    suite.addTestSuite(PropertyDefiningStrategyTest.class);
+    suite.addTestSuite(PropertyDefiningGWTTest.class);
 
     return suite;
   }

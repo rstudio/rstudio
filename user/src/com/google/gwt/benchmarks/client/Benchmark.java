@@ -17,6 +17,7 @@ package com.google.gwt.benchmarks.client;
 
 import com.google.gwt.benchmarks.BenchmarkShell;
 import com.google.gwt.benchmarks.client.impl.BenchmarkResults;
+import com.google.gwt.junit.PropertyDefiningStrategy;
 import com.google.gwt.junit.JUnitShell.Strategy;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.impl.JUnitResult;
@@ -107,31 +108,34 @@ public abstract class Benchmark extends GWTTestCase {
   /**
    * The {@link Strategy} used for benchmarking.
    */
-  private static Strategy BENCHMARK_STRATEGY = new Strategy() {
+  public static class BenchmarkStrategy extends PropertyDefiningStrategy {
+    public BenchmarkStrategy(TestCase test) {
+      super(test);
+    }
+
+    @Override
     public String getModuleInherit() {
       return "com.google.gwt.benchmarks.Benchmarks";
     }
 
-    public String getSyntheticModuleExtension() {
-      return "Benchmarks";
-    }
-
+    @Override
     public void processResult(TestCase testCase, JUnitResult result) {
+      super.processResult(testCase, result);
       if (result instanceof BenchmarkResults) {
         BenchmarkShell.getReport().addBenchmarkResults(testCase,
             (BenchmarkResults) result);
       }
     }
-  };
 
-  /**
-   * Get the {@link Strategy} to use when compiling and running this test.
-   *  
-   * @return the test {@link Strategy}
-   */
+    @Override
+    protected String getBaseModuleExtension() {
+      return "Benchmarks";
+    }
+  }
+
   @Override
-  public Strategy getStrategy() {
-    return BENCHMARK_STRATEGY;
+  protected Strategy createStrategy() {
+    return new BenchmarkStrategy(this);
   }
 
   /**
