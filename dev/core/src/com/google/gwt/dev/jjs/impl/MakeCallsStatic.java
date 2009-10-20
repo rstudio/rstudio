@@ -19,6 +19,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -31,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
@@ -320,15 +322,31 @@ public class MakeCallsStatic {
     return new MakeCallsStatic(program).execImpl();
   }
 
-  static JMethodCall makeStaticCall(JMethodCall x, JMethod newMethod) {
+  static JExpression makeStaticCall(JMethodCall x, JMethod newMethod) {
     // Update the call site
     JMethodCall newCall = new JMethodCall(x.getSourceInfo().makeChild(
         MakeCallsStatic.class, "Devirtualized function call"), null, newMethod);
 
-    // The qualifier becomes the first arg
-    newCall.addArg(x.getInstance());
-    newCall.addArgs(x.getArgs());
-    return newCall;
+    /*
+     * If the qualifier is a JMultiExpression, invoke on the last value. This
+     * ensures that clinits maintain the same execution order relative to
+     * parameters in deeply-inlined scenarios.
+     */
+    // (a, b).foo() --> (a, foo(b))
+    if (x.getInstance() instanceof JMultiExpression) {
+      JMultiExpression multi = (JMultiExpression) x.getInstance();
+      int lastIndex = multi.exprs.size() - 1;
+      newCall.addArg(multi.exprs.get(lastIndex));
+      newCall.addArgs(x.getArgs());
+      multi.exprs.set(lastIndex, newCall);
+      return multi;
+    } else {
+      // The qualifier becomes the first arg
+      // a.foo(b) --> foo(a,b)
+      newCall.addArg(x.getInstance());
+      newCall.addArgs(x.getArgs());
+      return newCall;
+    }
   }
 
   protected Set<JMethod> toBeMadeStatic = new HashSet<JMethod>();
