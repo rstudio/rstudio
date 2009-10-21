@@ -63,7 +63,6 @@ public class DevModeServiceRequestProcessor implements RequestProcessor {
     throw new IllegalArgumentException(
         "Unknown DevModeService Request: The DevModeService cannot handle requests of type "
             + request.getDevModeRequest().getRequestType().name());
-
   }
 
   private Response processCapabilityExchange(int requestId) {

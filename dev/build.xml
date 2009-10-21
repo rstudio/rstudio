@@ -209,6 +209,7 @@
   <target name="checkstyle" description="Static analysis of source">
     <gwt.checkstyle>
       <fileset dir="core/src">
+        <filename name="com/google/gwt/dev/shell/remoteui/RemoteMessageProto.java" negate="yes" />
         <filename name="com/google/gwt/dev/asm/**/*.java" negate="yes" />
         <filename name="com/google/gwt/dev/js/rhino/**/*.java" negate="yes" />
         <filename name="org/eclipse/**/*.java" negate="yes" />
