@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.server.rpc;
 
-import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.rpc.server.ClientOracle;
 import com.google.gwt.rpc.server.RpcServlet;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
@@ -24,6 +23,7 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
