@@ -20,5 +20,6 @@ This product includes software developed by:
    - ASM (http://asm.objectweb.org/) with modifications
  - The OpenQA Project (http://openqa.org/)
    - Selenium-RC (http://selenium-rc.openqa.org/)
+ - The Protobuf Project (http://code.google.com/p/protobuf/)
 
 For source availability and license information see COPYING.

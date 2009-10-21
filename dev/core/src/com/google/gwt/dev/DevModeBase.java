@@ -31,6 +31,7 @@ import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.OophmSessionHandler;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
+import com.google.gwt.dev.shell.remoteui.RemoteUI;
 import com.google.gwt.dev.ui.DevModeUI;
 import com.google.gwt.dev.ui.DoneCallback;
 import com.google.gwt.dev.ui.DoneEvent;
@@ -200,6 +201,7 @@ abstract class DevModeBase implements DoneCallback {
     public String getTag() {
       return "-logdir";
     }
+
     @Override
     public String[] getTagArgs() {
       return new String[] {"directory"};
@@ -333,6 +335,54 @@ abstract class DevModeBase implements DoneCallback {
     }
   }
 
+  protected static class ArgHandlerRemoteUI extends ArgHandlerString {
+
+    private final OptionUI options;
+
+    public ArgHandlerRemoteUI(OptionUI options) {
+      this.options = options;
+    }
+
+    @Override
+    public String getPurpose() {
+      return "Sends Development Mode UI event information to the specified host and port.";
+    }
+
+    @Override
+    public String getTag() {
+      return "-remoteUI";
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[] {"port-number | host-string:port-number"};
+    }
+
+    @Override
+    public boolean setString(String str) {
+      String[] split = str.split(":");
+      String hostStr = "localhost";
+      String portStr = null;
+
+      if (split.length > 1) {
+        hostStr = split[0];
+        portStr = split[1];
+      } else {
+        portStr = split[0];
+      }
+
+      try {
+        RemoteUI remoteUI = new RemoteUI(hostStr, Integer.parseInt(portStr));
+        options.setUI(remoteUI);
+      } catch (NumberFormatException nfe) {
+        System.err.println("A port must be an integer");
+        return false;
+      }
+
+      return true;
+    }
+  }
+
   /**
    * Handles the -whitelist command line flag.
    */
@@ -360,13 +410,13 @@ abstract class DevModeBase implements DoneCallback {
 
   protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir,
       OptionLogLevel, OptionGenDir, OptionNoServer, OptionPort,
-      OptionPortHosted, OptionStartupURLs {
+      OptionPortHosted, OptionStartupURLs, OptionUI {
 
     /**
      * The base shell work directory.
      * 
-     * @param moduleDef 
-     * @return working directory base 
+     * @param moduleDef
+     * @return working directory base
      */
     File getShellBaseWorkDir(ModuleDef moduleDef);
   }
@@ -377,6 +427,7 @@ abstract class DevModeBase implements DoneCallback {
   protected static class HostedModeBaseOptionsImpl extends
       PrecompileOptionsImpl implements HostedModeBaseOptions {
 
+    private DevModeUI ui;
     private boolean isNoServer;
     private File logDir;
     private int port;
@@ -418,6 +469,10 @@ abstract class DevModeBase implements DoneCallback {
       return Collections.unmodifiableList(startupURLs);
     }
 
+    public DevModeUI getUI() {
+      return ui;
+    }
+
     public boolean isNoServer() {
       return isNoServer;
     }
@@ -437,6 +492,10 @@ abstract class DevModeBase implements DoneCallback {
     public void setPortHosted(int port) {
       portHosted = port;
     }
+
+    public void setUI(DevModeUI ui) {
+      this.ui = ui;
+    }
   }
 
   /**
@@ -452,7 +511,6 @@ abstract class DevModeBase implements DoneCallback {
 
     void setLogFile(String filename);
   }
-
 
   /**
    * Controls whether to run a server or not.
@@ -489,6 +547,15 @@ abstract class DevModeBase implements DoneCallback {
     List<String> getStartupURLs();
   }
 
+  /**
+   * Controls the UI that should be used to display the dev mode server's data.
+   */
+  protected interface OptionUI {
+    DevModeUI getUI();
+
+    void setUI(DevModeUI ui);
+  }
+
   abstract static class ArgProcessor extends ArgProcessorBase {
     public ArgProcessor(HostedModeBaseOptions options, boolean forceServer) {
       if (!forceServer) {
@@ -507,8 +574,7 @@ abstract class DevModeBase implements DoneCallback {
       registerHandler(new ArgHandlerDisableCastChecking(options));
       registerHandler(new ArgHandlerDraftCompile(options));
       registerHandler(new ArgHandlerPortHosted(options));
-      // TODO(rdayal): implement
-      // registerHandler(new ArgHandlerRemoteUI(options));
+      registerHandler(new ArgHandlerRemoteUI(options));
     }
   }
 
@@ -538,12 +604,14 @@ abstract class DevModeBase implements DoneCallback {
   /**
    * Produce a random string that has low probability of collisions.
    * 
-   * <p>In this case, we use 16 characters, each drawn from a pool of 94,
-   * so the number of possible values is 94^16, leading to an expected number
-   * of values used before a collision occurs as sqrt(pi/2) * 94^8 (treated the
-   * same as a birthday attack), or a little under 10^16.
+   * <p>
+   * In this case, we use 16 characters, each drawn from a pool of 94, so the
+   * number of possible values is 94^16, leading to an expected number of values
+   * used before a collision occurs as sqrt(pi/2) * 94^8 (treated the same as a
+   * birthday attack), or a little under 10^16.
    * 
-   * <p>This algorithm is also implemented in hosted.html, though it is not
+   * <p>
+   * This algorithm is also implemented in hosted.html, though it is not
    * technically important that they match.
    * 
    * @return a random string
@@ -602,11 +670,11 @@ abstract class DevModeBase implements DoneCallback {
   public TreeLogger getTopLogger() {
     return topLogger;
   }
-  
+
   /**
    * Launch the arguments as Urls in separate windows.
    * 
-   * @param logger TreeLogger instance to use 
+   * @param logger TreeLogger instance to use
    */
   public void launchStartupUrls(final TreeLogger logger) {
     ensureCodeServerListener();
@@ -626,7 +694,7 @@ abstract class DevModeBase implements DoneCallback {
   public final String normalizeURL(String unknownUrlText) {
     return normalizeURL(unknownUrlText, getPort(), getHost());
   }
- 
+
   /**
    * Callback for the UI to indicate it is done.
    */
@@ -715,8 +783,9 @@ abstract class DevModeBase implements DoneCallback {
    * Perform any startup tasks, including initializing the UI (if any) and the
    * logger, updates checker, and the development mode code server.
    * 
-   * <p>Subclasses that override this method should be careful what facilities
-   * are used before the super implementation is called.
+   * <p>
+   * Subclasses that override this method should be careful what facilities are
+   * used before the super implementation is called.
    * 
    * @return true if startup was successful
    */
@@ -727,11 +796,10 @@ abstract class DevModeBase implements DoneCallback {
 
     // Set done callback
     ui.setCallback(DoneEvent.getType(), this);
-    
+
     // Check for updates
     final TreeLogger logger = getTopLogger();
-    final CheckForUpdates updateChecker
-        = CheckForUpdates.createUpdateChecker(logger);
+    final CheckForUpdates updateChecker = CheckForUpdates.createUpdateChecker(logger);
     if (updateChecker != null) {
       Thread checkerThread = new Thread("GWT Update Checker") {
         @Override
@@ -810,7 +878,7 @@ abstract class DevModeBase implements DoneCallback {
       String path = parsedUrl.getPath();
       String query = parsedUrl.getQuery();
       String hash = parsedUrl.getRef();
-      String hostedParam =  "gwt.hosted=" + listener.getEndpointIdentifier();
+      String hostedParam = "gwt.hosted=" + listener.getEndpointIdentifier();
       if (query == null) {
         query = hostedParam;
       } else {
@@ -826,8 +894,7 @@ abstract class DevModeBase implements DoneCallback {
       getTopLogger().log(TreeLogger.ERROR, "Invalid URL " + url, e);
       throw new UnableToCompleteException();
     }
-    System.err.println(
-        "Using a browser with the GWT Development Plugin, please browse to");
+    System.err.println("Using a browser with the GWT Development Plugin, please browse to");
     System.err.println("the following URL:");
     System.err.println("  " + url);
     getTopLogger().log(TreeLogger.INFO,
@@ -873,6 +940,9 @@ abstract class DevModeBase implements DoneCallback {
       throw new IllegalStateException("Startup code has already been run");
     }
 
+    // See if there was a UI specified by command-line args
+    ui = options.getUI();
+
     // If no UI was specified by command-line args, then create one.
     if (ui == null) {
       if (headlessMode) {
@@ -894,8 +964,8 @@ abstract class DevModeBase implements DoneCallback {
         return false;
       }
       options.setPort(resultPort);
-      getTopLogger().log(TreeLogger.INFO, "Started web server on port "
-          + resultPort);
+      getTopLogger().log(TreeLogger.INFO,
+          "Started web server on port " + resultPort);
     }
 
     return true;

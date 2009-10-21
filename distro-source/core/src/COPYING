@@ -246,3 +246,10 @@ e.g. "gwt-dev-linux.jar".
   Source code availability: 
     http://developer.mozilla.org/en/docs/Download_Mozilla_Source_Code
 
+* Protobuf
+  License: New BSD License
+    http://www.opensource.org/licenses/bsd-license.php
+  Source code availablility:
+    http://code.google.com/p/protobuf/source/checkout
+
+
