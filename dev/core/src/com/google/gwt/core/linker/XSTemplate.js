@@ -48,6 +48,7 @@ function __MODULE_FUNC__() {
 
   $stats && $stats({
     moduleName: '__MODULE_NAME__',
+    sessionId: $sessionId,
     subSystem: 'startup',
     evtGroup: 'bootstrap', 
     millis:(new Date()).getTime(), 
@@ -85,6 +86,7 @@ function __MODULE_FUNC__() {
       // Record when the module EntryPoints return.
       $stats && $stats({
         moduleName: '__MODULE_NAME__',
+        sessionId: $sessionId,
         subSystem: 'startup',
         evtGroup: 'moduleStartup',
         millis:(new Date()).getTime(),
@@ -292,6 +294,7 @@ function __MODULE_FUNC__() {
 
   $stats && $stats({
     moduleName:'__MODULE_NAME__', 
+    sessionId: $sessionId,
     subSystem:'startup', 
     evtGroup: 'bootstrap', 
     millis:(new Date()).getTime(), 
@@ -342,6 +345,7 @@ function __MODULE_FUNC__() {
 
   $stats && $stats({
     moduleName:'__MODULE_NAME__', 
+    sessionId: $sessionId,
     subSystem:'startup', 
     evtGroup: 'bootstrap', 
     millis:(new Date()).getTime(), 
@@ -350,6 +354,7 @@ function __MODULE_FUNC__() {
 
   $stats && $stats({
     moduleName:'__MODULE_NAME__', 
+    sessionId: $sessionId,
     subSystem:'startup', 
     evtGroup: 'loadExternalRefs', 
     millis:(new Date()).getTime(), 
@@ -371,11 +376,11 @@ function __MODULE_FUNC__() {
   var compiledScriptTag = '"<script src=\\"' + base + strongName + '.cache.js\\"></scr" + "ipt>"';
   $doc.write('<script><!--\n'
     + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
-    + 'moduleName:"__MODULE_NAME__", subSystem:"startup",'
+    + 'moduleName:"__MODULE_NAME__", sessionId:$sessionId, subSystem:"startup",'
     + 'evtGroup: "loadExternalRefs", millis:(new Date()).getTime(),'
     + 'type: "end"});'
     + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
-    + 'moduleName:"__MODULE_NAME__", subSystem:"startup",'
+    + 'moduleName:"__MODULE_NAME__", sessionId:$sessionId, subSystem:"startup",'
     + 'evtGroup: "moduleStartup", millis:(new Date()).getTime(),'
     + 'type: "moduleRequested"});'
     + 'document.write(' + compiledScriptTag + ');'

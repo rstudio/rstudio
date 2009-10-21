@@ -5,13 +5,14 @@
 var $wnd = parent;
 var $doc = $wnd.document;
 var $moduleName, $moduleBase, $entry
-,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;
+,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null
+,$sessionId = $wnd.__gwtStatsSessionId ? $wnd.__gwtStatsSessionId : null;
 // Lightweight metrics
 if ($stats) {
   var moduleFuncName = location.search.substr(1);
   var moduleFunc = $wnd[moduleFuncName];
   var moduleName = moduleFunc ? moduleFunc.moduleName : "unknown";
-  $stats({moduleName:moduleName,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
+  $stats({moduleName:moduleName,sessionId:$sessionId,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
 }
 var $hostedHtmlVersion="2.0";
 
@@ -270,7 +271,7 @@ if ($legacyHosted) {
 
 // Lightweight metrics
 window.fireOnModuleLoadStart = function(className) {
-  $stats && $stats({moduleName:$moduleName, subSystem:'startup', evtGroup:'moduleStartup', millis:(new Date()).getTime(), type:'onModuleLoadStart', className:className});
+  $stats && $stats({moduleName:$moduleName, sessionId:$sessionId, subSystem:'startup', evtGroup:'moduleStartup', millis:(new Date()).getTime(), type:'onModuleLoadStart', className:className});
 };
 
 window.__gwt_module_id = 0;
@@ -279,7 +280,7 @@ window.__gwt_module_id = 0;
 <font face='arial' size='-1'>This html file is for hosted mode support.</font>
 <script><!--
 // Lightweight metrics
-$stats && $stats({moduleName:$moduleName,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalEnd'});
+$stats && $stats({moduleName:$moduleName, sessionId:$sessionId, subSystem:'startup', evtGroup:'moduleStartup', millis:(new Date()).getTime(), type:'moduleEvalEnd'});
 
 // OOPHM currently only supports IFrameLinker
 var query = parent.location.search;

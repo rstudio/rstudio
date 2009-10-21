@@ -242,6 +242,7 @@ public class AsyncFragmentLoader {
         String type, Integer fragment, Integer size) /*-{
       var evt = {
        moduleName: @com.google.gwt.core.client.GWT::getModuleName()(), 
+        sessionId: $sessionId,
         subSystem: 'runAsync',
         evtGroup: eventGroup,
         millis: (new Date()).getTime(),

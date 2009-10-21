@@ -80,7 +80,8 @@ public class XSLinker extends SelectionScriptLinker {
     out.print("var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;");
     out.newlineOpt();
     out.print("$stats && $stats({moduleName:'" + context.getModuleName()
-        + "',subSystem:'startup',evtGroup:'moduleStartup'"
+        + "',sessionId:$sessionId"
+        + ",subSystem:'startup',evtGroup:'moduleStartup'"
         + ",millis:(new Date()).getTime(),type:'moduleEvalStart'});");
     out.newlineOpt();
 
@@ -93,7 +94,8 @@ public class XSLinker extends SelectionScriptLinker {
     DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
 
     out.print("$stats && $stats({moduleName:'" + context.getModuleName()
-        + "',subSystem:'startup',evtGroup:'moduleStartup'"
+        + "',sessionId:$sessionId"
+        + ",subSystem:'startup',evtGroup:'moduleStartup'"
         + ",millis:(new Date()).getTime(),type:'moduleEvalEnd'});");
 
     // Generate the call to tell the bootstrap code that we're ready to go.

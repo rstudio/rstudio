@@ -31,6 +31,7 @@ final class Stats {
   static native boolean onModuleStart(String mainClassName) /*-{
     return $stats({
       moduleName: $moduleName,
+      sessionId: $sessionId,
       subSystem: "startup",
       evtGroup: "moduleStartup",
       millis : (new Date()).getTime(),

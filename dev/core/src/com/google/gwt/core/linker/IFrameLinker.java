@@ -205,7 +205,8 @@ public class IFrameLinker extends SelectionScriptLinker {
     DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
 
     out.print("$stats && $stats({moduleName:'" + context.getModuleName()
-        + "',subSystem:'startup',evtGroup:'moduleStartup'"
+        + "',sessionId:$sessionId"
+        + ",subSystem:'startup',evtGroup:'moduleStartup'"
         + ",millis:(new Date()).getTime(),type:'moduleEvalEnd'});");
 
     // Generate the call to tell the bootstrap code that we're ready to go.
@@ -305,10 +306,13 @@ public class IFrameLinker extends SelectionScriptLinker {
       out.print("};");
       out.newlineOpt();
     }
-    out.print("var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;");
+    out.print("var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null,");
+    out.newlineOpt();
+    out.print("$sessionId = $wnd.__gwtStatsSessionId ? $wnd.__gwtStatsSessionId : null;");
     out.newlineOpt();
     out.print("$stats && $stats({moduleName:'" + context.getModuleName()
-        + "',subSystem:'startup',evtGroup:'moduleStartup'"
+        + "',sessionId:$sessionId"
+        + ",subSystem:'startup',evtGroup:'moduleStartup'"
         + ",millis:(new Date()).getTime(),type:'moduleEvalStart'});");
     out.newlineOpt();
     out.print("</script></head>");

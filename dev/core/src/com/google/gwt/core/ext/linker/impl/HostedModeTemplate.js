@@ -51,6 +51,7 @@ function __MODULE_FUNC__() {
   if (isHostedMode()) {
     $stats && $stats({
       moduleName: '__MODULE_NAME__',
+      sessionId: $sessionId,
       subSystem: 'startup',
       evtGroup: 'bootstrap', 
       millis:(new Date()).getTime(), 
@@ -101,6 +102,7 @@ function __MODULE_FUNC__() {
       // Record when the module EntryPoints return.
       $stats && $stats({
         moduleName: '__MODULE_NAME__',
+        sessionId: $sessionId,
         subSystem: 'startup',
         evtGroup: 'moduleStartup',
         millis:(new Date()).getTime(),
@@ -295,7 +297,8 @@ function __MODULE_FUNC__() {
        * avoid FF2 refresh quirks.
        */
       $stats && $stats({
-        moduleName:'__MODULE_NAME__', 
+        moduleName:'__MODULE_NAME__',
+        sessionId: $sessionId,
         subSystem:'startup', 
         evtGroup: 'moduleStartup', 
         millis:(new Date()).getTime(), 
@@ -331,7 +334,8 @@ function __MODULE_FUNC__() {
     // Mark this module's script injection done and (possibly) start the module.
     scriptsDone = true;
     $stats && $stats({
-      moduleName:'__MODULE_NAME__', 
+      moduleName:'__MODULE_NAME__',
+      sessionId: $sessionId,
       subSystem:'startup', 
       evtGroup: 'loadExternalRefs', 
       millis:(new Date()).getTime(), 
@@ -380,7 +384,8 @@ function __MODULE_FUNC__() {
   // --------------- WINDOW ONLOAD HOOK ---------------
 
   $stats && $stats({
-    moduleName:'__MODULE_NAME__', 
+    moduleName:'__MODULE_NAME__',
+    sessionId: $sessionId,
     subSystem:'startup', 
     evtGroup: 'bootstrap', 
     millis:(new Date()).getTime(), 
@@ -438,7 +443,8 @@ function __MODULE_FUNC__() {
   }, 50);
 
   $stats && $stats({
-    moduleName:'__MODULE_NAME__', 
+    moduleName:'__MODULE_NAME__',
+    sessionId: $sessionId,
     subSystem:'startup', 
     evtGroup: 'bootstrap', 
     millis:(new Date()).getTime(), 
@@ -446,10 +452,11 @@ function __MODULE_FUNC__() {
   });
 
   $stats && $stats({
-    moduleName:'__MODULE_NAME__', 
-    subSystem:'startup', 
-    evtGroup: 'loadExternalRefs', 
-    millis:(new Date()).getTime(), 
+    moduleName:'__MODULE_NAME__',
+    sessionId: $sessionId,
+    subSystem:'startup',
+    evtGroup: 'loadExternalRefs',
+    millis:(new Date()).getTime(),
     type: 'begin'
   });
 

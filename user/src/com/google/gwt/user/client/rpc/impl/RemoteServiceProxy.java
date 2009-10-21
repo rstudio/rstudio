@@ -74,7 +74,8 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   public static native JavaScriptObject timeStat(String method, int count,
       String eventType) /*-{
     return {
-      moduleName: @com.google.gwt.core.client.GWT::getModuleName()(), 
+      moduleName: @com.google.gwt.core.client.GWT::getModuleName()(),
+      sessionId: $sessionId,
       subSystem: 'rpc',
       evtGroup: count,
       method: method,
