@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.server.rpc.impl;
 
+import com.google.gwt.user.client.rpc.GwtTransient;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 
 import java.io.UnsupportedEncodingException;
@@ -220,6 +221,17 @@ public class SerializabilityUtil {
     return (result == instanceType) ? null : result;
   }
 
+  static boolean isNotStaticTransientOrFinal(Field field) {
+    /*
+     * Only serialize fields that are not static, transient (including @GwtTransient), or final.
+     */
+    int fieldModifiers = field.getModifiers();
+    return !Modifier.isStatic(fieldModifiers)
+        && !Modifier.isTransient(fieldModifiers)
+        && !field.isAnnotationPresent(GwtTransient.class)
+        && !Modifier.isFinal(fieldModifiers);
+  }
+
   /**
    * This method treats arrays in a special way.
    */
@@ -316,15 +328,5 @@ public class SerializabilityUtil {
     } catch (ClassNotFoundException e) {
       return null;
     }
-  }
-
-  private static boolean isNotStaticTransientOrFinal(Field field) {
-    /*
-     * Only serialize fields that are not static, transient or final.
-     */
-    int fieldModifiers = field.getModifiers();
-    return !Modifier.isStatic(fieldModifiers)
-        && !Modifier.isTransient(fieldModifiers)
-        && !Modifier.isFinal(fieldModifiers);
   }
 }

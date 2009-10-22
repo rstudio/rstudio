@@ -790,22 +790,18 @@ public final class ServerSerializationStreamReader extends
         // Iterate over each field and locate a suitable setter method
         Field[] fields = instanceClass.getDeclaredFields();
         for (Field field : fields) {
-          // Consider non-final, non-static, non-transient fields only
-          int mod = field.getModifiers();
-          if (Modifier.isFinal(mod) || Modifier.isStatic(mod)
-              || Modifier.isTransient(mod)) {
-            continue;
-          }
-
-          String fieldName = field.getName();
-          String setterName = "set"
+          // Consider non-final, non-static, non-transient (or @GwtTransient) fields only
+          if (SerializabilityUtil.isNotStaticTransientOrFinal(field)) {
+            String fieldName = field.getName();
+            String setterName = "set"
               + Character.toUpperCase(fieldName.charAt(0))
               + fieldName.substring(1);
-          try {
-            Method setter = instanceClass.getMethod(setterName, field.getType());
-            setters.put(fieldName, setter);
-          } catch (NoSuchMethodException e) {
-            // Just leave this field out of the map
+            try {
+              Method setter = instanceClass.getMethod(setterName, field.getType());
+              setters.put(fieldName, setter);
+            } catch (NoSuchMethodException e) {
+              // Just leave this field out of the map
+            }
           }
         }
 
