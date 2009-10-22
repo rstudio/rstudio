@@ -38,7 +38,7 @@
           <include name="apache/ant-1.6.5.jar" />
           <include name="eclipse/jdt-3.4.2.jar" />
           <include name="jetty/jetty-6.1.11.jar" />
-          <include name="protobuf/protobuf-2.2.0/protobuf-java-2.2.0.jar" />
+          <include name="protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
           <include name="tomcat/ant-launcher-1.6.5.jar" />
           <include name="tomcat/catalina-1.0.jar" />
           <include name="tomcat/catalina-optional-1.0.jar" />
@@ -94,7 +94,7 @@
           <zipfileset src="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
           <zipfileset src="${gwt.tools.lib}/eclipse/jdt-3.4.2.jar" />
           <zipfileset src="${gwt.tools.lib}/jetty/jetty-6.1.11.jar" />
-          <zipfileset src="${gwt.tools.lib}/protobuf/protobuf-2.2.0/protobuf-java-2.2.0.jar" />
+          <zipfileset src="${gwt.tools.lib}/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
           <zipfileset src="${gwt.tools.lib}/tomcat/ant-launcher-1.6.5.jar" />
           <zipfileset src="${gwt.tools.lib}/tomcat/catalina-1.0.jar" />
           <zipfileset src="${gwt.tools.lib}/tomcat/catalina-optional-1.0.jar" />

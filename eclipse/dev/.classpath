@@ -39,6 +39,6 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/sun/swingworker/swing-worker-1.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-core-js-r5070.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-core-js-r5070-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5070.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5070-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.2.0/protobuf-java-2.2.0.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

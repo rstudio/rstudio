@@ -251,5 +251,6 @@ e.g. "gwt-dev-linux.jar".
     http://www.opensource.org/licenses/bsd-license.php
   Source code availablility:
     http://code.google.com/p/protobuf/source/checkout
+  Binary modifications consist of package-rebasing. The rebased classes are rooted at com/google/gwt/dev/protobuf/ within gwt-dev.jar
 
 

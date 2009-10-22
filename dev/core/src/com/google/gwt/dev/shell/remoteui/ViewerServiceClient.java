@@ -17,6 +17,7 @@ package com.google.gwt.dev.shell.remoteui;
 
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.dev.protobuf.ByteString;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest;
@@ -25,7 +26,6 @@ import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.View
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
-import com.google.protobuf.ByteString;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
