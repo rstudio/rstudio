@@ -40,6 +40,7 @@ public class CssProperty extends CssNode {
       this.suffix = suffix;
     }
 
+    @Override
     public String getExpression() {
       return path.replace(".", "().") + "() + \"" + Generator.escape(suffix)
           + "\"";
@@ -58,6 +59,7 @@ public class CssProperty extends CssNode {
       return this;
     }
 
+    @Override
     public String toCss() {
       return "value(\"" + path + "\""
           + (suffix == null ? "" : (", \"" + suffix + "\"")) + ")";
@@ -74,6 +76,7 @@ public class CssProperty extends CssNode {
       this.expression = expression;
     }
 
+    @Override
     public String getExpression() {
       return expression;
     }
@@ -83,6 +86,7 @@ public class CssProperty extends CssNode {
       return this;
     }
 
+    @Override
     public String toCss() {
       return "/* Java expression */";
     }
@@ -106,6 +110,7 @@ public class CssProperty extends CssNode {
       this.ident = ident;
     }
 
+    @Override
     public String getExpression() {
       return '"' + Generator.escape(ident) + '"';
     }
@@ -119,6 +124,7 @@ public class CssProperty extends CssNode {
       return this;
     }
 
+    @Override
     public String toCss() {
       return ident;
     }
@@ -138,12 +144,17 @@ public class CssProperty extends CssNode {
       this(Arrays.asList(values));
     }
 
+    @Override
     public String getExpression() {
       StringBuilder toReturn = new StringBuilder();
       for (Iterator<Value> i = values.iterator(); i.hasNext();) {
-        toReturn.append(i.next().getExpression());
+        Value value = i.next();
+        if (value.isSpaceRequired()) {
+          toReturn.append("\" \" +");
+        }
+        toReturn.append(value.getExpression());
         if (i.hasNext()) {
-          toReturn.append("+ \" \" +");
+          toReturn.append("+ ");
         }
       }
       return toReturn.toString();
@@ -158,6 +169,7 @@ public class CssProperty extends CssNode {
       return this;
     }
 
+    @Override
     public String toCss() {
       StringBuilder sb = new StringBuilder();
       for (Value v : values) {
@@ -204,6 +216,7 @@ public class CssProperty extends CssNode {
       }
     }
 
+    @Override
     public String getExpression() {
       return expression;
     }
@@ -221,6 +234,7 @@ public class CssProperty extends CssNode {
       return this;
     }
 
+    @Override
     public String toCss() {
       return css;
     }
@@ -275,6 +289,7 @@ public class CssProperty extends CssNode {
       this.value = value;
     }
 
+    @Override
     public String getExpression() {
       // The escaped CSS content has to be escaped to be a valid Java literal
       return "\"" + Generator.escape(toCss()) + "\"";
@@ -292,8 +307,24 @@ public class CssProperty extends CssNode {
     /**
      * Returns a escaped, quoted representation of the underlying value.
      */
+    @Override
     public String toCss() {
       return '"' + escapeValue(value, true) + '"';
+    }
+  }
+
+  /**
+   * Represents a token in the CSS source.
+   */
+  public static class TokenValue extends IdentValue {
+
+    public TokenValue(String token) {
+      super(token);
+    }
+
+    @Override
+    public boolean isSpaceRequired() {
+      return false;
     }
   }
 
@@ -324,6 +355,10 @@ public class CssProperty extends CssNode {
 
     public NumberValue isNumberValue() {
       return null;
+    }
+
+    public boolean isSpaceRequired() {
+      return true;
     }
 
     public StringValue isStringValue() {

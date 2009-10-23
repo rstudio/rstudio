@@ -38,6 +38,7 @@ import com.google.gwt.resources.css.ast.CssProperty.IdentValue;
 import com.google.gwt.resources.css.ast.CssProperty.ListValue;
 import com.google.gwt.resources.css.ast.CssProperty.NumberValue;
 import com.google.gwt.resources.css.ast.CssProperty.StringValue;
+import com.google.gwt.resources.css.ast.CssProperty.TokenValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
 
 import org.w3c.css.sac.AttributeCondition;
@@ -916,7 +917,7 @@ public class GenerateCssAst {
       case LexicalUnit.SAC_URI:
         return new IdentValue("url(" + value.getStringValue() + ")");
       case LexicalUnit.SAC_OPERATOR_COMMA:
-        return new IdentValue(",");
+        return new TokenValue(",");
       case LexicalUnit.SAC_COUNTER_FUNCTION:
       case LexicalUnit.SAC_COUNTERS_FUNCTION:
       case LexicalUnit.SAC_FUNCTION: {
@@ -971,25 +972,25 @@ public class GenerateCssAst {
       case LexicalUnit.SAC_INHERIT:
         return new IdentValue("inherit");
       case LexicalUnit.SAC_OPERATOR_EXP:
-        return new IdentValue("^");
+        return new TokenValue("^");
       case LexicalUnit.SAC_OPERATOR_GE:
-        return new IdentValue(">=");
+        return new TokenValue(">=");
       case LexicalUnit.SAC_OPERATOR_GT:
-        return new IdentValue(">");
+        return new TokenValue(">");
       case LexicalUnit.SAC_OPERATOR_LE:
-        return new IdentValue("<=");
+        return new TokenValue("<=");
       case LexicalUnit.SAC_OPERATOR_LT:
-        return new IdentValue("<");
+        return new TokenValue("<");
       case LexicalUnit.SAC_OPERATOR_MINUS:
-        return new IdentValue("-");
+        return new TokenValue("-");
       case LexicalUnit.SAC_OPERATOR_MOD:
-        return new IdentValue("%");
+        return new TokenValue("%");
       case LexicalUnit.SAC_OPERATOR_MULTIPLY:
-        return new IdentValue("*");
+        return new TokenValue("*");
       case LexicalUnit.SAC_OPERATOR_PLUS:
-        return new IdentValue("+");
+        return new TokenValue("+");
       case LexicalUnit.SAC_OPERATOR_SLASH:
-        return new IdentValue("/");
+        return new TokenValue("/");
       case LexicalUnit.SAC_OPERATOR_TILDE:
         return new IdentValue("~");
       case LexicalUnit.SAC_RECT_FUNCTION: {
