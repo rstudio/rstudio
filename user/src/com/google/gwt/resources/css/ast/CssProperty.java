@@ -147,15 +147,17 @@ public class CssProperty extends CssNode {
     @Override
     public String getExpression() {
       StringBuilder toReturn = new StringBuilder();
+      boolean first = true;
       for (Iterator<Value> i = values.iterator(); i.hasNext();) {
         Value value = i.next();
-        if (value.isSpaceRequired()) {
+        if (!first && value.isSpaceRequired()) {
           toReturn.append("\" \" +");
         }
         toReturn.append(value.getExpression());
         if (i.hasNext()) {
           toReturn.append("+ ");
         }
+        first = false;
       }
       return toReturn.toString();
     }
