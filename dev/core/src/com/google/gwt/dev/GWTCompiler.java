@@ -202,7 +202,7 @@ public class GWTCompiler {
 
           precompilation = null; // No longer needed, so save the memory
 
-          Link.legacyLink(logger.branch(TreeLogger.INFO, "Linking into "
+          Link.legacyLink(logger.branch(TreeLogger.TRACE, "Linking into "
               + options.getOutDir().getPath()), module, generatedArtifacts,
               allPerms, resultFiles, options.getOutDir(), precompileOptions);
 

@@ -210,10 +210,11 @@ public class Compiler {
 
           precompilation = null; // No longer needed, so save the memory
 
-          Link.link(logger.branch(TreeLogger.INFO, "Linking into "
-              + options.getWarDir().getPath()), module, generatedArtifacts,
-              allPerms, resultFiles, options.getWarDir(),
-              options.getExtraDir(), precompileOptions);
+          File absPath = new File(options.getWarDir(), module.getName());
+          absPath = absPath.getAbsoluteFile();
+          Link.link(logger.branch(TreeLogger.TRACE, "Linking into " + absPath),
+              module, generatedArtifacts, allPerms, resultFiles,
+              options.getWarDir(), options.getExtraDir(), precompileOptions);
 
           long compileDone = System.currentTimeMillis();
           long delta = compileDone - compileStart;

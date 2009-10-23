@@ -210,6 +210,9 @@ public class JavaToJavaScriptCompiler {
       UnifiedAst unifiedAst, Map<String, String> rebindAnswers,
       PropertyOracle[] propertyOracles, int permutationId)
       throws UnableToCompleteException {
+
+    int printId = permutationId + 1;
+    logger.log(TreeLogger.INFO, "Compiling permutation " + printId + "...");
     long permStart = System.currentTimeMillis();
     try {
       if (JProgram.isTracingEnabled()) {
@@ -358,7 +361,7 @@ public class JavaToJavaScriptCompiler {
           makeSoycArtifact(logger, permutationId, jprogram, js, sizeBreakdowns,
               sourceInfoMaps, dependencies, map, obfuscateMap));
 
-      System.out.println("Permutation took "
+      logger.log(TreeLogger.TRACE, "Permutation took "
           + (System.currentTimeMillis() - permStart) + " ms");
       return toReturn;
     } catch (Throwable e) {

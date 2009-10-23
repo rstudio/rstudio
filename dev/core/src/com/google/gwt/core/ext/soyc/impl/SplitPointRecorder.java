@@ -108,7 +108,7 @@ public class SplitPointRecorder {
       Utility.close(writer);
       pw.close();
 
-      logger.log(TreeLogger.INFO, "Done");
+      logger.log(TreeLogger.DEBUG, "Done");
 
     } catch (Throwable e) {
       logger.log(TreeLogger.ERROR, "Could not open dependency file.", e);

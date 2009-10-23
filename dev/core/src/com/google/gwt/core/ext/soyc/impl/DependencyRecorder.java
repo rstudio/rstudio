@@ -107,7 +107,7 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
    */
   protected void recordDependenciesImpl(TreeLogger logger, JProgram jprogram) {
 
-    logger = logger.branch(TreeLogger.INFO,
+    logger = logger.branch(TreeLogger.DEBUG,
         "Creating dependencies file for the compile report");
 
     ControlFlowAnalyzer dependencyAnalyzer = new ControlFlowAnalyzer(jprogram);
@@ -124,7 +124,6 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
       writer.write(builder.toString());
       Utility.close(writer);
 
-      logger.log(TreeLogger.INFO, "Done");
     } catch (Throwable e) {
       logger.log(TreeLogger.ERROR, "Could not write dependency file.", e);
     }

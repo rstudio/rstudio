@@ -249,9 +249,10 @@ public abstract class PermutationWorkerFactory {
     List<Work> work = new ArrayList<Work>(permutations.length);
     for (int i = 0; i < permutations.length; ++i) {
       Permutation perm = permutations[i];
-      TreeLogger permLogger = logger.branch(TreeLogger.DEBUG,
-          "Worker permutation " + perm.getId() + " of " + permutations.length);
-      work.add(new Work(permLogger, perm, resultFiles.get(i)));
+      int printId = perm.getId() + 1;
+      logger.log(TreeLogger.DEBUG, 
+          "Creating worker permutation " + printId + " of " + permutations.length);
+      work.add(new Work(logger, perm, resultFiles.get(i)));
     }
 
     // Create the workers.

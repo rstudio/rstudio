@@ -198,9 +198,9 @@ public class CompilePerms {
       throws UnableToCompleteException {
     final TreeLogger branch = logger.branch(TreeLogger.INFO, "Compiling "
         + perms.length + " permutation" + (perms.length > 1 ? "s" : ""));
-    PermutationWorkerFactory.compilePermutations(logger, precompilation, perms,
+    PermutationWorkerFactory.compilePermutations(branch, precompilation, perms,
         localWorkers, resultFiles);
-    branch.log(TreeLogger.INFO, "Permutation compile succeeded");
+    logger.log(TreeLogger.INFO, "Compile of permutations succeeded");
   }
 
   public static void main(String[] args) {
