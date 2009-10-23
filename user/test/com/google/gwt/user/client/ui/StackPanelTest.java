@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
@@ -54,6 +56,7 @@ public class StackPanelTest extends PanelTestBase<StackPanel> {
     HasWidgetsTester.testAll(createStackPanel(), new Adder(), true);
   }
 
+  @DoNotRunWith(Platform.Htmlunit)
   public void testDebugId() {
     final StackPanel p = createStackPanel();
     Label a = new Label("a");

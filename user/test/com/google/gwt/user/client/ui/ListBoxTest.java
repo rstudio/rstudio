@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -38,6 +40,7 @@ public class ListBoxTest extends GWTTestCase {
     assertEquals(0, lb.getItemCount());
   }
 
+  @DoNotRunWith(Platform.Htmlunit)
   public void testDebugId() {
     ListBox list = new ListBox();
     list.addItem("option0", "value0");
@@ -49,7 +52,7 @@ public class ListBoxTest extends GWTTestCase {
     list.ensureDebugId("myList");
     UIObjectTest.assertDebugId("myList", list.getElement());
 
-    delayTestFinish(250);
+    delayTestFinish(5000);
     DeferredCommand.addCommand(new Command() {
       public void execute() {
         UIObjectTest.assertDebugIdContents("myList-item0", "option0");   
