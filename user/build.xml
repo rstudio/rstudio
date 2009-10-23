@@ -471,6 +471,10 @@
   <target name="test.htmlunit"
     depends="compile, compile.tests"
     description="Run all HtmlUnit tests">
+    <!-- Prevent compilation for every target. -->
+    <property name="compile.complete" value="true"/>
+    <property name="compile.tests.complete" value="true"/>
+    
     <property.ensure name="distro.built" location="${gwt.dev.staging.jar}"
         message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
     <limit failonerror="true" hours="${test.timeout}">
@@ -489,6 +493,10 @@
   <target name="test.dev"
       depends="compile, compile.tests"
       description="Run dev-mode tests for this project.">
+    <!-- Prevent compilation for every target. -->
+    <property name="compile.complete" value="true"/>
+    <property name="compile.tests.complete" value="true"/>
+
     <limit failonerror="true" hours="${test.timeout}">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
         threadCount="${gwt.threadCount}">
@@ -506,6 +514,10 @@
   <target name="test.web"
       depends="compile, compile.tests"
       description="Run web-mode tests for this project.">
+    <!-- Prevent compilation for every target. -->
+    <property name="compile.complete" value="true"/>
+    <property name="compile.tests.complete" value="true"/>
+
     <limit failonerror="true" hours="${test.timeout}">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
         threadCount="${gwt.threadCount}">
@@ -523,6 +535,10 @@
   <target name="test.emma"
       depends="compile, compile.tests"
       description="Run emma tests for this project.">
+    <!-- Prevent compilation for every target. -->
+    <property name="compile.complete" value="true"/>
+    <property name="compile.tests.complete" value="true"/>
+
     <limit failonerror="true" hours="${test.timeout}">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
         threadCount="${gwt.threadCount}">
@@ -540,6 +556,10 @@
   <target name="test.draft"
       depends="compile, compile.tests"
       description="Run draft compiled tests for this project.">
+    <!-- Prevent compilation for every target. -->
+    <property name="compile.complete" value="true"/>
+    <property name="compile.tests.complete" value="true"/>
+
     <limit failonerror="true" hours="${test.timeout}">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
         threadCount="${gwt.threadCount}">
@@ -557,6 +577,10 @@
   <target name="test.nometa"
       depends="compile, compile.tests"
       description="Run -XdisableClassMetadata tests for this project.">
+    <!-- Prevent compilation for every target. -->
+    <property name="compile.complete" value="true"/>
+    <property name="compile.tests.complete" value="true"/>
+
     <limit failonerror="true" hours="${test.timeout}">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
         threadCount="${gwt.threadCount}">
