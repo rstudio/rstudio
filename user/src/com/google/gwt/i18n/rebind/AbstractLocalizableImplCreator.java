@@ -109,7 +109,8 @@ abstract class AbstractLocalizableImplCreator extends
 
     // generated implementations for interface X will be named X_, X_en,
     // X_en_CA, etc.
-    GwtLocale generatedLocale = resourceList.findLeastDerivedLocale(locale);
+    GwtLocale generatedLocale = resourceList.findLeastDerivedLocale(logger,
+        locale);
     String localeSuffix = String.valueOf(ResourceFactory.LOCALE_SEPARATOR);
     localeSuffix += generatedLocale.getAsString();
     // Use _ rather than "." in class name, cannot use $

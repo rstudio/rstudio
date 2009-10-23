@@ -132,11 +132,12 @@ public abstract class AbstractResource {
     /**
      * From the list of locales matched for any resources in this resource list,
      * choose the one that is least derived from the original search locale.
-     * 
+     * @param logger logger to use
      * @param locale originally requested locale
      * @return least derived matched locale
      */
-    public GwtLocale findLeastDerivedLocale(GwtLocale locale) {
+    public GwtLocale findLeastDerivedLocale(TreeLogger logger,
+        GwtLocale locale) {
       List<GwtLocale> searchList = locale.getCompleteSearchList();
       Map<GwtLocale, Integer> derivedIndex = new HashMap<GwtLocale, Integer>();
       for (int i = 0; i < searchList.size(); ++i) {
@@ -148,8 +149,8 @@ public abstract class AbstractResource {
         GwtLocale matchLocale = list.get(i).getMatchLocale();
         Integer wrappedIdx = derivedIndex.get(matchLocale);
         if (wrappedIdx == null) {
-          assert false : "Locale " + matchLocale + " not in searchlist "
-              + searchList;
+          logger.log(TreeLogger.WARN, "Locale " + matchLocale
+              + " not in searchlist " + searchList);
           continue;
         }
         int idx = wrappedIdx;
