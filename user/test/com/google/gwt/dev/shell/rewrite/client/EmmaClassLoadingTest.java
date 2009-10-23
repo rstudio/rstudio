@@ -151,6 +151,7 @@ class FourthTopLevelClass extends TestCase {
   private void test1() {
     if (false) {
       class Foo {
+        @SuppressWarnings("jsni")
         public native void foo() /*-{
           @com.google.gwt.dev.shell.rewrite.client.FourthTopLevelClass::log(Ljava/lang/String;)("ANY_FOO");
         }-*/;
@@ -161,6 +162,7 @@ class FourthTopLevelClass extends TestCase {
 
   private void test2() {
     class Foo {
+      @SuppressWarnings("jsni")
       public native void foo() /*-{
         @com.google.gwt.dev.shell.rewrite.client.FourthTopLevelClass::log(Ljava/lang/String;)("4a foo");
       }-*/;
@@ -175,6 +177,7 @@ class FourthTopLevelClass extends TestCase {
   @SuppressWarnings("unused")
   private void test3() {
     class Foo {
+      @SuppressWarnings("jsni")
       public native void foo() /*-{
         @com.google.gwt.dev.shell.rewrite.client.FourthTopLevelClass::log(Ljava/lang/String;)("4b foo");
       }-*/;
@@ -205,6 +208,7 @@ class SecondTopLevelClass extends TestCase {
       a.foo();
 
       EmmaClassLoadingTest.TestInterface b = new EmmaClassLoadingTest.TestInterface() {
+        @SuppressWarnings("jsni")
         public native void foo() /*-{
           @com.google.gwt.dev.shell.rewrite.client.SecondTopLevelClass::log(Ljava/lang/String;)("2b foo");
         }-*/;
@@ -213,6 +217,7 @@ class SecondTopLevelClass extends TestCase {
 
       if (false) {
         EmmaClassLoadingTest.TestInterface c = new EmmaClassLoadingTest.TestInterface() {
+          @SuppressWarnings("jsni")
           public native void foo() /*-{
             @com.google.gwt.dev.shell.rewrite.client.SecondTopLevelClass::log(Ljava/lang/String;)("ANY_FOO_1");
           }-*/;
@@ -232,6 +237,7 @@ class SecondTopLevelClass extends TestCase {
       }
 
       EmmaClassLoadingTest.TestInterface d = new EmmaClassLoadingTest.TestInterface() {
+        @SuppressWarnings("jsni")
         public native void foo() /*-{
           @com.google.gwt.dev.shell.rewrite.client.SecondTopLevelClass::log(Ljava/lang/String;)("2d foo");
         }-*/;
@@ -246,6 +252,7 @@ class SecondTopLevelClass extends TestCase {
        * to fail.
        */
       EmmaClassLoadingTest.TestInterface e = new EmmaClassLoadingTest.TestInterface() {
+        @SuppressWarnings("jsni")
         public native void foo() /*-{
           @com.google.gwt.dev.shell.rewrite.client.SecondTopLevelClass::log(Ljava/lang/String;)("2e foo");
         }-*/;
@@ -281,6 +288,7 @@ class ThirdTopLevelClass extends TestCase {
 
   void test() {
     EmmaClassLoadingTest.TestInterface a = new EmmaClassLoadingTest.TestInterface() {
+      @SuppressWarnings("jsni")
       public native void foo() /*-{
         @com.google.gwt.dev.shell.rewrite.client.ThirdTopLevelClass::log(Ljava/lang/String;)("3a foo");
       }-*/;
