@@ -22,10 +22,11 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class URLTest extends GWTTestCase {
 
-  private final String DECODED_URL = "http://www.foo \u00E9 bar.com/1_!~*'();/?@&=+$,#";
-  private final String DECODED_URL_COMPONENT = "-_.!~*'():/#?@ \u00E9 ";
-  private final String ENCODED_URL = "http://www.foo%20%C3%A9%20bar.com/1_!~*'();/?@&=+$,#";
-  private final String ENCODED_URL_COMPONENT = "-_.!~*'()%3A%2F%23%3F%40+%C3%A9+";
+  private final String DECODED_URL = "http://www.foo \u00E9+bar.com/1_!~*'();/?@&=+$,#";
+  private final String DECODED_URL_COMPONENT = "-_.!~*'():/#?@ \u00E9+";
+  private final String ENCODED_URL = "http://www.foo%20%C3%A9+bar.com/1_!~*'();/?@&=+$,#";
+  private final String ENCODED_URL_COMPONENT = "-_.!~*'()%3A%2F%23%3F%40%20%C3%A9%2B";
+  private final String ENCODED_URL_COMPONENT_QS = "-_.!~*'()%3A%2F%23%3F%40+%C3%A9%2B";
 
   public String getModuleName() {
     return "com.google.gwt.http.HttpSuite";
@@ -67,6 +68,37 @@ public class URLTest extends GWTTestCase {
 
     String actualURLComponent = URL.decodeComponent(ENCODED_URL_COMPONENT);
     assertEquals(DECODED_URL_COMPONENT, actualURLComponent);
+
+    actualURLComponent = URL.decodeComponent(ENCODED_URL_COMPONENT_QS);
+    assertEquals(DECODED_URL_COMPONENT, actualURLComponent);
+  }
+
+  /**
+   * Test method for
+   * {@link com.google.gwt.http.client.URL#decodeComponent(java.lang.String,boolean)}.
+   */
+  public void testDecodeComponent2() {
+    try {
+      URL.decodeComponent(null);
+      fail("Expected NullPointerException");
+    } catch (NullPointerException ex) {
+      // expected exception was thrown
+    }
+
+    assertEquals("", URL.decodeComponent("", false));
+    assertEquals("", URL.decodeComponent("", true));
+    assertEquals(" ", URL.decodeComponent(" ", false));
+    assertEquals(" ", URL.decodeComponent(" ", true));
+    assertEquals("+", URL.decodeComponent("+", false));
+    assertEquals(" ", URL.decodeComponent("+", true));
+    assertEquals(" ", URL.decodeComponent("%20", false));
+    assertEquals(" ", URL.decodeComponent("%20", true));
+
+    String actualURLComponent = URL.decodeComponent(ENCODED_URL_COMPONENT, false);
+    assertEquals(DECODED_URL_COMPONENT, actualURLComponent);
+
+    actualURLComponent = URL.decodeComponent(ENCODED_URL_COMPONENT_QS, true);
+    assertEquals(DECODED_URL_COMPONENT, actualURLComponent);
   }
 
   /**
@@ -104,6 +136,37 @@ public class URLTest extends GWTTestCase {
     assertEquals("+", URL.encodeComponent(" "));
 
     String actualURLComponent = URL.encodeComponent(DECODED_URL_COMPONENT);
+    assertEquals(ENCODED_URL_COMPONENT_QS, actualURLComponent);
+  }
+
+  /**
+   * Test method for
+   * {@link com.google.gwt.http.client.URL#encodeComponent(java.lang.String,boolean)}.
+   */
+  public void testEncodeComponent2() {
+    try {
+      URL.encodeComponent(null, false);
+      fail("Expected NullPointerException");
+    } catch (NullPointerException ex) {
+      // expected exception was thrown
+    }
+
+    try {
+      URL.encodeComponent(null, true);
+      fail("Expected NullPointerException");
+    } catch (NullPointerException ex) {
+      // expected exception was thrown
+    }
+
+    assertEquals("", URL.encodeComponent("", false));
+    assertEquals("", URL.encodeComponent("", true));
+    assertEquals("%20", URL.encodeComponent(" ", false));
+    assertEquals("+", URL.encodeComponent(" ", true));
+
+    String actualURLComponent = URL.encodeComponent(DECODED_URL_COMPONENT, false);
     assertEquals(ENCODED_URL_COMPONENT, actualURLComponent);
+
+    actualURLComponent = URL.encodeComponent(DECODED_URL_COMPONENT, true);
+    assertEquals(ENCODED_URL_COMPONENT_QS, actualURLComponent);
   }
 }
