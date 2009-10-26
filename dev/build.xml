@@ -6,7 +6,8 @@
 
   <property name="alldeps.jar" location="${project.build}/alldeps.jar" />
   <property name="gwt.junit.testcase.dev.core.includes" value="**/com/google/**/*Test.class" />
-  <property name="gwt.junit.testcase.dev.core.excludes" value="" />
+  <!-- BrowserManagerTest is brought in from user and is not instantiable. -->
+  <property name="gwt.junit.testcase.dev.core.excludes" value="**/BrowserManagerTest.class" />
 
   <target name="clean" description="Cleans this project's intermediate and output files">
     <delete dir="${project.build}" failonerror="false" />
