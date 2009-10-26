@@ -66,7 +66,7 @@ class Shared {
   static Set<String> getEnhancedTypes(PropertyOracle propertyOracle) {
     try {
       ConfigurationProperty prop = propertyOracle.getConfigurationProperty(RPC_ENHANCED_CLASSES);
-      return Collections.unmodifiableSet(new HashSet(prop.getValues()));
+      return Collections.unmodifiableSet(new HashSet<String>(prop.getValues()));
     } catch (BadPropertyValueException e) {
       return null;
     }

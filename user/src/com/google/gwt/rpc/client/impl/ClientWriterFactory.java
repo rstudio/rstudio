@@ -61,6 +61,7 @@ public class ClientWriterFactory {
     return reader;
   }
 
+  @SuppressWarnings("unused") // used by super-source peer
   public static SerializationStreamWriter createWriter(
       TypeOverrides typeOverrides, CommandSink commandSink) {
     return new CommandServerSerializationStreamWriter(commandSink);

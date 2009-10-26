@@ -1243,11 +1243,9 @@ public class SerializableTypeOracleBuilder {
       }
 
       boolean superTypeOk = false;
-      if (superType != null) {
-        superTypeOk = checkSubtype(logger, superType, originalType,
-            TypePaths.createSupertypePath(parent, superType, classOrInterface),
-            problems);
-      }
+      superTypeOk = checkSubtype(logger, superType, originalType,
+          TypePaths.createSupertypePath(parent, superType, classOrInterface),
+          problems);
 
       /*
        * If my super type did not check out, then I am not instantiable and we

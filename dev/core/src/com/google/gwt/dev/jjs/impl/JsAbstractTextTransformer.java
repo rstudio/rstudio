@@ -61,21 +61,36 @@ public abstract class JsAbstractTextTransformer {
     starts.add(newJs.length());
   }
 
+  // FIXME document parameters
   /**
    * Called if any operations need to be performed before all statements have
    * been processed.
+   * 
+   * @param newJs
+   * @param starts
+   * @param ends
    */
   protected void beginStatements(StringBuilder newJs, ArrayList<Integer> starts,
       ArrayList<Integer> ends) {
   }
 
+  // FIXME document
+  /**
+   * @param newJs
+   * @param ends
+   */
   protected void endStatement(StringBuilder newJs, ArrayList<Integer> ends) {
     ends.add(newJs.length());
   }
 
+  // FIXME document parameters
   /**
    * Called if any operations need to be performed after all statements have
    * been processed.
+   *
+   * @param newJs
+   * @param starts
+   * @param ends
    */
   protected void endStatements(StringBuilder newJs, ArrayList<Integer> starts,
       ArrayList<Integer> ends) {

@@ -35,7 +35,7 @@ public interface Member extends Serializable {
   /**
    * Compares Members based on type and source name.
    */
-  Comparator<Member> TYPE_AND_SOURCE_NAME_COMPARATOR = new TypeAndSourceNameComparator();;
+  Comparator<Member> TYPE_AND_SOURCE_NAME_COMPARATOR = new TypeAndSourceNameComparator();
 
   /**
    * Returns the (possibly obfuscated) identifier used in the output.

@@ -58,6 +58,7 @@ public class CommandServerSerializationStreamReader implements
 
   class Visitor extends RpcCommandVisitor {
 
+    @SuppressWarnings("hiding")
     private final Stack<Object> values = new Stack<Object>();
 
     @Override

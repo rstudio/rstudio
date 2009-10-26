@@ -627,6 +627,9 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     return false;
   }
 
+  /**
+   * @param search the search string, currently ignored.
+   */
   private void showFindResult(DefaultMutableTreeNode node, String search) {
     // TODO(jat): highlight search string
     TreePath path = new TreePath(node.getPath());

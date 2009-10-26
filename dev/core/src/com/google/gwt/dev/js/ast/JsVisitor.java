@@ -90,6 +90,7 @@ public class JsVisitor {
     }
   };
 
+  @SuppressWarnings("cast")
   public final <T extends JsVisitable> T accept(T node) {
     // The following cast to T is needed for javac 1.5.0_13
     // as shipped on OS X

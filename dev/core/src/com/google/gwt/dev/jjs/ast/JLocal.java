@@ -20,8 +20,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Java local variable definition.
  */
-public class JLocal extends JVariable implements HasEnclosingMethod,
-    CanHaveInitializer {
+public class JLocal extends JVariable implements HasEnclosingMethod {
 
   private final JMethodBody enclosingMethodBody;
 

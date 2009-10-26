@@ -41,9 +41,6 @@ import java.util.Map.Entry;
  */
 public final class Utility {
 
-  private static final String GWT_TMP_DIR = "gwt-tmp";
-
-  private static String sDevJarName = null;
   private static String sInstallPath = null;
 
   /**
@@ -239,9 +236,8 @@ public final class Utility {
    * Creates a randomly-named temporary directory.
    * 
    * @param baseDir base directory to contain the new directory. May be
-   *          {@code null}, in which case a subdirectory under the
-   *          {@code java.io.tmpdir} system property, named by
-   *          {@link #GWT_TMP_DIR}, will be used.
+   *          {@code null}, in which case the directory given by the
+   *          {@code java.io.tmpdir} system property will be used.
    * @param prefix the initial characters of the new directory name
    * @return a newly-created temporary directory; the caller must delete this
    *          directory (either when done or on VM exit)
@@ -340,7 +336,6 @@ public final class Utility {
                 + devJarFile.getCanonicalPath()
                 + " does not appear to be a valid file");
           }
-          sDevJarName = devJarFile.getName();
 
           String dirPath = jarPath.substring(0, jarPath.lastIndexOf('/') + 1);
           File installDirFile = new File(URI.create(dirPath));
@@ -361,10 +356,8 @@ public final class Utility {
         int pos = override.lastIndexOf('/');
         if (pos < 0) {
           sInstallPath = "";
-          sDevJarName = override;
         } else {
           sInstallPath = override.substring(0, pos);
-          sDevJarName = override.substring(pos + 1);
         }
       }
     } catch (IOException e) {

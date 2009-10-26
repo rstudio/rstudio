@@ -113,6 +113,11 @@ public class Style extends JavaScriptObject {
         return BORDER_STYLE_DASHED;
       }
     },
+    HIDDEN {
+      public String getCssName() {
+        return BORDER_STYLE_HIDDEN;
+      }
+    },
     SOLID {
       public String getCssName() {
         return BORDER_STYLE_SOLID;

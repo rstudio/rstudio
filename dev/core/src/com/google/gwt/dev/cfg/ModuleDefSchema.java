@@ -350,6 +350,7 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
+    @SuppressWarnings("unused")
     protected Schema __property_provider_begin(BindingProperty property) {
       return fChild = new PropertyProviderBodySchema();
     }
@@ -372,6 +373,7 @@ public class ModuleDefSchema extends Schema {
       property.setProvider(new PropertyProvider(fn.getBody().toSource()));
     }
 
+    @SuppressWarnings("unused")
     protected Schema __public_begin(String path, String includes,
         String excludes, String defaultExcludes, String caseSensitive) {
       return fChild = new IncludeExcludeSchema();
@@ -485,6 +487,7 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
+    @SuppressWarnings("unused")
     protected Schema __set_property_begin(BindingProperty prop,
         PropertyValue[] value) throws UnableToCompleteException {
       bindingPropertyCondition = new ConditionAll();
@@ -537,6 +540,7 @@ public class ModuleDefSchema extends Schema {
      * Indicates which subdirectories contain translatable source without
      * necessarily adding a sourcepath entry.
      */
+    @SuppressWarnings("unused")
     protected Schema __source_begin(String path, String includes,
         String excludes, String defaultExcludes, String caseSensitive) {
       return fChild = new IncludeExcludeSchema();
@@ -561,6 +565,7 @@ public class ModuleDefSchema extends Schema {
      * Like adding a translatable source package, but such that it uses the
      * module's package itself as its sourcepath root entry.
      */
+    @SuppressWarnings("unused")
     protected Schema __super_source_begin(String path, String includes,
         String excludes, String defaultExcludes, String caseSensitive) {
       return fChild = new IncludeExcludeSchema();
@@ -1181,6 +1186,7 @@ public class ModuleDefSchema extends Schema {
     registerAttributeConverter(Class.class, classAttrCvt);
   }
 
+  @SuppressWarnings("unused")
   protected Schema __module_begin(NullableName renameTo) {
     return bodySchema;
   }

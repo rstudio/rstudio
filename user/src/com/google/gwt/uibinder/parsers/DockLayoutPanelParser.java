@@ -106,8 +106,7 @@ public class DockLayoutPanelParser implements ElementParser {
     return DOCK_NAMES.get(elem.getLocalName());
   }
 
-  private JClassType getSplitLayoutPanelType(UiBinderWriter writer)
-      throws UnableToCompleteException {
+  private JClassType getSplitLayoutPanelType(UiBinderWriter writer) {
     try {
       return writer.getOracle().getType(SplitLayoutPanel.class.getName());
     } catch (NotFoundException e) {

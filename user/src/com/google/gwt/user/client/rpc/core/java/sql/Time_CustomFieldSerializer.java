@@ -28,6 +28,7 @@ import java.sql.Time;
  */
 public final class Time_CustomFieldSerializer {
 
+  @SuppressWarnings("unused")
   public static void deserialize(SerializationStreamReader streamReader,
       Time instance) {
     // No fields

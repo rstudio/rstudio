@@ -23,10 +23,6 @@ import java.util.List;
  */
 public class MethodCall extends Expression {
 
-  private final List<String> arguments;
-
-  private final String name;
-
   /**
    * Creates a new MethodCall Expression.
    * 
@@ -37,9 +33,6 @@ public class MethodCall extends Expression {
    *            call.
    */
   public MethodCall(String name, List<String> arguments) {
-    this.name = name;
-    this.arguments = arguments;
-
     StringBuffer call = new StringBuffer(name + "(");
 
     if (arguments != null) {

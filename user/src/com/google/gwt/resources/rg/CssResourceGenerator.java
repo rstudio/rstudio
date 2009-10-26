@@ -38,7 +38,6 @@ import com.google.gwt.resources.client.CssResource.Import;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.resources.client.CssResource.Shared;
-import com.google.gwt.resources.client.CssResource.Strict;
 import com.google.gwt.resources.css.ClassRenamer;
 import com.google.gwt.resources.css.CssGenerationVisitor;
 import com.google.gwt.resources.css.DefsCollector;
@@ -424,7 +423,7 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
 
     sw.println("public String getText() {");
     sw.indent();
-    boolean strict = isStrict(logger, context, method);
+    boolean strict = isStrict(logger, method);
     Map<JMethod, String> actualReplacements = new IdentityHashMap<JMethod, String>();
     String cssExpression = makeExpression(logger, context, cssResourceSubtype,
         stylesheetMap.get(method), replacementsWithPrefix, strict,
@@ -730,17 +729,18 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
    * also perform some limited sanity-checking for the now-deprecated Strict
    * annotation.
    */
-  @SuppressWarnings("deprecation")
-  private boolean isStrict(TreeLogger logger, ResourceContext context,
-      JMethod method) {
-    Strict strictAnnotation = method.getAnnotation(Strict.class);
+  @SuppressWarnings("deprecation") // keep references to deprecated Strict annotation local
+  private boolean isStrict(TreeLogger logger, JMethod method) {
+    com.google.gwt.resources.client.CssResource.Strict strictAnnotation =
+      method.getAnnotation(com.google.gwt.resources.client.CssResource.Strict.class);
     NotStrict nonStrictAnnotation = method.getAnnotation(NotStrict.class);
     boolean strict = true;
 
     if (strictAnnotation != null && nonStrictAnnotation != null) {
       // Both annotations
       logger.log(TreeLogger.WARN, "Contradictory annotations "
-          + Strict.class.getName() + " and " + NotStrict.class.getName()
+          + com.google.gwt.resources.client.CssResource.Strict.class.getName()
+          + " and " + NotStrict.class.getName()
           + " applied to the CssResource accessor method; assuming strict");
 
     } else if (nonStrictAnnotation != null) {

@@ -80,7 +80,6 @@ public class HostedModePluginObject extends ScriptableObject {
   private class DisconnectMethod extends ScriptableObject implements Function {
 
     private static final long serialVersionUID = -8799481412144519779L;
-    private static final int EXPECTED_NUM_ARGS = 0;
 
     public Object call(Context context, Scriptable scope, Scriptable thisObj,
         Object[] args) {

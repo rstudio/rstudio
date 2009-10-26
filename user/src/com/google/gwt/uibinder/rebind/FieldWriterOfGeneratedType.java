@@ -21,8 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
  * Implementation of FieldWriter for fields whose type we haven't genereated
  * yet, e.g. locally defined CssResources.
  */
-class FieldWriterOfGeneratedType extends AbstractFieldWriter implements
-    FieldWriter {
+class FieldWriterOfGeneratedType extends AbstractFieldWriter {
 
   private final String typePackage;
   private final String typeName;

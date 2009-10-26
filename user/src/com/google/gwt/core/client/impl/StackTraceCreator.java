@@ -86,6 +86,8 @@ public class StackTraceCreator {
     /**
      * Attempt to infer the stack from an unknown JavaScriptObject that had been
      * thrown. The default implementation just returns an empty array.
+     * 
+     * @param e a JavaScriptObject
      */
     public JsArrayString inferFrom(JavaScriptObject e) {
       return JavaScriptObject.createArray().cast();

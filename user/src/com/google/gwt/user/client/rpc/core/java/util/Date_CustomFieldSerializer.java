@@ -26,6 +26,7 @@ import java.util.Date;
  */
 public final class Date_CustomFieldSerializer {
 
+  @SuppressWarnings("unused")
   public static void deserialize(SerializationStreamReader streamReader,
       Date instance) {
     // No fields

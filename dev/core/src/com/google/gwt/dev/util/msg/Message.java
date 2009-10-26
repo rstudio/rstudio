@@ -84,34 +84,66 @@ public abstract class Message {
     this.minChars = minNumChars;
   }
 
+  /**
+   * @param c a Class
+   * @return a suitable Formatter
+   */
   protected final Formatter getFormatter(Class c) {
     return FMT_CLASS;
   }
 
+  /**
+   * @param f a File
+   * @return a suitable Formatter
+   */
   protected final Formatter getFormatter(File f) {
     return FMT_FILE;
   }
 
+  /**
+   * @param i an Integer
+   * @return a suitable Formatter
+   */
   protected final Formatter getFormatter(Integer i) {
     return FMT_INTEGER;
   }
 
+  /**
+   * @param l a Long
+   * @return a suitable Formatter
+   */
   protected Formatter getFormatter(Long l) {
     return FMT_LONG;
   }
 
+  /**
+   * @param m a Method
+   * @return a suitable Formatter
+   */
   protected final Formatter getFormatter(Method m) {
     return FMT_METHOD;
   }
 
+  /**
+   * @param s a String
+   * @return a suitable Formatter
+   */
   protected final Formatter getFormatter(String s) {
     return FMT_STRING;
   }
 
+  /**
+   * @param sa a String array
+   * @return a suitable Formatter
+   */
   protected final Formatter getFormatter(String[] sa) {
     return FMT_STRING_ARRAY;
   }
 
+  /**
+   * @param u a URL
+   * @return a suitable Formatter
+   */
   protected final Formatter getFormatter(URL u) {
     return FMT_URL;
   }

@@ -35,16 +35,30 @@ public class PopupImpl {
     return DOM.getParent(popup);
   }
 
+  /**
+   * @param popup the popup
+   */
   public void onHide(Element popup) {
   }
 
+  /**
+   * @param popup the popup
+   */
   public void onShow(Element popup) {
   }
 
+  /**
+   * @param popup the popup
+   * @param rect the clip rect
+   */
   public void setClip(Element popup, String rect) {
     DOM.setStyleAttribute(popup, "clip", rect);
   }
 
+  /**
+   * @param popup the popup
+   * @param visible true if visible
+   */
   public void setVisible(Element popup, boolean visible) {
   }
 }

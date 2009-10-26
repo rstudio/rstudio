@@ -29,7 +29,7 @@ public final class HandlerParam {
    */
   public static HandlerParam create(Method method, String normalizedTagName,
       int paramIndex) {
-    Class paramType = method.getParameterTypes()[paramIndex];
+    Class<?> paramType = method.getParameterTypes()[paramIndex];
     Field[] fields = method.getDeclaringClass().getDeclaredFields();
     String fieldNamePrefix = normalizedTagName + "_" + (paramIndex + 1);
     Field matchingField = null;
@@ -78,13 +78,13 @@ public final class HandlerParam {
     return handlerParam;
   }
 
-  private final Class paramType;
+  private final Class<?> paramType;
 
   private final Field metaField;
 
   private final String normalizedAttrName;
 
-  private HandlerParam(Class paramType, Field metaField,
+  private HandlerParam(Class<?> paramType, Field metaField,
       String normalizedAttrName) {
     this.paramType = paramType;
     this.metaField = metaField;

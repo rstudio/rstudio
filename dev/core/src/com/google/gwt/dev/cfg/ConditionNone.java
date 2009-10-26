@@ -34,7 +34,7 @@ public class ConditionNone extends CompoundCondition {
   protected boolean doEval(TreeLogger logger, PropertyOracle propertyOracle,
       TypeOracle typeOracle, String testType) throws UnableToCompleteException {
     for (Iterator<Condition> iter = getConditions().iterator(); iter.hasNext();) {
-      Condition condition = (Condition) iter.next();
+      Condition condition = iter.next();
       if (condition.isTrue(logger, propertyOracle, typeOracle, testType)) {
         return false;
       }

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.core.ext.soyc;
 
-import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.Comparator;
 
@@ -31,7 +30,7 @@ class SourceNameComparator implements Comparator<Member>, Serializable {
   /**
    * Always use the singleton instance.
    */
-  private Object readResolve() throws ObjectStreamException {
+  private Object readResolve() {
     return Member.SOURCE_NAME_COMPARATOR;
   }
 }

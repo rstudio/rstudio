@@ -101,7 +101,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
       return handleHasTextPlaceholder(elem, name, idHolder);
    }
 
-    return handleOpaqueWidgetPlaceholder(elem, name, idHolder);
+    return handleOpaqueWidgetPlaceholder(name, idHolder);
   }
 
   /**
@@ -175,8 +175,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
     return openPlaceholder + bodyToken + closePlaceholder;
   }
 
-  private String handleOpaqueWidgetPlaceholder(XMLElement elem, String name,
-      String idHolder) throws UnableToCompleteException {
+  private String handleOpaqueWidgetPlaceholder(String name, String idHolder) {
     String tag = String.format("<span id='\" + %s + \"'></span>", idHolder);
     String placeholder = nextPlaceholder(name, "<span></span>", tag);
     return placeholder;

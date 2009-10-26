@@ -71,7 +71,8 @@ final class JsHoister {
     public void endVisit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
       JsArrayLiteral toReturn = new JsArrayLiteral(x.getSourceInfo());
       List<JsExpression> expressions = toReturn.getExpressions();
-      for (JsExpression e : x.getExpressions()) {
+      int size = x.getExpressions().size();
+      while (size-- > 0) {
         expressions.add(0, stack.pop());
       }
       stack.push(toReturn);
@@ -120,7 +121,8 @@ final class JsHoister {
     public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
       JsInvocation toReturn = new JsInvocation(x.getSourceInfo());
       List<JsExpression> params = toReturn.getArguments();
-      for (JsExpression e : x.getArguments()) {
+      int size = x.getArguments().size();
+      while (size-- > 0) {
         params.add(0, stack.pop());
       }
       toReturn.setQualifier(stack.pop());
@@ -152,7 +154,8 @@ final class JsHoister {
       JsNew toReturn = new JsNew(x.getSourceInfo());
 
       List<JsExpression> arguments = toReturn.getArguments();
-      for (JsExpression a : x.getArguments()) {
+      int size = x.getArguments().size();
+      while (size-- > 0) {
         arguments.add(0, stack.pop());
       }
       toReturn.setConstructorExpression(stack.pop());
@@ -174,7 +177,8 @@ final class JsHoister {
       JsObjectLiteral toReturn = new JsObjectLiteral(x.getSourceInfo());
       List<JsPropertyInitializer> inits = toReturn.getPropertyInitializers();
 
-      for (JsPropertyInitializer init : x.getPropertyInitializers()) {
+      int size = x.getPropertyInitializers().size();
+      while (size-- > 0) {
         /*
          * JsPropertyInitializers are the only non-JsExpression objects that we
          * care about, so we just go ahead and create the objects in the loop,

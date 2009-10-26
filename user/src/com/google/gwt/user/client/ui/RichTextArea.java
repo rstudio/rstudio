@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.HasAllMouseHandlers;
 import com.google.gwt.event.logical.shared.HasInitializeHandlers;
 import com.google.gwt.event.logical.shared.InitializeEvent;
 import com.google.gwt.event.logical.shared.InitializeHandler;
@@ -45,7 +44,7 @@ import com.google.gwt.user.client.ui.impl.RichTextAreaImpl;
  */
 @SuppressWarnings("deprecation")
 public class RichTextArea extends FocusWidget implements HasHTML,
-    SourcesMouseEvents, HasAllMouseHandlers, HasInitializeHandlers {
+    HasInitializeHandlers {
 
   /**
    * <p>

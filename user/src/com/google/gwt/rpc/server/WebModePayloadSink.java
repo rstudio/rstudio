@@ -695,8 +695,8 @@ public class WebModePayloadSink extends CommandSink {
           leafType = leafType.getComponentType();
         } while (leafType.getComponentType() != null);
         assert dims > 0;
-        assert leafType != null;
-
+        // leafType cannot be null here
+        
         String s = getJavahSignatureName(leafType);
         for (int i = 0; i < dims; ++i) {
           s = "_3" + s;

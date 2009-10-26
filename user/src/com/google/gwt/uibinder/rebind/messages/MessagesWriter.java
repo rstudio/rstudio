@@ -291,8 +291,7 @@ public class MessagesWriter {
     return uri != null && uri.startsWith(getMessagesUri());
   }
 
-  private String declareMessage(XMLElement elem, String defaultMessage)
-      throws UnableToCompleteException {
+  private String declareMessage(XMLElement elem, String defaultMessage) {
     List<PlaceholderWriter> emptyList = Collections.emptyList();
     MessageWriter newMessage = newMessage(elem);
     newMessage.setDefaultMessage(defaultMessage);

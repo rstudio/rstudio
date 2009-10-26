@@ -209,6 +209,7 @@ public final class GWT {
    * supplied with a class literal. No two runAsync calls in the same program
    * should use the same name.
    */
+  @SuppressWarnings("unused") // parameter will be used following replacement
   public static void runAsync(Class<?> name, RunAsyncCallback callback) {
     runAsyncWithoutCodeSplitting(callback);
   }

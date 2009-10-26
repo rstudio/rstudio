@@ -1155,7 +1155,9 @@ public abstract class BrowserChannel {
       return false;
     }
 
-    // IOException thrown by subclasses
+    /**
+     * @throws IOException if a subclass encounters an I/O error
+     */
     public void send() throws IOException {
       throw new UnsupportedOperationException(getClass().getName()
           + " is a message format that can only be received.");

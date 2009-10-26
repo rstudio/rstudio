@@ -267,6 +267,11 @@ public abstract class AbstractTreeLogger extends TreeLogger {
    * @deprecated This method has been deprecated; override
    *             {@link #doCommitBranch(AbstractTreeLogger, com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)}
    *             instead.
+   *
+   * @param childBeingCommitted
+   * @param type
+   * @param msg
+   * @param caught
    */
   @Deprecated
   protected final void doCommitBranch(AbstractTreeLogger childBeingCommitted,
@@ -285,6 +290,11 @@ public abstract class AbstractTreeLogger extends TreeLogger {
    * @deprecated This method has been deprecated; override
    *             {@link #branch(com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)
    *             instead.
+   *
+   * @param indexOfLogEntryWithinParentLogger
+   * @param type
+   * @param msg
+   * @param caught
    */
   @Deprecated
   protected final void doLog(int indexOfLogEntryWithinParentLogger,

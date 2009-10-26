@@ -187,7 +187,7 @@ public class JUnitMessageQueue {
         throw new IllegalArgumentException("results cannot be null");
       }
       userAgents.add(userAgent);
-      ClientStatus clientStatus = ensureClientStatus(clientId);
+      ensureClientStatus(clientId);
 
       // Cache the test results.
       for (Map.Entry<TestInfo, JUnitResult> entry : results.entrySet()) {

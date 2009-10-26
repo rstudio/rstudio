@@ -156,6 +156,9 @@ public class HybridServiceServlet extends RpcServlet implements
         moduleBaseURL, strongName);
   }
 
+  /**
+   * @param serializedResponse
+   */
   protected void onAfterResponseSerialized(String serializedResponse) {
   }
 

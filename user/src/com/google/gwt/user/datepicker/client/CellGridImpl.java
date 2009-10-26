@@ -107,14 +107,23 @@ abstract class CellGridImpl<V> extends Grid {
       }
     }
 
+    /**
+     * @param enabled
+     */
     protected void onEnabled(boolean enabled) {
       updateStyle();
     }
 
+    /**
+     * @param highlighted
+     */
     protected void onHighlighted(boolean highlighted) {
       updateStyle();
     }
 
+    /**
+     * @param selected
+     */
     protected void onSelected(boolean selected) {
       updateStyle();
     }

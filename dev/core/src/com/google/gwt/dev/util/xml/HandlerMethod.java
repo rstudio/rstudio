@@ -107,7 +107,7 @@ public final class HandlerMethod {
 
       // Can the corresponding element have arbitrary children?
       //
-      Class returnType = method.getReturnType();
+      Class<?> returnType = method.getReturnType();
       boolean arbitraryChildren = false;
       if (type == TYPE_BEGIN) {
         if (Schema.class.isAssignableFrom(returnType)) {
@@ -115,7 +115,7 @@ public final class HandlerMethod {
 
           // Also, we need to register this schema type.
           //
-          ReflectiveParser.registerSchemaLevel(returnType);
+          ReflectiveParser.registerSchemaLevel((Class<? extends Schema>) returnType);
 
         } else if (returnType.equals(Void.TYPE)) {
           arbitraryChildren = true;
@@ -131,7 +131,7 @@ public final class HandlerMethod {
       // Create handler args.
       //
       if (type == TYPE_TEXT) {
-        Class[] paramTypes = method.getParameterTypes();
+        Class<?>[] paramTypes = method.getParameterTypes();
         if (paramTypes.length != 1 || !String.class.equals(paramTypes[0])) {
           throw new IllegalArgumentException(
               "__text handlers must have exactly one String parameter");
@@ -142,8 +142,8 @@ public final class HandlerMethod {
         //
         return new HandlerMethod(method, type, false, EMPTY_HANDLERPARAMS);
       } else {
-        Class[] paramTypes = method.getParameterTypes();
-        List handlerParams = new ArrayList();
+        Class<?>[] paramTypes = method.getParameterTypes();
+        List<HandlerParam> handlerParams = new ArrayList<HandlerParam>();
         for (int i = 0, n = paramTypes.length; i < n; ++i) {
           HandlerParam handlerParam = HandlerParam.create(method,
               normalizedTagName, i);
@@ -155,7 +155,7 @@ public final class HandlerMethod {
           }
         }
 
-        HandlerParam[] hpa = (HandlerParam[]) handlerParams.toArray(EMPTY_HANDLERPARAMS);
+        HandlerParam[] hpa = handlerParams.toArray(EMPTY_HANDLERPARAMS);
         return new HandlerMethod(method, type, arbitraryChildren, hpa);
       }
     } catch (Exception e) {

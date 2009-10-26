@@ -527,6 +527,10 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     throw thrown;
   }
 
+  /**
+   * @param original the thrown exception
+   * @param exception the caught exception
+   */
   protected boolean isExceptionSame(Throwable original, Object exception) {
     // For most platforms, the null exception means we threw it.
     // IE overrides this.

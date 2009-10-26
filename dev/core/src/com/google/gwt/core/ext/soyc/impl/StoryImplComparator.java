@@ -17,7 +17,6 @@ package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.soyc.Story;
 
-import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.Comparator;
 
@@ -32,7 +31,7 @@ public class StoryImplComparator implements Comparator<Story>, Serializable {
   /**
    * Use the singleton instance.
    */
-  private Object readResolve() throws ObjectStreamException {
+  private Object readResolve() {
     return StoryImpl.ID_COMPARATOR;
   }
 }

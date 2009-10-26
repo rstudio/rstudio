@@ -24,18 +24,19 @@ import java.util.Map;
  */
 public class HandlerClassInfo {
   private static final HandlerMethod[] EMPTY_ARRAY_HANDLERMETHOD = new HandlerMethod[0];
-  private static Map sClassInfoMap = new HashMap();
+  private static Map<Class<?>,HandlerClassInfo> sClassInfoMap =
+    new HashMap<Class<?>,HandlerClassInfo>();
 
-  public static synchronized HandlerClassInfo getClassInfo(Class c) {
+  public static synchronized HandlerClassInfo getClassInfo(Class<?> c) {
     if (sClassInfoMap.containsKey(c)) {
-      return (HandlerClassInfo) sClassInfoMap.get(c);
+      return sClassInfoMap.get(c);
     } else {
       throw new RuntimeException("The schema class '" + c.getName()
           + "' should have been registered prior to parsing");
     }
   }
 
-  public static synchronized void registerClass(Class c) {
+  public static synchronized void registerClass(Class<?> c) {
     if (sClassInfoMap.containsKey(c)) {
       return;
     }
@@ -48,8 +49,8 @@ public class HandlerClassInfo {
     sClassInfoMap.put(c, classInfo);
   }
 
-  private static HandlerClassInfo createClassInfo(Class c) {
-    Map namedHandlerMethods = new HashMap();
+  private static HandlerClassInfo createClassInfo(Class<?> c) {
+    Map<String,HandlerMethod> namedHandlerMethods = new HashMap<String,HandlerMethod>();
     try {
       loadClassInfoRecursive(namedHandlerMethods, c);
     } catch (Exception e) {
@@ -60,7 +61,8 @@ public class HandlerClassInfo {
     return classInfo;
   }
 
-  private static void loadClassInfoRecursive(Map namedHandlerMethods, Class c) {
+  private static void loadClassInfoRecursive(Map<String,HandlerMethod> namedHandlerMethods,
+      Class<?> c) {
     if (!Schema.class.isAssignableFrom(c)) {
       // Have gone up as far as we can go.
       //
@@ -84,35 +86,34 @@ public class HandlerClassInfo {
 
     // Recurse into superclass.
     //
-    Class superclass = c.getSuperclass();
+    Class<?> superclass = c.getSuperclass();
     if (superclass != null) {
       loadClassInfoRecursive(namedHandlerMethods, superclass);
     }
   }
 
-  private final Map namedHandlerMethods;
+  private final Map<String,HandlerMethod> namedHandlerMethods;
 
   // Nobody else can create one.
-  private HandlerClassInfo(Map namedHandlerMethods) {
+  private HandlerClassInfo(Map<String,HandlerMethod> namedHandlerMethods) {
     this.namedHandlerMethods = namedHandlerMethods;
   }
 
   public HandlerMethod getEndMethod(String localName) {
     String methodName = "__" + localName.replace('-', '_');
-    return (HandlerMethod) namedHandlerMethods.get(methodName + "_end");
+    return namedHandlerMethods.get(methodName + "_end");
   }
 
   public HandlerMethod[] getHandlerMethods() {
-    return (HandlerMethod[]) namedHandlerMethods.values().toArray(
-        EMPTY_ARRAY_HANDLERMETHOD);
+    return namedHandlerMethods.values().toArray(EMPTY_ARRAY_HANDLERMETHOD);
   }
 
   public HandlerMethod getStartMethod(String localName) {
     String methodName = "__" + localName.replace('-', '_');
-    return (HandlerMethod) namedHandlerMethods.get(methodName + "_begin");
+    return namedHandlerMethods.get(methodName + "_begin");
   }
 
   public HandlerMethod getTextMethod() {
-    return (HandlerMethod) namedHandlerMethods.get("__text");
+    return namedHandlerMethods.get("__text");
   }
 }

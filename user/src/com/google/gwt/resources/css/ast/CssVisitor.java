@@ -63,93 +63,210 @@ public class CssVisitor {
     doAcceptWithInsertRemove(nodes);
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssDef x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssEval x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssExternalSelectors x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssIf x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssMediaRule x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssNoFlip x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssPageRule x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssProperty x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssRule x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssSelector x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssSprite x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssStylesheet x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public void endVisit(CssUrl x, Context ctx) {
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssDef x, Context ctx) {
     return true;
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssEval x, Context ctx) {
     return true;
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssExternalSelectors x, Context ctx) {
     return true;
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssIf x, Context ctx) {
     return true;
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssMediaRule x, Context ctx) {
     return true;
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssNoFlip x, Context ctx) {
     return true;
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssPageRule x, Context ctx) {
     return true;
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssProperty x, Context ctx) {
     return true;
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssRule x, Context ctx) {
     return true;
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssSelector x, Context ctx) {
     return true;
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssSprite x, Context ctx) {
     return true;
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssStylesheet x, Context ctx) {
     return true;
   }
 
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   * @return
+   */
   public boolean visit(CssUrl x, Context ctx) {
     return true;
   }

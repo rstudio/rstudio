@@ -554,9 +554,8 @@ public final class CompilingClassLoader extends ClassLoader implements
               intfMethod.getName(), parameterTypes)) == null) {
             implementingType = implementingType.getSuperclass();
           }
-          assert implementingMethod != null && implementingType != null : "Unable to find virtual override for "
-              + intfMethod.toString();
-
+          // implementingmethod and implementingType cannot be null here
+          
           /*
            * Create a pseudo-method declaration for the interface method. This
            * should look something like

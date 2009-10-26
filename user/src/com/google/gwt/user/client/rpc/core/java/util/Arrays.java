@@ -38,7 +38,7 @@ public final class Arrays {
      * toArray() results the correct type, and can generate internal
      * ArrayStoreExceptions.
      */
-
+    @SuppressWarnings("unused")
     public static void deserialize(SerializationStreamReader streamReader,
         List instance) throws SerializationException {
       // Handled in instantiate.

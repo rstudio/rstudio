@@ -217,6 +217,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    */
   private static class SuggestionMenuItem extends MenuItem {
 
+    @SuppressWarnings("hiding")
     private static final String STYLENAME_DEFAULT = "item";
 
     private Suggestion suggestion;

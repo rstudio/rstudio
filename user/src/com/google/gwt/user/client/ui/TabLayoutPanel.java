@@ -60,7 +60,7 @@ import java.util.Iterator;
  * - Update style mechanism (gwt-Tab, etc. not really sufficient).
  */
 public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
-    RequiresResize, ProvidesResize, IndexedPanel,
+    ProvidesResize, IndexedPanel,
     HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
 
   private static final int BIG_ENOUGH_TO_NOT_WRAP = 16384;

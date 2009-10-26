@@ -66,8 +66,8 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
     primaryCorrelations = new Correlation[numCorrelationAxes()];
   }
 
-  private SourceInfoCorrelation(SourceInfoCorrelation parent, String mutation,
-      String caller, SourceInfo... additionalAncestors) {
+  private SourceInfoCorrelation(SourceInfoCorrelation parent, String caller,
+      SourceInfo... additionalAncestors) {
     assert parent != null;
     assert caller != null;
     this.origin = parent.origin;
@@ -199,7 +199,7 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
   public SourceInfoCorrelation makeChild(Class<?> caller, String description,
       SourceInfo... merge) {
     String callerName = caller == null ? "Unrecorded caller" : caller.getName();
-    return new SourceInfoCorrelation(this, description, callerName, merge);
+    return new SourceInfoCorrelation(this, callerName, merge);
   }
 
   /**

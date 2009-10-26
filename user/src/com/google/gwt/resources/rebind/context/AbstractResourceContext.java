@@ -69,7 +69,7 @@ public abstract class AbstractResourceContext implements ResourceContext {
     }
 
     toReturn = new HashMap<String, Object>();
-    toReturn.put(TYPE_ORACLE_RELOAD_COUNT_KEY, (Object) oracle.getReloadCount());
+    toReturn.put(TYPE_ORACLE_RELOAD_COUNT_KEY, oracle.getReloadCount());
     CACHES.put(oracle, toReturn);
     return toReturn;
   }

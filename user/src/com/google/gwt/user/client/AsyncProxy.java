@@ -170,6 +170,8 @@ public interface AsyncProxy<T> {
     /**
      * This method will be invoked by the AsyncProxy after method playback is
      * complete.
+     * 
+     * @param instance the instance
      */
     public void onComplete(T instance) {
     }
@@ -187,6 +189,8 @@ public interface AsyncProxy<T> {
      * This method will be called with the instance object before method replay
      * starts. This provides the developer with the opportunity to perform
      * secondary initialization of the backing object.
+     * 
+     * @param instance the instance
      */
     public void onInit(T instance) {
     }

@@ -114,6 +114,12 @@ public class SymbolMapsLinker extends AbstractLinker {
 
   /**
    * Override to change the format of the symbol map.
+   * 
+   * @param logger the logger to write to
+   * @param result the compilation result
+   * @param pw the output PrintWriter
+   *
+   * @throws UnableToCompleteException if an error occurs
    */
   protected void doWriteSymbolMap(TreeLogger logger, CompilationResult result,
       PrintWriter pw) throws UnableToCompleteException {

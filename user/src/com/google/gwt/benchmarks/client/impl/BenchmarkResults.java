@@ -16,7 +16,6 @@
 package com.google.gwt.benchmarks.client.impl;
 
 import com.google.gwt.junit.client.impl.JUnitResult;
-import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +33,7 @@ import java.util.List;
  * @see com.google.gwt.junit.JUnitShell
  * @see com.google.gwt.benchmarks.BenchmarkReport
  */
-public class BenchmarkResults extends JUnitResult implements IsSerializable {
+public class BenchmarkResults extends JUnitResult {
 
   /**
    * The URL of the document on the browser (document.location). This is used to

@@ -105,6 +105,7 @@ public class JsConstructExpressionVisitor extends JsVisitor {
   /**
    * We only look at nodes that would not normally be surrounded by parentheses.
    */
+  @SuppressWarnings("cast")
   protected <T extends JsVisitable<T>> T doAccept(T node) {
     /*
      * Extra casts to Object to prevent 'inconvertible types' compile errors due

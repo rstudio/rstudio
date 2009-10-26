@@ -137,8 +137,7 @@ public class CommandClientSerializationStreamWriter extends
   }-*/;
 
   private ValueCommand invokeCustomSerializer(
-      SerializeFunction serializeFunction, Class<?> type, Object value)
-      throws SerializationException {
+      SerializeFunction serializeFunction, Class<?> type, Object value) {
     InvokeCustomFieldSerializerCommand command = new InvokeCustomFieldSerializerCommand(
         type, null, null);
     identityMap.put(value, command);

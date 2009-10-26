@@ -50,6 +50,7 @@ public class CalendarUtil {
    * @param date the date
    * @param days number of days
    */
+  @SuppressWarnings("deprecation") // GWT requires Date
   public static void addDaysToDate(Date date, int days) {
     date.setDate(date.getDate() + days);
   }
@@ -60,6 +61,7 @@ public class CalendarUtil {
    * @param date the date
    * @param months number of months
    */
+  @SuppressWarnings("deprecation") // GWT requires Date
   public static void addMonthsToDate(Date date, int months) {
     if (months != 0) {
       int month = date.getMonth();
@@ -130,6 +132,7 @@ public class CalendarUtil {
    * @param date1 a second date
    * @return true if the dates are the same
    */
+  @SuppressWarnings("deprecation") // GWT requires Date
   public static boolean isSameDate(Date date0, Date date1) {
     assert date0 != null : "date0 cannot be null";
     assert date1 != null : "date1 cannot be null";
@@ -144,6 +147,7 @@ public class CalendarUtil {
    * 
    * @param date the date
    */
+  @SuppressWarnings("deprecation") // GWT requires Date
   public static void setToFirstDayOfMonth(Date date) {
     resetTime(date);
     date.setDate(1);
@@ -164,6 +168,7 @@ public class CalendarUtil {
    * 
    * @param date the date
    */
+  @SuppressWarnings("deprecation") // GWT requires Date
   private static void resetTime(Date date) {
     long msec = date.getTime();
     msec = (msec / 1000) * 1000;
@@ -176,3 +181,4 @@ public class CalendarUtil {
     date.setSeconds(0);
   }
 }
+

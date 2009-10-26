@@ -144,6 +144,12 @@ public final class HorizontalSplitPanel extends SplitPanel {
       updateRightWidth(rightElem, newRightWidth);
     }
 
+    /**
+     * Implemented by subclasses.
+     *
+     * @param rightElem
+     * @param newRightWidth
+     */
     public void updateRightWidth(Element rightElem, int newRightWidth) {
       // No need to update the width of the right side; this will be
       // recomputed automatically by CSS. This is helpful, as we do not
@@ -155,6 +161,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
   /**
    * The IE6 implementation for horizontal split panels.
    */
+  @SuppressWarnings("unused") // will be used by IE6 permutation
   private static class ImplIE6 extends Impl {
 
     private boolean isResizeInProgress = false;
@@ -311,6 +318,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
    * The Safari implementation which owes its existence entirely to a single
    * WebKit bug: http://bugs.webkit.org/show_bug.cgi?id=9137.
    */
+  @SuppressWarnings("unused") // will be used by Safari permutation
   private static class ImplSafari extends Impl {
     @Override
     public void init(HorizontalSplitPanel panel) {

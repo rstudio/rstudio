@@ -24,6 +24,7 @@ import com.google.gwt.user.client.rpc.SerializationStreamWriter;
  */
 public final class StackTraceElement_CustomFieldSerializer {
 
+  @SuppressWarnings("unused")
   public static void deserialize(SerializationStreamReader streamReader,
       StackTraceElement instance) {
     // No fields

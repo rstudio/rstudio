@@ -49,6 +49,7 @@ public class HistoryImpl implements HasValueChangeHandlers<String>, HasHandlers 
    *             problem has been solved. It is now a no-op.
    */
   @Deprecated
+  @SuppressWarnings("unused")
   public static void setUpdateHashOnIE6(boolean updateHash) {
   }
 
@@ -146,6 +147,7 @@ public class HistoryImpl implements HasValueChangeHandlers<String>, HasHandlers 
     $wnd.location.hash = this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(historyToken);
   }-*/;
 
+  @SuppressWarnings("unused")
   protected void nativeUpdateOnEvent(String historyToken) {
     // Do nothing, the hash is already updated.
   }

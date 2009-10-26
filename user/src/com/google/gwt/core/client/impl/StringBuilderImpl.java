@@ -156,7 +156,7 @@ public class StringBuilderImpl {
     }
     int appendLength = toAppend.length();
     if (appendLength > 0) {
-      stringArray[arrayLen++] = toAppend == null ? "null" : toAppend;
+      stringArray[arrayLen++] = toAppend;
       stringLength += appendLength;
       /*
        * If we hit 1k elements, let's do a join to reduce the array size. This

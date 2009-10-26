@@ -75,7 +75,7 @@ public class TypeInfo {
       return intf.getDeclaredMethod(methodName, paramTypes);
     } catch (NoSuchMethodException e) {
       if (includeInherited) {
-        Class[] superintfs = intf.getInterfaces();
+        Class<?>[] superintfs = intf.getInterfaces();
         for (int i = 0; i < superintfs.length; i++) {
           Method method = getInterfaceMethod(superintfs[i], methodName,
             paramTypes, true);
@@ -135,7 +135,7 @@ public class TypeInfo {
     // Arrays
     //
     if (type.isArray()) {
-      Class componentType = type.getComponentType();
+      Class<?> componentType = type.getComponentType();
       return getSourceRepresentation(componentType) + "[]";
     }
 

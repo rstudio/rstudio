@@ -21,10 +21,10 @@ package com.google.gwt.dev.util.msg;
 public final class FormatterForClass extends Formatter {
 
   public String format(Object toFormat) {
-    return getNiceTypeName((Class) toFormat);
+    return getNiceTypeName((Class<?>) toFormat);
   }
 
-  private String getNiceTypeName(Class targetType) {
+  private String getNiceTypeName(Class<?> targetType) {
     // Screen out common cases.
     // Otherwise, just pass along the class name.
     if (targetType.isArray()) {

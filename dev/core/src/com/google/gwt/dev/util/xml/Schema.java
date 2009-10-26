@@ -26,7 +26,8 @@ import java.util.Map;
  */
 public abstract class Schema {
 
-  private final Map convertersByType = new HashMap();
+  private final Map<Class<?>, AttributeConverter> convertersByType =
+    new HashMap<Class<?>, AttributeConverter>();
 
   private Schema parent;
 
@@ -37,7 +38,7 @@ public abstract class Schema {
    * specified type.
    */
   public AttributeConverter getAttributeConverter(Class type) {
-    AttributeConverter converter = (AttributeConverter) convertersByType.get(type);
+    AttributeConverter converter = convertersByType.get(type);
     if (converter != null) {
       return converter;
     } else if (parent != null) {

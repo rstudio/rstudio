@@ -92,6 +92,9 @@ class LayoutImpl {
     style.setBottom(0, PX);
   }
 
+  /**
+   * @param parent the parent element
+   */
   public void finalizeLayout(Element parent) {
   }
 
@@ -174,10 +177,12 @@ class LayoutImpl {
     }
   }
 
+  @SuppressWarnings("unused")
   public void onAttach(Element parent) {
     // Do nothing. This exists only to help LayoutImplIE6 avoid memory leaks.
   }
 
+  @SuppressWarnings("unused")
   public void onDetach(Element parent) {
     // Do nothing. This exists only to help LayoutImplIE6 avoid memory leaks.
   }

@@ -105,6 +105,14 @@ public final class VerticalSplitPanel extends SplitPanel {
           panel.getElement(BOTTOM), px, px + splitElemHeight, newBottomHeight);
     }
 
+    /**
+     * @param topElem
+     * @param splitElem
+     * @param bottomElem
+     * @param topHeight
+     * @param bottomTop
+     * @param bottomHeight
+     */
     protected void updateElements(Element topElem, Element splitElem,
         Element bottomElem, int topHeight, int bottomTop, int bottomHeight) {
       setHeight(topElem, topHeight + "px");
@@ -120,6 +128,7 @@ public final class VerticalSplitPanel extends SplitPanel {
   /**
    * Provides an implementation for IE6/7 that relies on 100% length in CSS.
    */
+  @SuppressWarnings("unused") // will be used by IE6 permutation
   private static class ImplIE6 extends Impl {
 
     private static void expandToFitParentHorizontally(Element elem) {

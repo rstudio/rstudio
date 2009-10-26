@@ -516,11 +516,9 @@ public class UiBinderWriter {
     }
 
     JClassType rtn = null;
-    if (pkg != null) {
-      rtn = pkg.findType(tagName);
-      if (rtn == null) {
-        die("No class matching \"%s\" in %s", tagName, ns);
-      }
+    rtn = pkg.findType(tagName);
+    if (rtn == null) {
+      die("No class matching \"%s\" in %s", tagName, ns);
     }
 
     return rtn;

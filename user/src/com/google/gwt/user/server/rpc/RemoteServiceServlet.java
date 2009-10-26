@@ -255,6 +255,8 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
    * Override this method to examine the serialized response that will be
    * returned to the client. The default implementation does nothing and need
    * not be called by subclasses.
+   * 
+   * @param serializedResponse
    */
   protected void onAfterResponseSerialized(String serializedResponse) {
   }
@@ -263,6 +265,8 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
    * Override this method to examine the serialized version of the request
    * payload before it is deserialized into objects. The default implementation
    * does nothing and need not be called by subclasses.
+   * 
+   * @param serializedRequest
    */
   protected void onBeforeRequestDeserialized(String serializedRequest) {
   }

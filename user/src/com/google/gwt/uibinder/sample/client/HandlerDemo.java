@@ -66,7 +66,8 @@ public class HandlerDemo extends Composite {
   }
 
   @UiHandler("buttonSubmit")
-  void doClickSubmit(ClickEvent event) {
+  @SuppressWarnings("unused") 
+  void doClickSubmit(ClickEvent ignored) {
     panelForm.submit();
   }
 

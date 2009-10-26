@@ -369,7 +369,7 @@ public class FieldSerializerCreator {
     if (isArray != null) {
       writeArrayDeserializationStatements(isArray);
     } else if (serializableClass.isEnum() != null) {
-      writeEnumDeserializationStatements(serializableClass.isEnum());
+      writeEnumDeserializationStatements();
     } else {
       writeClassDeserializationStatements();
     }
@@ -379,11 +379,11 @@ public class FieldSerializerCreator {
     sourceWriter.println();
   }
 
-  private void writeEnumDeserializationStatements(JEnumType enumType) {
+  private void writeEnumDeserializationStatements() {
     sourceWriter.println("// Enum deserialization is handled via the instantiate method");
   }
 
-  private void writeEnumSerializationStatements(JEnumType enumType) {
+  private void writeEnumSerializationStatements() {
     sourceWriter.println("assert (instance != null);");
     sourceWriter.println("streamWriter.writeInt(instance.ordinal());");
   }
@@ -477,7 +477,7 @@ public class FieldSerializerCreator {
     if (isArray != null) {
       writeArraySerializationStatements(isArray);
     } else if (serializableClass.isEnum() != null) {
-      writeEnumSerializationStatements(serializableClass.isEnum());
+      writeEnumSerializationStatements();
     } else {
       writeClassSerializationStatements();
     }

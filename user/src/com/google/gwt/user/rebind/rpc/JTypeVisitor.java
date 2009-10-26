@@ -77,27 +77,51 @@ class JTypeVisitor {
     }
   }
 
+  /**
+   * @param typeAnnotation
+   */
   protected void endVisit(JAnnotationType typeAnnotation) {
   }
 
+  /**
+   * @param typeArray
+   */
   protected void endVisit(JArrayType typeArray) {
   }
 
+  /**
+   * @param typeEnum
+   */
   protected void endVisit(JEnumType typeEnum) {
   }
 
+  /**
+   * @param typeGeneric
+   */
   protected void endVisit(JGenericType typeGeneric) {
   }
 
+  /**
+   * @param typeParameterized
+   */
   protected void endVisit(JParameterizedType typeParameterized) {
   }
 
+  /**
+   * @param typePrimitive
+   */
   protected void endVisit(JPrimitiveType typePrimitive) {
   }
 
+  /**
+   * @param typeRaw
+   */
   protected void endVisit(JRawType typeRaw) {
   }
 
+  /**
+   * @param typeReal
+   */
   protected void endVisit(JRealClassType typeReal) {
   }
 
@@ -165,9 +189,15 @@ class JTypeVisitor {
     endVisit(typeReal);
   }
 
+  /**
+   * @param typeParam
+   */
   protected void endVisit(JTypeParameter typeParam) {
   }
 
+  /**
+   * @param typeWild
+   */
   protected void endVisit(JWildcardType typeWild) {
   }
 

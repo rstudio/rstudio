@@ -197,6 +197,7 @@ class PrefixTree extends AbstractCollection<String> {
    *  @param s The String to make safe
    *  @return A safe version of <code>s</code>
    */
+  @SuppressWarnings("unused") // called from JSNI
   private static String safe(String s) {
     return ':' + s;
   }
@@ -207,6 +208,7 @@ class PrefixTree extends AbstractCollection<String> {
    *  @param s A String returned from safe()
    *  @return The original String passed into safe()
    */
+  @SuppressWarnings("unused") // called from JSNI
   private static String unsafe(String s) {
     return s.substring(1);
   }
@@ -463,6 +465,7 @@ class PrefixTree extends AbstractCollection<String> {
    * @param output the collection into which the prefixes will be dumped
    * @param prefix the prefix to filter with
    */
+  @SuppressWarnings("unused") // called from JSNI
   private void dump(Collection<String> output, String prefix) {
     for (String s : this) {
       output.add(prefix + s);

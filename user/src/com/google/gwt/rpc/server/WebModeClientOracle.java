@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.ObjectStreamException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -428,7 +427,7 @@ public final class WebModeClientOracle extends ClientOracle implements
    * Reinitialize the <code>operableFieldMap</code> field when the
    * WebModeClientOracle is reloaded.
    */
-  private Object readResolve() throws ObjectStreamException {
+  private Object readResolve() {
     operableFieldMap = new HashMap<Class<?>, Field[]>();
     return this;
   }

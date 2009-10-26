@@ -342,7 +342,7 @@ public class StoryRecorder {
       assert !dependencyScope.isEmpty();
 
       SourceInfo gapInfo = dependencyScope.peek().info;
-      recordStory(gapInfo, fragment, newRange.length(), newRange, builder);
+      recordStory(gapInfo, fragment, newRange.length(), newRange);
 
       lastEnd += newRange.length();
     }
@@ -355,13 +355,13 @@ public class StoryRecorder {
     if (lastEnd < toStore.getEnd()) {
       Range newRange = new Range(Math.max(lastEnd, toStore.getStart()),
           toStore.getEnd());
-      recordStory(rangeInfo.info, fragment, newRange.length(), newRange, builder);
+      recordStory(rangeInfo.info, fragment, newRange.length(), newRange);
       lastEnd += newRange.length();
     }
   }
 
   private void recordStory(SourceInfo info, int fragment, int length,
-      Range range, StringBuilder builder) throws IOException {
+      Range range) throws IOException {
     assert info != null;
     assert storyCache != null;
 

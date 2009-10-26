@@ -34,7 +34,6 @@ import java.util.Set;
 /**
  * The main executable class for the hosted mode shell.
  */
-@SuppressWarnings("deprecation")
 @Deprecated
 public class GWTShell extends DevModeBase {
 
@@ -90,8 +89,7 @@ public class GWTShell extends DevModeBase {
    * Concrete class to implement all shell options.
    */
   protected static class ShellOptionsImpl extends HostedModeBaseOptionsImpl
-      implements HostedModeBaseOptions, WorkDirs, LegacyCompilerOptions,
-      OptionPortHosted {
+      implements WorkDirs, LegacyCompilerOptions {
     private int localWorkers;
     private File outDir;
 
@@ -183,6 +181,7 @@ public class GWTShell extends DevModeBase {
 
   protected File outDir;
 
+  @SuppressWarnings("unused")
   public void restartServer(TreeLogger logger) throws UnableToCompleteException {
     // Unimplemented.
   }

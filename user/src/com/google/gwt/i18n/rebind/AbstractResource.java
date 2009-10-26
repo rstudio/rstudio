@@ -92,7 +92,7 @@ public abstract class AbstractResource {
    * Encapsulates an ordered set of resources to search for translations.
    */
   public static class ResourceList extends AbstractList<AbstractResource>
-      implements List<AbstractResource>, Set<AbstractResource> {
+      implements Set<AbstractResource> {
 
     private List<AbstractResource> list = new ArrayList<AbstractResource>();
 
@@ -349,6 +349,9 @@ public abstract class AbstractResource {
     this.matchLocale = matchLocale;
   }
   
+  /**
+   * @param key
+   */
   public Collection<String> getExtensions(String key) {
     return new ArrayList<String>();
   }

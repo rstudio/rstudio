@@ -50,7 +50,7 @@ public class DevModeServiceRequestProcessor implements RequestProcessor {
 
     switch (request.getDevModeRequest().getRequestType()) {
       case CAPABILITY_EXCHANGE:
-        return processCapabilityExchange(request.getRequestId());
+        return processCapabilityExchange();
 
       case RESTART_WEB_SERVER:
         return processRestartServer();
@@ -65,7 +65,7 @@ public class DevModeServiceRequestProcessor implements RequestProcessor {
             + request.getDevModeRequest().getRequestType().name());
   }
 
-  private Response processCapabilityExchange(int requestId) {
+  private Response processCapabilityExchange() {
     CapabilityExchange.Builder capabilityExchangeBuilder = CapabilityExchange.newBuilder();
 
     CapabilityExchange.Capability.Builder c1Builder = CapabilityExchange.Capability.newBuilder();

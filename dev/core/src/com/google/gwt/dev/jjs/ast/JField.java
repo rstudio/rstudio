@@ -20,8 +20,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Java field definition.
  */
-public class JField extends JVariable implements CanBeStatic, HasEnclosingType,
-    CanHaveInitializer {
+public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
 
   /**
    * Determines whether the variable is final, volatile, or neither.

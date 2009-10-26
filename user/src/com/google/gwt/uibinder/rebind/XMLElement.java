@@ -298,7 +298,7 @@ public class XMLElement {
    */
   public String consumeInnerText(PostProcessingInterpreter<String> interpreter)
       throws UnableToCompleteException {
-    String text = consumeInnerTextEscapedAsHtmlStringLiteral((Interpreter<String>) interpreter);
+    String text = consumeInnerTextEscapedAsHtmlStringLiteral(interpreter);
     return interpreter.postProcess(text);
   }
 

@@ -89,8 +89,6 @@ public class DeadCodeElimination {
    */
   public class DeadCodeVisitor extends JModVisitor {
 
-    private JClassType currentClass;
-
     /**
      * Expressions whose result does not matter. A parent node should add any
      * children whose result does not matter to this set during the parent's
@@ -257,7 +255,7 @@ public class DeadCodeElimination {
 
     @Override
     public void endVisit(JClassType x, Context ctx) {
-      currentClass = null;
+      // previously set currentClass = null;
     }
 
     @Override
@@ -581,7 +579,7 @@ public class DeadCodeElimination {
 
     @Override
     public boolean visit(JClassType x, Context ctx) {
-      currentClass = x;
+      // previously set currentClass = x;
       return true;
     }
 

@@ -138,7 +138,7 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
     builder.setLength(0);
   }
 
-  private void maybeFlushOutput() throws IOException {
+  private void maybeFlushOutput() {
     if (builder.length() > 8 * 1024) {
       flushOutput();
     }
