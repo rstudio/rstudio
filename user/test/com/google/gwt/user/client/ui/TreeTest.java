@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -154,7 +152,6 @@ public class TreeTest extends GWTTestCase {
     b.setWidget(null);
   }
 
-  @DoNotRunWith({Platform.Htmlunit})
   public void testRemove() {
     Tree t = new Tree();
     TreeItem item = t.addItem("a");

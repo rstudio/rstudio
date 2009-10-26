@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -29,7 +27,6 @@ public class SimpleRadioButtonTest extends GWTTestCase {
     return "com.google.gwt.user.UserTest";
   }
 
-  @DoNotRunWith({Platform.Htmlunit})
   public void testProperties() {
     SimpleRadioButton radio = new SimpleRadioButton("myName");
     assertEquals("myName", radio.getName());

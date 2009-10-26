@@ -34,9 +34,7 @@ import java.util.Queue;
  * number of more detailed tests are in
  * {@link com.google.gwt.core.client.impl.AsyncFragmentLoaderTest}.
  * 
- * This test is flaky on HtmlUnit.
  */
-@DoNotRunWith(Platform.Htmlunit)
 public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
   private static final class LightweightMetricsEvent extends JavaScriptObject {
     protected LightweightMetricsEvent() {
@@ -123,6 +121,7 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
     lwmObserver.uninstall();
   }
 
+  @DoNotRunWith(Platform.Htmlunit)
   public void testMetricsSignalled() {
     if (!GWT.isScript()) {
       // There are no runAsync lightweight metrics in hosted mode

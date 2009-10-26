@@ -19,8 +19,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.HasDirection;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 
@@ -147,7 +145,6 @@ public class AnchorTest extends GWTTestCase {
     }
   }
 
-  @DoNotRunWith({Platform.Htmlunit})
   public void testEvents() {
     Anchor anchor = new Anchor("Trigger obscure JavaScript things");
 

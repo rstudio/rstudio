@@ -278,7 +278,6 @@ public class UiBinderTest extends GWTTestCase {
         widgetUi.totallyPrivateStyleSpan.getClassName().length() > 0);
   }
 
-  @DoNotRunWith(Platform.Htmlunit)
   public void testRadioButton() {
     RadioButton able = widgetUi.myRadioAble;
     RadioButton baker = widgetUi.myRadioBaker;

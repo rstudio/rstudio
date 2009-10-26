@@ -197,7 +197,6 @@ public class CreateEventTest extends GWTTestCase {
    * Tests that {@link Event#getCurrentEvent()} returns the right value for
    * synthesized events.
    */
-  @DoNotRunWith({Platform.Htmlunit})
   public void testGetCurrentEvent() {
     CurrentEventListener listener = new CurrentEventListener();
     Event.setEventListener(child, listener);
@@ -217,7 +216,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests NativeEvent.stopPropagation().
    */
-  @DoNotRunWith({Platform.Htmlunit})
   public void testStopPropagation() {
     NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(
         "click") {
@@ -261,7 +259,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createChangeEvent().
    */
-  @DoNotRunWith({Platform.Htmlunit})
   public void testTriggerChangeEvent() {
     BubbleAssertingEventListener listener = new BubbleAssertingEventListener(
         "change");

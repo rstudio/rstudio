@@ -120,7 +120,6 @@ public class DOMTest extends GWTTestCase {
    * Tests {@link DOM#getAbsoluteLeft(Element)} and
    * {@link DOM#getAbsoluteTop(Element)}.
    */
-  @DoNotRunWith({Platform.Htmlunit})
   public void testGetAbsolutePosition() {
     final int border = 8;
     final int margin = 9;
@@ -157,7 +156,6 @@ public class DOMTest extends GWTTestCase {
    * contains children and has scrollbars. See issue #1093 for more details.
    * 
    */
-  @DoNotRunWith({Platform.Htmlunit})
   public void testGetAbsolutePositionWhenScrolled() {
     final Element outer = DOM.createDiv();
     final Element inner = DOM.createDiv();
@@ -192,7 +190,6 @@ public class DOMTest extends GWTTestCase {
    * element has a border.
    * 
    */
-  @DoNotRunWith({Platform.Htmlunit})
   public void testGetAbsolutePositionWithPixelBorders() {
     final Element outer = DOM.createDiv();
     final Element inner = DOM.createDiv();
@@ -223,7 +220,6 @@ public class DOMTest extends GWTTestCase {
    * Tests getAbsoluteLeft/Top() for the document.body element. This used to
    * cause exceptions to be thrown on Opera (see issue 1556).
    */
-  @DoNotRunWith({Platform.Htmlunit})
   public void testGetBodyAbsolutePosition() {
     try {
       // The body's absolute left/top depends upon the browser, but we just
@@ -271,7 +267,6 @@ public class DOMTest extends GWTTestCase {
    * Tests that {@link DOM#isOrHasChild(Element, Element)} works consistently
    * across browsers.
    */
-  @DoNotRunWith({Platform.Htmlunit})
   public void testIsOrHasChild() {
     Element div = DOM.createDiv();
     Element childDiv = DOM.createDiv();

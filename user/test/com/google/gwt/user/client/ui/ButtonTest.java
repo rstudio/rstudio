@@ -18,8 +18,6 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
@@ -83,7 +81,6 @@ public class ButtonTest extends GWTTestCase {
   /**
    * Tests issues 1585 and 3962: a button shouldn't submit a form.
    */
-  @DoNotRunWith(Platform.Htmlunit)
   public void testPushButton() {
     FormPanel f = new FormPanel();
     f.setAction("javascript:''");

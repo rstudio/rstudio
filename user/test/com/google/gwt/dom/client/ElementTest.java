@@ -556,7 +556,6 @@ public class ElementTest extends GWTTestCase {
   /**
    * style.
    */
-  @DoNotRunWith({Platform.Htmlunit})
   public void testStyle() {
     DivElement div = Document.get().createDivElement();
 
@@ -570,7 +569,6 @@ public class ElementTest extends GWTTestCase {
   /**
    * Test that styles only allow camelCase.
    */
-  @DoNotRunWith({Platform.Htmlunit})
   public void testStyleCamelCase() {
     DivElement div = Document.get().createDivElement();
 

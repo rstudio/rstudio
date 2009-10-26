@@ -95,7 +95,6 @@ public class HistoryTest extends GWTTestCase {
    * Tests against issue #879: Ensure that empty history tokens do not add
    * additional characters after the '#' symbol in the URL.
    */
-  @DoNotRunWith(Platform.Htmlunit)
   public void testEmptyHistoryTokens() {
     delayTestFinish(5000);
 
