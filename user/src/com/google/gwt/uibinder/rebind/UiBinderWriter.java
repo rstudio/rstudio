@@ -176,13 +176,14 @@ public class UiBinderWriter {
       JClassType curType = q.removeFirst();
       list.add(curType);
 
-      // Add the superclass and implemented interfaces to the back of the queue.
+      // Add implemented interfaces to the back of the queue (breadth first, remember?)
+      for (JClassType intf : curType.getImplementedInterfaces()) {
+        q.add(intf);
+      }
+      // Add then add superclasses
       JClassType superClass = curType.getSuperclass();
       if (superClass != null) {
         q.add(superClass);
-      }
-      for (JClassType intf : curType.getImplementedInterfaces()) {
-        q.add(intf);
       }
     }
 
