@@ -40,7 +40,7 @@ public class ListBoxTest extends GWTTestCase {
     assertEquals(0, lb.getItemCount());
   }
 
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testDebugId() {
     ListBox list = new ListBox();
     list.addItem("option0", "value0");

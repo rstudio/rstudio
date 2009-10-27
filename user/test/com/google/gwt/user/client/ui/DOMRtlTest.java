@@ -36,7 +36,7 @@ public class DOMRtlTest extends GWTTestCase {
    * Tests {@link DOM#getAbsoluteLeft(Element)} for consistency when the element
    * contains children and has scrollbars.
    */
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testGetAbsolutePositionWhenScrolled() {
     assertTrue(LocaleInfo.getCurrentLocale().isRTL());
     final Element outer = DOM.createDiv();

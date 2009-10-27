@@ -40,7 +40,7 @@ public class RichTextAreaTest extends GWTTestCase {
    * IE actually preserves dynamically-created iframe contents across DOM
    * removal/re-adding).
    */
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testAddEditRemoveAdd() {
     final RichTextArea area = new RichTextArea();
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
@@ -89,7 +89,7 @@ public class RichTextAreaTest extends GWTTestCase {
     }
   }
 
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testFormatAfterInitialize() {
     final RichTextArea area = new RichTextArea();
 
@@ -126,7 +126,7 @@ public class RichTextAreaTest extends GWTTestCase {
     }
   }
 
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testFormatWhenHidden() {
     final RichTextArea area = new RichTextArea();
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
@@ -148,7 +148,7 @@ public class RichTextAreaTest extends GWTTestCase {
   /**
    * See that the custom InitializeEvent fires.
    */
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testRichTextInitializeEvent() {
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     final RichTextArea richTextArea = new RichTextArea();
@@ -164,7 +164,7 @@ public class RichTextAreaTest extends GWTTestCase {
    * Test that a delayed set of HTML is reflected. Some platforms have timing
    * subtleties that need to be tested.
    */
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testSetHTMLAfterInit() {
     final RichTextArea richTextArea = new RichTextArea();    
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
@@ -182,7 +182,7 @@ public class RichTextAreaTest extends GWTTestCase {
    * Test that an immediate set of HTML is reflected immediately and after the
    * area loads. Some platforms have timing subtleties that need to be tested.
    */
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testSetHTMLBeforeInit() {
     final RichTextArea richTextArea = new RichTextArea();
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
@@ -206,7 +206,7 @@ public class RichTextAreaTest extends GWTTestCase {
    * Test that delayed set of text is reflected. Some platforms have timing
    * subtleties that need to be tested.
    */
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testSetTextAfterInit() {
     final RichTextArea richTextArea = new RichTextArea();
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
@@ -224,7 +224,7 @@ public class RichTextAreaTest extends GWTTestCase {
    * Test that an immediate set of text is reflected immediately and after the
    * area loads. Some platforms have timing subtleties that need to be tested.
    */
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testSetTextBeforeInit() {
     final RichTextArea richTextArea = new RichTextArea();
     richTextArea.setText("foo");

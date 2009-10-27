@@ -18,9 +18,9 @@ package com.google.gwt.junit;
 /**
  * An enum to indicate the Platform where a test should run. In general, it
  * should be able to represent a large matrix such as: Browser * Os_combo *
- * {hosted, web} * {htmlunit, actual_browser}. For now, we just distinguish
- * between Htmlunit and non-Htmlunit platforms.
+ * {hosted, web} * {htmlUnit, actual_browser}. For now, we just distinguish
+ * between HtmlUnit and non-HtmlUnit platforms.
  */
 public enum Platform {
-  Htmlunit
+  HtmlUnit
 }

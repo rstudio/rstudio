@@ -30,7 +30,7 @@ public class TextAreaTest extends TextBoxBaseTestBase {
    * designed to work on all browsers and verifies that the newlines are
    * accounted for in all browsers.
    */
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testNewline() {
     testNewline("Hello World\r\n\r\n\r\n\r\n\r\n", 15, 6, 15);
     testNewline("Hello\r\n\r\n\r\n\r\nWorld, My name is John.", 7, 3, 15);

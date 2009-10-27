@@ -285,7 +285,7 @@ public class HistoryTest extends GWTTestCase {
    * Test that using an empty history token works properly. There have been
    * problems (see issue 2905) with this in the past on Safari.
    */
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testEmptyHistoryToken() {
     final ArrayList<Object> counter = new ArrayList<Object>();
 

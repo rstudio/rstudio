@@ -236,7 +236,7 @@ public class UiBinderTest extends GWTTestCase {
     WidgetBasedUi.Style style();
   }
 
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testNoOverrideInheritedSharedCssClasses() {
     Bundle bundle = GWT.create(Bundle.class);
     WidgetBasedUi ui = GWT.create(WidgetBasedUi.class);
@@ -356,7 +356,7 @@ public class UiBinderTest extends GWTTestCase {
     assertNotNull(widgetUi.heartCursorResource.getUrl());
   }
 
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testCssImportedScopes() {
     assertEquals(100, widgetUi.cssImportScopeSample.inner.getOffsetWidth());
   }

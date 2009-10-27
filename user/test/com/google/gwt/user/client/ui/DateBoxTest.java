@@ -30,7 +30,7 @@ public class DateBoxTest extends WidgetTestBase {
     return "com.google.gwt.user.User";
   }
 
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testAccessors() {
     DateBox db = new DateBox();
     assertFalse(db.isDatePickerShowing());
@@ -40,7 +40,7 @@ public class DateBoxTest extends WidgetTestBase {
     assertFalse(db.isDatePickerShowing());
   }
 
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testValueChangeEvent() {
 
     // Checks setValue(date, true);

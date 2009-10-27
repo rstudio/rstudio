@@ -155,7 +155,7 @@ public class EventTest extends GWTTestCase {
    * Test that a double click results in exactly one simulated click event in
    * IE. See issue 3392 for more info.
    */
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testDoubleClickEvent() {
     TestLabel label = new TestLabel();
     RootPanel.get().add(label);

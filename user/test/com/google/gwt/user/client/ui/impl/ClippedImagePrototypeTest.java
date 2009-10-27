@@ -83,7 +83,7 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
    * {@link com.google.gwt.user.client.ui.impl.ClippedImagePrototype#applyTo(com.google.gwt.user.client.ui.Image)}
    * is called.
    */
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testApplyToClippedImage() {
     final Image image = new Image("counting-backwards.png", 12, 13, 8, 8);
 

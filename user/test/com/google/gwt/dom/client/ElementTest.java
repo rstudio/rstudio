@@ -218,7 +218,7 @@ public class ElementTest extends GWTTestCase {
   /**
    * scroll[Left|Top], getAbsolute[Left|Top].
    */
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testGetAbsolutePositionWhenBodyScrolled() {
     Document doc = Document.get();
     BodyElement body = doc.getBody();
@@ -375,7 +375,7 @@ public class ElementTest extends GWTTestCase {
   /**
    * offset[Left|Top|Width|Height], offsetParent.
    */
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testOffsets() {
     DivElement outer = Document.get().createDivElement();
     DivElement middle = Document.get().createDivElement();
@@ -462,7 +462,7 @@ public class ElementTest extends GWTTestCase {
   /**
    * Tests that scrollLeft behaves as expected in RTL mode.
    */
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testScrollLeftInRtl() {
     final DivElement outer = Document.get().createDivElement();
     final DivElement inner = Document.get().createDivElement();
@@ -528,7 +528,7 @@ public class ElementTest extends GWTTestCase {
    */
   // TODO (amitmanjhi): Remove annotation after updating HtmlUnit. kprobst says
   // the issue has been fixed in htmlUnit trunk
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testSetInnerText() {
     Document doc = Document.get();
 

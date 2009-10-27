@@ -33,7 +33,7 @@ public class StyleInjectorTest extends GWTTestCase {
     return "com.google.gwt.dom.DOMTest";
   }
 
-  @DoNotRunWith(value = {Platform.Htmlunit})
+  @DoNotRunWith(value = {Platform.HtmlUnit})
   @SuppressWarnings("deprecation")
   public void testOldMethods() {
     final DivElement elt = Document.get().createDivElement();
@@ -62,7 +62,7 @@ public class StyleInjectorTest extends GWTTestCase {
   /**
    * Ensure that the IE createStyleSheet compatibility code is exercised.
    */
-  @DoNotRunWith(value = {Platform.Htmlunit})
+  @DoNotRunWith(value = {Platform.HtmlUnit})
   @SuppressWarnings("deprecation")
   public void testOldMethodsWithLotsOfStyles() {
     StyleElement[] elements = new StyleElement[100];
@@ -94,12 +94,12 @@ public class StyleInjectorTest extends GWTTestCase {
     });
   }
 
-  @DoNotRunWith(value = {Platform.Htmlunit})
+  @DoNotRunWith(value = {Platform.HtmlUnit})
   public void testStyleInjectorBatched() {
     testStyleInjector("testStyleInjectorBatched", false);
   }
 
-  @DoNotRunWith(value = {Platform.Htmlunit})
+  @DoNotRunWith(value = {Platform.HtmlUnit})
   public void testStyleInjectorImmediate() {
     testStyleInjector("testStyleInjectorImmediate", true);
   }

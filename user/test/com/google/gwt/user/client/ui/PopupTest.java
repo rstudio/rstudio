@@ -27,7 +27,7 @@ import com.google.gwt.user.client.Window;
 /**
  * Tests for {@link PopupPanel}.
  */
-@DoNotRunWith(Platform.Htmlunit)
+@DoNotRunWith(Platform.HtmlUnit)
 public class PopupTest extends GWTTestCase {
 
   /**
@@ -130,7 +130,7 @@ public class PopupTest extends GWTTestCase {
    * Tests that a large PopupPanel is not positioned off the top or left edges
    * of the browser window, making part of the panel unreachable.
    */
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testCenterLargePopup() {
     PopupPanel popup = new PopupPanel();
     popup.setHeight("4096px");
@@ -211,7 +211,7 @@ public class PopupTest extends GWTTestCase {
     }
   }
 
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testPopup() {
     // Get rid of window margins so we can test absolute position.
     Window.setMargin("0px");

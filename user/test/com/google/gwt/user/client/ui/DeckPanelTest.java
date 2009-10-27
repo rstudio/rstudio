@@ -81,7 +81,7 @@ public class DeckPanelTest extends PanelTestBase<DeckPanel> {
    * Test that the offsetHeight/Width of a widget are defined when the widget is
    * added to the DeckPanel.
    */
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testWidgetOffsetDimensionsOnload() {
     DeckPanel deck = new DeckPanel();
     RootPanel.get().add(deck);

@@ -138,7 +138,7 @@ public class XMLTest extends GWTTestCase {
     return "com.google.gwt.xml.XML";
   }
 
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testAttr() {
     Document d = createTestDocument();
     Element de = d.getDocumentElement();
@@ -150,7 +150,7 @@ public class XMLTest extends GWTTestCase {
     assertEquals(de.getAttributeNode("unset"), null);
   }
 
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testCreate() {
     Document d = XMLParser.createDocument();
     CDATASection createCDATA;

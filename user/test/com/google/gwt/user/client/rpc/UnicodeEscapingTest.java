@@ -202,7 +202,7 @@ public class UnicodeEscapingTest extends GWTTestCase {
    * 
    * Note that this does not test all possible combinations.
    */
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   // TODO(jat): decide if we really want to specify this behavior since some
   // browsers and OOPHM plugins have issues with it -- disabled for now
   public void disabled_testServerToClientBMPSurrogates() {

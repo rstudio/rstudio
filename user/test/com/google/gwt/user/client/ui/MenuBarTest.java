@@ -207,7 +207,7 @@ public class MenuBarTest extends GWTTestCase {
     assertNull(bar.getSelectedItem());
   }
 
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testDebugId() {
     Command emptyCommand = new Command() {
       public void execute() {

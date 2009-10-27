@@ -65,7 +65,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
   /**
    * Just make sure that reentrant behavior doesn't fail.
    */
-  @DoNotRunWith(value = {Platform.Htmlunit})
+  @DoNotRunWith(value = {Platform.HtmlUnit})
   public static void testReentrantCalls() {
     if (!GWT.isScript()) {
       // sample is useless in hosted mode
@@ -82,7 +82,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
     assertEquals(start, end);
   }
 
-  @DoNotRunWith(value = {Platform.Htmlunit})
+  @DoNotRunWith(value = {Platform.HtmlUnit})
   public static void testStackTraces() {
     JsArrayString start = sample();
 

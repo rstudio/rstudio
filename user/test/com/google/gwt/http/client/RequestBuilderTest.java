@@ -92,7 +92,7 @@ public class RequestBuilderTest extends GWTTestCase {
    * <li>url == "www.freebsd.org" - violates same source
    * </ul>
    */
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testRequestBuilderStringString() throws RequestException {
     try {
       new RequestBuilder((RequestBuilder.Method) null, null);

@@ -121,7 +121,7 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
     lwmObserver.uninstall();
   }
 
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testMetricsSignalled() {
     if (!GWT.isScript()) {
       // There are no runAsync lightweight metrics in hosted mode

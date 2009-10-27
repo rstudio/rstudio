@@ -38,7 +38,7 @@ public class AbsolutePanelTest extends PanelTestBase<AbsolutePanel> {
     absolutePanel.add(label, 10, 10);
   }
   
-  @DoNotRunWith(Platform.Htmlunit)
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testPositioning() {
     // Make an absolute panel with a label at (3, 7).
     AbsolutePanel abs = new AbsolutePanel();

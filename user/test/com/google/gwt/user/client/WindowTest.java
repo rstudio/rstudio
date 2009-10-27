@@ -169,7 +169,7 @@ public class WindowTest extends GWTTestCase {
    * Tests the ability of the Window to get the client size correctly with and
    * without visible scroll bars.
    */
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testGetClientSize() {
 
     // NOTE: We must clear the DOM here so that previous tests do not pollute
@@ -205,7 +205,7 @@ public class WindowTest extends GWTTestCase {
   /**
    * Tests the ability of scroll the Window and catch scroll events.
    */
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testScrolling() {
     // Force scroll bars to appear
     Window.enableScrolling(true);

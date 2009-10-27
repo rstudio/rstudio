@@ -87,7 +87,7 @@ public class DialogBoxTest extends PopupTest {
     assertFalse(dialogBox.isShowing());
   }
 
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testDebugId() {
     DialogBox dBox = new DialogBox();
     dBox.setAnimationEnabled(false);

@@ -292,7 +292,7 @@ public class DOMTest extends GWTTestCase {
    */
   // TODO (amitmanjhi): Remove annotation after updating HtmlUnit. kprobst says
   // the issue has been fixed in htmlUnit trunk
-  @DoNotRunWith({Platform.Htmlunit})
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testSetInnerText() {
     Element tableElem = DOM.createTable();
 
