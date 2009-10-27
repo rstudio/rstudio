@@ -30,14 +30,17 @@ public final class ArgHandlerDumpSignatures extends ArgHandlerFile {
     this.option = option;
   }
 
+  @Override
   public String getPurpose() {
-    return "Dump the singatures all loaded types and their members";
+    return "Dump the signatures of all loaded types and their members";
   }
 
+  @Override
   public String getTag() {
     return "-dumpSignatures";
   }
 
+  @Override
   public String[] getTagArgs() {
     return new String[] {"style"};
   }

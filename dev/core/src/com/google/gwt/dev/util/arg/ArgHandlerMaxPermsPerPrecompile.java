@@ -19,6 +19,8 @@ import com.google.gwt.util.tools.ArgHandlerInt;
 
 /**
  * Handles an argument for {@link OptionMaxPermsPerPrecompile}.
+ * 
+ * TODO(spoon) delete this obsolete option.
  */
 public class ArgHandlerMaxPermsPerPrecompile extends ArgHandlerInt {
 
@@ -35,7 +37,7 @@ public class ArgHandlerMaxPermsPerPrecompile extends ArgHandlerInt {
 
   @Override
   public String getPurpose() {
-    return "maximum permutations to compile at a time";
+    return "ignored; soon to be deleted";
   }
 
   @Override
