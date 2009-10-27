@@ -29,6 +29,7 @@ import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
 import com.google.gwt.uibinder.rebind.model.ImplicitDataResource;
 import com.google.gwt.uibinder.rebind.model.ImplicitImageResource;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -96,7 +97,7 @@ public class BundleWriter {
     
     // Write css methods
     for (ImplicitCssResource css : bundleClass.getCssMethods()) {
-      writer.write("@Source(\"%s\")", css.getSource());
+      writeCssSource(css);
       writeCssImports(css);
       writer.write("%s %s();", css.getClassName(), css.getName());
       writer.newline();
@@ -133,6 +134,22 @@ public class BundleWriter {
         }
         writer.write("@Import({%s})", b);
       }
+    }
+  }
+
+  private void writeCssSource(ImplicitCssResource css) {
+    Collection<String> sources = css.getSource();
+    if (sources.size() == 1) {
+      writer.write("@Source(\"%s\")", sources.iterator().next());
+    } else {
+      StringBuffer b = new StringBuffer();
+      for (String s : sources) {
+        if (b.length() > 0) {
+          b.append(", ");
+        }
+        b.append('"').append(s).append('"');
+      }
+      writer.write("@Source({%s})", b);
     }
   }
 

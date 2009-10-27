@@ -118,7 +118,7 @@ public class XMLElement {
    * was unset. The returned string is not escaped.
    * 
    * @param name the attribute's full name (including prefix)
-   * @return the attribute's value, or null
+   * @return the attribute's value, or ""
    */
   public String consumeAttribute(String name) {
     String value = elem.getAttribute(name);

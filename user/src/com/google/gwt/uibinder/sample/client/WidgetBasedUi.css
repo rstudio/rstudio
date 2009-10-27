@@ -1,8 +1,3 @@
-.menuBar {
-  border:solid;
-  background-color:white;
-}
-
 /*
  * Demonstrates that the ui.xml has access to styles that 
  * do not back any declared CssResource api

@@ -71,9 +71,13 @@
 <!-- 
   Tests creating a CssResource from an external file.
  -->
-<ui:style field='myStyle' src='WidgetBasedUi.css' 
-    type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'/>
-
+<ui:style field='myStyle' src='WidgetBasedUi.css Menu.css' 
+    type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'>
+    .menuBar { 
+      font-family: sans-serif;
+    }
+</ui:style>
+ 
 <ui:style field='myOtherStyle' type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'>
   /* because we extend WidgetBasedUi.Style and it's tagged @Shared, we can refine the menubar 
      style defined in other files */

@@ -224,13 +224,12 @@ public class UiBinderParser {
 
   private void createStyle(XMLElement elem) throws UnableToCompleteException {
     String body = elem.consumeUnescapedInnerText();
-    if (body.length() > 0 && elem.hasAttribute(SOURCE_ATTRIBUTE)) {
-      writer.die(
-          "In %s, cannot use both a source attribute and inline css text.",
-          elem);
-    }
-
     String source = elem.consumeAttribute(SOURCE_ATTRIBUTE);
+    
+    if (0 == body.length() && 0 == source.length()) {
+      writer.die("%s must have either a src attribute or body text", elem);
+    }
+    
     String name = elem.consumeAttribute(FIELD_ATTRIBUTE, "style");
     JClassType publicType = consumeCssResourceType(elem);
 
