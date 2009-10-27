@@ -73,8 +73,6 @@ public class UiBinderWriter {
   private static final String BUNDLE_URI_SCHEME = "urn:with:";
   private static final String PACKAGE_URI_SCHEME = "urn:import:";
 
-  private static int domId = 0;
-
   // TODO(rjrjr) Another place that we need a general anonymous field
   // mechanism
   private static final String CLIENT_BUNDLE_FIELD = "clientBundleFieldNameUnlikelyToCollideWithUserSpecifiedFieldOkay";
@@ -237,6 +235,8 @@ public class UiBinderWriter {
   private final FieldManager fieldManager;
 
   private final ImplicitClientBundle bundleClass;
+
+  private int domId = 0;
 
   private int fieldIndex;
 
