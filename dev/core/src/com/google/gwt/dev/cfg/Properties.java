@@ -74,15 +74,6 @@ public class Properties implements Iterable<Property> {
     return map.values().iterator();
   }
 
-  private <T extends Property> T create(String name, Class<T> clazz) {
-    return create(name, false, false, clazz);
-  }
-
-  private <T extends Property> T create(String name, boolean flag,
-      Class<T> clazz) {
-    return create(name, flag, true, clazz);
-  }
-
   private <T extends Property> T create(String name, boolean flag,
       boolean useFlagArgument, Class<T> clazz) {
     if (clazz == null) {
@@ -124,5 +115,14 @@ public class Properties implements Iterable<Property> {
     }
 
     throw new RuntimeException("Unable to create Property instance", ex);
+  }
+
+  private <T extends Property> T create(String name, boolean flag,
+      Class<T> clazz) {
+    return create(name, flag, true, clazz);
+  }
+
+  private <T extends Property> T create(String name, Class<T> clazz) {
+    return create(name, false, false, clazz);
   }
 }
