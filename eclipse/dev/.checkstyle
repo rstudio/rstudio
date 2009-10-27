@@ -4,7 +4,6 @@
         <file-match-pattern match-pattern="core[\\/]src[\\/]com[\\/]google[\\/]gwt[\\/].*\.java$" include-pattern="true"/>
         <file-match-pattern match-pattern="core[\\/]src[\\/]com[\\/]google[\\/]gwt[\\/]dev[\\/]asm[\\/]" include-pattern="false"/>
         <file-match-pattern match-pattern="core[\\/]src[\\/]com[\\/]google[\\/]gwt[\\/]dev[\\/]js[\\/]rhino[\\/]" include-pattern="false"/>
-        <file-match-pattern match-pattern="linux[\\/]src[\\/]com[\\/]google[\\/]gwt[\\/].*\.java$" include-pattern="true"/>
     </fileset>
     <filter name="NonSrcDirs" enabled="true"/>
 </fileset-config>
