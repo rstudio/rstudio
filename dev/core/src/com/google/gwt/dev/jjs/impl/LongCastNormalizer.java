@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
+import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -56,14 +57,21 @@ public class LongCastNormalizer {
       JType lhsType = x.getLhs().getType();
       JType rhsType = x.getRhs().getType();
       JType resultType = x.getType();
+      JBinaryOperator op = x.getOp();
 
       if (resultType == program.getTypeJavaLangString()) {
         // Don't mess with concat.
         return;
       }
 
+      if (lhsType == JPrimitiveType.BOOLEAN
+          && (op == JBinaryOperator.AND || op == JBinaryOperator.OR)) {
+        // Don't mess with if rewriter.
+        return;
+      }
+
       // Special case: shift operators always coerce a long RHS to int.
-      if (x.getOp().isShiftOperator()) {
+      if (op.isShiftOperator()) {
         if (rhsType == longType) {
           rhsType = program.getTypePrimitiveInt();
         }
@@ -80,7 +88,7 @@ public class LongCastNormalizer {
         if ((lhsType == floatType || lhsType == doubleType)) {
           coerceTo = lhsType;
         }
-        if (x.getOp().isAssignment()) {
+        if (op.isAssignment()) {
           // In an assignment, the lhs must coerce the rhs
           coerceTo = lhsType;
         } else if ((rhsType == floatType || rhsType == doubleType)) {
@@ -93,7 +101,7 @@ public class LongCastNormalizer {
       JExpression newRhs = checkAndReplace(x.getRhs(), rhsType);
       if (newLhs != x.getLhs() || newRhs != x.getRhs()) {
         JBinaryOperation binOp = new JBinaryOperation(x.getSourceInfo(),
-            resultType, x.getOp(), newLhs, newRhs);
+            resultType, op, newLhs, newRhs);
         ctx.replaceMe(binOp);
       }
     }

@@ -39,26 +39,38 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
       expected = getMainMethodSource(program);
       assertEquals(userCode, expected, optimized);
     }
+
+    /**
+     * Compare without compiling expected, needed when optimizations produce
+     * incorrect java code (e.g. "a" || "b" is incorrect in java).
+     */
+    public void intoString(String expected) {
+      String actual = optimized;
+      assertTrue(actual.startsWith("{"));
+      assertTrue(actual.endsWith("}"));
+      actual = actual.substring(1, actual.length() - 2).trim();
+      // Join lines in actual code and remove indentations
+      actual = actual.replaceAll(" +", " ").replaceAll("\n", "");
+      assertEquals(userCode, expected, actual);
+    }
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    addSnippetClassDecl("static volatile boolean b;");
+    addSnippetClassDecl("static volatile boolean b1;");
+    addSnippetClassDecl("static volatile int i;");
+    addSnippetClassDecl("static volatile long l;");
   }
 
   public void testConditionalOptimizations() throws Exception {
     optimize("int", "return true ? 3 : 4;").into("return 3;");
     optimize("int", "return false ? 3 : 4;").into("return 4;");
 
-    addSnippetClassDecl("static volatile boolean TEST");
-    addSnippetClassDecl("static volatile boolean RESULT");
-
-    optimize("boolean", "return TEST ? true : RESULT;").into(
-        "return TEST || RESULT;");
-
-    optimize("boolean", "return TEST ? false : RESULT;").into(
-        "return !TEST && RESULT;");
-
-    optimize("boolean", "return TEST ? RESULT : true;").into(
-        "return !TEST || RESULT;");
-
-    optimize("boolean", "return TEST ? RESULT : false;").into(
-        "return TEST && RESULT;");
+    optimize("boolean", "return b ? true : b1;").into("return b || b1;");
+    optimize("boolean", "return b ? false : b1;").into("return !b && b1;");
+    optimize("boolean", "return b ? b1 : true;").into("return !b || b1;");
+    optimize("boolean", "return b ? b1 : false;").into("return b && b1;");
   }
 
   public void testIfOptimizations() throws Exception {
@@ -69,10 +81,46 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
 
     optimize("int", "if (true) {} else return 4; return 0;").into("return 0;");
 
-    addSnippetClassDecl("static volatile boolean TEST");
-    addSnippetClassDecl("static boolean test() { return TEST; }");
+    addSnippetClassDecl("static boolean test() { return b; }");
     optimize("int", "if (test()) {} else {}; return 0;").into(
         "test(); return 0;");
+  }
+
+  public void testIfStatementToBoolean_NotOptimization() throws Exception {
+    optimize("void", "if (!b) i = 1;").intoString(
+        "EntryPoint.b || (EntryPoint.i = 1);");
+    optimize("void", "if (!b) i = 1; else i = 2;").intoString(
+        "EntryPoint.b ? (EntryPoint.i = 2) : (EntryPoint.i = 1);");
+    optimize("int", "if (!b) { return 1;} else {return 2;}").into(
+        "return b ? 2 : 1;");
+  }
+
+  public void testIfStatementToBoolean_ReturnLifting() throws Exception {
+    optimize("int", "if (b) return 1; return 2;").into(
+        "if (b) return 1; return 2;");
+    optimize("int", "if (b) { return 1; }  return 2;").into(
+        "if (b) { return 1; } return 2;");
+    optimize("int", "if (b) { return 1;} else {return 2;}").into(
+        "return b ? 1 : 2;");
+    optimize("int", "if (b) return 1; else {return 2;}").into(
+        "return b ? 1 : 2;");
+    optimize("int", "if (b) return 1; else return 2;").into("return b ? 1 : 2;");
+    optimize("void", "if (b) return; else return;").into(
+        "if (b) return; else return;");
+  }
+
+  public void testIfStatementToBoolean_ThenElseOptimization() throws Exception {
+    optimize("void", "if (b) i = 1; else i = 2;").intoString(
+        "EntryPoint.b ? (EntryPoint.i = 1) : (EntryPoint.i = 2);");
+    optimize("void", "if (b) {i = 1;} else {i = 2;}").intoString(
+        "EntryPoint.b ? (EntryPoint.i = 1) : (EntryPoint.i = 2);");
+  }
+
+  public void testIfStatementToBoolean_ThenOptimization() throws Exception {
+    optimize("void", "if (b) i = 1;").intoString(
+        "EntryPoint.b && (EntryPoint.i = 1);");
+    optimize("void", "if (b) {i = 1;}").intoString(
+        "EntryPoint.b && (EntryPoint.i = 1);");
   }
 
   private Result optimize(final String returnType, final String codeSnippet)

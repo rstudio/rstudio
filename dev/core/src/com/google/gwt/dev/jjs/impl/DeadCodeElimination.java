@@ -89,6 +89,8 @@ public class DeadCodeElimination {
    */
   public class DeadCodeVisitor extends JModVisitor {
 
+    private JMethod currentMethod = null;
+
     /**
      * Expressions whose result does not matter. A parent node should add any
      * children whose result does not matter to this set during the parent's
@@ -358,7 +360,7 @@ public class DeadCodeElimination {
     @Override
     public void endVisit(JIfStatement x, Context ctx) {
       JStatement updated = simplifier.ifStatement(x, x.getSourceInfo(),
-          x.getIfExpr(), x.getThenStmt(), x.getElseStmt());
+          x.getIfExpr(), x.getThenStmt(), x.getElseStmt(), currentMethod);
       if (updated != x) {
         ctx.replaceMe(updated);
       }
@@ -371,6 +373,11 @@ public class DeadCodeElimination {
         assert (!x.hasSideEffects());
         ctx.replaceMe(literal);
       }
+    }
+
+    @Override
+    public void endVisit(JMethod x, Context ctx) {
+      currentMethod = null;
     }
 
     /**
@@ -592,6 +599,12 @@ public class DeadCodeElimination {
     @Override
     public boolean visit(JExpressionStatement x, Context ctx) {
       ignoringExpressionOutput.add(x.getExpr());
+      return true;
+    }
+
+    @Override
+    public boolean visit(JMethod x, Context ctx) {
+      currentMethod = x;
       return true;
     }
 

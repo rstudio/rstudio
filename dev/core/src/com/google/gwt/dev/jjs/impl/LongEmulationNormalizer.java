@@ -56,7 +56,6 @@ public class LongEmulationNormalizer {
       JType lhsType = x.getLhs().getType();
       JType rhsType = x.getRhs().getType();
       if (lhsType != longType) {
-        assert (rhsType != longType);
         return;
       }
 

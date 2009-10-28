@@ -23,10 +23,13 @@ import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
+import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperation;
@@ -186,7 +189,8 @@ public class Simplifier {
   }
 
   public JStatement ifStatement(JIfStatement original, SourceInfo sourceInfo,
-      JExpression condExpr, JStatement thenStmt, JStatement elseStmt) {
+      JExpression condExpr, JStatement thenStmt, JStatement elseStmt,
+      JMethod currentMethod) {
     if (condExpr instanceof JMultiExpression) {
       // if(a,b,c) d else e -> {a; b; if(c) d else e; }
       JMultiExpression condMulti = (JMultiExpression) condExpr;
@@ -195,7 +199,7 @@ public class Simplifier {
         newBlock.addStmt(expr.makeStatement());
       }
       newBlock.addStmt(ifStatement(null, sourceInfo, last(condMulti.exprs),
-          thenStmt, elseStmt));
+          thenStmt, elseStmt, currentMethod));
       // TODO(spoon): immediately simplify the resulting block
       return newBlock;
     }
@@ -227,8 +231,15 @@ public class Simplifier {
         // TODO: this goes away when we normalize the Java AST properly.
         thenStmt = ensureBlock(thenStmt);
         elseStmt = ensureBlock(elseStmt);
-        return ifStatement(null, sourceInfo, unflipped, elseStmt, thenStmt);
+        return ifStatement(null, sourceInfo, unflipped, elseStmt, thenStmt,
+            currentMethod);
       }
+    }
+
+    JStatement rewritenStatement = rewriteIfIntoBoolean(sourceInfo, condExpr,
+        thenStmt, elseStmt, currentMethod);
+    if (rewritenStatement != null) {
+      return rewritenStatement;
     }
 
     // no simplification made
@@ -303,5 +314,85 @@ public class Simplifier {
       stmt = block;
     }
     return stmt;
+  }
+
+  private JExpression extractExpression(JStatement stmt) {
+    if (stmt instanceof JExpressionStatement) {
+      JExpressionStatement statement = (JExpressionStatement) stmt;
+      return statement.getExpr();
+    }
+
+    return null;
+  }
+
+  private JStatement extractSingleStatement(JStatement stmt) {
+    if (stmt instanceof JBlock) {
+      JBlock block = (JBlock) stmt;
+      if (block.getStatements().size() == 1) {
+        return extractSingleStatement(block.getStatements().get(0));
+      }
+    }
+
+    return stmt;
+  }
+
+  private JStatement rewriteIfIntoBoolean(SourceInfo sourceInfo,
+      JExpression condExpr, JStatement thenStmt, JStatement elseStmt,
+      JMethod currentMethod) {
+    thenStmt = extractSingleStatement(thenStmt);
+    elseStmt = extractSingleStatement(elseStmt);
+
+    if (thenStmt instanceof JReturnStatement
+        && elseStmt instanceof JReturnStatement && currentMethod != null) {
+      // Special case
+      // if () { return ..; } else { return ..; } =>
+      // return ... ? ... : ...;
+      JExpression thenExpression = ((JReturnStatement) thenStmt).getExpr();
+      JExpression elseExpression = ((JReturnStatement) elseStmt).getExpr();
+      if (thenExpression == null || elseExpression == null) {
+        // empty returns are not supported.
+        return null;
+      }
+
+      JConditional conditional = new JConditional(sourceInfo,
+          currentMethod.getType(), condExpr, thenExpression, elseExpression);
+
+      JReturnStatement returnStatement = new JReturnStatement(sourceInfo,
+          conditional);
+      return returnStatement;
+    }
+
+    if (elseStmt != null) {
+      // if () { } else { } -> ... ? ... : ... ;
+      JExpression thenExpression = extractExpression(thenStmt);
+      JExpression elseExpression = extractExpression(elseStmt);
+
+      if (thenExpression != null && elseExpression != null) {
+        JConditional conditional = new JConditional(sourceInfo,
+            JPrimitiveType.VOID, condExpr, thenExpression, elseExpression);
+
+        return conditional.makeStatement();
+      }
+    } else {
+      // if () { } -> ... && ...;
+      JExpression thenExpression = extractExpression(thenStmt);
+
+      if (thenExpression != null) {
+        JBinaryOperator binaryOperator = JBinaryOperator.AND;
+
+        JExpression unflipExpression = maybeUnflipBoolean(condExpr);
+        if (unflipExpression != null) {
+          condExpr = unflipExpression;
+          binaryOperator = JBinaryOperator.OR;
+        }
+
+        JBinaryOperation binaryOperation = new JBinaryOperation(sourceInfo,
+            program.getTypeVoid(), binaryOperator, condExpr, thenExpression);
+
+        return binaryOperation.makeStatement();
+      }
+    }
+
+    return null;
   }
 }
