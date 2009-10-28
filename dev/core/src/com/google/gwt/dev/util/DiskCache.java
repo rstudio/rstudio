@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
@@ -125,16 +126,75 @@ public class DiskCache {
   }
 
   /**
+   * Write the rest of the data in an input stream to disk.
+   * 
+   * @return a handle to retrieve it later
+   */
+  public synchronized long transferFromStream(InputStream in) {
+    byte[] buf = Util.takeThreadLocalBuf();
+    try {
+      long position = moveToEndPosition();
+
+      // Placeholder, we don't know the length yet.
+      file.writeInt(-1);
+
+      // Transfer all the bytes.
+      int length = 0;
+      int bytesRead;
+      while ((bytesRead = in.read(buf)) != -1) {
+        file.write(buf, 0, bytesRead);
+        length += bytesRead;
+      }
+
+      // Now go back and fill in the length.
+      file.seek(position);
+      file.writeInt(length);
+      // Don't eagerly seek the end, the next operation might be a read.
+      atEnd = false;
+      return position;
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to read from byte cache", e);
+    } finally {
+      Util.releaseThreadLocalBuf(buf);
+    }
+  }
+
+  /**
+   * Reads bytes of data back from disk and writes them into the specified
+   * output stream.
+   */
+  public synchronized void transferToStream(long token, OutputStream out) {
+    byte[] buf = Util.takeThreadLocalBuf();
+    try {
+      atEnd = false;
+      file.seek(token);
+      int length = file.readInt();
+      int bufLen = buf.length;
+      while (length > bufLen) {
+        int read = file.read(buf, 0, bufLen);
+        length -= read;
+        out.write(buf, 0, read);
+      }
+      while (length > 0) {
+        int read = file.read(buf, 0, length);
+        length -= read;
+        out.write(buf, 0, read);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to read from byte cache", e);
+    } finally {
+      Util.releaseThreadLocalBuf(buf);
+    }
+  }
+
+  /**
    * Write a byte array to disk.
    * 
    * @return a handle to retrieve it later
    */
   public synchronized long writeByteArray(byte[] bytes) {
     try {
-      if (!atEnd) {
-        file.seek(file.length());
-      }
-      long position = file.getFilePointer();
+      long position = moveToEndPosition();
       file.writeInt(bytes.length);
       file.write(bytes);
       return position;
@@ -163,34 +223,6 @@ public class DiskCache {
     return writeByteArray(Util.getBytes(str));
   }
 
-  /**
-   * Reads bytes of data back from disk and writes them into the specified
-   * output stream.
-   */
-  public synchronized void writeTo(long token, OutputStream out) {
-    byte[] buf = Util.takeThreadLocalBuf();
-    try {
-      atEnd = false;
-      file.seek(token);
-      int length = file.readInt();
-      int bufLen = buf.length;
-      while (length > bufLen) {
-        int read = file.read(buf, 0, bufLen);
-        length -= read;
-        out.write(buf, 0, read);
-      }
-      while (length > 0) {
-        int read = file.read(buf, 0, length);
-        length -= read;
-        out.write(buf, 0, read);
-      }
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to read from byte cache", e);
-    } finally {
-      Util.releaseThreadLocalBuf(buf);
-    }
-  }
-
   @Override
   protected synchronized void finalize() throws Throwable {
     close();
@@ -201,6 +233,25 @@ public class DiskCache {
       file.setLength(0);
       file.close();
       file = null;
+    }
+  }
+
+  /**
+   * Moves to the end of the file if necessary and returns the offset position.
+   * Caller must synchronize.
+   * 
+   * @return the offset position of the end of the file
+   * @throws IOException
+   */
+  private long moveToEndPosition() throws IOException {
+    // Get an end pointer.
+    if (atEnd) {
+      return file.getFilePointer();
+    } else {
+      long position = file.length();
+      file.seek(position);
+      atEnd = true;
+      return position;
     }
   }
 }

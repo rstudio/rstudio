@@ -20,11 +20,11 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.dev.util.DiskCache;
-import com.google.gwt.dev.util.Util;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -45,7 +45,12 @@ public class StandardGeneratedResource extends GeneratedResource {
       String partialPath, File file) {
     super(StandardLinkerContext.class, generatorType, partialPath);
     this.lastModified = file.lastModified();
-    this.token = diskCache.writeByteArray(Util.readFileAsBytes(file));
+    try {
+      this.token = diskCache.transferFromStream(new FileInputStream(file));
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException("Unable to open file '"
+          + file.getAbsolutePath() + "'", e);
+    }
   }
 
   @Override
@@ -62,19 +67,17 @@ public class StandardGeneratedResource extends GeneratedResource {
   @Override
   public void writeTo(TreeLogger logger, OutputStream out)
       throws UnableToCompleteException {
-    diskCache.writeTo(token, out);
+    diskCache.transferToStream(token, out);
   }
 
   private void readObject(ObjectInputStream stream) throws IOException,
       ClassNotFoundException {
     stream.defaultReadObject();
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    Util.copyNoClose(stream, baos);
-    token = diskCache.writeByteArray(baos.toByteArray());
+    token = diskCache.transferFromStream(stream);
   }
 
   private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.defaultWriteObject();
-    diskCache.writeTo(token, stream);
+    diskCache.transferToStream(token, stream);
   }
 }

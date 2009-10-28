@@ -19,10 +19,8 @@ import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.DiskCache;
-import com.google.gwt.dev.util.Util;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -65,19 +63,17 @@ public class SyntheticArtifact extends EmittedArtifact {
   @Override
   public void writeTo(TreeLogger logger, OutputStream out)
       throws UnableToCompleteException {
-    diskCache.writeTo(token, out);
+    diskCache.transferToStream(token, out);
   }
 
   private void readObject(ObjectInputStream stream) throws IOException,
       ClassNotFoundException {
     stream.defaultReadObject();
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    Util.copyNoClose(stream, baos);
-    token = diskCache.writeByteArray(baos.toByteArray());
+    token = diskCache.transferFromStream(stream);
   }
 
   private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.defaultWriteObject();
-    diskCache.writeTo(token, stream);
+    diskCache.transferToStream(token, stream);
   }
 }

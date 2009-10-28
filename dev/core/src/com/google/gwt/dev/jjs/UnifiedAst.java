@@ -20,10 +20,9 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.util.PerfLogger;
+import com.google.gwt.dev.util.DiskCache;
+import com.google.gwt.dev.util.Util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -42,9 +41,9 @@ public class UnifiedAst implements Serializable {
   /**
    * Encapsulates the combined programs.
    */
-  static final class AST {
-    private JProgram jProgram;
-    private JsProgram jsProgram;
+  static final class AST implements Serializable {
+    private final JProgram jProgram;
+    private final JsProgram jsProgram;
 
     public AST(JProgram jProgram, JsProgram jsProgram) {
       this.jProgram = jProgram;
@@ -60,42 +59,7 @@ public class UnifiedAst implements Serializable {
     }
   }
 
-  private static AST deserializeAst(byte[] serializedAst) {
-    try {
-      PerfLogger.start("deserialize");
-      ByteArrayInputStream bais = new ByteArrayInputStream(serializedAst);
-      ObjectInputStream is;
-      is = new ObjectInputStream(bais);
-      JProgram jprogram = (JProgram) is.readObject();
-      JsProgram jsProgram = (JsProgram) is.readObject();
-      return new AST(jprogram, jsProgram);
-    } catch (IOException e) {
-      throw new RuntimeException(
-          "Should be impossible for memory based streams", e);
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException(
-          "Should be impossible when deserializing in process", e);
-    } finally {
-      PerfLogger.end();
-    }
-  }
-
-  private static byte[] serializeAst(AST ast) {
-    try {
-      PerfLogger.start("serialize");
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      ObjectOutputStream os = new ObjectOutputStream(baos);
-      os.writeObject(ast.getJProgram());
-      os.writeObject(ast.getJsProgram());
-      os.close();
-      return baos.toByteArray();
-    } catch (IOException e) {
-      throw new RuntimeException(
-          "Should be impossible for memory based streams", e);
-    } finally {
-      PerfLogger.end();
-    }
-  }
+  private static final DiskCache diskCache = new DiskCache();
 
   /**
    * The original AST; nulled out once consumed (by the first call to
@@ -121,7 +85,7 @@ public class UnifiedAst implements Serializable {
   /**
    * The serialized AST.
    */
-  private byte[] serializedAst;
+  private transient long serializedAstToken;
 
   public UnifiedAst(JJSOptions options, AST initialAst,
       boolean singlePermutation, Set<String> rebindRequests) {
@@ -129,7 +93,8 @@ public class UnifiedAst implements Serializable {
     this.initialAst = initialAst;
     this.rebindRequests = Collections.unmodifiableSortedSet(new TreeSet<String>(
         rebindRequests));
-    this.serializedAst = singlePermutation ? null : serializeAst(initialAst);
+    this.serializedAstToken = singlePermutation ? -1
+        : diskCache.writeObject(initialAst);
   }
 
   /**
@@ -140,7 +105,7 @@ public class UnifiedAst implements Serializable {
     this.initialAst = other.initialAst;
     other.initialAst = null; // steal its copy
     this.rebindRequests = other.rebindRequests;
-    this.serializedAst = other.serializedAst;
+    this.serializedAstToken = other.serializedAstToken;
   }
 
   /**
@@ -179,7 +144,7 @@ public class UnifiedAst implements Serializable {
   public void prepare() {
     synchronized (myLockObject) {
       if (initialAst == null) {
-        initialAst = deserializeAst(serializedAst);
+        initialAst = diskCache.readObject(serializedAstToken, AST.class);
       }
     }
   }
@@ -191,36 +156,39 @@ public class UnifiedAst implements Serializable {
         initialAst = null;
         return result;
       } else {
-        if (serializedAst == null) {
+        if (serializedAstToken < 0) {
           throw new IllegalStateException(
               "No serialized AST was cached and AST was already consumed.");
         }
-        return deserializeAst(serializedAst);
+        return diskCache.readObject(serializedAstToken, AST.class);
       }
     }
   }
 
   /**
-   * Re-initialize lock object.
+   * Re-initialize lock object; copy serialized AST straight to cache.
    */
-  private Object readResolve() {
+  private void readObject(ObjectInputStream stream) throws IOException,
+      ClassNotFoundException {
+    stream.defaultReadObject();
     myLockObject = new Object();
-    return this;
+    serializedAstToken = diskCache.transferFromStream(stream);
   }
 
   /**
    * Force byte serialization of AST before writing.
    */
-  private Object writeReplace() {
-    if (serializedAst == null) {
-      synchronized (myLockObject) {
-        if (initialAst == null) {
-          throw new IllegalStateException(
-              "No serialized AST was cached and AST was already consumed.");
-        }
-        serializedAst = serializeAst(initialAst);
-      }
+  private void writeObject(ObjectOutputStream stream) throws IOException {
+    stream.defaultWriteObject();
+    if (serializedAstToken >= 0) {
+      // Copy the bytes.
+      diskCache.transferToStream(serializedAstToken, stream);
+    } else if (initialAst != null) {
+      // Serialize into raw bytes.
+      Util.writeObjectToStream(stream, stream);
+    } else {
+      throw new IllegalStateException(
+          "No serialized AST was cached and AST was already consumed.");
     }
-    return this;
   }
 }
