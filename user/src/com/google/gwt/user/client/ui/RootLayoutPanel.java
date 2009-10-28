@@ -24,8 +24,8 @@ import com.google.gwt.user.client.Window;
  * to the document body (i.e. {@link RootPanel#get()}).
  * 
  * <p>
- * This panel automatically calls {@link RequiresResize#layout()} on itself when
- * initially created, and whenever the window is resized.
+ * This panel automatically calls {@link RequiresResize#onResize()} on itself
+ * when initially created, and whenever the window is resized.
  * </p>
  * 
  * <p>

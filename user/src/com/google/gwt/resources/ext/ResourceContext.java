@@ -92,9 +92,9 @@ public interface ResourceContext {
   /**
    * Return the GeneratorContext in which the overall resource generation
    * framework is being run. Implementations of ResourceGenerator should prefer
-   * {@link #addToOutput} over {@link GeneratorContext#tryCreateResource} in
-   * order to take advantage of serving optimizations that can be performed by
-   * the bundle architecture.
+   * {@link #deploy} over {@link GeneratorContext#tryCreateResource} in order to
+   * take advantage of serving optimizations that can be performed by the bundle
+   * architecture.
    */
   GeneratorContext getGeneratorContext();
 

@@ -340,7 +340,7 @@ public final class DisclosurePanel extends Composite implements
    * @param isOpen the initial open/close state of the content panel
    * 
    * @deprecated use
-   *             {@link #DisclosurePanel(ImageResource, ImageResource, String)
+   *             {@link #DisclosurePanel(ImageResource, ImageResource, String)}
    *             and {@link #setOpen(boolean)}
    */
   @Deprecated
@@ -356,9 +356,9 @@ public final class DisclosurePanel extends Composite implements
    * open/close state and a bundle of images to be used in the default header
    * widget.
    * 
-   * @param images a bundle that provides disclosure panel specific images
+   * @param openImage the open state image resource
+   * @param closedImage the closed state image resource
    * @param headerText the text to be displayed in the header
-   * @param isOpen the initial open/close state of the content panel
    */
   public DisclosurePanel(ImageResource openImage, ImageResource closedImage,
       String headerText) {

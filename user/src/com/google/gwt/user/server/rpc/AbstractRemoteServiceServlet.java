@@ -75,8 +75,8 @@ public abstract class AbstractRemoteServiceServlet extends HttpServlet {
 
   /**
    * Override this method to control what should happen when an exception
-   * escapes the {@link #processCall(String)} method. The default implementation
-   * will log the failure and send a generic failure response to the client.
+   * escapes the {@link #doPost} method. The default implementation will log the
+   * failure and send a generic failure response to the client.
    * <p>
    * An "expected failure" is an exception thrown by a service method that is
    * declared in the signature of the service method. These exceptions are
@@ -102,8 +102,9 @@ public abstract class AbstractRemoteServiceServlet extends HttpServlet {
   /**
    * Returns the strong name of the permutation, as reported by the client that
    * issued the request, or <code>null</code> if it could not be determined.
-   * This information is encoded in the {@value #STRONG_NAME_HEADER} HTTP
-   * header.
+   * This information is encoded in the
+   * {@value com.google.gwt.user.client.rpc.RpcRequestBuilder#STRONG_NAME_HEADER}
+   * HTTP header.
    */
   protected final String getPermutationStrongName() {
     return getThreadLocalRequest().getHeader(STRONG_NAME_HEADER);

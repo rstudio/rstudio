@@ -534,8 +534,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * @deprecated Use {@link #onPreviewNativeEvent(NativePreviewEvent)}
-   *             instead
+   * @deprecated Use {@link #onPreviewNativeEvent} instead
    */
   @Deprecated
   public boolean onEventPreview(Event event) {
@@ -550,8 +549,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
-   * @deprecated Use {@link #onPreviewNativeEvent(NativePreviewEvent)}
-   *             instead
+   * @deprecated Use {@link #onPreviewNativeEvent} instead
    */
   @Deprecated
   public boolean onKeyDownPreview(char key, int modifiers) {
@@ -566,8 +564,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
-   * @deprecated Use {@link #onPreviewNativeEvent(NativePreviewEvent)}
-   *             instead
+   * @deprecated Use {@link #onPreviewNativeEvent} instead
    */
   @Deprecated
   public boolean onKeyPressPreview(char key, int modifiers) {
@@ -582,8 +579,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
-   * @deprecated Use {@link #onPreviewNativeEvent(NativePreviewEvent)}
-   *             instead
+   * @deprecated Use {@link #onPreviewNativeEvent} instead
    */
   @Deprecated
   public boolean onKeyUpPreview(char key, int modifiers) {

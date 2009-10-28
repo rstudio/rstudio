@@ -244,7 +244,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
    * <p>
    * Its assocated splitter cannot be dragged to a position that would make it
    * smaller than this size. This method has no effect for the
-   * {@link Direction#CENTER} widget.
+   * {@link DockLayoutPanel.Direction#CENTER} widget.
    * </p>
    * 
    * @param child the child whose minimum size will be set

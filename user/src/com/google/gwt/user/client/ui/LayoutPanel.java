@@ -20,8 +20,9 @@ import com.google.gwt.layout.client.Layout;
 import com.google.gwt.layout.client.Layout.Layer;
 
 /**
- * A panel that lays its children out in arbitrary {@link Layout.Layer layers}
- * using the {@link Layout} class.
+ * A panel that lays its children out in arbitrary
+ * {@link com.google.gwt.layout.client.Layout.Layer layers} using the
+ * {@link Layout} class.
  * 
  * <p>
  * Whenever children are added to, or removed from, this panel, you must call
@@ -66,8 +67,9 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
    * 
    * <p>
    * By default, each child will fill the panel. To build more interesting
-   * layouts, use {@link #getLayer(Widget)} to get the {@link Layout.Layer}
-   * associated with each child, and set its layout constraints as desired.
+   * layouts, use {@link #getLayer(Widget)} to get the
+   * {@link com.google.gwt.layout.client.Layout.Layer} associated with each
+   * child, and set its layout constraints as desired.
    * </p>
    * 
    * @param widget the widget to be added
@@ -90,7 +92,8 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
    * @return the associated layer
    */
   public Layout.Layer getLayer(Widget child) {
-    assert child.getParent() == this : "The requested widget is not a child of this panel";
+    assert child.getParent() == this :
+      "The requested widget is not a child of this panel";
     return (Layout.Layer) child.getLayoutData();
   }
 
@@ -99,8 +102,9 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
    * 
    * <p>
    * By default, each child will fill the panel. To build more interesting
-   * layouts, use {@link #getLayer(Widget)} to get the {@link Layout.Layer}
-   * associated with each child, and set its layout constraints as desired.
+   * layouts, use {@link #getLayer(Widget)} to get the
+   * {@link com.google.gwt.layout.client.Layout.Layer} associated with each
+   * child, and set its layout constraints as desired.
    * </p>
    * 
    * <p>
