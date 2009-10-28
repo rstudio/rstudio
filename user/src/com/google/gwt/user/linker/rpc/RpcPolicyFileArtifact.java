@@ -48,7 +48,12 @@ public class RpcPolicyFileArtifact extends Artifact<RpcPolicyFileArtifact> {
 
   @Override
   protected final int compareToComparableArtifact(RpcPolicyFileArtifact o) {
-    return getProxyClass().compareTo(o.getProxyClass());
+    int cmp = getProxyClass().compareTo(o.getProxyClass());
+    if (cmp != 0) {
+      return cmp;
+    }
+
+    return artifact.compareTo(o.getEmittedArtifact());
   }
 
   @Override
