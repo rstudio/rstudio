@@ -68,11 +68,13 @@ import org.w3c.flute.parser.Parser;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -641,7 +643,14 @@ public class GenerateCssAst {
   }
 
   private static final String LITERAL_FUNCTION_NAME = "literal";
-
+  /**
+   * We cache the stylesheets to prevent repeated parsing of the same source
+   * material. This is a common case if the user is using UiBinder's implicit
+   * stylesheets. It is necessary to use the list of URLs passed to exec because
+   * of the eager variable expansion performed by
+   * {@link GenerationHandler#parseDef(String)}.
+   */
+  private static final Map<List<URL>, SoftReference<CssStylesheet>> SHEETS = new HashMap<List<URL>, SoftReference<CssStylesheet>>();
   private static final String VALUE_FUNCTION_NAME = "value";
 
   /**
@@ -651,13 +660,22 @@ public class GenerateCssAst {
    */
   public static CssStylesheet exec(TreeLogger logger, URL... stylesheets)
       throws UnableToCompleteException {
+
+    List<URL> sheets = Arrays.asList(stylesheets);
+    SoftReference<CssStylesheet> ref = SHEETS.get(sheets);
+    CssStylesheet toReturn = ref == null ? null : ref.get();
+    if (toReturn != null) {
+      logger.log(TreeLogger.DEBUG, "Using cached result");
+      return new CssStylesheet(toReturn);
+    }
+
     Parser p = new Parser();
     Errors errors = new Errors(logger);
     GenerationHandler g = new GenerationHandler(errors);
     p.setDocumentHandler(g);
     p.setErrorHandler(errors);
 
-    for (URL stylesheet : stylesheets) {
+    for (URL stylesheet : sheets) {
       TreeLogger branchLogger = logger.branch(TreeLogger.DEBUG,
           "Parsing CSS stylesheet " + stylesheet.toExternalForm());
       try {
@@ -678,7 +696,10 @@ public class GenerateCssAst {
       throw new UnableToCompleteException();
     }
 
-    return g.css;
+    toReturn = g.css;
+    SHEETS.put(new ArrayList<URL>(sheets), new SoftReference<CssStylesheet>(
+        new CssStylesheet(toReturn)));
+    return toReturn;
   }
 
   /**

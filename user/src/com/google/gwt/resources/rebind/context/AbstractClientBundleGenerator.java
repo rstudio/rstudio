@@ -186,28 +186,28 @@ public abstract class AbstractClientBundleGenerator extends Generator {
      */
     String generatedSimpleSourceName = generateSimpleSourceName(logger,
         resourceContext, requirements);
+    String packageName = sourceType.getPackage().getName();
+    String createdClassName = packageName + "." + generatedSimpleSourceName;
 
-    // Begin writing the generated source.
-    ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
-        sourceType.getPackage().getName(), generatedSimpleSourceName);
-
-    // The generated class needs to be able to determine the module base URL
-    f.addImport(GWT.class.getName());
-
-    // Used by the map methods
-    f.addImport(ResourcePrototype.class.getName());
-
-    // The whole point of this exercise
-    f.addImplementedInterface(sourceType.getQualifiedSourceName());
-
-    String createdClassName = f.getCreatedClassName();
-
-    // All source gets written through this Writer
-    PrintWriter out = generatorContext.tryCreate(logger,
-        sourceType.getPackage().getName(), generatedSimpleSourceName);
+    PrintWriter out = generatorContext.tryCreate(logger, packageName,
+        generatedSimpleSourceName);
 
     // If an implementation already exists, we don't need to do any work
     if (out != null) {
+      // Begin writing the generated source.
+      ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
+          packageName, generatedSimpleSourceName);
+
+      // The generated class needs to be able to determine the module base URL
+      f.addImport(GWT.class.getName());
+
+      // Used by the map methods
+      f.addImport(ResourcePrototype.class.getName());
+
+      // The whole point of this exercise
+      f.addImplementedInterface(sourceType.getQualifiedSourceName());
+
+      // All source gets written through this Writer
       SourceWriter sw = f.createSourceWriter(generatorContext, out);
 
       // Set the now-calculated simple source name

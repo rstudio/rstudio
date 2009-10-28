@@ -19,10 +19,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 
+ * An abstract representation of a CSS stylesheet.
  */
 public class CssStylesheet extends CssNode implements HasNodes {
   private List<CssNode> rules = new ArrayList<CssNode>();
+
+  public CssStylesheet() {
+  }
+
+  /**
+   * A copy constructor that will clone the contents of an existing
+   * CssStylesheet.
+   */
+  public CssStylesheet(CssStylesheet other) {
+    append(other);
+  }
+
+  /**
+   * Append the given stylesheet. The contents of the other stylesheet will be
+   * cloned.
+   */
+  public void append(CssStylesheet other) {
+    rules.addAll(CssNodeCloner.clone(CssNode.class, other.rules));
+  }
 
   public List<CssNode> getNodes() {
     return rules;
