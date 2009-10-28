@@ -180,6 +180,7 @@ public class ImplicitCssResource {
       try {
         File f = File.createTempFile(String.format("uiBinder_%s_%s",
             packageName, className), ".css");
+        f.deleteOnExit();
 
         BufferedWriter out = new BufferedWriter(new FileWriter(f));
         out.write(body);
