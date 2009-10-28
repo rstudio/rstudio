@@ -18,7 +18,6 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.shell.log.SwingLoggerPanel;
-import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 /**
@@ -52,8 +51,7 @@ public class CompileTaskRunner {
       // Eager AWT initialization for OS X to ensure safe coexistence with SWT.
       BootStrapPlatform.initGui();
 
-      final AbstractTreeLogger logger = loggerWindow.getLogger();
-      logger.setMaxDetail(options.getLogLevel());
+      final TreeLogger logger = loggerWindow.getLogger();
       final boolean[] success = new boolean[1];
 
       // Compiler will be spawned onto a second thread, UI thread for tree

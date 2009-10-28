@@ -253,7 +253,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
 
   private final JEditorPane details;
 
-  private final AbstractTreeLogger logger;
+  private final TreeLogger logger;
 
   private DefaultMutableTreeNode root;
 
@@ -380,19 +380,18 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     add(splitter);
     
     AbstractTreeLogger uiLogger = new SwingTreeLogger(this);
-    AbstractTreeLogger bestLogger = uiLogger;
+    uiLogger.setMaxDetail(maxLevel);
+    TreeLogger bestLogger = uiLogger;
     if (logFile != null) {
       try {
         PrintWriterTreeLogger fileLogger = new PrintWriterTreeLogger(logFile);
-        bestLogger = new CompositeTreeLogger(bestLogger, fileLogger);
         fileLogger.setMaxDetail(maxLevel);
-        uiLogger.setMaxDetail(maxLevel);
+        bestLogger = new CompositeTreeLogger(bestLogger, fileLogger);
       } catch (IOException ex) {
         bestLogger.log(TreeLogger.ERROR, "Can't log to file "
             + logFile.getAbsolutePath(), ex);
       }
     }
-    bestLogger.setMaxDetail(maxLevel);
     logger = bestLogger;
     KeyStroke key = KeyStroke.getKeyStroke(KeyEvent.VK_F,
         InputEvent.CTRL_DOWN_MASK);
@@ -460,7 +459,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     return autoScroll;
   }
 
-  public AbstractTreeLogger getLogger() {
+  public TreeLogger getLogger() {
     return logger;
   }
 

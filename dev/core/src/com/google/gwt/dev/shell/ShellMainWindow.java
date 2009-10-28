@@ -17,7 +17,6 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.log.SwingLoggerPanel;
-import com.google.gwt.dev.util.log.AbstractTreeLogger;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
@@ -57,7 +56,7 @@ public class ShellMainWindow extends JPanel {
   /**
    * @return TreeLogger instance
    */
-  public AbstractTreeLogger getLogger() {
+  public TreeLogger getLogger() {
     return logWindow.getLogger();
   }
 }

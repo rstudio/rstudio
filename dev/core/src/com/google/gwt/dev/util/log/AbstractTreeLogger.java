@@ -84,11 +84,11 @@ public abstract class AbstractTreeLogger extends TreeLogger {
     return e.getClass().getSimpleName();
   }
 
-  public int indexWithinMyParent;
-  
   protected TreeLogger.Type logLevel = TreeLogger.ALL;
 
   protected AbstractTreeLogger parent;
+
+  private int indexWithinMyParent;
 
   private int nextChildIndex;
 
@@ -220,7 +220,7 @@ public abstract class AbstractTreeLogger extends TreeLogger {
     }
     logLevel = type;
   }
-  
+
   @Override
   public String toString() {
     return getLoggerId();
@@ -245,12 +245,12 @@ public abstract class AbstractTreeLogger extends TreeLogger {
         // Commit the parent first.
         //
         parent.commitMyBranchEntryInMyParentLogger();
-  
+
         // Let the subclass do its thing to commit this branch.
         //
         parent.doCommitBranch(this, uncommitted.type, uncommitted.message,
             uncommitted.caught, uncommitted.helpInfo);
-  
+
         // Release the uncommitted state.
         //
         uncommitted = null;
@@ -267,7 +267,7 @@ public abstract class AbstractTreeLogger extends TreeLogger {
    * @deprecated This method has been deprecated; override
    *             {@link #doCommitBranch(AbstractTreeLogger, com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)}
    *             instead.
-   *
+   * 
    * @param childBeingCommitted
    * @param type
    * @param msg
@@ -290,7 +290,7 @@ public abstract class AbstractTreeLogger extends TreeLogger {
    * @deprecated This method has been deprecated; override
    *             {@link #branch(com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)
    *             instead.
-   *
+   * 
    * @param indexOfLogEntryWithinParentLogger
    * @param type
    * @param msg

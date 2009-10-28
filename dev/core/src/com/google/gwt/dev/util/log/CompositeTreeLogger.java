@@ -15,46 +15,44 @@
  */
 package com.google.gwt.dev.util.log;
 
+import com.google.gwt.core.ext.TreeLogger;
+
 /**
- * Forks logging over two child loggers.  This provides the graphics + file
+ * Forks logging over two child loggers. This provides the graphics + file
  * logging of HostedModeBase's -logfile option.
  */
-public class CompositeTreeLogger extends AbstractTreeLogger {
+public class CompositeTreeLogger extends TreeLogger {
 
-  private AbstractTreeLogger[] loggers;
-  
-  public CompositeTreeLogger(AbstractTreeLogger... loggers) {
+  private TreeLogger[] loggers;
+
+  public CompositeTreeLogger(TreeLogger... loggers) {
     this.loggers = loggers;
   }
 
   @Override
-  protected AbstractTreeLogger doBranch() {
-    AbstractTreeLogger children[] = new AbstractTreeLogger[loggers.length];
+  public TreeLogger branch(Type type, String msg, Throwable caught,
+      HelpInfo helpInfo) {
+    TreeLogger children[] = new TreeLogger[loggers.length];
     for (int i = 0; i < loggers.length; i++) {
-      children[i] = loggers[i].doBranch();      
-      children[i].indexWithinMyParent = loggers[i].allocateNextChildIndex();
-      children[i].parent = loggers[i];
-      children[i].logLevel = loggers[i].logLevel;
+      children[i] = loggers[i].branch(type, msg, caught, helpInfo);
     }
     return new CompositeTreeLogger(children);
   }
 
   @Override
-  protected void doCommitBranch(AbstractTreeLogger childBeingCommitted,
-      Type type, String msg, Throwable caught, HelpInfo helpInfo) {
-    CompositeTreeLogger child = (CompositeTreeLogger) childBeingCommitted;
-    assert loggers.length == child.loggers.length;
-    for (int i = 0; i < loggers.length; i++) {
-      loggers[i].doCommitBranch(child.loggers[i], type, msg, caught, helpInfo);      
+  public boolean isLoggable(Type type) {
+    for (TreeLogger logger : loggers) {
+      if (logger.isLoggable(type)) {
+        return true;
+      }
     }
+    return false;
   }
 
   @Override
-  protected void doLog(int indexOfLogEntryWithinParentLogger, Type type,
-      String msg, Throwable caught, HelpInfo helpInfo) {
-    for (AbstractTreeLogger logger : loggers) {
-      logger.doLog(indexOfLogEntryWithinParentLogger, type, msg, caught,
-          helpInfo);
+  public void log(Type type, String msg, Throwable caught, HelpInfo helpInfo) {
+    for (TreeLogger logger : loggers) {
+      logger.log(type, msg, caught, helpInfo);
     }
   }
 }

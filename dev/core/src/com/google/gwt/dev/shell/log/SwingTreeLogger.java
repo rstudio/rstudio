@@ -277,7 +277,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
           if (event.isBranchCommit) {
             SwingTreeLogger parentLogger = (SwingTreeLogger) logger.getParentLogger();
             parent = parentLogger.treeNode;
-            idx = logger.indexWithinMyParent;
+            idx = logger.getBranchedIndex();
             node = logger.treeNode;
           } else {
             parent = logger.treeNode;
