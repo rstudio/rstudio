@@ -17,9 +17,9 @@ package com.google.gwt.resources.rg;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.resources.client.impl.ImageResourcePrototype;
@@ -34,6 +34,8 @@ import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
 import java.awt.geom.AffineTransform;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -46,12 +48,73 @@ import java.util.Set;
  * Builds an image strip for all ImageResources defined within an ClientBundle.
  */
 public final class ImageResourceGenerator extends AbstractResourceGenerator {
-  private Map<String, ImageRect> imageRectsByName;
-  private Map<ImageRect, ImageBundleBuilder> buildersByImageRect;
-  private Map<RepeatStyle, ImageBundleBuilder> buildersByRepeatStyle;
-  private Map<ImageBundleBuilder, String[]> urlsByBuilder;
-  private Map<ImageRect, String[]> urlsByExternalImageRect;
-  private Map<ImageRect, ImageBundleBuilder> rtlImages;
+  /**
+   * This is shared that can be shared across permutations for a given
+   * ClientBundle type.
+   */
+  static class CachedState {
+    /**
+     * Associates an ImageRect with the ImageBundleBuilder that will emit its
+     * bytes.
+     */
+    public final Map<ImageRect, ImageBundleBuilder> buildersByImageRect = new IdentityHashMap<ImageRect, ImageBundleBuilder>();
+
+    /**
+     * Associates a layout constraint with an ImageBundleBuilder that can
+     * satisfy that constraint.
+     */
+    public final Map<RepeatStyle, ImageBundleBuilder> buildersByRepeatStyle = new EnumMap<RepeatStyle, ImageBundleBuilder>(
+        RepeatStyle.class);
+
+    /**
+     * Associates a method name with the ImageRect that contains the data for
+     * that method.
+     */
+    public final Map<String, ImageRect> imageRectsByName = new HashMap<String, ImageRect>();
+
+    /**
+     * Records that ImageRects that also need to provide an RTL-flipped version.
+     */
+    public final Set<ImageRect> rtlImages = new HashSet<ImageRect>();
+
+    public final Map<ImageBundleBuilder, URL[]> urlsByBuilder = new IdentityHashMap<ImageBundleBuilder, URL[]>();
+
+    /**
+     * Maps an ImageRect to two URLs that contain the normal and flipped
+     * contents.
+     */
+    public final Map<ImageRect, URL[]> urlsByExternalImageRect = new IdentityHashMap<ImageRect, URL[]>();
+  }
+
+  /**
+   * This data is specific to a particular permutation.
+   */
+  static class LocalState {
+    /**
+     * Maps resource URLs to field names within the generated ClientBundle type.
+     * These fields will be statically initialized to an expression that can be
+     * used to access the contents of the resource URL.
+     * 
+     * @see ImageResourceGenerator#maybeDeploy
+     */
+    public final Map<URL, String> fieldNamesByUrl = new HashMap<URL, String>();
+
+    /**
+     * Maps an ImageRect to a pair of Java expressions. The first can be used to
+     * access the normal version of the resource, while the second, optional,
+     * field is used to access an RTL-flipped version.
+     */
+    public final Map<ImageRect, String[]> urlExpressionsByImageRect = new HashMap<ImageRect, String[]>();
+  }
+
+  /**
+   * This is set to <code>true</code> by {@link #init} if {@link #shared} was
+   * initialized from cached data.
+   */
+  private boolean prepared;
+  private CachedState shared;
+  private LocalState local;
+  private JType stringType;
 
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context,
@@ -63,18 +126,10 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
     sw.indent();
     sw.println('"' + name + "\",");
 
-    ImageRect rect = imageRectsByName.get(name);
+    ImageRect rect = shared.imageRectsByName.get(name);
     assert rect != null : "No ImageRect ever computed for " + name;
 
-    String[] urlExpressions;
-    {
-      ImageBundleBuilder builder = buildersByImageRect.get(rect);
-      if (builder == null) {
-        urlExpressions = urlsByExternalImageRect.get(rect);
-      } else {
-        urlExpressions = urlsByBuilder.get(builder);
-      }
-    }
+    String[] urlExpressions = local.urlExpressionsByImageRect.get(rect);
     assert urlExpressions != null : "No URL expression for " + name;
     assert urlExpressions.length == 2;
 
@@ -93,110 +148,75 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
     return sw.toString();
   }
 
+  /**
+   * We use this as a signal that we have received all image methods and can now
+   * create the bundled images.
+   */
   @Override
   public void createFields(TreeLogger logger, ResourceContext context,
       ClientBundleFields fields) throws UnableToCompleteException {
-
-    TypeOracle typeOracle = context.getGeneratorContext().getTypeOracle();
-    JClassType stringType = typeOracle.findType(String.class.getName());
-    assert stringType != null;
-
-    Map<ImageBundleBuilder, String> prettyNames = new IdentityHashMap<ImageBundleBuilder, String>();
-
-    for (Map.Entry<RepeatStyle, ImageBundleBuilder> entry : buildersByRepeatStyle.entrySet()) {
-      RepeatStyle repeatStyle = entry.getKey();
-      ImageBundleBuilder builder = entry.getValue();
-      Arranger arranger;
-
-      switch (repeatStyle) {
-        case None:
-          arranger = new ImageBundleBuilder.BestFitArranger();
-          break;
-        case Horizontal:
-          arranger = new ImageBundleBuilder.VerticalArranger();
-          break;
-        case Vertical:
-          arranger = new ImageBundleBuilder.HorizontalArranger();
-          break;
-        case Both:
-          // This is taken care of when writing the external images;
-          continue;
-        default:
-          logger.log(TreeLogger.ERROR, "Unknown RepeatStyle" + repeatStyle);
-          throw new UnableToCompleteException();
-      }
-
-      String bundleUrlExpression = builder.writeBundledImage(logger.branch(
-          TreeLogger.DEBUG, "Writing image strip", null), context, arranger);
-
-      if (bundleUrlExpression == null) {
-        continue;
-      }
-
-      String prettyName = "imageUrl" + repeatStyle;
-      prettyNames.put(builder, prettyName);
-      String fieldName = fields.define(stringType, prettyName,
-          bundleUrlExpression, true, true);
-      String[] strings = {fieldName, null};
-      urlsByBuilder.put(builder, strings);
+    if (!prepared) {
+      finalizeArrangements(logger, context);
     }
 
-    if (rtlImages.size() > 0) {
-      Set<ImageBundleBuilder> rtlBuilders = new HashSet<ImageBundleBuilder>();
-
-      for (Map.Entry<ImageRect, ImageBundleBuilder> entry : rtlImages.entrySet()) {
-        ImageRect rtlImage = entry.getKey();
-
-        AffineTransform tx = new AffineTransform();
-        tx.setTransform(-1, 0, 0, 1, rtlImage.getWidth(), 0);
-
-        rtlImage.setTransform(tx);
-
-        if (buildersByImageRect.containsKey(rtlImage)) {
-          rtlBuilders.add(buildersByImageRect.get(rtlImage));
+    for (ImageRect rect : shared.imageRectsByName.values()) {
+      String[] urlExpressions;
+      {
+        URL[] contents;
+        ImageBundleBuilder builder = shared.buildersByImageRect.get(rect);
+        if (builder == null) {
+          contents = shared.urlsByExternalImageRect.get(rect);
         } else {
-          String[] strings = urlsByExternalImageRect.get(rtlImage);
-          assert strings != null;
-          byte[] imageBytes = ImageBundleBuilder.toPng(logger, rtlImage);
-          strings[1] = context.deploy(rtlImage.getName() + "_rtl.png",
-              "image/png", imageBytes, false);
+          contents = shared.urlsByBuilder.get(builder);
         }
+        assert contents != null && contents.length == 2;
+
+        urlExpressions = new String[2];
+        urlExpressions[0] = maybeDeploy(context, fields, contents[0]);
+        urlExpressions[1] = maybeDeploy(context, fields, contents[1]);
       }
-
-      for (ImageBundleBuilder builder : rtlBuilders) {
-        String bundleUrlExpression = builder.writeBundledImage(logger.branch(
-            TreeLogger.DEBUG, "Writing image strip", null), context,
-            new ImageBundleBuilder.IdentityArranger());
-
-        if (bundleUrlExpression == null) {
-          continue;
-        }
-
-        String prettyName = prettyNames.get(builder);
-        String[] strings = urlsByBuilder.get(builder);
-        assert strings != null;
-
-        strings[1] = fields.define(stringType, prettyName + "_rtl",
-            bundleUrlExpression, true, true);
-      }
+      local.urlExpressionsByImageRect.put(rect, urlExpressions);
     }
+  }
+
+  @Override
+  public void finish(TreeLogger logger, ResourceContext context)
+      throws UnableToCompleteException {
+    local = null;
   }
 
   @Override
   public void init(TreeLogger logger, ResourceContext context) {
-    imageRectsByName = new HashMap<String, ImageRect>();
-    buildersByImageRect = new IdentityHashMap<ImageRect, ImageBundleBuilder>();
-    buildersByRepeatStyle = new EnumMap<RepeatStyle, ImageBundleBuilder>(
-        RepeatStyle.class);
-    rtlImages = new IdentityHashMap<ImageRect, ImageBundleBuilder>();
-    urlsByBuilder = new IdentityHashMap<ImageBundleBuilder, String[]>();
-    urlsByExternalImageRect = new IdentityHashMap<ImageRect, String[]>();
+    // The images are bundled differently when data resources are supported
+    String key = context.getClientBundleType().getQualifiedSourceName() + ":"
+        + context.supportsDataUrls();
+    shared = context.getCachedData(key, CachedState.class);
+    prepared = shared != null;
+    if (prepared) {
+      logger.log(TreeLogger.DEBUG, "Using cached data");
+    } else {
+      shared = new CachedState();
+      context.putCachedData(key, shared);
+    }
+    local = new LocalState();
+
+    stringType = context.getGeneratorContext().getTypeOracle().findType(
+        String.class.getCanonicalName());
+    assert stringType != null : "No String type";
   }
 
+  /**
+   * Process each image method. This will either assign the image to an
+   * ImageBundleBuilder or reencode an external image.
+   */
   @Override
   public void prepare(TreeLogger logger, ResourceContext context,
       ClientBundleRequirements requirements, JMethod method)
       throws UnableToCompleteException {
+    if (prepared) {
+      return;
+    }
+
     URL[] resources = ResourceGeneratorUtil.findResources(logger, context,
         method);
 
@@ -219,37 +239,96 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
         rect.setPosition(0, 0);
         throw new UnsuitableForStripException(rect);
       }
-      buildersByImageRect.put(rect, builder);
+      shared.buildersByImageRect.put(rect, builder);
     } catch (UnsuitableForStripException e) {
       // Add the image to the output as a separate resource
+      URL normalContents;
       rect = e.getImageRect();
 
-      String urlExpression;
       if (rect.isAnimated()) {
         // Can't re-encode animated images, so we emit it as-is
-        urlExpression = context.deploy(resource, false);
+        normalContents = resource;
       } else {
-        // Re-encode the image as a PNG to strip random header data
-        byte[] imageBytes = ImageBundleBuilder.toPng(logger, rect);
-        urlExpression = context.deploy(rect.getName() + ".png", "image/png",
-            imageBytes, false);
+        normalContents = reencodeToTempFile(logger, rect);
       }
-      urlsByExternalImageRect.put(rect, new String[] {urlExpression, null});
+      shared.urlsByExternalImageRect.put(rect, new URL[] {normalContents, null});
     }
 
-    imageRectsByName.put(name, rect);
+    shared.imageRectsByName.put(name, rect);
 
     if (getFlipRtl(method)) {
-      rtlImages.put(rect, null);
+      shared.rtlImages.add(rect);
+    }
+  }
+
+  private void finalizeArrangements(TreeLogger logger, ResourceContext context)
+      throws UnableToCompleteException {
+    for (Map.Entry<RepeatStyle, ImageBundleBuilder> entry : shared.buildersByRepeatStyle.entrySet()) {
+      RepeatStyle repeatStyle = entry.getKey();
+      ImageBundleBuilder builder = entry.getValue();
+      Arranger arranger;
+
+      switch (repeatStyle) {
+        case None:
+          arranger = new ImageBundleBuilder.BestFitArranger();
+          break;
+        case Horizontal:
+          arranger = new ImageBundleBuilder.VerticalArranger();
+          break;
+        case Vertical:
+          arranger = new ImageBundleBuilder.HorizontalArranger();
+          break;
+        case Both:
+          // This is taken care of when writing the external images;
+          continue;
+        default:
+          logger.log(TreeLogger.ERROR, "Unknown RepeatStyle" + repeatStyle);
+          throw new UnableToCompleteException();
+      }
+      URL normalContents = renderToTempFile(logger, builder, arranger);
+
+      shared.urlsByBuilder.put(builder, new URL[] {normalContents, null});
+    }
+
+    if (shared.rtlImages.size() > 0) {
+      Set<ImageBundleBuilder> rtlBuilders = new HashSet<ImageBundleBuilder>();
+
+      for (ImageRect rtlImage : shared.rtlImages) {
+        // Create a transformation to mirror about the Y-axis and translate
+        AffineTransform tx = new AffineTransform();
+        tx.setTransform(-1, 0, 0, 1, rtlImage.getWidth(), 0);
+        rtlImage.setTransform(tx);
+
+        if (shared.buildersByImageRect.containsKey(rtlImage)) {
+          /*
+           * This image is assigned to a builder, so we'll just remember to
+           * regenerate that builder.
+           */
+          rtlBuilders.add(shared.buildersByImageRect.get(rtlImage));
+        } else {
+          // Otherwise, emit the external version
+          URL[] contents = shared.urlsByExternalImageRect.get(rtlImage);
+          assert contents != null;
+          contents[1] = reencodeToTempFile(logger, rtlImage);
+        }
+      }
+
+      for (ImageBundleBuilder builder : rtlBuilders) {
+        URL[] contents = shared.urlsByBuilder.get(builder);
+        assert contents != null && contents.length == 2;
+
+        contents[1] = renderToTempFile(logger, builder,
+            new ImageBundleBuilder.IdentityArranger());
+      }
     }
   }
 
   private ImageBundleBuilder getBuilder(JMethod method) {
     RepeatStyle repeatStyle = getRepeatStyle(method);
-    ImageBundleBuilder builder = buildersByRepeatStyle.get(repeatStyle);
+    ImageBundleBuilder builder = shared.buildersByRepeatStyle.get(repeatStyle);
     if (builder == null) {
       builder = new ImageBundleBuilder();
-      buildersByRepeatStyle.put(repeatStyle, builder);
+      shared.buildersByRepeatStyle.put(repeatStyle, builder);
     }
     return builder;
   }
@@ -269,6 +348,73 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
       return RepeatStyle.None;
     } else {
       return options.repeatStyle();
+    }
+  }
+
+  /**
+   * Create a field in the ClientBundle type that is used to intern the URL
+   * expressions that can be used to access the contents of the given resource.
+   * 
+   * @return the name of the field that was created
+   */
+  private String maybeDeploy(ResourceContext context,
+      ClientBundleFields fields, URL resource) throws UnableToCompleteException {
+    if (resource == null) {
+      return null;
+    }
+
+    String toReturn = local.fieldNamesByUrl.get(resource);
+    if (toReturn == null) {
+      String urlExpression = context.deploy(resource, false);
+      toReturn = fields.define(stringType, "internedUrl"
+          + local.fieldNamesByUrl.size(), urlExpression, true, true);
+      local.fieldNamesByUrl.put(resource, toReturn);
+    }
+    return toReturn;
+  }
+
+  /**
+   * Re-encode an image as a PNG to strip random header data.
+   */
+  private URL reencodeToTempFile(TreeLogger logger, ImageRect rect)
+      throws UnableToCompleteException {
+    try {
+      byte[] imageBytes = ImageBundleBuilder.toPng(logger, rect);
+
+      if (imageBytes == null) {
+        return null;
+      }
+
+      File file = File.createTempFile(
+          ImageResourceGenerator.class.getSimpleName(), ".png");
+      file.deleteOnExit();
+      Util.writeBytesToFile(logger, file, imageBytes);
+      return file.toURI().toURL();
+    } catch (IOException ex) {
+      logger.log(TreeLogger.ERROR, "Unable to write re-encoded PNG", ex);
+      throw new UnableToCompleteException();
+    }
+  }
+
+  /**
+   * Re-encode an image as a PNG to strip random header data.
+   */
+  private URL renderToTempFile(TreeLogger logger, ImageBundleBuilder builder,
+      Arranger arranger) throws UnableToCompleteException {
+    try {
+      byte[] imageBytes = builder.render(logger, arranger);
+      if (imageBytes == null) {
+        return null;
+      }
+
+      File file = File.createTempFile(
+          ImageResourceGenerator.class.getSimpleName(), ".png");
+      file.deleteOnExit();
+      Util.writeBytesToFile(logger, file, imageBytes);
+      return file.toURI().toURL();
+    } catch (IOException ex) {
+      logger.log(TreeLogger.ERROR, "Unable to write re-encoded PNG", ex);
+      throw new UnableToCompleteException();
     }
   }
 }

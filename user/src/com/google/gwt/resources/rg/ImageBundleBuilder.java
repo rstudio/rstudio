@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.resources.ext.ResourceContext;
 
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
@@ -453,8 +452,8 @@ class ImageBundleBuilder {
    * Only PNG is supported right now. In the future, we may be able to infer the
    * best output type, and get rid of this constant.
    */
-  private static final String BUNDLE_FILE_TYPE = "png";
-  private static final String BUNDLE_MIME_TYPE = "image/png";
+  static final String BUNDLE_FILE_TYPE = "png";
+  static final String BUNDLE_MIME_TYPE = "image/png";
   private static final int IMAGE_MAX_SIZE = Integer.getInteger(
       "gwt.imageResource.maxBundleSize", 256);
 
@@ -647,18 +646,10 @@ class ImageBundleBuilder {
   }
 
   /**
-   * Write all images into the output.
-   * 
-   * @param logger a hierarchical logger which logs to the hosted console
-   * @param context the local ResourceContext that is being used to accumulate
-   *          output files
-   * @param arranger a provider of image layout logic
-   * @return a Java expression which will evaluate to the location of the
-   *         composite image at runtime
+   * Render the composited image into an array of bytes.
    */
-  public String writeBundledImage(TreeLogger logger, ResourceContext context,
-      Arranger arranger) throws UnableToCompleteException {
-
+  public byte[] render(TreeLogger logger, Arranger arranger)
+      throws UnableToCompleteException {
     if (imageNameToImageRectMap.isEmpty()) {
       return null;
     }
@@ -668,11 +659,7 @@ class ImageBundleBuilder {
 
     byte[] imageBytes = createImageBytes(logger, bundledImage);
 
-    String bundleFileName = context.deploy(
-        context.getClientBundleType().getQualifiedSourceName() + ".cache."
-            + BUNDLE_FILE_TYPE, BUNDLE_MIME_TYPE, imageBytes, false);
-
-    return bundleFileName;
+    return imageBytes;
   }
 
   private ImageRect addImage(TreeLogger logger, String imageName, URL imageUrl)
