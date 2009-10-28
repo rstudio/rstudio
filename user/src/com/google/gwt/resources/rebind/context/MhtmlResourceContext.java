@@ -19,9 +19,12 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.dev.util.Util;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Encodes resources into Multipart HTML files. In order to avoid mixed-content
@@ -42,6 +45,7 @@ public class MhtmlResourceContext extends StaticResourceContext {
   private String bundleBaseIdent;
   private int id = 0;
   private String isHttpsIdent;
+  private final Map<String, String> strongNameToExpressions = new HashMap<String, String>();
 
   /**
    * Output is lazily initialized in the case that all deployed resources are
@@ -59,6 +63,12 @@ public class MhtmlResourceContext extends StaticResourceContext {
   @Override
   public String deploy(String suggestedFileName, String mimeType, byte[] data,
       boolean xhrCompatible) throws UnableToCompleteException {
+
+    String strongName = Util.computeStrongName(data);
+    String toReturn = strongNameToExpressions.get(strongName);
+    if (toReturn != null) {
+      return toReturn;
+    }
 
     assert partialPath != null : "partialPath";
     assert isHttpsIdent != null : "isHttpsIdent";
@@ -103,8 +113,10 @@ public class MhtmlResourceContext extends StaticResourceContext {
      * 
      * isHttps ? (staticLocation) : (bundleBaseIdent + "location")
      */
-    return isHttpsIdent + " ? (" + staticLocation + ") : (" + bundleBaseIdent
-        + " + \"" + location + "\")";
+    toReturn = isHttpsIdent + " ? (" + staticLocation + ") : ("
+        + bundleBaseIdent + " + \"" + location + "\")";
+    strongNameToExpressions.put(strongName, toReturn);
+    return toReturn;
   }
 
   public void finish() throws UnableToCompleteException {
@@ -112,11 +124,6 @@ public class MhtmlResourceContext extends StaticResourceContext {
       pw.close();
       getContext().commitResource(getLogger(), out);
     }
-  }
-
-  @Override
-  public boolean supportsDataUrls() {
-    return true;
   }
 
   void setBundleBaseIdent(String ident) {
