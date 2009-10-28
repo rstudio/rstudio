@@ -506,6 +506,19 @@ public class ControlFlowAnalyzer {
             maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
           }
           rescueOverridingMethods(method);
+
+          /*
+           * Special case: also rescue an associated staticImpl. Most of the
+           * time, this would happen naturally since the instance method
+           * delegates to the static. However, in cases where the static has
+           * been inlined into the instance method, future optimization could
+           * tighten an instance call into a static call, reaching code that
+           * was pruned.
+           */
+          JMethod staticImpl = program.getStaticImpl(method);
+          if (staticImpl != null) {
+            rescue(staticImpl);
+          }
           return true;
         }
       }
