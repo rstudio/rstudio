@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationResult;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
+import com.google.gwt.dev.Precompile.PrecompileOptions;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
@@ -45,7 +46,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,14 +135,14 @@ public class Link {
   }
 
   public static void legacyLink(TreeLogger logger, ModuleDef module,
-      ArtifactSet generatedArtifacts, Permutation[] permutations,
+      ArtifactSet generatedArtifacts,
       List<FileBackedObject<PermutationResult>> resultFiles, File outDir,
       JJSOptions precompileOptions) throws UnableToCompleteException,
       IOException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, precompileOptions);
     ArtifactSet artifacts = doLink(logger, linkerContext, generatedArtifacts,
-        permutations, resultFiles);
+        resultFiles);
     OutputFileSet outFileSet = new OutputFileSetOnDirectory(outDir,
         module.getName() + "/");
     OutputFileSet extraFileSet = new OutputFileSetOnDirectory(outDir,
@@ -151,14 +151,14 @@ public class Link {
   }
 
   public static void link(TreeLogger logger, ModuleDef module,
-      ArtifactSet generatedArtifacts, Permutation[] permutations,
+      ArtifactSet generatedArtifacts,
       List<FileBackedObject<PermutationResult>> resultFiles, File outDir,
       File extrasDir, JJSOptions precompileOptions)
       throws UnableToCompleteException, IOException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, precompileOptions);
     ArtifactSet artifacts = doLink(logger, linkerContext, generatedArtifacts,
-        permutations, resultFiles);
+        resultFiles);
     doProduceOutput(logger, artifacts, linkerContext, chooseOutputFileSet(
         outDir, module.getName() + "/"), chooseOutputFileSet(extrasDir,
         module.getName() + "/"));
@@ -186,6 +186,19 @@ public class Link {
     }
     // Exit w/ non-success code.
     System.exit(1);
+  }
+
+  /**
+   * Add to a compilation result all of the selection permutations from its
+   * associated permutation.
+   */
+  private static void addSelectionPermutations(
+      StandardCompilationResult compilation, Permutation perm,
+      StandardLinkerContext linkerContext) {
+    for (StaticPropertyOracle propOracle : perm.getPropertyOracles()) {
+      compilation.addSelectionPermutation(computeSelectionPermutation(
+          linkerContext, propOracle));
+    }
   }
 
   /**
@@ -219,20 +232,43 @@ public class Link {
     }
   }
 
+  /**
+   * Return a map giving the value of each non-trivial selection property.
+   */
+  private static Map<SelectionProperty, String> computeSelectionPermutation(
+      StandardLinkerContext linkerContext, StaticPropertyOracle propOracle) {
+    BindingProperty[] orderedProps = propOracle.getOrderedProps();
+    String[] orderedPropValues = propOracle.getOrderedPropValues();
+    Map<SelectionProperty, String> unboundProperties = new HashMap<SelectionProperty, String>();
+    for (int i = 0; i < orderedProps.length; i++) {
+      SelectionProperty key = linkerContext.getProperty(orderedProps[i].getName());
+      if (key.tryGetValue() != null) {
+        /*
+         * The view of the Permutation doesn't include properties with defined
+         * values.
+         */
+        continue;
+      } else if (key.isDerived()) {
+        /*
+         * The property provider does not need to be invoked, because the value
+         * is determined entirely by other properties.
+         */
+        continue;
+      }
+      unboundProperties.put(key, orderedPropValues[i]);
+    }
+    return unboundProperties;
+  }
+
   private static ArtifactSet doLink(TreeLogger logger,
       StandardLinkerContext linkerContext, ArtifactSet generatedArtifacts,
-      Permutation[] perms, List<FileBackedObject<PermutationResult>> resultFiles)
+      List<FileBackedObject<PermutationResult>> resultFiles)
       throws UnableToCompleteException {
-    if (perms.length != resultFiles.size()) {
-      throw new IllegalArgumentException(
-          "Mismatched resultFiles.length and permutation count");
-    }
-
-    for (int i = 0; i < perms.length; ++i) {
-      finishPermuation(logger, perms[i], resultFiles.get(i), linkerContext);
-    }
-
     linkerContext.addOrReplaceArtifacts(generatedArtifacts);
+    for (FileBackedObject<PermutationResult> resultFile : resultFiles) {
+      PermutationResult result = resultFile.newInstance(logger);
+      finishPermutation(logger, result.getPermutation(), result, linkerContext);
+    }
     return linkerContext.invokeLink(logger);
   }
 
@@ -251,35 +287,13 @@ public class Link {
     logger.log(TreeLogger.INFO, "Link succeeded");
   }
 
-  private static void finishPermuation(TreeLogger logger, Permutation perm,
-      FileBackedObject<PermutationResult> resultFile,
-      StandardLinkerContext linkerContext) throws UnableToCompleteException {
-    PermutationResult permutationResult = resultFile.newInstance(logger);
-    StandardCompilationResult compilation = linkerContext.getCompilation(permutationResult);
-    StaticPropertyOracle[] propOracles = perm.getPropertyOracles();
-    for (StaticPropertyOracle propOracle : propOracles) {
-      BindingProperty[] orderedProps = propOracle.getOrderedProps();
-      String[] orderedPropValues = propOracle.getOrderedPropValues();
-      Map<SelectionProperty, String> unboundProperties = new HashMap<SelectionProperty, String>();
-      for (int i = 0; i < orderedProps.length; i++) {
-        SelectionProperty key = linkerContext.getProperty(orderedProps[i].getName());
-        if (key.tryGetValue() != null) {
-          /*
-           * The view of the Permutation doesn't include properties with defined
-           * values.
-           */
-          continue;
-        } else if (key.isDerived()) {
-          /*
-           * The property provider does not need to be invoked, because the
-           * value is determined entirely by other properties.
-           */
-          continue;
-        }
-        unboundProperties.put(key, orderedPropValues[i]);
-      }
-      compilation.addSelectionPermutation(unboundProperties);
-    }
+  /**
+   * Add a compilation to a linker context.
+   */
+  private static void finishPermutation(TreeLogger logger, Permutation perm,
+      PermutationResult permResult, StandardLinkerContext linkerContext) {
+    StandardCompilationResult compilation = linkerContext.getCompilation(permResult);
+    addSelectionPermutations(compilation, perm, linkerContext);
     logScriptSize(logger, perm.getId(), compilation);
   }
 
@@ -315,17 +329,6 @@ public class Link {
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
     for (String moduleName : options.getModuleNames()) {
-      File compilerWorkDir = options.getCompilerWorkDir(moduleName);
-      Collection<PrecompilationFile> precomps;
-      try {
-        precomps = PrecompilationFile.scanJarFile(new File(compilerWorkDir,
-            Precompile.PRECOMPILE_FILENAME));
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR, "Failed to scan "
-            + Precompile.PRECOMPILE_FILENAME, e);
-        return false;
-      }
-
       ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
 
       OutputFileSet outFileSet;
@@ -357,36 +360,53 @@ public class Link {
         throw new UnableToCompleteException();
       }
 
-      if (precomps.isEmpty()) {
-        logger.log(TreeLogger.ERROR, "No precompilation files found in '"
-            + compilerWorkDir.getAbsolutePath()
-            + "'; please run Precompile first");
-        return false;
-      }
-
       List<Permutation> permsList = new ArrayList<Permutation>();
       ArtifactSet generatedArtifacts = new ArtifactSet();
       JJSOptions precompileOptions = null;
 
-      for (PrecompilationFile precompilationFile : precomps) {
-        Precompilation precompilation;
-        try {
-          precompilation = precompilationFile.newInstance(logger);
-        } catch (UnableToCompleteException e) {
-          return false;
+      File compilerWorkDir = options.getCompilerWorkDir(moduleName);
+      List<Integer> permutationIds = new ArrayList<Integer>();
+      PrecompilationResult precompileResults;
+      try {
+        precompileResults = Util.readFileAsObject(new File(compilerWorkDir,
+            Precompile.PRECOMPILE_FILENAME), PrecompilationResult.class);
+      } catch (ClassNotFoundException e) {
+        logger.log(TreeLogger.ERROR, "Error reading "
+            + Precompile.PRECOMPILE_FILENAME);
+        return false;
+      } catch (IOException e) {
+        logger.log(TreeLogger.ERROR, "Error reading "
+            + Precompile.PRECOMPILE_FILENAME);
+        return false;
+      }
+
+      if (precompileResults instanceof PrecompileOptions) {
+        /**
+         * Precompiling happened on the shards.
+         */
+        precompileOptions = (JJSOptions) precompileResults;
+        int numPermutations = module.getProperties().numPermutations();
+        for (int i = 0; i < numPermutations; ++i) {
+          permutationIds.add(i);
         }
+      } else {
+        /**
+         * Precompiling happened on the start node.
+         */
+        Precompilation precompilation = (Precompilation) precompileResults;
         permsList.addAll(Arrays.asList(precompilation.getPermutations()));
         generatedArtifacts.addAll(precompilation.getGeneratedArtifacts());
         precompileOptions = precompilation.getUnifiedAst().getOptions();
+
+        for (Permutation perm : precompilation.getPermutations()) {
+          permutationIds.add(perm.getId());
+        }
       }
 
-      Permutation[] perms = permsList.toArray(new Permutation[permsList.size()]);
-
       List<FileBackedObject<PermutationResult>> resultFiles = new ArrayList<FileBackedObject<PermutationResult>>(
-          perms.length);
-      for (int i = 0; i < perms.length; ++i) {
-        File f = CompilePerms.makePermFilename(compilerWorkDir,
-            perms[i].getId());
+          permutationIds.size());
+      for (int id : permutationIds) {
+        File f = CompilePerms.makePermFilename(compilerWorkDir, id);
         if (!f.exists()) {
           logger.log(TreeLogger.ERROR, "File not found '" + f.getAbsolutePath()
               + "'; please compile all permutations");
@@ -402,8 +422,7 @@ public class Link {
           module, precompileOptions);
 
       ArtifactSet artifacts = doLink(branch, linkerContext, generatedArtifacts,
-          perms, resultFiles);
-
+          resultFiles);
       try {
         doProduceOutput(branch, artifacts, linkerContext, outFileSet,
             extraFileSet);

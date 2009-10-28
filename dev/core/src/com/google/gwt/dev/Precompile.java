@@ -54,19 +54,20 @@ import com.google.gwt.dev.util.arg.ArgHandlerDumpSignatures;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
+import com.google.gwt.dev.util.arg.ArgHandlerShardPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerSoycDetailed;
 import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
 import com.google.gwt.dev.util.arg.OptionDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.OptionDumpSignatures;
+import com.google.gwt.dev.util.arg.OptionEnableGeneratingOnShards;
 import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.OptionValidateOnly;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -74,8 +75,6 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.concurrent.FutureTask;
-import java.util.jar.JarOutputStream;
-import java.util.zip.ZipEntry;
 
 /**
  * Performs the first phase of compilation, generating the set of permutations
@@ -88,7 +87,8 @@ public class Precompile {
    */
   public interface PrecompileOptions extends JJSOptions, CompileTaskOptions,
       OptionGenDir, OptionValidateOnly, OptionDisableUpdateCheck,
-      OptionDumpSignatures, OptionMaxPermsPerPrecompile {
+      OptionDumpSignatures, OptionEnableGeneratingOnShards,
+      OptionMaxPermsPerPrecompile, PrecompilationResult {
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -97,6 +97,7 @@ public class Precompile {
       registerHandler(new ArgHandlerGenDir(options));
       registerHandler(new ArgHandlerScriptStyle(options));
       registerHandler(new ArgHandlerEnableAssertions(options));
+      registerHandler(new ArgHandlerShardPrecompile(options));
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
       registerHandler(new ArgHandlerDisableClassMetadata(options));
       registerHandler(new ArgHandlerDisableCastChecking(options));
@@ -118,9 +119,10 @@ public class Precompile {
   }
 
   static class PrecompileOptionsImpl extends CompileTaskOptionsImpl implements
-      PrecompileOptions {
+      PrecompileOptions, Serializable {
     private boolean disableUpdateCheck;
     private File dumpFile;
+    private boolean enableGeneratingOnShards;
     private File genDir;
     private final JJSOptionsImpl jjsOptions = new JJSOptionsImpl();
     private int maxPermsPerPrecompile;
@@ -143,6 +145,7 @@ public class Precompile {
       setGenDir(other.getGenDir());
       setMaxPermsPerPrecompile(other.getMaxPermsPerPrecompile());
       setValidateOnly(other.isValidateOnly());
+      setEnabledGeneratingOnShards(other.isEnabledGeneratingOnShards());
     }
 
     public File getDumpSignatureFile() {
@@ -183,6 +186,10 @@ public class Precompile {
 
     public boolean isEnableAssertions() {
       return jjsOptions.isEnableAssertions();
+    }
+
+    public boolean isEnabledGeneratingOnShards() {
+      return enableGeneratingOnShards;
     }
 
     public boolean isOptimizePrecompile() {
@@ -239,6 +246,10 @@ public class Precompile {
 
     public void setEnableAssertions(boolean enableAssertions) {
       jjsOptions.setEnableAssertions(enableAssertions);
+    }
+
+    public void setEnabledGeneratingOnShards(boolean enabled) {
+      enableGeneratingOnShards = enabled;
     }
 
     public void setGenDir(File genDir) {
@@ -460,30 +471,8 @@ public class Precompile {
     }
   }
 
-  private static AbstractCompiler getCompiler(ModuleDef module) {
-    ConfigurationProperty compilerClassProp = module.getProperties().createConfiguration(
-        "x.compiler.class", false);
-    String compilerClassName = compilerClassProp.getValue();
-    if (compilerClassName == null || compilerClassName.length() == 0) {
-      return new JavaScriptCompiler();
-    }
-    Throwable caught;
-    try {
-      Class<?> compilerClass = Class.forName(compilerClassName);
-      return (AbstractCompiler) compilerClass.newInstance();
-    } catch (ClassNotFoundException e) {
-      caught = e;
-    } catch (InstantiationException e) {
-      caught = e;
-    } catch (IllegalAccessException e) {
-      caught = e;
-    }
-    throw new RuntimeException("Unable to instantiate compiler class '"
-        + compilerClassName + "'", caught);
-  }
-
-  private static Precompilation precompile(TreeLogger logger,
-      JJSOptions jjsOptions, ModuleDef module, int permutationBase,
+  static Precompilation precompile(TreeLogger logger, JJSOptions jjsOptions,
+      ModuleDef module, int permutationBase,
       PropertyPermutations allPermutations, File genDir,
       File generatorResourcesDir, File dumpSignatureFile) {
 
@@ -506,9 +495,8 @@ public class Precompile {
           module, compilationState, generatedArtifacts, allPermutations,
           genDir, generatorResourcesDir);
       PerfLogger.start("Precompile");
-      UnifiedAst unifiedAst = getCompiler(module).precompile(logger,
-          module, rpo, declEntryPts, null, jjsOptions,
-          rpo.getPermuationCount() == 1);
+      UnifiedAst unifiedAst = getCompiler(module).precompile(logger, module,
+          rpo, declEntryPts, null, jjsOptions, rpo.getPermuationCount() == 1);
       PerfLogger.end();
 
       // Merge all identical permutations together.
@@ -538,6 +526,28 @@ public class Precompile {
     }
   }
 
+  private static AbstractCompiler getCompiler(ModuleDef module) {
+    ConfigurationProperty compilerClassProp = module.getProperties().createConfiguration(
+        "x.compiler.class", false);
+    String compilerClassName = compilerClassProp.getValue();
+    if (compilerClassName == null || compilerClassName.length() == 0) {
+      return new JavaScriptCompiler();
+    }
+    Throwable caught;
+    try {
+      Class<?> compilerClass = Class.forName(compilerClassName);
+      return (AbstractCompiler) compilerClass.newInstance();
+    } catch (ClassNotFoundException e) {
+      caught = e;
+    } catch (InstantiationException e) {
+      caught = e;
+    } catch (IllegalAccessException e) {
+      caught = e;
+    }
+    throw new RuntimeException("Unable to instantiate compiler class '"
+        + compilerClassName + "'", caught);
+  }
+
   private final PrecompileOptionsImpl options;
 
   public Precompile(PrecompileOptions options) {
@@ -545,7 +555,6 @@ public class Precompile {
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
-    boolean originalCompilationStateRetained = options.isCompilationStateRetained();
     // Avoid early optimizations since permutation compiles will run separately.
     options.setOptimizePrecompile(false);
 
@@ -555,116 +564,76 @@ public class Precompile {
       // No need to check mkdirs result because an IOException will occur anyway
       compilerWorkDir.mkdirs();
 
-      JarOutputStream precompilationJar;
-      try {
-        precompilationJar = new JarOutputStream(new FileOutputStream(new File(
-            compilerWorkDir, PRECOMPILE_FILENAME)));
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR, "Could not create " + PRECOMPILE_FILENAME,
-            e);
-        return false;
-      }
+      File precompilationFile = new File(compilerWorkDir, PRECOMPILE_FILENAME);
 
       ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
 
-      // TODO: All JDT checks now before even building TypeOracle?
-      module.getCompilationState(logger);
-
+      boolean generateOnShards = options.isEnabledGeneratingOnShards();
       if (options.isValidateOnly()) {
-        TreeLogger branch = logger.branch(TreeLogger.INFO,
-            "Validating compilation " + module.getName());
-        if (!validate(branch, options, module, options.getGenDir(),
-            compilerWorkDir, options.getDumpSignatureFile())) {
-          branch.log(TreeLogger.ERROR, "Validation failed");
-          return false;
-        }
-        branch.log(TreeLogger.INFO, "Validation succeeded");
-      } else {
-        TreeLogger branch = logger.branch(TreeLogger.INFO,
-            "Precompiling module " + module.getName());
-        PropertyPermutations allPermutations = new PropertyPermutations(
-            module.getProperties());
-        int potentialPermutations = allPermutations.size();
-        int permutationsPerIteration = options.getMaxPermsPerPrecompile();
-
-        if (permutationsPerIteration <= 0) {
-          permutationsPerIteration = potentialPermutations;
-        }
+        // Don't bother running on shards for just a validation run
+        generateOnShards = false;
+      } else if (options.getDumpSignatureFile() != null) {
+        logger.log(TreeLogger.INFO,
+            "Precompiling on the start node, because a dump signature file was specified");
         /*
-         * The potential number of permutations to precompile >= the actual
-         * number of permutations that end up being precompiled, because some of
-         * the permutations might collapse due to identical rebind results. So
-         * we have to track these two counts and ids separately.
+         * It would be possible to shard in this case, too. However, each
+         * permutation would have its own signatures dumped. Either the output
+         * would need to be multiple dump files, or those files would need to be
+         * combined back into one.
          */
-        int actualPermutations = 0;
-        for (int potentialFirstPerm = 0; potentialFirstPerm < potentialPermutations; potentialFirstPerm += permutationsPerIteration) {
-          int numPermsToPrecompile = Math.min(potentialPermutations
-              - potentialFirstPerm, permutationsPerIteration);
+        generateOnShards = false;
+      }
 
-          /*
-           * After the first precompile, we need to forcibly refresh
-           * CompilationState to clear out generated units from previous
-           * precompilations.
-           */
-          if (potentialFirstPerm != 0) {
-            module.getCompilationState(branch).refresh(branch);
+      if (generateOnShards) {
+        /*
+         * Pre-precompile. Count the permutations and plan to do a real
+         * precompile in the CompilePerms shards.
+         */
+        TreeLogger branch = logger.branch(TreeLogger.INFO,
+            "Precompiling (minimal) module " + module.getName());
+        Util.writeObjectAsFile(logger, precompilationFile, options);
+        int numPermutations = module.getProperties().numPermutations();
+        Util.writeStringAsFile(logger, new File(compilerWorkDir,
+            PERM_COUNT_FILENAME), String.valueOf(numPermutations));
+        branch.log(TreeLogger.INFO,
+            "Precompilation (minimal) succeeded, number of permutations: "
+                + numPermutations);
+      } else {
+        // TODO: All JDT checks now before even building TypeOracle?
+        module.getCompilationState(logger);
+
+        if (options.isValidateOnly()) {
+          TreeLogger branch = logger.branch(TreeLogger.INFO,
+              "Validating compilation " + module.getName());
+          if (!validate(branch, options, module, options.getGenDir(),
+              compilerWorkDir, options.getDumpSignatureFile())) {
+            branch.log(TreeLogger.ERROR, "Validation failed");
+            return false;
           }
-
-          if (potentialFirstPerm + numPermsToPrecompile < potentialPermutations) {
-            /*
-             * On all iterations but the last, force retainCompilationState to
-             * be true. Otherwise, state will be discarded that is needed on
-             * later iterations.
-             */
-            options.setCompilationStateRetained(true);
-          } else {
-            // On the last iteration, use whatever the original setting was
-            options.setCompilationStateRetained(originalCompilationStateRetained);
-          }
-
-          // Select only the range of property permutations that we want
-          PropertyPermutations localPermutations = new PropertyPermutations(
-              allPermutations, potentialFirstPerm, numPermsToPrecompile);
+          branch.log(TreeLogger.INFO, "Validation succeeded");
+        } else {
+          TreeLogger branch = logger.branch(TreeLogger.INFO,
+              "Precompiling module " + module.getName());
 
           Precompilation precompilation = precompile(branch, options, module,
-              actualPermutations, localPermutations, options.getGenDir(),
-              compilerWorkDir, options.getDumpSignatureFile());
+              options.getGenDir(), compilerWorkDir,
+              options.getDumpSignatureFile());
           if (precompilation == null) {
             branch.log(TreeLogger.ERROR, "Precompilation failed");
             return false;
           }
-          int actualNumPermsPrecompiled = precompilation.getPermutations().length;
-          String precompilationFilename = PrecompilationFile.fileNameForPermutations(
-              actualPermutations, actualNumPermsPrecompiled);
-          try {
-            precompilationJar.putNextEntry(new ZipEntry(precompilationFilename));
-            Util.writeObjectToStream(precompilationJar, precompilation);
-          } catch (IOException e) {
-            branch.log(TreeLogger.ERROR,
-                "Failed to write a precompilation result", e);
-            return false;
-          }
+          Util.writeObjectAsFile(logger, precompilationFile, precompilation);
 
-          actualPermutations += actualNumPermsPrecompiled;
-          branch.log(TreeLogger.DEBUG, "Compiled " + actualNumPermsPrecompiled
-              + " permutations starting from " + potentialFirstPerm);
+          int permsPrecompiled = precompilation.getPermutations().length;
+          Util.writeStringAsFile(logger, new File(compilerWorkDir,
+              PERM_COUNT_FILENAME), String.valueOf(permsPrecompiled));
+          branch.log(TreeLogger.INFO,
+              "Precompilation succeeded, number of permutations: "
+                  + permsPrecompiled);
         }
-
-        try {
-          precompilationJar.close();
-        } catch (IOException e) {
-          branch.log(TreeLogger.ERROR, "Failed to finalize "
-              + PRECOMPILE_FILENAME, e);
-          return false;
-        }
-
-        Util.writeStringAsFile(branch, new File(compilerWorkDir,
-            PERM_COUNT_FILENAME), String.valueOf(actualPermutations));
-        branch.log(TreeLogger.INFO,
-            "Precompilation succeeded, number of permutations: "
-                + actualPermutations);
       }
     }
+
     return true;
   }
 }

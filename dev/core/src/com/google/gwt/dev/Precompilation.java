@@ -17,7 +17,13 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.jjs.UnifiedAst;
+import com.google.gwt.dev.util.Util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Collection;
 
@@ -25,13 +31,14 @@ import java.util.Collection;
  * The result of compilation phase 1, includes a unified AST and metadata
  * relevant to each permutation.
  */
-public class Precompilation implements Serializable {
+public class Precompilation implements Serializable, PrecompilationResult {
   /*
    * TODO: don't make this whole class serializable, instead dump the
    * independent members out to a file so that the generated artifacts are
    * optional to deserialize.
    */
-  private ArtifactSet generatedArtifacts;
+  private transient ArtifactSet generatedArtifacts;
+  private transient byte[] generatedArtifactsSerialized;
   private final Permutation[] permutations;
   private final UnifiedAst unifiedAst;
 
@@ -68,6 +75,20 @@ public class Precompilation implements Serializable {
    * Returns the set of generated artifacts from the precompile phase.
    */
   public ArtifactSet getGeneratedArtifacts() {
+    if (generatedArtifacts == null) {
+      try {
+        assert generatedArtifactsSerialized != null;
+        generatedArtifacts = Util.readStreamAsObject(new ByteArrayInputStream(
+            generatedArtifactsSerialized), ArtifactSet.class);
+        generatedArtifactsSerialized = null;
+      } catch (ClassNotFoundException e) {
+        throw new RuntimeException(
+            "Unexpected exception deserializing from memory stream", e);
+      } catch (IOException e) {
+        throw new RuntimeException(
+            "Unexpected exception deserializing from memory stream", e);
+      }
+    }
     return generatedArtifacts;
   }
 
@@ -93,5 +114,18 @@ public class Precompilation implements Serializable {
    */
   public UnifiedAst getUnifiedAst() {
     return unifiedAst;
+  }
+
+  private void readObject(ObjectInputStream stream) throws IOException,
+      ClassNotFoundException {
+    stream.defaultReadObject();
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    Util.copyNoClose(stream, baos);
+    generatedArtifactsSerialized = baos.toByteArray();
+  }
+
+  private void writeObject(ObjectOutputStream stream) throws IOException {
+    stream.defaultWriteObject();
+    Util.writeObjectToStream(stream, generatedArtifacts);
   }
 }

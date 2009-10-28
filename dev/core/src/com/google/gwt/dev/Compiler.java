@@ -213,8 +213,8 @@ public class Compiler {
           File absPath = new File(options.getWarDir(), module.getName());
           absPath = absPath.getAbsoluteFile();
           Link.link(logger.branch(TreeLogger.TRACE, "Linking into " + absPath),
-              module, generatedArtifacts, allPerms, resultFiles,
-              options.getWarDir(), options.getExtraDir(), precompileOptions);
+              module, generatedArtifacts, resultFiles, options.getWarDir(),
+              options.getExtraDir(), precompileOptions);
 
           long compileDone = System.currentTimeMillis();
           long delta = compileDone - compileStart;

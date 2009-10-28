@@ -18,9 +18,14 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
+import com.google.gwt.dev.Precompile.PrecompileOptions;
+import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.cfg.PropertyPermutations;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.FileBackedObject;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.OptionLocalWorkers;
 import com.google.gwt.util.tools.ArgHandlerString;
@@ -28,7 +33,6 @@ import com.google.gwt.util.tools.ArgHandlerString;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -245,38 +249,21 @@ public class CompilePerms {
   }
 
   /**
-   * Check whether any of the listed permutations have their precompilation in
-   * the supplied precompilation file.
-   */
-  private static boolean isPrecompileForAnyOf(
-      PrecompilationFile precompilationFile, int[] permutations) {
-    if (permutations == null) {
-      // Special case: compile everything.
-      return true;
-    }
-    for (int perm : permutations) {
-      if (precompilationFile.isForPermutation(perm)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
    * Choose the subset of requested permutations that correspond to the
    * indicated precompilation.
    */
   private static Permutation[] selectPermutationsForPrecompilation(
-      int[] permsToRun, PrecompilationFile precompilationFile,
-      Precompilation precompilation) {
+      int[] permsToRun, Precompilation precompilation) {
     if (permsToRun == null) {
       // Special case: compile everything.
       return precompilation.getPermutations();
     }
     ArrayList<Permutation> subPermsList = new ArrayList<Permutation>();
-    for (int perm : permsToRun) {
-      if (precompilationFile.isForPermutation(perm)) {
-        subPermsList.add(precompilation.getPermutation(perm));
+    for (int id : permsToRun) {
+      for (Permutation perm : precompilation.getPermutations()) {
+        if (perm.getId() == id) {
+          subPermsList.add(perm);
+        }
       }
     }
     return subPermsList.toArray(new Permutation[subPermsList.size()]);
@@ -296,56 +283,39 @@ public class CompilePerms {
       int[] permsToRun = options.getPermsToCompile();
 
       File compilerWorkDir = options.getCompilerWorkDir(moduleName);
-      Collection<PrecompilationFile> precomps;
+      File precompilationFile = new File(compilerWorkDir,
+          Precompile.PRECOMPILE_FILENAME);
+
+      PrecompilationResult precompileResults;
       try {
-        precomps = PrecompilationFile.scanJarFile(new File(compilerWorkDir,
-            Precompile.PRECOMPILE_FILENAME));
+        precompileResults = Util.readFileAsObject(precompilationFile,
+            PrecompilationResult.class);
       } catch (IOException e) {
-        logger.log(TreeLogger.ERROR, "Failed to scan "
-            + Precompile.PRECOMPILE_FILENAME + "; has Precompile been run?", e);
+        logger.log(TreeLogger.ERROR, "Failed to read "
+            + Precompile.PRECOMPILE_FILENAME + "; has Precompile been run?");
+        return false;
+      } catch (ClassNotFoundException e) {
+        logger.log(TreeLogger.ERROR, "Failed to read "
+            + Precompile.PRECOMPILE_FILENAME, e);
         return false;
       }
 
       /*
-       * Check that all requested permutations actually have a Precompile
-       * available
+       * TODO(spoon) Check that all requested permutations have a permutation
+       * available before starting. probably needs two branches.
        */
-      if (permsToRun != null) {
-        checking_perms : for (int perm : permsToRun) {
-          for (PrecompilationFile precomp : precomps) {
-            if (precomp.isForPermutation(perm)) {
-              continue checking_perms;
-            }
-          }
-          logger.log(TreeLogger.ERROR,
-              "No precompilation file found for permutation " + perm);
+
+      if (precompileResults instanceof PrecompileOptions) {
+        PrecompileOptions precompilationOptions = (PrecompileOptions) precompileResults;
+        if (!precompileAndCompile(logger, moduleName, compilerWorkDir,
+            precompilationOptions)) {
           return false;
         }
       } else {
-        // TODO: validate that a contiguous set of all perms exists.
-      }
-
-      /*
-       * Perform the compiles one file at a time, to minimize the number of
-       * times a Precompilation needs to be deserialized.
-       */
-      for (PrecompilationFile precompilationFile : precomps) {
-        if (!isPrecompileForAnyOf(precompilationFile, permsToRun)) {
-          continue;
-        }
-        Precompilation precompilation;
-        try {
-          /*
-           * TODO: don't bother deserializing the generated artifacts.
-           */
-          precompilation = precompilationFile.newInstance(logger);
-        } catch (UnableToCompleteException e) {
-          return false;
-        }
-
+        Precompilation precompilation = (Precompilation) precompileResults;
         // Choose which permutations go with this permutation
         Permutation[] subPerms = selectPermutationsForPrecompilation(
-            permsToRun, precompilationFile, precompilation);
+            permsToRun, precompilation);
 
         List<FileBackedObject<PermutationResult>> resultFiles = makeResultFiles(
             compilerWorkDir, subPerms);
@@ -354,6 +324,65 @@ public class CompilePerms {
       }
     }
 
+    return true;
+  }
+
+  /**
+   * Run both a precompile and a compile with the given precompilation options.
+   */
+  private boolean precompileAndCompile(TreeLogger logger, String moduleName,
+      File compilerWorkDir, PrecompileOptions precompilationOptions)
+      throws UnableToCompleteException {
+    precompilationOptions.setOptimizePrecompile(false);
+    precompilationOptions.setCompilationStateRetained(true);
+    precompilationOptions.setGenDir(null);
+
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+    PropertyPermutations allPermutations = new PropertyPermutations(
+        module.getProperties());
+    int[] perms = options.getPermsToCompile();
+    if (perms == null) {
+      perms = new int[allPermutations.size()];
+      for (int i = 0; i < perms.length; ++i) {
+        perms[i] = i;
+      }
+    }
+
+    logger = logger.branch(TreeLogger.INFO, "Compiling " + perms.length
+        + " permutation" + (perms.length > 1 ? "s" : ""));
+    for (int permId : perms) {
+      /*
+       * TODO(spoon,scottb): move Precompile out of the loop to run only once
+       * per shard. We'll need a new PropertyPermutations constructor that can
+       * take a precise list. Then figure out a way to avoid copying the
+       * generated artifacts into every perm result on a shard.
+       */
+      module.getCompilationState(logger).refresh(logger);
+      PropertyPermutations onePerm = new PropertyPermutations(allPermutations,
+          permId, 1);
+
+      assert (precompilationOptions.getDumpSignatureFile() == null);
+      Precompilation precompilation = Precompile.precompile(logger,
+          precompilationOptions, module, permId, onePerm,
+          precompilationOptions.getGenDir(), compilerWorkDir, null);
+      if (precompilation == null) {
+        return false;
+      }
+
+      // Choose which permutations go with this precompilation
+      Permutation[] subPerms = selectPermutationsForPrecompilation(
+          new int[] {permId}, precompilation);
+      assert subPerms.length == 1;
+
+      PermutationResult permResult = compile(logger, subPerms[0],
+          precompilation.getUnifiedAst());
+      FileBackedObject<PermutationResult> resultFile = new FileBackedObject<PermutationResult>(
+          PermutationResult.class, makePermFilename(compilerWorkDir, permId));
+      permResult.addArtifacts(precompilation.getGeneratedArtifacts());
+      resultFile.set(logger, permResult);
+    }
+
+    logger.log(TreeLogger.INFO, "Compile of permutations succeeded");
     return true;
   }
 }

@@ -204,7 +204,7 @@ public class GWTCompiler {
 
           Link.legacyLink(logger.branch(TreeLogger.TRACE, "Linking into "
               + options.getOutDir().getPath()), module, generatedArtifacts,
-              allPerms, resultFiles, options.getOutDir(), precompileOptions);
+              resultFiles, options.getOutDir(), precompileOptions);
 
           long compileDone = System.currentTimeMillis();
           long delta = compileDone - compileStart;

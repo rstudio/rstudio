@@ -172,6 +172,10 @@ public class JavaToJavaScriptCompiler {
       this.statementRanges = statementRanges;
     }
 
+    public void addArtifacts(Collection<? extends Artifact<?>> newArtifacts) {
+      this.artifacts.addAll(newArtifacts);
+    }
+
     public ArtifactSet getArtifacts() {
       return artifacts;
     }
@@ -356,9 +360,8 @@ public class JavaToJavaScriptCompiler {
 
       PermutationResult toReturn = new PermutationResultImpl(js, permutation,
           makeSymbolMap(symbolTable), ranges);
-      toReturn.getArtifacts().addAll(
-          makeSoycArtifacts(logger, permutationId, jprogram, js,
-              sizeBreakdowns, sourceInfoMaps, dependencies, map, obfuscateMap));
+      toReturn.addArtifacts(makeSoycArtifacts(logger, permutationId, jprogram,
+          js, sizeBreakdowns, sourceInfoMaps, dependencies, map, obfuscateMap));
 
       logger.log(TreeLogger.TRACE, "Permutation took "
           + (System.currentTimeMillis() - permStart) + " ms");
