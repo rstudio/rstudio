@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,6 +30,9 @@ public class TabPanelParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
+    writer.warn(
+        "%1$s:%2$s is deprecated. Use the %1$s:TabLayoutPanel instead.",
+        elem.getPrefix(), elem.getLocalName());
     // Parse children.
     for (XMLElement child : elem.consumeChildElements()) {
       // TabPanel can only contain Tab elements.
@@ -54,15 +57,19 @@ public class TabPanelParser implements ElementParser {
       String childFieldName = null;
       for (XMLElement tabChild : child.consumeChildElements()) {
         if (tabChild.getLocalName().equals(TAG_TABHTML)) {
-          HtmlInterpreter interpreter =
-            HtmlInterpreter.newInterpreterForUiObject(writer, fieldName);
+          HtmlInterpreter interpreter = HtmlInterpreter.newInterpreterForUiObject(
+              writer, fieldName);
           tabHTML = tabChild.consumeInnerHtml(interpreter);
         } else {
           if (childFieldName != null) {
-            writer.die("gwt:Tab may only have a single child widget");
+            writer.die("%s may only have a single child widget", child);
           }
           childFieldName = writer.parseElementToField(tabChild);
         }
+      }
+
+      if (childFieldName == null) {
+        writer.die("%s must have a child widget", child);
       }
 
       if (tabHTML != null) {

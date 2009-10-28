@@ -43,6 +43,9 @@ public class DockPanelParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
+    writer.warn(
+        "%1$s:%2$s is deprecated. Use the %1$s:DockLayoutPanel instead.",
+        elem.getPrefix(), elem.getLocalName());
     // Parse children.
     for (XMLElement child : elem.consumeChildElements()) {
       // DockPanel can only contain Dock elements.

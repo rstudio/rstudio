@@ -278,6 +278,8 @@
         <ui:attribute name="text" description="radio button name"/>
       </demo:PointlessRadioButtonSubclass>
       
+	<gwt:HorizontalPanel>
+	  <gwt:Cell><gwt:HTMLPanel>
       <p> ... a StackPanel ... </p>
       
       <gwt:StackPanel stylePrimaryName="myStyle" width="280px" ui:field='myStackPanel'>
@@ -296,6 +298,21 @@
         </gwt:HTMLPanel>
         <gwt:Label text="Stack Three Text"  gwt:StackPanel-text="Stack Three" />
       </gwt:StackPanel>
+      </gwt:HTMLPanel></gwt:Cell>
+      
+      <gwt:cell><gwt:HTMLPanel>
+        <p> ... a TabPanel </p>
+      
+        <gwt:TabPanel>
+          <gwt:Tab text='Able'><gwt:Label>Able Widget</gwt:Label></gwt:Tab>
+          <gwt:Tab><gwt:TabHTML><b>B</b>aker</gwt:TabHTML>
+            <gwt:Label>Baker widget</gwt:Label>
+          </gwt:Tab>
+        </gwt:TabPanel>
+      </gwt:HTMLPanel></gwt:cell>
+      
+      </gwt:HorizontalPanel>
+      
       
       <p> ... a DisclosurePanel with a text header ... </p>
       
