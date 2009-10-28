@@ -22,6 +22,7 @@ import com.google.gwt.sample.showcase.client.content.i18n.CwDateTimeFormat;
 import com.google.gwt.sample.showcase.client.content.i18n.CwDictionaryExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwMessagesExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwNumberFormat;
+import com.google.gwt.sample.showcase.client.content.i18n.CwPluralFormsExample;
 import com.google.gwt.sample.showcase.client.content.lists.CwListBox;
 import com.google.gwt.sample.showcase.client.content.lists.CwMenuBar;
 import com.google.gwt.sample.showcase.client.content.lists.CwStackPanel;
@@ -74,7 +75,8 @@ public interface ShowcaseConstants extends Constants,
     CwDateTimeFormat.CwConstants, CwMessagesExample.CwConstants,
     CwConstantsExample.CwConstants, CwConstantsWithLookupExample.CwConstants,
     CwDictionaryExample.CwConstants, CwDecoratorPanel.CwConstants,
-    CwAnimation.CwConstants, CwDatePicker.CwConstants {
+    CwAnimation.CwConstants, CwDatePicker.CwConstants,
+    CwPluralFormsExample.CwConstants {
 
   /**
    * The path to source code for examples, raw files, and style definitions.

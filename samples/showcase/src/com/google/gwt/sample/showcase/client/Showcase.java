@@ -37,6 +37,7 @@ import com.google.gwt.sample.showcase.client.content.i18n.CwDateTimeFormat;
 import com.google.gwt.sample.showcase.client.content.i18n.CwDictionaryExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwMessagesExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwNumberFormat;
+import com.google.gwt.sample.showcase.client.content.i18n.CwPluralFormsExample;
 import com.google.gwt.sample.showcase.client.content.lists.CwListBox;
 import com.google.gwt.sample.showcase.client.content.lists.CwMenuBar;
 import com.google.gwt.sample.showcase.client.content.lists.CwStackPanel;
@@ -365,6 +366,8 @@ public class Showcase implements EntryPoint {
     setupMainMenuOption(catI18N, new CwDateTimeFormat(constants),
         images.catI18N());
     setupMainMenuOption(catI18N, new CwMessagesExample(constants),
+        images.catI18N());
+    setupMainMenuOption(catI18N, new CwPluralFormsExample(constants),
         images.catI18N());
     setupMainMenuOption(catI18N, new CwConstantsExample(constants),
         images.catI18N());

@@ -25,4 +25,5 @@
   <extend-property name="locale" values="ar"/>
   <extend-property name="locale" values="fr"/>
   <extend-property name="locale" values="zh"/>
+  <set-property-fallback name="locale" value="en"/>
 </module>
