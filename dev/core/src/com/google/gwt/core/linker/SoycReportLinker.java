@@ -23,8 +23,8 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.SelectionProperty;
+import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
-import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis;
 import com.google.gwt.soyc.SoycDashboard;
 import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
 
@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Converts SOYC report files into emitted private artifacts.
+ * Generates the top-level report files for a compile report.
  */
 @LinkerOrder(Order.POST)
 public class SoycReportLinker extends Linker {
@@ -46,38 +46,22 @@ public class SoycReportLinker extends Linker {
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
       ArtifactSet artifacts) throws UnableToCompleteException {
+    if (!includesReports(artifacts)) {
+      return artifacts;
+    }
+
     ArtifactSet results = new ArtifactSet(artifacts);
-    boolean foundReports = false;
 
-    for (StandardCompilationAnalysis soycFiles : artifacts.find(StandardCompilationAnalysis.class)) {
-      if (soycFiles.getDepFile() != null) {
-        results.add(soycFiles.getDepFile());
-      }
-      if (soycFiles.getSizeMapsFile() != null) {
-        results.add(soycFiles.getSizeMapsFile());
-      }
-      if (soycFiles.getDetailedStoriesFile() != null) {
-        results.add(soycFiles.getDetailedStoriesFile());
-      }
-      results.add(soycFiles.getSplitPointsFile());
-      if (!soycFiles.getReportFiles().isEmpty()) {
-        results.addAll(soycFiles.getReportFiles());
-        foundReports = true;
-      }
+    // Run the final step of the dashboard to generate top-level files.
+    ArtifactsOutputDirectory out = new ArtifactsOutputDirectory();
+    try {
+      new SoycDashboard(out).generateCrossPermutationFiles(extractPermutationDescriptions(artifacts));
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR,
+          "Error while generating a Story of Your Compile", e);
     }
+    results.addAll(out.getArtifacts());
 
-    if (foundReports) {
-      // run the final step of the dashboard to generate top-level files
-      ArtifactsOutputDirectory out = new ArtifactsOutputDirectory();
-      try {
-        new SoycDashboard(out).generateCrossPermutationFiles(extractPermutationDescriptions(artifacts));
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR,
-            "Error while generating a Story of Your Compile", e);
-        e.printStackTrace();
-      }
-      results.addAll(out.getArtifacts());
-    }
     return results;
   }
 
@@ -97,5 +81,15 @@ public class SoycReportLinker extends Linker {
     }
 
     return permDescriptions;
+  }
+
+  private boolean includesReports(ArtifactSet artifacts) {
+    for (SyntheticArtifact art : artifacts.find(SyntheticArtifact.class)) {
+      if (art.getPartialPath().startsWith(
+          ArtifactsOutputDirectory.COMPILE_REPORT_DIRECTORY + "/")) {
+        return true;
+      }
+    }
+    return false;
   }
 }

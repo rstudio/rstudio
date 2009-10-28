@@ -15,7 +15,8 @@
  */
 package com.google.gwt.soyc.io;
 
-import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis.SoycArtifact;
+import com.google.gwt.core.ext.linker.SyntheticArtifact;
+import com.google.gwt.core.linker.SoycReportLinker;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,13 +29,13 @@ import java.util.List;
  * artifacts.
  */
 public class ArtifactsOutputDirectory implements OutputDirectory {
+  public static final String COMPILE_REPORT_DIRECTORY = "compile-report";
+
   /**
    * An in-memory output stream. When it is closed, its contents are saved to an
    * artifact.
    */
   private class OutputStreamForArtifact extends OutputStream {
-    private static final String OUTPUT_DIRECTORY_NAME = "compile-report";
-
     private ByteArrayOutputStream baos = new ByteArrayOutputStream();
     private boolean closed = false;
     private final String path;
@@ -47,8 +48,9 @@ public class ArtifactsOutputDirectory implements OutputDirectory {
     public void close() {
       if (!closed) {
         closed = true;
-        SoycArtifact newArtifact = new SoycArtifact(OUTPUT_DIRECTORY_NAME + "/"
-            + path, baos.toByteArray());
+        SyntheticArtifact newArtifact = new SyntheticArtifact(
+            SoycReportLinker.class, COMPILE_REPORT_DIRECTORY + "/" + path,
+            baos.toByteArray());
         newArtifact.setPrivate(false);
         artifacts.add(newArtifact);
         baos = null;
@@ -71,12 +73,12 @@ public class ArtifactsOutputDirectory implements OutputDirectory {
     }
   }
 
-  private List<SoycArtifact> artifacts = new ArrayList<SoycArtifact>();
+  private List<SyntheticArtifact> artifacts = new ArrayList<SyntheticArtifact>();
 
   /**
    * Return the list of artifacts that have been written so far.
    */
-  public List<SoycArtifact> getArtifacts() {
+  public List<SyntheticArtifact> getArtifacts() {
     return artifacts;
   }
 

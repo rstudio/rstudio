@@ -16,8 +16,8 @@
 
 /**
  * This package contains interfaces that provide access to
- * "Story of Your Compile" information. When the compiler is run with analysis
- * turned on, these types are available to Linkers via
- * {@link com.google.gwt.core.ext.linker.CompilationAnalysis} artifacts.
+ * "Story of Your Compile" information. When the compiler is run with detailed
+ * analysis turned on, these types are available via XML files in the extras
+ * output.
  */
 package com.google.gwt.core.ext.soyc;
