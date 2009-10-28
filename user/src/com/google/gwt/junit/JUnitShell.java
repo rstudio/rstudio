@@ -330,9 +330,9 @@ public class JUnitShell extends GWTShell {
   /**
    * The amount of time to wait for all clients to complete a single test
    * method, in milliseconds, measured from when the <i>last</i> client connects
-   * (and thus starts the test). 20 minutes.
+   * (and thus starts the test). default of 5 minutes.
    */
-  private static final long TEST_METHOD_TIMEOUT_MILLIS = 4 * 300000;
+  private static final long TEST_METHOD_TIMEOUT_MILLIS = 300000;
 
   /**
    * Singleton object for hosting unit tests. All test case instances executed
@@ -529,6 +529,11 @@ public class JUnitShell extends GWTShell {
    * Determines how to batch up tests for execution.
    */
   private BatchingStrategy batchingStrategy = new NoBatchingStrategy();
+  
+  /**
+   * Timeout in presence of batching. reassigned later.
+   */
+  private long testBatchingMethodTimeoutMillis = TEST_METHOD_TIMEOUT_MILLIS;
 
   /**
    * Determines how modules are compiled.
@@ -729,13 +734,13 @@ public class JUnitShell extends GWTShell {
        */
       lastModule = currentModule;
       if (testMethodTimeout == 0) {
-        testMethodTimeout = currentTimeMillis + TEST_METHOD_TIMEOUT_MILLIS;
+        testMethodTimeout = currentTimeMillis + testBatchingMethodTimeoutMillis;
       } else if (testMethodTimeout < currentTimeMillis) {
         double elapsed = (currentTimeMillis - testBeginTime) / 1000.0;
         throw new TimeoutException(
             "The browser did not complete the test method "
                 + currentTestInfo.toString() + " in "
-                + TEST_METHOD_TIMEOUT_MILLIS
+                + testBatchingMethodTimeoutMillis
                 + "ms.\n  We have no results from:\n"
                 + messageQueue.getWorkingClients(currentTestInfo)
                 + "Actual time elapsed: " + elapsed + " seconds.\n");
@@ -915,6 +920,8 @@ public class JUnitShell extends GWTShell {
   private void runTestImpl(GWTTestCase testCase, TestResult testResult)
       throws UnableToCompleteException {
 
+    testBatchingMethodTimeoutMillis = batchingStrategy.getTimeoutMultiplier()
+        * TEST_METHOD_TIMEOUT_MILLIS; 
     if (mustNotExecuteTest(getBannedPlatforms(testCase.getClass(),
         testCase.getName()))) {
       return;

@@ -71,6 +71,15 @@ public abstract class BatchingStrategy {
     toExecute.removeAll(toRemove);
     return toExecute;
   }
+
+  /**
+   * Returns the multiplicative factor for adjusting the timeout. Default value
+   * of 1 for no batching.
+   */
+  protected int getTimeoutMultiplier() {
+    return 1;
+  }
+
 }
 
 /**
@@ -130,6 +139,11 @@ class ClassBatchingStrategy extends BatchingStrategy {
   public boolean isSingleTestOnly() {
     return false;
   }
+  
+  @Override
+  protected int getTimeoutMultiplier() {
+    return 4;
+  }
 }
 
 /**
@@ -150,5 +164,10 @@ class ModuleBatchingStrategy extends BatchingStrategy {
   @Override
   public boolean isSingleTestOnly() {
     return false;
+  }
+  
+  @Override
+  protected int getTimeoutMultiplier() {
+    return 4;
   }
 }
