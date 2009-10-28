@@ -14,10 +14,6 @@
     <gwt.ant dir="hello" />
   </target>
 
-  <target name="i18n" description="Build i18n">
-    <gwt.ant dir="i18n" />
-  </target>
-
   <target name="json" description="Build json">
     <gwt.ant dir="json" />
   </target>
@@ -33,7 +29,6 @@
   <target name="-do" description="Run all subprojects" >
     <antcall target="dynatable" />
     <antcall target="hello" />
-    <antcall target="i18n" />
     <antcall target="json" />
     <antcall target="mail" />
     <antcall target="showcase" />
