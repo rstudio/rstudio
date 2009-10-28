@@ -2,6 +2,7 @@
 <fileset-config file-format-version="1.2.0" simple-config="false">
     <fileset name="all" enabled="true" check-config-name="GWT Checks" local="false">
         <file-match-pattern match-pattern="core[\\/]src[\\/]com[\\/]google[\\/]gwt[\\/].*\.java$" include-pattern="true"/>
+        <file-match-pattern match-pattern="core[\\/]src[\\/]com[\\/]google[\\/]gwt[\\/]dev[\\/]shell[\\/]remoteui[\\/]RemoteMessageProto\.java" include-pattern="false"/>
         <file-match-pattern match-pattern="core[\\/]src[\\/]com[\\/]google[\\/]gwt[\\/]dev[\\/]asm[\\/]" include-pattern="false"/>
         <file-match-pattern match-pattern="core[\\/]src[\\/]com[\\/]google[\\/]gwt[\\/]dev[\\/]js[\\/]rhino[\\/]" include-pattern="false"/>
     </fileset>
