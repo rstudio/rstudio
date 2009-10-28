@@ -31,6 +31,7 @@ import com.google.gwt.resources.ext.ClientBundleRequirements;
 public class MhtmlClientBundleGenerator extends AbstractClientBundleGenerator {
 
   private static final String BUNDLE_EXTENSION = ".cache.txt";
+  private static int counter = 0;
 
   private MhtmlResourceContext resourceContext;
   private String partialPath;
@@ -42,10 +43,15 @@ public class MhtmlClientBundleGenerator extends AbstractClientBundleGenerator {
         resourceBundleType);
 
     /*
+     * We use a counter to ensure that the generated resources have unique
+     * names. Previously we used the system time, but it sometimes led to non-
+     * unique names if subsequent calls happened within the same millisecond.
+     * 
      * TODO: figure out how to make the filename stable based on actual content.
      */
+    counter++;
     partialPath = Util.computeStrongName(Util.getBytes(resourceBundleType.getQualifiedSourceName()
-        + System.currentTimeMillis()))
+        + counter))
         + BUNDLE_EXTENSION;
     resourceContext.setPartialPath(partialPath);
 
