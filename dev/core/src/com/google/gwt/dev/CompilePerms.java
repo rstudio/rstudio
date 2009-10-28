@@ -184,9 +184,7 @@ public class CompilePerms {
   public static PermutationResult compile(TreeLogger logger,
       Permutation permutation, UnifiedAst unifiedAst)
       throws UnableToCompleteException {
-    return unifiedAst.compilePermutation(logger,
-        permutation.getRebindAnswers(), permutation.getPropertyOracles(),
-        permutation.getId());
+    return unifiedAst.compilePermutation(logger, permutation);
   }
 
   /**

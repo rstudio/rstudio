@@ -32,6 +32,7 @@ import com.google.gwt.core.ext.soyc.impl.SizeMapRecorder;
 import com.google.gwt.core.ext.soyc.impl.SplitPointRecorder;
 import com.google.gwt.core.ext.soyc.impl.StoryRecorder;
 import com.google.gwt.core.linker.SoycReportLinker;
+import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
@@ -148,17 +149,18 @@ public class JavaToJavaScriptCompiler {
   private static class PermutationResultImpl implements PermutationResult {
     private final ArtifactSet artifacts = new ArtifactSet();
     private final byte[][] js;
-    private final int permutationId;
+    private Permutation permutation;
     private final byte[] serializedSymbolMap;
     private final StatementRanges[] statementRanges;
 
-    public PermutationResultImpl(String[] js, SymbolData[] symbolMap,
-        StatementRanges[] statementRanges, int permutationId) {
+    public PermutationResultImpl(String[] js, Permutation permutation,
+        SymbolData[] symbolMap, StatementRanges[] statementRanges) {
       byte[][] bytes = new byte[js.length][];
       for (int i = 0; i < js.length; ++i) {
         bytes[i] = Util.getBytes(js[i]);
       }
       this.js = bytes;
+      this.permutation = permutation;
       try {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Util.writeObjectToStream(baos, (Object) symbolMap);
@@ -168,7 +170,6 @@ public class JavaToJavaScriptCompiler {
             e);
       }
       this.statementRanges = statementRanges;
-      this.permutationId = permutationId;
     }
 
     public ArtifactSet getArtifacts() {
@@ -179,8 +180,8 @@ public class JavaToJavaScriptCompiler {
       return js;
     }
 
-    public int getPermutationId() {
-      return permutationId;
+    public Permutation getPermutation() {
+      return permutation;
     }
 
     public byte[] getSerializedSymbolMap() {
@@ -198,20 +199,17 @@ public class JavaToJavaScriptCompiler {
    * @param logger the logger to use
    * @param unifiedAst the result of a
    *          {@link #precompile(TreeLogger, WebModeCompilerFrontEnd, String[], JJSOptions, boolean)}
-   * @param rebindAnswers the set of rebind answers to resolve all outstanding
-   *          rebind decisions for this permutation
-   * @param propertyOracles all property oracles corresponding to this
-   *          permutation
-   * @param permutationId the unique id of this permutation
+   * @param permutation the permutation to compile
    * @return the output JavaScript
    * @throws UnableToCompleteException if an error other than
    *           {@link OutOfMemoryError} occurs
    */
   public static PermutationResult compilePermutation(TreeLogger logger,
-      UnifiedAst unifiedAst, Map<String, String> rebindAnswers,
-      PropertyOracle[] propertyOracles, int permutationId)
+      UnifiedAst unifiedAst, Permutation permutation)
       throws UnableToCompleteException {
-
+    PropertyOracle[] propertyOracles = permutation.getPropertyOracles();
+    int permutationId = permutation.getId();
+    Map<String, String> rebindAnswers = permutation.getRebindAnswers();
     int printId = permutationId + 1;
     logger.log(TreeLogger.INFO, "Compiling permutation " + printId + "...");
     long permStart = System.currentTimeMillis();
@@ -356,8 +354,8 @@ public class JavaToJavaScriptCompiler {
       generateJavaScriptCode(options, jsProgram, map, js, ranges,
           sizeBreakdowns, sourceInfoMaps, splitBlocks);
 
-      PermutationResult toReturn = new PermutationResultImpl(js,
-          makeSymbolMap(symbolTable), ranges, permutationId);
+      PermutationResult toReturn = new PermutationResultImpl(js, permutation,
+          makeSymbolMap(symbolTable), ranges);
       toReturn.getArtifacts().addAll(
           makeSoycArtifacts(logger, permutationId, jprogram, js,
               sizeBreakdowns, sourceInfoMaps, dependencies, map, obfuscateMap));
