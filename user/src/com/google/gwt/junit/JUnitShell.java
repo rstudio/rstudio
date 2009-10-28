@@ -191,8 +191,7 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public boolean setString(String runStyleArg) {
-          runStyleName = runStyleArg;
-          return true;
+          return createRunStyle(runStyleArg);
         }
       });
 
@@ -510,6 +509,9 @@ public class JUnitShell extends GWTShell {
       if (!argProcessor.processArgs(args)) {
         throw new JUnitFatalLaunchException("Error processing shell arguments");
       }
+      if (unitTestShell.runStyle == null) {
+        unitTestShell.createRunStyle("HtmlUnit");
+      }
       unitTestShell.messageQueue = new JUnitMessageQueue(
           unitTestShell.numClients);
 
@@ -597,12 +599,6 @@ public class JUnitShell extends GWTShell {
    */
   private RunStyle runStyle = null;
 
-  /**
-   * The argument passed to -runStyle.  This is parsed later so we can pass in
-   * a logger.
-   */
-  private String runStyleName = null;
-
   private boolean shouldAutoGenerateResources = true;
 
   /**
@@ -662,11 +658,6 @@ public class JUnitShell extends GWTShell {
     if (!super.doStartup()) {
       return false;
     }
-    if (!createRunStyle()) {
-      // RunStyle already logged reasons for its failure
-      return false;
-    }
-
     if (!runStyle.setupMode(getTopLogger(), developmentMode)) {
       getTopLogger().log(TreeLogger.ERROR, "Run style does not support "
           + (developmentMode ? "development" : "production") + " mode");
@@ -827,51 +818,44 @@ public class JUnitShell extends GWTShell {
   /**
    * Create the specified (or default) runStyle.
    * 
+   * @param runStyleName the argument passed to -runStyle
    * @return true if the runStyle was successfully created/initialized
    */
-  private boolean createRunStyle() {
-    if (runStyleName == null) {
-      // Default to HtmlUnit runstyle with no args
-      runStyle = new RunStyleHtmlUnit(this);
-      return runStyle.initialize(null);
-    } else {
-      String args = null;
-      String name = runStyleName;
-      int colon = name.indexOf(':');
-      if (colon >= 0) {
-        args = name.substring(colon + 1);
-        name = name.substring(0, colon);
-      }
-      if (name.indexOf('.') < 0) {
-        name = RunStyle.class.getName() + name;
-      }
-      Throwable caught = null;
-      try {
-        Class<?> clazz = Class.forName(name);
-        Class<? extends RunStyle> runStyleClass = clazz.asSubclass(
-            RunStyle.class);
-        Constructor<? extends RunStyle> ctor = runStyleClass.getConstructor(
-            JUnitShell.class);
-        runStyle = ctor.newInstance(JUnitShell.this);
-        return runStyle.initialize(args);
-      } catch (ClassNotFoundException e) {
-        caught = e;
-      } catch (SecurityException e) {
-        caught = e;
-      } catch (NoSuchMethodException e) {
-        caught = e;
-      } catch (IllegalArgumentException e) {
-        caught = e;
-      } catch (InstantiationException e) {
-        caught = e;
-      } catch (IllegalAccessException e) {
-        caught = e;
-      } catch (InvocationTargetException e) {
-        caught = e;
-      }
-      throw new RuntimeException("Unable to create runStyle " + runStyleName,
-          caught);
+  private boolean createRunStyle(String runStyleName) {
+    String args = null;
+    String name = runStyleName;
+    int colon = name.indexOf(':');
+    if (colon >= 0) {
+      args = name.substring(colon + 1);
+      name = name.substring(0, colon);
     }
+    if (name.indexOf('.') < 0) {
+      name = RunStyle.class.getName() + name;
+    }
+    Throwable caught = null;
+    try {
+      Class<?> clazz = Class.forName(name);
+      Class<? extends RunStyle> runStyleClass = clazz.asSubclass(RunStyle.class);
+      Constructor<? extends RunStyle> ctor = runStyleClass.getConstructor(JUnitShell.class);
+      runStyle = ctor.newInstance(JUnitShell.this);
+      return runStyle.initialize(args);
+    } catch (ClassNotFoundException e) {
+      caught = e;
+    } catch (SecurityException e) {
+      caught = e;
+    } catch (NoSuchMethodException e) {
+      caught = e;
+    } catch (IllegalArgumentException e) {
+      caught = e;
+    } catch (InstantiationException e) {
+      caught = e;
+    } catch (IllegalAccessException e) {
+      caught = e;
+    } catch (InvocationTargetException e) {
+      caught = e;
+    }
+    throw new RuntimeException("Unable to create runStyle " + runStyleName,
+        caught);
   }
 
   private boolean mustNotExecuteTest(Set<Platform> bannedPlatforms) {
@@ -886,7 +870,7 @@ public class JUnitShell extends GWTShell {
 
     Map<String, JUnitResult> results = messageQueue.getResults(currentTestInfo);
     assert results != null;
-    assert results.size() == numClients;
+    assert results.size() == numClients : results.size() + " != " + numClients;
 
     boolean parallelTesting = numClients > 1;
 
