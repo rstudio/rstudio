@@ -15,8 +15,6 @@
  */
 package org.apache.commons.collections;
 
-import junit.framework.AssertionFailedError;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
