@@ -51,29 +51,22 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.util.DefaultTextOutput;
-import com.google.gwt.dev.util.FileBackedObject;
+import com.google.gwt.dev.util.OutputFileSet;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.util.tools.Utility;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
  * An implementation of {@link LinkerContext} that is initialized from a
@@ -117,67 +110,6 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       return o1.getName().compareTo(o2.getName());
     }
   };
-
-  /**
-   * Returns the parent path of forward-slash based partial path. Assumes the
-   * given path does not end with a trailing slash.
-   */
-  private static String getParentPath(String path) {
-    assert !path.endsWith("/");
-    int pos = path.lastIndexOf('/');
-    return (pos >= 0) ? path.substring(0, pos) : null;
-  }
-
-  /**
-   * A faster bulk version of {@link File#mkdirs()} that takes advantage of
-   * cached state to avoid a lot of file system access.
-   */
-  private static boolean mkdirs(File dir, Set<String> createdDirs) {
-    if (dir == null) {
-      return true;
-    }
-    String path = dir.getPath();
-    if (createdDirs.contains(path)) {
-      return true;
-    }
-    if (!dir.exists()) {
-      if (!mkdirs(dir.getParentFile(), createdDirs)) {
-        return false;
-      }
-      if (!dir.mkdir()) {
-        return false;
-      }
-    }
-    createdDirs.add(path);
-    return true;
-  }
-
-  /**
-   * Creates directory entries within a zip archive. This is consistent with how
-   * most tools operate.
-   * 
-   * @param path the path of a directory within the archive to create
-   * @param zipOutputStream the archive we're creating
-   * @param createdDirs the set of already-created directories to avoid
-   *          duplication
-   */
-  private static void mkzipDirs(String path, ZipOutputStream zipOutputStream,
-      Set<String> createdDirs) throws IOException {
-    if (path == null) {
-      return;
-    }
-    if (createdDirs.contains(path)) {
-      return;
-    }
-    mkzipDirs(getParentPath(path), zipOutputStream, createdDirs);
-    ZipEntry entry = new ZipEntry(path + '/');
-    entry.setSize(0);
-    entry.setCompressedSize(0);
-    entry.setCrc(0);
-    entry.setMethod(ZipOutputStream.STORED);
-    zipOutputStream.putNextEntry(entry);
-    createdDirs.add(path);
-  }
 
   private final ArtifactSet artifacts = new ArtifactSet();
 
@@ -294,24 +226,9 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       configurationProperties = Collections.unmodifiableSortedSet(mutableConfigurationProperties);
     }
 
-    {
-      int index = 0;
-      for (Script script : module.getScripts()) {
-        artifacts.add(new StandardScriptReference(script.getSrc(), index++));
-        logger.log(TreeLogger.SPAM, "Added script " + script.getSrc(), null);
-      }
-    }
-
-    {
-      int index = 0;
-      for (String style : module.getStyles()) {
-        artifacts.add(new StandardStylesheetReference(style, index++));
-        logger.log(TreeLogger.SPAM, "Added style " + style, null);
-      }
-    }
-
-    // Generated files should be passed in via addArtifacts()
-
+    /*
+     * Add static resources in the specified module as artifacts.
+     */
     for (String path : module.getAllPublicFiles()) {
       String partialPath = path.replace(File.separatorChar, '/');
       PublicResource resource = new StandardPublicResource(partialPath,
@@ -319,6 +236,8 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       artifacts.add(resource);
       logger.log(TreeLogger.SPAM, "Added public resource " + resource, null);
     }
+
+    recordStaticReferences(logger, module);
   }
 
   /**
@@ -340,27 +259,20 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   /**
    * Gets or creates a CompilationResult for the given JavaScript program.
    */
-  public StandardCompilationResult getCompilation(TreeLogger logger,
-      FileBackedObject<PermutationResult> resultFile)
-      throws UnableToCompleteException {
-    PermutationResult permutationResult = resultFile.newInstance(logger);
-
+  public StandardCompilationResult getCompilation(
+      PermutationResult permutationResult) {
     byte[][] js = permutationResult.getJs();
     String strongName = Util.computeStrongName(js);
     StandardCompilationResult result = resultsByStrongName.get(strongName);
     if (result == null) {
       result = new StandardCompilationResult(strongName, js,
           permutationResult.getSerializedSymbolMap(),
-          permutationResult.getStatementRanges(), permutationResult.getPermutationId());
+          permutationResult.getStatementRanges(),
+          permutationResult.getPermutationId());
       resultsByStrongName.put(result.getStrongName(), result);
       artifacts.add(result);
-
-      // Add any other Permutations
-      ArtifactSet otherArtifacts = permutationResult.getArtifacts();
-      if (otherArtifacts != null) {
-        artifacts.addAll(otherArtifacts);
-      }
     }
+    artifacts.addAll(permutationResult.getArtifacts());
     return result;
   }
 
@@ -500,138 +412,45 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   }
 
   /**
-   * Writes artifacts into the extra directory in the standard way.
+   * Emit EmittedArtifacts artifacts onto <code>out</code>. Does not close
+   * <code>out</code>.
    * 
-   * @param logger logs the operation
-   * @param artifacts the set of artifacts to write
-   * @param extraPath optional extra path for non-deployable artifacts
-   * @throws UnableToCompleteException
+   * @param logger where to log progress
+   * @param artifacts the artifacts to emit
+   * @param emitPrivates whether to emit the private artifacts only, vs. the
+   *          public artifacts only
+   * @param out where to emit the artifact contents
    */
-  public void produceExtraDirectory(TreeLogger logger, ArtifactSet artifacts,
-      File extraPath) throws UnableToCompleteException {
-    extraPath = extraPath.getAbsoluteFile();
-    logger = logger.branch(TreeLogger.TRACE, "Writing extras into "
-        + extraPath.getPath(), null);
+  public void produceOutput(TreeLogger logger, ArtifactSet artifacts,
+      boolean emitPrivates, OutputFileSet out) throws UnableToCompleteException {
+    String publicness = emitPrivates ? "private" : "public";
+    logger = logger.branch(TreeLogger.TRACE, "Linking " + publicness
+        + " artifacts into " + out.getPathDescription(), null);
 
-    Set<String> createdDirs = new HashSet<String>();
     for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
       TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
           "Emitting resource " + artifact.getPartialPath(), null);
 
-      if (!artifact.isPrivate()) {
+      if (artifact.isPrivate() != emitPrivates) {
         continue;
       }
 
-      File outFile = new File(extraPath, getExtraPathForLinker(
-          artifact.getLinker(), artifact.getPartialPath()));
-      writeArtifactToFile(artifactLogger, artifact, outFile, createdDirs);
-    }
-  }
-
-  /**
-   * Writes artifacts into an extra zip in the standard way.
-   * 
-   * @param logger logs the operation
-   * @param artifacts the set of artifacts to write
-   * @param extraZip the output zip for deployable artifacts
-   * @param pathPrefix path within the zip to write into; if non-empty must end
-   *          with a trailing slash
-   * @throws UnableToCompleteException
-   */
-  public void produceExtraZip(TreeLogger logger, ArtifactSet artifacts,
-      File extraZip, String pathPrefix) throws UnableToCompleteException {
-    extraZip = extraZip.getAbsoluteFile();
-    logger = logger.branch(TreeLogger.TRACE, "Linking compilation into "
-        + extraZip.getPath(), null);
-
-    try {
-      Set<String> createdDirs = new HashSet<String>();
-      ZipOutputStream zipOutputStream = new ZipOutputStream(
-          new BufferedOutputStream(new FileOutputStream(extraZip)));
-      for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
-        TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
-            "Emitting resource " + artifact.getPartialPath(), null);
-
-        if (!artifact.isPrivate()) {
-          continue;
-        }
-        String path = pathPrefix
-            + getExtraPathForLinker(artifact.getLinker(),
-                artifact.getPartialPath());
-        writeArtifactToZip(artifactLogger, artifact, path, zipOutputStream,
-            createdDirs);
-      }
-      Utility.close(zipOutputStream);
-    } catch (FileNotFoundException e) {
-      logger.log(TreeLogger.ERROR, "Unable to create extra archive "
-          + extraZip.getPath(), e);
-      throw new UnableToCompleteException();
-    }
-  }
-
-  /**
-   * Writes artifacts into output directory in the standard way.
-   * 
-   * @param logger logs the operation
-   * @param artifacts the set of artifacts to write
-   * @param outputPath the output path for deployable artifacts
-   * @throws UnableToCompleteException
-   */
-  public void produceOutputDirectory(TreeLogger logger, ArtifactSet artifacts,
-      File outputPath) throws UnableToCompleteException {
-    outputPath = outputPath.getAbsoluteFile();
-    logger = logger.branch(TreeLogger.TRACE, "Linking compilation into "
-        + outputPath.getPath(), null);
-
-    Set<String> createdDirs = new HashSet<String>();
-    for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
-      TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
-          "Emitting resource " + artifact.getPartialPath(), null);
-
+      String partialPath = artifact.getPartialPath();
       if (artifact.isPrivate()) {
-        continue;
-      }
-      File outFile = new File(outputPath, artifact.getPartialPath());
-      writeArtifactToFile(artifactLogger, artifact, outFile, createdDirs);
-    }
-  }
-
-  /**
-   * Writes artifacts into an output zip in the standard way.
-   * 
-   * @param logger logs the operation
-   * @param artifacts the set of artifacts to write
-   * @param outZip the output zip for deployable artifacts
-   * @param pathPrefix path within the zip to write into; if non-empty must end
-   *          with a trailing slash
-   * @throws UnableToCompleteException
-   */
-  public void produceOutputZip(TreeLogger logger, ArtifactSet artifacts,
-      File outZip, String pathPrefix) throws UnableToCompleteException {
-    outZip = outZip.getAbsoluteFile();
-    logger = logger.branch(TreeLogger.TRACE, "Linking compilation into "
-        + outZip.getPath(), null);
-
-    try {
-      ZipOutputStream zipOutputStream = new ZipOutputStream(
-          new BufferedOutputStream(new FileOutputStream(outZip)));
-      Set<String> createdDirs = new HashSet<String>();
-      for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
-        TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
-            "Emitting resource " + artifact.getPartialPath(), null);
-
-        if (artifact.isPrivate()) {
-          continue;
+        partialPath = getExtraPathForLinker(artifact.getLinker(), partialPath);
+        if (partialPath.startsWith("/")) {
+          partialPath = partialPath.substring(1);
         }
-        String path = pathPrefix + artifact.getPartialPath();
-        writeArtifactToZip(artifactLogger, artifact, path, zipOutputStream,
-            createdDirs);
       }
-      Utility.close(zipOutputStream);
-    } catch (FileNotFoundException e) {
-      logger.log(TreeLogger.ERROR, "Unable to create output archive "
-          + outZip.getPath(), e);
-      throw new UnableToCompleteException();
+      try {
+        OutputStream artifactStream = out.openForWrite(partialPath,
+            artifact.getLastModified());
+        artifact.writeTo(artifactLogger, artifactStream);
+        artifactStream.close();
+      } catch (IOException e) {
+        artifactLogger.log(TreeLogger.ERROR,
+            "Fatal error emitting this artifact", e);
+      }
     }
   }
 
@@ -646,42 +465,26 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     return linkerShortNames.get(linkerType) + '/' + partialPath;
   }
 
-  private void writeArtifactToFile(TreeLogger logger, EmittedArtifact artifact,
-      File outFile, Set<String> createdDirs) throws UnableToCompleteException {
-    if (!outFile.exists()
-        || (outFile.lastModified() < artifact.getLastModified())) {
-      if (!mkdirs(outFile.getParentFile(), createdDirs)) {
-        logger.log(TreeLogger.ERROR, "Unable to create directory for file '"
-            + outFile.getAbsolutePath() + "'");
-      } else {
-        try {
-          FileOutputStream out = new FileOutputStream(outFile);
-          artifact.writeTo(logger, out);
-          out.close();
-        } catch (IOException e) {
-          logger.log(TreeLogger.ERROR, "Unable to create file '"
-              + outFile.getAbsolutePath() + "'", e);
-          throw new UnableToCompleteException();
-        }
-        outFile.setLastModified(artifact.getLastModified());
+  /**
+   * Record script references and CSS references that are listed in the module
+   * file.
+   */
+  private void recordStaticReferences(TreeLogger logger, ModuleDef module) {
+    {
+      int index = 0;
+      for (Script script : module.getScripts()) {
+        String url = script.getSrc();
+        artifacts.add(new StandardScriptReference(url, index++));
+        logger.log(TreeLogger.SPAM, "Added script " + url, null);
       }
     }
-  }
 
-  private void writeArtifactToZip(TreeLogger logger, EmittedArtifact artifact,
-      String path, ZipOutputStream zipOutputStream, Set<String> createdDirs)
-      throws UnableToCompleteException {
-    try {
-      mkzipDirs(getParentPath(path), zipOutputStream, createdDirs);
-      ZipEntry zipEntry = new ZipEntry(path);
-      zipEntry.setTime(artifact.getLastModified());
-      zipOutputStream.putNextEntry(zipEntry);
-      artifact.writeTo(logger, zipOutputStream);
-      zipOutputStream.closeEntry();
-    } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Unable to write out artifact '"
-          + artifact.getPartialPath() + "'", e);
-      throw new UnableToCompleteException();
+    {
+      int index = 0;
+      for (String style : module.getStyles()) {
+        artifacts.add(new StandardStylesheetReference(style, index++));
+        logger.log(TreeLogger.SPAM, "Added style " + style, null);
+      }
     }
   }
 }

@@ -30,6 +30,10 @@ import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
 import com.google.gwt.dev.util.FileBackedObject;
+import com.google.gwt.dev.util.NullOutputFileSet;
+import com.google.gwt.dev.util.OutputFileSet;
+import com.google.gwt.dev.util.OutputFileSetOnDirectory;
+import com.google.gwt.dev.util.OutputFileSetOnJar;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
@@ -86,8 +90,8 @@ public class Link {
       LinkOptions {
 
     private File extraDir;
-    private File warDir;
     private File outDir;
+    private File warDir;
 
     public LinkOptionsImpl() {
     }
@@ -133,24 +137,31 @@ public class Link {
   public static void legacyLink(TreeLogger logger, ModuleDef module,
       ArtifactSet generatedArtifacts, Permutation[] permutations,
       List<FileBackedObject<PermutationResult>> resultFiles, File outDir,
-      JJSOptions precompileOptions) throws UnableToCompleteException {
+      JJSOptions precompileOptions) throws UnableToCompleteException,
+      IOException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, precompileOptions);
     ArtifactSet artifacts = doLink(logger, linkerContext, generatedArtifacts,
         permutations, resultFiles);
-    doProduceLegacyOutput(logger, artifacts, linkerContext, module, outDir);
+    OutputFileSet outFileSet = new OutputFileSetOnDirectory(outDir,
+        module.getName() + "/");
+    OutputFileSet extraFileSet = new OutputFileSetOnDirectory(outDir,
+        module.getName() + "-aux/");
+    doProduceOutput(logger, artifacts, linkerContext, outFileSet, extraFileSet);
   }
 
   public static void link(TreeLogger logger, ModuleDef module,
       ArtifactSet generatedArtifacts, Permutation[] permutations,
       List<FileBackedObject<PermutationResult>> resultFiles, File outDir,
       File extrasDir, JJSOptions precompileOptions)
-      throws UnableToCompleteException {
+      throws UnableToCompleteException, IOException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, precompileOptions);
     ArtifactSet artifacts = doLink(logger, linkerContext, generatedArtifacts,
         permutations, resultFiles);
-    doProduceOutput(logger, artifacts, linkerContext, module, outDir, extrasDir);
+    doProduceOutput(logger, artifacts, linkerContext, chooseOutputFileSet(
+        outDir, module.getName() + "/"), chooseOutputFileSet(extrasDir,
+        module.getName() + "/"));
   }
 
   public static void main(String[] args) {
@@ -177,6 +188,37 @@ public class Link {
     System.exit(1);
   }
 
+  /**
+   * Choose an output file set for the given <code>dirOrJar</code> based on
+   * its name, whether it's null, and whether it already exists as a directory.
+   */
+  private static OutputFileSet chooseOutputFileSet(File dirOrJar,
+      String pathPrefix) throws IOException {
+    return chooseOutputFileSet(dirOrJar, pathPrefix, pathPrefix);
+  }
+
+  /**
+   * A version of {@link #chooseOutputFileSet(File, String)} that allows
+   * choosing a separate path prefix depending on whether the output is a
+   * directory or a jar file.
+   */
+  private static OutputFileSet chooseOutputFileSet(File dirOrJar,
+      String jarPathPrefix, String dirPathPrefix) throws IOException {
+
+    if (dirOrJar == null) {
+      return new NullOutputFileSet();
+    }
+
+    String name = dirOrJar.getName();
+    if (!dirOrJar.isDirectory()
+        && (name.endsWith(".war") || name.endsWith(".jar") || name.endsWith(".zip"))) {
+      return new OutputFileSetOnJar(dirOrJar, jarPathPrefix);
+    } else {
+      Util.recursiveDelete(new File(dirOrJar, dirPathPrefix), true);
+      return new OutputFileSetOnDirectory(dirOrJar, dirPathPrefix);
+    }
+  }
+
   private static ArtifactSet doLink(TreeLogger logger,
       StandardLinkerContext linkerContext, ArtifactSet generatedArtifacts,
       Permutation[] perms, List<FileBackedObject<PermutationResult>> resultFiles)
@@ -194,52 +236,26 @@ public class Link {
     return linkerContext.invokeLink(logger);
   }
 
-  private static void doProduceLegacyOutput(TreeLogger logger,
-      ArtifactSet artifacts, StandardLinkerContext linkerContext,
-      ModuleDef module, File outDir) throws UnableToCompleteException {
-    File moduleOutDir = new File(outDir, module.getName());
-    File moduleExtraDir = new File(outDir, module.getName() + "-aux");
-    Util.recursiveDelete(moduleOutDir, true);
-    Util.recursiveDelete(moduleExtraDir, true);
-    linkerContext.produceOutputDirectory(logger, artifacts, moduleOutDir);
-    linkerContext.produceExtraDirectory(logger, artifacts, moduleExtraDir);
-    logger.log(TreeLogger.INFO, "Link succeeded");
-  }
-
+  /**
+   * Emit final output.
+   */
   private static void doProduceOutput(TreeLogger logger, ArtifactSet artifacts,
-      StandardLinkerContext linkerContext, ModuleDef module, File outDir,
-      File extraDir) throws UnableToCompleteException {
-    String outPath = outDir.getPath();
-    if (!outDir.isDirectory()
-        && (outPath.endsWith(".war") || outPath.endsWith(".jar") || outPath.endsWith(".zip"))) {
-      linkerContext.produceOutputZip(logger, artifacts, outDir,
-          module.getName() + '/');
-    } else {
-      File moduleOutDir = new File(outDir, module.getName());
-      Util.recursiveDelete(moduleOutDir, true);
-      linkerContext.produceOutputDirectory(logger, artifacts, moduleOutDir);
-    }
+      StandardLinkerContext linkerContext, OutputFileSet outFileSet,
+      OutputFileSet extraFileSet) throws UnableToCompleteException, IOException {
+    linkerContext.produceOutput(logger, artifacts, false, outFileSet);
+    linkerContext.produceOutput(logger, artifacts, true, extraFileSet);
 
-    if (extraDir != null) {
-      String extraPath = extraDir.getPath();
-      if (!extraDir.isDirectory()
-          && (extraPath.endsWith(".war") || extraPath.endsWith(".jar") || extraPath.endsWith(".zip"))) {
-        linkerContext.produceExtraZip(logger, artifacts, extraDir,
-            module.getName() + '/');
-      } else {
-        File moduleExtraDir = new File(extraDir, module.getName());
-        Util.recursiveDelete(moduleExtraDir, true);
-        linkerContext.produceExtraDirectory(logger, artifacts, moduleExtraDir);
-      }
-    }
+    outFileSet.close();
+    extraFileSet.close();
+
     logger.log(TreeLogger.INFO, "Link succeeded");
   }
 
   private static void finishPermuation(TreeLogger logger, Permutation perm,
       FileBackedObject<PermutationResult> resultFile,
       StandardLinkerContext linkerContext) throws UnableToCompleteException {
-    StandardCompilationResult compilation = linkerContext.getCompilation(
-        logger, resultFile);
+    PermutationResult permutationResult = resultFile.newInstance(logger);
+    StandardCompilationResult compilation = linkerContext.getCompilation(permutationResult);
     StaticPropertyOracle[] propOracles = perm.getPropertyOracles();
     for (StaticPropertyOracle propOracle : propOracles) {
       BindingProperty[] orderedProps = propOracle.getOrderedProps();
@@ -312,6 +328,35 @@ public class Link {
 
       ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
 
+      OutputFileSet outFileSet;
+      OutputFileSet extraFileSet;
+      try {
+        if (options.getOutDir() == null) {
+          outFileSet = chooseOutputFileSet(options.getWarDir(),
+              module.getName() + "/");
+          extraFileSet = chooseOutputFileSet(options.getExtraDir(),
+              module.getName() + "/");
+        } else {
+          outFileSet = chooseOutputFileSet(options.getOutDir(),
+              module.getName() + "/");
+          if (options.getExtraDir() != null) {
+            extraFileSet = chooseOutputFileSet(options.getExtraDir(),
+                module.getName() + "-aux/", "");
+          } else if (outFileSet instanceof OutputFileSetOnDirectory) {
+            // Automatically emit extras into the output directory, if it's in
+            // fact a directory
+            extraFileSet = chooseOutputFileSet(options.getOutDir(),
+                module.getName() + "-aux/");
+          } else {
+            extraFileSet = new NullOutputFileSet();
+          }
+        }
+      } catch (IOException e) {
+        logger.log(TreeLogger.ERROR,
+            "Unexpected exception while producing output", e);
+        throw new UnableToCompleteException();
+      }
+
       if (precomps.isEmpty()) {
         logger.log(TreeLogger.ERROR, "No precompilation files found in '"
             + compilerWorkDir.getAbsolutePath()
@@ -359,12 +404,12 @@ public class Link {
       ArtifactSet artifacts = doLink(branch, linkerContext, generatedArtifacts,
           perms, resultFiles);
 
-      if (options.getOutDir() == null) {
-        doProduceOutput(branch, artifacts, linkerContext, module,
-            options.getWarDir(), options.getExtraDir());
-      } else {
-        doProduceLegacyOutput(branch, artifacts, linkerContext, module,
-            options.getOutDir());
+      try {
+        doProduceOutput(branch, artifacts, linkerContext, outFileSet,
+            extraFileSet);
+      } catch (IOException e) {
+        logger.log(TreeLogger.ERROR,
+            "Unexpected exception while producing output", e);
       }
     }
     return true;

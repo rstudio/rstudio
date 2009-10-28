@@ -28,6 +28,9 @@ import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.ui.RestartServerCallback;
 import com.google.gwt.dev.ui.RestartServerEvent;
 import com.google.gwt.dev.util.InstalledHelpInfo;
+import com.google.gwt.dev.util.NullOutputFileSet;
+import com.google.gwt.dev.util.OutputFileSet;
+import com.google.gwt.dev.util.OutputFileSetOnDirectory;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
@@ -486,11 +489,26 @@ public class DevMode extends DevModeBase
   private void produceOutput(TreeLogger logger,
       StandardLinkerContext linkerStack, ArtifactSet artifacts, ModuleDef module)
       throws UnableToCompleteException {
-    File moduleOutDir = new File(options.getWarDir(), module.getName());
-    linkerStack.produceOutputDirectory(logger, artifacts, moduleOutDir);
-    if (options.getExtraDir() != null) {
-      File moduleExtraDir = new File(options.getExtraDir(), module.getName());
-      linkerStack.produceExtraDirectory(logger, artifacts, moduleExtraDir);
+    TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG, "Linking module '"
+        + module.getName() + "'");
+
+    try {
+      OutputFileSetOnDirectory outFileSet = new OutputFileSetOnDirectory(
+          options.getWarDir(), module.getName() + "/");
+      OutputFileSet extraFileSet = new NullOutputFileSet();
+      if (options.getExtraDir() != null) {
+        extraFileSet = new OutputFileSetOnDirectory(options.getExtraDir(),
+            module.getName() + "/");
+      }
+
+      linkerStack.produceOutput(linkLogger, artifacts, false, outFileSet);
+      linkerStack.produceOutput(linkLogger, artifacts, true, extraFileSet);
+
+      outFileSet.close();
+      extraFileSet.close();
+    } catch (IOException e) {
+      linkLogger.log(TreeLogger.ERROR, "I/O exception", e);
+      throw new UnableToCompleteException();
     }
   }
 
