@@ -26,7 +26,6 @@ import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -57,7 +56,6 @@ public final class DisclosurePanel extends Composite implements
     FiresDisclosureEvents, HasWidgets, HasAnimation,
     HasOpenHandlers<DisclosurePanel>, HasCloseHandlers<DisclosurePanel> {
   interface DefaultImages extends ClientBundle {
-    @ImageOptions(flipRtl = true)
     ImageResource disclosurePanelClosed();
 
     ImageResource disclosurePanelOpen();
