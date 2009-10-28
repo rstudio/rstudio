@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs;
 
+import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
@@ -334,8 +335,9 @@ public class JavaToJavaScriptCompiler {
       // blocks, this class now handles non-top level blocks only.
       SelectionProperty userAgentProperty = null;
       for (PropertyOracle oracle : propertyOracles) {
-        userAgentProperty = oracle.getSelectionProperty(logger, "user.agent");
-        if (userAgentProperty != null) {
+        try {
+          userAgentProperty = oracle.getSelectionProperty(logger, "user.agent");
+        } catch (BadPropertyValueException e) {
           break;
         }
       }
