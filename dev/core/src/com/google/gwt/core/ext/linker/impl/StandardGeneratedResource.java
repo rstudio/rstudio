@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.dev.util.DiskCache;
+import com.google.gwt.util.tools.Utility;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -45,11 +46,15 @@ public class StandardGeneratedResource extends GeneratedResource {
       String partialPath, File file) {
     super(StandardLinkerContext.class, generatorType, partialPath);
     this.lastModified = file.lastModified();
+    FileInputStream fis = null;
     try {
-      this.token = diskCache.transferFromStream(new FileInputStream(file));
+      fis = new FileInputStream(file);
+      this.token = diskCache.transferFromStream(fis);
     } catch (FileNotFoundException e) {
       throw new RuntimeException("Unable to open file '"
           + file.getAbsolutePath() + "'", e);
+    } finally {
+      Utility.close(fis);
     }
   }
 
