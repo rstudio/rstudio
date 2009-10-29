@@ -301,7 +301,10 @@ public class ViewerServiceClient {
     logBuilder = logBuilder.setLevel(type.getLabel());
 
     if (caught != null) {
-      logBuilder = logBuilder.setDetails(AbstractTreeLogger.getStackTraceAsString(caught));
+      String stackTraceAsString = AbstractTreeLogger.getStackTraceAsString(caught);
+      if (stackTraceAsString != null) {
+        logBuilder = logBuilder.setDetails(stackTraceAsString);
+      }
     }
 
     if (helpInfo != null) {
