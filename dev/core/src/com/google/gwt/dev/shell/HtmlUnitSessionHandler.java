@@ -24,6 +24,7 @@ import com.google.gwt.dev.shell.BrowserChannel.Value.ValueType;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import com.gargoylesoftware.htmlunit.ScriptResult;
+import com.gargoylesoftware.htmlunit.WebWindow;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine;
 import com.gargoylesoftware.htmlunit.javascript.host.Window;
@@ -209,8 +210,11 @@ public class HtmlUnitSessionHandler extends SessionHandler {
         currentUrl = getUrlBeforeHash(currentUrl);
         String newUrl = getUrlBeforeHash((String) args[0].getValue());
         if (!newUrl.equals(currentUrl)) {
-          // TODO: removeAllJobs for all windows?
-          window.getWebWindow().getTopWindow().getJobManager().removeAllJobs();
+          WebWindow webWindow = window.getWebWindow();
+          do {
+            webWindow.getJobManager().removeAllJobs();
+            webWindow = webWindow.getParentWindow();
+          } while (webWindow != webWindow.getTopWindow());
         }
       }
       result = jsEngine.callFunction(htmlPage, jsFunction, jsContext, window,
