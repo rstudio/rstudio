@@ -172,8 +172,8 @@ public class MakeTopLevelHtmlForPerm {
 
   private static String classesInPackageFileName(SizeBreakdown breakdown,
       String packageName, String permutationId) {
-    return breakdown.getId() + "_" + packageName + "-" + permutationId
-        + "_Classes.html";
+    return breakdown.getId() + "_" + filename(packageName) + "-"
+        + permutationId + "_Classes.html";
   }
 
   /**
