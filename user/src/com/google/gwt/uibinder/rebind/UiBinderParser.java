@@ -77,6 +77,7 @@ public class UiBinderParser {
   // guice!!!
 
   private static final String IMPORT_ATTRIBUTE = "import";
+  private static final String TAG = "UiBinder";
   private final UiBinderWriter writer;
   private final TypeOracle oracle;
   private final MessagesWriter messagesWriter;
@@ -105,6 +106,18 @@ public class UiBinderParser {
    * the document.
    */
   public String parse(XMLElement elem) throws UnableToCompleteException {
+    if (!writer.isBinderElement(elem)) {
+      writer.die("Bad prefix on <%s:%s>? The root element must be in "
+          + "xml namespace \"%s\" (usually with prefix \"ui:\"), "
+          + "but this has prefix \"%s\"", elem.getPrefix(),
+          elem.getLocalName(), UiBinderWriter.BINDER_URI, elem.getPrefix());
+    }
+
+    if (!TAG.equals(elem.getLocalName())) {
+      writer.die("Root element must be %s:%s, but found %s", elem.getPrefix(),
+          TAG, elem);
+    }
+
     findResources(elem);
     messagesWriter.findMessagesConfig(elem);
     XMLElement uiRoot = elem.consumeSingleChildElement();

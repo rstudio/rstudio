@@ -391,8 +391,8 @@ public class XMLElement {
     XMLElement ret = null;
     for (XMLElement child : consumeChildElements()) {
       if (ret != null) {
-        writer.die("%s may only contain a single child element, but found"
-            + "%s and %s.", getLocalName(), ret, child);
+        writer.die("%s may only contain a single child element, but found "
+            + "%s and %s.", this, ret, child);
       }
 
       ret = child;

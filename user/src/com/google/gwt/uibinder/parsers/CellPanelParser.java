@@ -84,7 +84,8 @@ public class CellPanelParser implements ElementParser {
       String ns = child.getNamespaceUri();
       String tagName = child.getLocalName();
 
-      if (ns.equals(elem.getNamespaceUri()) && localTagNameIsCell(tagName)) {
+      if (ns != null && ns.equals(elem.getNamespaceUri())
+          && localTagNameIsCell(tagName)) {
         // It's a cell element, so parse its single child as a widget.
         XMLElement widget = child.consumeSingleChildElement();
         String childFieldName = writer.parseElementToField(widget);
@@ -93,6 +94,10 @@ public class CellPanelParser implements ElementParser {
         // Parse the cell tag's alignment & size attributes.
         parseCellAttributes(child, fieldName, childFieldName, writer);
       } else {
+        if (!writer.isWidgetElement(child)) {
+          writer.die("In %s, expected a widget or <%s:%s>, found %s", elem,
+              elem.getPrefix(), CELL_TAG.toLowerCase(), child);
+        }
         // It's just a normal child, so parse it as a widget.
         String childFieldName = writer.parseElementToField(child);
         writer.addStatement("%1$s.add(%2$s);", fieldName, childFieldName);

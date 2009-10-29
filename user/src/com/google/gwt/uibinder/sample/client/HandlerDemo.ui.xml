@@ -1,4 +1,4 @@
-<gwt:UiBinder
+<ui:UiBinder
   xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:gwt='urn:import:com.google.gwt.user.client.ui'>
 
@@ -16,4 +16,4 @@
     <gwt:TextBox ui:field="textBoxValueChange"/>
   </gwt:FlowPanel>
 
-</gwt:UiBinder>
+</ui:UiBinder>

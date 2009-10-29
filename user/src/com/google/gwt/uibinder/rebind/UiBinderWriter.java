@@ -69,7 +69,7 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 @SuppressWarnings("deprecation")
 public class UiBinderWriter {
-  private static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";
+  static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";
   private static final String BUNDLE_URI_SCHEME = "urn:with:";
   private static final String PACKAGE_URI_SCHEME = "urn:import:";
 
@@ -644,7 +644,7 @@ public class UiBinderWriter {
   public String getUiFieldAttributeName() {
     return gwtPrefix + ":field";
   }
-
+  
   public boolean isBinderElement(XMLElement elem) {
     String uri = elem.getNamespaceUri();
     return uri != null && BINDER_URI.equals(uri);
