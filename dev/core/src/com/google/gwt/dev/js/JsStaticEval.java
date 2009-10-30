@@ -33,15 +33,18 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsIf;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsValueLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
+import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 import java.util.ArrayList;
@@ -163,6 +166,8 @@ public class JsStaticEval {
         trySimplifyEq(x, arg1, arg2, ctx);
       } else if (op == JsBinaryOperator.NEQ) {
         trySimplifyNe(x, arg1, arg2, ctx);
+      } else if (op == JsBinaryOperator.ADD) {
+        trySimplifyAdd(x, arg1, arg2, ctx);
       }
     }
 
@@ -449,6 +454,22 @@ public class JsStaticEval {
       return true;
     }
 
+    private boolean appendLiteral(StringBuilder result, JsValueLiteral val) {
+      if (val instanceof JsNumberLiteral) {
+        double number = ((JsNumberLiteral) val).getValue();
+        result.append(fixTrailingZeroes(String.valueOf(number)));
+      } else if (val instanceof JsStringLiteral) {
+        result.append(((JsStringLiteral) val).getValue());
+      } else if (val instanceof JsBooleanLiteral) {
+        result.append(((JsBooleanLiteral) val).getValue());
+      } else if (val instanceof JsNullLiteral) {
+        result.append("null");
+      } else {
+        return false;
+      }
+      return true;
+    }
+        
     /**
      * This method MUST be called whenever any statements are removed from a
      * function. This is because some statements, such as JsVars or JsFunction
@@ -480,6 +501,20 @@ public class JsStaticEval {
       }
     }
 
+    /*
+     * String.valueOf(Double) produces trailing .0 on integers which is 
+     * incorrect for Javascript which produces conversions to string without
+     * trailing zeroes. Without this, int + String will turn out wrong.
+     */
+    private String fixTrailingZeroes(String num) {
+      if (num.endsWith(".0")) {
+        String fixNum = num.substring(0, num.length() - 2);
+        assert Double.parseDouble(fixNum) == Double.parseDouble(num);
+        num = fixNum;
+      }
+      return num;
+    }
+        
     private SourceInfo makeSourceInfo(HasSourceInfo x, String m) {
       return x.getSourceInfo().makeChild(StaticEvalVisitor.class, m);
     }
@@ -550,6 +585,30 @@ public class JsStaticEval {
       return original;
     }
 
+    /**
+     * Simplify a + b.
+     */
+    private void trySimplifyAdd(JsExpression original, JsExpression arg1,
+        JsExpression arg2, JsContext<JsExpression> ctx) {
+      if (arg1 instanceof JsValueLiteral && arg2 instanceof JsValueLiteral) {
+        // case: number + number
+        if (arg1 instanceof JsNumberLiteral && 
+            arg2 instanceof JsNumberLiteral) {
+          ctx.replaceMe(program.getNumberLiteral(
+              ((JsNumberLiteral) arg1).getValue() + 
+              ((JsNumberLiteral) arg2).getValue()));
+        } else {
+          // cases: number + string or string + number
+          StringBuilder result = new StringBuilder();
+          if (appendLiteral(result, (JsValueLiteral) arg1) && 
+              appendLiteral(result, (JsValueLiteral) arg2)) {
+            ctx.replaceMe(program.getStringLiteral(original.getSourceInfo(),
+                result.toString()));
+          }
+        }
+      }
+    }
+  
     private void trySimplifyEq(JsExpression original, JsExpression arg1,
         JsExpression arg2, JsContext<JsExpression> ctx) {
       JsExpression updated = simplifyEq(original, arg1, arg2);

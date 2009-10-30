@@ -20,6 +20,16 @@ package com.google.gwt.dev.js;
  */
 public class JsStaticEvalTest extends OptimizerTestBase {
 
+  public void testAddLiterals() throws Exception {
+    assertEquals("alert(42);", optimize("alert(21+21);"));
+    assertEquals("alert('Hello World');", optimize("alert('Hello '+'World');"));
+    assertEquals("alert('Hello 42');", optimize("alert('Hello ' + 42);"));
+    assertEquals("alert('42 Hello');", optimize("alert(42 + ' Hello');"));
+    assertEquals("alert('42 Hello');", optimize("alert(42.0 + ' Hello');"));
+    assertEquals("alert('42.2 Hello');", optimize("alert(42.2 + ' Hello');"));
+    assertEquals("alert('Hello 42.2');", optimize("alert('Hello ' + 42.2);"));
+  }
+
   public void testIfWithEmptyThen() throws Exception {
     assertEquals("a();", optimize("if (a()) { }"));
   }
