@@ -31,7 +31,7 @@
 
       <!-- raw files -->
       <zipfileset dir="${dist.resources}" prefix="${project.distname}" />
-      <zipfileset dir="src" prefix="${project.distname}" />
+      <zipfileset filemode="755" dir="src" prefix="${project.distname}" />
 
       <!-- doc -->
       <zipfileset dir="${gwt.build.out}" prefix="${project.distname}">
@@ -58,5 +58,12 @@
     -->
     <mkdir dir="${gwt.build.staging}" />
     <unzip src="${project.dist}" dest="${gwt.build.staging}" />
+    <!-- cute.  zipinfo says the zip has good perms, unzip gets it right, but
+         ant <unzip> leaves the perms as non-executable... go figure. -->
+    <chmod perm="uga+rx">
+      <fileset dir="${gwt.build.staging}/gwt-${gwt.version}">
+        <patternset refid="chmod.executables"/>
+      </fileset>
+    </chmod>
   </target>
 </project>
