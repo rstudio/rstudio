@@ -272,8 +272,28 @@ public class UiBinderWriter {
     this.messages = new MessagesWriter(BINDER_URI, logger, templatePath,
         baseClass.getPackage().getName(), this.implClassName);
 
-    JClassType uiBinderType = baseClass.getImplementedInterfaces()[0];
+    // Check for possible misuse 'GWT.create(UiBinder.class)'
+    JClassType uibinderItself =
+      oracle.findType(UiBinder.class.getCanonicalName());
+    if (uibinderItself.equals(baseClass)) {
+      die("You must use a subtype of UiBinder in GWT.create(). E.g.,\n"
+          + "  interface Binder extends UiBinder<Widget, MyClass> {}\n"
+          + "  GWT.create(Binder.class);");
+    }
+
+    JClassType[] uiBinderTypes = baseClass.getImplementedInterfaces();
+    if (uiBinderTypes.length == 0) {
+      throw new RuntimeException("No implemented interfaces for "
+          + baseClass.getName());
+    }
+    JClassType uiBinderType = uiBinderTypes[0];
+
     JClassType[] typeArgs = uiBinderType.isParameterized().getTypeArgs();
+    if (typeArgs.length < 2) {
+      throw new RuntimeException(
+          "Root and owner type parameters are required for type %s"
+          + uiBinderType.getName());
+    }
     uiRootType = typeArgs[0];
     uiOwnerType = typeArgs[1];
 
@@ -786,7 +806,11 @@ public class UiBinderWriter {
   private BundleAttributeParser createBundleParser(JClassType bundleClass,
       XMLAttribute attribute) throws UnableToCompleteException {
 
-    final String templateResourceName = attribute.getName().split(":")[0];
+    final String[] templateResourceNames = attribute.getName().split(":");
+    if (templateResourceNames.length == 0) {
+      throw new RuntimeException("No template resource");
+    }
+    final String templateResourceName = templateResourceNames[0];
     warn("The %1$s mechanism is deprecated. Instead, declare the following "
         + "%2$s:with element as a child of your %2$s:UiBinder element: "
         + "<%2$s:with field='%3$s' type='%4$s.%5$s' />", BUNDLE_URI_SCHEME,
