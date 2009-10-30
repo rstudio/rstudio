@@ -15,6 +15,10 @@
  */
 package com.google.gwt.uibinder;
 
+import com.google.gwt.uibinder.parsers.FieldReferenceConverterTest;
+import com.google.gwt.uibinder.parsers.SimpleAttributeParserTest;
+import com.google.gwt.uibinder.parsers.StrictAttributeParserTest;
+import com.google.gwt.uibinder.parsers.StringAttributeParserTest;
 import com.google.gwt.uibinder.rebind.GwtResourceEntityResolverTest;
 import com.google.gwt.uibinder.rebind.HandlerEvaluatorTest;
 import com.google.gwt.uibinder.rebind.TokenatorTest;
@@ -43,6 +47,12 @@ public class UiBinderJreSuite {
     suite.addTestSuite(OwnerClassTest.class);
     suite.addTestSuite(OwnerFieldClassTest.class);
     suite.addTestSuite(OwnerFieldTest.class);
+
+    // parsers
+    suite.addTestSuite(FieldReferenceConverterTest.class);
+    suite.addTestSuite(SimpleAttributeParserTest.class);
+    suite.addTestSuite(StrictAttributeParserTest.class);
+    suite.addTestSuite(StringAttributeParserTest.class);
 
     return suite;
   }

@@ -115,7 +115,7 @@ public class XMLElementTest extends TestCase {
   }
 
   private void appendText(final String text) {
-    Text t = doc.createTextNode(STRING_WITH_DOUBLEQUOTE);
+    Text t = doc.createTextNode(text);
     item.appendChild(t);
   }
 
@@ -129,13 +129,11 @@ public class XMLElementTest extends TestCase {
     assertEquals("", elm.consumeUnescapedInnerText());
   }
 
-  public void testEmptyStringOnMissingAttribute()
-      throws ParserConfigurationException, SAXException, IOException {
+  public void testEmptyStringOnMissingAttribute() {
     assertEquals("", elm.consumeAttribute("fnord"));
   }
 
-  public void testIterator() throws ParserConfigurationException, SAXException,
-      IOException {
+  public void testIterator() {
     String[] expecteds = {"attr1", "attr2"};
     Set<String> seen = new HashSet<String>();
     for (int i = elm.getAttributeCount() - 1; i >= 0; i--) {
