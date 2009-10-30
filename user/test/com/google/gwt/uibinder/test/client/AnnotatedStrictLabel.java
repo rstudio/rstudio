@@ -13,17 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.uibinder.sample.client;
+package com.google.gwt.uibinder.test.client;
+
+import com.google.gwt.uibinder.client.UiConstructor;
 
 /**
- * Faux bundle used by test.
+ * To prove that a bound Ui can use a widget that is not
+ * default instantiable, via @UiConstructor.
  */
-public class FakeBundle {
-  public String helloText() {
-    return "hello";
-  }
-
-  public ArbitraryPojo pojo() {
-    return  new ArbitraryPojo();
+public class AnnotatedStrictLabel extends StrictLabel {
+  @UiConstructor public AnnotatedStrictLabel(String text) {
+    super(text);
   }
 }

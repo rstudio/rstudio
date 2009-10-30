@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.uibinder.sample.client;
+package com.google.gwt.uibinder.test.client;
 
 /**
  * Used when testing non-primitive property setting in templates.

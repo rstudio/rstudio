@@ -1,4 +1,4 @@
-<!-- Copyright 2008 Google Inc.                                             -->
+<!-- Copyright 2009 Google Inc.                                             -->
 <!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
 <!-- may not use this file except in compliance with the License. You may   -->
 <!-- may obtain a copy of the License at                                    -->
@@ -11,9 +11,16 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- GWT UiBinder support.                                                  -->
-<module>
-  <inherits name="com.google.gwt.resources.Resources" />
-  <inherits name="com.google.gwt.uibinder.UiBinder" />
-  <entry-point class="com.google.gwt.uibinder.sample.client.UiBinderDemo" />
-</module>
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' >
+  <ui:with field='bundle' type='com.google.gwt.uibinder.test.client.CssImportScopeSample.Bundle' />
+  
+  <ui:style import='com.google.gwt.uibinder.test.client.CssImportScopeSample.OuterStyle
+        com.google.gwt.uibinder.test.client.CssImportScopeSample.InnerStyle'>
+    .outer-body .inner-body { width: 100px; background-color: red; }   
+  </ui:style>
+
+  <div class='{bundle.style.body}'> 
+    <span ui:field='outer'/>
+    <div ui:field='inner' class='{bundle.innerStyle.body}'>Inner!</div>
+  </div>
+</ui:UiBinder>

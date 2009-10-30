@@ -13,21 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.uibinder.sample.client;
-
-import com.google.gwt.user.datepicker.client.DatePicker;
-
-import java.util.Date;
+package com.google.gwt.uibinder.test.client;
 
 /**
- * A custom widget used by UiBinder samples to make sure that custom widgets
- * actually work.
+ * Faux bundle used by test.
  */
-public class MyDatePicker extends DatePicker {
+public class FakeBundle {
+  public String helloText() {
+    return "hello";
+  }
 
-  @SuppressWarnings("deprecation")
-  public MyDatePicker() {
-    Date importantDate = new Date(1997, 4, 19);
-    setValue(importantDate);
+  public ArbitraryPojo pojo() {
+    return  new ArbitraryPojo();
   }
 }

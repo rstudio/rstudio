@@ -46,7 +46,7 @@
 
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:gwt='urn:import:com.google.gwt.user.client.ui'
-  xmlns:demo='urn:import:com.google.gwt.uibinder.sample.client'
+  xmlns:demo='urn:import:com.google.gwt.uibinder.test.client'
 
   ui:defaultLocale="en_us"
   ui:generateKeys="com.google.gwt.i18n.rebind.keygen.MD5KeyGenerator"
@@ -55,7 +55,7 @@
   ui:generateLocales="default"
 >
 
-<ui:with field='external' type='com.google.gwt.uibinder.sample.client.WidgetBasedUiExternalResources'>
+<ui:with field='external' type='com.google.gwt.uibinder.test.client.WidgetBasedUiExternalResources'>
   (This text is ignored, but it's a handy place to document a resource.)
   
   external is used to test receiving a resource from the owner via
@@ -63,7 +63,7 @@
   injection via Gin and the like
 </ui:with>
 
-<ui:with field='values' type='com.google.gwt.uibinder.sample.client.FakeBundle'>
+<ui:with field='values' type='com.google.gwt.uibinder.test.client.FakeBundle'>
   Tests the default creation of a resource via GWT.create(), and also the ability
   for a resource to provide arbitrary objects to arbitrary attributes (look for FooLabel)
 </ui:with>
@@ -72,13 +72,13 @@
   Tests creating a CssResource from an external file.
  -->
 <ui:style field='myStyle' src='WidgetBasedUi.css Menu.css' 
-    type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'>
+    type='com.google.gwt.uibinder.test.client.WidgetBasedUi.Style'>
     .menuBar { 
       font-family: sans-serif;
     }
 </ui:style>
  
-<ui:style field='myOtherStyle' type='com.google.gwt.uibinder.sample.client.WidgetBasedUi.Style'>
+<ui:style field='myOtherStyle' type='com.google.gwt.uibinder.test.client.WidgetBasedUi.Style'>
   /* because we extend WidgetBasedUi.Style and it's tagged @Shared, we can refine the menubar 
      style defined in other files */
   

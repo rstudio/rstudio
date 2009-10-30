@@ -16,7 +16,7 @@
 package com.google.gwt.uibinder;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.uibinder.sample.client.UiBinderTest;
+import com.google.gwt.uibinder.test.client.UiBinderTest;
 
 import junit.framework.Test;
 

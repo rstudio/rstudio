@@ -1,5 +1,5 @@
 <!--                                                                        -->
-<!-- Copyright 2007 Google Inc.                                             -->
+<!-- Copyright 2008 Google Inc.                                             -->
 <!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
 <!-- may not use this file except in compliance with the License. You may   -->
 <!-- may obtain a copy of the License at                                    -->
@@ -11,8 +11,19 @@
 <!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
-
-<!-- UiBinder test support.                                                 -->
-<module>
-	<inherits name="com.google.gwt.uibinder.sample.UiBinderDemo" />
-</module>
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:res='urn:with:com.google.gwt.uibinder.test.client.DomBasedUi.Resources'
+  >
+  <div ui:field='root' res:class="style.bodyColor style.bodyFont" 
+      title="The title of this div is localizable">
+    <ui:attribute name='title'/>
+    Hello, <span ui:field="nameSpan" />.
+    <ui:msg>How goes it?</ui:msg>
+      <h2 res:class="style.bodyColor style.bodyFont">Placeholders in localizables</h2>
+      <p><ui:msg>When you mark up your text for translation, there will be bits
+      that you don't want the translators to mess with. You can protect
+      these with <span style="font-weight:bold"
+        ui:ph="boldSpan">placeholders</span><ui:ph name="tm"><sup ui:field="tmElement">TM</sup></ui:ph>.</ui:msg></p>
+  </div>
+</ui:UiBinder>

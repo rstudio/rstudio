@@ -17,7 +17,6 @@ package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.uibinder.parsers.NullInterpreter;
-import com.google.gwt.uibinder.testing.UiBinderTesting;
 
 import junit.framework.TestCase;
 
@@ -109,7 +108,7 @@ public class XMLElementTest extends TestCase {
 
   private void init(final String domString)
       throws ParserConfigurationException, SAXException, IOException {
-    doc = UiBinderTesting.documentForString(domString);
+    doc = DocumentTestHelp.documentForString(domString);
     item = (Element) doc.getDocumentElement().getElementsByTagName("elm").item(
         0);
     elm = new XMLElement(item, new UiBinderWriter());
@@ -152,7 +151,7 @@ public class XMLElementTest extends TestCase {
   }
 
   public void testNoEndTags() throws Exception {
-    Document doc = UiBinderTesting.documentForString("<doc><br/></doc>");
+    Document doc = DocumentTestHelp.documentForString("<doc><br/></doc>");
 
     Element item = (Element) doc.getDocumentElement().getElementsByTagName("br").item(
         0);

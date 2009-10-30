@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.uibinder.sample.client;
+package com.google.gwt.uibinder.test.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
@@ -46,7 +46,7 @@ public class UiBinderTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.uibinder.UiBinderTestModule";
+    return "com.google.gwt.uibinder.test.UiBinderTestApp";
   }
 
   @Override

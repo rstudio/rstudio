@@ -13,16 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.uibinder.sample.client;
+package com.google.gwt.uibinder.test.client;
 
-import com.google.gwt.uibinder.client.UiConstructor;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.InlineLabel;
 
 /**
- * A widget with a UiConstructor annotation that it doesn't need,
- * to confirm these work.
+ * To prove that a bound Ui can use a widget that is not
+ * default instantiable.
  */
-public class NeedlesslyAnnotatedLabel extends Label {
-  @UiConstructor public NeedlesslyAnnotatedLabel() {
+public class StrictLabel extends InlineLabel {
+  public StrictLabel(String text) {
+    super(text);
   }
 }

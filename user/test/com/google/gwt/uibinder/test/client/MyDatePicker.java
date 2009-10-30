@@ -13,16 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.uibinder.sample.client;
+package com.google.gwt.uibinder.test.client;
 
-import com.google.gwt.user.client.ui.InlineLabel;
+import com.google.gwt.user.datepicker.client.DatePicker;
+
+import java.util.Date;
 
 /**
- * To prove that a bound Ui can use a widget that is not
- * default instantiable.
+ * A custom widget used by UiBinder samples to make sure that custom widgets
+ * actually work.
  */
-public class StrictLabel extends InlineLabel {
-  public StrictLabel(String text) {
-    super(text);
+public class MyDatePicker extends DatePicker {
+
+  @SuppressWarnings("deprecation")
+  public MyDatePicker() {
+    Date importantDate = new Date(1997, 4, 19);
+    setValue(importantDate);
   }
 }

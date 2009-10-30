@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.uibinder.testing;
+package com.google.gwt.uibinder.rebind;
 
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -26,9 +26,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 /**
- * Support methods for testing uibinder. Not intended for production use!
+ * Support methods for testing uibinder.
  */
-public class UiBinderTesting {
+class DocumentTestHelp {
   /**
    * Creates an XML document model with the given contents.
    *
@@ -47,6 +47,6 @@ public class UiBinderTesting {
   /**
    * Not instantiable.
    */
-  private UiBinderTesting() {
+  private DocumentTestHelp() {
   }
 }
