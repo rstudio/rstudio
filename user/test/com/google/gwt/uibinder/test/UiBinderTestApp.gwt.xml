@@ -13,7 +13,7 @@
 
 <!-- GWT UiBinder support.                                                  -->
 <module>
-  <inherits name="com.google.gwt.resources.Resources" />
   <inherits name="com.google.gwt.uibinder.UiBinder" />
-  <entry-point class="com.google.gwt.uibinder.sample.client.UiBinderTestApp" />
+  <inherits name="com.google.gwt.debug.Debug"/>
+  <entry-point class="com.google.gwt.uibinder.test.client.UiBinderTestApp" />
 </module>

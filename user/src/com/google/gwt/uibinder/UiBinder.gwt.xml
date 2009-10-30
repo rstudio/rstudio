@@ -14,8 +14,7 @@
 
 <!-- GWT UI Binder support.                                                 -->
 <module>
-  <!-- Inheriting the debug module -->
-  <inherits name="com.google.gwt.debug.Debug"/>
+  <inherits name="com.google.gwt.resources.Resources" />
   
   <generate-with class="com.google.gwt.uibinder.rebind.UiBinderGenerator">
     <when-type-assignable class="com.google.gwt.uibinder.client.UiBinder"/>
