@@ -17,6 +17,7 @@ package com.google.gwt.dev.shell.remoteui;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.dev.shell.BrowserListener;
 import com.google.gwt.dev.ui.DevModeUI;
 import com.google.gwt.dev.ui.RestartServerCallback;
 import com.google.gwt.dev.ui.RestartServerEvent;
@@ -35,14 +36,22 @@ public class RemoteUI extends DevModeUI {
   private final List<ModuleHandle> modules = new ArrayList<ModuleHandle>();
   private final Object modulesLock = new Object();
 
+  private final String clientId;
   private final DevModeServiceRequestProcessor devModeRequestProcessor;
   private final MessageTransport transport;
   private ViewerServiceTreeLogger webServerLogger = null;
   private ViewerServiceTreeLogger mainLogger = null;
   private ViewerServiceClient viewerServiceClient = null;
+  private final int webServerPort;
+  private final int browserChannelPort;
 
-  public RemoteUI(String host, int port) {
+  public RemoteUI(String host, int port, String clientId, int webServerPort,
+      int browserChannelPort) {
     try {
+      this.clientId = clientId;
+      this.browserChannelPort = browserChannelPort;
+      this.webServerPort = webServerPort;
+
       Socket socket = new Socket(host, port);
       devModeRequestProcessor = new DevModeServiceRequestProcessor(this);
       transport = new MessageTransport(socket.getInputStream(),
@@ -85,6 +94,8 @@ public class RemoteUI extends DevModeUI {
   public void initialize(Type logLevel) {
     super.initialize(logLevel);
     viewerServiceClient = new ViewerServiceClient(transport);
+    String devModeQueryParam = BrowserListener.getDevModeURLParams(BrowserListener.computeEndpointIdentifier(browserChannelPort));
+    viewerServiceClient.initialize(clientId, devModeQueryParam, webServerPort);
     viewerServiceClient.checkCapabilities();
   }
 

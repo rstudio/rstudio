@@ -52,7 +52,9 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.ServerSocket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -275,7 +277,7 @@ abstract class DevModeBase implements DoneCallback {
     @Override
     public boolean setString(String value) {
       if (value.equals("auto")) {
-        options.setPort(0);
+        options.setPort(getFreeSocketPort());
       } else {
         try {
           options.setPort(Integer.parseInt(value));
@@ -322,7 +324,7 @@ abstract class DevModeBase implements DoneCallback {
     @Override
     public boolean setString(String value) {
       if (value.equals("auto")) {
-        options.setPortHosted(0);
+        options.setPortHosted(getFreeSocketPort());
       } else {
         try {
           options.setPortHosted(Integer.parseInt(value));
@@ -337,9 +339,9 @@ abstract class DevModeBase implements DoneCallback {
 
   protected static class ArgHandlerRemoteUI extends ArgHandlerString {
 
-    private final OptionUI options;
+    private final HostedModeBaseOptions options;
 
-    public ArgHandlerRemoteUI(OptionUI options) {
+    public ArgHandlerRemoteUI(HostedModeBaseOptions options) {
       this.options = options;
     }
 
@@ -355,7 +357,7 @@ abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"port-number | host-string:port-number"};
+      return new String[] {"port-number:client-id-string | host-string:port-number:client-id-string"};
     }
 
     @Override
@@ -363,17 +365,24 @@ abstract class DevModeBase implements DoneCallback {
       String[] split = str.split(":");
       String hostStr = "localhost";
       String portStr = null;
+      String clientId;
 
-      if (split.length > 1) {
+      if (split.length == 3) {
         hostStr = split[0];
         portStr = split[1];
-      } else {
+        clientId = split[2];
+      } else if (split.length == 2) {
         portStr = split[0];
+        clientId = split[1];
+      } else {
+        return false;
       }
 
+      options.setRemoteUIHost(hostStr);
+      options.setClientId(clientId);
+
       try {
-        RemoteUI remoteUI = new RemoteUI(hostStr, Integer.parseInt(portStr));
-        options.setUI(remoteUI);
+        options.setRemoteUIHostPort(Integer.parseInt(portStr));
       } catch (NumberFormatException nfe) {
         System.err.println("A port must be an integer");
         return false;
@@ -410,7 +419,7 @@ abstract class DevModeBase implements DoneCallback {
 
   protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir,
       OptionLogLevel, OptionGenDir, OptionNoServer, OptionPort,
-      OptionPortHosted, OptionStartupURLs, OptionUI {
+      OptionPortHosted, OptionStartupURLs, OptionRemoteUI {
 
     /**
      * The base shell work directory.
@@ -424,15 +433,18 @@ abstract class DevModeBase implements DoneCallback {
   /**
    * Concrete class to implement all hosted mode base options.
    */
+  @SuppressWarnings("serial")
   protected static class HostedModeBaseOptionsImpl extends
       PrecompileOptionsImpl implements HostedModeBaseOptions {
 
-    private DevModeUI ui;
     private boolean isNoServer;
     private File logDir;
     private int port;
     private int portHosted;
     private final List<String> startupURLs = new ArrayList<String>();
+    private String remoteUIClientId;
+    private String remoteUIHost;
+    private int remoteUIHostPort;
 
     public void addStartupURL(String url) {
       startupURLs.add(url);
@@ -440,6 +452,10 @@ abstract class DevModeBase implements DoneCallback {
 
     public boolean alsoLogToFile() {
       return logDir != null;
+    }
+
+    public String getClientId() {
+      return remoteUIClientId;
     }
 
     public File getLogDir() {
@@ -461,6 +477,14 @@ abstract class DevModeBase implements DoneCallback {
       return portHosted;
     }
 
+    public String getRemoteUIHost() {
+      return remoteUIHost;
+    }
+
+    public int getRemoteUIHostPort() {
+      return remoteUIHostPort;
+    }
+
     public File getShellBaseWorkDir(ModuleDef moduleDef) {
       return new File(new File(getWorkDir(), moduleDef.getName()), "shell");
     }
@@ -469,12 +493,12 @@ abstract class DevModeBase implements DoneCallback {
       return Collections.unmodifiableList(startupURLs);
     }
 
-    public DevModeUI getUI() {
-      return ui;
-    }
-
     public boolean isNoServer() {
       return isNoServer;
+    }
+
+    public void setClientId(String clientId) {
+      this.remoteUIClientId = clientId;
     }
 
     public void setLogFile(String filename) {
@@ -493,8 +517,16 @@ abstract class DevModeBase implements DoneCallback {
       portHosted = port;
     }
 
-    public void setUI(DevModeUI ui) {
-      this.ui = ui;
+    public void setRemoteUIHost(String remoteUIHost) {
+      this.remoteUIHost = remoteUIHost;
+    }
+
+    public void setRemoteUIHostPort(int remoteUIHostPort) {
+      this.remoteUIHostPort = remoteUIHostPort;
+    }
+
+    public boolean useRemoteUI() {
+      return remoteUIHost != null;
     }
   }
 
@@ -539,21 +571,31 @@ abstract class DevModeBase implements DoneCallback {
   }
 
   /**
+   * Controls the UI that should be used to display the dev mode server's data.
+   */
+  protected interface OptionRemoteUI {
+    String getClientId();
+
+    String getRemoteUIHost();
+
+    int getRemoteUIHostPort();
+
+    void setClientId(String clientId);
+
+    void setRemoteUIHost(String remoteUIHost);
+
+    void setRemoteUIHostPort(int remoteUIHostPort);
+
+    boolean useRemoteUI();
+  }
+
+  /**
    * Controls the startup URLs.
    */
   protected interface OptionStartupURLs {
     void addStartupURL(String url);
 
     List<String> getStartupURLs();
-  }
-
-  /**
-   * Controls the UI that should be used to display the dev mode server's data.
-   */
-  protected interface OptionUI {
-    DevModeUI getUI();
-
-    void setUI(DevModeUI ui);
   }
 
   abstract static class ArgProcessor extends ArgProcessorBase {
@@ -599,6 +641,27 @@ abstract class DevModeBase implements DoneCallback {
     } else {
       return "http://" + host + "/" + unknownUrlText;
     }
+  }
+
+  /**
+   * Returns a free port. The returned port should not be returned again unless
+   * the ephemeral port range is exhausted.
+   */
+  protected static int getFreeSocketPort() {
+    ServerSocket socket = null;
+    try {
+      socket = new ServerSocket(0);
+      return socket.getLocalPort();
+    } catch (IOException e) {
+    } finally {
+      if (socket != null) {
+        try {
+          socket.close();
+        } catch (IOException e) {
+        }
+      }
+    }
+    return -1;
   }
 
   /**
@@ -878,7 +941,7 @@ abstract class DevModeBase implements DoneCallback {
       String path = parsedUrl.getPath();
       String query = parsedUrl.getQuery();
       String hash = parsedUrl.getRef();
-      String hostedParam = "gwt.hosted=" + listener.getEndpointIdentifier();
+      String hostedParam = BrowserListener.getDevModeURLParams(listener.getEndpointIdentifier());
       if (query == null) {
         query = hostedParam;
       } else {
@@ -941,16 +1004,7 @@ abstract class DevModeBase implements DoneCallback {
     }
 
     // See if there was a UI specified by command-line args
-    ui = options.getUI();
-
-    // If no UI was specified by command-line args, then create one.
-    if (ui == null) {
-      if (headlessMode) {
-        ui = new HeadlessUI(options);
-      } else {
-        ui = new SwingUI(options);
-      }
-    }
+    ui = createUI();
 
     started = true;
 
@@ -969,5 +1023,19 @@ abstract class DevModeBase implements DoneCallback {
     }
 
     return true;
+  }
+
+  private DevModeUI createUI() {
+    if (headlessMode) {
+      return new HeadlessUI(options);
+    } else {
+      if (options.useRemoteUI()) {
+        return new RemoteUI(options.getRemoteUIHost(),
+            options.getRemoteUIHostPort(), options.getClientId(),
+            options.getPort(), options.getPortHosted());
+      }
+    }
+
+    return new SwingUI(options);
   }
 }

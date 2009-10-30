@@ -47,7 +47,8 @@ message Message {
         ADD_LOG = 1;
         ADD_LOG_BRANCH = 2;
         ADD_LOG_ENTRY = 3;
-        DISCONNECT_LOG = 4;        
+        DISCONNECT_LOG = 4;
+        INITIALIZE = 5;        
       }
       
       // Request the capabilities of the ViewerService. No additional
@@ -129,12 +130,19 @@ message Message {
         required uint32 logHandle = 1;
       }
       
+      message Initialize {
+        optional string clientId = 1;
+        optional string devModeQueryParam = 2;
+        optional sint32 webServerPort = 3;         
+      }
+      
       required RequestType requestType = 1;
       optional CapabilityExchange capabilityExchange = 2;
       optional AddLog addLog = 3;
       optional AddLogBranch addLogBranch = 4;
       optional AddLogEntry addLogEntry = 5;
-      optional DisconnectLog disconnectLog = 6;                 
+      optional DisconnectLog disconnectLog = 6;
+      optional Initialize initialize = 7;                 
     }
   
     // The root type for all requests for the DevModeService

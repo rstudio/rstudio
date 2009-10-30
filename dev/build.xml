@@ -221,6 +221,19 @@
     <antcall target="-filter.props" />
   </target>
 
+  <target name="generate.remotemessageproto.java">
+    <!-- Generate the java code -->
+    <exec executable="protoc" failonerror="true">
+        <arg value="--java_out=core/src"/>
+        <arg value="./core/src/com/google/gwt/dev/shell/remoteui/remotemessage.proto"/>
+    </exec>
+      
+    <!-- Rebase the java code to match the rebased protobuf library -->
+    <replace file="./core/src/com/google/gwt/dev/shell/remoteui/RemoteMessageProto.java">
+        <replacefilter token="com.google.protobuf" value="com.google.gwt.dev.protobuf"/>
+    </replace>
+  </target>
+      
   <target name="checkstyle" description="Static analysis of source">
     <gwt.checkstyle>
       <fileset dir="core/src">

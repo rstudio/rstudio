@@ -32,12 +32,25 @@ import java.net.UnknownHostException;
  */
 public class BrowserListener {
 
+  public static String computeEndpointIdentifier(int browserChannelPort) {
+    try {
+      return InetAddress.getLocalHost().getHostAddress() + ":"
+          + browserChannelPort;
+    } catch (UnknownHostException e) {
+      throw new RuntimeException("Unable to determine my ip", e);
+    }
+  }
+
+  public static String getDevModeURLParams(String endpointIdentifier) {
+    return "gwt.hosted=" + endpointIdentifier;
+  }
+
   private ServerSocket listenSocket;
 
   private Thread listenThread;
-
+  
   private boolean ignoreRemoteDeath = false;
-
+  
   /**
    * Listens for new connections from browsers.
    */
@@ -102,12 +115,7 @@ public class BrowserListener {
       // If we failed to initialize our socket, just bail here.
       throw new UnableToCompleteException();
     }
-    try {
-      return InetAddress.getLocalHost().getHostAddress() + ":"
-          + listenSocket.getLocalPort();
-    } catch (UnknownHostException e) {
-      throw new RuntimeException("Unable to determine my ip", e);
-    }
+    return computeEndpointIdentifier(listenSocket.getLocalPort());
   }
 
   /**
