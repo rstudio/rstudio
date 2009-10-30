@@ -684,22 +684,15 @@ public class JUnitShell extends GWTShell {
    */
   protected boolean notDone() {
     int activeClients = messageQueue.getNumClientsRetrievedTest(currentTestInfo);
-    if (firstLaunch && runStyle.isStartDelayed()) {
-      // Pretty print the list of clients for manual tests.
-      if (runStyle instanceof RunStyleManual) {
-        String[] newClients = messageQueue.getNewClients();
-        int printIndex = activeClients - newClients.length + 1;
-        for (String newClient : newClients) {
-          System.out.println(printIndex + " - " + newClient);
-          ++printIndex;
-        }
+    if (firstLaunch && runStyle instanceof RunStyleManual) {
+      String[] newClients = messageQueue.getNewClients();
+      int printIndex = activeClients - newClients.length + 1;
+      for (String newClient : newClients) {
+        System.out.println(printIndex + " - " + newClient);
+        ++printIndex;
       }
-
-      if (runStyle.wasInterrupted()) {
-        // Exit early if the test is interrupted.
-        throw new TimeoutException("A remote browser died a mysterious death.");
-      } else if (activeClients != this.numClients) {
-        // Wait forever for first contact.
+      if (activeClients != this.numClients) {
+        // Wait forever for first contact; user-driven.
         return true;
       }
     }

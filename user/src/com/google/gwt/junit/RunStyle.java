@@ -51,15 +51,6 @@ abstract class RunStyle {
   }
 
   /**
-   * Check whether or not tests start immediately or if they can be delayed.
-   * 
-   * @return <code>true</code> if the test can be delayed
-   */
-  public boolean isStartDelayed() {
-    return false;
-  }
-
-  /**
    * Requests initial launch of the browser. This should only be called once per
    * instance of RunStyle.
    * 

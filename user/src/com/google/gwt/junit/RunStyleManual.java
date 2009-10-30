@@ -46,14 +46,6 @@ class RunStyleManual extends RunStyle {
     return true;
   }
 
-  /**
-   * Manual tests are started by users in user time.
-   */
-  @Override
-  public boolean isStartDelayed() {
-    return true;
-  }
-
   @Override
   public void launchModule(String moduleName) throws UnableToCompleteException {
     if (numClients == 1) {

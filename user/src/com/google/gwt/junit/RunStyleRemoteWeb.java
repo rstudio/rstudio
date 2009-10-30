@@ -201,14 +201,6 @@ class RunStyleRemoteWeb extends RunStyle {
     return true;
   }
 
-  /**
-   * Remote web tests can be queued for extended periods.
-   */
-  @Override
-  public boolean isStartDelayed() {
-    return true;
-  }
-
   @Override
   public synchronized void launchModule(String moduleName)
       throws UnableToCompleteException {
