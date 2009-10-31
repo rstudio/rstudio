@@ -239,7 +239,7 @@
     <fileset id="test.nometa.remote.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-      <gwt.junit test.args="${test.args} -XdisableClassMetadata -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
+      <gwt.junit test.args="${test.args} -XdisableClassMetadata -web -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
           test.out="${junit.out}/nometa-remote"
           test.cases="test.nometa.remote.tests" >
       <extraclasspaths>
