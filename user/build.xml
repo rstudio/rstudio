@@ -28,6 +28,14 @@
   <property name="gwt.junit.testcase.dev.excludes" value="" />
 
   <!--
+    Test args can be specified per test target type.
+  -->
+  <property name="test.args.dev.remote" value="${test.args}" />
+  <property name="test.args.dev.selenium" value="${test.args}" />
+  <property name="test.args.web.remote" value="${test.args}" />
+  <property name="test.args.web.selenium" value="${test.args}" />
+
+  <!--
     Only IFrameLinker actually supports -noserver mode; run the other linker
     tests if and when they are supported
   -->
@@ -139,11 +147,12 @@
       if="gwt.hosts.web.remote"
       unless="test.web.remote.disable">
     <echo message="Performing web remote testing at ${gwt.hosts.web.remote}" />
-    <property name="test.web.remote.args" value="${test.args}" />
+    <property name="test.web.remote.args" value="${test.args.web.remote}" />
     <fileset id="test.web.remote.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -web -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
+    <gwt.junit
+        test.args="${test.web.remote.args} -out www -web -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
         test.out="${junit.out}/web-remote"
         test.cases="test.web.remote.tests" >
       <extraclasspaths>
@@ -158,12 +167,12 @@
       if="gwt.hosts.dev.remote"
       unless="test.dev.remote.disable">
     <echo message="Performing dev-mode remote testing at ${gwt.remote.browsers}" />
-    <property name="test.dev.remote.args" value="${test.args}" />
+    <property name="test.dev.remote.args" value="${test.args.dev.remote}" />
     <fileset id="test.dev.remote.tests" dir="${javac.junit.out}"
       includes="${gwt.junit.testcase.dev.includes}"
       excludes="${gwt.junit.testcase.dev.excludes}" />
     <gwt.junit
-        test.args="${test.args} -out www -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module"
+        test.args="${test.dev.remote.args} -out www -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module"
         test.out="${junit.out}/dev-remote" test.cases="test.dev.remote.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
@@ -177,11 +186,12 @@
       if="gwt.hosts.dev.remote"
       unless="test.emma.remote.disable">
     <echo message="Performing emma remote testing at ${gwt.hosts.dev.remote}" />
-    <property name="test.emma.remote.args" value="${test.args}" />
+    <property name="test.emma.remote.args" value="${test.args.dev.remote}" />
     <fileset id="test.emma.remote.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
-      <gwt.junit test.args="${test.args} -out www -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module"
+      <gwt.junit
+          test.args="${test.emma.remote.args} -out www -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module"
           test.out="${junit.out}/emma-remote"
           test.cases="test.emma.remote.tests" >
       <extraclasspaths>
@@ -197,11 +207,12 @@
       if="gwt.hosts.dev.selenium"
       unless="test.emma.selenium.disable">
     <echo message="Performing emma selenium testing at ${gwt.hosts.dev.selenium}" />
-    <property name="test.emma.remote.args" value="${test.args}" />
+    <property name="test.emma.selenium.args" value="${test.args.dev.selenium}" />
     <fileset id="test.emma.selenium.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -runStyle Selenium:${gwt.hosts.dev.selenium} -batch module"
+    <gwt.junit
+        test.args="${test.emma.selenium.args} -out www -runStyle Selenium:${gwt.hosts.dev.selenium} -batch module"
         test.out="${junit.out}/emma-selenium"
         test.cases="test.emma.selenium.tests" >
       <extraclasspaths>
@@ -217,13 +228,14 @@
       if="gwt.hosts.web.remote"
       unless="test.draft.remote.disable">
     <echo message="Performing draft remote testing at ${gwt.hosts.web.remote}" />
-    <property name="test.draft.remote.args" value="${test.args}" />
+    <property name="test.draft.remote.args" value="${test.args.web.remote}" />
     <fileset id="test.draft.remote.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-      <gwt.junit test.args="${test.args} -draftCompile -web -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
-          test.out="${junit.out}/draft-remote"
-          test.cases="test.draft.remote.tests" >
+    <gwt.junit
+        test.args="${test.draft.remote.args} -draftCompile -web -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
+        test.out="${junit.out}/draft-remote"
+        test.cases="test.draft.remote.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -235,13 +247,14 @@
       if="gwt.hosts.web.remote"
       unless="test.nometa.remote.disable">
     <echo message="Performing nometa remote testing at ${gwt.hosts.web.remote}" />
-    <property name="test.nometa.remote.args" value="${test.args}" />
+    <property name="test.nometa.remote.args" value="${test.args.web.remote}" />
     <fileset id="test.nometa.remote.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-      <gwt.junit test.args="${test.args} -XdisableClassMetadata -web -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
-          test.out="${junit.out}/nometa-remote"
-          test.cases="test.nometa.remote.tests" >
+    <gwt.junit
+        test.args="${test.nometa.remote.args} -XdisableClassMetadata -web -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
+        test.out="${junit.out}/nometa-remote"
+        test.cases="test.nometa.remote.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -258,11 +271,12 @@
       if="gwt.hosts.web.selenium"
       unless="test.web.selenium.disable">
     <echo message="Performing web testing using Selenium RC at ${gwt.hosts.web.selenium}" />
-    <property name="test.selenium.args" value="${test.args}" />
+    <property name="test.web.selenium.args" value="${test.args.web.selenium}" />
     <fileset id="test.web.selenium.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module"
+    <gwt.junit
+        test.args="${test.web.selenium.args} -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module"
         test.out="${junit.out}/web-selenium"
         test.cases="test.web.selenium.tests" >
       <extraclasspaths>
@@ -277,11 +291,12 @@
       if="gwt.hosts.dev.selenium"
       unless="test.dev.selenium.disable">
     <echo message="Performing dev-mode testing using Selenium RC at ${gwt.hosts.dev.selenium}" />
-    <property name="test.selenium.args" value="${test.args}" />
+    <property name="test.dev.selenium.args" value="${test.args.dev.selenium}" />
     <fileset id="test.dev.selenium.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
-    <gwt.junit test.args="${test.args} -out www -runStyle Selenium:${gwt.hosts.dev.selenium} -batch module"
+    <gwt.junit
+        test.args="${test.dev.selenium.args} -out www -runStyle Selenium:${gwt.hosts.dev.selenium} -batch module"
         test.out="${junit.out}/dev-selenium"
         test.cases="test.dev.selenium.tests" >
       <extraclasspaths>
@@ -295,11 +310,13 @@
       if="gwt.hosts.web.selenium"
       unless="test.nometa.selenium.disable">
     <echo message="Performing nometa testing using Selenium RC at ${gwt.hosts.web.selenium}" />
-    <property name="test.selenium.args" value="${test.args}" />
+    <property name="test.nometa.selenium.args"
+        value="${test.args.web.selenium}" />
     <fileset id="test.nometa.selenium.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -XdisableClassMetadata -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module"
+    <gwt.junit
+        test.args="${test.nometa.selenium.args} -XdisableClassMetadata -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module"
         test.out="${junit.out}/nometa-selenium"
         test.cases="test.nometa.selenium.tests" >
       <extraclasspaths>
@@ -313,11 +330,13 @@
       if="gwt.hosts.web.selenium"
       unless="test.draft.selenium.disable">
     <echo message="Performing draft testing using Selenium RC at ${gwt.hosts.web.selenium}" />
-    <property name="test.selenium.args" value="${test.args}" />
+    <property name="test.draft.selenium.args"
+        value="${test.args.web.selenium}" />
     <fileset id="test.draft.selenium.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
-    <gwt.junit test.args="${test.args} -draftCompile -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module"
+    <gwt.junit
+        test.args="${test.draft.selenium.args} -draftCompile -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module"
         test.out="${junit.out}/draft-selenium"
         test.cases="test.draft.selenium.tests" >
       <extraclasspaths>
