@@ -26,6 +26,7 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DecoratedTabPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -97,7 +98,7 @@ public class CwTabPanel extends ContentWidget {
 
     // Add a tab with an image
     VerticalPanel vPanel = new VerticalPanel();
-    vPanel.add(Showcase.images.gwtLogo().createImage());
+    vPanel.add(new Image(Showcase.images.gwtLogo()));
     tabPanel.add(vPanel, tabTitles[1]);
 
     // Add a tab

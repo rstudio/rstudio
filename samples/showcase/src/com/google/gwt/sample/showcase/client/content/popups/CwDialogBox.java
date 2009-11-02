@@ -172,7 +172,7 @@ public class CwDialogBox extends ContentWidget {
         HasHorizontalAlignment.ALIGN_CENTER);
 
     // Add an image to the dialog
-    Image image = Showcase.images.jimmy().createImage();
+    Image image = new Image(Showcase.images.jimmy());
     dialogContents.add(image);
     dialogContents.setCellHorizontalAlignment(image,
         HasHorizontalAlignment.ALIGN_CENTER);

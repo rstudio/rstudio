@@ -31,6 +31,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsWithLookupExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwDateTimeFormat;
@@ -77,6 +78,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TabBar;
@@ -390,9 +392,10 @@ public class Showcase implements EntryPoint {
    * @param image the icon to display next to the {@link TreeItem}
    */
   private void setupMainMenuOption(TreeItem parent, ContentWidget content,
-      AbstractImagePrototype image) {
+      ImageResource image) {
     // Create the TreeItem
-    TreeItem option = parent.addItem(image.getHTML() + " " + content.getName());
+    TreeItem option = parent.addItem(AbstractImagePrototype.create(image).getHTML()
+        + " " + content.getName());
 
     // Map the item to its history token and content widget
     itemWidgets.put(option, content);
@@ -437,7 +440,7 @@ public class Showcase implements EntryPoint {
       }
     });
     HorizontalPanel localeWrapper = new HorizontalPanel();
-    localeWrapper.add(images.locale().createImage());
+    localeWrapper.add(new Image(images.locale()));
     localeWrapper.add(localeBox);
     vPanel.add(localeWrapper);
 
@@ -477,7 +480,7 @@ public class Showcase implements EntryPoint {
     // Add the title and some images to the title bar
     HorizontalPanel titlePanel = new HorizontalPanel();
     titlePanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-    titlePanel.add(images.gwtLogo().createImage());
+    titlePanel.add(new Image(images.gwtLogo()));
     titlePanel.add(new HTML(pageTitle));
     app.setTitleWidget(titlePanel);
   }

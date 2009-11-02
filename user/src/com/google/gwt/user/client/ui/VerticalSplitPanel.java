@@ -16,6 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
@@ -34,12 +36,22 @@ import com.google.gwt.user.client.Timer;
  * </p>
  * 
  * <h3>CSS Style Rules</h3>
- * <ul class='css'>
+ * <ul>
  * <li>.gwt-VerticalSplitPanel { the panel itself }</li>
  * <li>.gwt-VerticalSplitPanel vsplitter { the splitter }</li>
  * </ul>
  */
 public final class VerticalSplitPanel extends SplitPanel {
+  /**
+   * The default resources used by this widget.
+   */
+  public interface Resources extends ClientBundle {
+    /**
+     * An image representing the drag thumb.
+     */
+    @Source("splitPanelThumb.png")
+    ImageResource verticalSplitPanelThumb();
+  }
 
   /**
    * Provides a base implementation for splitter layout that relies on CSS
@@ -128,7 +140,8 @@ public final class VerticalSplitPanel extends SplitPanel {
   /**
    * Provides an implementation for IE6/7 that relies on 100% length in CSS.
    */
-  @SuppressWarnings("unused") // will be used by IE6 permutation
+  @SuppressWarnings("unused")
+  // will be used by IE6 permutation
   private static class ImplIE6 extends Impl {
 
     private static void expandToFitParentHorizontally(Element elem) {
@@ -228,11 +241,11 @@ public final class VerticalSplitPanel extends SplitPanel {
     }
 
     private native void addResizeListener(Element container) /*-{
-         var self = this;
-         container.onresize = $entry(function() {
-           self.@com.google.gwt.user.client.ui.VerticalSplitPanel$ImplIE6::onResize()();
-         });
-      }-*/;
+      var self = this;
+      container.onresize = $entry(function() {
+        self.@com.google.gwt.user.client.ui.VerticalSplitPanel$ImplIE6::onResize()();
+      });
+    }-*/;
 
     private void onResize() {
       setSplitPosition(getOffsetHeight(panel.getElement(TOP)));
@@ -265,19 +278,29 @@ public final class VerticalSplitPanel extends SplitPanel {
   private String lastSplitPosition;
 
   public VerticalSplitPanel() {
-    this(GWT.<VerticalSplitPanelImages>create(VerticalSplitPanelImages.class));
+    this(GWT.<Resources> create(Resources.class));
   }
 
   /**
    * Creates an empty vertical split panel.
+   * @deprecated replaced by {@link #VerticalSplitPanel(Resources)}
    */
+  @Deprecated
   public VerticalSplitPanel(VerticalSplitPanelImages images) {
+    this(images.verticalSplitPanelThumb());
+  }
+
+  public VerticalSplitPanel(Resources resources) {
+    this(AbstractImagePrototype.create(resources.verticalSplitPanelThumb()));
+  }
+
+  private VerticalSplitPanel(AbstractImagePrototype thumbImage) {
     super(DOM.createDiv(), DOM.createDiv(), preventBoxStyles(DOM.createDiv()),
         preventBoxStyles(DOM.createDiv()));
 
     container = preventBoxStyles(DOM.createDiv());
 
-    buildDOM(images.verticalSplitPanelThumb());
+    buildDOM(thumbImage);
 
     setStyleName("gwt-VerticalSplitPanel");
 

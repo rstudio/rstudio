@@ -18,7 +18,10 @@ package com.google.gwt.user.client.ui;
 /**
  * An {@link ImageBundle} that provides images for
  * {@link com.google.gwt.user.client.ui.HorizontalSplitPanel}.
+ * 
+ * @deprecated replaced by {@link VerticalSplitPanel.Resources}.
  */
+@Deprecated
 public interface VerticalSplitPanelImages extends ImageBundle {
 
   /**

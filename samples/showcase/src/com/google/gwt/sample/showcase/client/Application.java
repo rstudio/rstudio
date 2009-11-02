@@ -22,8 +22,8 @@ import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DecoratorPanel;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -35,7 +35,6 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Tree;
-import com.google.gwt.user.client.ui.TreeImages;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
@@ -71,14 +70,14 @@ public class Application extends Composite implements ResizeHandler,
   /**
    * Images used in the {@link Application}.
    */
-  public interface ApplicationImages extends TreeImages {
+  public interface ApplicationImages extends Tree.Resources {
     /**
      * An image indicating a leaf.
      * 
      * @return a prototype of this image
      */
-    @Resource("noimage.png")
-    AbstractImagePrototype treeLeaf();
+    @Source("noimage.png")
+    ImageResource treeLeaf();
   }
 
   /**

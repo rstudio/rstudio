@@ -22,7 +22,10 @@ package com.google.gwt.user.client.ui;
  * <p>
  * <h3>Example</h3> {@example com.google.gwt.examples.TreeImagesExample}
  * </p>
+ * 
+ * @deprecated replaced by {@link Tree.Resources}.
  */
+@Deprecated
 public interface TreeImages extends ImageBundle {
 
   /**
@@ -45,18 +48,4 @@ public interface TreeImages extends ImageBundle {
    * @return a prototype of this image
    */
   AbstractImagePrototype treeLeaf();
-}
-
-/**
- * A bundle containing the RTL versions of the images for Tree. Right now, there is no
- * need to override any of the methods in TreeImages and specify a different image in
- * the RTL context, because the images that we're currently using are direction-agnostic.
- * 
- * Notice that this interface is package protected. This interface need not be
- * publicly exposed, as it is only used by the Tree class to provide RTL
- * versions of the images in the case the the user does not pass in their own
- * bundle. However, we cannot make this class private, because the generated
- * class needs to be able to extend this class.
- */
-interface TreeImagesRTL extends TreeImages {
 }

@@ -16,12 +16,14 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.i18n.client.LocaleInfo;
 
 /**
  * A panel that arranges two widgets in a single horizontal row and allows the
@@ -34,12 +36,22 @@ import com.google.gwt.i18n.client.LocaleInfo;
  * </p>
  * 
  * <h3>CSS Style Rules</h3>
- * <ul class='css'>
+ * <ul>
  * <li>.gwt-HorizontalSplitPanel { the panel itself }</li>
  * <li>.gwt-HorizontalSplitPanel hsplitter { the splitter }</li>
  * </ul>
  */
 public final class HorizontalSplitPanel extends SplitPanel {
+  /**
+   * The default resources used by this widget.
+   */
+  public interface Resources extends ClientBundle {
+    /**
+     * An image representing the drag thumb.
+     */
+    @Source("splitPanelThumb.png")
+    ImageResource horizontalSplitPanelThumb();
+  }
 
   /**
    * The standard implementation for horizontal split panels.
@@ -67,17 +79,17 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
       // Right now, both panes are stacked on top of each other
       // on either the left side or the right side of the containing
-      // panel. This happens because both panes have position:absolute 
-      // and no left/top values. The panes will be on the left side 
-      // if the directionality is LTR, and on the right side if the 
-      // directionality is RTL. In the LTR case, we need to snap the 
+      // panel. This happens because both panes have position:absolute
+      // and no left/top values. The panes will be on the left side
+      // if the directionality is LTR, and on the right side if the
+      // directionality is RTL. In the LTR case, we need to snap the
       // right pane to the right of the container, and in the RTL case,
-      // we need to snap the left pane to the left of the container.      
-      if (LocaleInfo.getCurrentLocale().isRTL()) {      
-        setLeft(panel.getElement(LEFT), "0px");        
-      } else {        
+      // we need to snap the left pane to the left of the container.
+      if (LocaleInfo.getCurrentLocale().isRTL()) {
+        setLeft(panel.getElement(LEFT), "0px");
+      } else {
         setRight(panel.getElement(RIGHT), "0px");
-      }  
+      }
     }
 
     public void onAttach() {
@@ -90,7 +102,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
       setSplitPositionUsingPixels(px);
     }
 
-    public void setSplitPosition(String pos) { 
+    public void setSplitPosition(String pos) {
       final Element leftElem = panel.getElement(LEFT);
       setWidth(leftElem, pos);
       setSplitPositionUsingPixels(getOffsetWidth(leftElem));
@@ -99,10 +111,9 @@ public final class HorizontalSplitPanel extends SplitPanel {
     /**
      * Set the splitter's position in units of pixels.
      * 
-     * px represents the splitter's position as a distance
-     * of px pixels from the left edge of the container. This is
-     * true even in a bidi environment. Callers of this method
-     * must be aware of this constraint.
+     * px represents the splitter's position as a distance of px pixels from the
+     * left edge of the container. This is true even in a bidi environment.
+     * Callers of this method must be aware of this constraint.
      */
     public void setSplitPositionUsingPixels(int px) {
       final Element splitElem = panel.getSplitElement();
@@ -146,7 +157,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
     /**
      * Implemented by subclasses.
-     *
+     * 
      * @param rightElem
      * @param newRightWidth
      */
@@ -161,7 +172,8 @@ public final class HorizontalSplitPanel extends SplitPanel {
   /**
    * The IE6 implementation for horizontal split panels.
    */
-  @SuppressWarnings("unused") // will be used by IE6 permutation
+  @SuppressWarnings("unused")
+  // will be used by IE6 permutation
   private static class ImplIE6 extends Impl {
 
     private boolean isResizeInProgress = false;
@@ -173,17 +185,17 @@ public final class HorizontalSplitPanel extends SplitPanel {
       this.panel = panel;
 
       final Element elem = panel.getElement();
-     
+
       // Prevents inherited text-align settings from interfering with the
       // panel's layout. The setting we choose must be bidi-sensitive,
       // as left-alignment is the default with LTR directionality, and
-      // right-alignment is the default with RTL directionality.            
+      // right-alignment is the default with RTL directionality.
       if (LocaleInfo.getCurrentLocale().isRTL()) {
         DOM.setStyleAttribute(elem, "textAlign", "right");
       } else {
-        DOM.setStyleAttribute(elem, "textAlign", "left");  
+        DOM.setStyleAttribute(elem, "textAlign", "left");
       }
-      
+
       DOM.setStyleAttribute(elem, "position", "relative");
 
       /*
@@ -198,11 +210,11 @@ public final class HorizontalSplitPanel extends SplitPanel {
       expandToFitParentUsingPercentages(panel.container);
 
       if (LocaleInfo.getCurrentLocale().isRTL()) {
-        // Snap the left pane to the left edge of the container. We 
-        // only need to do this when layout is RTL; if we don't, the 
+        // Snap the left pane to the left edge of the container. We
+        // only need to do this when layout is RTL; if we don't, the
         // left pane will overlap the right pane.
         setLeft(panel.getElement(LEFT), "0px");
-      }              
+      }
     }
 
     @Override
@@ -262,20 +274,20 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
         // Set the width of the right side.
         setWidth(panel.getElement(RIGHT), newRightWidth + "px");
-        
-        // Move the splitter to the right edge of the left element. 
-        setLeft(splitElem, px + "px");    
-        
-        // Update the width of the left side        
+
+        // Move the splitter to the right edge of the left element.
+        setLeft(splitElem, px + "px");
+
+        // Update the width of the left side
         if (px == 0) {
 
-          // This takes care of a qurky RTL layout bug with IE6. 
+          // This takes care of a qurky RTL layout bug with IE6.
           // During DOM construction and layout, onResize events
-          // are fired, and this method is called with px == 0. 
+          // are fired, and this method is called with px == 0.
           // If one tries to set the width of the LEFT element to
           // before layout completes, the RIGHT element will
           // appear to be blanked out.
-          
+
           DeferredCommand.addCommand(new Command() {
             public void execute() {
               setWidth(panel.getElement(LEFT), "0px");
@@ -284,7 +296,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
         } else {
           setWidth(panel.getElement(LEFT), px + "px");
         }
-        
+
       } else {
         super.setSplitPositionUsingPixels(px);
       }
@@ -310,7 +322,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
       setHeight(rightElem, height);
       setHeight(panel.getSplitElement(), height);
       setHeight(leftElem, height);
-      setSplitPositionUsingPixels(getOffsetWidth(leftElem));      
+      setSplitPositionUsingPixels(getOffsetWidth(leftElem));
     }
   }
 
@@ -318,7 +330,8 @@ public final class HorizontalSplitPanel extends SplitPanel {
    * The Safari implementation which owes its existence entirely to a single
    * WebKit bug: http://bugs.webkit.org/show_bug.cgi?id=9137.
    */
-  @SuppressWarnings("unused") // will be used by Safari permutation
+  @SuppressWarnings("unused")
+  // will be used by Safari permutation
   private static class ImplSafari extends Impl {
     @Override
     public void init(HorizontalSplitPanel panel) {
@@ -360,22 +373,37 @@ public final class HorizontalSplitPanel extends SplitPanel {
   private int initialLeftWidth;
 
   public HorizontalSplitPanel() {
-    this(GWT.<HorizontalSplitPanelImages>create(HorizontalSplitPanelImages.class));
+    this(GWT.<Resources> create(Resources.class));
   }
 
   /**
    * Creates an empty horizontal split panel.
    * 
-   * @param images ImageBundle containing an image for the splitter's drag
-   *               thumb 
+   * @param images ImageBundle containing an image for the splitter's drag thumb
+   * @deprecated replaced by {@link #HorizontalSplitPanel(Resources)}
    */
+  @Deprecated
   public HorizontalSplitPanel(HorizontalSplitPanelImages images) {
+    this(images.horizontalSplitPanelThumb());
+  }
+
+  /**
+   * Creates an empty horizontal split panel.
+   * 
+   * @param resources ClientBundle containing an image for the splitter's drag
+   *          thumb
+   */
+  public HorizontalSplitPanel(Resources resources) {
+    this(AbstractImagePrototype.create(resources.horizontalSplitPanelThumb()));
+  }
+
+  private HorizontalSplitPanel(AbstractImagePrototype thumbImage) {
     super(DOM.createDiv(), DOM.createDiv(), preventBoxStyles(DOM.createDiv()),
         preventBoxStyles(DOM.createDiv()));
 
     container = preventBoxStyles(DOM.createDiv());
 
-    buildDOM(images.horizontalSplitPanelThumb());
+    buildDOM(thumbImage);
 
     setStyleName("gwt-HorizontalSplitPanel");
 
@@ -388,17 +416,16 @@ public final class HorizontalSplitPanel extends SplitPanel {
   }
 
   /**
-   * Adds a widget to a pane in the HorizontalSplitPanel. The method
-   * will first attempt to add the widget to the left pane. If a 
-   * widget is already in that position, it will attempt to add the
-   * widget to the right pane. If a widget is already in that position,
-   * an exception will be thrown, as a HorizontalSplitPanel can
-   * contain at most two widgets.
+   * Adds a widget to a pane in the HorizontalSplitPanel. The method will first
+   * attempt to add the widget to the left pane. If a widget is already in that
+   * position, it will attempt to add the widget to the right pane. If a widget
+   * is already in that position, an exception will be thrown, as a
+   * HorizontalSplitPanel can contain at most two widgets.
    * 
-   * Note that this method is bidi-sensitive. In an RTL environment,
-   * this method will first attempt to add the widget to the right pane,
-   * and if a widget is already in that position, it will attempt to add
-   * the widget to the left pane.
+   * Note that this method is bidi-sensitive. In an RTL environment, this method
+   * will first attempt to add the widget to the right pane, and if a widget is
+   * already in that position, it will attempt to add the widget to the left
+   * pane.
    * 
    * @param w the widget to be added
    * @throws IllegalStateException
@@ -416,17 +443,16 @@ public final class HorizontalSplitPanel extends SplitPanel {
   }
 
   /**
-   * Gets the widget in the pane that is at the end of the line
-   * direction for the layout. That is, in an RTL layout, gets
-   * the widget in the left pane, and in an LTR layout, gets
-   * the widget in the right pane.
-   *
+   * Gets the widget in the pane that is at the end of the line direction for
+   * the layout. That is, in an RTL layout, gets the widget in the left pane,
+   * and in an LTR layout, gets the widget in the right pane.
+   * 
    * @return the widget, <code>null</code> if there is not one.
    */
   public Widget getEndOfLineWidget() {
     return getWidget(getEndOfLinePos());
   }
-   
+
   /**
    * Gets the widget in the left side of the panel.
    * 
@@ -446,11 +472,10 @@ public final class HorizontalSplitPanel extends SplitPanel {
   }
 
   /**
-   * Gets the widget in the pane that is at the start of the line 
-   * direction for the layout. That is, in an RTL environment, gets
-   * the widget in the right pane, and in an LTR environment, gets
-   * the widget in the left pane.   
-   *
+   * Gets the widget in the pane that is at the start of the line direction for
+   * the layout. That is, in an RTL environment, gets the widget in the right
+   * pane, and in an LTR environment, gets the widget in the left pane.
+   * 
    * @return the widget, <code>null</code> if there is not one.
    */
   public Widget getStartOfLineWidget() {
@@ -458,11 +483,10 @@ public final class HorizontalSplitPanel extends SplitPanel {
   }
 
   /**
-   * Sets the widget in the pane that is at the end of the line direction
-   * for the layout. That is, in an RTL layout, sets the widget in
-   * the left pane, and in and RTL layout, sets the widget in the 
-   * right pane.
-   *
+   * Sets the widget in the pane that is at the end of the line direction for
+   * the layout. That is, in an RTL layout, sets the widget in the left pane,
+   * and in and RTL layout, sets the widget in the right pane.
+   * 
    * @param w the widget
    */
   public void setEndOfLineWidget(Widget w) {
@@ -479,22 +503,22 @@ public final class HorizontalSplitPanel extends SplitPanel {
   }
 
   /**
-   * Sets the widget in the right side of the panel. 
+   * Sets the widget in the right side of the panel.
    * 
    * @param w the widget
    */
-  public void setRightWidget(Widget w) {    
+  public void setRightWidget(Widget w) {
     setWidget(RIGHT, w);
   }
- 
+
   /**
    * Moves the position of the splitter.
-   *
-   * This method is not bidi-sensitive. The size specified is always
-   * the size of the left region, regardless of directionality.
-   *
+   * 
+   * This method is not bidi-sensitive. The size specified is always the size of
+   * the left region, regardless of directionality.
+   * 
    * @param pos the new size of the left region in CSS units (e.g. "10px",
-   *             "1em")
+   *          "1em")
    */
   @Override
   public void setSplitPosition(String pos) {
@@ -503,11 +527,10 @@ public final class HorizontalSplitPanel extends SplitPanel {
   }
 
   /**
-   * Sets the widget in the pane that is at the start of the line direction
-   * for the layout. That is, in an RTL layout, sets the widget in
-   * the right pane, and in and RTL layout, sets the widget in the
-   * left pane.
-   *
+   * Sets the widget in the pane that is at the start of the line direction for
+   * the layout. That is, in an RTL layout, sets the widget in the right pane,
+   * and in and RTL layout, sets the widget in the left pane.
+   * 
    * @param w the widget
    */
   public void setStartOfLineWidget(Widget w) {
@@ -521,7 +544,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
    * <li>-right = the container on the right side of the splitter.</li>
    * <li>-left = the container on the left side of the splitter.</li>
    * </ul>
-   *
+   * 
    * @see UIObject#onEnsureDebugId(String)
    */
   @Override
@@ -593,7 +616,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
   private int getEndOfLinePos() {
     return (LocaleInfo.getCurrentLocale().isRTL() ? LEFT : RIGHT);
   }
-  
+
   private int getStartOfLinePos() {
     return (LocaleInfo.getCurrentLocale().isRTL() ? RIGHT : LEFT);
   }

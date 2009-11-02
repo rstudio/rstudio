@@ -16,6 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.impl.ClippedImagePrototype;
 
 /**
  * An opaque representation of a particular image such that the image can be
@@ -25,10 +27,10 @@ import com.google.gwt.dom.client.Element;
  * 
  * <p>
  * The {@link #applyTo(Image)} method provides an efficient way to replace the
- * contents of an existing <code>Image</code>. This is useful in cases where
- * an image changes its appearance based on a user's action. Instead of creating
- * two <code>Image</code> objects then alternately hiding/showing them, one
- * can use the {@link #applyTo(Image)} method of two
+ * contents of an existing <code>Image</code>. This is useful in cases where an
+ * image changes its appearance based on a user's action. Instead of creating
+ * two <code>Image</code> objects then alternately hiding/showing them, one can
+ * use the {@link #applyTo(Image)} method of two
  * <code>AbstractImagePrototype</code> objects to transform a single
  * <code>Image</code> object between two (or more) visual representations. The
  * use of <code>AbstractImagePrototypes</code> results in an cleaner and more
@@ -56,6 +58,20 @@ public abstract class AbstractImagePrototype {
   public static class ImagePrototypeElement extends Element {
     protected ImagePrototypeElement() {
     }
+  }
+
+  /**
+   * Create an AbstractImagePrototype backed by a ClientBundle ImageResource.
+   * This method provides an API compatibility mapping for the new ImageResource
+   * API.
+   * 
+   * @param resource an ImageResource produced by a ClientBundle
+   * @return an AbstractImagePrototype that displays the contents of the
+   *         ImageResource
+   */
+  public static AbstractImagePrototype create(ImageResource resource) {
+    return new ClippedImagePrototype(resource.getURL(), resource.getLeft(),
+        resource.getTop(), resource.getWidth(), resource.getHeight());
   }
 
   /**

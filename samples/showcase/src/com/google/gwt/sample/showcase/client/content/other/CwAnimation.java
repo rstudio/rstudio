@@ -18,6 +18,8 @@ package com.google.gwt.sample.showcase.client.content.other;
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
@@ -26,12 +28,11 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.DecoratorPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -209,10 +210,10 @@ public class CwAnimation extends ContentWidget {
     absolutePanel.ensureDebugId("cwAbsolutePanel");
 
     // Add a widget that we will animate
-    animateeTop = Showcase.images.gwtLogoThumb().createImage();
-    animateeBottom = Showcase.images.gwtLogoThumb().createImage();
-    animateeLeft = Showcase.images.gwtLogoThumb().createImage();
-    animateeRight = Showcase.images.gwtLogoThumb().createImage();
+    animateeTop = new Image(Showcase.images.gwtLogoThumb());
+    animateeBottom = new Image(Showcase.images.gwtLogoThumb());
+    animateeLeft = new Image(Showcase.images.gwtLogoThumb());
+    animateeRight = new Image(Showcase.images.gwtLogoThumb());
     absolutePanel.add(animateeTop);
     absolutePanel.add(animateeBottom);
     absolutePanel.add(animateeLeft);

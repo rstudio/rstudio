@@ -37,7 +37,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({
+@ShowcaseStyle(value = {
     ".gwt-PopupPanel", "html>body .gwt-PopupPanel", "* html .gwt-PopupPanel",
     ".gwt-DecoratedPopupPanel", "html>body .gwt-DecoratedPopupPanel",
     "* html .gwt-DecoratedPopupPanel"})
@@ -114,7 +114,7 @@ public class CwBasicPopup extends ContentWidget {
         });
 
     // Create a popup to show the full size image
-    Image jimmyFull = Showcase.images.jimmy().createImage();
+    Image jimmyFull = new Image(Showcase.images.jimmy());
     final PopupPanel imagePopup = new PopupPanel(true);
     imagePopup.setAnimationEnabled(true);
     imagePopup.ensureDebugId("cwBasicPopup-imagePopup");
@@ -126,7 +126,7 @@ public class CwBasicPopup extends ContentWidget {
     });
 
     // Add an image thumbnail
-    Image jimmyThumb = Showcase.images.jimmyThumb().createImage();
+    Image jimmyThumb = new Image(Showcase.images.jimmyThumb());
     jimmyThumb.ensureDebugId("cwBasicPopup-thumb");
     jimmyThumb.addStyleName("cw-BasicPopup-thumb");
     jimmyThumb.addClickHandler(new ClickHandler() {

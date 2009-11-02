@@ -264,7 +264,10 @@ import java.lang.annotation.Target;
  * @see com.google.gwt.user.client.ui.Image#setVisibleRect(int, int, int, int)
  * @see com.google.gwt.user.client.ui.Image#setUrlAndVisibleRect(String, int,
  *      int, int, int)
+ * @deprecated replaced by {@link com.google.gwt.resources.client.ClientBundle}
+ *             and {@link com.google.gwt.resources.client.ImageResource}
  */
+@Deprecated
 public interface ImageBundle {
 
   /**

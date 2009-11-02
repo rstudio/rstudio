@@ -26,6 +26,7 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -98,26 +99,26 @@ public class CwCustomButton extends ContentWidget {
 
     // Add a normal PushButton
     PushButton normalPushButton = new PushButton(
-        Showcase.images.gwtLogo().createImage());
+        new Image(Showcase.images.gwtLogo()));
     normalPushButton.ensureDebugId("cwCustomButton-push-normal");
     pushPanel.add(normalPushButton);
 
     // Add a disabled PushButton
     PushButton disabledPushButton = new PushButton(
-        Showcase.images.gwtLogo().createImage());
+        new Image(Showcase.images.gwtLogo()));
     disabledPushButton.ensureDebugId("cwCustomButton-push-disabled");
     disabledPushButton.setEnabled(false);
     pushPanel.add(disabledPushButton);
 
     // Add a normal ToggleButton
     ToggleButton normalToggleButton = new ToggleButton(
-        Showcase.images.gwtLogo().createImage());
+        new Image(Showcase.images.gwtLogo()));
     normalToggleButton.ensureDebugId("cwCustomButton-toggle-normal");
     togglePanel.add(normalToggleButton);
 
     // Add a disabled ToggleButton
     ToggleButton disabledToggleButton = new ToggleButton(
-        Showcase.images.gwtLogo().createImage());
+        new Image(Showcase.images.gwtLogo()));
     disabledToggleButton.ensureDebugId("cwCustomButton-toggle-disabled");
     disabledToggleButton.setEnabled(false);
     togglePanel.add(disabledToggleButton);

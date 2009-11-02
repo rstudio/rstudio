@@ -23,11 +23,12 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.i18n.client.Constants;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.ImageBundle;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RichTextArea;
@@ -43,47 +44,47 @@ import com.google.gwt.user.client.ui.Widget;
 public class RichTextToolbar extends Composite {
 
   /**
-   * This {@link ImageBundle} is used for all the button icons. Using an image
-   * bundle allows all of these images to be packed into a single image, which
-   * saves a lot of HTTP requests, drastically improving startup time.
+   * This {@link ClientBundle} is used for all the button icons. Using a bundle
+   * allows all of these images to be packed into a single image, which saves a
+   * lot of HTTP requests, drastically improving startup time.
    */
-  public interface Images extends ImageBundle {
+  public interface Images extends ClientBundle {
 
-    AbstractImagePrototype bold();
+    ImageResource bold();
 
-    AbstractImagePrototype createLink();
+    ImageResource createLink();
 
-    AbstractImagePrototype hr();
+    ImageResource hr();
 
-    AbstractImagePrototype indent();
+    ImageResource indent();
 
-    AbstractImagePrototype insertImage();
+    ImageResource insertImage();
 
-    AbstractImagePrototype italic();
+    ImageResource italic();
 
-    AbstractImagePrototype justifyCenter();
+    ImageResource justifyCenter();
 
-    AbstractImagePrototype justifyLeft();
+    ImageResource justifyLeft();
 
-    AbstractImagePrototype justifyRight();
+    ImageResource justifyRight();
 
-    AbstractImagePrototype ol();
+    ImageResource ol();
 
-    AbstractImagePrototype outdent();
+    ImageResource outdent();
 
-    AbstractImagePrototype removeFormat();
+    ImageResource removeFormat();
 
-    AbstractImagePrototype removeLink();
+    ImageResource removeLink();
 
-    AbstractImagePrototype strikeThrough();
+    ImageResource strikeThrough();
 
-    AbstractImagePrototype subscript();
+    ImageResource subscript();
 
-    AbstractImagePrototype superscript();
+    ImageResource superscript();
 
-    AbstractImagePrototype ul();
+    ImageResource ul();
 
-    AbstractImagePrototype underline();
+    ImageResource underline();
   }
 
   /**
@@ -409,15 +410,15 @@ public class RichTextToolbar extends Composite {
     return lb;
   }
 
-  private PushButton createPushButton(AbstractImagePrototype img, String tip) {
-    PushButton pb = new PushButton(img.createImage());
+  private PushButton createPushButton(ImageResource img, String tip) {
+    PushButton pb = new PushButton(new Image(img));
     pb.addClickHandler(handler);
     pb.setTitle(tip);
     return pb;
   }
 
-  private ToggleButton createToggleButton(AbstractImagePrototype img, String tip) {
-    ToggleButton tb = new ToggleButton(img.createImage());
+  private ToggleButton createToggleButton(ImageResource img, String tip) {
+    ToggleButton tb = new ToggleButton(new Image(img));
     tb.addClickHandler(handler);
     tb.setTitle(tip);
     return tb;

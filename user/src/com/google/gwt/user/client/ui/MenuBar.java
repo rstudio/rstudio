@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,6 +23,9 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
@@ -38,11 +41,11 @@ import java.util.List;
  * A standard menu bar widget. A menu bar can contain any number of menu items,
  * each of which can either fire a {@link com.google.gwt.user.client.Command} or
  * open a cascaded menu bar.
- *
+ * 
  * <p>
  * <img class='gallery' src='MenuBar.png'/>
  * </p>
- *
+ * 
  * <h3>CSS Style Rules</h3>
  * <dl>
  * <dt>.gwt-MenuBar</dt>
@@ -96,7 +99,7 @@ import java.util.List;
  * <dt>.gwt-MenuBarPopup .menuPopupBottomRightInner</dt>
  * <dd>the inner element of the cell</dd>
  * </dl>
- *
+ * 
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.MenuBarExample}
@@ -109,34 +112,28 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     HasCloseHandlers<PopupPanel> {
   /**
    * An {@link ImageBundle} that provides images for {@link MenuBar}.
+   * 
+   * @deprecated replaced by {@link Resources}
    */
+  @Deprecated
   public interface MenuBarImages extends ImageBundle {
     /**
      * An image indicating a {@link MenuItem} has an associated submenu.
-     *
+     * 
      * @return a prototype of this image
      */
     AbstractImagePrototype menuBarSubMenuIcon();
   }
 
   /**
-   * A bundle containing the RTL versions of the images for MenuBar.
-   *
-   * Notice that this interface is package protected. This interface need not be
-   * publicly exposed, as it is only used by the MenuBar class to provide RTL
-   * versions of the images in the case the the user does not pass in their own
-   * bundle. However, we cannot make this class private, because the generated
-   * class needs to be able to extend this class.
+   * A ClientBundle that contains the default resources for this widget.
    */
-  interface MenuBarImagesRTL extends MenuBarImages {
+  public interface Resources extends ClientBundle {
     /**
-     * An image indicating a {@link MenuItem} has an associated submenu for a
-     * RTL context.
-     *
-     * @return a prototype of this image
+     * An image indicating a {@link MenuItem} has an associated submenu.
      */
-    @Resource("menuBarSubMenuIcon_rtl.gif")
-    AbstractImagePrototype menuBarSubMenuIcon();
+    @ImageOptions(flipRtl = true)
+    ImageResource menuBarSubMenuIcon();
   }
 
   private static final String STYLENAME_DEFAULT = "gwt-MenuBar";
@@ -153,7 +150,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   private Element body;
 
-  private MenuBarImages images = null;
+  private AbstractImagePrototype subMenuIcon = null;
   private boolean isAnimationEnabled = false;
   private MenuBar parentMenu;
   private PopupPanel popup;
@@ -170,37 +167,58 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Creates an empty menu bar.
-   *
+   * 
    * @param vertical <code>true</code> to orient the menu bar vertically
    */
   public MenuBar(boolean vertical) {
-    super();
-    if (LocaleInfo.getCurrentLocale().isRTL()) {
-      init(vertical, GWT.<MenuBarImagesRTL> create(MenuBarImagesRTL.class));
-    } else {
-      init(vertical, GWT.<MenuBarImages> create(MenuBarImages.class));
-    }
+    this(vertical, GWT.<Resources> create(Resources.class));
   }
 
   /**
    * Creates an empty menu bar that uses the specified image bundle for menu
    * images.
-   *
+   * 
    * @param vertical <code>true</code> to orient the menu bar vertically
    * @param images a bundle that provides images for this menu
+   * @deprecated replaced by {@link #MenuBar(boolean, Resources)}
    */
+  @Deprecated
   public MenuBar(boolean vertical, MenuBarImages images) {
-    init(vertical, images);
+    init(vertical, images.menuBarSubMenuIcon());
+  }
+
+  /**
+   * Creates an empty menu bar that uses the specified ClientBundle for menu
+   * images.
+   * 
+   * @param vertical <code>true</code> to orient the menu bar vertically
+   * @param resources a bundle that provides images for this menu
+   */
+  public MenuBar(boolean vertical, Resources resources) {
+    init(vertical,
+        AbstractImagePrototype.create(resources.menuBarSubMenuIcon()));
   }
 
   /**
    * Creates an empty horizontal menu bar that uses the specified image bundle
    * for menu images.
-   *
+   * 
    * @param images a bundle that provides images for this menu
+   * @deprecated replaced by {@link #MenuBar(Resources)}
    */
+  @Deprecated
   public MenuBar(MenuBarImages images) {
     this(false, images);
+  }
+
+  /**
+   * Creates an empty horizontal menu bar that uses the specified ClientBundle
+   * for menu images.
+   * 
+   * @param resources a bundle that provides images for this menu
+   */
+  public MenuBar(Resources resources) {
+    this(false, resources);
   }
 
   public HandlerRegistration addCloseHandler(CloseHandler<PopupPanel> handler) {
@@ -209,7 +227,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Adds a menu item to the bar.
-   *
+   * 
    * @param item the item to be added
    * @return the {@link MenuItem} object
    */
@@ -220,7 +238,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Adds a menu item to the bar, that will fire the given command when it is
    * selected.
-   *
+   * 
    * @param text the item's text
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param cmd the command to be fired
@@ -233,7 +251,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Adds a menu item to the bar, that will open the specified menu when it is
    * selected.
-   *
+   * 
    * @param text the item's text
    * @param asHTML <code>true</code> to treat the specified text as html
    * @param popup the menu to be cascaded from it
@@ -246,7 +264,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Adds a menu item to the bar, that will fire the given command when it is
    * selected.
-   *
+   * 
    * @param text the item's text
    * @param cmd the command to be fired
    * @return the {@link MenuItem} object created
@@ -258,7 +276,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Adds a menu item to the bar, that will open the specified menu when it is
    * selected.
-   *
+   * 
    * @param text the item's text
    * @param popup the menu to be cascaded from it
    * @return the {@link MenuItem} object created
@@ -270,7 +288,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Adds a thin line to the {@link MenuBar} to separate sections of
    * {@link MenuItem}s.
-   *
+   * 
    * @return the {@link MenuItemSeparator} object created
    */
   public MenuItemSeparator addSeparator() {
@@ -280,7 +298,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Adds a thin line to the {@link MenuBar} to separate sections of
    * {@link MenuItem}s.
-   *
+   * 
    * @param separator the {@link MenuItemSeparator} to be added
    * @return the {@link MenuItemSeparator} object
    */
@@ -325,7 +343,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Gets whether this menu bar's child menus will open when the mouse is moved
    * over it.
-   *
+   * 
    * @return <code>true</code> if child menus will auto-open
    */
   public boolean getAutoOpen() {
@@ -334,7 +352,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Get the index of a {@link MenuItem}.
-   *
+   * 
    * @return the index of the item, or -1 if it is not contained by this MenuBar
    */
   public int getItemIndex(MenuItem item) {
@@ -343,7 +361,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Get the index of a {@link MenuItemSeparator}.
-   *
+   * 
    * @return the index of the separator, or -1 if it is not contained by this
    *         MenuBar
    */
@@ -353,7 +371,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Adds a menu item to the bar at a specific index.
-   *
+   * 
    * @param item the item to be inserted
    * @param beforeIndex the index where the item should be inserted
    * @return the {@link MenuItem} object
@@ -388,7 +406,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Adds a thin line to the {@link MenuBar} to separate sections of
    * {@link MenuItem}s at the specified index.
-   *
+   * 
    * @param beforeIndex the index where the seperator should be inserted
    * @return the {@link MenuItemSeparator} object
    * @throws IndexOutOfBoundsException if <code>beforeIndex</code> is out of
@@ -401,7 +419,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Adds a thin line to the {@link MenuBar} to separate sections of
    * {@link MenuItem}s at the specified index.
-   *
+   * 
    * @param separator the {@link MenuItemSeparator} to be inserted
    * @param beforeIndex the index where the seperator should be inserted
    * @return the {@link MenuItemSeparator} object
@@ -429,14 +447,14 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   }
 
   /**
-   * Moves the menu selection down to the next item.  If there is no selection,
-   * selects the first item.  If there are no items at all, does nothing.
+   * Moves the menu selection down to the next item. If there is no selection,
+   * selects the first item. If there are no items at all, does nothing.
    */
   public void moveSelectionDown() {
     if (selectFirstItemIfNoneSelected()) {
       return;
     }
-  
+
     if (vertical) {
       selectNextItem();
     } else {
@@ -458,14 +476,14 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   }
 
   /**
-   * Moves the menu selection up to the previous item.  If there is no selection,
-   * selects the first item.  If there are no items at all, does nothing.
+   * Moves the menu selection up to the previous item. If there is no selection,
+   * selects the first item. If there are no items at all, does nothing.
    */
   public void moveSelectionUp() {
     if (selectFirstItemIfNoneSelected()) {
       return;
     }
-  
+
     if ((shownChildMenu == null) && vertical) {
       selectPrevItem();
     } else if ((parentMenu != null) && parentMenu.vertical) {
@@ -559,7 +577,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Closes the menu bar.
-   *
+   * 
    * @deprecated Use {@link #addCloseHandler(CloseHandler)} instead
    */
   @Deprecated
@@ -582,7 +600,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Removes the specified menu item from the bar.
-   *
+   * 
    * @param item the item to be removed
    */
   public void removeItem(MenuItem item) {
@@ -600,7 +618,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Removes the specified {@link MenuItemSeparator} from the bar.
-   *
+   * 
    * @param separator the separator to be removed
    */
   public void removeSeparator(MenuItemSeparator separator) {
@@ -611,6 +629,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Select the given MenuItem, which must be a direct child of this MenuBar.
+   * 
    * @param item the MenuItem to select, or null to clear selection
    */
   public void selectItem(MenuItem item) {
@@ -659,7 +678,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Sets whether this menu bar's child menus will open when the mouse is moved
    * over it.
-   *
+   * 
    * @param autoOpen <code>true</code> to cause child menus to auto-open
    */
   public void setAutoOpen(boolean autoOpen) {
@@ -670,7 +689,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * Returns a list containing the <code>MenuItem</code> objects in the menu
    * bar. If there are no items in the menu bar, then an empty <code>List</code>
    * object will be returned.
-   *
+   * 
    * @return a list containing the <code>MenuItem</code> objects in the menu bar
    */
   protected List<MenuItem> getItems() {
@@ -681,7 +700,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * Returns the <code>MenuItem</code> that is currently selected (highlighted)
    * by the user. If none of the items in the menu are currently selected, then
    * <code>null</code> will be returned.
-   *
+   * 
    * @return the <code>MenuItem</code> that is currently selected, or
    *         <code>null</code> if no items are currently selected
    */
@@ -704,7 +723,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * <ul>
    * <li>-item# = the {@link MenuItem} at the specified index.</li>
    * </ul>
-   *
+   * 
    * @see UIObject#onEnsureDebugId(String)
    */
   @Override
@@ -729,7 +748,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * popup associated with it, the popup will be shown. If it has a command
    * associated with it, and 'fireCommand' is true, then the command will be
    * fired. Popups associated with other items will be hidden.
-   *
+   * 
    * @param item the item whose popup is to be shown. @param fireCommand
    * <code>true</code> if the item's command should be fired, <code>false</code>
    * otherwise.
@@ -807,7 +826,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Set the IDs of the menu items.
-   *
+   * 
    * @param baseID the base ID
    */
   void setMenuItemDebugIds(String baseID) {
@@ -820,7 +839,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Show or hide the icon used for items with a submenu.
-   *
+   * 
    * @param item the item with or without a submenu
    */
   void updateSubmenuIcon(MenuItem item) {
@@ -850,7 +869,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       setItemColSpan(item, 1);
       Element td = DOM.createTD();
       DOM.setElementProperty(td, "vAlign", "middle");
-      DOM.setInnerHTML(td, images.menuBarSubMenuIcon().getHTML());
+      DOM.setInnerHTML(td, subMenuIcon.getHTML());
       setStyleName(td, "subMenuIcon");
       DOM.appendChild(tr, td);
     }
@@ -859,7 +878,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Physically add the td element of a {@link MenuItem} or
    * {@link MenuItemSeparator} to this {@link MenuBar}.
-   *
+   * 
    * @param beforeIndex the index where the seperator should be inserted
    * @param tdElem the td element to be added
    */
@@ -905,8 +924,8 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     }
   }
 
-  private void init(boolean vertical, MenuBarImages images) {
-    this.images = images;
+  private void init(boolean vertical, AbstractImagePrototype subMenuIcon) {
+    this.subMenuIcon = subMenuIcon;
 
     Element table = DOM.createTable();
     body = DOM.createTBody();
@@ -1092,7 +1111,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Removes the specified item from the {@link MenuBar} and the physical DOM
    * structure.
-   *
+   * 
    * @param item the item to be removed
    * @return true if the item was removed
    */
@@ -1109,9 +1128,9 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   }
 
   /**
-   * Selects the first item in the menu if no items are currently selected.
-   * Has no effect if there are no items.
-   *
+   * Selects the first item in the menu if no items are currently selected. Has
+   * no effect if there are no items.
+   * 
    * @return true if no item was previously selected, false otherwise
    */
   private boolean selectFirstItemIfNoneSelected() {
@@ -1177,7 +1196,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Set the colspan of a {@link MenuItem} or {@link MenuItemSeparator}.
-   *
+   * 
    * @param item the {@link MenuItem} or {@link MenuItemSeparator}
    * @param colspan the colspan
    */

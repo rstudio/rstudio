@@ -15,39 +15,39 @@
  */
 package com.google.gwt.sample.showcase.client;
 
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.user.client.ui.ImageBundle;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 
 /**
  * The images used throughout the Showcase.
  */
-public interface ShowcaseImages extends ImageBundle {
-  AbstractImagePrototype catI18N();
+public interface ShowcaseImages extends ClientBundle {
+  ImageResource catI18N();
 
-  AbstractImagePrototype catLists();
+  ImageResource catLists();
 
-  AbstractImagePrototype catOther();
+  ImageResource catOther();
 
-  AbstractImagePrototype catPanels();
+  ImageResource catPanels();
 
-  AbstractImagePrototype catPopups();
+  ImageResource catPopups();
 
-  AbstractImagePrototype catTables();
+  ImageResource catTables();
 
-  AbstractImagePrototype catTextInput();
+  ImageResource catTextInput();
 
-  AbstractImagePrototype catWidgets();
+  ImageResource catWidgets();
 
-  AbstractImagePrototype gwtLogo();
+  ImageResource gwtLogo();
 
-  AbstractImagePrototype gwtLogoThumb();
+  ImageResource gwtLogoThumb();
 
-  AbstractImagePrototype jimmy();
+  ImageResource jimmy();
 
-  AbstractImagePrototype jimmyThumb();
+  ImageResource jimmyThumb();
 
   /**
    * Indicates the locale selection box.
    */
-  AbstractImagePrototype locale();
+  ImageResource locale();
 }

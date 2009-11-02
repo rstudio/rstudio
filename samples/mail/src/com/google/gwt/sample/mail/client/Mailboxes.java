@@ -16,11 +16,11 @@
 package com.google.gwt.sample.mail.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.ImageBundle;
 import com.google.gwt.user.client.ui.Tree;
-import com.google.gwt.user.client.ui.TreeImages;
 import com.google.gwt.user.client.ui.TreeItem;
 
 /**
@@ -32,21 +32,21 @@ public class Mailboxes extends Composite {
    * Specifies the images that will be bundled for this Composite and specify
    * that tree's images should also be included in the same bundle.
    */
-  public interface Images extends ImageBundle, TreeImages {
-    AbstractImagePrototype drafts();
+  public interface Images extends ClientBundle, Tree.Resources {
+    ImageResource drafts();
 
-    AbstractImagePrototype home();
+    ImageResource home();
 
-    AbstractImagePrototype inbox();
+    ImageResource inbox();
 
-    AbstractImagePrototype sent();
+    ImageResource sent();
 
-    AbstractImagePrototype templates();
+    ImageResource templates();
 
-    AbstractImagePrototype trash();
-    
-    @Resource("noimage.png")
-    AbstractImagePrototype treeLeaf();
+    ImageResource trash();
+
+    @Source("noimage.png")
+    ImageResource treeLeaf();
   }
 
   private Tree tree;
@@ -76,13 +76,13 @@ public class Mailboxes extends Composite {
 
   /**
    * A helper method to simplify adding tree items that have attached images.
-   * {@link #addImageItem(TreeItem, String, AbstractImagePrototype) code}
+   * {@link #addImageItem(TreeItem, String, ImageResource) code}
    * 
    * @param root the tree item to which the new item will be added.
    * @param title the text associated with this item.
    */
   private TreeItem addImageItem(TreeItem root, String title,
-      AbstractImagePrototype imageProto) {
+      ImageResource imageProto) {
     TreeItem item = new TreeItem(imageItemHTML(imageProto, title));
     root.addItem(item);
     return item;
@@ -95,7 +95,7 @@ public class Mailboxes extends Composite {
    * @param title the title of the item
    * @return the resultant HTML
    */
-  private String imageItemHTML(AbstractImagePrototype imageProto, String title) {
-    return imageProto.getHTML() + " " + title;
+  private String imageItemHTML(ImageResource imageProto, String title) {
+    return AbstractImagePrototype.create(imageProto).getHTML() + " " + title;
   }
 }

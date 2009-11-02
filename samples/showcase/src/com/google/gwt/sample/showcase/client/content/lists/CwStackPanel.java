@@ -17,7 +17,10 @@ package com.google.gwt.sample.showcase.client.content.lists;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.Constants;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
@@ -25,15 +28,13 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.DecoratedStackPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Tree;
-import com.google.gwt.user.client.ui.TreeImages;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -41,7 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({
+@ShowcaseStyle(value = {
     ".gwt-DecoratedStackPanel", "html>body .gwt-DecoratedStackPanel",
     "* html .gwt-DecoratedStackPanel", ".cw-StackPanelHeader"})
 public class CwStackPanel extends ContentWidget {
@@ -78,30 +79,30 @@ public class CwStackPanel extends ContentWidget {
    * space. Each TreeItem will use its own custom image.
    */
   @ShowcaseSource
-  public interface Images extends TreeImages {
-    AbstractImagePrototype contactsgroup();
+  public interface Images extends Tree.Resources {
+    ImageResource contactsgroup();
 
-    AbstractImagePrototype defaultContact();
+    ImageResource defaultContact();
 
-    AbstractImagePrototype drafts();
+    ImageResource drafts();
 
-    AbstractImagePrototype filtersgroup();
+    ImageResource filtersgroup();
 
-    AbstractImagePrototype inbox();
+    ImageResource inbox();
 
-    AbstractImagePrototype mailgroup();
+    ImageResource mailgroup();
 
-    AbstractImagePrototype sent();
+    ImageResource sent();
 
-    AbstractImagePrototype templates();
+    ImageResource templates();
 
-    AbstractImagePrototype trash();
+    ImageResource trash();
 
     /**
      * Use noimage.png, which is a blank 1x1 image.
      */
-    @Resource("noimage.png")
-    AbstractImagePrototype treeLeaf();
+    @Source("noimage.png")
+    ImageResource treeLeaf();
   }
 
   /**
@@ -182,6 +183,10 @@ public class CwStackPanel extends ContentWidget {
     });
   }
 
+  private void addItem(TreeItem root, ImageResource image, String label) {
+    root.addItem(AbstractImagePrototype.create(image).getHTML() + " " + label);
+  }
+
   /**
    * Create the list of Contacts.
    * 
@@ -193,7 +198,7 @@ public class CwStackPanel extends ContentWidget {
     // Create a popup to show the contact info when a contact is clicked
     HorizontalPanel contactPopupContainer = new HorizontalPanel();
     contactPopupContainer.setSpacing(5);
-    contactPopupContainer.add(images.defaultContact().createImage());
+    contactPopupContainer.add(new Image(images.defaultContact()));
     final HTML contactInfo = new HTML();
     contactPopupContainer.add(contactInfo);
     final PopupPanel contactPopup = new PopupPanel(true, false);
@@ -254,12 +259,11 @@ public class CwStackPanel extends ContentWidget {
     Tree mailPanel = new Tree(images);
     TreeItem mailPanelRoot = mailPanel.addItem("foo@example.com");
     String[] mailFolders = constants.cwStackPanelMailFolders();
-    mailPanelRoot.addItem(images.inbox().getHTML() + " " + mailFolders[0]);
-    mailPanelRoot.addItem(images.drafts().getHTML() + " " + mailFolders[1]);
-    mailPanelRoot.addItem(images.templates().getHTML() + " " + mailFolders[2]);
-    mailPanelRoot.addItem(images.sent().getHTML() + " " + mailFolders[3]);
-    mailPanelRoot.addItem(images.trash().getHTML() + " " + mailFolders[4]);
-    mailPanelRoot.setState(true);
+    addItem(mailPanelRoot, images.inbox(), mailFolders[0]);
+    addItem(mailPanelRoot, images.drafts(), mailFolders[1]);
+    addItem(mailPanelRoot, images.templates(), mailFolders[2]);
+    addItem(mailPanelRoot, images.sent(), mailFolders[3]);
+    addItem(mailPanelRoot, images.trash(), mailFolders[4]);
     return mailPanel;
   }
 
@@ -268,16 +272,16 @@ public class CwStackPanel extends ContentWidget {
    * text.
    * 
    * @param text the header text
-   * @param image the {@link AbstractImagePrototype} to add next to the header
+   * @param image the {@link ImageResource} to add next to the header
    * @return the header as a string
    */
   @ShowcaseSource
-  private String getHeaderString(String text, AbstractImagePrototype image) {
+  private String getHeaderString(String text, ImageResource image) {
     // Add the image and text to a horizontal panel
     HorizontalPanel hPanel = new HorizontalPanel();
     hPanel.setSpacing(0);
     hPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-    hPanel.add(image.createImage());
+    hPanel.add(new Image(image));
     HTML headerText = new HTML(text);
     headerText.setStyleName("cw-StackPanelHeader");
     hPanel.add(headerText);

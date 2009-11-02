@@ -36,6 +36,7 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -159,7 +160,7 @@ public class CwAbsolutePanel extends ContentWidget {
     grid.setBorderWidth(1);
     for (int i = 0; i < 3; i++) {
       grid.setHTML(0, i, i + "");
-      grid.setWidget(1, i, Showcase.images.gwtLogoThumb().createImage());
+      grid.setWidget(1, i, new Image(Showcase.images.gwtLogoThumb()));
     }
     absolutePanel.add(grid, 60, 100);
     widgetMap.put(widgetNames[2], grid);

@@ -53,6 +53,8 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -92,77 +94,62 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     HasCloseHandlers<TreeItem>, SourcesMouseEvents, HasAllMouseHandlers {
 
   /**
-   * Provides images to support the the deprecated case where a url prefix is
-   * passed in through {@link Tree#setImageBase(String)}. This class is used in
-   * such a way that it will be completely removed by the compiler if the
-   * deprecated methods, {@link Tree#setImageBase(String)} and
-   * {@link Tree#getImageBase()}, are not called.
+   * A ClientBundle that provides images for this widget.
    */
-  private static class ImagesFromImageBase implements TreeImages {
+  public interface Resources extends ClientBundle {
 
     /**
-     * A convenience image prototype that implements
-     * {@link AbstractImagePrototype#applyTo(Image)} for a specified image name.
+     * An image indicating a closed branch.
      */
-    private class Prototype extends AbstractImagePrototype {
-      private final String imageUrl;
+    ImageResource treeClosed();
 
-      Prototype(String url) {
-        imageUrl = url;
-      }
+    /**
+     * An image indicating a leaf.
+     */
+    ImageResource treeLeaf();
 
-      @Override
-      public void applyTo(Image image) {
-        image.setUrl(baseUrl + imageUrl);
-      }
+    /**
+     * An image indicating an open branch.
+     */
+    ImageResource treeOpen();
+  }
 
-      @Override
-      public void applyTo(ImagePrototypeElement img) {
-        DOM.setImgSrc(img.<Element> cast(), imageUrl);
-      }
+  /**
+   * There are several ways of configuring images for the Tree widget due to
+   * deprecated APIs.
+   */
+  static class ImageAdapter {
+    private static final Resources DEFAULT_RESOURCES = GWT.create(Resources.class);
+    private final AbstractImagePrototype treeClosed;
+    private final AbstractImagePrototype treeLeaf;
+    private final AbstractImagePrototype treeOpen;
 
-      @Override
-      public ImagePrototypeElement createElement() {
-        Element img = DOM.createImg();
-        applyTo(img.<ImagePrototypeElement> cast());
-        return img.cast();
-      }
-
-      @Override
-      public Image createImage() {
-        // NOTE: This class is only used internally and, therefore only needs
-        // to support applyTo(Image).
-        throw new UnsupportedOperationException("createImage is unsupported.");
-      }
-
-      @Override
-      public String getHTML() {
-        // NOTE: This class is only used internally and, therefore only needs
-        // to support applyTo(Image).
-        throw new UnsupportedOperationException("getHTML is unsupported.");
-      }
+    public ImageAdapter() {
+      this(DEFAULT_RESOURCES);
     }
 
-    private final String baseUrl;
+    public ImageAdapter(Resources resources) {
+      treeClosed = AbstractImagePrototype.create(resources.treeClosed());
+      treeLeaf = AbstractImagePrototype.create(resources.treeLeaf());
+      treeOpen = AbstractImagePrototype.create(resources.treeOpen());
+    }
 
-    ImagesFromImageBase(String baseUrl) {
-      this.baseUrl = baseUrl;
+    public ImageAdapter(TreeImages images) {
+      treeClosed = images.treeClosed();
+      treeLeaf = images.treeLeaf();
+      treeOpen = images.treeOpen();
     }
 
     public AbstractImagePrototype treeClosed() {
-      return new Prototype("tree_closed.gif");
+      return treeClosed;
     }
 
     public AbstractImagePrototype treeLeaf() {
-      return new Prototype("tree_white.gif");
+      return treeLeaf;
     }
 
     public AbstractImagePrototype treeOpen() {
-      return new Prototype("tree_open.gif");
-    }
-
-    String getBaseUrl() {
-      return baseUrl;
+      return treeOpen;
     }
   }
 
@@ -235,7 +222,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   private Element focusable;
 
-  private TreeImages images;
+  private ImageAdapter images;
 
   private String indentValue;
 
@@ -251,20 +238,39 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * Constructs an empty tree.
    */
   public Tree() {
-    if (LocaleInfo.getCurrentLocale().isRTL()) {
-      init(GWT.<TreeImagesRTL> create(TreeImagesRTL.class), false);
-    } else {
-      init(GWT.<TreeImages> create(TreeImages.class), false);
-    }
+    init(new ImageAdapter(), false);
+  }
+
+  /**
+   * Constructs a tree that uses the specified ClientBundle for images.
+   * 
+   * @param resources a bundle that provides tree specific images
+   */
+  public Tree(Resources resources) {
+    init(new ImageAdapter(resources), false);
+  }
+
+  /**
+   * Constructs a tree that uses the specified ClientBundle for images. If this
+   * tree does not use leaf images, the width of the Resources's leaf image will
+   * control the leaf indent.
+   * 
+   * @param resources a bundle that provides tree specific images
+   * @param useLeafImages use leaf images from bundle
+   */
+  public Tree(Resources resources, boolean useLeafImages) {
+    init(new ImageAdapter(resources), useLeafImages);
   }
 
   /**
    * Constructs a tree that uses the specified image bundle for images.
    * 
    * @param images a bundle that provides tree specific images
+   * @deprecated replaced by {@link #Tree(Resources)}
    */
+  @Deprecated
   public Tree(TreeImages images) {
-    init(images, true);
+    init(new ImageAdapter(images), false);
   }
 
   /**
@@ -274,9 +280,11 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * 
    * @param images a bundle that provides tree specific images
    * @param useLeafImages use leaf images from bundle
+   * @deprecated replaced by {@link #Tree(Resources, boolean)}
    */
+  @Deprecated
   public Tree(TreeImages images, boolean useLeafImages) {
-    init(images, useLeafImages);
+    init(new ImageAdapter(images), useLeafImages);
   }
 
   /**
@@ -342,8 +350,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
-   * @deprecated Use {@link #addKeyDownHandler}, {@link
-   * #addKeyUpHandler} and {@link #addKeyPressHandler} instead
+   * @deprecated Use {@link #addKeyDownHandler}, {@link #addKeyUpHandler} and
+   *             {@link #addKeyPressHandler} instead
    */
   @Deprecated
   public void addKeyboardListener(KeyboardListener listener) {
@@ -367,9 +375,9 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
-   * @deprecated Use {@link #addMouseOverHandler} {@link
-   * #addMouseMoveHandler}, {@link #addMouseDownHandler}, {@link
-   * #addMouseUpHandler} and {@link #addMouseOutHandler} instead
+   * @deprecated Use {@link #addMouseOverHandler} {@link #addMouseMoveHandler},
+   *             {@link #addMouseDownHandler}, {@link #addMouseUpHandler} and
+   *             {@link #addMouseOutHandler} instead
    */
   @Deprecated
   public void addMouseListener(MouseListener listener) {
@@ -406,8 +414,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
-   * @deprecated Use {@link #addSelectionHandler}, {@link
-   * #addOpenHandler}, and {@link #addCloseHandler} instead
+   * @deprecated Use {@link #addSelectionHandler}, {@link #addOpenHandler}, and
+   *             {@link #addCloseHandler} instead
    */
   @Deprecated
   public void addTreeListener(TreeListener listener) {
@@ -438,20 +446,6 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       parent.setState(true);
       parent = parent.getParentItem();
     }
-  }
-
-  /**
-   * Gets this tree's default image package.
-   * 
-   * @return the tree's image package
-   * @deprecated Use {@link #Tree(TreeImages)} as it provides a more efficient
-   *             and manageable way to supply a set of images to be used within
-   *             a tree
-   */
-  @Deprecated
-  public String getImageBase() {
-    return (images instanceof ImagesFromImageBase)
-        ? ((ImagesFromImageBase) images).getBaseUrl() : GWT.getModuleBaseURL();
   }
 
   /**
@@ -604,8 +598,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
-   * the object returned by {@link #addFocusHandler} instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by {@link #addFocusHandler} instead
    */
   @Deprecated
   public void removeFocusListener(FocusListener listener) {
@@ -631,8 +625,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by an add*Handler method instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by an add*Handler method instead
    */
   @Deprecated
   public void removeKeyboardListener(KeyboardListener listener) {
@@ -640,8 +634,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by an add*Handler method instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by an add*Handler method instead
    */
   @Deprecated
   public void removeMouseListener(MouseListener listener) {
@@ -649,8 +643,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by an add*Handler method instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by an add*Handler method instead
    */
   @Deprecated
   public void removeTreeListener(TreeListener listener) {
@@ -791,7 +785,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return childWidgets;
   }
 
-  TreeImages getImages() {
+  ImageAdapter getImages() {
     return images;
   }
 
@@ -939,7 +933,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return topClosedParent;
   }
 
-  private void init(TreeImages images, boolean useLeafImages) {
+  private void init(ImageAdapter images, boolean useLeafImages) {
     setImages(images, useLeafImages);
     setElement(DOM.createDiv());
 
@@ -1200,7 +1194,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     }
   }
 
-  private void setImages(TreeImages images, boolean useLeafImages) {
+  private void setImages(ImageAdapter images, boolean useLeafImages) {
     this.images = images;
     this.useLeafImages = useLeafImages;
 

@@ -24,6 +24,7 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -86,7 +87,7 @@ public class CwGrid extends ContentWidget {
     int numColumns = grid.getColumnCount();
     for (int row = 0; row < numRows; row++) {
       for (int col = 0; col < numColumns; col++) {
-        grid.setWidget(row, col, Showcase.images.gwtLogo().createImage());
+        grid.setWidget(row, col, new Image(Showcase.images.gwtLogo()));
       }
     }
 

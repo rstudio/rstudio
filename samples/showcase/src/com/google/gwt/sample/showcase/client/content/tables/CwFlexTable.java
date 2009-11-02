@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
@@ -154,8 +155,8 @@ public class CwFlexTable extends ContentWidget {
   @ShowcaseSource
   private void addRow(FlexTable flexTable) {
     int numRows = flexTable.getRowCount();
-    flexTable.setWidget(numRows, 0, Showcase.images.gwtLogo().createImage());
-    flexTable.setWidget(numRows, 1, Showcase.images.gwtLogo().createImage());
+    flexTable.setWidget(numRows, 0, new Image(Showcase.images.gwtLogo()));
+    flexTable.setWidget(numRows, 1, new Image(Showcase.images.gwtLogo()));
     flexTable.getFlexCellFormatter().setRowSpan(0, 1, numRows + 1);
   }
 
