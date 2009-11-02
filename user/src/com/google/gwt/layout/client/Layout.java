@@ -317,7 +317,7 @@ public class Layout {
     }
   }
 
-  private static LayoutImpl impl = GWT.create(LayoutImpl.class);
+  private LayoutImpl impl = GWT.create(LayoutImpl.class);
 
   private List<Layer> layers = new ArrayList<Layer>();
   private final Element parentElem;
