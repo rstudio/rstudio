@@ -16,6 +16,7 @@
 package com.google.gwt.dev.shell.log;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.shell.Icons;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 
@@ -25,6 +26,8 @@ import java.awt.Color;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.Icon;
@@ -49,12 +52,26 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
     private static final Date firstLog = new Date();
     private static NumberFormat minHr = NumberFormat.getIntegerInstance();
     private static NumberFormat seconds = NumberFormat.getNumberInstance();
+    private static final Map<Type, Color> logColors = new HashMap<Type, Color>();
+    private static final Map<Type,Icon> logIcons = new HashMap<Type, Icon>();
 
     static {
       seconds.setMinimumFractionDigits(3);
       seconds.setMaximumFractionDigits(3);
       seconds.setMinimumIntegerDigits(2);
       minHr.setMinimumIntegerDigits(2);
+      logColors.put(Type.ERROR, Color.RED);
+      logIcons.put(Type.ERROR, Icons.getLogItemError());
+      logColors.put(Type.WARN, WARN_COLOR);
+      logIcons.put(Type.WARN, Icons.getLogItemWarning());
+      logColors.put(Type.INFO, Color.BLACK);
+      logIcons.put(Type.INFO, Icons.getLogItemInfo());
+      logColors.put(Type.TRACE, Color.DARK_GRAY);
+      logIcons.put(Type.TRACE, Icons.getLogItemTrace());
+      logColors.put(Type.DEBUG, DEBUG_COLOR);
+      logIcons.put(Type.DEBUG, Icons.getLogItemDebug());
+      logColors.put(Type.SPAM, SPAM_COLOR);
+      logIcons.put(Type.SPAM, Icons.getLogItemSpam());
     }
 
     public final SwingTreeLogger childLogger;
@@ -75,12 +92,18 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
 
     public final TreeLogger.Type type;
 
+    /**
+     * Maintains the highest priority of any child events.
+     */
+    private Type inheritedPriority;
+
     public LogEvent(SwingTreeLogger logger, boolean isBranchCommit, int index,
         Type type, String message, Throwable caught, HelpInfo helpInfo) {
       this.childLogger = logger;
       this.isBranchCommit = isBranchCommit;
       this.index = index;
       this.type = type;
+      this.inheritedPriority = type;
       this.message = message;
       this.helpInfo = helpInfo;
       this.timestamp = new Date();
@@ -133,35 +156,22 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
       return sb.toString();
     }
 
+    public Type getInheritedPriority() {
+      return inheritedPriority;
+    }
+
     /**
      * Set the properties of a label to match this log entry.
      * 
      * @param treeLabel label to set properties for.
      */
     public void setDisplayProperties(JLabel treeLabel) {
-      Icon image = null;
-      if (type == TreeLogger.ERROR) {
-        treeLabel.setForeground(Color.RED);
-        image = Icons.getLogItemError();
-      } else if (type == TreeLogger.WARN) {
-        treeLabel.setForeground(WARN_COLOR);
-        image = Icons.getLogItemWarning();
-      } else if (type == TreeLogger.INFO) {
-        treeLabel.setForeground(Color.BLACK);
-        image = Icons.getLogItemInfo();
-      } else if (type == TreeLogger.TRACE) {
-        treeLabel.setForeground(Color.DARK_GRAY);
-        image = Icons.getLogItemTrace();
-      } else if (type == TreeLogger.DEBUG) {
-        treeLabel.setForeground(DEBUG_COLOR);
-        image = Icons.getLogItemDebug();
-      } else if (type == TreeLogger.SPAM) {
-        treeLabel.setForeground(SPAM_COLOR);
-        image = Icons.getLogItemSpam();
-      } else {
-        // Messages without icons, ie ALL
-        treeLabel.setForeground(Color.BLACK);
+      Icon image = logIcons.get(type);
+      Color color = logColors.get(inheritedPriority);
+      if (color == null) {
+        color = Color.BLACK;
       }
+      treeLabel.setForeground(color);
       treeLabel.setIcon(image);
       StringBuffer sb = new StringBuffer();
 
@@ -198,6 +208,21 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
       s += ", msg '" + message + "'";
       s += "]";
       return s;
+    }
+
+    /**
+     * Update this log event's inherited priority, which is the highest priority
+     * of this event and any child events.
+     * 
+     * @param inheritedPriority
+     * @return true if the priority was upgraded
+     */
+    public boolean updateInheritedPriority(Type inheritedPriority) {
+      if (this.inheritedPriority.isLowerPriorityThan(inheritedPriority)) {
+        this.inheritedPriority = inheritedPriority;
+        return true;
+      }
+      return false;
     }
 
     private void formatTimestamp(long ts, StringBuffer sb) {
@@ -292,6 +317,15 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
           }
           if (event.type.needsAttention()) {
             panel.tree.makeVisible(new TreePath(node.getPath()));
+          }
+          // Propagate our priority to our ancestors
+          Type priority = event.getInheritedPriority();
+          while (parent != panel.treeModel.getRoot()) {
+            LogEvent parentEvent = (LogEvent) parent.getUserObject();
+            if (!parentEvent.updateInheritedPriority(priority)) {
+              break;
+            }
+            parent = (DefaultMutableTreeNode) parent.getParent();
           }
         } catch (InterruptedException e) {
           // TODO(jat): Auto-generated catch block
