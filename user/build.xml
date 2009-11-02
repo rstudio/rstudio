@@ -43,6 +43,12 @@
   <property name="gwt.junit.testcase.noserver.excludes" value="" />
 
   <!--
+    Run LayoutTest in CSS standards mode
+  -->
+  <property name="gwt.junit.testcase.standards.includes" value="**/LayoutTest.class" />
+  <property name="gwt.junit.testcase.standards.excludes" value="" />
+
+  <!--
     Whether I18NSuite should test e.g. Foo$InnerMsgs_fr.properties (if the
     value is "dollar") or Foo_Inner_fr.properties (for "bar")
    -->
@@ -400,6 +406,21 @@
     </gwt.junit>
   </target>
 
+  <target name="test.standards"
+      depends="compile, compile.tests"
+      description="Run standards mode tests for this project."
+      unless="test.standards.disable">
+    <fileset id="test.standards.tests" dir="${javac.junit.out}"
+        includes="${gwt.junit.testcase.standards.includes}"
+        excludes="${gwt.junit.testcase.standards.excludes}" />
+    <gwt.junit test.args="${test.args} -web -standardsMode"
+        test.out="${junit.out}/standards" test.cases="test.standards.tests">
+      <extraclasspaths>
+        <path refid="test.extraclasspath" />
+      </extraclasspaths>
+    </gwt.junit>
+  </target>
+
   <target name="test.web.htmlunit"
       depends="compile, compile.tests"
       description="Run web-mode tests with HtmlUnit."
@@ -483,6 +504,8 @@
       <!-- <antcall target="test.web.htmlunit"/> -->
       <!-- <antcall target="test.draft.htmlunit"/> -->
       <!-- <antcall target="test.nometa.htmlunit"/> -->
+      <!-- TODO(rice) : Enable standards mode tests when they are stable. -->
+      <!-- <antcall target="test.standards"/> -->
     </parallel>
     </limit>
   </target>

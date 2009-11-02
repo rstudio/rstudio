@@ -1,0 +1,73 @@
+<!--
+Copyright 2008 Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<html>
+<head>
+<meta name='gwt:onLoadErrorFn' content='junitOnLoadErrorFn'>
+<meta name='gwt:onPropertyErrorFn' content='junitOnPropertyErrorFn'>
+</head>
+<body>
+<script language='javascript'>
+<!--
+// -- BEGIN CHANGE FROM junit/public/junit.html
+// Set the runtime locale for this test
+// TODO(jat): find a better way to do this that doesn't require duplcating
+//     junit.html for each different runtime locale.
+window['__gwt_Locale'] = 'es_AR';
+// -- END CHANGE FROM junit/public/junit.html
+
+function junitOnLoadErrorFn(moduleName) {
+  junitError('Failed to load module "' + moduleName +
+    '".\nPlease see the log for details.');
+}
+
+function junitOnPropertyErrorFn(propName, allowedValues, badValue) {
+  var msg = 'While attempting to load the module, property "' + propName;
+  if (badValue != null) {
+    msg += '" was set to the unexpected value "' + badValue + '"';
+  } else {
+    msg += '" was not specified';
+  }
+  msg += 'Allowed values: ' + allowedValues;
+  junitError(msg);
+}
+
+function junitError(msg) {
+  var xmlHttpRequest = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+  xmlHttpRequest.open('POST', 'junithost/loadError', true);
+  xmlHttpRequest.setRequestHeader('Content-Type', 'text/x-gwt-rpc; charset=utf-8');
+  xmlHttpRequest.send(msg);
+}
+
+function loadSelectionScript() {
+  var moduleName = document.location.href;
+  var pos = moduleName.lastIndexOf('/');
+  moduleName = moduleName.substr(0, pos);
+  pos = moduleName.lastIndexOf('/');
+  moduleName = moduleName.substr(pos + 1);
+  document.write("<script language='javascript' src='" + moduleName + ".nocache.js'></script>");
+}
+loadSelectionScript();
+-->
+</script>
+<iframe src="javascript:''" id='__gwt_historyFrame' style='position:absolute;width:0;height:0;border:0'></iframe>
+<noscript>
+  <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
+    Your web browser must have JavaScript enabled
+    in order for this application to display correctly.
+  </div>
+</noscript>
+</body>
+</html>

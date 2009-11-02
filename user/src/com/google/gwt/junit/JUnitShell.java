@@ -285,6 +285,24 @@ public class JUnitShell extends GWTShell {
           return true;
         }
       });
+      
+      registerHandler(new ArgHandlerFlag() {
+        @Override
+        public String getPurpose() {
+          return "Use CSS standards mode (rather than quirks mode) for the hosting page";
+        }
+
+        @Override
+        public String getTag() {
+          return "-standardsMode";
+        }
+
+        @Override
+        public boolean setFlag() {
+          setStandardsMode(true);
+          return true;
+        }
+      });
 
       registerHandler(new ArgHandlerString() {
         @Override
@@ -605,6 +623,8 @@ public class JUnitShell extends GWTShell {
   private RunStyle runStyle = null;
 
   private boolean shouldAutoGenerateResources = true;
+  
+  private boolean standardsMode = false;
 
   /**
    * The time the test actually began.
@@ -638,7 +658,8 @@ public class JUnitShell extends GWTShell {
     try {
       String localhost = InetAddress.getLocalHost().getHostAddress();
       String url = "http://" + localhost + ":" + getPort() + "/"
-          + moduleName + "/junit.html";
+          + moduleName
+          + (standardsMode ? "/junit-standards.html" : "/junit.html");
       if (developmentMode) {
         // CHECKSTYLE_OFF
         url += "?gwt.hosted=" + localhost + ":" + codeServerPort;
@@ -811,6 +832,10 @@ public class JUnitShell extends GWTShell {
    */
   void setNumClients(int numClients) {
     this.numClients = numClients;
+  }
+  
+  void setStandardsMode(boolean standardsMode) {
+    this.standardsMode = standardsMode;
   }
 
   /**

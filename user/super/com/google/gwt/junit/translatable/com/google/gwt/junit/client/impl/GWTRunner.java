@@ -256,12 +256,16 @@ public abstract class GWTRunner implements EntryPoint {
     } else {
       /*
        * We're being asked to run a test in a different module. We must navigate
-       * the browser to a new URL which will run that other module.
+       * the browser to a new URL which will run that other module.  We retain
+       * the same path suffix (e.g., '/junit.html') as the current URL.
        */
+      String currentPath = Window.Location.getPath();
+      String pathSuffix = currentPath.substring(currentPath.lastIndexOf('/'));
+      
       UrlBuilder builder = Window.Location.createUrlBuilder();
       builder.setParameter(BLOCKINDEX_QUERY_PARAM,
           Integer.toString(currentBlock.getIndex())).setPath(
-          newModule + "/junit.html");
+          newModule + pathSuffix);
       Window.Location.replace(builder.buildString());
       currentBlock = null;
       currentTestIndex = 0;
