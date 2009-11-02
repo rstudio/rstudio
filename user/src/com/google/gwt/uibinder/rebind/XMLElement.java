@@ -40,6 +40,8 @@ import java.util.Set;
  * will run first, and if they consume a value, less-specific parsers will not
  * see it.
  */
+@SuppressWarnings("deprecation")
+// BundleAttributeParser not quite ready to die
 public class XMLElement {
   /**
    * Callback interface used by {@link #consumeInnerHtml(Interpreter)} and
@@ -83,11 +85,13 @@ public class XMLElement {
     }
   }
 
-  private final UiBinderWriter writer;
-
   private final Element elem;
+  final AttributeParsers attributeParsers;
+  final BundleAttributeParsers bundleParsers;
+  private final MortalLogger logger;
 
   private final String debugString;
+  private final XMLElementProvider provider;
 
   {
     // from com/google/gxp/compiler/schema/html.xml
@@ -107,57 +111,56 @@ public class XMLElement {
     NO_END_TAG.add("wbr");
   }
 
-  public XMLElement(Element elem, UiBinderWriter writer) {
+  XMLElement(Element elem, AttributeParsers attributeParsers,
+      BundleAttributeParsers bundleParsers, MortalLogger logger,
+      XMLElementProvider provider) {
     this.elem = elem;
-    this.writer = writer;
+    this.attributeParsers = attributeParsers;
+    this.bundleParsers = bundleParsers;
+    this.logger = logger;
+    this.provider = provider;
+
     this.debugString = getOpeningTag();
   }
 
   /**
-   * Consumes the given attribute and returns its trimmed value, or null if it
-   * was unset. The returned string is not escaped.
+   * Consumes the named attribute as a boolean expression: a literal, or a field
+   * reference. At the moment field references are validated for syntax
+   * only--there is no check that there is any such field or methods, nor
+   * that they have the correct return type.
    * 
-   * @param name the attribute's full name (including prefix)
-   * @return the attribute's value, or ""
-   */
-  public String consumeAttribute(String name) {
-    String value = elem.getAttribute(name);
-    elem.removeAttribute(name);
-    return value.trim();
-  }
-
-  /**
-   * Consumes the given attribute and returns its trimmed value, or the given
-   * default value if it was unset. The returned string is not escaped.
+   * @return "true", "false", an expression that will evaluate to a boolean
+   *         value in the generated code, or "" if there is no such attribute
    * 
-   * @param name the attribute's full name (including prefix)
-   * @param defaultValue the value to return if the attribute was unset
-   * @return the attribute's value, or defaultValue
+   * @throws UnableToCompleteException on unparseable value
    */
-  public String consumeAttribute(String name, String defaultValue) {
-    String value = consumeAttribute(name);
-    if ("".equals(value)) {
-      return defaultValue;
-    }
-    return value;
-  }
-
-  /**
-   * Consumes the given attribute as a boolean value.
-   * 
-   * @throws UnableToCompleteException
-   */
-  public boolean consumeBooleanAttribute(String attr)
+  public String consumeBooleanAttribute(String name)
       throws UnableToCompleteException {
-    String value = consumeAttribute(attr);
-    if (value.equals("true")) {
-      return true;
-    } else if (value.equals("false")) {
-      return false;
+    String value = consumeRawAttribute(name);
+    return attributeParsers.getBooleanParser().parse(value, logger);
+  }
+
+  /**
+   * Consumes the named attribute as a boolean expression. This will not accept
+   * {field.reference} expressions. It is intended for values that must be
+   * resolved at compile time, such as generated annotation values.
+   * 
+   * @return {@link Boolean#TRUE}, {@link Boolean#FALSE}, or null if no such
+   *         attribute
+   * 
+   * @throws UnableToCompleteException on unparseable value
+   */
+  public Boolean consumeBooleanConstantAttribute(String name)
+      throws UnableToCompleteException {
+    String value = consumeRawAttribute(name);
+    if ("".equals(value)) {
+      return null;
     }
-    writer.die(String.format("Error parsing \"%s\" attribute of \"%s\" "
-        + "as a boolean value", attr, this));
-    return false; // unreachable line for happy compiler
+    if (value.equals("true") || value.equals("false")) {
+      return Boolean.valueOf(value);
+    }
+    logger.die("In %s, %s must be \"true\" or \"false\"", this, name);
+    return null; // unreachable
   }
 
   /**
@@ -192,7 +195,7 @@ public class XMLElement {
     for (int i = 0; i < childNodes.getLength(); ++i) {
       Node childNode = childNodes.item(i);
       if (childNode.getNodeType() == Node.ELEMENT_NODE) {
-        XMLElement childElement = new XMLElement((Element) childNode, writer);
+        XMLElement childElement = provider.get((Element) childNode);
         if (interpreter.interpretElement(childElement)) {
           elements.add(childElement);
           doomed.add(childNode);
@@ -207,21 +210,20 @@ public class XMLElement {
   }
 
   /**
-   * Consumes the given attribute as a double value.
+   * Consumes the given attribute as a double expression: a literal, or a field
+   * reference. At the moment field references are validated for syntax
+   * only--there is no check that there is any such field or methods, nor
+   * that they have the correct return type.
    * 
-   * @param attr the attribute's full name (including prefix)
-   * @return the attribute's value as a double
-   * @throws UnableToCompleteException
+   * @return a double literal, an expression that will evaluate to a double
+   *         value in the generated code, or "" if there is no such attribute
+   * 
+   * @throws UnableToCompleteException on unparseable value
    */
-  public double consumeDoubleAttribute(String attr)
+  public String consumeDoubleAttribute(String name)
       throws UnableToCompleteException {
-    try {
-      return Double.parseDouble(consumeAttribute(attr));
-    } catch (NumberFormatException e) {
-      writer.die(String.format("Error parsing \"%s\" attribute of \"%s\" "
-          + "as a double value", attr, this));
-      return 0; // unreachable line for happy compiler
-    }
+    String value = consumeRawAttribute(name);
+    return attributeParsers.getDoubleParser().parse(value, logger);
   }
 
   /**
@@ -234,7 +236,7 @@ public class XMLElement {
    */
   public <T extends Enum<T>> T consumeEnumAttribute(String attr, Class<T> type)
       throws UnableToCompleteException {
-    String strValue = consumeAttribute(attr);
+    String strValue = consumeRawAttribute(attr);
 
     // Get the enum value. Enum.valueOf() throws IAE if the specified string is
     // not valid.
@@ -248,7 +250,7 @@ public class XMLElement {
     }
 
     if (value == null) {
-      writer.die(String.format("Error parsing \"%s\" attribute of \"%s\" "
+      logger.die(String.format("Error parsing \"%s\" attribute of \"%s\" "
           + "as a %s enum", attr, this, type.getSimpleName()));
     }
     return value;
@@ -276,7 +278,7 @@ public class XMLElement {
       throw new NullPointerException("interpreter must not be null");
     }
     StringBuffer buf = new StringBuffer();
-    GetInnerHtmlVisitor.getEscapedInnerHtml(elem, buf, interpreter, writer);
+    GetInnerHtmlVisitor.getEscapedInnerHtml(elem, buf, interpreter, provider);
 
     clearChildren(elem);
     return buf.toString().trim();
@@ -323,36 +325,19 @@ public class XMLElement {
     StringBuffer buf = new StringBuffer();
 
     GetEscapedInnerTextVisitor.getEscapedInnerText(elem, buf, interpreter,
-        writer);
+        provider);
 
     // Make sure there are no children left but empty husks
     for (XMLElement child : consumeChildElements()) {
       if (child.hasChildNodes() || child.getAttributeCount() > 0) {
         // TODO(rjrjr) This is not robust enough, and consumeInnerHtml needs
         // a similar check
-        writer.die("Text value of \"%s\" has illegal child \"%s\"", this, child);
+        logger.die("Text value of \"%s\" has illegal child \"%s\"", this, child);
       }
     }
 
     clearChildren(elem);
     return buf.toString().trim();
-  }
-
-  /**
-   * Consumes the given attribute as an int value.
-   * 
-   * @param attr the attribute's full name (including prefix)
-   * @return the attribute's value as an int
-   * @throws UnableToCompleteException
-   */
-  public int consumeIntAttribute(String attr) throws UnableToCompleteException {
-    try {
-      return Integer.parseInt(consumeAttribute(attr));
-    } catch (NumberFormatException e) {
-      writer.die(String.format("Error parsing \"%s\" attribute of \"%s\" "
-          + "as an int value", attr, this));
-      return 0; // unreachable line for happy compiler
-    }
   }
 
   /**
@@ -363,9 +348,38 @@ public class XMLElement {
     String rtn = getOpeningTag();
 
     for (int i = getAttributeCount() - 1; i >= 0; i--) {
-      getAttribute(i).consumeValue();
+      getAttribute(i).consumeRawValue();
     }
     return rtn;
+  }
+
+  /**
+   * Consumes the given attribute and returns its trimmed value, or null if it
+   * was unset. The returned string is not escaped.
+   * 
+   * @param name the attribute's full name (including prefix)
+   * @return the attribute's value, or ""
+   */
+  public String consumeRawAttribute(String name) {
+    String value = elem.getAttribute(name);
+    elem.removeAttribute(name);
+    return value.trim();
+  }
+
+  /**
+   * Consumes the given attribute and returns its trimmed value, or the given
+   * default value if it was unset. The returned string is not escaped.
+   * 
+   * @param name the attribute's full name (including prefix)
+   * @param defaultValue the value to return if the attribute was unset
+   * @return the attribute's value, or defaultValue
+   */
+  public String consumeRawAttribute(String name, String defaultValue) {
+    String value = consumeRawAttribute(name);
+    if ("".equals(value)) {
+      return defaultValue;
+    }
+    return value;
   }
 
   /**
@@ -373,9 +387,9 @@ public class XMLElement {
    */
   public String consumeRequiredAttribute(String name)
       throws UnableToCompleteException {
-    String value = consumeAttribute(name);
+    String value = consumeRawAttribute(name);
     if ("".equals(value)) {
-      writer.die("In %s, missing required attribute name \"%s\"", this, name);
+      logger.die("In %s, missing required attribute name \"%s\"", this, name);
     }
     return value;
   }
@@ -391,15 +405,15 @@ public class XMLElement {
     XMLElement ret = null;
     for (XMLElement child : consumeChildElements()) {
       if (ret != null) {
-        writer.die("%s may only contain a single child element, but found "
+        logger.die("%s may only contain a single child element, but found "
             + "%s and %s.", this, ret, child);
       }
 
       ret = child;
     }
-    
+
     if (ret == null) {
-      writer.die("%s must have a single child element", this);
+      logger.die("%s must have a single child element", this);
     }
 
     return ret;
@@ -420,8 +434,9 @@ public class XMLElement {
     if (children.getLength() < 1) {
       return "";
     }
-    if (children.getLength() > 1 || Node.TEXT_NODE != children.item(0).getNodeType()) {
-      writer.die("%s must contain only text", this);
+    if (children.getLength() > 1
+        || Node.TEXT_NODE != children.item(0).getNodeType()) {
+      logger.die("%s must contain only text", this);
     }
     Text t = (Text) children.item(0);
     return t.getTextContent();
@@ -478,7 +493,7 @@ public class XMLElement {
     if (parent == null || Node.ELEMENT_NODE != parent.getNodeType()) {
       return null;
     }
-    return new XMLElement((Element) parent, writer);
+    return provider.get((Element) parent);
   }
 
   public String getPrefix() {

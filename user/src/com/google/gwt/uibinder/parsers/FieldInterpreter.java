@@ -42,7 +42,7 @@ import com.google.gwt.uibinder.rebind.XMLElement;
       if (elem.hasAttribute("id")) {
         writer.die(String.format(
             "Cannot declare id=\"%s\" and %s=\"%s\" on the same element",
-            elem.consumeAttribute("id"), writer.getUiFieldAttributeName(),
+            elem.consumeRawAttribute("id"), writer.getUiFieldAttributeName(),
             fieldName));
       }
 

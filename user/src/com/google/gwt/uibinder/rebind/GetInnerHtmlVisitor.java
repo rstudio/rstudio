@@ -28,20 +28,20 @@ class GetInnerHtmlVisitor extends GetEscapedInnerTextVisitor {
    * each descendant, and uses the writer to report errors.
    */
   public static void getEscapedInnerHtml(Element elem, StringBuffer buffer,
-      Interpreter<String> interpreter, UiBinderWriter writer)
+      Interpreter<String> interpreter, XMLElementProvider writer)
       throws UnableToCompleteException {
     new ChildWalker().accept(elem, new GetInnerHtmlVisitor(buffer, interpreter,
         writer));
   }
 
   private GetInnerHtmlVisitor(StringBuffer buffer,
-      Interpreter<String> interpreter, UiBinderWriter writer) {
+      Interpreter<String> interpreter, XMLElementProvider writer) {
     super(buffer, interpreter, writer);
   }
 
   @Override
   public void visitElement(Element elem) throws UnableToCompleteException {
-    XMLElement xmlElement = new XMLElement(elem, writer);
+    XMLElement xmlElement = elementProvider.get(elem);
     String replacement = interpreter.interpretElement(xmlElement);
     if (replacement != null) {
       buffer.append(replacement);
@@ -50,7 +50,7 @@ class GetInnerHtmlVisitor extends GetEscapedInnerTextVisitor {
 
     // TODO(jgw): Ditch the closing tag when there are no children.
     buffer.append(xmlElement.consumeOpeningTag());
-    getEscapedInnerHtml(elem, buffer, interpreter, writer);
+    getEscapedInnerHtml(elem, buffer, interpreter, elementProvider);
     buffer.append(xmlElement.getClosingTag());
   }
 }

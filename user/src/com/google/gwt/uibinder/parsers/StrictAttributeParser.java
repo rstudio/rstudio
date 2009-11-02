@@ -18,7 +18,7 @@ package com.google.gwt.uibinder.parsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.uibinder.parsers.FieldReferenceConverter.Delegate;
 import com.google.gwt.uibinder.parsers.FieldReferenceConverter.IllegalFieldReferenceException;
-import com.google.gwt.uibinder.rebind.UiBinderWriter;
+import com.google.gwt.uibinder.rebind.MortalLogger;
 
 /**
  * Fall through attribute parser. Accepts a field reference or nothing.
@@ -60,13 +60,13 @@ public class StrictAttributeParser implements AttributeParser {
    * In any other case (e.g. more than one field reference), an
    * UnableToCompleteException is thrown.
    */
-  public String parse(String value, UiBinderWriter writer)
+  public String parse(String value, MortalLogger logger)
       throws UnableToCompleteException {
 
     try {
       return new FieldReferenceConverter(new FieldReferenceDelegate()).convert(value);
     } catch (IllegalFieldReferenceException e) {
-      writer.die("Bad field reference: \"%s\"", value);
+      logger.die("Bad field reference: \"%s\"", value);
       return null; // Unreachable
     }
   }

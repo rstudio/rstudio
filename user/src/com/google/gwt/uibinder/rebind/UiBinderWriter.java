@@ -17,11 +17,9 @@ package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
-import com.google.gwt.core.ext.typeinfo.JParameter;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.dom.client.TagName;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.parsers.AttributeMessageParser;
@@ -29,7 +27,6 @@ import com.google.gwt.uibinder.parsers.AttributeParser;
 import com.google.gwt.uibinder.parsers.BeanParser;
 import com.google.gwt.uibinder.parsers.BundleAttributeParser;
 import com.google.gwt.uibinder.parsers.ElementParser;
-import com.google.gwt.uibinder.parsers.StrictAttributeParser;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
@@ -65,12 +62,11 @@ import javax.xml.parsers.ParserConfigurationException;
  * TODO(rdamazio): Refactor this, extract model classes, improve ordering
  * guarantees, etc.
  * 
- * TODO(rjrjr): Improve error messages
+ * TODO(rjrjr): Line numbers in error messages.
  */
 @SuppressWarnings("deprecation")
 public class UiBinderWriter {
   static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";
-  private static final String BUNDLE_URI_SCHEME = "urn:with:";
   private static final String PACKAGE_URI_SCHEME = "urn:import:";
 
   // TODO(rjrjr) Another place that we need a general anonymous field
@@ -138,24 +134,6 @@ public class UiBinderWriter {
     return propName.substring(0, 1).toUpperCase() + propName.substring(1);
   }
 
-  private static AttributeParser getAttributeParserByClassName(
-      String parserClassName) {
-    try {
-      Class<? extends AttributeParser> parserClass = Class.forName(
-          parserClassName).asSubclass(AttributeParser.class);
-      return parserClass.newInstance();
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException("Unable to instantiate parser", e);
-    } catch (ClassCastException e) {
-      throw new RuntimeException(parserClassName
-          + " must extend AttributeParser");
-    } catch (InstantiationException e) {
-      throw new RuntimeException("Unable to instantiate parser", e);
-    } catch (IllegalAccessException e) {
-      throw new RuntimeException("Unable to instantiate parser", e);
-    }
-  }
-
   /**
    * Returns a list of the given type and all its superclasses and implemented
    * interfaces in a breadth-first traversal.
@@ -174,7 +152,8 @@ public class UiBinderWriter {
       JClassType curType = q.removeFirst();
       list.add(curType);
 
-      // Add implemented interfaces to the back of the queue (breadth first, remember?)
+      // Add implemented interfaces to the back of the queue (breadth first,
+      // remember?)
       for (JClassType intf : curType.getImplementedInterfaces()) {
         q.add(intf);
       }
@@ -191,23 +170,10 @@ public class UiBinderWriter {
   private final MortalLogger logger;
 
   /**
-   * Class names of parsers for values of attributes with no namespace prefix,
-   * keyed by method parameter signatures.
-   * 
-   * TODO(rjrjr) Seems like the attribute parsers belong in BeanParser, which is
-   * the only thing that uses them.
-   */
-  private final Map<String, String> attributeParsers = new HashMap<String, String>();
-  /**
    * Class names of parsers for various ui types, keyed by the classname of the
    * UI class they can build.
    */
   private final Map<String, String> elementParsers = new HashMap<String, String>();
-
-  /**
-   * Map of bundle parsers, keyed by bundle class name.
-   */
-  private final Map<String, BundleAttributeParser> bundleParsers = new HashMap<String, BundleAttributeParser>();
 
   private final List<String> initStatements = new ArrayList<String>();
   private final List<String> statements = new ArrayList<String>();
@@ -259,6 +225,8 @@ public class UiBinderWriter {
    * section.
    */
   private final LinkedList<List<String>> detachStatementsStack = new LinkedList<List<String>>();
+  private final AttributeParsers attributeParsers;
+  private final BundleAttributeParsers bundleParsers;
 
   UiBinderWriter(JClassType baseClass, String implClassName,
       String templatePath, TypeOracle oracle, MortalLogger logger)
@@ -302,25 +270,10 @@ public class UiBinderWriter {
         this.implClassName, CLIENT_BUNDLE_FIELD, logger);
     handlerEvaluator = new HandlerEvaluator(ownerClass, logger, oracle);
     fieldManager = new FieldManager(logger);
-  }
 
-  /** 
-   * Hack for testing. Die method works, nothing else does 
-   */
-  UiBinderWriter() {
-    this.baseClass = null;
-    this.implClassName = null;
-    this.oracle = null;
-    this.logger = new MortalLogger(new PrintWriterTreeLogger());
-    this.templatePath = null;
-    this.messages = null;
-    uiRootType = null;
-    uiOwnerType = null;
-
-    ownerClass = null;
-    bundleClass = null;
-    handlerEvaluator = null;
-    fieldManager = null;
+    attributeParsers = new AttributeParsers();
+    bundleParsers = new BundleAttributeParsers(oracle, gwtPrefix, logger,
+        getOwnerClass(), templatePath, uiOwnerType);
   }
 
   /**
@@ -563,22 +516,11 @@ public class UiBinderWriter {
   }
 
   /**
-   * Find and return an appropriate attribute parser for a set of parameters, or
+   * Find and return an appropriate attribute parser for a set of types, or
    * return null.
    */
-  public AttributeParser getAttributeParser(JParameter... params) {
-    String paramTypeNames = getParametersKey(params);
-    String parserClassName = attributeParsers.get(paramTypeNames);
-
-    if (parserClassName != null) {
-      return getAttributeParserByClassName(parserClassName);
-    }
-
-    if (params.length == 1) {
-      return new StrictAttributeParser();
-    }
-
-    return null;
+  public AttributeParser getAttributeParser(JType... types) {
+    return attributeParsers.get(types);
   }
 
   /**
@@ -589,10 +531,10 @@ public class UiBinderWriter {
    * returned.
    */
   public AttributeParser getAttributeParser(XMLAttribute attribute,
-      JParameter... params) throws UnableToCompleteException {
+      JType... types) throws UnableToCompleteException {
     AttributeParser parser = getBundleAttributeParser(attribute);
     if (parser == null) {
-      parser = getAttributeParser(params);
+      parser = getAttributeParser(types);
     }
     return parser;
   }
@@ -608,27 +550,7 @@ public class UiBinderWriter {
   @Deprecated
   public BundleAttributeParser getBundleAttributeParser(XMLAttribute attribute)
       throws UnableToCompleteException {
-    if (attribute.getNamespaceUri() == null) {
-      return null;
-    }
-
-    String attributePrefixUri = attribute.getNamespaceUri();
-    if (!attributePrefixUri.startsWith(BUNDLE_URI_SCHEME)) {
-      return null;
-    }
-
-    String bundleClassName = attributePrefixUri.substring(BUNDLE_URI_SCHEME.length());
-    BundleAttributeParser parser = bundleParsers.get(bundleClassName);
-    if (parser == null) {
-      JClassType bundleClassType = getOracle().findType(bundleClassName);
-      if (bundleClassType == null) {
-        die("No such resource class: " + bundleClassName);
-      }
-      parser = createBundleParser(bundleClassType, attribute);
-      bundleParsers.put(bundleClassName, parser);
-    }
-
-    return parser;
+    return bundleParsers.get(attribute);
   }
 
   public ImplicitClientBundle getBundleClass() {
@@ -664,7 +586,7 @@ public class UiBinderWriter {
   public String getUiFieldAttributeName() {
     return gwtPrefix + ":field";
   }
-  
+
   public boolean isBinderElement(XMLElement elem) {
     String uri = elem.getNamespaceUri();
     return uri != null && BINDER_URI.equals(uri);
@@ -781,13 +703,10 @@ public class UiBinderWriter {
     Element documentElement = doc.getDocumentElement();
     gwtPrefix = documentElement.lookupPrefix(BINDER_URI);
 
-    XMLElement elem = new XMLElement(documentElement, this);
+    XMLElement elem = new XMLElementProviderImpl(attributeParsers,
+        bundleParsers, logger).get(documentElement);
     this.rendered = tokenator.detokenate(parseDocumentElement(elem));
     printWriter.print(rendered);
-  }
-
-  private void addAttributeParser(String signature, String className) {
-    attributeParsers.put(signature, className);
   }
 
   private void addElementParser(String gwtClass, String parser) {
@@ -798,51 +717,6 @@ public class UiBinderWriter {
     String gwtClass = "com.google.gwt.user.client.ui." + className;
     String parser = "com.google.gwt.uibinder.parsers." + className + "Parser";
     addElementParser(gwtClass, parser);
-  }
-
-  /**
-   * Creates a parser for the given bundle class. This method will die soon.
-   */
-  private BundleAttributeParser createBundleParser(JClassType bundleClass,
-      XMLAttribute attribute) throws UnableToCompleteException {
-
-    final String[] templateResourceNames = attribute.getName().split(":");
-    if (templateResourceNames.length == 0) {
-      throw new RuntimeException("No template resource");
-    }
-    final String templateResourceName = templateResourceNames[0];
-    warn("The %1$s mechanism is deprecated. Instead, declare the following "
-        + "%2$s:with element as a child of your %2$s:UiBinder element: "
-        + "<%2$s:with field='%3$s' type='%4$s.%5$s' />", BUNDLE_URI_SCHEME,
-        gwtPrefix, templateResourceName, bundleClass.getPackage().getName(),
-        bundleClass.getName());
-
-    // Try to find any bundle instance created with UiField.
-    OwnerField field = getOwnerClass().getUiFieldForType(bundleClass);
-    if (field != null) {
-      if (!templateResourceName.equals(field.getName())) {
-        die("Template %s has no \"xmlns:%s='urn:with:%s'\" for %s.%s#%s",
-            templatePath, field.getName(),
-            bundleClass.getQualifiedSourceName(),
-            uiOwnerType.getPackage().getName(), uiOwnerType.getName(),
-            field.getName());
-      }
-
-      if (field.isProvided()) {
-        return new BundleAttributeParser(bundleClass, "owner."
-            + field.getName(), false);
-      }
-    }
-
-    // Try to find any bundle instance created with @UiFactory.
-    JMethod method = getOwnerClass().getUiFactoryMethod(bundleClass);
-    if (method != null) {
-      return new BundleAttributeParser(bundleClass, "owner." + method.getName()
-          + "()", false);
-    }
-
-    return new BundleAttributeParser(bundleClass, "my"
-        + bundleClass.getName().replace('.', '_') + "Instance", true);
   }
 
   /**
@@ -922,7 +796,7 @@ public class UiBinderWriter {
     if (elem.hasAttribute("id") && isWidgetElement(elem)) {
       hasOldSchoolId = true;
       // If an id is specified on the element, use that.
-      fieldName = elem.consumeAttribute("id");
+      fieldName = elem.consumeRawAttribute("id");
       warn("Deprecated use of id=\"%1$s\" for field name. "
           + "Please switch to gwt:field=\"%1$s\" instead. "
           + "This will soon be a compile error!", fieldName);
@@ -931,23 +805,9 @@ public class UiBinderWriter {
       if (hasOldSchoolId) {
         die("Cannot declare both id and field on the same element: " + elem);
       }
-      fieldName = elem.consumeAttribute(getUiFieldAttributeName());
+      fieldName = elem.consumeRawAttribute(getUiFieldAttributeName());
     }
     return fieldName;
-  }
-
-  /**
-   * Given a parameter array, return a key for the attributeParsers table.
-   */
-  private String getParametersKey(JParameter[] params) {
-    String paramTypeNames = "";
-    for (int i = 0; i < params.length; ++i) {
-      paramTypeNames += params[i].getType().getParameterizedQualifiedSourceName();
-      if (i != params.length - 1) {
-        paramTypeNames += ",";
-      }
-    }
-    return paramTypeNames;
   }
 
   private Class<? extends ElementParser> getParserForClass(JClassType uiClass) {
@@ -1141,21 +1001,6 @@ public class UiBinderWriter {
     addWidgetParser("DockLayoutPanel");
     addWidgetParser("StackLayoutPanel");
     addWidgetParser("TabLayoutPanel");
-
-    addAttributeParser("boolean",
-        "com.google.gwt.uibinder.parsers.BooleanAttributeParser");
-
-    addAttributeParser("java.lang.String",
-        "com.google.gwt.uibinder.parsers.StringAttributeParser");
-
-    addAttributeParser("int", "com.google.gwt.uibinder.parsers.IntParser");
-
-    addAttributeParser("int,int",
-        "com.google.gwt.uibinder.parsers.IntPairParser");
-
-    addAttributeParser("com.google.gwt.user.client.ui.HasHorizontalAlignment."
-        + "HorizontalAlignmentConstant",
-        "com.google.gwt.uibinder.parsers.HorizontalAlignmentConstantParser");
   }
 
   /**
@@ -1215,9 +1060,8 @@ public class UiBinderWriter {
   }
 
   private void writeClassOpen(IndentedWriter w) {
-    w.write("public class %s implements UiBinder<%s, %s>, %s {",
-        implClassName, uiRootType.getName(), uiOwnerType.getName(),
-        baseClass.getName());
+    w.write("public class %s implements UiBinder<%s, %s>, %s {", implClassName,
+        uiRootType.getName(), uiOwnerType.getName(), baseClass.getName());
     w.indent();
   }
 
@@ -1291,7 +1135,7 @@ public class UiBinderWriter {
       String fieldName = ownerField.getName();
       FieldWriter fieldWriter = fieldManager.lookup(fieldName);
 
-      BundleAttributeParser bundleParser = bundleParsers.get(ownerField.getType().getRawType().getQualifiedSourceName());
+      BundleAttributeParser bundleParser = bundleParsers.get(ownerField.getType());
 
       if (bundleParser != null) {
         // ownerField is a bundle resource.
@@ -1337,8 +1181,10 @@ public class UiBinderWriter {
   private void writeStaticBundleInstances(IndentedWriter niceWriter) {
     // TODO(rjrjr) It seems bad that this method has special
     // knowledge of BundleAttributeParser, but that'll die soon so...
-    for (String key : bundleParsers.keySet()) {
-      String declaration = declareStaticField(bundleParsers.get(key));
+
+    Map<String, BundleAttributeParser> bpMap = bundleParsers.getMap();
+    for (String key : bpMap.keySet()) {
+      String declaration = declareStaticField(bpMap.get(key));
       if (declaration != null) {
         niceWriter.write(declaration);
       }

@@ -19,12 +19,12 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
-import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.uibinder.rebind.DummyMortalLogger;
 import com.google.gwt.uibinder.rebind.JClassTypeAdapter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.user.client.ui.Button;
@@ -49,7 +49,7 @@ public class OwnerClassTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    logger = new MortalLogger(new PrintWriterTreeLogger());
+    logger = new DummyMortalLogger();
     gwtTypeAdapter = new JClassTypeAdapter();
   }
 
@@ -76,6 +76,7 @@ public class OwnerClassTest extends TestCase {
   /**
    * Uibinder class for testing of {@link UiFactory}.
    */
+  @SuppressWarnings("unused") // We know these methods are unused
   private static class UiFactoryClass {
     @UiFactory
     Label createLabel() {
@@ -102,6 +103,7 @@ public class OwnerClassTest extends TestCase {
   /**
    * Uibinder class for testing bad usage of {@link UiFactory}.
    */
+  @SuppressWarnings("unused") // We know these methods are unused
   private static class BadUiFactoryClass {
     @UiFactory
     int thisShouldntWork() {
@@ -124,6 +126,7 @@ public class OwnerClassTest extends TestCase {
   /**
    * Uibinder class for testing bad usage of {@link UiFactory}.
    */
+  @SuppressWarnings("unused") // We know these methods are unused
   private static class DuplicateUiFactoryClass {
     @UiFactory
     Label labelFactory1() {
@@ -151,6 +154,7 @@ public class OwnerClassTest extends TestCase {
   /**
    * Uibinder class for testing of {@link UiField}.
    */
+  @SuppressWarnings("unused") // We know these methods are unused
   private static class UiFieldsClass {
     @UiField
     Label label1;
@@ -197,6 +201,7 @@ public class OwnerClassTest extends TestCase {
   /**
    * Uibinder class for testing bad usage of {@link UiField}.
    */
+  @SuppressWarnings("unused") // We know these methods are unused
   private static class BadUiFieldsClass {
     @UiField
     int thisShouldntWork;
@@ -217,6 +222,7 @@ public class OwnerClassTest extends TestCase {
   /**
    * Uibinder class for testing of {@link UiHandler}.
    */
+  @SuppressWarnings("unused") // We know these methods are unused
   private static class UiHandlersClass {
     @UiHandler("myField")
     void onMyFieldClicked(ClickEvent ev) {
@@ -280,6 +286,7 @@ public class OwnerClassTest extends TestCase {
   /**
    * Parent class for testing inheritance of owner classes.
    */
+  @SuppressWarnings("unused") // We know these methods are unused
   private static class ParentUiBinderClass {
     @UiField
     Label label1;
@@ -298,6 +305,7 @@ public class OwnerClassTest extends TestCase {
   /**
    * Child class for testing inheritance of owner classes.
    */
+  @SuppressWarnings("unused") // We know these methods are unused
   private static class ChildUiBinderClass extends ParentUiBinderClass {
     @UiField(provided = true)
     Button button1;

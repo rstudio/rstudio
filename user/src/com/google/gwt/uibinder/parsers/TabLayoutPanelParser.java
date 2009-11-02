@@ -40,14 +40,14 @@ public class TabLayoutPanelParser implements ElementParser {
   public void parse(XMLElement panelElem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
     // TabLayoutPanel requires tabBar size and unit ctor args.
-    double size = panelElem.consumeDoubleAttribute("barHeight");
+    String size = panelElem.consumeDoubleAttribute("barHeight");
     Unit unit = panelElem.consumeEnumAttribute("barUnit", Unit.class);
 
     String enumName = DockLayoutPanelParser.getFullyQualifiedEnumName(unit);
     JClassType tlpType = writer.getOracle().findType(
         TabLayoutPanel.class.getName());
     writer.setFieldInitializerAsConstructor(fieldName, tlpType,
-        Double.toString(size), enumName);
+        size, enumName);
 
     // Parse children.
     for (XMLElement tabElem : panelElem.consumeChildElements()) {

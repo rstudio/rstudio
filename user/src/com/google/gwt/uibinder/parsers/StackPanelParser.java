@@ -39,7 +39,7 @@ public class StackPanelParser implements ElementParser {
       String stackItemLabel = null;
       String variableAttributeName = elem.getPrefix() + ":" + ATTRIBUTE_TEXT;
       if (child.hasAttribute(variableAttributeName)) {
-        stackItemLabel = child.consumeAttribute(variableAttributeName);
+        stackItemLabel = child.consumeRawAttribute(variableAttributeName);
       }
 
       String childFieldName = writer.parseElementToField(child);

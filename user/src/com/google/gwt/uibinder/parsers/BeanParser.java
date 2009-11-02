@@ -20,7 +20,7 @@ import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
-import com.google.gwt.core.ext.typeinfo.NotFoundException;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLAttribute;
 import com.google.gwt.uibinder.rebind.XMLElement;
@@ -47,12 +47,11 @@ public class BeanParser implements ElementParser {
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
     final Map<String, String> setterValues = new HashMap<String, String>();
-    final Map<String, String> localizedValues =
-        fetchLocalizedAttributeValues(elem, writer);
+    final Map<String, String> localizedValues = fetchLocalizedAttributeValues(
+        elem, writer);
 
     final Map<String, String> requiredValues = new HashMap<String, String>();
-    final Map<String, JParameter> unfilledRequiredParams =
-        new HashMap<String, JParameter>();
+    final Map<String, JType> unfilledRequiredParams = new HashMap<String, JType>();
 
     final OwnerFieldClass ownerFieldClass = OwnerFieldClass.getFieldClass(type,
         writer.getLogger());
@@ -66,7 +65,7 @@ public class BeanParser implements ElementParser {
 
     if (creator != null) {
       for (JParameter param : creator.getParameters()) {
-        unfilledRequiredParams.put(param.getName(), param);
+        unfilledRequiredParams.put(param.getName(), param.getType());
       }
     }
 
@@ -78,22 +77,22 @@ public class BeanParser implements ElementParser {
       String key = property.getKey();
       String value = property.getValue();
 
-      JParameter param = unfilledRequiredParams.get(key);
-      if (param != null) {
-        if (!isString(writer, param)) {
+      JType paramType = unfilledRequiredParams.get(key);
+      if (paramType != null) {
+        if (!isString(writer, paramType)) {
           writer.die("In %s, cannot appply message attribute to non-string "
               + "constructor argument %s %s.", elem,
-              param.getType().getSimpleSourceName(), key);
+              paramType.getSimpleSourceName(), key);
         }
 
         requiredValues.put(key, value);
         unfilledRequiredParams.remove(key);
-     } else {
+      } else {
         JMethod setter = ownerFieldClass.getSetter(key);
         JParameter[] params = setter == null ? null : setter.getParameters();
 
         if (setter == null || !(params.length == 1)
-            || !isString(writer, params[0])) {
+            || !isString(writer, params[0].getType())) {
           writer.die("In %s, no method found to apply message attribute %s",
               elem, key);
         } else {
@@ -122,16 +121,14 @@ public class BeanParser implements ElementParser {
       }
 
       if (unfilledRequiredParams.keySet().contains(propertyName)) {
-        JParameter parameter = unfilledRequiredParams.get(propertyName);
-        AttributeParser parser =
-            writer.getAttributeParser(attribute, parameter);
+        JType paramType = unfilledRequiredParams.get(propertyName);
+        AttributeParser parser = writer.getAttributeParser(attribute, paramType);
         if (parser == null) {
           writer.die("In %s, unable to parse %s as constructor argument "
-              + "of type %s", elem, attribute,
-              parameter.getType().getSimpleSourceName());
+              + "of type %s", elem, attribute, paramType.getSimpleSourceName());
         }
-        requiredValues.put(propertyName, parser.parse(attribute.consumeValue(),
-            writer));
+        requiredValues.put(propertyName, parser.parse(
+            attribute.consumeRawValue(), writer.getLogger()));
         unfilledRequiredParams.remove(propertyName);
       } else {
         JMethod setter = ownerFieldClass.getSetter(propertyName);
@@ -140,22 +137,20 @@ public class BeanParser implements ElementParser {
               elem.getLocalName(), initialCap(propertyName));
         }
 
-        JParameter[] params = setter.getParameters();
-
-        AttributeParser parser = writer.getAttributeParser(attribute, params);
+        AttributeParser parser = writer.getAttributeParser(attribute,
+            getParamTypes(setter));
 
         if (parser == null) {
           writer.die("In %s, unable to parse %s.", elem, attribute);
         }
-        setterValues.put(propertyName, parser.parse(attribute.consumeValue(),
-            writer));
+        setterValues.put(propertyName, parser.parse(
+            attribute.consumeRawValue(), writer.getLogger()));
       }
     }
 
     if (!unfilledRequiredParams.isEmpty()) {
-      StringBuilder b =
-          new StringBuilder(String.format("%s missing required arguments:",
-              elem));
+      StringBuilder b = new StringBuilder(String.format(
+          "%s missing required arguments:", elem));
       for (String name : unfilledRequiredParams.keySet()) {
         b.append(" ").append(name);
       }
@@ -174,8 +169,8 @@ public class BeanParser implements ElementParser {
     }
 
     for (String propertyName : setterValues.keySet()) {
-      writer.addStatement("%s.set%s(%s);", fieldName,
-          initialCap(propertyName), setterValues.get(propertyName));
+      writer.addStatement("%s.set%s(%s);", fieldName, initialCap(propertyName),
+          setterValues.get(propertyName));
     }
   }
 
@@ -199,19 +194,23 @@ public class BeanParser implements ElementParser {
     return localizedValues;
   }
 
+  private JType[] getParamTypes(JMethod setter) {
+    JParameter[] params = setter.getParameters();
+    JType[] types = new JType[params.length];
+    for (int i = 0; i < params.length; i++) {
+      types[i] = params[i].getType();
+    }
+    return types;
+  }
+
   private String initialCap(String propertyName) {
     return propertyName.substring(0, 1).toUpperCase() +
     propertyName.substring(1);
   }
 
-  private boolean isString(UiBinderWriter writer, JParameter param) {
-    JClassType stringType;
-    try {
-      stringType = writer.getOracle().getType(String.class.getName());
-    } catch (NotFoundException e) {
-      return false; // Inconceivable!
-    }
-    return stringType.equals(param.getType());
+  private boolean isString(UiBinderWriter writer, JType paramType) {
+    JType stringType = writer.getOracle().findType(String.class.getName());
+    return stringType.equals(paramType);
   }
 
   private String[] makeArgsList(final Map<String, String> valueMap,

@@ -16,7 +16,7 @@
 package com.google.gwt.uibinder.parsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.uibinder.rebind.UiBinderWriter;
+import com.google.gwt.uibinder.rebind.MortalLogger;
 
 import java.util.HashMap;
 
@@ -38,11 +38,11 @@ public class HorizontalAlignmentConstantParser implements AttributeParser {
       "com.google.gwt.user.client.ui.HasHorizontalAlignment.ALIGN_CENTER");
   }
 
-  public String parse(String value, UiBinderWriter writer)
+  public String parse(String value, MortalLogger logger)
       throws UnableToCompleteException {
     String translated = values.get(value);
     if (translated == null) {
-      writer.die("Invalid value: horizontalAlignment='" + value + "'");
+      logger.die("Invalid value: horizontalAlignment='" + value + "'");
     }
     return translated;
   }

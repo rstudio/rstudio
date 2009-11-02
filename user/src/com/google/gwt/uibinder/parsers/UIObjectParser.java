@@ -64,7 +64,7 @@ public class UIObjectParser implements ElementParser {
       throws UnableToCompleteException {
     String attributeValue = null;
     if (elem.hasAttribute(attribute)) {
-      attributeValue = elem.consumeAttribute(attribute);
+      attributeValue = elem.consumeRawAttribute(attribute);
 
       if ("".equals(attributeValue)) {
         writer.die("In %s, value for attribute %s cannot be empty", elem, attribute);

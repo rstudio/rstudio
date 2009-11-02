@@ -31,11 +31,9 @@ public class MenuBarParser implements ElementParser {
       UiBinderWriter writer) throws UnableToCompleteException {
     // Generate instantiation (Vertical MenuBars require a ctor param).
     if (elem.hasAttribute("vertical")) {
-      boolean vertical = elem.consumeBooleanAttribute("vertical");
-      if (vertical) {
-        writer.setFieldInitializerAsConstructor(fieldName,
-            writer.getOracle().findType(MenuBar.class.getName()), "true");
-      }
+      String vertical = elem.consumeBooleanAttribute("vertical");
+      writer.setFieldInitializerAsConstructor(fieldName,
+          writer.getOracle().findType(MenuBar.class.getName()), vertical);
     }
 
     // Parse children.

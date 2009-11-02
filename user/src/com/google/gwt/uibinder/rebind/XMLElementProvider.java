@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,22 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.uibinder.parsers;
+package com.google.gwt.uibinder.rebind;
 
-import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.uibinder.rebind.MortalLogger;
+import org.w3c.dom.Element;
 
-/**
- * Parses a single boolean attribute.
- */
-public class BooleanAttributeParser extends StrictAttributeParser {
-
-  public String parse(String value, MortalLogger logger)
-      throws UnableToCompleteException {
-    if (value.equals("true") || value.equals("false")) {
-      return value;
-    } 
-    
-    return super.parse(value, logger);
-  }
+interface XMLElementProvider {
+  XMLElement get(Element e);
 }

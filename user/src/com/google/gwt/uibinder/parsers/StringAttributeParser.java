@@ -15,6 +15,7 @@
  */
 package com.google.gwt.uibinder.parsers;
 
+import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 
 /**
@@ -36,7 +37,7 @@ public class StringAttributeParser implements AttributeParser {
   final FieldReferenceConverter braceReplacor = new FieldReferenceConverter(
       new FieldReferenceDelegate());
 
-  public String parse(String value, UiBinderWriter writer) {
+  public String parse(String value, MortalLogger ignored) {
     return braceReplacor.convert(value);
   }
 }

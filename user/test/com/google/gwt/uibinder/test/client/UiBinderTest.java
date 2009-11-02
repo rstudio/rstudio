@@ -80,6 +80,11 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("HTML", elm.getInnerHTML());
   }
 
+  public void testBraceEscaping() {
+    assertEquals("blah di blah {foo: \"bar\"} di blah", 
+        widgetUi.bracedParagraph.getAttribute("fnord"));
+  }
+  
   public void testBundle() {
     assertEquals(getCenter(), widgetUi.bundledLabel.getParent());
     assertEquals(new FakeBundle().helloText(), widgetUi.bundledLabel.getText());

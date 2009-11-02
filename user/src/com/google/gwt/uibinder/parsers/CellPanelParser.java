@@ -49,30 +49,30 @@ public class CellPanelParser implements ElementParser {
 
     // Parse horizontal and vertical alignment attributes.
     if (cellElem.hasAttribute(HALIGN_ATTR)) {
-      String value = halignParser.parse(cellElem.consumeAttribute(HALIGN_ATTR),
-          writer);
+      String value = halignParser.parse(cellElem.consumeRawAttribute(HALIGN_ATTR),
+          writer.getLogger());
       writer.addStatement("%1$s.setCellHorizontalAlignment(%2$s, %3$s);",
           fieldName, childFieldName, value);
     }
 
     if (cellElem.hasAttribute(VALIGN_ATTR)) {
-      String value = valignParser.parse(cellElem.consumeAttribute(VALIGN_ATTR),
-          writer);
+      String value = valignParser.parse(cellElem.consumeRawAttribute(VALIGN_ATTR),
+          writer.getLogger());
       writer.addStatement("%1$s.setCellVerticalAlignment(%2$s, %3$s);",
           fieldName, childFieldName, value);
     }
 
     // Parse width and height attributes.
     if (cellElem.hasAttribute(WIDTH_ATTR)) {
-      String value = stringParser.parse(cellElem.consumeAttribute(WIDTH_ATTR),
-          writer);
+      String value = stringParser.parse(cellElem.consumeRawAttribute(WIDTH_ATTR),
+          writer.getLogger());
       writer.addStatement("%1$s.setCellWidth(%2$s, %3$s);", fieldName,
           childFieldName, value);
     }
 
     if (cellElem.hasAttribute(HEIGHT_ATTR)) {
-      String value = stringParser.parse(cellElem.consumeAttribute(HEIGHT_ATTR),
-          writer);
+      String value = stringParser.parse(cellElem.consumeRawAttribute(HEIGHT_ATTR),
+          writer.getLogger());
       writer.addStatement("%1$s.setCellHeight(%2$s, %3$s);", fieldName,
           childFieldName, value);
     }

@@ -126,7 +126,7 @@ public class UiBinderParser {
 
   private JClassType consumeCssResourceType(XMLElement elem)
       throws UnableToCompleteException {
-    String typeName = elem.consumeAttribute("type", null);
+    String typeName = elem.consumeRawAttribute("type", null);
     if (typeName == null) {
       return cssResourceType;
     }
@@ -166,16 +166,13 @@ public class UiBinderParser {
   private void createImage(XMLElement elem) throws UnableToCompleteException {
     String name = elem.consumeRequiredAttribute(FIELD_ATTRIBUTE);
     // @source is optional on ImageResource
-    String source = elem.consumeAttribute(SOURCE_ATTRIBUTE, null);
+    String source = elem.consumeRawAttribute(SOURCE_ATTRIBUTE, null);
 
-    Boolean flipRtl = null;
-    if (elem.hasAttribute(FLIP_RTL_ATTRIBUTE)) {
-      flipRtl = elem.consumeBooleanAttribute(FLIP_RTL_ATTRIBUTE);
-    }
+    Boolean flipRtl = elem.consumeBooleanConstantAttribute(FLIP_RTL_ATTRIBUTE);
 
     RepeatStyle repeatStyle = null;
     if (elem.hasAttribute(REPEAT_STYLE_ATTRIBUTE)) {
-      String value = elem.consumeAttribute(REPEAT_STYLE_ATTRIBUTE);
+      String value = elem.consumeRawAttribute(REPEAT_STYLE_ATTRIBUTE);
       try {
         repeatStyle = RepeatStyle.valueOf(value);
       } catch (IllegalArgumentException e) {
@@ -237,16 +234,16 @@ public class UiBinderParser {
 
   private void createStyle(XMLElement elem) throws UnableToCompleteException {
     String body = elem.consumeUnescapedInnerText();
-    String source = elem.consumeAttribute(SOURCE_ATTRIBUTE);
+    String source = elem.consumeRawAttribute(SOURCE_ATTRIBUTE);
     
     if (0 == body.length() && 0 == source.length()) {
       writer.die("%s must have either a src attribute or body text", elem);
     }
     
-    String name = elem.consumeAttribute(FIELD_ATTRIBUTE, "style");
+    String name = elem.consumeRawAttribute(FIELD_ATTRIBUTE, "style");
     JClassType publicType = consumeCssResourceType(elem);
 
-    String importTypeNames = elem.consumeAttribute(IMPORT_ATTRIBUTE, null);
+    String importTypeNames = elem.consumeRawAttribute(IMPORT_ATTRIBUTE, null);
     LinkedHashSet<JClassType> importTypes = new LinkedHashSet<JClassType>();
     if (importTypeNames != null) {
       String[] typeNames = importTypeNames.split("\\s+");

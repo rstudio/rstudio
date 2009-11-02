@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,21 +31,21 @@ class GetEscapedInnerTextVisitor implements NodeVisitor {
    * and uses the writer to report errors.
    */
   public static void getEscapedInnerText(Element elem, StringBuffer buffer,
-      Interpreter<String> interpreter, UiBinderWriter writer)
+      Interpreter<String> interpreter, XMLElementProvider writer)
       throws UnableToCompleteException {
-    new ChildWalker().accept(elem, new GetEscapedInnerTextVisitor(buffer, interpreter,
-        writer));
+    new ChildWalker().accept(elem, new GetEscapedInnerTextVisitor(buffer,
+        interpreter, writer));
   }
 
   protected final StringBuffer buffer;
   protected final Interpreter<String> interpreter;
-  protected final UiBinderWriter writer;
+  protected final XMLElementProvider elementProvider;
 
   protected GetEscapedInnerTextVisitor(StringBuffer buffer,
-      Interpreter<String> interpreter, UiBinderWriter writer) {
+      Interpreter<String> interpreter, XMLElementProvider elementProvider) {
     this.buffer = buffer;
     this.interpreter = interpreter;
-    this.writer = writer;
+    this.elementProvider = elementProvider;
   }
 
   public void visitCData(CDATASection d) {
@@ -53,8 +53,7 @@ class GetEscapedInnerTextVisitor implements NodeVisitor {
   }
 
   public void visitElement(Element e) throws UnableToCompleteException {
-    String replacement =
-        interpreter.interpretElement(new XMLElement(e, writer));
+    String replacement = interpreter.interpretElement(elementProvider.get(e));
 
     if (replacement != null) {
       buffer.append(replacement);
@@ -62,17 +61,17 @@ class GetEscapedInnerTextVisitor implements NodeVisitor {
   }
 
   public void visitText(Text t) {
-    String escaped =
-        UiBinderWriter.escapeText(t.getTextContent(), preserveWhiteSpace(t));
+    String escaped = UiBinderWriter.escapeText(t.getTextContent(),
+        preserveWhiteSpace(t));
     buffer.append(escaped);
   }
 
   private boolean preserveWhiteSpace(Text t) {
     Element parent = Node.ELEMENT_NODE == t.getParentNode().getNodeType()
-      ? (Element) t.getParentNode() : null;
+        ? (Element) t.getParentNode() : null;
 
-    boolean preserveWhitespace =
-        parent != null && "pre".equals(parent.getTagName());
+    boolean preserveWhitespace = parent != null
+        && "pre".equals(parent.getTagName());
     // TODO(rjrjr) What about script blocks?
     return preserveWhitespace;
   }

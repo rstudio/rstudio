@@ -143,9 +143,9 @@ public class DisclosurePanelParser implements ElementParser {
       UiBinderWriter writer) throws UnableToCompleteException {
     // TODO(rjrjr) parser should come from XMLElement
 
-    String value = headerElem.consumeAttribute(attribute, null);
+    String value = headerElem.consumeRawAttribute(attribute, null);
     if (value != null) {
-      value = new StrictAttributeParser().parse(value, writer);
+      value = new StrictAttributeParser().parse(value, writer.getLogger());
     }
     return value;
   }

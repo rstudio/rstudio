@@ -89,7 +89,7 @@ public class DockLayoutPanelParser implements ElementParser {
       String childFieldName = writer.parseElementToField(widget);
 
       if (requiresSize(child)) {
-        double size = child.consumeDoubleAttribute("size");
+        String size = child.consumeDoubleAttribute("size");
         writer.addStatement("%s.%s(%s, %f);", fieldName, addMethodName(child),
             childFieldName, size);
       } else {

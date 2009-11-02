@@ -15,14 +15,14 @@
  */
 package com.google.gwt.uibinder.parsers;
 
-import com.google.gwt.uibinder.rebind.UiBinderWriter;
+import com.google.gwt.uibinder.rebind.MortalLogger;
 
 /**
  * Parses a pair of integer values.
  */
 public class IntPairParser implements AttributeParser {
 
-  public String parse(String value, UiBinderWriter writer) {
+  public String parse(String value, MortalLogger ignored) {
     // TODO(jgw): parse & validate
     return value;
   }

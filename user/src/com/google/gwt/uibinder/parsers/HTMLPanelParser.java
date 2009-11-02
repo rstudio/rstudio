@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,25 +30,25 @@ public class HTMLPanelParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       final UiBinderWriter writer) throws UnableToCompleteException {
-    String customTag =
-      UiBinderWriter.escapeTextForJavaStringLiteral(elem.consumeAttribute("tag"));
+    String customTag = UiBinderWriter.escapeTextForJavaStringLiteral(elem.consumeRawAttribute("tag"));
 
     /*
-     * Gathers up elements that indicate nested widgets (but only those
-     * that are not inside msg elements).
+     * Gathers up elements that indicate nested widgets (but only those that are
+     * not inside msg elements).
      */
-    WidgetInterpreter widgetInterpreter = new WidgetInterpreter(fieldName, writer);
+    WidgetInterpreter widgetInterpreter = new WidgetInterpreter(fieldName,
+        writer);
 
     /*
      * Handles non-widget elements like msg, and dom elements with ui:field
-     * attributes. There may be widgets inside a msg, which is why
-     * the construction in makeHtmlInterpreter is so complicated.
+     * attributes. There may be widgets inside a msg, which is why the
+     * construction in makeHtmlInterpreter is so complicated.
      */
     HtmlInterpreter htmlInterpreter = makeHtmlInterpreter(fieldName, writer);
 
     writer.beginAttachedSection(fieldName + ".getElement()");
-    String html = elem.consumeInnerHtml(InterpreterPipe.newPipe(widgetInterpreter,
-        htmlInterpreter));
+    String html = elem.consumeInnerHtml(InterpreterPipe.newPipe(
+        widgetInterpreter, htmlInterpreter));
     writer.endAttachedSection();
 
     /*
@@ -58,10 +58,11 @@ public class HTMLPanelParser implements ElementParser {
      * signature (by passing in type).
      */
     if ("".equals(customTag)) {
-      writer.setFieldInitializerAsConstructor(fieldName, type, "\"" + html + "\"");
+      writer.setFieldInitializerAsConstructor(fieldName, type, "\"" + html
+          + "\"");
     } else {
-      writer.setFieldInitializerAsConstructor(fieldName, type, "\"" + customTag + "\"",
-          "\"" + html + "\"");
+      writer.setFieldInitializerAsConstructor(fieldName, type, "\"" + customTag
+          + "\"", "\"" + html + "\"");
     }
   }
 
@@ -73,17 +74,16 @@ public class HTMLPanelParser implements ElementParser {
       final UiBinderWriter uiWriter) {
     final String ancestorExpression = fieldName + ".getElement()";
 
-    PlaceholderInterpreterProvider placeholderInterpreterProvider =
-        new PlaceholderInterpreterProvider() {
-          public PlaceholderInterpreter get(MessageWriter message) {
-            return new WidgetPlaceholderInterpreter(fieldName, uiWriter,
-                message, ancestorExpression);
-          }
-        };
+    PlaceholderInterpreterProvider placeholderInterpreterProvider = new PlaceholderInterpreterProvider() {
+      public PlaceholderInterpreter get(MessageWriter message) {
+        return new WidgetPlaceholderInterpreter(fieldName, uiWriter, message,
+            ancestorExpression);
+      }
+    };
 
-    HtmlInterpreter htmlInterpreter =
-        new HtmlInterpreter(uiWriter, ancestorExpression,
-            new HtmlMessageInterpreter(uiWriter, placeholderInterpreterProvider));
+    HtmlInterpreter htmlInterpreter = new HtmlInterpreter(uiWriter,
+        ancestorExpression, new HtmlMessageInterpreter(uiWriter,
+            placeholderInterpreterProvider));
 
     return htmlInterpreter;
   }

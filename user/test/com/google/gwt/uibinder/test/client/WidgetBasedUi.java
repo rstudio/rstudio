@@ -122,6 +122,7 @@ public class WidgetBasedUi extends Composite {
   @UiField ParagraphElement simpleSpriteParagraph;
   @UiField DataResource heartCursorResource;
   @UiField CssImportScopeSample cssImportScopeSample;
+  @UiField ParagraphElement bracedParagraph;
 
   public WidgetBasedUi() {
     this.bundledLabel = new Label();

@@ -24,17 +24,16 @@ import org.w3c.dom.Attr;
  * parser writers out of trouble.
  */
 public class XMLAttribute {
-
   private XMLElement xmlElem;
   private Attr w3cAttr;
 
-  public XMLAttribute(XMLElement element, Attr attr) {
+  XMLAttribute(XMLElement element, Attr attr) {
     this.xmlElem = element;
     this.w3cAttr = attr;
   }
 
-  public String consumeValue() {
-    return xmlElem.consumeAttribute(w3cAttr.getName());
+  public String consumeRawValue() {
+    return xmlElem.consumeRawAttribute(w3cAttr.getName());
   }
   
   public String getLocalName() {

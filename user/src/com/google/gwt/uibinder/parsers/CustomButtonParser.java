@@ -57,29 +57,31 @@ public class CustomButtonParser implements ElementParser {
       }
 
       // Look for innerHTML first.
-      HtmlInterpreter interpreter =
-          HtmlInterpreter.newInterpreterForUiObject(writer, fieldName);
+      HtmlInterpreter interpreter = HtmlInterpreter.newInterpreterForUiObject(
+          writer, fieldName);
       String innerHtml = child.consumeInnerHtml(interpreter).trim();
       if (innerHtml.length() > 0) {
-        writer.addStatement("%1$s.get%2$s().setHTML(\"%3$s\");", fieldName, faceName,
-            innerHtml);
+        writer.addStatement("%1$s.get%2$s().setHTML(\"%3$s\");", fieldName,
+            faceName, innerHtml);
       }
 
       // Then look for html, text, and image attributes.
       if (child.hasAttribute("html")) {
-        String html = child.consumeAttribute("html");
-        writer.addStatement("%1$s.get%2$s().setHTML(\"%3$s\");", fieldName, faceName, html);
+        String html = child.consumeRawAttribute("html");
+        writer.addStatement("%1$s.get%2$s().setHTML(\"%3$s\");", fieldName,
+            faceName, html);
       }
 
       if (child.hasAttribute("text")) {
-        String text = child.consumeAttribute("text");
-        writer.addStatement("%1$s.get%2$s().setText(\"%3$s\");", fieldName, faceName, text);
+        String text = child.consumeRawAttribute("text");
+        writer.addStatement("%1$s.get%2$s().setText(\"%3$s\");", fieldName,
+            faceName, text);
       }
 
       if (child.hasAttribute("image")) {
-        String image = child.consumeAttribute("image");
-        writer.addStatement("%1$s.get%2$s().setImage(new %3$s(\"%4$s\"));", fieldName,
-            faceName, IMAGE_CLASS, image);
+        String image = child.consumeRawAttribute("image");
+        writer.addStatement("%1$s.get%2$s().setImage(new %3$s(\"%4$s\"));",
+            fieldName, faceName, IMAGE_CLASS, image);
       }
     }
   }

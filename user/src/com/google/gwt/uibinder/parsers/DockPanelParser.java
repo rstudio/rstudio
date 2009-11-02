@@ -63,7 +63,7 @@ public class DockPanelParser implements ElementParser {
       if (!child.hasAttribute("direction")) {
         writer.die("Dock must specify the 'direction' attribute");
       }
-      String value = child.consumeAttribute("direction");
+      String value = child.consumeRawAttribute("direction");
       String translated = values.get(value);
       if (translated == null) {
         writer.die("Invalid value: dockDirection='" + value + "'");
@@ -77,13 +77,13 @@ public class DockPanelParser implements ElementParser {
       // And they can optionally have a width.
       if (child.hasAttribute("width")) {
         writer.addStatement("%1$s.setCellWidth(%2$s, \"%3$s\");",
-            fieldName, childFieldName, child.consumeAttribute("width"));
+            fieldName, childFieldName, child.consumeRawAttribute("width"));
       }
 
       // And they can optionally have a height.
       if (child.hasAttribute("height")) {
         writer.addStatement("%1$s.setCellHeight(%2$s, \"%3$s\");",
-            fieldName, childFieldName, child.consumeAttribute("height"));
+            fieldName, childFieldName, child.consumeRawAttribute("height"));
       }
 
       // Parse the CellPanel-specific attributes on the Dock element.

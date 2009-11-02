@@ -160,7 +160,7 @@
   </gwt:Dock>
   <gwt:Dock direction='CENTER'>
     <gwt:HTMLPanel>
-      <p><ui:msg>This is a demonstration and test bed of GWT's shiny UiBinder
+      <p ui:field='bracedParagraph' fnord='blah di blah {{foo: "bar"} di blah'><ui:msg>This is a demonstration and test bed of GWT's shiny UiBinder
       package. At the moment it works mainly as described in
       <a href="http://code.google.com/p/google-web-toolkit-incubator/wiki/DeclarativeUi"
         ui:ph="oldBlogLink">

@@ -39,31 +39,85 @@ public class XMLElementTest extends TestCase {
   private Document doc;
   private Element item;
   private XMLElement elm;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    init("<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
-  }
+  private XMLElementProvider elemProvider;
 
   public void testConsumeAttribute() {
-    assertEquals("attr1Value", elm.consumeAttribute("attr1"));
-    assertEquals("", elm.consumeAttribute("attr1"));
+    assertEquals("attr1Value", elm.consumeRawAttribute("attr1"));
+    assertEquals("", elm.consumeRawAttribute("attr1"));
   }
 
   public void testConsumeAttributeWithDefault() {
-    assertEquals("attr1Value", elm.consumeAttribute("attr1", "default"));
-    assertEquals("default", elm.consumeAttribute("attr1", "default"));
-    assertEquals("otherDefault", elm.consumeAttribute("unsetthing",
+    assertEquals("attr1Value", elm.consumeRawAttribute("attr1", "default"));
+    assertEquals("default", elm.consumeRawAttribute("attr1", "default"));
+    assertEquals("otherDefault", elm.consumeRawAttribute("unsetthing",
         "otherDefault"));
   }
 
-  public void testConsumeRequired() throws UnableToCompleteException {
-    assertEquals("attr1Value", elm.consumeRequiredAttribute("attr1"));
+  public void testConsumeBooleanConstant() throws ParserConfigurationException,
+      SAXException, IOException, UnableToCompleteException {
+    init("<doc><elm yes='true' no='false' "
+        + "fnord='fnord' ref='{foo.bar.baz}'/></doc>");
+
+    assertNull(elm.consumeBooleanConstantAttribute("foo"));
+
+    assertTrue(elm.consumeBooleanConstantAttribute("yes"));
+    assertNull(elm.consumeBooleanConstantAttribute("yes"));
+
+    assertFalse(elm.consumeBooleanConstantAttribute("no"));
+    assertNull(elm.consumeBooleanConstantAttribute("no"));
+
     try {
-      elm.consumeRequiredAttribute("unsetthing");
-      fail("Should have thrown UnableToCompleteException");
-    } catch (UnableToCompleteException e) {
+      elm.consumeBooleanConstantAttribute("ref");
+      fail("Should throw UnableToCompleteException on field ref");
+    } catch (UnableToCompleteException c) {
+      /* pass */
+    }
+
+    try {
+      elm.consumeBooleanConstantAttribute("fnord");
+      fail("Should throw UnableToCompleteException on misparse");
+    } catch (UnableToCompleteException c) {
+      /* pass */
+    }
+  }
+
+  public void testConsumeBoolean() throws ParserConfigurationException,
+      SAXException, IOException, UnableToCompleteException {
+    init("<doc><elm yes='true' no='false' "
+        + "fnord='fnord' ref='{foo.bar.baz}'/></doc>");
+
+    assertEquals("", elm.consumeBooleanAttribute("foo"));
+
+    assertEquals("true", elm.consumeBooleanAttribute("yes"));
+    assertEquals("", elm.consumeBooleanAttribute("yes"));
+
+    assertEquals("false", elm.consumeBooleanAttribute("no"));
+    assertEquals("", elm.consumeBooleanAttribute("no"));
+
+    assertEquals("foo.bar().baz()", elm.consumeBooleanAttribute("ref"));
+
+    try {
+      elm.consumeBooleanAttribute("fnord");
+      fail("Should throw UnableToCompleteException on misparse");
+    } catch (UnableToCompleteException c) {
+      /* pass */
+    }
+  }
+
+  public void testConsumeDouble() throws UnableToCompleteException,
+      ParserConfigurationException, SAXException, IOException {
+    init("<doc><elm minus='-123.45' plus='123.45' minus-one='-1' "
+        + "plus-one='1' fnord='fnord' ref='{foo.bar.baz}'/></doc>");
+    assertEquals("1", elm.consumeDoubleAttribute("plus-one"));
+    assertEquals("-1", elm.consumeDoubleAttribute("minus-one"));
+    assertEquals("123.45", elm.consumeDoubleAttribute("plus"));
+    assertEquals("-123.45", elm.consumeDoubleAttribute("minus"));
+    assertEquals("foo.bar().baz()", elm.consumeBooleanAttribute("ref"));
+
+    try {
+      elm.consumeBooleanAttribute("fnord");
+      fail("Should throw UnableToCompleteException on misparse");
+    } catch (UnableToCompleteException c) {
       /* pass */
     }
   }
@@ -83,6 +137,16 @@ public class XMLElementTest extends TestCase {
         elm.consumeInnerTextEscapedAsHtmlStringLiteral(new NullInterpreter<String>()));
   }
 
+  public void testConsumeRequired() throws UnableToCompleteException {
+    assertEquals("attr1Value", elm.consumeRequiredAttribute("attr1"));
+    try {
+      elm.consumeRequiredAttribute("unsetthing");
+      fail("Should have thrown UnableToCompleteException");
+    } catch (UnableToCompleteException e) {
+      /* pass */
+    }
+  }
+
   public void testConsumeSingleChildElementEmpty()
       throws ParserConfigurationException, SAXException, IOException,
       UnableToCompleteException {
@@ -96,7 +160,7 @@ public class XMLElementTest extends TestCase {
     init("<doc><elm><child>Hi.</child></elm></doc>");
     assertEquals("Hi.",
         elm.consumeSingleChildElement().consumeUnescapedInnerText());
-    
+
     init("<doc><elm id='elm'><child>Hi.</child><child>Ho.</child></elm></doc>");
     try {
       elm.consumeSingleChildElement();
@@ -104,19 +168,6 @@ public class XMLElementTest extends TestCase {
     } catch (UnableToCompleteException e) {
       /* pass */
     }
- }
-
-  private void init(final String domString)
-      throws ParserConfigurationException, SAXException, IOException {
-    doc = DocumentTestHelp.documentForString(domString);
-    item = (Element) doc.getDocumentElement().getElementsByTagName("elm").item(
-        0);
-    elm = new XMLElement(item, new UiBinderWriter());
-  }
-
-  private void appendText(final String text) {
-    Text t = doc.createTextNode(text);
-    item.appendChild(t);
   }
 
   public void testConsumeUnescapedInnerText() throws UnableToCompleteException {
@@ -130,7 +181,7 @@ public class XMLElementTest extends TestCase {
   }
 
   public void testEmptyStringOnMissingAttribute() {
-    assertEquals("", elm.consumeAttribute("fnord"));
+    assertEquals("", elm.consumeRawAttribute("fnord"));
   }
 
   public void testIterator() {
@@ -141,7 +192,7 @@ public class XMLElementTest extends TestCase {
       String expected = expecteds[i];
       assertEquals(expected, attr.getLocalName());
       assertFalse(attr.isConsumed());
-      assertEquals(expected + "Value", attr.consumeValue());
+      assertEquals(expected + "Value", attr.consumeRawValue());
       assertTrue(attr.isConsumed());
       seen.add(expected);
     }
@@ -153,8 +204,30 @@ public class XMLElementTest extends TestCase {
 
     Element item = (Element) doc.getDocumentElement().getElementsByTagName("br").item(
         0);
-    XMLElement elm = new XMLElement(item, null);
+    XMLElement elm = elemProvider.get(item);
     assertEquals("br", item.getTagName());
     assertEquals("", elm.getClosingTag());
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    init("<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
+  }
+
+  private void appendText(final String text) {
+    Text t = doc.createTextNode(text);
+    item.appendChild(t);
+  }
+
+  private void init(final String domString)
+      throws ParserConfigurationException, SAXException, IOException {
+    doc = DocumentTestHelp.documentForString(domString);
+    item = (Element) doc.getDocumentElement().getElementsByTagName("elm").item(
+        0);
+
+    elemProvider = new XMLElementProviderImpl(new AttributeParsers(), null,
+        new DummyMortalLogger());
+    elm = elemProvider.get(item);
   }
 }

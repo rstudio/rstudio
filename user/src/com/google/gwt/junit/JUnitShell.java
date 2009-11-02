@@ -350,7 +350,7 @@ public class JUnitShell extends GWTShell {
    * method, in milliseconds, measured from when the <i>last</i> client connects
    * (and thus starts the test). default of 5 minutes.
    */
-  private static final long TEST_METHOD_TIMEOUT_MILLIS = 300000;
+  private static final long TEST_METHOD_TIMEOUT_MILLIS = 50 * 60 * 1000;
 
   /**
    * Singleton object for hosting unit tests. All test case instances executed

@@ -114,10 +114,8 @@ public class MessagesWriter {
         logger.die("%s has no attribute matching %s", elem, child);
       }
 
-      String defaultMessage =
-          MessageWriter.escapeMessageFormat(elem.consumeAttribute(attributeName));
-      defaultMessage =
-          UiBinderWriter.escapeTextForJavaStringLiteral(defaultMessage);
+      String defaultMessage = MessageWriter.escapeMessageFormat(elem.consumeRawAttribute(attributeName));
+      defaultMessage = UiBinderWriter.escapeTextForJavaStringLiteral(defaultMessage);
       attributeMessages.add(new AttributeMessage(attributeName, declareMessage(
           child, defaultMessage)));
     }
@@ -130,7 +128,7 @@ public class MessagesWriter {
    */
   public String consumeMessageAttribute(String attName, XMLElement elem) {
     String fullAttName = getMessagesPrefix() + ":" + attName;
-    return elem.consumeAttribute(fullAttName);
+    return elem.consumeRawAttribute(fullAttName);
   }
 
   /**
@@ -262,12 +260,12 @@ public class MessagesWriter {
    */
   String consumeMessageElementAttribute(String attName, XMLElement elem) {
     if (elem.hasAttribute(attName)) {
-      return UiBinderWriter.escapeTextForJavaStringLiteral(elem.consumeAttribute(attName));
+      return UiBinderWriter.escapeTextForJavaStringLiteral(elem.consumeRawAttribute(attName));
     }
 
     String fullAttName = getMessagesPrefix() + ":" + attName;
     if (elem.hasAttribute(fullAttName)) {
-      String value = elem.consumeAttribute(fullAttName);
+      String value = elem.consumeRawAttribute(fullAttName);
       logger.warn(
           "In %s, deprecated prefix \"%s:\" on \"%s\". Use \"%s\" instead.",
           elem, getMessagesPrefix(), fullAttName, attName);

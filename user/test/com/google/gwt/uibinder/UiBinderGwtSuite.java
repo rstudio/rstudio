@@ -25,13 +25,14 @@ import junit.framework.Test;
  */
 public class UiBinderGwtSuite {
   public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite("Test suite for UiBinder GWTTestCases");
-    
+    GWTTestSuite suite = new GWTTestSuite(
+        "Test suite for UiBinder GWTTestCases");
+
     suite.addTestSuite(UiBinderTest.class);
-    
+
     return suite;
   }
-  
+
   private UiBinderGwtSuite() {
   }
 }

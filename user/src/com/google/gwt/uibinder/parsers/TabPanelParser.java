@@ -49,7 +49,7 @@ public class TabPanelParser implements ElementParser {
       // Get the caption, if any.
       String tabCaption = "";
       if (child.hasAttribute("text")) {
-        tabCaption = child.consumeAttribute("text");
+        tabCaption = child.consumeRawAttribute("text");
       }
 
       // Get the single required child widget.

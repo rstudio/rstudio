@@ -63,7 +63,7 @@ public class StackLayoutPanelParser implements ElementParser {
         widgetElem = stackChild;
       }
 
-      double size = headerElem.consumeDoubleAttribute("size");
+      String size = headerElem.consumeDoubleAttribute("size");
       XMLElement headerWidgetElem = headerElem.consumeSingleChildElement();
       String headerFieldName = writer.parseElementToField(headerWidgetElem);
       String childFieldName = writer.parseElementToField(widgetElem);

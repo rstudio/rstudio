@@ -37,6 +37,7 @@ class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
     this.writer = writer;
   }
 
+  @SuppressWarnings("deprecation")
   public String interpretElement(XMLElement elem)
       throws UnableToCompleteException {
     Map<String, String> attNameToToken = new HashMap<String, String>();
@@ -44,8 +45,19 @@ class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
     for (int i = elem.getAttributeCount() - 1; i >= 0; i--) {
       XMLAttribute att = elem.getAttribute(i);
       AttributeParser parser = writer.getBundleAttributeParser(att);
-      
-      if (parser == null && att.hasComputedValue()) {
+
+      if (parser != null) {
+        // Legacy res:style='style.pretty'
+        String parsedValue = parser.parse(att.consumeRawValue(),
+            writer.getLogger());
+        String attToken = writer.tokenForExpression(parsedValue);
+
+        // Use local name here, replacing res:style with plain old style
+        attNameToToken.put(att.getLocalName(), attToken);
+        continue;
+      }
+
+      if (att.hasComputedValue()) {
         /*
          * It's okay to simply create a string parser by hand, rather than
          * asking the writer to magically guess what kind of parser we need,
@@ -53,12 +65,18 @@ class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
          * markup. Bean parser takes care of the strongly typed cases.
          */
         parser = new StringAttributeParser();
-      }
-
-      if (parser != null) {
-        String parsedValue = parser.parse(att.consumeValue(), writer);
+        String parsedValue = parser.parse(att.consumeRawValue(),
+            writer.getLogger());
         String attToken = writer.tokenForExpression(parsedValue);
-        attNameToToken.put(att.getLocalName(), attToken);
+        attNameToToken.put(att.getName(), attToken);
+      } else {
+        /*
+         * No computed value, but make sure that any {{ madness gets escaped.
+         * TODO(rjrjr) Move this to XMLElement RSN
+         */
+        String n = att.getName();
+        String v = att.consumeRawValue().replace("{{", "{");
+        elem.setAttribute(n, v);
       }
     }
 

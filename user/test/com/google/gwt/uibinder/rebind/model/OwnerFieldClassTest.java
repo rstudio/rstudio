@@ -22,8 +22,8 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.client.UiConstructor;
+import com.google.gwt.uibinder.rebind.DummyMortalLogger;
 import com.google.gwt.uibinder.rebind.JClassTypeAdapter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.user.client.ui.Label;
@@ -36,13 +36,12 @@ import junit.framework.TestCase;
 public class OwnerFieldClassTest extends TestCase {
 
   private JClassTypeAdapter gwtTypeAdapter;
-  private MortalLogger logger;
+  private MortalLogger logger = new DummyMortalLogger();
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    logger = new MortalLogger(new PrintWriterTreeLogger());
     gwtTypeAdapter = new JClassTypeAdapter();
   }
 
@@ -69,6 +68,7 @@ public class OwnerFieldClassTest extends TestCase {
   /**
    * Class with lots of setters for testing.
    */
+  @SuppressWarnings("unused") // We know these methods are unused
   private static class SettersTestClass {
     // No ambiguity in these setters
     public void setBlaBla(int x) {
@@ -177,6 +177,7 @@ public class OwnerFieldClassTest extends TestCase {
   /**
    * Class with overridden setters for testing.
    */
+  @SuppressWarnings("unused") // We know these methods are unused
   private static class OverriddenSettersTestClass extends SettersTestClass {
     // Simple override of parent method
     @Override
@@ -278,6 +279,7 @@ public class OwnerFieldClassTest extends TestCase {
   /**
    * Class with a {@link UiConstructor}-annotated constructor.
    */
+  @SuppressWarnings("unused") // We know these methods are unused
   private static class UiConstructorClass {
     @UiConstructor
     public UiConstructorClass(boolean visible) {
@@ -307,6 +309,7 @@ public class OwnerFieldClassTest extends TestCase {
    * Class with (disallowed) multiple constructors annotated with
    * {@link UiConstructor}.
    */
+  @SuppressWarnings("unused") // We know these methods are unused
   private static class MultiUiConstructorsClass {
     @UiConstructor
     public MultiUiConstructorsClass(boolean visible) {

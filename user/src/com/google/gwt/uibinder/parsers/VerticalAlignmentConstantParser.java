@@ -15,7 +15,8 @@
  */
 package com.google.gwt.uibinder.parsers;
 
-import com.google.gwt.uibinder.rebind.UiBinderWriter;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.uibinder.rebind.MortalLogger;
 
 import java.util.HashMap;
 
@@ -37,11 +38,11 @@ public class VerticalAlignmentConstantParser implements AttributeParser {
       "com.google.gwt.user.client.ui.HasVerticalAlignment.ALIGN_BOTTOM");
   }
 
-  public String parse(String value, UiBinderWriter writer) {
+  public String parse(String value, MortalLogger logger)
+      throws UnableToCompleteException {
     String translated = values.get(value);
     if (translated == null) {
-      throw new RuntimeException("Invalid value: vorizontalAlignment='"
-        + value + "'");
+      logger.die("Invalid value: vorizontalAlignment='%s'", value);
     }
     return translated;
   }
