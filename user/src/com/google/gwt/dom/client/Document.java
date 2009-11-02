@@ -1097,7 +1097,7 @@ public class Document extends Node {
    */
   public final void enableScrolling(boolean enable) {
     getViewportElement().getStyle().setProperty("overflow",
-        enable ? "" : "hidden");
+        enable ? "auto" : "hidden");
   }
 
   /**
