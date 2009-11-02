@@ -64,7 +64,6 @@ public class HandlerManagerTest extends HandlerTestBase {
     assertNotFired(click1, click2);
   }
 
-  @SuppressWarnings("deprecation")
   public void testRemoveHandlers() {
     HandlerManager manager = new HandlerManager("bogus source");
     addHandlers(manager);
@@ -189,7 +188,6 @@ public class HandlerManagerTest extends HandlerTestBase {
     assertNotFired(two);
   }
 
-  @SuppressWarnings("deprecation")
   public void testConcurrentAddAfterRemoveIsNotClobbered() {
     final HandlerManager manager = new HandlerManager("bogus source");
 
