@@ -277,7 +277,7 @@ public class ImageTest extends GWTTestCase {
    * Tests the creation of an image in clipped mode.
    */
   @DoNotRunWith({Platform.HtmlUnit})
-  public void testCreateClippedImage() {
+  public void disabledTestCreateClippedImage() {
     final Image image = new Image("counting-forwards.png", 16, 16, 16, 16);
 
     delayTestFinish(5000);
@@ -362,7 +362,7 @@ public class ImageTest extends GWTTestCase {
    * on a clipped image.
    */
   @DoNotRunWith({Platform.HtmlUnit})
-  public void testSetUrlAndVisibleRectOnClippedImage() {
+  public void disabledTestSetUrlAndVisibleRectOnClippedImage() {
     final Image image = new Image("counting-backwards.png", 12, 12, 12, 12);
     delayTestFinish(5000);
 
@@ -413,7 +413,7 @@ public class ImageTest extends GWTTestCase {
    * on a clipped image.
    */
   @DoNotRunWith({Platform.HtmlUnit})
-  public void testSetVisibleRectAndLoadEventsOnClippedImage() {
+  public void disabledTestSetVisibleRectAndLoadEventsOnClippedImage() {
     final Image image = new Image("counting-backwards.png", 16, 16, 16, 16);
 
     delayTestFinish(5000);
