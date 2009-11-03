@@ -15,16 +15,17 @@
  */
 package com.google.gwt.user.client.rpc;
 
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
-import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
-import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
-import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
-import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
-
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertSame;
+
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializableGraphWithCFS;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,8 +42,8 @@ import java.util.Vector;
 import java.util.Map.Entry;
 
 /**
- * Misnamed set of static validation methods used by various
- * collection class tests.
+ * Misnamed set of static validation methods used by various collection class
+ * tests.
  * <p>
  * TODO: could add generics to require args to be of the same type
  */
@@ -247,7 +248,7 @@ public class TestSetValidator {
     return reference.equals(list);
   }
 
-  public static boolean isValid(HashMap<?,?> expected, HashMap<?,?> map) {
+  public static boolean isValid(HashMap<?, ?> expected, HashMap<?, ?> map) {
     if (map == null) {
       return false;
     }
@@ -259,7 +260,7 @@ public class TestSetValidator {
     Set<?> entries = expected.entrySet();
     Iterator<?> entryIter = entries.iterator();
     while (entryIter.hasNext()) {
-      Entry<?,?> entry = (Entry<?,?>) entryIter.next();
+      Entry<?, ?> entry = (Entry<?, ?>) entryIter.next();
 
       Object value = map.get(entry.getKey());
 
@@ -298,8 +299,9 @@ public class TestSetValidator {
     return true;
   }
 
-  public static boolean isValid(LinkedHashMap<?,?> expected, LinkedHashMap<?,?> map) {
-    if (isValid((HashMap<?,?>) expected, (HashMap<?,?>) map)) {
+  public static boolean isValid(LinkedHashMap<?, ?> expected,
+      LinkedHashMap<?, ?> map) {
+    if (isValid((HashMap<?, ?>) expected, (HashMap<?, ?>) map)) {
       Iterator<?> expectedEntries = expected.entrySet().iterator();
       Iterator<?> actualEntries = map.entrySet().iterator();
       return equals(expectedEntries, actualEntries);
@@ -494,6 +496,19 @@ public class TestSetValidator {
     return true;
   }
 
+  public static boolean isValidComplexCyclicGraphWithCFS(
+      SerializableGraphWithCFS result) {
+    assertNotNull(result);
+    List<SerializableGraphWithCFS> array = result.getArray();
+    assertNotNull(array);
+    assertEquals(1, array.size());
+
+    SerializableGraphWithCFS child = array.get(0);
+    assertFalse(result == child);
+    assertSame(result, child.getParent());
+    return true;
+  }
+
   public static boolean isValidTrivialCyclicGraph(
       SerializableDoublyLinkedNode actual) {
     if (actual == null) {
@@ -538,5 +553,4 @@ public class TestSetValidator {
   private static boolean equalsWithNullCheck(Object a, Object b) {
     return a == b || (a != null && a.equals(b));
   }
-
 }

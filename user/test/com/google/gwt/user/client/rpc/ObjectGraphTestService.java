@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializableGraphWithCFS;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
 
@@ -33,9 +34,13 @@ public interface ObjectGraphTestService extends RemoteService {
   SerializableDoublyLinkedNode echo_ComplexCyclicGraph(
       SerializableDoublyLinkedNode node1, SerializableDoublyLinkedNode node2);
 
+  SerializableGraphWithCFS echo_ComplexCyclicGraphWithCFS(
+      SerializableGraphWithCFS createComplexCyclicGraphWithArrays);
+
   SerializablePrivateNoArg echo_PrivateNoArg(SerializablePrivateNoArg node);
 
-  SerializableWithTwoArrays echo_SerializableWithTwoArrays(SerializableWithTwoArrays node);
+  SerializableWithTwoArrays echo_SerializableWithTwoArrays(
+      SerializableWithTwoArrays node);
 
   SerializableDoublyLinkedNode echo_TrivialCyclicGraph(
       SerializableDoublyLinkedNode node);

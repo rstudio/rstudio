@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializableGraphWithCFS;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
 
@@ -34,8 +35,13 @@ public interface ObjectGraphTestServiceAsync {
 
   void echo_PrivateNoArg(SerializablePrivateNoArg node, AsyncCallback callback);
 
-  void echo_SerializableWithTwoArrays(SerializableWithTwoArrays node, AsyncCallback callback);
+  void echo_SerializableWithTwoArrays(SerializableWithTwoArrays node,
+      AsyncCallback callback);
 
   void echo_TrivialCyclicGraph(SerializableDoublyLinkedNode node,
       AsyncCallback callback);
+
+  void echo_ComplexCyclicGraphWithCFS(
+      SerializableGraphWithCFS createComplexCyclicGraphWithArrays,
+      AsyncCallback<SerializableGraphWithCFS> asyncCallback);
 }

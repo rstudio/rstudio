@@ -177,7 +177,8 @@ public class CommandServerSerializationStreamReader implements
     public boolean visit(InvokeCustomFieldSerializerCommand x, Context ctx) {
       if (maybePushBackRef(x)) {
 
-        CommandServerSerializationStreamReader subReader = new CommandServerSerializationStreamReader();
+        CommandServerSerializationStreamReader subReader = new CommandServerSerializationStreamReader(
+            backRefs);
         subReader.prepareToRead(x.getValues());
 
         Class<?> serializerClass = x.getSerializerClass();
@@ -267,8 +268,17 @@ public class CommandServerSerializationStreamReader implements
     }
   }
 
-  Map<IdentityValueCommand, Object> backRefs = new HashMap<IdentityValueCommand, Object>();
+  final Map<IdentityValueCommand, Object> backRefs;
   Iterator<ValueCommand> values;
+
+  public CommandServerSerializationStreamReader() {
+    this(new HashMap<IdentityValueCommand, Object>());
+  }
+
+  private CommandServerSerializationStreamReader(
+      Map<IdentityValueCommand, Object> backRefs) {
+    this.backRefs = backRefs;
+  }
 
   public void prepareToRead(List<ValueCommand> commands) {
     values = commands.iterator();

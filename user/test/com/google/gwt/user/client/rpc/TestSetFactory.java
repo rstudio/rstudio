@@ -257,6 +257,32 @@ public class TestSetFactory {
   }
 
   /**
+   * Test reference cycles where the reference graph passes through a
+   * CustomFieldSerializer.
+   */
+  public static final class SerializableGraphWithCFS implements Serializable {
+    private ArrayList<SerializableGraphWithCFS> array;
+    private SerializableGraphWithCFS parent;
+
+    public SerializableGraphWithCFS() {
+      array = new ArrayList<SerializableGraphWithCFS>();
+      array.add(new SerializableGraphWithCFS(this));
+    }
+
+    public SerializableGraphWithCFS(SerializableGraphWithCFS parent) {
+      this.parent = parent;
+    }
+
+    public ArrayList<SerializableGraphWithCFS> getArray() {
+      return array;
+    }
+
+    public SerializableGraphWithCFS getParent() {
+      return parent;
+    }
+  }
+
+  /**
    * Tests that classes with a private no-arg constructor can be serialized.
    */
   public static class SerializablePrivateNoArg implements IsSerializable {
@@ -350,6 +376,10 @@ public class TestSetFactory {
     return new Character[] {
         new Character(Character.MAX_VALUE), new Character(Character.MIN_VALUE),
         new Character(Character.MAX_VALUE), new Character(Character.MIN_VALUE)};
+  }
+
+  public static SerializableGraphWithCFS createComplexCyclicGraphWithCFS() {
+    return new SerializableGraphWithCFS();
   }
 
   @SuppressWarnings("deprecation")

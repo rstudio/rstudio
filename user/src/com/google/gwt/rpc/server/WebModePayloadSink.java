@@ -295,101 +295,101 @@ public class WebModePayloadSink extends CommandSink {
 
     @Override
     public boolean visit(InvokeCustomFieldSerializerCommand x, Context ctx) {
-      byte[] currentBackRef = null;
-      // TODO Extract the commands as an inline function
-      if (!isStarted(x)) {
-        InstantiateCommand makeReader = new InstantiateCommand(
-            CommandClientSerializationStreamReader.class);
-        /*
-         * Ensure that the reader will stick around for both instantiate and
-         * deserialize calls.
-         */
-        makeBackRef(makeReader);
-
-        ArrayValueCommand payload = new ArrayValueCommand(Object.class);
-        for (ValueCommand value : x.getValues()) {
-          payload.add(value);
-        }
-        makeReader.set(CommandClientSerializationStreamReader.class, "payload",
-            payload);
-
-        currentBackRef = begin(x);
-
-        String instantiateIdent = clientOracle.getMethodId(
-            x.getSerializerClass(), "instantiate",
-            SerializationStreamReader.class);
-
-        // x = $Foo(new Foo);
-        // x = instantiate(reader);
-        push(currentBackRef);
-        eq();
-        if (instantiateIdent == null) {
-          // No instantiate method, we'll have to invoke the constructor
-
-          instantiateIdent = clientOracle.getSeedName(x.getTargetClass());
-          assert instantiateIdent != null : "instantiateIdent";
-
-          // $Foo()
-          String constructorMethodName;
-          if (x.getTargetClass().getEnclosingClass() == null) {
-            constructorMethodName = "$" + x.getTargetClass().getSimpleName();
-          } else {
-            String name = x.getTargetClass().getName();
-            constructorMethodName = "$"
-                + name.substring(name.lastIndexOf('.') + 1);
-          }
-
-          String constructorIdent = clientOracle.getMethodId(
-              x.getTargetClass(), constructorMethodName, x.getTargetClass());
-          assert constructorIdent != null : "constructorIdent "
-              + constructorMethodName;
-
-          // constructor(new Seed);
-          push(constructorIdent);
-          lparen();
-          _new();
-          push(instantiateIdent);
-          rparen();
-          semi();
-        } else {
-          // instantiate(reader);
-          push(instantiateIdent);
-          lparen();
-          accept(makeReader);
-          rparen();
-          semi();
-        }
-
-        // Call the deserialize method if it exists
-        String deserializeIdent = clientOracle.getMethodId(
-            x.getSerializerClass(), "deserialize",
-            SerializationStreamReader.class, x.getManuallySerializedType());
-        if (deserializeIdent != null) {
-          // deserialize(reader, obj);
-          push(deserializeIdent);
-          lparen();
-          accept(makeReader);
-          comma();
-          push(currentBackRef);
-          rparen();
-          semi();
-        }
-
-        // If there are extra fields, set them
-        for (SetCommand setter : x.getSetters()) {
-          accept(setter);
-          semi();
-        }
-
-        commit(x);
-        forget(makeReader);
-      }
-
-      if (currentBackRef == null) {
+      if (isStarted(x)) {
         push(makeBackRef(x));
-      } else {
-        push(currentBackRef);
+        return false;
       }
+
+      // ( backref = instantiate(), deserialize(), setter, ..., backref )
+      byte[] currentBackRef = begin(x);
+
+      lparen();
+
+      InstantiateCommand makeReader = new InstantiateCommand(
+          CommandClientSerializationStreamReader.class);
+      /*
+       * Ensure that the reader will stick around for both instantiate and
+       * deserialize calls.
+       */
+      makeBackRef(makeReader);
+
+      ArrayValueCommand payload = new ArrayValueCommand(Object.class);
+      for (ValueCommand value : x.getValues()) {
+        payload.add(value);
+      }
+      makeReader.set(CommandClientSerializationStreamReader.class, "payload",
+          payload);
+
+      String instantiateIdent = clientOracle.getMethodId(
+          x.getSerializerClass(), "instantiate",
+          SerializationStreamReader.class);
+
+      // x = $Foo(new Foo),
+      // x = instantiate(reader),
+      push(currentBackRef);
+      eq();
+      if (instantiateIdent == null) {
+        // No instantiate method, we'll have to invoke the constructor
+
+        instantiateIdent = clientOracle.getSeedName(x.getTargetClass());
+        assert instantiateIdent != null : "instantiateIdent";
+
+        // $Foo()
+        String constructorMethodName;
+        if (x.getTargetClass().getEnclosingClass() == null) {
+          constructorMethodName = "$" + x.getTargetClass().getSimpleName();
+        } else {
+          String name = x.getTargetClass().getName();
+          constructorMethodName = "$"
+              + name.substring(name.lastIndexOf('.') + 1);
+        }
+
+        String constructorIdent = clientOracle.getMethodId(x.getTargetClass(),
+            constructorMethodName, x.getTargetClass());
+        assert constructorIdent != null : "constructorIdent "
+            + constructorMethodName;
+
+        // constructor(new Seed),
+        push(constructorIdent);
+        lparen();
+        _new();
+        push(instantiateIdent);
+        rparen();
+        comma();
+      } else {
+        // instantiate(reader),
+        push(instantiateIdent);
+        lparen();
+        accept(makeReader);
+        rparen();
+        comma();
+      }
+
+      // Call the deserialize method if it exists
+      String deserializeIdent = clientOracle.getMethodId(
+          x.getSerializerClass(), "deserialize",
+          SerializationStreamReader.class, x.getManuallySerializedType());
+      if (deserializeIdent != null) {
+        // deserialize(reader, obj),
+        push(deserializeIdent);
+        lparen();
+        accept(makeReader);
+        comma();
+        push(currentBackRef);
+        rparen();
+        comma();
+      }
+
+      // If there are extra fields, set them
+      for (SetCommand setter : x.getSetters()) {
+        accept(setter);
+        comma();
+      }
+
+      push(currentBackRef);
+      rparen();
+      commit(x, false);
+      forget(makeReader);
 
       return false;
     }
@@ -696,7 +696,7 @@ public class WebModePayloadSink extends CommandSink {
         } while (leafType.getComponentType() != null);
         assert dims > 0;
         // leafType cannot be null here
-        
+
         String s = getJavahSignatureName(leafType);
         for (int i = 0; i < dims; ++i) {
           s = "_3" + s;

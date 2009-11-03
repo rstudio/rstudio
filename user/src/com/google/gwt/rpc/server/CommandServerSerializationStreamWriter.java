@@ -48,7 +48,7 @@ public class CommandServerSerializationStreamWriter extends
     CommandSerializationStreamWriterBase {
 
   private final ClientOracle clientOracle;
-  private final Map<Object, IdentityValueCommand> identityMap = new IdentityHashMap<Object, IdentityValueCommand>();
+  private final Map<Object, IdentityValueCommand> identityMap;
 
   public CommandServerSerializationStreamWriter(CommandSink sink) {
     this(new HostedModeClientOracle(), sink);
@@ -56,8 +56,14 @@ public class CommandServerSerializationStreamWriter extends
 
   public CommandServerSerializationStreamWriter(ClientOracle oracle,
       CommandSink sink) {
+    this(oracle, sink, new IdentityHashMap<Object, IdentityValueCommand>());
+  }
+
+  private CommandServerSerializationStreamWriter(ClientOracle oracle,
+      CommandSink sink, Map<Object, IdentityValueCommand> identityMap) {
     super(sink);
     this.clientOracle = oracle;
+    this.identityMap = identityMap;
   }
 
   /**
@@ -70,13 +76,16 @@ public class CommandServerSerializationStreamWriter extends
       return NullValueCommand.INSTANCE;
     }
 
+    /*
+     * Check accessor map before the identity map because we don't want to
+     * recurse on wrapped primitive values.
+     */
     Accessor accessor;
-
-    if (identityMap.containsKey(value)) {
-      return identityMap.get(value);
-
-    } else if ((accessor = CommandSerializationUtil.getAccessor(type)).canMakeValueCommand()) {
+    if ((accessor = CommandSerializationUtil.getAccessor(type)).canMakeValueCommand()) {
       return accessor.makeValueCommand(value);
+
+    } else if (identityMap.containsKey(value)) {
+      return identityMap.get(value);
 
     } else if (type.isArray()) {
       return makeArray(type, value);
@@ -92,6 +101,7 @@ public class CommandServerSerializationStreamWriter extends
   private ArrayValueCommand makeArray(Class<?> type, Object value)
       throws SerializationException {
     ArrayValueCommand toReturn = new ArrayValueCommand(type.getComponentType());
+    identityMap.put(value, toReturn);
     for (int i = 0, j = Array.getLength(value); i < j; i++) {
       Object arrayValue = Array.get(value, i);
       if (arrayValue == null) {
@@ -102,7 +112,6 @@ public class CommandServerSerializationStreamWriter extends
         toReturn.add(makeValue(valueType, arrayValue));
       }
     }
-    identityMap.put(value, toReturn);
     return toReturn;
   }
 
@@ -202,8 +211,12 @@ public class CommandServerSerializationStreamWriter extends
               instanceClass, customSerializer, manuallySerializedType);
           identityMap.put(instance, toReturn);
 
+          /*
+           * Pass the current identityMap into the new writer to allow circular
+           * references through the graph emitted by the CFS.
+           */
           CommandServerSerializationStreamWriter subWriter = new CommandServerSerializationStreamWriter(
-              clientOracle, new HasValuesCommandSink(toReturn));
+              clientOracle, new HasValuesCommandSink(toReturn), identityMap);
           method.invoke(null, subWriter, instance);
 
           return toReturn;

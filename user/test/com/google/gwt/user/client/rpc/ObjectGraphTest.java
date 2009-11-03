@@ -18,6 +18,7 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializableGraphWithCFS;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStream;
@@ -63,6 +64,25 @@ public class ObjectGraphTest extends GWTTestCase {
           public void onSuccess(Object result) {
             assertNotNull(result);
             assertTrue(TestSetValidator.isValidComplexCyclicGraph((SerializableDoublyLinkedNode) result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testComplexCyclicGraphWithCFS() {
+    delayTestFinish(TEST_DELAY);
+
+    ObjectGraphTestServiceAsync service = getServiceAsync();
+    service.echo_ComplexCyclicGraphWithCFS(
+        TestSetFactory.createComplexCyclicGraphWithCFS(),
+        new AsyncCallback<SerializableGraphWithCFS>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(SerializableGraphWithCFS result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidComplexCyclicGraphWithCFS(result));
             finishTest();
           }
         });

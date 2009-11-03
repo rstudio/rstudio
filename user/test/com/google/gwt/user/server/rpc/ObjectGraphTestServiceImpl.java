@@ -18,6 +18,7 @@ package com.google.gwt.user.server.rpc;
 import com.google.gwt.user.client.rpc.ObjectGraphTestService;
 import com.google.gwt.user.client.rpc.TestSetValidator;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializableGraphWithCFS;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
 
@@ -39,6 +40,15 @@ public class ObjectGraphTestServiceImpl extends HybridServiceServlet implements
   public SerializableDoublyLinkedNode echo_ComplexCyclicGraph(
       SerializableDoublyLinkedNode root) {
     if (!TestSetValidator.isValidComplexCyclicGraph(root)) {
+      throw new RuntimeException();
+    }
+
+    return root;
+  }
+
+  public SerializableGraphWithCFS echo_ComplexCyclicGraphWithCFS(
+      SerializableGraphWithCFS root) {
+    if (!TestSetValidator.isValidComplexCyclicGraphWithCFS(root)) {
       throw new RuntimeException();
     }
 

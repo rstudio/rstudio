@@ -51,13 +51,19 @@ public class CommandClientSerializationStreamWriter extends
     anObject.hashCode();
   }
 
-  private final Map<Object, IdentityValueCommand> identityMap = new IdentityHashMap<Object, IdentityValueCommand>();
+  private final Map<Object, IdentityValueCommand> identityMap;
   private final TypeOverrides serializer;
 
   public CommandClientSerializationStreamWriter(TypeOverrides serializer,
       CommandSink sink) {
+    this(serializer, sink, new IdentityHashMap<Object, IdentityValueCommand>());
+  }
+
+  private CommandClientSerializationStreamWriter(TypeOverrides serializer,
+      CommandSink sink, Map<Object, IdentityValueCommand> identityMap) {
     super(sink);
     this.serializer = serializer;
+    this.identityMap = identityMap;
   }
 
   /**
@@ -141,8 +147,13 @@ public class CommandClientSerializationStreamWriter extends
     InvokeCustomFieldSerializerCommand command = new InvokeCustomFieldSerializerCommand(
         type, null, null);
     identityMap.put(value, command);
+
+    /*
+     * Pass the current identityMap into the new writer to allow circular
+     * references through the graph emitted by the CFS.
+     */
     CommandClientSerializationStreamWriter subWriter = new CommandClientSerializationStreamWriter(
-        serializer, new HasValuesCommandSink(command));
+        serializer, new HasValuesCommandSink(command), identityMap);
 
     serializeFunction.serialize(subWriter, value);
     if (serializer.hasExtraFields(type.getName())) {
