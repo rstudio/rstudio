@@ -44,7 +44,7 @@ public class SoycTest extends TestCase {
     assertTrue(new File(options.getWarDir() + "/hello/compile-report/index.html").exists());
     assertTrue(new File(options.getWarDir() + "/hello/compile-report/SoycDashboard-0-index.html").exists());
     assertTrue(new File(options.getWarDir() + "/hello/compile-report/total-0-overallBreakdown.html").exists());
-    assertTrue(new File(options.getWarDir() + "/hello/compile-report/soycStyling.css").exists());
+    assertTrue(new File(options.getWarDir() + "/hello/compile-report/soyc.css").exists());
 
     assertFalse(new File(options.getWarDir() + "/hello/compile-report/index2.html").exists());
     Util.recursiveDelete(options.getWarDir(), false);

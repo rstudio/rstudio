@@ -34,7 +34,8 @@ public class StaticResources {
    * cannot be iterated over.
    */
   private static String[] resourceNames = new String[] {
-      "soycStyling.css",};
+      "goog.css", "inlay.css", "soyc.css", "images/g_gwt.png",
+      "images/up_arrow.png"};
 
   public static void emit(OutputDirectory outDir) throws IOException {
     String prefix = StaticResources.class.getPackage().getName().replace('.',
@@ -45,7 +46,7 @@ public class StaticResources {
       InputStream in = loader.getResourceAsStream(prefix + resourceName);
       if (in == null) {
         throw new Error("Could not find resource via my class loader: "
-            + resourceName);
+            + prefix + resourceName);
       }
       OutputStream out = outDir.getOutputStream(resourceName);
       Utility.streamOut(in, out, 10240);

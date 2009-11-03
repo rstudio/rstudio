@@ -1,0 +1,241 @@
+/* Inlay overrides */
+.g-doc {
+  width: auto;
+  margin: 1em;
+}
+
+#hd p {
+  padding: 0;
+}
+
+/* Soyc header rules */
+#gwt-logo {
+  background: transparent url(images/g_gwt.png) 0 0 no-repeat;
+  display:block;
+  width:175px;
+  height:30px;
+  margin:4px 0 0 0
+}
+.soyc-ir span {
+  position:absolute;
+  top:-9999px
+}
+#soyc-appbar-lrg {
+  margin:0 0 1.25em 0;
+  padding:.25em .5em;
+  background-color:#e5ecf9;
+  border-top:1px solid #36c
+}
+#soyc-appbar-lrg h1 {
+  font-size:1.2em;
+  padding:0
+}
+#soyc-appbar-lrg h1 span {
+  font-size:80%;
+  font-weight:normal
+}
+
+/* Splitpoint dashboard page rules */
+#soyc-summary {
+  margin-bottom: 2em;
+}
+#soyc-summary dl {
+  float: left;
+  margin-right: 3em;
+}
+#soyc-summary dt {
+  font-size: 1em;
+  font-weight: normal;
+  color: #666;
+  margin-bottom: .2em;
+  padding: 0;
+}
+#soyc-summary dd.value {
+  font-size: 140%;
+  font-weight: bold;
+}
+#soyc-summary dd.report {
+  font-size: .85em;
+}
+#soyc-splitpoint-number-col {
+  width:2em;
+}
+#soyc-splitpoint-size-col {
+  width: 350px;
+}
+#soyc-table-splitpoints {
+  margin-top: 1em;
+}
+#soyc-table-splitpoints tr td:first-child {
+  font-weight:bold;
+}
+#soyc-table-splitpoints a:link {
+  text-decoration: none;
+}
+#soyc-table-splitpoints a:hover,
+#soyc-table-splitpoints a:active {
+  text-decoration: underline;
+}
+#soyc-table-splitpoints a:active {
+  color: #008000;
+}
+.soyc-th-units {
+  font-weight: normal;
+  font-size: .85em;
+}
+.soyc-bar-graph {
+  border: 1px solid #7291D3;
+  width: 200px;
+  height: 1em;
+  background-image: 
+      -webkit-gradient(
+        linear, 
+        left top, left bottom,
+        from(rgba(200, 200, 200, 1)), to(rgba(230, 230, 230, 1)));
+}
+.soyc-bar-graph-fill {
+  background-color: #2966CE;
+  height: 1em;
+}
+
+/* Split point status page rules */
+.soyc-exclusive {
+  margin-left: 2em;
+}
+.soyc-exclusive li {
+  padding: .25em 0 .5em 0;
+}
+.soyc-call-stack-link {
+  font-weight: bold;
+  padding-left: .5em;
+}
+
+/* Method dependencies page rules */
+.soyc-class-header-2 {
+  padding: .2em .5em .3em .5em;
+  margin-bottom: 1em;
+}
+.soyc-class-header {
+  background-color: #e5ecf9;
+  padding: .2em .5em .3em .5em;
+  margin-bottom: 1em;
+}
+.soyc-call-stack-list {
+  list-style: none;
+}
+.soyc-call-stack-list li {
+  background: transparent url('images/up_arrow.png') no-repeat center left;
+  padding-left: 1.4em;
+  padding-top: .4em;
+}
+
+/* Breakdown page rules */
+.soyc-iframe-code,
+.soyc-iframe-package {
+  width: 100%;
+  border: none;
+  border: 1px inset #ccc;
+}
+.soyc-iframe-code {
+  height: 20%;
+}
+.soyc-iframe-package {
+  height: 65%;
+  margin-bottom: 1em;
+}
+.soyc-breakdown .g-doc {
+  width: 100%;
+  margin: 0;
+}
+.soyc-breakdown-strings {
+  padding: .5em 0 0 .5em;
+}
+
+/* Generic table rules */
+.soyc-table {
+  border:1px solid #c5d7ef;
+  border-collapse:collapse;
+  width:100%
+}
+#bd h2.soyc-table-title {
+  background:#e5ecf9;
+  margin:0;
+  color:#000;
+  font-size:1em;
+  padding:3px 0 3px 5px;
+  border-left:1px solid #c5d7ef;
+  border-right:1px solid #c5d7ef;
+  border-top:1px solid #c5d7ef
+}
+.soyc-table-caption, .soyc-table caption {
+  border:1px solid #c5d7ef;
+  background:#e5ecf9;
+  -moz-margin-start:-1px
+}
+.soyc-table caption {
+  padding:3px 5px;
+  text-align:left
+}
+.soyc-table th, .soyc-table td {
+  background-color:#fff;
+  padding:.35em 1em .25em .35em;
+  margin:0
+}
+.soyc-table thead th {
+  font-weight:bold;
+  text-align:left;
+  background:#c5d7ef;
+  vertical-align:bottom
+}
+.soyc-table tfoot tr td {
+  border-top:1px solid #c5d7ef;
+  background-color:#e5ecf9
+}
+.soyc-table td {
+  border-top:1px solid #c5d7ef;
+  border-bottom:1px solid #c5d7ef
+}
+.soyc-even td,
+.soyc-even th,
+.soyc-even-top td,
+.soyc-even-tween td,
+.soyc-even-bottom td,
+ol.soyc-even {
+  background-color:#e9e9e9;
+  border-top:1px solid #c5d7ef;
+  border-bottom:1px solid #c5d7ef
+}
+.soyc-even-top td {
+  border-bottom:0
+}
+.soyc-even-bottom td {
+  border-top:0
+}
+.soyc-even-tween td {
+  border:0
+}
+.soyc-table .soyc-tween td {
+  border:0
+}
+.soyc-table .soyc-tween-top td {
+  border-bottom:0
+}
+.soyc-table .soyc-tween-bottom td {
+  border-top:0
+}
+
+/* Goog inline block rules */
+html>body .goog-inline-block {
+  display:-moz-inline-box;
+  display:inline-block;
+}
+.goog-inline-block {
+  position:relative;
+  display:inline-block
+}
+* html .goog-inline-block {
+  display:inline
+}
+*:first-child+html .goog-inline-block {
+  display:inline
+}
