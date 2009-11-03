@@ -144,8 +144,8 @@
     </gwt.checkstyle>
     <gwt.checkstyle.tests>
       <fileset dir="test">
-        <filename name="com/google/**" />
-        <filename name="test/**" />
+        <include name="com/google/**/*.java" />
+        <include name="test/**" />
       </fileset>
     </gwt.checkstyle.tests>
   </target>
