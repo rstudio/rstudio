@@ -35,9 +35,5 @@ public class TabLayoutPanelExample implements EntryPoint {
     // possible size changes.
     RootLayoutPanel rp = RootLayoutPanel.get();
     rp.add(p);
-
-    // The RootLayoutPanel requires that its layout() method be explicitly
-    // called for the initial layout to take effect.
-    rp.layout();
   }
 }

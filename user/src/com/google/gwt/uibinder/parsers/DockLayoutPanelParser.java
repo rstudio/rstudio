@@ -83,9 +83,6 @@ public class DockLayoutPanelParser implements ElementParser {
             childFieldName);
       }
     }
-
-    // Emit the layout() call.
-    writer.addStatement("%s.layout();", fieldName);
   }
 
   private String addMethodName(XMLElement elem) {

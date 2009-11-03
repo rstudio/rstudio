@@ -15,9 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.layout.client.Layout.AnimationCallback;
-import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Event;
 
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ import java.util.NoSuchElementException;
  * - default style.
  */
 public class StackLayoutPanel extends Composite implements HasWidgets,
-    RequiresLayout, RequiresResize, ProvidesResize {
+    RequiresResize, ProvidesResize {
 
   private class ClickWrapper extends Composite {
     private Widget target;
@@ -75,16 +75,11 @@ public class StackLayoutPanel extends Composite implements HasWidgets,
     public double headerSize;
     public Widget header;
     public Widget widget;
-    public Layer widgetLayer;
-    public Layer headerLayer;
 
-    public LayoutData(Widget widget, Widget header, double headerSize,
-        Layer widgetLayer, Layer headerLayer) {
+    public LayoutData(Widget widget, Widget header, double headerSize) {
       this.widget = widget;
       this.header = header;
       this.headerSize = headerSize;
-      this.widgetLayer = widgetLayer;
-      this.headerLayer = headerLayer;
     }
   }
 
@@ -122,18 +117,15 @@ public class StackLayoutPanel extends Composite implements HasWidgets,
     layoutPanel.add(wrapper);
     layoutPanel.add(widget);
 
-    Layer headerLayer = layoutPanel.getLayer(wrapper);
-    headerLayer.setLeftRight(0, Unit.PX, 0, Unit.PX);
+    layoutPanel.setWidgetLeftRight(wrapper, 0, Unit.PX, 0, Unit.PX);
+    layoutPanel.setWidgetLeftRight(widget, 0, Unit.PX, 0, Unit.PX);
 
-    Layer widgetLayer = layoutPanel.getLayer(widget);
-    widgetLayer.setLeftRight(0, Unit.PX, 0, Unit.PX);
-
-    LayoutData data = new LayoutData(widget, wrapper, headerSize, widgetLayer,
-        headerLayer);
+    LayoutData data = new LayoutData(widget, wrapper, headerSize);
     layoutData.add(data);
 
     if (visibleWidget == null) {
-      visibleWidget = widget;
+      // Don't animate the initial widget display.
+      showWidget(widget, 0);
     }
   }
 
@@ -169,46 +161,6 @@ public class StackLayoutPanel extends Composite implements HasWidgets,
     };
   }
 
-  public void layout() {
-    layout(0);
-  }
-
-  public void layout(int duration) {
-    layout(duration, null);
-  }
-
-  public void layout(int duration, AnimationCallback callback) {
-    int top = 0, bottom = 0;
-    int i = 0, visibleIndex = -1;
-    for (; i < layoutData.size(); ++i) {
-      LayoutData data = layoutData.get(i);
-      data.headerLayer.setTopHeight(top, unit, data.headerSize, unit);
-
-      top += data.headerSize;
-
-      data.widgetLayer.setTopHeight(top, unit, 0, unit);
-
-      if (data.widget == visibleWidget) {
-        visibleIndex = i;
-        break;
-      }
-    }
-
-    assert visibleIndex != -1;
-
-    for (int j = layoutData.size() - 1; j > i; --j) {
-      LayoutData data = layoutData.get(j);
-      data.headerLayer.setBottomHeight(bottom, unit, data.headerSize, unit);
-      data.widgetLayer.setBottomHeight(bottom, unit, 0, unit);
-      bottom += data.headerSize;
-    }
-
-    LayoutData data = layoutData.get(visibleIndex);
-    data.widgetLayer.setTopBottom(top, unit, bottom, unit);
-
-    layoutPanel.layout(duration, callback);
-  }
-
   public void onResize() {
     layoutPanel.onResize();
   }
@@ -230,7 +182,49 @@ public class StackLayoutPanel extends Composite implements HasWidgets,
    * @param widget the child widget to be shown.
    */
   public void showWidget(Widget widget) {
+    showWidget(widget, ANIMATION_TIME);
+  }
+
+  private void animate(int duration) {
+    int top = 0, bottom = 0;
+    int i = 0, visibleIndex = -1;
+    for (; i < layoutData.size(); ++i) {
+      LayoutData data = layoutData.get(i);
+      layoutPanel.setWidgetTopHeight(data.header, top, unit, data.headerSize,
+          unit);
+
+      top += data.headerSize;
+
+      layoutPanel.setWidgetTopHeight(data.widget, top, unit, 0, unit);
+
+      if (data.widget == visibleWidget) {
+        visibleIndex = i;
+        break;
+      }
+    }
+
+    assert visibleIndex != -1;
+
+    for (int j = layoutData.size() - 1; j > i; --j) {
+      LayoutData data = layoutData.get(j);
+      layoutPanel.setWidgetBottomHeight(data.header, bottom, unit,
+          data.headerSize, unit);
+      layoutPanel.setWidgetBottomHeight(data.widget, bottom, unit, 0, unit);
+      bottom += data.headerSize;
+    }
+
+    LayoutData data = layoutData.get(visibleIndex);
+    layoutPanel.setWidgetTopBottom(data.widget, top, unit, bottom, unit);
+
+    layoutPanel.animate(duration);
+  }
+
+  private void showWidget(Widget widget, final int duration) {
     visibleWidget = widget;
-    layout(ANIMATION_TIME);
+    Scheduler.get().scheduleFinally(new ScheduledCommand() {
+      public void execute() {
+        animate(duration);
+      }
+    });
   }
 }

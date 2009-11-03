@@ -53,7 +53,7 @@ public class Mail implements EntryPoint {
     Window.setMargin("0px");
 
     // Special-case stuff to make topPanel overhang a bit.
-    Element topElem = outer.getContainerElementFor(topPanel);
+    Element topElem = outer.getWidgetContainerElement(topPanel);
     topElem.getStyle().setZIndex(2);
     topElem.getStyle().setOverflow(Overflow.VISIBLE);
 
@@ -69,6 +69,5 @@ public class Mail implements EntryPoint {
     // displayed.
     RootLayoutPanel root = RootLayoutPanel.get();
     root.add(outer);
-    root.layout();
   }
 }

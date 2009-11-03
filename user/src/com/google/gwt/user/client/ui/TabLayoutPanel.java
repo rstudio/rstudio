@@ -29,7 +29,6 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.layout.client.Layout.Alignment;
-import com.google.gwt.layout.client.Layout.Layer;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -60,8 +59,8 @@ import java.util.Iterator;
  * - Update style mechanism (gwt-Tab, etc. not really sufficient).
  */
 public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
-    ProvidesResize, IndexedPanel,
-    HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
+    ProvidesResize, IndexedPanel, HasBeforeSelectionHandlers<Integer>,
+    HasSelectionHandlers<Integer> {
 
   private static final int BIG_ENOUGH_TO_NOT_WRAP = 16384;
 
@@ -127,12 +126,9 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
     initWidget(panel);
 
     panel.add(tabBar);
-    Layer layer = panel.getLayer(tabBar);
-    layer.setLeftRight(0, Unit.PX, 0, Unit.PX);
-    layer.setTopHeight(0, Unit.PX, barHeight, barUnit);
-    panel.layout();
-
-    panel.getLayer(tabBar).setChildVerticalPosition(Alignment.END);
+    panel.setWidgetLeftRight(tabBar, 0, Unit.PX, 0, Unit.PX);
+    panel.setWidgetTopHeight(tabBar, 0, Unit.PX, barHeight, barUnit);
+    panel.setWidgetVerticalPosition(tabBar, Alignment.END);
 
     // Make the tab bar extremely wide so that tabs themselves never wrap.
     // (Its layout container is overflow:hidden)
@@ -356,13 +352,13 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
 
     // Update the tabs being selected and unselected.
     if (selectedIndex != -1) {
-      Layer layer = panel.getLayer(children.get(selectedIndex));
-      layer.getContainerElement().getStyle().setVisibility(Visibility.HIDDEN);
+      Element container = panel.getWidgetContainerElement(children.get(selectedIndex));
+      container.getStyle().setVisibility(Visibility.HIDDEN);
       tabs.get(selectedIndex).setSelected(false);
     }
 
-    Layer layer = panel.getLayer(children.get(index));
-    layer.getContainerElement().getStyle().setVisibility(Visibility.VISIBLE);
+    Element container = panel.getWidgetContainerElement(children.get(index));
+    container.getStyle().setVisibility(Visibility.VISIBLE);
     tabs.get(index).setSelected(true);
     selectedIndex = index;
 
@@ -445,10 +441,9 @@ public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
   }
 
   private void layoutChild(Widget child) {
-    Layer layer = panel.getLayer(child);
-    layer.setLeftRight(0, Unit.PX, 0, Unit.PX);
-    layer.setTopBottom(barHeight, barUnit, 0, Unit.PX);
-    layer.getContainerElement().getStyle().setVisibility(Visibility.HIDDEN);
-    panel.layout();
+    panel.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
+    panel.setWidgetTopBottom(child, barHeight, barUnit, 0, Unit.PX);
+    panel.getWidgetContainerElement(child).getStyle().setVisibility(
+        Visibility.HIDDEN);
   }
 }

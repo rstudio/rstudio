@@ -29,18 +29,10 @@ public class SplitLayoutPanelExample implements EntryPoint {
     p.addNorth(new HTML("list"), 384);
     p.add(new HTML("details"));
 
-    // Note the explicit call to layout(). This is required for the layout to
-    // take effect.
-    p.layout();
-
     // Attach the LayoutPanel to the RootLayoutPanel. The latter will listen for
     // resize events on the window to ensure that its children are informed of
     // possible size changes.
     RootLayoutPanel rp = RootLayoutPanel.get();
     rp.add(p);
-
-    // The RootLayoutPanel also requires that its layout() method be explicitly
-    // called for the initial layout to take effect.
-    rp.layout();
   }
 }

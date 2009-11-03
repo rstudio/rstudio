@@ -18,7 +18,6 @@ package com.google.gwt.examples;
 import static com.google.gwt.dom.client.Style.Unit.PCT;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -34,22 +33,13 @@ public class LayoutPanelExample implements EntryPoint {
     p.add(childOne);
     p.add(childTwo);
 
-    Layer layerOne = p.getLayer(childOne), layerTwo = p.getLayer(childTwo);
-    layerOne.setLeftWidth(0, PCT, 50, PCT);
-    layerTwo.setRightWidth(0, PCT, 50, PCT);
-
-    // Note the explicit call to layout(). This is required for the layout to
-    // take effect.
-    p.layout();
+    p.setWidgetLeftWidth(childOne, 0, PCT, 50, PCT);
+    p.setWidgetRightWidth(childTwo, 0, PCT, 50, PCT);
 
     // Attach the LayoutPanel to the RootLayoutPanel. The latter will listen for
     // resize events on the window to ensure that its children are informed of
     // possible size changes.
     RootLayoutPanel rp = RootLayoutPanel.get();
     rp.add(p);
-
-    // The RootLayoutPanel also requires that its layout() method be explicitly
-    // called for the initial layout to take effect.
-    rp.layout();
   }
 }

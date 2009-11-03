@@ -73,9 +73,6 @@ public class StackLayoutPanelParser implements ElementParser {
       writer.addStatement("%s.add(%s, %s, %s);", fieldName, childFieldName,
           headerFieldName, size);
     }
-
-    // Emit the layout() call.
-    writer.addStatement("%s.layout();", fieldName);
   }
 
   private boolean isElementType(XMLElement parent, XMLElement child, String type) {

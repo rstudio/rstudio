@@ -16,20 +16,17 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.layout.client.Layout;
+import com.google.gwt.layout.client.Layout.Alignment;
+import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 
 /**
  * A panel that lays its children out in arbitrary
  * {@link com.google.gwt.layout.client.Layout.Layer layers} using the
  * {@link Layout} class.
- * 
- * <p>
- * Whenever children are added to, or removed from, this panel, you must call
- * one of {@link #layout()}, {@link #layout(int)}, or
- * {@link #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)}
- * to update the panel's layout.
- * </p>
  * 
  * <p>
  * This widget will <em>only</em> work in standards mode, which requires that
@@ -46,13 +43,12 @@ import com.google.gwt.layout.client.Layout.Layer;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.LayoutPanelExample}
  * </p>
- * 
- * TODO: implements IndexedPanel (I think)
  */
-public class LayoutPanel extends ComplexPanel implements RequiresLayout,
+public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
     RequiresResize, ProvidesResize {
 
   private final Layout layout;
+  private final LayoutCommand animCmd;
 
   /**
    * Creates an empty layout panel.
@@ -60,6 +56,7 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
   public LayoutPanel() {
     setElement(Document.get().createDivElement());
     layout = new Layout(getElement());
+    animCmd = new LayoutCommand(layout);
   }
 
   /**
@@ -67,9 +64,9 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
    * 
    * <p>
    * By default, each child will fill the panel. To build more interesting
-   * layouts, use {@link #getLayer(Widget)} to get the
-   * {@link com.google.gwt.layout.client.Layout.Layer} associated with each
-   * child, and set its layout constraints as desired.
+   * layouts, set child widgets' layout constraints using
+   * {@link #setWidgetLeftRight(Widget, double, Unit, double, Unit)} and related
+   * methods.
    * </p>
    * 
    * @param widget the widget to be added
@@ -78,23 +75,29 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
     insert(widget, getWidgetCount());
   }
 
+  public void animate(int duration) {
+    animate(duration, null);
+  }
+
+  public void animate(final int duration, final AnimationCallback callback) {
+    animCmd.schedule(duration, callback);
+  }
+
+  public void forceLayout() {
+    animCmd.cancel();
+    layout.layout();
+    onResize();
+  }
+
   /**
-   * Gets the {@link Layer} associated with the given widget. This layer may be
-   * used to manipulate the child widget's layout constraints.
+   * Gets the container element wrapping the given child widget.
    * 
-   * <p>
-   * After you have made changes to any of the child widgets' constraints, you
-   * must call one of the {@link RequiresLayout} methods for those changes to
-   * be reflected visually.
-   * </p>
-   * 
-   * @param child the child widget whose layer is to be retrieved
-   * @return the associated layer
+   * @param child
+   * @return the widget's container element
    */
-  public Layout.Layer getLayer(Widget child) {
-    assert child.getParent() == this :
-      "The requested widget is not a child of this panel";
-    return (Layout.Layer) child.getLayoutData();
+  public Element getWidgetContainerElement(Widget child) {
+    assertIsChild(child);
+    return getLayer(child).getContainerElement();
   }
 
   /**
@@ -102,9 +105,9 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
    * 
    * <p>
    * By default, each child will fill the panel. To build more interesting
-   * layouts, use {@link #getLayer(Widget)} to get the
-   * {@link com.google.gwt.layout.client.Layout.Layer} associated with each
-   * child, and set its layout constraints as desired.
+   * layouts, set child widgets' layout constraints using
+   * {@link #setWidgetLeftRight(Widget, double, Unit, double, Unit)} and related
+   * methods.
    * </p>
    * 
    * <p>
@@ -131,39 +134,8 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
 
     // Adopt.
     adopt(widget);
-  }
 
-  public void layout() {
-    layout.layout();
-  }
-
-  public void layout(int duration) {
-    layout.layout(duration);
-  }
-
-  public void layout(int duration, final Layout.AnimationCallback callback) {
-    layout.layout(duration, new Layout.AnimationCallback() {
-      public void onAnimationComplete() {
-        // Chain to the passed callback.
-        if (callback != null) {
-          callback.onAnimationComplete();
-        }
-      }
-
-      public void onLayout(Layer layer, double progress) {
-        // Inform the child associated with this layer that its size may have
-        // changed.
-        Widget child = (Widget) layer.getUserObject();
-        if (child instanceof RequiresResize) {
-          ((RequiresResize) child).onResize();
-        }
-
-        // Chain to the passed callback.
-        if (callback != null) {
-          callback.onLayout(layer, progress);
-        }
-      }
-    });
+    animate(0);
   }
 
   public void onResize() {
@@ -184,12 +156,123 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
   }
 
   /**
-   * Gets the {@link Layout} instance associated with this widget.
+   * Sets the child widget's bottom and height values.
    * 
-   * @return this widget's layout instance
+   * @param child
+   * @param bottom
+   * @param bottomUnit
+   * @param height
+   * @param heightUnit
    */
-  protected Layout getLayout() {
-    return layout;
+  public void setWidgetBottomHeight(Widget child, double bottom,
+      Unit bottomUnit, double height, Unit heightUnit) {
+    assertIsChild(child);
+    getLayer(child).setBottomHeight(bottom, bottomUnit, height, heightUnit);
+    animate(0);
+  }
+
+  /**
+   * Sets the child widget's horizontal position within its layer.
+   * 
+   * @param child
+   * @param position
+   */
+  public void setWidgetHorizontalPosition(Widget child, Alignment position) {
+    assertIsChild(child);
+    getLayer(child).setChildHorizontalPosition(position);
+    animate(0);
+  }
+
+  /**
+   * Sets the child widget's left and right values.
+   * 
+   * @param child
+   * @param left
+   * @param leftUnit
+   * @param right
+   * @param rightUnit
+   */
+  public void setWidgetLeftRight(Widget child, double left, Unit leftUnit,
+      double right, Unit rightUnit) {
+    assertIsChild(child);
+    getLayer(child).setLeftRight(left, leftUnit, right, rightUnit);
+    animate(0);
+  }
+
+  /**
+   * Sets the child widget's left and width values.
+   * 
+   * @param child
+   * @param left
+   * @param leftUnit
+   * @param width
+   * @param widthUnit
+   */
+  public void setWidgetLeftWidth(Widget child, double left, Unit leftUnit,
+      double width, Unit widthUnit) {
+    assertIsChild(child);
+    getLayer(child).setLeftWidth(left, leftUnit, width, widthUnit);
+    animate(0);
+  }
+
+  /**
+   * Sets the child widget's right and width values.
+   * 
+   * @param child
+   * @param right
+   * @param rightUnit
+   * @param width
+   * @param widthUnit
+   */
+  public void setWidgetRightWidth(Widget child, double right, Unit rightUnit,
+      double width, Unit widthUnit) {
+    assertIsChild(child);
+    getLayer(child).setRightWidth(right, rightUnit, width, widthUnit);
+    animate(0);
+  }
+
+  /**
+   * Sets the child widget's top and bottom values.
+   * 
+   * @param child
+   * @param top
+   * @param topUnit
+   * @param bottom
+   * @param bottomUnit
+   */
+  public void setWidgetTopBottom(Widget child, double top, Unit topUnit,
+      double bottom, Unit bottomUnit) {
+    assertIsChild(child);
+    getLayer(child).setTopBottom(top, topUnit, bottom, bottomUnit);
+    animate(0);
+  }
+
+  /**
+   * Sets the child widget's top and height values.
+   * 
+   * @param child
+   * @param top
+   * @param topUnit
+   * @param height
+   * @param heightUnit
+   */
+  public void setWidgetTopHeight(Widget child, double top, Unit topUnit,
+      double height, Unit heightUnit) {
+    assertIsChild(child);
+    getLayer(child).setTopHeight(top, topUnit, height, heightUnit);
+    animate(0);
+  }
+
+  /**
+   * Sets the child widget's vertical position within its layer.
+   * 
+   * @param child
+   * @param position
+   */
+  public void setWidgetVerticalPosition(Widget child, Alignment position) {
+    assertIsChild(child);
+    getLayer(child).setChildVerticalPosition(position);
+    animate(0);
   }
 
   @Override
@@ -200,5 +283,24 @@ public class LayoutPanel extends ComplexPanel implements RequiresLayout,
   @Override
   protected void onUnload() {
     layout.onDetach();
+  }
+
+  /**
+   * Gets the {@link Layout} instance associated with this widget. This is made
+   * package-protected for use by {@link RootLayoutPanel}.
+   * 
+   * @return this widget's layout instance
+   */
+  Layout getLayout() {
+    return layout;
+  }
+
+  private void assertIsChild(Widget widget) {
+    assert (widget == null) || (widget.getParent() == this) : "The specified widget is not a child of this panel";
+  }
+
+  private Layout.Layer getLayer(Widget child) {
+    assert child.getParent() == this : "The requested widget is not a child of this panel";
+    return (Layout.Layer) child.getLayoutData();
   }
 }

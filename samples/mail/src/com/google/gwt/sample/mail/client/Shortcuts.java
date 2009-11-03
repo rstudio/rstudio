@@ -33,8 +33,6 @@ public class Shortcuts extends LayoutComposite {
   interface Binder extends UiBinder<StackLayoutPanel, Shortcuts> { }
   private static final Binder binder = GWT.create(Binder.class);
 
-  private StackLayoutPanel stackPanel;
-
   @UiField Mailboxes mailboxes;
   @UiField Tasks tasks;
   @UiField Contacts contacts;
@@ -45,12 +43,6 @@ public class Shortcuts extends LayoutComposite {
    * @param images a bundle that provides the images for this widget
    */
   public Shortcuts() {
-    initWidget(stackPanel = binder.createAndBindUi(this));
-  }
-
-  @Override
-  protected void onLoad() {
-    // Show the mailboxes group by default.
-    stackPanel.showWidget(mailboxes);
+    initWidget(binder.createAndBindUi(this));
   }
 }

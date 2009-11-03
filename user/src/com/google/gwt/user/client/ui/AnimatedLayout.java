@@ -15,40 +15,25 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.layout.client.Layout;
+import com.google.gwt.layout.client.Layout.AnimationCallback;
 
 /**
- * Designates that a widget requires a method to be explicitly called after its
- * children are modified.
+ * Specifies that a panel can animate between layouts.
  * 
  * <p>
- * Widgets that implement this interface perform some layout work that will not
- * be fully realized until {@link #layout()} or one of its overloads is called.
- * This is required after adding or removing child widgets, and after any other
- * operations that the implementor designates as requiring layout. Note that
- * only <em>one</em> call to {@link #layout()} is required after any number of
- * modifications.
+ * The normal use pattern is to set all childrens' positions, then to call
+ * {@link #animate(int)} to move them to their new positions over some period
+ * of time.
  * </p>
  */
-public interface RequiresLayout {
-
-  /**
-   * Layout children immediately.
-   * 
-   * @see #layout(int)
-   * @see #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)
-   */
-  void layout();
+public interface AnimatedLayout {
 
   /**
    * Layout children, animating over the specified period of time.
    * 
    * @param duration the animation duration, in milliseconds
-   * 
-   * @see #layout()
-   * @see #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)
    */
-  void layout(int duration);
+  void animate(int duration);
 
   /**
    * Layout children, animating over the specified period of time.
@@ -60,9 +45,20 @@ public interface RequiresLayout {
    * 
    * @param duration the animation duration, in milliseconds
    * @param callback the animation callback
-   * 
-   * @see #layout()
-   * @see #layout(int, com.google.gwt.layout.client.Layout.AnimationCallback)
    */
-  void layout(int duration, final Layout.AnimationCallback callback);
+  void animate(final int duration, final AnimationCallback callback);
+
+  /**
+   * Layout children immediately.
+   * 
+   * <p>
+   * This is not normally necessary, unless you want to update child widgets'
+   * positions explicitly to create a starting point for a subsequent call to
+   * {@link #animate(int)}.
+   * </p>
+   * 
+   * @see #animate(int)
+   * @see #animate(int, AnimationCallback)
+   */
+  void forceLayout();
 }

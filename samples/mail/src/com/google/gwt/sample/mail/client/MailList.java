@@ -78,7 +78,7 @@ public class MailList extends LayoutComposite implements ClickHandler {
     dock.add(new ScrollPanel(table));
     header.setWidth("100%");
     table.setWidth("100%");
-    dock.layout();
+
     initWidget(dock);
     setStyleName("mail-List");
 

@@ -173,7 +173,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
         layoutCommand = new Command() {
           public void execute() {
             layoutCommand = null;
-            layout();
+            forceLayout();
           }
         };
         DeferredCommand.addCommand(layoutCommand);

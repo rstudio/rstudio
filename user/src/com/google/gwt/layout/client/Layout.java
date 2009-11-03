@@ -449,32 +449,7 @@ public class Layout {
    * called after updating any of its children's {@link Layer layers}.
    */
   public void layout() {
-    for (Layer l : layers) {
-      l.left = l.sourceLeft = l.targetLeft;
-      l.top = l.sourceTop = l.targetTop;
-      l.right = l.sourceRight = l.targetRight;
-      l.bottom = l.sourceBottom = l.targetBottom;
-      l.width = l.sourceWidth = l.targetWidth;
-      l.height = l.sourceHeight = l.targetHeight;
-
-      l.setLeft = l.setTargetLeft;
-      l.setTop = l.setTargetTop;
-      l.setRight = l.setTargetRight;
-      l.setBottom = l.setTargetBottom;
-      l.setWidth = l.setTargetWidth;
-      l.setHeight = l.setTargetHeight;
-
-      l.leftUnit = l.targetLeftUnit;
-      l.topUnit = l.targetTopUnit;
-      l.rightUnit = l.targetRightUnit;
-      l.bottomUnit = l.targetBottomUnit;
-      l.widthUnit = l.targetWidthUnit;
-      l.heightUnit = l.targetHeightUnit;
-
-      impl.layout(l);
-    }
-
-    impl.finalizeLayout(parentElem);
+    layout(0);
   }
 
   /**
@@ -495,6 +470,41 @@ public class Layout {
    * @param callback the animation callback
    */
   public void layout(int duration, final AnimationCallback callback) {
+    // If there's no actual animation going on, don't do any of the expensive
+    // constraint calculations or anything like that.
+    if (duration == 0) {
+      for (Layer l : layers) {
+        l.left = l.sourceLeft = l.targetLeft;
+        l.top = l.sourceTop = l.targetTop;
+        l.right = l.sourceRight = l.targetRight;
+        l.bottom = l.sourceBottom = l.targetBottom;
+        l.width = l.sourceWidth = l.targetWidth;
+        l.height = l.sourceHeight = l.targetHeight;
+
+        l.setLeft = l.setTargetLeft;
+        l.setTop = l.setTargetTop;
+        l.setRight = l.setTargetRight;
+        l.setBottom = l.setTargetBottom;
+        l.setWidth = l.setTargetWidth;
+        l.setHeight = l.setTargetHeight;
+
+        l.leftUnit = l.targetLeftUnit;
+        l.topUnit = l.targetTopUnit;
+        l.rightUnit = l.targetRightUnit;
+        l.bottomUnit = l.targetBottomUnit;
+        l.widthUnit = l.targetWidthUnit;
+        l.heightUnit = l.targetHeightUnit;
+
+        impl.layout(l);
+      }
+
+      impl.finalizeLayout(parentElem);
+      if (callback != null) {
+        callback.onAnimationComplete();
+      }
+      return;
+    }
+
     // Deal with constraint changes (e.g. left-width => right-width, etc)
     int parentWidth = parentElem.getClientWidth();
     int parentHeight = parentElem.getClientHeight();
