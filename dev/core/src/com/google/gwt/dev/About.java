@@ -46,16 +46,27 @@ public class About {
   public static String GWT_VERSION;
 
   /**
-   * @deprecated use {@link #getGwtVersionArray()} or
+   * @deprecated use {@link #getGwtVersionObject()} or
    *             {@link #getGwtVersionNum()} instead.
    */
   @Deprecated
   public static String GWT_VERSION_NUM;
 
+  /**
+   * Tag used for text replacement of the SVN version (split up to avoid
+   * replacing it here).
+   */ 
+  private static final String GWT_SVNREV_TAG = "@GWT_" + "SVNREV@";
+
+  /**
+   * Tag used for text replacement of the GWT version (split up to avoid
+   * replacing it here).
+   */ 
+  private static final String GWT_VERSION_TAG = "@GWT_" + "VERSION@";
+
   private static final String gwtName = "Google Web Toolkit";
   private static final String gwtSvnRev;
-  private static int[] gwtVersionArray = null;
-  private static final String gwtVersionNum;
+  private static final GwtVersion gwtVersion;
 
   static {
     Properties props = new Properties();
@@ -68,19 +79,19 @@ public class About {
 
     String tmp;
     tmp = props.getProperty("gwt.svnrev");
-    // Check for null or sentinel value (break up to avoid text replace)
-    if (tmp == null || tmp.equals("@GWT_" + "SVNREV@")) {
+    // Check for null or sentinel value
+    if (tmp == null || tmp.equals(GWT_SVNREV_TAG)) {
       gwtSvnRev = "unknown";
     } else {
       gwtSvnRev = tmp;
     }
 
     tmp = props.getProperty("gwt.version");
-    // Check for null or sentinel value (break up to avoid text replace)
-    if (tmp == null || tmp.equals("@GWT_" + "VERSION@")) {
-      gwtVersionNum = "0.0.0";
+    // Check for null or sentinel value
+    if (tmp == null || tmp.equals(GWT_VERSION_TAG)) {
+      gwtVersion = new GwtVersion();
     } else {
-      gwtVersionNum = tmp;
+      gwtVersion = new GwtVersion(tmp);
     }
 
     // Initialize deprecated constants
@@ -121,10 +132,7 @@ public class About {
    *         determined at build time.
    */
   public static int[] getGwtVersionArray() {
-    if (gwtVersionArray == null) {
-      gwtVersionArray = parseGwtVersionString(getGwtVersionNum());
-    }
-    return gwtVersionArray;
+    return gwtVersion.getComponents();
   }
 
   /**
@@ -134,61 +142,18 @@ public class About {
    *         determined at build time.
    */
   public static String getGwtVersionNum() {
-    return gwtVersionNum;
+    return gwtVersion.toString();
   }
 
   /**
-   * Takes a string formatted as 3 numbers separated by periods and returns an 3
-   * element array. Non-numeric prefixes and suffixes are stripped.
+   * The Google Web Toolkit release number.
    * 
-   * @param versionString A string formatted as 3 numbers.
-   * @return a 3 element array of the parsed string
-   * @throws NumberFormatException if the string is malformed
+   * @return the release number or a version equivalent to "0.0.0" if the value
+   *     couldn't be determined at build time.
    */
-  public static int[] parseGwtVersionString(String versionString)
-      throws NumberFormatException {
-    int[] version = {0, 0, 0};
-    if (versionString == null) {
-      return version;
-    }
-    int len = versionString.length();
-    int index = 0;
-    // Skip leading characters that are not digits to support a
-    // non-numeric prefix on a version string.
-    for (; index < len; ++index) {
-      if (Character.isDigit(versionString.charAt(index))) {
-        break;
-      }
-    }
-    int part = 0;
-    int v = 0;
-    for (; index < len; ++index) {
-      char ch = versionString.charAt(index);
-      if (ch == '.') {
-        if (part >= version.length) {
-          throw new NumberFormatException("Too many period chracters");
-        }
-        version[part++] = v;
-        v = 0;
-      } else if (Character.isDigit(ch)) {
-        int digit = Character.digit(ch, 10);
-        if (digit < 0) {
-          throw new NumberFormatException("Negative number encountered");
-        }
-        v = v * 10 + digit;
-      } else {
-        // end the parse to support a non-numeric suffix
-        break;
-      }
-    }
-    if (part >= version.length) {
-      throw new NumberFormatException("Too many digits in string. Expected 3");
-    }
-    version[part++] = v;
-    if (part != version.length) {
-      throw new NumberFormatException("Expected 3 elements in array");
-    }
-    return version;
+  public static GwtVersion getGwtVersionObject() {
+    // This is public because CheckForUpdates and WebAppCreator need access.
+    return gwtVersion;
   }
 
   private About() {

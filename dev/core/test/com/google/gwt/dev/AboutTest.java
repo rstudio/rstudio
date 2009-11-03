@@ -23,7 +23,7 @@ import junit.framework.TestCase;
 public class AboutTest extends TestCase {
 
   @SuppressWarnings("deprecation")
-  public void testDepreciatedConstants() {
+  public void testDeprecatedConstants() {
     assertEquals("GWT_NAME", About.getGwtName(), About.GWT_NAME); 
     assertEquals("GWT_VERSION", About.getGwtVersion(), About.GWT_VERSION);
     assertEquals("GWT_VERSION_NUM", About.getGwtVersionNum(), About.GWT_VERSION_NUM);
@@ -44,81 +44,17 @@ public class AboutTest extends TestCase {
     String result = About.getGwtVersion();
     assertFalse(result.length() == 0);
     String compare = About.getGwtName() + " " + About.getGwtVersionNum();
-    
+    assertEquals(compare, result);
   }
   
   public void testGwtVersionNum() {
     String result = About.getGwtVersionNum();
     assertFalse(result.length() == 0);
   }
-  
-  public void testParseGwtVersionString() {
-    int[] result;
-    result = About.parseGwtVersionString("0.0.0");
-    assertEquals("result.length", 3, result.length);
-    assertEquals("0.0.0 - 0", 0, result[0]);
-    assertEquals("0.0.0 - 1", 0, result[1]);
-    assertEquals("0.0.0 - 2", 0, result[2]);
-    
-    result = About.parseGwtVersionString(null);
-    assertEquals("result.length", 3, result.length);
-    assertEquals("null - 0", 0, result[0]);
-    assertEquals("null - 1", 0, result[1]);
-    assertEquals("null - 2", 0, result[2]);    
-    
-    result = About.parseGwtVersionString("1.5.4");
-    assertEquals("result.length", 3, result.length);
-    assertEquals("1.5.4 - 0", 1, result[0]);
-    assertEquals("1.5.4 - 1", 5, result[1]);
-    assertEquals("1.5.4 - 2", 4, result[2]);
-    
-    result = About.parseGwtVersionString("prefix1.5.4");
-    assertEquals("prefix1.5.4 - 0", 1, result[0]);
-    assertEquals("prefix1.5.4 - 1", 5, result[1]);
-    assertEquals("prefix1.5.4 - 2", 4, result[2]);
-    
-    result = About.parseGwtVersionString("1.5.4-suffix0");
-    assertEquals("result.length", 3, result.length);
-    assertEquals("1.5.4-suffix0 - 0", 1, result[0]);
-    assertEquals("1.5.4-suffix0 - 1", 5, result[1]);
-    assertEquals("1.5.4-suffix0 - 2", 4, result[2]);
-    
-    result = About.parseGwtVersionString("1.5.4-patch0");
-    assertEquals("result.length", 3, result.length);
-    assertEquals("1.5.4-patch0 - 0", 1, result[0]);
-    assertEquals("1.5.4-patch0 - 1", 5, result[1]);
-    assertEquals("1.5.4-patch0 - 2", 4, result[2]);
 
-    try {
-      result = About.parseGwtVersionString("1.5.4.2");
-      fail("Should have thrown exception parsing 1.5.4.2. Got "
-          + result[0] +", " + result[1] + ", " + result[2]);
-    } catch (NumberFormatException ex) {
-      // OK
-    }        
-    
-    try {
-      result = About.parseGwtVersionString("1.5baloney");
-      fail("Should have thrown exception parsing 1.5baloney Got "
-          + result[0] +", " + result[1] + ", " + result[2]);
-    } catch (NumberFormatException ex) {
-      // OK
-    }            
-    
-    try {
-      result = About.parseGwtVersionString("1");
-      fail("Should have thrown exception parsing 1 Got "
-          + result[0] +", " + result[1] + ", " + result[2]);
-    } catch (NumberFormatException ex) {
-      // OK
-    }
-    
-    try {
-      result = About.parseGwtVersionString("1.5");
-      fail("Should have thrown exception parsing 1.5 Got "
-          + result[0] +", " + result[1] + ", " + result[2]);
-    } catch (NumberFormatException ex) {
-      // OK
-    }
+  public void testGwtVersionObject() {
+    GwtVersion version = About.getGwtVersionObject();
+    assertNotNull(version);
+    assertFalse(version.toString().length() == 0);
   }
 }

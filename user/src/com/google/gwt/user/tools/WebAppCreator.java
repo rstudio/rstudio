@@ -19,6 +19,7 @@ import com.google.gwt.dev.About;
 import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.dev.Compiler;
 import com.google.gwt.dev.DevMode;
+import com.google.gwt.dev.GwtVersion;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.user.tools.util.ArgHandlerIgnore;
 import com.google.gwt.user.tools.util.ArgHandlerOverwrite;
@@ -219,9 +220,8 @@ public final class WebAppCreator {
 
     // Public builds generate a DTD reference.
     String gwtModuleDtd = "";
-    int gwtVersion[] = About.getGwtVersionArray();
-    if (gwtVersion[2] == 999
-        && !(gwtVersion[0] == 0 && gwtVersion[1] == 0)) {
+    GwtVersion gwtVersion = About.getGwtVersionObject();
+    if (gwtVersion.isNoNagVersion()) {
       gwtModuleDtd = "\n<!DOCTYPE module PUBLIC \"-//Google Inc.//DTD Google Web Toolkit "
           + About.getGwtVersionNum()
           + "//EN\" \"http://google-web-toolkit.googlecode.com/svn/tags/"

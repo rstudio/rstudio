@@ -18,6 +18,7 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.dev.About;
+import com.google.gwt.dev.GwtVersion;
 import com.google.gwt.dev.shell.ie.CheckForUpdatesIE6;
 
 import org.w3c.dom.Document;
@@ -55,85 +56,6 @@ import javax.xml.parsers.ParserConfigurationException;
  * available.
  */
 public class CheckForUpdates {
-
-  /**
-   * Represents a GWT version.
-   */
-  public static class GwtVersion implements Comparable<GwtVersion> {
-
-    /**
-     *  Always a 3 element array. 
-     */
-    private final int[] version;
-
-    /**
-     * Create a version that avoids any nagging -- "0.0.999".
-     */
-    public GwtVersion() {
-      version = new int[3];
-      version[2] = 999;
-    }
-
-    /**
-     * Parse a version number as a string. An empty or null string are
-     * explicitly allowed and are equivalent to "0.0.0".
-     * 
-     * @param versionString
-     * @throws NumberFormatException
-     */
-    public GwtVersion(String versionString) throws NumberFormatException {
-     version = About.parseGwtVersionString(versionString);
-    }
-
-    public int compareTo(GwtVersion o) {
-      for (int i = 0; i <= 2; ++i) {
-        if (version[i] != o.version[i]) {
-          return version[i] - o.version[i];
-        }
-      }
-      return 0;
-    }
-    
-    @Override
-    public boolean equals(Object o) {
-      if (!(o instanceof GwtVersion)) {
-        return false;
-      }
-      GwtVersion other = (GwtVersion) o;
-      for (int i = 0; i <= 2; ++i) {
-        if (version[i] != other.version[i]) {
-          return false;
-        }
-      }
-      return true;
-    }
-    
-    public int getPart(int part) {
-      // TODO: something besides IORE here?
-      return version[part];
-    }
-
-    @Override
-    public int hashCode() {
-      return (version[0] * 31 + version[1]) * 31 + version[2];
-    }
-
-    public boolean isNoNagVersion() {
-      return version[2] == 999;
-    }
-
-    public boolean isUnspecified() {
-      return version[0] == 0 && version[1] == 0 && version[2] == 0;
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder buf = new StringBuilder();
-      buf.append(version[0]).append('.').append(version[1]).append('.');
-      buf.append(version[2]);
-      return buf.toString();
-    }
-  }
 
   /**
    * Returns the result of an update check.
@@ -312,12 +234,7 @@ public class CheckForUpdates {
   public CheckForUpdates(TreeLogger logger, String entryPoint) {
     this.logger = logger;
     this.entryPoint = entryPoint;
-    try {
-      myVersion = new GwtVersion(About.getGwtVersionNum());
-    } catch (NumberFormatException e) {
-      // if our build version number is bogus, use one that avoids nagging
-      myVersion = new GwtVersion();
-    }
+    myVersion = About.getGwtVersionObject();
   }
 
   /**
@@ -401,7 +318,7 @@ public class CheckForUpdates {
 
       // See if new version is available.
       //
-      String url = queryURL + "?v=" + About.getGwtVersionNum() + "&id="
+      String url = queryURL + "?v=" + myVersion.toString() + "&id="
           + firstLaunch + "&r=" + About.getGwtSvnRev();
       if (entryPoint != null) {
         url += "&e=" + entryPoint;
