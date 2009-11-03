@@ -230,8 +230,8 @@ public class XMLElement {
   /**
    * Consumes the given attribute as an enum value.
    * 
-   * @param attr the attribute's full name (including prefix)
-   * @param type the enumerated type of which this attribute must be a member
+   * @param name the attribute's full name (including prefix)
+   * @param enumType the enumerated type of which this attribute must be a member
    * @return the attribute's value
    * @throws UnableToCompleteException
    */

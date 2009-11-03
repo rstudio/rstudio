@@ -147,7 +147,7 @@ public class UiBinderParser {
   }
 
   /**
-   * Interprets <ui:data> elements
+   * Interprets <ui:data> elements.
    */
   private void createData(XMLElement elem) throws UnableToCompleteException {
     String name = elem.consumeRequiredAttribute(FIELD_ATTRIBUTE);
@@ -161,7 +161,7 @@ public class UiBinderParser {
   }
 
   /**
-   * Interprets <ui:image> elements
+   * Interprets <ui:image> elements.
    */
   private void createImage(XMLElement elem) throws UnableToCompleteException {
     String name = elem.consumeRequiredAttribute(FIELD_ATTRIBUTE);

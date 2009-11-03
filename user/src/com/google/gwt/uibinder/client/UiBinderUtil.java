@@ -79,7 +79,6 @@ public class UiBinderUtil {
     
     return new TempAttachment(origParent, origSibling, element);
   }
- 
 
   public static Element fromHtml(String html) {
     ensureHiddenDiv();
