@@ -42,12 +42,12 @@ import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,13 +58,15 @@ import java.util.Set;
 public abstract class AbstractClientBundleGenerator extends Generator {
 
   /**
-   * An implementation of FieldAccumulator that immediately composes its output
-   * into a StringWriter.
+   * An implementation of ClientBundleFields.
    */
-  private static class FieldsImpl implements ClientBundleFields {
+  protected static class FieldsImpl implements ClientBundleFields {
     private final NameFactory factory = new NameFactory();
-    private final StringWriter buffer = new StringWriter();
-    private final PrintWriter pw = new PrintWriter(buffer);
+    /**
+     * It is necessary to maintain order in case one field refers to another.
+     */
+    private final Map<String, String> fieldsToDeclarations = new LinkedHashMap<String, String>();
+    private final Map<String, String> fieldsToInitializers = new HashMap<String, String>();
 
     public void addName(String name) {
       factory.addName(name);
@@ -82,33 +84,56 @@ public abstract class AbstractClientBundleGenerator extends Generator {
 
       String ident = factory.createName(name);
 
-      pw.print("private ");
+      StringBuilder sb = new StringBuilder();
+      sb.append("private ");
 
       if (isStatic) {
-        pw.print("static ");
+        sb.append("static ");
       }
 
       if (isFinal) {
-        pw.print("final ");
+        sb.append("final ");
       }
 
-      pw.print(type.getQualifiedSourceName());
-      pw.print(" ");
-      pw.print(ident);
+      sb.append(type.getQualifiedSourceName());
+      sb.append(" ");
+      sb.append(ident);
+
+      fieldsToDeclarations.put(ident, sb.toString());
 
       if (initializer != null) {
-        pw.print(" = ");
-        pw.print(initializer);
+        fieldsToInitializers.put(ident, initializer);
       }
-
-      pw.println(";");
 
       return ident;
     }
 
-    public String toString() {
-      pw.flush();
-      return buffer.getBuffer().toString();
+    /**
+     * This can be called to reset the initializer expression on an
+     * already-defined field.
+     * 
+     * @param ident an identifier previously returned by {@link #define}
+     * @param initializer a Java expression that will be used to initialize the
+     *          field
+     */
+    public void setInitializer(String ident, String initializer) {
+      assert fieldsToDeclarations.containsKey(ident) : ident + " not defined";
+      fieldsToInitializers.put(ident, initializer);
+    }
+
+    private String getCode() {
+      StringBuilder sb = new StringBuilder();
+      for (Map.Entry<String, String> entry : fieldsToDeclarations.entrySet()) {
+        String ident = entry.getKey();
+        sb.append(entry.getValue());
+
+        String initializer = fieldsToInitializers.get(ident);
+        if (initializer != null) {
+          sb.append(" = ").append(initializer);
+        }
+        sb.append(";\n");
+      }
+      return sb.toString();
     }
   }
 
@@ -194,6 +219,9 @@ public abstract class AbstractClientBundleGenerator extends Generator {
 
     // If an implementation already exists, we don't need to do any work
     if (out != null) {
+      // There is actual work to do
+      doCreateBundleForPermutation(logger, generatorContext, fields,
+          generatedSimpleSourceName);
       // Begin writing the generated source.
       ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
           packageName, generatedSimpleSourceName);
@@ -218,7 +246,7 @@ public abstract class AbstractClientBundleGenerator extends Generator {
           fields);
 
       // Print the accumulated field definitions
-      sw.println(fields.toString());
+      sw.println(fields.getCode());
 
       /*
        * The map-accessor methods use JSNI and need a fully-qualified class
@@ -231,7 +259,7 @@ public abstract class AbstractClientBundleGenerator extends Generator {
     }
 
     finish(logger, resourceContext, generators.keySet());
-    doFinish();
+    doFinish(logger);
 
     // Return the name of the concrete class
     return createdClassName;
@@ -246,30 +274,34 @@ public abstract class AbstractClientBundleGenerator extends Generator {
       TreeLogger logger, GeneratorContext context, JClassType resourceBundleType)
       throws UnableToCompleteException;
 
-  // FIXME - document params
   /**
    * Provides a hook for subtypes to add additional fields or requirements to
    * the bundle.
    * 
-   * @param logger
-   * @param contect
-   * @param context
-   * @param fields
-   * @param requirements
-   *
    * @throws UnableToCompleteException if an error occurs.
    */
   protected void doAddFieldsAndRequirements(TreeLogger logger,
-      GeneratorContext context, ClientBundleFields fields,
+      GeneratorContext context, FieldsImpl fields,
       ClientBundleRequirements requirements) throws UnableToCompleteException {
   }
 
   /**
-   * Provides a hook for finalizing generated resources.
-   *
+   * This method is called after the ClientBundleRequirements have been
+   * evaluated and a new ClientBundle implementation is being created.
+   * 
    * @throws UnableToCompleteException if an error occurs.
    */
-  protected void doFinish() throws UnableToCompleteException {
+  protected void doCreateBundleForPermutation(TreeLogger logger,
+      GeneratorContext generatorContext, FieldsImpl fields,
+      String generatedSimpleSourceName) throws UnableToCompleteException {
+  }
+
+  /**
+   * Provides a hook for finalizing generated resources.
+   * 
+   * @throws UnableToCompleteException if an error occurs.
+   */
+  protected void doFinish(TreeLogger logger) throws UnableToCompleteException {
   }
 
   /**
@@ -354,13 +386,14 @@ public abstract class AbstractClientBundleGenerator extends Generator {
 
   /**
    * Given a ClientBundle subtype, compute which ResourceGenerators should
-   * implement which methods.
+   * implement which methods. The data returned from this method should be
+   * stable across identical modules.
    */
   private Map<Class<? extends ResourceGenerator>, List<JMethod>> createTaskList(
       TreeLogger logger, TypeOracle typeOracle, JClassType sourceType)
       throws UnableToCompleteException {
 
-    Map<Class<? extends ResourceGenerator>, List<JMethod>> toReturn = new HashMap<Class<? extends ResourceGenerator>, List<JMethod>>();
+    Map<Class<? extends ResourceGenerator>, List<JMethod>> toReturn = new LinkedHashMap<Class<? extends ResourceGenerator>, List<JMethod>>();
 
     JClassType bundleType = typeOracle.findType(ClientBundle.class.getName());
     assert bundleType != null;
@@ -495,33 +528,6 @@ public abstract class AbstractClientBundleGenerator extends Generator {
     return toReturn.toString();
   }
 
-  private Map<ResourceGenerator, List<JMethod>> initAndPrepare(
-      TreeLogger logger,
-      Map<Class<? extends ResourceGenerator>, List<JMethod>> taskList,
-      AbstractResourceContext resourceContext,
-      ClientBundleRequirements requirements) throws UnableToCompleteException {
-    // Try to provide as many errors as possible before failing.
-    boolean success = true;
-    Map<ResourceGenerator, List<JMethod>> toReturn = new IdentityHashMap<ResourceGenerator, List<JMethod>>();
-
-    // Run the ResourceGenerators to generate implementations of the methods
-    for (Map.Entry<Class<? extends ResourceGenerator>, List<JMethod>> entry : taskList.entrySet()) {
-
-      ResourceGenerator rg = instantiateResourceGenerator(logger,
-          entry.getKey());
-      toReturn.put(rg, entry.getValue());
-
-      success &= initAndPrepare(logger, resourceContext, rg, entry.getValue(),
-          requirements);
-    }
-
-    if (!success) {
-      throw new UnableToCompleteException();
-    }
-
-    return toReturn;
-  }
-
   private boolean initAndPrepare(TreeLogger logger,
       AbstractResourceContext resourceContext, ResourceGenerator rg,
       List<JMethod> generatorMethods, ClientBundleRequirements requirements) {
@@ -548,6 +554,33 @@ public abstract class AbstractClientBundleGenerator extends Generator {
     }
 
     return !fail;
+  }
+
+  private Map<ResourceGenerator, List<JMethod>> initAndPrepare(
+      TreeLogger logger,
+      Map<Class<? extends ResourceGenerator>, List<JMethod>> taskList,
+      AbstractResourceContext resourceContext,
+      ClientBundleRequirements requirements) throws UnableToCompleteException {
+    // Try to provide as many errors as possible before failing.
+    boolean success = true;
+    Map<ResourceGenerator, List<JMethod>> toReturn = new IdentityHashMap<ResourceGenerator, List<JMethod>>();
+
+    // Run the ResourceGenerators to generate implementations of the methods
+    for (Map.Entry<Class<? extends ResourceGenerator>, List<JMethod>> entry : taskList.entrySet()) {
+
+      ResourceGenerator rg = instantiateResourceGenerator(logger,
+          entry.getKey());
+      toReturn.put(rg, entry.getValue());
+
+      success &= initAndPrepare(logger, resourceContext, rg, entry.getValue(),
+          requirements);
+    }
+
+    if (!success) {
+      throw new UnableToCompleteException();
+    }
+
+    return toReturn;
   }
 
   /**

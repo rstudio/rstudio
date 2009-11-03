@@ -22,7 +22,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.resources.ext.ClientBundleFields;
 import com.google.gwt.resources.ext.ClientBundleRequirements;
 
 /**
@@ -31,10 +30,9 @@ import com.google.gwt.resources.ext.ClientBundleRequirements;
 public class MhtmlClientBundleGenerator extends AbstractClientBundleGenerator {
 
   private static final String BUNDLE_EXTENSION = ".cache.txt";
-  private static int counter = 0;
 
+  private String bundleBaseIdent;
   private MhtmlResourceContext resourceContext;
-  private String partialPath;
 
   @Override
   protected AbstractResourceContext createResourceContext(TreeLogger logger,
@@ -42,25 +40,12 @@ public class MhtmlClientBundleGenerator extends AbstractClientBundleGenerator {
     resourceContext = new MhtmlResourceContext(logger, context,
         resourceBundleType);
 
-    /*
-     * We use a counter to ensure that the generated resources have unique
-     * names. Previously we used the system time, but it sometimes led to non-
-     * unique names if subsequent calls happened within the same millisecond.
-     * 
-     * TODO: figure out how to make the filename stable based on actual content.
-     */
-    counter++;
-    partialPath = Util.computeStrongName(Util.getBytes(resourceBundleType.getQualifiedSourceName()
-        + counter))
-        + BUNDLE_EXTENSION;
-    resourceContext.setPartialPath(partialPath);
-
     return resourceContext;
   }
 
   @Override
   protected void doAddFieldsAndRequirements(TreeLogger logger,
-      GeneratorContext generatorContext, ClientBundleFields fields,
+      GeneratorContext generatorContext, FieldsImpl fields,
       ClientBundleRequirements requirements) throws UnableToCompleteException {
     JType booleanType;
     JType stringType;
@@ -78,14 +63,23 @@ public class MhtmlClientBundleGenerator extends AbstractClientBundleGenerator {
     resourceContext.setIsHttpsIdent(isHttpsIdent);
 
     // "mhtml:" + GWT.getModuleBaseURL() + "partialPath!cid:"
-    String bundleBaseIdent = fields.define(stringType, "bundleBase",
-        "\"mhtml:\" + GWT.getModuleBaseURL() + \"" + partialPath + "!cid:\"",
-        true, true);
+    bundleBaseIdent = fields.define(stringType, "bundleBase", null, true, true);
     resourceContext.setBundleBaseIdent(bundleBaseIdent);
   }
 
   @Override
-  protected void doFinish() throws UnableToCompleteException {
+  protected void doCreateBundleForPermutation(TreeLogger logger,
+      GeneratorContext generatorContext, FieldsImpl fields,
+      String generatedSimpleSourceName) throws UnableToCompleteException {
+    String partialPath = Util.computeStrongName(Util.getBytes(generatedSimpleSourceName))
+        + BUNDLE_EXTENSION;
+    resourceContext.setPartialPath(partialPath);
+    fields.setInitializer(bundleBaseIdent,
+        "\"mhtml:\" + GWT.getModuleBaseURL() + \"" + partialPath + "!cid:\"");
+  }
+
+  @Override
+  protected void doFinish(TreeLogger logger) throws UnableToCompleteException {
     resourceContext.finish();
   }
 }

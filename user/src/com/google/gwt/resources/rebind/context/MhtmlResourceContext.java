@@ -21,6 +21,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.dev.util.Util;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
@@ -51,7 +53,7 @@ public class MhtmlResourceContext extends StaticResourceContext {
    * Output is lazily initialized in the case that all deployed resources are
    * large.
    */
-  private OutputStream out;
+  private ByteArrayOutputStream out;
   private String partialPath;
   private PrintWriter pw;
 
@@ -70,7 +72,6 @@ public class MhtmlResourceContext extends StaticResourceContext {
       return toReturn;
     }
 
-    assert partialPath != null : "partialPath";
     assert isHttpsIdent != null : "isHttpsIdent";
     assert bundleBaseIdent != null : "bundleBaseIdent";
 
@@ -90,7 +91,7 @@ public class MhtmlResourceContext extends StaticResourceContext {
     }
 
     if (out == null) {
-      out = getContext().tryCreateResource(getLogger(), partialPath);
+      out = new ByteArrayOutputStream();
       pw = new PrintWriter(out);
       pw.println("Content-Type: multipart/related; boundary=\"" + BOUNDARY
           + "\"");
@@ -121,8 +122,19 @@ public class MhtmlResourceContext extends StaticResourceContext {
 
   public void finish() throws UnableToCompleteException {
     if (out != null) {
+      TreeLogger logger = getLogger().branch(TreeLogger.DEBUG,
+          "Writing container to disk");
       pw.close();
-      getContext().commitResource(getLogger(), out);
+
+      assert partialPath != null : "partialPath";
+
+      OutputStream realOut = getContext().tryCreateResource(logger, partialPath);
+      try {
+        realOut.write(out.toByteArray());
+      } catch (IOException e) {
+        logger.log(TreeLogger.ERROR, "Unable to write container file", e);
+      }
+      getContext().commitResource(logger, realOut);
     }
   }
 
