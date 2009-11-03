@@ -61,7 +61,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   /**
    * This field holds a JavaScript array.
    */
-  private transient E[] array;
+  private transient E[] array = (E[]) new Object[0];
 
   /**
    * Ensures that RPC will consider type parameter E to be exposed. It will be
@@ -73,22 +73,21 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   /**
    * The size of the array.
    */
-  private int size;
-
-  {
-    clearImpl();
-  }
+  private int size = 0;
 
   public ArrayList() {
   }
-
+  
   public ArrayList(Collection<? extends E> c) {
-    addAll(c);
+    // Avoid calling overridable methods from constructors
+    spliceArray(array, 0, 0, c.toArray());
+    size = c.size();
   }
 
   public ArrayList(int initialCapacity) {
+    // Avoid calling overridable methods from constructors
     assert (initialCapacity >= 0);
-    ensureCapacity(initialCapacity);
+    setCapacity(array, initialCapacity);
   }
 
   @Override
@@ -130,7 +129,8 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public void clear() {
-    clearImpl();
+    array = (E[]) new Object[0];
+    size = 0;
   }
 
   public Object clone() {
@@ -274,11 +274,5 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   void setSize(int newSize) {
     setCapacity(array, newSize);
     size = newSize;
-  }
-
-  @SuppressWarnings("unchecked")
-  private void clearImpl() {
-    array = (E[]) new Object[0];
-    size = 0;
   }
 }
