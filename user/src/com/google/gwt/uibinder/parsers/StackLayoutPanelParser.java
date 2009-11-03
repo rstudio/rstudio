@@ -68,7 +68,7 @@ public class StackLayoutPanelParser implements ElementParser {
       String headerFieldName = writer.parseElementToField(headerWidgetElem);
       String childFieldName = writer.parseElementToField(widgetElem);
 
-      writer.addStatement("%s.add(%s, %s, %f);", fieldName, childFieldName,
+      writer.addStatement("%s.add(%s, %s, %s);", fieldName, childFieldName,
           headerFieldName, size);
     }
 
