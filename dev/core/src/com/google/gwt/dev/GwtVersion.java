@@ -92,7 +92,10 @@ public final class GwtVersion implements Comparable<GwtVersion> {
    * @return a copy of the array of version components, always exactly length 3.
    */
   public int[] getComponents() {
-    return Arrays.copyOf(components, COMPONENT_COUNT);
+    // Avoid Arrays.copyOf since it was added in JDK1.6
+    int[] returnVal = new int[COMPONENT_COUNT];
+    System.arraycopy(components, 0, returnVal, 0, COMPONENT_COUNT);
+    return returnVal;
   }
   
   /**
