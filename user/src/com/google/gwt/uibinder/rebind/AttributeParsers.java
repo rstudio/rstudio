@@ -15,8 +15,11 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.uibinder.parsers.AttributeParser;
+import com.google.gwt.uibinder.parsers.EnumAttributeParser;
 import com.google.gwt.uibinder.parsers.StrictAttributeParser;
 
 import java.util.HashMap;
@@ -49,8 +52,11 @@ class AttributeParsers {
    * keyed by method parameter signatures.
    */
   private final Map<String, String> parsers = new HashMap<String, String>();
+  private final TypeOracle oracle;
 
-  public AttributeParsers() {
+  public AttributeParsers(TypeOracle oracle) {
+    this.oracle = oracle;
+    
     addAttributeParser(BOOLEAN,
         "com.google.gwt.uibinder.parsers.BooleanAttributeParser");
 
@@ -73,11 +79,23 @@ class AttributeParsers {
 
   public AttributeParser get(JType... types) {
     AttributeParser rtn = getForKey(getParametersKey(types));
-    if (rtn == null && types.length == 1) {
-      rtn = new StrictAttributeParser();
+    if (rtn != null || types.length > 1) {
+      return rtn;
+    }
+    
+    /* A couple of special cases when we're asked to handle a single type */
+    
+    /* Maybe it's an enum */
+    JEnumType enumType = types[0].isEnum();
+    if (enumType != null) {
+      return new EnumAttributeParser(enumType);
     }
 
-    return rtn;
+    /*
+     * Dunno what it is, so let a StrictAttributeParser look for
+     * a {field.reference}
+     */
+    return new StrictAttributeParser();
   }
 
   public AttributeParser getBooleanParser() {

@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JEnumType;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
@@ -234,26 +235,10 @@ public class XMLElement {
    * @return the attribute's value
    * @throws UnableToCompleteException
    */
-  public <T extends Enum<T>> T consumeEnumAttribute(String attr, Class<T> type)
+  public String consumeEnumAttribute(String name, JEnumType enumType)
       throws UnableToCompleteException {
-    String strValue = consumeRawAttribute(attr);
-
-    // Get the enum value. Enum.valueOf() throws IAE if the specified string is
-    // not valid.
-    T value = null;
-    try {
-      // Enum.valueOf() doesn't accept null arguments.
-      if (strValue != null) {
-        value = Enum.valueOf(type, strValue);
-      }
-    } catch (IllegalArgumentException e) {
-    }
-
-    if (value == null) {
-      logger.die(String.format("Error parsing \"%s\" attribute of \"%s\" "
-          + "as a %s enum", attr, this, type.getSimpleName()));
-    }
-    return value;
+    String value = consumeRawAttribute(name);
+    return attributeParsers.get(enumType).parse(value, logger);
   }
 
   /**

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.parsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
@@ -48,31 +49,16 @@ public class DockLayoutPanelParser implements ElementParser {
     DOCK_NAMES.put("center", "add");
   }
 
-  /**
-   * TODO(jgw): This will be moved into EnumAttributeParser as soon as I get
-   * around to building it.
-   */
-  static String getFullyQualifiedEnumName(Enum<?> e) {
-    Class<?> cls = e.getClass();
-    String clsName = cls.getCanonicalName();
-    if (clsName == null) {
-      // A synthesized enum subtype (e.g., Unit$3) will have no canonical name
-      // (yet will not be marked as synthetic). Its superclass will be the
-      // one we want (e.g., Unit).
-      clsName = cls.getSuperclass().getCanonicalName();
-    }
-    return clsName + "." + e.name();
-  }
-
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
     // Generate instantiation (requires a 'unit' ctor param).
     // (Don't generate a ctor for the SplitLayoutPanel; it's implicitly PX).
     if (type != getSplitLayoutPanelType(writer)) {
-      Unit unit = elem.consumeEnumAttribute("unit", Unit.class);
+      JEnumType unitEnumType = writer.getOracle().findType(
+          Unit.class.getCanonicalName()).isEnum();
+      String unit = elem.consumeEnumAttribute("unit", unitEnumType);
       writer.setFieldInitializerAsConstructor(fieldName,
-          writer.getOracle().findType(DockLayoutPanel.class.getName()),
-          getFullyQualifiedEnumName(unit));
+          writer.getOracle().findType(DockLayoutPanel.class.getName()), unit);
     }
 
     // Parse children.

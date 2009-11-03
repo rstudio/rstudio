@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.parsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
@@ -39,15 +40,17 @@ public class TabLayoutPanelParser implements ElementParser {
 
   public void parse(XMLElement panelElem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
+    JEnumType unitEnumType = writer.getOracle().findType(
+        Unit.class.getCanonicalName()).isEnum();
+
     // TabLayoutPanel requires tabBar size and unit ctor args.
     String size = panelElem.consumeDoubleAttribute("barHeight");
-    Unit unit = panelElem.consumeEnumAttribute("barUnit", Unit.class);
+    String unit = panelElem.consumeEnumAttribute("barUnit", unitEnumType);
 
-    String enumName = DockLayoutPanelParser.getFullyQualifiedEnumName(unit);
     JClassType tlpType = writer.getOracle().findType(
         TabLayoutPanel.class.getName());
     writer.setFieldInitializerAsConstructor(fieldName, tlpType,
-        size, enumName);
+        size, unit);
 
     // Parse children.
     for (XMLElement tabElem : panelElem.consumeChildElements()) {

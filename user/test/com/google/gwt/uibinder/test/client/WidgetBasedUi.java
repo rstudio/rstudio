@@ -22,7 +22,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.OListElement;
 import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
@@ -63,13 +62,11 @@ public class WidgetBasedUi extends Composite {
   }
   private static final Binder binder = GWT.create(Binder.class);
 
-  private static boolean stylesInjected = false;
+  @UiField(provided = true)
+  final WidgetBasedUiExternalResources external = GWT.create(WidgetBasedUiExternalResources.class);
 
   @UiField(provided = true)
-  final WidgetBasedUiExternalResources external;
-
-  @UiField(provided = true)
-  final Label bundledLabel;
+  final Label bundledLabel =  new Label();
 
   @UiField Style myStyle;
   @UiField ClickyLink customLinkWidget;
@@ -123,17 +120,10 @@ public class WidgetBasedUi extends Composite {
   @UiField DataResource heartCursorResource;
   @UiField CssImportScopeSample cssImportScopeSample;
   @UiField ParagraphElement bracedParagraph;
+  @UiField EnumeratedLabel enumLabel;
 
   public WidgetBasedUi() {
-    this.bundledLabel = new Label();
-    this.external = GWT.create(WidgetBasedUiExternalResources.class);
-
-    // Inject only once.
-    if (!stylesInjected) {
-      StyleInjector.injectStylesheet(external.style().getText());
-      stylesInjected = true;
-    }
-
+    external.style().ensureInjected();
     initWidget(binder.createAndBindUi(this));
   }
 

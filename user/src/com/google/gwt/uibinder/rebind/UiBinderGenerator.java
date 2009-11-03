@@ -96,15 +96,15 @@ public class UiBinderGenerator extends Generator {
     PrintWriter printWriter = writers.tryToMakePrintWriterFor(implName);
 
     if (printWriter != null) {
-      generateOnce(interfaceType, implName, packageName, printWriter, logger,
-          oracle, writers);
+      generateOnce(interfaceType, implName, printWriter, logger, oracle,
+          writers);
     }
     return packageName + "." + implName;
   }
 
   private void generateOnce(JClassType interfaceType, String implName,
-      String packageName, PrintWriter binderPrintWrier, TreeLogger treeLogger,
-      TypeOracle oracle, PrintWriterManager writerManager)
+      PrintWriter binderPrintWrier, TreeLogger treeLogger, TypeOracle oracle,
+      PrintWriterManager writerManager)
       throws UnableToCompleteException {
 
     MortalLogger logger = new MortalLogger(treeLogger);

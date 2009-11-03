@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.parsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
@@ -32,11 +33,12 @@ public class StackLayoutPanelParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
-    // StackLayoutPanel requires a unit ctor.
-    Unit unit = elem.consumeEnumAttribute("unit", Unit.class);
+    JEnumType unitEnumType = writer.getOracle().findType(
+        Unit.class.getCanonicalName()).isEnum();
+    String unit = elem.consumeEnumAttribute("unit", unitEnumType);
     writer.setFieldInitializerAsConstructor(fieldName,
         writer.getOracle().findType(StackLayoutPanel.class.getName()),
-        DockLayoutPanelParser.getFullyQualifiedEnumName(unit));
+        unit);
 
     // Parse children.
     for (XMLElement child : elem.consumeChildElements()) {

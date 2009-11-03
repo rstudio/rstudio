@@ -495,6 +495,7 @@
       <p><demo:NeedlesslyAnnotatedLabel ui:field="needlessLabel"
         text="Sometimes people do things they don't need to do. Don't punish them."/></p>
       <demo:FooLabel ui:field='theFoo' pojo="{values.pojo}"/>
+      <demo:EnumeratedLabel ui:field='enumLabel' suffix='tail'>This label uses an enum for its</demo:EnumeratedLabel>
 
     <h2>How to use the debugId, addStyleNames, addDependentStyleNames attributes</h2>
     <p>You can use the <strong>debugId</strong>, <strong>addStyleNames</strong>, and <strong>addDependentStyleNames</strong>

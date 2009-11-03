@@ -226,7 +226,7 @@ public class XMLElementTest extends TestCase {
     item = (Element) doc.getDocumentElement().getElementsByTagName("elm").item(
         0);
 
-    elemProvider = new XMLElementProviderImpl(new AttributeParsers(), null,
+    elemProvider = new XMLElementProviderImpl(new AttributeParsers(null), null,
         new DummyMortalLogger());
     elm = elemProvider.get(item);
   }
