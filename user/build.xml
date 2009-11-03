@@ -142,6 +142,12 @@
       <fileset dir="super/com/google/gwt/emul" />
       <fileset dir="super/com/google/gwt/junit/translatable" />
     </gwt.checkstyle>
+    <gwt.checkstyle.tests>
+      <fileset dir="test">
+        <filename name="com/google/**" />
+        <filename name="test/**" />
+      </fileset>
+    </gwt.checkstyle.tests>
   </target>
 
   <target name="test.remoteweb" depends="test.web.remote">
