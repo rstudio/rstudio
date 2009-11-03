@@ -15,6 +15,9 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+/**
+ * A MortalLogger using a dummy logger.
+ */
 public class DummyMortalLogger extends MortalLogger {
   public DummyMortalLogger() {
     super(new DummyTreeLogger());
