@@ -338,7 +338,7 @@ public class JUnitShell extends GWTShell {
    * begin running the test. "Contacted" does not necessarily mean "the test has
    * begun," e.g. for linker errors stopping the test initialization.
    */
-  static final int TEST_BEGIN_TIMEOUT_MILLIS = 60000;
+  static final int TEST_BEGIN_TIMEOUT_MILLIS = 60 * 1000;
 
   /**
    * This is a system property that, when set, emulates command line arguments.
@@ -350,7 +350,7 @@ public class JUnitShell extends GWTShell {
    * method, in milliseconds, measured from when the <i>last</i> client connects
    * (and thus starts the test). default of 5 minutes.
    */
-  private static final long TEST_METHOD_TIMEOUT_MILLIS = 50 * 60 * 1000;
+  private static final long TEST_METHOD_TIMEOUT_MILLIS = 5 * 60 * 1000;
 
   /**
    * Singleton object for hosting unit tests. All test case instances executed
