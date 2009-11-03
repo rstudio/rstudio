@@ -133,7 +133,8 @@ public class JsniCollector {
   }
 
   /**
-   * Just a little class to grab source only once for a compilation unit.
+   * Lazily grab source only for compilation units which actually contain native
+   * methods, then cache it.
    * 
    * TODO: parse JSNI <i>during</i> JDT's cycle to avoiding having to read from
    * disk twice.
