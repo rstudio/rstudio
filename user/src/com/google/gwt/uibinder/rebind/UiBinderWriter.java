@@ -271,7 +271,7 @@ public class UiBinderWriter {
     handlerEvaluator = new HandlerEvaluator(ownerClass, logger, oracle);
     fieldManager = new FieldManager(logger);
 
-    attributeParsers = new AttributeParsers(oracle);
+    attributeParsers = new AttributeParsers();
     bundleParsers = new BundleAttributeParsers(oracle, gwtPrefix, logger,
         getOwnerClass(), templatePath, uiOwnerType);
   }

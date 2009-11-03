@@ -17,7 +17,6 @@ package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.uibinder.parsers.AttributeParser;
 import com.google.gwt.uibinder.parsers.EnumAttributeParser;
 import com.google.gwt.uibinder.parsers.StrictAttributeParser;
@@ -52,10 +51,8 @@ class AttributeParsers {
    * keyed by method parameter signatures.
    */
   private final Map<String, String> parsers = new HashMap<String, String>();
-  private final TypeOracle oracle;
 
-  public AttributeParsers(TypeOracle oracle) {
-    this.oracle = oracle;
+  public AttributeParsers() {
     
     addAttributeParser(BOOLEAN,
         "com.google.gwt.uibinder.parsers.BooleanAttributeParser");
@@ -75,6 +72,10 @@ class AttributeParsers {
     addAttributeParser("com.google.gwt.user.client.ui.HasHorizontalAlignment."
         + "HorizontalAlignmentConstant",
         "com.google.gwt.uibinder.parsers.HorizontalAlignmentConstantParser");
+
+    addAttributeParser("com.google.gwt.user.client.ui.HasVerticalAlignment."
+        + "VerticalAlignmentConstant",
+        "com.google.gwt.uibinder.parsers.VerticalAlignmentConstantParser");
   }
 
   public AttributeParser get(JType... types) {
