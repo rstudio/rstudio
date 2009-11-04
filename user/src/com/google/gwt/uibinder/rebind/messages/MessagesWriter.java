@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.uibinder.rebind.IndentedWriter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
+import com.google.gwt.uibinder.rebind.XMLAttribute;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
 import java.io.PrintWriter;
@@ -112,6 +113,12 @@ public class MessagesWriter {
       }
       if (!elem.hasAttribute(attributeName)) {
         logger.die("%s has no attribute matching %s", elem, child);
+      }
+      XMLAttribute attribute = elem.getAttribute(attributeName);
+      if (attribute.hasComputedValue()) {
+        logger.die("In %s, attribute \"%s\" has a field reference and "
+            + "so cannot be marked for localization, but found %s", elem,
+            attributeName, child);
       }
 
       String defaultMessage = MessageWriter.escapeMessageFormat(elem.consumeRawAttribute(attributeName));

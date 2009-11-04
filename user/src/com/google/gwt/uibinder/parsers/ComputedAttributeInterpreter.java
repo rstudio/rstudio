@@ -52,7 +52,7 @@ class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
             writer.getLogger());
         String attToken = writer.tokenForExpression(parsedValue);
 
-        // Use local name here, replacing res:style with plain old style
+        // Use localName so <div res:style='...'> becomes <div style='...'>
         attNameToToken.put(att.getLocalName(), attToken);
         continue;
       }

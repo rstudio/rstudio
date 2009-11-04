@@ -15,23 +15,31 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+
 import org.w3c.dom.Element;
 
-@SuppressWarnings("deprecation")
-//BundleAttributeParser not quite ready to die
 class XMLElementProviderImpl implements XMLElementProvider {
   private final AttributeParsers attributeParsers;
-  private final BundleAttributeParsers bundleParsers; 
+  @SuppressWarnings("deprecation")
+  // bundleParsers for legacy templates
+  private final BundleAttributeParsers bundleParsers;
   private final MortalLogger logger;
-  
+  private final TypeOracle oracle;
+
+  @SuppressWarnings("deprecation")
+  // bundleParsers for legacy templates
   public XMLElementProviderImpl(AttributeParsers attributeParsers,
-    BundleAttributeParsers bundleParsers, MortalLogger logger) {
+      BundleAttributeParsers bundleParsers, TypeOracle oracle,
+      MortalLogger logger) {
     this.attributeParsers = attributeParsers;
     this.bundleParsers = bundleParsers;
+    this.oracle = oracle;
     this.logger = logger;
   }
-  
+
   public XMLElement get(Element e) {
-    return new XMLElement(e, attributeParsers, bundleParsers, logger, this);
+    return new XMLElement(e, attributeParsers, bundleParsers, oracle, logger,
+        this);
   }
 }

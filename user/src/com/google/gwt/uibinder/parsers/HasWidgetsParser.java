@@ -32,6 +32,10 @@ public class HasWidgetsParser implements ElementParser {
       UiBinderWriter writer) throws UnableToCompleteException {
     // Parse children.
     for (XMLElement child : elem.consumeChildElements()) {
+      if (!writer.isWidgetElement(child)) {
+        writer.die("%s can contain only widgets, but found %s",
+            elem, child);
+      }
       String childFieldName = writer.parseElementToField(child);
       writer.addStatement("%1$s.add(%2$s);", fieldName, childFieldName);
     }

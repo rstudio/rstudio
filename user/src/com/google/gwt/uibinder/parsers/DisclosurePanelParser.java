@@ -64,8 +64,10 @@ public class DisclosurePanelParser implements ElementParser {
     }
 
     if (null != children.header) {
-      String openImage = getAttribute(OPEN_IMAGE, children.header, writer);
-      String closedImage = getAttribute(CLOSED_IMAGE, children.header, writer);
+      String openImage = children.header.consumeAttributeWithDefault(
+          OPEN_IMAGE, null);
+      String closedImage = children.header.consumeAttributeWithDefault(
+          CLOSED_IMAGE, null);
       String headerText = children.header.consumeInnerTextEscapedAsHtmlStringLiteral(new TextInterpreter(
           writer));
 
@@ -133,20 +135,5 @@ public class DisclosurePanelParser implements ElementParser {
     });
 
     return children;
-  }
-
-  /**
-   * @return a field reference or a null string if the attribute is unset
-   * @throws UnableToCompleteException on bad value
-   */
-  private String getAttribute(String attribute, XMLElement headerElem,
-      UiBinderWriter writer) throws UnableToCompleteException {
-    // TODO(rjrjr) parser should come from XMLElement
-
-    String value = headerElem.consumeRawAttribute(attribute, null);
-    if (value != null) {
-      value = new StrictAttributeParser().parse(value, writer.getLogger());
-    }
-    return value;
   }
 }

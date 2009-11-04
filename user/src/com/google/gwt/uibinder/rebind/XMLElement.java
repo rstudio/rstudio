@@ -16,7 +16,11 @@
 package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.JEnumType;
+import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.core.ext.typeinfo.TypeOracleException;
+import com.google.gwt.uibinder.parsers.AttributeParser;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
@@ -41,8 +45,6 @@ import java.util.Set;
  * will run first, and if they consume a value, less-specific parsers will not
  * see it.
  */
-@SuppressWarnings("deprecation")
-// BundleAttributeParser not quite ready to die
 public class XMLElement {
   /**
    * Callback interface used by {@link #consumeInnerHtml(Interpreter)} and
@@ -79,6 +81,8 @@ public class XMLElement {
 
   private static final Set<String> NO_END_TAG = new HashSet<String>();
 
+  private static final String[] EMPTY = new String[] {};
+
   private static void clearChildren(Element elem) {
     Node child;
     while ((child = elem.getFirstChild()) != null) {
@@ -87,12 +91,22 @@ public class XMLElement {
   }
 
   private final Element elem;
-  final AttributeParsers attributeParsers;
-  final BundleAttributeParsers bundleParsers;
-  private final MortalLogger logger;
+  private final AttributeParsers attributeParsers;
+  @SuppressWarnings("deprecation")
+  // for legacy templates
+  private final BundleAttributeParsers bundleParsers;
+  private final TypeOracle oracle;
 
+  private final MortalLogger logger;
   private final String debugString;
+
   private final XMLElementProvider provider;
+
+  private JClassType stringType;
+
+  private JType booleanType;
+
+  private JType doubleType;
 
   {
     // from com/google/gxp/compiler/schema/html.xml
@@ -112,39 +126,88 @@ public class XMLElement {
     NO_END_TAG.add("wbr");
   }
 
+  @SuppressWarnings("deprecation")
+  // bundleParsers for legacy templates
   XMLElement(Element elem, AttributeParsers attributeParsers,
-      BundleAttributeParsers bundleParsers, MortalLogger logger,
-      XMLElementProvider provider) {
+      BundleAttributeParsers bundleParsers, TypeOracle oracle,
+      MortalLogger logger, XMLElementProvider provider) {
     this.elem = elem;
     this.attributeParsers = attributeParsers;
     this.bundleParsers = bundleParsers;
     this.logger = logger;
+    this.oracle = oracle;
     this.provider = provider;
 
     this.debugString = getOpeningTag();
   }
 
   /**
-   * Consumes the named attribute as a boolean expression: a literal, or a field
-   * reference. At the moment field references are validated for syntax
-   * only--there is no check that there is any such field or methods, nor
-   * that they have the correct return type.
+   * Consumes the given attribute as a literal or field reference. The optional
+   * types parameters determine how (or if) the value is parsed.
    * 
-   * @return "true", "false", an expression that will evaluate to a boolean
-   *         value in the generated code, or "" if there is no such attribute
+   * @param name the attribute's full name (including prefix)
+   * @param types the type(s) this attribute is expected to provide
+   * @return the attribute's value as a Java expression, or "" if it is not set
+   * @throws UnableToCompleteException on parse failure
+   */
+  public String consumeAttribute(String name, JType... types)
+      throws UnableToCompleteException {
+    String value = consumeRawAttribute(name);
+    return getParser(getAttribute(name), types).parse(value, logger);
+    /*
+     * TODO(rjrjr) If we get a field reference, enforce that its type matches
+     * the given type. CssResourceGenerator.validateValue() has similar logic,
+     * says Bob.
+     */
+  }
+
+  /**
+   * Consumes the given attribute as a literal or field reference. The optional
+   * types parameters determine how (or if) the value is parsed.
+   * 
+   * @param name the attribute's full name (including prefix)
+   * @param defaultValue the value to @return if the attribute was unset
+   * @param types the type(s) this attribute is expected to provide
+   * @return the attribute's value as a Java expression, or the given default if
+   *         it was unset
+   * @throws UnableToCompleteException on parse failure
+   */
+  public String consumeAttributeWithDefault(String name, String defaultValue,
+      JType... types) throws UnableToCompleteException {
+    String value = consumeRawAttribute(name);
+    if ("".equals(value)) {
+      return defaultValue;
+    }
+    value = getParser(getAttribute(name), types).parse(value, logger);
+    if ("".equals(value)) {
+      return defaultValue;
+    }
+    return value;
+    /*
+     * TODO(rjrjr) If we get a field reference, enforce that its type matches
+     * the given type. CssResourceGenerator.validateValue() has similar logic,
+     * says Bob.
+     */
+  }
+
+  /**
+   * Convenience method for parsing the named attribute as a boolean value or
+   * reference.
+   * 
+   * @return an expression that will evaluate to a boolean value in the
+   *         generated code, or "" if there is no such attribute
    * 
    * @throws UnableToCompleteException on unparseable value
    */
   public String consumeBooleanAttribute(String name)
       throws UnableToCompleteException {
-    String value = consumeRawAttribute(name);
-    return attributeParsers.getBooleanParser().parse(value, logger);
+    return consumeAttribute(name, getBooleanType());
   }
 
   /**
    * Consumes the named attribute as a boolean expression. This will not accept
-   * {field.reference} expressions. It is intended for values that must be
-   * resolved at compile time, such as generated annotation values.
+   * {field.reference} expressions. Useful for values that must be resolved at
+   * compile time, such as generated annotation values.
    * 
    * @return {@link Boolean#TRUE}, {@link Boolean#FALSE}, or null if no such
    *         attribute
@@ -211,10 +274,8 @@ public class XMLElement {
   }
 
   /**
-   * Consumes the given attribute as a double expression: a literal, or a field
-   * reference. At the moment field references are validated for syntax
-   * only--there is no check that there is any such field or methods, nor
-   * that they have the correct return type.
+   * Convenience method for parsing the named attribute as a double value or
+   * reference.
    * 
    * @return a double literal, an expression that will evaluate to a double
    *         value in the generated code, or "" if there is no such attribute
@@ -223,22 +284,7 @@ public class XMLElement {
    */
   public String consumeDoubleAttribute(String name)
       throws UnableToCompleteException {
-    String value = consumeRawAttribute(name);
-    return attributeParsers.getDoubleParser().parse(value, logger);
-  }
-
-  /**
-   * Consumes the given attribute as an enum value.
-   * 
-   * @param name the attribute's full name (including prefix)
-   * @param enumType the enumerated type of which this attribute must be a member
-   * @return the attribute's value
-   * @throws UnableToCompleteException
-   */
-  public String consumeEnumAttribute(String name, JEnumType enumType)
-      throws UnableToCompleteException {
-    String value = consumeRawAttribute(name);
-    return attributeParsers.get(enumType).parse(value, logger);
+    return consumeAttribute(name, getDoubleType());
   }
 
   /**
@@ -339,6 +385,23 @@ public class XMLElement {
   }
 
   /**
+   * Consumes the named attribute and parses it to an unparsed, unescaped array
+   * of Strings. The strings in the attribute may be comma or space separated
+   * (or a mix of both).
+   * 
+   * @return array of String, empty if the attribute was not set.
+   * @throws UnableToCompleteException on unparseable value
+   */
+  public String[] consumeRawArrayAttribute(String name) {
+    String raw = consumeRawAttribute(name, null);
+    if (raw == null) {
+      return EMPTY;
+    }
+
+    return raw.split("[,\\s]+");
+  }
+
+  /**
    * Consumes the given attribute and returns its trimmed value, or null if it
    * was unset. The returned string is not escaped.
    * 
@@ -370,7 +433,7 @@ public class XMLElement {
   /**
    * Consumes the named attribute, or dies if it is missing.
    */
-  public String consumeRequiredAttribute(String name)
+  public String consumeRequiredRawAttribute(String name)
       throws UnableToCompleteException {
     String value = consumeRawAttribute(name);
     if ("".equals(value)) {
@@ -405,6 +468,51 @@ public class XMLElement {
   }
 
   /**
+   * Consumes the named attribute and parses it to an array of String
+   * expressions. The strings in the attribute may be comma or space separated
+   * (or a mix of both).
+   * 
+   * @return array of String expressions, empty if the attribute was not set.
+   * @throws UnableToCompleteException on unparseable value
+   */
+  public String[] consumeStringArrayAttribute(String name)
+      throws UnableToCompleteException {
+    AttributeParser parser = attributeParsers.get(getStringType());
+
+    String[] strings = consumeRawArrayAttribute(name);
+    for (int i = 0; i < strings.length; i++) {
+      strings[i] = parser.parse(strings[i], logger);
+    }
+    return strings;
+  }
+
+  /**
+   * Convenience method for parsing the named attribute as a String value or
+   * reference.
+   * 
+   * @return an expression that will evaluate to a String value in the generated
+   *         code, or "" if there is no such attribute
+   * @throws UnableToCompleteException on unparseable value
+   */
+  public String consumeStringAttribute(String name)
+      throws UnableToCompleteException {
+    return consumeAttribute(name, getStringType());
+  }
+
+  /**
+   * Convenience method for parsing the named attribute as a String value or
+   * reference.
+   * 
+   * @return an expression that will evaluate to a String value in the generated
+   *         code, or the given defaultValue if there is no such attribute
+   * @throws UnableToCompleteException on unparseable value
+   */
+  public String consumeStringAttribute(String name, String defaultValue)
+      throws UnableToCompleteException {
+    return consumeAttributeWithDefault(name, defaultValue, getStringType());
+  }
+
+  /**
    * Returns the unprocessed, unescaped, raw inner text of the receiver. Dies if
    * the receiver has non-text children.
    * <p>
@@ -434,6 +542,19 @@ public class XMLElement {
   public XMLAttribute getAttribute(int i) {
     return new XMLAttribute(XMLElement.this,
         (Attr) elem.getAttributes().item(i));
+  }
+
+  /**
+   * Get the attribute with the given name.
+   * 
+   * @return the attribute, or null if there is none of that name
+   */
+  public XMLAttribute getAttribute(String name) {
+    Attr attr = elem.getAttributeNode(name);
+    if (attr == null) {
+      return null;
+    }
+    return new XMLAttribute(this, attr);
   }
 
   /**
@@ -509,6 +630,28 @@ public class XMLElement {
     return debugString;
   }
 
+  private JType getBooleanType() {
+    if (booleanType == null) {
+      try {
+        booleanType = oracle.parse("boolean");
+      } catch (TypeOracleException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return booleanType;
+  }
+
+  private JType getDoubleType() {
+    if (doubleType == null) {
+      try {
+        doubleType = oracle.parse("double");
+      } catch (TypeOracleException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return doubleType;
+  }
+
   private String getOpeningTag() {
     StringBuilder b = new StringBuilder().append("<").append(elem.getTagName());
 
@@ -521,5 +664,26 @@ public class XMLElement {
     b.append(">");
 
     return b.toString();
+  }
+
+  @SuppressWarnings("deprecation")
+  // bundleParsers for legacy templates
+  private AttributeParser getParser(XMLAttribute xmlAttribute, JType... types)
+      throws UnableToCompleteException {
+    AttributeParser rtn = null;
+    if (xmlAttribute != null) {
+      rtn = bundleParsers.get(xmlAttribute);
+    }
+    if (rtn == null) {
+      rtn = attributeParsers.get(types);
+    }
+    return rtn;
+  }
+
+  private JClassType getStringType() {
+    if (stringType == null) {
+      stringType = oracle.findType(String.class.getCanonicalName());
+    }
+    return stringType;
   }
 }

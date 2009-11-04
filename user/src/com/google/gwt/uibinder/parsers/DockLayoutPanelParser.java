@@ -56,7 +56,7 @@ public class DockLayoutPanelParser implements ElementParser {
     if (type != getSplitLayoutPanelType(writer)) {
       JEnumType unitEnumType = writer.getOracle().findType(
           Unit.class.getCanonicalName()).isEnum();
-      String unit = elem.consumeEnumAttribute("unit", unitEnumType);
+      String unit = elem.consumeAttribute("unit", unitEnumType);
       writer.setFieldInitializerAsConstructor(fieldName,
           writer.getOracle().findType(DockLayoutPanel.class.getName()), unit);
     }

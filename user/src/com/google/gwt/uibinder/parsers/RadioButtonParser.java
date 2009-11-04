@@ -34,7 +34,7 @@ public class RadioButtonParser implements ElementParser {
 
     if (type.equals(writer.getOracle().findType(RadioButton.class.getName()))) {
       writer.setFieldInitializerAsConstructor(fieldName, type,
-          '"' + elem.consumeRawAttribute("name") + '"');
+          elem.consumeStringAttribute("name"));
     }
   }
 }

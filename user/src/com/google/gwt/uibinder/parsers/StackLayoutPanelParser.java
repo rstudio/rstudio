@@ -35,7 +35,7 @@ public class StackLayoutPanelParser implements ElementParser {
       UiBinderWriter writer) throws UnableToCompleteException {
     JEnumType unitEnumType = writer.getOracle().findType(
         Unit.class.getCanonicalName()).isEnum();
-    String unit = elem.consumeEnumAttribute("unit", unitEnumType);
+    String unit = elem.consumeAttribute("unit", unitEnumType);
     writer.setFieldInitializerAsConstructor(fieldName,
         writer.getOracle().findType(StackLayoutPanel.class.getName()),
         unit);

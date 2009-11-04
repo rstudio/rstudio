@@ -45,7 +45,7 @@ public class TabLayoutPanelParser implements ElementParser {
 
     // TabLayoutPanel requires tabBar size and unit ctor args.
     String size = panelElem.consumeDoubleAttribute("barHeight");
-    String unit = panelElem.consumeEnumAttribute("barUnit", unitEnumType);
+    String unit = panelElem.consumeAttribute("barUnit", unitEnumType);
 
     JClassType tlpType = writer.getOracle().findType(
         TabLayoutPanel.class.getName());

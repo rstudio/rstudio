@@ -39,6 +39,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.StackPanel;
 import com.google.gwt.user.client.ui.Tree;
@@ -121,6 +122,8 @@ public class WidgetBasedUi extends Composite {
   @UiField CssImportScopeSample cssImportScopeSample;
   @UiField ParagraphElement bracedParagraph;
   @UiField EnumeratedLabel enumLabel;
+  @UiField PushButton pushButton;
+  @UiField Label lblDebugId;
 
   public WidgetBasedUi() {
     external.style().ensureInjected();

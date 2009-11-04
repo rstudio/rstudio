@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
+import com.google.gwt.user.client.ui.Image;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -29,20 +30,20 @@ import java.util.Set;
 public class CustomButtonParser implements ElementParser {
 
   private static final Set<String> faceNames = new HashSet<String>();
-  private static final Object IMAGE_CLASS =
-      "com.google.gwt.user.client.ui.Image";
+  private static final String IMAGE_CLASS = Image.class.getCanonicalName();
 
   static {
-    faceNames.add("UpFace");
-    faceNames.add("DownFace");
-    faceNames.add("UpHoveringFace");
-    faceNames.add("DownHoveringFace");
-    faceNames.add("UpDisabledFace");
-    faceNames.add("DownDisabledFace");
+    faceNames.add("upFace");
+    faceNames.add("downFace");
+    faceNames.add("upHoveringFace");
+    faceNames.add("downHoveringFace");
+    faceNames.add("upDisabledFace");
+    faceNames.add("downDisabledFace");
   }
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
+
     // Parse children.
     for (XMLElement child : elem.consumeChildElements()) {
       // CustomButton can only contain Face elements.
@@ -50,39 +51,29 @@ public class CustomButtonParser implements ElementParser {
       String faceName = child.getLocalName();
 
       if (!ns.equals(elem.getNamespaceUri())) {
-        writer.die("Invalid CustomButton child namespace: " + ns);
+        writer.die("In %s, invalid child namespace: %s", elem, ns);
       }
       if (!faceNames.contains(faceName)) {
-        writer.die("Invalid CustomButton face: " + faceName);
+        writer.die("In %s, invalid CustomButton face: %s:%s", elem, ns, faceName);
       }
 
-      // Look for innerHTML first.
       HtmlInterpreter interpreter = HtmlInterpreter.newInterpreterForUiObject(
           writer, fieldName);
       String innerHtml = child.consumeInnerHtml(interpreter).trim();
       if (innerHtml.length() > 0) {
-        writer.addStatement("%1$s.get%2$s().setHTML(\"%3$s\");", fieldName,
-            faceName, innerHtml);
-      }
-
-      // Then look for html, text, and image attributes.
-      if (child.hasAttribute("html")) {
-        String html = child.consumeRawAttribute("html");
-        writer.addStatement("%1$s.get%2$s().setHTML(\"%3$s\");", fieldName,
-            faceName, html);
-      }
-
-      if (child.hasAttribute("text")) {
-        String text = child.consumeRawAttribute("text");
-        writer.addStatement("%1$s.get%2$s().setText(\"%3$s\");", fieldName,
-            faceName, text);
+        writer.addStatement("%s.%s().setHTML(\"%s\");", fieldName,
+            faceNameGetter(faceName), innerHtml);
       }
 
       if (child.hasAttribute("image")) {
-        String image = child.consumeRawAttribute("image");
-        writer.addStatement("%1$s.get%2$s().setImage(new %3$s(\"%4$s\"));",
-            fieldName, faceName, IMAGE_CLASS, image);
+        String image = child.consumeAttribute("image");
+        writer.addStatement("%s.%s().setImage(new %s(%s));",
+            fieldName, faceNameGetter(faceName), IMAGE_CLASS, image);
       }
     }
+  }
+
+  private String faceNameGetter(String faceName) {
+    return "get" + faceName.substring(0, 1).toUpperCase() + faceName.substring(1);
   }
 }

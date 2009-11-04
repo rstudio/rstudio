@@ -48,11 +48,11 @@
   xmlns:gwt='urn:import:com.google.gwt.user.client.ui'
   xmlns:demo='urn:import:com.google.gwt.uibinder.test.client'
 
-  ui:defaultLocale="en_us"
+  ui:defaultLocale="en_US"
   ui:generateKeys="com.google.gwt.i18n.rebind.keygen.MD5KeyGenerator"
   ui:generateFormat="com.google.gwt.i18n.rebind.format.PropertiesFormat"
   ui:generateFilename="myapp_translate_source"
-  ui:generateLocales="default"
+  ui:generateLocales="en_US"
 >
 
 <ui:with field='external' type='com.google.gwt.uibinder.test.client.WidgetBasedUiExternalResources'>
@@ -286,13 +286,9 @@
       <gwt:StackPanel stylePrimaryName="myStyle" width="280px" ui:field='myStackPanel'>
         <gwt:Label text="Stack One Text"  gwt:StackPanel-text="Stack One"
             ui:field='myStackPanelItem'>
-          <!-- ui:attribute name="gwt:StackPanel-text" description="Label for Stack One"/
--->
           <ui:attribute name="text" description="Content for Stack One Text"/>
         </gwt:Label>
         <gwt:HTMLPanel gwt:StackPanel-text="Stack Two">
-          <!-- ui:attribute name="gwt:StackPanel-text" description="Label for Stack Two"/
--->
           <div>
             <ui:msg description="Describe div content">Some other content</ui:msg>
           </div>
@@ -497,6 +493,14 @@
         text="Sometimes people do things they don't need to do. Don't punish them."/></p>
       <demo:FooLabel ui:field='theFoo' pojo="{values.pojo}"/>
       <demo:EnumeratedLabel ui:field='enumLabel' suffix='tail'>This label uses an enum for its</demo:EnumeratedLabel>
+      <gwt:PushButton ui:field='pushButton' enabled='true'>
+        <gwt:upFace><b>click me</b></gwt:upFace>
+        <gwt:downFace image='{prettyImage}'/>
+        <gwt:upHoveringFace><b>Click ME!</b></gwt:upHoveringFace>
+        <gwt:downHoveringFace image='{prettyImage}'/>
+        <gwt:upDisabledFace image='{prettyImage}'/>
+        <gwt:downDisabledFace image='{prettyImage}'/>
+      </gwt:PushButton>
 
     <h2>How to use the debugId, addStyleNames, addDependentStyleNames attributes</h2>
     <p>You can use the <strong>debugId</strong>, <strong>addStyleNames</strong>, and <strong>addDependentStyleNames</strong>
@@ -518,8 +522,8 @@
 
     &lt;gwt:FlowPanel&gt;
       &lt;gwt:Label ui:field="lblDebugId" debugId="joe" 
-          addStyleNames="newStyle, anotherStyle" 
-          addStyleDependentNames="dependentStyle, anotherDependentStyle" 
+          addStyleNames="newStyle anotherStyle" 
+          addStyleDependentNames="dependentStyle anotherDependentStyle" 
           text="a label with debug id" /&gt;
 
       &lt;!-- A button that only adds a single style name, no comma's needed --&gt;
@@ -540,7 +544,9 @@
     type="button"&gt;Go&lt;/button&gt;</pre>
 
     <gwt:FlowPanel>
-      <gwt:Label ui:field="lblDebugId" debugId="joe" addStyleNames="newStyle, anotherStyle" addStyleDependentNames="dependentStyle, anotherDependentStyle">
+      <gwt:Label ui:field="lblDebugId" debugId="joe" 
+          addStyleNames="newStyle, anotherStyle {external.style.prettyText}" 
+          addStyleDependentNames="dependentStyle anotherDependentStyle, {external.style.prettyText}">
         A label with a debug id
       </gwt:Label>
       <gwt:Button ui:field="btnGo" debugId="myButton" addStyleNames="buttonStyle">Go</gwt:Button>

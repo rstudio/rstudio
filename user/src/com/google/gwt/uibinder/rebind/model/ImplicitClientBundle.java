@@ -64,7 +64,7 @@ public class ImplicitClientBundle {
    *          to enforce deterministic order across recompiles
    * @return
    */
-  public ImplicitCssResource createCssResource(String name, String source,
+  public ImplicitCssResource createCssResource(String name, String[] source,
       JClassType extendedInterface, String body, LinkedHashSet<JClassType> importTypes) {
     ImplicitCssResource css = new ImplicitCssResource(packageName, cssBaseName
         + name, name, source, extendedInterface, body, logger, importTypes);

@@ -83,28 +83,20 @@ class AttributeParsers {
     if (rtn != null || types.length > 1) {
       return rtn;
     }
-    
-    /* A couple of special cases when we're asked to handle a single type */
-    
-    /* Maybe it's an enum */
-    JEnumType enumType = types[0].isEnum();
-    if (enumType != null) {
-      return new EnumAttributeParser(enumType);
+
+    if (types.length == 1) {
+      /* Maybe it's an enum */
+      JEnumType enumType = types[0].isEnum();
+      if (enumType != null) {
+        return new EnumAttributeParser(enumType);
+      }
     }
 
     /*
-     * Dunno what it is, so let a StrictAttributeParser look for
-     * a {field.reference}
+     * Dunno what it is, so let a StrictAttributeParser look for a
+     * {field.reference}
      */
     return new StrictAttributeParser();
-  }
-
-  public AttributeParser getBooleanParser() {
-    return getForKey(BOOLEAN);
-  }
-
-  public AttributeParser getDoubleParser() {
-    return getForKey(DOUBLE);
   }
 
   private void addAttributeParser(String signature, String className) {

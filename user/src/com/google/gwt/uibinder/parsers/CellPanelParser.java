@@ -19,6 +19,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
+import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
 /**
  * Parses {@link com.google.gwt.user.client.ui.CellPanel} widgets.
@@ -31,10 +33,6 @@ public class CellPanelParser implements ElementParser {
   private static final String HEIGHT_ATTR = "height";
   private static final String CELL_TAG = "Cell";
 
-  private static HorizontalAlignmentConstantParser halignParser = new HorizontalAlignmentConstantParser();
-  private static VerticalAlignmentConstantParser valignParser = new VerticalAlignmentConstantParser();
-  private static StringAttributeParser stringParser = new StringAttributeParser();
-
   /**
    * Parses the alignment and size attributes common to all CellPanels.
    * 
@@ -46,33 +44,33 @@ public class CellPanelParser implements ElementParser {
   static void parseCellAttributes(XMLElement cellElem, String fieldName,
       String childFieldName, UiBinderWriter writer)
       throws UnableToCompleteException {
+    JClassType hAlignConstantType = writer.getOracle().findType(
+        HorizontalAlignmentConstant.class.getCanonicalName());
+    JClassType vAlignConstantType = writer.getOracle().findType(
+        VerticalAlignmentConstant.class.getCanonicalName());
 
     // Parse horizontal and vertical alignment attributes.
     if (cellElem.hasAttribute(HALIGN_ATTR)) {
-      String value = halignParser.parse(cellElem.consumeRawAttribute(HALIGN_ATTR),
-          writer.getLogger());
+      String value = cellElem.consumeAttribute(HALIGN_ATTR, hAlignConstantType);
       writer.addStatement("%1$s.setCellHorizontalAlignment(%2$s, %3$s);",
           fieldName, childFieldName, value);
     }
 
     if (cellElem.hasAttribute(VALIGN_ATTR)) {
-      String value = valignParser.parse(cellElem.consumeRawAttribute(VALIGN_ATTR),
-          writer.getLogger());
+      String value = cellElem.consumeAttribute(VALIGN_ATTR, vAlignConstantType);
       writer.addStatement("%1$s.setCellVerticalAlignment(%2$s, %3$s);",
           fieldName, childFieldName, value);
     }
 
     // Parse width and height attributes.
     if (cellElem.hasAttribute(WIDTH_ATTR)) {
-      String value = stringParser.parse(cellElem.consumeRawAttribute(WIDTH_ATTR),
-          writer.getLogger());
+      String value = cellElem.consumeStringAttribute(WIDTH_ATTR);
       writer.addStatement("%1$s.setCellWidth(%2$s, %3$s);", fieldName,
           childFieldName, value);
     }
 
     if (cellElem.hasAttribute(HEIGHT_ATTR)) {
-      String value = stringParser.parse(cellElem.consumeRawAttribute(HEIGHT_ATTR),
-          writer.getLogger());
+      String value = cellElem.consumeStringAttribute(HEIGHT_ATTR);
       writer.addStatement("%1$s.setCellHeight(%2$s, %3$s);", fieldName,
           childFieldName, value);
     }

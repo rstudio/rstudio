@@ -41,13 +41,6 @@ import java.util.Set;
  * Models a method returning a CssResource on a generated ClientBundle.
  */
 public class ImplicitCssResource {
-  private static List<String> explodeSource(String source) {
-    if (source.length() == 0) {
-      return Collections.emptyList();
-    }
-    return Arrays.asList(source.split("\\s+"));
-  }
-
   private final String packageName;
   private final String className;
   private final String name;
@@ -60,7 +53,7 @@ public class ImplicitCssResource {
   private File generatedFile;
 
   ImplicitCssResource(String packageName, String className, String name,
-      String source, JClassType extendedInterface, String body,
+      String[] source, JClassType extendedInterface, String body,
       MortalLogger logger, HashSet<JClassType> importTypes) {
     this.packageName = packageName;
     this.className = className;
@@ -69,7 +62,7 @@ public class ImplicitCssResource {
     this.body = body;
     this.logger = logger;
     this.imports = Collections.unmodifiableSet(importTypes);
-    sources = explodeSource(source);
+    sources = Arrays.asList(source);
   }
 
   /**

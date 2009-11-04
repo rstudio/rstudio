@@ -18,12 +18,10 @@ package com.google.gwt.uibinder.rebind;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JPackage;
-import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dom.client.TagName;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.parsers.AttributeMessageParser;
-import com.google.gwt.uibinder.parsers.AttributeParser;
 import com.google.gwt.uibinder.parsers.BeanParser;
 import com.google.gwt.uibinder.parsers.BundleAttributeParser;
 import com.google.gwt.uibinder.parsers.ElementParser;
@@ -516,30 +514,6 @@ public class UiBinderWriter {
   }
 
   /**
-   * Find and return an appropriate attribute parser for a set of types, or
-   * return null.
-   */
-  public AttributeParser getAttributeParser(JType... types) {
-    return attributeParsers.get(types);
-  }
-
-  /**
-   * Find and return an appropriate attribute parser for an attribute and set of
-   * parameters, or return null.
-   * <p>
-   * If params is of size one, a parser of some kind is guaranteed to be
-   * returned.
-   */
-  public AttributeParser getAttributeParser(XMLAttribute attribute,
-      JType... types) throws UnableToCompleteException {
-    AttributeParser parser = getBundleAttributeParser(attribute);
-    if (parser == null) {
-      parser = getAttributeParser(types);
-    }
-    return parser;
-  }
-
-  /**
    * Finds an attribute {@link BundleAttributeParser} for the given xml
    * attribute, if any, based on its namespace uri.
    * 
@@ -704,7 +678,7 @@ public class UiBinderWriter {
     gwtPrefix = documentElement.lookupPrefix(BINDER_URI);
 
     XMLElement elem = new XMLElementProviderImpl(attributeParsers,
-        bundleParsers, logger).get(documentElement);
+        bundleParsers, oracle, logger).get(documentElement);
     this.rendered = tokenator.detokenate(parseDocumentElement(elem));
     printWriter.print(rendered);
   }

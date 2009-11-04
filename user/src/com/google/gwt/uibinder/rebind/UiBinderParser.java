@@ -136,7 +136,7 @@ public class UiBinderParser {
 
   private JClassType consumeTypeAttribute(XMLElement elem)
       throws UnableToCompleteException {
-    String resourceTypeName = elem.consumeRequiredAttribute("type");
+    String resourceTypeName = elem.consumeRequiredRawAttribute("type");
 
     JClassType resourceType = oracle.findType(resourceTypeName);
     if (resourceType == null) {
@@ -150,8 +150,8 @@ public class UiBinderParser {
    * Interprets <ui:data> elements.
    */
   private void createData(XMLElement elem) throws UnableToCompleteException {
-    String name = elem.consumeRequiredAttribute(FIELD_ATTRIBUTE);
-    String source = elem.consumeRequiredAttribute(SOURCE_ATTRIBUTE);
+    String name = elem.consumeRequiredRawAttribute(FIELD_ATTRIBUTE);
+    String source = elem.consumeRequiredRawAttribute(SOURCE_ATTRIBUTE);
     ImplicitDataResource dataMethod = bundleClass.createDataResource(name,
         source);
     FieldWriter field = fieldManager.registerField(dataResourceType,
@@ -164,7 +164,7 @@ public class UiBinderParser {
    * Interprets <ui:image> elements.
    */
   private void createImage(XMLElement elem) throws UnableToCompleteException {
-    String name = elem.consumeRequiredAttribute(FIELD_ATTRIBUTE);
+    String name = elem.consumeRequiredRawAttribute(FIELD_ATTRIBUTE);
     // @source is optional on ImageResource
     String source = elem.consumeRawAttribute(SOURCE_ATTRIBUTE, null);
 
@@ -193,7 +193,7 @@ public class UiBinderParser {
    * Interprets <ui:with> elements.
    */
   private void createResource(XMLElement elem) throws UnableToCompleteException {
-    String resourceName = elem.consumeRequiredAttribute(FIELD_ATTRIBUTE);
+    String resourceName = elem.consumeRequiredRawAttribute(FIELD_ATTRIBUTE);
     JClassType resourceType = consumeTypeAttribute(elem);
     if (elem.getAttributeCount() > 0) {
       writer.die("In %s, should only find attributes \"field\" and \"type\"",
@@ -234,22 +234,19 @@ public class UiBinderParser {
 
   private void createStyle(XMLElement elem) throws UnableToCompleteException {
     String body = elem.consumeUnescapedInnerText();
-    String source = elem.consumeRawAttribute(SOURCE_ATTRIBUTE);
+    String[] source = elem.consumeRawArrayAttribute(SOURCE_ATTRIBUTE);
     
-    if (0 == body.length() && 0 == source.length()) {
+    if (0 == body.length() && 0 == source.length) {
       writer.die("%s must have either a src attribute or body text", elem);
     }
     
     String name = elem.consumeRawAttribute(FIELD_ATTRIBUTE, "style");
     JClassType publicType = consumeCssResourceType(elem);
 
-    String importTypeNames = elem.consumeRawAttribute(IMPORT_ATTRIBUTE, null);
+    String[] importTypeNames = elem.consumeRawArrayAttribute(IMPORT_ATTRIBUTE);
     LinkedHashSet<JClassType> importTypes = new LinkedHashSet<JClassType>();
-    if (importTypeNames != null) {
-      String[] typeNames = importTypeNames.split("\\s+");
-      for (String type : typeNames) {
-        importTypes.add(findCssResourceType(elem, type));
-      }
+    for (String type : importTypeNames) {
+      importTypes.add(findCssResourceType(elem, type));
     }
 
     ImplicitCssResource cssMethod = bundleClass.createCssResource(name, source,

@@ -15,11 +15,13 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.core.ext.TreeLogger;
+
 /**
  * A MortalLogger using a dummy logger.
  */
 public class DummyMortalLogger extends MortalLogger {
   public DummyMortalLogger() {
-    super(new DummyTreeLogger());
+    super(TreeLogger.NULL);
   }
 }

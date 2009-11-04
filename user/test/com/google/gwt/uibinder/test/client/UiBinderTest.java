@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.StackPanel;
@@ -72,6 +73,18 @@ public class UiBinderTest extends GWTTestCase {
     Element elm = widgetUi.nonStandardElement;
     assertEquals("I", elm.getTagName());
   }
+  
+  public void testAddStyleNamesAndDebugId() {
+    Label l = widgetUi.lblDebugId;
+    assertEquals("gwt-debug-joe", l.getElement().getId());
+
+    WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
+    assertTrue(l.getStyleName().contains("newStyle"));
+    assertTrue(l.getStyleName().contains("anotherStyle"));
+    assertTrue(l.getStyleName().contains("dependentStyle"));
+    assertTrue(l.getStyleName().contains("anotherDependentStyle"));
+    assertTrue(l.getStyleName().contains(resources.style().prettyText()));
+  }
 
   // TODO(rjrjr) The direction stuff in these tests really belongs in
   // DockPanelParserTest
@@ -90,8 +103,7 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals(getCenter(), widgetUi.bundledLabel.getParent());
     assertEquals(new FakeBundle().helloText(), widgetUi.bundledLabel.getText());
     WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
-    assertEquals("bundledLabel should have styleName",
-        resources.style().prettyText(), widgetUi.bundledLabel.getStyleName());
+    assertEquals(resources.style().prettyText(), widgetUi.bundledLabel.getStyleName());
 
     Element pretty = DOM.getElementById("prettyPara");
     assertEquals(resources.style().prettyText(), pretty.getClassName());
@@ -175,6 +187,12 @@ public class UiBinderTest extends GWTTestCase {
         widgetUi.enumLabel.getText().endsWith(expected.toString()));
   }
 
+  public void testCustomButtonParser() {
+    assertEquals("<b>click me</b>", widgetUi.pushButton.getUpFace().getHTML());
+    assertEquals("<b>Click ME!</b>", widgetUi.pushButton.getUpHoveringFace().getHTML());
+    // Can't test the images at all :-P
+  }
+  
   public void testProtectedDomTextMessageWithFunnyChars() {
     String t = widgetUi.funnyCharsProtectedMessageParagraph.getInnerText();
     assertEquals("Don't forget about protected untranslatable blocks: "

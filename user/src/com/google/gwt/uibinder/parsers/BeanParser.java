@@ -80,7 +80,7 @@ public class BeanParser implements ElementParser {
       JType paramType = unfilledRequiredParams.get(key);
       if (paramType != null) {
         if (!isString(writer, paramType)) {
-          writer.die("In %s, cannot appply message attribute to non-string "
+          writer.die("In %s, cannot apply message attribute to non-string "
               + "constructor argument %s %s.", elem,
               paramType.getSimpleSourceName(), key);
         }
@@ -116,19 +116,18 @@ public class BeanParser implements ElementParser {
       String propertyName = attribute.getLocalName();
       if (setterValues.keySet().contains(propertyName)
           || requiredValues.containsKey(propertyName)) {
-        // TODO(rjrjr) A fine example of why res: namespace hack must die
         writer.die("Duplicate attribute name: %s", propertyName);
       }
 
       if (unfilledRequiredParams.keySet().contains(propertyName)) {
         JType paramType = unfilledRequiredParams.get(propertyName);
-        AttributeParser parser = writer.getAttributeParser(attribute, paramType);
-        if (parser == null) {
+        String value = elem.consumeAttributeWithDefault(attribute.getName(),
+            null, paramType);
+        if (value == null) {
           writer.die("In %s, unable to parse %s as constructor argument "
               + "of type %s", elem, attribute, paramType.getSimpleSourceName());
         }
-        requiredValues.put(propertyName, parser.parse(
-            attribute.consumeRawValue(), writer.getLogger()));
+        requiredValues.put(propertyName, value);
         unfilledRequiredParams.remove(propertyName);
       } else {
         JMethod setter = ownerFieldClass.getSetter(propertyName);
@@ -137,14 +136,13 @@ public class BeanParser implements ElementParser {
               elem.getLocalName(), initialCap(propertyName));
         }
 
-        AttributeParser parser = writer.getAttributeParser(attribute,
-            getParamTypes(setter));
+        String value = elem.consumeAttributeWithDefault(attribute.getName(),
+            null,getParamTypes(setter));
 
-        if (parser == null) {
+        if (value == null) {
           writer.die("In %s, unable to parse %s.", elem, attribute);
         }
-        setterValues.put(propertyName, parser.parse(
-            attribute.consumeRawValue(), writer.getLogger()));
+        setterValues.put(propertyName, value);
       }
     }
 

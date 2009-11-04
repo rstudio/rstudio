@@ -30,7 +30,6 @@ public class HTMLPanelParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       final UiBinderWriter writer) throws UnableToCompleteException {
-    String customTag = UiBinderWriter.escapeTextForJavaStringLiteral(elem.consumeRawAttribute("tag"));
 
     /*
      * Gathers up elements that indicate nested widgets (but only those that are
@@ -57,12 +56,13 @@ public class HTMLPanelParser implements ElementParser {
      * will not break subclasses if they happen to have the same constructor
      * signature (by passing in type).
      */
-    if ("".equals(customTag)) {
+    String customTag = elem.consumeStringAttribute("tag", null);
+    if (null == customTag) {
       writer.setFieldInitializerAsConstructor(fieldName, type, "\"" + html
           + "\"");
     } else {
-      writer.setFieldInitializerAsConstructor(fieldName, type, "\"" + customTag
-          + "\"", "\"" + html + "\"");
+      writer.setFieldInitializerAsConstructor(fieldName, type, customTag, "\""
+          + html + "\"");
     }
   }
 
