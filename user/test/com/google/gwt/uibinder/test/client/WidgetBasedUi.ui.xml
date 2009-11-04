@@ -278,7 +278,7 @@
         <ui:attribute name="text" description="radio button name"/>
       </demo:PointlessRadioButtonSubclass>
       
-	<gwt:HorizontalPanel>
+	<gwt:HorizontalPanel horizontalAlignment="ALIGN_LEFT">
 	  <gwt:Cell><gwt:HTMLPanel>
       <p> ... a StackPanel ... </p>
       

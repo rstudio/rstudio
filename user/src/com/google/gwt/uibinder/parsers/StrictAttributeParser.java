@@ -66,7 +66,7 @@ public class StrictAttributeParser implements AttributeParser {
     try {
       return new FieldReferenceConverter(new FieldReferenceDelegate()).convert(value);
     } catch (IllegalFieldReferenceException e) {
-      logger.die("Bad field reference: \"%s\"", value);
+      logger.die("Cannot parse value: \"%s\"", value);
       return null; // Unreachable
     }
   }

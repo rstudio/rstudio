@@ -24,7 +24,7 @@ import java.util.HashMap;
  * Parses a
  * {@link com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant}.
  */
-public class VerticalAlignmentConstantParser implements AttributeParser {
+public class VerticalAlignmentConstantParser extends StrictAttributeParser {
 
   private static final HashMap<String, String> values =
     new HashMap<String, String>();
@@ -41,9 +41,9 @@ public class VerticalAlignmentConstantParser implements AttributeParser {
   public String parse(String value, MortalLogger logger)
       throws UnableToCompleteException {
     String translated = values.get(value);
-    if (translated == null) {
-      logger.die("Invalid value: vorizontalAlignment='%s'", value);
+    if (translated != null) {
+      return translated;
     }
-    return translated;
+    return super.parse(value, logger);
   }
 }
