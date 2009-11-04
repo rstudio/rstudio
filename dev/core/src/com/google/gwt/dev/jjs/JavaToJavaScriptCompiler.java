@@ -85,6 +85,7 @@ import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
+import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
@@ -637,7 +638,11 @@ public class JavaToJavaScriptCompiler {
     if (isAggressivelyOptimize) {
       // inlining
       didChange = MethodInliner.exec(jprogram) || didChange;
+
+      // remove same parameters value
+      didChange = SameParameterValueOptimizer.exec(jprogram) || didChange;
     }
+    
     // prove that any types that have been culled from the main tree are
     // unreferenced due to type tightening?
 
