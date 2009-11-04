@@ -34,12 +34,35 @@ import java.util.Map.Entry;
  * Test for <code>PushButton</code> as most of this widget's functionality is UI
  * based, the primary test will be in the new UI testing framework once it is
  * released.
- * 
  */
 public class CustomButtonTest extends GWTTestCase {
 
   public String getModuleName() {
     return "com.google.gwt.user.User";
+  }
+
+  public void testCleanupOnRemoval() {
+    PushButton pb = new PushButton();
+    ToggleButton tb = new ToggleButton();
+
+    RootPanel.get().add(pb);
+    RootPanel.get().add(tb);
+
+    // Synthesize mouse-over events to get both buttons into the 'hover' state.
+    pb.getElement().dispatchEvent(
+        Document.get().createMouseOverEvent(1, 0, 0, 0, 0, false, false, false,
+            false, Event.BUTTON_LEFT, null));
+    tb.getElement().dispatchEvent(
+        Document.get().createMouseOverEvent(1, 0, 0, 0, 0, false, false, false,
+            false, Event.BUTTON_LEFT, null));
+    assertTrue(pb.isHovering());
+    assertTrue(tb.isHovering());
+
+    // Remove the buttons. The hover state should be cleared.
+    pb.removeFromParent();
+    tb.removeFromParent();
+    assertFalse(pb.isHovering());
+    assertFalse(tb.isHovering());
   }
 
   public void testCSS() {
@@ -125,6 +148,33 @@ public class CustomButtonTest extends GWTTestCase {
     }
   }
 
+  public void testSyntheticClick() {
+    PushButton b = new PushButton();
+    final ArrayList<String> events = new ArrayList<String>();
+
+    b.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        events.add(event.getNativeEvent().getType());
+      }
+    });
+
+    RootPanel.get().add(b);
+
+    // Synthesize over/down/up events, which should kick off CustomButton's
+    // internal machinery to synthesize a click.
+    b.getElement().dispatchEvent(
+        Document.get().createMouseOverEvent(1, 0, 0, 0, 0, false, false, false,
+            false, Event.BUTTON_LEFT, null));
+    b.getElement().dispatchEvent(
+        Document.get().createMouseDownEvent(1, 0, 0, 0, 0, false, false, false,
+            false, Event.BUTTON_LEFT));
+    b.getElement().dispatchEvent(
+        Document.get().createMouseUpEvent(1, 0, 0, 0, 0, false, false, false,
+            false, Event.BUTTON_LEFT));
+    assertEquals("Expecting one click event", 1, events.size());
+    assertEquals("Expecting one click event", "click", events.get(0));
+  }
+  
   public void testTransitions() {
     ToggleButton b = new ToggleButton("transitions");
 
@@ -158,32 +208,5 @@ public class CustomButtonTest extends GWTTestCase {
     assertTrue(b.isHovering());
     assertFalse(b.isDown());
     assertFalse(b.isEnabled());
-  }
-
-  public void testSyntheticClick() {
-    PushButton b = new PushButton();
-    final ArrayList<String> events = new ArrayList<String>();
-
-    b.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        events.add(event.getNativeEvent().getType());
-      }
-    });
-
-    RootPanel.get().add(b);
-
-    // Synthesize over/down/up events, which should kick off CustomButton's
-    // internal machinery to synthesize a click.
-    b.getElement().dispatchEvent(
-        Document.get().createMouseOverEvent(1, 0, 0, 0, 0, false, false, false,
-            false, Event.BUTTON_LEFT, null));
-    b.getElement().dispatchEvent(
-        Document.get().createMouseDownEvent(1, 0, 0, 0, 0, false, false, false,
-            false, Event.BUTTON_LEFT));
-    b.getElement().dispatchEvent(
-        Document.get().createMouseUpEvent(1, 0, 0, 0, 0, false, false, false,
-            false, Event.BUTTON_LEFT));
-    assertEquals("Expecting one click event", 1, events.size());
-    assertEquals("Expecting one click event", "click", events.get(0));
   }
 }

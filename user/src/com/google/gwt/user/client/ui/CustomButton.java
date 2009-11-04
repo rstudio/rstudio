@@ -804,6 +804,7 @@ public abstract class CustomButton extends ButtonBase {
   protected void onDetach() {
     super.onDetach();
     cleanupCaptureState();
+    setHovering(false);
   }
 
   /**
