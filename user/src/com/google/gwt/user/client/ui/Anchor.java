@@ -37,7 +37,7 @@ import com.google.gwt.i18n.client.HasDirection;
  * @see Hyperlink
  */
 public class Anchor extends FocusWidget implements HasHorizontalAlignment,
-    HasName, HasText, HasHTML, HasWordWrap, HasDirection {
+    HasName, HasHTML, HasWordWrap, HasDirection {
 
   /**
    * Creates an Anchor widget that wraps an existing &lt;a&gt; element.

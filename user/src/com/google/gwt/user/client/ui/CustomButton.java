@@ -105,7 +105,7 @@ public abstract class CustomButton extends ButtonBase {
    * Represents a button's face. Each face is associated with its own style
    * modifier and, optionally, its own contents html, text, or image.
    */
-  public abstract class Face implements HasHTML, HasText {
+  public abstract class Face implements HasHTML {
     private static final String STYLENAME_HTML_FACE = "html-face";
     private final Face delegateTo;
     private Element face;
@@ -827,7 +827,7 @@ public abstract class CustomButton extends ButtonBase {
     }
   }
 
-  void fireClickListeners(Event nativeEvent) {
+  void fireClickListeners(@SuppressWarnings("unused") Event nativeEvent) {
     // TODO(ecc) Once event triggering is committed, should fire a native click event instead.
     fireEvent(new ClickEvent() {
     });

@@ -81,7 +81,7 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
  * </p>
  */
 @SuppressWarnings("deprecation")
-public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
+public class DialogBox extends DecoratedPopupPanel implements HasHTML,
     MouseListener {
   /**
    * Set of characteristic interfaces supported by the {@link DialogBox} caption
