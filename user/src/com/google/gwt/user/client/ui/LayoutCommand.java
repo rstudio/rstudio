@@ -46,6 +46,15 @@ public class LayoutCommand implements ScheduledCommand {
     this.layout = layout;
   }
 
+  /**
+   * Cancels this command. A subsequent call to
+   * {@link #schedule(int, AnimationCallback)} will re-enable it.
+   */
+  public void cancel() {
+    // There's no way to "unschedule" a command, so we use a canceled flag.
+    canceled = true;
+  }
+
   public final void execute() {
     if (canceled) {
       return;
@@ -80,13 +89,6 @@ public class LayoutCommand implements ScheduledCommand {
   }
 
   /**
-   * Called before the layout is executed. Override this method to perform any
-   * work that needs to happen just before it.
-   */
-  protected void doBeforeLayout() {
-  }
-
-  /**
    * Schedules a layout. The duration and callback passed to this method will
    * supercede any previous call that has not yet been executed.
    * 
@@ -105,11 +107,9 @@ public class LayoutCommand implements ScheduledCommand {
   }
 
   /**
-   * Cancels this command. A subsequent call to
-   * {@link #schedule(int, AnimationCallback)} will re-enable it.
+   * Called before the layout is executed. Override this method to perform any
+   * work that needs to happen just before it.
    */
-  public void cancel() {
-    // There's no way to "unschedule" a command, so we use a canceled flag.
-    canceled = true;
+  protected void doBeforeLayout() {
   }
 }
