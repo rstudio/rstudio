@@ -48,7 +48,7 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
     RequiresResize, ProvidesResize {
 
   private final Layout layout;
-  private final LayoutCommand animCmd;
+  private final LayoutCommand layoutCmd;
 
   /**
    * Creates an empty layout panel.
@@ -56,7 +56,7 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
   public LayoutPanel() {
     setElement(Document.get().createDivElement());
     layout = new Layout(getElement());
-    animCmd = new LayoutCommand(layout);
+    layoutCmd = new LayoutCommand(layout);
   }
 
   /**
@@ -80,11 +80,11 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
   }
 
   public void animate(final int duration, final AnimationCallback callback) {
-    animCmd.schedule(duration, callback);
+    layoutCmd.schedule(duration, callback);
   }
 
   public void forceLayout() {
-    animCmd.cancel();
+    layoutCmd.cancel();
     layout.layout();
     onResize();
   }

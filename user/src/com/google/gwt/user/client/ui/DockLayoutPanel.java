@@ -85,7 +85,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   private final Unit unit;
   private Widget center;
   private final Layout layout;
-  private final LayoutCommand animCmd;
+  private final LayoutCommand layoutCmd;
 
   /**
    * Creates an empty dock panel.
@@ -97,7 +97,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
 
     setElement(Document.get().createDivElement());
     layout = new Layout(getElement());
-    animCmd = new DockAnimateCommand(layout);
+    layoutCmd = new DockAnimateCommand(layout);
   }
 
   /**
@@ -156,11 +156,11 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   }
 
   public void animate(int duration, final Layout.AnimationCallback callback) {
-    animCmd.schedule(duration, callback);
+    layoutCmd.schedule(duration, callback);
   }
 
   public void forceLayout() {
-    animCmd.cancel();
+    layoutCmd.cancel();
     doLayout();
     layout.layout();
     onResize();

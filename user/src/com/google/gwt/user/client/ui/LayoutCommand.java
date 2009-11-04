@@ -38,7 +38,7 @@ public class LayoutCommand implements ScheduledCommand {
   private final Layout layout;
 
   /**
-   * Creates a new command for the given layout object
+   * Creates a new command for the given layout object.
    * 
    * @param layout
    */
