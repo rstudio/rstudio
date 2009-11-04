@@ -85,7 +85,7 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
            * 
            * void bar() { ((IB) object).foo(); }
            */
-          for (String intf : computeAllInterfaces(owner)) {
+          outer : for (String intf : computeAllInterfaces(owner)) {
             if (jsoData.getSingleJsoIntfTypes().contains(intf)) {
               /*
                * Check that it really should be mangled and is not a reference
@@ -95,23 +95,25 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
                * is undefined.
                */
               String maybeMangled = intf.replace('/', '_') + "_" + name;
-              Method method = jsoData.getImplementation(maybeMangled);
-              if (method != null) {
-                /*
-                 * Found a method with the right name, but we need to check the
-                 * parameters and the return type. In order to do this, we'll
-                 * look at the arguments and return type of the target method,
-                 * removing the first argument, which is the instance.
-                 */
-                assert method.getArgumentTypes().length >= 1;
-                Type[] argumentTypes = new Type[method.getArgumentTypes().length - 1];
-                System.arraycopy(method.getArgumentTypes(), 1, argumentTypes,
-                    0, argumentTypes.length);
-                String maybeDescriptor = Type.getMethodDescriptor(
-                    method.getReturnType(), argumentTypes);
-                if (maybeDescriptor.equals(desc)) {
-                  name = maybeMangled;
-                  break;
+              List<Method> methods = jsoData.getImplementations(maybeMangled);
+              if (methods != null) {
+                for (Method method : methods) {
+                  /*
+                   * Found a method with the right name, but we need to check
+                   * the parameters and the return type. In order to do this,
+                   * we'll look at the arguments and return type of the target
+                   * method, removing the first argument, which is the instance.
+                   */
+                  assert method.getArgumentTypes().length >= 1;
+                  Type[] argumentTypes = new Type[method.getArgumentTypes().length - 1];
+                  System.arraycopy(method.getArgumentTypes(), 1, argumentTypes,
+                      0, argumentTypes.length);
+                  String maybeDescriptor = Type.getMethodDescriptor(
+                      method.getReturnType(), argumentTypes);
+                  if (maybeDescriptor.equals(desc)) {
+                    name = maybeMangled;
+                    break outer;
+                  }
                 }
               }
             }
@@ -179,8 +181,10 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
      * may be referenced via a more specific interface.
      */
     if (inSingleJsoImplInterfaceType) {
-      for (Map.Entry<String, Method> entry : toImplement(currentTypeName).entrySet()) {
-        writeEmptyMethod(entry.getKey(), entry.getValue());
+      for (Map.Entry<String, List<Method>> entry : toImplement(currentTypeName).entrySet()) {
+        for (Method method : entry.getValue()) {
+          writeEmptyMethod(entry.getKey(), method);
+        }
       }
     }
     super.visitEnd();
@@ -255,14 +259,14 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
    * Given a resource name of a class, find all mangled method names that must
    * be implemented.
    */
-  private SortedMap<String, Method> toImplement(String typeName) {
+  private SortedMap<String, List<Method>> toImplement(String typeName) {
     String name = typeName.replace('/', '_');
     String prefix = name + "_";
     String suffix = name + "`";
-    SortedMap<String, Method> toReturn = new TreeMap<String, Method>();
+    SortedMap<String, List<Method>> toReturn = new TreeMap<String, List<Method>>();
 
     for (String mangledName : jsoData.getMangledNames().subSet(prefix, suffix)) {
-      toReturn.put(mangledName, jsoData.getImplementation(mangledName));
+      toReturn.put(mangledName, jsoData.getImplementations(mangledName));
     }
     toReturn.keySet().removeAll(implementedMethods);
     return toReturn;
@@ -293,51 +297,52 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
      * semantics of the dispatches that would make a common implementation far
      * more awkward than the duplication of code.
      */
-    for (Map.Entry<String, Method> entry : toImplement(stubIntr).entrySet()) {
-      String mangledName = entry.getKey();
-      Method method = entry.getValue();
+    for (Map.Entry<String, List<Method>> entry : toImplement(stubIntr).entrySet()) {
+      for (Method method : entry.getValue()) {
+        String mangledName = entry.getKey();
 
-      String descriptor = "("
-          + method.getDescriptor().substring(
-              1 + method.getArgumentTypes()[0].getDescriptor().length());
-      String localName = method.getName().substring(0,
-          method.getName().length() - 1);
-      Method toCall = new Method(localName, descriptor);
+        String descriptor = "("
+            + method.getDescriptor().substring(
+                1 + method.getArgumentTypes()[0].getDescriptor().length());
+        String localName = method.getName().substring(0,
+            method.getName().length() - 1);
+        Method toCall = new Method(localName, descriptor);
 
-      // Must not be final
-      MethodVisitor mv = super.visitMethod(Opcodes.ACC_PUBLIC
-          | Opcodes.ACC_SYNTHETIC, mangledName, descriptor, null, null);
-      if (mv != null) {
-        mv.visitCode();
+        // Must not be final
+        MethodVisitor mv = super.visitMethod(Opcodes.ACC_PUBLIC
+            | Opcodes.ACC_SYNTHETIC, mangledName, descriptor, null, null);
+        if (mv != null) {
+          mv.visitCode();
 
-        /*
-         * It just so happens that the stack and local variable sizes are the
-         * same, but they're kept distinct to aid in clarity should the dispatch
-         * logic change.
-         * 
-         * These start at 1 because we need to load "this" onto the stack
-         */
-        int var = 1;
-        int size = 1;
+          /*
+           * It just so happens that the stack and local variable sizes are the
+           * same, but they're kept distinct to aid in clarity should the
+           * dispatch logic change.
+           * 
+           * These start at 1 because we need to load "this" onto the stack
+           */
+          int var = 1;
+          int size = 1;
 
-        // load this
-        mv.visitVarInsn(Opcodes.ALOAD, 0);
+          // load this
+          mv.visitVarInsn(Opcodes.ALOAD, 0);
 
-        // then the rest of the arguments
-        for (Type t : toCall.getArgumentTypes()) {
-          size += t.getSize();
-          mv.visitVarInsn(t.getOpcode(Opcodes.ILOAD), var);
-          var += t.getSize();
+          // then the rest of the arguments
+          for (Type t : toCall.getArgumentTypes()) {
+            size += t.getSize();
+            mv.visitVarInsn(t.getOpcode(Opcodes.ILOAD), var);
+            var += t.getSize();
+          }
+
+          // Make sure there's enough room for the return value
+          size = Math.max(size, toCall.getReturnType().getSize());
+
+          mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, currentTypeName,
+              toCall.getName(), toCall.getDescriptor());
+          mv.visitInsn(toCall.getReturnType().getOpcode(Opcodes.IRETURN));
+          mv.visitMaxs(size, var);
+          mv.visitEnd();
         }
-
-        // Make sure there's enough room for the return value
-        size = Math.max(size, toCall.getReturnType().getSize());
-
-        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, currentTypeName,
-            toCall.getName(), toCall.getDescriptor());
-        mv.visitInsn(toCall.getReturnType().getOpcode(Opcodes.IRETURN));
-        mv.visitMaxs(size, var);
-        mv.visitEnd();
       }
     }
   }

@@ -311,6 +311,10 @@ public class SingleJsoImplTest extends GWTTestCase {
       return "a";
     }
 
+    public String a(boolean overload) {
+      return overload ? "Kaboom!" : "OK";
+    }
+
     public String ex() throws IOException {
       throw new IOException();
     }
@@ -402,6 +406,8 @@ public class SingleJsoImplTest extends GWTTestCase {
 
   interface Simple {
     String a();
+
+    String a(boolean overload);
 
     String ex() throws IOException;
 
@@ -589,6 +595,7 @@ public class SingleJsoImplTest extends GWTTestCase {
       assertTrue(asJso instanceof Object);
       assertTrue(asJso instanceof Simple);
       assertEquals("a", asJso.a());
+      assertEquals("OK", asJso.a(false));
       try {
         asJso.ex();
         fail("Should have thrown IOException");
@@ -609,7 +616,9 @@ public class SingleJsoImplTest extends GWTTestCase {
       assertTrue(asSimple instanceof JavaScriptObject);
       assertTrue(asSimple instanceof JsoSimple);
       assertEquals("a", asSimple.a());
+      assertEquals("OK", asSimple.a(false));
       assertEquals("a", ((JsoSimple) asSimple).a());
+      assertEquals("OK", ((JsoSimple) asSimple).a(false));
       try {
         asSimple.ex();
         fail("Should have thrown IOException");
@@ -635,6 +644,8 @@ public class SingleJsoImplTest extends GWTTestCase {
       assertTrue(asObject instanceof Simple);
       assertEquals("a", ((Simple) asObject).a());
       assertEquals("a", ((JsoSimple) asObject).a());
+      assertEquals("OK", ((Simple) asObject).a(false));
+      assertEquals("OK", ((JsoSimple) asObject).a(false));
 
       // Test a cross-cast that's normally not allowed by the type system
       assertTrue(asObject instanceof JsoRandom);

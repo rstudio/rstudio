@@ -91,16 +91,18 @@ public class HostedModeClassRewriter {
    */
   public interface SingleJsoImplData {
     /**
-     * Returns a Method corresponding to the declaration of the abstract method
-     * in an interface type.
+     * Returns the method declarations that should be generated for a given
+     * mangled method name. {@link #getDeclarations} and
+     * {@link #getImplementations} maintain a pairwise mapping.
      */
-    Method getDeclaration(String mangledName);
+    List<Method> getDeclarations(String mangledName);
 
     /**
-     * Return a Method corresponding to the concrete implementation of the
-     * method in a JSO type.
+     * Returns the implementations that the method declarations above should
+     * delegate to.{@link #getDeclarations} and {@link #getImplementations}
+     * maintain a pairwise mapping.
      */
-    Method getImplementation(String mangledName);
+    List<Method> getImplementations(String mangledName);
 
     /**
      * Returns all of the mangled method names for SingleJsoImpl methods.

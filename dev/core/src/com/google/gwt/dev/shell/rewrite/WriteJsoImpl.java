@@ -26,6 +26,8 @@ import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOr
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.SingleJsoImplData;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -90,8 +92,17 @@ abstract class WriteJsoImpl extends ClassAdapter {
 
       // Implement the trampoline methods
       for (String mangledName : jsoData.getMangledNames()) {
-        writeTrampoline(mangledName, jsoData.getDeclaration(mangledName),
-            jsoData.getImplementation(mangledName));
+        List<Method> declarations = jsoData.getDeclarations(mangledName);
+        List<Method> implementations = jsoData.getImplementations(mangledName);
+        assert declarations.size() == implementations.size() : "Declaration / implementation size mismatch";
+
+        Iterator<Method> declIterator = declarations.iterator();
+        Iterator<Method> implIterator = implementations.iterator();
+
+        while (declIterator.hasNext()) {
+          assert implIterator.hasNext();
+          writeTrampoline(mangledName, declIterator.next(), implIterator.next());
+        }
       }
     }
 
