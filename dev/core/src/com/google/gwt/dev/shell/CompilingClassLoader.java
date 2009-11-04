@@ -540,19 +540,14 @@ public final class CompilingClassLoader extends ClassLoader implements
               + intfMethod.getName();
           mangledNames.add(mangledName);
 
-          JType[] parameterTypes = new JType[intfMethod.getParameters().length];
-          for (int i = 0; i < parameterTypes.length; i++) {
-            parameterTypes[i] = intfMethod.getParameters()[i].getType();
-          }
-
           /*
            * Handle virtual overrides by finding the method that we would
            * normally invoke and using its declaring class as the dispatch
            * target.
            */
           JMethod implementingMethod;
-          while ((implementingMethod = implementingType.findMethod(
-              intfMethod.getName(), parameterTypes)) == null) {
+          while ((implementingMethod = findOverloadUsingErasure(
+              implementingType, intfMethod)) == null) {
             implementingType = implementingType.getSuperclass();
           }
           // implementingmethod and implementingType cannot be null here
@@ -566,11 +561,11 @@ public final class CompilingClassLoader extends ClassLoader implements
            * This must be kept in sync with the WriteJsoImpl class.
            */
           {
-            String decl = getBinaryOrPrimitiveName(intfMethod.getReturnType())
+            String decl = getBinaryOrPrimitiveName(intfMethod.getReturnType().getErasedType())
                 + " " + intfMethod.getName() + "(";
-            for (JType paramType : parameterTypes) {
+            for (JParameter param : intfMethod.getParameters()) {
               decl += ",";
-              decl += getBinaryOrPrimitiveName(paramType);
+              decl += getBinaryOrPrimitiveName(param.getType().getErasedType());
             }
             decl += ")";
 
@@ -587,14 +582,14 @@ public final class CompilingClassLoader extends ClassLoader implements
            * This must be kept in sync with the WriteJsoImpl class.
            */
           {
-            String returnName = getBinaryOrPrimitiveName(implementingMethod.getReturnType());
+            String returnName = getBinaryOrPrimitiveName(implementingMethod.getReturnType().getErasedType());
             String jsoName = getBinaryOrPrimitiveName(implementingType);
 
             String decl = returnName + " " + intfMethod.getName() + "$ ("
                 + jsoName;
-            for (JType paramType : parameterTypes) {
+            for (JParameter param : implementingMethod.getParameters()) {
               decl += ",";
-              decl += getBinaryOrPrimitiveName(paramType);
+              decl += getBinaryOrPrimitiveName(param.getType().getErasedType());
             }
             decl += ")";
 
@@ -647,6 +642,34 @@ public final class CompilingClassLoader extends ClassLoader implements
           map.put(key, maybeOther);
         }
       }
+    }
+
+    /**
+     * Looks for a concrete implementation of <code>intfMethod</code> in
+     * <code>implementingType</code>.
+     */
+    private JMethod findOverloadUsingErasure(JClassType implementingType,
+        JMethod intfMethod) {
+
+      int numParams = intfMethod.getParameters().length;
+      JType[] erasedTypes = new JType[numParams];
+      for (int i = 0; i < numParams; i++) {
+        erasedTypes[i] = intfMethod.getParameters()[i].getType().getErasedType();
+      }
+
+      outer : for (JMethod method : implementingType.getOverloads(intfMethod.getName())) {
+        JParameter[] params = method.getParameters();
+        if (params.length != numParams) {
+          continue;
+        }
+        for (int i = 0; i < numParams; i++) {
+          if (params[i].getType().getErasedType() != erasedTypes[i]) {
+            continue outer;
+          }
+        }
+        return method;
+      }
+      return null;
     }
   }
 
