@@ -41,6 +41,7 @@ import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.util.tools.ArgHandlerFlag;
+import com.google.gwt.util.tools.ArgHandlerInt;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import junit.framework.AssertionFailedError;
@@ -106,7 +107,6 @@ public class JUnitShell extends GWTShell {
     void processResult(TestCase testCase, JUnitResult result);
   }
 
-  @SuppressWarnings("deprecation")
   class ArgProcessor extends GWTShell.ArgProcessor {
 
     public ArgProcessor() {
@@ -176,6 +176,38 @@ public class JUnitShell extends GWTShell {
         public boolean setFlag() {
           developmentMode = false;
           return true;
+        }
+      });
+
+      registerHandler(new ArgHandlerInt() {
+        @Override
+        public String[] getDefaultArgs() {
+          return new String[] {getTag(), "5"};
+        }
+
+        @Override
+        public String getPurpose() {
+          return "Set the test method timeout, in minutes";
+        }
+
+        @Override
+        public String getTag() {
+          return "-testMethodTimeout";
+        }
+
+        @Override
+        public String[] getTagArgs() {
+          return new String[] {"minutes"};
+        }
+
+        @Override
+        public boolean isUndocumented() {
+          return false;
+        }
+
+        @Override
+        public void setInt(int minutes) {
+          baseTestMethodTimeoutMillis = minutes * 60 * 1000;
         }
       });
 
@@ -358,13 +390,6 @@ public class JUnitShell extends GWTShell {
    * This is a system property that, when set, emulates command line arguments.
    */
   private static final String PROP_GWT_ARGS = "gwt.args";
-
-  /**
-   * The amount of time to wait for all clients to complete a single test
-   * method, in milliseconds, measured from when the <i>last</i> client connects
-   * (and thus starts the test). default of 5 minutes.
-   */
-  private static final long TEST_METHOD_TIMEOUT_MILLIS = 5 * 60 * 1000;
 
   /**
    * Singleton object for hosting unit tests. All test case instances executed
@@ -563,9 +588,16 @@ public class JUnitShell extends GWTShell {
   private BatchingStrategy batchingStrategy = new NoBatchingStrategy();
   
   /**
-   * Timeout in presence of batching. reassigned later.
+   * The amount of time to wait for all clients to complete a single test
+   * method, in milliseconds, measured from when the <i>last</i> client connects
+   * (and thus starts the test). Set by the -testMethodTimeout argument.
    */
-  private long testBatchingMethodTimeoutMillis = TEST_METHOD_TIMEOUT_MILLIS;
+  private long baseTestMethodTimeoutMillis;
+
+  /**
+   * Test method timeout as modified by the batching strategy.
+   */
+  private long testBatchingMethodTimeoutMillis;
 
   /**
    * Determines how modules are compiled.
@@ -953,7 +985,7 @@ public class JUnitShell extends GWTShell {
       throws UnableToCompleteException {
 
     testBatchingMethodTimeoutMillis = batchingStrategy.getTimeoutMultiplier()
-        * TEST_METHOD_TIMEOUT_MILLIS; 
+        * baseTestMethodTimeoutMillis;
     if (mustNotExecuteTest(getBannedPlatforms(testCase.getClass(),
         testCase.getName()))) {
       return;
