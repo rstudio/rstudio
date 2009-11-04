@@ -25,6 +25,8 @@ import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
+import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 
 /**
@@ -47,8 +49,24 @@ public final class CompiledClass {
     return null;
   }
 
+  /**
+   * Returns <code>true</code> if this is a local type, or if this type is
+   * nested inside of any local type.
+   */
+  private static boolean isLocalType(SourceTypeBinding binding) {
+    SourceTypeBinding b = binding;
+    while (!b.isStatic()) {
+      if (b instanceof LocalTypeBinding) {
+        return true;
+      }
+      b = ((NestedTypeBinding) b).enclosingType;
+    }
+    return false;
+  }
+
   protected final String binaryName;
   protected final CompiledClass enclosingClass;
+  protected final boolean isLocal;
   protected final String location;
   protected final CompilationUnit unit;
 
@@ -74,6 +92,7 @@ public final class CompiledClass {
     byte[] bytes = classFile.getBytes();
     this.cacheToken = diskCache.writeByteArray(bytes);
     this.location = String.valueOf(classFile.fileName());
+    this.isLocal = isLocalType(binding);
   }
 
   /**
@@ -110,6 +129,14 @@ public final class CompiledClass {
 
   public CompilationUnit getUnit() {
     return unit;
+  }
+
+  /**
+   * Returns <code>true</code> if this is a local type, or if this type is
+   * nested inside of any local type.
+   */
+  public boolean isLocal() {
+    return isLocal;
   }
 
   @Override

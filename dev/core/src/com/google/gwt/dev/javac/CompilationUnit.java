@@ -56,8 +56,6 @@ import java.util.regex.Pattern;
  */
 public abstract class CompilationUnit {
 
-  protected static final DiskCache diskCache = new DiskCache();
-
   /**
    * Encapsulates the functionality to find all nested classes of this class
    * that have compiler-generated names. All class bytes are loaded from the
@@ -264,6 +262,8 @@ public abstract class CompilationUnit {
     }
   }
 
+  protected static final DiskCache diskCache = new DiskCache();
+
   private static final Pattern GENERATED_CLASSNAME_PATTERN = Pattern.compile(".+\\$\\d.*");
 
   /**
@@ -321,14 +321,13 @@ public abstract class CompilationUnit {
   private List<JsniMethod> jsniMethods = null;
   private State state = State.FRESH;
 
-  /*
-   * Check if the unit has one or more classes with generated names. 'javac'
-   * below refers to the compiler that was used to compile the java files on
-   * disk. Returns true if our heuristic for constructing the anonymous class
-   * mappings worked.
-   */
   public boolean constructAnonymousClassMappings(TreeLogger logger) {
-    // map from the name in javac to the name in jdt
+    /*
+     * Check if the unit has one or more classes with generated names. 'javac'
+     * below refers to the compiler that was used to compile the java files on
+     * disk. Returns true if our heuristic for constructing the anonymous class
+     * mappings worked.
+     */
     anonymousClassMap = new HashMap<String, String>();
     for (String topLevelClass : getTopLevelClasses()) {
       // Generate a mapping for each top-level class separately
@@ -578,10 +577,13 @@ public abstract class CompilationUnit {
     }
   }
 
+  /**
+   * TODO(amitmanjhi): what is the difference between an anonymous and local
+   * class for our purposes? All our unit tests pass whether or not we do the
+   * additional {@link #isClassnameGenerated} check. We either need to find the
+   * real difference and add a unit test, or else simply this.
+   */
   private boolean isAnonymousClass(CompiledClass cc) {
-    if (!cc.getRealClassType().isLocalType()) {
-      return false;
-    }
-    return isClassnameGenerated(cc.getBinaryName());
+    return cc.isLocal() && isClassnameGenerated(cc.getBinaryName());
   }
 }
