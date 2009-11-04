@@ -24,7 +24,6 @@ import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.uibinder.rebind.DummyMortalLogger;
 import com.google.gwt.uibinder.rebind.JClassTypeAdapter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.user.client.ui.Button;
@@ -43,13 +42,11 @@ import java.util.Set;
 public class OwnerClassTest extends TestCase {
 
   private JClassTypeAdapter gwtTypeAdapter;
-  private MortalLogger logger;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    logger = new DummyMortalLogger();
     gwtTypeAdapter = new JClassTypeAdapter();
   }
 
@@ -62,7 +59,7 @@ public class OwnerClassTest extends TestCase {
   public void testOwnerClass_empty() throws Exception {
     JClassType ownerType = gwtTypeAdapter.adaptJavaClass(EmptyOwnerClass.class);
     JClassType labelType = gwtTypeAdapter.adaptJavaClass(Label.class);
-    OwnerClass ownerClass = new OwnerClass(ownerType, logger);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL);
 
     assertNull(ownerClass.getUiFactoryMethod(labelType));
     assertNull(ownerClass.getUiField("fieldName"));
@@ -87,7 +84,7 @@ public class OwnerClassTest extends TestCase {
   public void testOwnerClass_uiFactory() throws Exception {
     JClassType ownerType = gwtTypeAdapter.adaptJavaClass(UiFactoryClass.class);
     JClassType labelType = gwtTypeAdapter.adaptJavaClass(Label.class);
-    OwnerClass ownerClass = new OwnerClass(ownerType, logger);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL);
 
     JMethod uiFactoryMethod = ownerClass.getUiFactoryMethod(labelType);
     assertNotNull(uiFactoryMethod);
@@ -114,7 +111,7 @@ public class OwnerClassTest extends TestCase {
   public void testOwnerClass_uiFactoryBadType() {
     JClassType ownerType = gwtTypeAdapter.adaptJavaClass(BadUiFactoryClass.class);
     try {
-      new OwnerClass(ownerType, logger);
+      new OwnerClass(ownerType, MortalLogger.NULL);
       fail("Expected exception not thrown.");
     } catch (UnableToCompleteException utce) {
       // Expected
@@ -142,7 +139,7 @@ public class OwnerClassTest extends TestCase {
   public void testOwnerClass_uiFactoryDuplicateType() {
     JClassType ownerType = gwtTypeAdapter.adaptJavaClass(DuplicateUiFactoryClass.class);
     try {
-      new OwnerClass(ownerType, logger);
+      new OwnerClass(ownerType, MortalLogger.NULL);
       fail("Expected exception not thrown.");
     } catch (UnableToCompleteException utce) {
       // Expected
@@ -168,7 +165,7 @@ public class OwnerClassTest extends TestCase {
     JClassType ownerType = gwtTypeAdapter.adaptJavaClass(UiFieldsClass.class);
     JClassType labelType = gwtTypeAdapter.adaptJavaClass(Label.class);
     JClassType buttonType = gwtTypeAdapter.adaptJavaClass(Button.class);
-    OwnerClass ownerClass = new OwnerClass(ownerType, logger);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL);
 
     OwnerField labelField = ownerClass.getUiField("label1");
     OwnerField labelField2 = ownerClass.getUiFieldForType(labelType);
@@ -210,7 +207,7 @@ public class OwnerClassTest extends TestCase {
   public void testOwnerClass_uiFieldsBadType() {
     JClassType ownerType = gwtTypeAdapter.adaptJavaClass(BadUiFieldsClass.class);
     try {
-      new OwnerClass(ownerType, logger);
+      new OwnerClass(ownerType, MortalLogger.NULL);
       fail("Expected exception not thrown.");
     } catch (UnableToCompleteException utce) {
       // Expected
@@ -237,7 +234,7 @@ public class OwnerClassTest extends TestCase {
 
   public void testOwnerClass_uiHandlers() throws Exception {
     JClassType ownerType = gwtTypeAdapter.adaptJavaClass(UiHandlersClass.class);
-    OwnerClass ownerClass = new OwnerClass(ownerType, logger);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL);
 
     // Assert the two expected handlers are there
     List<JMethod> uiHandlers = ownerClass.getUiHandlers();
@@ -327,7 +324,7 @@ public class OwnerClassTest extends TestCase {
         gwtTypeAdapter.adaptJavaClass(ChildUiBinderClass.class);
     JClassType labelType = gwtTypeAdapter.adaptJavaClass(Label.class);
     JClassType buttonType = gwtTypeAdapter.adaptJavaClass(Button.class);
-    OwnerClass ownerClass = new OwnerClass(ownerType, logger);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL);
 
     // Test fields
     OwnerField labelField = ownerClass.getUiField("label1");

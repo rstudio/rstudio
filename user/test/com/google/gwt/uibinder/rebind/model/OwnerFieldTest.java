@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.rebind.DummyMortalLogger;
 import com.google.gwt.uibinder.rebind.JClassTypeAdapter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.user.client.ui.Button;
@@ -34,13 +33,11 @@ public class OwnerFieldTest extends TestCase {
 
   private JClassTypeAdapter gwtTypeAdapter;
   private JClassType ownerType;
-  private MortalLogger logger;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    logger = new DummyMortalLogger();
     gwtTypeAdapter = new JClassTypeAdapter();
     ownerType = gwtTypeAdapter.adaptJavaClass(this.getClass());
   }
@@ -64,14 +61,15 @@ public class OwnerFieldTest extends TestCase {
 
     JField someGwtField = gwtTypeAdapter.adaptField(
         this.getClass().getDeclaredField("someField"), ownerType);
-    OwnerField someOwnerField = new OwnerField(someGwtField, logger);
+    OwnerField someOwnerField = new OwnerField(someGwtField, MortalLogger.NULL);
     assertEquals("someField", someOwnerField.getName());
     assertEquals(labelType, someOwnerField.getType().getRawType());
     assertFalse(someOwnerField.isProvided());
 
     JField providedGwtField = gwtTypeAdapter.adaptField(
         this.getClass().getDeclaredField("providedField"), ownerType);
-    OwnerField providedOwnerField = new OwnerField(providedGwtField, logger);
+    OwnerField providedOwnerField = new OwnerField(providedGwtField,
+        MortalLogger.NULL);
     assertEquals("providedField", providedOwnerField.getName());
     assertEquals(buttonType, providedOwnerField.getType().getRawType());
     assertTrue(providedOwnerField.isProvided());
@@ -83,7 +81,7 @@ public class OwnerFieldTest extends TestCase {
     JField someGwtField = gwtTypeAdapter.adaptField(
         this.getClass().getDeclaredField("badTypeField"), ownerType);
     try {
-      new OwnerField(someGwtField, logger);
+      new OwnerField(someGwtField, MortalLogger.NULL);
       fail("Expected exception not thrown.");
     } catch (UnableToCompleteException utce) {
       // Expected
@@ -96,7 +94,7 @@ public class OwnerFieldTest extends TestCase {
     JField someGwtField = gwtTypeAdapter.adaptField(
         this.getClass().getDeclaredField("nonAnnotatedField"), ownerType);
     try {
-      new OwnerField(someGwtField, logger);
+      new OwnerField(someGwtField, MortalLogger.NULL);
       fail("Expected exception not thrown.");
     } catch (UnableToCompleteException utce) {
       // Expected

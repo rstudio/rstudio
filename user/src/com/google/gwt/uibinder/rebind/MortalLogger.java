@@ -24,6 +24,11 @@ import com.google.gwt.core.ext.UnableToCompleteException;
  * Treelogger.
  */
 public class MortalLogger {
+  /**
+   * A valid logger that ignores all messages, handy for testing.
+   */
+  public static final MortalLogger NULL = new MortalLogger(TreeLogger.NULL);
+
   private final TreeLogger logger;
 
   public MortalLogger(TreeLogger logger) {

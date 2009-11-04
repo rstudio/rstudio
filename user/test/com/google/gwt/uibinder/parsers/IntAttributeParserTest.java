@@ -16,7 +16,7 @@
 package com.google.gwt.uibinder.parsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.uibinder.rebind.DummyMortalLogger;
+import com.google.gwt.uibinder.rebind.MortalLogger;
 
 import junit.framework.TestCase;
 
@@ -25,23 +25,21 @@ import junit.framework.TestCase;
  */
 public class IntAttributeParserTest extends TestCase {
   private IntAttributeParser parser;
-  private DummyMortalLogger logger;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     parser = new IntAttributeParser();
-    logger = new DummyMortalLogger();
   }
 
   public void testGood() throws UnableToCompleteException {
-    assertEquals("1234", parser.parse("1234", logger));
-    assertEquals("-4321", parser.parse("-4321", logger));
+    assertEquals("1234", parser.parse("1234", MortalLogger.NULL));
+    assertEquals("-4321", parser.parse("-4321", MortalLogger.NULL));
   }
 
   public void testBad() {
     try {
-      parser.parse("fnord", logger);
+      parser.parse("fnord", MortalLogger.NULL);
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
@@ -49,6 +47,7 @@ public class IntAttributeParserTest extends TestCase {
   }
 
   public void testFieldRef() throws UnableToCompleteException {
-    assertEquals("foo.bar().baz()", parser.parse("{foo.bar.baz}", logger));
+    assertEquals("foo.bar().baz()", parser.parse("{foo.bar.baz}",
+        MortalLogger.NULL));
   }
 }

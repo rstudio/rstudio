@@ -66,8 +66,10 @@ public class DockLayoutPanelParser implements ElementParser {
       // Make sure the element is one of the fixed set of valid directions.
       if (!isValidChildElement(elem, child)) {
         writer.die(
-            "In %s, child must be one of {north, south, east, west, center}",
-            elem);
+            "In %1$s, child must be one of " +
+            "<%2$s:north>, <%2$s:south>, <%2$s:east>, <%2$s:west> or <%2$s:center>, " +
+            "but found %3$s",
+            elem, elem.getPrefix(), child);
       }
 
       // Consume the single widget element.
@@ -99,14 +101,10 @@ public class DockLayoutPanelParser implements ElementParser {
 
   private boolean isValidChildElement(XMLElement parent, XMLElement child) {
     String childNsUri = child.getNamespaceUri();
-    String parentNsUri = parent.getNamespaceUri();
-    if (childNsUri == null && parentNsUri != null) {
+    if (childNsUri == null) {
         return false;
     } 
-    if (childNsUri != null && parentNsUri == null) {
-        return false;
-    } 
-    if (!childNsUri.equals(parentNsUri)) {
+    if (!childNsUri.equals(parent.getNamespaceUri())) {
       return false;
     }
     if (!DOCK_NAMES.containsKey(child.getLocalName())) {

@@ -23,7 +23,6 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.client.UiConstructor;
-import com.google.gwt.uibinder.rebind.DummyMortalLogger;
 import com.google.gwt.uibinder.rebind.JClassTypeAdapter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.user.client.ui.Label;
@@ -36,7 +35,6 @@ import junit.framework.TestCase;
 public class OwnerFieldClassTest extends TestCase {
 
   private JClassTypeAdapter gwtTypeAdapter;
-  private MortalLogger logger = new DummyMortalLogger();
 
   @Override
   protected void setUp() throws Exception {
@@ -50,7 +48,8 @@ public class OwnerFieldClassTest extends TestCase {
     JClassType labelType = gwtTypeAdapter.adaptJavaClass(Label.class);
 
     // Now get its field class model
-    OwnerFieldClass fieldClass = OwnerFieldClass.getFieldClass(labelType, logger);
+    OwnerFieldClass fieldClass = OwnerFieldClass.getFieldClass(labelType,
+        MortalLogger.NULL);
 
     // Check the class model properties
     assertEquals(labelType, fieldClass.getRawType());
@@ -60,7 +59,8 @@ public class OwnerFieldClassTest extends TestCase {
     assertMethod(setter, "setVisible", JPrimitiveType.BOOLEAN);
 
     // Check that the same instance of the model is returned if asked again
-    assertSame(fieldClass, OwnerFieldClass.getFieldClass(labelType, logger));
+    assertSame(fieldClass, OwnerFieldClass.getFieldClass(labelType,
+        MortalLogger.NULL));
 
     gwtTypeAdapter.verifyAll();
   }
@@ -136,7 +136,8 @@ public class OwnerFieldClassTest extends TestCase {
     JClassType settersType =
         gwtTypeAdapter.adaptJavaClass(SettersTestClass.class);
     JClassType stringType = gwtTypeAdapter.adaptJavaClass(String.class);
-    OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(settersType, logger);
+    OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(settersType,
+        MortalLogger.NULL);
     assertEquals(settersType, settersClass.getRawType());
     assertNull(settersClass.getUiConstructor());
 
@@ -158,7 +159,8 @@ public class OwnerFieldClassTest extends TestCase {
     JClassType settersType =
         gwtTypeAdapter.adaptJavaClass(SettersTestClass.class);
     JClassType stringType = gwtTypeAdapter.adaptJavaClass(String.class);
-    OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(settersType, logger);
+    OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(settersType,
+        MortalLogger.NULL);
     assertEquals(settersType, settersClass.getRawType());
 
     JMethod bleSetter = settersClass.getSetter("ble");
@@ -223,7 +225,8 @@ public class OwnerFieldClassTest extends TestCase {
     JClassType settersType =
         gwtTypeAdapter.adaptJavaClass(OverriddenSettersTestClass.class);
     JClassType stringType = gwtTypeAdapter.adaptJavaClass(String.class);
-    OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(settersType, logger);
+    OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(settersType,
+        MortalLogger.NULL);
     assertEquals(settersType, settersClass.getRawType());
 
     // setBlaBla is not ambiguous, though overridden
@@ -291,7 +294,7 @@ public class OwnerFieldClassTest extends TestCase {
     JClassType constructorsType =
         gwtTypeAdapter.adaptJavaClass(UiConstructorClass.class);
     OwnerFieldClass constructorsClass =
-        OwnerFieldClass.getFieldClass(constructorsType, logger);
+        OwnerFieldClass.getFieldClass(constructorsType, MortalLogger.NULL);
     assertEquals(constructorsType, constructorsClass.getRawType());
 
     JConstructor constructor = constructorsClass.getUiConstructor();
@@ -328,7 +331,7 @@ public class OwnerFieldClassTest extends TestCase {
         gwtTypeAdapter.adaptJavaClass(MultiUiConstructorsClass.class);
 
     try {
-      OwnerFieldClass.getFieldClass(constructorsType, logger);
+      OwnerFieldClass.getFieldClass(constructorsType, MortalLogger.NULL);
       fail("Expected exception not thrown");
     } catch (UnableToCompleteException utce) {
       // Expected

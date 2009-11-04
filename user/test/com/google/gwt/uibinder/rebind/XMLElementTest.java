@@ -15,7 +15,12 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.uibinder.parsers.NullInterpreter;
 
 import junit.framework.TestCase;
@@ -40,17 +45,43 @@ public class XMLElementTest extends TestCase {
   private Element item;
   private XMLElement elm;
   private XMLElementProvider elemProvider;
+  
+  TypeOracle oracle;
+  
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    init("<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
 
-  public void testConsumeRawAttribute() {
-    assertEquals("attr1Value", elm.consumeRawAttribute("attr1"));
-    assertEquals("", elm.consumeRawAttribute("attr1"));
+    MockResourceOracle resourceOracle = new MockResourceOracle(
+        JavaResourceBase.getStandardResources());
+
+    CompilationState state = new CompilationState(TreeLogger.NULL,
+        resourceOracle);
+    oracle = state.getTypeOracle();
   }
 
-  public void testConsumeRawAttributeWithDefault() {
-    assertEquals("attr1Value", elm.consumeRawAttribute("attr1", "default"));
-    assertEquals("default", elm.consumeRawAttribute("attr1", "default"));
-    assertEquals("otherDefault", elm.consumeRawAttribute("unsetthing",
-        "otherDefault"));
+  public void testConsumeBoolean() throws ParserConfigurationException,
+      SAXException, IOException, UnableToCompleteException {
+    init("<doc><elm yes='true' no='false' "
+        + "fnord='fnord' ref='{foo.bar.baz}'/></doc>");
+
+    assertEquals("", elm.consumeBooleanAttribute("foo"));
+
+    assertEquals("true", elm.consumeBooleanAttribute("yes"));
+    assertEquals("", elm.consumeBooleanAttribute("yes"));
+
+    assertEquals("false", elm.consumeBooleanAttribute("no"));
+    assertEquals("", elm.consumeBooleanAttribute("no"));
+
+    assertEquals("foo.bar().baz()", elm.consumeBooleanAttribute("ref"));
+
+    try {
+      elm.consumeBooleanAttribute("fnord");
+      fail("Should throw UnableToCompleteException on misparse");
+    } catch (UnableToCompleteException c) {
+      /* pass */
+    }
   }
 
   public void testConsumeBooleanConstant() throws ParserConfigurationException,
@@ -81,47 +112,23 @@ public class XMLElementTest extends TestCase {
     }
   }
 
-  // TODO(rjrjr) To turn these back on need to learn how to mock out TypeOracle 
-//  public void testConsumeBoolean() throws ParserConfigurationException,
-//      SAXException, IOException, UnableToCompleteException {
-//    init("<doc><elm yes='true' no='false' "
-//        + "fnord='fnord' ref='{foo.bar.baz}'/></doc>");
-//
-//    assertEquals("", elm.consumeBooleanAttribute("foo"));
-//
-//    assertEquals("true", elm.consumeBooleanAttribute("yes"));
-//    assertEquals("", elm.consumeBooleanAttribute("yes"));
-//
-//    assertEquals("false", elm.consumeBooleanAttribute("no"));
-//    assertEquals("", elm.consumeBooleanAttribute("no"));
-//
-//    assertEquals("foo.bar().baz()", elm.consumeBooleanAttribute("ref"));
-//
-//    try {
-//      elm.consumeBooleanAttribute("fnord");
-//      fail("Should throw UnableToCompleteException on misparse");
-//    } catch (UnableToCompleteException c) {
-//      /* pass */
-//    }
-//  }
-//
-//  public void testConsumeDouble() throws UnableToCompleteException,
-//      ParserConfigurationException, SAXException, IOException {
-//    init("<doc><elm minus='-123.45' plus='123.45' minus-one='-1' "
-//        + "plus-one='1' fnord='fnord' ref='{foo.bar.baz}'/></doc>");
-//    assertEquals("1", elm.consumeDoubleAttribute("plus-one"));
-//    assertEquals("-1", elm.consumeDoubleAttribute("minus-one"));
-//    assertEquals("123.45", elm.consumeDoubleAttribute("plus"));
-//    assertEquals("-123.45", elm.consumeDoubleAttribute("minus"));
-//    assertEquals("foo.bar().baz()", elm.consumeBooleanAttribute("ref"));
-//
-//    try {
-//      elm.consumeBooleanAttribute("fnord");
-//      fail("Should throw UnableToCompleteException on misparse");
-//    } catch (UnableToCompleteException c) {
-//      /* pass */
-//    }
-//  }
+  public void testConsumeDouble() throws UnableToCompleteException,
+      ParserConfigurationException, SAXException, IOException {
+    init("<doc><elm minus='-123.45' plus='123.45' minus-one='-1' "
+        + "plus-one='1' fnord='fnord' ref='{foo.bar.baz}'/></doc>");
+    assertEquals("1", elm.consumeDoubleAttribute("plus-one"));
+    assertEquals("-1", elm.consumeDoubleAttribute("minus-one"));
+    assertEquals("123.45", elm.consumeDoubleAttribute("plus"));
+    assertEquals("-123.45", elm.consumeDoubleAttribute("minus"));
+    assertEquals("foo.bar().baz()", elm.consumeBooleanAttribute("ref"));
+
+    try {
+      elm.consumeBooleanAttribute("fnord");
+      fail("Should throw UnableToCompleteException on misparse");
+    } catch (UnableToCompleteException c) {
+      /* pass */
+    }
+  }
 
   public void testConsumeInnerTextEscapedAsHtmlStringLiteral()
       throws UnableToCompleteException {
@@ -136,6 +143,18 @@ public class XMLElementTest extends TestCase {
     assertEquals(
         "",
         elm.consumeInnerTextEscapedAsHtmlStringLiteral(new NullInterpreter<String>()));
+  }
+
+  public void testConsumeRawAttribute() {
+    assertEquals("attr1Value", elm.consumeRawAttribute("attr1"));
+    assertEquals("", elm.consumeRawAttribute("attr1"));
+  }
+
+  public void testConsumeRawAttributeWithDefault() {
+    assertEquals("attr1Value", elm.consumeRawAttribute("attr1", "default"));
+    assertEquals("default", elm.consumeRawAttribute("attr1", "default"));
+    assertEquals("otherDefault", elm.consumeRawAttribute("unsetthing",
+        "otherDefault"));
   }
 
   public void testConsumeRequired() throws UnableToCompleteException {
@@ -210,12 +229,6 @@ public class XMLElementTest extends TestCase {
     assertEquals("", elm.getClosingTag());
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    init("<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
-  }
-
   private void appendText(final String text) {
     Text t = doc.createTextNode(text);
     item.appendChild(t);
@@ -228,7 +241,7 @@ public class XMLElementTest extends TestCase {
         0);
 
     elemProvider = new XMLElementProviderImpl(new AttributeParsers(), null,
-        null, new DummyMortalLogger());
+        oracle, MortalLogger.NULL);
     elm = elemProvider.get(item);
   }
 }
