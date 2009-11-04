@@ -136,10 +136,21 @@ public class JavaResourceBase {
       return code;
     }
   };
+  public static final MockJavaResource THROWABLE = new MockJavaResource(
+      "java.lang.Throwable") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.lang;\n");
+      code.append("public class Throwable {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
 
   public static MockJavaResource[] getStandardResources() {
     return new MockJavaResource[] {
         ANNOTATION, CLASS, JAVASCRIPTOBJECT, MAP, OBJECT, SERIALIZABLE, STRING,
-        SUPPRESS_WARNINGS};
+        SUPPRESS_WARNINGS, THROWABLE};
   }
 }
