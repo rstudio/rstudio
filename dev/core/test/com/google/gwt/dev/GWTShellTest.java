@@ -38,9 +38,8 @@ public class GWTShellTest extends ArgProcessorTestBase {
 
   public void testAllValidArgs() {
     assertProcessSuccess(argProcessor, "-port", "8080", "-whitelist", "white",
-        "-blacklist", "black", "-logLevel", "DEBUG", "-style", "PRETTY", "-ea",
-        "-XdisableAggressiveOptimization", "-noserver", "-out", "myWww",
-        "-gen", "myGen", "http://www.google.com/", "foo");
+        "-blacklist", "black", "-logLevel", "DEBUG", "-noserver", "-out",
+        "myWww", "-gen", "myGen", "http://www.google.com/", "foo");
 
     assertNotNull(BrowserWidgetHostChecker.matchWhitelisted("white"));
     assertNotNull(BrowserWidgetHostChecker.matchBlacklisted("black"));
@@ -65,9 +64,6 @@ public class GWTShellTest extends ArgProcessorTestBase {
     assertEquals(new File("myWww"), options.getOutDir());
 
     assertEquals(TreeLogger.DEBUG, options.getLogLevel());
-    assertEquals(JsOutputOption.PRETTY, options.getOutput());
-    assertTrue(options.isEnableAssertions());
-    assertFalse(options.isAggressivelyOptimize());
 
     assertEquals(8080, options.getPort());
     assertTrue(options.isNoServer());

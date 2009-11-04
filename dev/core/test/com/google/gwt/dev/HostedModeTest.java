@@ -47,12 +47,10 @@ public class HostedModeTest extends ArgProcessorTestBase {
 
   public void testAllValidArgs() {
     assertProcessSuccess(argProcessor, "-port", "8080", "-whitelist", "white",
-        "-blacklist", "black", "-logLevel", "DEBUG", "-style", "PRETTY", "-ea",
-        "-XdisableAggressiveOptimization", "-noserver", "-server",
+        "-blacklist", "black", "-logLevel", "DEBUG", "-noserver", "-server",
         MySCL.class.getName(), "-gen", "myGen", "-war", "myWar", "-workDir",
-        "myWork", "-extra", "myExtra", "-localWorkers", "2", "-startupUrl",
-        "http://www.google.com/", "-startupUrl", "foo", "c.g.g.h.H",
-        "my.Module");
+        "myWork", "-extra", "myExtra", "-startupUrl", "http://www.google.com/",
+        "-startupUrl", "foo", "c.g.g.h.H", "my.Module");
 
     assertNotNull(BrowserWidgetHostChecker.matchWhitelisted("white"));
     assertNotNull(BrowserWidgetHostChecker.matchBlacklisted("black"));
@@ -79,11 +77,6 @@ public class HostedModeTest extends ArgProcessorTestBase {
     assertEquals(new File("myExtra"), options.getExtraDir());
 
     assertEquals(TreeLogger.DEBUG, options.getLogLevel());
-    assertEquals(JsOutputOption.PRETTY, options.getOutput());
-    assertTrue(options.isEnableAssertions());
-    assertFalse(options.isAggressivelyOptimize());
-
-    assertEquals(2, options.getLocalWorkers());
 
     assertEquals(8080, options.getPort());
     // False because -server overrides -noserver.
@@ -133,8 +126,6 @@ public class HostedModeTest extends ArgProcessorTestBase {
     assertEquals(JsOutputOption.OBFUSCATED, options.getOutput());
     assertFalse(options.isEnableAssertions());
     assertTrue(options.isAggressivelyOptimize());
-
-    assertEquals(1, options.getLocalWorkers());
 
     assertEquals(8888, options.getPort());
     assertFalse(options.isNoServer());

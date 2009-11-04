@@ -28,7 +28,14 @@ import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.shell.CheckForUpdates;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
+import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
+import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
+import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
+import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.JUnitResult;
@@ -104,6 +111,13 @@ public class JUnitShell extends GWTShell {
 
     public ArgProcessor() {
       super(options, true, true);
+      registerHandler(new ArgHandlerScriptStyle(options));
+      registerHandler(new ArgHandlerEnableAssertions(options));
+      registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
+      registerHandler(new ArgHandlerDisableClassMetadata(options));
+      registerHandler(new ArgHandlerDisableCastChecking(options));
+      registerHandler(new ArgHandlerDraftCompile(options));
+      registerHandler(new ArgHandlerLocalWorkers(options));
 
       // Override port to set auto by default.
       registerHandler(new ArgHandlerPort(options) {

@@ -38,14 +38,8 @@ import com.google.gwt.dev.ui.DoneEvent;
 import com.google.gwt.dev.ui.DevModeUI.ModuleHandle;
 import com.google.gwt.dev.util.BrowserInfo;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
-import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
-import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
-import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
-import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
-import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.util.tools.ArgHandlerFlag;
@@ -609,12 +603,6 @@ abstract class DevModeBase implements DoneCallback {
       registerHandler(new ArgHandlerLogDir(options));
       registerHandler(new ArgHandlerLogLevel(options));
       registerHandler(new ArgHandlerGenDir(options));
-      registerHandler(new ArgHandlerScriptStyle(options));
-      registerHandler(new ArgHandlerEnableAssertions(options));
-      registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
-      registerHandler(new ArgHandlerDisableClassMetadata(options));
-      registerHandler(new ArgHandlerDisableCastChecking(options));
-      registerHandler(new ArgHandlerDraftCompile(options));
       registerHandler(new ArgHandlerPortHosted(options));
       registerHandler(new ArgHandlerRemoteUI(options));
     }

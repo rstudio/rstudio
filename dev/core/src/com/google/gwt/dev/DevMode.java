@@ -33,7 +33,6 @@ import com.google.gwt.dev.util.OutputFileSet;
 import com.google.gwt.dev.util.OutputFileSetOnDirectory;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
-import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
@@ -51,8 +50,7 @@ import java.util.Map;
  * this class is to be determined. Consider this class as having <b>no</b>
  * public API other than {@link #main(String[])}.
  */
-public class DevMode extends DevModeBase
-    implements RestartServerCallback {
+public class DevMode extends DevModeBase implements RestartServerCallback {
 
   /**
    * Handles the -server command line flag.
@@ -154,7 +152,6 @@ public class DevMode extends DevModeBase
       registerHandler(new ArgHandlerWarDir(options));
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWorkDirOptional(options));
-      registerHandler(new ArgHandlerLocalWorkers(options));
       registerHandler(new ArgHandlerModuleName(options) {
         @Override
         public String getPurpose() {
@@ -169,8 +166,7 @@ public class DevMode extends DevModeBase
     }
   }
 
-  interface HostedModeOptions extends HostedModeBaseOptions,
-      CompilerOptions {
+  interface HostedModeOptions extends HostedModeBaseOptions, CompilerOptions {
     ServletContainerLauncher getServletContainerLauncher();
 
     void setServletContainerLauncher(ServletContainerLauncher scl);
@@ -368,7 +364,8 @@ public class DevMode extends DevModeBase
       servletValidator = ServletValidator.create(getTopLogger(), webXml);
     }
 
-    TreeLogger branch = getTopLogger().branch(TreeLogger.INFO, "Loading modules");
+    TreeLogger branch = getTopLogger().branch(TreeLogger.INFO,
+        "Loading modules");
     for (String moduleName : options.getModuleNames()) {
       TreeLogger moduleBranch = branch.branch(TreeLogger.INFO, moduleName);
       try {
@@ -460,7 +457,8 @@ public class DevMode extends DevModeBase
     return module;
   }
 
-  protected void restartServer(TreeLogger logger) throws UnableToCompleteException {
+  protected void restartServer(TreeLogger logger)
+      throws UnableToCompleteException {
     server.refresh();
   }
 
