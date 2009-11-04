@@ -183,23 +183,27 @@ public class UnitTestTreeLogger extends TreeLogger {
   }
 
   public void assertCorrectLogEntries() {
-    Assert.assertEquals("Log lengths do not match", expectedEntries.size(),
-        actualEntries.size());
+    if (expectedEntries.size() != actualEntries.size()) {
+      Assert.fail("Wrong log count: expected=" + expectedEntries + ", actual=" + actualEntries);
+    }
     for (int i = 0, c = expectedEntries.size(); i < c; ++i) {
       assertCorrectLogEntry(expectedEntries.get(i), actualEntries.get(i));
     }
   }
 
+  @Override
   public TreeLogger branch(Type type, String msg, Throwable caught,
       HelpInfo helpInfo) {
     log(type, msg, caught);
     return this;
   }
 
+  @Override
   public boolean isLoggable(Type type) {
     return loggableTypes.contains(type);
   }
 
+  @Override
   public void log(Type type, String msg, Throwable caught, HelpInfo helpInfo) {
     if (!isLoggable(type)) {
       return;
