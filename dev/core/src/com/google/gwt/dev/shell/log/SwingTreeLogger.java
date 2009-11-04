@@ -16,19 +16,16 @@
 package com.google.gwt.dev.shell.log;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.shell.Icons;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 
-import org.jdesktop.swingworker.SwingWorker;
-
 import java.awt.Color;
+import java.awt.EventQueue;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import javax.swing.Icon;
 import javax.swing.JLabel;
@@ -74,22 +71,49 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
       logIcons.put(Type.SPAM, Icons.getLogItemSpam());
     }
 
+    /**
+     * Logger for this event.
+     */
     public final SwingTreeLogger childLogger;
 
+    /**
+     * Detail message for the exception (ie, the stack trace).
+     */
     public final String exceptionDetail;
 
+    /**
+     * The name of the exception, or null if none.
+     */
     public final String exceptionName;
 
+    /**
+     * Extra info for this message, or null if none.
+     */
     public final HelpInfo helpInfo;
 
+    /**
+     * Index within the parent logger.
+     */
     public final int index;
 
+    /**
+     * True if this is a branch commit.
+     */
     public final boolean isBranchCommit;
 
+    /**
+     * Log message.
+     */
     public final String message;
 
+    /**
+     * Timestamp of when the message was logged.
+     */
     public final Date timestamp;
 
+    /**
+     * Log level of this message.
+     */
     public final TreeLogger.Type type;
 
     /**
@@ -97,6 +121,17 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
      */
     private Type inheritedPriority;
 
+    /**
+     * Create a log event.
+     * 
+     * @param logger
+     * @param isBranchCommit
+     * @param index
+     * @param type
+     * @param message
+     * @param caught
+     * @param helpInfo
+     */
     public LogEvent(SwingTreeLogger logger, boolean isBranchCommit, int index,
         Type type, String message, Throwable caught, HelpInfo helpInfo) {
       this.childLogger = logger;
@@ -156,6 +191,10 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
       return sb.toString();
     }
 
+    /**
+     * @return the inherited priority, which will be the highest priority of
+     *     this event or any child.
+     */
     public Type getInheritedPriority() {
       return inheritedPriority;
     }
@@ -214,12 +253,12 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
      * Update this log event's inherited priority, which is the highest priority
      * of this event and any child events.
      * 
-     * @param inheritedPriority
+     * @param childPriority
      * @return true if the priority was upgraded
      */
-    public boolean updateInheritedPriority(Type inheritedPriority) {
-      if (this.inheritedPriority.isLowerPriorityThan(inheritedPriority)) {
-        this.inheritedPriority = inheritedPriority;
+    public boolean updateInheritedPriority(Type childPriority) {
+      if (this.inheritedPriority.isLowerPriorityThan(childPriority)) {
+        this.inheritedPriority = childPriority;
         return true;
       }
       return false;
@@ -235,30 +274,42 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
 
     private String htmlEscape(String str) {
       // TODO(jat): call real implementation instead
-      return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace(
-          "\n", "<br>");
+      return str.replace("&", "&amp;").replace("<", "&lt;").replace(">",
+          "&gt;").replace("\n", "<br>");
     }
   }
 
   // package protected so SwingLoggerPanel can access
-  DefaultMutableTreeNode treeNode;
+  final DefaultMutableTreeNode treeNode;
 
   private SwingLoggerPanel panel;
-
+  
   /**
    * Constructs the top-level TreeItemLogger.
    * 
    * @param panel
    */
   public SwingTreeLogger(SwingLoggerPanel panel) {
+    this(panel, (DefaultMutableTreeNode) panel.treeModel.getRoot());
+  }
+
+  /**
+   * Used to create a branch treelogger, supplying a tree node to use rather
+   * than the panel's.
+   *  
+   * @param panel
+   * @param treeNode
+   */
+  private SwingTreeLogger(SwingLoggerPanel panel,
+      DefaultMutableTreeNode treeNode) {
     this.panel = panel;
-    // treeNode gets replaced for branches in doCommitBranch
-    treeNode = (DefaultMutableTreeNode) panel.treeModel.getRoot();
+    this.treeNode = treeNode;
   }
 
   @Override
   protected AbstractTreeLogger doBranch() {
-    SwingTreeLogger newLogger = new SwingTreeLogger(panel);
+    SwingTreeLogger newLogger = new SwingTreeLogger(panel,
+        new DefaultMutableTreeNode(null));
     return newLogger;
   }
 
@@ -266,10 +317,9 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
   protected void doCommitBranch(AbstractTreeLogger childBeingCommitted,
       Type type, String msg, Throwable caught, HelpInfo helpInfo) {
     SwingTreeLogger commitChild = (SwingTreeLogger) childBeingCommitted;
-    LogEvent logEvent = new LogEvent(commitChild, true,
-        commitChild.getBranchedIndex(), type, msg, caught, helpInfo);
-    commitChild.treeNode = new DefaultMutableTreeNode(logEvent);
-    addUpdate(logEvent);
+    assert commitChild.treeNode.getUserObject() == null;
+    addUpdate(new LogEvent(commitChild, true,
+        commitChild.getBranchedIndex(), type, msg, caught, helpInfo));
   }
 
   @Override
@@ -279,72 +329,62 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
   }
 
   /**
-   * @param logEvent
+   * Add a log event to be processed on the event thread.
+   *
+   * @param logEvent LogEvent to process
    */
   private void addUpdate(final LogEvent logEvent) {
-    new SwingWorker<LogEvent, Void>() {
-      @Override
-      protected LogEvent doInBackground() throws Exception {
-        return logEvent;
-      }
-
-      @Override
-      protected void done() {
-        LogEvent event;
-        try {
-          // TODO(jat): apply filter criteria
-          event = get();
-          // TODO(jat): do more of this work in doInBackground()?
-          SwingTreeLogger logger = event.childLogger;
-          DefaultMutableTreeNode node;
-          DefaultMutableTreeNode parent;
-          int idx;
-          if (event.isBranchCommit) {
-            SwingTreeLogger parentLogger = (SwingTreeLogger) logger.getParentLogger();
-            parent = parentLogger.treeNode;
-            idx = logger.getBranchedIndex();
-            node = logger.treeNode;
-          } else {
-            parent = logger.treeNode;
-            idx = event.index;
-            node = new DefaultMutableTreeNode(event);
+    // TODO(jat): investigate not running all of this on the event thread
+    EventQueue.invokeLater(new Runnable() {
+      public void run() {
+        // TODO(jat): apply filter criteria
+        SwingTreeLogger logger = logEvent.childLogger;
+        DefaultMutableTreeNode node;
+        DefaultMutableTreeNode parentNode;
+        int idx;
+        if (logEvent.isBranchCommit) {
+          SwingTreeLogger parentLogger
+          = (SwingTreeLogger) logger.getParentLogger();
+          logger.treeNode.setUserObject(logEvent);
+          parentNode = parentLogger.treeNode;
+          idx = logger.getBranchedIndex();
+          node = logger.treeNode;
+        } else {
+          parentNode = logger.treeNode;
+          idx = logEvent.index;
+          node = new DefaultMutableTreeNode(logEvent);
+        }
+        int insertIndex = findInsertionPoint(parentNode, idx);
+        panel.treeModel.insertNodeInto(node, parentNode, insertIndex);
+        if (parentNode == panel.treeModel.getRoot()
+            && parentNode.getChildCount() == 1) {
+          panel.treeModel.reload();
+        }
+        if (logEvent.type.needsAttention()) {
+          panel.tree.makeVisible(new TreePath(node.getPath()));
+        }
+        // Propagate our priority to our ancestors
+        Type priority = logEvent.getInheritedPriority();
+        while (parentNode != panel.treeModel.getRoot()) {
+          LogEvent parentEvent = (LogEvent) parentNode.getUserObject();
+          if (!parentEvent.updateInheritedPriority(priority)) {
+            break;
           }
-          int insertIndex = findInsertionPoint(parent, idx);
-          panel.treeModel.insertNodeInto(node, parent, insertIndex);
-          if (parent == panel.treeModel.getRoot()
-              && parent.getChildCount() == 1) {
-            panel.treeModel.reload();
-          }
-          if (event.type.needsAttention()) {
-            panel.tree.makeVisible(new TreePath(node.getPath()));
-          }
-          // Propagate our priority to our ancestors
-          Type priority = event.getInheritedPriority();
-          while (parent != panel.treeModel.getRoot()) {
-            LogEvent parentEvent = (LogEvent) parent.getUserObject();
-            if (!parentEvent.updateInheritedPriority(priority)) {
-              break;
-            }
-            parent = (DefaultMutableTreeNode) parent.getParent();
-          }
-        } catch (InterruptedException e) {
-          // TODO(jat): Auto-generated catch block
-          e.printStackTrace();
-        } catch (ExecutionException e) {
-          // TODO(jat): Auto-generated catch block
-          e.printStackTrace();
+          parentNode = ((DefaultMutableTreeNode) parentNode.getParent());
         }
       }
 
-      private int findInsertionPoint(DefaultMutableTreeNode parent, int index) {
-        int high = parent.getChildCount() - 1;
+      private int findInsertionPoint(DefaultMutableTreeNode parentNode,
+          int index) {
+        int high = parentNode.getChildCount() - 1;
         if (high < 0) {
           return 0;
         }
         int low = 0;
         while (low <= high) {
           final int mid = low + ((high - low) >> 1);
-          DefaultMutableTreeNode midChild = (DefaultMutableTreeNode) parent.getChildAt(mid);
+          DefaultMutableTreeNode midChild
+              = (DefaultMutableTreeNode) parentNode.getChildAt(mid);
           final Object userObject = midChild.getUserObject();
           int compIdx = -1;
           if (userObject instanceof LogEvent) {
@@ -361,6 +401,6 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
         }
         return low;
       }
-    }.execute();
+    });
   }
 }

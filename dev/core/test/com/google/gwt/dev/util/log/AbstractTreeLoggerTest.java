@@ -90,4 +90,42 @@ public class AbstractTreeLoggerTest extends TestCase {
     assertTrue(posTstDbgStr < posTstErrStr);
   }
 
+
+  /**
+   * Low-priority branch points don't actually show low-priority messages unless
+   * they (later) get a child that is loggable.
+   */
+  public void testLazyMultiBranchCommit() {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw, true);
+    PrintWriterTreeLogger logger = new PrintWriterTreeLogger(pw);
+    logger.setMaxDetail(TreeLogger.WARN);
+
+    final String tstDbg1Str = "TEST-DEBUG-STRING-1";
+    final String tstDbg2Str = "TEST-DEBUG-STRING-2";
+    final String tstErrStr = "TEST-ERROR-STRING";
+
+    // Emit something that's low-priority and wouldn't show up normally unless
+    // it had a higher-priority child log event.
+    TreeLogger branch = logger.branch(TreeLogger.DEBUG, tstDbg1Str, null);
+    assertEquals(-1, sw.toString().indexOf(tstDbg1Str));
+
+    // Emit something that's low-priority and wouldn't show up normally unless
+    // it had a higher-priority child log event.
+    branch = branch.branch(TreeLogger.DEBUG, tstDbg2Str, null);
+    assertEquals(-1, sw.toString().indexOf(tstDbg2Str));
+
+    // Emit something that's high-priority and will cause both to show up.
+    branch.log(TreeLogger.ERROR, tstErrStr, null);
+
+    // Make sure both are now there, in the right order.
+    int posTstDbg1Str = sw.toString().indexOf(tstDbg1Str);
+    int posTstDbg2Str = sw.toString().indexOf(tstDbg2Str);
+    int posTstErrStr = sw.toString().indexOf(tstErrStr);
+    assertTrue(posTstDbg1Str != -1);
+    assertTrue(posTstDbg2Str != -1);
+    assertTrue(posTstErrStr != -1);
+    assertTrue(posTstDbg1Str < posTstDbg2Str);
+    assertTrue(posTstDbg2Str < posTstErrStr);
+  }
 }
