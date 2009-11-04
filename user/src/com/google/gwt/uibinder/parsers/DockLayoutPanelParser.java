@@ -98,8 +98,22 @@ public class DockLayoutPanelParser implements ElementParser {
   }
 
   private boolean isValidChildElement(XMLElement parent, XMLElement child) {
-    return child.getNamespaceUri().equals(parent.getNamespaceUri())
-        && DOCK_NAMES.containsKey(child.getLocalName());
+    String childNsUri = child.getNamespaceUri();
+    String parentNsUri = parent.getNamespaceUri();
+    if (childNsUri == null && parentNsUri != null) {
+        return false;
+    } 
+    if (childNsUri != null && parentNsUri == null) {
+        return false;
+    } 
+    if (!childNsUri.equals(parentNsUri)) {
+      return false;
+    }
+    if (!DOCK_NAMES.containsKey(child.getLocalName())) {
+      return false;
+    }
+    // Made it through the gauntlet.
+    return true;
   }
 
   private boolean requiresSize(XMLElement elem) {
