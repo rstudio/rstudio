@@ -253,7 +253,8 @@
 
   <target name="test" depends="build, compile.tests" description="Run unit tests for this project.">
     <fileset id="tests.dev.core" dir="${javac.junit.out}" includes="${gwt.junit.testcase.dev.core.includes}" excludes="${gwt.junit.testcase.dev.core.excludes}" />
-    <gwt.junit test.out="${junit.out}" test.cases="tests.dev.core" >
+    <gwt.junit test.name="dev" test.out="${junit.out}"
+        test.cases="tests.dev.core" >
       <extraclasspaths>
         <pathelement location="${alldeps.jar}" />
         <!-- TODO: the following six items are needed because dev (alone) does

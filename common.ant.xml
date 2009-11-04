@@ -161,6 +161,7 @@
     <attribute name="test.reports" default="@{test.out}/reports" />
     <attribute name="test.emma.coverage" default="@{test.out}/emma-coverage" />
     <attribute name="test.cases" default="" />
+    <attribute name="test.name" default="" />
     <attribute name="haltonfailure" default="true" />
     <element name="extraclasspaths" optional="true" />
     <sequential>
@@ -236,7 +237,7 @@
           <isset property="junit.failure"/>
         </and>
       </condition>
-      <fail message="One or more junit tests failed" if="junit.stop.build" />
+      <fail message="One or more junit tests failed for target: @{test.name}" if="junit.stop.build" />
     </sequential>
   </macrodef>
 

@@ -37,7 +37,8 @@
 
   <target name="test" depends="build, compile.tests" description="Run unit tests for this project.">
     <fileset id="tests.antgwt" dir="${javac.junit.out}" includes="${gwt.junit.testcase.antgwt.includes}" excludes="${gwt.junit.testcase.antgwt.excludes}" />
-    <gwt.junit test.out="${junit.out}" test.cases="tests.antgwt" />
+    <gwt.junit test.name="ant-gwt" test.out="${junit.out}"
+        test.cases="tests.antgwt" />
   </target>
 
   <target name="checkstyle" description="Static analysis of source">

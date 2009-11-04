@@ -44,7 +44,8 @@
 
   <target name="test" depends="build, compile.tests" description="Run unit tests for this project.">
     <fileset id="tests.apichecker" dir="${javac.junit.out}" includes="${gwt.junit.testcase.apichecker.includes}" excludes="${gwt.junit.testcase.apichecker.excludes}" />
-    <gwt.junit test.out="${junit.out}" test.cases="tests.apichecker" >
+    <gwt.junit test.name="api-checker" test.out="${junit.out}"
+        test.cases="tests.apichecker" >
       <extraclasspaths>
         <pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
         <pathelement location="${gwt.dev.jar}" />
