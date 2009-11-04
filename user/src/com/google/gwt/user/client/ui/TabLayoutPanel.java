@@ -58,7 +58,7 @@ import java.util.Iterator;
  * - Aria, RTL, DebugId
  * - Update style mechanism (gwt-Tab, etc. not really sufficient).
  */
-public class TabLayoutPanel extends LayoutComposite implements HasWidgets,
+public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     ProvidesResize, IndexedPanel, HasBeforeSelectionHandlers<Integer>,
     HasSelectionHandlers<Integer> {
 

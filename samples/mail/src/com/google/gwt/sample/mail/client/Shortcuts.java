@@ -18,7 +18,7 @@ package com.google.gwt.sample.mail.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.LayoutComposite;
+import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.StackLayoutPanel;
 
 /**
@@ -28,7 +28,7 @@ import com.google.gwt.user.client.ui.StackLayoutPanel;
  * {@link com.google.gwt.user.client.ui.StackPanel},
  * {@link com.google.gwt.user.client.ui.Tree}, and other custom widgets.
  */
-public class Shortcuts extends LayoutComposite {
+public class Shortcuts extends ResizeComposite {
 
   interface Binder extends UiBinder<StackLayoutPanel, Shortcuts> { }
   private static final Binder binder = GWT.create(Binder.class);

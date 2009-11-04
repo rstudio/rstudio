@@ -20,13 +20,13 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.LayoutComposite;
+import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * A composite for displaying the details of an email message.
  */
-public class MailDetail extends LayoutComposite {
+public class MailDetail extends ResizeComposite {
 
   interface Binder extends UiBinder<Widget, MailDetail> { }
   private static final Binder binder = GWT.create(Binder.class);

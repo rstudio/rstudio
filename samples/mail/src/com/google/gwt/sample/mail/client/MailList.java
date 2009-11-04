@@ -22,14 +22,14 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.LayoutComposite;
+import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 
 /**
  * A composite that displays a list of emails that can be selected.
  */
-public class MailList extends LayoutComposite implements ClickHandler {
+public class MailList extends ResizeComposite implements ClickHandler {
 
   private static final int VISIBLE_EMAIL_COUNT = 20;
 

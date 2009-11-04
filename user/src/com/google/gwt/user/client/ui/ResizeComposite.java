@@ -20,7 +20,8 @@ package com.google.gwt.user.client.ui;
  * automatically delegates that interface's methods to its wrapped widget, which
  * must itself implement {@link RequiresResize}.
  */
-public abstract class LayoutComposite extends Composite implements RequiresResize {
+public abstract class ResizeComposite extends Composite implements
+    RequiresResize {
 
   @Override
   protected void initWidget(Widget widget) {
