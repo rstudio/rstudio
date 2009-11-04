@@ -276,20 +276,20 @@ public class TypeOracleMediator {
             JRealClassType type = compiledClass.getRealClassType();
             assert (type != null);
             type.resurrect();
-            binaryMapper.put(compiledClass.getBinaryName(), type);
+            binaryMapper.put(compiledClass.getInternalName(), type);
           }
           break;
         case COMPILED:
           for (CompiledClass compiledClass : unit.getCompiledClasses()) {
             JRealClassType type = createType(compiledClass);
-            binaryMapper.put(compiledClass.getBinaryName(), type);
+            binaryMapper.put(compiledClass.getInternalName(), type);
           }
           break;
         case CHECKED:
           for (CompiledClass compiledClass : unit.getCompiledClasses()) {
             JRealClassType type = compiledClass.getRealClassType();
             assert (type != null);
-            binaryMapper.put(compiledClass.getBinaryName(), type);
+            binaryMapper.put(compiledClass.getInternalName(), type);
           }
           break;
       }

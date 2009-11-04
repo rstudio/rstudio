@@ -273,8 +273,8 @@ public class JdtCompiler {
 
   private void recordBinaryTypes(Set<CompiledClass> compiledClasses) {
     for (CompiledClass compiledClass : compiledClasses) {
-      binaryTypes.put(compiledClass.getBinaryName(), compiledClass);
-      binaryTypesRefs.put(compiledClass.getBinaryName(),
+      binaryTypes.put(compiledClass.getInternalName(), compiledClass);
+      binaryTypesRefs.put(compiledClass.getInternalName(),
           compiledClass.getUnit().getDisplayLocation());
     }
   }

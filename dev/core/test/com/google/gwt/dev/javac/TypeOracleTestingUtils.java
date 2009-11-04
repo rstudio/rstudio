@@ -55,7 +55,7 @@ public class TypeOracleTestingUtils {
       Set<CompiledClass> compiledClasses = unit.getCompiledClasses();
       if (compiledClasses != null) {
         for (CompiledClass compiledClass : compiledClasses) {
-          validBinaryTypeNames.add(compiledClass.getBinaryName());
+          validBinaryTypeNames.add(compiledClass.getInternalName());
         }
       }
     }

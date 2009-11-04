@@ -446,6 +446,7 @@ public abstract class CompilationUnit {
   /**
    * Overridden to finalize; always returns {@link #getDisplayLocation()}.
    */
+  @Override
   public final String toString() {
     return getDisplayLocation();
   }
@@ -544,8 +545,8 @@ public abstract class CompilationUnit {
     List<String> classNames = new ArrayList<String>();
     for (CompiledClass cc : getCompiledClasses()) {
       if (isAnonymousClass(cc)
-          && cc.getBinaryName().startsWith(topLevelClass + "$")) {
-        classNames.add(cc.getBinaryName());
+          && cc.getInternalName().startsWith(topLevelClass + "$")) {
+        classNames.add(cc.getInternalName());
       }
     }
     Collections.sort(classNames, new GeneratedClassnameComparator());
@@ -556,7 +557,7 @@ public abstract class CompilationUnit {
     List<String> topLevelClasses = new ArrayList<String>();
     for (CompiledClass cc : getCompiledClasses()) {
       if (cc.getEnclosingClass() == null) {
-        topLevelClasses.add(cc.binaryName);
+        topLevelClasses.add(cc.getInternalName());
       }
     }
     return topLevelClasses;
@@ -584,6 +585,6 @@ public abstract class CompilationUnit {
    * real difference and add a unit test, or else simply this.
    */
   private boolean isAnonymousClass(CompiledClass cc) {
-    return cc.isLocal() && isClassnameGenerated(cc.getBinaryName());
+    return cc.isLocal() && isClassnameGenerated(cc.getInternalName());
   }
 }

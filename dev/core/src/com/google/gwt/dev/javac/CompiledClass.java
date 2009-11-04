@@ -18,6 +18,7 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.util.DiskCache;
+import com.google.gwt.dev.util.Name.InternalName;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ClassFile;
@@ -64,8 +65,8 @@ public final class CompiledClass {
     return false;
   }
 
-  protected final String binaryName;
   protected final CompiledClass enclosingClass;
+  protected final String internalName;
   protected final boolean isLocal;
   protected final String location;
   protected final CompilationUnit unit;
@@ -87,19 +88,12 @@ public final class CompiledClass {
     this.typeDeclaration = typeDeclaration;
     this.enclosingClass = enclosingClass;
     SourceTypeBinding binding = typeDeclaration.binding;
-    this.binaryName = CharOperation.charToString(binding.constantPoolName());
-    ClassFile classFile = getClassFile(typeDeclaration, binaryName);
+    this.internalName = CharOperation.charToString(binding.constantPoolName());
+    ClassFile classFile = getClassFile(typeDeclaration, internalName);
     byte[] bytes = classFile.getBytes();
     this.cacheToken = diskCache.writeByteArray(bytes);
     this.location = String.valueOf(classFile.fileName());
     this.isLocal = isLocalType(binding);
-  }
-
-  /**
-   * Returns the binary class name, e.g. {@code java/util/Map$Entry}.
-   */
-  public String getBinaryName() {
-    return binaryName;
   }
 
   /**
@@ -114,17 +108,24 @@ public final class CompiledClass {
   }
 
   /**
+   * Returns the binary class name, e.g. {@code java/util/Map$Entry}.
+   */
+  public String getInternalName() {
+    return internalName;
+  }
+
+  /**
    * Returns the enclosing package, e.g. {@code java.util}.
    */
   public String getPackageName() {
-    return Shared.getPackageNameFromBinary(binaryName);
+    return Shared.getPackageNameFromBinary(internalName);
   }
 
   /**
    * Returns the qualified source name, e.g. {@code java.util.Map.Entry}.
    */
   public String getSourceName() {
-    return binaryName.replace('/', '.').replace('$', '.');
+    return InternalName.toSourceName(internalName);
   }
 
   public CompilationUnit getUnit() {
@@ -141,7 +142,7 @@ public final class CompiledClass {
 
   @Override
   public String toString() {
-    return binaryName;
+    return internalName;
   }
 
   /**

@@ -25,6 +25,7 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.Empty;
+import com.google.gwt.dev.util.Name.InternalName;
 
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
@@ -185,7 +186,7 @@ public class JsniCollector {
     TypeDeclaration typeDecl = compiledClass.getTypeDeclaration();
     int[] lineEnds = typeDecl.compilationResult.getLineSeparatorPositions();
     List<JsniMethod> jsniMethods = new ArrayList<JsniMethod>();
-    String enclosingType = compiledClass.getBinaryName().replace('/', '.');
+    String enclosingType = InternalName.toBinaryName(compiledClass.getInternalName());
     AbstractMethodDeclaration[] methods = typeDecl.methods;
     if (methods != null) {
       for (AbstractMethodDeclaration method : methods) {

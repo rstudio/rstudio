@@ -374,7 +374,7 @@ public class CompilationState {
     for (CompilationUnit unit : unitMap.values()) {
       if (unit.isCompiled()) {
         for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-          classFileMap.put(compiledClass.getBinaryName(), compiledClass);
+          classFileMap.put(compiledClass.getInternalName(), compiledClass);
           classFileMapBySource.put(compiledClass.getSourceName(), compiledClass);
         }
       }
