@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.EnumsTestService.Basic;
 import com.google.gwt.user.client.rpc.EnumsTestService.Complex;
 import com.google.gwt.user.client.rpc.EnumsTestService.Subclassing;
@@ -24,8 +23,7 @@ import com.google.gwt.user.client.rpc.EnumsTestService.Subclassing;
 /**
  * Tests enums over RPC.
  */
-public class EnumsTest extends GWTTestCase {
-  private static final int TEST_DELAY = 5000;
+public class EnumsTest extends RpcTestBase {
 
   private static EnumsTestServiceAsync getService() {
     EnumsTestServiceAsync service = GWT.create(EnumsTestService.class);
@@ -42,16 +40,11 @@ public class EnumsTest extends GWTTestCase {
     }
   }
 
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.user.RPCSuite";
-  }
-
   /**
    * Test that basic enums can be used over RPC.
    */
   public void testBasicEnums() {
-    delayTestFinish(TEST_DELAY);
+    delayTestFinishForRpc();
     getService().echo(Basic.A, new AsyncCallback<Basic>() {
       public void onFailure(Throwable caught) {
         rethrowException(caught);
@@ -70,11 +63,10 @@ public class EnumsTest extends GWTTestCase {
    * over RPC and that the client state does not change.
    */
   public void testComplexEnums() {
-    delayTestFinish(TEST_DELAY);
-
     Complex a = Complex.A;
     a.value = "client";
 
+    delayTestFinishForRpc();
     getService().echo(Complex.A, new AsyncCallback<Complex>() {
       public void onFailure(Throwable caught) {
         rethrowException(caught);
@@ -96,7 +88,7 @@ public class EnumsTest extends GWTTestCase {
    * Test that null can be used as an enumeration.
    */
   public void testNull() {
-    delayTestFinish(TEST_DELAY);
+    delayTestFinishForRpc();
 
     getService().echo((Basic) null, new AsyncCallback<Basic>() {
       public void onFailure(Throwable caught) {
@@ -114,7 +106,7 @@ public class EnumsTest extends GWTTestCase {
    * Test that enums with subclasses can be passed over RPC.
    */
   public void testSubclassingEnums() {
-    delayTestFinish(TEST_DELAY);
+    delayTestFinishForRpc();
 
     getService().echo(Subclassing.A, new AsyncCallback<Subclassing>() {
       public void onFailure(Throwable caught) {

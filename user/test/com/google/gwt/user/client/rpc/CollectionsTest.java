@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
@@ -42,12 +41,7 @@ import java.util.Vector;
 /**
  * Tests collections across RPC.
  */
-public class CollectionsTest extends GWTTestCase {
-  /**
-   * Used by testVeryLargeArray() because the serialization takes a while.
-   */
-  private static final int LONG_TEST_DELAY = 120000;
-  private static final int TEST_DELAY = 10000;
+public class CollectionsTest extends RpcTestBase {
 
   private CollectionsTestServiceAsync collectionsTestService;
 
@@ -55,10 +49,9 @@ public class CollectionsTest extends GWTTestCase {
    * TODO: Why is this disabled???
    */
   public void disabledTestDateArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Date[] expected = TestSetFactory.createDateArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Date[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -78,10 +71,9 @@ public class CollectionsTest extends GWTTestCase {
    * due to SSW.
    */
   public void disabledTestVeryLargeArray() {
-    delayTestFinish(LONG_TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final int[] expected = TestSetFactory.createVeryLargeArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<int[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -95,14 +87,9 @@ public class CollectionsTest extends GWTTestCase {
     });
   }
 
-  public String getModuleName() {
-    return "com.google.gwt.user.RPCSuite";
-  }
-
   public void testArrayList() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(TestSetFactory.createArrayList(),
         new AsyncCallback<ArrayList<MarkerTypeArrayList>>() {
           public void onFailure(Throwable caught) {
@@ -118,11 +105,10 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testArraysAsList() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final List<MarkerTypeArraysAsList> expected = TestSetFactory.createArraysAsList();
 
+    delayTestFinishForRpc();
     service.echoArraysAsList(expected,
         new AsyncCallback<List<MarkerTypeArraysAsList>>() {
           public void onFailure(Throwable caught) {
@@ -138,10 +124,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testBooleanArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Boolean[] expected = TestSetFactory.createBooleanArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Boolean[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -156,10 +141,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testByteArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Byte[] expected = TestSetFactory.createByteArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Byte[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -174,10 +158,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testCharArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Character[] expected = TestSetFactory.createCharArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Character[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -192,10 +175,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testDoubleArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Double[] expected = TestSetFactory.createDoubleArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Double[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -210,10 +192,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testEnumArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Enum<?>[] expected = TestSetFactory.createEnumArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Enum<?>[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -228,10 +209,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testFloatArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Float[] expected = TestSetFactory.createFloatArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Float[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -246,10 +226,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testHashMap() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final HashMap<String, MarkerTypeHashMap> expected = TestSetFactory.createHashMap();
+    delayTestFinishForRpc();
     service.echo(expected,
         new AsyncCallback<HashMap<String, MarkerTypeHashMap>>() {
           public void onFailure(Throwable caught) {
@@ -265,10 +244,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testHashSet() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final HashSet<MarkerTypeHashSet> expected = TestSetFactory.createHashSet();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<HashSet<MarkerTypeHashSet>>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -283,10 +261,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testIntegerArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Integer[] expected = TestSetFactory.createIntegerArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Integer[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -301,12 +278,12 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testLinkedHashMap() {
-    delayTestFinish(TEST_DELAY);
     CollectionsTestServiceAsync service = getServiceAsync();
 
     final LinkedHashMap<String, MarkerTypeLinkedHashMap> expected = TestSetFactory.createLinkedHashMap();
     assertFalse(LinkedHashMap_CustomFieldSerializer.getAccessOrderNoReflection(expected));
 
+    delayTestFinishForRpc();
     service.echo(expected,
         new AsyncCallback<LinkedHashMap<String, MarkerTypeLinkedHashMap>>() {
           public void onFailure(Throwable caught) {
@@ -325,12 +302,12 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testLinkedHashMapLRU() {
-    delayTestFinish(TEST_DELAY);
     CollectionsTestServiceAsync service = getServiceAsync();
 
     final LinkedHashMap<String, MarkerTypeLinkedHashMap> expected = TestSetFactory.createLRULinkedHashMap();
     assertTrue(LinkedHashMap_CustomFieldSerializer.getAccessOrderNoReflection(expected));
 
+    delayTestFinishForRpc();
     service.echo(expected,
         new AsyncCallback<LinkedHashMap<String, MarkerTypeLinkedHashMap>>() {
           public void onFailure(Throwable caught) {
@@ -349,10 +326,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testLongArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Long[] expected = TestSetFactory.createLongArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Long[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -367,10 +343,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testPrimitiveBooleanArray() {
-    delayTestFinish(TEST_DELAY);
-
     final boolean[] expected = TestSetFactory.createPrimitiveBooleanArray();
     CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<boolean[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -384,10 +359,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testPrimitiveByteArray() {
-    delayTestFinish(TEST_DELAY);
-
     final byte[] expected = TestSetFactory.createPrimitiveByteArray();
     CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<byte[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -401,10 +375,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testPrimitiveCharArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final char[] expected = TestSetFactory.createPrimitiveCharArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<char[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -419,10 +392,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testPrimitiveDoubleArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final double[] expected = TestSetFactory.createPrimitiveDoubleArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<double[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -437,10 +409,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testPrimitiveFloatArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final float[] expected = TestSetFactory.createPrimitiveFloatArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<float[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -455,10 +426,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testPrimitiveIntegerArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final int[] expected = TestSetFactory.createPrimitiveIntegerArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<int[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -473,10 +443,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testPrimitiveLongArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final long[] expected = TestSetFactory.createPrimitiveLongArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<long[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -491,10 +460,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testPrimitiveShortArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final short[] expected = TestSetFactory.createPrimitiveShortArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<short[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -509,10 +477,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testShortArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Short[] expected = TestSetFactory.createShortArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Short[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -527,10 +494,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testSqlDateArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final java.sql.Date[] expected = TestSetFactory.createSqlDateArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<java.sql.Date[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -545,10 +511,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testSqlTimeArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Time[] expected = TestSetFactory.createSqlTimeArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Time[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -563,10 +528,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testSqlTimestampArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Timestamp[] expected = TestSetFactory.createSqlTimestampArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Timestamp[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -581,10 +545,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testStringArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final String[] expected = TestSetFactory.createStringArray();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<String[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -599,11 +562,10 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testStringArrayArray() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final String[][] expected = new String[][] {
         new String[] {"hello"}, new String[] {"bye"}};
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<String[][]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -617,9 +579,8 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testTreeMap() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     for (boolean option : new boolean[] {true, false}) {
       final TreeMap<String, MarkerTypeTreeMap> expected = TestSetFactory.createTreeMap(option);
       service.echo(expected, option,
@@ -638,9 +599,8 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testTreeSet() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     for (boolean option : new boolean[] {true, false}) {
       final TreeSet<MarkerTypeTreeSet> expected = TestSetFactory.createTreeSet(option);
       service.echo(expected, option,
@@ -659,10 +619,9 @@ public class CollectionsTest extends GWTTestCase {
   }
 
   public void testVector() {
-    delayTestFinish(TEST_DELAY);
-
     CollectionsTestServiceAsync service = getServiceAsync();
     final Vector<MarkerTypeVector> expected = TestSetFactory.createVector();
+    delayTestFinishForRpc();
     service.echo(expected, new AsyncCallback<Vector<MarkerTypeVector>>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);

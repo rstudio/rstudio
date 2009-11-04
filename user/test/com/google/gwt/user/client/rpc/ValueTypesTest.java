@@ -16,24 +16,17 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * TODO: document me.
  */
-public class ValueTypesTest extends GWTTestCase {
-
-  private static final int TEST_DELAY = 5000;
+public class ValueTypesTest extends RpcTestBase {
 
   private ValueTypesTestServiceAsync primitiveTypeTestService;
 
-  public String getModuleName() {
-    return "com.google.gwt.user.RPCSuite";
-  }
-
   public void testBoolean_FALSE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_FALSE(false, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -49,8 +42,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testBoolean_TRUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_TRUE(true, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -66,8 +59,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testByte() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo((byte) (Byte.MAX_VALUE / (byte) 2), new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -83,8 +76,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testByte_MAX_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MAX_VALUE(Byte.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -100,8 +93,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testByte_MIN_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MIN_VALUE(Byte.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -117,8 +110,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testChar() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo((char) (Character.MAX_VALUE / (char) 2), new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -135,8 +128,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testChar_MAX_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MAX_VALUE(Character.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -152,8 +145,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testChar_MIN_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MIN_VALUE(Character.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -169,8 +162,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testDouble() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(Double.MAX_VALUE / 2, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -186,8 +179,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testDouble_MAX_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MAX_VALUE(Double.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -203,8 +196,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testDouble_MIN_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MIN_VALUE(Double.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -223,8 +216,8 @@ public class ValueTypesTest extends GWTTestCase {
    * Validate that NaNs (not-a-number, such as 0/0) propagate properly via RPC.
    */
   public void testDouble_NaN() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(Double.NaN, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -243,8 +236,8 @@ public class ValueTypesTest extends GWTTestCase {
    * Validate that negative infinity propagates properly via RPC.
    */
   public void testDouble_NegInfinity() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(Double.NEGATIVE_INFINITY, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -264,8 +257,8 @@ public class ValueTypesTest extends GWTTestCase {
    * Validate that positive infinity propagates properly via RPC.
    */
   public void testDouble_PosInfinity() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(Double.POSITIVE_INFINITY, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -282,8 +275,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testFloat() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(Float.MAX_VALUE / 2, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -299,8 +292,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testFloat_MAX_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MAX_VALUE(Float.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -316,8 +309,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testFloat_MIN_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MIN_VALUE(Float.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -336,8 +329,8 @@ public class ValueTypesTest extends GWTTestCase {
    * Validate that NaNs (not-a-number, such as 0/0) propagate properly via RPC.
    */
   public void testFloat_NaN() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(Float.NaN, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -356,8 +349,8 @@ public class ValueTypesTest extends GWTTestCase {
    * Validate that negative infinity propagates properly via RPC.
    */
   public void testFloat_NegInfinity() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(Float.NEGATIVE_INFINITY, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -377,8 +370,8 @@ public class ValueTypesTest extends GWTTestCase {
    * Validate that positive infinity propagates properly via RPC.
    */
   public void testFloat_PosInfinity() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(Float.POSITIVE_INFINITY, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -395,8 +388,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testInteger() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(Integer.MAX_VALUE / 2, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -412,8 +405,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testInteger_MAX_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MAX_VALUE(Integer.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -429,8 +422,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testInteger_MIN_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MIN_VALUE(Integer.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -446,8 +439,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testLong() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(Long.MAX_VALUE / 2, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -464,8 +457,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testLong_MAX_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MAX_VALUE(Long.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -481,8 +474,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testLong_MIN_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MIN_VALUE(Long.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -498,8 +491,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testShort() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo((short) (Short.MAX_VALUE / (short) 2), new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -515,8 +508,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testShort_MAX_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MAX_VALUE(Short.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
@@ -532,8 +525,8 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   public void testShort_MIN_VALUE() {
-    delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_MIN_VALUE(Short.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {

@@ -21,7 +21,6 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * This test case is used to check that the RemoteServiceServlet walks the class
@@ -36,7 +35,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  * {@link com.google.gwt.user.server.rpc.RemoteServiceServletTestServiceImpl}.
  * </p>
  */
-public class RemoteServiceServletTest extends GWTTestCase {
+public class RemoteServiceServletTest extends RpcTestBase {
   private static class MyRpcRequestBuilder extends RpcRequestBuilder {
     private boolean doCreate;
     private boolean doFinish;
@@ -91,8 +90,6 @@ public class RemoteServiceServletTest extends GWTTestCase {
     }
   }
 
-  private static final int TEST_DELAY = 10000;
-
   protected static RemoteServiceServletTestServiceAsync getAsyncService() {
     RemoteServiceServletTestServiceAsync service = (RemoteServiceServletTestServiceAsync) GWT.create(RemoteServiceServletTestService.class);
 
@@ -104,16 +101,12 @@ public class RemoteServiceServletTest extends GWTTestCase {
 
   private Request req;
 
-  public String getModuleName() {
-    return "com.google.gwt.user.RPCSuite";
-  }
-
   public void testAlternateStatusCode() {
     RemoteServiceServletTestServiceAsync service = getAsyncService();
     ((ServiceDefTarget) service).setServiceEntryPoint(GWT.getModuleBaseURL()
         + "servlettest/404");
 
-    delayTestFinish(TEST_DELAY);
+    delayTestFinishForRpc();
 
     service.test(new AsyncCallback<Void>() {
 
@@ -136,7 +129,7 @@ public class RemoteServiceServletTest extends GWTTestCase {
   public void testManualSend() throws RequestException {
     RemoteServiceServletTestServiceAsync service = getAsyncService();
 
-    delayTestFinish(TEST_DELAY);
+    delayTestFinishForRpc();
 
     RequestBuilder builder = service.testExpectCustomHeader(new AsyncCallback<Void>() {
 
@@ -158,7 +151,7 @@ public class RemoteServiceServletTest extends GWTTestCase {
   public void testPermutationStrongName() {
     RemoteServiceServletTestServiceAsync service = getAsyncService();
 
-    delayTestFinish(TEST_DELAY);
+    delayTestFinishForRpc();
 
     assertNotNull(GWT.getPermutationStrongName());
     service.testExpectPermutationStrongName(GWT.getPermutationStrongName(),
@@ -172,7 +165,7 @@ public class RemoteServiceServletTest extends GWTTestCase {
             finishTest();
           }
         });
-  };
+  }
 
   /**
    * Ensure that each doFoo method is called.
@@ -182,7 +175,7 @@ public class RemoteServiceServletTest extends GWTTestCase {
     RemoteServiceServletTestServiceAsync service = getAsyncService();
     ((ServiceDefTarget) service).setRpcRequestBuilder(builder);
 
-    delayTestFinish(TEST_DELAY);
+    delayTestFinishForRpc();
     service.test(new AsyncCallback<Void>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -198,7 +191,7 @@ public class RemoteServiceServletTest extends GWTTestCase {
   public void testServiceInterfaceLocation() {
     RemoteServiceServletTestServiceAsync service = getAsyncService();
 
-    delayTestFinish(TEST_DELAY);
+    delayTestFinishForRpc();
 
     req = service.test(new AsyncCallback<Void>() {
 

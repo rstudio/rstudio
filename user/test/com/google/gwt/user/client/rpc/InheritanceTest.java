@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AnonymousClassInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.Circle;
@@ -27,22 +26,16 @@ import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableSubc
 /**
  * TODO: document me.
  */
-public class InheritanceTest extends GWTTestCase {
-  private static final int TEST_DELAY = 5000;
+public class InheritanceTest extends RpcTestBase {
 
   private InheritanceTestServiceAsync inheritanceTestService;
-
-  public String getModuleName() {
-    return "com.google.gwt.user.RPCSuite";
-  }
 
   /**
    * Test that anonymous classes are not serializable.
    */
   public void testAnonymousClasses() {
-    delayTestFinish(TEST_DELAY);
-
     InheritanceTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(new AnonymousClassInterface() {
       public void foo() {
         // purposely empty
@@ -66,9 +59,8 @@ public class InheritanceTest extends GWTTestCase {
    * 161</a>
    */
   public void testFieldShadowing() {
-    delayTestFinish(TEST_DELAY);
-
     InheritanceTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(InheritanceTestSetFactory.createCircle(),
         new AsyncCallback<Object>() {
           public void onFailure(Throwable caught) {
@@ -87,9 +79,8 @@ public class InheritanceTest extends GWTTestCase {
    * Tests that transient fields do not prevent serializability.
    */
   public void testJavaSerializableClass() {
-    delayTestFinish(TEST_DELAY);
-
     InheritanceTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(new InheritanceTestSetFactory.JavaSerializableClass(3),
         new AsyncCallback<Object>() {
           public void onFailure(Throwable caught) {
@@ -107,9 +98,8 @@ public class InheritanceTest extends GWTTestCase {
    * Test that non-static inner classes are not serializable.
    */
   public void testNonStaticInnerClass() {
-    delayTestFinish(TEST_DELAY);
-
     InheritanceTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(InheritanceTestSetFactory.createNonStaticInnerClass(),
         new AsyncCallback<Object>() {
           public void onFailure(Throwable caught) {
@@ -123,9 +113,8 @@ public class InheritanceTest extends GWTTestCase {
   }
 
   public void testReturnOfUnserializableClassFromServer() {
-    delayTestFinish(TEST_DELAY);
-
     InheritanceTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.getUnserializableClass(new AsyncCallback<Object>() {
       public void onFailure(Throwable caught) {
         finishTest();
@@ -141,9 +130,8 @@ public class InheritanceTest extends GWTTestCase {
    * Test that a valid serializable class can be serialized.
    */
   public void testSerializableClass() {
-    delayTestFinish(TEST_DELAY);
-
     InheritanceTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(InheritanceTestSetFactory.createSerializableClass(),
         new AsyncCallback<Object>() {
           public void onFailure(Throwable caught) {
@@ -162,9 +150,8 @@ public class InheritanceTest extends GWTTestCase {
    * Test that IsSerializable is inherited, also test static inner classes.
    */
   public void testSerializableSubclass() {
-    delayTestFinish(TEST_DELAY);
-
     InheritanceTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(InheritanceTestSetFactory.createSerializableSubclass(),
         new AsyncCallback<Object>() {
           public void onFailure(Throwable caught) {
@@ -180,7 +167,7 @@ public class InheritanceTest extends GWTTestCase {
   }
 
   public void testSerializationExceptionPreventsCall() {
-    delayTestFinish(TEST_DELAY);
+    delayTestFinishForRpc();
     final boolean serializationExceptionCaught[] = new boolean[1];
     new Timer() {
       @Override
@@ -189,7 +176,7 @@ public class InheritanceTest extends GWTTestCase {
             serializationExceptionCaught[0]);
         finishTest();
       }
-    }.schedule(TEST_DELAY / 2);
+    }.schedule(RPC_TIMEOUT / 2);
 
     InheritanceTestServiceAsync service = getServiceAsync();
     service.echo(new AnonymousClassInterface() {
@@ -215,9 +202,8 @@ public class InheritanceTest extends GWTTestCase {
    * Tests that transient fields do not prevent serializability.
    */
   public void testTransientFieldExclusion() {
-    delayTestFinish(TEST_DELAY);
-
     InheritanceTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(
         InheritanceTestSetFactory.createSerializableClassWithTransientField(),
         new AsyncCallback<Object>() {

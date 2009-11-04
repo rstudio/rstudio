@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory.SerializableSubclass;
 
 import junit.framework.AssertionFailedError;
@@ -31,23 +30,17 @@ import junit.framework.AssertionFailedError;
  * serialized</li>
  * </ul>
  */
-public class CustomFieldSerializerTest extends GWTTestCase {
-  private static final int TEST_DELAY = 5000;
+public class CustomFieldSerializerTest extends RpcTestBase {
 
   private CustomFieldSerializerTestServiceAsync customFieldSerializerTestService;
-
-  public String getModuleName() {
-    return "com.google.gwt.user.RPCSuite";
-  }
 
   /**
    * Test that custom field serializers do not make their subclasses
    * serializable.
    */
   public void testCustomFieldSerializabilityInheritance() {
-    delayTestFinish(TEST_DELAY);
-
     CustomFieldSerializerTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(
         CustomFieldSerializerTestSetFactory.createUnserializableSubclass(),
         new AsyncCallback() {
@@ -67,9 +60,8 @@ public class CustomFieldSerializerTest extends GWTTestCase {
    * Tests that the custom field serializers are actually called.
    */
   public void testCustomFieldSerialization() {
-    delayTestFinish(TEST_DELAY);
-
     CustomFieldSerializerTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(
         CustomFieldSerializerTestSetFactory.createUnserializableClass(),
         new AsyncCallback() {
@@ -93,9 +85,8 @@ public class CustomFieldSerializerTest extends GWTTestCase {
    * is required for most immutable classes) work.
    */
   public void testSerializableImmutables() {
-    delayTestFinish(TEST_DELAY);
-
     CustomFieldSerializerTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(
         CustomFieldSerializerTestSetFactory.createSerializableImmutablesArray(),
         new AsyncCallback() {
@@ -119,9 +110,8 @@ public class CustomFieldSerializerTest extends GWTTestCase {
    * serializers serialize and deserialize correctly.
    */
   public void testSerializableSubclasses() {
-    delayTestFinish(TEST_DELAY);
-
     CustomFieldSerializerTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo(
         CustomFieldSerializerTestSetFactory.createSerializableSubclass(),
         new AsyncCallback() {

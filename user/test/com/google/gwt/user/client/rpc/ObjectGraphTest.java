@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableGraphWithCFS;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
@@ -26,17 +25,11 @@ import com.google.gwt.user.client.rpc.impl.AbstractSerializationStream;
 /**
  * TODO: document me.
  */
-public class ObjectGraphTest extends GWTTestCase {
-  private static final int TEST_DELAY = 5000;
-
-  public String getModuleName() {
-    return "com.google.gwt.user.RPCSuite";
-  }
+public class ObjectGraphTest extends RpcTestBase {
 
   public void testAcyclicGraph() {
-    delayTestFinish(TEST_DELAY);
-
     ObjectGraphTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_AcyclicGraph(TestSetFactory.createAcyclicGraph(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
@@ -52,9 +45,8 @@ public class ObjectGraphTest extends GWTTestCase {
   }
 
   public void testComplexCyclicGraph() {
-    delayTestFinish(TEST_DELAY);
-
     ObjectGraphTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_ComplexCyclicGraph(TestSetFactory.createComplexCyclicGraph(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
@@ -70,9 +62,8 @@ public class ObjectGraphTest extends GWTTestCase {
   }
 
   public void testComplexCyclicGraphWithCFS() {
-    delayTestFinish(TEST_DELAY);
-
     ObjectGraphTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_ComplexCyclicGraphWithCFS(
         TestSetFactory.createComplexCyclicGraphWithCFS(),
         new AsyncCallback<SerializableGraphWithCFS>() {
@@ -89,10 +80,9 @@ public class ObjectGraphTest extends GWTTestCase {
   }
 
   public void testComplexCyclicGraph2() {
-    delayTestFinish(TEST_DELAY);
-
     ObjectGraphTestServiceAsync service = getServiceAsync();
     final SerializableDoublyLinkedNode node = TestSetFactory.createComplexCyclicGraph();
+    delayTestFinishForRpc();
     service.echo_ComplexCyclicGraph(node, node, new AsyncCallback() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -107,10 +97,9 @@ public class ObjectGraphTest extends GWTTestCase {
   }
 
   public void testDoublyReferencedArray() {
-    delayTestFinish(TEST_DELAY);
-
     ObjectGraphTestServiceAsync service = getServiceAsync();
     final SerializableWithTwoArrays node = TestSetFactory.createDoublyReferencedArray();
+    delayTestFinishForRpc();
     service.echo_SerializableWithTwoArrays(node, new AsyncCallback() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -142,10 +131,9 @@ public class ObjectGraphTest extends GWTTestCase {
   }
 
   public void testPrivateNoArg() {
-    delayTestFinish(TEST_DELAY);
-
     ObjectGraphTestServiceAsync service = getServiceAsync();
     final SerializablePrivateNoArg node = TestSetFactory.createPrivateNoArg();
+    delayTestFinishForRpc();
     service.echo_PrivateNoArg(node, new AsyncCallback() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
@@ -160,9 +148,8 @@ public class ObjectGraphTest extends GWTTestCase {
   }
 
   public void testTrivialCyclicGraph() {
-    delayTestFinish(TEST_DELAY);
-
     ObjectGraphTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
     service.echo_TrivialCyclicGraph(TestSetFactory.createTrivialCyclicGraph(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {

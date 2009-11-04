@@ -19,13 +19,11 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestException;
-import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * Tests run-time serialization errors for GWT RPC.
  */
-public class RunTimeSerializationErrorsTest extends GWTTestCase {
-  private static final int TIMEOUT = 20000;
+public class RunTimeSerializationErrorsTest extends RpcTestBase {
 
   public static MixedSerializableEchoServiceAsync getService() {
     MixedSerializableEchoServiceAsync service = GWT.create(MixedSerializableEchoService.class);
@@ -36,13 +34,8 @@ public class RunTimeSerializationErrorsTest extends GWTTestCase {
     return service;
   }
 
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.user.RPCSuite";
-  }
-
   public void testBadSerialization1() {
-    delayTestFinish(TIMEOUT);
+    delayTestFinishForRpc();
     getService().echoVoid(new MixedSerializable.NonSerializableSub(),
         new AsyncCallback<MixedSerializable>() {
           public void onFailure(Throwable caught) {
@@ -97,7 +90,7 @@ public class RunTimeSerializationErrorsTest extends GWTTestCase {
   }
 
   public void testGoodSerialization1() {
-    delayTestFinish(TIMEOUT);
+    delayTestFinishForRpc();
     getService().echoVoid(new MixedSerializable.SerializableSub(),
         new AsyncCallback<MixedSerializable>() {
           public void onFailure(Throwable caught) {
@@ -111,7 +104,7 @@ public class RunTimeSerializationErrorsTest extends GWTTestCase {
   }
 
   public void testGoodSerialization2() {
-    delayTestFinish(TIMEOUT);
+    delayTestFinishForRpc();
     getService().echoRequest(new MixedSerializable.SerializableSub(),
         new AsyncCallback<MixedSerializable>() {
           public void onFailure(Throwable caught) {
@@ -125,7 +118,7 @@ public class RunTimeSerializationErrorsTest extends GWTTestCase {
   }
 
   public void testGoodSerialization3() {
-    delayTestFinish(TIMEOUT);
+    delayTestFinishForRpc();
     getService().echoVoid(new MixedSerializable.SerializableSub(),
         new AsyncCallback<MixedSerializable>() {
           public void onFailure(Throwable caught) {
