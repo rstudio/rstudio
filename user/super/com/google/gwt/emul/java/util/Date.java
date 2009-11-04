@@ -105,7 +105,7 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
       int min, int sec) /*-{
     return Date.UTC(year + 1900, month, date, hrs, min, sec);
   }-*/;
-
+  
   /**
    * JavaScript Date instance.
    */
@@ -206,7 +206,7 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
 
   public native int getYear() /*-{
     this.@java.util.Date::checkJsDate()();
-    return this.@java.util.Date::jsdate.getFullYear()-1900;
+    return this.@java.util.Date::jsdate.getFullYear() - 1900;
   }-*/;
 
   @Override
@@ -216,27 +216,36 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
 
   public native void setDate(int date) /*-{
     this.@java.util.Date::checkJsDate()();
+    var hours = this.@java.util.Date::jsdate.getHours()
     this.@java.util.Date::jsdate.setDate(date);
+    this.@java.util.Date::fixDaylightSavings(I)(hours);
   }-*/;
 
   public native void setHours(int hours) /*-{
     this.@java.util.Date::checkJsDate()();
     this.@java.util.Date::jsdate.setHours(hours);
+    this.@java.util.Date::fixDaylightSavings(I)(hours);
   }-*/;
 
   public native void setMinutes(int minutes) /*-{
     this.@java.util.Date::checkJsDate()();
+    var hours = this.@java.util.Date::jsdate.getHours() + minutes / 60;
     this.@java.util.Date::jsdate.setMinutes(minutes);
+    this.@java.util.Date::fixDaylightSavings(I)(hours);
   }-*/;
 
   public native void setMonth(int month) /*-{
     this.@java.util.Date::checkJsDate()();
+    var hours = this.@java.util.Date::jsdate.getHours();
     this.@java.util.Date::jsdate.setMonth(month);
+    this.@java.util.Date::fixDaylightSavings(I)(hours);
   }-*/;
 
   public native void setSeconds(int seconds) /*-{
     this.@java.util.Date::checkJsDate()();
+    var hours = this.@java.util.Date::jsdate.getHours() + seconds / (60 * 60);
     this.@java.util.Date::jsdate.setSeconds(seconds);
+    this.@java.util.Date::fixDaylightSavings(I)(hours);
   }-*/;
 
   public void setTime(long time) {
@@ -245,7 +254,9 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
 
   public native void setYear(int year) /*-{
     this.@java.util.Date::checkJsDate()();
+    var hours = this.@java.util.Date::jsdate.getHours()
     this.@java.util.Date::jsdate.setFullYear(year + 1900);
+    this.@java.util.Date::fixDaylightSavings(I)(hours);
   }-*/;
 
   public native String toGMTString() /*-{
@@ -306,6 +317,57 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
           + this.@java.util.Date::jsdate);
     }
   }-*/;
+  
+  /*
+   * Some browsers have the following behavior:
+   * 
+   * // Assume a U.S. time zone with daylight savings
+   * // Set a non-existent time: 2:00 am Sunday March 8, 2009
+   * var date = new Date(2009, 2, 8, 2, 0, 0);
+   * var hours = date.getHours(); // returns 1
+   * 
+   * The equivalent Java code will return 3. To compensate, we determine the
+   * amount of daylight savings adjustment by comparing the time zone offsets
+   * for the requested time and a time one day later, and add the adjustment to
+   * the hours and minutes of the requested time.
+   */
+
+  /**
+   * Detects if the requested time falls into a non-existent time range due to
+   * local time advancing into daylight savings time. If so, push the requested
+   * time forward out of the non-existent range.
+   */
+  @SuppressWarnings("unused") // called by JSNI
+  private native void fixDaylightSavings(int hours) /*-{
+    if ((this.@java.util.Date::jsdate.getHours() % 24) != (hours % 24)) {
+      // Find the change in time zone offset between the current
+      // time and the same time the following day
+      var d = new Date();
+      d.setTime(this.@java.util.Date::jsdate.getTime());
+      var noff = d.getTimezoneOffset();
+      d.setDate(d.getDate() + 1);
+      var loff = d.getTimezoneOffset();
+      var timeDiff = noff - loff;
+      
+      // If the time zone offset is changing, advance the hours and
+      // minutes from the initially requested time by the change amount
+      if (timeDiff > 0) {
+        var year = this.@java.util.Date::jsdate.getYear() + 1900;
+        var month = this.@java.util.Date::jsdate.getMonth();
+        var day = this.@java.util.Date::jsdate.getDate();
+        var badHours = this.@java.util.Date::jsdate.getHours();
+        var minute = this.@java.util.Date::jsdate.getMinutes();
+        var second = this.@java.util.Date::jsdate.getSeconds();
+        if (badHours + timeDiff / 60 >= 24) {
+          day++;
+        }
+        var newTime = new Date(year, month, day,
+            hours + timeDiff / 60,
+            minute + timeDiff % 60, second);
+        this.@java.util.Date::jsdate.setTime(newTime.getTime());
+      }
+    }
+  }-*/;
 
   private native double getTime0() /*-{
     this.@java.util.Date::checkJsDate()();
@@ -326,6 +388,9 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
     this.@java.util.Date::checkJsDate()();
     this.@java.util.Date::jsdate.setFullYear(year + 1900, month, date);
     this.@java.util.Date::jsdate.setHours(hrs, min, sec, 0);
+    
+    // Set the expected hour.
+    this.@java.util.Date::fixDaylightSavings(I)(hrs);
   }-*/;
 
   private native void setTime0(double time) /*-{

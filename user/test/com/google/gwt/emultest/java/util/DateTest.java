@@ -18,6 +18,7 @@ package com.google.gwt.emultest.java.util;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -637,6 +638,218 @@ public class DateTest extends GWTTestCase {
     int arg34 = 0;
     int arg35 = 0;
     long a2 = accum2.UTC(arg30, arg31, arg32, arg33, arg34, arg35);
+  }
+
+  // Month and date of days with time shifts
+  private ArrayList<Integer> timeShiftMonth = new ArrayList<Integer>();
+  private ArrayList<Integer> timeShiftDate = new ArrayList<Integer>();
+  
+  private boolean containsTimeShift(Date start, int days) {
+    long startTime = start.getTime();
+    Date end = new Date();
+    end.setTime(startTime);
+    end.setDate(start.getDate() + days);
+    long endTime = end.getTime();
+    return (endTime - startTime) != ((long) days * 24 * 60 * 60 * 1000);
+  }
+
+  private void findTimeShift(Date start, int days) {
+    assertTrue(days != 0);
+
+    // Found a shift day
+    if (days == 1) {
+      timeShiftMonth.add(start.getMonth());
+      timeShiftDate.add(start.getDate());
+      return;
+    }
+    
+    // Recurse over the first half of the period
+    if (containsTimeShift(start, days / 2)) {
+      findTimeShift(start, days / 2);
+    }
+    
+    // Recurse over the second half of the period
+    Date mid = new Date();
+    mid.setTime(start.getTime());
+    mid.setDate(start.getDate() + days / 2);
+    if (containsTimeShift(mid, days - days / 2)) {
+      findTimeShift(mid, days - days / 2);
+    }
+  }
+
+  private void findTimeShifts(int year) {
+    timeShiftMonth.clear();
+    timeShiftDate.clear();
+    Date start = new Date(year - 1900, 0, 1, 12, 0, 0);
+    Date end = new Date(year + 1 - 1900, 0, 1, 12, 0, 0);
+    int days = (int) ((end.getTime() - start.getTime()) /
+        (24 * 60 * 60 * 1000));
+    findTimeShift(start, days);
+  }
+
+  private boolean findClockBackwardTime(int year, int[] monthDayHour) {
+    findTimeShifts(year);
+    int numShifts = timeShiftMonth.size();
+    for (int i = 0; i < numShifts; i++) {
+      int month = timeShiftMonth.get(i);
+      int day = timeShiftDate.get(i);
+
+      long start = new Date(year - 1900, month, day, 0, 30, 0).getTime();
+      long end = new Date(year - 1900, month, day + 1, 23, 30, 0).getTime();
+      int lastHour = -1;
+      for (long time = start; time < end; time += 60 * 60 * 1000) {
+        Date d = new Date();
+        d.setTime(time);
+        int hour = d.getHours();
+        if (hour == lastHour) {
+          monthDayHour[0] = d.getMonth();
+          monthDayHour[1] = d.getDate();
+          monthDayHour[2] = d.getHours();
+          return true;
+        }
+        lastHour = hour;
+      }
+    }
+
+    return false;
+  }
+
+  private boolean findClockForwardTime(int year, int[] monthDayHour) {
+    findTimeShifts(year);
+    int numShifts = timeShiftMonth.size();
+    for (int i = 0; i < numShifts; i++) {
+      int month = timeShiftMonth.get(i);
+      int startDay = timeShiftDate.get(i);
+      
+      for (int day = startDay; day <= startDay + 1; day++) {
+        for (int hour = 0; hour < 24; hour++) {
+          Date d = new Date(year - 1900, month, day, hour, 0, 0);
+          int h = d.getHours();
+          if ((h % 24) == ((hour + 1) % 24)) {
+            monthDayHour[0] = month;
+            monthDayHour[1] = day;
+            monthDayHour[2] = hour;
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+  
+  public void testClockBackwardTime() {
+    int[] monthDayHour = new int[3];
+    if (!findClockBackwardTime(2009, monthDayHour)) {
+      return;
+    }
+    
+    Date d;
+    int month = monthDayHour[0];
+    int day = monthDayHour[1];
+    int hour = monthDayHour[2];
+    
+    // Check that this is the later of the two times having the
+    // same hour:minute:second
+    d = new Date(2009 - 1900, month, day, hour, 30, 0);
+    assertEquals(hour, d.getHours());
+    d.setTime(d.getTime() - 60 * 60 * 1000);
+    assertEquals(hour, d.getHours());
+  }
+  
+  public void testClockForwardTime() {
+    int[] monthDayHour = new int[3];
+    if (!findClockForwardTime(2009, monthDayHour)) {
+      return;
+    }
+    
+    Date d;
+    int month = monthDayHour[0];
+    int day = monthDayHour[1];
+    int hour = monthDayHour[2];
+    
+    d = new Date(2009 - 1900, month, day, hour, 0, 0);
+    assertEquals(hour + 1, d.getHours());
+    
+    // Test year change -- assume the previous year changes on a different day
+    d = new Date(2008 - 1900, month, day, hour, 0, 0);
+    assertEquals(hour, d.getHours());
+    d.setYear(2009 - 1900);
+    assertEquals(hour + 1, d.getHours());
+    
+    // Test month change
+    d = new Date(2009 - 1900, month + 1, day, hour, 0, 0);
+    assertEquals(hour, d.getHours());
+    d.setMonth(month);
+    assertEquals(3, d.getHours());
+    
+    // Test day change
+    d = new Date(2009 - 1900, month, day + 1, hour, 0, 0);
+    assertEquals(hour, d.getHours());
+    d.setDate(day);
+    assertEquals(hour + 1, d.getHours());
+    
+    // Test hour setting
+    d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
+    assertEquals(hour + 2, d.getHours());
+    d.setHours(hour);
+    assertEquals(hour + 1, d.getHours());
+    
+    // Test changing hour by minutes = +- 60
+    d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
+    assertEquals(hour + 2, d.getHours());
+    d.setMinutes(-60);
+    assertEquals(hour + 1, d.getHours());
+
+    d = new Date(2009 - 1900, month, day, hour - 1, 0, 0);
+    assertEquals(hour - 1, d.getHours());
+    d.setMinutes(60);
+    assertEquals(hour + 1, d.getHours());
+    
+    // Test changing hour by minutes = +- 120
+    d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
+    assertEquals(hour + 2, d.getHours());
+    d.setMinutes(-120);
+    assertEquals(hour + 1, d.getHours());
+    
+    d = new Date(2009 - 1900, month, day, hour - 2, 0, 0);
+    assertEquals(hour - 2, d.getHours());
+    d.setMinutes(120);
+    assertEquals(hour + 1, d.getHours());
+    
+    // Test changing hour by seconds = +- 3600
+    d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
+    assertEquals(hour + 2, d.getHours());
+    d.setSeconds(-3600);
+    assertEquals(hour + 1, d.getHours());
+
+    d = new Date(2009 - 1900, month, day, hour - 1, 0, 0);
+    assertEquals(hour - 1, d.getHours());
+    d.setSeconds(3600);
+    assertEquals(hour + 1, d.getHours());
+    
+    // Test changing hour by seconds = +- 7200
+    d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
+    assertEquals(hour + 2, d.getHours());
+    d.setSeconds(-7200);
+    assertEquals(hour + 1, d.getHours());
+
+    d = new Date(2009 - 1900, month, day, hour - 2, 0, 0);
+    assertEquals(hour - 2, d.getHours());
+    d.setSeconds(7200);
+    assertEquals(hour + 1, d.getHours());
+    
+    d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
+    d.setHours(hour);
+    d.setMinutes(30);
+    assertEquals(hour + 1, d.getHours());
+    assertEquals(30, d.getMinutes());
+    
+    d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
+    d.setMinutes(30);
+    d.setHours(hour);
+    assertEquals(hour + 1, d.getHours());
+    assertEquals(30, d.getMinutes());
   }
 
   Date create() {
