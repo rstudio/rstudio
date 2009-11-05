@@ -36,7 +36,8 @@ public class JUnitMessageQueueTest extends TestCase {
   private final static int ONE_TEST_PER_BLOCK = 1;
 
   public void testAddTestBlocks() {
-    JUnitMessageQueue queue = new JUnitMessageQueue(10);
+    JUnitMessageQueue queue = new JUnitMessageQueue();
+    queue.setNumClients(10);
     assertEquals(0, queue.getTestBlocks().size());
     List<TestInfo[]> expectedBlocks = new ArrayList<TestInfo[]>();
 
@@ -458,6 +459,17 @@ public class JUnitMessageQueueTest extends TestCase {
     assertTrue(queue.getResults(testInfo).get("client0").getException() == null);
   }
 
+  public void testSetNumClients() {
+    JUnitMessageQueue queue = new JUnitMessageQueue();
+    queue.addTestBlocks(createTestBlocks(ONE_BLOCK, ONE_TEST_PER_BLOCK), true);
+    try {
+      queue.setNumClients(2);
+      fail("Expected IllegalStateException");
+    } catch (IllegalStateException e) {
+      // expected.
+    }
+  }
+
   /**
    * Assert that two arrays are the same size and contain the same elements.
    * Ordering does not matter.
@@ -489,7 +501,8 @@ public class JUnitMessageQueueTest extends TestCase {
    */
   private JUnitMessageQueue createQueue(int numClients, int numBlocks,
       int testsPerBlock) {
-    JUnitMessageQueue queue = new JUnitMessageQueue(numClients);
+    JUnitMessageQueue queue = new JUnitMessageQueue();
+    queue.setNumClients(numClients);
     queue.addTestBlocks(createTestBlocks(numBlocks, testsPerBlock), true);
     return queue;
   }

@@ -40,6 +40,15 @@ abstract class RunStyle {
   }
 
   /**
+   * Tests whether the test was interrupted.
+   * 
+   * @return the interrupted hosts, or null if not interrupted
+   */
+  public String[] getInterruptedHosts() {
+    return null;
+  }
+
+  /**
    * Returns the number of times this test should be tried to run. A test
    * succeeds if it succeeds even once.
    */
@@ -88,15 +97,6 @@ abstract class RunStyle {
    */
   public boolean shouldAutoGenerateResources() {
     return true;
-  }
-
-  /**
-   * Tests whether the test was interrupted.
-   * 
-   * @return <code>true</code> if the test has been interrupted.
-   */
-  public boolean wasInterrupted() {
-    return false;
   }
 
   /**

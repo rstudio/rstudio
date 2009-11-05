@@ -240,7 +240,8 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public boolean setString(String runStyleArg) {
-          return createRunStyle(runStyleArg);
+          runStyleName = runStyleArg;
+          return true;
         }
       });
 
@@ -568,11 +569,7 @@ public class JUnitShell extends GWTShell {
       if (!argProcessor.processArgs(args)) {
         throw new JUnitFatalLaunchException("Error processing shell arguments");
       }
-      if (unitTestShell.runStyle == null) {
-        unitTestShell.createRunStyle("HtmlUnit");
-      }
-      unitTestShell.messageQueue = new JUnitMessageQueue(
-          unitTestShell.numClients);
+      unitTestShell.messageQueue = new JUnitMessageQueue();
 
       if (!unitTestShell.startUp()) {
         throw new JUnitFatalLaunchException("Shell failed to start");
@@ -670,6 +667,12 @@ public class JUnitShell extends GWTShell {
    */
   private RunStyle runStyle = null;
 
+  /**
+   * The argument passed to -runStyle.  This is parsed later so we can pass in
+   * a logger.
+   */
+  private String runStyleName = "HtmlUnit";
+
   private boolean shouldAutoGenerateResources = true;
   
   private boolean standardsMode = false;
@@ -732,6 +735,11 @@ public class JUnitShell extends GWTShell {
     if (!super.doStartup()) {
       return false;
     }
+    if (!createRunStyle(runStyleName)) {
+      // RunStyle already logged reasons for its failure
+      return false;
+    }
+
     if (!runStyle.setupMode(getTopLogger(), developmentMode)) {
       getTopLogger().log(TreeLogger.ERROR, "Run style does not support "
           + (developmentMode ? "development" : "production") + " mode");
@@ -816,8 +824,16 @@ public class JUnitShell extends GWTShell {
               + "\n Actual time elapsed: " + elapsed + " seconds.\n");
     }
 
-    if (runStyle.wasInterrupted()) {
-      throw new TimeoutException("A remote browser died a mysterious death.");
+    // Check that we haven't lost communication with a remote host.
+    String[] interruptedHosts = runStyle.getInterruptedHosts();
+    if (interruptedHosts != null) {
+      StringBuilder msg = new StringBuilder();
+      msg.append("A remote browser died a mysterious death.\n");
+      msg.append("  We lost communication with:");
+      for (String host : interruptedHosts) {
+        msg.append("\n  ").append(host);
+      }
+      throw new TimeoutException(msg.toString());
     }
 
     if (messageQueue.hasResults(currentTestInfo)) {
@@ -884,6 +900,7 @@ public class JUnitShell extends GWTShell {
    */
   void setNumClients(int numClients) {
     this.numClients = numClients;
+    messageQueue.setNumClients(numClients);
   }
 
   void setStandardsMode(boolean standardsMode) {

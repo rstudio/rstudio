@@ -63,7 +63,7 @@ public class CompileStrategyTest extends TestCase {
     private boolean isLastBlock;
 
     public MockJUnitMessageQueue() {
-      super(1);
+      super();
     }
 
     @Override

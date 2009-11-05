@@ -18,6 +18,9 @@ package com.google.gwt.junit;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Runs in web mode via browsers managed as an external process. This feature is
  * experimental and is not officially supported.
@@ -74,6 +77,26 @@ class RunStyleExternalBrowser extends RunStyle {
   }
 
   @Override
+  public String[] getInterruptedHosts() {
+    // Make sure all browsers are still running
+    Set<String> toRet = null;
+    for (ExternalBrowser browser : externalBrowsers) {
+      try {
+        browser.getProcess().exitValue();
+
+        // The host exited, so return its path.
+        if (toRet == null) {
+          toRet = new HashSet<String>();
+        }
+        toRet.add(browser.getPath());
+      } catch (IllegalThreadStateException e) {
+        // The process is still active, keep looking.
+      }
+    }
+    return toRet == null ? null : toRet.toArray(new String[toRet.size()]);
+  }
+
+  @Override
   public boolean initialize(String args) {
     if (args == null || args.length() == 0) {
       getLogger().log(TreeLogger.ERROR, "ExternalBrowser runstyle requires an "
@@ -82,6 +105,7 @@ class RunStyleExternalBrowser extends RunStyle {
       return false;
     }
     String browsers[] = args.split(",");
+    shell.setNumClients(browsers.length);
     synchronized (this) {
       this.externalBrowsers = new ExternalBrowser[browsers.length];
       for (int i = 0; i < browsers.length; ++i) {
@@ -117,21 +141,5 @@ class RunStyleExternalBrowser extends RunStyle {
       }
       browser.setProcess(child);
     }
-  }
-
-  @Override
-  public boolean wasInterrupted() {
-    
-    // Make sure all browsers are still running 
-    for (ExternalBrowser browser : externalBrowsers) {
-      try {
-        browser.getProcess().exitValue();
-      } catch (IllegalThreadStateException e) {
-        // The process is still active, keep looking.
-        continue;
-      }
-      return true;
-    }
-    return false;
   }
 }

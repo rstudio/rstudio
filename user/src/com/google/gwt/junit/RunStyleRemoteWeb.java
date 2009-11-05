@@ -27,6 +27,8 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.rmi.Naming;
 import java.rmi.server.RMISocketFactory;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Runs in web mode via browsers managed over RMI. This feature is experimental
@@ -134,13 +136,13 @@ class RunStyleRemoteWeb extends RunStyle {
   private RemoteBrowser[] remoteBrowsers;
 
   /**
-   * Whether one of the remote browsers was interrupted.
+   * The list of hosts that were interrupted.
    */
-  private boolean wasInterrupted;
+  private Set<String> interruptedHosts;
 
   /**
-   * A separate lock to control access to {@link #wasInterrupted}. This keeps
-   * the main thread calls into {@link #wasInterrupted()} from having to
+   * A separate lock to control access to {@link #interruptedHosts}. This keeps
+   * the main thread calls into {@link #getInterruptedHosts()} from having to
    * synchronized on the containing instance and potentially block on RPC calls.
    * It is okay to take the {@link #wasInterruptedLock} while locking the
    * containing instance; it is NOT okay to do the opposite or deadlock could
@@ -154,7 +156,17 @@ class RunStyleRemoteWeb extends RunStyle {
   public RunStyleRemoteWeb(JUnitShell shell) {
     super(shell);
   }
-  
+
+  @Override
+  public String[] getInterruptedHosts() {
+    synchronized (wasInterruptedLock) {
+      if (interruptedHosts == null) {
+        return null;
+      }
+      return interruptedHosts.toArray(new String[interruptedHosts.size()]);
+    }
+  }
+
   @Override
   public boolean initialize(String args) {
     if (args == null || args.length() == 0) {
@@ -247,13 +259,6 @@ class RunStyleRemoteWeb extends RunStyle {
     keepAliveThread.start();
   }
 
-  @Override
-  public boolean wasInterrupted() {
-    synchronized (wasInterruptedLock) {
-      return wasInterrupted;
-    }
-  }
-
   private synchronized boolean doKeepAlives() {
     for (RemoteBrowser remoteBrowser : remoteBrowsers) {
       if (remoteBrowser.getToken() > 0) {
@@ -278,7 +283,10 @@ class RunStyleRemoteWeb extends RunStyle {
           }
           remoteBrowser.setToken(0);
           synchronized (wasInterruptedLock) {
-            wasInterrupted = true;
+            if (interruptedHosts == null) {
+              interruptedHosts = new HashSet<String>();
+            }
+            interruptedHosts.add(remoteBrowser.getRmiUrl());
           }
           break;
         }
@@ -286,7 +294,7 @@ class RunStyleRemoteWeb extends RunStyle {
     }
 
     synchronized (wasInterruptedLock) {
-      return !wasInterrupted;
+      return interruptedHosts == null;
     }
   }
 }

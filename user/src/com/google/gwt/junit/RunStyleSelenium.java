@@ -24,6 +24,8 @@ import com.thoughtworks.selenium.SeleniumException;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,13 +70,13 @@ public class RunStyleSelenium extends RunStyle {
   private RCSelenium remotes[];
 
   /**
-   * Whether one of the remote browsers was interrupted.
+   * The list of hosts that were interrupted.
    */
-  private boolean wasInterrupted;
+  private Set<String> interruptedHosts;
 
   /**
-   * A separate lock to control access to {@link #wasInterrupted}. This keeps
-   * the main thread calls into {@link #wasInterrupted()} from having to be
+   * A separate lock to control access to {@link #interruptedHosts}. This keeps
+   * the main thread calls into {@link #getInterruptedHosts()} from having to be
    * synchronized on the containing instance and potentially block on RPC calls.
    * It is okay to take the {@link #wasInterruptedLock} while locking the
    * containing instance; it is NOT okay to do the opposite or deadlock could
@@ -85,7 +87,17 @@ public class RunStyleSelenium extends RunStyle {
   public RunStyleSelenium(final JUnitShell shell) {
     super(shell);
   }
-  
+
+  @Override
+  public String[] getInterruptedHosts() {
+    synchronized (wasInterruptedLock) {
+      if (interruptedHosts == null) {
+        return null;
+      }
+      return interruptedHosts.toArray(new String[interruptedHosts.size()]);
+    }
+  }
+
   @Override
   public boolean initialize(String args) {
     if (args == null || args.length() == 0) {
@@ -160,13 +172,6 @@ public class RunStyleSelenium extends RunStyle {
     }
   }
 
-  @Override
-  public boolean wasInterrupted() {
-    synchronized (wasInterruptedLock) {
-      return wasInterrupted;
-    }
-  }
-
   /**
    * Create the keep-alive thread.
    */
@@ -199,17 +204,17 @@ public class RunStyleSelenium extends RunStyle {
             remote.getSelenium().getTitle();
           }
         } catch (Throwable e) {
-          setWasInterrupted(true);
+          synchronized (wasInterruptedLock) {
+            if (interruptedHosts == null) {
+              interruptedHosts = new HashSet<String>();
+            }
+            interruptedHosts.add(remote.getHost() + ":" + remote.getPort()
+                + "/" + remote.getBrowser());
+          }
         }
       }
     }
 
-    return !wasInterrupted();
-  }
-
-  private void setWasInterrupted(boolean wasInterrupted) {
-    synchronized (wasInterruptedLock) {
-      this.wasInterrupted = wasInterrupted;
-    }
+    return interruptedHosts == null;
   }
 }
