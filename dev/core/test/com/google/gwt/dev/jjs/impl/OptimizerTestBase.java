@@ -64,18 +64,15 @@ public abstract class OptimizerTestBase extends TestCase {
   }
 
   public static JMethod findMainMethod(JProgram program) {
-    return findMethod(program, "onModuleLoad");
-  }
-
-  public static JMethod findMethod(JProgram program, String methodName) {
     JDeclaredType mainType = program.getFromTypeMap("test.EntryPoint");
+    JMethod mainMethod = null;
     for (JMethod method : mainType.getMethods()) {
-      if (method.getName().equals(methodName)) {
-        return method;
+      if (method.getName().equals("onModuleLoad")) {
+        mainMethod = method;
+        break;
       }
     }
-    
-    return null;
+    return mainMethod;
   }
 
   /**
