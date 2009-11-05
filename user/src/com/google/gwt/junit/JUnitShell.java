@@ -241,7 +241,6 @@ public class JUnitShell extends GWTShell {
         }
       });
 
-      // TODO: currently, only two values but soon may have multiple values.
       registerHandler(new ArgHandlerString() {
         @Override
         public String getPurpose() {
@@ -578,7 +577,7 @@ public class JUnitShell extends GWTShell {
       // TODO: install a shutdown hook? Not necessary with GWTShell.
       unitTestShell.lastLaunchFailed = false;
     }
-
+    unitTestShell.checkArgs();
     return unitTestShell;
   }
 
@@ -861,8 +860,8 @@ public class JUnitShell extends GWTShell {
 
   /**
    * Accessor method to HostedModeBase.setHeadless -- without this, we get
-   * IllegalAccessError from the -notHeadless arg handler.  Compiler bug?
-   *  
+   * IllegalAccessError from the -notHeadless arg handler. Compiler bug?
+   *
    * @param headlessMode
    */
   void setHeadlessAccessor(boolean headlessMode) {
@@ -879,9 +878,15 @@ public class JUnitShell extends GWTShell {
   void setNumClients(int numClients) {
     this.numClients = numClients;
   }
-  
+
   void setStandardsMode(boolean standardsMode) {
     this.standardsMode = standardsMode;
+  }
+
+  private void checkArgs() {
+    if (runStyle.getTries() > 1 && !(batchingStrategy instanceof NoBatchingStrategy)) {
+      throw new JUnitFatalLaunchException("Batching does not work with tries > 1");
+    }
   }
 
   /**
@@ -934,6 +939,20 @@ public class JUnitShell extends GWTShell {
         && bannedPlatforms.contains(Platform.HtmlUnit);
   }
 
+  private boolean mustRetry(int numTries) {
+    if (numTries >= runStyle.getTries()) {
+      return false;
+    }
+    assert (batchingStrategy instanceof NoBatchingStrategy);
+    // checked in {@code checkArgs()}
+    /*
+     * If a batching strategy is being used, the client will already have moved
+     * passed the failed test case. The whole block could be re-executed, but it
+     * would be more complicated.
+     */
+    return true;
+  }
+
   private void processTestResult(TestCase testCase, TestResult testResult,
       Strategy strategy) {
 
@@ -978,10 +997,15 @@ public class JUnitShell extends GWTShell {
     }
   }
 
+  private void runTestImpl(GWTTestCase testCase, TestResult testResult)
+      throws UnableToCompleteException {
+    runTestImpl(testCase, testResult, 0);
+  }
+
   /**
    * Runs a particular test case.
    */
-  private void runTestImpl(GWTTestCase testCase, TestResult testResult)
+  private void runTestImpl(GWTTestCase testCase, TestResult testResult, int numTries)
       throws UnableToCompleteException {
 
     testBatchingMethodTimeoutMillis = batchingStrategy.getTimeoutMultiplier()
@@ -1021,6 +1045,7 @@ public class JUnitShell extends GWTShell {
 
     currentTestInfo = new TestInfo(currentModule.getName(),
         testCase.getClass().getName(), testCase.getName());
+    numTries++;
     if (messageQueue.hasResults(currentTestInfo)) {
       // Already have a result.
       processTestResult(testCase, testResult, strategy);
@@ -1038,6 +1063,7 @@ public class JUnitShell extends GWTShell {
       return;
     }
 
+    boolean mustRetry = mustRetry(numTries);
     // Wait for test to complete
     try {
       // Set a timeout period to automatically fail if the servlet hasn't been
@@ -1048,17 +1074,29 @@ public class JUnitShell extends GWTShell {
       while (notDone()) {
         messageQueue.waitForResults(1000);
       }
-      if (pendingException != null) {
+      if (!mustRetry && pendingException != null) {
         UnableToCompleteException e = pendingException;
         pendingException = null;
         throw e;
       }
     } catch (TimeoutException e) {
-      lastLaunchFailed = true;
-      testResult.addError(testCase, e);
-      return;
+      if (!mustRetry) {
+        lastLaunchFailed = true;
+        testResult.addError(testCase, e);
+        return;
+      }
     }
 
+    if (mustRetry) {
+      if (messageQueue.needsRerunning(currentTestInfo)) {
+        // remove the result if it is present and rerun
+        messageQueue.removeResults(currentTestInfo);
+        getTopLogger().log(TreeLogger.WARN,
+            currentTestInfo + " is being retried, retry attempt = " + numTries);
+        runTestImpl(testCase, testResult, numTries);
+        return;
+      }
+    }
     assert (messageQueue.hasResults(currentTestInfo));
     processTestResult(testCase, testResult, testCase.getStrategy());
   }

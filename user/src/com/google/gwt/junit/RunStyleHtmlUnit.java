@@ -186,6 +186,16 @@ public class RunStyleHtmlUnit extends RunStyle {
   }
 
   @Override
+  public int getTries() {
+    // TODO: set this via the command-line
+    /*
+     * as long as this number is greater than 1, GWTTestCaseTest::testRetry will
+     * pass
+     */
+    return 3;
+  }
+
+  @Override
   public boolean initialize(String args) {
     if (args == null || args.length() == 0) {
       // If no browsers specified, default to Firefox 3.

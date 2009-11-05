@@ -40,6 +40,14 @@ abstract class RunStyle {
   }
 
   /**
+   * Returns the number of times this test should be tried to run. A test
+   * succeeds if it succeeds even once.
+   */
+  public int getTries() {
+    return 1;
+  }
+
+  /**
    * Initialize the runstyle with any supplied arguments.
    * 
    * @param args arguments passed in -runStyle option, null if none supplied

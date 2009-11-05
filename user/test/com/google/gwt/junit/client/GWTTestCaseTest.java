@@ -24,6 +24,8 @@ import static com.google.gwt.junit.client.GWTTestCaseTest.SetUpTearDownState.INI
 import static com.google.gwt.junit.client.GWTTestCaseTest.SetUpTearDownState.IS_SETUP;
 import static com.google.gwt.junit.client.GWTTestCaseTest.SetUpTearDownState.IS_TORNDOWN;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.Timer;
 
 import junit.framework.AssertionFailedError;
@@ -46,6 +48,13 @@ public class GWTTestCaseTest extends GWTTestCase {
    * been caught during normal test execution.
    */
   private static String outOfBandError = null;
+
+  /**
+   * These two variables test the retry functionality, currently used with
+   * HtmlUnit.
+   */
+  private static boolean attemptedOnce = false;
+  private static boolean htmlunitMode = true;
 
   private static void assertNotEquals(double a, double b, double delta) {
     boolean failed = false;
@@ -355,6 +364,27 @@ public class GWTTestCaseTest extends GWTTestCase {
     }
 
     fail("Unexpected exception during assertTrue(String, boolean) testing");
+  }
+
+  /*
+   * Just setting the htmlunit mode.
+   */
+  @DoNotRunWith(Platform.HtmlUnit)
+  public void testSetRetry() {
+    htmlunitMode = false;
+  }
+
+  /*
+   * This test MUST appear after testSetRetry().
+   */
+  public void testRetry() {
+    if (htmlunitMode && !attemptedOnce) {
+      // fail
+      attemptedOnce = true;
+      assertTrue(false);
+    } else {
+      assertTrue(true);
+    }
   }
 
   public void testSetUpTearDown() throws Exception {

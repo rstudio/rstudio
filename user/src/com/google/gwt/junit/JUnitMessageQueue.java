@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * A message queue to pass data between {@link JUnitShell} and
@@ -392,6 +393,38 @@ public class JUnitMessageQueue {
         }
       }
       return true;
+    }
+  }
+
+  /*
+   * Returns true iff any there are no results, missing results, or any of the
+   * test results is an exception other than JUnitFatalLaunchException.
+   */
+  boolean needsRerunning(TestInfo testInfo) {
+    Map<String, JUnitResult> results = getResults(testInfo);
+    if (results == null) {
+      return true;
+    }
+    if (results.size() != numClients) {
+      return true;
+    }
+    for (Entry<String, JUnitResult> entry : results.entrySet()) {
+      JUnitResult result = entry.getValue();
+      if (result == null) {
+        return true;
+      }
+      Throwable exception = result.getException();
+      if (exception != null
+          && !(exception instanceof JUnitFatalLaunchException)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void removeResults(TestInfo testInfo) {
+    synchronized (clientStatusesLock) {
+      testResults.remove(testInfo);
     }
   }
 

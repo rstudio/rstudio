@@ -31,6 +31,10 @@ import java.util.Map;
  */
 public class JUnitMessageQueueTest extends TestCase {
 
+  private final static int TWO_CLIENTS = 2;
+  private final static int ONE_BLOCK = 1;
+  private final static int ONE_TEST_PER_BLOCK = 1;
+
   public void testAddTestBlocks() {
     JUnitMessageQueue queue = new JUnitMessageQueue(10);
     assertEquals(0, queue.getTestBlocks().size());
@@ -171,7 +175,6 @@ public class JUnitMessageQueueTest extends TestCase {
   }
 
   public void testGetResults() {
-    final long timeout = System.currentTimeMillis() + 15;
     JUnitMessageQueue queue = createQueue(3, 2, 3);
     TestInfo[] testBlock0 = queue.getTestBlocks().get(0);
     TestInfo test0_0 = testBlock0[0];
@@ -273,7 +276,6 @@ public class JUnitMessageQueueTest extends TestCase {
   }
 
   public void testHasResults() {
-    final long timeout = System.currentTimeMillis() + 15;
     JUnitMessageQueue queue = createQueue(3, 2, 3);
     TestInfo[] testBlock0 = queue.getTestBlocks().get(0);
     TestInfo test0_0 = testBlock0[0];
@@ -343,6 +345,49 @@ public class JUnitMessageQueueTest extends TestCase {
     }
   }
 
+  public void testNeedRerunningExceptions() {
+    JUnitMessageQueue queue = createQueue(TWO_CLIENTS, ONE_BLOCK,
+        ONE_TEST_PER_BLOCK);
+    // an exception
+    TestInfo testInfo = queue.getTestBlocks().get(0)[0];
+    Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
+    JUnitResult junitResult = new JUnitResult();
+    junitResult.setException(new AssertionError());
+    results.put(testInfo, junitResult);
+    queue.reportResults("client0", "ie6", results);
+    results = new HashMap<TestInfo, JUnitResult>();
+    junitResult = new JUnitResult();
+    junitResult.setException(new JUnitFatalLaunchException());
+    results.put(testInfo, junitResult);
+    queue.reportResults("client1", "ff3", createTestResults(ONE_TEST_PER_BLOCK));
+    assertTrue(queue.needsRerunning(testInfo));
+
+    // an exception but exception in launch module
+    queue.removeResults(testInfo);
+    results = new HashMap<TestInfo, JUnitResult>();
+    junitResult = new JUnitResult();
+    junitResult.setException(new JUnitFatalLaunchException());
+    results.put(testInfo, junitResult);
+    queue.reportResults("client0", "ie6", results);
+    queue.reportResults("client1", "ff3", createTestResults(ONE_TEST_PER_BLOCK));
+    assertFalse(queue.needsRerunning(testInfo));
+  }
+
+  public void testNeedRerunningIncompleteResults() {
+    JUnitMessageQueue queue = createQueue(TWO_CLIENTS, ONE_BLOCK,
+        ONE_TEST_PER_BLOCK);
+    TestInfo testInfo = queue.getTestBlocks().get(0)[0];
+
+    // incomplete results
+    assertTrue(queue.needsRerunning(testInfo));
+    queue.reportResults("client0", "ff3", createTestResults(1));
+    assertTrue(queue.needsRerunning(testInfo));
+    
+    // complete results
+    queue.reportResults("client1", "ie7", createTestResults(1));
+    assertFalse(queue.needsRerunning(testInfo));
+  }
+
   public void testNewClients() {
     final long timeout = System.currentTimeMillis() + 15;
     JUnitMessageQueue queue = createQueue(15, 1, 1);
@@ -375,6 +420,42 @@ public class JUnitMessageQueueTest extends TestCase {
       queue.reportResults("client2", "safari", createTestResults(0));
       assertEquals(0, queue.getNewClients().length);
     }
+  }
+
+  public void testRemove() {
+    JUnitMessageQueue queue = createQueue(TWO_CLIENTS, ONE_BLOCK,
+        ONE_TEST_PER_BLOCK);
+    TestInfo testInfo = queue.getTestBlocks().get(0)[0];
+    assertFalse(queue.hasResults(testInfo));
+
+    queue.reportResults("client0", "ie6", createTestResults(ONE_TEST_PER_BLOCK));
+    assertFalse(queue.hasResults(testInfo));
+    queue.reportResults("client1", "ff3", createTestResults(ONE_TEST_PER_BLOCK));
+    assertTrue(queue.hasResults(testInfo));
+
+    queue.removeResults(testInfo);
+    assertFalse(queue.hasResults(testInfo));
+  }
+
+  public void testRetries() {
+    JUnitMessageQueue queue = createQueue(TWO_CLIENTS, ONE_BLOCK,
+        ONE_TEST_PER_BLOCK);
+    TestInfo testInfo = queue.getTestBlocks().get(0)[0];
+    Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
+    JUnitResult junitResult = new JUnitResult();
+    junitResult.setException(new AssertionError());
+    results.put(testInfo, junitResult);
+    queue.reportResults("client0", "ff3", results);
+    assertTrue(queue.needsRerunning(testInfo));
+    assertTrue(queue.getResults(testInfo).get("client0").getException() != null);
+
+    queue.removeResults(testInfo);
+
+    queue.reportResults("client0", "ff3", createTestResults(ONE_TEST_PER_BLOCK));
+    queue.reportResults("client1", "ie6", createTestResults(ONE_TEST_PER_BLOCK));
+    assertFalse(queue.needsRerunning(testInfo));
+    // check that the updated result appears now.
+    assertTrue(queue.getResults(testInfo).get("client0").getException() == null);
   }
 
   /**
@@ -442,7 +523,7 @@ public class JUnitMessageQueueTest extends TestCase {
   private Map<TestInfo, JUnitResult> createTestResults(int numTests) {
     Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
     for (int i = 0; i < numTests; i++) {
-      TestInfo testInfo = new TestInfo("testModule", "testClass", "testMethod"
+      TestInfo testInfo = new TestInfo("testModule0", "testClass", "testMethod"
           + i);
       results.put(testInfo, new JUnitResult());
     }
