@@ -20,17 +20,35 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Helper for loading modules from the classpath.
  */
 class ModuleContext {
+  private static final Map<String, TypeOracle> typeOracleMap = new HashMap<String, TypeOracle>();
+
+  private static TypeOracle getTypeOracleFor(TreeLogger logger,
+      String moduleName) throws UnableToCompleteException {
+    TypeOracle oracle;
+    synchronized (typeOracleMap) {
+      oracle = typeOracleMap.get(moduleName);
+      if (oracle == null) {
+        ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(logger,
+            moduleName);
+        oracle = moduleDef.getCompilationState(logger).getTypeOracle();
+        typeOracleMap.put(moduleName, oracle);
+      }
+    }
+    return oracle;
+  }
+
   private final TypeOracle oracle;
-  private final ModuleDef moduleDef;
 
   ModuleContext(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
-    moduleDef = ModuleDefLoader.loadFromClassPath(logger, moduleName);
-    oracle = moduleDef.getTypeOracle(logger);
+    this.oracle = getTypeOracleFor(logger, moduleName);
   }
 
   public TypeOracle getOracle() {

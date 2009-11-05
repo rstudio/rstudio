@@ -14,5 +14,6 @@
 
 <module>
   <inherits name="com.google.gwt.core.Core"/>
+  <inherits name="com.google.gwt.junit.JUnit"/>
   <source path="test"/>
 </module>
