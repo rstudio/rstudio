@@ -188,8 +188,13 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void testCustomButtonParser() {
-    assertEquals("<b>click me</b>", widgetUi.pushButton.getUpFace().getHTML());
-    assertEquals("<b>Click ME!</b>", widgetUi.pushButton.getUpHoveringFace().getHTML());
+    // .toLowerCase normalization to keep IE happy
+    assertEquals("<b>click me</b>",
+        widgetUi.pushButton.getUpFace().getHTML().toLowerCase());
+    assertTrue(widgetUi.pushButton.getUpHoveringFace().getHTML().contains(
+        ">Click ME!<"));
+    assertEquals("<b>click me!</b>",
+        widgetUi.pushButton.getUpHoveringFace().getHTML().toLowerCase());
     // Can't test the images at all :-P
   }
   
