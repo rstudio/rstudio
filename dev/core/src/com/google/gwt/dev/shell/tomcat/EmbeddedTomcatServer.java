@@ -22,7 +22,7 @@ import com.google.gwt.dev.resource.impl.PathPrefix;
 import com.google.gwt.dev.resource.impl.PathPrefixSet;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.shell.WorkDirs;
-import com.google.gwt.util.tools.Utility;
+import com.google.gwt.dev.util.Util;
 
 import org.apache.catalina.Connector;
 import org.apache.catalina.ContainerEvent;
@@ -39,7 +39,6 @@ import org.apache.coyote.tomcat5.CoyoteConnector;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -275,70 +274,44 @@ public class EmbeddedTomcatServer {
    * Assumes that the leaf is a file (not a directory).
    */
   private void copyFileNoOverwrite(TreeLogger logger, String srcResName,
-      Resource resource, File catBase) {
+      Resource srcRes, File catBase) {
 
     File dest = new File(catBase, srcResName);
-    InputStream is = null;
-    FileOutputStream os = null;
     try {
-      URL srcRes = resource.getURL();
-      if (srcRes == null) {
-        logger.log(TreeLogger.TRACE, "Cannot find: " + srcResName, null);
-        return;
-      }
-
       // Only copy if src is newer than desc.
-      //
-      long srcLastModified = srcRes.openConnection().getLastModified();
+      long srcLastModified = srcRes.getLastModified();
       long dstLastModified = dest.lastModified();
 
       if (srcLastModified < dstLastModified) {
         // Don't copy over it.
-        //
         logger.log(TreeLogger.SPAM, "Source is older than existing: "
             + dest.getAbsolutePath(), null);
         return;
       } else if (srcLastModified == dstLastModified) {
         // Exact same time; quietly don't overwrite.
-        //
         return;
       } else if (dest.exists()) {
         // Warn about the overwrite
         logger.log(TreeLogger.WARN, "Overwriting existing file '"
-            + dest.getAbsolutePath() + "' with '" + resource.getLocation()
+            + dest.getAbsolutePath() + "' with '" + srcRes.getLocation()
             + "', which has a newer timestamp");
       }
 
       // Make dest directories as required.
-      //
       File destParent = dest.getParentFile();
       if (destParent != null) {
         // No need to check mkdirs result because IOException later anyway.
         destParent.mkdirs();
       }
 
-      // Open in and out streams.
-      //
-      is = srcRes.openStream();
-      os = new FileOutputStream(dest);
-
-      // Copy the bytes over.
-      //
-      Utility.streamOut(is, os, 1024);
-
-      // Try to close and change the last modified time.
-      //
-      Utility.close(os);
+      Util.copy(srcRes.openContents(), new FileOutputStream(dest));
       dest.setLastModified(srcLastModified);
 
       logger.log(TreeLogger.TRACE, "Wrote: " + dest.getAbsolutePath(), null);
     } catch (IOException e) {
       logger.log(TreeLogger.WARN, "Failed to write: " + dest.getAbsolutePath(),
           e);
-    } finally {
-      Utility.close(is);
-      Utility.close(os);
-    }
+    } 
   }
 
   /**

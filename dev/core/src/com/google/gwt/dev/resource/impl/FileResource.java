@@ -19,8 +19,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 /**
  * Represents a resource contained in directory on a file system.
@@ -59,15 +57,6 @@ public class FileResource extends AbstractResource {
   @Override
   public String getPath() {
     return abstractPathName;
-  }
-
-  @Override
-  public URL getURL() {
-    try {
-      return new URL(getLocation());
-    } catch (MalformedURLException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Override

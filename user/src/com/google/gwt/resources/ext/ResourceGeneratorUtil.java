@@ -92,9 +92,10 @@ public final class ResourceGeneratorUtil {
       resourceMap = oracle.getResourceMap();
     }
 
+    @SuppressWarnings("deprecation")
     public URL locate(String resourceName) {
       Resource r = resourceMap.get(resourceName);
-      return r == null ? null : r.getURL();
+      return (r == null) ? null : r.getURL();
     }
   }
 

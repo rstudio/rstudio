@@ -18,7 +18,6 @@ package com.google.gwt.dev.resource.impl;
 import junit.framework.Assert;
 
 import java.io.InputStream;
-import java.net.URL;
 
 public final class MockAbstractResource extends AbstractResource {
   private boolean isStale;
@@ -48,11 +47,6 @@ public final class MockAbstractResource extends AbstractResource {
   @Override
   public String getPath() {
     return path;
-  }
-
-  @Override
-  public URL getURL() {
-    return null;
   }
 
   @Override

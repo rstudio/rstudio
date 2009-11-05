@@ -157,6 +157,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @throws MalformedURLException
    * @see javax.servlet.ServletContext#getResource(java.lang.String)
    */
+  @SuppressWarnings("deprecation")
   public URL getResource(String path) throws MalformedURLException {
     ModuleDef moduleDef = moduleDefRef.get();
     assert (moduleDef != null) : "GWTShellServlet should have guaranteed that a"

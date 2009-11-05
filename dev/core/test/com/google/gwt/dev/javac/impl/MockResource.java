@@ -48,11 +48,6 @@ public abstract class MockResource extends Resource {
   }
 
   @Override
-  public URL getURL() {
-    return null;
-  }
-
-  @Override
   public InputStream openContents() {
     return new ByteArrayInputStream(Util.getBytes(getContent().toString()));
   }

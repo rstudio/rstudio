@@ -16,6 +16,7 @@
 package com.google.gwt.dev.resource;
 
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
@@ -37,8 +38,9 @@ public abstract class Resource {
   public abstract long getLastModified();
 
   /**
-   * Returns the user-relevant location of the resource. No programmatic
-   * assumptions should be made about the return value.
+   * Returns the URL-like location of the resource. The returned value should
+   * generally reflect a unique resource in the system. The returned value will
+   * only be a valid URL if the underlying object is accessible via a URL.
    */
   public abstract String getLocation();
 
@@ -48,13 +50,19 @@ public abstract class Resource {
   public abstract String getPath();
 
   /**
-   * Returns a URL for this resource; this URL will only be valid for resources
-   * based off the file system.
+   * Returns a URL for this resource if the resource happens to be based off the
+   * file system, otherwise returns <code>null</code>.
    * 
-   * TODO: get rid of this method?
+   * @deprecated with no replacement
    */
-  public abstract URL getURL();
-
+  @Deprecated
+  public final URL getURL() {
+    try {
+      return new URL(getLocation());
+    } catch (MalformedURLException e) {
+      return null;
+    }
+  }
   /**
    * Overridden to finalize; always returns identity hash code.
    */

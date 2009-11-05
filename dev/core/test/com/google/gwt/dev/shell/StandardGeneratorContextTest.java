@@ -93,11 +93,6 @@ public class StandardGeneratorContextTest extends TestCase {
           }
 
           @Override
-          public URL getURL() {
-            return null;
-          }
-
-          @Override
           public InputStream openContents() {
             return new ByteArrayInputStream(Util.getBytes("w00t!"));
           }

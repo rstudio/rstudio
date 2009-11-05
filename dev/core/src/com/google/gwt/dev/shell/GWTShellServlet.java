@@ -404,6 +404,7 @@ public class GWTShellServlet extends HttpServlet {
    * @param moduleName the name of the module
    * @throws IOException
    */
+  @SuppressWarnings("deprecation")
   private void doGetPublicFile(HttpServletRequest request,
       HttpServletResponse response, TreeLogger logger, String partialPath,
       String moduleName) throws IOException {

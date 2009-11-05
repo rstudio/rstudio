@@ -17,8 +17,6 @@ package com.google.gwt.dev.resource.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
@@ -57,15 +55,6 @@ public class ZipFileResource extends AbstractResource {
   @Override
   public String getPath() {
     return path;
-  }
-
-  @Override
-  public URL getURL() {
-    try {
-      return new URL(getLocation());
-    } catch (MalformedURLException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   /**

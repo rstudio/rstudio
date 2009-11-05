@@ -105,11 +105,6 @@ public class ResourceOracleImpl implements ResourceOracle {
     }
 
     @Override
-    public URL getURL() {
-      return resource.getURL();
-    }
-
-    @Override
     public boolean isStale() {
       return resource.isStale();
     }
