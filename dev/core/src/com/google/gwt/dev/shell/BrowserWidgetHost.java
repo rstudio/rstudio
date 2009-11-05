@@ -23,23 +23,6 @@ import com.google.gwt.core.ext.UnableToCompleteException;
  * <code>ModuleSpaceHost</code>, and the compiler.
  */
 public interface BrowserWidgetHost {
-  /**
-   * Perform a web-mode compile on the user-specified set of modules. Used in
-   * non-legacy mode.
-   * 
-   * @throws UnableToCompleteException
-   */
-  void compile() throws UnableToCompleteException;
-
-  /**
-   * Compile the specified set of modules, used in legacy mode.
-   * 
-   * @param modules the names of the modules to compile
-   * @throws UnableToCompleteException
-   * @deprecated Will be removed when legacy shell mode is removed
-   */
-  @Deprecated
-  void compile(String[] modules) throws UnableToCompleteException;
 
   /**
    * For OOPHM.
@@ -61,29 +44,6 @@ public interface BrowserWidgetHost {
       throws UnableToCompleteException;
 
   TreeLogger getLogger();
-
-  /**
-   * Called from a selection script as it begins to load in hosted mode. This
-   * triggers a hosted mode link, which might actually update the running
-   * selection script.
-   * 
-   * @param moduleName the module to link
-   * @return <code>true</code> if the selection script was overwritten; this
-   *         will trigger a full-page refresh by the calling (out of date)
-   *         selection script
-   */
-  boolean initModule(String moduleName);
-
-  /**
-   * Returns <code>true</code> if running in legacy mode.
-   * 
-   * @deprecated Will be removed when legacy shell mode is removed
-   */
-  @Deprecated
-  boolean isLegacyMode();
-
-  String normalizeURL(String whatTheUserTyped);
-
 
   /**
    * For OOPHM.

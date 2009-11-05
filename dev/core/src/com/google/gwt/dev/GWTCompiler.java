@@ -66,7 +66,10 @@ public class GWTCompiler {
     }
   }
 
-  static class GWTCompilerOptionsImpl extends PrecompileOptionsImpl implements
+  /**
+   * Simple implementation of {@link LegacyCompilerOptions}.
+   */
+  public static class GWTCompilerOptionsImpl extends PrecompileOptionsImpl implements
       LegacyCompilerOptions {
 
     private int localWorkers;

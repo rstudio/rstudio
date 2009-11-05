@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
-import com.google.gwt.dev.GWTCompiler.GWTCompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.WorkDirs;
@@ -184,26 +183,6 @@ public class GWTShell extends DevModeBase {
   @SuppressWarnings("unused")
   public void restartServer(TreeLogger logger) throws UnableToCompleteException {
     // Unimplemented.
-  }
-
-  @Override
-  protected void compile(TreeLogger logger) throws UnableToCompleteException {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Compiles a logical module def. The caller can modify the specified module
-   * def programmatically in some cases (this is needed for JUnit support, for
-   * example).
-   */
-  @Override
-  protected void compile(TreeLogger logger, ModuleDef moduleDef)
-      throws UnableToCompleteException {
-    LegacyCompilerOptions newOptions = new GWTCompilerOptionsImpl(options);
-    newOptions.setCompilationStateRetained(true);
-    if (!new GWTCompiler(newOptions).run(logger, moduleDef)) {
-      // TODO(jat): error dialog?
-    }
   }
 
   @Override

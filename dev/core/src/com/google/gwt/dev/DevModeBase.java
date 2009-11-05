@@ -73,25 +73,6 @@ abstract class DevModeBase implements DoneCallback {
    */
   public class UiBrowserWidgetHostImpl implements BrowserWidgetHost {
 
-    public void compile() throws UnableToCompleteException {
-      if (isLegacyMode()) {
-        throw new UnsupportedOperationException();
-      }
-      DevModeBase.this.compile(getLogger());
-    }
-
-    @Deprecated
-    public void compile(String[] moduleNames) throws UnableToCompleteException {
-      if (!isLegacyMode()) {
-        throw new UnsupportedOperationException();
-      }
-      for (int i = 0; i < moduleNames.length; i++) {
-        String moduleName = moduleNames[i];
-        ModuleDef moduleDef = loadModule(getLogger(), moduleName, true);
-        DevModeBase.this.compile(getLogger(), moduleDef);
-      }
-    }
-
     public ModuleSpaceHost createModuleSpaceHost(TreeLogger mainLogger,
         String moduleName, String userAgent, String url, String tabKey,
         String sessionKey, BrowserChannelServer serverChannel,
@@ -131,19 +112,6 @@ abstract class DevModeBase implements DoneCallback {
 
     public TreeLogger getLogger() {
       return getTopLogger();
-    }
-
-    public boolean initModule(String moduleName) {
-      return DevModeBase.this.initModule(moduleName);
-    }
-
-    @Deprecated
-    public boolean isLegacyMode() {
-      return DevModeBase.this instanceof GWTShell;
-    }
-
-    public String normalizeURL(String whatTheUserTyped) {
-      return DevModeBase.this.normalizeURL(whatTheUserTyped);
     }
 
     public void unloadModule(ModuleSpaceHost moduleSpaceHost) {
@@ -733,7 +701,7 @@ abstract class DevModeBase implements DoneCallback {
     String startupURL = "";
     try {
       for (String prenormalized : options.getStartupURLs()) {
-        startupURL = normalizeURL(prenormalized);
+        startupURL = normalizeURL(prenormalized, getPort(), getHost());
         logger.log(TreeLogger.INFO, "Starting URL: " + startupURL, null);
         launchURL(startupURL);
       }
@@ -741,10 +709,6 @@ abstract class DevModeBase implements DoneCallback {
       logger.log(TreeLogger.ERROR,
           "Unable to open new window for startup URL: " + startupURL, null);
     }
-  }
-
-  public final String normalizeURL(String unknownUrlText) {
-    return normalizeURL(unknownUrlText, getPort(), getHost());
   }
 
   /**
@@ -790,21 +754,6 @@ abstract class DevModeBase implements DoneCallback {
   protected long checkForUpdatesInterval() {
     return CheckForUpdates.ONE_MINUTE;
   }
-
-  /**
-   * Compiles all modules.
-   * 
-   * @throws UnableToCompleteException
-   */
-  protected abstract void compile(TreeLogger logger)
-      throws UnableToCompleteException;
-
-  /**
-   * Compiles a module (legacy only).
-   */
-  @Deprecated
-  protected abstract void compile(TreeLogger logger, ModuleDef moduleDef)
-      throws UnableToCompleteException;
 
   protected abstract HostedModeBaseOptions createOptions();
 
@@ -889,26 +838,6 @@ abstract class DevModeBase implements DoneCallback {
 
   protected String getHost() {
     return "localhost";
-  }
-
-  /**
-   * Called from a selection script as it begins to load in hosted mode. This
-   * triggers a hosted mode link, which might actually update the running
-   * selection script.
-   * 
-   * @param moduleName the module to link
-   * @return <code>true</code> if the selection script was overwritten; this
-   *         will trigger a full-page refresh by the calling (out of date)
-   *         selection script
-   */
-  protected boolean initModule(String moduleName) {
-    /*
-     * Not used in legacy mode due to GWTShellServlet playing this role.
-     * 
-     * TODO: something smarter here and actually make GWTShellServlet less
-     * magic?
-     */
-    return false;
   }
 
   /**

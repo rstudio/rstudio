@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
-import com.google.gwt.dev.Compiler.CompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
@@ -298,20 +297,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   }
 
   @Override
-  protected void compile(TreeLogger logger) throws UnableToCompleteException {
-    CompilerOptions newOptions = new CompilerOptionsImpl(options);
-    newOptions.setCompilationStateRetained(true);
-    new Compiler(newOptions).run(logger);
-  }
-
-  @Deprecated
-  @Override
-  protected void compile(TreeLogger logger, ModuleDef moduleDef)
-      throws UnableToCompleteException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   protected HostedModeBaseOptions createOptions() {
     return new HostedModeOptionsImpl();
   }
@@ -417,33 +402,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
   protected String getWebServerName() {
     return options.getServletContainerLauncher().getName();
-  }
-
-  @Override
-  protected boolean initModule(String moduleName) {
-    ModuleDef module = modulesByName.get(moduleName);
-    if (module == null) {
-      getTopLogger().log(
-          TreeLogger.WARN,
-          "Unknown module requested '"
-              + moduleName
-              + "'; all active GWT modules must be specified in the command line arguments");
-      return false;
-    }
-    try {
-      TreeLogger logger = getTopLogger().branch(TreeLogger.DEBUG,
-          "Initializing module '" + module.getName() + "' for hosted mode");
-      boolean shouldRefreshPage = false;
-      if (module.isGwtXmlFileStale()) {
-        shouldRefreshPage = true;
-        module = loadModule(logger, module.getCanonicalName(), false);
-      }
-      link(logger, module);
-      return shouldRefreshPage;
-    } catch (UnableToCompleteException e) {
-      // Already logged.
-      return false;
-    }
   }
 
   /*

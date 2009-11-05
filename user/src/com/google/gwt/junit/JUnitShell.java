@@ -20,7 +20,10 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.GWTCompiler;
 import com.google.gwt.dev.GWTShell;
+import com.google.gwt.dev.LegacyCompilerOptions;
+import com.google.gwt.dev.GWTCompiler.GWTCompilerOptionsImpl;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
@@ -848,7 +851,11 @@ public class JUnitShell extends GWTShell {
             userAgents);
       }
     }
-    super.compile(getTopLogger(), module);
+    LegacyCompilerOptions newOptions = new GWTCompilerOptionsImpl(options);
+    newOptions.setCompilationStateRetained(true);
+    if (!new GWTCompiler(newOptions).run(getTopLogger(), module)) {
+      throw new UnableToCompleteException();
+    }
   }
 
   void maybeCompileForWebMode(String moduleName, String... userAgents)
