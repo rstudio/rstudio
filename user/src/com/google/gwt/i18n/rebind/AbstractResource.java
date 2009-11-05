@@ -143,15 +143,21 @@ public abstract class AbstractResource {
       for (int i = 0; i < searchList.size(); ++i) {
         derivedIndex.put(searchList.get(i), i);
       }
-      GwtLocale best = LocaleUtils.getLocaleFactory().getDefault();
+      GwtLocale defaultLocale = LocaleUtils.getLocaleFactory().getDefault();
+      GwtLocale best = defaultLocale;
       int bestIdx = Integer.MAX_VALUE;
       for (int i = 0; i < list.size(); ++i) {
         GwtLocale matchLocale = list.get(i).getMatchLocale();
         Integer wrappedIdx = derivedIndex.get(matchLocale);
         if (wrappedIdx == null) {
-          logger.log(TreeLogger.WARN, "Locale " + matchLocale
-              + " not in searchlist " + searchList);
-          continue;
+          // We had an @DefaultLocale for a locale not present in this
+          // permutation -- treat it as the default locale.
+          wrappedIdx = derivedIndex.get(defaultLocale);
+          if (wrappedIdx == null) {
+            // shouldn't happen
+            assert false : "No default locale in search list";
+            continue;
+          }
         }
         int idx = wrappedIdx;
         if (idx < bestIdx) {
