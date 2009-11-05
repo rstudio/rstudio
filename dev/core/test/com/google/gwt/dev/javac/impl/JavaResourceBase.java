@@ -53,6 +53,41 @@ public class JavaResourceBase {
       return code;
     }
   };
+  public static final MockJavaResource COLLECTION = new MockJavaResource(
+      "java.util.Collection") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.util;\n");
+      code.append("public interface Collection<E> {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource ENUM = new MockJavaResource(
+      "java.lang.Enum") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.lang;\n");
+      code.append("import java.io.Serializable;\n");
+      code.append("public abstract class Enum<E extends Enum<E>> implements Serializable {\n");
+      code.append("  protected Enum(String name, int ordinal) {}\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource EXCEPTION = new MockJavaResource(
+      "java.lang.Exception") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.lang;\n");
+      code.append("public class Exception extends Throwable {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource FOO = new MockJavaResource("test.Foo") {
     @Override
     protected CharSequence getContent() {
@@ -60,6 +95,17 @@ public class JavaResourceBase {
       code.append("package test;\n");
       code.append("public class Foo {\n");
       code.append("  public String value() { return \"Foo\"; }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource IS_SERIALIZABLE = new MockJavaResource(
+      "com.google.gwt.user.client.rpc.IsSerializable") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.rpc;\n");
+      code.append("public interface IsSerializable {\n");
       code.append("}\n");
       return code;
     }
@@ -150,7 +196,8 @@ public class JavaResourceBase {
 
   public static MockJavaResource[] getStandardResources() {
     return new MockJavaResource[] {
-        ANNOTATION, CLASS, JAVASCRIPTOBJECT, MAP, OBJECT, SERIALIZABLE, STRING,
-        SUPPRESS_WARNINGS, THROWABLE};
+        ANNOTATION, CLASS, COLLECTION, ENUM, EXCEPTION, IS_SERIALIZABLE,
+        JAVASCRIPTOBJECT, MAP, OBJECT, SERIALIZABLE, STRING, SUPPRESS_WARNINGS,
+        THROWABLE};
   }
 }

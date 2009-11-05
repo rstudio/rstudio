@@ -98,20 +98,6 @@ public class DockLayoutPanelParserTest extends TestCase {
 
   private static final String fieldName = "fieldName";
 
-  // TODO(rjrjr) Move this to JavaResourceBase. Have to do it atomically for
-  // all other tests that define their own Enum.
-  private static final MockJavaResource ENUM = new MockJavaResource(
-  "java.lang.Enum") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package java.lang;\n");
-      code.append("public abstract class Enum<E extends Enum<E>> {\n");
-      code.append("  protected Enum(String name, int ordinal) {}\n");
-      code.append("}\n");
-      return code;
-    }
-  };
   private static final MockJavaResource MY_UI_JAVA = new MockJavaResource(
       "my.Ui") {
     @Override
@@ -271,7 +257,6 @@ public class DockLayoutPanelParserTest extends TestCase {
   MockJavaResource[] getUiResources() {
     List<MockJavaResource> rtn = Lists.create(UiJavaResources.getUiResources());
     rtn.add(MY_UI_JAVA);
-    rtn.add(ENUM);
     return rtn.toArray(new MockJavaResource[rtn.size()]);
   }
 

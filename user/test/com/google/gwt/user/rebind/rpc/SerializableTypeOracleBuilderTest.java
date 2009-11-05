@@ -126,56 +126,12 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
         code));
   }
 
-  private static void addIsSerializable(Set<CompilationUnit> units) {
-    StringBuffer code = new StringBuffer();
-    code.append("package com.google.gwt.user.client.rpc;\n");
-    code.append("public interface IsSerializable {\n");
-    code.append("}\n");
-    units.add(createMockCompilationUnit(
-        "com.google.gwt.user.client.rpc.IsSerializable", code));
-  }
-
-  private static void addJavaLangException(Set<CompilationUnit> units) {
-    StringBuffer code = new StringBuffer();
-    code.append("package java.lang;\n");
-    code.append("public class Exception extends Throwable {\n");
-    code.append("}\n");
-
-    units.add(createMockCompilationUnit("java.lang.Exception", code));
-  }
-
-  private static void addJavaLangThrowable(Set<CompilationUnit> units) {
-    StringBuffer code = new StringBuffer();
-    code.append("package java.lang;\n");
-    code.append("import java.io.Serializable;\n");
-    code.append("public class Throwable implements Serializable {\n");
-    code.append("}\n");
-    units.add(createMockCompilationUnit("java.lang.Throwable", code));
-  }
-
-  private static void addJavaUtilCollection(Set<CompilationUnit> units) {
-    StringBuffer code = new StringBuffer();
-    code.append("package java.util;\n");
-    code.append("public interface Collection<E> {\n");
-    code.append("}\n");
-    units.add(createMockCompilationUnit("java.util.Collection", code));
-  }
-
-  private static void addJavaUtilMap(Set<CompilationUnit> units) {
-    units.add(new SourceFileCompilationUnit(JavaResourceBase.MAP));
-  }
-
   private static void addStandardClasses(Set<CompilationUnit> units) {
     for (Resource resource : JavaResourceBase.getStandardResources()) {
       units.add(new SourceFileCompilationUnit(resource));
     }
     addGwtTransient(units);
-    addJavaUtilMap(units);
     addICRSE(units);
-    addJavaLangException(units);
-    addJavaLangThrowable(units);
-    addJavaUtilCollection(units);
-    addIsSerializable(units);
   }
 
   private static void assertFieldSerializable(SerializableTypeOracle so,
@@ -223,7 +179,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   private static TreeLogger createLogger() {
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger(new PrintWriter(
-        System.err));
+        System.err, true));
     logger.setMaxDetail(TreeLogger.ERROR);
     return logger;
   }
@@ -772,17 +728,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("  }\n");
       code.append("};\n");
       units.add(createMockCompilationUnit("EnumWithNonDefaultCtors", code));
-    }
-
-    {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("import java.io.Serializable;\n");
-      code.append("public class Enum<E extends Enum<E>> implements Serializable {\n");
-      code.append("  protected Enum(String name, int ordinal) {\n");
-      code.append("  }\n");
-      code.append("}\n");
-      units.add(createMockCompilationUnit("java.lang.Enum", code));
     }
 
     TreeLogger logger = createLogger();
