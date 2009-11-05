@@ -213,7 +213,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
         oracle.getType(MyIntegerList.class.getName()),
         parameterizedMyCustomList};
 
-    validateEquals(oracle, expected, actualSubtypes);
+    validateEquals(expected, actualSubtypes);
   }
 
   /**

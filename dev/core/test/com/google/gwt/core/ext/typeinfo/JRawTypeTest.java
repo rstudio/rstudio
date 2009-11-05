@@ -75,7 +75,7 @@ public class JRawTypeTest extends JDelegatingClassTypeTestBase {
         oracle.getType(MyIntegerList.class.getName())};
     JClassType[] actualSubtypes = rawTestType.getSubtypes();
 
-    validateEquals(oracle, expectedTypes, actualSubtypes);
+    validateEquals(expectedTypes, actualSubtypes);
   }
 
   @Override

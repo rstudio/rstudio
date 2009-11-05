@@ -98,10 +98,10 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
     assertArraysEqual(expected, actual);
   }
 
-  protected static void validateEquals(TypeOracle oracle,
-      JClassType[] expectedTypes, JClassType actualTypes[]) {
-    oracle.sort(expectedTypes);
-    oracle.sort(actualTypes);
+  protected static void validateEquals(JClassType[] expectedTypes,
+      JClassType actualTypes[]) {
+    TypeOracle.sort(expectedTypes);
+    TypeOracle.sort(actualTypes);
 
     assertArraysEqual(expectedTypes, actualTypes);
   }
