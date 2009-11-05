@@ -30,6 +30,12 @@ public class DialogBoxExample implements EntryPoint, ClickHandler {
       // Set the dialog box's caption.
       setText("My First Dialog");
 
+      // Enable animation.
+      setAnimationEnabled(true);
+
+      // Enable glass background.
+      setGlassEnabled(true);
+
       // DialogBox is a SimplePanel, so you have to set its widget property to
       // whatever you want its contents to be.
       Button ok = new Button("OK");

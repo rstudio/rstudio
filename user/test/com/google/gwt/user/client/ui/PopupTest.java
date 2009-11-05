@@ -17,10 +17,12 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 
@@ -50,7 +52,7 @@ public class PopupTest extends GWTTestCase {
     }
 
     @Override
-    public Element getContainerElement() {
+    public com.google.gwt.user.client.Element getContainerElement() {
       return super.getContainerElement();
     }
 
@@ -172,6 +174,81 @@ public class PopupTest extends GWTTestCase {
     testDependantPopupPanel(primaryPopup);
   }
 
+  public void testGlassPanelDisabled() {
+    // Verify that the glass is disabled by default
+    PopupPanel popup = createPopupPanel();
+    assertFalse(popup.isGlassEnabled());
+    assertNull(popup.getGlassElement());
+
+    // Verify the glass panel is never created
+    popup.show();
+    assertNull(popup.getGlassElement());
+    popup.hide();
+  }
+
+  public void testGlassDisabledWhileShowing() {
+    // Show the popup and glass panel
+    PopupPanel popup = createPopupPanel();
+    popup.setGlassEnabled(true);
+    Element glass = popup.getGlassElement();
+    popup.show();
+
+    // Disable the glass panel and hide the popup
+    popup.setGlassEnabled(false);
+    assertTrue(isAttached(glass));
+    popup.hide();
+    assertFalse(isAttached(glass));
+
+    // Show the popup and verify that glass is no longer used
+    popup.show();
+    assertFalse(isAttached(glass));
+    popup.hide();
+  }
+
+  public void testGlassEnabled() {
+    // Verify that the glass is disabled by default
+    PopupPanel popup = createPopupPanel();
+    assertFalse(popup.isGlassEnabled());
+    assertNull(popup.getGlassElement());
+
+    // Enable the glass panel and verify it is created
+    popup.setGlassEnabled(true);
+    Element glass = popup.getGlassElement();
+    assertNotNull(glass);
+    assertFalse(isAttached(glass));
+
+    // Show the popup and verify the glass panel is added
+    popup.show();
+    assertTrue(isAttached(glass));
+
+    // Hide the popup and verify the glass panel is removed
+    popup.hide();
+    assertFalse(isAttached(glass));
+  }
+
+  public void testGlassEnabledWhileShowing() {
+    // Verify that the glass is disabled by default
+    PopupPanel popup = createPopupPanel();
+    assertFalse(popup.isGlassEnabled());
+    assertNull(popup.getGlassElement());
+
+    // Show the popup and enable the glass panel
+    popup.show();
+    popup.setGlassEnabled(true);
+    Element glass = popup.getGlassElement();
+    assertNotNull(glass);
+    assertFalse(isAttached(glass));
+
+    // Hide the popup and verify the glass panel is removed
+    popup.hide();
+    assertFalse(isAttached(glass));
+
+    // Show the popup and verify the glas is now used
+    popup.show();
+    assertTrue(isAttached(glass));
+    popup.hide();
+  }
+
   /**
    * Test that the onLoad method is only called once when showing the popup.
    */
@@ -256,8 +333,8 @@ public class PopupTest extends GWTTestCase {
 
     // Ensure that hiding the popup fires the appropriate events.
     delayTestFinish(1000);
-    popup.addPopupListener(new PopupListener() {
-      public void onPopupClosed(PopupPanel sender, boolean autoClosed) {
+    popup.addCloseHandler(new CloseHandler<PopupPanel>() {
+      public void onClose(CloseEvent<PopupPanel> event) {
         finishTest();
       }
     });
@@ -341,5 +418,9 @@ public class PopupTest extends GWTTestCase {
         finishTest();
       }
     }.schedule(2000);
+  }
+
+  private boolean isAttached(Element elem) {
+    return Document.get().getBody().isOrHasChild(elem);
   }
 }

@@ -102,6 +102,7 @@ public class CwDialogBox extends ContentWidget {
   public Widget onInitialize() {
     // Create the dialog box
     final DialogBox dialogBox = createDialogBox();
+    dialogBox.setGlassEnabled(true);
     dialogBox.setAnimationEnabled(true);
 
     // Create a button to show the dialog Box

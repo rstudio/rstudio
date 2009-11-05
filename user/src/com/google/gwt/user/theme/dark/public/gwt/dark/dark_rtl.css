@@ -463,6 +463,12 @@ a, a:visited, a:hover {
   overflow: hidden;
 }
 
+.gwt-PopupGlass {
+  background-color: #0cf;
+  opacity: 0.3;
+  filter: alpha(opacity=30);
+}
+
 .gwt-PushButton-up,
 .gwt-PushButton-up-hovering,
 .gwt-PushButton-up-disabled,
