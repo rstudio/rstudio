@@ -37,6 +37,13 @@ public abstract class TreeLogger {
     }
 
     /**
+     * @return the prefix to go before the link.
+     */
+    public String getPrefix() {
+      return "More info: ";
+    }
+
+    /**
      * @return a URL containing extra information about the problem, or null if
      *     none.
      */

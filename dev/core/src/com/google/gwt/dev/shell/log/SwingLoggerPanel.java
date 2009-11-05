@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.shell.CloseButton;
 import com.google.gwt.dev.shell.CloseButton.Callback;
 import com.google.gwt.dev.shell.log.SwingTreeLogger.LogEvent;
+import com.google.gwt.dev.util.BrowserLauncher;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.CompositeTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -249,8 +250,6 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
 
   String regexFilter;
 
-  private boolean autoScroll;
-
   private final JEditorPane details;
 
   private final TreeLogger logger;
@@ -273,6 +272,13 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
   
   private boolean disconnected = false;
 
+  /**
+   * Create a Swing-based logger panel, with a tree section and a detail
+   * section.
+   * 
+   * @param maxLevel
+   * @param logFile
+   */
   public SwingLoggerPanel(TreeLogger.Type maxLevel, File logFile) {
     super(new BorderLayout());
     regexFilter = "";
@@ -425,6 +431,9 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     });
   }
 
+  /**
+   * Collapse all tree nodes.
+   */
   @SuppressWarnings("unchecked")
   public void collapseAll() {
     Enumeration<DefaultMutableTreeNode> children = root.postorderEnumeration();
@@ -437,12 +446,18 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     tree.invalidate();
   }
 
+  /**
+   * Show that the client connected to this logger has disconnected.
+   */
   public void disconnected() {
     disconnected  = true;
     tree.setBackground(DISCONNECTED_COLOR);
     tree.repaint();
   }
 
+  /**
+   * Expand all tree nodes.
+   */
   @SuppressWarnings("unchecked")
   public void expandAll() {
     Enumeration<DefaultMutableTreeNode> children = root.postorderEnumeration();
@@ -455,10 +470,9 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     tree.invalidate();
   }
 
-  public boolean getAutoScroll() {
-    return autoScroll;
-  }
-
+  /**
+   * @return the TreeLogger for this panel
+   */
   public TreeLogger getLogger() {
     return logger;
   }
@@ -467,9 +481,14 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     EventType eventType = event.getEventType();
     if (eventType == HyperlinkEvent.EventType.ACTIVATED) {
       URL url = event.getURL();
-      // TODO(jat): how best to display the URL?  We could either figure out
-      // how to run the user's browser, create a mini-browser in Swing, or just
-      // re-use the details pane as we do here, but this is rather poor.
+      try {
+        BrowserLauncher.browse(url.toExternalForm());
+        return;
+      } catch (Exception e) {
+        // if anything fails, fall-through to failsafe implementation
+      }
+      // As a last resort, just use the details pane to display the HTML, but
+      // this is rather poor.
       try {
         details.setPage(url);
       } catch (IOException e) {
@@ -478,6 +497,9 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     }
   }
 
+  /**
+   * @param node
+   */
   public void notifyChange(DefaultMutableTreeNode node) {
     treeModel.nodeChanged(node);
   }
@@ -486,10 +508,6 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
   public void removeAll() {
     tree.removeAll();
     details.setText("");
-  }
-
-  public void setAutoScroll(boolean autoScroll) {
-    this.autoScroll = autoScroll;
   }
 
   /**

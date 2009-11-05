@@ -17,6 +17,7 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
@@ -921,11 +922,12 @@ abstract class DevModeBase implements DoneCallback {
 
   protected void launchURL(String url) throws UnableToCompleteException {
     /*
-     * TODO(jat): properly support launching arbitrary browsers; waiting on
-     * Freeland's work with BrowserScanner and the trunk merge to get it.
+     * TODO(jat): properly support launching arbitrary browsers -- need some
+     * UI API tweaks to support that.
      */
+    URL parsedUrl = null;
     try {
-      URL parsedUrl = new URL(url);
+      parsedUrl = new URL(url);
       String path = parsedUrl.getPath();
       String query = parsedUrl.getQuery();
       String hash = parsedUrl.getRef();
@@ -939,8 +941,9 @@ abstract class DevModeBase implements DoneCallback {
       if (hash != null) {
         path += '#' + hash;
       }
-      url = new URL(parsedUrl.getProtocol(), parsedUrl.getHost(),
-          parsedUrl.getPort(), path).toExternalForm();
+      parsedUrl = new URL(parsedUrl.getProtocol(), parsedUrl.getHost(),
+          parsedUrl.getPort(), path);
+      url = parsedUrl.toExternalForm();
     } catch (MalformedURLException e) {
       getTopLogger().log(TreeLogger.ERROR, "Invalid URL " + url, e);
       throw new UnableToCompleteException();
@@ -948,8 +951,24 @@ abstract class DevModeBase implements DoneCallback {
     System.err.println("Using a browser with the GWT Development Plugin, please browse to");
     System.err.println("the following URL:");
     System.err.println("  " + url);
+    final URL helpInfoUrl = parsedUrl;
     getTopLogger().log(TreeLogger.INFO,
-        "Waiting for browser connection to " + url, null);
+        "Waiting for browser connection to " + url, null, new HelpInfo() {
+          @Override
+          public String getAnchorText() {
+            return "Launch default browser";
+          }
+          
+          @Override
+          public String getPrefix() {
+            return "";
+          }
+
+          @Override
+          public URL getURL() {
+            return helpInfoUrl;
+          }
+        });
   }
 
   /**

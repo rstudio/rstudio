@@ -179,8 +179,9 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
         if (anchorText == null) {
           anchorText = url.toExternalForm();
         }
+        String prefix = helpInfo.getPrefix();
         if (url != null) {
-          sb.append("\nMore info: <a href=\"");
+          sb.append("<p>" + prefix + "<a href=\"");
           sb.append(url.toString());
           sb.append("\">");
           sb.append(anchorText);
