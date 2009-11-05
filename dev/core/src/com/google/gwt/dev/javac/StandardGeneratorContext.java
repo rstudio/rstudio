@@ -28,6 +28,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.javac.impl.FileCompilationUnit;
+import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
@@ -105,14 +106,20 @@ public class StandardGeneratorContext implements GeneratorContext {
      * Finalizes the source and adds this compilation unit to the host.
      */
     public void commit() {
-      cacheToken = diskCache.writeString(sw.toString());
+      String source = sw.toString();
+      strongHash = Util.computeStrongName(Util.getBytes(source));
+      cacheToken = diskCache.writeString(source);
       sw = null;
       creationTime = System.currentTimeMillis();
     }
 
     @Override
     public String getDisplayLocation() {
-      return "transient source for " + typeName;
+      if (strongHash != null) {
+        return "generated://" + strongHash + "/" + Shared.toPath(getTypeName());
+      } else {
+        return "generated://uncommitted/" + Shared.toPath(getTypeName());
+      }
     }
 
     @Override
@@ -129,9 +136,6 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     public String getStrongHash() {
-      if (strongHash == null) {
-        strongHash = Util.computeStrongName(Util.getBytes(getSource()));
-      }
       return strongHash;
     }
 
