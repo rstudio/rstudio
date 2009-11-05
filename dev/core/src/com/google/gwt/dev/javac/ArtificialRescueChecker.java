@@ -291,8 +291,9 @@ public class ArtificialRescueChecker {
    * Check the {@link ArtificialRescue} annotations in a CompilationUnit. Errors
    * are reported through {@link GWTProblem}.
    */
-  public static void check(CompilationUnit cud) {
-    new ArtificialRescueChecker(cud).check();
+  public static void check(CompilationUnitDeclaration cud,
+      boolean allowArtificialRescue) {
+    new ArtificialRescueChecker(cud, allowArtificialRescue).check();
   }
 
   /**
@@ -354,14 +355,15 @@ public class ArtificialRescueChecker {
 
   private List<String> referencedTypes;
 
-  private ArtificialRescueChecker(CompilationUnit unit) {
-    allowArtificialRescue = unit.isGenerated();
-    cud = unit.getJdtCud();
-  }
-
   private ArtificialRescueChecker(CompilationUnitDeclaration cud) {
     allowArtificialRescue = true;
     this.cud = cud;
+  }
+
+  private ArtificialRescueChecker(CompilationUnitDeclaration cud,
+      boolean allowArtificialRescue) {
+    this.cud = cud;
+    this.allowArtificialRescue = allowArtificialRescue;
   }
 
   private void check() {
