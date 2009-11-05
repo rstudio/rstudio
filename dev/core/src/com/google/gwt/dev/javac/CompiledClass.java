@@ -68,7 +68,6 @@ public final class CompiledClass {
   protected final CompiledClass enclosingClass;
   protected final String internalName;
   protected final boolean isLocal;
-  protected final String location;
   protected final CompilationUnit unit;
 
   /**
@@ -92,7 +91,6 @@ public final class CompiledClass {
     ClassFile classFile = getClassFile(typeDeclaration, internalName);
     byte[] bytes = classFile.getBytes();
     this.cacheToken = diskCache.writeByteArray(bytes);
-    this.location = String.valueOf(classFile.fileName());
     this.isLocal = isLocalType(binding);
   }
 
@@ -156,7 +154,7 @@ public final class CompiledClass {
     if (nameEnvironmentAnswer == null) {
       try {
         ClassFileReader cfr = new ClassFileReader(getBytes(),
-            location.toCharArray());
+            unit.getDisplayLocation().toCharArray(), true);
         nameEnvironmentAnswer = new NameEnvironmentAnswer(cfr, null);
       } catch (ClassFormatException e) {
         throw new RuntimeException("Unexpectedly unable to parse class file", e);

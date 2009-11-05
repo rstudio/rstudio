@@ -345,7 +345,7 @@ public class CompilationState {
 
       // Check all units using our custom checks.
       CompilationUnitInvalidator.validateCompilationUnits(invalidatorState,
-          newUnits, jdtCompiler.getBinaryTypeNames());
+          newUnits);
 
       // More units may have errors now.
       anyErrors |= CompilationUnitInvalidator.invalidateUnitsWithErrors(logger,

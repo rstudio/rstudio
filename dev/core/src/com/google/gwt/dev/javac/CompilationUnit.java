@@ -285,16 +285,14 @@ public abstract class CompilationUnit {
     return GENERATED_CLASSNAME_PATTERN.matcher(className).matches();
   }
 
-  private static Set<String> computeFileNameRefs(
-      CompilationUnitDeclaration cud,
-      final Map<String, String> binaryTypeToSourceFileMap) {
+  private static Set<String> computeFileNameRefs(CompilationUnitDeclaration cud) {
     final Set<String> result = new HashSet<String>();
     cud.traverse(new TypeRefVisitor(cud) {
       @Override
       protected void onBinaryTypeRef(BinaryTypeBinding referencedType,
           CompilationUnitDeclaration unitOfReferrer, Expression expression) {
-        String fileName = binaryTypeToSourceFileMap.get(String.valueOf(referencedType.getFileName()));
-        if (fileName != null) {
+        String fileName = String.valueOf(referencedType.getFileName());
+        if (fileName.endsWith(".java")) {
           result.add(fileName);
         }
       }
@@ -507,11 +505,10 @@ public abstract class CompilationUnit {
   /**
    * Sets the compiled JDT AST for this unit.
    */
-  void setCompiled(CompilationUnitDeclaration cud,
-      Map<String, String> binaryTypeToSourceFileMap) {
+  void setCompiled(CompilationUnitDeclaration cud) {
     assert (state == State.FRESH || state == State.ERROR);
     this.cud = cud;
-    fileNameRefs = computeFileNameRefs(cud, binaryTypeToSourceFileMap);
+    fileNameRefs = computeFileNameRefs(cud);
     state = State.COMPILED;
   }
 

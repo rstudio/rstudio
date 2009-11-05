@@ -110,8 +110,7 @@ public class BinaryTypeReferenceRestrictionsChecker {
    * is reported against the {@link CompilationUnitDeclaration} for the first
    * instance of each unique {@link BinaryTypeBinding}.
    */
-  public static void check(CompilationUnitDeclaration cud,
-      Set<String> validBinaryTypeNames) {
+  public static void check(CompilationUnitDeclaration cud) {
     List<BinaryTypeReferenceSite> binaryTypeReferenceSites = findAllBinaryTypeReferenceSites(cud);
     Set<BinaryTypeBinding> alreadySeenTypeBindings = new HashSet<BinaryTypeBinding>();
 
@@ -122,8 +121,8 @@ public class BinaryTypeReferenceRestrictionsChecker {
       }
       alreadySeenTypeBindings.add(binaryTypeBinding);
 
-      String binaryName = String.valueOf(binaryTypeBinding.constantPoolName());
-      if (validBinaryTypeNames.contains(binaryName)) {
+      String fileName = String.valueOf(binaryTypeBinding.getFileName());
+      if (fileName.endsWith(".java")) {
         // This binary name is valid; it is a reference to a unit that was
         // compiled in a previous JDT run.
         continue;

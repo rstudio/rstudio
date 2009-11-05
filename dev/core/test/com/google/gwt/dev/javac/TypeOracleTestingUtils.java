@@ -61,8 +61,7 @@ public class TypeOracleTestingUtils {
     }
     JdtCompiler.compile(units);
     CompilationUnitInvalidator.InvalidatorState state = new CompilationUnitInvalidator.InvalidatorState();
-    CompilationUnitInvalidator.validateCompilationUnits(state, units,
-        validBinaryTypeNames);
+    CompilationUnitInvalidator.validateCompilationUnits(state, units);
     if (CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units)) {
       CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);
     }

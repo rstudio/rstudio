@@ -196,15 +196,14 @@ public class CompilationUnitInvalidator {
   }
 
   public static void validateCompilationUnits(InvalidatorState state,
-      Collection<CompilationUnit> units, Set<String> validBinaryTypeNames) {
+      Collection<CompilationUnit> units) {
     for (CompilationUnit unit : units) {
       if (unit.getState() == State.COMPILED) {
         CompilationUnitDeclaration jdtCud = unit.getJdtCud();
         JSORestrictionsChecker.check(state.jsoState, jdtCud);
         JsniChecker.check(jdtCud);
         ArtificialRescueChecker.check(unit);
-        BinaryTypeReferenceRestrictionsChecker.check(jdtCud,
-            validBinaryTypeNames);
+        BinaryTypeReferenceRestrictionsChecker.check(jdtCud);
       }
     }
     state.jsoState.finalCheck();
