@@ -19,7 +19,10 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
 import org.w3c.dom.Element;
 
-class XMLElementProviderImpl implements XMLElementProvider {
+/**
+ * The default implemenatation of {@link XMLElementProvider}.
+ */
+public class XMLElementProviderImpl implements XMLElementProvider {
   private final AttributeParsers attributeParsers;
   @SuppressWarnings("deprecation")
   // bundleParsers for legacy templates

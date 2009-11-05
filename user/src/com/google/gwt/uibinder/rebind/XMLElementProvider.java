@@ -17,6 +17,9 @@ package com.google.gwt.uibinder.rebind;
 
 import org.w3c.dom.Element;
 
-interface XMLElementProvider {
+/**
+ * Implemented by objects that instantiate XMLElement.
+ */
+public interface XMLElementProvider {
   XMLElement get(Element e);
 }

@@ -45,6 +45,10 @@ abstract class AbstractFieldWriter implements FieldWriter {
     this.name = name;
     this.logger = logger;
   }
+  
+  public String getInitializer() {
+    return initializer;
+  }
 
   public void needs(FieldWriter f) {
     needs.add(f);

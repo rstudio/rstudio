@@ -33,15 +33,9 @@ import com.google.gwt.uibinder.rebind.model.OwnerField;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -49,10 +43,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Writer for UiBinder generated classes.
@@ -64,7 +54,6 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 @SuppressWarnings("deprecation")
 public class UiBinderWriter {
-  static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";
   private static final String PACKAGE_URI_SCHEME = "urn:import:";
 
   // TODO(rjrjr) Another place that we need a general anonymous field
@@ -226,17 +215,17 @@ public class UiBinderWriter {
   private final AttributeParsers attributeParsers;
   private final BundleAttributeParsers bundleParsers;
 
-  UiBinderWriter(JClassType baseClass, String implClassName,
-      String templatePath, TypeOracle oracle, MortalLogger logger)
+  public UiBinderWriter(JClassType baseClass, String implClassName,
+      String templatePath, TypeOracle oracle, MortalLogger logger,
+      FieldManager fieldManager, MessagesWriter messagesWriter)
       throws UnableToCompleteException {
     this.baseClass = baseClass;
     this.implClassName = implClassName;
     this.oracle = oracle;
     this.logger = logger;
     this.templatePath = templatePath;
-
-    this.messages = new MessagesWriter(BINDER_URI, logger, templatePath,
-        baseClass.getPackage().getName(), this.implClassName);
+    this.fieldManager = fieldManager;
+    this.messages = messagesWriter;
 
     // Check for possible misuse 'GWT.create(UiBinder.class)'
     JClassType uibinderItself =
@@ -267,7 +256,6 @@ public class UiBinderWriter {
     bundleClass = new ImplicitClientBundle(baseClass.getPackage().getName(),
         this.implClassName, CLIENT_BUNDLE_FIELD, logger);
     handlerEvaluator = new HandlerEvaluator(ownerClass, logger, oracle);
-    fieldManager = new FieldManager(logger);
 
     attributeParsers = new AttributeParsers();
     bundleParsers = new BundleAttributeParsers(oracle, gwtPrefix, logger,
@@ -563,7 +551,7 @@ public class UiBinderWriter {
 
   public boolean isBinderElement(XMLElement elem) {
     String uri = elem.getNamespaceUri();
-    return uri != null && BINDER_URI.equals(uri);
+    return uri != null && UiBinderGenerator.BINDER_URI.equals(uri);
   }
 
   public boolean isWidgetElement(XMLElement elem) {
@@ -659,23 +647,16 @@ public class UiBinderWriter {
    * Entry point for the code generation logic. It generates the
    * implementation's superstructure, and parses the root widget (leading to all
    * of its children being parsed as well).
+   * @param doc TODO
    */
-  void parseDocument(PrintWriter printWriter) throws UnableToCompleteException {
-    Document doc = null;
-    try {
-      doc = parseXmlResource(templatePath);
-    } catch (SAXParseException e) {
-      die("Error parsing XML (line " + e.getLineNumber() + "): "
-          + e.getMessage(), e);
-    }
-
+  void parseDocument(Document doc, PrintWriter printWriter) throws UnableToCompleteException {
     JClassType uiBinderClass = getOracle().findType(UiBinder.class.getName());
     if (!baseClass.isAssignableTo(uiBinderClass)) {
       die(baseClass.getName() + " must implement UiBinder");
     }
 
     Element documentElement = doc.getDocumentElement();
-    gwtPrefix = documentElement.lookupPrefix(BINDER_URI);
+    gwtPrefix = documentElement.lookupPrefix(UiBinderGenerator.BINDER_URI);
 
     XMLElement elem = new XMLElementProviderImpl(attributeParsers,
         bundleParsers, oracle, logger).get(documentElement);
@@ -909,45 +890,6 @@ public class UiBinderWriter {
     }
 
     return null;
-  }
-
-  private Document parseXmlResource(final String resourcePath)
-      throws SAXParseException, UnableToCompleteException {
-    // Get the document builder. We need namespaces, and automatic expanding
-    // of entity references (the latter of which makes life somewhat easier
-    // for XMLElement).
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    factory.setNamespaceAware(true);
-    factory.setExpandEntityReferences(true);
-    DocumentBuilder builder;
-    try {
-      builder = factory.newDocumentBuilder();
-    } catch (ParserConfigurationException e) {
-      throw new RuntimeException(e);
-    }
-
-    try {
-      ClassLoader classLoader = UiBinderGenerator.class.getClassLoader();
-      URL url = classLoader.getResource(resourcePath);
-      if (null == url) {
-        die("Unable to find resource: " + resourcePath);
-      }
-
-      InputStream stream = url.openStream();
-      InputSource input = new InputSource(stream);
-      input.setSystemId(url.toExternalForm());
-
-      builder.setEntityResolver(new GwtResourceEntityResolver());
-
-      return builder.parse(input);
-    } catch (SAXParseException e) {
-      // Let SAXParseExceptions through.
-      throw e;
-    } catch (SAXException e) {
-      throw new RuntimeException(e);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private void registerParsers() {

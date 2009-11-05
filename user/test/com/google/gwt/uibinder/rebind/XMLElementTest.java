@@ -34,35 +34,35 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 /**
  * Tests XMLElement.
  */
 public class XMLElementTest extends TestCase {
   private static final String STRING_WITH_DOUBLEQUOTE = "I have a \" quote in me";
+  private static final W3cDomHelper docHelper = new W3cDomHelper();
   private Document doc;
   private Element item;
   private XMLElement elm;
   private XMLElementProvider elemProvider;
-  
-  TypeOracle oracle;
-  
+  private TypeOracle oracle;
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    init("<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
-
     MockResourceOracle resourceOracle = new MockResourceOracle(
         JavaResourceBase.getStandardResources());
-
     CompilationState state = new CompilationState(TreeLogger.NULL,
         resourceOracle);
     oracle = state.getTypeOracle();
+
+    elemProvider = new XMLElementProviderImpl(new AttributeParsers(), null,
+        oracle, MortalLogger.NULL);
+
+    init("<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
   }
 
-  public void testConsumeBoolean() throws ParserConfigurationException,
-      SAXException, IOException, UnableToCompleteException {
+  public void testConsumeBoolean() throws SAXException, IOException,
+      UnableToCompleteException {
     init("<doc><elm yes='true' no='false' "
         + "fnord='fnord' ref='{foo.bar.baz}'/></doc>");
 
@@ -84,8 +84,8 @@ public class XMLElementTest extends TestCase {
     }
   }
 
-  public void testConsumeBooleanConstant() throws ParserConfigurationException,
-      SAXException, IOException, UnableToCompleteException {
+  public void testConsumeBooleanConstant() throws SAXException, IOException,
+      UnableToCompleteException {
     init("<doc><elm yes='true' no='false' "
         + "fnord='fnord' ref='{foo.bar.baz}'/></doc>");
 
@@ -113,7 +113,7 @@ public class XMLElementTest extends TestCase {
   }
 
   public void testConsumeDouble() throws UnableToCompleteException,
-      ParserConfigurationException, SAXException, IOException {
+      SAXException, IOException {
     init("<doc><elm minus='-123.45' plus='123.45' minus-one='-1' "
         + "plus-one='1' fnord='fnord' ref='{foo.bar.baz}'/></doc>");
     assertEquals("1", elm.consumeDoubleAttribute("plus-one"));
@@ -167,9 +167,8 @@ public class XMLElementTest extends TestCase {
     }
   }
 
-  public void testConsumeSingleChildElementEmpty()
-      throws ParserConfigurationException, SAXException, IOException,
-      UnableToCompleteException {
+  public void testConsumeSingleChildElementEmpty() throws SAXException,
+      IOException, UnableToCompleteException {
     try {
       elm.consumeSingleChildElement();
       fail("Should throw on single child element");
@@ -220,10 +219,9 @@ public class XMLElementTest extends TestCase {
   }
 
   public void testNoEndTags() throws Exception {
-    Document doc = DocumentTestHelp.documentForString("<doc><br/></doc>");
-
-    Element item = (Element) doc.getDocumentElement().getElementsByTagName("br").item(
-        0);
+    doc = docHelper.documentFor("<doc><br/></doc>");
+    Element documentElement = doc.getDocumentElement();
+    Element item = (Element) documentElement.getElementsByTagName("br").item(0);
     XMLElement elm = elemProvider.get(item);
     assertEquals("br", item.getTagName());
     assertEquals("", elm.getClosingTag());
@@ -234,14 +232,10 @@ public class XMLElementTest extends TestCase {
     item.appendChild(t);
   }
 
-  private void init(final String domString)
-      throws ParserConfigurationException, SAXException, IOException {
-    doc = DocumentTestHelp.documentForString(domString);
+  private void init(final String domString) throws SAXException, IOException {
+    doc = docHelper.documentFor(domString);
     item = (Element) doc.getDocumentElement().getElementsByTagName("elm").item(
         0);
-
-    elemProvider = new XMLElementProviderImpl(new AttributeParsers(), null,
-        oracle, MortalLogger.NULL);
     elm = elemProvider.get(item);
   }
 }

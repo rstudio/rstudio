@@ -39,6 +39,16 @@ import java.util.Map;
  */
 public class DockLayoutPanelParser implements ElementParser {
 
+  private static class CenterChild {
+    final String widgetName;
+    final XMLElement child;
+
+    public CenterChild(XMLElement child, String widgetName) {
+      this.widgetName = widgetName;
+      this.child = child;
+    }
+  }
+
   private static final Map<String, String> DOCK_NAMES = new HashMap<String, String>();
 
   static {
@@ -61,29 +71,42 @@ public class DockLayoutPanelParser implements ElementParser {
           writer.getOracle().findType(DockLayoutPanel.class.getName()), unit);
     }
 
+    CenterChild center = null;
+
     // Parse children.
     for (XMLElement child : elem.consumeChildElements()) {
       // Make sure the element is one of the fixed set of valid directions.
       if (!isValidChildElement(elem, child)) {
         writer.die(
-            "In %1$s, child must be one of " +
-            "<%2$s:north>, <%2$s:south>, <%2$s:east>, <%2$s:west> or <%2$s:center>, " +
-            "but found %3$s",
-            elem, elem.getPrefix(), child);
+            "In %1$s, child must be one of "
+                + "<%2$s:north>, <%2$s:south>, <%2$s:east>, <%2$s:west> or <%2$s:center>, "
+                + "but found %3$s", elem, elem.getPrefix(), child);
       }
 
       // Consume the single widget element.
       XMLElement widget = child.consumeSingleChildElement();
-      String childFieldName = writer.parseElementToField(widget);
+      if (!writer.isWidgetElement(widget)) {
+        writer.die("In %s, %s must contain a widget, but found %s", elem, child,
+            widget);
+      }
+      String widgetName = writer.parseElementToField(widget);
 
-      if (requiresSize(child)) {
+      if (child.getLocalName().equals("center")) {
+        if (center != null) {
+          writer.die("In %s, only one <%s:center> is allowed", elem,
+              elem.getPrefix());
+        }
+        center = new CenterChild(child, widgetName);
+      } else {
         String size = child.consumeDoubleAttribute("size");
         writer.addStatement("%s.%s(%s, %s);", fieldName, addMethodName(child),
-            childFieldName, size);
-      } else {
-        writer.addStatement("%s.%s(%s);", fieldName, addMethodName(child),
-            childFieldName);
+            widgetName, size);
       }
+    }
+
+    if (center != null) {
+      writer.addStatement("%s.%s(%s);", fieldName, addMethodName(center.child),
+          center.widgetName);
     }
   }
 
@@ -102,8 +125,8 @@ public class DockLayoutPanelParser implements ElementParser {
   private boolean isValidChildElement(XMLElement parent, XMLElement child) {
     String childNsUri = child.getNamespaceUri();
     if (childNsUri == null) {
-        return false;
-    } 
+      return false;
+    }
     if (!childNsUri.equals(parent.getNamespaceUri())) {
       return false;
     }
@@ -112,9 +135,5 @@ public class DockLayoutPanelParser implements ElementParser {
     }
     // Made it through the gauntlet.
     return true;
-  }
-
-  private boolean requiresSize(XMLElement elem) {
-    return !elem.getLocalName().equals("center");
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.uibinder;
 
+import com.google.gwt.uibinder.parsers.DockLayoutPanelParserTest;
 import com.google.gwt.uibinder.parsers.FieldReferenceConverterTest;
 import com.google.gwt.uibinder.parsers.IntAttributeParserTest;
 import com.google.gwt.uibinder.parsers.StrictAttributeParserTest;
@@ -49,6 +50,7 @@ public class UiBinderJreSuite {
     suite.addTestSuite(OwnerFieldTest.class);
 
     // parsers
+    suite.addTestSuite(DockLayoutPanelParserTest.class);
     suite.addTestSuite(FieldReferenceConverterTest.class);
     suite.addTestSuite(IntAttributeParserTest.class);
     suite.addTestSuite(StrictAttributeParserTest.class);

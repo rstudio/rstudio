@@ -110,7 +110,7 @@ public class UiBinderParser {
       writer.die("Bad prefix on <%s:%s>? The root element must be in "
           + "xml namespace \"%s\" (usually with prefix \"ui:\"), "
           + "but this has prefix \"%s\"", elem.getPrefix(),
-          elem.getLocalName(), UiBinderWriter.BINDER_URI, elem.getPrefix());
+          elem.getLocalName(), UiBinderGenerator.BINDER_URI, elem.getPrefix());
     }
 
     if (!TAG.equals(elem.getLocalName())) {

@@ -36,6 +36,8 @@ public interface FieldWriter {
 
   String getQualifiedSourceName();
 
+  String getInitializer();
+  
   /**
    * @return the type of this field, or null if this field is of a type that has
    *         not yet been generated

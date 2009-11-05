@@ -26,7 +26,7 @@ import java.util.LinkedList;
  * This class handles all {@link FieldWriter} instances created for the current
  * template.
  */
-class FieldManager {
+public class FieldManager {
 
   private static final String DUPLICATE_FIELD_ERROR = "Duplicate declaration of field %1$s.";
 
@@ -46,8 +46,8 @@ class FieldManager {
   /**
    * Basic constructor just injects an oracle instance.
    */
-  public FieldManager(MortalLogger logger2) {
-    this.logger = logger2;
+  public FieldManager(MortalLogger logger) {
+    this.logger = logger;
   }
 
   /**

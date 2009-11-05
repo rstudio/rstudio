@@ -26,7 +26,11 @@ import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 
+import org.w3c.dom.Document;
+import org.xml.sax.SAXParseException;
+
 import java.io.PrintWriter;
+import java.net.URL;
 
 /**
  * Generator for implementations of
@@ -35,6 +39,8 @@ import java.io.PrintWriter;
 public class UiBinderGenerator extends Generator {
 
   private static final String TEMPLATE_SUFFIX = ".ui.xml";
+
+  static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";
 
   /**
    * Given a UiBinder interface, return the path to its ui.xml file, suitable
@@ -103,18 +109,22 @@ public class UiBinderGenerator extends Generator {
   }
 
   private void generateOnce(JClassType interfaceType, String implName,
-      PrintWriter binderPrintWrier, TreeLogger treeLogger, TypeOracle oracle,
+      PrintWriter binderPrintWriter, TreeLogger treeLogger, TypeOracle oracle,
       PrintWriterManager writerManager)
-      throws UnableToCompleteException {
+ throws UnableToCompleteException {
 
     MortalLogger logger = new MortalLogger(treeLogger);
     String templatePath = deduceTemplateFile(logger, interfaceType);
+    MessagesWriter messages = new MessagesWriter(BINDER_URI, logger,
+        templatePath, interfaceType.getPackage().getName(), implName);
 
     UiBinderWriter uiBinderWriter = new UiBinderWriter(interfaceType, implName,
-        templatePath, oracle, logger);
-    uiBinderWriter.parseDocument(binderPrintWrier);
+        templatePath, oracle, logger, new FieldManager(logger), messages);
 
-    MessagesWriter messages = uiBinderWriter.getMessages();
+    Document doc = getW3cDoc(logger, templatePath);
+
+    uiBinderWriter.parseDocument(doc, binderPrintWriter);
+
     if (messages.hasMessages()) {
       messages.write(writerManager.makePrintWriterFor(messages.getMessagesClassName()));
     }
@@ -123,5 +133,22 @@ public class UiBinderGenerator extends Generator {
     new BundleWriter(bundleClass, writerManager, oracle, writerManager).write();
 
     writerManager.commit();
+  }
+
+  private Document getW3cDoc(MortalLogger logger, String templatePath)
+      throws UnableToCompleteException {
+    URL url = UiBinderGenerator.class.getClassLoader().getResource(templatePath);
+    if (null == url) {
+      logger.die("Unable to find resource: " + templatePath);
+    }
+    
+    Document doc = null;
+    try {
+      doc = new W3cDomHelper().documentFor(url);
+    } catch (SAXParseException e) {
+      logger.die("Error parsing XML (line " + e.getLineNumber() + "): "
+          + e.getMessage(), e);
+    }
+    return doc;
   }
 }

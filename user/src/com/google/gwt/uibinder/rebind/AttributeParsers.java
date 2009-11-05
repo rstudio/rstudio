@@ -24,7 +24,10 @@ import com.google.gwt.uibinder.parsers.StrictAttributeParser;
 import java.util.HashMap;
 import java.util.Map;
 
-class AttributeParsers {
+/**
+ * Managers access to all implementations of {@link AttributeParser}
+ */
+public class AttributeParsers {
   private static final String DOUBLE = "double";
   private static final String BOOLEAN = "boolean";
 
