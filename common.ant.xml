@@ -237,7 +237,9 @@
           <isset property="junit.failure"/>
         </and>
       </condition>
-      <fail message="One or more junit tests failed for target: @{test.name}" if="junit.stop.build" />
+      <fail
+          message="One or more junit tests failed for target: @{test.name} @{test.args}"
+          if="junit.stop.build" />
     </sequential>
   </macrodef>
 

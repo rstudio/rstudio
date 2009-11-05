@@ -960,20 +960,21 @@ public class JUnitShell extends GWTShell {
     assert results != null;
     assert results.size() == numClients : results.size() + " != " + numClients;
 
-    boolean parallelTesting = numClients > 1;
-
     for (Entry<String, JUnitResult> entry : results.entrySet()) {
       String clientId = entry.getKey();
       JUnitResult result = entry.getValue();
       assert (result != null);
       Throwable exception = result.getException();
-      // In the case that we're running multiple clients at once, we need to
-      // let the user know the browser in which the failure happened
-      if (parallelTesting && exception != null) {
+
+      // Let the user know the browser in which the failure happened.
+      if (exception != null) {
         String msg = "Remote test failed at " + clientId;
         if (exception instanceof AssertionFailedError) {
-          AssertionFailedError newException = new AssertionFailedError(msg
-              + "\n" + exception.getMessage());
+          String oldMessage = exception.getMessage();
+          if (oldMessage != null) {
+            msg += "\n" + exception.getMessage();
+          }
+          AssertionFailedError newException = new AssertionFailedError(msg);
           newException.setStackTrace(exception.getStackTrace());
           newException.initCause(exception.getCause());
           exception = newException;
