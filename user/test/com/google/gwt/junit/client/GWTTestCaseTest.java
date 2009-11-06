@@ -381,10 +381,9 @@ public class GWTTestCaseTest extends GWTTestCase {
     if (htmlunitMode && !attemptedOnce) {
       // fail
       attemptedOnce = true;
-      assertTrue(false);
-    } else {
-      assertTrue(true);
+      throw new RuntimeException();
     }
+    assertTrue(true);
   }
 
   public void testSetUpTearDown() throws Exception {

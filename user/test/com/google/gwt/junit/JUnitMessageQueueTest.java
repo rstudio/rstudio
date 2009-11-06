@@ -15,6 +15,7 @@
  */
 package com.google.gwt.junit;
 
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
@@ -353,7 +354,7 @@ public class JUnitMessageQueueTest extends TestCase {
     TestInfo testInfo = queue.getTestBlocks().get(0)[0];
     Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
     JUnitResult junitResult = new JUnitResult();
-    junitResult.setException(new AssertionError());
+    junitResult.setException(new UnableToCompleteException());
     results.put(testInfo, junitResult);
     queue.reportResults("client0", "ie6", results);
     results = new HashMap<TestInfo, JUnitResult>();
