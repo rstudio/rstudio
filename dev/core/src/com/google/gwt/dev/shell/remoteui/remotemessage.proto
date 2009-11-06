@@ -108,6 +108,7 @@ message Message {
        optional string level = 2;  // TODO: Maybe use an enum here
        optional string details = 3;
        optional HelpInfo helpInfo = 4;
+       optional bool needsAttention = 5;
       }
       
       // Add a new log branch to an existing log

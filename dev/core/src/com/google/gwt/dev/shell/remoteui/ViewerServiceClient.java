@@ -207,7 +207,7 @@ public class ViewerServiceClient {
 
     return createLogger(addLogBuilder);
   }
-  
+
   /**
    * Check the capabilities of the ViewerService. Ensures that the ViewerService
    * supports: adding a log, adding a log branch, adding a log entry, and
@@ -266,12 +266,13 @@ public class ViewerServiceClient {
     waitForResponse(responseFuture);
   }
 
-  public void initialize(String clientId, String devModeQueryParam, int webServerPort) {
+  public void initialize(String clientId, String devModeQueryParam,
+      int webServerPort) {
     ViewerRequest.Initialize.Builder initializationBuilder = ViewerRequest.Initialize.newBuilder();
     initializationBuilder.setClientId(clientId);
     initializationBuilder.setDevModeQueryParam(devModeQueryParam);
     initializationBuilder.setWebServerPort(webServerPort);
-    
+
     ViewerRequest.Builder viewerRequestBuilder = ViewerRequest.newBuilder();
     viewerRequestBuilder.setRequestType(ViewerRequest.RequestType.INITIALIZE);
     viewerRequestBuilder.setInitialize(initializationBuilder);
@@ -335,6 +336,11 @@ public class ViewerServiceClient {
       }
 
       logBuilder = logBuilder.setHelpInfo(helpInfoBuilder);
+    }
+
+    if (type.needsAttention()) {
+      // Set this field if attention is actually needed
+      logBuilder.setNeedsAttention(true);
     }
 
     return logBuilder;
