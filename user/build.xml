@@ -422,7 +422,7 @@
         includes="${gwt.junit.testcase.standards.includes}"
         excludes="${gwt.junit.testcase.standards.excludes}" />
     <gwt.junit test.name="test.standards"
-        test.args="${test.args} -web -standardsMode"
+        test.args="${test.args} -web -XstandardsMode"
         test.out="${junit.out}/standards" test.cases="test.standards.tests">
       <extraclasspaths>
         <path refid="test.extraclasspath" />
