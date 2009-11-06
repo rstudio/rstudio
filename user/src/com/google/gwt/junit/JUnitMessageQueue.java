@@ -57,11 +57,20 @@ public class JUnitMessageQueue {
     }
   }
 
+  private static final Set<Class<? extends Throwable>> THROWABLES_NOT_RETRIED = createThrowablesNotRetried();
+
+  private static Set<Class<? extends Throwable>> createThrowablesNotRetried() {
+    Set<Class<? extends Throwable>> throwableSet = new HashSet<Class<? extends Throwable>>();
+    throwableSet.add(com.google.gwt.junit.JUnitFatalLaunchException.class);
+    throwableSet.add(java.lang.Error.class);
+    return throwableSet;
+  }
+
   /**
    * Records results for each client; must lock before accessing.
    */
   private final Map<String, ClientStatus> clientStatuses = new HashMap<String, ClientStatus>();
-
+  
   /**
    * A set of the GWT user agents (eg. ie6, gecko) that have connected. 
    */
@@ -100,7 +109,7 @@ public class JUnitMessageQueue {
    */
   JUnitMessageQueue() {
   }
-
+  
   /**
    * Called by the servlet to query for for the next block to test.
    * 
@@ -390,9 +399,10 @@ public class JUnitMessageQueue {
     }
   }
 
-  /*
+  /**
    * Returns true iff any there are no results, missing results, or any of the
-   * test results is an exception other than JUnitFatalLaunchException.
+   * test results is an exception other than those in {@code
+   * THROWABLES_NOT_RETRIED}.
    */
   boolean needsRerunning(TestInfo testInfo) {
     Map<String, JUnitResult> results = getResults(testInfo);
@@ -408,8 +418,7 @@ public class JUnitMessageQueue {
         return true;
       }
       Throwable exception = result.getException();
-      if (exception != null
-          && !(exception instanceof JUnitFatalLaunchException)) {
+      if (exception != null && !isMember(exception, THROWABLES_NOT_RETRIED)) {
         return true;
       }
     }
@@ -461,7 +470,7 @@ public class JUnitMessageQueue {
     }
     return clientStatus;
   }
-  
+
   /**
    * Get the map of test results from all clients for a given {@link TestInfo},
    * creating it if necessary.
@@ -476,5 +485,14 @@ public class JUnitMessageQueue {
       testResults.put(testInfo, results);
     }
     return results;
+  }
+
+  private boolean isMember(Throwable exception, Set<Class<? extends Throwable>> throwableSet) {
+    for (Class<? extends Throwable> throwable : throwableSet) {
+      if (throwable.isInstance(exception)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
