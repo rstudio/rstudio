@@ -21,6 +21,7 @@ import com.google.gwt.dev.js.ast.CanBooleanEval;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsBlock;
+import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsBreak;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -42,14 +43,17 @@ import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsValueLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
+import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
-import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -151,12 +155,21 @@ public class JsStaticEval {
 
     private Set<JsExpression> evalBooleanContext = new HashSet<JsExpression>();
 
+    /**
+     * This is used by {@link #additionCoercesToString}.
+     */
+    private Map<JsExpression, Boolean> coercesToStringMap = new IdentityHashMap<JsExpression, Boolean>();
+
     @Override
     public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
       JsBinaryOperator op = x.getOperator();
       JsExpression arg1 = x.getArg1();
       JsExpression arg2 = x.getArg2();
-      if (op == JsBinaryOperator.AND) {
+
+      if (MATH_ASSOCIATIVE.contains(op)
+          && trySimplifyAssociativeExpression(x, ctx)) {
+        // Nothing else to do
+      } else if (op == JsBinaryOperator.AND) {
         shortCircuitAnd(arg1, arg2, ctx);
       } else if (op == JsBinaryOperator.OR) {
         shortCircuitOr(arg1, arg2, ctx);
@@ -454,6 +467,52 @@ public class JsStaticEval {
       return true;
     }
 
+    /**
+     * Given an expression, determine if the addition operator would cause a
+     * string coercion to happen.
+     */
+    private boolean additionCoercesToString(JsExpression expr) {
+      if (expr instanceof JsStringLiteral) {
+        return true;
+      }
+
+      /*
+       * Because the nodes passed into this method are visited on exit, it is
+       * worthwile to memoize the result for this function.
+       */
+      Boolean toReturn = coercesToStringMap.get(expr);
+      if (toReturn != null) {
+        return toReturn;
+      }
+      toReturn = false;
+
+      if (expr instanceof JsBinaryOperation) {
+        JsBinaryOperation op = (JsBinaryOperation) expr;
+        switch (op.getOperator()) {
+          case ADD:
+            toReturn = additionCoercesToString(op.getArg1())
+                || additionCoercesToString(op.getArg2());
+            break;
+          case COMMA:
+            toReturn = additionCoercesToString(op.getArg2());
+            break;
+        }
+
+        if (op.getOperator().isAssignment()) {
+          toReturn = additionCoercesToString(op.getArg2());
+        }
+      }
+
+      /*
+       * TODO: Consider adding heuristics to detect String(foo), typeof(foo),
+       * and foo.toString(). The latter is debatable, since an implementation
+       * might not actually return a string.
+       */
+
+      coercesToStringMap.put(expr, toReturn);
+      return toReturn;
+    }
+
     private boolean appendLiteral(StringBuilder result, JsValueLiteral val) {
       if (val instanceof JsNumberLiteral) {
         double number = ((JsNumberLiteral) val).getValue();
@@ -469,7 +528,7 @@ public class JsStaticEval {
       }
       return true;
     }
-        
+
     /**
      * This method MUST be called whenever any statements are removed from a
      * function. This is because some statements, such as JsVars or JsFunction
@@ -502,7 +561,7 @@ public class JsStaticEval {
     }
 
     /*
-     * String.valueOf(Double) produces trailing .0 on integers which is 
+     * String.valueOf(Double) produces trailing .0 on integers which is
      * incorrect for Javascript which produces conversions to string without
      * trailing zeroes. Without this, int + String will turn out wrong.
      */
@@ -514,7 +573,7 @@ public class JsStaticEval {
       }
       return num;
     }
-        
+
     private SourceInfo makeSourceInfo(HasSourceInfo x, String m) {
       return x.getSourceInfo().makeChild(StaticEvalVisitor.class, m);
     }
@@ -592,23 +651,121 @@ public class JsStaticEval {
         JsExpression arg2, JsContext<JsExpression> ctx) {
       if (arg1 instanceof JsValueLiteral && arg2 instanceof JsValueLiteral) {
         // case: number + number
-        if (arg1 instanceof JsNumberLiteral && 
-            arg2 instanceof JsNumberLiteral) {
-          ctx.replaceMe(program.getNumberLiteral(
-              ((JsNumberLiteral) arg1).getValue() + 
-              ((JsNumberLiteral) arg2).getValue()));
+        if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
+          double value = ((JsNumberLiteral) arg1).getValue()
+              + ((JsNumberLiteral) arg2).getValue();
+          ctx.replaceMe(program.getNumberLiteral(value));
         } else {
           // cases: number + string or string + number
           StringBuilder result = new StringBuilder();
-          if (appendLiteral(result, (JsValueLiteral) arg1) && 
-              appendLiteral(result, (JsValueLiteral) arg2)) {
+          if (appendLiteral(result, (JsValueLiteral) arg1)
+              && appendLiteral(result, (JsValueLiteral) arg2)) {
             ctx.replaceMe(program.getStringLiteral(original.getSourceInfo(),
                 result.toString()));
           }
         }
       }
     }
-  
+
+    /**
+     * Attempts to simplify adjoining binary expressions with mathematically
+     * associative operators. This pass also tries to make these binary
+     * expressions as left-normal as possible.
+     */
+    private boolean trySimplifyAssociativeExpression(JsBinaryOperation x,
+        JsContext<JsExpression> ctx) {
+      boolean toReturn = false;
+      JsBinaryOperator op = x.getOperator();
+      JsExpression arg1 = x.getArg1();
+      JsExpression arg2 = x.getArg2();
+
+      /*
+       * First, we'll try to normalize the nesting of any binary expressions
+       * that we encounter. If we do this correctly,it will help to cut down on
+       * the number of unnecessary parens in the emitted JS.
+       */
+      // (X) O (c O d) ==> ((X) O c) O d
+      {
+        JsBinaryOperation rightOp = null;
+        if (arg2 instanceof JsBinaryOperation) {
+          rightOp = (JsBinaryOperation) arg2;
+        }
+        if (rightOp != null && !rightOp.getOperator().isAssignment()
+            && op == rightOp.getOperator()) {
+
+          if (op == JsBinaryOperator.ADD) {
+            /*
+             * JS type coercion is a problem if we don't know for certain that
+             * the right-hand expression will definitely be evaluated in a
+             * string context.
+             */
+            boolean mustBeString = additionCoercesToString(rightOp.getArg1())
+                || (additionCoercesToString(arg1) && additionCoercesToString(rightOp.getArg2()));
+            if (!mustBeString) {
+              return toReturn;
+            }
+          }
+
+          // (X) O c --> Try to reduce this
+          JsExpression newLeft = new JsBinaryOperation(x.getSourceInfo(), op,
+              arg1, rightOp.getArg1());
+
+          // Reset local vars with new state
+          op = rightOp.getOperator();
+          arg1 = accept(newLeft);
+          arg2 = rightOp.getArg2();
+          x = new JsBinaryOperation(x.getSourceInfo(), op, arg1, arg2);
+
+          ctx.replaceMe(x);
+          toReturn = didChange = true;
+        }
+      }
+
+      /*
+       * Now that we know that our AST is as left-normal as we can make it
+       * (because this method is called from endVisit), we now try to simplify
+       * the left-right node and the right node.
+       */
+      // (a O b) O c ==> a O s
+      {
+        JsBinaryOperation leftOp = null;
+        JsExpression leftLeft = null;
+        JsExpression leftRight = null;
+
+        if (arg1 instanceof JsBinaryOperation) {
+          leftOp = (JsBinaryOperation) arg1;
+          if (op.getPrecedence() == leftOp.getOperator().getPrecedence()) {
+            leftLeft = leftOp.getArg1();
+            leftRight = leftOp.getArg2();
+          }
+        }
+
+        if (leftRight != null) {
+          if (op == JsBinaryOperator.ADD) {
+            // Behavior as described above
+            boolean mustBeString = additionCoercesToString(leftRight)
+                || (additionCoercesToString(leftLeft) && additionCoercesToString(arg2));
+            if (!mustBeString) {
+              return toReturn;
+            }
+          }
+
+          // (b O c)
+          JsBinaryOperation middle = new JsBinaryOperation(x.getSourceInfo(),
+              op, leftRight, arg2);
+          StaticEvalVisitor v = new StaticEvalVisitor();
+          JsExpression maybeSimplified = v.accept(middle);
+
+          if (v.didChange()) {
+            x.setArg1(leftLeft);
+            x.setArg2(maybeSimplified);
+            toReturn = didChange = true;
+          }
+        }
+      }
+      return toReturn;
+    }
+
     private void trySimplifyEq(JsExpression original, JsExpression arg1,
         JsExpression arg2, JsContext<JsExpression> ctx) {
       JsExpression updated = simplifyEq(original, arg1, arg2);
@@ -661,8 +818,20 @@ public class JsStaticEval {
     }
   }
 
+  /**
+   * A set of the JS operators that are mathematically associative in nature.
+   */
+  private static final Set<JsBinaryOperator> MATH_ASSOCIATIVE = EnumSet.of(
+      JsBinaryOperator.ADD, JsBinaryOperator.AND, JsBinaryOperator.BIT_AND,
+      JsBinaryOperator.BIT_OR, JsBinaryOperator.BIT_XOR,
+      JsBinaryOperator.COMMA, JsBinaryOperator.MUL, JsBinaryOperator.OR);
+
   public static boolean exec(JsProgram program) {
     return (new JsStaticEval(program)).execImpl();
+  }
+
+  public static <T extends JsVisitable> T exec(JsProgram program, T node) {
+    return (new JsStaticEval(program)).execImpl(node);
   }
 
   /**
@@ -768,5 +937,9 @@ public class JsStaticEval {
     sev.accept(program);
 
     return sev.didChange();
+  }
+
+  public <T extends JsVisitable> T execImpl(T node) {
+    return new StaticEvalVisitor().accept(node);
   }
 }

@@ -30,6 +30,65 @@ public class JsStaticEvalTest extends OptimizerTestBase {
     assertEquals("alert('Hello 42.2');", optimize("alert('Hello ' + 42.2);"));
   }
 
+  public void testAssociativity() throws Exception {
+    // Simple test
+    assertEquals("alert(a||b||c||d);", optimize("alert((a||b)||(c||d));"));
+    assertEquals("alert(a&&b&&c&&d);", optimize("alert((a&&b)&&(c&&d));"));
+
+    // Preserve precedence
+    assertEquals("alert((a||b)&&(c||d));",
+        optimize("alert((a || b) && (c || d));"));
+    assertEquals("alert(a&&b||c&&d);",
+        optimize("alert((a && b) || ( c && d));"));
+    assertEquals("a(),b&&c();", optimize("a(), b && c()"));
+    assertEquals("a()&&b,c();", optimize("a() && b, c()"));
+
+    // Don't damage math expressions
+    assertEquals("alert(seconds/(60*60));",
+        optimize("alert(seconds / (60 * 60))"));
+    assertEquals("alert(1-(1-foo));", optimize("alert(1 - (1 - foo))"));
+
+    // Don't damage assignments
+    assertEquals("alert((a=0,b=foo));",
+        optimize("alert((a = 0, b = (bar, foo)))"));
+    assertEquals("alert(1+(a='2')+3+4);",
+        optimize("alert(1 + (a = '2') + 3 + 4);"));
+    assertEquals("alert(1+(a='2')+7);",
+        optimize("alert(1 + (a = '2') + (3 + 4));"));
+
+    // Break comma expressions up
+    assertEquals("alert((a(),b(),c(),d));",
+        optimize("alert(((a(),b()),(c(),d)));"));
+    // and remove expressions without side effects
+    assertEquals("alert(d);", optimize("alert(((a,b),(c,d)));"));
+
+    // Pattern of coercing a numeric add operation to a string
+    assertEquals("alert(''+(a+b));", optimize("alert('' + (a + b))"));
+    assertEquals("alert('foo'+(a+b));",
+        optimize("alert('foo' + ('' + (a + b)))"));
+
+    // Tests involving numeric and string literals and identifiers
+    assertEquals("alert(21+(1+$foo));",
+        optimize("alert((20 + 1) + (1 + $foo));"));
+    assertEquals("alert('211'+$foo);",
+        optimize("alert((20 + 1) + ('1' + $foo));"));
+    assertEquals("alert('2011'+$foo);",
+        optimize("alert((20 + '1') + ('1' + $foo));"));
+    assertEquals("alert('2011'+$foo);",
+        optimize("alert(('20' + 1) + ('1' + $foo));"));
+    assertEquals("alert('2011'+$foo);",
+        optimize("alert(('20' + '1') + ('1' + $foo));"));
+
+    // These are also tricky, because $foo could be non-numeric
+    assertEquals("alert($foo+1+21);", optimize("alert(($foo + 1) + (20 + 1));"));
+    assertEquals("alert($bar+13+7+(2+$foo));",
+        optimize("alert((($bar + (10 + 3)) + (2 + 5)) + (2 + $foo));"));
+
+    // Without type info, there's nothing that can be done for this expr
+    assertEquals("alert($foo+($bar+($baz+$quux)));",
+        optimize("alert($foo + ($bar + ($baz + $quux)));"));
+  }
+
   public void testIfWithEmptyThen() throws Exception {
     assertEquals("a();", optimize("if (a()) { }"));
   }
