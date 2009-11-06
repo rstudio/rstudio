@@ -1,4 +1,4 @@
-var GwtDevelopmentModePlugin = {
+var GwtDeveloperPlugin = {
 
 // Add a new entry when the Add Entry button is clicked.
 addEntry: function() {
@@ -70,11 +70,12 @@ makeLBE: function(inc, hostname) {
   return listboxEntry;
 },
 
-// Internal - load the access list from the gwt-dmp.accessList preference
+// Internal - load the access list from the gwt-dev-plugin.accessList
+// preference
 getAccessList: function() {
   var prefServ = Components.classes["@mozilla.org/preferences-service;1"]
                   .getService(Components.interfaces.nsIPrefService);
-  var prefs = prefServ.getBranch("gwt-dmp.");
+  var prefs = prefServ.getBranch("gwt-dev-plugin.");
   var pref = prefs.getCharPref("accessList");
   if (!pref) {
     return [];
@@ -82,11 +83,12 @@ getAccessList: function() {
   return pref.split(",");
 },
 
-// Internal - save the access list to the gwt-dmp.accessList preference
+// Internal - save the access list to the gwt-dev-plugin.accessList
+// preference
 saveAccessList: function(list) {
   var prefServ = Components.classes["@mozilla.org/preferences-service;1"]
                   .getService(Components.interfaces.nsIPrefService);
-  var prefs = prefServ.getBranch("gwt-dmp.");
+  var prefs = prefServ.getBranch("gwt-dev-plugin.");
   prefs.setCharPref("accessList", list.join(","));
   prefServ.savePrefFile(null);
 }

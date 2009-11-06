@@ -23,6 +23,15 @@
 #include "nsMemory.h"
 #include "nsServiceManagerUtils.h"
 #include "nsIPromptService.h"
+#include "nsIDOMWindow.h"
+#include "nsIDOMWindowInternal.h"
+#include "nsIDOMLocation.h"
+#include "nsXPCOMStrings.h"
+#include "nsICategoryManager.h"
+#include "nsIJSContextStack.h"
+#include "nsIScriptContext.h"
+#include "nsIScriptGlobalObject.h"
+#include "nsPIDOMWindow.h"
 
 #ifndef NS_IMPL_ISUPPORTS2_CI
 #include "nsIClassInfoImpl.h" // 1.9 only
@@ -69,34 +78,181 @@ static nsresult getUserAgent(std::string& userAgent) {
   return NS_OK;
 }
 
+/**
+ * Get JS window object.
+ *
+ * @param win output parameter to store the window object
+ * @return true on success
+ */
+static bool getWindowObject(nsIDOMWindow** win) {
+  // Get JSContext from stack.
+  nsCOMPtr<nsIJSContextStack> stack =
+      do_GetService("@mozilla.org/js/xpc/ContextStack;1");
+  if (!stack) {
+    Debug::log(Debug::Error) << "getWindowObject: no context stack"
+        << Debug::flush;
+    return false;
+  }
+  JSContext *cx;
+  if (NS_FAILED(stack->Peek(&cx)) || !cx) {
+    Debug::log(Debug::Error) << "getWindowObject: no context on stack"
+        << Debug::flush;
+    return false;
+  }
+  if (!(::JS_GetOptions(cx) & JSOPTION_PRIVATE_IS_NSISUPPORTS)) {
+    Debug::log(Debug::Error)
+        << "getWindowObject: context doesn't have nsISupports" << Debug::flush;
+    return false;
+  }
+
+  nsCOMPtr<nsIScriptContext> scx =
+    do_QueryInterface(static_cast<nsISupports *>
+                                 (::JS_GetContextPrivate(cx)));
+  if (!scx) {
+    Debug::log(Debug::Error) << "getWindowObject: no script context"
+        << Debug::flush;
+    return false;
+  }
+  nsCOMPtr<nsIScriptGlobalObject> globalObj = scx->GetGlobalObject();
+  if (!globalObj) {
+    Debug::log(Debug::Error) << "getWindowObject: no global object"
+        << Debug::flush;
+    return false;
+  }
+  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(globalObj);
+  if (!window) {
+    Debug::log(Debug::Error) << "getWindowObject: window is null"
+        << Debug::flush;
+    return false;
+  }
+  NS_ADDREF(*win = window);
+  return true;
+}
+
+/**
+ * Get the URL of a window.
+ *
+ * @param win DOMWindowInternal instance
+ * @param url output wide string for the URL
+ * @return true if successful
+ */
+static bool getWindowUrl(nsIDOMWindowInternal* win, nsAString& url) {
+  nsCOMPtr<nsIDOMLocation> loc;
+  if (win->GetLocation(getter_AddRefs(loc)) != NS_OK) {
+    Debug::log(Debug::Info) << "Unable to get location" << Debug::flush;
+    return false;
+  }
+  if (loc->GetHref(url) != NS_OK) {
+    Debug::log(Debug::Info) << "Unable to get URL" << Debug::flush;
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Get the top-level window for a given window, and its URL.
+ *
+ * @param win window to start from
+ * @param topWinRet output parameter to store top window
+ * @param topUrl output parameter to store URL
+ * @return true on success, false on error (already logged)
+ */
+static bool getTopWindow(nsIDOMWindow* win, nsIDOMWindowInternal** topWinRet,
+    nsAString& topUrl) {
+  nsCOMPtr<nsIDOMWindow> topWin;
+  if (win->GetTop(getter_AddRefs(topWin)) != NS_OK) {
+    Debug::log(Debug::Error) << "Unable to get top window" << Debug::flush;
+    return false;
+  }
+  nsresult rv;
+  nsCOMPtr<nsIDOMWindowInternal> topWinInt = do_QueryInterface(topWin, &rv);
+  if (rv != NS_OK) {
+    Debug::log(Debug::Error) << "Unable to QI DOMWindowInternal"
+        << Debug::flush;
+    return false;
+  }
+  nsCOMPtr<nsIDOMWindowInternal> opener;
+  if (topWinInt->GetOpener(getter_AddRefs(opener)) != NS_OK) {
+    Debug::log(Debug::Debugging) << "Unable to get opener" << Debug::flush;
+    *topWinRet = topWinInt;
+    return true;
+  }
+  if (!getWindowUrl(topWinInt, topUrl)) {
+    Debug::log(Debug::Error) << "Unable to get url of top window"
+        << Debug::flush;
+    return false;
+  }
+  while (opener) {
+    nsCOMPtr<nsIDOMWindow> nextTopWin;
+    if (opener->GetTop(getter_AddRefs(nextTopWin)) != NS_OK) {
+      Debug::log(Debug::Debugging) << "Unable to get next top" << Debug::flush;
+      break;
+    }
+    if (nextTopWin == topWin) {
+      // prevent infinite loop -- see issue 4199:
+      // http://code.google.com/p/google-web-toolkit/issues/detail?id=4199
+      break;
+    }
+    nsCOMPtr<nsIDOMWindowInternal> nextTopWinInt = do_QueryInterface(
+        nextTopWin, &rv);
+    if (rv != NS_OK) {
+      Debug::log(Debug::Warning) << "Unable to QI DOMWindowInternal on next"
+          << Debug::flush;
+      break;
+    }
+    if (!getWindowUrl(nextTopWinInt, topUrl)) {
+      break;
+    }
+    Debug::log(Debug::Debugging) << " current url: " << topUrl << Debug::flush;
+    topWin = nextTopWin;
+    topWinInt = nextTopWinInt;
+    if (topWinInt->GetOpener(getter_AddRefs(opener)) != NS_OK) {
+      break;
+    }
+  }
+  Debug::log(Debug::Info) << "  Top url: " << topUrl << Debug::flush;
+  *topWinRet = topWinInt;
+  return true;
+}
+
 std::string ExternalWrapper::computeTabIdentity() {
   std::string returnVal;
   if (!windowWatcher) {
     return returnVal;
   }
-  nsCOMPtr<nsIDOMWindow> topWindow(domWindow);
-  if (topWindow->GetTop(getter_AddRefs(topWindow)) != NS_OK) {
-    Debug::log(Debug::Warning) << "Unable to get top window" << Debug::flush;
+  // The nsPIDOMWindow interface of our top-level window appears to be stable
+  // across refreshes, so we will use that for our tab ID.
+  nsCOMPtr<nsPIDOMWindow> privateWin = do_QueryInterface(topWindow);
+  if (!privateWin) {
     return returnVal;
   }
-  nsCOMPtr<nsIWebBrowserChrome> chrome;
-  if (windowWatcher->GetChromeForWindow(topWindow.get(),
-      getter_AddRefs(chrome)) != NS_OK) {
-    Debug::log(Debug::Warning) << "Unable to get browser chrome for window"
-        << Debug::flush;
-    return returnVal;
-  }
-  Debug::log(Debug::Debugging) << "computeTabIdentity: browserChrome = "
-      << (void*) chrome.get() << Debug::flush;
-  // TODO(jat): find a way to get the tab from the chrome window
+  char buf[20]; // typically 8-16 hex digits plus 0x, not horrible if truncated
+  snprintf(buf, sizeof(buf), "%p", privateWin.get());
+  buf[19] = 0; // ensure null termination
+  returnVal = buf;
   return returnVal;
 }
 
-NS_IMETHODIMP ExternalWrapper::Init(nsIDOMWindow* domWindow,
+// TODO(jat): remove suppliedWindow and update hosted.html API
+NS_IMETHODIMP ExternalWrapper::Init(nsIDOMWindow* suppliedWindow,
     PRBool *_retval) {
-  Debug::log(Debug::Spam) << "Init" << Debug::flush;
-  this->domWindow = domWindow;
-  *_retval = true;
+  Debug::log(Debug::Debugging) << "Plugin initialized from hosted.html"
+      << Debug::flush;
+  *_retval = false;
+  nsCOMPtr<nsIDOMWindow> computedWindow;
+  if (getWindowObject(getter_AddRefs(computedWindow))) {
+    Debug::log(Debug::Debugging) << " passed window=" << suppliedWindow
+        << ", computed=" << computedWindow << Debug::flush;
+    domWindow = computedWindow;
+  } else {
+    Debug::log(Debug::Warning) << " using supplied window object"
+        << Debug::flush;
+    // TODO(jat): remove this
+    domWindow = suppliedWindow;
+  }
+  if (getTopWindow(domWindow, getter_AddRefs(topWindow), url)) {
+    *_retval = true;
+  }
   return NS_OK;
 }
 
@@ -106,11 +262,11 @@ bool ExternalWrapper::askUserToAllow(const std::string& url) {
   if (!promptService) {
     return false;
   }
-  NS_ConvertASCIItoUTF16 title("Allow GWT Development Mode Connection");
+  NS_ConvertASCIItoUTF16 title("Allow GWT Developer Plugin Connection");
   NS_ConvertASCIItoUTF16 text("This web server is requesting a GWT "
-      "development mode connection -- do you want to allow it?");
+      "developer plugin connection -- do you want to allow it?");
   NS_ConvertASCIItoUTF16 checkMsg("Remember this decision for this server "
-      "(change in GWT plugin preferences)");
+      "(change in GWT Developer Plugin preferences)");
   PRBool remember = false;
   PRBool include = true;
   if (promptService->ConfirmCheck(domWindow.get(), title.get(), text.get(),
@@ -123,16 +279,18 @@ bool ExternalWrapper::askUserToAllow(const std::string& url) {
   return include;
 }
 
-NS_IMETHODIMP ExternalWrapper::Connect(const nsACString& url,
+// TODO(jat): remove suppliedUrl and update hosted.html API
+NS_IMETHODIMP ExternalWrapper::Connect(const nsACString& suppliedUrl,
 		const nsACString& sessionKey, const nsACString& aAddr,
 		const nsACString& aModuleName, const nsACString& hostedHtmlVersion,
 		PRBool *_retval) {
-  Debug::log(Debug::Spam) << "Connect(url=" << url << ", sessionKey="
+  Debug::log(Debug::Info) << "Connect(url=" <<  url << ", sessionKey="
       << sessionKey << ", address=" << aAddr << ", module=" << aModuleName
       << ", hostedHtmlVersion=" << hostedHtmlVersion << Debug::flush;
 
   // TODO: string utilities?
-  nsCString urlAutoStr(url);
+  nsCString urlAutoStr;
+  NS_UTF16ToCString(url, NS_CSTRING_ENCODING_UTF8, urlAutoStr);
   nsCString sessionKeyAutoStr(sessionKey);
   nsCString addrAutoStr(aAddr);
   nsCString moduleAutoStr(aModuleName);
@@ -158,6 +316,9 @@ NS_IMETHODIMP ExternalWrapper::Connect(const nsACString& url,
   std::string hostPart = hostedUrl.substr(0, index);
   std::string portPart = hostedUrl.substr(index + 1);
 
+  // TODO(jat): leaks HostChannel -- need to save it in a session object and
+  // return that so the host page can call a disconnect method on it at unload
+  // time or when it gets GC'd.
   HostChannel* channel = new HostChannel();
 
   Debug::log(Debug::Debugging) << "Connecting..." << Debug::flush;
@@ -173,8 +334,7 @@ NS_IMETHODIMP ExternalWrapper::Connect(const nsACString& url,
 
   std::string hostedHtmlVersionStr(hostedHtmlVersionAutoStr.get());
   if (!channel->init(sessionHandler.get(), BROWSERCHANNEL_PROTOCOL_VERSION,
-      BROWSERCHANNEL_PROTOCOL_VERSION,
-      hostedHtmlVersionStr)) {
+      BROWSERCHANNEL_PROTOCOL_VERSION, hostedHtmlVersionStr)) {
     *_retval = false;
     return NS_OK;
   }
@@ -211,13 +371,16 @@ static bool strEquals(const PRUnichar* utf16, const char* ascii) {
   return strcmp(ascii, utf8.get()) == 0;
 }
 
-NS_IMETHODIMP ExternalWrapper::CanCreateWrapper(const nsIID * iid, char **_retval) {
-  Debug::log(Debug::Spam) << "ExternalWrapper::CanCreateWrapper" << Debug::flush;
+NS_IMETHODIMP ExternalWrapper::CanCreateWrapper(const nsIID * iid,
+    char **_retval) {
+  Debug::log(Debug::Spam) << "ExternalWrapper::CanCreateWrapper"
+      << Debug::flush;
   *_retval = cloneAllAccess();
   return NS_OK;
 }
 
-NS_IMETHODIMP ExternalWrapper::CanCallMethod(const nsIID * iid, const PRUnichar *methodName, char **_retval) {
+NS_IMETHODIMP ExternalWrapper::CanCallMethod(const nsIID * iid,
+    const PRUnichar *methodName, char **_retval) {
   Debug::log(Debug::Spam) << "ExternalWrapper::CanCallMethod" << Debug::flush;
   if (strEquals(methodName, "connect") || strEquals(methodName, "init")) {
     *_retval = cloneAllAccess();
@@ -227,12 +390,14 @@ NS_IMETHODIMP ExternalWrapper::CanCallMethod(const nsIID * iid, const PRUnichar 
   return NS_OK;
 }
 
-NS_IMETHODIMP ExternalWrapper::CanGetProperty(const nsIID * iid, const PRUnichar *propertyName, char **_retval) {
+NS_IMETHODIMP ExternalWrapper::CanGetProperty(const nsIID * iid,
+    const PRUnichar *propertyName, char **_retval) {
   Debug::log(Debug::Spam) << "ExternalWrapper::CanGetProperty" << Debug::flush;
   *_retval = nsnull;
   return NS_OK;
 }
-NS_IMETHODIMP ExternalWrapper::CanSetProperty(const nsIID * iid, const PRUnichar *propertyName, char **_retval) {
+NS_IMETHODIMP ExternalWrapper::CanSetProperty(const nsIID * iid,
+    const PRUnichar *propertyName, char **_retval) {
   Debug::log(Debug::Spam) << "ExternalWrapper::CanSetProperty" << Debug::flush;
   *_retval = nsnull;
   return NS_OK;

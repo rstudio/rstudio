@@ -1,1 +1,1 @@
-pref("gwt-dmp.accessList", "");
+pref("gwt-dev-plugin.accessList", "");

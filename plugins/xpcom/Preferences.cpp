@@ -27,8 +27,8 @@
 #include "nsIPrefBranch2.h"
 #include "nsServiceManagerUtils.h"
 
-#define DMP_PREFS_PREFIX "gwt-dmp."
-#define DMP_ACCESS_LIST "accessList"
+#define GWT_DEV_PREFS_PREFIX "gwt-dev-plugin."
+#define GWT_DEV_ACCESS_LIST "accessList"
 
 NS_IMPL_ADDREF(Preferences)
 NS_IMPL_RELEASE(Preferences)
@@ -38,14 +38,15 @@ Preferences::Preferences() {
   nsCOMPtr<nsIPrefService> prefService = do_GetService(
       NS_PREFSERVICE_CONTRACTID);
   if (!prefService) {
-    Debug::log(Debug::Error) << "Unable to get preference service" << Debug::flush;
+    Debug::log(Debug::Error) << "Unable to get preference service"
+        << Debug::flush;
     return;
   }
   nsCOMPtr<nsIPrefBranch> branch;
-  prefService->GetBranch(DMP_PREFS_PREFIX, getter_AddRefs(branch));
+  prefService->GetBranch(GWT_DEV_PREFS_PREFIX, getter_AddRefs(branch));
   if (!branch) {
-    Debug::log(Debug::Error) << "Unable to get gwt-dmp. preference branch"
-        << Debug::flush;
+    Debug::log(Debug::Error) << "Unable to get " GWT_DEV_PREFS_PREFIX
+        " preference branch" << Debug::flush;
     return;
   }
   prefs = do_QueryInterface(branch);
@@ -53,9 +54,10 @@ Preferences::Preferences() {
     Debug::log(Debug::Error) << "Unable to get nsIPrefBranch2" << Debug::flush;
     return;
   }
-  prefs->AddObserver(DMP_ACCESS_LIST, this, PR_FALSE);
+  prefs->AddObserver(GWT_DEV_ACCESS_LIST, this, PR_FALSE);
   nsCString prefValue;
-  if (branch->GetCharPref(DMP_ACCESS_LIST, getter_Copies(prefValue)) == NS_OK) {
+  if (branch->GetCharPref(GWT_DEV_ACCESS_LIST, getter_Copies(prefValue))
+      == NS_OK) {
     loadAccessList(prefValue.get());
   }
 }
@@ -74,7 +76,8 @@ Preferences::Observe(nsISupports *aSubject, const char* aTopic,
   nsCOMPtr<nsIPrefBranch> prefs(do_QueryInterface(aSubject, &rv));
   NS_ENSURE_SUCCESS(rv, rv);
   nsCString prefValue;
-  if (prefs->GetCharPref(DMP_ACCESS_LIST, getter_Copies(prefValue)) == NS_OK) {
+  if (prefs->GetCharPref(GWT_DEV_ACCESS_LIST, getter_Copies(prefValue))
+      == NS_OK) {
     loadAccessList(prefValue.get());
   }
   return NS_OK;
@@ -82,7 +85,8 @@ Preferences::Observe(nsISupports *aSubject, const char* aTopic,
 
 void Preferences::addNewRule(const std::string& pattern, bool exclude) {
   nsCString prefValue;
-  if (prefs->GetCharPref(DMP_ACCESS_LIST, getter_Copies(prefValue)) != NS_OK) {
+  if (prefs->GetCharPref(GWT_DEV_ACCESS_LIST, getter_Copies(prefValue))
+      != NS_OK) {
     Debug::log(Debug::Error) << "Unable to retrieve access list preference"
         << Debug::flush;
     return;
@@ -96,7 +100,7 @@ void Preferences::addNewRule(const std::string& pattern, bool exclude) {
     pref += '!';
   }
   pref += pattern;
-  if (prefs->SetCharPref(DMP_ACCESS_LIST, pref.c_str()) != NS_OK) {
+  if (prefs->SetCharPref(GWT_DEV_ACCESS_LIST, pref.c_str()) != NS_OK) {
     Debug::log(Debug::Error) << "Unable to save modified access list preference"
         << Debug::flush;
     return;
@@ -114,6 +118,6 @@ void Preferences::loadAccessList(const char* prefValue) {
 
 Preferences::~Preferences() {
   if (prefs) {
-    prefs->RemoveObserver(DMP_ACCESS_LIST, this);
+    prefs->RemoveObserver(GWT_DEV_ACCESS_LIST, this);
   }
 }

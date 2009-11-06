@@ -76,7 +76,7 @@ void Debug::logString(const char* str) {
   strncpy_s(bufPtr, buflen, str, len);
   bufPtr += len;
 #else
-  printf("%s", str);
+  fputs(str, stdout);
 #endif
 }
 #endif

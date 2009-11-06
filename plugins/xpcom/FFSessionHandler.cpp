@@ -48,7 +48,7 @@ static JSContext* getJSContext() {
 
   if (cx == nsnull) {
     // TODO(jat): figure out why this can be null at plugin unload time
-    Debug::log(Debug::Error) << "GWT DMP: Null JS context" << Debug::flush;
+    Debug::log(Debug::Error) << "GWT Dev Plugin: Null JS context" << Debug::flush;
   }
 
   return cx;

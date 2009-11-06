@@ -41,7 +41,7 @@ class nsIDOMWindow;
   { 0xAA, 0xFD, 0x17, 0xE4, 0x97, 0xD1, 0x5D, 0x09 } }
 
 #define OOPHM_CONTRACTID "@gwt.google.com/oophm/ExternalWrapper;1"
-#define OOPHM_CLASSNAME "GWT Hosted-mode component"
+#define OOPHM_CLASSNAME "GWT DevMode component"
 
 class ExternalWrapper : public IOOPHM,
                         public nsISecurityCheckedComponent {
@@ -54,6 +54,8 @@ class ExternalWrapper : public IOOPHM,
 
 private:
   nsCOMPtr<nsIDOMWindow> domWindow;
+  nsCOMPtr<nsIDOMWindowInternal> topWindow;
+  nsString url;
   nsCOMPtr<Preferences> preferences;
   scoped_ptr<FFSessionHandler> sessionHandler;
   nsCOMPtr<nsIWindowWatcher> windowWatcher;
@@ -74,8 +76,16 @@ private:
 
 };
 
-inline Debug::DebugStream& operator<<(Debug::DebugStream& dbg, const nsACString& str) {
+inline Debug::DebugStream& operator<<(Debug::DebugStream& dbg,
+    const nsACString& str) {
   nsCString copy(str);
+  dbg << copy.get();
+  return dbg;
+}
+
+inline Debug::DebugStream& operator<<(Debug::DebugStream& dbg,
+    const nsAString& str) {
+  NS_ConvertUTF16toUTF8 copy(str);
   dbg << copy.get();
   return dbg;
 }

@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\xpconnect&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;&quot;..\prebuilt\ff2\incldue&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include\xpconnect&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -64,10 +64,10 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib xpcomglue_s.lib xpcom.lib nspr4.lib js3250.dll"
 				ShowProgress="2"
-				OutputFile="$(ProjectDir)\..\extension-ff2\platform\WINNT_x86-msvc\components\xpOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\extension\lib\WINNT_x86-msvc\ff2\xpGWTDMP.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\lib&quot;"
-				ModuleDefinitionFile="$(ProjectDir)\..\xpOOPHM.def"
+				ModuleDefinitionFile="$(ProjectDir)\..\xpGWTDMP.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
@@ -143,10 +143,10 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib xpcomglue_s.lib xpcom.lib nspr4.lib js3250.lib"
 				ShowProgress="2"
-				OutputFile="..\extension\platform\WINNT_x86-msvc\components\xpOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\prebuilt\extension\lib\WINNT_x86-msvc\ff2\xpGWTDMP.dll"
 				LinkIncremental="0"
 				AdditionalLibraryDirectories="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.8\WINNT_x86-msvc\lib"
-				ModuleDefinitionFile="..\xpOOPHM.def"
+				ModuleDefinitionFile="..\xpGWTDMP.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
@@ -693,7 +693,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath="..\xpOOPHM.rc"
+				RelativePath="..\xpGWTDMP.rc"
 				>
 			</File>
 		</Filter>
@@ -791,7 +791,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\xpOOPHM.def"
+				RelativePath="..\xpGWTDMP.def"
 				>
 			</File>
 		</Filter>

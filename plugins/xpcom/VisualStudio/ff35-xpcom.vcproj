@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;..\prebuilt\ff3\include;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpconnect&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;..\prebuilt\ff35\include;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpconnect&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -65,10 +65,10 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib xpcomglue_s.lib xpcom.lib nspr4.lib js3250.lib"
 				ShowProgress="2"
-				OutputFile="$(ProjectDir)\..\prebuilt\extension-ff35\platform\WINNT_x86-msvc\components\xpOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\prebuilt\extension\lib\WINNT_x86-msvc\ff35\xpGwtDevPlugin.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\lib"
-				ModuleDefinitionFile="$(ProjectDir)\..\xpOOPHM.def"
+				ModuleDefinitionFile="$(ProjectDir)\..\xpGwtDevPlugin.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
@@ -125,10 +125,10 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;..\prebuilt\ff3\include;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpconnect&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;..\prebuilt\ff35\include;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpconnect&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3;BROWSER=ff35"
 				ExceptionHandling="1"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -140,6 +140,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				ResourceOutputFileName="$(IntDir)/$(TargetName).res"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -148,10 +149,10 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib xpcomglue_s.lib xpcom.lib nspr4.lib js3250.lib"
 				ShowProgress="2"
-				OutputFile="..\extension\platform\WINNT_x86-msvc\components\xpOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\prebuilt\extension\lib\WINNT_x86-msvc\ff35\xpGwtDevPlugin.dll"
 				LinkIncremental="0"
 				AdditionalLibraryDirectories="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\lib"
-				ModuleDefinitionFile="..\xpOOPHM.def"
+				ModuleDefinitionFile="$(ProjectDir)\..\xpGwtDevPlugin.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
@@ -255,7 +256,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\prebuilt\ff3\include\IOOPHM.h"
+				RelativePath="..\prebuilt\ff35\include\IOOPHM.h"
 				>
 			</File>
 			<File
@@ -717,7 +718,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath="..\xpOOPHM.rc"
+				RelativePath="..\xpGwtDevPlugin.rc"
 				>
 			</File>
 		</Filter>
@@ -827,7 +828,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\xpOOPHM.def"
+				RelativePath="..\xpGwtDevPlugin.def"
 				>
 			</File>
 		</Filter>

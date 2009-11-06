@@ -22,12 +22,17 @@
 #include "nsICategoryManager.h"
 #include "nsISupports.h"
 #include "nsIXULAppInfo.h"
+#include "nsIXULRuntime.h"
 #include "nsServiceManagerUtils.h"
 #include "nsXPCOMCID.h"
 
 #ifdef BROWSER_FF3
 #include "nsIClassInfoImpl.h" // 1.9 only
 #endif
+
+// Allow a macro to be treated as a C string, ie -Dfoo=bar; QUOTE(foo) = "bar"
+#define QUOTE_HELPER(x) #x
+#define QUOTE(x) QUOTE_HELPER(x)
 
 #ifdef _WINDOWS
 #include <windows.h>
@@ -112,36 +117,30 @@ static nsModuleInfo const kModuleInfo = {
 
 NSGETMODULE_ENTRY_POINT(ExternalWrapperModule) (nsIComponentManager *servMgr,
     nsIFile* location, nsIModule** result) {
-  Debug::log(Debug::Debugging) << "GWT DMP ExternalWrapperModule entry point"
-      << Debug::flush;
-
-  // CURRENTLY BUILT AS SEPARATE PLUGINS FOR FF1.5/2 and FF3, so the below
-  // comments are out of date.
-  //
-  // This module is compiled once against Gecko 1.8 (Firefox 1.5 and 2) and
-  // once against Gecko 1.9 (Firefox 3). We need to make sure that we are
-  // only loaded into the environment we were compiled against.
   nsresult nr;
-  nsCOMPtr<nsIXULAppInfo> app_info =
-      do_GetService("@mozilla.org/xre/app-info;1", &nr);
+  nsCOMPtr<nsIXULAppInfo> app_info
+      = do_GetService("@mozilla.org/xre/app-info;1", &nr);
   if (NS_FAILED(nr) || !app_info) {
     return NS_ERROR_FAILURE;
   }
-
   nsCString gecko_version;
   app_info->GetPlatformVersion(gecko_version);
-  Debug::log(Debug::Info)
-      << "Initializing GWT Development Mode Plugin - gecko version = "
-      << gecko_version.BeginReading() << Debug::flush;
-#if defined(BROWSER_FF2)
-  if (strncmp(gecko_version.BeginReading(), "1.8", 3) != 0) {
+  nsCString browser_version;
+  app_info->GetVersion(browser_version);
+  nsCOMPtr<nsIXULRuntime> xulRuntime
+      = do_GetService("@mozilla.org/xre/app-info;1", &nr);
+  if (NS_FAILED(nr) || !app_info) {
     return NS_ERROR_FAILURE;
   }
-#elif defined(BROWSER_FF3)
-  if (strncmp(gecko_version.BeginReading(), "1.9", 3) != 0) {
-    return NS_ERROR_FAILURE;
-  }
-#endif
-
+  nsCString os;
+  xulRuntime->GetOS(os);
+  nsCString abi;
+  xulRuntime->GetXPCOMABI(abi);
+  Debug::log(Debug::Info) << "Initializing GWT Development Mode Plugin"
+      << Debug::flush;
+  Debug::log(Debug::Info) << "  gecko=" << gecko_version.BeginReading()
+      << ", firefox=" << browser_version.BeginReading() << ", abi="
+      << os.BeginReading() << "_" << abi.BeginReading() << ", built for "
+      QUOTE(BROWSER) << Debug::flush;
   return NS_NewGenericModule2(&kModuleInfo, result);
 }

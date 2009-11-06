@@ -24,8 +24,10 @@ ifeq ($(OS),mac)
 DEFAULT_FIREFOX_LIBS ?= /Applications/Firefox.app/Contents/MacOS
 RUN_PATH_FLAG = -executable_path
 DLL_SUFFIX = .dylib
-DLLFLAGS = -bundle -arch $(MARCH)
-TARGET_PLATFORM = Darwin_$(ARCH)-gcc3
+DLLFLAGS = -bundle $(ALLARCHCFLAGS)
+CFLAGS += $(ALLARCHCFLAGS)
+CXXFLAGS += $(ALLARCHCFLAGS)
+TARGET_PLATFORM = Darwin-gcc3
 # Mac puts multiple architectures into the same files
 GECKO_PLATFORM = Darwin-gcc3
 else
@@ -51,6 +53,7 @@ $(warning Defaulting to FF3 build [set with BROWSER=ff2, ff3, ff3+, or ff35])
 BROWSER=ff3
 endif
 
+CFLAGS += -DBROWSER=$(BROWSER)
 GECKO_MINOR_VERSION=
 ifeq ($(BROWSER),ff2)
 BROWSER_VERSION   = 1.8
@@ -86,11 +89,11 @@ GECKO_PLATFORM ?= $(TARGET_PLATFORM)
 COMMON            = ../common/libcommon$(FLAG32BIT).a
 
 OBJ_OUTDIR        = build/$(TARGET_PLATFORM)-$(BROWSER)
-EXTENSION_OUTDIR  = prebuilt/extension-$(BROWSER)
-FF_PLATFORM_DIR   = $(EXTENSION_OUTDIR)/platform/$(TARGET_PLATFORM)
+EXTENSION_OUTDIR  = prebuilt/extension
+FF_PLATFORM_DIR   = $(EXTENSION_OUTDIR)/lib/$(TARGET_PLATFORM)/$(BROWSER)
 
-INSTALLER_XPI     = prebuilt/gwt-dmp-$(BROWSER).xpi
-FF_DLL            = $(OBJ_OUTDIR)/libgwt_dmp_$(BROWSER)$(DLL_SUFFIX)
+INSTALLER_XPI     = prebuilt/gwt-dev-plugin.xpi
+FF_DLL            = $(OBJ_OUTDIR)/libgwt_dev_$(BROWSER)$(DLL_SUFFIX)
 #FF_TYPELIB        = build/IOOPHM.xpt
 #FF_HEADER         = $(OBJ_OUTDIR)/IOOPHM.h
 FF_TYPELIB        = prebuilt/extension/components/IOOPHM.xpt
@@ -119,11 +122,11 @@ DLLFLAGS += \
 
 INC += -I$(GECKO_PLAT_INC) -I$(GECKO_SDK)/include -I$(dir $(FF_HEADER))
 
-VERSION=0.9.$(shell ./getversion).$(shell date +%Y%m%d%H%M%S)
+VERSION ?= 0.9.$(shell ./getversion).$(shell date +%Y%m%d%H%M%S)
 
 .PHONY: all xpi lib common browser clean depend install install-platform find-ff-libs
 
-all:: common xpi
+all:: common lib xpi
 
 lib:: browser $(OBJ_OUTDIR) $(EXTENSION_OUTDIR) $(FF_DLL)
 xpi:: $(EXTENSION_OUTDIR) $(INSTALLER_XPI)
@@ -140,17 +143,16 @@ browser:: find-ff-libs
 #	    $(error Missing Firefox libraries at $(GECKO_LIBS))
 #	fi
 
-# Not needed currently, but keeping around for now in case we change back to
-# putting it in build
-$(EXTENSION_OUTDIR):
-	rm -rf $@
-	mkdir -p $@
-	#cp -r prebuilt/extension/. $(EXTENSION_OUTDIR)
-	cp -r prebuilt/extension-$(BROWSER)/. $(EXTENSION_OUTDIR)
-	@mkdir -p $@/components
+generate-install:: $(EXTENSION_OUTDIR) install-template.rdf
+	sed -e s/GWT_DEV_PLUGIN_VERSION/$(VERSION)/ install-template.rdf >$(INSTALL_RDF)
 
-generate-install:: $(EXTENSION_OUTDIR) install-template-$(BROWSER).rdf
-	sed -e s/GWT_OOPHM_VERSION/$(VERSION)/ install-template-$(BROWSER).rdf >$(INSTALL_RDF)
+linuxplatforms:
+	$(MAKE) BROWSER=ff3 ARCH=x86
+	$(MAKE) BROWSER=ff3+ ARCH=x86
+	$(MAKE) BROWSER=ff35 ARCH=x86
+	$(MAKE) BROWSER=ff3 ARCH=x86_64
+	$(MAKE) BROWSER=ff3+ ARCH=x86_64
+	$(MAKE) BROWSER=ff35 ARCH=x86_64
 
 SRCS =	\
 		ExternalWrapper.cpp \
@@ -168,26 +170,22 @@ $(FF_OBJS): $(OBJ_OUTDIR)
 $(OBJ_OUTDIR)::
 	@mkdir -p $@
 
-$(INSTALLER_XPI): $(FF_TYPELIB) $(EXTENSION_OUTDIR) generate-install $(shell find prebuilt/extension $(EXTENSION_OUTDIR)) $(FF_DLL)
+$(INSTALLER_XPI): $(FF_TYPELIB) $(EXTENSION_OUTDIR) generate-install $(shell find prebuilt/extension $(EXTENSION_OUTDIR))
 	@mkdir -p $(EXTENSION_OUTDIR)/components
-	(cd prebuilt/extension; find . \( -name .svn -prune \) -o -print | cpio -pmdua ../../$(EXTENSION_OUTDIR))
+	#(cd prebuilt/extension; find . \( -name .svn -prune \) -o -print | cpio -pmdua ../../$(EXTENSION_OUTDIR))
 	-rm $(INSTALLER_XPI)
 	(cd $(EXTENSION_OUTDIR) && zip -r -D -9 $(DIR)/$(INSTALLER_XPI) * -x '*/.svn/*' -x 'META-INF/*')
 
 $(FF_TYPELIB): IOOPHM.idl
 	$(XPIDL) $(XPIDL_FLAGS) -m typelib -e $@ $<
 
-$(FF_HEADER): IOOPHM.idl
+$(FF_HEADER): IOOPHM.idl $(OBJ_OUTDIR)
 	$(XPIDL) $(XPIDL_FLAGS) -m header -e $@ $<
 
 $(FF_DLL): $(FF_OBJS) $(COMMON)
 	$(CXX) -m$(FLAG32BIT) -o $@ $(FF_OBJS) $(COMMON) $(DLLFLAGS) 
-	@mkdir -p $(FF_PLATFORM_DIR)/components
-	cp $(FF_DLL) $(FF_PLATFORM_DIR)/components/
-#ifeq ($(OS),mac)
-#	@mkdir -p $(subst x86,ppc,$(FF_PLATFORM_DIR))/components
-#	cp $(FF_DLL) $(subst x86,ppc,$(FF_PLATFORM_DIR))/components/
-#endif
+	@mkdir -p $(FF_PLATFORM_DIR)
+	cp $(FF_DLL) $(FF_PLATFORM_DIR)/
 
 $(OBJ_OUTDIR)/%.o: %.cpp $(FF_HEADER)
 	$(CXX) $(CXXFLAGS) -c -o $@ -I. -I../common $<
@@ -200,8 +198,8 @@ clean:
 
 install-platform:
 ifdef BROWSER
-	@-mkdir -p $(subst $(EXTENSION_OUTDIR),prebuilt/extension-$(BROWSER),$(FF_PLATFORM_DIR))/components
-	-cp $(FF_DLL) $(subst $(EXTENSION_OUTDIR),prebuilt/extension-$(BROWSER),$(FF_PLATFORM_DIR))/components
+	@-mkdir -p $(FF_PLATFORM_DIR)
+	-cp $(FF_DLL) $(FF_PLATFORM_DIR))/
 ifeq ($(OS),mac)
 	@-mkdir -p $(subst $(EXTENSION_OUTDIR),prebuilt/extension-$(BROWSER),$(subst x86,ppc,$(FF_PLATFORM_DIR)))/components
 	-cp $(FF_DLL) $(subst $(EXTENSION_OUTDIR),prebuilt/extension-$(BROWSER),$(subst x86,ppc,$(FF_PLATFORM_DIR)))/components
@@ -209,6 +207,8 @@ endif
 else
 	@$(MAKE) $@ BROWSER=ff2
 	@$(MAKE) $@ BROWSER=ff3
+	@$(MAKE) $@ BROWSER=ff3+
+	@$(MAKE) $@ BROWSER=ff35
 endif
 
 DEPEND = g++ -MM -MT'$$(OBJ_OUTDIR)/$(patsubst %.cpp,%.o,$(src))' \

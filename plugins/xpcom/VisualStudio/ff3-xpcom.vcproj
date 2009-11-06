@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;&quot;..\prebuilt\ff3\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpconnect&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;&quot;..\prebuilt\ff3\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -65,10 +65,10 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib xpcomglue_s.lib xpcom.lib nspr4.lib js3250.lib"
 				ShowProgress="2"
-				OutputFile="$(ProjectDir)\..\prebuilt\extension-ff3\platform\WINNT_x86-msvc\components\xpOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\prebuilt\extension\lib\WINNT_x86-msvc\ff3\xpGwtDevPlugin.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\lib"
-				ModuleDefinitionFile="$(ProjectDir)\..\xpOOPHM.def"
+				ModuleDefinitionFile="$(ProjectDir)\..\xpGwtDevPlugin.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
@@ -125,10 +125,10 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;&quot;..\prebuilt\ff3\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpconnect&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;&quot;..\prebuilt\ff3\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3;BROWSER=ff3"
 				ExceptionHandling="1"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -140,6 +140,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				ResourceOutputFileName="$(IntDir)/$(TargetName).res"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -148,10 +149,10 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib xpcomglue_s.lib xpcom.lib nspr4.lib js3250.lib"
 				ShowProgress="2"
-				OutputFile="..\extension\platform\WINNT_x86-msvc\components\xpOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\prebuilt\extension\lib\WINNT_x86-msvc\ff3\xpGwtDevPlugin.dll"
 				LinkIncremental="0"
 				AdditionalLibraryDirectories="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\WINNT_x86-msvc\lib"
-				ModuleDefinitionFile="..\xpOOPHM.def"
+				ModuleDefinitionFile="$(ProjectDir)\..\xpGwtDevPlugin.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
@@ -263,19 +264,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jsapi.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsapi.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jsautocfg.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsautocfg.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jscompat.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jscompat.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jsconfig.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsconfig.h"
 				>
 			</File>
 			<File
@@ -283,7 +284,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jslong.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jslong.h"
 				>
 			</File>
 			<File
@@ -291,15 +292,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jsotypes.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsotypes.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jsproto.tbl"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsproto.tbl"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jspubtd.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jspubtd.h"
 				>
 			</File>
 			<File
@@ -307,23 +308,23 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jstypes.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jstypes.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jsutil.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsutil.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jsutil.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsutil.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jsutil.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsutil.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\js\jsutil.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\jsutil.h"
 				>
 			</File>
 			<File
@@ -363,7 +364,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpconnect\nsAXPCNativeCallContext.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsAXPCNativeCallContext.h"
 				>
 			</File>
 			<File
@@ -371,7 +372,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nscore.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nscore.h"
 				>
 			</File>
 			<File
@@ -391,7 +392,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\widget\nsEvent.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsEvent.h"
 				>
 			</File>
 			<File
@@ -415,15 +416,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nsIEnumerator.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIEnumerator.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nsIException.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIException.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nsIExceptionService.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIExceptionService.h"
 				>
 			</File>
 			<File
@@ -435,19 +436,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\necko\nsIHttpProtocolHandler.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIHttpProtocolHandler.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nsIInterfaceInfo.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIInterfaceInfo.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nsIInterfaceInfoManager.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIInterfaceInfoManager.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpconnect\nsIJSContextStack.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIJSContextStack.h"
 				>
 			</File>
 			<File
@@ -459,7 +460,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\caps\nsIPrincipal.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIPrincipal.h"
 				>
 			</File>
 			<File
@@ -467,31 +468,31 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\necko\nsIProtocolHandler.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIProtocolHandler.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\necko\nsIProxiedProtocolHandler.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIProxiedProtocolHandler.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpconnect\nsIScriptableInterfaces.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIScriptableInterfaces.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\dom\nsIScriptGlobalObject.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIScriptGlobalObject.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\dom\nsIScriptObjectPrincipal.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIScriptObjectPrincipal.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\caps\nsISecurityCheckedComponent.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISecurityCheckedComponent.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nsISerializable.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISerializable.h"
 				>
 			</File>
 			<File
@@ -503,11 +504,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nsISimpleEnumerator.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nsISupports.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISimpleEnumerator.h"
 				>
 			</File>
 			<File
@@ -515,7 +512,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nsISupportsBase.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISupports.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISupportsBase.h"
 				>
 			</File>
 			<File
@@ -531,7 +532,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nsISupportsUtils.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsISupportsUtils.h"
 				>
 			</File>
 			<File
@@ -539,11 +540,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nsIVariant.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIVariant.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpconnect\nsIXPConnect.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsIXPConnect.h"
 				>
 			</File>
 			<File
@@ -551,7 +552,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\necko\nsNetCID.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsNetCID.h"
 				>
 			</File>
 			<File
@@ -559,7 +560,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\nsrootidl.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\nsrootidl.h"
 				>
 			</File>
 			<File
@@ -675,15 +676,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpconnect\xpccomponents.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpccomponents.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpconnect\xpcexception.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcexception.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpconnect\xpcjsid.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcjsid.h"
 				>
 			</File>
 			<File
@@ -695,15 +696,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\xpt_arena.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpt_arena.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\xpt_struct.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpt_struct.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xpcom\xptinfo.h"
+				RelativePath="..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.0\include\xptinfo.h"
 				>
 			</File>
 		</Filter>
@@ -713,7 +714,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath="..\xpOOPHM.rc"
+				RelativePath="..\xpGwtDevPlugin.rc"
 				>
 			</File>
 		</Filter>
@@ -827,7 +828,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\xpOOPHM.def"
+				RelativePath="..\xpGwtDevPlugin.def"
 				>
 			</File>
 		</Filter>

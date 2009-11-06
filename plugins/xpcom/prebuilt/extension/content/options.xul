@@ -2,26 +2,26 @@
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 
 <dialog buttons="accept"
-     id="gwt-dmp-prefs"
-     title="GWT Development Mode Plugin Options"
-     onload="GwtDevelopmentModePlugin.onload()"
+     id="gwt-dev-prefs"
+     title="GWT Developer Plugin Options"
+     onload="GwtDeveloperPlugin.onload()"
      ondialogaccept="return true;"
      xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
 <script type="application/x-javascript"
-    src="chrome://gwt-dmp/content/prefScript.js"/>
+    src="chrome://gwt-dev-plugin/content/prefScript.js"/>
 
 <vbox flex="1">
 
   <groupbox flex="1">
     <caption>
       <hbox>
-        <image src="chrome://gwt-dmp/skin/warning.png"/>
+        <image src="chrome://gwt-dev-plugin/skin/warning.png"/>
         <label value="Security Restrictions" style="font-weight: bold"/>
       </hbox>
     </caption>
     <description width="55em">
-      The GWT Development Mode Plugin will open a TCP/IP connection to an
+      The GWT Developer Plugin will open a TCP/IP connection to an
       arbitrary host/port at the request of a web page.  To minimize security
       risks, by default it will only connect to the local machine.  To allow
       cross-machine debugging, you can add exceptions here -- include the exact
@@ -55,7 +55,7 @@
 
   <hbox>
     <button id="removeButton" label="Remove Selected"
-        oncommand="GwtDevelopmentModePlugin.removeEntry()"/>
+        oncommand="GwtDeveloperPlugin.removeEntry()"/>
     <!-- TODO(jat): add move up/down buttons -->
   </hbox>
 

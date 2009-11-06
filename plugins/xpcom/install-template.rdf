@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+
+  <Description about="urn:mozilla:install-manifest">
+    <em:id>gwt-dev-plugin@google.com</em:id>
+    <em:name>GWT Developer Plugin for Firefox</em:name>
+    <em:version>GWT_DEV_PLUGIN_VERSION</em:version>
+    <em:type>2</em:type>
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <!-- TODO: can we add 1.5-2.0 back?  Do we care? -->
+        <em:minVersion>3.0</em:minVersion>
+        <em:maxVersion>3.5.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+
+    <!-- Front End MetaData -->
+    <em:description>A plugin to support GWT development-mode in XPCOM-based browsers</em:description>
+    <em:creator>Google, Inc.</em:creator>
+    <em:homepageURL>http://code.google.com/webtoolkit/</em:homepageURL>
+    <em:iconURL>chrome://gwt-dev-plugin/skin/icon.png</em:iconURL>
+
+    <em:targetPlatform>Linux_x86-gcc3</em:targetPlatform>
+    <em:targetPlatform>Linux_x86_64-gcc3</em:targetPlatform>
+    <em:targetPlatform>WINNT_x86-msvc</em:targetPlatform>
+    <em:targetPlatform>Darwin_x86-gcc3</em:targetPlatform>
+    <em:targetPlatform>Darwin_ppc-gcc3</em:targetPlatform>
+
+    <em:optionsURL>chrome://gwt-dev-plugin/content/options.xul</em:optionsURL>
+
+    <!-- updates, see http://developer.mozilla.org/en/docs/Extension_Versioning%2C_Update_and_Compatibility#Update_RDF_Format -->
+    <em:updateURL><![CDATA[https://dl-ssl.google.com/gwt/plugins/firefox/gwt-dev-plugin-updates.rdf?guid=%ITEM_ID%&version=%ITEM_VERSION%&application=%APP_ID%&appversion=%APP_VERSION%&locale=%APP_LOCALE%]]></em:updateURL>
+
+    <!-- TODO
+    # replace default about dialog
+    <em:aboutURL>chrome://gwt-dmp/content/about.xul</em:aboutURL>
+
+    # more platforms - any others?  OS/ABI for FreeBSD?
+    <em:targetPlatform>SunOS_sparc-sunc</em:targetPlatform>
+    <em:targetPlatform>SunOS_x86-sunc</em:targetPlatform>
+    <em:targetPlatform>SunOS_x86_64-sunc</em:targetPlatform>
+    -->
+
+  </Description>
+</RDF>
