@@ -642,6 +642,27 @@ public class GenerateCssAst {
     }
   }
 
+  /**
+   * Associates a template CssStylesheet with a timestamp.
+   */
+  private static class CachedStylesheet {
+    private final CssStylesheet sheet;
+    private final long timestamp;
+
+    public CachedStylesheet(CssStylesheet sheet, long timestamp) {
+      this.sheet = sheet;
+      this.timestamp = timestamp;
+    }
+
+    public CssStylesheet getCopyOfStylesheet() {
+      return new CssStylesheet(sheet);
+    }
+
+    public long getTimestamp() {
+      return timestamp;
+    }
+  }
+
   private static final String LITERAL_FUNCTION_NAME = "literal";
   /**
    * We cache the stylesheets to prevent repeated parsing of the same source
@@ -650,7 +671,7 @@ public class GenerateCssAst {
    * of the eager variable expansion performed by
    * {@link GenerationHandler#parseDef(String)}.
    */
-  private static final Map<List<URL>, SoftReference<CssStylesheet>> SHEETS = new HashMap<List<URL>, SoftReference<CssStylesheet>>();
+  private static final Map<List<URL>, SoftReference<CachedStylesheet>> SHEETS = Collections.synchronizedMap(new HashMap<List<URL>, SoftReference<CachedStylesheet>>());
   private static final String VALUE_FUNCTION_NAME = "value";
 
   /**
@@ -661,12 +682,39 @@ public class GenerateCssAst {
   public static CssStylesheet exec(TreeLogger logger, URL... stylesheets)
       throws UnableToCompleteException {
 
+    long mtime = 0;
+    for (URL url : stylesheets) {
+      long lastModified;
+      try {
+        lastModified = url.openConnection().getLastModified();
+      } catch (IOException e) {
+        // Non-fatal, assuming we can re-open the stream later
+        logger.log(TreeLogger.DEBUG, "Could not determine cached time", e);
+        lastModified = 0;
+      }
+      if (lastModified == 0) {
+        /*
+         * We have to refresh, since the modification date can't be determined,
+         * either due to IOException or getLastModified() not providing useful
+         * data.
+         */
+        mtime = Long.MAX_VALUE;
+        break;
+      } else {
+        mtime = Math.max(mtime, lastModified);
+      }
+    }
+
     List<URL> sheets = Arrays.asList(stylesheets);
-    SoftReference<CssStylesheet> ref = SHEETS.get(sheets);
-    CssStylesheet toReturn = ref == null ? null : ref.get();
+    SoftReference<CachedStylesheet> ref = SHEETS.get(sheets);
+    CachedStylesheet toReturn = ref == null ? null : ref.get();
     if (toReturn != null) {
-      logger.log(TreeLogger.DEBUG, "Using cached result");
-      return new CssStylesheet(toReturn);
+      if (mtime <= toReturn.getTimestamp()) {
+        logger.log(TreeLogger.DEBUG, "Using cached result");
+        return toReturn.getCopyOfStylesheet();
+      } else {
+        logger.log(TreeLogger.DEBUG, "Invalidating cached stylesheet");
+      }
     }
 
     Parser p = new Parser();
@@ -696,10 +744,10 @@ public class GenerateCssAst {
       throw new UnableToCompleteException();
     }
 
-    toReturn = g.css;
-    SHEETS.put(new ArrayList<URL>(sheets), new SoftReference<CssStylesheet>(
-        new CssStylesheet(toReturn)));
-    return toReturn;
+    toReturn = new CachedStylesheet(g.css, mtime == Long.MAX_VALUE ? 0 : mtime);
+    SHEETS.put(new ArrayList<URL>(sheets), new SoftReference<CachedStylesheet>(
+        toReturn));
+    return toReturn.getCopyOfStylesheet();
   }
 
   /**
