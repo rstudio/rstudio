@@ -17,11 +17,13 @@
 
   Sample usage:
   <!DOCTYPE ui:UiBinder
-    SYSTEM "http://google-web-toolkit.googlecode.com/files/xhtml.ent">
+    SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 
   This file is maintained at
-  <http://google-web-toolkit.googlecode.com/svn/trunk/user/src/com/google/gwt/uibinder/resources/xhtml.ent>. Changes
-  made to it must be propagated to the URL in the sample above.
+  http://google-web-toolkit.googlecode.com/svn/trunk/user/src/com/google/gwt/uibinder/resources/xhtml.ent 
+  Changes made to it must be propagated to the URLs above.
+  It is also available as https://dl-ssl.google.com/gwt/DTD/xhtml.ent
+  
 -->
 
 <!-- Latin-1 characters -->

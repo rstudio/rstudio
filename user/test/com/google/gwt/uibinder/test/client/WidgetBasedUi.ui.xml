@@ -14,7 +14,7 @@
 -->
 
 <!DOCTYPE ui:UiBinder 
-  SYSTEM "http://google-web-toolkit.googlecode.com/files/xhtml.ent"
+  SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent"
   [
     <!ENTITY % MyEntities SYSTEM "MyEntities.ent">
     %MyEntities;
@@ -26,10 +26,12 @@
   
   First, this bit:
   
-    SYSTEM "http://google-web-toolkit.googlecode.com/files/xhtml.ent"
+    SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent"
  
-  allows you to use familiar HTML entities like %nbsp; and &bull;, 
-  which are not part of XML.
+  allows you to use familiar HTML entities like &nbsp; and &bull;, 
+  which are not part of XML. (The file is also available as 
+  https://dl-ssl.google.com/gwt/DTD/xhtml.ent.)
+  
     
   Next, the bit in square brackets is even more optional. It shows how
   to add your own entities, in this case pulling in additional

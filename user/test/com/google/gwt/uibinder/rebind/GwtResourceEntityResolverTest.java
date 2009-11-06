@@ -27,17 +27,19 @@ import java.io.InputStream;
  * Text of GwtResourceEntityResolver.
  */
 public class GwtResourceEntityResolverTest extends TestCase {
-  private static final String SYSTEM_ID = "http://google-web-toolkit.googlecode.com/files/xhtml.ent";
-
   private static class MockResourceLoader implements
       GwtResourceEntityResolver.ResourceLoader {
-    String fetched;
     InputStream stream;
 
     public InputStream fetch(String name) {
       return stream;
     }
   }
+  private static final String LEGACY_SYSTEM_ID = "http://google-web-toolkit.googlecode.com/files/xhtml.ent";
+  private static final String VERSIONED_SYSTEM_ID = "http://dl.google.com/gwt/DTD/2.0.0/xhtml.ent";
+  private static final String REDIRECT_SYSTEM_ID = "http://dl.google.com/gwt/DTD/xhtml.ent";
+  private static final String SSL_VERSIONED_SYSTEM_ID = "https://dl-ssl.google.com/gwt/DTD/2.0.0/xhtml.ent";
+  private static final String SSL_REDIRECT_SYSTEM_ID = "https://dl-ssl.google.com/gwt/DTD/xhtml.ent";
 
   private GwtResourceEntityResolver resolver;
   private MockResourceLoader loader;
@@ -56,22 +58,33 @@ public class GwtResourceEntityResolverTest extends TestCase {
     };
   }
 
+  public void testAlmostCorrectAndOnceWorked() throws SAXException, IOException {
+    doBad(LEGACY_SYSTEM_ID.replace("files", "filesss"));
+    doBad(VERSIONED_SYSTEM_ID.replace("DTD", "DTDdddd"));
+    doBad(REDIRECT_SYSTEM_ID.replace("DTD", "DTDdddd"));
+  }
+  
   public void testNotOurProblem() throws SAXException, IOException {
-    assertNull(resolver.resolveEntity(null, "http://arbitrary"));
-    assertNull(resolver.resolveEntity("meaningless", "http://arbitrary"));
-    assertNull(resolver.resolveEntity(null, "arbitrary/relative"));
-
-    String almostCorrectAndOnceWorked = SYSTEM_ID.replace("files", "filesss");
-    assertNull(resolver.resolveEntity("meaningless", almostCorrectAndOnceWorked));
-    assertNull(resolver.resolveEntity(null, almostCorrectAndOnceWorked));
+    doBad("http://arbitrary");
   }
 
-  public void testOursGood() throws SAXException, IOException {
+  public void testVersionedGood() throws SAXException, IOException {
+    doGood(VERSIONED_SYSTEM_ID);
+    doGood(REDIRECT_SYSTEM_ID);
+    doGood(SSL_VERSIONED_SYSTEM_ID);
+    doGood(SSL_REDIRECT_SYSTEM_ID);
+    doGood(LEGACY_SYSTEM_ID);
+  }
+
+  private void doBad(String url) throws SAXException, IOException {
+    assertNull(resolver.resolveEntity(null, url));
+    assertNull(resolver.resolveEntity("meaningless", url));
+  }
+
+  private void doGood(String url) throws SAXException, IOException {
     String publicId = "some old public thing";
-
-    InputSource s = resolver.resolveEntity(publicId, SYSTEM_ID);
+    InputSource s = resolver.resolveEntity(publicId, url);
+    assertNotNull(s);
     assertEquals(publicId, s.getPublicId());
-    assertEquals(SYSTEM_ID, s.getSystemId());
-    assertEquals(loader.stream, s.getByteStream());
   }
-}
+ }
