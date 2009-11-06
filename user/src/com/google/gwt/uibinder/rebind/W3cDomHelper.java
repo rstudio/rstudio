@@ -15,7 +15,11 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
+
 import org.w3c.dom.Document;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -30,14 +34,14 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 /**
- * Simplifies instantiation of the w3c XML parser, in just the style
- * that UiBinder likes it. Used by both prod and test.
+ * Simplifies instantiation of the w3c XML parser, in just the style that
+ * UiBinder likes it. Used by both prod and test.
  */
 public class W3cDomHelper {
   private final DocumentBuilderFactory factory;
   private final DocumentBuilder builder;
 
-  public W3cDomHelper() {
+  public W3cDomHelper(final TreeLogger logger) {
     factory = DocumentBuilderFactory.newInstance();
     factory.setNamespaceAware(true);
     factory.setExpandEntityReferences(true);
@@ -47,6 +51,28 @@ public class W3cDomHelper {
       throw new RuntimeException(e);
     }
     builder.setEntityResolver(new GwtResourceEntityResolver());
+    builder.setErrorHandler(new ErrorHandler() {
+
+      public void error(SAXParseException exception) throws SAXException {
+        logger.log(Type.ERROR, exception.getMessage());
+        logger.log(Type.DEBUG, "SAXParseException", exception);
+      }
+
+      public void fatalError(SAXParseException exception) throws SAXException {
+        /*
+         * Fatal errors seem to be no scarier than error errors, and
+         * simply happen due to badly formed XML.
+         */
+        logger.log(Type.ERROR, exception.getMessage());
+        logger.log(Type.DEBUG, "SAXParseException", exception);
+      }
+
+      public void warning(SAXParseException exception) throws SAXException {
+        logger.log(Type.WARN, exception.getMessage());
+        logger.log(Type.DEBUG, "SAXParseException", exception);
+      }
+
+    });
   }
 
   /**
@@ -54,8 +80,7 @@ public class W3cDomHelper {
    * 
    * @param string the document contents
    */
-  public Document documentFor(String string) throws SAXException,
-      IOException {
+  public Document documentFor(String string) throws SAXException, IOException {
     return builder.parse(new ByteArrayInputStream(string.getBytes()));
   }
 

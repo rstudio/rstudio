@@ -93,7 +93,7 @@ public class DockLayoutPanelParserTest extends TestCase {
     }
   }
 
-  private static final W3cDomHelper docHelper = new W3cDomHelper();
+  private static final W3cDomHelper docHelper = new W3cDomHelper(TreeLogger.NULL);
   private static final String BINDER_URI = "binderUri";
 
   private static final String fieldName = "fieldName";

@@ -144,7 +144,7 @@ public class UiBinderGenerator extends Generator {
     
     Document doc = null;
     try {
-      doc = new W3cDomHelper().documentFor(url);
+      doc = new W3cDomHelper(logger.getTreeLogger()).documentFor(url);
     } catch (SAXParseException e) {
       logger.die("Error parsing XML (line " + e.getLineNumber() + "): "
           + e.getMessage(), e);

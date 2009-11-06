@@ -39,7 +39,7 @@ import java.util.Set;
  */
 public class XMLElementTest extends TestCase {
   private static final String STRING_WITH_DOUBLEQUOTE = "I have a \" quote in me";
-  private static final W3cDomHelper docHelper = new W3cDomHelper();
+  private static final W3cDomHelper docHelper = new W3cDomHelper(TreeLogger.NULL);
   private Document doc;
   private Element item;
   private XMLElement elm;
