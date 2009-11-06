@@ -40,6 +40,11 @@ function getTopWindow() {
     } catch (e) {
       return topWin;
     }
+    if (topWin == nextTopWin) {
+      // avoid infinite loops -- see issue 4199
+      // http://code.google.com/p/google-web-toolkit/issues/detail?id=4199
+      return topWin;
+    }
     topWin = nextTopWin;
   }
   return topWin;
