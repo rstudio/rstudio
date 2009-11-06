@@ -148,6 +148,12 @@ public class RunStyleHtmlUnit extends RunStyle {
   }
 
   private static final Map<String, BrowserVersion> BROWSER_MAP = createBrowserMap();
+  
+  /*
+   * as long as this number is greater than 1, GWTTestCaseTest::testRetry will
+   * pass
+   */
+  private static final int DEFAULT_TRIES = 3;
 
   /**
    * Returns the list of browsers Htmlunit emulates as a comma separated string.
@@ -187,12 +193,7 @@ public class RunStyleHtmlUnit extends RunStyle {
 
   @Override
   public int getTries() {
-    // TODO: set this via the command-line
-    /*
-     * as long as this number is greater than 1, GWTTestCaseTest::testRetry will
-     * pass
-     */
-    return 3;
+    return tries;
   }
 
   @Override
@@ -209,11 +210,12 @@ public class RunStyleHtmlUnit extends RunStyle {
             + "name " + browserName + ", expected browser name: one of "
             + BROWSER_MAP.keySet());
         return false;
-      } else {
-        browserSet.add(browser);
       }
+      browserSet.add(browser);
     }
     browsers = Collections.unmodifiableSet(browserSet);
+   
+    setTries(DEFAULT_TRIES); // set to the default value for this RunStyle 
     return true;
   }
 

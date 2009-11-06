@@ -23,6 +23,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
  */
 abstract class RunStyle {
 
+  protected int tries = 1;
+  
   /**
    * The containing shell.
    */
@@ -53,7 +55,7 @@ abstract class RunStyle {
    * succeeds if it succeeds even once.
    */
   public int getTries() {
-    return 1;
+    return tries;
   }
 
   /**
@@ -76,6 +78,10 @@ abstract class RunStyle {
    */
   public abstract void launchModule(String moduleName)
       throws UnableToCompleteException;
+
+  public void setTries(int tries) {
+    this.tries = tries;
+  }
 
   /**
    * Setup this RunStyle for the selected mode. 

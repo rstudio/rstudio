@@ -357,6 +357,38 @@ public class JUnitShell extends GWTShell {
           return true;
         }
       });
+      
+      registerHandler(new ArgHandlerInt() {
+        @Override
+        public String getPurpose() {
+          return "EXPERIMENTAL: Sets the maximum number of attempts for running each test method";
+        }
+
+        @Override
+        public String getTag() {
+          return "-Xtries";
+        }
+
+        @Override
+        public String[] getTagArgs() {
+          return new String[] {"1"};
+        }
+        
+        @Override
+        public boolean isRequired() {
+          return false;
+        }
+        
+        @Override
+        public boolean isUndocumented() {
+          return false;
+        }
+
+        @Override
+        public void setInt(int value) {
+          tries = value;
+        }
+      });
 
       registerHandler(new ArgHandlerString() {
         @Override
@@ -604,6 +636,11 @@ public class JUnitShell extends GWTShell {
   private long testBatchingMethodTimeoutMillis;
 
   /**
+   * Max number of times a test method must be tried. 
+   */
+  private int tries;
+  
+  /**
    * Determines how modules are compiled.
    */
   private CompileStrategy compileStrategy = new SimpleCompileStrategy(
@@ -744,7 +781,11 @@ public class JUnitShell extends GWTShell {
       // RunStyle already logged reasons for its failure
       return false;
     }
-
+    
+    if (tries >= 1) {
+      runStyle.setTries(tries);
+    }
+    
     if (!runStyle.setupMode(getTopLogger(), developmentMode)) {
       getTopLogger().log(TreeLogger.ERROR, "Run style does not support "
           + (developmentMode ? "development" : "production") + " mode");
