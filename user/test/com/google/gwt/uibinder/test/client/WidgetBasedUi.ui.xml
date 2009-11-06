@@ -172,7 +172,8 @@
       adopters should recognize themselves as such, and be prepared to have the
       api rug yanked out from under them.</ui:msg></p>
       <p ui:field="main">
-        &point-right;&nbsp;<span ui:field="messageInMain"><ui:msg>This is the main area. It's an <b>HTMLPanel</b>, which allows you to mix 
+        &point-right;&nbsp;<span ui:field="messageInMain"><ui:msg>This is the main area. 
+        It's an <b>HTMLPanel</b>, which allows you to mix 
           &point-right; &bull; XHTML &bull; &point-left; and regular GWT widgets, more or less with 
           impunity. Take the following button for example.</ui:msg></span>&nbsp;&point-left;
       </p>
@@ -481,6 +482,13 @@
       with widgets <demo:MyDatePicker/> as well, whether they <gwt:Label>HasText<ui:ph name="tm">*TM*</ui:ph></gwt:Label>
       or <gwt:HTML>HasHTML<ui:ph name="TM2"><sup ui:field="tmElementJr"
         class="{external.style.tmText}">TM</sup></ui:ph></gwt:HTML></ui:msg></p> 
+        
+      <p><ui:msg>
+        You can mix both widgets and named dom fields within a
+        <gwt:HTML ui:field='mixedMessageWidget'>single translatable message</gwt:HTML>, another source
+        <span ui:field='mixedMessageSpan'>exciting and subtle</span>
+         bugs.
+      </ui:msg></p>
 
       <h2>Any Widget You Like</h2>
       <p><demo:AnnotatedStrictLabel text="This widget is not default instantiable." ui:field="strictLabel"/></p>

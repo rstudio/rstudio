@@ -181,6 +181,11 @@ public class UiBinderTest extends GWTTestCase {
         + "translation: funny characters \" \" ' ' & < > > { }", t);
   }
 
+  public void testMixOfWidgetsAndElementsInUiMsg() {
+    assertEquals("single translatable message", widgetUi.mixedMessageWidget.getText());
+    assertEquals("exciting and subtle", widgetUi.mixedMessageSpan.getInnerText());
+  }
+  
   public void testEnums() {
     Suffix expected = EnumeratedLabel.Suffix.tail;
     assertTrue("Should end with suffix \"" + expected + "\"",

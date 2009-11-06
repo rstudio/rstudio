@@ -263,12 +263,13 @@ public class UiBinderWriter {
   }
 
   /**
-   * Statements to be excuted right after the current attached element is
+   * Add a statement to be executed right after the current attached element is
    * detached. This is useful for doing things that might be expensive while the
    * element is attached to the DOM.
    * 
    * @param format
    * @param args
+   * @see #beginAttachedSection(String)
    */
   public void addDetachStatement(String format, Object... args) {
     detachStatementsStack.getFirst().add(String.format(format, args));
@@ -291,10 +292,17 @@ public class UiBinderWriter {
   }
 
   /**
-   * Begin a section where a new attachable element is being parsed. Note that
-   * attachment is only done when actually needed.
+   * Begin a section where a new attachable element is being parsed--that is,
+   * one that will be constructed as a big innerHTML string, and then briefly
+   * attached to the dom to allow fields accessing its to be filled (at the
+   * moment, HasHTMLParser, HTMLPanelParser, and DomElementParser.).
+   * <p>
+   * Succeeding calls made to {@link #ensureAttached} and
+   * {@link #ensureFieldAttached} must refer to children of this element, until
+   * {@link #endAttachedSection} is called.
    * 
-   * @param element to be attached for this section
+   * @param element Java expression for the generated code that will return the
+   *          dom element to be attached.
    */
   public void beginAttachedSection(String element) {
     attachSectionElements.addFirst(element);
@@ -414,6 +422,7 @@ public class UiBinderWriter {
   /**
    * End the current attachable section. This will detach the element if it was
    * ever attached and execute any detach statements.
+   * @see #beginAttachedSection(String)
    */
   public void endAttachedSection() {
     String elementVar = attachSectionElements.removeFirst();
@@ -431,6 +440,7 @@ public class UiBinderWriter {
    * Ensure that the specified element is attached to the DOM.
    * 
    * @param element variable name of element to be attached
+   * @see #beginAttachedSection(String)
    */
   public void ensureAttached(String element) {
     String attachSectionElement = attachSectionElements.getFirst();
@@ -445,9 +455,12 @@ public class UiBinderWriter {
   }
 
   /**
-   * Ensure that the specified field is attached to the DOM.
+   * Ensure that the specified field is attached to the DOM. The field
+   * must hold an object that responds to Element getElement(). Convenience
+   * wrapper for {@link ensureAttached}<code>(field + ".getElement()")</code>.
    * 
    * @param field variable name of the field to be attached
+   * @see #beginAttachedSection(String)
    */
   public void ensureFieldAttached(String field) {
     ensureAttached(field + ".getElement()");

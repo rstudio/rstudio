@@ -20,7 +20,9 @@ import java.util.Map;
 
 /**
  * Methods to dispense unique text tokens to be stitched into text, and
- * to help replace the tokens with arbitrary content.
+ * to help replace the tokens with arbitrary content. Multiple tokenators
+ * can be used across the same body of text without fear of the tokens they
+ * vend colliding with each other.
  */
 public class Tokenator {
   /**

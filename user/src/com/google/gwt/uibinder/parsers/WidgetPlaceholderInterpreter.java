@@ -118,6 +118,11 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
       uiWriter.addInitStatement("%1$s.addAndReplaceElement(%2$s, %3$s);",
           fieldName, childField, idHolder);
     }
+    /*
+     * We get used recursively, so this will be called again. Empty the map 
+     * or else we'll re-register things.
+     */
+    idToWidgetElement.clear();
     return super.postProcess(consumed);
   }
 

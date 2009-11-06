@@ -35,6 +35,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HasHTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
@@ -124,7 +125,9 @@ public class WidgetBasedUi extends Composite {
   @UiField EnumeratedLabel enumLabel;
   @UiField PushButton pushButton;
   @UiField Label lblDebugId;
-
+  @UiField HasHTML mixedMessageWidget;
+  @UiField SpanElement mixedMessageSpan;
+  
   public WidgetBasedUi() {
     external.style().ensureInjected();
     initWidget(binder.createAndBindUi(this));
