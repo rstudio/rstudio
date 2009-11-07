@@ -15,11 +15,11 @@
  */
 package com.google.gwt.uibinder;
 
-import com.google.gwt.uibinder.parsers.DockLayoutPanelParserTest;
-import com.google.gwt.uibinder.parsers.FieldReferenceConverterTest;
-import com.google.gwt.uibinder.parsers.IntAttributeParserTest;
-import com.google.gwt.uibinder.parsers.StrictAttributeParserTest;
-import com.google.gwt.uibinder.parsers.StringAttributeParserTest;
+import com.google.gwt.uibinder.attributeparsers.FieldReferenceConverterTest;
+import com.google.gwt.uibinder.attributeparsers.IntAttributeParserTest;
+import com.google.gwt.uibinder.attributeparsers.StrictAttributeParserTest;
+import com.google.gwt.uibinder.attributeparsers.StringAttributeParserTest;
+import com.google.gwt.uibinder.elementparsers.DockLayoutPanelParserTest;
 import com.google.gwt.uibinder.rebind.GwtResourceEntityResolverTest;
 import com.google.gwt.uibinder.rebind.HandlerEvaluatorTest;
 import com.google.gwt.uibinder.rebind.TokenatorTest;

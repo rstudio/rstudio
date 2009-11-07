@@ -20,11 +20,14 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dom.client.TagName;
+import com.google.gwt.uibinder.attributeparsers.AttributeParser;
+import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
+import com.google.gwt.uibinder.attributeparsers.BundleAttributeParser;
+import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.parsers.AttributeMessageParser;
-import com.google.gwt.uibinder.parsers.BeanParser;
-import com.google.gwt.uibinder.parsers.BundleAttributeParser;
-import com.google.gwt.uibinder.parsers.ElementParser;
+import com.google.gwt.uibinder.elementparsers.AttributeMessageParser;
+import com.google.gwt.uibinder.elementparsers.BeanParser;
+import com.google.gwt.uibinder.elementparsers.ElementParser;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
@@ -523,7 +526,7 @@ public class UiBinderWriter {
    *             will be leaving us soon.
    */
   @Deprecated
-  public BundleAttributeParser getBundleAttributeParser(XMLAttribute attribute)
+  public AttributeParser getBundleAttributeParser(XMLAttribute attribute)
       throws UnableToCompleteException {
     return bundleParsers.get(attribute);
   }
@@ -683,7 +686,7 @@ public class UiBinderWriter {
 
   private void addWidgetParser(String className) {
     String gwtClass = "com.google.gwt.user.client.ui." + className;
-    String parser = "com.google.gwt.uibinder.parsers." + className + "Parser";
+    String parser = "com.google.gwt.uibinder.elementparsers." + className + "Parser";
     addElementParser(gwtClass, parser);
   }
 
@@ -910,7 +913,7 @@ public class UiBinderWriter {
     // automagically, according to http://b/issue?id=1867118
 
     addElementParser("com.google.gwt.dom.client.Element",
-        "com.google.gwt.uibinder.parsers.DomElementParser");
+        "com.google.gwt.uibinder.elementparsers.DomElementParser");
 
     // Register widget parsers.
     addWidgetParser("UIObject");

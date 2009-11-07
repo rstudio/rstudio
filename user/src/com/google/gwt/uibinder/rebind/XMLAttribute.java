@@ -15,7 +15,8 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import com.google.gwt.uibinder.parsers.FieldReferenceConverter;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.uibinder.attributeparsers.FieldReferenceConverter;
 
 import org.w3c.dom.Attr;
 
@@ -34,6 +35,10 @@ public class XMLAttribute {
 
   public String consumeRawValue() {
     return xmlElem.consumeRawAttribute(w3cAttr.getName());
+  }
+  
+  public String consumeStringValue() throws UnableToCompleteException {
+    return xmlElem.consumeStringAttribute(w3cAttr.getName());
   }
   
   public String getLocalName() {

@@ -16,6 +16,8 @@
 package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
+import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 
 import org.w3c.dom.Element;
 

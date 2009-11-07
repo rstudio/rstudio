@@ -20,7 +20,9 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.uibinder.parsers.AttributeParser;
+import com.google.gwt.uibinder.attributeparsers.AttributeParser;
+import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
+import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
@@ -297,8 +299,8 @@ public class XMLElement {
    * <p>
    * This call requires an interpreter to make sense of any special children.
    * The odds are you want to use
-   * {@link com.google.gwt.templates.parsers.HtmlInterpreter} for an HTML value,
-   * or {@link com.google.gwt.templates.parsers.TextInterpreter} for text.
+   * {@link com.google.gwt.uibinder.elementparsers.templates.parsers.HtmlInterpreter} for an HTML value,
+   * or {@link com.google.gwt.uibinder.elementparsers.templates.parsers.TextInterpreter} for text.
    * 
    * @param interpreter Called for each element, expected to return a string
    *          replacement for it, or null if it should be left as is
@@ -343,7 +345,7 @@ public class XMLElement {
    * <p>
    * This call requires an interpreter to make sense of any special children.
    * The odds are you want to use
-   * {@link com.google.gwt.templates.parsers.TextInterpreter}
+   * {@link com.google.gwt.uibinder.elementparsers.templates.parsers.TextInterpreter}
    * 
    * @throws UnableToCompleteException If any elements present are not consumed
    *           by the interpreter

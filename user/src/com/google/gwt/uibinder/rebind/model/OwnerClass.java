@@ -109,7 +109,7 @@ public class OwnerClass {
    *
    * @param type the type of the field
    * @return the field descriptor
-   * @deprecated This will die with {@link com.google.gwt.uibinder.parsers.BundleAttributeParser}
+   * @deprecated This will die with {@link com.google.gwt.uibinder.attributeparsers.BundleAttributeParser}
    */
   @Deprecated
   public OwnerField getUiFieldForType(JClassType type) {

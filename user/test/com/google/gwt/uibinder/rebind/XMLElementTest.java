@@ -21,7 +21,8 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
-import com.google.gwt.uibinder.parsers.NullInterpreter;
+import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
+import com.google.gwt.uibinder.elementparsers.NullInterpreter;
 
 import junit.framework.TestCase;
 

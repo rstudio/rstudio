@@ -64,7 +64,7 @@ public interface FieldWriter {
 
   /**
    * @deprecated needed only by
-   *             {@link com.google.gwt.uibinder.parsers.BundleAttributeParser},
+   *             {@link com.google.gwt.uibinder.attributeparsers.BundleAttributeParser},
    *             which will die soon
    * @throws IllegalStateException if initializer in a later call doesn't match
    *           earlier call
