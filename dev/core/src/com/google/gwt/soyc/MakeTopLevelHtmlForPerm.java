@@ -445,7 +445,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<dl>");
     outFile.println("<dt>Full code size</dt>");
     outFile.println("<dd class=\"value\">"
-        + globalInformation.getInitialCodeBreakdown().sizeAllCode
+        + globalInformation.getTotalCodeBreakdown().sizeAllCode
         + " Bytes</dd>");
     outFile.println("<dd class=\"report\"><a href=\"total-" + permutationId
         + "-overallBreakdown.html\">Report</a></dd>");
@@ -455,7 +455,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<dt>Initial download size</dt>");
     // TODO(kprobst) -- add percentage here: (48%)</dd>");
     outFile.println("<dd class=\"value\">"
-        + globalInformation.getTotalCodeBreakdown().sizeAllCode + " Bytes</dd>");
+        + globalInformation.getInitialCodeBreakdown().sizeAllCode + " Bytes</dd>");
     outFile.println("<dd class=\"report\"><a href=\"initial-" + permutationId
         + "-overallBreakdown.html\">Report</a></dd>");
     outFile.println("</dl>");
@@ -486,7 +486,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("</thead>");
     outFile.println("<tbody>");
 
-    if (globalInformation.getSplitPointToLocation().size() > 1) {
+    if (globalInformation.getSplitPointToLocation().size() >= 1) {
 
       int numSplitPoints = globalInformation.getSplitPointToLocation().size();
       float maxSize = globalInformation.getTotalCodeBreakdown().sizeAllCode;
