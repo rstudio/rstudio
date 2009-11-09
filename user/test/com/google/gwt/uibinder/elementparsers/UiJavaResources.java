@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.uibinder.test;
+package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
@@ -22,17 +22,18 @@ import com.google.gwt.dev.util.collect.Lists;
 import java.util.List;
 
 /**
- * A paired down set of GWT widget Java source files for code generator testing.
+ * A pared down, very low fidelity set of GWT widget Java source files for code
+ * generator testing.
  */
-public class UiJavaResources {
+class UiJavaResources {
 
-  public static final MockJavaResource WIDGET = new MockJavaResource(
-      "com.google.gwt.user.client.ui.Widget") {
+  public static final MockJavaResource DIALOG_BOX = new MockJavaResource(
+      "com.google.gwt.user.client.ui.DialogBox") {
     @Override
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
-      code.append("public class Widget {\n");
+      code.append("public class DialogBox extends Widget {\n");
       code.append("}\n");
       return code;
     }
@@ -48,17 +49,6 @@ public class UiJavaResources {
       return code;
     }
   };
-  public static final MockJavaResource SPLIT_LAYOUT_PANEL = new MockJavaResource(
-      "com.google.gwt.user.client.ui.SplitLayoutPanel") {
-    @Override
-    protected CharSequence getContent() {
-      StringBuffer code = new StringBuffer();
-      code.append("package com.google.gwt.user.client.ui;\n");
-      code.append("public class SplitLayoutPanel extends DockLayoutPanel {\n");
-      code.append("}\n");
-      return code;
-    }
-  };
   public static final MockJavaResource LABEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.Label") {
     @Override
@@ -70,13 +60,13 @@ public class UiJavaResources {
       return code;
     }
   };
-  public static final MockJavaResource UI_BINDER = new MockJavaResource(
-      "com.google.gwt.uibinder.client.UiBinder") {
+  public static final MockJavaResource SPLIT_LAYOUT_PANEL = new MockJavaResource(
+      "com.google.gwt.user.client.ui.SplitLayoutPanel") {
     @Override
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
-      code.append("package com.google.gwt.uibinder.client;\n");
-      code.append("public interface UiBinder<U, O> {\n");
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class SplitLayoutPanel extends DockLayoutPanel {\n");
       code.append("}\n");
       return code;
     }
@@ -93,6 +83,28 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource UI_BINDER = new MockJavaResource(
+      "com.google.gwt.uibinder.client.UiBinder") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.uibinder.client;\n");
+      code.append("public interface UiBinder<U, O> {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource WIDGET = new MockJavaResource(
+      "com.google.gwt.user.client.ui.Widget") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
 
   /**
    * @return a pale reflection of com.google.gwt.user.ui, plus
@@ -101,12 +113,13 @@ public class UiJavaResources {
   public static MockJavaResource[] getUiResources() {
     MockJavaResource[] base = JavaResourceBase.getStandardResources();
     List<MockJavaResource> rtn = Lists.create(base);
-    rtn.add(WIDGET);
+    rtn.add(DIALOG_BOX);
     rtn.add(DOCK_LAYOUT_PANEL);
-    rtn.add(SPLIT_LAYOUT_PANEL);
     rtn.add(LABEL);
-    rtn.add(UI_BINDER);
+    rtn.add(SPLIT_LAYOUT_PANEL);
     rtn.add(STYLE);
+    rtn.add(UI_BINDER);
+    rtn.add(WIDGET);
     return rtn.toArray(new MockJavaResource[rtn.size()]);
   }
 }

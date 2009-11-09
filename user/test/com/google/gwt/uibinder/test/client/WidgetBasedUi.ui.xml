@@ -258,7 +258,7 @@
                 <ui:msg>the Mop</ui:msg>
               </gwt:MenuItem>
               <gwt:MenuItem ui:field='menuItemLegacy'>
-                <span style="white-space:nowrap">The <gwt:MenuItemHTML>pig's in</gwt:MenuItemHTML> a hurry</span>
+                <span style="white-space:nowrap">The pig's in a hurry</span>
               </gwt:MenuItem>
             </gwt:MenuBar>
           </gwt:MenuItem>
@@ -659,7 +659,16 @@
     <tr><td>Lately, anyway.</td></tr>
   </gwt:HTMLPanel>
   
-    </gwt:HTMLPanel>
+   <gwt:DialogBox autoHide="true" modal="true">
+     <gwt:caption>Hello, I <b>caption</b> you.</gwt:caption>
+     <gwt:HTMLPanel>
+       And your little dog, too!
+       <gwt:Button ui:field='cancel'>Cancel</gwt:Button>
+       <gwt:Button ui:field='ok'>Okay</gwt:Button>
+     </gwt:HTMLPanel>
+   </gwt:DialogBox>
+
+   </gwt:HTMLPanel>
   </gwt:Dock>
 </gwt:DockPanel>
 </ui:UiBinder>

@@ -930,6 +930,7 @@ public class UiBinderWriter {
     addWidgetParser("RadioButton");
     addWidgetParser("CellPanel");
     addWidgetParser("CustomButton");
+    addWidgetParser("DialogBox");
     addWidgetParser("DockLayoutPanel");
     addWidgetParser("StackLayoutPanel");
     addWidgetParser("TabLayoutPanel");

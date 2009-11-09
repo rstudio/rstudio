@@ -29,7 +29,7 @@ class FieldWriterOfExistingType extends AbstractFieldWriter {
     super(name, logger);
     this.logger = logger;
     if (type == null) {
-      throw new RuntimeException("type cannot be null");
+      throw new IllegalArgumentException("type cannot be null");
     }
     this.type = type;
   }

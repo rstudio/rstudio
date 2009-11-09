@@ -22,7 +22,7 @@ import com.google.gwt.uibinder.rebind.XMLElement.Interpreter;
 
 /**
  * This is the most generally useful interpreter, and the most likely to be used
- * by a custom parser when calling {@link XMLElement#consumeInnerHtml}
+ * by a custom parser when calling {@link XMLElement#consumeInnerHtml}.
  * <ul>
  * <li>Assigns computed values to element attributes (e.g.
  * class="{style.pretty}")
@@ -30,10 +30,10 @@ import com.google.gwt.uibinder.rebind.XMLElement.Interpreter;
  * gwt:field="importantDiv"&gt;)
  * <li>Turns &lt;ui:msg&gt; and &lt;ui:attr&gt; elements into methods on a
  * generated Messages interface
+ * <li>Fails if any element encountered is a widget
  * </ul>
  */
 public class HtmlInterpreter implements XMLElement.Interpreter<String> {
-
   /**
    * A convenience factory method for the most common use of this class, to work
    * with HTML that will eventually be rendered under a
@@ -50,8 +50,9 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
     String ancestorExpression = uiExpression + ".getElement()";
     return new HtmlInterpreter(writer, ancestorExpression,
         new HtmlMessageInterpreter(writer, ancestorExpression));
-  }
+  } 
 
+  private final UiBinderWriter writer;
   private final InterpreterPipe<String> pipe;
 
   /**
@@ -67,6 +68,7 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
    */
   public HtmlInterpreter(UiBinderWriter writer, String ancestorExpression,
       Interpreter<String> messageInterpreter) {
+    this.writer = writer;
     this.pipe = new InterpreterPipe<String>();
 
     pipe.add(new FieldInterpreter(writer, ancestorExpression));
@@ -77,6 +79,9 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
 
   public String interpretElement(XMLElement elem)
       throws UnableToCompleteException {
+    if (writer.isWidgetElement(elem)) {
+      writer.die("Found widget %s in an HTML context", elem);
+    }
     return pipe.interpretElement(elem);
   }
 }

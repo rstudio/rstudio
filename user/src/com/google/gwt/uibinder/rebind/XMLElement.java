@@ -22,7 +22,6 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
 import com.google.gwt.uibinder.attributeparsers.AttributeParser;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
-import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
@@ -86,6 +85,8 @@ public class XMLElement {
   private static final String[] EMPTY = new String[] {};
 
   private static void clearChildren(Element elem) {
+    // TODO(rjrjr) I'm nearly positive that anywhere this is called
+    // we should instead be calling assertEmpty
     Node child;
     while ((child = elem.getFirstChild()) != null) {
       elem.removeChild(child);
@@ -94,9 +95,9 @@ public class XMLElement {
 
   private final Element elem;
   private final AttributeParsers attributeParsers;
-  @SuppressWarnings("deprecation")
   // for legacy templates
-  private final BundleAttributeParsers bundleParsers;
+  @SuppressWarnings("deprecation")
+  private final com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers bundleParsers;
   private final TypeOracle oracle;
 
   private final MortalLogger logger;
@@ -128,11 +129,13 @@ public class XMLElement {
     NO_END_TAG.add("wbr");
   }
 
-  @SuppressWarnings("deprecation")
   // bundleParsers for legacy templates
-  XMLElement(Element elem, AttributeParsers attributeParsers,
-      BundleAttributeParsers bundleParsers, TypeOracle oracle,
-      MortalLogger logger, XMLElementProvider provider) {
+  @SuppressWarnings("deprecation")
+  XMLElement(
+      Element elem,
+      AttributeParsers attributeParsers,
+      com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers bundleParsers,
+      TypeOracle oracle, MortalLogger logger, XMLElementProvider provider) {
     this.elem = elem;
     this.attributeParsers = attributeParsers;
     this.bundleParsers = bundleParsers;
@@ -207,6 +210,25 @@ public class XMLElement {
   }
 
   /**
+   * Convenience method for parsing the named attribute as a boolean value or
+   * reference.
+   * 
+   * @param defaultValue value to return if attribute was not set
+   * @return an expression that will evaluate to a boolean value in the
+   *         generated code, or defaultValue if there is no such attribute
+   * 
+   * @throws UnableToCompleteException on unparseable value
+   */
+  public String consumeBooleanAttribute(String name, boolean defaultValue)
+      throws UnableToCompleteException {
+    String parsed = consumeAttribute(name, getBooleanType());
+    if ("".equals(parsed)) {
+      return Boolean.toString(defaultValue);
+    }
+    return parsed;
+  }
+
+  /**
    * Consumes the named attribute as a boolean expression. This will not accept
    * {field.reference} expressions. Useful for values that must be resolved at
    * compile time, such as generated annotation values.
@@ -230,17 +252,15 @@ public class XMLElement {
   }
 
   /**
-   * Consumes and returns all child elements, and erases any text nodes.
+   * Consumes and returns all child elements
+   * 
+   * @throws UnableToCompleteException if extra text nodes are found
    */
-  public Iterable<XMLElement> consumeChildElements() {
-    try {
-      Iterable<XMLElement> rtn = consumeChildElements(new NoBrainInterpeter<Boolean>(
-          true));
-      clearChildren(elem);
-      return rtn;
-    } catch (UnableToCompleteException e) {
-      throw new RuntimeException("Impossible exception", e);
-    }
+  public Iterable<XMLElement> consumeChildElements()
+      throws UnableToCompleteException {
+    Iterable<XMLElement> rtn = consumeChildElementsNoEmptyCheck();
+    assertEmpty();
+    return rtn;
   }
 
   /**
@@ -299,8 +319,10 @@ public class XMLElement {
    * <p>
    * This call requires an interpreter to make sense of any special children.
    * The odds are you want to use
-   * {@link com.google.gwt.uibinder.elementparsers.templates.parsers.HtmlInterpreter} for an HTML value,
-   * or {@link com.google.gwt.uibinder.elementparsers.templates.parsers.TextInterpreter} for text.
+   * {@link com.google.gwt.uibinder.elementparsers.templates.parsers.HtmlInterpreter}
+   * for an HTML value, or
+   * {@link com.google.gwt.uibinder.elementparsers.templates.parsers.TextInterpreter}
+   * for text.
    * 
    * @param interpreter Called for each element, expected to return a string
    *          replacement for it, or null if it should be left as is
@@ -361,11 +383,9 @@ public class XMLElement {
         provider);
 
     // Make sure there are no children left but empty husks
-    for (XMLElement child : consumeChildElements()) {
+    for (XMLElement child : consumeChildElementsNoEmptyCheck()) {
       if (child.hasChildNodes() || child.getAttributeCount() > 0) {
-        // TODO(rjrjr) This is not robust enough, and consumeInnerHtml needs
-        // a similar check
-        logger.die("Text value of \"%s\" has illegal child \"%s\"", this, child);
+        logger.die("%s has illegal child %s", this, child);
       }
     }
 
@@ -632,6 +652,25 @@ public class XMLElement {
     return debugString;
   }
 
+  private void assertEmpty() throws UnableToCompleteException {
+    NoBrainInterpeter<String> nullInterpreter = new NoBrainInterpeter<String>(
+        null);
+    String s = consumeInnerTextEscapedAsHtmlStringLiteral(nullInterpreter);
+    if (!"".equals(s)) {
+      logger.die("Unexpected text in %s: \"%s\"", this, s);
+    }
+  }
+
+  private Iterable<XMLElement> consumeChildElementsNoEmptyCheck() {
+    try {
+      Iterable<XMLElement> rtn = consumeChildElements(new NoBrainInterpeter<Boolean>(
+          true));
+      return rtn;
+    } catch (UnableToCompleteException e) {
+      throw new RuntimeException("Impossible exception", e);
+    }
+  }
+
   private JType getBooleanType() {
     if (booleanType == null) {
       try {
@@ -669,7 +708,6 @@ public class XMLElement {
   }
 
   @SuppressWarnings("deprecation")
-  // bundleParsers for legacy templates
   private AttributeParser getParser(XMLAttribute xmlAttribute, JType... types)
       throws UnableToCompleteException {
     AttributeParser rtn = null;

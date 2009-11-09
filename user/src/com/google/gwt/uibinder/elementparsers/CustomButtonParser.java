@@ -59,7 +59,7 @@ public class CustomButtonParser implements ElementParser {
 
       HtmlInterpreter interpreter = HtmlInterpreter.newInterpreterForUiObject(
           writer, fieldName);
-      String innerHtml = child.consumeInnerHtml(interpreter).trim();
+      String innerHtml = child.consumeInnerHtml(interpreter);
       if (innerHtml.length() > 0) {
         writer.addStatement("%s.%s().setHTML(\"%s\");", fieldName,
             faceNameGetter(faceName), innerHtml);
