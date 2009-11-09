@@ -57,7 +57,7 @@ static NS_IMETHODIMP registerSelf(nsIComponentManager *aCompMgr, nsIFile *aPath,
     const nsModuleComponentInfo *aInfo) {
 
   Debug::log(Debug::Info)
-      << "  successfully registered GWT Development Mode plugin"
+      << "  successfully registered GWT Developer Plugin"
       << Debug::flush;
   nsresult rv;
   nsCOMPtr<nsICategoryManager> categoryManager =
@@ -84,7 +84,7 @@ static NS_IMETHODIMP factoryDestructor(void) {
 static NS_IMETHODIMP unregisterSelf(nsIComponentManager *aCompMgr,
     nsIFile *aPath, const char *aLoaderStr,
     const nsModuleComponentInfo *aInfo) {
-  Debug::log(Debug::Info) << "Unregistered GWT Development Mode plugin"
+  Debug::log(Debug::Info) << "Unregistered GWT Developer Plugin"
       << Debug::flush;
   return NS_OK;
 }
@@ -136,7 +136,7 @@ NSGETMODULE_ENTRY_POINT(ExternalWrapperModule) (nsIComponentManager *servMgr,
   xulRuntime->GetOS(os);
   nsCString abi;
   xulRuntime->GetXPCOMABI(abi);
-  Debug::log(Debug::Info) << "Initializing GWT Development Mode Plugin"
+  Debug::log(Debug::Info) << "Initializing GWT Developer Plugin"
       << Debug::flush;
   Debug::log(Debug::Info) << "  gecko=" << gecko_version.BeginReading()
       << ", firefox=" << browser_version.BeginReading() << ", abi="

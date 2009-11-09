@@ -31,7 +31,7 @@
     <em:optionsURL>chrome://gwt-dev-plugin/content/options.xul</em:optionsURL>
 
     <!-- updates, see http://developer.mozilla.org/en/docs/Extension_Versioning%2C_Update_and_Compatibility#Update_RDF_Format -->
-    <em:updateURL><![CDATA[https://dl-ssl.google.com/gwt/plugins/firefox/gwt-dev-plugin-updates.rdf?guid=%ITEM_ID%&version=%ITEM_VERSION%&application=%APP_ID%&appversion=%APP_VERSION%&locale=%APP_LOCALE%]]></em:updateURL>
+    <em:updateURL><![CDATA[https://dl-ssl.google.com/gwt/plugins/firefox/gwt-dev-plugin-updates.rdf?guid=%ITEM_ID%&version=%ITEM_VERSION%&application=%APP_ID%&appversion=%APP_VERSION%&locale=%APP_LOCALE%&os=%APP_OS%&abi=%APP_ABI%]]></em:updateURL>
 
     <!-- TODO
     # replace default about dialog
