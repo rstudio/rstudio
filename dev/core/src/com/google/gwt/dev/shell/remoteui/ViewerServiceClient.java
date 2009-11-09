@@ -314,8 +314,7 @@ public class ViewerServiceClient {
   private LogData.Builder generateLogData(Type type, String msg,
       Throwable caught, HelpInfo helpInfo) {
     LogData.Builder logBuilder = LogData.newBuilder().setSummary(msg);
-
-    logBuilder = logBuilder.setLevel(type.getLabel());
+    logBuilder.setLevel(type.getLabel());
 
     if (caught != null) {
       String stackTraceAsString = AbstractTreeLogger.getStackTraceAsString(caught);
@@ -328,14 +327,14 @@ public class ViewerServiceClient {
       LogData.HelpInfo.Builder helpInfoBuilder = LogData.HelpInfo.newBuilder();
 
       if (helpInfo.getURL() != null) {
-        helpInfoBuilder = helpInfoBuilder.setUrl(helpInfo.getURL().toExternalForm());
+        helpInfoBuilder.setUrl(helpInfo.getURL().toExternalForm());
       }
 
       if (helpInfo.getAnchorText() != null) {
         helpInfoBuilder.setText(helpInfo.getAnchorText());
       }
 
-      logBuilder = logBuilder.setHelpInfo(helpInfoBuilder);
+      logBuilder.setHelpInfo(helpInfoBuilder);
     }
 
     if (type.needsAttention()) {

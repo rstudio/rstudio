@@ -24,6 +24,7 @@ message Message {
   enum MessageType {
     REQUEST = 0;
     RESPONSE = 1;
+    FAILURE = 2;
   }
     
   // A request message. This is the root type for all request messages
@@ -105,10 +106,10 @@ message Message {
         }
   
        required string summary = 1;
-       optional string level = 2;  // TODO: Maybe use an enum here
-       optional string details = 3;
-       optional HelpInfo helpInfo = 4;
-       optional bool needsAttention = 5;
+       optional string level = 2;
+       optional bool needsAttention = 3;
+       optional string details = 4;
+       optional HelpInfo helpInfo = 5;
       }
       
       // Add a new log branch to an existing log
@@ -170,9 +171,8 @@ message Message {
     }
     
     required ServiceType serviceType = 1;
-    optional uint32 requestId = 2;
-    optional ViewerRequest viewerRequest = 3;
-    optional DevModeRequest devModeRequest = 4;
+    optional ViewerRequest viewerRequest = 2;
+    optional DevModeRequest devModeRequest = 3;
   }
 
   // A response message for a request. This is the root type for all response 
@@ -234,7 +234,7 @@ message Message {
       }
       
       // Response to a RestartWebServer request. Right now, there is no information
-      // that needs to be passed back (TODO: Provide a success code?)
+      // that needs to be passed back
       message RestartWebServer {
       }
       
@@ -243,13 +243,22 @@ message Message {
       optional RestartWebServer restartWebServer = 3;     
     }
  
-    required uint32 requestId = 1;
-    optional ViewerResponse viewerResponse = 2;
-    optional DevModeResponse devModeResponse = 3;
+    optional ViewerResponse viewerResponse = 1;
+    optional DevModeResponse devModeResponse = 2;
   }
   
-  required MessageType messageType = 1;
-  optional Request request = 2;
-  optional Response response = 3;
- 
+  message Failure {
+    optional string message = 1;
+    optional string stackTrace = 2;
+  }
+  
+  // In the first release, we'll ignore this field. In the future, 
+  // we can make use of it to detect protocol incompatibilities
+  optional string protocolVersion = 1;
+  
+  required MessageType messageType = 2;
+  required uint32 messageId = 3;
+  optional Request request = 4;
+  optional Response response = 5;
+  optional Failure failure = 6; 
 }
