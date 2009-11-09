@@ -169,7 +169,7 @@ public class OophmSessionHandler extends SessionHandler {
       ModuleSpace moduleSpace = new ModuleSpaceOOPHM(msh, moduleName,
           serverChannel);
       moduleMap.put(serverChannel, moduleSpace);
-      moduleSpace.onLoad(loadModuleLogger);
+      moduleSpace.onLoad(logger);
     } catch (Throwable e) {
       // We do catch Throwable intentionally because there are a ton of things
       // that can go wrong trying to load a module, including Error-derived

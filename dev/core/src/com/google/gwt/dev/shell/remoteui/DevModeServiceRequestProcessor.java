@@ -89,7 +89,10 @@ public class DevModeServiceRequestProcessor implements RequestProcessor {
   }
 
   private Response processRestartServer() {
-    remoteUI.restartWebServer();
+    if (!remoteUI.restartWebServer()) {
+      throw new IllegalStateException(
+          "Unable to restart the web server. This server may not have the capability to be restarted.");
+    }
 
     DevModeResponse.Builder devModeResponseBuilder = DevModeResponse.newBuilder();
     devModeResponseBuilder.setResponseType(DevModeResponse.ResponseType.RESTART_WEB_SERVER);

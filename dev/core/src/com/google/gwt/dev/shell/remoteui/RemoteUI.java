@@ -39,8 +39,6 @@ public class RemoteUI extends DevModeUI {
   private final String clientId;
   private final DevModeServiceRequestProcessor devModeRequestProcessor;
   private final MessageTransport transport;
-  private ViewerServiceTreeLogger webServerLogger = null;
-  private ViewerServiceTreeLogger mainLogger = null;
   private ViewerServiceClient viewerServiceClient = null;
   private final int webServerPort;
   private final int browserChannelPort;
@@ -64,30 +62,8 @@ public class RemoteUI extends DevModeUI {
   }
 
   @Override
-  public TreeLogger getTopLogger() {
-    if (mainLogger != null) {
-      return mainLogger;
-    }
-
-    mainLogger = new ViewerServiceTreeLogger(viewerServiceClient);
-    int topLoggerHandle = viewerServiceClient.addMainLog();
-    mainLogger.setLogHandle(topLoggerHandle);
-    mainLogger.setMaxDetail(getLogLevel());
-    return mainLogger;
-  }
-
-  @Override
   public TreeLogger getWebServerLogger(String serverName, byte[] serverIcon) {
-    if (webServerLogger != null) {
-      return webServerLogger;
-    }
-
-    webServerLogger = new ViewerServiceTreeLogger(viewerServiceClient);
-    int webServerLoggerHandle = viewerServiceClient.addServerLog(serverName,
-        serverIcon);
-    webServerLogger.setLogHandle(webServerLoggerHandle);
-    webServerLogger.setMaxDetail(getLogLevel());
-    return webServerLogger;
+    return getConsoleLogger();
   }
 
   @Override
@@ -138,10 +114,18 @@ public class RemoteUI extends DevModeUI {
     return handle;
   }
 
-  public void restartWebServer() {
-    if (supportsRestartWebServer() && webServerLogger != null) {
-      ((RestartServerCallback) getCallback(RestartServerEvent.getType())).onRestartServer(webServerLogger);
+  public boolean restartWebServer() {
+    if (!supportsRestartWebServer()) {
+      return false;
     }
+
+    TreeLogger webServerLogger = getConsoleLogger();
+    if (webServerLogger == null) {
+      return false;
+    }
+
+    ((RestartServerCallback) getCallback(RestartServerEvent.getType())).onRestartServer(webServerLogger);
+    return true;
   }
 
   public boolean supportsRestartWebServer() {

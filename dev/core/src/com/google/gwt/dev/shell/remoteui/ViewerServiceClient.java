@@ -123,22 +123,6 @@ public class ViewerServiceClient {
   }
 
   /**
-   * Add a new MAIN logger. Typically, this method should only be called once
-   * (as there is only one MAIN logger).
-   * 
-   * @return the log handle for the newly-created MAIN logger
-   */
-  public int addMainLog() {
-    ViewerRequest.AddLog.MainLog.Builder mainLogBuilder = ViewerRequest.AddLog.MainLog.newBuilder();
-
-    ViewerRequest.AddLog.Builder addLogBuilder = ViewerRequest.AddLog.newBuilder();
-    addLogBuilder.setType(ViewerRequest.AddLog.LogType.MAIN);
-    addLogBuilder.setMainLog(mainLogBuilder);
-
-    return createLogger(addLogBuilder);
-  }
-
-  /**
    * Add a new Module logger. This method should not be called multiple times
    * with the exact same arguments (as there should only be one logger
    * associated with that set of arguments).
@@ -179,31 +163,6 @@ public class ViewerServiceClient {
     ViewerRequest.AddLog.Builder addLogBuilder = ViewerRequest.AddLog.newBuilder();
     addLogBuilder.setType(ViewerRequest.AddLog.LogType.MODULE);
     addLogBuilder.setModuleLog(moduleLogBuilder);
-
-    return createLogger(addLogBuilder);
-  }
-
-  /**
-   * Add a new Web Server logger. Typically, this method should only be called
-   * once, as there is only one Web Server tunning at a time.
-   * 
-   * @param serverName short name of the web server or null if only the icon
-   *          should be used
-   * @param serverIcon byte array containing an icon (fitting into 24x24) to use
-   *          for the server, or null if only the name should be used
-   * @return the log handle for the newly-created Module logger
-   */
-  public int addServerLog(String serverName, byte[] serverIcon) {
-    ViewerRequest.AddLog.ServerLog.Builder serverLogBuilder = ViewerRequest.AddLog.ServerLog.newBuilder();
-    serverLogBuilder.setName(serverName);
-
-    if (serverIcon != null) {
-      serverLogBuilder = serverLogBuilder.setIcon(ByteString.copyFrom(serverIcon));
-    }
-
-    ViewerRequest.AddLog.Builder addLogBuilder = ViewerRequest.AddLog.newBuilder();
-    addLogBuilder.setType(ViewerRequest.AddLog.LogType.WEB_SERVER);
-    addLogBuilder.setServerLog(serverLogBuilder);
 
     return createLogger(addLogBuilder);
   }
