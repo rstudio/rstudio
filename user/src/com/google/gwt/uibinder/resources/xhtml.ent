@@ -21,9 +21,10 @@
 
   This file is maintained at
   http://google-web-toolkit.googlecode.com/svn/trunk/user/src/com/google/gwt/uibinder/resources/xhtml.ent 
-  Changes made to it must be propagated to the URLs above.
+  Changes made to it must be propagated to the URL above.
+
   It is also available as https://dl-ssl.google.com/gwt/DTD/xhtml.ent
-  
+
 -->
 
 <!-- Latin-1 characters -->
