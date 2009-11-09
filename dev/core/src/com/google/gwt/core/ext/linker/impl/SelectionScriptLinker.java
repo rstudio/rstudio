@@ -276,8 +276,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
         // Hosted mode link.
         text.append("alert(\"GWT module '"
             + context.getModuleName()
-            + "' needs to be (re)compiled, "
-            + "please run a compile or use the Compile/Browse button in hosted mode\");");
+            + "' may need to be (re)compiled\");");
         text.append("return;");
 
       } else if (compilations.size() == 1) {
