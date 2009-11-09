@@ -6,6 +6,8 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
 
+  <ui:image field='logo' src='logo.png'/>
+
   <ui:style>
   .statusDiv {
     text-align: right;
@@ -16,11 +18,9 @@
     text-align: right;
   }
 
-  .logo {
-    background: url(logo.png);
+  @sprite .logo {
+    gwt-image: 'logo';
     position: absolute;
-    width: 140px;
-    height: 75px;
   }
   </ui:style>
 
@@ -39,5 +39,4 @@
       </div>
     </div>
   </g:HTMLPanel>
-
 </ui:UiBinder>

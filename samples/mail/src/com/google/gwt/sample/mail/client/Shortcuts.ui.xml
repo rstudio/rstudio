@@ -5,41 +5,70 @@
 
   <ui:style>
   .shortcuts {
-    border-left: 1px solid #666;
-    border-right: 1px solid #666;
+    border-left: 1px solid #999;
+    border-right: 1px solid #999;
+    border-bottom: 1px solid #999;
   }
 
-  .stackHeader {
-    background: #c1eec8 url(gradient.gif) repeat-x 0px -1px;
-    padding-top: 1em;
+  @sprite .stackHeader {
+    gwt-image: 'gradient';
+    background-color: #b4b6bc;
+
+    text-shadow: rgba(255, 255, 255, 1) 0 1px 1px;
+    font-size: 1.2em;
     font-weight: bold;
-    text-align: center;
-    border-top: 1px solid #666;
-    border-bottom: 1px solid #666;  
+    color: #000;
+    padding: .7em .5em 0 .6em;
+    border-top: 1px solid #888;
+  }
+
+  @sprite .mailboxesIcon {
+    gwt-image: 'mailboxesgroup';
+    float: left;
+  }
+
+  @sprite .tasksIcon {
+    gwt-image: 'tasksgroup';
+    float: left;
+  }
+
+  @sprite .contactsIcon {
+    gwt-image: 'contactsgroup';
+    float: left;
   }
   </ui:style>
 
+  <ui:image field='mailboxesgroup' src='mailboxesgroup.png'/>
+  <ui:image field='contactsgroup' src='contactsgroup.png'/>
+  <ui:image field='tasksgroup' src='tasksgroup.png'/>
+  <ui:image field='gradient' src='gradient_bg_dark.png' repeatStyle='Horizontal'/>
+
   <g:StackLayoutPanel styleName='{style.shortcuts}' unit='EM'>
     <g:stack>
-      <g:header size='4'>
-        <g:Label styleName='{style.stackHeader}'>Mailboxes</g:Label>
+      <g:header size='3'>
+        <g:HTMLPanel styleName='{style.stackHeader}'>
+          <div class='{style.mailboxesIcon}'/> Mailboxes
+        </g:HTMLPanel>
       </g:header>
       <mail:Mailboxes ui:field='mailboxes'/>
     </g:stack>
 
     <g:stack>
-      <g:header size='4'>
-        <g:Label styleName='{style.stackHeader}'>Tasks</g:Label>
+      <g:header size='3'>
+        <g:HTMLPanel styleName='{style.stackHeader}'>
+          <div class='{style.tasksIcon}'/> Tasks
+        </g:HTMLPanel>
       </g:header>
       <mail:Tasks ui:field='tasks'/>
     </g:stack>
 
     <g:stack>
-      <g:header size='4'>
-        <g:Label styleName='{style.stackHeader}'>Contacts</g:Label>
+      <g:header size='3'>
+        <g:HTMLPanel styleName='{style.stackHeader}'>
+          <div class='{style.contactsIcon}'/> Contacts
+        </g:HTMLPanel>
       </g:header>
       <mail:Contacts ui:field='contacts'/>
     </g:stack>
   </g:StackLayoutPanel>
-
 </ui:UiBinder>

@@ -15,23 +15,22 @@
  */
 package com.google.gwt.sample.mail.client;
 
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.ResizeComposite;
-import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 
 /**
  * A composite that displays a list of emails that can be selected.
  */
-public class MailList extends ResizeComposite implements ClickHandler {
-
-  private static final int VISIBLE_EMAIL_COUNT = 20;
+public class MailList extends ResizeComposite {
 
   /**
    * Callback when mail items are selected. 
@@ -40,82 +39,28 @@ public class MailList extends ResizeComposite implements ClickHandler {
     void onItemSelected(MailItem item);
   }
 
-  private Listener listener;
+  interface Binder extends UiBinder<Widget, MailList> { }
+  interface SelectionStyle extends CssResource {
+    String selectedRow();
+  }
 
-  private HTML countLabel = new HTML();
-  private HTML newerButton = new HTML("<a href='javascript:;'>&lt; newer</a>",
-      true);
-  private HTML olderButton = new HTML("<a href='javascript:;'>older &gt;</a>",
-      true);
+  private static final Binder binder = GWT.create(Binder.class);
+  static final int VISIBLE_EMAIL_COUNT = 20;
+
+  @UiField FlexTable header;
+  @UiField FlexTable table;
+  @UiField SelectionStyle selectionStyle;
+
+  private Listener listener;
   private int startIndex, selectedRow = -1;
-  private FlexTable header = new FlexTable();
-  private FlexTable table = new FlexTable();
-  private HorizontalPanel navBar = new HorizontalPanel();
+  private NavBar navBar;
 
   public MailList() {
-    // Setup the table.
-    table.setCellSpacing(0);
-    table.setCellPadding(0);
-
-    // Hook up events.
-    table.addClickHandler(this);
-    newerButton.addClickHandler(this);
-    olderButton.addClickHandler(this);
-
-    // Create the 'navigation' bar at the upper-right.
-    HorizontalPanel innerNavBar = new HorizontalPanel();
-    navBar.setStyleName("mail-ListNavBar");
-    innerNavBar.add(newerButton);
-    innerNavBar.add(countLabel);
-    innerNavBar.add(olderButton);
-
-    navBar.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
-    navBar.add(innerNavBar);
-    navBar.setWidth("100%");
-
-    DockLayoutPanel dock = new DockLayoutPanel(Unit.EM);
-    dock.addNorth(header, 2);
-    dock.add(new ScrollPanel(table));
-    header.setWidth("100%");
-    table.setWidth("100%");
-
-    initWidget(dock);
-    setStyleName("mail-List");
+    initWidget(binder.createAndBindUi(this));
+    navBar = new NavBar(this);
 
     initTable();
     update();
-  }
-
-  public void onClick(ClickEvent event) {
-    Object sender = event.getSource();
-    if (sender == olderButton) {
-      // Move forward a page.
-      startIndex += VISIBLE_EMAIL_COUNT;
-      if (startIndex >= MailItems.getMailItemCount()) {
-        startIndex -= VISIBLE_EMAIL_COUNT;
-      } else {
-        styleRow(selectedRow, false);
-        selectedRow = -1;
-        update();
-      }
-    } else if (sender == newerButton) {
-      // Move back a page.
-      startIndex -= VISIBLE_EMAIL_COUNT;
-      if (startIndex < 0) {
-        startIndex = 0;
-      } else {
-        styleRow(selectedRow, false);
-        selectedRow = -1;
-        update();
-      }
-    } else if (sender == table) {
-      // Select the row that was clicked (-1 to account for header row).
-      Cell cell = table.getCellForEvent(event);
-      if (cell != null) {
-        int row = cell.getRowIndex();
-        selectRow(row);
-      }
-    }
   }
 
   /**
@@ -133,31 +78,59 @@ public class MailList extends ResizeComposite implements ClickHandler {
     }
   }
 
+  void newer() {
+    // Move back a page.
+    startIndex -= VISIBLE_EMAIL_COUNT;
+    if (startIndex < 0) {
+      startIndex = 0;
+    } else {
+      styleRow(selectedRow, false);
+      selectedRow = -1;
+      update();
+    }
+  }
+
+  void older() {
+    // Move forward a page.
+    startIndex += VISIBLE_EMAIL_COUNT;
+    if (startIndex >= MailItems.getMailItemCount()) {
+      startIndex -= VISIBLE_EMAIL_COUNT;
+    } else {
+      styleRow(selectedRow, false);
+      selectedRow = -1;
+      update();
+    }
+  }
+
+  @UiHandler("table")
+  void onTableClicked(ClickEvent event) {
+    // Select the row that was clicked (-1 to account for header row).
+    Cell cell = table.getCellForEvent(event);
+    if (cell != null) {
+      int row = cell.getRowIndex();
+      selectRow(row);
+    }
+  }
+
   /**
    * Initializes the table so that it contains enough rows for a full page of
    * emails. Also creates the images that will be used as 'read' flags.
    */
   private void initTable() {
-    // Create the header.
-    header.getRowFormatter().setStyleName(0, "mail-ListHeader");
-    header.getElement().getStyle().setProperty("tableLayout", "fixed");
-    header.setCellSpacing(0);
-
-    header.getColumnFormatter().setWidth(0, "96px");
-    header.getColumnFormatter().setWidth(1, "160px");
+    // Initialize the header.
+    header.getColumnFormatter().setWidth(0, "128px");
+    header.getColumnFormatter().setWidth(1, "192px");
     header.getColumnFormatter().setWidth(3, "256px");
 
     header.setText(0, 0, "Sender");
     header.setText(0, 1, "Email");
     header.setText(0, 2, "Subject");
     header.setWidget(0, 3, navBar);
+    header.getCellFormatter().setHorizontalAlignment(0, 3, HasHorizontalAlignment.ALIGN_RIGHT);
 
     // Initialize the table.
-    table.getElement().getStyle().setProperty("tableLayout", "fixed");
-    header.setCellSpacing(0);
-
-    table.getColumnFormatter().setWidth(0, "96px");
-    table.getColumnFormatter().setWidth(1, "160px");
+    table.getColumnFormatter().setWidth(0, "128px");
+    table.getColumnFormatter().setWidth(1, "192px");
 
     for (int i = 0; i < VISIBLE_EMAIL_COUNT; ++i) {
       table.setText(i, 0, "");
@@ -196,10 +169,12 @@ public class MailList extends ResizeComposite implements ClickHandler {
 
   private void styleRow(int row, boolean selected) {
     if (row != -1) {
+      String style = selectionStyle.selectedRow();
+
       if (selected) {
-        table.getRowFormatter().addStyleName(row, "mail-SelectedRow");
+        table.getRowFormatter().addStyleName(row, style);
       } else {
-        table.getRowFormatter().removeStyleName(row, "mail-SelectedRow");
+        table.getRowFormatter().removeStyleName(row, style);
       }
     }
   }
@@ -212,9 +187,8 @@ public class MailList extends ResizeComposite implements ClickHandler {
       max = count;
     }
 
-    newerButton.setVisible(startIndex != 0);
-    olderButton.setVisible(startIndex + VISIBLE_EMAIL_COUNT < count);
-    countLabel.setText("" + (startIndex + 1) + " - " + max + " of " + count);
+    // Update the nav bar.
+    navBar.update(startIndex, count, max);
 
     // Show the selected emails.
     int i = 0;

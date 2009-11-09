@@ -14,6 +14,5 @@
 
 <module rename-to="mail">
 	<inherits name='com.google.gwt.user.User'/>
-  <inherits name="com.google.gwt.uibinder.UiBinder" />
 	<entry-point class='com.google.gwt.sample.mail.client.Mail'/>
 </module>

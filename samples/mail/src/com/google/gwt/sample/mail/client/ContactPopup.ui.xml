@@ -3,6 +3,8 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
 
+  <ui:image field='photo' src='default_photo.jpg'/>
+
   <ui:style>
   .popup {
     background: #fff;
@@ -12,13 +14,11 @@
     height: 2.5em;
   }
 
-  .photo {
+  @sprite .photo {
+    gwt-image: 'photo';
+
     float: left;
     margin-right: 4px;
-
-    background: url(default_photo.jpg);
-    width: 32px;
-    height: 32px;
   }
 
   .right {

@@ -41,6 +41,9 @@ public class AboutDialog extends DialogBox {
     // Use this opportunity to set the dialog's caption.
     setText("About the Mail Sample");
     setWidget(binder.createAndBindUi(this));
+
+    setAnimationEnabled(true);
+    setGlassEnabled(true);
   }
 
   @Override
