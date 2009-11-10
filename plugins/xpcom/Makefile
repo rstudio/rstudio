@@ -154,6 +154,10 @@ linuxplatforms:
 	$(MAKE) BROWSER=ff3+ ARCH=x86_64
 	$(MAKE) BROWSER=ff35 ARCH=x86_64
 
+macplatforms:
+	$(MAKE) BROWSER=ff3
+	$(MAKE) BROWSER=ff35
+
 SRCS =	\
 		ExternalWrapper.cpp \
 		ModuleOOPHM.cpp \
