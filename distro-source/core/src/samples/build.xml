@@ -3,7 +3,6 @@
   <target name="-do">
     <ant target="${target}" dir="DynaTable"/>
     <ant target="${target}" dir="Hello"/>
-    <ant target="${target}" dir="I18N"/>
     <ant target="${target}" dir="JSON"/>
     <ant target="${target}" dir="Mail"/>
     <ant target="${target}" dir="Showcase"/>
