@@ -85,7 +85,7 @@ public class CssGenerationVisitor extends CssVisitor {
   public void endVisit(CssMediaRule x, Context ctx) {
     out.indentOut();
     out.print("}");
-    out.newline();
+    out.newlineOpt();
   }
 
   @Override
@@ -98,7 +98,7 @@ public class CssGenerationVisitor extends CssVisitor {
   public void endVisit(CssPageRule x, Context ctx) {
     out.indentOut();
     out.print("}");
-    out.newline();
+    out.newlineOpt();
   }
 
   @Override
@@ -274,7 +274,7 @@ public class CssGenerationVisitor extends CssVisitor {
   private void closeBrace() {
     out.indentOut();
     out.print('}');
-    out.newline();
+    out.newlineOpt();
   }
 
   private void colon() {
