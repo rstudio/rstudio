@@ -36,7 +36,7 @@ import com.google.gwt.user.client.Window;
  * Because this implementation gets compiled in for both IE6 and 7, it
  * dynamically detects IE7 and punts to the super implementation.
  */
-class LayoutImplIE6 extends LayoutImpl {
+class LayoutImplIE6 extends LayoutImplIE8 {
 
   private static boolean isIE6 = isIE6();
 
@@ -393,10 +393,8 @@ class LayoutImplIE6 extends LayoutImpl {
         switch (_hPos) {
           case 0: // BEGIN
             child.style.left = '0px';
-            child.style.width = '';
             break;
           case 1: // END
-            child.style.width = '';
             child.style.left = (container.offsetWidth - childDecoWidth - child.offsetWidth) + 'px';
             break;
           case 2: // STRETCH
@@ -409,10 +407,8 @@ class LayoutImplIE6 extends LayoutImpl {
         switch (_vPos) {
           case 0: // BEGIN
             child.style.top = '0px';
-            child.style.height = '';
             break;
           case 1: // END
-            child.style.height = '';
             child.style.top = (container.offsetHeight - childDecoHeight - child.offsetHeight) + 'px';
             break;
           case 2: // STRETCH

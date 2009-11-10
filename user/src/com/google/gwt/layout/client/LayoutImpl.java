@@ -17,7 +17,6 @@ package com.google.gwt.layout.client;
 
 import static com.google.gwt.dom.client.Style.Unit.EM;
 import static com.google.gwt.dom.client.Style.Unit.EX;
-import static com.google.gwt.dom.client.Style.Unit.IN;
 import static com.google.gwt.dom.client.Style.Unit.PX;
 
 import com.google.gwt.dom.client.DivElement;
@@ -42,9 +41,8 @@ class LayoutImpl {
   private static DivElement fixedRuler;
 
   static {
-    Document doc = Document.get();
-    fixedRuler = createRuler(IN, IN);
-    doc.getBody().appendChild(fixedRuler);
+    fixedRuler = createRuler(Unit.CM, Unit.CM);
+    Document.get().getBody().appendChild(fixedRuler);
   }
 
   protected static DivElement createRuler(Unit widthUnit, Unit heightUnit) {
@@ -111,15 +109,15 @@ class LayoutImpl {
       case EX:
         return relativeRuler.getOffsetHeight() / 10.0;
       case CM:
-        return fixedRuler.getOffsetWidth() / 10.0;
+        return fixedRuler.getOffsetWidth() * 0.1;     // 1.0    cm / cm
       case MM:
-        return fixedRuler.getOffsetWidth() / 100.0;
+        return fixedRuler.getOffsetWidth() * 0.01;    // 0.1    cm / mm
       case IN:
-        return fixedRuler.getOffsetWidth() / 25.4;
+        return fixedRuler.getOffsetWidth() * 0.254;   // 2.54   cm / in
       case PT:
-        return fixedRuler.getOffsetWidth() / 284;
+        return fixedRuler.getOffsetWidth() * 0.00353; // 0.0353 cm / pt
       case PC:
-        return fixedRuler.getOffsetWidth() / 23.6;
+        return fixedRuler.getOffsetWidth() * 0.0423;  // 0.423  cm / pc
       default:
       case PX:
         return 1;
@@ -150,7 +148,8 @@ class LayoutImpl {
     style = layer.child.getStyle();
     switch (layer.hPos) {
       case BEGIN:
-        style.clearLeft();
+        style.setLeft(0, Unit.PX);
+        style.clearRight();
         break;
       case END:
         style.clearLeft();
@@ -164,7 +163,8 @@ class LayoutImpl {
 
     switch (layer.vPos) {
       case BEGIN:
-        style.clearTop();
+        style.setTop(0, Unit.PX);
+        style.clearBottom();
         break;
       case END:
         style.clearTop();

@@ -146,34 +146,35 @@ public class LayoutTest extends GWTTestCase {
    * Tests child alignment within a layer.
    */
   public void testChildAlignment() {
-    child0.getStyle().setWidth(64, PX);
-    child0.getStyle().setHeight(128, PX);
-    layer0.setTopHeight(0, PX, 128, PX);
-    layer0.setLeftWidth(0, PX, 256, PX);
+    layer0.setLeftWidth(0, PX, 128, PX);
+    layer0.setTopHeight(0, PX, 256, PX);
 
     layer0.setChildHorizontalPosition(Alignment.STRETCH);
     layer0.setChildVerticalPosition(Alignment.STRETCH);
     layout.layout();
     assertEquals(0, child0.getOffsetLeft());
-    assertEquals(0, child1.getOffsetTop());
+    assertEquals(0, child0.getOffsetTop());
     assertEquals(128, child0.getOffsetWidth());
-    assertEquals(256, child1.getOffsetHeight());
+    assertEquals(256, child0.getOffsetHeight());
+
+    child0.getStyle().setWidth(64, PX);
+    child0.getStyle().setHeight(128, PX);
 
     layer0.setChildHorizontalPosition(Alignment.BEGIN);
     layer0.setChildVerticalPosition(Alignment.BEGIN);
     layout.layout();
     assertEquals(0, child0.getOffsetLeft());
-    assertEquals(0, child1.getOffsetTop());
+    assertEquals(0, child0.getOffsetTop());
     assertEquals(64, child0.getOffsetWidth());
-    assertEquals(128, child1.getOffsetHeight());
+    assertEquals(128, child0.getOffsetHeight());
 
     layer0.setChildHorizontalPosition(Alignment.END);
     layer0.setChildVerticalPosition(Alignment.END);
     layout.layout();
     assertEquals(64, child0.getOffsetLeft());
-    assertEquals(128, child1.getOffsetTop());
+    assertEquals(128, child0.getOffsetTop());
     assertEquals(64, child0.getOffsetWidth());
-    assertEquals(128, child1.getOffsetHeight());
+    assertEquals(128, child0.getOffsetHeight());
   }
 
   /**
@@ -276,6 +277,15 @@ public class LayoutTest extends GWTTestCase {
     testHorizontalSplit(PC);
     testHorizontalSplit(PT);
     testHorizontalSplit(PX);
+
+    testVerticalSplit(CM);
+    testVerticalSplit(EM);
+    testVerticalSplit(EX);
+    testVerticalSplit(IN);
+    testVerticalSplit(MM);
+    testVerticalSplit(PC);
+    testVerticalSplit(PT);
+    testVerticalSplit(PX);
   }
 
   /**

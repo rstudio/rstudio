@@ -18,6 +18,11 @@
   <inherits name="com.google.gwt.dom.DOM"/>
   <inherits name="com.google.gwt.animation.Animation"/>
 
+  <replace-with class="com.google.gwt.layout.client.LayoutImplIE8">
+    <when-type-is class="com.google.gwt.layout.client.LayoutImpl"/>
+    <when-property-is name="user.agent" value="ie8"/>
+  </replace-with>
+
   <replace-with class="com.google.gwt.layout.client.LayoutImplIE6">
     <when-type-is class="com.google.gwt.layout.client.LayoutImpl"/>
     <when-property-is name="user.agent" value="ie6"/>
