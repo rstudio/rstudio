@@ -641,16 +641,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
-      code.append("public class AutoSerializable {\n");
-      code.append("  interface IFoo extends Serializable {};\n");
-      code.append("  IFoo createFoo() { return new IFoo(){};}\n");
-      code.append("}\n");
-      resources.add(new StaticJavaResource("AutoSerializable", code));
-    }
-
-    {
-      StringBuilder code = new StringBuilder();
-      code.append("import java.io.Serializable;\n");
       code.append("public class OuterClass {\n");
       code.append("  static class StaticNested implements Serializable {};\n");
       code.append("  class NonStaticNested implements Serializable {};\n");
@@ -736,12 +726,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     assertFalse(sob.shouldConsiderFieldsForSerialization(notSerializable,
         problems));
 
-    // Local types should not qualify for serialization
-    JClassType iFoo = to.getType("AutoSerializable.IFoo");
-    problems = new ProblemReport();
-    assertFalse(sob.shouldConsiderFieldsForSerialization(iFoo.getSubtypes()[0],
-        problems));
-
     // Static nested types qualify for serialization
     JClassType staticNested = to.getType("OuterClass.StaticNested");
     problems = new ProblemReport();
@@ -791,9 +775,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     assertTrue(sob.shouldConsiderFieldsForSerialization(enumWithSubclasses,
         problems));
 
-    problems = new ProblemReport();
-    assertFalse(sob.shouldConsiderFieldsForSerialization(
-        enumWithSubclasses.getSubtypes()[0], problems));
+    // There are no longer any enum subclasses in TypeOracle
+    assertEquals(0, enumWithSubclasses.getSubtypes().length);
 
     // Enum that are not default instantiable should qualify
     JClassType enumWithNonDefaultCtors = to.getType("EnumWithNonDefaultCtors");

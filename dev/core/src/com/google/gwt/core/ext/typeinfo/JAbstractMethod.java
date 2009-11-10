@@ -42,6 +42,8 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
 
   private List<JTypeParameter> typeParams = Lists.create();
 
+  private String[] realParameterNames = null;
+
   JAbstractMethod(JAbstractMethod srcMethod) {
     this.annotations = new Annotations(srcMethod.annotations);
     this.isVarArgs = srcMethod.isVarArgs;
@@ -114,6 +116,7 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
   }
 
   public JParameter[] getParameters() {
+    // TODO(jat): where do we handle fake arg names?
     return params.toArray(TypeOracle.NO_JPARAMS);
   }
 
@@ -236,6 +239,22 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     return annotations.getDeclaredAnnotations();
   }
 
+  // Called only by a JParameter, passing itself as a reference for lookup.
+  String getRealParameterName(JParameter parameter) {
+    if (realParameterNames == null) {
+      fetchRealParameterNames();
+    }
+    int n = params.size();
+    for (int i = 0; i < n; ++i) {
+      // Identity tests are ok since identity is durable within an oracle.
+      if (params.get(i) == parameter) {
+        return realParameterNames == null ? "arg" + i : realParameterNames[i];
+      }
+    }
+    // TODO: report error if we are asked for an unknown JParameter?
+    return null;
+  }
+
   boolean hasParamTypes(JType[] paramTypes) {
     if (params.size() != paramTypes.length) {
       return false;
@@ -250,5 +269,9 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
       }
     }
     return true;
+  }
+
+  private void fetchRealParameterNames() {
+    realParameterNames = getEnclosingType().getOracle().getJavaSourceParser().getArguments(this);
   }
 }

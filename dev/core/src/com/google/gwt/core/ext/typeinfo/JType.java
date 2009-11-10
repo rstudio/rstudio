@@ -40,6 +40,11 @@ public abstract class JType {
     return getQualifiedSourceName();
   }
 
+  /**
+   * TODO(scottb): remove if we can resolve param names differently.
+   */
+  public abstract String getQualifiedBinaryName();
+
   public abstract String getQualifiedSourceName();
 
   public abstract String getSimpleSourceName();

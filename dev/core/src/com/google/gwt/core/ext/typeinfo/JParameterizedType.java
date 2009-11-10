@@ -99,7 +99,8 @@ public class JParameterizedType extends JMaybeParameterizedType {
     });
 
     this.typeArgs = Lists.create(typeArgs);
-    assert (this.typeArgs.indexOf(null) == -1);
+    assert (this.typeArgs.indexOf(null) == -1)
+        : "Unresolved typeArg creating JParameterizedType from " + baseType;
 
     // NOTE: Can't perform substitutions until we are done building
   }
@@ -236,6 +237,11 @@ public class JParameterizedType extends JMaybeParameterizedType {
     }
 
     return sb.toString();
+  }
+
+  @Override
+  public String getQualifiedBinaryName() {
+    return getBaseType().getQualifiedBinaryName();
   }
 
   /**
@@ -427,7 +433,7 @@ public class JParameterizedType extends JMaybeParameterizedType {
   /**
    * Initialize a map of substitutions for {@link JTypeParameter}s to
    * corresponding {@link JClassType}s. This can only be initialized after the
-   * {@link com.google.gwt.dev.jdt.TypeOracleBuilder TypeOracleBuilder} has
+   * {@link com.google.gwt.dev.javac.TypeOracleMediator TypeOracleMediator} has
    * fully resolved all of the {@link JClassType}s.
    */
   void maybeInitializeTypeParameterSubstitutionMap() {

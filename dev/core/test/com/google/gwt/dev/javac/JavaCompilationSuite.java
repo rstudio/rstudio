@@ -31,6 +31,7 @@ public class JavaCompilationSuite {
     suite.addTestSuite(CompilationStateTest.class);
     suite.addTestSuite(CompilationUnitFileReferenceTest.class);
     suite.addTestSuite(GWTProblemTest.class);
+    suite.addTestSuite(JavaSourceParserTest.class);
     suite.addTestSuite(JdtBehaviorTest.class);
     suite.addTestSuite(JdtCompilerTest.class);
     suite.addTestSuite(JProgramLastFragmentLoadingBeforeTest.class);

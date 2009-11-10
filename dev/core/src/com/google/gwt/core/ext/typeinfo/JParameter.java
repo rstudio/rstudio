@@ -26,11 +26,13 @@ public class JParameter implements HasAnnotations, HasMetaData {
 
   private final Annotations annotations;
 
-  private final String name;
+  private String name;
 
   private JType type;
 
   private final JAbstractMethod enclosingMethod;
+
+  private boolean argNameIsReal;
   
   public JParameter(JAbstractMethod enclosingMethod, JType type,
       String name) {
@@ -39,9 +41,16 @@ public class JParameter implements HasAnnotations, HasMetaData {
 
   public JParameter(JAbstractMethod enclosingMethod, JType type, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+    this(enclosingMethod, type, name, declaredAnnotations, true);
+  }
+
+  public JParameter(JAbstractMethod enclosingMethod, JType type, String name,
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
+      boolean argNameIsReal) {
     this.enclosingMethod = enclosingMethod;
     this.type = type;
     this.name = name;
+    this.argNameIsReal = argNameIsReal;
 
     enclosingMethod.addParameter(this);
 
@@ -79,6 +88,10 @@ public class JParameter implements HasAnnotations, HasMetaData {
   }
 
   public String getName() {
+    if (!argNameIsReal) {
+      name = enclosingMethod.getRealParameterName(this);
+      argNameIsReal = true;
+    }
     return name;
   }
 
@@ -90,6 +103,7 @@ public class JParameter implements HasAnnotations, HasMetaData {
     return annotations.isAnnotationPresent(annotationClass);
   }
 
+  @Override
   public String toString() {
     StringBuffer sb = new StringBuffer();
     sb.append(type.getParameterizedQualifiedSourceName());
@@ -110,6 +124,11 @@ public class JParameter implements HasAnnotations, HasMetaData {
    */
   Annotation[] getDeclaredAnnotations() {
     return annotations.getDeclaredAnnotations();
+  }
+
+  // Only called by JAbstractMethod after real parameter names are fetched.
+  void setName(String name) {
+    this.name = name;
   }
 
   // Called when parameter types are found to be parameterized

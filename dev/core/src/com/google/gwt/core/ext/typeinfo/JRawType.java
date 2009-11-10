@@ -136,6 +136,11 @@ public class JRawType extends JMaybeParameterizedType {
   }
 
   @Override
+  public String getQualifiedBinaryName() {
+    return getBaseType().getQualifiedBinaryName();
+  }
+
+  @Override
   public String getQualifiedSourceName() {
     return getBaseType().getQualifiedSourceName();
   }

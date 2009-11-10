@@ -16,7 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.typeinfo.HasTypeParameters;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
 import com.google.gwt.core.ext.typeinfo.JAnnotationMethod;
 import com.google.gwt.core.ext.typeinfo.JAnnotationType;
@@ -32,58 +31,43 @@ import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
+import com.google.gwt.core.ext.typeinfo.JRawType;
 import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
+import com.google.gwt.core.ext.typeinfo.JWildcardType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
-import com.google.gwt.dev.javac.CompilationUnit.State;
+import com.google.gwt.dev.asm.ClassReader;
+import com.google.gwt.dev.asm.ClassVisitor;
+import com.google.gwt.dev.asm.Opcodes;
+import com.google.gwt.dev.asm.Type;
+import com.google.gwt.dev.asm.signature.SignatureReader;
+import com.google.gwt.dev.asm.util.TraceClassVisitor;
+import com.google.gwt.dev.javac.asm.CollectAnnotationData;
+import com.google.gwt.dev.javac.asm.CollectClassData;
+import com.google.gwt.dev.javac.asm.CollectFieldData;
+import com.google.gwt.dev.javac.asm.CollectMethodData;
+import com.google.gwt.dev.javac.asm.CollectTypeParams;
+import com.google.gwt.dev.javac.asm.ResolveClassSignature;
+import com.google.gwt.dev.javac.asm.ResolveMethodSignature;
+import com.google.gwt.dev.javac.asm.ResolveTypeSignature;
+import com.google.gwt.dev.javac.asm.CollectAnnotationData.AnnotationData;
+import com.google.gwt.dev.javac.asm.CollectClassData.AnnotationEnum;
 import com.google.gwt.dev.javac.impl.Shared;
-import com.google.gwt.dev.util.collect.HashMap;
-import com.google.gwt.dev.util.collect.HashSet;
-import com.google.gwt.dev.util.collect.IdentityHashMap;
-import com.google.gwt.dev.util.collect.Maps;
+import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
+import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.Name;
+import com.google.gwt.dev.util.Name.InternalName;
 
-import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.AbstractVariableDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.Annotation;
-import org.eclipse.jdt.internal.compiler.ast.AnnotationMethodDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.Argument;
-import org.eclipse.jdt.internal.compiler.ast.ArrayInitializer;
-import org.eclipse.jdt.internal.compiler.ast.ClassLiteralAccess;
-import org.eclipse.jdt.internal.compiler.ast.Clinit;
-import org.eclipse.jdt.internal.compiler.ast.Expression;
-import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.Initializer;
-import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
-import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.NameReference;
-import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.TypeParameter;
-import org.eclipse.jdt.internal.compiler.ast.TypeReference;
-import org.eclipse.jdt.internal.compiler.ast.Wildcard;
-import org.eclipse.jdt.internal.compiler.impl.Constant;
-import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;
-import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
-import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
-import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
-import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
-import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
-import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
-import org.eclipse.jdt.internal.compiler.lookup.RawTypeBinding;
-import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
-import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
-import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
-import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
-import org.eclipse.jdt.internal.compiler.lookup.TypeVariableBinding;
-import org.eclipse.jdt.internal.compiler.lookup.WildcardBinding;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import java.io.PrintWriter;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -94,7 +78,18 @@ import java.util.Set;
  */
 public class TypeOracleMediator {
 
-  private static final JClassType[] NO_JCLASSES = new JClassType[0];
+  /**
+   * Pairs of bits to convert from ASM Opcodes.* to Shared.* bitfields.
+   */
+  private static final int[] ASM_TO_SHARED_MODIFIERS = new int[] {
+      Opcodes.ACC_PUBLIC, Shared.MOD_PUBLIC, Opcodes.ACC_PRIVATE,
+      Shared.MOD_PRIVATE, Opcodes.ACC_PROTECTED, Shared.MOD_PROTECTED,
+      Opcodes.ACC_STATIC, Shared.MOD_STATIC, Opcodes.ACC_FINAL,
+      Shared.MOD_FINAL, Opcodes.ACC_ABSTRACT, Shared.MOD_ABSTRACT,
+      Opcodes.ACC_VOLATILE, Shared.MOD_VOLATILE, Opcodes.ACC_TRANSIENT,
+      Shared.MOD_TRANSIENT,};
+
+  private static final JTypeParameter[] NO_TYPE_PARAMETERS = new JTypeParameter[0];
 
   /**
    * Returns the binary name of a type. This is the same name that would be
@@ -134,192 +129,308 @@ public class TypeOracleMediator {
     return classType.getQualifiedSourceName();
   }
 
-  /**
-   * Returns the value associated with a JDT constant.
-   */
-  private static Object getConstantValue(Constant constant) {
-    switch (constant.typeID()) {
-      case TypeIds.T_char:
-        return constant.charValue();
-      case TypeIds.T_byte:
-        return constant.byteValue();
-      case TypeIds.T_short:
-        return constant.shortValue();
-      case TypeIds.T_boolean:
-        return constant.booleanValue();
-      case TypeIds.T_long:
-        return constant.longValue();
-      case TypeIds.T_double:
-        return constant.doubleValue();
-      case TypeIds.T_float:
-        return constant.floatValue();
-      case TypeIds.T_int:
-        return constant.intValue();
-      case TypeIds.T_JavaLangString:
-        return constant.stringValue();
-      case TypeIds.T_null:
-        return null;
-      default:
-        break;
+  private static JTypeParameter[] collectTypeParams(String signature) {
+    if (signature != null) {
+      List<JTypeParameter> params = new ArrayList<JTypeParameter>();
+      SignatureReader reader = new SignatureReader(signature);
+      reader.accept(new CollectTypeParams(params));
+      return params.toArray(new JTypeParameter[params.size()]);
     }
+    return NO_TYPE_PARAMETERS;
+  }
 
-    assert false : "Unknown constant type";
+  /**
+   * @param resolvedType a resolved type, which is either a primitive, an array,
+   * or a JRealClassType.
+   */
+  private static <T> Class<? extends T> getClassLiteral(TreeLogger logger,
+      Class<T> requestedClass, JType resolvedType) {
+    Class<?> clazz = null;
+    if (resolvedType instanceof JPrimitiveType) {
+      clazz = getClassLiteralForPrimitive((JPrimitiveType) resolvedType);
+    } else {
+      String binaryName; 
+      if (resolvedType instanceof JArrayType) {
+        binaryName = ((JArrayType) resolvedType).getQualifiedBinaryName();
+      } else if (resolvedType instanceof JRealClassType) {
+        binaryName = ((JRealClassType) resolvedType).getQualifiedBinaryName();
+      } else {
+        throw new IllegalArgumentException(
+            "Unexpected type for class literal '"
+                + resolvedType.getQualifiedSourceName() + "'");
+      }
+      try {
+        clazz = Class.forName(binaryName, false,
+            Thread.currentThread().getContextClassLoader());
+      } catch (ClassNotFoundException e) {
+        logger.log(TreeLogger.ERROR,
+            "Unable to get class object for annotation " + resolvedType, e);
+        return null;
+      }
+    }
+    if (requestedClass.isAssignableFrom(clazz)) {
+      return clazz.asSubclass(requestedClass);
+    }
     return null;
   }
 
-  private static String getMethodName(JClassType enclosingType,
-      AbstractMethodDeclaration jmethod) {
-    if (jmethod.isConstructor()) {
-      return String.valueOf(enclosingType.getSimpleSourceName());
+  private static Class<?> getClassLiteralForPrimitive(JPrimitiveType type) {
+    if (type.equals(JPrimitiveType.INT)) {
+      return Integer.TYPE;
+    } else if (type.equals(JPrimitiveType.BOOLEAN)) {
+      return Boolean.TYPE;
+    } else if (type.equals(JPrimitiveType.DOUBLE)) {
+      return Double.TYPE;
+    } else if (type.equals(JPrimitiveType.FLOAT)) {
+      return Float.TYPE;
+    } else if (type.equals(JPrimitiveType.LONG)) {
+      return Long.TYPE;
+    } else if (type.equals(JPrimitiveType.VOID)) {
+      return Void.TYPE;
+    } else if (type.equals(JPrimitiveType.CHAR)) {
+      return Character.TYPE;
+    } else if (type.equals(JPrimitiveType.SHORT)) {
+      return Short.TYPE;
+    } else if (type.equals(JPrimitiveType.BYTE)) {
+      return Byte.TYPE;
     } else {
-      return String.valueOf(jmethod.binding.selector);
+      assert false : "Unexpected type " + type;
+      return null;
     }
   }
 
-  private static RetentionPolicy getRetentionPolicy(
-      Class<? extends java.lang.annotation.Annotation> clazz) {
-    // Default retention policy is CLASS, see @Retention.
-    RetentionPolicy retentionPolicy = RetentionPolicy.CLASS;
-    Retention retentionAnnotation = clazz.getAnnotation(Retention.class);
-    if (retentionAnnotation != null) {
-      retentionPolicy = retentionAnnotation.value();
+  private static JTypeParameter[] getTypeParametersForClass(
+      CollectClassData classData) {
+    JTypeParameter[] typeParams = null;
+    if (classData.getSignature() != null) {
+      // TODO(jat): do we need to consider generic types w/ method type
+      // params for local classes?
+      typeParams = collectTypeParams(classData.getSignature());
     }
-    return retentionPolicy;
+    return typeParams;
+  }
+
+  private static Class<?> getWrapperClass(Class<?> primitiveClass) {
+    assert primitiveClass.isPrimitive();
+    if (primitiveClass.equals(Integer.TYPE)) {
+      return Integer.class;
+    } else if (primitiveClass.equals(Boolean.TYPE)) {
+      return Boolean.class;
+    } else if (primitiveClass.equals(Byte.TYPE)) {
+      return Byte.class;
+    } else if (primitiveClass.equals(Character.TYPE)) {
+      return Character.class;
+    } else if (primitiveClass.equals(Short.TYPE)) {
+      return Short.class;
+    } else if (primitiveClass.equals(Long.TYPE)) {
+      return Long.class;
+    } else if (primitiveClass.equals(Float.TYPE)) {
+      return Float.class;
+    } else if (primitiveClass.equals(Double.TYPE)) {
+      return Double.class;
+    } else {
+      throw new IllegalArgumentException(primitiveClass.toString()
+          + " not a primitive class");
+    }
   }
 
   /**
-   * Returns <code>true</code> if this name is the special package-info type
-   * name.
-   * 
    * @return <code>true</code> if this name is the special package-info type
-   *         name
+   *         name.
    */
   private static boolean isPackageInfoTypeName(String qname) {
     return "package-info".equals(qname);
   }
 
-  private static boolean maybeGeneric(TypeDeclaration typeDecl,
-      JClassType enclosingType) {
-
-    if (typeDecl.typeParameters != null) {
-      // Definitely generic since it has type parameters.
-      return true;
+  /**
+   * Returns true if this class is a non-static class inside a generic class.
+   * 
+   * TODO(jat): do we need to consider the entire hierarchy?
+   * 
+   * @param classData
+   * @param enclosingClassData
+   * @return true if this class is a non-static class inside a generic class
+   */
+  private static boolean nonStaticInsideGeneric(CollectClassData classData,
+      CollectClassData enclosingClassData) {
+    if (enclosingClassData == null
+        || (classData.getAccess() & Opcodes.ACC_STATIC) != 0) {
+      return false;
     }
-
-    if (enclosingType != null && enclosingType.isGenericType() != null) {
-      if (!typeDecl.binding.isStatic()) {
-        /*
-         * This non-static, inner class can reference the type parameters of its
-         * enclosing generic type, so we will treat it as a generic type.
-         */
-        return true;
-      }
-    }
-
-    if (typeDecl.binding.isLocalType()) {
-      LocalTypeBinding localTypeBinding = (LocalTypeBinding) typeDecl.binding;
-      MethodBinding enclosingMethod = localTypeBinding.enclosingMethod;
-      if (enclosingMethod != null) {
-        if (enclosingMethod.typeVariables != null
-            && enclosingMethod.typeVariables.length != 0) {
-          /*
-           * This local type can reference the type parameters of its enclosing
-           * method, so we will treat is as a generic type.
-           */
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return getTypeParametersForClass(enclosingClassData) != null;
   }
 
-  // TODO: move into the Annotations class or create an AnnotationsUtil class?
-  private static HashMap<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> newAnnotationMap() {
-    return new HashMap<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation>();
+  /**
+   * Substitute the raw type if the supplied type is generic.
+   * 
+   * @param type
+   * @return original type or its raw type if it is generic
+   */
+  private static JType possiblySubstituteRawType(JType type) {
+    if (type != null) {
+      JGenericType genericType = type.isGenericType();
+      if (genericType != null) {
+        type = genericType.getRawType();
+      }
+    }
+    return type;
   }
 
-  private final Map<String, JRealClassType> binaryMapper = new HashMap<String, JRealClassType>();
+  // map of internal names to classes
+  final Map<String, JRealClassType> binaryMapper = new HashMap<String, JRealClassType>();
 
-  /**
-   * Mapping of source type bindings; transient because freshly-compiled units
-   * are processed in chunks, so only references between types in the same chunk
-   * are source bindings; the rest are going to be binary type bindings.
-   */
-  private final transient Map<SourceTypeBinding, JRealClassType> sourceMapper = new IdentityHashMap<SourceTypeBinding, JRealClassType>();
+  final TypeOracle typeOracle;
 
-  /**
-   * Mapping of type variable bindings; transient because compilation units are
-   * processed monolithically, and a tv binding is only valid within a single
-   * unit.
-   */
-  private final transient Map<TypeVariableBinding, JTypeParameter> tvMapper = new IdentityHashMap<TypeVariableBinding, JTypeParameter>();
+  // map of internal names to class visitors
+  // transient since it is not retained across calls to addNewUnits
+  private transient Map<String, CollectClassData> classMap;
 
-  private final TypeOracle typeOracle = new TypeOracle();
+  // transient since it is not retained across calls to addNewUnits
+  private transient HashMap<JRealClassType, CollectClassData> classMapType;
 
-  /**
-   * Set of unresolved types to process, generated from the first phase of type
-   * oracle resolution. Transient because they all get resolved in the second
-   * phase.
-   */
-  private final transient Set<JRealClassType> unresolvedTypes = new HashSet<JRealClassType>();
+  private final Set<JRealClassType> resolved = new HashSet<JRealClassType>();
+
+  private Resolver resolver;
+
+  public TypeOracleMediator() {
+    this(null);
+  }
+
+  // @VisibleForTesting
+  public TypeOracleMediator(TypeOracle typeOracle) {
+    if (typeOracle == null) {
+      typeOracle = new TypeOracle();
+    }
+    this.typeOracle = typeOracle;
+    resolver = new Resolver() {
+      public Map<String, JRealClassType> getBinaryMapper() {
+        return TypeOracleMediator.this.binaryMapper;
+      }
+
+      public TypeOracle getTypeOracle() {
+        return TypeOracleMediator.this.typeOracle;
+      }
+
+      public boolean resolveAnnotation(TreeLogger logger,
+          CollectAnnotationData annotVisitor,
+          Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+        return TypeOracleMediator.this.resolveAnnotation(logger, annotVisitor,
+            declaredAnnotations);
+      }
+
+      public boolean resolveAnnotations(TreeLogger logger,
+          List<CollectAnnotationData> annotations,
+          Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+        return TypeOracleMediator.this.resolveAnnotations(logger, annotations,
+            declaredAnnotations);
+      }
+
+      public boolean resolveClass(TreeLogger logger, JRealClassType type) {
+        return TypeOracleMediator.this.resolveClass(logger, type);
+      }
+    };
+  }
 
   /**
    * Adds new units to an existing TypeOracle.
    */
   public void addNewUnits(TreeLogger logger, Collection<CompilationUnit> units) {
-    // Perform a shallow pass to establish identity for new and old types.
+    // First collect all class data and resurrect graveyard types.
+    classMap = new HashMap<String, CollectClassData>();
     for (CompilationUnit unit : units) {
-      switch (unit.getState()) {
-        case GRAVEYARD:
-          for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-            JRealClassType type = compiledClass.getRealClassType();
-            assert (type != null);
+      if (unit.getState() == CompilationUnit.State.GRAVEYARD) {
+        for (CompiledClass compiledClass : unit.getCompiledClasses()) {
+          JRealClassType type = compiledClass.getRealClassType();
+          if (type != null) {
             type.resurrect();
-            binaryMapper.put(compiledClass.getInternalName(), type);
           }
-          break;
-        case COMPILED:
-          for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-            JRealClassType type = createType(compiledClass);
-            binaryMapper.put(compiledClass.getInternalName(), type);
-          }
-          break;
-        case CHECKED:
-          for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-            JRealClassType type = compiledClass.getRealClassType();
-            assert (type != null);
-            binaryMapper.put(compiledClass.getInternalName(), type);
-          }
-          break;
-      }
-    }
-
-    // Perform a deep pass to resolve all new types in terms of our types.
-    for (CompilationUnit unit : units) {
-      if (unit.getState() != State.COMPILED) {
+        }
+        continue;
+      } else if (!unit.isCompiled()) {
         continue;
       }
-      TreeLogger cudLogger = logger.branch(TreeLogger.SPAM,
-          "Processing types in compilation unit: " + unit.getDisplayLocation());
       Set<CompiledClass> compiledClasses = unit.getCompiledClasses();
       for (CompiledClass compiledClass : compiledClasses) {
-        if (unresolvedTypes.remove(compiledClass.getRealClassType())) {
-          TypeDeclaration typeDeclaration = compiledClass.getTypeDeclaration();
-          if (!resolveTypeDeclaration(cudLogger, typeDeclaration)) {
-            logger.log(TreeLogger.WARN,
-                "Unexpectedly unable to fully resolve type "
-                    + compiledClass.getSourceName());
-          }
+        CollectClassData cv = processClass(compiledClass);
+        // skip any classes that can't be referenced by name outside of
+        // their local scope, such as anonymous classes and method-local classes
+        if (!cv.hasNoExternalName()) {
+          classMap.put(compiledClass.getInternalName(), cv);
         }
       }
     }
-    // Clean transient state.
-    assert unresolvedTypes.size() == 0;
-    sourceMapper.clear();
-    tvMapper.clear();
+
+    // Perform a shallow pass to establish identity for new and old types.
+    classMapType = new HashMap<JRealClassType, CollectClassData>();
+    Set<JRealClassType> unresolvedTypes = new HashSet<JRealClassType>();
+    for (CompilationUnit unit : units) {
+      if (!unit.isCompiled()) {
+        continue;
+      }
+      Set<CompiledClass> compiledClasses = unit.getCompiledClasses();
+      for (CompiledClass compiledClass : compiledClasses) {
+        String internalName = compiledClass.getInternalName();
+        CollectClassData cv = classMap.get(internalName);
+        if (cv == null) {
+          // ignore classes that were skipped earlier
+          continue;
+        }
+        JRealClassType type = compiledClass.getRealClassType();
+        if (type == null) {
+          type = createType(compiledClass, unresolvedTypes);
+        } else {
+          resolved.add(type);
+        }
+        if (type != null) {
+          binaryMapper.put(internalName, type);
+          classMapType.put(type, cv);
+        }
+      }
+    }
+
+    // Hook up enclosing types
+    TreeLogger branch = logger.branch(TreeLogger.SPAM,
+        "Resolving enclosing classes");
+    for (Iterator<JRealClassType> it = unresolvedTypes.iterator(); it.hasNext();) {
+      JRealClassType type = it.next();
+      if (!resolveEnclosingClass(branch, type)) {
+        // already logged why it failed, don't try and use it further
+        it.remove();
+      }
+    }
+
+    // Resolve unresolved types.
+    for (JRealClassType type : unresolvedTypes) {
+      branch = logger.branch(TreeLogger.SPAM, "Resolving "
+          + type.getQualifiedSourceName());
+      if (!resolveClass(branch, type)) {
+        // already logged why it failed
+        // TODO: should we do anything else here?
+      }
+    }
 
     typeOracle.finish();
+
+    // save source references
+    for (CompilationUnit unit : units) {
+      if (unit.isCompiled() && unit instanceof SourceFileCompilationUnit) {
+        SourceFileCompilationUnit sourceUnit = (SourceFileCompilationUnit) unit;
+        Resource sourceFile = sourceUnit.getSourceFile();
+        Set<CompiledClass> compiledClasses = unit.getCompiledClasses();
+        for (CompiledClass compiledClass : compiledClasses) {
+          JRealClassType type = compiledClass.getRealClassType();
+          typeOracle.addSourceReference(type, sourceFile);
+        }
+      }
+    }
+
+    // no longer needed
+    classMap = null;
+    classMapType = null;
+  }
+
+  public Map<String, JRealClassType> getBinaryMapper() {
+    return binaryMapper;
   }
 
   public TypeOracle getTypeOracle() {
@@ -330,1050 +441,752 @@ public class TypeOracleMediator {
    * Full refresh based on new units.
    */
   public void refresh(TreeLogger logger, Collection<CompilationUnit> units) {
-    logger = logger.branch(TreeLogger.DEBUG, "Refreshing TypeOracle");
     binaryMapper.clear();
     typeOracle.reset();
+    resolved.clear();
     addNewUnits(logger, units);
   }
 
-  private Object createAnnotationInstance(TreeLogger logger,
-      Expression expression) {
-    Annotation annotation = (Annotation) expression;
-
-    // Determine the annotation class
-    TypeBinding resolvedType = annotation.resolvedType;
-    Class<?> classLiteral = getClassLiteral(logger, resolvedType);
-    if (classLiteral == null) {
-      return null;
-    }
-
-    Class<? extends java.lang.annotation.Annotation> clazz = classLiteral.asSubclass(java.lang.annotation.Annotation.class);
-
-    // Build the map of identifiers to values.
-    Map<String, Object> identifierToValue = new HashMap<String, Object>();
-    for (MemberValuePair mvp : annotation.memberValuePairs()) {
-      // Method name
-      String identifier = String.valueOf(mvp.name);
-
-      // Value
-      Expression expressionValue = mvp.value;
-      TypeBinding expectedElementValueType = mvp.binding.returnType;
-      Object elementValue = getAnnotationElementValue(logger,
-          expectedElementValueType, expressionValue);
-      if (elementValue == null) {
+  private Annotation createAnnotation(TreeLogger logger,
+      Class<? extends Annotation> annotationClass, AnnotationData annotData) {
+    Map<String, Object> values = annotData.getValues();
+    for (Map.Entry<String, Object> entry : values.entrySet()) {
+      Method method = null;
+      Throwable caught = null;
+      try {
+        method = annotationClass.getMethod(entry.getKey());
+      } catch (SecurityException e) {
+        caught = e;
+      } catch (NoSuchMethodException e) {
+        caught = e;
+      }
+      if (caught != null) {
+        logger.log(TreeLogger.WARN, "Exception resolving "
+            + annotationClass.getCanonicalName() + "." + entry.getKey(), caught);
         return null;
       }
-
-      /*
-       * If the expected value is supposed to be an array then the element value
-       * had better be an array.
-       */
-      assert (expectedElementValueType.isArrayType() == false || expectedElementValueType.isArrayType()
-          && elementValue.getClass().isArray());
-
-      identifierToValue.put(identifier, elementValue);
+      entry.setValue(resolveAnnotationValue(logger, method.getReturnType(),
+          entry.getValue()));
     }
-
-    return AnnotationProxyFactory.create(clazz,
-        Maps.normalize(identifierToValue));
+    return AnnotationProxyFactory.create(annotationClass, values);
   }
 
-  private JRealClassType createType(CompiledClass compiledClass) {
-    JRealClassType realClassType = compiledClass.getRealClassType();
-    if (realClassType == null) {
-      JRealClassType enclosingType = null;
-      CompiledClass enclosingClass = compiledClass.getEnclosingClass();
-      if (enclosingClass != null) {
-        enclosingType = enclosingClass.getRealClassType();
-        if (enclosingType == null) {
-          enclosingType = createType(enclosingClass);
-        }
-      }
-      realClassType = createType(compiledClass, enclosingType);
-      if (realClassType != null) {
-        unresolvedTypes.add(realClassType);
-        sourceMapper.put(compiledClass.getTypeDeclaration().binding,
-            realClassType);
-        compiledClass.setRealClassType(realClassType);
-      }
-    }
-    return realClassType;
-  }
-
-  /**
-   * Maps a TypeDeclaration into a JRealClassType. If the TypeDeclaration has
-   * TypeParameters (i.e, it is a generic type or method), then the
-   * TypeParameters are mapped into JTypeParameters.
-   */
   private JRealClassType createType(CompiledClass compiledClass,
-      JRealClassType enclosingType) {
-    TypeDeclaration typeDecl = compiledClass.getTypeDeclaration();
-    SourceTypeBinding binding = typeDecl.binding;
-    assert (binding.constantPoolName() != null);
-
+      CollectClassData classData, CollectClassData enclosingClassData) {
+    int access = classData.getAccess();
     String qname = compiledClass.getSourceName();
     String className = Shared.getShortName(qname);
+    JRealClassType resultType = null;
     String jpkgName = compiledClass.getPackageName();
     JPackage pkg = typeOracle.getOrCreatePackage(jpkgName);
-    boolean isLocalType = binding instanceof LocalTypeBinding;
-    boolean isIntf = TypeDeclaration.kind(typeDecl.modifiers) == TypeDeclaration.INTERFACE_DECL;
-    boolean isAnnotation = TypeDeclaration.kind(typeDecl.modifiers) == TypeDeclaration.ANNOTATION_TYPE_DECL;
-
-    JRealClassType resultType;
-    if (isAnnotation) {
-      resultType = new JAnnotationType(typeOracle, pkg, enclosingType,
+    boolean isIntf = (access & Opcodes.ACC_INTERFACE) != 0;
+    boolean isLocalType = classData.isLocal();
+    String enclosingTypeName = null;
+    if (enclosingClassData != null) {
+      enclosingTypeName = InternalName.toSourceName(InternalName.getClassName(enclosingClassData.getName()));
+    }
+    if ((access & Opcodes.ACC_ANNOTATION) != 0) {
+      resultType = new JAnnotationType(typeOracle, pkg, enclosingTypeName,
+          false, className, true);
+    } else if ((access & Opcodes.ACC_ENUM) != 0) {
+      resultType = new JEnumType(typeOracle, pkg, enclosingTypeName,
           isLocalType, className, isIntf);
-    } else if (maybeGeneric(typeDecl, enclosingType)) {
-      // Go through and create declarations for each of the type parameters on
-      // the generic class or method
-      JTypeParameter[] jtypeParameters = declareTypeParameters(typeDecl.typeParameters);
-
-      JGenericType jgenericType = new JGenericType(typeOracle, pkg,
-          enclosingType, isLocalType, className, isIntf, jtypeParameters);
-
-      resultType = jgenericType;
-    } else if (binding.isEnum()) {
-      resultType = new JEnumType(typeOracle, pkg, enclosingType, isLocalType,
-          className, isIntf);
     } else {
-      resultType = new JRealClassType(typeOracle, pkg, enclosingType,
-          isLocalType, className, isIntf);
+      JTypeParameter[] typeParams = getTypeParametersForClass(classData);
+      if ((typeParams != null && typeParams.length > 0)
+          || nonStaticInsideGeneric(classData, enclosingClassData)) {
+        resultType = new JGenericType(typeOracle, pkg, enclosingTypeName,
+            isLocalType, className, isIntf, typeParams);
+      } else {
+        resultType = new JRealClassType(typeOracle, pkg, enclosingTypeName,
+            isLocalType, className, isIntf);
+      }
     }
 
     /*
      * Declare type parameters for all methods; we must do this during the first
      * pass.
      */
-    if (typeDecl.methods != null) {
-      for (AbstractMethodDeclaration method : typeDecl.methods) {
-        declareTypeParameters(method.typeParameters());
-      }
-    }
-
+    // if (typeDecl.methods != null) {
+    // for (AbstractMethodDeclaration method : typeDecl.methods) {
+    // declareTypeParameters(method.typeParameters());
+    // }
+    // }
     /*
      * Add modifiers since these are needed for
      * TypeOracle.getParameterizedType's error checking code.
      */
-    resultType.addModifierBits(Shared.bindingToModifierBits(binding));
+    resultType.addModifierBits(mapBits(ASM_TO_SHARED_MODIFIERS, access));
+    if (isIntf) {
+      // Always add implicit modifiers on interfaces.
+      resultType.addModifierBits(Shared.MOD_STATIC | Shared.MOD_ABSTRACT);
+    }
+
     return resultType;
   }
 
-  private JClassType[] createTypeParameterBounds(TreeLogger logger,
-      TypeVariableBinding tvBinding) {
-    TypeBinding firstBound = tvBinding.firstBound;
-    if (firstBound == null) {
-      // No bounds were specified, so we default to Object. We assume that the
-      // superclass field of a TypeVariableBinding object is a Binding
-      // for a java.lang.Object, and we use this binding to find the
-      // JClassType for java.lang.Object. To be sure that our assumption
-      // about the superclass field is valid, we perform a runtime check
-      // against the name of the resolved type.
-
-      // You may wonder why we have to go this roundabout way to find a
-      // JClassType for java.lang.Object. The reason is that the TypeOracle
-      // has not been constructed as yet, so we cannot simply call
-      // TypeOracle.getJavaLangObject().
-      JClassType jimplicitUpperBound = (JClassType) resolveType(logger,
-          tvBinding.superclass);
-      if (jimplicitUpperBound != null) {
-        assert (Object.class.getName().equals(jimplicitUpperBound.getQualifiedSourceName()));
-        return new JClassType[] {jimplicitUpperBound};
-      }
-
-      // Failed to resolve the implicit upper bound.
-      return null;
-    }
-
-    List<JClassType> bounds = new ArrayList<JClassType>();
-    JClassType jfirstBound = (JClassType) resolveType(logger, firstBound);
-    if (jfirstBound == null) {
-      return null;
-    }
-
-    bounds.add(jfirstBound);
-
-    ReferenceBinding[] superInterfaces = tvBinding.superInterfaces();
-    for (ReferenceBinding superInterface : superInterfaces) {
-      if (superInterface != firstBound) {
-        JClassType jsuperInterface = (JClassType) resolveType(logger,
-            superInterface);
-        if (jsuperInterface == null) {
+  private JRealClassType createType(CompiledClass compiledClass,
+      Set<JRealClassType> unresolvedTypes) {
+    JRealClassType realClassType = compiledClass.getRealClassType();
+    if (realClassType == null) {
+      CollectClassData classData = classMap.get(compiledClass.getInternalName());
+      String outerClassName = classData.getOuterClass();
+      CollectClassData enclosingClassData = null;
+      if (outerClassName != null) {
+        enclosingClassData = classMap.get(outerClassName);
+        if (enclosingClassData == null) {
+          // if our enclosing class was skipped, skip this one too
           return null;
         }
-        bounds.add(jsuperInterface);
-      } else {
-        /*
-         * If the first bound was an interface JDT will still include it in the
-         * set of superinterfaces. So, we ignore it since we have already added
-         * it to the bounds.
-         */
       }
+      realClassType = createType(compiledClass, classData, enclosingClassData);
+      unresolvedTypes.add(realClassType);
+      compiledClass.setRealClassType(realClassType);
     }
-
-    return bounds.toArray(NO_JCLASSES);
+    return realClassType;
   }
 
-  /**
-   * Declares TypeParameters declared on a JGenericType or a JAbstractMethod by
-   * mapping the TypeParameters into JTypeParameters. <p/> This mapping has to
-   * be done on the first pass through the AST in order to handle declarations
-   * of the form: <<C exends GenericClass<T>, T extends SimpleClass> <p/> JDT
-   * already knows that GenericClass<T> is a parameterized type with a type
-   * argument of <T extends SimpleClass>. Therefore, in order to resolve
-   * GenericClass<T>, we must have knowledge of <T extends SimpleClass>. <p/>
-   * By calling this method on the first pass through the AST, a JTypeParameter
-   * for <T extends SimpleClass> will be created.
-   */
-  private JTypeParameter[] declareTypeParameters(TypeParameter[] typeParameters) {
-    if (typeParameters == null || typeParameters.length == 0) {
-      return null;
+  private Class<? extends Annotation> getAnnotationClass(TreeLogger logger,
+      AnnotationData annotData) {
+    Type type = Type.getType(annotData.getDesc());
+    JType resolvedType = resolveType(type);
+    if (resolvedType != null) {
+      return getClassLiteral(logger, Annotation.class, resolvedType);
     }
-
-    JTypeParameter[] jtypeParamArray = new JTypeParameter[typeParameters.length];
-    for (int i = 0; i < typeParameters.length; ++i) {
-      TypeParameter typeParam = typeParameters[i];
-      jtypeParamArray[i] = new JTypeParameter(String.valueOf(typeParam.name), i);
-      tvMapper.put(typeParam.binding, jtypeParamArray[i]);
-    }
-
-    return jtypeParamArray;
-  }
-
-  /**
-   * Returns an annotation element value as defined in JLS 3.0 section 9.7.
-   * 
-   * @param logger
-   * @param expectedElementValueType the expected element value type
-   * @param elementValueExpression the expression that defines the element value
-   * 
-   * @return annotation element value as defined in JLS 3.0 section 9.7
-   */
-  @SuppressWarnings("unchecked")
-  private Object getAnnotationElementValue(TreeLogger logger,
-      TypeBinding expectedElementValueType, Expression elementValueExpression) {
-
-    Object elementValue = null;
-
-    if (elementValueExpression.constant != null
-        && elementValueExpression.constant != Constant.NotAConstant) {
-      /*
-       * Rely on JDT's computed constant value to deal with an
-       * AnnotationElementValue expression whose resolved type is a primitive or
-       * a string.
-       */
-      Constant constant = elementValueExpression.constant;
-      int expectedTypeId = expectedElementValueType.id;
-
-      if (expectedElementValueType.isArrayType()) {
-        /*
-         * This can happen when an element value is an array with a single
-         * element. In this case JLS 3.0 section 9.7 allows for the
-         * ArrayInitializer expression to be implicit. Since, element values can
-         * only be single dimensional arrays, we take the leaf type of the
-         * expected array type as our resultant element value type.
-         */
-        assert (!elementValueExpression.resolvedType.isArrayType() && expectedElementValueType.dimensions() == 1);
-
-        expectedTypeId = expectedElementValueType.leafComponentType().id;
-      }
-
-      if (elementValueExpression.resolvedType.id != expectedTypeId) {
-        /*
-         * Narrowing and widening conversions are handled by the following
-         * Constant.castTo call. JDT wants the upper four bits of this mask to
-         * be the target type id and the lower four bits to be the source type
-         * id. See Constant.castTo for more details.
-         */
-        constant = constant.castTo((expectedTypeId << 4)
-            + elementValueExpression.resolvedType.id);
-      }
-
-      elementValue = getConstantValue(constant);
-    } else if (elementValueExpression instanceof ClassLiteralAccess) {
-      ClassLiteralAccess classLiteral = (ClassLiteralAccess) elementValueExpression;
-      elementValue = getClassLiteral(logger, classLiteral.targetType);
-    } else if (elementValueExpression instanceof ArrayInitializer) {
-      elementValue = getAnnotationElementValueArray(logger,
-          (ArrayInitializer) elementValueExpression);
-    } else if (elementValueExpression instanceof NameReference) {
-      /*
-       * Any primitive types, conditionals, strings, arrays and name references
-       * to constant fields will have all been handled by the constant
-       * expression block above. This name reference can only be for an
-       * enumerated type.
-       */
-      NameReference nameRef = (NameReference) elementValueExpression;
-
-      assert (nameRef.constant == null || nameRef.constant == Constant.NotAConstant);
-      assert (nameRef.actualReceiverType.isEnum());
-
-      Class<?> clazz = getClassLiteral(logger, nameRef.actualReceiverType);
-      Class<? extends Enum> enumClass = clazz.asSubclass(Enum.class);
-
-      String enumName = String.valueOf(nameRef.fieldBinding().name);
-      elementValue = Enum.valueOf(enumClass, enumName);
-    } else if (elementValueExpression instanceof Annotation) {
-      elementValue = createAnnotationInstance(logger, elementValueExpression);
-    } else {
-      assert (false);
-      return null;
-    }
-
-    assert (elementValue != null);
-
-    if (expectedElementValueType.isArrayType()
-        && !elementValue.getClass().isArray()) {
-      /*
-       * Handle single element arrays where no explicit array initializer was
-       * given.
-       */
-      Object array = Array.newInstance(elementValue.getClass(), 1);
-      Array.set(array, 0, elementValue);
-      elementValue = array;
-    }
-
-    return elementValue;
-  }
-
-  /**
-   * Returns an annotation element value array. These arrays can only have a
-   * single dimension.
-   */
-  private Object getAnnotationElementValueArray(TreeLogger logger,
-      ArrayInitializer arrayInitializer) {
-    assert (arrayInitializer.binding.dimensions == 1);
-
-    Class<?> leafComponentClass = getClassLiteral(logger,
-        arrayInitializer.binding.leafComponentType);
-    if (leafComponentClass == null) {
-      return null;
-    }
-
-    Expression[] initExpressions = arrayInitializer.expressions;
-    int arrayLength = initExpressions != null ? initExpressions.length : 0;
-
-    Object array = Array.newInstance(leafComponentClass, arrayLength);
-    boolean failed = false;
-    for (int i = 0; i < arrayLength; ++i) {
-      Expression arrayInitExp = initExpressions[i];
-      Object value = getAnnotationElementValue(logger,
-          arrayInitializer.binding.leafComponentType, arrayInitExp);
-      if (value != null) {
-        Array.set(array, i, value);
-      } else {
-        failed = true;
-        break;
-      }
-    }
-
-    if (!failed) {
-      return array;
-    }
-
-    return null;
-  }
-
-  private Class<?> getClassLiteral(TreeLogger logger, TypeBinding resolvedType) {
-    if (resolvedType instanceof BaseTypeBinding) {
-      return getClassLiteralForPrimitive((BaseTypeBinding) resolvedType);
-    } else {
-      try {
-        String className = String.valueOf(resolvedType.constantPoolName());
-        className = className.replace('/', '.');
-        return Class.forName(className, false,
-            Thread.currentThread().getContextClassLoader());
-      } catch (ClassNotFoundException e) {
-        logger.log(TreeLogger.ERROR, "", e);
+    try {
+      Class<?> clazz = Class.forName(type.getClassName(), false,
+          getClass().getClassLoader());
+      if (!Annotation.class.isAssignableFrom(clazz)) {
+        logger.log(TreeLogger.ERROR, "Binary-only type " + type.getClassName()
+            + " is not an annotation");
         return null;
       }
+      return clazz.asSubclass(Annotation.class);
+    } catch (ClassNotFoundException e) {
+      logger.log(TreeLogger.WARN, "Ignoring unresolvable annotation type "
+          + type.getClassName(), e);
+      return null;
     }
   }
 
-  private Class<?> getClassLiteralForPrimitive(BaseTypeBinding type) {
-    switch (type.id) {
-      case TypeIds.T_boolean:
+  @SuppressWarnings("unused")
+  private Class<?> getClassLiteralForPrimitive(Type type) {
+    switch (type.getSort()) {
+      case Type.BOOLEAN:
         return Boolean.TYPE;
-      case TypeIds.T_byte:
+      case Type.BYTE:
         return Byte.TYPE;
-      case TypeIds.T_char:
+      case Type.CHAR:
         return Character.TYPE;
-      case TypeIds.T_short:
+      case Type.SHORT:
         return Short.TYPE;
-      case TypeIds.T_int:
+      case Type.INT:
         return Integer.TYPE;
-      case TypeIds.T_long:
+      case Type.LONG:
         return Long.TYPE;
-      case TypeIds.T_float:
+      case Type.FLOAT:
         return Float.TYPE;
-      case TypeIds.T_double:
+      case Type.DOUBLE:
         return Double.TYPE;
-      case TypeIds.T_void:
+      case Type.VOID:
         return Void.TYPE;
       default:
-        assert false : "Unexpected base type id " + type.id;
+        assert false : "Unexpected primitive type " + type;
         return null;
     }
   }
 
   /**
-   * Returns the qualified name of the binding, excluding any type parameter
-   * information.
+   * Map a bitset onto a different bitset.
+   * 
+   * @param mapping int array containing a sequence of from/to pairs, each from
+   *          entry should have exactly one bit set
+   * @param input bitset to map
+   * @return mapped bitset
    */
-  private String getQualifiedName(ReferenceBinding binding) {
-    String qualifiedName = CharOperation.toString(binding.compoundName);
-    if (binding instanceof LocalTypeBinding) {
-      // The real name of a local type is its constant pool name.
-      qualifiedName = CharOperation.charToString(binding.constantPoolName());
-      qualifiedName = qualifiedName.replace('/', '.');
-    } else {
-      /*
-       * All other types have their fully qualified name as part of its compound
-       * name.
-       */
-      qualifiedName = CharOperation.toString(binding.compoundName);
+  private int mapBits(int[] mapping, int input) {
+    int output = 0;
+    for (int i = 0; i < mapping.length; i += 2) {
+      if ((input & mapping[i]) != 0) {
+        output |= mapping[i + 1];
+      }
     }
-
-    qualifiedName = qualifiedName.replace('$', '.');
-    return qualifiedName;
+    return output;
   }
 
-  private boolean resolveAnnotation(
-      TreeLogger logger,
-      Annotation jannotation,
-      Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations) {
 
-    logger = logger.branch(TreeLogger.SPAM, "Resolving annotation '"
-        + jannotation.printExpression(0, new StringBuffer()).toString() + "'",
-        null);
+  /**
+   * Collects data about a class which only needs the bytecode and no TypeOracle
+   * data structures. This is used to make the initial shallow identity pass for
+   * creating JRealClassType/JGenericType objects.
+   */
+  private CollectClassData processClass(CompiledClass compiledClass) {
+    byte[] classBytes = compiledClass.getBytes();
+    ClassReader reader = new ClassReader(classBytes);
+    CollectClassData mcv = new CollectClassData(classBytes);
+    ClassVisitor cv = mcv;
+    if (false) {
+      cv = new TraceClassVisitor(cv, new PrintWriter(System.out));
+    }
+    reader.accept(cv, 0);
+    return mcv;
+  }
 
-    // Determine the annotation class
-    TypeBinding resolvedType = jannotation.resolvedType;
-    Class<?> classLiteral = getClassLiteral(logger, resolvedType);
-    if (classLiteral == null) {
+  private boolean resolveAnnotation(TreeLogger logger,
+      CollectAnnotationData annotVisitor,
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+    AnnotationData annotData = annotVisitor.getAnnotation();
+    Class<? extends Annotation> annotationClass = getAnnotationClass(logger,
+        annotData);
+    if (annotationClass == null) {
       return false;
     }
-
-    java.lang.annotation.Annotation annotation = (java.lang.annotation.Annotation) createAnnotationInstance(
-        logger, jannotation);
-    if (annotation == null) {
+    Annotation annotInstance = createAnnotation(logger, annotationClass,
+        annotData);
+    if (annotInstance == null) {
       return false;
     }
-
-    Class<? extends java.lang.annotation.Annotation> clazz = classLiteral.asSubclass(java.lang.annotation.Annotation.class);
-    // Do not reflect source-only annotations.
-    if (getRetentionPolicy(clazz) != RetentionPolicy.SOURCE) {
-      declaredAnnotations.put(clazz, annotation);
-    }
+    declaredAnnotations.put(annotationClass, annotInstance);
     return true;
   }
 
-  private boolean resolveAnnotations(
-      TreeLogger logger,
-      Annotation[] annotations,
-      Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations) {
+  private boolean resolveAnnotations(TreeLogger logger,
+      List<CollectAnnotationData> annotations,
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     boolean succeeded = true;
     if (annotations != null) {
-      for (Annotation annotation : annotations) {
+      for (CollectAnnotationData annotation : annotations) {
         succeeded &= resolveAnnotation(logger, annotation, declaredAnnotations);
       }
     }
     return succeeded;
   }
 
-  private boolean resolveBoundForTypeParameter(TreeLogger logger,
-      HasTypeParameters genericElement, TypeParameter typeParameter, int ordinal) {
-    JClassType[] jbounds = createTypeParameterBounds(logger,
-        typeParameter.binding);
-    if (jbounds == null) {
+  @SuppressWarnings("unchecked")
+  private Object resolveAnnotationValue(TreeLogger logger,
+      Class<?> expectedType, Object value) {
+    if (expectedType.isArray()) {
+      Class<?> componentType = expectedType.getComponentType();
+      if (!value.getClass().isArray()) {
+        logger.log(TreeLogger.WARN, "Annotation error: expected array of "
+            + componentType.getCanonicalName() + ", got "
+            + value.getClass().getCanonicalName());
+        return null;
+      }
+      // resolve each element in the array
+      int n = Array.getLength(value);
+      Object newArray = Array.newInstance(componentType, n);
+      for (int i = 0; i < n; ++i) {
+        Object valueElement = Array.get(value, i);
+        Object resolvedValue = resolveAnnotationValue(logger, componentType,
+            valueElement);
+        if (resolvedValue == null
+            || !componentType.isAssignableFrom(resolvedValue.getClass())) {
+          logger.log(TreeLogger.ERROR, "Annotation error: expected "
+              + componentType + ", got " + resolvedValue);
+        } else {
+          Array.set(newArray, i, resolvedValue);
+        }
+      }
+      return newArray;
+    } else if (expectedType.isEnum()) {
+      if (!(value instanceof AnnotationEnum)) {
+        logger.log(TreeLogger.ERROR,
+            "Annotation error: expected an enum value," + " but got " + value);
+        return null;
+      }
+      AnnotationEnum annotEnum = (AnnotationEnum) value;
+      Type type = Type.getType(annotEnum.getDesc());
+      JType resolvedType = resolveType(type);
+      if (resolvedType == null) {
+        logger.log(TreeLogger.WARN,
+            "Unable to resolve annotation enum type of " + type.getClassName());
+        return null;
+      }
+      String enumValue = annotEnum.getValue();
+      // TODO: is there a way to avoid the SuppressWarning(unchecked) here?
+      Class<? extends Enum> enumType = getClassLiteral(logger, Enum.class,
+          resolvedType);
+      if (enumType == null) {
+        logger.log(TreeLogger.WARN,
+            "Unable to resolve annotation enum type of "
+                + resolvedType.getQualifiedSourceName());
+        return null;
+      }
+      return Enum.valueOf(enumType, enumValue);
+    } else if (Annotation.class.isAssignableFrom(expectedType)) {
+      if (!(value instanceof AnnotationData)) {
+        logger.log(TreeLogger.WARN,
+            "Annotation error: expected annotation type "
+                + expectedType.getCanonicalName() + ", got "
+                + value.getClass().getCanonicalName());
+        return null;
+      }
+      AnnotationData annotData = (AnnotationData) value;
+      Class<? extends Annotation> annotationClass = getAnnotationClass(logger,
+          annotData);
+      if (!expectedType.isAssignableFrom(annotationClass)) {
+        logger.log(TreeLogger.WARN, "Annotation error: expected "
+            + expectedType.getCanonicalName() + ", got "
+            + annotationClass.getCanonicalName());
+        return null;
+      }
+      return createAnnotation(logger, annotationClass, annotData);
+    } else if (expectedType.isPrimitive()) {
+      Class<?> wrapper = getWrapperClass(expectedType);
+      return wrapper.cast(value);
+    } else {
+      if (expectedType.isAssignableFrom(value.getClass())) {
+        return value;
+      }
+      if (Class.class.equals(expectedType)) {
+        if (!(value instanceof Type)) {
+          logger.log(TreeLogger.WARN, "Annotation error: expected a class "
+              + "literal, but received " + value);
+          return null;
+        }
+        Type valueType = (Type) value;
+        JRealClassType objType = resolveObject(valueType);
+        if (objType == null) {
+          // See if we can use a binary only class here
+          try {
+            return Class.forName(valueType.getClassName(), false,
+                getClass().getClassLoader());
+          } catch (ClassNotFoundException e) {
+            logger.log(TreeLogger.ERROR, "Annotation error: cannot resolve "
+                + valueType.getClassName(), e);
+            return null;
+          }
+        }
+        // TODO(jat): other checks?
+        try {
+          // TODO(jat): is it safe to use Class.forName here?
+          return Class.forName(objType.getQualifiedBinaryName(), false,
+              TypeOracleMediator.class.getClassLoader());
+        } catch (ClassNotFoundException e) {
+          logger.log(TreeLogger.WARN, "Unable to load class literal for "
+              + objType, e);
+          return null;
+        }
+      }
+      // TODO(jat) asserts about other acceptable types
+      return value;
+    }
+  }
+
+  private JType resolveArray(Type type) {
+    assert type.getSort() == Type.ARRAY;
+    JType resolvedType = resolveType(type.getElementType());
+    int dims = type.getDimensions();
+    for (int i = 0; i < dims; ++i) {
+      resolvedType = typeOracle.getArrayType(resolvedType);
+    }
+    return resolvedType;
+  }
+
+  private boolean resolveClass(TreeLogger logger, JRealClassType type) {
+    assert type != null;
+    // Avoid cycles and useless computation.
+    if (resolved.contains(type)) {
+      return true;
+    }
+    resolved.add(type);
+
+    // Make sure our enclosing type is resolved first.
+    if (type.getEnclosingType() != null
+        && !resolveClass(logger, type.getEnclosingType())) {
       return false;
     }
 
-    genericElement.getTypeParameters()[ordinal].setBounds(jbounds);
+    // Build a search list for type parameters to find their definition,
+    // resolving enclosing classes as we go up.
+    TypeParameterLookup typeParamLookup = new TypeParameterLookup();
+    typeParamLookup.pushEnclosingScopes(type);
+
+    CollectClassData classData = classMapType.get(type);
+    assert classData != null;
+    int access = classData.getAccess();
+
+    assert (!classData.getClassType().isLocal());
+
+    logger = logger.branch(TreeLogger.SPAM, "Found type '"
+        + type.getQualifiedSourceName() + "'", null);
+
+    // Handle package-info classes.
+    if (isPackageInfoTypeName(type.getSimpleSourceName())) {
+      return resolvePackage(logger, type, classData.getAnnotations());
+    }
+
+    // Resolve annotations
+    Map<Class<? extends Annotation>, Annotation> declaredAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
+    resolveAnnotations(logger, classData.getAnnotations(), declaredAnnotations);
+    type.addAnnotations(declaredAnnotations);
+
+    String signature = classData.getSignature();
+    if (signature != null) {
+      // If we have a signature, use it for superclass and interfaces
+      SignatureReader reader = new SignatureReader(signature);
+      ResolveClassSignature classResolver = new ResolveClassSignature(
+          resolver, binaryMapper, logger, type, typeParamLookup);
+      reader.accept(classResolver);
+      classResolver.finish();
+    } else {
+      // Set the super type for non-interfaces
+      if ((access & Opcodes.ACC_INTERFACE) == 0) {
+        String superName = classData.getSuperName();
+        if (superName != null) {
+          JClassType superType = binaryMapper.get(superName);
+          if (superType == null || !resolveClass(logger, superType)) {
+            logger.log(TreeLogger.WARN, "Unable to resolve supertype "
+                + superName);
+            return false;
+          }
+          type.setSuperclass((JClassType) possiblySubstituteRawType(superType));
+        }
+      }
+
+      // Set interfaces
+      for (String intfName : classData.getInterfaces()) {
+        JClassType intf = binaryMapper.get(intfName);
+        if (intf == null || !resolveClass(logger, intf)) {
+          logger.log(TreeLogger.WARN, "Unable to resolve interface " + intfName);
+          return false;
+        }
+        type.addImplementedInterface((JClassType) possiblySubstituteRawType(intf));
+      }
+    }
+    if (((access & Opcodes.ACC_INTERFACE) == 0) && type.getSuperclass() == null) {
+      // Only Object or interfaces should not have a superclass
+      assert "java/lang/Object".equals(classData.getName());
+    }
+
+    // Process methods
+    for (CollectMethodData method : classData.getMethods()) {
+      if (!resolveMethod(logger, type, method, typeParamLookup)) {
+        logger.log(TreeLogger.WARN, "Unable to resolve method " + method);
+        return false;
+      }
+    }
+
+    // Process fields
+    // Track the next enum ordinal across resolveField calls.
+    int[] nextEnumOrdinal = new int[] {0};
+    for (CollectFieldData field : classData.getFields()) {
+      if (!resolveField(logger, type, field, typeParamLookup, nextEnumOrdinal)) {
+        logger.log(TreeLogger.WARN, "Unable to resolve field " + field);
+        return false;
+      }
+    }
+
     return true;
   }
 
-  private boolean resolveBoundsForTypeParameters(TreeLogger logger,
-      HasTypeParameters genericElement, TypeParameter[] typeParameters) {
-    if (typeParameters != null) {
-      for (int i = 0; i < typeParameters.length; ++i) {
-        if (!resolveBoundForTypeParameter(logger, genericElement,
-            typeParameters[i], i)) {
+  private boolean resolveClass(TreeLogger logger, JType type) {
+    if (!(type instanceof JClassType)) {
+      // non-classes are already resolved
+      return true;
+    }
+    if (type instanceof JRealClassType) {
+      return resolveClass(logger, (JRealClassType) type);
+    }
+    if (type instanceof JArrayType) {
+      return resolveClass(logger, ((JArrayType) type).getComponentType());
+    }
+    if (type instanceof JParameterizedType) {
+      return resolveClass(logger, ((JParameterizedType) type).getBaseType());
+    }
+    if (type instanceof JRawType) {
+      return resolveClass(logger, ((JRawType) type).getBaseType());
+    }
+    if (type instanceof JTypeParameter) {
+      JTypeParameter typeParam = (JTypeParameter) type;
+      if (!resolveClass(logger, typeParam.getDeclaringClass())) {
+        return false;
+      }
+      for (JClassType bound : typeParam.getBounds()) {
+        if (!resolveClass(logger, bound)) {
           return false;
+        }
+      }
+      return true;
+    }
+    if (type instanceof JWildcardType) {
+      JWildcardType wildcard = (JWildcardType) type;
+      for (JClassType bound : wildcard.getUpperBounds()) {
+        if (!resolveClass(logger, bound)) {
+          return false;
+        }
+      }
+      for (JClassType bound : wildcard.getLowerBounds()) {
+        if (!resolveClass(logger, bound)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private boolean resolveEnclosingClass(TreeLogger logger, JRealClassType type) {
+    assert type != null;
+    if (type.getEnclosingType() != null) {
+      return true;
+    }
+    // Find our enclosing class and set it
+    CollectClassData classData = classMapType.get(type);
+    assert classData != null;
+    String outerClass = classData.getOuterClass();
+    JRealClassType enclosingType = null;
+    if (outerClass != null) {
+      enclosingType = binaryMapper.get(outerClass);
+      // Ensure enclosing classes are resolved
+      if (enclosingType != null) {
+        if (!resolveEnclosingClass(logger, enclosingType)) {
+          return false;
+        }
+        if (enclosingType.isGenericType() != null
+            && (classData.getAccess() & (Opcodes.ACC_STATIC | Opcodes.ACC_INTERFACE)) != 0) {
+          // If the inner class doesn't have access to it's enclosing type's
+          // type variables, the enclosign type must be the raw type instead
+          // of the generic type.
+          JGenericType genericType = enclosingType.isGenericType();
+          type.setEnclosingType(genericType.getRawType());
+        } else {
+          type.setEnclosingType(enclosingType);
         }
       }
     }
     return true;
   }
 
-  private boolean resolveField(TreeLogger logger, JClassType enclosingType,
-      FieldDeclaration jfield) {
-
-    if (jfield instanceof Initializer) {
-      // Pretend we didn't see this.
-      //
-      return true;
-    }
-
-    // Try to resolve annotations, ignore any that fail.
-    Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations = newAnnotationMap();
-    resolveAnnotations(logger, jfield.annotations, declaredAnnotations);
-
-    String name = String.valueOf(jfield.name);
-    JField field;
-    if (jfield.getKind() == AbstractVariableDeclaration.ENUM_CONSTANT) {
-      assert (enclosingType.isEnum() != null);
-      field = new JEnumConstant(enclosingType, name, declaredAnnotations,
-          jfield.binding.original().id);
+  private boolean resolveField(TreeLogger logger, JRealClassType type,
+      CollectFieldData field, TypeParameterLookup typeParamLookup,
+      int[] nextEnumOrdinal) {
+    Map<Class<? extends Annotation>, Annotation> declaredAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
+    resolveAnnotations(logger, field.getAnnotations(), declaredAnnotations);
+    String name = field.getName();
+    JField jfield;
+    if ((field.getAccess() & Opcodes.ACC_ENUM) != 0) {
+      assert (type.isEnum() != null);
+      jfield = new JEnumConstant(type, name, declaredAnnotations,
+          nextEnumOrdinal[0]++);
     } else {
-      field = new JField(enclosingType, name, declaredAnnotations);
+      jfield = new JField(type, name, declaredAnnotations);
     }
 
     // Get modifiers.
     //
-    field.addModifierBits(Shared.bindingToModifierBits(jfield.binding));
+    jfield.addModifierBits(mapBits(ASM_TO_SHARED_MODIFIERS, field.getAccess()));
 
-    // Set the field type.
-    //
-    TypeBinding jfieldType = jfield.binding.type;
+    String signature = field.getSignature();
+    JType fieldType;
+    if (signature != null) {
+      SignatureReader reader = new SignatureReader(signature);
+      JType[] fieldTypeRef = new JType[1];
+      reader.acceptType(new ResolveTypeSignature(resolver, binaryMapper,
+          logger, fieldTypeRef, typeParamLookup, null));
+      fieldType = fieldTypeRef[0];
+      // TraceSignatureVisitor trace = new TraceSignatureVisitor(
+      // methodData.getAccess());
+      // reader.acceptType(trace);
+      // System.err.println("Field " + name + ": " + trace.getDeclaration());
 
-    JType fieldType = resolveType(logger, jfieldType);
+    } else {
+      fieldType = resolveType(Type.getType(field.getDesc()));
+    }
     if (fieldType == null) {
-      // Unresolved type.
-      //
       return false;
     }
-    field.setType(fieldType);
-
+    jfield.setType(fieldType);
     return true;
   }
 
-  private boolean resolveFields(TreeLogger logger, JClassType type,
-      FieldDeclaration[] jfields) {
-    if (jfields != null) {
-      for (int i = 0; i < jfields.length; i++) {
-        FieldDeclaration jfield = jfields[i];
-        if (!resolveField(logger, type, jfield)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
+  private boolean resolveMethod(TreeLogger logger, JRealClassType type,
+      CollectMethodData methodData, TypeParameterLookup typeParamLookup) {
+    Map<Class<? extends Annotation>, Annotation> declaredAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
+    resolveAnnotations(logger, methodData.getAnnotations(), declaredAnnotations);
+    String name = methodData.getName();
 
-  private boolean resolveMethod(TreeLogger logger, JClassType enclosingType,
-      AbstractMethodDeclaration jmethod) {
-
-    if (jmethod instanceof Clinit) {
-      // Pretend we didn't see this.
-      //
+    if ("<clinit>".equals(name)
+        || (methodData.getAccess() & Opcodes.ACC_SYNTHETIC) != 0) {
+      // Ignore the following and leave them out of TypeOracle:
+      // - static initializers
+      // - synthetic methods
       return true;
     }
 
-    String name = getMethodName(enclosingType, jmethod);
-
-    // Try to resolve annotations, ignore any that fail.
-    Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations = newAnnotationMap();
-    resolveAnnotations(logger, jmethod.annotations, declaredAnnotations);
+    if (type.isEnum() != null && "<init>".equals(name)) {
+      // Leave enum constructors out of TypeOracle
+      return true;
+    }
+    if (type.isEnum() != null
+        && (methodData.getAccess() & Opcodes.ACC_STATIC) != 0) {
+      // Special-case synthetic static methods that aren't marked synthetic
+      if ("values".equals(name) || "valueOf".equals(name)) {
+        return true;
+      }
+    }
 
     JAbstractMethod method;
 
     // Declare the type parameters. We will pass them into the constructors for
     // JConstructor/JMethod/JAnnotatedMethod. Then, we'll do a second pass to
     // resolve the bounds on each JTypeParameter object.
-    JTypeParameter[] jtypeParameters = resolveTypeParameters(jmethod.typeParameters());
+    JTypeParameter[] typeParams = collectTypeParams(methodData.getSignature());
 
-    if (jmethod.isConstructor()) {
-      method = new JConstructor(enclosingType, name, declaredAnnotations,
-          jtypeParameters);
-      // Do a second pass to resolve the bounds on each JTypeParameter.
-      if (!resolveBoundsForTypeParameters(logger, method,
-          jmethod.typeParameters())) {
-        return false;
-      }
+    typeParamLookup.pushScope(typeParams);
+    boolean hasReturnType = true;
+    if ("<init>".equals(name)) {
+      name = type.getSimpleSourceName();
+      method = new JConstructor(type, name, declaredAnnotations, typeParams);
+      hasReturnType = false;
     } else {
-      if (jmethod.isAnnotationMethod()) {
-        AnnotationMethodDeclaration annotationMethod = (AnnotationMethodDeclaration) jmethod;
-        Object defaultValue = null;
-        if (annotationMethod.defaultValue != null) {
-          defaultValue = getAnnotationElementValue(logger,
-              annotationMethod.returnType.resolvedType,
-              annotationMethod.defaultValue);
-        }
-        method = new JAnnotationMethod(enclosingType, name, defaultValue,
+      if (type.isAnnotation() != null) {
+        // TODO(jat): !! anything else to do here?
+        method = new JAnnotationMethod(type, name, typeParams,
             declaredAnnotations);
       } else {
-        method = new JMethod(enclosingType, name, declaredAnnotations,
-            jtypeParameters);
+        method = new JMethod(type, name, declaredAnnotations, typeParams);
       }
-
-      // Do a second pass to resolve the bounds on each JTypeParameter.
-      // The type parameters must be resolved at this point, because they may
-      // be used in the resolution of the method's return type.
-      if (!resolveBoundsForTypeParameters(logger, method,
-          jmethod.typeParameters())) {
-        return false;
-      }
-
-      TypeBinding jreturnType = ((MethodDeclaration) jmethod).returnType.resolvedType;
-      JType returnType = resolveType(logger, jreturnType);
-      if (returnType == null) {
-        // Unresolved type.
-        //
-        return false;
-      }
-      ((JMethod) method).setReturnType(returnType);
     }
 
-    // Parse modifiers.
-    //
-    method.addModifierBits(Shared.bindingToModifierBits(jmethod.binding));
-    if (enclosingType.isInterface() != null) {
+    // Copy modifier flags
+    method.addModifierBits(mapBits(ASM_TO_SHARED_MODIFIERS,
+        methodData.getAccess()));
+    if (type.isInterface() != null) {
       // Always add implicit modifiers on interface methods.
-      //
       method.addModifierBits(Shared.MOD_PUBLIC | Shared.MOD_ABSTRACT);
     }
 
-    // Add the parameters.
-    //
-    Argument[] jparams = jmethod.arguments;
-    if (!resolveParameters(logger, method, jparams)) {
-      return false;
-    }
-
-    // Add throws.
-    //
-    TypeReference[] jthrows = jmethod.thrownExceptions;
-    if (!resolveThrownTypes(logger, method, jthrows)) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private boolean resolveMethods(TreeLogger logger, JClassType type,
-      AbstractMethodDeclaration[] jmethods) {
-    if (jmethods != null) {
-      for (int i = 0; i < jmethods.length; i++) {
-        AbstractMethodDeclaration jmethod = jmethods[i];
-        if (!resolveMethod(logger, type, jmethod)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  private boolean resolvePackage(TreeLogger logger, TypeDeclaration jclass) {
-    SourceTypeBinding binding = jclass.binding;
-
-    String packageName = String.valueOf(binding.fPackage.readableName());
-    JPackage pkg = typeOracle.getOrCreatePackage(packageName);
-    assert (pkg != null);
-
-    CompilationUnitScope cus = (CompilationUnitScope) jclass.scope.parent;
-    assert (cus != null);
-
-    // Try to resolve annotations, ignore any that fail.
-    Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations = newAnnotationMap();
-    resolveAnnotations(logger, cus.referenceContext.currentPackage.annotations,
-        declaredAnnotations);
-
-    pkg.addAnnotations(declaredAnnotations);
-    return true;
-  }
-
-  private boolean resolveParameter(TreeLogger logger, JAbstractMethod method,
-      Argument jparam) {
-    TypeBinding jtype = jparam.binding.type;
-    JType type = resolveType(logger, jtype);
-    if (type == null) {
-      // Unresolved.
-      //
-      return false;
-    }
-
-    // Try to resolve annotations, ignore any that fail.
-    Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations = newAnnotationMap();
-    resolveAnnotations(logger, jparam.annotations, declaredAnnotations);
-
-    String name = String.valueOf(jparam.name);
-    new JParameter(method, type, name, declaredAnnotations);
-    if (jparam.isVarArgs()) {
+    if ((methodData.getAccess() & Opcodes.ACC_VARARGS) != 0) {
       method.setVarArgs();
     }
+
+    String signature = methodData.getSignature();
+    Type[] argTypes = methodData.getArgTypes();
+    String[] argNames = methodData.getArgNames();
+    if (signature != null) {
+      // If we have a signature, use it for superclass and interfaces
+      SignatureReader reader = new SignatureReader(signature);
+      ResolveMethodSignature methodResolver = new ResolveMethodSignature(
+          resolver, logger, method, typeParamLookup, hasReturnType, methodData,
+          argTypes, argNames);
+      // TraceSignatureVisitor trace = new TraceSignatureVisitor(
+      // methodData.getAccess());
+      // reader.accept(trace);
+      // System.err.println("Method " + name + ": " + trace.getDeclaration());
+      reader.accept(methodResolver);
+      if (!methodResolver.finish()) {
+        return false;
+      }
+    } else {
+      if (hasReturnType) {
+        Type returnType = Type.getReturnType(methodData.getDesc());
+        JType returnJType = resolveType(returnType);
+        if (returnJType == null) {
+          return false;
+        }
+        ((JMethod) method).setReturnType(returnJType);
+      }
+
+      if (!resolveParameters(logger, method, methodData)) {
+        return false;
+      }
+    }
+    // The signature might not actually include the exceptions if they don't
+    // include a type variable, so resolveThrows is always used (it does
+    // nothing if there are already exceptions defined)
+    if (!resolveThrows(method, methodData)) {
+      return false;
+    }
+    typeParamLookup.popScope();
+    return true;
+  }
+
+  private JRealClassType resolveObject(Type type) {
+    assert type.getSort() == Type.OBJECT;
+    String className = type.getInternalName();
+    assert Name.isInternalName(className);
+    JRealClassType classType = binaryMapper.get(className);
+    return classType;
+  }
+
+  private boolean resolvePackage(TreeLogger logger, JRealClassType type,
+      List<CollectAnnotationData> annotations) {
+    Map<Class<? extends Annotation>, Annotation> declaredAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
+    resolveAnnotations(logger, annotations, declaredAnnotations);
+    type.getPackage().addAnnotations(declaredAnnotations);
     return true;
   }
 
   private boolean resolveParameters(TreeLogger logger, JAbstractMethod method,
-      Argument[] jparams) {
-    if (jparams != null) {
-      for (int i = 0; i < jparams.length; i++) {
-        Argument jparam = jparams[i];
-        if (!resolveParameter(logger, method, jparam)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  private boolean resolveThrownType(TreeLogger logger, JAbstractMethod method,
-      TypeReference jthrown) {
-
-    JType type = resolveType(logger, jthrown.resolvedType);
-    if (type == null) {
-      // Not resolved.
-      //
-      return false;
-    }
-
-    method.addThrows(type);
-
-    return true;
-  }
-
-  private boolean resolveThrownTypes(TreeLogger logger, JAbstractMethod method,
-      TypeReference[] jthrows) {
-    if (jthrows != null) {
-      for (int i = 0; i < jthrows.length; i++) {
-        TypeReference jthrown = jthrows[i];
-        if (!resolveThrownType(logger, method, jthrown)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  private JType resolveType(TreeLogger logger, TypeBinding binding) {
-    // Check for primitives.
-    if (binding instanceof BaseTypeBinding) {
-      switch (binding.id) {
-        case TypeIds.T_boolean:
-          return JPrimitiveType.BOOLEAN;
-        case TypeIds.T_byte:
-          return JPrimitiveType.BYTE;
-        case TypeIds.T_char:
-          return JPrimitiveType.CHAR;
-        case TypeIds.T_short:
-          return JPrimitiveType.SHORT;
-        case TypeIds.T_int:
-          return JPrimitiveType.INT;
-        case TypeIds.T_long:
-          return JPrimitiveType.LONG;
-        case TypeIds.T_float:
-          return JPrimitiveType.FLOAT;
-        case TypeIds.T_double:
-          return JPrimitiveType.DOUBLE;
-        case TypeIds.T_void:
-          return JPrimitiveType.VOID;
-        default:
-          assert false : "Unexpected base type id " + binding.id;
-      }
-    }
-
-    /*
-     * Check for a user-defined type, which may be either a SourceTypeBinding or
-     * a RawTypeBinding. Both of these are subclasses of ReferenceBinding and
-     * all the functionality we need is on ReferenceBinding, so we cast it to
-     * that and deal with them in common code.
-     * 
-     * TODO: do we need to do anything more with raw types?
-     */
-    if (binding instanceof SourceTypeBinding
-        || binding instanceof RawTypeBinding) {
-      ReferenceBinding referenceBinding = (ReferenceBinding) binding;
-
-      // First check the type oracle to prefer type identity with the type
-      // oracle we're assimilating into.
-      //
-      String typeName = getQualifiedName(referenceBinding);
-      JType resolvedType = typeOracle.findType(typeName);
-      if (resolvedType == null) {
-        // Otherwise, it should be something we've mapped during this build.
-        resolvedType = sourceMapper.get(referenceBinding);
-      }
-
-      if (resolvedType != null) {
-        if (binding instanceof RawTypeBinding) {
-          // Use the raw type instead of the generic type.
-          JGenericType genericType = (JGenericType) resolvedType;
-          resolvedType = genericType.getRawType();
-        }
-        return resolvedType;
-      }
-    }
-
-    if (binding instanceof BinaryTypeBinding) {
-      // Try a binary lookup.
-      String binaryName = String.valueOf(binding.constantPoolName());
-      JRealClassType realClassType = binaryMapper.get(binaryName);
-      if (realClassType != null) {
-        return realClassType;
-      }
-    }
-
-    // Check for an array.
-    //
-    if (binding instanceof ArrayBinding) {
-      ArrayBinding arrayBinding = (ArrayBinding) binding;
-
-      // Start by resolving the leaf type.
-      //
-      TypeBinding leafBinding = arrayBinding.leafComponentType;
-      JType resolvedType = resolveType(logger, leafBinding);
-      if (resolvedType != null) {
-        int dims = arrayBinding.dimensions;
-        for (int i = 0; i < dims; ++i) {
-          // By using the oracle to intern, we guarantee correct identity
-          // mapping of lazily-created array types.
-          //
-          resolvedType = typeOracle.getArrayType(resolvedType);
-        }
-        return resolvedType;
-      } else {
-        // Fall-through to failure.
-        //
-      }
-    }
-
-    // Check for parameterized.
-    if (binding instanceof ParameterizedTypeBinding) {
-      ParameterizedTypeBinding ptBinding = (ParameterizedTypeBinding) binding;
-
-      /*
-       * NOTE: it is possible for ParameterizedTypeBinding.arguments to be null.
-       * This can happen if a generic class has a non-static, non-generic, inner
-       * class that references a TypeParameter from its enclosing generic type.
-       * You would think that typeVariables() would do the right thing but it
-       * does not.
-       */
-      TypeBinding[] arguments = ptBinding.arguments;
-      int nArguments = arguments != null ? arguments.length : 0;
-      JClassType[] typeArguments = new JClassType[nArguments];
-      boolean failed = false;
-      for (int i = 0; i < typeArguments.length; ++i) {
-        typeArguments[i] = (JClassType) resolveType(logger, arguments[i]);
-        if (typeArguments[i] == null) {
-          failed = true;
-        }
-      }
-
-      JClassType enclosingType = null;
-      if (ptBinding.enclosingType() != null) {
-        enclosingType = (JClassType) resolveType(logger,
-            ptBinding.enclosingType());
-        if (enclosingType == null) {
-          failed = true;
-        }
-      }
-
-      /*
-       * NOTE: In the case where a generic type has a nested, non-static,
-       * non-generic type. The type for the binding will not be a generic type.
-       */
-      JType resolveType = resolveType(logger, ptBinding.genericType());
-      if (resolveType == null) {
-        failed = true;
-      }
-
-      if (!failed) {
-        if (resolveType.isGenericType() != null) {
-          return typeOracle.getParameterizedType(resolveType.isGenericType(),
-              enclosingType, typeArguments);
-        } else {
-          /*
-           * A static type (enum or class) that does not declare any type
-           * parameters that is nested within a generic type might be referenced
-           * via a parameterized type by JDT. In this case we just return the
-           * type and don't treat it as a parameterized.
-           */
-          return resolveType;
-        }
-      } else {
-        // Fall-through to failure
-      }
-    }
-
-    if (binding instanceof TypeVariableBinding) {
-      TypeVariableBinding tvBinding = (TypeVariableBinding) binding;
-      JTypeParameter typeParameter = tvMapper.get(tvBinding);
-      if (typeParameter != null) {
-        return typeParameter;
-      }
-
-      // Fall-through to failure
-    }
-
-    if (binding instanceof WildcardBinding) {
-      WildcardBinding wcBinding = (WildcardBinding) binding;
-
-      assert (wcBinding.otherBounds == null);
-
-      BoundType boundType;
-      JClassType typeBound;
-
-      switch (wcBinding.boundKind) {
-        case Wildcard.EXTENDS: {
-          assert (wcBinding.bound != null);
-          boundType = BoundType.EXTENDS;
-          typeBound = (JClassType) resolveType(logger, wcBinding.bound);
-        }
-          break;
-        case Wildcard.SUPER: {
-          assert (wcBinding.bound != null);
-          boundType = BoundType.SUPER;
-          typeBound = (JClassType) resolveType(logger, wcBinding.bound);
-        }
-          break;
-        case Wildcard.UNBOUND: {
-          boundType = BoundType.UNBOUND;
-          typeBound = (JClassType) resolveType(logger, wcBinding.erasure());
-        }
-          break;
-        default:
-          assert false : "WildcardBinding of unknown boundKind???";
-          return null;
-      }
-
-      if (boundType != null) {
-        return typeOracle.getWildcardType(boundType, typeBound);
-      }
-
-      // Fall-through to failure
-    }
-
-    // Log other cases we know about that don't make sense.
-    //
-    String name = String.valueOf(binding.readableName());
-    logger = logger.branch(TreeLogger.WARN, "Unable to resolve type: " + name
-        + " binding: " + binding.getClass().getCanonicalName(), null);
-
-    if (binding instanceof BinaryTypeBinding) {
-      logger.log(TreeLogger.WARN,
-          "Source not available for this type, so it cannot be resolved", null);
-    }
-
-    return null;
-  }
-
-  private boolean resolveTypeDeclaration(TreeLogger logger,
-      TypeDeclaration clazz) {
-    SourceTypeBinding binding = clazz.binding;
-    assert (binding.constantPoolName() != null);
-
-    String qname = String.valueOf(binding.qualifiedSourceName());
-    logger = logger.branch(TreeLogger.SPAM, "Found type '" + qname + "'", null);
-
-    // Handle package-info classes.
-    if (isPackageInfoTypeName(qname)) {
-      return resolvePackage(logger, clazz);
-    }
-
-    // Just resolve the type.
-    JRealClassType jtype = (JRealClassType) resolveType(logger, binding);
-    if (jtype == null) {
-      // Failed to resolve.
-      //
-      return false;
-    }
-
-    /*
-     * Modifiers were added during processType since getParameterizedType
-     * depends on them being set.
-     */
-
-    // Try to resolve annotations, ignore any that fail.
-    Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations = newAnnotationMap();
-    resolveAnnotations(logger, clazz.annotations, declaredAnnotations);
-    jtype.addAnnotations(declaredAnnotations);
-
-    // Resolve bounds for type parameters on generic types. Note that this
-    // step does not apply to type parameters on generic methods; that
-    // occurs during the method resolution stage.
-    JGenericType jGenericType = jtype.isGenericType();
-    if (jGenericType != null
-        && !resolveBoundsForTypeParameters(logger, jtype.isGenericType(),
-            clazz.typeParameters)) {
-      // Failed to resolve
-      return false;
-    }
-
-    // Resolve superclass (for classes only).
-    //
-    if (jtype.isInterface() == null) {
-      ReferenceBinding superclassRef = binding.superclass;
-      assert superclassRef != null
-          || "java.lang.Object".equals(jtype.getQualifiedSourceName());
-      if (superclassRef != null) {
-        JClassType jsuperClass = (JClassType) resolveType(logger, superclassRef);
-        assert jsuperClass != null;
-        jtype.setSuperclass(jsuperClass);
-      }
-    }
-
-    // Resolve superinterfaces.
-    //
-    ReferenceBinding[] superintfRefs = binding.superInterfaces;
-    for (int i = 0; i < superintfRefs.length; i++) {
-      ReferenceBinding superintfRef = superintfRefs[i];
-      JClassType jinterface = (JClassType) resolveType(logger, superintfRef);
-      if (jinterface == null) {
-        // Failed to resolve.
-        //
+      CollectMethodData methodData) {
+    Type[] argTypes = methodData.getArgTypes();
+    String[] argNames = methodData.getArgNames();
+    boolean argNamesAreReal = methodData.hasActualArgNames();
+    List<CollectAnnotationData>[] paramAnnot = methodData.getArgAnnotations();
+    for (int i = 0; i < argTypes.length; ++i) {
+      JType argType = resolveType(argTypes[i]);
+      if (argType == null) {
         return false;
       }
-      jtype.addImplementedInterface(jinterface);
+      // Try to resolve annotations, ignore any that fail.
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
+      resolveAnnotations(logger, paramAnnot[i], declaredAnnotations);
+
+      // JParameter adds itself to the method
+      new JParameter(method, argType, argNames[i], declaredAnnotations,
+          argNamesAreReal);
     }
+    return true;
+  }
 
-    // Resolve fields.
-    //
-    FieldDeclaration[] fields = clazz.fields;
-    if (!resolveFields(logger, jtype, fields)) {
-      return false;
+  private boolean resolveThrows(JAbstractMethod method,
+      CollectMethodData methodData) {
+    if (method.getThrows().length == 0) {
+      for (String excName : methodData.getExceptions()) {
+        JType exc = resolveType(Type.getObjectType(excName));
+        if (exc == null) {
+          return false;
+        }
+        method.addThrows(exc);
+      }
     }
-
-    // Resolve methods. This also involves the declaration of type
-    // variables on generic methods, and the resolution of the bounds
-    // on these type variables.
-
-    // One would think that it would be better to perform the declaration
-    // of type variables on methods at the time when we are processing
-    // all of the classes. Unfortunately, when we are processing classes,
-    // we do not have enough information about their methods to analyze
-    // their type variables. Hence, the type variable declaration and
-    // bounds resolution for generic methods must happen after the resolution
-    // of methods is complete.
-    AbstractMethodDeclaration[] methods = clazz.methods;
-    if (!resolveMethods(logger, jtype, methods)) {
-      return false;
-    }
-
     return true;
   }
 
   /**
-   * Declares TypeParameters declared on a JGenericType or a JAbstractMethod by
-   * mapping the TypeParameters into JTypeParameters. <p/> This mapping has to
-   * be done on the first pass through the AST in order to handle declarations
-   * of the form: <<C exends GenericClass<T>, T extends SimpleClass> <p/> JDT
-   * already knows that GenericClass<T> is a parameterized type with a type
-   * argument of <T extends SimpleClass>. Therefore, in order to resolve
-   * GenericClass<T>, we must have knowledge of <T extends SimpleClass>. <p/>
-   * By calling this method on the first pass through the AST, a JTypeParameter
-   * for <T extends SimpleClass> will be created.
+   * Returns a primitive, an array, or a JRealClassType.
    */
-  private JTypeParameter[] resolveTypeParameters(TypeParameter[] typeParameters) {
-    if (typeParameters == null || typeParameters.length == 0) {
-      return null;
+  private JType resolveType(Type type) {
+    // Check for primitives.
+    switch (type.getSort()) {
+      case Type.BOOLEAN:
+        return JPrimitiveType.BOOLEAN;
+      case Type.BYTE:
+        return JPrimitiveType.BYTE;
+      case Type.CHAR:
+        return JPrimitiveType.CHAR;
+      case Type.SHORT:
+        return JPrimitiveType.SHORT;
+      case Type.INT:
+        return JPrimitiveType.INT;
+      case Type.LONG:
+        return JPrimitiveType.LONG;
+      case Type.FLOAT:
+        return JPrimitiveType.FLOAT;
+      case Type.DOUBLE:
+        return JPrimitiveType.DOUBLE;
+      case Type.VOID:
+        return JPrimitiveType.VOID;
+      case Type.ARRAY:
+        return resolveArray(type);
+      case Type.OBJECT:
+        JRealClassType resolvedType = resolveObject(type);
+        return possiblySubstituteRawType(resolvedType);
+      default:
+        assert false : "Unexpected type " + type;
+        return null;
     }
-
-    JTypeParameter[] jtypeParamArray = new JTypeParameter[typeParameters.length];
-    for (int i = 0; i < typeParameters.length; ++i) {
-      jtypeParamArray[i] = tvMapper.get(typeParameters[i].binding);
-      assert jtypeParamArray[i] != null;
-    }
-
-    return jtypeParamArray;
   }
 }

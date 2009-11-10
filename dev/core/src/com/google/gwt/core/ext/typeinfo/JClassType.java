@@ -101,7 +101,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
    * 
    * @param lhsType
    * @param rhsType
-   * @return
+   * @return true if rhsType can be assigned to lhsType
    */
   private static boolean areClassTypesAssignableNoSupers(JClassType lhsType,
       JClassType rhsType) {
@@ -618,15 +618,6 @@ public abstract class JClassType extends JType implements HasAnnotations,
 
   protected JMaybeParameterizedType isMaybeParameterizedType() {
     return null;
-  }
-
-  protected final String makeCompoundName(JClassType type) {
-    if (type.getEnclosingType() == null) {
-      return type.getSimpleSourceName();
-    } else {
-      return makeCompoundName(type.getEnclosingType()) + "."
-          + type.getSimpleSourceName();
-    }
   }
 
   /**

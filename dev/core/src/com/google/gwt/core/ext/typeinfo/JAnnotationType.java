@@ -23,9 +23,9 @@ import java.util.Arrays;
 public class JAnnotationType extends JRealClassType {
 
   public JAnnotationType(TypeOracle oracle, JPackage declaringPackage,
-      JClassType enclosingType, boolean isLocalType, String name,
+      String enclosingTypeName, boolean isLocalType, String name,
       boolean isInterface) {
-    super(oracle, declaringPackage, enclosingType, isLocalType, name,
+    super(oracle, declaringPackage, enclosingTypeName, isLocalType, name,
         isInterface);
   }
 

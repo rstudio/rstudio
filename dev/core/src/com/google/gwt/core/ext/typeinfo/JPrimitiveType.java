@@ -82,6 +82,11 @@ public class JPrimitiveType extends JType {
     return jni;
   }
 
+  @Override
+  public String getQualifiedBinaryName() {
+    return name;
+  }
+
   public String getQualifiedBoxedSourceName() {
     return "java.lang." + boxedName;
   }

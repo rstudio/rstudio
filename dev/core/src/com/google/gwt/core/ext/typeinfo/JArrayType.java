@@ -26,6 +26,8 @@ public class JArrayType extends JClassType {
 
   private JType componentType;
 
+  private String lazyQualifiedBinaryName;
+
   private String lazyQualifiedName;
 
   private String lazySimpleName;
@@ -182,6 +184,14 @@ public class JArrayType extends JClassType {
     return getComponentType().getParameterizedQualifiedSourceName() + "[]";
   }
 
+  @Override
+  public String getQualifiedBinaryName() {
+    if (lazyQualifiedBinaryName == null) {
+      lazyQualifiedBinaryName = "[" + getComponentType().getQualifiedBinaryName();
+    }
+    return lazyQualifiedBinaryName;
+  }
+  
   @Override
   public String getQualifiedSourceName() {
     if (lazyQualifiedName == null) {

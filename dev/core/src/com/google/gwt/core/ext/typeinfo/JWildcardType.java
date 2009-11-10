@@ -110,6 +110,12 @@ public class JWildcardType extends JDelegatingClassType {
   }
 
   @Override
+  public String getQualifiedBinaryName() {
+    // TODO(jat): !! does a binary name have meaning for a wildcard?
+    return toString(true);
+  }
+
+  @Override
   public String getQualifiedSourceName() {
     return toString(false);
   }

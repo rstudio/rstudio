@@ -34,13 +34,18 @@ public class JRealClassType extends JClassType {
 
   private final JPackage declaringPackage;
 
-  private final JClassType enclosingType;
+  /**
+   * Set when this class is resolved, then never modified.
+   */
+  private JClassType enclosingType;
 
   private List<JClassType> interfaces = Lists.create();
 
   private final boolean isInterface;
 
   private final boolean isLocalType;
+
+  private String lazyQualifiedBinaryName;
 
   private String lazyQualifiedName;
 
@@ -56,16 +61,27 @@ public class JRealClassType extends JClassType {
 
   private JClassType superclass;
 
+  /**
+   * Create a class type that reflects an actual type.
+   * 
+   * @param oracle
+   * @param declaringPackage
+   * @param enclosingTypeName the fully qualified source name of the enclosing
+   *          class or null if a top-level class - setEnclosingType must be
+   *          called later with the proper enclosing type if this is non-null
+   * @param isLocalType
+   * @param name
+   * @param isInterface
+   */
   public JRealClassType(TypeOracle oracle, JPackage declaringPackage,
-      JClassType enclosingType, boolean isLocalType, String name,
+      String enclosingTypeName, boolean isLocalType, String name,
       boolean isInterface) {
     this.oracle = oracle;
     this.declaringPackage = declaringPackage;
-    this.enclosingType = enclosingType;
     this.isLocalType = isLocalType;
     this.name = name;
     this.isInterface = isInterface;
-    if (enclosingType == null) {
+    if (enclosingTypeName == null) {
       // Add myself to my package.
       //
       declaringPackage.addType(this);
@@ -73,18 +89,12 @@ public class JRealClassType extends JClassType {
       //
       nestedName = name;
     } else {
-      // Add myself to my enclosing type.
-      //
-      enclosingType.addNestedType(this);
       // Compute my "nested name".
       //
-      JClassType enclosing = enclosingType;
-      String nn = name;
-      do {
-        nn = enclosing.getSimpleSourceName() + "." + nn;
-        enclosing = enclosing.getEnclosingType();
-      } while (enclosing != null);
-      nestedName = nn;
+      nestedName = enclosingTypeName + "." + name;
+
+      // We will add ourselves to the enclosing class when it is set in
+      // setEnclosingType().
     }
     oracle.addNewType(this);
   }
@@ -94,11 +104,13 @@ public class JRealClassType extends JClassType {
     annotations.addAnnotations(declaredAnnotations);
   }
 
+  @Override
   public void addImplementedInterface(JClassType intf) {
     assert (intf != null);
     interfaces = Lists.add(interfaces, intf);
   }
 
+  @Override
   public void addModifierBits(int bits) {
     modifierBits |= bits;
   }
@@ -123,6 +135,7 @@ public class JRealClassType extends JClassType {
     return members.findNestedType(typeName);
   }
 
+  @Override
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return annotations.getAnnotation(annotationClass);
   }
@@ -138,6 +151,7 @@ public class JRealClassType extends JClassType {
     return members.getConstructors();
   }
 
+  @Override
   public JClassType getEnclosingType() {
     return enclosingType;
   }
@@ -157,6 +171,7 @@ public class JRealClassType extends JClassType {
     return members.getFields();
   }
 
+  @Override
   public JClassType[] getImplementedInterfaces() {
     return interfaces.toArray(TypeOracle.NO_JCLASSES);
   }
@@ -182,6 +197,7 @@ public class JRealClassType extends JClassType {
     return members.getMethods();
   }
 
+  @Override
   public String getName() {
     return nestedName;
   }
@@ -196,6 +212,7 @@ public class JRealClassType extends JClassType {
     return members.getNestedTypes();
   }
 
+  @Override
   public TypeOracle getOracle() {
     return oracle;
   }
@@ -210,8 +227,22 @@ public class JRealClassType extends JClassType {
     return members.getOverridableMethods();
   }
 
+  @Override
   public JPackage getPackage() {
     return declaringPackage;
+  }
+
+  @Override
+  public String getQualifiedBinaryName() {
+    if (lazyQualifiedBinaryName == null) {
+      lazyQualifiedBinaryName = "";
+      JPackage pkg = getPackage();
+      if (!pkg.isDefault()) {
+        lazyQualifiedBinaryName = pkg.getName() + ".";
+      }
+      lazyQualifiedBinaryName += nestedName.replace('.', '$');
+    }
+    return lazyQualifiedBinaryName;
   }
 
   @Override
@@ -219,9 +250,9 @@ public class JRealClassType extends JClassType {
     if (lazyQualifiedName == null) {
       JPackage pkg = getPackage();
       if (!pkg.isDefault()) {
-        lazyQualifiedName = pkg.getName() + "." + makeCompoundName(this);
+        lazyQualifiedName = pkg.getName() + "." + nestedName;
       } else {
-        lazyQualifiedName = makeCompoundName(this);
+        lazyQualifiedName = nestedName;
       }
     }
     return lazyQualifiedName;
@@ -232,10 +263,12 @@ public class JRealClassType extends JClassType {
     return name;
   }
 
+  @Override
   public JClassType[] getSubtypes() {
     return allSubtypes.toArray(TypeOracle.NO_JCLASSES);
   }
 
+  @Override
   public JClassType getSuperclass() {
     return superclass;
   }
@@ -247,10 +280,12 @@ public class JRealClassType extends JClassType {
     oracle.invalidate(this);
   }
 
+  @Override
   public boolean isAbstract() {
     return 0 != (modifierBits & TypeOracle.MOD_ABSTRACT);
   }
 
+  @Override
   public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
     return annotations.isAnnotationPresent(annotationClass);
   }
@@ -278,6 +313,7 @@ public class JRealClassType extends JClassType {
    * @return <code>true</code> if the type is default instantiable, or
    *         <code>false</code> otherwise
    */
+  @Override
   public boolean isDefaultInstantiable() {
     if (isInterface() != null || isAbstract()) {
       return false;
@@ -324,6 +360,7 @@ public class JRealClassType extends JClassType {
    * @return true if this type is a local type, whether it is named or
    *         anonymous.
    */
+  @Override
   public boolean isLocalType() {
     return isLocalType;
   }
@@ -334,6 +371,7 @@ public class JRealClassType extends JClassType {
    * @return true if this type has an enclosing type, false if this type is a
    *         top-level type
    */
+  @Override
   public boolean isMemberType() {
     return enclosingType != null;
   }
@@ -350,14 +388,17 @@ public class JRealClassType extends JClassType {
     return null;
   }
 
+  @Override
   public boolean isPrivate() {
     return 0 != (modifierBits & TypeOracle.MOD_PRIVATE);
   }
 
+  @Override
   public boolean isProtected() {
     return 0 != (modifierBits & TypeOracle.MOD_PROTECTED);
   }
 
+  @Override
   public boolean isPublic() {
     return 0 != (modifierBits & TypeOracle.MOD_PUBLIC);
   }
@@ -368,6 +409,7 @@ public class JRealClassType extends JClassType {
     return null;
   }
 
+  @Override
   public boolean isStatic() {
     return 0 != (modifierBits & TypeOracle.MOD_STATIC);
   }
@@ -382,6 +424,27 @@ public class JRealClassType extends JClassType {
    */
   public void resurrect() {
     oracle.resurrect(this);
+  }
+
+  /**
+   * INTERNAL METHOD -- this should only be called by TypeOracleMediator.
+   * 
+   * TODO: reduce visibility.
+   * 
+   * @param enclosingType
+   */
+  public void setEnclosingType(JClassType enclosingType) {
+    assert this.enclosingType == null;
+    assert enclosingType != null;
+
+    this.enclosingType = enclosingType;
+
+    // Add myself to my enclosing type.
+    JRawType rawType = enclosingType.isRawType();
+    if (rawType != null) {
+      enclosingType = rawType.getGenericType();
+    }
+    enclosingType.addNestedType(this);
   }
 
   @Override
@@ -411,6 +474,7 @@ public class JRealClassType extends JClassType {
     }
   }
 
+  @Override
   protected void acceptSubtype(JClassType me) {
     allSubtypes = IdentitySets.add(allSubtypes, me);
     notifySuperTypesOf(me);
@@ -441,10 +505,12 @@ public class JRealClassType extends JClassType {
     return members.findNestedTypeImpl(typeName, index);
   }
 
+  @Override
   protected int getModifierBits() {
     return modifierBits;
   }
 
+  @Override
   protected void getOverridableMethodsOnSuperclassesAndThisClass(
       Map<String, JMethod> methodsBySignature) {
     members.getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
@@ -458,6 +524,7 @@ public class JRealClassType extends JClassType {
    * 
    * @param methodsBySignature
    */
+  @Override
   protected void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
       Map<String, JMethod> methodsBySignature) {
     members.getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
@@ -466,6 +533,7 @@ public class JRealClassType extends JClassType {
   /**
    * Tells this type's superclasses and superinterfaces about it.
    */
+  @Override
   protected void notifySuperTypesOf(JClassType me) {
     // TODO(scottb): revisit
     if (superclass != null) {
@@ -477,6 +545,7 @@ public class JRealClassType extends JClassType {
     }
   }
 
+  @Override
   protected void removeSubtype(JClassType me) {
     allSubtypes = IdentitySets.remove(allSubtypes, me);
 
@@ -494,6 +563,7 @@ public class JRealClassType extends JClassType {
   /**
    * NOTE: This method is for testing purposes only.
    */
+  @Override
   Annotation[] getAnnotations() {
     return annotations.getAnnotations();
   }
@@ -501,6 +571,7 @@ public class JRealClassType extends JClassType {
   /**
    * NOTE: This method is for testing purposes only.
    */
+  @Override
   Annotation[] getDeclaredAnnotations() {
     return annotations.getDeclaredAnnotations();
   }
@@ -510,6 +581,7 @@ public class JRealClassType extends JClassType {
     return this;
   }
 
+  @Override
   void notifySuperTypes() {
     notifySuperTypesOf(this);
   }
@@ -517,6 +589,7 @@ public class JRealClassType extends JClassType {
   /**
    * Removes references to this instance from all of its super types.
    */
+  @Override
   void removeFromSupertypes() {
     removeSubtype(this);
   }

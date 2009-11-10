@@ -172,7 +172,9 @@ public final class CompiledClass {
   }
 
   void graveyard() {
-    realClassType.invalidate();
+    if (realClassType != null) {
+      realClassType.invalidate();
+    }
   }
 
   void invalidate() {

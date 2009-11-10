@@ -96,6 +96,12 @@ public class JTypeParameter extends JDelegatingClassType {
   }
 
   @Override
+  public String getQualifiedBinaryName() {
+    // TODO(jat): !! does a binary name have meaning for a type parameter?
+    return toString(true);
+  }
+
+  @Override
   public String getQualifiedSourceName() {
     return toString(false);
   }

@@ -16,7 +16,9 @@
 package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
+import com.google.gwt.dev.javac.JavaSourceParser;
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
@@ -262,6 +264,8 @@ public class TypeOracle {
 
   private JClassType javaLangObject;
 
+  private JavaSourceParser javaSourceParser = new JavaSourceParser();
+
   /**
    * Maps SingleJsoImpl interfaces to the implementing JSO subtype.
    */
@@ -275,7 +279,7 @@ public class TypeOracle {
 
   /**
    * A list of recently-added types that will be fully initialized on the next
-   * call to {@link #finish(TreeLogger)}.
+   * call to {@link #finish}.
    */
   private final List<JRealClassType> recentTypes = new ArrayList<JRealClassType>();
 
@@ -291,6 +295,17 @@ public class TypeOracle {
     // Always create the default package.
     //
     getOrCreatePackage("");
+  }
+
+  /**
+   * Called to add a source reference for a top-level class type.
+   * 
+   * SHOULD ONLY BE CALLED FROM TypeOracleMediator.
+   * 
+   * TODO: make not public?
+   */
+  public void addSourceReference(JRealClassType type, Resource sourceFile) {
+    javaSourceParser.addSourceForType(type, sourceFile);
   }
 
   /**
@@ -342,7 +357,7 @@ public class TypeOracle {
    * TODO: make not public?
    */
   public void finish() {
-    JClassType[] newTypes = recentTypes.toArray(NO_JCLASSES);
+    JClassType[] newTypes = recentTypes.toArray(new JClassType[recentTypes.size()]);
     computeHierarchyRelationships(newTypes);
     computeSingleJsoImplData(newTypes);
     recentTypes.clear();
@@ -376,6 +391,10 @@ public class TypeOracle {
       assert javaLangObject != null;
     }
     return javaLangObject;
+  }
+
+  public JavaSourceParser getJavaSourceParser() {
+    return javaSourceParser;
   }
 
   /**
@@ -852,12 +871,13 @@ public class TypeOracle {
       }
     }
   }
-
+  
   /**
    * Removes the specified type from the type oracle.
    */
   private void removeType(JRealClassType invalidType) {
     allTypes.remove(invalidType.getQualifiedSourceName());
+    recentTypes.remove(invalidType);
     JPackage pkg = invalidType.getPackage();
     if (pkg != null) {
       pkg.remove(invalidType);

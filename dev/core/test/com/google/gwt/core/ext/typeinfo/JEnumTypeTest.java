@@ -17,7 +17,10 @@ package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.test.EnumInterface;
+import com.google.gwt.core.ext.typeinfo.test.EnumOfInterface;
 import com.google.gwt.core.ext.typeinfo.test.MyEnum;
+import com.google.gwt.core.ext.typeinfo.test.TestAnnotation;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import junit.framework.TestCase;
@@ -105,7 +108,8 @@ public class JEnumTypeTest extends TestCase {
     JClassType type = typeOracle.getType(MyEnum.class.getName());
     JEnumType enumType = validateTypeIsEnum(type);
 
-    assertEquals(1, enumType.getConstructors().length);
+    // Enum constructors are not reflected.
+    assertEquals(0, enumType.getConstructors().length);
   }
 
   /**
@@ -118,6 +122,43 @@ public class JEnumTypeTest extends TestCase {
     JEnumType enumType = validateTypeIsEnum(type);
 
     assertEquals(1, enumType.getMethods().length);
+  }
+
+  /**
+   * Test an enum that implements an interface.
+   * 
+   * @throws NotFoundException 
+   */
+  public void testInterface() throws NotFoundException {
+    JClassType type = typeOracle.getType(EnumOfInterface.class.getName());
+    JEnumType enumType = validateTypeIsEnum(type);
+    JClassType[] intf = enumType.getImplementedInterfaces();
+    assertEquals(1, intf.length);
+    assertEquals(EnumInterface.class.getName(),
+        intf[0].getQualifiedSourceName());
+    JMethod getExtra = intf[0].getMethod("getExtra", new JType[0]);
+    TestAnnotation annotation = getExtra.getAnnotation(TestAnnotation.class);
+    assertNotNull(annotation);
+    assertEquals("EnumInterface getExtra", annotation.value());
+    JEnumConstant[] constants = enumType.getEnumConstants();
+    assertEquals(2, constants.length);
+    assertEquals("A", constants[0].getName());
+    annotation = constants[0].getAnnotation(TestAnnotation.class);
+    assertNotNull(annotation);
+    assertEquals("A", annotation.value());
+    JClassType aClass = constants[0].getType().isClass();
+    JMethod[] methods = aClass.getOverridableMethods();
+    assertEquals(7, methods.length);
+    // TODO(jat): verify getExtra is from A's anonymous subclass of
+    //     EnumInterface when/if that is implemented.
+    boolean found = false;
+    for (JMethod method : methods) {
+      if ("name".equals(method.getName())) {
+        found = true;
+        // TODO(jat); any other verification here?
+      }
+    }
+    assertTrue(found);
   }
 
   /**
