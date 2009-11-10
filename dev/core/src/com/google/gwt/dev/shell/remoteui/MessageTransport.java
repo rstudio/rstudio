@@ -70,6 +70,19 @@ public class MessageTransport {
     }
   }
 
+  /**
+   * A callback that is invoked when the transport terminates.
+   */
+  public interface TerminationCallback {
+
+    /**
+     * Called when the transport terminates.
+     * 
+     * @param e The exception that led to the termination
+     */
+    void onTermination(Exception e);
+  }
+
   class PendingRequest extends PendingSend {
     private final ReentrantLock lock = new ReentrantLock();
     private final Condition availableResponseCondition = lock.newCondition();
@@ -222,6 +235,7 @@ public class MessageTransport {
   private final Thread sendThread;
   private final ExecutorService serverRequestExecutor;
   private final PendingRequestMap pendingRequestMap = new PendingRequestMap();
+  private final TerminationCallback terminationCallback;
 
   /**
    * Create a new instance using the given streams and request processor.
@@ -232,9 +246,27 @@ public class MessageTransport {
    * @param requestProcessor a callback interface for handling remote client
    *          requests
    */
+  public MessageTransport(InputStream inputStream, OutputStream outputStream,
+      RequestProcessor requestProcessor) {
+    this(inputStream, outputStream, requestProcessor, null);
+  }
+
+  /**
+   * Create a new instance using the given streams and request processor.
+   * Closing either stream will cause the termination of the transport.
+   * 
+   * @param inputStream an input stream for reading messages
+   * @param outputStream an output stream for writing messages
+   * @param requestProcessor a callback interface for handling remote client
+   *          requests
+   * @param terminationCallback a callback that is invoked when the transport
+   *          terminates
+   */
   public MessageTransport(final InputStream inputStream,
-      final OutputStream outputStream, RequestProcessor requestProcessor) {
+      final OutputStream outputStream, RequestProcessor requestProcessor,
+      TerminationCallback terminationCallback) {
     this.requestProcessor = requestProcessor;
+    this.terminationCallback = terminationCallback;
     serverRequestExecutor = Executors.newFixedThreadPool(DEFAULT_SERVICE_THREADS);
 
     // This thread terminates on interruption or IO failure
@@ -396,5 +428,8 @@ public class MessageTransport {
 
   private void terminateDueToException(Exception e) {
     pendingRequestMap.blockAdds(e);
+    if (terminationCallback != null) {
+      terminationCallback.onTermination(e);
+    }
   }
 }

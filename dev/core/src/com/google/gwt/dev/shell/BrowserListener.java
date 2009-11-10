@@ -22,6 +22,7 @@ import com.google.gwt.dev.shell.BrowserChannel.SessionHandler;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -48,16 +49,19 @@ public class BrowserListener {
   private ServerSocket listenSocket;
 
   private Thread listenThread;
-  
+
   private boolean ignoreRemoteDeath = false;
-  
+
   /**
    * Listens for new connections from browsers.
    */
   public BrowserListener(final TreeLogger logger, int port,
       final SessionHandler handler) {
     try {
-      listenSocket = new ServerSocket(port);
+      listenSocket = new ServerSocket();
+      listenSocket.setReuseAddress(true);
+      listenSocket.bind(new InetSocketAddress(port));
+
       logger.log(TreeLogger.INFO, "Listening at: "
           + listenSocket.getLocalSocketAddress(), null);
       listenThread = new Thread() {
@@ -73,7 +77,6 @@ public class BrowserListener {
               try {
                 sock.setTcpNoDelay(true);
                 sock.setKeepAlive(true);
-                sock.setReuseAddress(true);
               } catch (SocketException e) {
                 // Ignore non-critical errors.
               }
@@ -106,7 +109,7 @@ public class BrowserListener {
 
   /**
    * @return the endpoint identifier of the listener, of the form host:port
-   * (where host may be an IP address as well).
+   *         (where host may be an IP address as well).
    * 
    * @throws UnableToCompleteException if the listener is not running
    */
@@ -134,12 +137,13 @@ public class BrowserListener {
   /**
    * Set any created BrowserChannelServers to ignore remote deaths.
    * 
-   * <p>This is most commonly wanted by JUnitShell.
+   * <p>
+   * This is most commonly wanted by JUnitShell.
    * 
    * @param ignoreRemoteDeath
    */
   public void setIgnoreRemoteDeath(boolean ignoreRemoteDeath) {
-    this.ignoreRemoteDeath  = ignoreRemoteDeath;
+    this.ignoreRemoteDeath = ignoreRemoteDeath;
   }
 
   /**

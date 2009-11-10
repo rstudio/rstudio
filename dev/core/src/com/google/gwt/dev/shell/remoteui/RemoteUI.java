@@ -19,6 +19,8 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.shell.BrowserListener;
 import com.google.gwt.dev.ui.DevModeUI;
+import com.google.gwt.dev.ui.DoneCallback;
+import com.google.gwt.dev.ui.DoneEvent;
 import com.google.gwt.dev.ui.RestartServerCallback;
 import com.google.gwt.dev.ui.RestartServerEvent;
 
@@ -29,9 +31,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TODO: Implement me.
+ * An implementation of a UI for the development mode server that sends UI
+ * events over the network to a remote viewer. Also receives commands from the
+ * remote viewer (such as a web server restart) and forwards the requests to the
+ * development mode server.
  */
-public class RemoteUI extends DevModeUI {
+public class RemoteUI extends DevModeUI implements
+    MessageTransport.TerminationCallback {
 
   private final List<ModuleHandle> modules = new ArrayList<ModuleHandle>();
   private final Object modulesLock = new Object();
@@ -51,9 +57,11 @@ public class RemoteUI extends DevModeUI {
       this.webServerPort = webServerPort;
 
       Socket socket = new Socket(host, port);
+      socket.setKeepAlive(true);
+      socket.setTcpNoDelay(true);
       devModeRequestProcessor = new DevModeServiceRequestProcessor(this);
       transport = new MessageTransport(socket.getInputStream(),
-          socket.getOutputStream(), devModeRequestProcessor);
+          socket.getOutputStream(), devModeRequestProcessor, this);
     } catch (UnknownHostException e) {
       throw new RuntimeException(e);
     } catch (IOException e) {
@@ -112,6 +120,16 @@ public class RemoteUI extends DevModeUI {
     }
 
     return handle;
+  }
+
+  public void onTermination(Exception e) {
+    getTopLogger().log(
+        TreeLogger.INFO,
+        "Remote UI connection terminated due to exception: "
+            + e.getLocalizedMessage());
+    getTopLogger().log(TreeLogger.INFO,
+        "Shutting down development mode server.");
+    ((DoneCallback) getCallback(DoneEvent.getType())).onDone();
   }
 
   public boolean restartWebServer() {
