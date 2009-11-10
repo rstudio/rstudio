@@ -21,7 +21,16 @@
     </gwt.javac>
   </target>
 
-  <target name="compile.tests" depends="compile.emma.if.enabled" description="Compiles the test code for this project">
+  <!--
+    Compiles test dependencies in dev/core
+  -->
+  <target name="compile.dev.tests">
+    <gwt.ant dir="../../dev" target="compile.tests" />
+  </target>
+
+  <target name="compile.tests"
+      depends="compile.dev.tests, compile.emma.if.enabled"
+      description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" destdir="${javac.junit.out}">
       <classpath>
@@ -29,12 +38,13 @@
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
         <pathelement location="${gwt.dev.staging.jar}" />
         <pathelement location="${gwt.dev.jar}" />
+        <pathelement location="${gwt.build.out}/dev/bin-test" />
         <pathelement location="${gwt.user.jar}" />
       </classpath>
     </gwt.javac>
   </target>
         
-        <target name="build" depends="compile" description="Build and package this project">
+  <target name="build" depends="compile" description="Build and package this project">
     <mkdir dir="${gwt.build.lib}" />
                     
     <gwt.jar>
@@ -49,6 +59,7 @@
       <extraclasspaths>
         <pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
         <pathelement location="${gwt.dev.jar}" />
+        <pathelement location="${gwt.build.out}/dev/bin-test" />
       </extraclasspaths>
     </gwt.junit>
   </target>

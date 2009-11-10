@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
@@ -109,6 +110,13 @@ public class Shared {
     return (pos < 0) ? qualifiedTypeName : qualifiedTypeName.substring(pos + 1);
   }
 
+  public static String getTypeName(Resource sourceFile) {
+    String path = sourceFile.getPath();
+    assert (path.endsWith(".java"));
+    path = path.substring(0, path.lastIndexOf('.'));
+    return path.replace('/', '.');
+  }
+
   public static String makeTypeName(String packageName, String shortName) {
     if (packageName.length() == 0) {
       return shortName;
@@ -130,6 +138,11 @@ public class Shared {
     } finally {
       Utility.close(content);
     }
+  }
+
+  public static String readSource(Resource sourceFile) {
+    InputStream contents = sourceFile.openContents();
+    return Util.readStreamAsString(contents);
   }
 
   public static String toPath(String qualifiedTypeName) {

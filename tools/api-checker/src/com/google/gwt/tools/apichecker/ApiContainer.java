@@ -21,15 +21,14 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JConstructor;
 import com.google.gwt.core.ext.typeinfo.JPackage;
-import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompilationUnitInvalidator;
 import com.google.gwt.dev.javac.JdtCompiler;
 import com.google.gwt.dev.javac.TypeOracleMediator;
+import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
+import com.google.gwt.dev.resource.Resource;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,29 +57,20 @@ public final class ApiContainer {
    * A public constructor used for programmatic invocation and testing.
    * 
    * @param name Api name
-   * @param units a set of CompilationUnits
+   * @param resources a set of Resources
    * @param excludedPackages a set of excludedPackages
    * @param logger TreeLogger for logging messages
    * @throws IllegalArgumentException if one of the arguments is illegal
    * @throws UnableToCompleteException if there is a TypeOracle exception
    */
-  ApiContainer(String name, Set<CompilationUnit> units,
+  ApiContainer(String name, Set<Resource> resources,
       Set<String> excludedPackages, TreeLogger logger)
       throws UnableToCompleteException {
     this.name = name;
     this.logger = logger;
-    logger.log(TreeLogger.INFO, "name = " + name + ", units.size = " + units.size(), null);
-    try {
-      this.typeOracle = getTypeOracleFromCompilationUnits(units);
-    } catch (FileNotFoundException e2) {
-      System.err.println("Do you have a reference version of the API checked out?");
-      throw new IllegalArgumentException(e2);
-    } catch (IOException e3) {
-      throw new IllegalArgumentException(e3);
-    } catch (NotFoundException e4) {
-      logger.log(TreeLogger.ERROR, "logged a NotFoundException", e4);
-      throw new UnableToCompleteException();
-    }
+    logger.log(TreeLogger.INFO, "name = " + name + ", builders.size = "
+        + resources.size(), null);
+    this.typeOracle = createTypeOracle(resources);
     this.excludedPackages = excludedPackages;
     initializeApiPackages();
   }
@@ -191,9 +181,12 @@ public final class ApiContainer {
     return false;
   }
 
-  private TypeOracle getTypeOracleFromCompilationUnits(
-      Set<CompilationUnit> units) throws NotFoundException, IOException,
-      UnableToCompleteException {
+  private TypeOracle createTypeOracle(Set<Resource> resources)
+      throws UnableToCompleteException {
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    for (Resource resource : resources) {
+      units.add(new SourceFileCompilationUnit(resource));
+    }
     JdtCompiler.compile(units);
     if (CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units)) {
       logger.log(TreeLogger.ERROR, "Unable to build typeOracle for "

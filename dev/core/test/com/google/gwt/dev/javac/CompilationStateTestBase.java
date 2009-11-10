@@ -20,8 +20,9 @@ import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.StandardGeneratorContext.Generated;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.impl.MockResource;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
-import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
+import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
@@ -43,15 +44,13 @@ import java.util.Map.Entry;
  */
 public abstract class CompilationStateTestBase extends TestCase {
 
-  protected static class GeneratedSourceFileCompilationUnit extends
-      SourceFileCompilationUnit implements Generated {
+  public static class GeneratedSourceFileCompilationUnit extends
+      CompilationUnit implements Generated {
 
-    private final boolean modifySource;
-    private String strongHash;
+    private final GeneratedUnit generatedUnit;
 
-    public GeneratedSourceFileCompilationUnit(Resource sourceFile, boolean modifySource) {
-      super(sourceFile);
-      this.modifySource = modifySource;
+    public GeneratedSourceFileCompilationUnit(GeneratedUnit generatedUnit) {
+      this.generatedUnit = generatedUnit;
     }
 
     public void abort() {
@@ -61,39 +60,44 @@ public abstract class CompilationStateTestBase extends TestCase {
     }
 
     @Override
+    public String getDisplayLocation() {
+      return generatedUnit.optionalFileLocation();
+    }
+
+    @Override
+    public long getLastModified() {
+      return generatedUnit.creationTime();
+    }
+
+    @Override
     public String getSource() {
-      String extraChars = "";
-      if (modifySource) {
-        extraChars = "\n";
-      }
-      return super.getSource() + extraChars;
+      return generatedUnit.getSource();
     }
 
     public String getStrongHash() {
-      if (strongHash == null) {
-        strongHash = Util.computeStrongName(Util.getBytes(getSource()));
-      }
-      return strongHash;
+      return generatedUnit.getStrongHash();
+    }
+
+    @Override
+    public String getTypeName() {
+      return generatedUnit.getTypeName();
     }
 
     @Override
     public boolean isGenerated() {
       return true;
     }
-  }
 
-  static void assertUnitsChecked(Collection<CompilationUnit> units) {
-    for (CompilationUnit unit : units) {
-      assertSame(State.CHECKED, unit.getState());
-      assertNull(unit.getErrors());
-      assertTrue(unit.getCompiledClasses().size() > 0);
+    @Override
+    public boolean isSuperSource() {
+      return false;
     }
   }
 
   /**
    * Tweak this if you want to see the log output.
    */
-  protected static TreeLogger createTreeLogger() {
+  public static TreeLogger createTreeLogger() {
     boolean reallyLog = false;
     if (reallyLog) {
       AbstractTreeLogger logger = new PrintWriterTreeLogger();
@@ -103,6 +107,43 @@ public abstract class CompilationStateTestBase extends TestCase {
     return TreeLogger.NULL;
   }
 
+  public static Set<GeneratedUnit> getGeneratedUnits(
+      MockResource... sourceFiles) {
+    Set<GeneratedUnit> units = new HashSet<GeneratedUnit>();
+    for (final MockResource sourceFile : sourceFiles) {
+      units.add(new GeneratedUnit() {
+        public long creationTime() {
+          return sourceFile.getLastModified();
+        }
+
+        public String getSource() {
+          return sourceFile.getString();
+        }
+
+        public String getStrongHash() {
+          return Util.computeStrongName(Util.getBytes(getSource()));
+        }
+
+        public String getTypeName() {
+          return Shared.getTypeName(sourceFile);
+        }
+
+        public String optionalFileLocation() {
+          return sourceFile.getLocation();
+        }
+      });
+    }
+    return units;
+  }
+
+  static void assertUnitsChecked(Collection<CompilationUnit> units) {
+    for (CompilationUnit unit : units) {
+      assertSame(State.CHECKED, unit.getState());
+      assertFalse(unit.isError());
+      assertTrue(unit.getCompiledClasses().size() > 0);
+    }
+  }
+
   protected MockResourceOracle oracle = new MockResourceOracle(
       JavaResourceBase.getStandardResources());
 
@@ -110,28 +151,16 @@ public abstract class CompilationStateTestBase extends TestCase {
       oracle);
 
   protected void addGeneratedUnits(MockJavaResource... sourceFiles) {
-    Set<CompilationUnit> units = getCompilationUnits(sourceFiles);
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    Set<GeneratedUnit> generatedUnits = getGeneratedUnits(sourceFiles);
+    for (GeneratedUnit generatedUnit : generatedUnits) {
+      units.add(new GeneratedSourceFileCompilationUnit(generatedUnit));
+    }
     state.addGeneratedCompilationUnits(createTreeLogger(), units);
   }
 
-  protected Set<CompilationUnit> getCompilationUnits(
-      MockJavaResource... sourceFiles) {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    for (MockJavaResource sourceFile : sourceFiles) {
-      // keep the same source
-      units.add(new GeneratedSourceFileCompilationUnit(sourceFile, false));
-    }
-    return units;
-  }
-
-  protected Set<CompilationUnit> getModifiedCompilationUnits(
-      MockJavaResource... sourceFiles) {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    for (MockJavaResource sourceFile : sourceFiles) {
-      // modify the source
-      units.add(new GeneratedSourceFileCompilationUnit(sourceFile, true));
-    }
-    return units;
+  protected void rebuildCompilationState() {
+    state.refresh(createTreeLogger());
   }
 
   protected void validateCompilationState(String... generatedTypeNames) {
@@ -156,8 +185,10 @@ public abstract class CompilationStateTestBase extends TestCase {
       assertEquals(className, unit.getTypeName());
 
       // Find the matching resource (and remove it).
-      if (unit.isGenerated()) {
-        assertTrue(generatedTypes.contains(className));
+      if (generatedTypes.contains(className)) {
+        // Not always true due to caching! A source unit for FOO can b
+        // identical to the generated FOO and already be cached.
+        // assertTrue(unit.isGenerated());
         assertNotNull(generatedTypes.remove(className));
       } else {
         String partialPath = className.replace('.', '/') + ".java";

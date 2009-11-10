@@ -18,10 +18,10 @@ package com.google.gwt.tools.apichecker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
-import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.impl.StaticJavaResource;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.tools.apichecker.ApiCompatibilityChecker.StaticCompilationUnit;
 
 import junit.framework.TestCase;
 
@@ -48,20 +48,18 @@ public class ApiCompatibilityTest extends TestCase {
   // These cups are slightly different from the cups in ApiContainerTest
   private static final boolean DEBUG = false;
 
-  private static StaticCompilationUnit[] getScuArray() {
-    return new StaticCompilationUnit[] {
-        new StaticCompilationUnit("test.apicontainer.ApiClass",
-            getSourceForApiClass()),
-        new StaticCompilationUnit("test.apicontainer.NonApiClass",
+  private static StaticJavaResource[] getScuArray() {
+    return new StaticJavaResource[] {
+        new StaticJavaResource("test.apicontainer.ApiClass", getSourceForApiClass()),
+        new StaticJavaResource("test.apicontainer.NonApiClass",
             getSourceForNonApiClass()),
-        new StaticCompilationUnit("test.nonapipackage.TestClass",
+        new StaticJavaResource("test.nonapipackage.TestClass",
             getSourceForTestClass()),
-        new StaticCompilationUnit("java.lang.Object", getSourceForObject()),
-        new StaticCompilationUnit("java.lang.Throwable",
-            getSourceForThrowable()),
-        new StaticCompilationUnit("test.apicontainer.OneMoreApiClass",
+        new StaticJavaResource("java.lang.Object", getSourceForObject()),
+        new StaticJavaResource("java.lang.Throwable", getSourceForThrowable()),
+        new StaticJavaResource("test.apicontainer.OneMoreApiClass",
             getSourceForOneMoreApiClass()),
-        new StaticCompilationUnit("java.lang.RuntimeException",
+        new StaticJavaResource("java.lang.RuntimeException",
             getSourceForRuntimeException()),};
   }
 
@@ -151,13 +149,13 @@ public class ApiCompatibilityTest extends TestCase {
     AbstractTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(TreeLogger.ERROR);
 
-    api1 = new ApiContainer("Api1", new HashSet<CompilationUnit>(
+    api1 = new ApiContainer("Api1", new HashSet<Resource>(
         Arrays.asList(ApiContainerTest.getScuArray())), new HashSet<String>(),
         logger);
-    apiSameAs1 = new ApiContainer("ApiSameAs1", new HashSet<CompilationUnit>(
+    apiSameAs1 = new ApiContainer("ApiSameAs1", new HashSet<Resource>(
         Arrays.asList(ApiContainerTest.getScuArray())), new HashSet<String>(),
         logger);
-    api2 = new ApiContainer("Api2", new HashSet<CompilationUnit>(
+    api2 = new ApiContainer("Api2", new HashSet<Resource>(
         Arrays.asList(getScuArray())), new HashSet<String>(), logger);
   }
 

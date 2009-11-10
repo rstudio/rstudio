@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.StandardGeneratorContext.Generated;
+import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.resource.Resource;
@@ -409,7 +410,7 @@ public class CompilationState {
 
     // Then add any new source files.
     for (Resource newSourceFile : changed) {
-      String typeName = SourceFileCompilationUnit.getTypeName(newSourceFile);
+      String typeName = Shared.getTypeName(newSourceFile);
       assert (!unitMap.containsKey(typeName));
       unitMap.put(typeName, new SourceFileCompilationUnit(newSourceFile));
       // invalid a graveyard unit, if a new unit has the same type.

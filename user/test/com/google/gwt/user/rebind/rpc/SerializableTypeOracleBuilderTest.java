@@ -33,11 +33,10 @@ import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
-import com.google.gwt.dev.javac.CompilationUnit;
-import com.google.gwt.dev.javac.MockCompilationUnit;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
+import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.impl.StaticJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.user.rebind.rpc.testcases.client.AbstractSerializableTypes;
@@ -108,30 +107,30 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   private static TypeOracle sTypeOracle;
 
-  private static void addGwtTransient(Set<CompilationUnit> units) {
+  private static void addGwtTransient(Set<Resource> resources) {
     StringBuffer code = new StringBuffer();
     code.append("package com.google.gwt.user.client.rpc;\n");
     code.append("public @interface GwtTransient { }\n");
-    units.add(createMockCompilationUnit(
+    resources.add(new StaticJavaResource(
         "com.google.gwt.user.client.rpc.GwtTransient", code));
   }
 
-  private static void addICRSE(Set<CompilationUnit> units) {
+  private static void addICRSE(Set<Resource> resources) {
     StringBuffer code = new StringBuffer();
     code.append("package com.google.gwt.user.client.rpc;\n");
     code.append("public class IncompatibleRemoteServiceException extends Throwable {\n");
     code.append("}\n");
-    units.add(createMockCompilationUnit(
+    resources.add(new StaticJavaResource(
         "com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException",
         code));
   }
 
-  private static void addStandardClasses(Set<CompilationUnit> units) {
-    for (Resource resource : JavaResourceBase.getStandardResources()) {
-      units.add(new SourceFileCompilationUnit(resource));
+  private static void addStandardClasses(Set<Resource> resources) {
+    for (MockJavaResource resource : JavaResourceBase.getStandardResources()) {
+      resources.add(resource);
     }
-    addGwtTransient(units);
-    addICRSE(units);
+    addGwtTransient(resources);
+    addICRSE(resources);
   }
 
   private static void assertFieldSerializable(SerializableTypeOracle so,
@@ -184,11 +183,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     return logger;
   }
 
-  private static CompilationUnit createMockCompilationUnit(String qname,
-      CharSequence code) {
-    return new MockCompilationUnit(qname, code.toString());
-  }
-
   private static SerializableTypeOracleBuilder createSerializableTypeOracleBuilder(
       TreeLogger logger, TypeOracle to) throws UnableToCompleteException {
     // Make an empty property oracle.
@@ -218,7 +212,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
           new String[] {
               "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases",
               "com.google.gwt.junit.JUnit"}, true);
-      sTypeOracle = moduleDef.getTypeOracle(logger);
+      sTypeOracle = moduleDef.getCompilationState(logger).getTypeOracle();
     }
     return sTypeOracle;
   }
@@ -272,22 +266,22 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void disabledTestMaybeExposedParameter()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public abstract class List<T> implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("List", code));
+      resources.add(new StaticJavaResource("List", code));
     }
 
     {
       StringBuilder code = new StringBuilder();
       code.append("public class EmptyList<T> extends List<T> {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("EmptyList", code));
+      resources.add(new StaticJavaResource("EmptyList", code));
     }
 
     {
@@ -296,18 +290,18 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("  T head;\n");
       code.append("  LinkedList<T> next;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("LinkedList", code));
+      resources.add(new StaticJavaResource("LinkedList", code));
     }
 
     {
       StringBuilder code = new StringBuilder();
       code.append("public class CantSerialize {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("CantSerialize", code));
+      resources.add(new StaticJavaResource("CantSerialize", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType list = to.getType("List").isGenericType();
     JGenericType emptyList = to.getType("EmptyList").isGenericType();
@@ -333,15 +327,15 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testAbstractFieldSerializableRootType()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public abstract class A implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -349,7 +343,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public abstract class B extends A {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("B", code));
+      resources.add(new StaticJavaResource("B", code));
     }
 
     {
@@ -357,11 +351,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class C extends B {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("C", code));
+      resources.add(new StaticJavaResource("C", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JClassType a = to.getType("A");
     JClassType b = to.getType("B");
@@ -384,8 +378,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testAccessLevelsInJavaPackage() throws UnableToCompleteException,
       NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -393,7 +387,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class A implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("java.A", code));
+      resources.add(new StaticJavaResource("java.A", code));
     }
 
     {
@@ -402,7 +396,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("class B extends A {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("java.B", code));
+      resources.add(new StaticJavaResource("java.B", code));
     }
 
     {
@@ -411,11 +405,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class C extends A {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("java.C", code));
+      resources.add(new StaticJavaResource("java.C", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JClassType a = to.getType("java.A");
     JArrayType arrayOfA = to.getArrayType(a);
@@ -436,8 +430,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testArrayOfParameterizedTypes() throws UnableToCompleteException,
       NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       // A<T> exposes its param
@@ -446,7 +440,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class A<T> implements Serializable {\n");
       code.append("  T t;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -455,7 +449,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class AList<T> implements Serializable {\n");
       code.append("  A<T>[] as;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("AList", code));
+      resources.add(new StaticJavaResource("AList", code));
     }
 
     {
@@ -464,7 +458,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class B<T> implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("B", code));
+      resources.add(new StaticJavaResource("B", code));
     }
 
     {
@@ -473,7 +467,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class BList<T> implements Serializable {\n");
       code.append("  B<T>[] bs;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("BList", code));
+      resources.add(new StaticJavaResource("BList", code));
     }
 
     {
@@ -482,7 +476,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class Ser1 implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Ser1", code));
+      resources.add(new StaticJavaResource("Ser1", code));
     }
 
     {
@@ -491,7 +485,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class Ser2 implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Ser2", code));
+      resources.add(new StaticJavaResource("Ser2", code));
     }
 
     {
@@ -501,11 +495,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("  AList<Ser1> alist;\n");
       code.append("  BList<Ser2> blist;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Root", code));
+      resources.add(new StaticJavaResource("Root", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType a = to.getType("A").isGenericType();
     JGenericType b = to.getType("B").isGenericType();
@@ -547,15 +541,15 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testArrayOfTypeParameter() throws UnableToCompleteException,
       NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public class A<T> implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -564,7 +558,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class B<T> extends A<T> implements Serializable {\n");
       code.append("  T[][] t;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("B", code));
+      resources.add(new StaticJavaResource("B", code));
     }
 
     {
@@ -574,7 +568,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("  A<T[]> a1;\n");
       code.append("  A<Ser> a2;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("C", code));
+      resources.add(new StaticJavaResource("C", code));
     }
 
     {
@@ -582,11 +576,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class Ser implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Ser", code));
+      resources.add(new StaticJavaResource("Ser", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType a = to.getType("A").isGenericType();
     JGenericType b = to.getType("B").isGenericType();
@@ -634,14 +628,14 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testClassQualifiesForSerialization()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
       code.append("public class NotSerializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("NotSerializable", code));
+      resources.add(new StaticJavaResource("NotSerializable", code));
     }
 
     {
@@ -651,7 +645,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("  interface IFoo extends Serializable {};\n");
       code.append("  IFoo createFoo() { return new IFoo(){};}\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("AutoSerializable", code));
+      resources.add(new StaticJavaResource("AutoSerializable", code));
     }
 
     {
@@ -661,7 +655,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("  static class StaticNested implements Serializable {};\n");
       code.append("  class NonStaticNested implements Serializable {};\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("OuterClass", code));
+      resources.add(new StaticJavaResource("OuterClass", code));
     }
 
     {
@@ -669,7 +663,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public abstract class AbstractSerializableClass implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("AbstractSerializableClass", code));
+      resources.add(new StaticJavaResource("AbstractSerializableClass", code));
     }
 
     {
@@ -678,8 +672,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class NonDefaultInstantiableSerializable implements Serializable {\n");
       code.append("  NonDefaultInstantiableSerializable(int i) {}\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("NonDefaultInstantiableSerializable",
-          code));
+      resources.add(new StaticJavaResource(
+          "NonDefaultInstantiableSerializable", code));
     }
 
     {
@@ -695,7 +689,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("    }\n");
       code.append("  }\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("PublicOuterClass", code));
+      resources.add(new StaticJavaResource("PublicOuterClass", code));
     }
 
     {
@@ -715,7 +709,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("  };\n");
       code.append("  public abstract String value();\n");
       code.append("};\n");
-      units.add(createMockCompilationUnit("EnumWithSubclasses", code));
+      resources.add(new StaticJavaResource("EnumWithSubclasses", code));
     }
 
     {
@@ -727,11 +721,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("    this.value = value;\n");
       code.append("  }\n");
       code.append("};\n");
-      units.add(createMockCompilationUnit("EnumWithNonDefaultCtors", code));
+      resources.add(new StaticJavaResource("EnumWithNonDefaultCtors", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
     SerializableTypeOracleBuilder sob = createSerializableTypeOracleBuilder(
         logger, to);
 
@@ -843,8 +837,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testConcreteClassesConstrainATypeParameter()
       throws NotFoundException, UnableToCompleteException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -852,7 +846,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public abstract class Holder<T extends Serializable> implements Serializable {\n");
       code.append("  T x;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Holder", code));
+      resources.add(new StaticJavaResource("Holder", code));
     }
 
     {
@@ -860,7 +854,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class StringHolder extends Holder<String> implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("StringHolder", code));
+      resources.add(new StaticJavaResource("StringHolder", code));
     }
 
     {
@@ -868,7 +862,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class DateHolder extends Holder<Date> implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("DateHolder", code));
+      resources.add(new StaticJavaResource("DateHolder", code));
     }
 
     {
@@ -876,7 +870,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class Date implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Date", code));
+      resources.add(new StaticJavaResource("Date", code));
     }
 
     {
@@ -884,11 +878,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class UnrelatedClass implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("UnrelatedClass", code));
+      resources.add(new StaticJavaResource("UnrelatedClass", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType holder = to.getType("Holder").isGenericType();
     JClassType stringHolder = to.getType("StringHolder");
@@ -919,15 +913,15 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testCovariantArrays() throws UnableToCompleteException,
       NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public class Sup implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Sup", code));
+      resources.add(new StaticJavaResource("Sup", code));
     }
 
     {
@@ -935,11 +929,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class Sub extends Sup {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Sub", code));
+      resources.add(new StaticJavaResource("Sub", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JClassType sup = to.getType("Sup");
     JClassType sub = to.getType("Sub");
@@ -979,8 +973,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testExtensionFromRaw1() throws UnableToCompleteException,
       NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -988,7 +982,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class HashSet<T extends SerClass> implements Serializable {\n");
       code.append("  T[] x;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("HashSet", code));
+      resources.add(new StaticJavaResource("HashSet", code));
     }
 
     {
@@ -996,7 +990,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class NameSet extends HashSet implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("NameSet", code));
+      resources.add(new StaticJavaResource("NameSet", code));
     }
 
     {
@@ -1004,7 +998,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class SerClass implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("SerClass", code));
+      resources.add(new StaticJavaResource("SerClass", code));
     }
 
     {
@@ -1012,11 +1006,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class SerClassSub extends SerClass {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("SerClassSub", code));
+      resources.add(new StaticJavaResource("SerClassSub", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType hashSet = to.getType("HashSet").isGenericType();
     JClassType nameSet = to.getType("NameSet");
@@ -1052,8 +1046,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testExtensionFromRaw2() throws UnableToCompleteException,
       NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -1061,7 +1055,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class HashSet<T extends Serializable> implements Serializable {\n");
       code.append("  T[] x;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("HashSet", code));
+      resources.add(new StaticJavaResource("HashSet", code));
     }
 
     {
@@ -1070,7 +1064,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class NameSet<T extends SerClass> extends HashSet implements Serializable {\n");
       code.append("  T exposed;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("NameSet", code));
+      resources.add(new StaticJavaResource("NameSet", code));
     }
 
     {
@@ -1078,7 +1072,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class SerClass implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("SerClass", code));
+      resources.add(new StaticJavaResource("SerClass", code));
     }
 
     {
@@ -1086,7 +1080,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class SerClassSub extends SerClass {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("SerClassSub", code));
+      resources.add(new StaticJavaResource("SerClassSub", code));
     }
 
     {
@@ -1094,11 +1088,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class UnrelatedClass implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("UnrelatedClass", code));
+      resources.add(new StaticJavaResource("UnrelatedClass", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JClassType string = to.getType(String.class.getCanonicalName());
     JGenericType hashSet = to.getType("HashSet").isGenericType();
@@ -1131,8 +1125,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testInfiniteParameterizedTypeExpansionCase1()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -1141,7 +1135,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("  B<T> b;\n");
       code.append("  T x;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -1150,7 +1144,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class B<T> extends A<T> implements Serializable {\n");
       code.append("  A<B<T>> ab;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("B", code));
+      resources.add(new StaticJavaResource("B", code));
     }
 
     {
@@ -1158,11 +1152,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class SerializableArgument implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("SerializableArgument", code));
+      resources.add(new StaticJavaResource("SerializableArgument", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType a = to.getType("A").isGenericType();
     JGenericType b = to.getType("B").isGenericType();
@@ -1187,8 +1181,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testInfiniteParameterizedTypeExpansionCase2()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -1196,7 +1190,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class A<T> implements Serializable {\n");
       code.append("  B<T> b;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -1205,7 +1199,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class B<T> extends A<T> implements Serializable {\n");
       code.append("  A<B<T>> ab;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("B", code));
+      resources.add(new StaticJavaResource("B", code));
     }
 
     {
@@ -1213,11 +1207,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class UnusedSerializableArgument implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("UnusedSerializableArgument", code));
+      resources.add(new StaticJavaResource("UnusedSerializableArgument", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType a = to.getType("A").isGenericType();
     JGenericType b = to.getType("B").isGenericType();
@@ -1243,8 +1237,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testInfiniteParameterizedTypeExpansionCase3()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -1252,7 +1246,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class A<T> implements Serializable {\n");
       code.append("  B<T> b;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -1261,11 +1255,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class B<T> extends A<T> implements Serializable {\n");
       code.append("  A<T[]> ab;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("B", code));
+      resources.add(new StaticJavaResource("B", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType a = to.getType("A").isGenericType();
     JGenericType b = to.getType("B").isGenericType();
@@ -1291,8 +1285,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testInfiniteParameterizedTypeExpansionCase4()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -1300,7 +1294,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class A<T> implements Serializable {\n");
       code.append("  T t;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -1309,11 +1303,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class B<T> extends A<T> implements Serializable {\n");
       code.append("  A<T[]> ab;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("B", code));
+      resources.add(new StaticJavaResource("B", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType a = to.getType("A").isGenericType();
     JGenericType b = to.getType("B").isGenericType();
@@ -1384,89 +1378,89 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testNonOverlappingInterfaces() throws UnableToCompleteException,
       NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public interface Intf1 extends Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Intf1", code));
+      resources.add(new StaticJavaResource("Intf1", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public interface Intf2 extends Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Intf2", code));
+      resources.add(new StaticJavaResource("Intf2", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public interface Intf3 extends Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Intf3", code));
+      resources.add(new StaticJavaResource("Intf3", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public class Implements12 implements Intf1, Intf2 {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Implements12", code));
+      resources.add(new StaticJavaResource("Implements12", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public class ImplementsNeither implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("ImplementsNeither", code));
+      resources.add(new StaticJavaResource("ImplementsNeither", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public interface List<T> extends Serializable  {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("List", code));
+      resources.add(new StaticJavaResource("List", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public class ListOfIntf1 implements List<Intf1>  {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("ListOfIntf1", code));
+      resources.add(new StaticJavaResource("ListOfIntf1", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public class ListOfIntf2 implements List<Intf2>  {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("ListOfIntf2", code));
+      resources.add(new StaticJavaResource("ListOfIntf2", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public class ListOfIntf3 implements List<Intf3>  {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("ListOfIntf3", code));
+      resources.add(new StaticJavaResource("ListOfIntf3", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public class ListOfImplements12 implements List<Implements12>  {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("ListOfImplements12", code));
+      resources.add(new StaticJavaResource("ListOfImplements12", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public class ListOfImplementsNeither implements List<ImplementsNeither>  {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("ListOfImplementsNeither", code));
+      resources.add(new StaticJavaResource("ListOfImplementsNeither", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JClassType intf1 = to.getType("Intf1");
     JClassType intf2 = to.getType("Intf2");
@@ -1618,14 +1612,14 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testProblemReporting() throws UnableToCompleteException,
       NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
       code.append("public interface TopInterface {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("TopInterface", code));
+      resources.add(new StaticJavaResource("TopInterface", code));
     }
     {
       StringBuilder code = new StringBuilder();
@@ -1633,7 +1627,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public abstract class AbstractSerializable implements\n");
       code.append("    Serializable, TopInterface {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("AbstractSerializable", code));
+      resources.add(new StaticJavaResource("AbstractSerializable", code));
     }
     {
       StringBuilder code = new StringBuilder();
@@ -1641,28 +1635,28 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public interface PureAbstractSerializable extends \n");
       code.append("    Serializable, TopInterface {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("PureAbstractSerializable", code));
+      resources.add(new StaticJavaResource("PureAbstractSerializable", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("public abstract class PureAbstractClass implements \n");
       code.append("    PureAbstractSerializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("PureAbstractClass", code));
+      resources.add(new StaticJavaResource("PureAbstractClass", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("public abstract class PureAbstractClassTwo extends \n");
       code.append("    PureAbstractClass {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("PureAbstractClassTwo", code));
+      resources.add(new StaticJavaResource("PureAbstractClassTwo", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("public class ConcreteNonSerializable implements\n");
       code.append("    TopInterface {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("ConcreteNonSerializable", code));
+      resources.add(new StaticJavaResource("ConcreteNonSerializable", code));
     }
     {
       StringBuilder code = new StringBuilder();
@@ -1670,7 +1664,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class ConcreteSerializable implements\n");
       code.append("    Serializable, TopInterface {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("ConcreteSerializable", code));
+      resources.add(new StaticJavaResource("ConcreteSerializable", code));
     }
     {
       StringBuilder code = new StringBuilder();
@@ -1678,7 +1672,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class SubSerializable extends\n");
       code.append("    ConcreteNonSerializable implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("SubSerializable", code));
+      resources.add(new StaticJavaResource("SubSerializable", code));
     }
     {
       StringBuilder code = new StringBuilder();
@@ -1687,10 +1681,10 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("  public ConcreteBadCtor(int i) {\n");
       code.append("  }\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("ConcreteBadCtor", code));
+      resources.add(new StaticJavaResource("ConcreteBadCtor", code));
     }
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     SerializableTypeOracleBuilder stob = createSerializableTypeOracleBuilder(
         logger, to);
@@ -1725,8 +1719,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     problems = new ProblemReport();
     assertFalse(
         "PureAbstractClass should have no possible concrete implementation",
-        stob.computeTypeInstantiability(logger, to.getType("PureAbstractClass"),
-            null, problems).hasInstantiableSubtypes());
+        stob.computeTypeInstantiability(logger,
+            to.getType("PureAbstractClass"), null, problems).hasInstantiableSubtypes());
     assertTrue(
         "PureAbstractClass should have a problem entry as the tested class",
         null != problems.getProblemsForType(to.getType("PureAbstractClass")));
@@ -1762,8 +1756,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   public void testRawCollection() throws UnableToCompleteException,
       NotFoundException {
 
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -1771,7 +1765,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.util.Collection;\n");
       code.append("public interface List<T> extends Serializable, Collection<T> {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("List", code));
+      resources.add(new StaticJavaResource("List", code));
     }
     {
       StringBuilder code = new StringBuilder();
@@ -1780,7 +1774,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class LinkedList<T> implements List<T> {\n");
       code.append("  T head;");
       code.append("}\n");
-      units.add(createMockCompilationUnit("LinkedList", code));
+      resources.add(new StaticJavaResource("LinkedList", code));
     }
     {
       StringBuilder code = new StringBuilder();
@@ -1791,11 +1785,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       // we get here from a raw collection.
       // code.append(" Object obj;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("RandomClass", code));
+      resources.add(new StaticJavaResource("RandomClass", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType list = to.getType("List").isGenericType();
     JGenericType linkedList = to.getType("LinkedList").isGenericType();
@@ -1819,8 +1813,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testRawTypes() throws UnableToCompleteException,
       NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -1828,7 +1822,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class A<T extends SerializableClass> implements Serializable {\n");
       code.append("  T x;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -1836,11 +1830,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class SerializableClass implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("SerializableClass", code));
+      resources.add(new StaticJavaResource("SerializableClass", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType a = to.getType("A").isGenericType();
     JRawType rawA = a.getRawType();
@@ -1865,8 +1859,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testRootTypeParameterWithSelfInBounds()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -1874,11 +1868,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class A<Ta extends A<Ta>> implements Serializable {\n");
       code.append("  Ta ta;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType a = to.getType("A").isGenericType();
     JClassType rawA = a.getRawType();
@@ -1897,8 +1891,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testStringArrayArray() throws NotFoundException,
       UnableToCompleteException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -1907,11 +1901,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("  String justOneString;");
       code.append("  String[][] stringsGalore;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Data", code));
+      resources.add(new StaticJavaResource("Data", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JClassType data = to.getType("Data");
     JClassType string = to.getType(String.class.getCanonicalName());
@@ -1936,15 +1930,15 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testSubclassIsAssignable() throws UnableToCompleteException,
       NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public class A<T> implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -1953,7 +1947,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class B extends A<String> implements Serializable {\n");
       code.append("  Object o;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("B", code));
+      resources.add(new StaticJavaResource("B", code));
     }
 
     {
@@ -1963,7 +1957,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       // TODO: rejecting Ser requires a better pruner in STOB
       // code.append(" Ser ser;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("C", code));
+      resources.add(new StaticJavaResource("C", code));
     }
 
     {
@@ -1971,11 +1965,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class Ser implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Ser", code));
+      resources.add(new StaticJavaResource("Ser", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType a = to.getType("A").isGenericType();
     JClassType b = to.getType("B");
@@ -2010,15 +2004,15 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testSubclassWithNewInstantiableTypeParameters()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public class A implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -2027,7 +2021,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class B<T extends C> extends A {\n");
       code.append("  T c;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("B", code));
+      resources.add(new StaticJavaResource("B", code));
     }
 
     {
@@ -2035,11 +2029,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class C implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("C", code));
+      resources.add(new StaticJavaResource("C", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JClassType a = to.getType("A");
     JRawType rawB = to.getType("B").isGenericType().getRawType();
@@ -2063,15 +2057,15 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testSubclassWithNewTypeParameterComparedToAnImplementedInterface()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public interface Intf<T> extends Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Intf", code));
+      resources.add(new StaticJavaResource("Intf", code));
     }
 
     {
@@ -2079,7 +2073,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class Bar<T> implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Bar", code));
+      resources.add(new StaticJavaResource("Bar", code));
     }
 
     {
@@ -2088,7 +2082,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class Foo<T extends Ser> extends Bar<T> implements Intf<String> {\n");
       code.append("  T x;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Foo", code));
+      resources.add(new StaticJavaResource("Foo", code));
     }
 
     {
@@ -2096,11 +2090,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class Ser implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Ser", code));
+      resources.add(new StaticJavaResource("Ser", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType intf = to.getType("Intf").isGenericType();
     JClassType foo = to.getType("Foo");
@@ -2132,15 +2126,15 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testSubclassWithNewUninstantiableTypeParameters()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
       code.append("import java.io.Serializable;\n");
       code.append("public class A implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -2149,11 +2143,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class B<T> extends A {\n");
       code.append("  T x;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("B", code));
+      resources.add(new StaticJavaResource("B", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JClassType a = to.getType("A");
 
@@ -2171,8 +2165,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testTransient() throws UnableToCompleteException,
       NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -2182,7 +2176,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("  transient ServerOnly1 serverOnly1;\n");
       code.append("  @GwtTransient ServerOnly2 serverOnly2;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -2190,7 +2184,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("class ServerOnly1 implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("ServerOnly1", code));
+      resources.add(new StaticJavaResource("ServerOnly1", code));
     }
 
     {
@@ -2198,11 +2192,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("class ServerOnly2 implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("ServerOnly2", code));
+      resources.add(new StaticJavaResource("ServerOnly2", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JClassType a = to.getType("A");
     JClassType serverOnly1 = to.getType("ServerOnly1");
@@ -2226,60 +2220,60 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    * @throws NotFoundException
    */
   public void testTypeConstrainer() throws NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
       code.append("public interface Intf1 {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Intf1", code));
+      resources.add(new StaticJavaResource("Intf1", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("public interface Intf2 {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Intf2", code));
+      resources.add(new StaticJavaResource("Intf2", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("public interface Intf3 {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Intf3", code));
+      resources.add(new StaticJavaResource("Intf3", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("public class Implements12 implements Intf1, Intf2 {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Implements12", code));
+      resources.add(new StaticJavaResource("Implements12", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("public class ImplementsNeither {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("ImplementsNeither", code));
+      resources.add(new StaticJavaResource("ImplementsNeither", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("public class Sup {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Sup", code));
+      resources.add(new StaticJavaResource("Sup", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("public class Sub extends Sup {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Sub", code));
+      resources.add(new StaticJavaResource("Sub", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("public class Holder<T> {\n");
       code.append("  T x;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("Holder", code));
+      resources.add(new StaticJavaResource("Holder", code));
     }
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JClassType intf1 = to.getType("Intf1");
     JClassType intf2 = to.getType("Intf2");
@@ -2351,8 +2345,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testTypeParametersInRootTypes1()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -2360,7 +2354,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public class A<T> implements Serializable {\n");
       code.append("  T t;\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -2368,11 +2362,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class B implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("B", code));
+      resources.add(new StaticJavaResource("B", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType a = to.getType("A").isGenericType();
     JRawType rawA = a.getRawType();
@@ -2404,8 +2398,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   public void testTypeParametersInRootTypes2()
       throws UnableToCompleteException, NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
+    Set<Resource> resources = new HashSet<Resource>();
+    addStandardClasses(resources);
 
     {
       StringBuilder code = new StringBuilder();
@@ -2413,7 +2407,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("public abstract class A<U extends B> implements Serializable {\n");
       code.append("  <V extends C>  V getFoo() { return null; }\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
 
     {
@@ -2421,7 +2415,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class B implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("B", code));
+      resources.add(new StaticJavaResource("B", code));
     }
 
     {
@@ -2429,11 +2423,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       code.append("import java.io.Serializable;\n");
       code.append("public class C implements Serializable {\n");
       code.append("}\n");
-      units.add(createMockCompilationUnit("C", code));
+      resources.add(new StaticJavaResource("C", code));
     }
 
     TreeLogger logger = createLogger();
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, resources);
 
     JGenericType a = to.getType("A").isGenericType();
     JClassType b = to.getType("B");

@@ -18,6 +18,8 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.impl.StaticJavaResource;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
 import junit.framework.TestCase;
@@ -85,24 +87,28 @@ public abstract class CheckerTestCase extends TestCase {
     shouldGenerateWarning(buggyCode, null, line, message);
   }
 
-  private void addLongCheckingCups(Set<CompilationUnit> units) {
+  private void addLongCheckingCups(Set<Resource> resources) {
     StringBuilder code = new StringBuilder();
     code.append("package com.google.gwt.core.client;\n");
     code.append("public @interface UnsafeNativeLong {\n");
     code.append("}\n");
-    units.add(new MockCompilationUnit(
+    resources.add(new StaticJavaResource(
         "com.google.gwt.core.client.UnsafeNativeLong", code.toString()));
   }
 
   private TypeOracle buildOracle(CharSequence buggyCode,
       CharSequence extraCode, UnitTestTreeLogger logger) {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addLongCheckingCups(units);
-    units.add(new MockCompilationUnit("Buggy", buggyCode.toString()));
+    Set<Resource> resources = new HashSet<Resource>();
+    addLongCheckingCups(resources);
+    StaticJavaResource buggyResource = new StaticJavaResource("Buggy",
+        buggyCode);
+    Set<GeneratedUnit> generatedUnits = CompilationStateTestBase.getGeneratedUnits(buggyResource);
     if (extraCode != null) {
-      units.add(new MockCompilationUnit("Extra", extraCode.toString()));
+      StaticJavaResource extraResource = new StaticJavaResource("Extra",
+          extraCode);
+      generatedUnits.addAll(CompilationStateTestBase.getGeneratedUnits(extraResource));
     }
     return TypeOracleTestingUtils.buildStandardTypeOracleWith(logger,
-        units.toArray(new CompilationUnit[units.size()]));
+        resources, generatedUnits);
   }
 }

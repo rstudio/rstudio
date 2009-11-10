@@ -19,9 +19,11 @@ import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
-import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
+import com.google.gwt.dev.javac.impl.Shared;
+import com.google.gwt.dev.javac.impl.TweakedMockJavaResource;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -36,10 +38,9 @@ public class CompilationStateTest extends CompilationStateTestBase {
 
     // Add a unit and ensure it shows up.
     addGeneratedUnits(JavaResourceBase.FOO);
-    validateCompilationState(SourceFileCompilationUnit.getTypeName(JavaResourceBase.FOO));
+    validateCompilationState(Shared.getTypeName(JavaResourceBase.FOO));
 
-    // Ensure it disappears after a refresh.
-    state.refresh(createTreeLogger());
+    rebuildCompilationState();
     validateCompilationState();
   }
 
@@ -55,10 +56,10 @@ public class CompilationStateTest extends CompilationStateTestBase {
 
   public void testCompileError() {
     oracle.add(JavaResourceBase.BAR);
-    state.refresh(createTreeLogger());
+    rebuildCompilationState();
 
     CompilationUnit badUnit = state.getCompilationUnitMap().get(
-        SourceFileCompilationUnit.getTypeName(JavaResourceBase.BAR));
+        Shared.getTypeName(JavaResourceBase.BAR));
     assertSame(State.ERROR, badUnit.getState());
 
     Set<CompilationUnit> goodUnits = new HashSet<CompilationUnit>(
@@ -78,7 +79,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
     addGeneratedUnits(JavaResourceBase.BAR);
 
     CompilationUnit badUnit = state.getCompilationUnitMap().get(
-        SourceFileCompilationUnit.getTypeName(JavaResourceBase.BAR));
+        Shared.getTypeName(JavaResourceBase.BAR));
     assertSame(State.ERROR, badUnit.getState());
 
     Set<CompilationUnit> goodUnits = new HashSet<CompilationUnit>(
@@ -90,22 +91,23 @@ public class CompilationStateTest extends CompilationStateTestBase {
   public void testCompileWithGeneratedUnitsErrorAndDepedentGeneratedUnit() {
     assertUnitsChecked(state.getCompilationUnits());
     MockJavaResource badFoo = new MockJavaResource(
-        SourceFileCompilationUnit.getTypeName(JavaResourceBase.FOO)) {
+        Shared.getTypeName(JavaResourceBase.FOO)) {
       @Override
       protected CharSequence getContent() {
-        return SourceFileCompilationUnit.readSource(JavaResourceBase.FOO)
+        return Shared.readSource(JavaResourceBase.FOO)
             + "\ncompilation error LOL!";
       }
     };
-    state.addGeneratedCompilationUnits(createTreeLogger(), getCompilationUnits(
-        badFoo, JavaResourceBase.BAR));
+    oracle.add(badFoo);
+    rebuildCompilationState();
+    addGeneratedUnits(JavaResourceBase.BAR);
 
     CompilationUnit badUnit = state.getCompilationUnitMap().get(
-        SourceFileCompilationUnit.getTypeName(badFoo));
+        Shared.getTypeName(badFoo));
     assertSame(State.ERROR, badUnit.getState());
     CompilationUnit invalidUnit = state.getCompilationUnitMap().get(
-        SourceFileCompilationUnit.getTypeName(JavaResourceBase.BAR));
-    assertSame(State.FRESH, invalidUnit.getState());
+        Shared.getTypeName(JavaResourceBase.BAR));
+    assertSame(State.ERROR, invalidUnit.getState());
 
     Set<CompilationUnit> goodUnits = new HashSet<CompilationUnit>(
         state.getCompilationUnits());
@@ -119,12 +121,13 @@ public class CompilationStateTest extends CompilationStateTestBase {
    * another generated unit it depends on can be reused
    */
   public void testComplexCacheInvalidation() {
-    Set<CompilationUnit> modifiedUnits = getCompilationUnits(JavaResourceBase.FOO);
-    modifiedUnits.addAll(getModifiedCompilationUnits(JavaResourceBase.BAR));
-    Set<String> reusedTypes = new HashSet<String>();
-    reusedTypes.add(SourceFileCompilationUnit.getTypeName(JavaResourceBase.FOO));
-    testCachingOverMultipleRefreshes(getCompilationUnits(JavaResourceBase.FOO,
-        JavaResourceBase.BAR), modifiedUnits, reusedTypes, 1);
+    testCachingOverMultipleRefreshes(new MockJavaResource[] {
+        JavaResourceBase.FOO, JavaResourceBase.BAR},
+        new MockJavaResource[] {
+            JavaResourceBase.FOO,
+            new TweakedMockJavaResource(JavaResourceBase.BAR)},
+        Collections.singleton(JavaResourceBase.FOO.getTypeName()));
+
   }
 
   public void testInitialization() {
@@ -132,55 +135,51 @@ public class CompilationStateTest extends CompilationStateTestBase {
   }
 
   public void testInvalidation() {
-    testCachingOverMultipleRefreshes(getCompilationUnits(JavaResourceBase.FOO),
-        getModifiedCompilationUnits(JavaResourceBase.FOO),
-        Collections.<String> emptySet(), 1);
+    testCachingOverMultipleRefreshes(
+        new MockJavaResource[] {JavaResourceBase.FOO},
+        new MockJavaResource[] {new TweakedMockJavaResource(
+            JavaResourceBase.FOO)}, Collections.<String> emptySet());
   }
 
   public void testInvalidationOfMultipleUnits() {
-    testCachingOverMultipleRefreshes(getCompilationUnits(JavaResourceBase.BAR,
-        JavaResourceBase.FOO), getModifiedCompilationUnits(
-        JavaResourceBase.BAR, JavaResourceBase.FOO),
-        Collections.<String> emptySet(), 2);
+    testCachingOverMultipleRefreshes(new MockJavaResource[] {
+        JavaResourceBase.FOO, JavaResourceBase.BAR}, new MockJavaResource[] {
+        new TweakedMockJavaResource(JavaResourceBase.FOO),
+        new TweakedMockJavaResource(JavaResourceBase.BAR)},
+        Collections.<String> emptySet());
   }
 
-  /*
-   * Steps: (i) Check compilation state. (ii) Add generated units. (iii) Change
-   * unit in source oracle. (iv) Refresh oracle. (v) Add same generated units.
-   * (v) Check that there is no reuse.
-   */
   public void testInvalidationWhenSourceUnitsChange() {
+    /*
+     * Steps: (i) Check compilation state. (ii) Add generated units. (iii)
+     * Change unit in source oracle. (iv) Refresh oracle. (v) Add same generated
+     * units. (v) Check that there is no reuse.
+     */
     validateCompilationState();
     oracle.add(JavaResourceBase.FOO);
-    state.refresh(createTreeLogger());
+    rebuildCompilationState();
 
     // add generated units
-    Set<CompilationUnit> generatedCups = getCompilationUnits(JavaResourceBase.BAR);
-    Map<String, CompilationUnit> usefulUnits = state.getUsefulGraveyardUnits(generatedCups);
-    assertEquals(0, usefulUnits.size());
-    state.addGeneratedCompilationUnits(createTreeLogger(), generatedCups,
-        usefulUnits);
+    addGeneratedUnits(JavaResourceBase.BAR);
     assertUnitsChecked(state.getCompilationUnits());
+    CompilationUnit oldBar = state.getCompilationUnitMap().get(
+        JavaResourceBase.BAR.getTypeName());
+    assertNotNull(oldBar);
 
     // change unit in source oracle
-    oracle.replace(new MockJavaResource(
-        SourceFileCompilationUnit.getTypeName(JavaResourceBase.FOO)) {
-      @Override
-      protected CharSequence getContent() {
-        return SourceFileCompilationUnit.readSource(JavaResourceBase.FOO)
-            + "\n";
-      }
-    });
-    state.refresh(createTreeLogger());
+    oracle.replace(new TweakedMockJavaResource(JavaResourceBase.FOO));
+    rebuildCompilationState();
 
     /*
-     * Add same generated units. Verify that the generated units are not used.
+     * Add same generated units. Verify that the original units are not used.
      */
-    usefulUnits = state.getUsefulGraveyardUnits(generatedCups);
-    assertEquals(0, usefulUnits.size());
-    state.addGeneratedCompilationUnits(createTreeLogger(), generatedCups,
-        usefulUnits);
+    addGeneratedUnits(JavaResourceBase.BAR);
     assertUnitsChecked(state.getCompilationUnits());
+
+    CompilationUnit newBar = state.getCompilationUnitMap().get(
+        JavaResourceBase.BAR.getTypeName());
+    assertNotNull(newBar);
+    assertNotSame(oldBar, newBar);
   }
 
   public void testSourceOracleAdd() {
@@ -188,7 +187,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
 
     int size = state.getCompilationUnits().size();
     oracle.add(JavaResourceBase.FOO);
-    state.refresh(createTreeLogger());
+    rebuildCompilationState();
     assertEquals(size + 1, state.getCompilationUnits().size());
     validateCompilationState();
   }
@@ -208,7 +207,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
 
     int size = state.getCompilationUnits().size();
     oracle.remove(JavaResourceBase.OBJECT.getPath());
-    state.refresh(createTreeLogger());
+    rebuildCompilationState();
     assertEquals(size - 1, state.getCompilationUnits().size());
     validateCompilationState();
   }
@@ -217,13 +216,8 @@ public class CompilationStateTest extends CompilationStateTestBase {
     validateCompilationState();
 
     int size = state.getCompilationUnits().size();
-    oracle.replace(new MockJavaResource("java.lang.Object") {
-      @Override
-      protected CharSequence getContent() {
-        return SourceFileCompilationUnit.readSource(JavaResourceBase.OBJECT);
-      }
-    });
-    state.refresh(createTreeLogger());
+    oracle.replace(new TweakedMockJavaResource(JavaResourceBase.OBJECT));
+    rebuildCompilationState();
     assertEquals(size, state.getCompilationUnits().size());
     validateCompilationState();
   }
@@ -233,27 +227,26 @@ public class CompilationStateTest extends CompilationStateTestBase {
 
     int size = state.getCompilationUnits().size();
     oracle.replace(JavaResourceBase.OBJECT);
-    state.refresh(createTreeLogger());
+    rebuildCompilationState();
     assertEquals(size, state.getCompilationUnits().size());
     validateCompilationState();
   }
 
   /* test if generatedUnits that depend on stale generatedUnits are invalidated */
   public void testTransitiveInvalidation() {
-    Set<CompilationUnit> modifiedUnits = getModifiedCompilationUnits(JavaResourceBase.FOO);
-    modifiedUnits.addAll(getCompilationUnits(JavaResourceBase.BAR));
-    testCachingOverMultipleRefreshes(getCompilationUnits(JavaResourceBase.BAR,
-        JavaResourceBase.FOO), modifiedUnits, Collections.<String> emptySet(),
-        2);
+    testCachingOverMultipleRefreshes(new MockJavaResource[] {
+        JavaResourceBase.FOO, JavaResourceBase.BAR},
+        new MockJavaResource[] {
+            new TweakedMockJavaResource(JavaResourceBase.FOO),
+            JavaResourceBase.BAR}, Collections.<String> emptySet());
   }
 
-  private void testCaching(MockJavaResource... files) {
+  private void testCaching(MockJavaResource... resources) {
     Set<String> reusedTypes = new HashSet<String>();
-    for (MockJavaResource file : files) {
-      reusedTypes.add(SourceFileCompilationUnit.getTypeName(file));
+    for (MockJavaResource resource : resources) {
+      reusedTypes.add(resource.getTypeName());
     }
-    testCachingOverMultipleRefreshes(getCompilationUnits(files),
-        getCompilationUnits(files), reusedTypes, 0);
+    testCachingOverMultipleRefreshes(resources, resources, reusedTypes);
   }
 
   /**
@@ -271,64 +264,56 @@ public class CompilationStateTest extends CompilationStateTestBase {
    *          initialSet and updatedSet.
    * @param numInvalidated Number of types invalidated from graveyardUnits.
    */
-  private void testCachingOverMultipleRefreshes(
-      Set<CompilationUnit> initialSet, Set<CompilationUnit> updatedSet,
-      Set<String> reusedTypes, int numInvalidated) {
+  private void testCachingOverMultipleRefreshes(MockJavaResource[] initialSet,
+      MockJavaResource[] updatedSet, Set<String> reusedTypes) {
 
-    // verify that there were no generated units before.
-    state.refresh(createTreeLogger());
-    assertEquals(0, state.graveyardUnits.size());
+    // Add 'initialSet' generatedUnits on the first cycle.
+    rebuildCompilationState();
+    assertEquals(oracle.getResources().size(),
+        state.getCompilationUnits().size());
+    addGeneratedUnits(initialSet);
+    Map<String, CompilationUnit> units1 = new HashMap<String, CompilationUnit>(
+        state.getCompilationUnitMap());
+    assertEquals(oracle.getResources().size() + initialSet.length,
+        units1.size());
+    assertUnitsChecked(units1.values());
 
-    // add 'initialSet' generatedUnits over the first refresh cycle.
-    testCachingOverSingleRefresh(new HashSet<CompilationUnit>(initialSet), 0,
-        Collections.<String> emptySet(), 0);
+    // Add 'updatedSet' generatedUnits on the second cycle.
+    rebuildCompilationState();
+    assertEquals(oracle.getResources().size(),
+        state.getCompilationUnits().size());
+    addGeneratedUnits(updatedSet);
+    Map<String, CompilationUnit> units2 = new HashMap<String, CompilationUnit>(
+        state.getCompilationUnitMap());
+    assertEquals(oracle.getResources().size() + updatedSet.length,
+        units2.size());
+    assertUnitsChecked(units2.values());
 
-    // add 'updatedSet' generatedUnits over the second refresh cycle.
-    testCachingOverSingleRefresh(new HashSet<CompilationUnit>(updatedSet),
-        initialSet.size(), reusedTypes, numInvalidated);
-
-    // add 'updatedSet' generatedUnits over the third refresh cycle.
-    reusedTypes = new HashSet<String>();
-    for (CompilationUnit unit : updatedSet) {
-      reusedTypes.add(unit.getTypeName());
+    // Validate that only 'reusedTypes' are reused.
+    for (MockJavaResource resource : updatedSet) {
+      String typeName = resource.getTypeName();
+      if (reusedTypes.contains(typeName)) {
+        assertSame(units1.get(typeName), units2.get(typeName));
+      } else {
+        assertNotSame(units1.get(typeName), units2.get(typeName));
+      }
     }
-    testCachingOverSingleRefresh(new HashSet<CompilationUnit>(updatedSet),
-        updatedSet.size(), reusedTypes, 0);
-  }
 
-  /**
-   * Steps:
-   * <ol>
-   * <li>Check graveyardUnits before refresh. assert size is 0.</li>
-   * <li>Refresh. assert size is 'graveyardUnitsSize'.</li>
-   * <li>Add generated cups. Confirm that the 'reusedTypes' and 'numInvalidated'
-   * match.</li>
-   * </ol>
-   * 
-   * @param generatedCups generated CompilationUnits to be added.
-   * @param graveyardUnitsSize initial expected size of graveyard units.
-   * @param reusedTypes Main type of the units that can be reused between the
-   *          initialSet and updatedSet.
-   * @param numInvalidated Number of types invalidated from graveyardUnits.
-   */
-  private void testCachingOverSingleRefresh(Set<CompilationUnit> generatedCups,
-      int graveyardUnitsSize, Set<String> reusedTypes, int numInvalidated) {
-    assertEquals(0, state.graveyardUnits.size());
+    // Add 'updatedSet' generatedUnits on the third cycle.
+    rebuildCompilationState();
+    assertEquals(oracle.getResources().size(),
+        state.getCompilationUnits().size());
+    addGeneratedUnits(updatedSet);
+    Map<String, CompilationUnit> units3 = new HashMap<String, CompilationUnit>(
+        state.getCompilationUnitMap());
+    assertEquals(oracle.getResources().size() + updatedSet.length,
+        units3.size());
+    assertUnitsChecked(units3.values());
 
-    assertUnitsChecked(state.getCompilationUnits());
-    state.refresh(createTreeLogger());
-    assertEquals(graveyardUnitsSize, state.graveyardUnits.size());
-
-    int initialSize = state.graveyardUnits.size();
-    Map<String, CompilationUnit> usefulUnits = state.getUsefulGraveyardUnits(generatedCups);
-    assertEquals(reusedTypes.size(), usefulUnits.size());
-    for (String typeName : reusedTypes) {
-      assertNotNull(usefulUnits.get(typeName));
+    // Validate that all generatedUnits are reused.
+    for (MockJavaResource resource : updatedSet) {
+      String typeName = resource.getTypeName();
+      assertSame(units2.get(typeName), units3.get(typeName));
     }
-    assertEquals(numInvalidated, initialSize - reusedTypes.size()
-        - state.graveyardUnits.size());
-    state.addGeneratedCompilationUnits(createTreeLogger(), generatedCups,
-        usefulUnits);
-    assertUnitsChecked(state.getCompilationUnits());
   }
 }

@@ -15,16 +15,9 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
-import com.google.gwt.dev.javac.impl.MockResourceOracle;
-import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.util.log.AbstractTreeLogger;
-import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-
-import junit.framework.TestCase;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,7 +27,7 @@ import java.util.Set;
 /**
  * Test if all fileReferences in a compilationUnit are recorded correctly.
  */
-public class CompilationUnitFileReferenceTest extends TestCase {
+public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
 
   public static final MockJavaResource MEMBER_INNER_SUBCLASS = new MockJavaResource(
       "test.OuterSubclass") {
@@ -137,33 +130,14 @@ public class CompilationUnitFileReferenceTest extends TestCase {
         JavaResourceBase.STRING, OUTER);
   }
 
-  /**
-   * Tweak this if you want to see the log output.
-   */
-  private static TreeLogger createTreeLogger() {
-    boolean reallyLog = false;
-    if (reallyLog) {
-      AbstractTreeLogger logger = new PrintWriterTreeLogger();
-      logger.setMaxDetail(TreeLogger.ALL);
-      return logger;
-    }
-    return TreeLogger.NULL;
-  }
-
-  private static void initializeExpectedDependency(Resource source,
-      Resource... targets) {
+  private static void initializeExpectedDependency(MockJavaResource source,
+      MockJavaResource... targets) {
     Set<String> targetSet = new HashSet<String>();
-    for (Resource target : targets) {
-      targetSet.add(target.getLocation());
+    for (MockJavaResource target : targets) {
+      targetSet.add(target.getTypeName());
     }
-    EXPECTED_DEPENDENCIES.put(source.getLocation(), targetSet);
+    EXPECTED_DEPENDENCIES.put(source.getTypeName(), targetSet);
   }
-
-  private MockResourceOracle oracle = new MockResourceOracle(
-      JavaResourceBase.getStandardResources());
-
-  private CompilationState state = new CompilationState(createTreeLogger(),
-      oracle);
 
   public void testBinaryBindingsWithMemberInnerClass() {
     testBinaryBindings(OUTER, MEMBER_INNER_SUBCLASS);
@@ -198,43 +172,30 @@ public class CompilationUnitFileReferenceTest extends TestCase {
   }
 
   public void testWithGeneratedUnits() {
-    state.addGeneratedCompilationUnits(createTreeLogger(),
-        copyAsGeneratedUnits(JavaResourceBase.BAR, JavaResourceBase.FOO));
-    assertRefsMatchExpectedRefs(JavaResourceBase.BAR, JavaResourceBase.FOO);
+    addGeneratedUnits(JavaResourceBase.FOO, JavaResourceBase.BAR);
+    assertRefsMatchExpectedRefs(JavaResourceBase.FOO, JavaResourceBase.BAR);
   }
 
   public void testWithMixedUnits() {
     oracle.add(JavaResourceBase.FOO);
-    state.refresh(createTreeLogger());
-    state.addGeneratedCompilationUnits(createTreeLogger(),
-        copyAsGeneratedUnits(JavaResourceBase.BAR));
-    assertRefsMatchExpectedRefs(JavaResourceBase.BAR, JavaResourceBase.FOO);
+    rebuildCompilationState();
+    addGeneratedUnits(JavaResourceBase.BAR);
+    assertRefsMatchExpectedRefs(JavaResourceBase.FOO, JavaResourceBase.BAR);
   }
 
-  private void assertRefsMatchExpectedRefs(Resource... files) {
-    for (Resource sourceFile : files) {
-      Set<String> sourceFileRefs = state.getCompilationUnitMap().get(
-          SourceFileCompilationUnit.getTypeName(sourceFile)).getFileNameRefs();
-      Set<String> expectedSourceFileRefs = EXPECTED_DEPENDENCIES.get(sourceFile.getLocation());
-      assertEquals(expectedSourceFileRefs, sourceFileRefs);
+  private void assertRefsMatchExpectedRefs(MockJavaResource... files) {
+    Map<String, CompilationUnit> unitMap = state.getCompilationUnitMap();
+    for (MockJavaResource file : files) {
+      String typeName = file.getTypeName();
+      Set<String> sourceFileRefs = unitMap.get(typeName).getFileNameRefs();
+      Set<String> expectedTypeNames = EXPECTED_DEPENDENCIES.get(typeName);
+      assertEquals(expectedTypeNames.size(), sourceFileRefs.size());
+      for (String expectedTypeName : expectedTypeNames) {
+        CompilationUnit expectedUnit = unitMap.get(expectedTypeName);
+        assertNotNull(expectedUnit);
+        assertTrue(sourceFileRefs.contains(expectedUnit.getDisplayLocation()));
+      }
     }
-  }
-
-  /**
-   * Returns copies of units as generated units for testing interactions with
-   * generated units.
-   */
-  private Set<CompilationUnit> copyAsGeneratedUnits(Resource... sourceFiles) {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    for (Resource sourceFile : sourceFiles) {
-      units.add(new SourceFileCompilationUnit(sourceFile) {
-        @Override
-        public boolean isGenerated() {
-          return true;
-        }
-      });
-    }
-    return units;
   }
 
   /**
@@ -242,10 +203,10 @@ public class CompilationUnitFileReferenceTest extends TestCase {
    * have only binary references to the previous unit(s). This tests the binary
    * reference matching in {@link CompilationState}.
    */
-  private void testBinaryBindings(Resource... files) {
+  private void testBinaryBindings(MockJavaResource... files) {
     for (Resource sourceFile : files) {
       oracle.add(sourceFile);
-      state.refresh(createTreeLogger());
+      rebuildCompilationState();
     }
     assertRefsMatchExpectedRefs(files);
   }
@@ -255,11 +216,11 @@ public class CompilationUnitFileReferenceTest extends TestCase {
    * to each other. This tests the source reference matching in
    * {@link CompilationState}.
    */
-  private void testSourceBindings(Resource... files) {
+  private void testSourceBindings(MockJavaResource... files) {
     for (Resource sourceFile : files) {
       oracle.add(sourceFile);
     }
-    state.refresh(createTreeLogger());
+    rebuildCompilationState();
     assertRefsMatchExpectedRefs(files);
   }
 }

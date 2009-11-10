@@ -17,26 +17,12 @@ package com.google.gwt.dev.javac.impl;
 
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.util.Util;
 
-import java.io.InputStream;
 
 /**
  * A compilation unit that was generated.
  */
 public class SourceFileCompilationUnit extends CompilationUnit {
-
-  public static String getTypeName(Resource sourceFile) {
-    String path = sourceFile.getPath();
-    assert (path.endsWith(".java"));
-    path = path.substring(0, path.lastIndexOf('.'));
-    return path.replace('/', '.');
-  }
-
-  public static String readSource(Resource sourceFile) {
-    InputStream contents = sourceFile.openContents();
-    return Util.readStreamAsString(contents);
-  }
 
   /**
    * A token to retrieve this object's bytes from the disk cache. It's generally
@@ -64,7 +50,7 @@ public class SourceFileCompilationUnit extends CompilationUnit {
   @Override
   public String getSource() {
     if (cacheToken < 0) {
-      String sourceCode = readSource(sourceFile);
+      String sourceCode = Shared.readSource(sourceFile);
       cacheToken = diskCache.writeString(sourceCode);
       return sourceCode;
     } else {
@@ -78,7 +64,7 @@ public class SourceFileCompilationUnit extends CompilationUnit {
 
   @Override
   public String getTypeName() {
-    return getTypeName(sourceFile);
+    return Shared.getTypeName(sourceFile);
   }
 
   @Override

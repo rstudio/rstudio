@@ -19,9 +19,9 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.javac.CompilationUnit;
-import com.google.gwt.dev.javac.MockCompilationUnit;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
+import com.google.gwt.dev.javac.impl.StaticJavaResource;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import junit.framework.TestCase;
@@ -37,36 +37,31 @@ import java.util.Set;
 public class TypeHierarchyUtilsTest extends TestCase {
   private static TreeLogger createLogger() {
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger(new PrintWriter(
-        System.err));
+        System.err, true));
     logger.setMaxDetail(TreeLogger.ERROR);
     return logger;
   }
 
   public void testParameterizedInterface() throws NotFoundException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    Set<Resource> resources = new HashSet<Resource>();
     {
       StringBuilder code = new StringBuilder();
       code.append("interface A<T> { }\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("A", code));
     }
     {
       StringBuilder code = new StringBuilder();
       code.append("interface B extends A<String> { }\n");
-      units.add(createMockCompilationUnit("A", code));
+      resources.add(new StaticJavaResource("B", code));
     }
     TreeLogger logger = createLogger();
     TypeOracle to = TypeOracleTestingUtils.buildStandardTypeOracleWith(logger,
-        units);
+        resources);
     JClassType a = to.getType("A");
     JClassType b = to.getType("B");
 
     List<JClassType> subtypesOfA = TypeHierarchyUtils.getImmediateSubtypes(a);
     assertEquals(1, subtypesOfA.size());
     assertTrue(subtypesOfA.contains(b));
-  }
-
-  private MockCompilationUnit createMockCompilationUnit(final String qname,
-      StringBuilder code) {
-    return new MockCompilationUnit(qname, code.toString());
   }
 }

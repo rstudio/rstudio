@@ -28,8 +28,8 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
-import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 
@@ -42,23 +42,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * A wide variety of tests on {@link StandardGeneratorContext}.
  */
 public class StandardGeneratorContextTest extends TestCase {
-
-  public static class MockCompilationState extends CompilationState {
-
-    public MockCompilationState() {
-      super(TreeLogger.NULL, new MockResourceOracle());
-    }
-
-  }
 
   private static class MockGenerator extends Generator {
     @Override
@@ -134,7 +126,8 @@ public class StandardGeneratorContextTest extends TestCase {
 
   private final ArtifactSet artifactSet = new ArtifactSet();
   private final StandardGeneratorContext genCtx;
-  private final CompilationState mockCompilationState = new MockCompilationState();
+  private final CompilationState mockCompilationState = CompilationStateBuilder.buildFrom(
+      TreeLogger.NULL, Collections.<Resource> emptySet());
   private final TreeLogger mockLogger = TreeLogger.NULL;
   private final PropertyOracle mockPropOracle = new MockPropertyOracle();
   private int tempFileCounter;

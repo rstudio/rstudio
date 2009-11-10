@@ -17,10 +17,10 @@ package com.google.gwt.tools.apichecker;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
-import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.impl.StaticJavaResource;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.tools.apichecker.ApiCompatibilityChecker.StaticCompilationUnit;
 
 import junit.framework.TestCase;
 
@@ -61,18 +61,18 @@ public class ApiContainerTest extends TestCase {
     }
   }
 
-  public static StaticCompilationUnit[] getScuArray() {
-    return new StaticCompilationUnit[] {
-        new StaticCompilationUnit("test.apicontainer.ApiClass",
+  public static StaticJavaResource[] getScuArray() {
+    return new StaticJavaResource[] {
+        new StaticJavaResource("test.apicontainer.ApiClass",
             getSourceForApiClass()),
-        new StaticCompilationUnit("test.apicontainer.NonApiClass",
+        new StaticJavaResource("test.apicontainer.NonApiClass",
             getSourceForNonApiClass()),
-        new StaticCompilationUnit("test.nonapipackage.TestClass",
+        new StaticJavaResource("test.nonapipackage.TestClass",
             getSourceForTestClass()),
-        new StaticCompilationUnit("java.lang.Object", getSourceForObject()),
-        new StaticCompilationUnit("test.apicontainer.OneMoreApiClass",
+        new StaticJavaResource("java.lang.Object", getSourceForObject()),
+        new StaticJavaResource("test.apicontainer.OneMoreApiClass",
             getSourceForOneMoreApiClass()),
-        new StaticCompilationUnit("java.newpackage.Test", getSourceForTest()),};
+        new StaticJavaResource("java.newpackage.Test", getSourceForTest()),};
   }
 
   private static JAbstractMethod getMethodByName(String name, ApiClass apiClass) {
@@ -162,9 +162,8 @@ public class ApiContainerTest extends TestCase {
   public void setUp() throws UnableToCompleteException {
     logger.setMaxDetail(com.google.gwt.core.ext.TreeLogger.ERROR);
 
-    apiCheck = new ApiContainer("ApiContainerTest",
-        new HashSet<CompilationUnit>(Arrays.asList(getScuArray())),
-        new HashSet<String>(), logger);
+    apiCheck = new ApiContainer("ApiContainerTest", new HashSet<Resource>(
+        Arrays.asList(getScuArray())), new HashSet<String>(), logger);
   }
 
   /*
@@ -181,10 +180,9 @@ public class ApiContainerTest extends TestCase {
     sb.append("class Temp {\n");
     sb.append("}");
 
-    ApiContainer apiCheckLoop = new ApiContainer(
-        "ApiClassTest",
-        new HashSet<CompilationUnit>(
-            Arrays.asList(new StaticCompilationUnit[] {new StaticCompilationUnit(
+    ApiContainer apiCheckLoop = new ApiContainer("ApiClassTest",
+        new HashSet<Resource>(
+            Arrays.asList(new StaticJavaResource[] {new StaticJavaResource(
                 "java.lang.Object", sb.toString())})), new HashSet<String>(),
         logger);
     ApiPackage javaLangPackage = apiCheckLoop.getApiPackage("java.lang");

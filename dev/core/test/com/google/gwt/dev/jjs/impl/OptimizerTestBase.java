@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.jjs.JavaAstConstructor;
@@ -77,8 +78,8 @@ public abstract class OptimizerTestBase extends TestCase {
 
   /**
    * Finds a type by name. The type name may be short, e.g. <code>"Foo"</code>,
-   * or fully-qualified, e.g. <code>"com.google.example.Foo"</code>. If a short
-   * name is used, it must be unambiguous.
+   * or fully-qualified, e.g. <code>"com.google.example.Foo"</code>. If a
+   * short name is used, it must be unambiguous.
    */
   public static JDeclaredType findType(JProgram program, String typeName) {
     JDeclaredType type = program.getFromTypeMap(typeName);
@@ -124,9 +125,6 @@ public abstract class OptimizerTestBase extends TestCase {
   private final Set<String> snippetClassDecls = new TreeSet<String>();
 
   private final Set<String> snippetImports = new TreeSet<String>();
-
-  private final CompilationState state = new CompilationState(logger,
-      sourceOracle);
 
   public OptimizerTestBase() {
     sourceOracle.add(JavaAstConstructor.getCompilerTypes());
@@ -178,8 +176,8 @@ public abstract class OptimizerTestBase extends TestCase {
         return code;
       }
     });
-    state.refresh(logger);
-
+    CompilationState state = CompilationStateBuilder.buildFrom(logger,
+        sourceOracle.getResources());
     JProgram program = JavaAstConstructor.construct(logger, state,
         "test.EntryPoint");
     return program;

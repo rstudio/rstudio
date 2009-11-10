@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
@@ -54,8 +55,8 @@ public class XMLElementTest extends TestCase {
     super.setUp();
     MockResourceOracle resourceOracle = new MockResourceOracle(
         JavaResourceBase.getStandardResources());
-    CompilationState state = new CompilationState(TreeLogger.NULL,
-        resourceOracle);
+    CompilationState state = CompilationStateBuilder.buildFrom(TreeLogger.NULL,
+        resourceOracle.getResources()); 
     oracle = state.getTypeOracle();
     logger = new MockMortalLogger();
     elemProvider = new XMLElementProviderImpl(new AttributeParsers(), null,

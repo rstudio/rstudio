@@ -20,13 +20,29 @@ import com.google.gwt.dev.util.Util;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.URL;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * An in-memory {@link Resource}.
  */
 public abstract class MockResource extends Resource {
+  private static final AtomicLong lastTimeStamp = new AtomicLong();
+
+  private static long getNextCreationTime() {
+    long currentTime = System.currentTimeMillis();
+    long lastTime;
+    // Go into the future until we succeed.
+    do {
+      lastTime = lastTimeStamp.get();
+      if (currentTime <= lastTime) {
+        currentTime = lastTime + 1;
+      }
+    } while (!lastTimeStamp.compareAndSet(lastTime, currentTime));
+    return currentTime;
+  }
+
   private final String path;
+  private final long creationTime = getNextCreationTime();
 
   public MockResource(String path) {
     this.path = path;
@@ -34,7 +50,7 @@ public abstract class MockResource extends Resource {
 
   @Override
   public long getLastModified() {
-    return 0;
+    return creationTime;
   }
 
   @Override
@@ -45,6 +61,10 @@ public abstract class MockResource extends Resource {
   @Override
   public String getPath() {
     return path;
+  }
+
+  public String getString() {
+    return getContent().toString();
   }
 
   @Override

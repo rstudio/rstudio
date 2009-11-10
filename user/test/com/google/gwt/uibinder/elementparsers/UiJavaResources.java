@@ -17,9 +17,11 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
-import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.collect.HashSet;
 
-import java.util.List;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * A pared down, very low fidelity set of GWT widget Java source files for code
@@ -110,9 +112,9 @@ class UiJavaResources {
    * @return a pale reflection of com.google.gwt.user.ui, plus
    *         {@link JavaResourceBase#getStandardResources}
    */
-  public static MockJavaResource[] getUiResources() {
-    MockJavaResource[] base = JavaResourceBase.getStandardResources();
-    List<MockJavaResource> rtn = Lists.create(base);
+  public static Set<Resource> getUiResources() {
+    Set<Resource> rtn = new HashSet<Resource>(
+        Arrays.asList(JavaResourceBase.getStandardResources()));
     rtn.add(DIALOG_BOX);
     rtn.add(DOCK_LAYOUT_PANEL);
     rtn.add(LABEL);
@@ -120,6 +122,6 @@ class UiJavaResources {
     rtn.add(STYLE);
     rtn.add(UI_BINDER);
     rtn.add(WIDGET);
-    return rtn.toArray(new MockJavaResource[rtn.size()]);
+    return rtn;
   }
 }

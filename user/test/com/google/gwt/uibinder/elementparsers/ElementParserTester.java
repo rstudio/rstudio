@@ -20,9 +20,9 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
-import com.google.gwt.dev.javac.impl.MockResourceOracle;
-import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.FieldWriter;
@@ -38,7 +38,7 @@ import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 
 class ElementParserTester {
    static final MockJavaResource BINDER_OWNER_JAVA = new MockJavaResource(
@@ -74,8 +74,8 @@ class ElementParserTester {
     this.parser = parser;
     String templatePath = "TemplatePath.ui.xml";
     String implName = "ImplClass";
-    MockResourceOracle resources = new MockResourceOracle(getUiResources());
-    CompilationState state = new CompilationState(TreeLogger.NULL, resources);
+    CompilationState state = CompilationStateBuilder.buildFrom(TreeLogger.NULL,
+        getUiResources());
     types = state.getTypeOracle();
 
     elemProvider = new XMLElementProviderImpl(new AttributeParsers(), null,
@@ -113,9 +113,9 @@ class ElementParserTester {
     return elem;
   }
 
-  private MockJavaResource[] getUiResources() {
-    List<MockJavaResource> rtn = Lists.create(UiJavaResources.getUiResources());
+  private Set<Resource> getUiResources() {
+    Set<Resource> rtn = UiJavaResources.getUiResources();
     rtn.add(BINDER_OWNER_JAVA);
-    return rtn.toArray(new MockJavaResource[rtn.size()]);
+    return rtn;
   }
 }

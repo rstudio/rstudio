@@ -16,9 +16,13 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.javac.impl.StaticJavaResource;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
 import junit.framework.TestCase;
+
+import java.util.Collections;
 
 /**
  * Tests the JSORestrictionsChecker.
@@ -290,9 +294,11 @@ public class JSORestrictionsTest extends TestCase {
       }
     }
     UnitTestTreeLogger logger = builder.createLogger();
-    CompilationUnit buggyCup = new MockCompilationUnit("Buggy",
-        buggyCode.toString());
-    TypeOracleTestingUtils.buildStandardTypeOracleWith(logger, buggyCup);
+    StaticJavaResource buggyResource = new StaticJavaResource("Buggy",
+        buggyCode);
+    TypeOracleTestingUtils.buildStandardTypeOracleWith(logger,
+        Collections.<Resource> emptySet(),
+        CompilationStateTestBase.getGeneratedUnits(buggyResource));
     logger.assertCorrectLogEntries();
   }
 

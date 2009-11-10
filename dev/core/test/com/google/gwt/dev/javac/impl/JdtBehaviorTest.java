@@ -149,7 +149,7 @@ public class JdtBehaviorTest extends TestCase {
     }
 
     public char[] getContents() {
-      return SourceFileCompilationUnit.readSource(sourceFile).toCharArray();
+      return Shared.readSource(sourceFile).toCharArray();
     }
 
     public char[] getFileName() {
@@ -157,13 +157,12 @@ public class JdtBehaviorTest extends TestCase {
     }
 
     public char[] getMainTypeName() {
-      return Shared.getShortName(
-          SourceFileCompilationUnit.getTypeName(sourceFile)).toCharArray();
+      return Shared.getShortName(Shared.getTypeName(sourceFile)).toCharArray();
     }
 
     public char[][] getPackageName() {
       return CharOperation.splitOn('.', Shared.getPackageName(
-          SourceFileCompilationUnit.getTypeName(sourceFile)).toCharArray());
+          Shared.getTypeName(sourceFile)).toCharArray());
     }
 
     @Override

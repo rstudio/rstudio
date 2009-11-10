@@ -18,8 +18,9 @@ package com.google.gwt.tools.apichecker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
-import com.google.gwt.dev.javac.CompilationUnit;
-import com.google.gwt.dev.javac.impl.FileCompilationUnit;
+import com.google.gwt.dev.javac.impl.Shared;
+import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.util.tools.ArgHandlerFlag;
@@ -30,6 +31,7 @@ import org.apache.tools.ant.types.ZipScanner;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -93,43 +95,82 @@ public class ApiCompatibilityChecker extends ToolBase {
 
   // TODO(amitmanjhi): better handling of exceptions and exception-chaining.
 
-  static class StaticCompilationUnit extends CompilationUnit {
+  static class FileResource extends Resource {
+    private final File file;
+    private final String path;
 
-    private final String source;
-    private final String typeName;
-
-    public StaticCompilationUnit(String typeName, String source) {
-      this.typeName = typeName;
-      this.source = source;
-    }
-
-    @Override
-    public String getDisplayLocation() {
-      return "/mock/" + typeName;
+    public FileResource(File file, String path) {
+      this.file = file;
+      this.path = path;
+      assert path.endsWith(".java");
+      assert file.getAbsolutePath().endsWith(path);
     }
 
     @Override
     public long getLastModified() {
-      return 0;
+      return file.lastModified();
     }
 
     @Override
-    public String getSource() {
-      return String.valueOf(source);
+    public String getLocation() {
+      return file.getAbsolutePath();
     }
 
     @Override
-    public String getTypeName() {
-      return typeName;
+    public String getPath() {
+      return path;
     }
 
     @Override
-    public boolean isGenerated() {
+    public InputStream openContents() {
+      try {
+        return new FileInputStream(file);
+      } catch (FileNotFoundException e) {
+        throw new RuntimeException("Unable to open file '"
+            + file.getAbsolutePath() + "'", e);
+      }
+    }
+
+    @Override
+    public boolean wasRerooted() {
       return false;
     }
+  }
+
+  static class StaticResource extends Resource {
+
+    private final long lastModified;
+    private final String source;
+    private final String typeName;
+
+    public StaticResource(String typeName, String source, long lastModified) {
+      this.typeName = typeName;
+      this.source = source;
+      this.lastModified = lastModified;
+    }
 
     @Override
-    public boolean isSuperSource() {
+    public long getLastModified() {
+      return lastModified;
+    }
+
+    @Override
+    public String getLocation() {
+      return "/mock/" + getPath();
+    }
+
+    @Override
+    public String getPath() {
+      return Shared.toPath(typeName);
+    }
+
+    @Override
+    public InputStream openContents() {
+      return new ByteArrayInputStream(Util.getBytes(source));
+    }
+
+    @Override
+    public boolean wasRerooted() {
       return false;
     }
   }
@@ -137,15 +178,15 @@ public class ApiCompatibilityChecker extends ToolBase {
   /**
    * Abstract internal class that specifies a set of {@link CompilationUnit}.
    */
-  private abstract static class CompilationUnits {
+  private abstract static class Resources {
     protected final TreeLogger logger;
 
-    CompilationUnits(TreeLogger logger) {
+    Resources(TreeLogger logger) {
       this.logger = logger;
     }
 
-    public abstract Set<CompilationUnit> getCompilationUnits()
-        throws NotFoundException, IOException, UnableToCompleteException;
+    public abstract Set<Resource> getResources() throws NotFoundException,
+        IOException, UnableToCompleteException;
 
     // TODO (amitmanjhi): remove this code. use TypeOracle functionality
     // instead.
@@ -196,13 +237,13 @@ public class ApiCompatibilityChecker extends ToolBase {
   /**
    * Class that specifies a set of {@link CompilationUnit} read from jar files.
    */
-  private static class JarFileCompilationUnits extends CompilationUnits {
+  private static class JarFileResources extends Resources {
+    private final ZipScanner excludeScanner;
     private final Set<String> includedPaths;
     private final JarFile jarFiles[];
-    private Set<CompilationUnit> units = null;
-    private final ZipScanner excludeScanner;
+    private Set<Resource> resources = null;
 
-    JarFileCompilationUnits(JarFile[] jarFiles, Set<String> includedPaths,
+    JarFileResources(JarFile[] jarFiles, Set<String> includedPaths,
         Set<String> excludedPaths, TreeLogger logger) {
       super(logger);
       this.jarFiles = jarFiles;
@@ -218,12 +259,12 @@ public class ApiCompatibilityChecker extends ToolBase {
     }
 
     @Override
-    public Set<CompilationUnit> getCompilationUnits() throws IOException {
-      if (units != null) {
-        return units;
+    public Set<Resource> getResources() throws IOException {
+      if (resources != null) {
+        return resources;
       }
 
-      units = new HashSet<CompilationUnit>();
+      resources = new HashSet<Resource>();
       for (JarFile jarFile : jarFiles) {
         Enumeration<JarEntry> entries = jarFile.entries();
         while (entries.hasMoreElements()) {
@@ -240,8 +281,12 @@ public class ApiCompatibilityChecker extends ToolBase {
             } else {
               if (isValidPackage(packageName, fileName)) {
                 // Add if package and fileNames are okay
-                units.add(new StaticCompilationUnit(packageName + "."
-                    + getClassName(fileName), fileContent));
+                long lastModified = jarEntry.getTime();
+                if (lastModified < 0) {
+                  lastModified = System.currentTimeMillis();
+                }
+                resources.add(new StaticResource(packageName + "."
+                    + getClassName(fileName), fileContent, lastModified));
                 logger.log(TreeLogger.DEBUG, "adding pkgName = " + packageName
                     + ", file = " + fileName, null);
               } else {
@@ -252,7 +297,7 @@ public class ApiCompatibilityChecker extends ToolBase {
           }
         }
       }
-      return units;
+      return resources;
     }
 
     String getFileContentsFromJar(JarFile jarFile, JarEntry jarEntry)
@@ -301,14 +346,14 @@ public class ApiCompatibilityChecker extends ToolBase {
    * Class that specifies a set of {@link CompilationUnit} read from the
    * file-system.
    */
-  private static class SourceFileCompilationUnits extends CompilationUnits {
-    private final Set<File> includedPaths;
-    private Set<CompilationUnit> units = null;
+  private static class SourceFileResources extends Resources {
     private final ZipScanner excludeScanner;
+    private final Set<File> includedPaths;
+    private Set<Resource> units = null;
 
-    SourceFileCompilationUnits(String dirRoot,
-        Set<String> includedPathsAsString, Set<String> excludedPathsAsString,
-        TreeLogger logger) throws FileNotFoundException, IOException {
+    SourceFileResources(String dirRoot, Set<String> includedPathsAsString,
+        Set<String> excludedPathsAsString, TreeLogger logger)
+        throws FileNotFoundException, IOException {
       super(logger);
       if (dirRoot == null) {
         dirRoot = "";
@@ -337,13 +382,13 @@ public class ApiCompatibilityChecker extends ToolBase {
     }
 
     @Override
-    public Set<CompilationUnit> getCompilationUnits() throws NotFoundException,
-        IOException, UnableToCompleteException {
+    public Set<Resource> getResources() throws NotFoundException, IOException,
+        UnableToCompleteException {
       if (units != null) {
         return units;
       }
 
-      units = new HashSet<CompilationUnit>();
+      units = new HashSet<Resource>();
       for (File sourceFile : includedPaths) {
         updateCompilationUnitsInPath(sourceFile);
       }
@@ -381,9 +426,11 @@ public class ApiCompatibilityChecker extends ToolBase {
           continue;
         }
         if (file.isFile()) {
-          String pkgName = null;
+          String fileName = file.getName();
           if (file.getName().endsWith("java")) {
-            pkgName = extractPackageName(new FileReader(file));
+            String className = file.getName().substring(0,
+                fileName.length() - 5);
+            String pkgName = extractPackageName(new FileReader(file));
             if (pkgName == null) {
               logger.log(TreeLogger.WARN, "Not adding file = "
                   + file.toString() + ", because packageName = null", null);
@@ -391,7 +438,8 @@ public class ApiCompatibilityChecker extends ToolBase {
               if (isValidPackage(pkgName,
                   sourcePathEntry.toURI().toURL().toString())) {
                 // Add if the package and fileNames are okay
-                units.add(new FileCompilationUnit(file, pkgName));
+                String typeName = Shared.makeTypeName(pkgName, className);
+                units.add(new FileResource(file, Shared.toPath(typeName)));
                 logger.log(TreeLogger.DEBUG, "adding pkgName = " + pkgName
                     + ", file = " + file.toString(), null);
               } else {
@@ -473,34 +521,34 @@ public class ApiCompatibilityChecker extends ToolBase {
 
       Set<String> excludedPackages = checker.getSetOfExcludedPackages(checker.configProperties);
       if (PROCESS_NEW_API) {
-        Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-        units.addAll(new SourceFileCompilationUnits(
+        Set<Resource> resources = new HashSet<Resource>();
+        resources.addAll(new SourceFileResources(
             checker.configProperties.getProperty("dirRoot_new"),
             checker.getConfigPropertyAsSet("sourceFiles_new"),
-            checker.getConfigPropertyAsSet("excludedFiles_new"), logger).getCompilationUnits());
-        units.addAll(checker.getGwtCompilationUnits(logger));
+            checker.getConfigPropertyAsSet("excludedFiles_new"), logger).getResources());
+        resources.addAll(checker.getGwtCompilationUnits(logger));
         newApi = new ApiContainer(
-            checker.configProperties.getProperty("name_new"), units,
+            checker.configProperties.getProperty("name_new"), resources,
             excludedPackages, logger);
         if (checker.printAllApi) {
           logger.log(TreeLogger.INFO, newApi.getApiAsString());
         }
       }
       if (PROCESS_EXISTING_API) {
-        Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+        Set<Resource> resources = new HashSet<Resource>();
         if (checker.refJars == null) {
-          units.addAll(new SourceFileCompilationUnits(
+          resources.addAll(new SourceFileResources(
               checker.configProperties.getProperty("dirRoot_old"),
               checker.getConfigPropertyAsSet("sourceFiles_old"),
-              checker.getConfigPropertyAsSet("excludedFiles_old"), logger).getCompilationUnits());
+              checker.getConfigPropertyAsSet("excludedFiles_old"), logger).getResources());
         } else {
-          units.addAll(new JarFileCompilationUnits(checker.refJars,
+          resources.addAll(new JarFileResources(checker.refJars,
               checker.getConfigPropertyAsSet("sourceFiles_old"),
-              checker.getConfigPropertyAsSet("excludedFiles_old"), logger).getCompilationUnits());
+              checker.getConfigPropertyAsSet("excludedFiles_old"), logger).getResources());
         }
-        units.addAll(checker.getGwtCompilationUnits(logger));
+        resources.addAll(checker.getGwtCompilationUnits(logger));
         existingApi = new ApiContainer(
-            checker.configProperties.getProperty("name_old"), units,
+            checker.configProperties.getProperty("name_old"), resources,
             excludedPackages, logger);
         if (checker.printAllApi) {
           logger.log(TreeLogger.INFO, existingApi.getApiAsString());
@@ -846,10 +894,10 @@ public class ApiCompatibilityChecker extends ToolBase {
     return set;
   }
 
-  private Set<CompilationUnit> getGwtCompilationUnits(TreeLogger logger)
+  private Set<Resource> getGwtCompilationUnits(TreeLogger logger)
       throws FileNotFoundException, IOException, NotFoundException,
       UnableToCompleteException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    Set<Resource> resources = new HashSet<Resource>();
     if (gwtDevJar == null || gwtUserJar == null) {
       if (gwtDevJar != null) {
         System.err.println("Argument gwtUserJar must be provided for gwtDevJar to be used");
@@ -857,7 +905,7 @@ public class ApiCompatibilityChecker extends ToolBase {
       if (gwtUserJar != null) {
         System.err.println("Argument gwtDevJar must be provided for gwtUserJar to be used");
       }
-      return units;
+      return resources;
     }
     // gwt-user.jar
     Set<String> gwtIncludedPaths = new HashSet<String>(
@@ -872,19 +920,19 @@ public class ApiCompatibilityChecker extends ToolBase {
             "com/google/gwt/user/client/rpc/core/java/util/LinkedHashMap_CustomFieldSerializer.java",
             "com/google/gwt/user/rebind", "com/google/gwt/user/server",
             "com/google/gwt/user/tools",}));
-    CompilationUnits cu = new JarFileCompilationUnits(
-        new JarFile[] {gwtUserJar}, gwtIncludedPaths, gwtExcludedPaths, logger);
-    units.addAll(cu.getCompilationUnits());
+    Resources cu = new JarFileResources(new JarFile[] {gwtUserJar},
+        gwtIncludedPaths, gwtExcludedPaths, logger);
+    resources.addAll(cu.getResources());
 
     // gwt-dev-*.jar
     gwtIncludedPaths = new HashSet<String>(Arrays.asList(new String[] {
         "com/google/gwt/core/client",
         "com/google/gwt/dev/jjs/intrinsic/com/google/gwt/lang",
         "com/google/gwt/lang",}));
-    cu = new JarFileCompilationUnits(new JarFile[] {gwtDevJar},
-        gwtIncludedPaths, new HashSet<String>(), logger);
-    units.addAll(cu.getCompilationUnits());
-    return units;
+    cu = new JarFileResources(new JarFile[] {gwtDevJar}, gwtIncludedPaths,
+        new HashSet<String>(), logger);
+    resources.addAll(cu.getResources());
+    return resources;
   }
 
   /*

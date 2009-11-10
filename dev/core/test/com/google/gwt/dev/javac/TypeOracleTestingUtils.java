@@ -17,10 +17,11 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.CompilationStateTestBase.GeneratedSourceFileCompilationUnit;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
-import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
+import com.google.gwt.dev.resource.Resource;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -32,50 +33,67 @@ import java.util.Set;
 public class TypeOracleTestingUtils {
 
   public static TypeOracle buildStandardTypeOracleWith(TreeLogger logger,
-      CompilationUnit... extraUnits) {
-    Set<CompilationUnit> extraUnitSet = new HashSet<CompilationUnit>();
-    Collections.addAll(extraUnitSet, extraUnits);
-    return buildStandardTypeOracleWith(logger, extraUnitSet);
+      Resource... resources) {
+    return buildStandardTypeOracleWith(logger, new HashSet<Resource>(
+        Arrays.asList(resources)));
   }
 
   public static TypeOracle buildStandardTypeOracleWith(TreeLogger logger,
-      Set<CompilationUnit> extraUnits) {
-    Set<CompilationUnit> unitSet = new HashSet<CompilationUnit>();
-    addStandardCups(unitSet);
-    for (CompilationUnit extraUnit : extraUnits) {
-      unitSet.add(extraUnit);
-    }
-    return buildTypeOracle(logger, unitSet);
+      Set<Resource> resources) {
+    return buildTypeOracle(logger, standardBuildersPlus(resources));
+  }
+
+  public static TypeOracle buildStandardTypeOracleWith(TreeLogger logger,
+      Set<Resource> resources, Set<GeneratedUnit> generatedUnits) {
+    return buildTypeOracle(logger, standardBuildersPlus(resources),
+        generatedUnits);
+  }
+
+  public static void buildStandardTypeOracleWith(TypeOracleMediator mediator,
+      TreeLogger logger, Resource... resources) {
+    buildStandardTypeOracleWith(mediator, logger, new HashSet<Resource>(
+        Arrays.asList(resources)));
+  }
+
+  public static void buildStandardTypeOracleWith(TypeOracleMediator mediator,
+      TreeLogger logger, Set<Resource> resources) {
+    buildTypeOracle(mediator, logger, standardBuildersPlus(resources));
   }
 
   public static TypeOracle buildTypeOracle(TreeLogger logger,
-      Set<CompilationUnit> units) {
-    Set<String> validBinaryTypeNames = new HashSet<String>();
-    for (CompilationUnit unit : units) {
-      Set<CompiledClass> compiledClasses = unit.getCompiledClasses();
-      if (compiledClasses != null) {
-        for (CompiledClass compiledClass : compiledClasses) {
-          validBinaryTypeNames.add(compiledClass.getInternalName());
-        }
-      }
+      Set<Resource> resources) {
+    return buildTypeOracle(logger, resources,
+        Collections.<GeneratedUnit> emptySet());
+  }
+
+  public static TypeOracle buildTypeOracle(TreeLogger logger,
+      Set<Resource> resources, Set<GeneratedUnit> generatedUnits) {
+    CompilationState state = CompilationStateBuilder.buildFrom(logger,
+        resources);
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    for (GeneratedUnit unit : generatedUnits) {
+      units.add(new GeneratedSourceFileCompilationUnit(unit));
     }
-    JdtCompiler.compile(units);
-    CompilationUnitInvalidator.InvalidatorState state = new CompilationUnitInvalidator.InvalidatorState();
-    CompilationUnitInvalidator.validateCompilationUnits(state, units);
-    if (CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units)) {
-      CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);
-    }
-    TypeOracleMediator mediator = new TypeOracleMediator();
-    mediator.refresh(logger, units);
-    return mediator.getTypeOracle();
+    state.addGeneratedCompilationUnits(logger, units);
+    return state.getTypeOracle();
+  }
+
+  public static void buildTypeOracle(TypeOracleMediator mediator,
+      TreeLogger logger, Set<Resource> resources) {
+    CompilationState state = CompilationStateBuilder.buildFrom(logger,
+        resources);
+    mediator.addNewUnits(logger, state.getCompilationUnits());
   }
 
   /**
-   * Add compilation units for basic classes like Object and String.
+   * Compilation resources for basic classes like Object and String.
    */
-  private static void addStandardCups(Set<CompilationUnit> units) {
-    for (MockJavaResource resource : JavaResourceBase.getStandardResources()) {
-      units.add(new SourceFileCompilationUnit(resource));
+  private static Set<Resource> standardBuildersPlus(Set<Resource> resources) {
+    Set<Resource> result = new HashSet<Resource>();
+    for (Resource standardResource : JavaResourceBase.getStandardResources()) {
+      result.add(standardResource);
     }
+    result.addAll(resources);
+    return result;
   }
 }

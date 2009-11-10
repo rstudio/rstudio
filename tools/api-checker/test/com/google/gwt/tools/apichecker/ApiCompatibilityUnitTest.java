@@ -18,10 +18,10 @@ package com.google.gwt.tools.apichecker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
-import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.impl.StaticJavaResource;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.tools.apichecker.ApiCompatibilityChecker.StaticCompilationUnit;
 
 import junit.framework.TestCase;
 
@@ -265,15 +265,14 @@ public class ApiCompatibilityUnitTest extends TestCase {
     AbstractTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(TreeLogger.ERROR);
 
-    Set<CompilationUnit> set1 = new HashSet<CompilationUnit>();
-    for (Map.Entry<String, String> entry
-        : existingTypesToSourcesMap.entrySet()) {
-      set1.add(new StaticCompilationUnit(entry.getKey(), entry.getValue()));
+    Set<Resource> set1 = new HashSet<Resource>();
+    for (Map.Entry<String, String> entry : existingTypesToSourcesMap.entrySet()) {
+      set1.add(new StaticJavaResource(entry.getKey(), entry.getValue()));
     }
     Set<String> emptyList = Collections.emptySet();
-    Set<CompilationUnit> set2 = new HashSet<CompilationUnit>();
+    Set<Resource> set2 = new HashSet<Resource>();
     for (String type : existingTypesToSourcesMap.keySet()) {
-      set2.add(new StaticCompilationUnit(type, newTypesToSourcesMap.get(type)));
+      set2.add(new StaticJavaResource(type, newTypesToSourcesMap.get(type)));
     }
 
     ApiContainer existingApi = new ApiContainer("existingApi", set1, emptyList,
