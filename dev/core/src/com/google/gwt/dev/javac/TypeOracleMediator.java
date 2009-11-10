@@ -933,13 +933,6 @@ public class TypeOracleMediator {
       // Leave enum constructors out of TypeOracle
       return true;
     }
-    if (type.isEnum() != null
-        && (methodData.getAccess() & Opcodes.ACC_STATIC) != 0) {
-      // Special-case synthetic static methods that aren't marked synthetic
-      if ("values".equals(name) || "valueOf".equals(name)) {
-        return true;
-      }
-    }
 
     JAbstractMethod method;
 

@@ -121,7 +121,7 @@ public class JEnumTypeTest extends TestCase {
     JClassType type = typeOracle.getType(MyEnum.class.getName());
     JEnumType enumType = validateTypeIsEnum(type);
 
-    assertEquals(1, enumType.getMethods().length);
+    assertEquals(3, enumType.getMethods().length);
   }
 
   /**
