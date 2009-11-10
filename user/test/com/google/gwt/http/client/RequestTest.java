@@ -16,19 +16,18 @@
 package com.google.gwt.http.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.xhr.client.XMLHttpRequest;
 
 /**
  * TODO: document me.
  */
-public class RequestTest extends GWTTestCase {
-  private static final int TEST_FINISH_DELAY = 10000;
+public class RequestTest extends RequestTestBase {
 
   private static String getTestBaseURL() {
     return GWT.getModuleBaseURL() + "testRequest/";
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.http.RequestTest";
   }
@@ -37,7 +36,7 @@ public class RequestTest extends GWTTestCase {
    * Test method for {@link com.google.gwt.http.client.Request#cancel()}.
    */
   public void testCancel() {
-    delayTestFinish(TEST_FINISH_DELAY);
+    delayTestFinishForRequest();
 
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
         getTestBaseURL() + "/cancel");
@@ -64,7 +63,7 @@ public class RequestTest extends GWTTestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.http.client.Request#Request(com.google.gwt.core.client.JavaScriptObject, int, com.google.gwt.http.client.RequestCallback)}.
+   * {@link com.google.gwt.http.client.Request#Request(XMLHttpRequest, int, RequestCallback)}.
    */
   public void testRequest() {
     RequestCallback callback = new RequestCallback() {
@@ -107,7 +106,7 @@ public class RequestTest extends GWTTestCase {
    * Test method for {@link com.google.gwt.http.client.Request#isPending()}.
    */
   public void testIsPending() {
-    // delayTestFinish(TEST_FINISH_DELAY);
+    // delayTestFinishForRequest();
 
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
         getTestBaseURL() + "isPending");

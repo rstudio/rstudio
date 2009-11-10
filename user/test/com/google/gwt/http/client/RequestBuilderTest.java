@@ -18,13 +18,11 @@ package com.google.gwt.http.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
-import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * Test cases for the {@link RequestBuilder} class.
  */
-public class RequestBuilderTest extends GWTTestCase {
-  private static final int TEST_FINISH_DELAY = 10000;
+public class RequestBuilderTest extends RequestTestBase {
 
   public static final String SERVLET_GET_RESPONSE = "get";
   public static final String SERVLET_POST_RESPONSE = "post";
@@ -176,7 +174,7 @@ public class RequestBuilderTest extends GWTTestCase {
    * {@link com.google.gwt.http.client.RequestBuilder#sendRequest(java.lang.String, com.google.gwt.http.client.RequestCallback)}.
    */
   public void testSend_GET() throws RequestException {
-    delayTestFinish(TEST_FINISH_DELAY);
+    delayTestFinishForRequest();
 
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
         getTestBaseURL() + "send_GET");
@@ -198,7 +196,7 @@ public class RequestBuilderTest extends GWTTestCase {
    * Test method for {@link com.google.gwt.http.client.RequestBuilder#send()}.
    */
   public void testSend_POST() throws RequestException {
-    delayTestFinish(TEST_FINISH_DELAY);
+    delayTestFinishForRequest();
 
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
         getTestBaseURL() + "sendRequest_POST");
@@ -223,7 +221,7 @@ public class RequestBuilderTest extends GWTTestCase {
    * {@link com.google.gwt.http.client.RequestBuilder#sendRequest(java.lang.String, com.google.gwt.http.client.RequestCallback)}.
    */
   public void testSendRequest_GET() throws RequestException {
-    delayTestFinish(TEST_FINISH_DELAY);
+    delayTestFinishForRequest();
 
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
         getTestBaseURL() + "sendRequest_GET");
@@ -245,7 +243,7 @@ public class RequestBuilderTest extends GWTTestCase {
    * {@link com.google.gwt.http.client.RequestBuilder#sendRequest(java.lang.String, com.google.gwt.http.client.RequestCallback)}.
    */
   public void testSendRequest_POST() throws RequestException {
-    delayTestFinish(TEST_FINISH_DELAY);
+    delayTestFinishForRequest();
 
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
         getTestBaseURL() + "sendRequest_POST");
@@ -338,7 +336,7 @@ public class RequestBuilderTest extends GWTTestCase {
     } catch (IllegalArgumentException expected) {
     }
 
-    delayTestFinish(TEST_FINISH_DELAY);
+    delayTestFinishForRequest();
 
     builder = new RequestBuilder(RequestBuilder.GET, getTestBaseURL()
         + "setRequestHeader");
@@ -370,7 +368,7 @@ public class RequestBuilderTest extends GWTTestCase {
    * </ul>
    */
   public void testSetTimeout_noTimeout() throws RequestException {
-    delayTestFinish(TEST_FINISH_DELAY);
+    delayTestFinishForRequest();
 
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
         getTestBaseURL() + "setTimeout/noTimeout");
@@ -400,7 +398,7 @@ public class RequestBuilderTest extends GWTTestCase {
    * </ul>
    */
   public void testSetTimeout_timeout() throws RequestException {
-    delayTestFinish(TEST_FINISH_DELAY);
+    delayTestFinishForRequest();
 
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
         getTestBaseURL() + "setTimeout/timeout");

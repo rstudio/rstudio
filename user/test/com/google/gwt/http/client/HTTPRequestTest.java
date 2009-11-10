@@ -16,7 +16,6 @@
 package com.google.gwt.http.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.HTTPRequest;
 import com.google.gwt.user.client.ResponseTextHandler;
 
@@ -25,9 +24,7 @@ import com.google.gwt.user.client.ResponseTextHandler;
  * 
  */
 @Deprecated
-public class HTTPRequestTest extends GWTTestCase {
-
-  private static final int TEST_TIMEOUT = 10000;
+public class HTTPRequestTest extends RequestTestBase {
 
   private static String getTestBaseURL() {
     return GWT.getModuleBaseURL() + "testRequestBuilder/";
@@ -39,7 +36,7 @@ public class HTTPRequestTest extends GWTTestCase {
   }
 
   public void testAsyncGet() {
-    delayTestFinish(TEST_TIMEOUT);
+    delayTestFinishForRequest();
     HTTPRequest.asyncGet(getTestBaseURL() + "send_GET",
         new ResponseTextHandler() {
           public void onCompletion(String responseText) {
@@ -50,7 +47,7 @@ public class HTTPRequestTest extends GWTTestCase {
   }
 
   public void testAsyncPost() {
-    delayTestFinish(TEST_TIMEOUT);
+    delayTestFinishForRequest();
     HTTPRequest.asyncPost(getTestBaseURL() + "simplePost",
         "method=test+request", new ResponseTextHandler() {
           public void onCompletion(String responseText) {

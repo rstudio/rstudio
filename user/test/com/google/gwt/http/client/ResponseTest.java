@@ -16,13 +16,11 @@
 package com.google.gwt.http.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * 
  */
-public class ResponseTest extends GWTTestCase {
-  private static final int TEST_FINISH_DELAY = 10000;
+public class ResponseTest extends RequestTestBase {
 
   private static RequestBuilder getHTTPRequestBuilder() {
     return getHTTPRequestBuilder(getTestBaseURL());
@@ -48,6 +46,7 @@ public class ResponseTest extends GWTTestCase {
     fail("Unexpected exception: " + exception.toString());
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.http.ResponseTest";
   }
@@ -154,7 +153,7 @@ public class ResponseTest extends GWTTestCase {
   }
 
   private void executeTest(RequestBuilder builder, RequestCallback callback) {
-    delayTestFinish(TEST_FINISH_DELAY);
+    delayTestFinishForRequest();
 
     try {
       builder.sendRequest(null, callback);
