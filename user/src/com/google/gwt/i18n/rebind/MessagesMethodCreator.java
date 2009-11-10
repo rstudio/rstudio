@@ -412,7 +412,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       if (localizedType != null) {
         try {
           Class<?> testClass = Class.forName(
-              localizedType.getQualifiedSourceName(), false,
+              localizedType.getQualifiedBinaryName(), false,
               PluralRule.class.getClassLoader());
           if (PluralRule.class.isAssignableFrom(testClass)) {
             return (PluralRule) testClass.newInstance();

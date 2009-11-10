@@ -17,6 +17,7 @@ package com.google.gwt.i18n;
 
 import com.google.gwt.i18n.client.AnnotationsTest;
 import com.google.gwt.i18n.client.ArabicPluralsTest;
+import com.google.gwt.i18n.client.CustomPluralsTest;
 import com.google.gwt.i18n.client.DateTimeFormat_de_Test;
 import com.google.gwt.i18n.client.DateTimeFormat_en_Test;
 import com.google.gwt.i18n.client.DateTimeParse_en_Test;
@@ -57,6 +58,7 @@ public class I18NSuite {
     suite.addTestSuite(AnnotationsTest.class);
     suite.addTestSuite(ConstantMapTest.class);
     suite.addTestSuite(CurrencyTest.class);
+    suite.addTestSuite(CustomPluralsTest.class);
     suite.addTestSuite(DateTimeFormat_de_Test.class);
     suite.addTestSuite(DateTimeFormat_en_Test.class);
     suite.addTestSuite(DateTimeParse_en_Test.class);
