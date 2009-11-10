@@ -21,7 +21,7 @@
 #include "Preferences.h"
 #include "AllowedConnections.h"
 
-#define REG_ACCESS_LIST "SOFTWARE\\Google\\Google Web Toolkit\\gwt-dmp.accessList"
+#define REG_ACCESS_LIST "SOFTWARE\\Google\\Google Web Toolkit\\gwt-dev-plugin.accessList"
 
 /**
  * Return a null-terminated string containing the access list.
