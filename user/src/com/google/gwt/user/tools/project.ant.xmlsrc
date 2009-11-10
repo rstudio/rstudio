@@ -43,7 +43,7 @@
     </java>
   </target>
 
-  <target name="devMode" depends="javac" description="Run development mode">
+  <target name="devmode" depends="javac" description="Run development mode">
     <java failonerror="true" fork="true" classname="@shellClass">
       <classpath>
         <pathelement location="src"/>
