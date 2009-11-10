@@ -246,9 +246,9 @@ bool ExternalWrapper::askUserToAllow(const std::string& url) {
 
 // TODO(jat): remove suppliedUrl and update hosted.html API
 NS_IMETHODIMP ExternalWrapper::Connect(const nsACString& suppliedUrl,
-		const nsACString& sessionKey, const nsACString& aAddr,
-		const nsACString& aModuleName, const nsACString& hostedHtmlVersion,
-		PRBool *_retval) {
+                const nsACString& sessionKey, const nsACString& aAddr,
+                const nsACString& aModuleName, const nsACString& hostedHtmlVersion,
+                PRBool *_retval) {
   Debug::log(Debug::Info) << "Connect(url=" <<  url << ", sessionKey="
       << sessionKey << ", address=" << aAddr << ", module=" << aModuleName
       << ", hostedHtmlVersion=" << hostedHtmlVersion << Debug::flush;
