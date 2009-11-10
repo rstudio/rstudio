@@ -36,6 +36,8 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
   private static String moduleBaseUrlProtocol =
       GWT.getHostPageBaseURL().startsWith("https") ?  "https://" : "http://";
 
+  private static boolean isIE6 = isIE6();
+  
   private static native void injectGlobalHandler() /*-{
     $wnd.__gwt_transparentImgHandler = function (elem) {
       elem.onerror = null;
@@ -43,6 +45,28 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
     };
   }-*/;
   
+  // Stolen and modified from UserAgent.gwt.xml.
+  // TODO(jgw): Get rid of this method, and switch to using soft permutations
+  // once they land in trunk.
+  private static native boolean isIE6() /*-{
+     function makeVersion(result) {
+       return (parseInt(result[1]) * 1000) + parseInt(result[2]);
+     }
+
+     var ua = navigator.userAgent.toLowerCase();
+     if (ua.indexOf("msie") != -1) {
+       var result = /msie ([0-9]+)\.([0-9]+)/.exec(ua);
+       if (result && result.length == 3) {
+         var v = makeVersion(result);
+         if (v < 7000) {
+           return true;
+         }
+       }
+     }
+
+     return false;
+   }-*/;
+
   public ClippedImageImplIE6() {
     injectGlobalHandler();
   }
@@ -50,7 +74,11 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
   @Override
   public void adjust(Element clipper, String url, int left, int top, int width,
       int height) {
-
+    if (!isIE6) {
+      super.adjust(clipper, url, left, top, width, height);
+      return;
+    }
+    
     clipper.getStyle().setPropertyPx("width", width);
     clipper.getStyle().setPropertyPx("height", height);
 
@@ -73,6 +101,10 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
   @Override
   public Element createStructure(String url, int left, int top, int width,
       int height) {
+    if (!isIE6) {
+      return super.createStructure(url, left, top, width, height);
+    }
+    
     // We need to explicitly sink ONLOAD on the child image element, because it
     // can't be fired on the clipper.
     Element clipper = super.createStructure(url, left, top, width, height);
@@ -82,6 +114,11 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
   }
 
   public void fireSyntheticLoadEvent(final Image image) {
+    if (!isIE6) {
+      super.fireSyntheticLoadEvent(image);
+      return;
+    }
+    
     // This is the same as the superclass' implementation, except that it
     // explicitly checks for the 'clipper' element, and dispatches the event
     // on the img (you can't dispatch events on the clipper).
@@ -97,6 +134,10 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
 
   @Override
   public String getHTML(String url, int left, int top, int width, int height) {
+    if (!isIE6) {
+      return super.getHTML(url, left, top, width, height);
+    }
+    
     String clipperStyle = "overflow: hidden; width: " + width + "px; height: "
         + height + "px; padding: 0px; zoom: 1";
 
