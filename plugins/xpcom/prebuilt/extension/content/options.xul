@@ -39,7 +39,7 @@
       <radio id="include" label="Include" selected="true"/>
       <radio id="exclude" label="Exclude"/>
     </radiogroup>
-    <button id="addButton" label="Add Entry" oncommand="GwtDevelopmentModePlugin.addEntry()"/>
+    <button id="addButton" label="Add Entry" oncommand="GwtDeveloperPlugin.addEntry()"/>
   </hbox>
 
   <listbox id="accessListListbox" rows="5">
