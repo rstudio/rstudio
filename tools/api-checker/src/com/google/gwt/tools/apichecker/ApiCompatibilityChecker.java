@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -53,8 +53,7 @@ import java.util.jar.JarFile;
 /**
  * {@link ApiCompatibilityChecker} Main class to check if the new API is
  * compatible with the existing API.
- *
- *
+ * 
  * <p>
  * To compute API diffs, follow these 2 steps:
  * <ol>
@@ -62,14 +61,14 @@ import java.util.jar.JarFile;
  * <li>call getApiDiff on the {@code ApiDiffGenerator}
  * </ol>
  * </p>
- *
+ * 
  * <p>
  * An {@code ApiContainer} object is a list of {@link ApiPackage} objects.
  * {@code ApiPackage} objects themselves are list of {@link ApiClass} objects.
  * {@code ApiClass} objects contain list of {@code ApiConstructor}, {@code
  * ApiMethod}, and {@code JField} objects.
  * </p>
- *
+ * 
  * <p>
  * Each {@code ApiDiffGenerator} object computes the list of intersecting and
  * missing {@link ApiPackageDiffGenerator} objects. Each {@code
@@ -80,12 +79,12 @@ import java.util.jar.JarFile;
  * for constructors, {@link ApiMethod} for methods, and {@link ApiField} for
  * fields.
  * </p>
- *
+ * 
  * <p>
  * For each intersecting API member, a list of {@link ApiChange} objects is
  * stored. Each ApiChange object encodes a specific {@code ApiChange} like
  * adding the 'final' keyword to the API member.
- *
+ * 
  */
 public class ApiCompatibilityChecker extends ToolBase {
 
@@ -289,7 +288,8 @@ public class ApiCompatibilityChecker extends ToolBase {
       }
       for (String includedPath : includedPaths) {
         if (fileName.startsWith(includedPath)) {
-          logger.log(TreeLogger.SPAM, fileName + " is not excluded, and is included by " + includedPath);
+          logger.log(TreeLogger.SPAM, fileName
+              + " is not excluded, and is included by " + includedPath);
           return true;
         }
       }
@@ -412,8 +412,8 @@ public class ApiCompatibilityChecker extends ToolBase {
   public static final boolean API_SOURCE_COMPATIBILITY = true;
 
   /**
-   * prints which class the member was declared in plus the string message in
-   * ApiChange, false by default
+   * Prints which class the member was declared in plus the string message in
+   * ApiChange, false by default.
    */
   public static boolean DEBUG = false;
 
@@ -508,8 +508,8 @@ public class ApiCompatibilityChecker extends ToolBase {
       }
 
       if (PROCESS_NEW_API && PROCESS_EXISTING_API) {
-        Collection<ApiChange> apiDifferences = getApiDiff(newApi,
-            existingApi, checker.whiteList);
+        Collection<ApiChange> apiDifferences = getApiDiff(newApi, existingApi,
+            checker.whiteList);
         for (ApiChange apiChange : apiDifferences) {
           System.out.println(apiChange);
         }
@@ -906,7 +906,6 @@ public class ApiCompatibilityChecker extends ToolBase {
    * "java.util.ArrayList::size() MISSING". The {@code ApiElement} is
    * represented as the string obtained by invoking the getRelativeSignature()
    * method on {@link ApiElement}.
-   *
    */
   private Set<String> readWhiteListFromFile(FileReader fr) throws IOException {
     Set<String> hashSet = new HashSet<String>();
