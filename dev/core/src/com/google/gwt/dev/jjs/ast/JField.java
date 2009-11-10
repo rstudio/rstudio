@@ -92,6 +92,13 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     this.declStmt = declStmt;
   }
 
+  public void setVolatile() {
+    if (isFinal()) {
+      throw new IllegalStateException("Final fields cannot be set volatile");
+    }
+    isVolatile = true;
+  }
+
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       // Do not visit declStmt, it gets visited within its own code block.
