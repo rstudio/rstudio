@@ -44,4 +44,8 @@ public class AnnotatedClass {
   @TestAnnotation("Parameter")
   int annotatedParameter) {
   }
+  
+  @TestAnnotation(value = "Method", arrayWithImplicitArrayInitializer = {String.class, Foo.class})
+  void annotatedWithArrayOfClasses() {
+  }
 }

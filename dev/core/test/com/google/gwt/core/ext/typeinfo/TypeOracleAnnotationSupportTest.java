@@ -194,6 +194,19 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
     validateAnnotation(parameter, "Parameter", "Not assigned", realAnnotation);
   }
 
+  public void testAnnotatedWithArrayOfClasses() throws NotFoundException,
+      SecurityException, NoSuchMethodException {
+    JClassType annotatedClass = typeOracle.getType(AnnotatedClass.class.getName());
+    JMethod annotatedMethod = annotatedClass.getMethod("annotatedWithArrayOfClasses",
+        new JType[0]);
+
+    Method method = AnnotatedClass.class.getDeclaredMethod("annotatedWithArrayOfClasses");
+    TestAnnotation realAnnotation = method.getAnnotation(TestAnnotation.class);
+
+    validateAnnotation(annotatedMethod, "Method", "Not assigned",
+        realAnnotation);
+  }
+  
   /**
    * Tests translatable classes that are annotated with annotations for which we
    * have no source.

@@ -139,66 +139,6 @@ public class TypeOracleMediator {
     return NO_TYPE_PARAMETERS;
   }
 
-  /**
-   * @param resolvedType a resolved type, which is either a primitive, an array,
-   * or a JRealClassType.
-   */
-  private static <T> Class<? extends T> getClassLiteral(TreeLogger logger,
-      Class<T> requestedClass, JType resolvedType) {
-    Class<?> clazz = null;
-    if (resolvedType instanceof JPrimitiveType) {
-      clazz = getClassLiteralForPrimitive((JPrimitiveType) resolvedType);
-    } else {
-      String binaryName; 
-      if (resolvedType instanceof JArrayType) {
-        binaryName = ((JArrayType) resolvedType).getQualifiedBinaryName();
-      } else if (resolvedType instanceof JRealClassType) {
-        binaryName = ((JRealClassType) resolvedType).getQualifiedBinaryName();
-      } else {
-        throw new IllegalArgumentException(
-            "Unexpected type for class literal '"
-                + resolvedType.getQualifiedSourceName() + "'");
-      }
-      try {
-        clazz = Class.forName(binaryName, false,
-            Thread.currentThread().getContextClassLoader());
-      } catch (ClassNotFoundException e) {
-        logger.log(TreeLogger.ERROR,
-            "Unable to get class object for annotation " + resolvedType, e);
-        return null;
-      }
-    }
-    if (requestedClass.isAssignableFrom(clazz)) {
-      return clazz.asSubclass(requestedClass);
-    }
-    return null;
-  }
-
-  private static Class<?> getClassLiteralForPrimitive(JPrimitiveType type) {
-    if (type.equals(JPrimitiveType.INT)) {
-      return Integer.TYPE;
-    } else if (type.equals(JPrimitiveType.BOOLEAN)) {
-      return Boolean.TYPE;
-    } else if (type.equals(JPrimitiveType.DOUBLE)) {
-      return Double.TYPE;
-    } else if (type.equals(JPrimitiveType.FLOAT)) {
-      return Float.TYPE;
-    } else if (type.equals(JPrimitiveType.LONG)) {
-      return Long.TYPE;
-    } else if (type.equals(JPrimitiveType.VOID)) {
-      return Void.TYPE;
-    } else if (type.equals(JPrimitiveType.CHAR)) {
-      return Character.TYPE;
-    } else if (type.equals(JPrimitiveType.SHORT)) {
-      return Short.TYPE;
-    } else if (type.equals(JPrimitiveType.BYTE)) {
-      return Byte.TYPE;
-    } else {
-      assert false : "Unexpected type " + type;
-      return null;
-    }
-  }
-
   private static JTypeParameter[] getTypeParametersForClass(
       CollectClassData classData) {
     JTypeParameter[] typeParams = null;
@@ -549,15 +489,11 @@ public class TypeOracleMediator {
   private Class<? extends Annotation> getAnnotationClass(TreeLogger logger,
       AnnotationData annotData) {
     Type type = Type.getType(annotData.getDesc());
-    JType resolvedType = resolveType(type);
-    if (resolvedType != null) {
-      return getClassLiteral(logger, Annotation.class, resolvedType);
-    }
     try {
       Class<?> clazz = Class.forName(type.getClassName(), false,
-          getClass().getClassLoader());
+          Thread.currentThread().getContextClassLoader());
       if (!Annotation.class.isAssignableFrom(clazz)) {
-        logger.log(TreeLogger.ERROR, "Binary-only type " + type.getClassName()
+        logger.log(TreeLogger.ERROR, "Type " + type.getClassName()
             + " is not an annotation");
         return null;
       }
@@ -696,24 +632,15 @@ public class TypeOracleMediator {
         return null;
       }
       AnnotationEnum annotEnum = (AnnotationEnum) value;
-      Type type = Type.getType(annotEnum.getDesc());
-      JType resolvedType = resolveType(type);
-      if (resolvedType == null) {
-        logger.log(TreeLogger.WARN,
-            "Unable to resolve annotation enum type of " + type.getClassName());
+      Class<? extends Enum> enumType = expectedType.asSubclass(Enum.class);
+      try {
+        return Enum.valueOf(enumType, annotEnum.getValue());
+      } catch (IllegalArgumentException e) {
+        logger.log(TreeLogger.WARN, "Unable to resolve annotation value '"
+            + annotEnum.getValue() + "' within enum type '"
+            + enumType.getName() + "'");
         return null;
       }
-      String enumValue = annotEnum.getValue();
-      // TODO: is there a way to avoid the SuppressWarning(unchecked) here?
-      Class<? extends Enum> enumType = getClassLiteral(logger, Enum.class,
-          resolvedType);
-      if (enumType == null) {
-        logger.log(TreeLogger.WARN,
-            "Unable to resolve annotation enum type of "
-                + resolvedType.getQualifiedSourceName());
-        return null;
-      }
-      return Enum.valueOf(enumType, enumValue);
     } else if (Annotation.class.isAssignableFrom(expectedType)) {
       if (!(value instanceof AnnotationData)) {
         logger.log(TreeLogger.WARN,
@@ -746,26 +673,13 @@ public class TypeOracleMediator {
           return null;
         }
         Type valueType = (Type) value;
-        JRealClassType objType = resolveObject(valueType);
-        if (objType == null) {
-          // See if we can use a binary only class here
-          try {
-            return Class.forName(valueType.getClassName(), false,
-                getClass().getClassLoader());
-          } catch (ClassNotFoundException e) {
-            logger.log(TreeLogger.ERROR, "Annotation error: cannot resolve "
-                + valueType.getClassName(), e);
-            return null;
-          }
-        }
-        // TODO(jat): other checks?
+        // See if we can use a binary only class here
         try {
-          // TODO(jat): is it safe to use Class.forName here?
-          return Class.forName(objType.getQualifiedBinaryName(), false,
-              TypeOracleMediator.class.getClassLoader());
+          return Class.forName(valueType.getClassName(), false,
+              Thread.currentThread().getContextClassLoader());
         } catch (ClassNotFoundException e) {
-          logger.log(TreeLogger.WARN, "Unable to load class literal for "
-              + objType, e);
+          logger.log(TreeLogger.ERROR, "Annotation error: cannot resolve "
+              + valueType.getClassName(), e);
           return null;
         }
       }
