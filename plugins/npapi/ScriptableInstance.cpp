@@ -131,9 +131,9 @@ bool ScriptableInstance::makeResult(bool isException, const Value& value, NPVari
   return NPN_Invoke(getNPP(), window, jsResultID, varArgs.getArray(), varArgs.getSize(), result);
 }
 
-//=====================================================================================
+//=============================================================================
 // NPObject methods
-//=====================================================================================
+//=============================================================================
 
 bool ScriptableInstance::hasProperty(NPIdentifier name) {
   if (!NPN_IdentifierIsString(name)) {
@@ -220,9 +220,9 @@ bool ScriptableInstance::enumeration(NPIdentifier** propReturn, uint32_t* count)
   return true;
 }
 
-//=====================================================================================
+//=============================================================================
 // internal methods
-//=====================================================================================
+//=============================================================================
 
 void ScriptableInstance::init(const NPVariant* args, unsigned argCount, NPVariant* result) {
   if (argCount != 1 || !NPVariantProxy::isObject(args[0])) {
@@ -333,6 +333,7 @@ int ScriptableInstance::getLocalObjectRef(NPObject* obj) {
   if (NPN_GetProperty(getNPP(), obj, gwtId, wrappedRetVal.addressForReturn())
       && wrappedRetVal.isInt()) {
     id = wrappedRetVal.getAsInt();
+    localObjects.set(id, obj);
   } else {
     id = localObjects.add(obj);
     wrappedRetVal = id;

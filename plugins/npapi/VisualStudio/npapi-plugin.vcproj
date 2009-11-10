@@ -63,9 +63,9 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
 				ShowProgress="2"
-				OutputFile="$(ProjectDir)\..\prebuilt\gwtdmp\WINNT_x86-msvc\npOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\prebuilt\gwt-dev-plugin\WINNT_x86-msvc\npGwtDevPlugin.dll"
 				LinkIncremental="1"
-				ModuleDefinitionFile="$(ProjectDir)\..\npOOPHM.def"
+				ModuleDefinitionFile="$(ProjectDir)\..\npGwtDevPlugin.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
@@ -144,10 +144,10 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
 				ShowProgress="2"
-				OutputFile="$(ProjectDir)\..\prebuilt\gwtdmp\WINNT_x86-msvc\npOOPHM.dll"
+				OutputFile="$(ProjectDir)\..\prebuilt\gwt-dev-plugin\WINNT_x86-msvc\npGwtDevPlugin.dll"
 				LinkIncremental="0"
 				AdditionalLibraryDirectories=""
-				ModuleDefinitionFile="..\npOOPHM.def"
+				ModuleDefinitionFile="..\npGwtDevPlugin.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetName).pdb"
 				SubSystem="2"
@@ -349,7 +349,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath="..\npOOPHM.rc"
+				RelativePath="..\npGwtDevPlugin.rc"
 				>
 			</File>
 		</Filter>
@@ -423,7 +423,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\npOOPHM.def"
+				RelativePath="..\npGwtDevPlugin.def"
 				>
 			</File>
 			<File

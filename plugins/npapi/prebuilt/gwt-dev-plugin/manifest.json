@@ -1,7 +1,8 @@
 {
-  "name": "GWT Development Mode Plugin",
+  "name": "GWT Developer Plugin",
   "version": "0.9.0",
   "description": "A plugin to enable debugging with GWT's Development Mode",
+  "update_url": "https://dl-ssl.google.com/gwt/plugins/chrome/updates.xml",
   "icons": {
     "16": "gwt16.png",
     "32": "gwt32.png",
@@ -17,6 +18,6 @@
     }
   ],
   "plugins": [
-    { "path": "WINNT_x86-msvc/npOOPHM.dll", "public": true }
+    { "path": "WINNT_x86-msvc/npGwtDevPlugin.dll", "public": true }
   ]
 }

@@ -16,8 +16,7 @@
  * the License.
  */
 
-#include <vector>
-#include <algorithm>
+#include <map>
 
 #include "Debug.h"
 
@@ -25,27 +24,21 @@
 
 class LocalObjectTable {
 private:
-  static const int INITIAL_OBJECT_TABLE_SIZE = 300;
+  typedef std::map<int, NPObject*> ObjectMap;
 
-  int nextFree;
-  std::vector<NPObject*> objects;
+  int nextId;
+  ObjectMap objects;
   bool dontFree;
 
-  bool isFree(int id) {
-    // low bit is set for free pointers, object pointers can't be odd
-    NPObject* obj = objects[id];
-    return !obj || (reinterpret_cast<long long>(obj) & 1);
-  }
-
   void setFree(int id) {
-    objects[id] = reinterpret_cast<NPObject*>((nextFree << 1) | 1LL);
-    nextFree = id;
+    if (objects.erase(id) != 1) {
+      Debug::log(Debug::Error) << "setFree(id=" << id << "): object not in table"
+        << Debug::flush;
+    }
   }
 
 public:
   LocalObjectTable() {
-    nextFree = -1;
-    objects.reserve(INITIAL_OBJECT_TABLE_SIZE);
     dontFree = false;
   }
 
@@ -55,64 +48,51 @@ public:
    * Add a new object, which must not be in the table, and return a new id for it.
    */
   int add(NPObject* obj) {
-    int id;
-    if (nextFree >= 0) {
-      id = nextFree;
-      nextFree = int(reinterpret_cast<long long>(objects[nextFree])) >> 1;
-      objects[id] = obj;
-    } else {
-      id = static_cast<int>(objects.size());
-      objects.push_back(obj);
-    }
-    Debug::log(Debug::Spam) << "LocalObjectTable::add(obj=" << obj << "): id=" << id
-        << Debug::flush;
-    // keep track that we hold a reference in the table
-    NPN_RetainObject(obj);
+    int id = nextId++;
+    set(id, obj);
     return id;
   }
 
+  void set(int id, NPObject* obj) {
+    Debug::log(Debug::Info) << "LocalObjectTable::set(id=" << id << ",obj=" << (void*)obj
+        << ")" << Debug::flush;
+    objects[id] = obj;
+    // keep track that we hold a reference in the table
+    NPN_RetainObject(obj);
+  }
+
   void free(int id) {
-    Debug::log(Debug::Spam) << "LocalObjectTable::free(id=" << id << ")" << Debug::flush;
-    if (unsigned(id) >= objects.size()) {
-      Debug::log(Debug::Error) << "LocalObjectTable::free(id=" << id << "): invalid index (size="
-          << objects.size() << Debug::flush;
-      return;
-    }
-    if (isFree(id)) {
+    Debug::log(Debug::Info) << "LocalObjectTable::free(id=" << id << ")" << Debug::flush;
+    ObjectMap::iterator it = objects.find(id);
+    if (it == objects.end()) {
       Debug::log(Debug::Error) << "Freeing freed object slot " << id << Debug::flush;
       return;
     }
-    NPObject* obj = objects[id];
     setFree(id);
     if (!dontFree) {
+      NPObject* obj = it->second;
       NPN_ReleaseObject(obj);
     }
   }
 
   void freeAll() {
-    Debug::log(Debug::Spam) << "LocalObjectTable::freeAll()" << Debug::flush;
-    for (unsigned i = 0; i < objects.size(); ++i) {
-      if (!isFree(i)) {
-        NPObject* obj = objects[i];
-        setFree(i);
-        if (!dontFree) {
-          NPN_ReleaseObject(obj);
-        }
+    Debug::log(Debug::Info) << "LocalObjectTable::freeAll()" << Debug::flush;
+    for (ObjectMap::const_iterator it = objects.begin(); it != objects.end(); ++it) {
+      NPObject* obj = it->second;
+      if (!dontFree) {
+        NPN_ReleaseObject(obj);
       }
     }
+    objects.clear();
   }
 
   NPObject* get(int id) {
-    if (unsigned(id) >= objects.size()) {
-      Debug::log(Debug::Error) << "LocalObjectTable::get(id=" << id << "): invalid index (size="
-          << objects.size() << Debug::flush;
-      return 0;
+    ObjectMap::iterator it = objects.find(id);
+    if (it == objects.end()) {
+      Debug::log(Debug::Error) << "LocalObjectTable::get(id=" << id
+          << "): no object found" << Debug::flush;
     }
-    if (isFree(id)) {
-      Debug::log(Debug::Error) << "Getting freed object slot " << id << Debug::flush;
-      return 0;
-    }
-    return objects[id];
+    return it->second;
   }
 
   void setDontFree(bool dontFree) {
