@@ -50,7 +50,8 @@ public class DockLayoutPanelParserTest extends TestCase {
       tester.parse(b.toString());
       fail();
     } catch (UnableToCompleteException e) {
-      assertNotNull(tester.logger.died);
+      assertTrue("expect \"must contain a widget\" error", 
+          tester.logger.died.contains("must contain a widget"));
     }
   }
 
@@ -126,5 +127,18 @@ public class DockLayoutPanelParserTest extends TestCase {
     } catch (UnableToCompleteException e) {
       assertNotNull(tester.logger.died);
     }
+  }
+   
+  public void testNoUnits() throws SAXException, IOException, UnableToCompleteException {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:DockLayoutPanel>");
+    b.append("</g:DockLayoutPanel>");
+
+    FieldWriter w = tester.parse(b.toString());
+    assertEquals("new " + PARSED_TYPE
+        + "(com.google.gwt.dom.client.Style.Unit.PX)", w.getInitializer());
+
+    Iterator<String> i = tester.writer.statements.iterator();
+    assertFalse(i.hasNext());
   }
 }

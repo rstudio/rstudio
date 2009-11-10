@@ -73,6 +73,17 @@ class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource STACK_LAYOUT_PANEL = new MockJavaResource(
+      "com.google.gwt.user.client.ui.StackLayoutPanel") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class StackLayoutPanel extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource STYLE = new MockJavaResource(
       "com.google.gwt.dom.client.Style") {
     @Override
@@ -81,6 +92,17 @@ class UiJavaResources {
       code.append("package com.google.gwt.dom.client;\n");
       code.append("public class Style  {\n");
       code.append("  public enum Unit { PX, PT, EM };\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource TAB_LAYOUT_PANEL = new MockJavaResource(
+      "com.google.gwt.user.client.ui.TabLayoutPanel") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class TabLayoutPanel extends Widget {\n");
       code.append("}\n");
       return code;
     }
@@ -96,13 +118,24 @@ class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource UI_OBJECT = new MockJavaResource(
+  "com.google.gwt.user.client.ui.UIObject") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class UIObject {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource WIDGET = new MockJavaResource(
       "com.google.gwt.user.client.ui.Widget") {
     @Override
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
-      code.append("public class Widget {\n");
+      code.append("public class Widget extends UIObject {\n");
       code.append("}\n");
       return code;
     }
@@ -119,7 +152,10 @@ class UiJavaResources {
     rtn.add(DOCK_LAYOUT_PANEL);
     rtn.add(LABEL);
     rtn.add(SPLIT_LAYOUT_PANEL);
+    rtn.add(STACK_LAYOUT_PANEL);
     rtn.add(STYLE);
+    rtn.add(TAB_LAYOUT_PANEL);
+    rtn.add(UI_OBJECT);
     rtn.add(UI_BINDER);
     rtn.add(WIDGET);
     return rtn;

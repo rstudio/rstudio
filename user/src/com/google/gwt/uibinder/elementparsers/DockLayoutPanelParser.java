@@ -62,11 +62,13 @@ public class DockLayoutPanelParser implements ElementParser {
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
     // Generate instantiation (requires a 'unit' ctor param).
-    // (Don't generate a ctor for the SplitLayoutPanel; it's implicitly PX).
+    // (Don't generate a ctor for the SplitLayoutPanel, it has its own parser).
     if (type != getSplitLayoutPanelType(writer)) {
       JEnumType unitEnumType = writer.getOracle().findType(
           Unit.class.getCanonicalName()).isEnum();
-      String unit = elem.consumeAttribute("unit", unitEnumType);
+      String unit = elem.consumeAttributeWithDefault("unit",
+          String.format("%s.%s", unitEnumType.getQualifiedSourceName(), "PX"),
+          unitEnumType);
       writer.setFieldInitializerAsConstructor(fieldName,
           writer.getOracle().findType(DockLayoutPanel.class.getName()), unit);
     }
@@ -123,11 +125,7 @@ public class DockLayoutPanelParser implements ElementParser {
   }
 
   private boolean isValidChildElement(XMLElement parent, XMLElement child) {
-    String childNsUri = child.getNamespaceUri();
-    if (childNsUri == null) {
-      return false;
-    }
-    if (!childNsUri.equals(parent.getNamespaceUri())) {
+    if (!parent.getNamespaceUri().equals(child.getNamespaceUri())) {
       return false;
     }
     if (!DOCK_NAMES.containsKey(child.getLocalName())) {

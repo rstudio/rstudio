@@ -28,6 +28,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.elementparsers.AttributeMessageParser;
 import com.google.gwt.uibinder.elementparsers.BeanParser;
 import com.google.gwt.uibinder.elementparsers.ElementParser;
+import com.google.gwt.uibinder.elementparsers.IsEmptyParser;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
 import com.google.gwt.uibinder.rebind.model.ImplicitCssResource;
@@ -833,7 +834,8 @@ public class UiBinderWriter {
     }
 
     parsers.add(new BeanParser());
-
+    parsers.add(new IsEmptyParser());
+    
     return parsers;
   }
 

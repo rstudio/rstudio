@@ -40,17 +40,21 @@ public class TabLayoutPanelParser implements ElementParser {
 
   public void parse(XMLElement panelElem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
+    // TabLayoutPanel requires tabBar size and unit ctor args.
+
+    String size = panelElem.consumeDoubleAttribute("barHeight");
+    if ("".equals(size)) {
+      writer.die("In %s, barHeight attribute is required", panelElem);
+    }
+
     JEnumType unitEnumType = writer.getOracle().findType(
         Unit.class.getCanonicalName()).isEnum();
+    String unit = panelElem.consumeAttributeWithDefault("barUnit",
+        String.format("%s.%s", unitEnumType.getQualifiedSourceName(), "PX"),
+        unitEnumType);
 
-    // TabLayoutPanel requires tabBar size and unit ctor args.
-    String size = panelElem.consumeDoubleAttribute("barHeight");
-    String unit = panelElem.consumeAttribute("barUnit", unitEnumType);
-
-    JClassType tlpType = writer.getOracle().findType(
-        TabLayoutPanel.class.getName());
-    writer.setFieldInitializerAsConstructor(fieldName, tlpType,
-        size, unit);
+    writer.setFieldInitializerAsConstructor(fieldName,
+        writer.getOracle().findType(TabLayoutPanel.class.getName()), size, unit);
 
     // Parse children.
     for (XMLElement tabElem : panelElem.consumeChildElements()) {
@@ -65,7 +69,7 @@ public class TabLayoutPanelParser implements ElementParser {
 
       // Parse the child widget.
       if (children.body == null) {
-        writer.die("%s must have a child widget", tabElem);
+        writer.die("In %s, %s must have a child widget", panelElem, tabElem);
       }
       if (!writer.isWidgetElement(children.body)) {
         writer.die("In %s, %s must be a widget", tabElem, children.body);
@@ -93,8 +97,8 @@ public class TabLayoutPanelParser implements ElementParser {
             headerField);
       } else {
         // Neither a header or customHeader.
-        writer.die("%1$s requires either a <%2$s:%3$s> or <%2$s:%4$s>",
-            tabElem, tabElem.getPrefix(), HEADER, CUSTOM);
+        writer.die("In %1$s, %2$s requires either a <%3$s:%4$s> or <%3$s:%5$s>",
+            panelElem, tabElem, tabElem.getPrefix(), HEADER, CUSTOM);
       }
     }
   }
@@ -148,7 +152,7 @@ public class TabLayoutPanelParser implements ElementParser {
   }
 
   private boolean isElementType(XMLElement parent, XMLElement child, String type) {
-    return child.getNamespaceUri().equals(parent.getNamespaceUri())
+    return parent.getNamespaceUri().equals(child.getNamespaceUri())
         && type.equals(child.getLocalName());
   }
 }

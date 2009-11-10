@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,6 +21,10 @@ import com.google.gwt.uibinder.attributeparsers.StrictAttributeParserTest;
 import com.google.gwt.uibinder.attributeparsers.StringAttributeParserTest;
 import com.google.gwt.uibinder.elementparsers.DialogBoxParserTest;
 import com.google.gwt.uibinder.elementparsers.DockLayoutPanelParserTest;
+import com.google.gwt.uibinder.elementparsers.IsEmptyParserTest;
+import com.google.gwt.uibinder.elementparsers.StackLayoutPanelParserTest;
+import com.google.gwt.uibinder.elementparsers.TabLayoutPanelParserTest;
+import com.google.gwt.uibinder.elementparsers.UIObjectParserTest;
 import com.google.gwt.uibinder.rebind.GwtResourceEntityResolverTest;
 import com.google.gwt.uibinder.rebind.HandlerEvaluatorTest;
 import com.google.gwt.uibinder.rebind.TokenatorTest;
@@ -50,13 +54,19 @@ public class UiBinderJreSuite {
     suite.addTestSuite(OwnerFieldClassTest.class);
     suite.addTestSuite(OwnerFieldTest.class);
 
-    // parsers
-    suite.addTestSuite(DialogBoxParserTest.class);
-    suite.addTestSuite(DockLayoutPanelParserTest.class);
-    suite.addTestSuite(FieldReferenceConverterTest.class);
+    // attributeparsers
     suite.addTestSuite(IntAttributeParserTest.class);
+    suite.addTestSuite(FieldReferenceConverterTest.class);
     suite.addTestSuite(StrictAttributeParserTest.class);
     suite.addTestSuite(StringAttributeParserTest.class);
+
+    // elementparsers
+    suite.addTestSuite(DialogBoxParserTest.class);
+    suite.addTestSuite(DockLayoutPanelParserTest.class);
+    suite.addTestSuite(IsEmptyParserTest.class);
+    suite.addTestSuite(StackLayoutPanelParserTest.class);
+    suite.addTestSuite(TabLayoutPanelParserTest.class);
+    suite.addTestSuite(UIObjectParserTest.class);
 
     return suite;
   }

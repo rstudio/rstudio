@@ -65,6 +65,40 @@ public class XMLElementTest extends TestCase {
     init("<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
   }
 
+  public void testAssertNoAttributes() throws SAXException, IOException {
+    init("<doc><elm yes='true' no='false'>Blah <blah/> blah</elm></doc>");
+    try {
+      elm.assertNoAttributes();
+      fail();
+    } catch (UnableToCompleteException e) {
+      assertTrue("Expect extra attributes list",
+          logger.died.contains("\"yes\""));
+      assertTrue("Expect extra attributes list",
+          logger.died.contains("\"no\""));
+    }
+  }
+
+  public void testAssertNoBody() throws SAXException, IOException {
+    init("<doc><elm yes='true' no='false'>Blah <blah/> blah</elm></doc>");
+    try {
+      elm.assertNoBody();
+      fail();
+    } catch (UnableToCompleteException e) {
+      assertTrue("Expect extra child", logger.died.contains("<blah>"));
+    }
+  }
+
+  public void testAssertNoText() throws SAXException, IOException {
+    init("<doc><elm yes='true' no='false'>Blah <blah/> blah</elm></doc>");
+    try {
+      elm.assertNoText();
+      fail();
+    } catch (UnableToCompleteException e) {
+      assertTrue("Expect extra text", logger.died.contains("Blah"));
+      assertTrue("Expect extra text", logger.died.contains("blah"));
+    }
+  }
+
   public void testConsumeBoolean() throws SAXException, IOException,
       UnableToCompleteException {
     init("<doc><elm yes='true' no='false' "

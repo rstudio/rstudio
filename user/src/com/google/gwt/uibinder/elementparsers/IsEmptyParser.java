@@ -21,27 +21,14 @@ import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
 /**
- * Parser of all UIObject types. Basically bats cleanup if more specialized
- * parsers have left things around, or haven't been run.
+ * The last parser, asserts that everything has been consumed
+ * and so the template has nothing unexpected.
  */
-public class UIObjectParser implements ElementParser {
+public class IsEmptyParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
-
-    String debugId = elem.consumeStringAttribute("debugId", null);
-    if (null != debugId) {
-      writer.addStatement("%s.ensureDebugId(%s);", fieldName, debugId);
-    }
-
-    String[] styleNames = elem.consumeStringArrayAttribute("addStyleNames");
-    for (String s : styleNames) {
-      writer.addStatement("%s.addStyleName(%s);", fieldName, s);
-    }
-
-    styleNames = elem.consumeStringArrayAttribute("addStyleDependentNames");
-    for (String s : styleNames) {
-      writer.addStatement("%s.addStyleDependentName(%s);", fieldName, s);
-    }
+    elem.assertNoAttributes();
+    elem.assertNoBody();
   }
 }

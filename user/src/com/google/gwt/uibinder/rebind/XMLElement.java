@@ -86,7 +86,7 @@ public class XMLElement {
 
   private static void clearChildren(Element elem) {
     // TODO(rjrjr) I'm nearly positive that anywhere this is called
-    // we should instead be calling assertEmpty
+    // we should instead be calling assertNoBody
     Node child;
     while ((child = elem.getFirstChild()) != null) {
       elem.removeChild(child);
@@ -144,6 +144,57 @@ public class XMLElement {
     this.provider = provider;
 
     this.debugString = getOpeningTag();
+  }
+
+  /**
+   * Ensure that the receiver has no attributes left
+   * 
+   * @throws UnableToCompleteException if it does
+   */
+  public void assertNoAttributes() throws UnableToCompleteException {
+    int numAtts = getAttributeCount();
+    if (numAtts == 0) {
+      return;
+    }
+
+    StringBuilder b = new StringBuilder();
+    for (int i = 0; i < numAtts; i++) {
+      if (i > 0) {
+        b.append(", ");
+      }
+      b.append('"').append(getAttribute(i).getName()).append('"');
+    }
+    logger.die("Unexpected attributes in %s: %s", this, b);
+  }
+
+  /**
+   * Require that the receiver's body is empty of text and has no child nodes
+   * 
+   * @throws UnableToCompleteException if it isn't
+   */
+  public void assertNoBody() throws UnableToCompleteException {
+    consumeChildElements(new Interpreter<Boolean>() {
+      public Boolean interpretElement(XMLElement elem)
+          throws UnableToCompleteException {
+        logger.die("In %s, found unexpected child \"%s\"", this, elem);
+        return false; // unreachable
+      }
+    });
+    assertNoText();
+  }
+
+  /**
+   * Require that the receiver's body is empty of text
+   * 
+   * @throws UnableToCompleteException if it isn't
+   */
+  public void assertNoText() throws UnableToCompleteException {
+    NoBrainInterpeter<String> nullInterpreter = new NoBrainInterpeter<String>(
+        null);
+    String s = consumeInnerTextEscapedAsHtmlStringLiteral(nullInterpreter);
+    if (!"".equals(s)) {
+      logger.die("Unexpected text in %s: \"%s\"", this, s);
+    }
   }
 
   /**
@@ -259,7 +310,7 @@ public class XMLElement {
   public Iterable<XMLElement> consumeChildElements()
       throws UnableToCompleteException {
     Iterable<XMLElement> rtn = consumeChildElementsNoEmptyCheck();
-    assertEmpty();
+    assertNoText();
     return rtn;
   }
 
@@ -650,15 +701,6 @@ public class XMLElement {
   @Override
   public String toString() {
     return debugString;
-  }
-
-  private void assertEmpty() throws UnableToCompleteException {
-    NoBrainInterpeter<String> nullInterpreter = new NoBrainInterpeter<String>(
-        null);
-    String s = consumeInnerTextEscapedAsHtmlStringLiteral(nullInterpreter);
-    if (!"".equals(s)) {
-      logger.die("Unexpected text in %s: \"%s\"", this, s);
-    }
   }
 
   private Iterable<XMLElement> consumeChildElementsNoEmptyCheck() {

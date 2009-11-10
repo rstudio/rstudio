@@ -23,6 +23,7 @@ import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.FieldWriter;
@@ -33,13 +34,21 @@ import com.google.gwt.uibinder.rebind.XMLElementProvider;
 import com.google.gwt.uibinder.rebind.XMLElementProviderImpl;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 
+import junit.framework.Assert;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Set;
 
+/**
+ * Utility for testing {@link ElementParser} implementations in
+ * isolation. For a new test you'll probably need to extend the
+ * mock class hierarchy in {@link UiJavaResources}.
+ */
 class ElementParserTester {
    static final MockJavaResource BINDER_OWNER_JAVA = new MockJavaResource(
       "my.Ui") {
@@ -59,14 +68,21 @@ class ElementParserTester {
   static final String FIELD_NAME = "fieldName";
   static final String BINDER_URI = "binderUri";
 
+  private static TreeLogger createLogger() {
+    PrintWriterTreeLogger logger = new PrintWriterTreeLogger(new PrintWriter(
+        System.err, true));
+    logger.setMaxDetail(TreeLogger.ERROR);
+    return logger;
+  }
   final JClassType parsedType;
   final MockMortalLogger logger = new MockMortalLogger();
-  final W3cDomHelper docHelper = new W3cDomHelper(TreeLogger.NULL);
 
+  final W3cDomHelper docHelper = new W3cDomHelper(createLogger());
   final TypeOracle types;
   final XMLElementProvider elemProvider;
   final MockUiBinderWriter writer;
   final FieldManager fieldManager;
+
   final ElementParser parser;
 
   ElementParserTester(String parsedTypeName, ElementParser parser)
@@ -74,7 +90,7 @@ class ElementParserTester {
     this.parser = parser;
     String templatePath = "TemplatePath.ui.xml";
     String implName = "ImplClass";
-    CompilationState state = CompilationStateBuilder.buildFrom(TreeLogger.NULL,
+    CompilationState state = CompilationStateBuilder.buildFrom(createLogger(), 
         getUiResources());
     types = state.getTypeOracle();
 
@@ -107,8 +123,11 @@ class ElementParserTester {
 
   private XMLElement getElem(String string) throws SAXException, IOException {
     Document doc = docHelper.documentFor(string);
+    String tag = "g:" + parsedType.getName();
     Element w3cElem = (Element) doc.getDocumentElement().getElementsByTagName(
-        "g:" + parsedType.getName()).item(0);
+        tag).item(0);
+    Assert.assertNotNull(String.format("Expected to find <%s> element in test DOM", tag), 
+        w3cElem);
     XMLElement elem = elemProvider.get(w3cElem);
     return elem;
   }
