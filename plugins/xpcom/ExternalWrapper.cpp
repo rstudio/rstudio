@@ -171,46 +171,11 @@ static bool getTopWindow(nsIDOMWindow* win, nsIDOMWindowInternal** topWinRet,
         << Debug::flush;
     return false;
   }
-  nsCOMPtr<nsIDOMWindowInternal> opener;
-  if (topWinInt->GetOpener(getter_AddRefs(opener)) != NS_OK) {
-    Debug::log(Debug::Debugging) << "Unable to get opener" << Debug::flush;
-    *topWinRet = topWinInt;
-    return true;
-  }
   if (!getWindowUrl(topWinInt, topUrl)) {
     Debug::log(Debug::Error) << "Unable to get url of top window"
         << Debug::flush;
     return false;
   }
-  while (opener) {
-    nsCOMPtr<nsIDOMWindow> nextTopWin;
-    if (opener->GetTop(getter_AddRefs(nextTopWin)) != NS_OK) {
-      Debug::log(Debug::Debugging) << "Unable to get next top" << Debug::flush;
-      break;
-    }
-    if (nextTopWin == topWin) {
-      // prevent infinite loop -- see issue 4199:
-      // http://code.google.com/p/google-web-toolkit/issues/detail?id=4199
-      break;
-    }
-    nsCOMPtr<nsIDOMWindowInternal> nextTopWinInt = do_QueryInterface(
-        nextTopWin, &rv);
-    if (rv != NS_OK) {
-      Debug::log(Debug::Warning) << "Unable to QI DOMWindowInternal on next"
-          << Debug::flush;
-      break;
-    }
-    if (!getWindowUrl(nextTopWinInt, topUrl)) {
-      break;
-    }
-    Debug::log(Debug::Debugging) << " current url: " << topUrl << Debug::flush;
-    topWin = nextTopWin;
-    topWinInt = nextTopWinInt;
-    if (topWinInt->GetOpener(getter_AddRefs(opener)) != NS_OK) {
-      break;
-    }
-  }
-  Debug::log(Debug::Info) << "  Top url: " << topUrl << Debug::flush;
   *topWinRet = topWinInt;
   return true;
 }
