@@ -37,7 +37,7 @@ a:link, a:visited, a:hover, a:active {
 .gwt-PopupGlass {
   background-color: #000;
   opacity: 0.3;
-  filter: alpha(opacity=30);
+  filter: literal("alpha(opacity=30)");
 }
 
 /* GWT Tree */

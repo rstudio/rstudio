@@ -1,0 +1,24 @@
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
+
+  <ui:style>
+  .tasks {
+    padding: 0.5em;
+  }
+
+  .item {
+    display: block;
+  }
+  </ui:style>
+
+  <g:FlowPanel styleName='{style.tasks}'>
+    <g:CheckBox styleName='{style.item}'>Get groceries</g:CheckBox>
+    <g:CheckBox styleName='{style.item}'>Walk the dog</g:CheckBox>
+    <g:CheckBox styleName='{style.item}'>Start Web 2.0 company</g:CheckBox>
+    <g:CheckBox styleName='{style.item}'>Write cool app in GWT</g:CheckBox>
+    <g:CheckBox styleName='{style.item}'>Get funding</g:CheckBox>
+    <g:CheckBox styleName='{style.item}'>Take a vacation</g:CheckBox>
+  </g:FlowPanel>
+</ui:UiBinder>

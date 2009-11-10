@@ -3,15 +3,17 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
 
-  <ui:style>
+  <ui:style field='style'
+    type='com.google.gwt.sample.mail.client.Contacts.Style'>
+
   .contacts {
     padding: 0.5em;
   }
+
+  .item {
+  	display: block;
+ 	}
   </ui:style>
 
-  <!-- We need to apply padding to an outer panel because VerticalPanel is a
-       table, and applying padding to a table behaves strangely on IE6/7. -->
-  <g:FlowPanel styleName='{style.contacts}'>
-    <g:VerticalPanel ui:field='panel'/>
-  </g:FlowPanel>
+  <g:FlowPanel styleName='{style.contacts}' ui:field='panel'/>
 </ui:UiBinder>

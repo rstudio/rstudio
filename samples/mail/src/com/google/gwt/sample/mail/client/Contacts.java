@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiTemplate;
@@ -69,6 +70,10 @@ public class Contacts extends Composite {
   }
 
   interface Binder extends UiBinder<Widget, Contacts> { }
+  interface Style extends CssResource {
+    String item();
+  }
+
   private static final Binder binder = GWT.create(Binder.class);
 
   private Contact[] contacts = new Contact[] {
@@ -82,6 +87,7 @@ public class Contacts extends Composite {
       new Contact("John von Neumann", "john@example.com")};
 
   @UiField ComplexPanel panel;
+  @UiField Style style;
 
   public Contacts() {
     initWidget(binder.createAndBindUi(this));
@@ -94,6 +100,7 @@ public class Contacts extends Composite {
 
   private void addContact(final Contact contact) {
     final Anchor link = new Anchor(contact.name);
+    link.setStyleName(style.item());
     panel.add(link);
 
     // Add a click handler that displays a ContactPopup when it is clicked.

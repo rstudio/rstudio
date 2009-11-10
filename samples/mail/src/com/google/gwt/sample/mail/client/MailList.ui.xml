@@ -13,8 +13,9 @@
     cursor: hand;
   }
 
-  .header {
-    background: #d3d6dd url(gradient_bg_dark.png) repeat-x bottom left;
+  @sprite .header {
+  	gwt-image: 'gradient';
+  	background-color: #d3d6dd;
     table-layout: fixed;
     width: 100%;
     height: 100%;

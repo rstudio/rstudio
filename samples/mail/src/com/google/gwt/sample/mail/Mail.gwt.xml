@@ -13,6 +13,11 @@
 <!-- limitations under the License.                                         -->
 
 <module rename-to="mail">
-	<inherits name='com.google.gwt.user.User'/>
-	<entry-point class='com.google.gwt.sample.mail.client.Mail'/>
+  <inherits name='com.google.gwt.user.User' />
+
+  <!-- This will give us shorter obfuscated CSS class names. We guarantee
+       that there will be no class names that will conflict with /M.+/ -->
+  <set-configuration-property name="CssResource.obfuscationPrefix" value="M" />
+
+  <entry-point class='com.google.gwt.sample.mail.client.Mail' />
 </module>

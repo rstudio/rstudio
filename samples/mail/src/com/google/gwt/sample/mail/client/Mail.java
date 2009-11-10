@@ -19,6 +19,9 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Window;
@@ -33,6 +36,13 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 public class Mail implements EntryPoint {
 
   interface Binder extends UiBinder<DockLayoutPanel, Mail> { }
+
+  interface GlobalResources extends ClientBundle {
+    @NotStrict
+    @Source("global.css")
+    CssResource css();
+  }
+
   private static final Binder binder = GWT.create(Binder.class);
 
   @UiField TopPanel topPanel;
@@ -45,6 +55,10 @@ public class Mail implements EntryPoint {
    * controls and hooking up event handler.
    */
   public void onModuleLoad() {
+    // Inject global styles.
+    GWT.<GlobalResources>create(GlobalResources.class).css().ensureInjected();
+
+    // Create the UI defined in Mail.ui.xml.
     DockLayoutPanel outer = binder.createAndBindUi(this);
 
     // Get rid of scrollbars, and clear out the window's built-in margin,
