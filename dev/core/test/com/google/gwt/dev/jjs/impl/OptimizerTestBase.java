@@ -35,7 +35,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Tests {@link DeadCodeElimination}.
+ * A useful base class for tests that build JJS ASTs.
  */
 public abstract class OptimizerTestBase extends TestCase {
 

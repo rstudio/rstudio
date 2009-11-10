@@ -13,9 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.javac;
+package com.google.gwt.dev.jjs.ast;
 
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.collect.Lists;
 
 import junit.framework.TestCase;

@@ -13,12 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.javac;
+package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
-import com.google.gwt.dev.jjs.impl.OptimizerTestBase;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
 /**
@@ -54,7 +53,7 @@ public class RunAsyncNameTest extends OptimizerTestBase {
    * Tests that it's an error to call the 2-argument version of GWT.runAsync
    * with anything but a class literal.
    */
-  public void testNonLiteralInCall() throws UnableToCompleteException {
+  public void testNonLiteralInCall() {
     UnitTestTreeLogger logger;
     {
       UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();

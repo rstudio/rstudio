@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.javac.asm.CollectClassDataTest;
+import com.google.gwt.dev.javac.asm.CollectReferencesVisitorTest;
+import com.google.gwt.dev.javac.asm.ResolveGenericsTest;
 import com.google.gwt.dev.javac.impl.JdtBehaviorTest;
 
 import junit.framework.Test;
@@ -27,17 +30,27 @@ public class JavaCompilationSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite(JavaCompilationSuite.class.getName());
 
+    suite.addTestSuite(ArtificialRescueCheckerTest.class);
     suite.addTestSuite(BinaryTypeReferenceRestrictionsCheckerTest.class);
     suite.addTestSuite(CompilationStateTest.class);
     suite.addTestSuite(CompilationUnitFileReferenceTest.class);
     suite.addTestSuite(GWTProblemTest.class);
     suite.addTestSuite(JavaSourceParserTest.class);
-    suite.addTestSuite(JdtBehaviorTest.class);
     suite.addTestSuite(JdtCompilerTest.class);
-    suite.addTestSuite(JProgramLastFragmentLoadingBeforeTest.class);
     suite.addTestSuite(JSORestrictionsTest.class);
     suite.addTestSuite(JsniCheckerTest.class);
     suite.addTestSuite(TypeOracleMediatorTest.class);
+
+    suite.addTestSuite(CollectClassDataTest.class);
+    suite.addTestSuite(CollectReferencesVisitorTest.class);
+    suite.addTestSuite(ResolveGenericsTest.class);
+
+    suite.addTestSuite(JdtBehaviorTest.class);
+
+    // TODO: Move these to another package.
+    suite.addTestSuite(GeneratedClassnameComparatorTest.class);
+    suite.addTestSuite(GeneratedClassnameFinderTest.class);
+    suite.addTestSuite(GeneratedClassnameTest.class);
 
     return suite;
   }
