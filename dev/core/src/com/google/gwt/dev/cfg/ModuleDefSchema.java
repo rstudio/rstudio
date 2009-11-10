@@ -336,8 +336,14 @@ public class ModuleDefSchema extends Schema {
       return new FullConditionSchema(rule.getRootCondition());
     }
 
-    protected Schema __generate_with_begin(Generator gen) {
-      RuleGenerateWith rule = new RuleGenerateWith(gen);
+    protected Schema __generate_with_begin(Class<? extends Generator> generator)
+        throws UnableToCompleteException {
+      if (!Generator.class.isAssignableFrom(generator)) {
+        logger.log(TreeLogger.ERROR, "A generator must extend "
+            + Generator.class.getName(), null);
+        throw new UnableToCompleteException();
+      }
+      RuleGenerateWith rule = new RuleGenerateWith(generator);
       moduleDef.getRules().prepend(rule);
       return new FullConditionSchema(rule.getRootCondition());
     }
@@ -1147,8 +1153,6 @@ public class ModuleDefSchema extends Schema {
       ConfigurationProperty.class);
   private boolean foundAnyPublic;
   private boolean foundExplicitSourceOrSuperSource;
-  private final ObjAttrCvt<Generator> genAttrCvt = new ObjAttrCvt<Generator>(
-      Generator.class);
   private final JsProgram jsPgm = new JsProgram();
   private final LinkerNameAttrCvt linkerNameAttrCvt = new LinkerNameAttrCvt();
   private final ModuleDefLoader loader;
@@ -1180,7 +1184,6 @@ public class ModuleDefSchema extends Schema {
         configurationPropAttrCvt);
     registerAttributeConverter(PropertyValue.class, propValueAttrCvt);
     registerAttributeConverter(PropertyValue[].class, propValueArrayAttrCvt);
-    registerAttributeConverter(Generator.class, genAttrCvt);
     registerAttributeConverter(LinkerName.class, linkerNameAttrCvt);
     registerAttributeConverter(NullableName.class, nullableNameAttrCvt);
     registerAttributeConverter(Class.class, classAttrCvt);

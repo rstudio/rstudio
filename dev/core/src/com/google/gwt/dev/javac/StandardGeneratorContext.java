@@ -272,6 +272,8 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private final Map<PrintWriter, Generated> uncommittedGeneratedCupsByPrintWriter = new IdentityHashMap<PrintWriter, Generated>();
 
+  private final Map<Class<? extends Generator>, Generator> generators = new IdentityHashMap<Class<? extends Generator>, Generator>();
+
   /**
    * Normally, the compiler host would be aware of the same types that are
    * available in the supplied type oracle although it isn't strictly required.
@@ -425,6 +427,46 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   public final TypeOracle getTypeOracle() {
     return compilationState.getTypeOracle();
+  }
+
+  public String runGenerator(TreeLogger logger,
+      Class<? extends Generator> generatorClass, String typeName)
+      throws UnableToCompleteException {
+    String msg = "Invoking " + toString();
+    logger = logger.branch(TreeLogger.DEBUG, msg, null);
+
+    Generator generator = generators.get(generatorClass);
+    if (generator == null) {
+      try {
+        generator = generatorClass.newInstance();
+        generators.put(generatorClass, generator);
+      } catch (Throwable e) {
+        logger.log(TreeLogger.ERROR,
+            "Unexpected error trying to instantiate Generator '"
+                + generatorClass.getName() + "'", e);
+        throw new UnableToCompleteException();
+      }
+    }
+
+    setCurrentGenerator(generatorClass);
+
+    long before = System.currentTimeMillis();
+    try {
+      String className = generator.generate(logger, this, typeName);
+      long after = System.currentTimeMillis();
+      if (className == null) {
+        msg = "Generator returned null, so the requested type will be used as is";
+      } else {
+        msg = "Generator returned class '" + className + "'";
+      }
+      msg += "; in " + (after - before) + " ms";
+      logger.log(TreeLogger.DEBUG, msg, null);
+      return className;
+    } catch (RuntimeException e) {
+      logger.log(TreeLogger.ERROR, "Generator '" + generatorClass.getName()
+          + "' threw threw an exception while rebinding '" + typeName + "'", e);
+      throw new UnableToCompleteException();
+    }
   }
 
   public void setCurrentGenerator(Class<? extends Generator> currentGenerator) {

@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.javac.StandardGeneratorContext;
 
 /**
  * Abstract base class for various kinds of deferred binding rules.
@@ -30,14 +30,16 @@ public abstract class Rule {
     return rootCondition;
   }
 
-  public boolean isApplicable(TreeLogger logger, GeneratorContext context,
-      String typeName) throws UnableToCompleteException {
+  public boolean isApplicable(TreeLogger logger,
+      StandardGeneratorContext context, String typeName)
+      throws UnableToCompleteException {
     return rootCondition.isTrue(logger, context.getPropertyOracle(),
         context.getTypeOracle(), typeName);
   }
 
-  public abstract String realize(TreeLogger logger, GeneratorContext context,
-      String typeName) throws UnableToCompleteException;
+  public abstract String realize(TreeLogger logger,
+      StandardGeneratorContext context, String typeName)
+      throws UnableToCompleteException;
 
   protected void dispose() {
   }
