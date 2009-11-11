@@ -40,7 +40,7 @@ class Shared {
   private static final String RPC_PROP_SUPPRESS_NON_STATIC_FINAL_FIELD_WARNINGS = "gwt.suppressNonStaticFinalFieldWarnings";
 
   /**
-   * Multi-valued configuration roperty used to list classes that are
+   * Multi-valued configuration property used to list classes that are
    * (potentially) enhanced with server-only fields, to be handled specially by
    * RPC.
    */

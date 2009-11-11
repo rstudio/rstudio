@@ -40,15 +40,6 @@ public interface SerializableTypeOracle {
    * @return true if the type is serializable
    */
   boolean isSerializable(JType type);
-  
-  /**
-   * Returns true if the type may be enhanced on the server to contain
-   * extra fields that are unknown to client code.
-   * 
-   * @param type the type to test
-   * @return <code>true</code> if the type might be enhanced on the server
-   */
-  boolean maybeEnhanced(JType type);
 
   /**
    * Returns <code>true</code> if the type might be instantiated as part of 

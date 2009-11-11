@@ -334,6 +334,14 @@ public abstract class JClassType extends JType implements HasAnnotations,
    * has not been calculated yet.
    */
   private Set<JClassType> flattenedSupertypes;
+  
+  /**
+   * True if this type may be enhanced with server-only fields.  This property
+   * is 'sticky' and may be set but not unset, since we need to generate the
+   * relevant RPC code for handling the server fields if there is any chance
+   * the class will be enhanced.
+   */
+  private boolean isEnhanced = false;
 
   public abstract void addImplementedInterface(JClassType intf);
 
@@ -558,6 +566,16 @@ public abstract class JClassType extends JType implements HasAnnotations,
    *         <code>false</code> otherwise
    */
   public abstract boolean isDefaultInstantiable();
+  
+  /**
+   * Returns true if the type may be enhanced on the server to contain
+   * extra fields that are unknown to client code.
+   * 
+   * @return <code>true</code> if the type might be enhanced on the server
+   */
+  public final boolean isEnhanced() {
+    return isEnhanced;
+  }
 
   public abstract boolean isFinal();
 
@@ -590,6 +608,14 @@ public abstract class JClassType extends JType implements HasAnnotations,
   public abstract boolean isPublic();
 
   public abstract boolean isStatic();
+  
+  /**
+   * Indicates that the type may be enhanced on the server to contain
+   * extra fields that are unknown to client code.
+   */
+  public void setEnhanced() {
+    this.isEnhanced = true;
+  }
 
   public abstract void setSuperclass(JClassType type);
 

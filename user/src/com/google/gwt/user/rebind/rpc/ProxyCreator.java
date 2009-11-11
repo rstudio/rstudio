@@ -659,13 +659,12 @@ public class ProxyCreator {
 
         /*
          * Emit client-side field information for classes that may be enhanced
-         * on the server and which are capable of being transmitted in both
-         * directions. Each line consists of a comma-separated list containing
-         * the keyword '@ClientFields', the class name, and a list of all
-         * potentially serializable client-visible fields.
+         * on the server. Each line consists of a comma-separated list
+         * containing the keyword '@ClientFields', the class name, and a list of
+         * all potentially serializable client-visible fields.
          */
         if ((type instanceof JClassType)
-            && serializationSto.maybeEnhanced(type) && deserializationSto.maybeEnhanced(type)) {
+            && ((JClassType) type).isEnhanced()) {
           JField[] fields = ((JClassType) type).getFields();
           JField[] rpcFields = new JField[fields.length];
           int numRpcFields = 0;

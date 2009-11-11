@@ -270,8 +270,7 @@ public class FieldSerializerCreator {
      * If the type is capable of making a round trip between the client and
      * server, store additional server-only field data using {@link WeakMapping}.
      */
-    if (typesSentToBrowser.maybeEnhanced(serializableClass)
-        && typesSentFromBrowser.maybeEnhanced(serializableClass)) {
+    if (serializableClass.isEnhanced()) {
       sourceWriter.println(WEAK_MAPPING_CLASS_NAME + ".set(instance, "
           + "\"server-enhanced-data\", streamReader.readString());");
     }
@@ -319,8 +318,7 @@ public class FieldSerializerCreator {
      * server, retrieve the additional server-only field data from {@link WeakMapping}.
      */
     
-    if (typesSentToBrowser.maybeEnhanced(serializableClass)
-        && typesSentFromBrowser.maybeEnhanced(serializableClass)) {
+    if (serializableClass.isEnhanced()) {
       sourceWriter.println("streamWriter.writeString((String) "
           + WEAK_MAPPING_CLASS_NAME + ".get(instance, \"server-enhanced-data\"));");
     }

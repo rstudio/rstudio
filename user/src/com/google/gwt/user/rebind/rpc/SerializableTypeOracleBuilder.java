@@ -852,9 +852,6 @@ public class SerializableTypeOracleBuilder {
 
     logReachableTypes(logger);
 
-    Set<JClassType> possiblyEnhancedTypes = new TreeSet<JClassType>(
-        JTYPE_COMPARATOR);
-
     Set<JClassType> possiblyInstantiatedTypes = new TreeSet<JClassType>(
         JTYPE_COMPARATOR);
 
@@ -881,16 +878,17 @@ public class SerializableTypeOracleBuilder {
         fieldSerializableTypes.add(type);
       }
 
-      if ((enhancedClasses != null && enhancedClasses.contains(type.getQualifiedSourceName()))
-          || tic.maybeEnhanced()) {
-        possiblyEnhancedTypes.add(type);
+      if (tic.maybeEnhanced()
+          || (enhancedClasses != null
+          && enhancedClasses.contains(type.getQualifiedSourceName()))) {
+        type.setEnhanced();
       }
     }
 
     logSerializableTypes(logger, fieldSerializableTypes);
 
     return new SerializableTypeOracleImpl(fieldSerializableTypes,
-        possiblyInstantiatedTypes, possiblyEnhancedTypes);
+        possiblyInstantiatedTypes);
   }
 
   /**
