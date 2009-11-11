@@ -204,7 +204,7 @@ public final class Impl {
    */
   private static void exit(boolean initialEntry) {
     if (initialEntry) {
-      SchedulerImpl.flushFinallyCommands();
+      SchedulerImpl.INSTANCE.flushFinallyCommands();
     }
 
     // Decrement after we call flush

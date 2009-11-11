@@ -45,16 +45,10 @@ public abstract class Scheduler {
   }
 
   /**
-   * Use a GWT.create() here to make it simple to hijack the default
-   * implementation.
-   */
-  private static final Scheduler IMPL = GWT.create(SchedulerImpl.class);
-
-  /**
    * Returns the default implementation of the Scheduler API.
    */
   public static Scheduler get() {
-    return IMPL;
+    return SchedulerImpl.INSTANCE;
   }
 
   /**
