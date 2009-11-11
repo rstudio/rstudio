@@ -1,0 +1,10 @@
+#!/bin/sh
+# Wrapper to prevent failure if svnversion isn't available
+
+V=`svnversion ${PWD}/.. 2>/dev/null`
+if [ $? -gt 0 -o -z "$V" ]
+then
+  V='0'
+fi
+echo $V | sed s/[^0-9].*$//
+exit 0

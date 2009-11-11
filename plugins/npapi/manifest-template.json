@@ -1,0 +1,23 @@
+{
+  "name": "GWT Developer Plugin",
+  "version": "GWT_DEV_PLUGIN_VERSION",
+  "description": "A plugin to enable debugging with GWT's Development Mode",
+  "update_url": "https://dl-ssl.google.com/gwt/plugins/chrome/updates.xml",
+  "icons": {
+    "16": "gwt16.png",
+    "32": "gwt32.png",
+    "48": "gwt48.png",
+    "64": "gwt64.png",
+    "128": "gwt128.png"
+  },
+  "background_page": "background.html",
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*", "file:///*"],
+      "js": ["record_tab_id.js"]
+    }
+  ],
+  "plugins": [
+    { "path": "WINNT_x86-msvc/npGwtDevPlugin.dll", "public": true }
+  ]
+}

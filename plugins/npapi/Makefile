@@ -16,7 +16,14 @@ OBJS=	main.o Plugin.o LocalObjectTable.o JavaObject.o npn_bindings.o \
 SRCS=	main.cpp Plugin.cpp LocalObjectTable.cpp JavaObject.cpp \
 	npn_bindings.cc ScriptableInstance.cpp
 
-all:: oophm.xpi
+VERSION ?= 0.9.$(shell ./getversion).$(shell date +%Y%m%d)
+
+all:: versioned-files
+
+signable: prebuilt/gwt-dev-plugin/manifest.json
+	-rm -rf signable
+	mkdir signable
+	cd prebuilt; find gwt-dev-plugin -path */.svn -prune -o -print | cpio -pmdua ../signable
 
 oophm.xpi: extension $(INSTDIR)/liboophm.so liboophm.so extension/install.rdf
 	-rm -f oophm.xpi
@@ -26,6 +33,10 @@ oophm-signed.xpi: $(INSTDIR)/liboophm.so extension/install.rdf \
   extension/META-INF/zigbert.sf
 	-rm -f $@
 	cd extension; zip -9 ../$@ META-INF/zigbert.rsa; zip -r -D -9 -o ../$@ * -x '*/.svn/*' -x META-INF/zigbert.rsa
+
+versioned-files::
+	sed -e s/GWT_DEV_PLUGIN_VERSION/$(VERSION)/ manifest-template.json >prebuilt/gwt-dev-plugin/manifest.json
+	sed -e s/GWT_DEV_PLUGIN_VERSION/$(VERSION)/ updates-template.xml >prebuilt/updates.xml
 
 extension: prebuilt/extension
 	-rm -rf extension
@@ -54,7 +65,7 @@ $(COMMON): common
 
 $(OBJS): 
 
-.PHONY: all realclean clean depend common install install-platform
+.PHONY: all realclean clean depend common install install-platform versioned-files
 
 install:: oophm.xpi
 	-cp --preserve=mode $< prebuilt
