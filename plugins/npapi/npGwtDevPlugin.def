@@ -1,4 +1,4 @@
-LIBRARY NPOOPHM
+LIBRARY npGwtDevPlugin
 
 EXPORTS
   NP_GetEntryPoints			@1

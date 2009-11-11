@@ -150,7 +150,7 @@ extern "C" {
 
   const char *NP_GetMIMEDescription() {
     Debug::log(Debug::Info) << "NP_GetMIMEDescription: returned mime description" << Debug::flush;
-    return "application/x-gwt-hosted-mode::GWT Hosted-mode plugin";
+    return "application/x-gwt-dev-mode::GWT dev-mode plugin;application/x-gwt-hosted-mode::GWT dev-mode plugin";
   }
 
   const char *NPP_GetMIMEDescription() {
