@@ -242,7 +242,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     this.genDir = genDir;
     this.generatorResourcesDir = generatorResourcesDir;
     this.allGeneratedArtifacts = allGeneratedArtifacts;
-    if (genDir == null && diskCache == null) {
+    if (diskCache == null) {
       diskCache = new DiskCache();
     }
   }
