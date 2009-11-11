@@ -720,10 +720,10 @@ abstract class DevModeBase implements DoneCallback {
    */
   public final void run() {
     try {
+      // Eager AWT init for OS X to ensure safe coexistence with SWT.
+      BootStrapPlatform.initGui();
+        
       if (startUp()) {
-        // Eager AWT init for OS X to ensure safe coexistence with SWT.
-        BootStrapPlatform.initGui();
-
         // The web server is running now, so launch browsers for startup urls.
         launchStartupUrls(getTopLogger());
       }
