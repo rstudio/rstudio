@@ -18,6 +18,7 @@ package com.google.gwt.dev.resource.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
+import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.msg.Message0;
 import com.google.gwt.dev.util.msg.Message1String;
 
@@ -320,6 +321,7 @@ public class ResourceOracleImpl implements ResourceOracle {
    * @param logger status and error details are written here
    */
   public void refresh(TreeLogger logger) {
+    PerfLogger.start("ResourceOracleImpl.refresh");
     TreeLogger refreshBranch = Messages.REFRESHING_RESOURCES.branch(logger,
         null);
 
@@ -386,6 +388,7 @@ public class ResourceOracleImpl implements ResourceOracle {
 
     if (!didChange) {
       // Nothing to do, keep the same identities.
+      PerfLogger.end();
       return;
     }
 
@@ -404,6 +407,7 @@ public class ResourceOracleImpl implements ResourceOracle {
     exposedResources = Collections.unmodifiableSet(externalSet);
     exposedResourceMap = Collections.unmodifiableMap(externalMap);
     exposedPathNames = Collections.unmodifiableSet(externalMap.keySet());
+    PerfLogger.end();
   }
 
   public void setPathPrefixes(PathPrefixSet pathPrefixSet) {

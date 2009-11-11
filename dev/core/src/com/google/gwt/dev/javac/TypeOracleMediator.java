@@ -57,6 +57,7 @@ import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name;
+import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Name.InternalName;
 
 import java.io.PrintWriter;
@@ -275,6 +276,7 @@ public class TypeOracleMediator {
    * Adds new units to an existing TypeOracle.
    */
   public void addNewUnits(TreeLogger logger, Collection<CompilationUnit> units) {
+    PerfLogger.start("TypeOracleMediator.addNewUnits");
     // First collect all class data and resurrect graveyard types.
     classMap = new HashMap<String, CollectClassData>();
     for (CompilationUnit unit : units) {
@@ -367,6 +369,7 @@ public class TypeOracleMediator {
     // no longer needed
     classMap = null;
     classMapType = null;
+    PerfLogger.end();
   }
 
   public Map<String, JRealClassType> getBinaryMapper() {

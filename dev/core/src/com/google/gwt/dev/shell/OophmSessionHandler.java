@@ -20,6 +20,7 @@ import com.google.gwt.dev.shell.BrowserChannel.SessionHandler;
 import com.google.gwt.dev.shell.BrowserChannel.Value;
 import com.google.gwt.dev.shell.JsValue.DispatchMethod;
 import com.google.gwt.dev.shell.JsValue.DispatchObject;
+import com.google.gwt.dev.util.PerfLogger;
 
 import java.lang.reflect.Member;
 import java.util.Collections;
@@ -159,6 +160,7 @@ public class OophmSessionHandler extends SessionHandler {
       String tabKey, String sessionKey, byte[] userAgentIcon) {
     logger = loadModuleLogger;
     try {
+      PerfLogger.start("OophmSessionHandler.loadModule " + moduleName);
       // Attach a new ModuleSpace to make it programmable.
       //
       BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
@@ -169,6 +171,7 @@ public class OophmSessionHandler extends SessionHandler {
       ModuleSpace moduleSpace = new ModuleSpaceOOPHM(msh, moduleName,
           serverChannel);
       moduleMap.put(serverChannel, moduleSpace);
+      PerfLogger.start("ModuleSpace.onLoad");
       moduleSpace.onLoad(logger);
     } catch (Throwable e) {
       // We do catch Throwable intentionally because there are a ton of things
@@ -178,6 +181,9 @@ public class OophmSessionHandler extends SessionHandler {
       this.logger.log(TreeLogger.ERROR, "Failed to load module '" + moduleName
           + "' from user agent '" + userAgent + "' at "
           + channel.getRemoteEndpoint(), e);
+    } finally {
+      PerfLogger.end();
+      PerfLogger.end();
     }
     return this.logger;
   }

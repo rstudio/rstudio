@@ -31,6 +31,7 @@ import com.google.gwt.dev.javac.impl.FileCompilationUnit;
 import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.DiskCache;
+import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
@@ -451,6 +452,8 @@ public class StandardGeneratorContext implements GeneratorContext {
     setCurrentGenerator(generatorClass);
 
     long before = System.currentTimeMillis();
+    PerfLogger.start("Generator '" + generator.getClass().getName()
+        + "' produced '" + typeName + "'");
     try {
       String className = generator.generate(logger, this, typeName);
       long after = System.currentTimeMillis();
@@ -466,6 +469,8 @@ public class StandardGeneratorContext implements GeneratorContext {
       logger.log(TreeLogger.ERROR, "Generator '" + generatorClass.getName()
           + "' threw threw an exception while rebinding '" + typeName + "'", e);
       throw new UnableToCompleteException();
+    } finally {
+      PerfLogger.end();
     }
   }
 
