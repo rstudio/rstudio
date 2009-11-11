@@ -1948,12 +1948,14 @@ public class GenerateJavaAST {
         JExpression expr, JClassType classType) {
       if (classType.getFields().size() > 0) {
         JField field = classType.getFields().get(0);
-        /* In some circumstances, the outer this ref can be captured as a local
+        /*
+         * In some circumstances, the outer this ref can be captured as a local
          * value (val$this), in other cases, as a this ref (this$).
+         * 
          * TODO: investigate using more JDT node information as an alternative
          */
-        if (field.getName().startsWith("this$") ||
-            field.getName().startsWith("val$this$")) {
+        if (field.getName().startsWith("this$")
+            || field.getName().startsWith("val$this$")) {
           list.add(new JFieldRef(expr.getSourceInfo(), expr, field,
               currentClass));
         }
@@ -2345,8 +2347,8 @@ public class GenerateJavaAST {
      * expression. Beware that when autoboxing, the type of the expression is
      * not necessarily the same as the type of the box to be created. The JDT
      * figures out what the necessary conversion is, depending on the context
-     * the expression appears in, and stores it in
-     * <code>x.implicitConversion</code>, so extract it from there.
+     * the expression appears in, and stores it in <code>x.implicitConversion</code>,
+     * so extract it from there.
      */
     private JPrimitiveType implicitConversionTargetType(Expression x)
         throws InternalCompilerException {
