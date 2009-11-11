@@ -1,0 +1,645 @@
+<?xml version="1.0"?>
+
+    <!-- See UiBinder.xsd for some XML Schema tips. -->
+
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="urn:import:com.google.gwt.user.client.ui"
+    xmlns="urn:import:com.google.gwt.user.client.ui"
+    elementFormDefault="qualified">
+
+    <xs:complexType
+        name="CellPanelType">
+
+        <!-- Any ordering, any number of occurrences -->
+        <xs:choice
+            minOccurs="0"
+            maxOccurs="unbounded">
+
+            <!-- The "cell" child -->
+            <xs:element
+                name="cell">
+                <xs:complexType>
+
+                    <!-- Require one widget -->
+                    <xs:sequence>
+                        <xs:any
+                            processContents="lax" />
+                    </xs:sequence>
+
+                    <xs:attribute
+                        name="horizontalAlignment"
+                        type="xs:string" />
+                    <xs:attribute
+                        name="verticalAlignment"
+                        type="xs:string" />
+                    <xs:attribute
+                        name="width"
+                        type="xs:string" />
+                    <xs:attribute
+                        name="height"
+                        type="xs:string" />
+
+                    <xs:anyAttribute
+                        processContents="lax" />
+                </xs:complexType>
+            </xs:element>
+
+            <!-- Any widget -->
+            <xs:any
+                processContents="lax" />
+
+        </xs:choice>
+        <xs:anyAttribute
+            processContents="lax" />
+    </xs:complexType>
+
+    <xs:element
+        name="DockPanel"
+        type="CellPanelType" />
+
+    <xs:element
+        name="HorizontalPanel"
+        type="CellPanelType" />
+
+    <xs:element
+        name="VerticalPanel"
+        type="CellPanelType" />
+
+    <!-- CustomButton extends ButtonBase which implements HasHTML -->
+    <xs:complexType
+        name="CustomButtonType"
+        mixed="true">
+        <xs:all
+            minOccurs="0"
+            maxOccurs="1">
+            <xs:element
+                name="upFace"
+                type="CustomButtonChildElement"
+                minOccurs="0" />
+            <xs:element
+                name="downFace"
+                type="CustomButtonChildElement"
+                minOccurs="0" />
+            <xs:element
+                name="upHoveringFace"
+                type="CustomButtonChildElement"
+                minOccurs="0" />
+            <xs:element
+                name="downHoveringFace"
+                type="CustomButtonChildElement"
+                minOccurs="0" />
+            <xs:element
+                name="upDisabledFace"
+                type="CustomButtonChildElement"
+                minOccurs="0" />
+            <xs:element
+                name="downDisabledFace"
+                type="CustomButtonChildElement"
+                minOccurs="0" />
+        </xs:all>
+        <xs:anyAttribute
+            processContents="lax" />
+    </xs:complexType>
+
+    <!-- Allow mixed content (text and elements) -->
+    <xs:complexType
+        name="CustomButtonChildElement"
+        mixed="true">
+
+        <!--  Allow any children (HTML elements) -->
+        <xs:choice
+            minOccurs="0"
+            maxOccurs="unbounded">
+            <xs:any
+                processContents="lax" />
+        </xs:choice>
+
+        <xs:attribute
+            name="image"
+            type="xs:string" />
+
+        <xs:anyAttribute
+            processContents="lax" />
+    </xs:complexType>
+
+    <xs:element
+        name="PushButton"
+        type="CustomButtonType" />
+
+    <xs:element
+        name="ToggleButton"
+        type="CustomButtonType" />
+
+    <!--
+        TODO: AFAICT, we cannot properly express the constraints of
+        DisclosurePanel. These constraints are that the header is optional and
+        any number of widgets are optional (and ordering is not enforced). Only
+        one of "header" or "customHeader" can appear. Ideally, this would be
+        something like <all><choice of header><choice minOccurs=0
+        maxOccurs=unbounded><any /></choice></all>, but nesting <choice> inside
+        <all> is not possible, nor is having a <any /> appear in <all>. It is
+        currently not that important since we do not use this for validation.
+    -->
+    <xs:element
+        name="DisclosurePanel">
+        <xs:complexType>
+
+            <!--
+                Allow any number of these (this allows multiple headers, which
+                is inconsistent with the actual parser logic, but we cannot
+                express the true constraints in an XSD.)
+            -->
+            <xs:choice
+                maxOccurs="unbounded"
+                minOccurs="0">
+
+                <xs:element
+                    name="header">
+
+                    <!-- Allow mixed content -->
+                    <xs:complexType
+                        mixed="true">
+
+                        <!--  Allow any children (HTML elements) -->
+                        <xs:choice
+                            minOccurs="0"
+                            maxOccurs="unbounded">
+                            <xs:any
+                                processContents="lax" />
+                        </xs:choice>
+
+                        <xs:attribute
+                            name="openImage"
+                            type="xs:string" />
+                        <xs:attribute
+                            name="closedImage"
+                            type="xs:string" />
+
+                        <xs:anyAttribute
+                            processContents="lax" />
+                    </xs:complexType>
+                </xs:element>
+
+                <xs:element
+                    name="customHeader">
+                    <xs:complexType>
+
+                        <!-- Require one widget -->
+                        <xs:sequence>
+                            <xs:any
+                                processContents="lax" />
+                        </xs:sequence>
+
+                        <xs:anyAttribute
+                            processContents="lax" />
+                    </xs:complexType>
+                </xs:element>
+
+                <!-- Allow any widget(s) -->
+                <xs:any
+                    processContents="lax" />
+
+            </xs:choice>
+            <xs:anyAttribute
+                processContents="lax" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType
+        name="DockLayoutPanelType">
+
+        <!--
+            Allow any number of occurrences of child elements ("center" can only
+            really occur once, which this schema does not enforce.)
+        -->
+        <xs:choice
+            maxOccurs="unbounded"
+            minOccurs="0">
+            <xs:element
+                name="north"
+                type="DockDirectionType">
+            </xs:element>
+            <xs:element
+                name="south"
+                type="DockDirectionType">
+            </xs:element>
+            <xs:element
+                name="west"
+                type="DockDirectionType">
+            </xs:element>
+            <xs:element
+                name="east"
+                type="DockDirectionType">
+            </xs:element>
+            <!-- The center element does not require the size, only a widget -->
+            <xs:element
+                name="center"
+                type="SingleChildWidgetType">
+            </xs:element>
+        </xs:choice>
+
+        <xs:attribute
+            name="unit"
+            type="xs:string">
+        </xs:attribute>
+
+        <xs:anyAttribute
+            processContents="lax" />
+    </xs:complexType>
+
+    <!-- Used for north, south, west, and east in the DockLayoutPanel. -->
+    <xs:complexType name="DockDirectionType">
+      <xs:complexContent>
+          <xs:extension base="SingleChildWidgetType">
+              <xs:attribute name="size" type="xs:string" use="required" />
+          </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType
+        name="SingleChildWidgetType">
+
+        <!-- Require one widget -->
+        <xs:sequence>
+            <xs:any
+                processContents="lax" />
+        </xs:sequence>
+
+        <xs:anyAttribute
+            processContents="lax" />
+    </xs:complexType>
+
+    <xs:element
+        name="DockLayoutPanel"
+        type="DockLayoutPanelType" />
+
+    <xs:element
+        name="SplitLayoutPanel"
+        type="DockLayoutPanelType" />
+
+    <xs:element
+        name="HTMLPanel">
+
+        <!-- Allow mixed content -->
+        <xs:complexType
+            mixed="true">
+
+            <!--  Allow any children (HTML elements) -->
+            <xs:choice
+                minOccurs="0"
+                maxOccurs="unbounded">
+                <xs:any
+                    processContents="lax" />
+            </xs:choice>
+
+            <xs:attribute
+                name="tag"
+                type="xs:string" />
+
+            <xs:anyAttribute
+                processContents="lax" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType
+        name="MenuBarType">
+
+        <!-- Allow any number of "MenuItem" children -->
+        <xs:choice
+            minOccurs="0"
+            maxOccurs="unbounded">
+            <xs:element
+                name="MenuItem">
+                <!-- MenuItem implements HasHTML -->
+                <xs:complexType
+                    mixed="true">
+
+                    <xs:choice
+                        minOccurs="0"
+                        maxOccurs="unbounded">
+                        <xs:element
+                            name="MenuBar"
+                            type="MenuBarType" />
+                        <xs:any
+                            processContents="lax" />
+                    </xs:choice>
+
+                    <xs:anyAttribute
+                        processContents="lax" />
+                </xs:complexType>
+            </xs:element>
+        </xs:choice>
+
+        <xs:attribute
+            name="vertical"
+            type="xs:string" />
+
+        <xs:anyAttribute
+            processContents="lax" />
+    </xs:complexType>
+
+    <xs:element
+        name="MenuBar"
+        type="MenuBarType" />
+
+
+    <xs:element
+        name="RadioButton">
+        <!-- RadioButton extends ButtonBase which HasHTML -->
+        <xs:complexType
+            mixed="true">
+
+            <xs:choice
+                minOccurs="0"
+                maxOccurs="unbounded">
+                <xs:any
+                    processContents="lax" />
+            </xs:choice>
+
+            <xs:attribute
+                name="name"
+                type="xs:string" />
+
+            <xs:anyAttribute
+                processContents="lax" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element
+        name="StackLayoutPanel">
+        <xs:complexType>
+
+            <!-- Allow any number of "stack" children -->
+            <xs:choice
+                minOccurs="0"
+                maxOccurs="unbounded">
+                <xs:element
+                    name="stack"
+                    type="StackLayoutPanelStack">
+                </xs:element>
+            </xs:choice>
+
+            <xs:attribute
+                name="unit"
+                type="xs:string" />
+
+            <xs:anyAttribute
+                processContents="lax" />
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType
+        name="StackLayoutPanelStack">
+
+        <!--
+            The constraints we want are one header and one widget in any order.
+            I don't think we can easily express this in XSD, so we do a closer
+            approximation of requiring at least two from {header, custom header,
+            or widget} (this violates the constraints in that two headers would
+            be valid.)
+        -->
+        <xs:choice
+            minOccurs="2"
+            maxOccurs="unbounded">
+
+            <xs:element
+                name="header"
+                type="MixedContentType" />
+
+            <xs:element
+                name="customHeader">
+                <xs:complexType>
+
+                    <!-- Require one widget in the custom header -->
+                    <xs:sequence>
+                        <xs:any
+                            processContents="lax" />
+                    </xs:sequence>
+
+                    <xs:attribute
+                        name="size"
+                        type="xs:string" />
+
+                    <xs:anyAttribute
+                        processContents="lax" />
+                </xs:complexType>
+            </xs:element>
+
+            <!-- Require one widget in the stack -->
+            <xs:any
+                processContents="lax" />
+
+        </xs:choice>
+        <xs:anyAttribute
+            processContents="lax" />
+    </xs:complexType>
+
+    <xs:element
+        name="TabLayoutPanel">
+        <xs:complexType>
+
+            <!-- Any number of tabs -->
+            <xs:choice
+                minOccurs="0"
+                maxOccurs="unbounded">
+
+                <xs:element
+                    name="tab">
+                    <xs:complexType>
+
+                        <!--
+                            Another instance of our inability to express the
+                            constraints. We require one body (a widget) and
+                            optionally one of the two headers. Instead, this
+                            schema allows any number of these.
+                        -->
+                        <xs:choice
+                            minOccurs="0"
+                            maxOccurs="unbounded">
+
+                            <xs:element
+                                name="header"
+                                type="MixedContentType">
+                            </xs:element>
+
+                            <xs:element
+                                name="customHeader"
+                                type="SingleChildWidgetType" />
+
+                            <!-- One widget -->
+                            <xs:any
+                                processContents="lax" />
+
+                        </xs:choice>
+
+                        <xs:anyAttribute
+                            processContents="lax" />
+                    </xs:complexType>
+                </xs:element>
+            </xs:choice>
+
+            <xs:attribute
+                name="barHeight"
+                type="xs:string"
+                use="required" />
+
+            <xs:attribute
+                name="barUnit"
+                type="xs:string" />
+
+            <xs:anyAttribute
+                processContents="lax" />
+        </xs:complexType>
+    </xs:element>
+
+    <!--
+        A complex type that contains both text and elements. There is no schema
+        for the elements, they can be any elements.
+    -->
+    <xs:complexType
+        name="MixedContentType"
+        mixed="true">
+
+        <xs:choice
+            minOccurs="0"
+            maxOccurs="unbounded">
+            <xs:any
+                processContents="lax" />
+        </xs:choice>
+
+        <xs:anyAttribute
+            processContents="lax" />
+    </xs:complexType>
+
+    <!--
+        A complex type that contains only elements. There is no schema for the
+        elements, they can be any elements.
+    -->
+    <xs:complexType
+        name="ElementContentType">
+
+        <xs:choice
+            minOccurs="0"
+            maxOccurs="unbounded">
+            <xs:any
+                processContents="lax" />
+        </xs:choice>
+
+        <xs:anyAttribute
+            processContents="lax" />
+    </xs:complexType>
+
+    <!--
+        Below are widgets that do not have a custom parser, but that implement
+        the HasHTML interface. We must list these in the schema to allow Eclipse
+        to show autocomplete proposals in the element's text content (e.g. a
+        proposal for <ui:msg>)
+    -->
+    <xs:element
+        name="Anchor"
+        type="MixedContentType" />
+    <xs:element
+        name="Button"
+        type="MixedContentType" />
+    <xs:element
+        name="CheckBox"
+        type="MixedContentType" />
+    <xs:element
+        name="DialogBox"
+        type="MixedContentType" />
+    <xs:element
+        name="HTML"
+        type="MixedContentType" />
+    <xs:element
+        name="InlineHTML"
+        type="MixedContentType" />
+    <xs:element
+        name="Hyperlink"
+        type="MixedContentType" />
+    <xs:element
+        name="InlineHyperlink"
+        type="MixedContentType" />
+    <xs:element
+        name="RichTextArea"
+        type="MixedContentType" />
+    <xs:element
+        name="TreeItem"
+        type="MixedContentType" />
+
+    <!--
+        Below are widgets that do not have a custom parser, but that implement
+        the HasWidgets interface. We must list these in the schema to allow
+        Eclipse to show autocomplete proposals for children of these elements.
+    -->
+    <xs:element
+        name="CaptionPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="AbsolutePanel"
+        type="ElementContentType" />
+    <xs:element
+        name="RootPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="DeckPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="FlowPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="LayoutPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="RootLayoutPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="StackPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="DecoratedStackPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="FlexTable"
+        type="ElementContentType" />
+    <xs:element
+        name="Grid"
+        type="ElementContentType" />
+    <xs:element
+        name="SimplePanel"
+        type="ElementContentType" />
+    <xs:element
+        name="DecoratorPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="FocusPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="FormPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="PopupPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="DecoratedPopupPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="ScrollPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="HorizontalSplitPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="VerticalSplitPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="TabPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="DecoratedTabPanel"
+        type="ElementContentType" />
+    <xs:element
+        name="Tree"
+        type="ElementContentType" />
+
+</xs:schema>

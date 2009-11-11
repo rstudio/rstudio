@@ -1,0 +1,302 @@
+<?xml version="1.0"?>
+
+    <!--
+        WARNING: This schema is a temporary, implementation detail. It is NOT
+        meant to be used for validation. It violates Unique Particle Attribution
+        (and thus is an invalid schema) and regularly does not have the same
+        constraints as the actual UiBinder parsers. The sole purpose is to
+        provide autocompletion proposals within Eclipse.
+    -->
+    <!--
+        Eclipse may still try to validate using this (e.g. if user right-clicks
+        on the file and chooses "Validate"). This schema is left completely
+        extensible (you will see <xs:any> and <xs:anyAttribute> everywhere
+        possible, along with mixed content) in hopes of never flagging a
+        validation error.
+    -->
+    <!--
+        Even though we do not use this for validation, it is useful to set
+        attributes as required. Eclipse uses this information to automatically
+        insert that attribute in the autocompletion.
+    -->
+    <!--
+        An example case where we violate Unique Particle Attribution is when we
+        have an optional <ui:style> as a child of <ui:UiBinder> AND we allow
+        <xs:any /> as a child of <ui:UiBinder> too. This causes this schema to
+        be invalid (Eclipse still gladly accepts it and at least uses it for
+        offering autocomplete choices.)
+    -->
+
+    <!--
+        <xs:choice maxOccurs="unbounded" minOccurs="0"> allows for optional
+        children, with multiple occurrences of a child, and without any ordering
+        constraints.
+    -->
+    <!--
+        <xs:sequence> <xs:any></xs:any> </xs:sequence> allows for a single
+        required child.
+    -->
+    <!--
+        An attribute that is defined locally within an element will be without a
+        namespace (unprefixed). This means that the interpretation of the
+        attribute is up to its parent element. An attribute that is defined
+        globally will have the namespace of the targetNamespace. An unprefixed
+        "global" attribute can be defined via attribute groups.
+    -->
+    <!--
+        <xs:any /> are used to allow for additional elements (which is required
+        for allowing third-party widgets, etc.) Similarly, <xs:anyAttribute />
+        allows for additional attributes.
+    -->
+    <!--
+        elementFormQualified="qualified" means child elements will need to be
+        namespaced also. (It will be a validation error if they are not
+        namespaced.) For example, this is what is used to have the "north" child
+        of "DockLayoutPanel" require the gwt-user namespace.
+    -->
+    <!--
+        targetNamespace defines the namespace for elements and global attributes
+        defined in this file.
+    -->
+    <!--
+        <complexType ... mixed="true"> allows for mixed content (text and child
+        elements, e.g. allowing HTML content).
+    -->
+
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="urn:ui:com.google.gwt.uibinder"
+    xmlns="urn:ui:com.google.gwt.uibinder"
+    elementFormDefault="qualified">
+
+    <xs:element
+        name="UiBinder">
+        <xs:complexType
+            mixed="true">
+
+            <xs:choice
+                minOccurs="0"
+                maxOccurs="unbounded">
+
+                <xs:element
+                    name="style"
+                    type="StyleType" />
+                <xs:element
+                    name="with"
+                    type="WithType" />
+                <xs:element
+                    name="data"
+                    type="DataType" />
+                <xs:element
+                    name="image"
+                    type="ImageType" />
+
+                <!-- Allow any elements (e.g. widgets from any package) -->
+                <xs:any
+                    processContents="lax" />
+            </xs:choice>
+
+            <xs:attribute
+                name="defaultLocale"
+                type="xs:string" />
+            <xs:attribute
+                name="generateKeys"
+                type="xs:string" />
+            <xs:attribute
+                name="generateFormat"
+                type="xs:string" />
+            <xs:attribute
+                name="generateFilename"
+                type="xs:string" />
+            <xs:attribute
+                name="generateLocales"
+                type="xs:string" />
+
+            <!-- Allow any attributes (e.g. namespace definitions) -->
+            <xs:anyAttribute
+                processContents="lax" />
+
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType
+        name="StyleType">
+        <!-- Only allow text content -->
+        <xs:simpleContent>
+            <xs:extension
+                base="xs:string">
+
+                <xs:attribute
+                    name="src"
+                    type="xs:string" />
+                <xs:attribute
+                    name="field"
+                    type="xs:string" />
+                <xs:attribute
+                    name="import"
+                    type="xs:string" />
+                <xs:attribute
+                    name="type"
+                    type="xs:string" />
+
+                <!-- Allow any attributes (e.g. from other schemas) -->
+                <xs:anyAttribute
+                    processContents="lax" />
+
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType
+        name="WithType"
+        mixed="true">
+        <!--
+            Be safe by allowing any content (text or elements). This pattern is
+            used below too.
+        -->
+        <xs:choice
+            minOccurs="0"
+            maxOccurs="unbounded">
+            <xs:any
+                processContents="lax" />
+        </xs:choice>
+
+        <xs:attribute
+            name="field"
+            type="xs:string"
+            use="required" />
+        <xs:attribute
+            name="type"
+            type="xs:string"
+            use="required" />
+
+        <xs:anyAttribute
+            processContents="lax" />
+
+    </xs:complexType>
+
+    <xs:complexType
+        name="DataType"
+        mixed="true">
+        <xs:choice
+            minOccurs="0"
+            maxOccurs="unbounded">
+            <xs:any
+                processContents="lax" />
+        </xs:choice>
+
+        <xs:attribute
+            name="field"
+            type="xs:string"
+            use="required" />
+        <xs:attribute
+            name="src"
+            type="xs:string"
+            use="required" />
+
+        <xs:anyAttribute
+            processContents="lax" />
+
+    </xs:complexType>
+
+    <xs:complexType
+        name="ImageType"
+        mixed="true">
+        <xs:choice
+            minOccurs="0"
+            maxOccurs="unbounded">
+            <xs:any
+                processContents="lax" />
+        </xs:choice>
+
+        <xs:attribute
+            name="field"
+            type="xs:string"
+            use="required" />
+        <xs:attribute
+            name="src"
+            type="xs:string" />
+        <xs:attribute
+            name="flipRtl"
+            type="xs:string" />
+        <xs:attribute
+            name="repeatStyle"
+            type="xs:string" />
+
+        <xs:anyAttribute
+            processContents="lax" />
+
+    </xs:complexType>
+
+    <xs:element
+        name="attribute">
+        <xs:complexType
+            mixed="true">
+            <xs:complexContent>
+                <xs:extension
+                    base="MsgType">
+                    <xs:attribute
+                        name="name"
+                        type="xs:string"
+                        use="required" />
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType
+        name="MsgType"
+        mixed="true">
+        <xs:choice
+            minOccurs="0"
+            maxOccurs="unbounded">
+            <xs:any
+                processContents="lax" />
+        </xs:choice>
+
+        <xs:attribute
+            name="description"
+            type="xs:string" />
+        <xs:attribute
+            name="key"
+            type="xs:string" />
+        <xs:attribute
+            name="meaning"
+            type="xs:string" />
+
+        <xs:anyAttribute
+            processContents="lax" />
+
+    </xs:complexType>
+
+    <xs:element
+        name="msg"
+        type="MsgType">
+    </xs:element>
+
+    <xs:element
+        name="ph">
+        <xs:complexType
+            mixed="true">
+            <xs:choice
+                minOccurs="0"
+                maxOccurs="unbounded">
+                <xs:any
+                    processContents="lax" />
+            </xs:choice>
+
+            <xs:attribute
+                name="name"
+                type="xs:string"
+                use="required" />
+            <xs:attribute
+                name="example"
+                type="xs:string" />
+
+            <xs:anyAttribute
+                processContents="lax" />
+
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>
