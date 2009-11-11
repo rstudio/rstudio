@@ -16,58 +16,73 @@
 package com.google.gwt.junit;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 
 import com.thoughtworks.selenium.DefaultSelenium;
 import com.thoughtworks.selenium.Selenium;
 import com.thoughtworks.selenium.SeleniumException;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Runs in web mode via browsers managed by Selenium.
+ * Runs via browsers managed by Selenium.
  */
 public class RunStyleSelenium extends RunStyle {
+  /**
+   * Wraps a Selenium instance.
+   */
+  protected static interface SeleniumWrapper {
+    void createSelenium(String domain);
+    Selenium getSelenium();
+    String getSpecifier();
+  }
 
-  private static class RCSelenium {
-    final String browser;
-    final String host;
-    final int port;
-    Selenium selenium;
+  /**
+   * Implements SeleniumWrapper using DefaultSelenium.
+   */
+  private static class RCSelenium implements SeleniumWrapper {
 
-    public RCSelenium(String browser, String host, int port) {
-      this.browser = browser;
-      this.host = host;
-      this.port = port;
+    private static final Pattern PATTERN =
+        Pattern.compile("([\\w\\.-]+):([\\d]+)/([\\w\\s\\*(/\\w+)*]+)");
+
+    private String browser;
+    private String host;
+    private int port;
+    private Selenium selenium;
+    private final String specifier;
+
+    public RCSelenium(String specifier) {
+      this.specifier = specifier;
+      parseSpecifier();
     }
 
     public void createSelenium(String domain) {
       this.selenium = new DefaultSelenium(host, port, browser, domain);
     }
 
-    public String getBrowser() {
-      return browser;
-    }
-
-    public String getHost() {
-      return host;
-    }
-
-    public int getPort() {
-      return port;
-    }
-
     public Selenium getSelenium() {
       return selenium;
     }
+
+    public String getSpecifier() {
+      return specifier;
+    }
+
+    private void parseSpecifier() {
+      Matcher matcher = PATTERN.matcher(specifier);
+      if (!matcher.matches()) {
+        throw new IllegalArgumentException("Unable to parse Selenium target "
+            + specifier + " (expected format is [host]:[port]/[browser])");
+      }
+      this.browser = matcher.group(3);
+      this.host = matcher.group(1);
+      this.port = Integer.parseInt(matcher.group(2));
+    }
   }
 
-  private RCSelenium remotes[];
+  private SeleniumWrapper remotes[];
 
   /**
    * The list of hosts that were interrupted.
@@ -106,19 +121,15 @@ public class RunStyleSelenium extends RunStyle {
       return false;
     }
     String[] targetsIn = args.split(",");
-    RCSelenium targets[] = new RCSelenium[targetsIn.length];
+    SeleniumWrapper targets[] = new SeleniumWrapper[targetsIn.length];
 
-    Pattern pattern = Pattern.compile("([\\w\\.-]+):([\\d]+)/([\\w\\s\\*(/\\w+)*]+)");
     for (int i = 0; i < targets.length; ++i) {
-      Matcher matcher = pattern.matcher(targetsIn[i]);
-      if (!matcher.matches()) {
-        getLogger().log(TreeLogger.ERROR, "Unable to parse Selenium target "
-            + targetsIn[i] + " (expected format is [host]:[port]/[browser])");
+      try {
+        targets[i] = createSeleniumWrapper(targetsIn[i]);
+      } catch (IllegalArgumentException e) {
+        getLogger().log(TreeLogger.ERROR, e.getMessage());
         return false;
       }
-      RCSelenium instance = new RCSelenium(matcher.group(3), matcher.group(1),
-          Integer.parseInt(matcher.group(2)));
-      targets[i] = instance;
     }
 
     this.remotes = targets;
@@ -129,7 +140,7 @@ public class RunStyleSelenium extends RunStyle {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-        for (RCSelenium remote : remotes) {
+        for (SeleniumWrapper remote : remotes) {
           if (remote.getSelenium() != null) {
             try {
               remote.getSelenium().stop();
@@ -146,18 +157,13 @@ public class RunStyleSelenium extends RunStyle {
   }
 
   @Override
-  public synchronized void launchModule(String moduleName) throws UnableToCompleteException {
+  public synchronized void launchModule(String moduleName) {
     // Get the localhost address.
-    String domain;
-    try {
-      String localhost = InetAddress.getLocalHost().getHostAddress();
-      domain = "http://" + localhost + ":" + shell.getPort() + "/";
-    } catch (UnknownHostException e) {
-      throw new RuntimeException("Unable to determine my ip address", e);
-    }
+    String domain = "http://" + getLocalHostName() + ":" + shell.getPort()
+        + "/";
 
     // Startup all the selenia and point them at the module url.
-    for (RCSelenium remote : remotes) {
+    for (SeleniumWrapper remote : remotes) {
       try {
         String url = shell.getModuleUrl(moduleName);
         shell.getTopLogger().log(TreeLogger.TRACE,
@@ -166,10 +172,22 @@ public class RunStyleSelenium extends RunStyle {
         remote.getSelenium().start();
         remote.getSelenium().open(url);
       } catch (Exception e) {
-        shell.getTopLogger().log(TreeLogger.ERROR,
-            "Error launching browser via Selenium-RC at " + remote.getHost(), e);
+        shell.getTopLogger().log(
+            TreeLogger.ERROR,
+            "Error launching browser via Selenium-RC at "
+                + remote.getSpecifier(), e);
       }
     }
+  }
+
+  /**
+   * Factory method for {@link SeleniumWrapper}.
+   *
+   * @param seleniumSpecifier Specifies the Selenium instance to create
+   * @return an instance of {@link SeleniumWrapper}
+   */
+  protected SeleniumWrapper createSeleniumWrapper(String seleniumSpecifier) {
+    return new RCSelenium(seleniumSpecifier);
   }
 
   /**
@@ -195,7 +213,7 @@ public class RunStyleSelenium extends RunStyle {
 
   private synchronized boolean doKeepAlives() {
     if (remotes != null) {
-      for (RCSelenium remote : remotes) {
+      for (SeleniumWrapper remote : remotes) {
         // Use getTitle() as a cheap way to see if the Selenium server's still
         // responding (Selenium seems to provide no way to check the server
         // status directly).
@@ -208,8 +226,7 @@ public class RunStyleSelenium extends RunStyle {
             if (interruptedHosts == null) {
               interruptedHosts = new HashSet<String>();
             }
-            interruptedHosts.add(remote.getHost() + ":" + remote.getPort()
-                + "/" + remote.getBrowser());
+            interruptedHosts.add(remote.getSpecifier());
           }
         }
       }

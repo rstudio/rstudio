@@ -55,8 +55,6 @@ import junit.framework.TestResult;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -752,20 +750,15 @@ public class JUnitShell extends GWTShell {
   }
 
   public String getModuleUrl(String moduleName) {
-    try {
-      String localhost = InetAddress.getLocalHost().getHostAddress();
-      String url = "http://" + localhost + ":" + getPort() + "/"
-          + moduleName
-          + (standardsMode ? "/junit-standards.html" : "/junit.html");
-      if (developmentMode) {
-        // CHECKSTYLE_OFF
-        url += "?gwt.hosted=" + localhost + ":" + codeServerPort;
-        // CHECKSTYLE_ON
-      }
-      return url;
-    } catch (UnknownHostException e) {
-      throw new RuntimeException("Unable to determine my ip address", e);
+    String localhost = runStyle.getLocalHostName();
+    String url = "http://" + localhost + ":" + getPort() + "/" + moduleName
+        + (standardsMode ? "/junit-standards.html" : "/junit.html");
+    if (developmentMode) {
+      // CHECKSTYLE_OFF
+      url += "?gwt.hosted=" + localhost + ":" + codeServerPort;
+      // CHECKSTYLE_ON
     }
+    return url;
   }
 
   /**

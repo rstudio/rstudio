@@ -18,6 +18,9 @@ package com.google.gwt.junit;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 /**
  * An abstract class that handles the details of launching a browser.
  */
@@ -48,6 +51,21 @@ abstract class RunStyle {
    */
   public String[] getInterruptedHosts() {
     return null;
+  }
+
+  /**
+   * Get the host name of the local system to use in URLs. This method returns
+   * the host address instead of the host name in case the test target cannot
+   * resolve the host name.
+   *  
+   * @return the host name of the local system
+   */
+  public String getLocalHostName() {
+    try {
+      return InetAddress.getLocalHost().getHostAddress();
+    } catch (UnknownHostException e) {
+      throw new RuntimeException("Unable to determine my ip address", e);
+    }
   }
 
   /**
@@ -111,5 +129,4 @@ abstract class RunStyle {
   protected TreeLogger getLogger() {
     return shell.getTopLogger();
   }
-
 }
