@@ -40,7 +40,7 @@ public class GWTProblemTest extends TestCase {
     };
 
     // Pick an Expression subtype to pass in
-    GWTProblem.recordInCud(new Wildcard(Wildcard.EXTENDS), cud, errorMessage,
+    GWTProblem.recordError(new Wildcard(Wildcard.EXTENDS), cud, errorMessage,
         info);
 
     CategorizedProblem[] errors = compilationResult.getErrors();

@@ -131,7 +131,7 @@ public class BinaryTypeReferenceRestrictionsChecker {
       String error = formatBinaryTypeRefErrorMessage(qualifiedTypeName);
 
       // TODO(mmendez): provide extra help info?
-      GWTProblem.recordInCud(binaryTypeReferenceSite.getExpression(), cud,
+      GWTProblem.recordError(binaryTypeReferenceSite.getExpression(), cud,
           error, null);
     }
   }

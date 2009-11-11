@@ -341,7 +341,7 @@ public class JSORestrictionsChecker {
 
   private static void errorOn(ASTNode node, CompilationUnitDeclaration cud,
       String error) {
-    GWTProblem.recordInCud(node, cud, error, new InstalledHelpInfo(
+    GWTProblem.recordError(node, cud, error, new InstalledHelpInfo(
         "jsoRestrictions.html"));
   }
 

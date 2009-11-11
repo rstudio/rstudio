@@ -195,8 +195,8 @@ public class JsniChecker {
         filterWarnings(meth, warnings);
         for (Set<String> set : warnings.values()) {
           for (String warning : set) {
-            GWTProblem.recordInCud(ProblemSeverities.Warning, meth, cud,
-                warning, null);
+            GWTProblem.recordProblem(meth, cud.compilationResult(), warning,
+                null, ProblemSeverities.Warning);
           }
         }
       }
@@ -373,7 +373,7 @@ public class JsniChecker {
     }
 
     private void longAccessError(ASTNode node, String message) {
-      GWTProblem.recordInCud(node, cud, message, new InstalledHelpInfo(
+      GWTProblem.recordError(node, cud, message, new InstalledHelpInfo(
           "longJsniRestriction.html"));
     }
 

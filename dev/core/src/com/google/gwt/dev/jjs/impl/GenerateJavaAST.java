@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.client.impl.ArtificialRescue;
+import com.google.gwt.dev.javac.JsniCollector;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JJSOptions;
@@ -98,8 +99,6 @@ import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.JsniRef;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.core.compiler.IProblem;
-import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
@@ -184,8 +183,6 @@ import org.eclipse.jdt.internal.compiler.lookup.SyntheticMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.VariableBinding;
-import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
-import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 import org.eclipse.jdt.internal.compiler.util.Util;
 
 import java.lang.reflect.Field;
@@ -2823,7 +2820,7 @@ public class GenerateJavaAST {
           String ident) {
         JsniRef parsed = JsniRef.parse(ident);
         if (parsed == null) {
-          reportJsniError(info, methodDecl,
+          JsniCollector.reportJsniError(info, methodDecl,
               "Badly formatted native reference '" + ident + "'");
           return null;
         }
@@ -2833,7 +2830,7 @@ public class GenerateJavaAST {
         return JsniRefLookup.findJsniRefTarget(parsed, prog,
             new JsniRefLookup.ErrorReporter() {
               public void reportError(String error) {
-                reportJsniError(info, methodDecl, error);
+                JsniCollector.reportJsniError(info, methodDecl, error);
               }
             });
       }
@@ -2842,11 +2839,11 @@ public class GenerateJavaAST {
           JField field, JsContext<JsExpression> ctx) {
         if (field.getEnclosingType() != null) {
           if (field.isStatic() && nameRef.getQualifier() != null) {
-            reportJsniError(info, methodDecl,
+            JsniCollector.reportJsniError(info, methodDecl,
                 "Cannot make a qualified reference to the static field "
                     + field.getName());
           } else if (!field.isStatic() && nameRef.getQualifier() == null) {
-            reportJsniError(info, methodDecl,
+            JsniCollector.reportJsniError(info, methodDecl,
                 "Cannot make an unqualified reference to the instance field "
                     + field.getName());
           }
@@ -2858,7 +2855,7 @@ public class GenerateJavaAST {
          */
         if (field.isCompileTimeConstant()) {
           if (ctx.isLvalue()) {
-            reportJsniError(info, methodDecl,
+            JsniCollector.reportJsniError(info, methodDecl,
                 "Cannot change the value of compile-time constant "
                     + field.getName());
           }
@@ -2890,22 +2887,24 @@ public class GenerateJavaAST {
           JClassType jsoImplType = program.typeOracle.getSingleJsoImpls().get(
               enclosingType);
           if (jsoImplType != null) {
-            reportJsniError(info, methodDecl, "Illegal reference to method '"
-                + method.getName() + "' in type '" + enclosingType.getName()
-                + "', which is implemented by an overlay type '"
-                + jsoImplType.getName() + "'. Use a stronger type in the JSNI "
-                + "identifier or a Java trampoline method.");
+            JsniCollector.reportJsniError(info, methodDecl,
+                "Illegal reference to method '" + method.getName()
+                    + "' in type '" + enclosingType.getName()
+                    + "', which is implemented by an overlay type '"
+                    + jsoImplType.getName()
+                    + "'. Use a stronger type in the JSNI "
+                    + "identifier or a Java trampoline method.");
           } else if (method.isStatic() && nameRef.getQualifier() != null) {
-            reportJsniError(info, methodDecl,
+            JsniCollector.reportJsniError(info, methodDecl,
                 "Cannot make a qualified reference to the static method "
                     + method.getName());
           } else if (!method.isStatic() && nameRef.getQualifier() == null) {
-            reportJsniError(info, methodDecl,
+            JsniCollector.reportJsniError(info, methodDecl,
                 "Cannot make an unqualified reference to the instance method "
                     + method.getName());
           } else if (!method.isStatic()
               && program.isJavaScriptObject(enclosingType)) {
-            reportJsniError(
+            JsniCollector.reportJsniError(
                 info,
                 methodDecl,
                 "Illegal reference to instance method '"
@@ -2916,8 +2915,8 @@ public class GenerateJavaAST {
           }
         }
         if (ctx.isLvalue()) {
-          reportJsniError(info, methodDecl, "Cannot reassign the Java method "
-              + method.getName());
+          JsniCollector.reportJsniError(info, methodDecl,
+              "Cannot reassign the Java method " + method.getName());
         }
 
         JsniMethodRef methodRef = new JsniMethodRef(info, nameRef.getIdent(),
@@ -3002,20 +3001,6 @@ public class GenerateJavaAST {
     // Process JSNI.
     Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap = v.getJsniMethodMap();
     new JsniRefGenerationVisitor(jprogram, jsProgram, jsniMethodMap).accept(jprogram);
-  }
-
-  public static void reportJsniError(SourceInfo info,
-      AbstractMethodDeclaration methodDeclaration, String message) {
-    CompilationResult compResult = methodDeclaration.compilationResult();
-    // recalculate startColumn, because SourceInfo does not hold it
-    int startColumn = Util.searchColumnNumber(
-        compResult.getLineSeparatorPositions(), info.getStartLine(),
-        info.getStartPos());
-    DefaultProblem problem = new DefaultProblem(
-        info.getFileName().toCharArray(), message,
-        IProblem.ExternalProblemNotFixable, null, ProblemSeverities.Error,
-        info.getStartPos(), info.getEndPos(), info.getStartLine(), startColumn);
-    compResult.record(problem, methodDeclaration);
   }
 
   /**

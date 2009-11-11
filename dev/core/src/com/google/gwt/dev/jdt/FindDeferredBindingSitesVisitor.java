@@ -64,7 +64,7 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
     Scope scope = site.scope;
     // Safe since CUS.referenceContext is set in its constructor.
     CompilationUnitDeclaration cud = scope.compilationUnitScope().referenceContext;
-    GWTProblem.recordInCud(messageSend, cud, message, null);
+    GWTProblem.recordError(messageSend, cud, message, null);
   }
 
   private final Map<String, MessageSendSite> results = new HashMap<String, MessageSendSite>();

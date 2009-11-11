@@ -16,7 +16,11 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.dev.javac.CompilationUnit.State;
+import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.JsParserException.SourceDetail;
@@ -27,9 +31,12 @@ import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Name.InternalName;
 
+import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
+import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
+import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 import org.eclipse.jdt.internal.compiler.util.Util;
 
 import java.io.IOException;
@@ -177,6 +184,107 @@ public class JsniCollector {
     }
   }
 
+  public static JsFunction parseJsniFunction(AbstractMethodDeclaration method,
+      String unitSource, String enclosingType, String fileName,
+      JsProgram jsProgram) {
+    CompilationResult compResult = method.compilationResult;
+    int[] indexes = compResult.lineSeparatorPositions;
+    int startLine = Util.getLineNumber(method.sourceStart, indexes, 0,
+        indexes.length - 1);
+    SourceInfo info = SourceOrigin.create(method.sourceStart, method.bodyEnd,
+        startLine, fileName);
+
+    // Handle JSNI block
+    String jsniCode = unitSource.substring(method.bodyStart, method.bodyEnd + 1);
+    int startPos = jsniCode.indexOf("/*-{");
+    int endPos = jsniCode.lastIndexOf("}-*/");
+    if (startPos < 0 && endPos < 0) {
+      reportJsniError(
+          info,
+          method,
+          "Native methods require a JavaScript implementation enclosed with /*-{ and }-*/");
+      return null;
+    }
+    if (startPos < 0) {
+      reportJsniError(info, method,
+          "Unable to find start of native block; begin your JavaScript block with: /*-{");
+      return null;
+    }
+    if (endPos < 0) {
+      reportJsniError(
+          info,
+          method,
+          "Unable to find end of native block; terminate your JavaScript block with: }-*/");
+      return null;
+    }
+
+    startPos += 3; // move up to open brace
+    endPos += 1; // move past close brace
+
+    jsniCode = jsniCode.substring(startPos, endPos);
+
+    // Here we parse it as an anonymous function, but we will give it a
+    // name later when we generate the JavaScript during code generation.
+    //
+    StringBuilder functionSource = new StringBuilder("function (");
+    boolean first = true;
+    if (method.arguments != null) {
+      for (Argument arg : method.arguments) {
+        if (first) {
+          first = false;
+        } else {
+          functionSource.append(',');
+        }
+        functionSource.append(arg.binding.name);
+      }
+    }
+    functionSource.append(") ");
+    int functionHeaderLength = functionSource.length();
+    functionSource.append(jsniCode);
+    StringReader sr = new StringReader(functionSource.toString());
+
+    // Absolute start and end position of braces in original source.
+    int absoluteJsStartPos = method.bodyStart + startPos;
+    int absoluteJsEndPos = absoluteJsStartPos + jsniCode.length();
+
+    // Adjust the points the JS parser sees to account for the synth header.
+    int jsStartPos = absoluteJsStartPos - functionHeaderLength;
+    int jsEndPos = absoluteJsEndPos - functionHeaderLength;
+
+    // To compute the start line, count lines from point to point.
+    int jsLine = info.getStartLine()
+        + countLines(indexes, info.getStartPos(), absoluteJsStartPos);
+
+    SourceInfo jsInfo = SourceOrigin.create(jsStartPos, jsEndPos, jsLine,
+        info.getFileName());
+    try {
+      List<JsStatement> result = JsParser.parse(jsInfo, jsProgram.getScope(),
+          sr);
+      JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
+      return (JsFunction) jsExprStmt.getExpression();
+    } catch (IOException e) {
+      throw new InternalCompilerException("Internal error parsing JSNI in '"
+          + enclosingType + '.' + method.toString() + '\'', e);
+    } catch (JsParserException e) {
+      int problemCharPos = computeAbsoluteProblemPosition(indexes,
+          e.getSourceDetail());
+      SourceInfo errorInfo = SourceOrigin.create(problemCharPos,
+          problemCharPos, e.getSourceDetail().getLine(), info.getFileName());
+      reportJsniError(errorInfo, method, e.getMessage());
+      return null;
+    }
+  }
+
+  public static void reportJsniError(SourceInfo info,
+      AbstractMethodDeclaration method, String msg) {
+    reportJsniProblem(info, method, msg, ProblemSeverities.Error);
+  }
+
+  public static void reportJsniWarning(SourceInfo info,
+      MethodDeclaration method, String msg) {
+    reportJsniProblem(info, method, msg, ProblemSeverities.Warning);
+  }
+
   /**
    * TODO: log real errors, replacing GenerateJavaScriptAST?
    */
@@ -215,6 +323,39 @@ public class JsniCollector {
     return jsniMethods;
   }
 
+  /**
+   * JS reports the error as a line number, to find the absolute position in the
+   * real source stream, we have to walk from the absolute JS start position
+   * until we have counted down enough lines. Then we use the column position to
+   * find the exact spot.
+   */
+  private static int computeAbsoluteProblemPosition(int[] indexes,
+      SourceDetail detail) {
+    // Convert 1-based to -1 - based.
+    int line = detail.getLine() - 1;
+    if (line == 0) {
+      return detail.getLineOffset() - 1;
+    }
+
+    int result = indexes[line - 1] + detail.getLineOffset();
+    /*
+     * In other words, make sure our result is actually on this line (less than
+     * the start position of the next line), but make sure we don't overflow if
+     * this is the last line in the file.
+     */
+    assert line >= indexes.length || result < indexes[line];
+    return result;
+  }
+
+  private static int countLines(int[] indexes, int p1, int p2) {
+    assert p1 >= 0;
+    assert p2 >= 0;
+    assert p1 <= p2;
+    int p1line = findLine(p1, indexes, 0, indexes.length);
+    int p2line = findLine(p2, indexes, 0, indexes.length);
+    return p2line - p1line;
+  }
+
   private static Interval findJsniSource(String source,
       AbstractMethodDeclaration method) {
     assert (method.isNative());
@@ -237,6 +378,20 @@ public class JsniCollector {
     int srcStart = bodyStart + jsniStart + JSNI_BLOCK_START.length();
     int srcEnd = bodyStart + jsniEnd;
     return new Interval(srcStart, srcEnd);
+  }
+
+  private static int findLine(int pos, int[] indexes, int lo, int tooHi) {
+    assert (lo < tooHi);
+    if (lo == tooHi - 1) {
+      return lo;
+    }
+    int mid = lo + (tooHi - lo) / 2;
+    assert (lo < mid);
+    if (pos < indexes[mid]) {
+      return findLine(pos, indexes, lo, mid);
+    } else {
+      return findLine(pos, indexes, mid, tooHi);
+    }
   }
 
   /**
@@ -331,6 +486,20 @@ public class JsniCollector {
         return null;
       }
     }
+  }
+
+  private static void reportJsniProblem(SourceInfo info,
+      AbstractMethodDeclaration methodDeclaration, String message,
+      int problemSeverity) {
+    // TODO: provide helpInfo for how to write JSNI methods?
+    HelpInfo jsniHelpInfo = null;
+    CompilationResult compResult = methodDeclaration.compilationResult();
+    // recalculate startColumn, because SourceInfo does not hold it
+    int startColumn = Util.searchColumnNumber(
+        compResult.getLineSeparatorPositions(), info.getStartLine(),
+        info.getStartPos());
+    GWTProblem.recordProblem(info, startColumn, compResult, message,
+        jsniHelpInfo, problemSeverity);
   }
 
   private JsniCollector() {

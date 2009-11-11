@@ -79,7 +79,7 @@ public class ArtificialRescueChecker {
     private void processArtificialRescue(Annotation rescue) {
       if (!allowArtificialRescue) {
         // Goal (1)
-        GWTProblem.recordInCud(rescue, cud, onlyGeneratedCode(), null);
+        GWTProblem.recordError(rescue, cud, onlyGeneratedCode(), null);
         return;
       }
 
@@ -155,25 +155,25 @@ public class ArtificialRescueChecker {
       TypeBinding typeBinding = cud.scope.getType(compoundName,
           compoundName.length);
       if (typeBinding == null) {
-        GWTProblem.recordInCud(rescue, cud, notFound(className), null);
+        GWTProblem.recordError(rescue, cud, notFound(className), null);
       } else if (typeBinding instanceof ProblemReferenceBinding) {
         ProblemReferenceBinding problem = (ProblemReferenceBinding) typeBinding;
         if (problem.problemId() == ProblemReasons.NotVisible) {
           // Ignore
         } else if (problem.problemId() == ProblemReasons.NotFound) {
-          GWTProblem.recordInCud(rescue, cud, notFound(className), null);
+          GWTProblem.recordError(rescue, cud, notFound(className), null);
         } else {
-          GWTProblem.recordInCud(rescue, cud,
+          GWTProblem.recordError(rescue, cud,
               unknownProblem(className, problem), null);
         }
       } else if (typeBinding instanceof BaseTypeBinding) {
         // No methods or fields on primitive types (3)
         if (methods.length > 0) {
-          GWTProblem.recordInCud(rescue, cud, noMethodsAllowed(), null);
+          GWTProblem.recordError(rescue, cud, noMethodsAllowed(), null);
         }
 
         if (fields.length > 0) {
-          GWTProblem.recordInCud(rescue, cud, noFieldsAllowed(), null);
+          GWTProblem.recordError(rescue, cud, noFieldsAllowed(), null);
         }
       } else if (typeBinding instanceof ReferenceBinding) {
         ReferenceBinding ref = (ReferenceBinding) typeBinding;
@@ -181,22 +181,22 @@ public class ArtificialRescueChecker {
         if (isArray) {
           // No methods or fields on array types (3)
           if (methods.length > 0) {
-            GWTProblem.recordInCud(rescue, cud, noMethodsAllowed(), null);
+            GWTProblem.recordError(rescue, cud, noMethodsAllowed(), null);
           }
 
           if (fields.length > 0) {
-            GWTProblem.recordInCud(rescue, cud, noFieldsAllowed(), null);
+            GWTProblem.recordError(rescue, cud, noFieldsAllowed(), null);
           }
         } else {
           // Check methods on reference types (3)
           for (String method : methods) {
             if (method.contains("@")) {
-              GWTProblem.recordInCud(rescue, cud, nameAndTypesOnly(), null);
+              GWTProblem.recordError(rescue, cud, nameAndTypesOnly(), null);
               continue;
             }
             JsniRef jsni = JsniRef.parse("@foo::" + method);
             if (jsni == null) {
-              GWTProblem.recordInCud(rescue, cud, badMethodSignature(method),
+              GWTProblem.recordError(rescue, cud, badMethodSignature(method),
                   null);
               continue;
             }
@@ -207,7 +207,7 @@ public class ArtificialRescueChecker {
             } else {
               MethodBinding[] methodBindings = ref.getMethods(jsni.memberName().toCharArray());
               if (methodBindings == null || methodBindings.length == 0) {
-                GWTProblem.recordInCud(rescue, cud, noMethod(className,
+                GWTProblem.recordError(rescue, cud, noMethod(className,
                     jsni.memberName()), null);
                 continue;
               }
@@ -217,7 +217,7 @@ public class ArtificialRescueChecker {
           // Check fields on reference types (3)
           for (String field : fields) {
             if (ref.getField(field.toCharArray(), false) == null) {
-              GWTProblem.recordInCud(rescue, cud, unknownField(field), null);
+              GWTProblem.recordError(rescue, cud, unknownField(field), null);
             }
           }
         }
