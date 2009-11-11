@@ -18,7 +18,6 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.dev.javac.asm.CollectClassDataTest;
 import com.google.gwt.dev.javac.asm.CollectReferencesVisitorTest;
 import com.google.gwt.dev.javac.asm.ResolveGenericsTest;
-import com.google.gwt.dev.javac.impl.JdtBehaviorTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -36,6 +35,7 @@ public class JavaCompilationSuite {
     suite.addTestSuite(CompilationUnitFileReferenceTest.class);
     suite.addTestSuite(GWTProblemTest.class);
     suite.addTestSuite(JavaSourceParserTest.class);
+    suite.addTestSuite(JdtBehaviorTest.class);
     suite.addTestSuite(JdtCompilerTest.class);
     suite.addTestSuite(JSORestrictionsTest.class);
     suite.addTestSuite(JsniCheckerTest.class);
@@ -44,8 +44,6 @@ public class JavaCompilationSuite {
     suite.addTestSuite(CollectClassDataTest.class);
     suite.addTestSuite(CollectReferencesVisitorTest.class);
     suite.addTestSuite(ResolveGenericsTest.class);
-
-    suite.addTestSuite(JdtBehaviorTest.class);
 
     // TODO: Move these to another package.
     suite.addTestSuite(GeneratedClassnameComparatorTest.class);

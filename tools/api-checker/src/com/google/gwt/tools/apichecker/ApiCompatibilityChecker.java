@@ -18,7 +18,7 @@ package com.google.gwt.tools.apichecker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
-import com.google.gwt.dev.javac.impl.Shared;
+import com.google.gwt.dev.javac.Shared;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;

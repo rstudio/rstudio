@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.util.tools.Utility;
 

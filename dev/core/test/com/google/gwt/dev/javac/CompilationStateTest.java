@@ -19,7 +19,6 @@ import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
-import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.javac.impl.TweakedMockJavaResource;
 
 import java.util.Collections;

@@ -25,8 +25,8 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompilationUnitInvalidator;
 import com.google.gwt.dev.javac.JdtCompiler;
+import com.google.gwt.dev.javac.SourceFileCompilationUnit;
 import com.google.gwt.dev.javac.TypeOracleMediator;
-import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.resource.Resource;
 
 import java.util.ArrayList;

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.javac.impl;
 
+import com.google.gwt.dev.javac.Shared;
+
 public class StaticJavaResource extends MockResource {
 
   private final CharSequence source;

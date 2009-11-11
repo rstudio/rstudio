@@ -16,7 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.typeinfo.JRealClassType;
-import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Name.InternalName;
 
