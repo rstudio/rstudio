@@ -125,7 +125,7 @@ public class TypeOracle {
    */
   @Deprecated
   public static final String TAG_TYPEARGS = "gwt.typeArgs";
-  
+
   static final int MOD_ABSTRACT = 0x00000001;
   static final int MOD_FINAL = 0x00000002;
   static final int MOD_NATIVE = 0x00000004;
@@ -641,28 +641,10 @@ public class TypeOracle {
     return parseImpl(type);
   }
 
-  /**
-   * Reset this type oracle for rebuild.
-   * 
-   * TODO: make this not public.
-   */
-  public void reset() {
-    recentTypes.clear();
-    ++reloadCount;
-  }
-
   void addNewType(JRealClassType newType) {
     String fqcn = newType.getQualifiedSourceName();
     allTypes.put(fqcn, newType);
     recentTypes.add(newType);
-  }
-
-  void invalidate(JRealClassType realClassType) {
-    removeType(realClassType);
-  }
-
-  void resurrect(JRealClassType realClassType) {
-    resurrectType(realClassType);
   }
 
   private void computeHierarchyRelationships(JClassType[] types) {
@@ -852,50 +834,5 @@ public class TypeOracle {
 
     JClassType[] typeArgs = typeArgList.toArray(new JClassType[typeArgList.size()]);
     return typeArgs;
-  }
-
-  private void removeSingleJsoImplData(JClassType... types) {
-    JClassType jsoType = findType(JSO_CLASS);
-    if (jsoType == null) {
-      return;
-    }
-
-    for (JClassType type : types) {
-      if (!jsoType.isAssignableFrom(type)) {
-        continue;
-      }
-      for (JClassType intf : JClassType.getFlattenedSuperTypeHierarchy(type)) {
-        if (jsoSingleImpls.get(intf) == type) {
-          jsoSingleImpls.remove(intf);
-        }
-      }
-    }
-  }
-  
-  /**
-   * Removes the specified type from the type oracle.
-   */
-  private void removeType(JRealClassType invalidType) {
-    allTypes.remove(invalidType.getQualifiedSourceName());
-    recentTypes.remove(invalidType);
-    JPackage pkg = invalidType.getPackage();
-    if (pkg != null) {
-      pkg.remove(invalidType);
-    }
-    invalidType.removeFromSupertypes();
-    removeSingleJsoImplData(invalidType);
-  }
-
-  /**
-   * Restore the specific type from the type oracle.
-   */
-  private void resurrectType(JRealClassType type) {
-    allTypes.put(type.getQualifiedSourceName(), type);
-    JPackage pkg = type.getPackage();
-    if (pkg != null) {
-      pkg.addType(type);
-    }
-    type.notifySuperTypes();
-    computeSingleJsoImplData(type);
   }
 }

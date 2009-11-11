@@ -29,6 +29,7 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
+import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
@@ -334,7 +335,7 @@ public class JUnitShell extends GWTShell {
           return true;
         }
       });
-      
+
       registerHandler(new ArgHandlerFlag() {
         @Override
         public String getPurpose() {
@@ -534,17 +535,15 @@ public class JUnitShell extends GWTShell {
    * instead of failing on the client.
    */
   private static JUnitFatalLaunchException checkTestClassInCurrentModule(
-      TreeLogger logger, ModuleDef currentModule, String moduleName,
-      TestCase testCase) throws UnableToCompleteException {
-    TypeOracle typeOracle = currentModule.getTypeOracle(logger);
+      CompilationState compilationState, String moduleName, TestCase testCase) {
+    TypeOracle typeOracle = compilationState.getTypeOracle();
     String typeName = testCase.getClass().getName();
     typeName = typeName.replace('$', '.');
     JClassType foundType = typeOracle.findType(typeName);
     if (foundType != null) {
       return null;
     }
-    Map<String, CompilationUnit> unitMap = currentModule.getCompilationState(
-        logger).getCompilationUnitMap();
+    Map<String, CompilationUnit> unitMap = compilationState.getCompilationUnitMap();
     CompilationUnit unit = unitMap.get(typeName);
     String errMsg;
     if (unit == null) {
@@ -622,7 +621,7 @@ public class JUnitShell extends GWTShell {
    * Determines how to batch up tests for execution.
    */
   private BatchingStrategy batchingStrategy = new NoBatchingStrategy();
-  
+
   /**
    * The amount of time to wait for all clients to complete a single test
    * method, in milliseconds, measured from when the <i>last</i> client connects
@@ -650,6 +649,11 @@ public class JUnitShell extends GWTShell {
    * Name of the module containing the current/last module to run.
    */
   private ModuleDef currentModule;
+
+  /**
+   * A type oracle for the current module, used to validate class existence.
+   */
+  private CompilationState currentCompilationState;
 
   /**
    * The name of the current test case being run.
@@ -716,7 +720,7 @@ public class JUnitShell extends GWTShell {
   private String runStyleName = "HtmlUnit";
 
   private boolean shouldAutoGenerateResources = true;
-  
+
   private boolean standardsMode = false;
 
   /**
@@ -918,6 +922,7 @@ public class JUnitShell extends GWTShell {
     if (!new GWTCompiler(newOptions).run(getTopLogger(), module)) {
       throw new UnableToCompleteException();
     }
+    // TODO(scottb): prepopulate currentCompilationState somehow?
   }
 
   void maybeCompileForWebMode(String moduleName, String... userAgents)
@@ -1104,11 +1109,12 @@ public class JUnitShell extends GWTShell {
       currentModule = compileStrategy.maybeCompileModule(moduleName,
           syntheticModuleName, strategy, runStyle, batchingStrategy,
           getTopLogger());
+      currentCompilationState = currentModule.getCompilationState(getTopLogger());
     }
     assert (currentModule != null);
 
     JUnitFatalLaunchException launchException = checkTestClassInCurrentModule(
-        getTopLogger(), currentModule, moduleName, testCase);
+        currentCompilationState, moduleName, testCase);
     if (launchException != null) {
       testResult.addError(testCase, launchException);
       return;

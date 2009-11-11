@@ -22,7 +22,6 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.GWTProblem;
 import com.google.gwt.dev.javac.JdtCompiler;
 import com.google.gwt.dev.javac.Shared;
-import com.google.gwt.dev.javac.JdtCompiler.CompilationUnitAdapter;
 import com.google.gwt.dev.util.CharArrayComparator;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.PerfLogger;
@@ -60,6 +59,44 @@ import java.util.TreeSet;
  * smartly where possible.
  */
 public abstract class AbstractCompiler {
+
+  /**
+   * Adapts a {@link CompilationUnit} for a JDT compile.
+   */
+  public static class CompilationUnitAdapter implements ICompilationUnit {
+
+    private final CompilationUnit unit;
+
+    public CompilationUnitAdapter(CompilationUnit unit) {
+      this.unit = unit;
+    }
+
+    public char[] getContents() {
+      return unit.getSource().toCharArray();
+    }
+
+    public char[] getFileName() {
+      return unit.getDisplayLocation().toCharArray();
+    }
+
+    public char[] getMainTypeName() {
+      return Shared.getShortName(unit.getTypeName()).toCharArray();
+    }
+
+    public char[][] getPackageName() {
+      String packageName = Shared.getPackageName(unit.getTypeName());
+      return CharOperation.splitOn('.', packageName.toCharArray());
+    }
+
+    public CompilationUnit getUnit() {
+      return unit;
+    }
+
+    @Override
+    public String toString() {
+      return unit.toString();
+    }
+  }
 
   /**
    * Adapted to hook the processing of compilation unit declarations so as to be
@@ -197,42 +234,7 @@ public abstract class AbstractCompiler {
     }
 
     private ReferenceBinding resolvePossiblyNestedType(String typeName) {
-      ReferenceBinding type = null;
-
-      int p = typeName.indexOf('$');
-      if (p > 0) {
-        // resolve an outer type before trying to get the cached inner
-        String cupName = typeName.substring(0, p);
-        char[][] chars = CharOperation.splitOn('.', cupName.toCharArray());
-        if (lookupEnvironment.getType(chars) != null) {
-          // outer class was found
-          chars = CharOperation.splitOn('.', typeName.toCharArray());
-          type = lookupEnvironment.getCachedType(chars);
-          if (type == null) {
-            // no inner type; this is a pure failure
-            return null;
-          }
-        }
-      } else {
-        // just resolve the type straight out
-        char[][] chars = CharOperation.splitOn('.', typeName.toCharArray());
-        type = lookupEnvironment.getType(chars);
-      }
-
-      if (type != null) {
-        // found it
-        return type;
-      }
-
-      // Assume that the last '.' should be '$' and try again.
-      //
-      p = typeName.lastIndexOf('.');
-      if (p >= 0) {
-        typeName = typeName.substring(0, p) + "$" + typeName.substring(p + 1);
-        return resolvePossiblyNestedType(typeName);
-      }
-
-      return null;
+      return JdtCompiler.resolveType(lookupEnvironment, typeName);
     }
   }
 

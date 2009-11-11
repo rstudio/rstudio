@@ -16,8 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.javac.CompilationUnit.State;
-import com.google.gwt.dev.javac.StandardGeneratorContext.Generated;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.javac.impl.MockResource;
@@ -42,56 +40,6 @@ import java.util.Map.Entry;
  * that goes with it (compilation units, type oracle, resources, ...).
  */
 public abstract class CompilationStateTestBase extends TestCase {
-
-  public static class GeneratedSourceFileCompilationUnit extends
-      CompilationUnit implements Generated {
-
-    private final GeneratedUnit generatedUnit;
-
-    public GeneratedSourceFileCompilationUnit(GeneratedUnit generatedUnit) {
-      this.generatedUnit = generatedUnit;
-    }
-
-    public void abort() {
-    }
-
-    public void commit() {
-    }
-
-    @Override
-    public String getDisplayLocation() {
-      return generatedUnit.optionalFileLocation();
-    }
-
-    @Override
-    public long getLastModified() {
-      return generatedUnit.creationTime();
-    }
-
-    @Override
-    public String getSource() {
-      return generatedUnit.getSource();
-    }
-
-    public String getStrongHash() {
-      return generatedUnit.getStrongHash();
-    }
-
-    @Override
-    public String getTypeName() {
-      return generatedUnit.getTypeName();
-    }
-
-    @Override
-    public boolean isGenerated() {
-      return true;
-    }
-
-    @Override
-    public boolean isSuperSource() {
-      return false;
-    }
-  }
 
   /**
    * Tweak this if you want to see the log output.
@@ -137,29 +85,31 @@ public abstract class CompilationStateTestBase extends TestCase {
 
   static void assertUnitsChecked(Collection<CompilationUnit> units) {
     for (CompilationUnit unit : units) {
-      assertSame(State.CHECKED, unit.getState());
+      assertTrue(unit.isCompiled());
       assertFalse(unit.isError());
       assertTrue(unit.getCompiledClasses().size() > 0);
     }
   }
 
+  /**
+   * Ensure a clean cache at the beginning of every test run!
+   */
+  protected CompilationStateBuilder isolatedBuilder = new CompilationStateBuilder();
+
   protected MockResourceOracle oracle = new MockResourceOracle(
       JavaResourceBase.getStandardResources());
 
-  protected CompilationState state = new CompilationState(createTreeLogger(),
-      oracle);
+  protected CompilationState state = isolatedBuilder.doBuildFrom(
+      createTreeLogger(), oracle.getResources());
 
   protected void addGeneratedUnits(MockJavaResource... sourceFiles) {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    Set<GeneratedUnit> generatedUnits = getGeneratedUnits(sourceFiles);
-    for (GeneratedUnit generatedUnit : generatedUnits) {
-      units.add(new GeneratedSourceFileCompilationUnit(generatedUnit));
-    }
-    state.addGeneratedCompilationUnits(createTreeLogger(), units);
+    state.addGeneratedCompilationUnits(createTreeLogger(),
+        getGeneratedUnits(sourceFiles));
   }
 
   protected void rebuildCompilationState() {
-    state.refresh(createTreeLogger());
+    state = isolatedBuilder.doBuildFrom(createTreeLogger(),
+        oracle.getResources());
   }
 
   protected void validateCompilationState(String... generatedTypeNames) {

@@ -22,7 +22,6 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
-import com.google.gwt.dev.javac.JdtCompiler.CompilationUnitAdapter;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.Memory;

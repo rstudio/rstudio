@@ -17,11 +17,16 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.resource.Resource;
 
+import org.eclipse.jdt.core.compiler.CategorizedProblem;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A compilation unit that was generated.
  */
-public class SourceFileCompilationUnit extends CompilationUnit {
+class SourceFileCompilationUnit extends CompilationUnitImpl {
 
   /**
    * A token to retrieve this object's bytes from the disk cache. It's generally
@@ -30,10 +35,17 @@ public class SourceFileCompilationUnit extends CompilationUnit {
    */
   private long cacheToken = -1;
 
-  private Resource sourceFile;
+  private final Resource sourceFile;
 
-  public SourceFileCompilationUnit(Resource sourceFile) {
+  private final ContentId contentId;
+
+  public SourceFileCompilationUnit(Resource sourceFile, ContentId contentId,
+      List<CompiledClass> compiledClasses, Set<ContentId> dependencies,
+      Collection<? extends JsniMethod> jsniMethods,
+      CategorizedProblem[] problems) {
+    super(compiledClasses, dependencies, jsniMethods, problems);
     this.sourceFile = sourceFile;
+    this.contentId = contentId;
   }
 
   @Override
@@ -74,5 +86,10 @@ public class SourceFileCompilationUnit extends CompilationUnit {
   @Override
   public boolean isSuperSource() {
     return sourceFile.wasRerooted();
+  }
+
+  @Override
+  ContentId getContentId() {
+    return contentId;
   }
 }

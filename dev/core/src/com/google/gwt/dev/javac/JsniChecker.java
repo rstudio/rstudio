@@ -16,14 +16,21 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.client.UnsafeNativeLong;
-import com.google.gwt.dev.jdt.FindJsniRefVisitor;
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.js.ast.JsContext;
+import com.google.gwt.dev.js.ast.JsExpression;
+import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.JsniRef;
+import com.google.gwt.dev.util.collect.Sets;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
+import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.ArrayInitializer;
@@ -38,16 +45,12 @@ import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
-import org.eclipse.jdt.internal.compiler.lookup.ProblemReasons;
 import org.eclipse.jdt.internal.compiler.lookup.ProblemReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
-import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
+import org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -62,13 +65,25 @@ import java.util.Set;
  * All tests also apply for arrays of longs, arrays of arrays of longs, etc.
  */
 public class JsniChecker {
-  private class CheckingVisitor extends ASTVisitor implements
+
+  /**
+   * A call-back interface to resolve types.
+   */
+  public interface TypeResolver {
+    ReferenceBinding resolveType(String typeName);
+  }
+
+  private class JsniDeclChecker extends ASTVisitor implements
       ClassFileConstants {
     @Override
     public void endVisit(MethodDeclaration meth, ClassScope scope) {
-      if (meth.isNative() && !hasUnsafeLongsAnnotation(meth, scope)) {
-        checkDecl(meth, scope);
-        checkRefs(meth, scope);
+      if (meth.isNative()) {
+        boolean hasUnsafeLongsAnnotation = hasUnsafeLongsAnnotation(meth, scope);
+        if (!hasUnsafeLongsAnnotation) {
+          checkDecl(meth, scope);
+        }
+        JsniMethod jsniMethod = jsniMethods.get(meth);
+        new JsniRefChecker(meth, hasUnsafeLongsAnnotation).check(jsniMethod.function());
       }
     }
 
@@ -90,33 +105,89 @@ public class JsniChecker {
       }
     }
 
-    private void checkFieldRef(ReferenceBinding clazz, JsniRef jsniRef,
-        Set<String> errors, Map<String, Set<String>> warnings) {
+    private boolean containsLong(final TypeReference type, ClassScope scope) {
+      return type != null
+          && JsniChecker.this.containsLong(type.resolveType(scope));
+    }
+
+    private String typeString(TypeReference type) {
+      return type.toString();
+    }
+  }
+
+  private class JsniRefChecker extends JsVisitor {
+
+    private transient SourceInfo errorInfo;
+    private final boolean hasUnsafeLongsAnnotation;
+    private final MethodDeclaration method;
+    private final Set<String> suppressWarnings;
+
+    public JsniRefChecker(MethodDeclaration method,
+        boolean hasUnsafeLongsAnnotation) {
+      this.method = method;
+      this.hasUnsafeLongsAnnotation = hasUnsafeLongsAnnotation;
+      this.suppressWarnings = getSuppressedWarnings(method);
+    }
+
+    public void check(JsFunction function) {
+      this.accept(function);
+    }
+
+    @Override
+    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+      this.errorInfo = x.getSourceInfo();
+      String ident = x.getIdent();
+      if (ident.charAt(0) == '@') {
+        JsniRef jsniRef = JsniRef.parse(ident);
+        if (jsniRef == null) {
+          emitError("Malformed JSNI identifier '" + ident + "'");
+        } else {
+          checkRef(jsniRef);
+        }
+      }
+      this.errorInfo = null;
+    }
+
+    private void checkFieldRef(ReferenceBinding clazz, JsniRef jsniRef) {
       assert jsniRef.isField();
+      if ("class".equals(jsniRef.memberName())) {
+        return;
+      }
       FieldBinding target = getField(clazz, jsniRef);
       if (target == null) {
         return;
       }
+      if (target.isDeprecated()) {
+        emitWarning("deprecation", "Referencing deprecated field '"
+            + jsniRef.className() + "." + jsniRef.memberName() + "'");
+      }
+
+      if (hasUnsafeLongsAnnotation) {
+        return;
+      }
       if (containsLong(target.type)) {
-        errors.add("Referencing field '" + jsniRef.className() + "."
+        emitError("Referencing field '" + jsniRef.className() + "."
             + jsniRef.memberName() + "': type '" + typeString(target.type)
             + "' is not safe to access in JSNI code");
       }
-      if (target.isDeprecated()) {
-        add(warnings, "deprecation", "Referencing deprecated field '"
-            + jsniRef.className() + "." + jsniRef.memberName() + "'");
-      }
     }
 
-    private void checkMethodRef(ReferenceBinding clazz, JsniRef jsniRef,
-        Set<String> errors, Map<String, Set<String>> warnings) {
+    private void checkMethodRef(ReferenceBinding clazz, JsniRef jsniRef) {
       assert jsniRef.isMethod();
       MethodBinding target = getMethod(clazz, jsniRef);
       if (target == null) {
         return;
       }
+      if (target.isDeprecated()) {
+        emitWarning("deprecation", "Referencing deprecated method '"
+            + jsniRef.className() + "." + jsniRef.memberName() + "'");
+      }
+
+      if (hasUnsafeLongsAnnotation) {
+        return;
+      }
       if (containsLong(target.returnType)) {
-        errors.add("Referencing method '" + jsniRef.className() + "."
+        emitError("Referencing method '" + jsniRef.className() + "."
             + jsniRef.memberName() + "': return type '"
             + typeString(target.returnType)
             + "' is not safe to access in JSNI code");
@@ -128,198 +199,89 @@ public class JsniChecker {
           ++i;
           if (containsLong(paramType)) {
             // It would be nice to print the parameter name, but how to find it?
-            errors.add("Parameter " + i + " of method '" + jsniRef.className()
+            emitError("Parameter " + i + " of method '" + jsniRef.className()
                 + "." + jsniRef.memberName() + "': type '"
                 + typeString(paramType)
                 + "' may not be passed out of JSNI code");
           }
         }
       }
-
-      if (target.isDeprecated()) {
-        add(warnings, "deprecation", "Referencing deprecated method '"
-            + jsniRef.className() + "." + jsniRef.memberName() + "'");
-      }
     }
 
-    private void checkRefs(MethodDeclaration meth, ClassScope scope) {
-      Map<String, Set<String>> errors = new LinkedHashMap<String, Set<String>>();
-
-      // first do a sloppy parse, for speed
-
-      FindJsniRefVisitor sloppyRefsVisitor = new FindJsniRefVisitor();
-      sloppyRefsVisitor.beSloppy();
-      meth.traverse(sloppyRefsVisitor, scope);
-
-      for (String jsniRefString : sloppyRefsVisitor.getJsniRefs()) {
-        JsniRef jsniRef = JsniRef.parse(jsniRefString);
-        Map<String, Set<String>> warnings = new LinkedHashMap<String, Set<String>>();
-
-        if (jsniRef != null) {
-          ReferenceBinding clazz = findClass(jsniRef);
-          if (looksLikeAnonymousClass(jsniRef)
-              || (clazz != null && clazz.isAnonymousType())) {
-            add(warnings, "deprecation", "Referencing class '"
-                + jsniRef.className()
-                + ": JSNI references to anonymous classes are deprecated");
-
-          } else if (clazz != null) {
-            if (clazz.isDeprecated()) {
-              add(warnings, "deprecation", "Referencing deprecated class '"
-                  + jsniRef.className() + "'");
-            }
-
-            Set<String> refErrors = new LinkedHashSet<String>();
-            if (jsniRef.isMethod()) {
-              checkMethodRef(clazz, jsniRef, refErrors, warnings);
-            } else {
-              checkFieldRef(clazz, jsniRef, refErrors, warnings);
-            }
-            if (!refErrors.isEmpty()) {
-              errors.put(jsniRefString, refErrors);
-            }
-          } else if (!jsniRef.className().equals("null")) {
-            /*
-             * TODO(scottb): re-enable this when we no longer get a bunch of
-             * false failures. Currently we can't resolve top level types (like
-             * boolean_Array_Rank_1_FieldSerializer), and we also don't resolve
-             * array and primitive refs, like @Z[]::class.
-             */
-            // GWTProblem.recordInCud(ProblemSeverities.Warning, meth, cud,
-            // "Referencing class '" + jsniRef.className()
-            // + ": unable to resolve class, expect subsequent failures",
-            // null);
-          }
-        }
-
-        filterWarnings(meth, warnings);
-        for (Set<String> set : warnings.values()) {
-          for (String warning : set) {
-            GWTProblem.recordProblem(meth, cud.compilationResult(), warning,
-                null, ProblemSeverities.Warning);
-          }
-        }
-      }
-
-      if (!errors.isEmpty()) {
-        // do a strict parse to find out which JSNI refs are real
-        FindJsniRefVisitor jsniRefsVisitor = new FindJsniRefVisitor();
-        meth.traverse(jsniRefsVisitor, scope);
-        for (String jsniRefString : jsniRefsVisitor.getJsniRefs()) {
-          if (errors.containsKey(jsniRefString)) {
-            for (String err : errors.get(jsniRefString)) {
-              longAccessError(meth, err);
-            }
-          }
-        }
-      }
-    }
-
-    /**
-     * Check whether the argument type is the <code>long</code> primitive type.
-     * If the argument is <code>null</code>, returns <code>false</code>.
-     */
-    private boolean containsLong(TypeBinding type) {
-      if (type instanceof BaseTypeBinding) {
-        BaseTypeBinding btb = (BaseTypeBinding) type;
-        if (btb.id == TypeIds.T_long) {
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-    private boolean containsLong(final TypeReference returnType,
-        ClassScope scope) {
-      return returnType != null && containsLong(returnType.resolveType(scope));
-    }
-
-    /**
-     * Given a MethodDeclaration and a map of warnings, filter those warning
-     * messages that are keyed with a suppressed type.
-     */
-    private void filterWarnings(MethodDeclaration method,
-        Map<String, Set<String>> warnings) {
-      Annotation[] annotations = method.annotations;
-      if (annotations == null) {
+    private void checkRef(JsniRef jsniRef) {
+      String className = jsniRef.className();
+      if ("null".equals(className)) {
         return;
       }
 
-      for (Annotation a : annotations) {
-        if (SuppressWarnings.class.getName().equals(
-            CharOperation.toString(((ReferenceBinding) a.resolvedType).compoundName))) {
-          for (MemberValuePair pair : a.memberValuePairs()) {
-            if (String.valueOf(pair.name).equals("value")) {
-              String[] values;
-              Expression valueExpr = pair.value;
+      boolean isArray = false;
+      while (className.endsWith("[]")) {
+        isArray = true;
+        className = className.substring(0, className.length() - 2);
+      }
 
-              if (valueExpr instanceof StringLiteral) {
-                // @SuppressWarnings("Foo")
-                values = new String[] {((StringLiteral) valueExpr).constant.stringValue()};
+      /*
+       * TODO(bobv): OMG WTF LOL. Okay, but seriously, the LHS of a JSNI ref for
+       * a primitive type should be the keyword, e.g. "int.class".
+       */
+      ReferenceBinding clazz = findClass(className);
+      boolean isPrimitive = (clazz == null) && className.length() == 1
+          && "ZBCDFIJSV".indexOf(className.charAt(0)) >= 0;
 
-              } else if (valueExpr instanceof ArrayInitializer) {
-                // @SuppressWarnings({ "Foo", "Bar"})
-                ArrayInitializer ai = (ArrayInitializer) valueExpr;
-                values = new String[ai.expressions.length];
-                for (int i = 0, j = values.length; i < j; i++) {
-                  values[i] = ((StringLiteral) ai.expressions[i]).constant.stringValue();
-                }
-              } else {
-                throw new InternalCompilerException(
-                    "Unable to analyze SuppressWarnings annotation");
-              }
-
-              for (String value : values) {
-                for (Iterator<String> it = warnings.keySet().iterator(); it.hasNext();) {
-                  if (it.next().toLowerCase().equals(value.toLowerCase())) {
-                    it.remove();
-                  }
-                }
-              }
-              return;
-            }
-          }
+      if (isArray || isPrimitive) {
+        if (!jsniRef.isField() || !jsniRef.memberName().equals("class")) {
+          emitError("Referencing member '" + jsniRef.className() + "."
+              + jsniRef.memberName()
+              + "': 'class' is the only legal reference for "
+              + (isArray ? "array" : "primitive") + " types");
+          return;
         }
+      }
+
+      if (isPrimitive) {
+        return;
+      }
+
+      // TODO(bobv): uncomment this.
+      // ReferenceBinding clazz = findClass(className);
+      if (looksLikeAnonymousClass(jsniRef)
+          || (clazz != null && clazz.isAnonymousType())) {
+        emitError("Referencing class '" + className
+            + ": JSNI references to anonymous classes are illegal");
+      } else if (clazz != null) {
+        if (clazz.isDeprecated()) {
+          emitWarning("deprecation", "Referencing deprecated class '"
+              + className + "'");
+        }
+
+        if (jsniRef.isMethod()) {
+          checkMethodRef(clazz, jsniRef);
+        } else {
+          checkFieldRef(clazz, jsniRef);
+        }
+      } else {
+        emitWarning("jsni", "Referencing class '" + className
+            + ": unable to resolve class, expect subsequent failures");
       }
     }
 
-    private ReferenceBinding findClass(JsniRef jsniRef) {
-      char[][] compoundName = getCompoundName(jsniRef);
-      TypeBinding binding = cud.scope.getType(compoundName, compoundName.length);
+    private void emitError(String msg) {
+      JsniCollector.reportJsniError(errorInfo, method, msg);
+    }
 
-      /*
-       * TODO(scottb): we cannot currently resolve top-level types; here's some
-       * experimental code that will let us do this.
-       */
-      // ReferenceBinding binding = cud.scope.environment().askForType(
-      // compoundName);
-      // while (binding == null && compoundName.length > 1) {
-      // int newLen = compoundName.length - 1;
-      // char[][] next = new char[newLen][];
-      // System.arraycopy(compoundName, 0, next, 0, newLen - 1);
-      // next[newLen - 1] = CharOperation.concat(compoundName[newLen - 1],
-      // compoundName[newLen], '$');
-      // compoundName = next;
-      // binding = cud.scope.environment().askForType(compoundName);
-      // }
-      if (binding instanceof ProblemReferenceBinding) {
-        ProblemReferenceBinding prb = (ProblemReferenceBinding) binding;
-        if (prb.problemId() == ProblemReasons.NotVisible) {
-          // It's just a visibility problem, so try drilling down manually
-          ReferenceBinding drilling = prb.closestReferenceMatch();
-          for (int i = prb.compoundName.length; i < compoundName.length; i++) {
-            drilling = drilling.getMemberType(compoundName[i]);
-          }
-          binding = drilling;
-        }
+    private void emitWarning(String category, String msg) {
+      if (suppressWarnings.contains(category)
+          || suppressWarnings.contains("all")) {
+        return;
       }
+      JsniCollector.reportJsniWarning(errorInfo, method, msg);
+    }
 
-      if (binding instanceof ReferenceBinding
-          && !(binding instanceof ProblemReferenceBinding)) {
-        return (ReferenceBinding) binding;
-      }
-      return null;
+    private ReferenceBinding findClass(String className) {
+      ReferenceBinding binding = typeResolver.resolveType(className);
+      assert !(binding instanceof ProblemReferenceBinding);
+      assert !(binding instanceof UnresolvedReferenceBinding);
+      return binding;
     }
 
     private char[][] getCompoundName(JsniRef jsniRef) {
@@ -336,45 +298,46 @@ public class JsniChecker {
 
     private MethodBinding getMethod(ReferenceBinding clazz, JsniRef jsniRef) {
       assert jsniRef.isMethod();
-      for (MethodBinding method : clazz.getMethods(jsniRef.memberName().toCharArray())) {
-        if (paramTypesMatch(method, jsniRef)) {
-          return method;
+      for (MethodBinding findMethod : clazz.getMethods(jsniRef.memberName().toCharArray())) {
+        if (paramTypesMatch(findMethod, jsniRef)) {
+          return findMethod;
         }
       }
       return null;
     }
 
-    private boolean hasUnsafeLongsAnnotation(MethodDeclaration meth,
-        ClassScope scope) {
-      if (meth.annotations != null) {
-        for (Annotation annot : meth.annotations) {
-          if (isUnsafeLongAnnotation(annot, scope)) {
-            return true;
-          }
-        }
+    private Set<String> getSuppressedWarnings(MethodDeclaration method) {
+      Annotation[] annotations = method.annotations;
+      if (annotations == null) {
+        return Sets.create();
       }
-      return false;
-    }
 
-    private boolean isUnsafeLongAnnotation(Annotation annot, ClassScope scope) {
-      if (annot.type != null) {
-        TypeBinding resolved = annot.type.resolveType(scope);
-        if (resolved != null) {
-          if (resolved instanceof ReferenceBinding) {
-            ReferenceBinding rb = (ReferenceBinding) resolved;
-            if (CharOperation.equals(rb.compoundName,
-                UNSAFE_LONG_ANNOTATION_CHARS)) {
-              return true;
+      for (Annotation a : annotations) {
+        if (SuppressWarnings.class.getName().equals(
+            CharOperation.toString(((ReferenceBinding) a.resolvedType).compoundName))) {
+          for (MemberValuePair pair : a.memberValuePairs()) {
+            if (String.valueOf(pair.name).equals("value")) {
+              Expression valueExpr = pair.value;
+              if (valueExpr instanceof StringLiteral) {
+                // @SuppressWarnings("Foo")
+                return Sets.create(((StringLiteral) valueExpr).constant.stringValue().toLowerCase());
+              } else if (valueExpr instanceof ArrayInitializer) {
+                // @SuppressWarnings({ "Foo", "Bar"})
+                ArrayInitializer ai = (ArrayInitializer) valueExpr;
+                String[] values = new String[ai.expressions.length];
+                for (int i = 0, j = values.length; i < j; i++) {
+                  values[i] = ((StringLiteral) ai.expressions[i]).constant.stringValue().toLowerCase();
+                }
+                return Sets.create(values);
+              } else {
+                throw new InternalCompilerException(
+                    "Unable to analyze SuppressWarnings annotation");
+              }
             }
           }
         }
       }
-      return false;
-    }
-
-    private void longAccessError(ASTNode node, String message) {
-      GWTProblem.recordError(node, cud, message, new InstalledHelpInfo(
-          "longJsniRestriction.html"));
+      return Sets.create();
     }
 
     private boolean looksLikeAnonymousClass(JsniRef jsniRef) {
@@ -400,10 +363,6 @@ public class JsniChecker {
     private String typeString(TypeBinding type) {
       return String.valueOf(type.shortReadableName());
     }
-
-    private String typeString(TypeReference type) {
-      return type.toString();
-    }
   }
 
   private static final char[][] UNSAFE_LONG_ANNOTATION_CHARS = CharOperation.splitOn(
@@ -414,30 +373,74 @@ public class JsniChecker {
    * {@link org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration}.
    * 
    */
-  public static void check(CompilationUnitDeclaration cud) {
-    JsniChecker checker = new JsniChecker(cud);
-    checker.check();
-  }
-
-  /**
-   * Adds an entry to a map of sets.
-   */
-  private static <K, V> void add(Map<K, Set<V>> map, K key, V value) {
-    Set<V> set = map.get(key);
-    if (set == null) {
-      set = new LinkedHashSet<V>();
-      map.put(key, set);
-    }
-    set.add(value);
+  public static void check(CompilationUnitDeclaration cud,
+      Map<AbstractMethodDeclaration, JsniMethod> jsniMethods,
+      TypeResolver typeResolver) {
+    new JsniChecker(cud, typeResolver, jsniMethods).check();
   }
 
   private final CompilationUnitDeclaration cud;
+  private final Map<AbstractMethodDeclaration, JsniMethod> jsniMethods;
+  private final TypeResolver typeResolver;
 
-  private JsniChecker(CompilationUnitDeclaration cud) {
+  private JsniChecker(CompilationUnitDeclaration cud,
+      TypeResolver typeResolver,
+      Map<AbstractMethodDeclaration, JsniMethod> jsniMethods) {
     this.cud = cud;
+    this.typeResolver = typeResolver;
+    this.jsniMethods = jsniMethods;
   }
 
   private void check() {
-    cud.traverse(new CheckingVisitor(), cud.scope);
+    // First check the declarations.
+    cud.traverse(new JsniDeclChecker(), cud.scope);
+  }
+
+  /**
+   * Check whether the argument type is the <code>long</code> primitive type.
+   * If the argument is <code>null</code>, returns <code>false</code>.
+   */
+  private boolean containsLong(TypeBinding type) {
+    if (type instanceof BaseTypeBinding) {
+      BaseTypeBinding btb = (BaseTypeBinding) type;
+      if (btb.id == TypeIds.T_long) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private boolean hasUnsafeLongsAnnotation(MethodDeclaration meth,
+      ClassScope scope) {
+    if (meth.annotations != null) {
+      for (Annotation annot : meth.annotations) {
+        if (isUnsafeLongAnnotation(annot, scope)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean isUnsafeLongAnnotation(Annotation annot, ClassScope scope) {
+    if (annot.type != null) {
+      TypeBinding resolved = annot.type.resolveType(scope);
+      if (resolved != null) {
+        if (resolved instanceof ReferenceBinding) {
+          ReferenceBinding rb = (ReferenceBinding) resolved;
+          if (CharOperation.equals(rb.compoundName,
+              UNSAFE_LONG_ANNOTATION_CHARS)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private void longAccessError(ASTNode node, String message) {
+    GWTProblem.recordError(node, cud, message, new InstalledHelpInfo(
+        "longJsniRestriction.html"));
   }
 }

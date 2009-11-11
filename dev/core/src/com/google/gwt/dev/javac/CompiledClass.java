@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Name.InternalName;
 
@@ -67,23 +66,16 @@ public final class CompiledClass {
   protected final CompiledClass enclosingClass;
   protected final String internalName;
   protected final boolean isLocal;
-  protected final CompilationUnit unit;
+  protected CompilationUnit unit;
 
   /**
    * A token to retrieve this object's bytes from the disk cache.
    */
   private final long cacheToken;
 
-  // The state below is transient.
   private transient NameEnvironmentAnswer nameEnvironmentAnswer;
-  private transient JRealClassType realClassType;
-  // Can be killed after parent is CHECKED.
-  private transient TypeDeclaration typeDeclaration;
 
-  CompiledClass(CompilationUnit unit, TypeDeclaration typeDeclaration,
-      CompiledClass enclosingClass) {
-    this.unit = unit;
-    this.typeDeclaration = typeDeclaration;
+  CompiledClass(TypeDeclaration typeDeclaration, CompiledClass enclosingClass) {
     this.enclosingClass = enclosingClass;
     SourceTypeBinding binding = typeDeclaration.binding;
     this.internalName = CharOperation.charToString(binding.constantPoolName());
@@ -142,13 +134,6 @@ public final class CompiledClass {
     return internalName;
   }
 
-  /**
-   * All checking is done, free up internal state.
-   */
-  void checked() {
-    this.typeDeclaration = null;
-  }
-
   NameEnvironmentAnswer getNameEnvironmentAnswer() {
     if (nameEnvironmentAnswer == null) {
       try {
@@ -162,30 +147,8 @@ public final class CompiledClass {
     return nameEnvironmentAnswer;
   }
 
-  JRealClassType getRealClassType() {
-    return realClassType;
-  }
-
-  TypeDeclaration getTypeDeclaration() {
-    return typeDeclaration;
-  }
-
-  void graveyard() {
-    if (realClassType != null) {
-      realClassType.invalidate();
-    }
-  }
-
-  void invalidate() {
-    nameEnvironmentAnswer = null;
-    typeDeclaration = null;
-    if (realClassType != null) {
-      realClassType.invalidate();
-      realClassType = null;
-    }
-  }
-
-  void setRealClassType(JRealClassType realClassType) {
-    this.realClassType = realClassType;
+  void initUnit(CompilationUnit unit) {
+    assert this.unit == null;
+    this.unit = unit;
   }
 }

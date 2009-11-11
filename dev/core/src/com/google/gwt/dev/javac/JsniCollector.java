@@ -15,9 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
-import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
@@ -26,24 +24,30 @@ import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.JsParserException.SourceDetail;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Name.InternalName;
+import com.google.gwt.dev.util.collect.IdentityHashMap;
+import com.google.gwt.dev.util.collect.IdentityMaps;
 
+import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
+import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
+import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
+import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
+import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 import org.eclipse.jdt.internal.compiler.util.Util;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Adapts compilation units containing JSNI-accessible code by rewriting the
@@ -65,42 +69,27 @@ public class JsniCollector {
   }
 
   private static final class JsniMethodImpl extends JsniMethod {
-    private JsFunction func;
-    private final int line;
-    private final String location;
+    private final JsFunction func;
     private final String name;
-    private final String[] paramNames;
-    private final JsProgram program;
-    private char[] source;
 
-    private JsniMethodImpl(String name, char[] source, String[] paramNames,
-        int line, String location, JsProgram program) {
+    public JsniMethodImpl(String name, JsFunction func) {
       this.name = name;
-      this.source = source;
-      this.paramNames = paramNames;
-      this.line = line;
-      this.location = location;
-      this.program = program;
+      this.func = func;
     }
 
     @Override
-    public JsFunction function(TreeLogger logger) {
-      if (func == null) {
-        func = parseAsAnonymousFunction(logger, program,
-            String.valueOf(source), paramNames, location, line);
-        source = null;
-      }
+    public JsFunction function() {
       return func;
     }
 
     @Override
     public int line() {
-      return line;
+      return func.getSourceInfo().getStartLine();
     }
 
     @Override
     public String location() {
-      return location;
+      return func.getSourceInfo().getFileName();
     }
 
     @Override
@@ -110,56 +99,22 @@ public class JsniCollector {
 
     @Override
     public String[] paramNames() {
-      return paramNames;
+      List<JsParameter> params = func.getParameters();
+      String[] result = new String[params.size()];
+      for (int i = 0; i < result.length; ++i) {
+        result[i] = params.get(i).getName().getIdent();
+      }
+      return result;
     }
 
     @Override
     public JsProgram program() {
-      return program;
+      return func.getScope().getProgram();
     }
 
     @Override
     public String toString() {
-      StringBuffer sb = new StringBuffer();
-      sb.append("function ");
-      sb.append(name);
-      sb.append('(');
-      boolean first = true;
-      for (String paramName : paramNames) {
-        if (first) {
-          first = false;
-        } else {
-          sb.append(", ");
-        }
-        sb.append(paramName);
-      }
-      sb.append(") {\n");
-      sb.append("  [...]");
-      sb.append("}\n");
-      return sb.toString();
-    }
-  }
-
-  /**
-   * Lazily grab source only for compilation units which actually contain native
-   * methods, then cache it.
-   * 
-   * TODO: parse JSNI <i>during</i> JDT's cycle to avoiding having to read from
-   * disk twice.
-   */
-  private static final class SourceCache {
-    private String source;
-    private final CompilationUnit unit;
-
-    public SourceCache(CompilationUnit unit) {
-      this.unit = unit;
-    }
-
-    public String get() {
-      if (source == null) {
-        source = unit.getSource();
-      }
-      return source;
+      return func.toString();
     }
   }
 
@@ -167,21 +122,27 @@ public class JsniCollector {
 
   public static final String JSNI_BLOCK_START = "/*-{";
 
-  public static void collectJsniMethods(TreeLogger logger,
-      Collection<CompilationUnit> units, JsProgram program) {
-    for (CompilationUnit unit : units) {
-      if (unit.getState() == State.COMPILED) {
-        String loc = unit.getDisplayLocation();
-        SourceCache sourceCache = new SourceCache(unit);
-        assert unit.getJsniMethods() == null;
-        List<JsniMethod> jsniMethods = new ArrayList<JsniMethod>();
-        for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-          jsniMethods.addAll(collectJsniMethods(logger, loc, sourceCache,
-              compiledClass, program));
-        }
-        unit.setJsniMethods(jsniMethods);
+  public static Map<AbstractMethodDeclaration, JsniMethod> collectJsniMethods(
+      final CompilationUnitDeclaration cud, final String source,
+      final JsProgram program) {
+    final Map<AbstractMethodDeclaration, JsniMethod> jsniMethods = new IdentityHashMap<AbstractMethodDeclaration, JsniMethod>();
+    cud.traverse(new ASTVisitor() {
+      @Override
+      public void endVisit(TypeDeclaration type, BlockScope scope) {
+        collectJsniMethods(cud, type, source, program, jsniMethods);
       }
-    }
+
+      @Override
+      public void endVisit(TypeDeclaration type, ClassScope scope) {
+        collectJsniMethods(cud, type, source, program, jsniMethods);
+      }
+
+      @Override
+      public void endVisit(TypeDeclaration type, CompilationUnitScope scope) {
+        collectJsniMethods(cud, type, source, program, jsniMethods);
+      }
+    }, cud.scope);
+    return IdentityMaps.normalizeUnmodifiable(jsniMethods);
   }
 
   public static JsFunction parseJsniFunction(AbstractMethodDeclaration method,
@@ -285,42 +246,41 @@ public class JsniCollector {
     reportJsniProblem(info, method, msg, ProblemSeverities.Warning);
   }
 
-  /**
-   * TODO: log real errors, replacing GenerateJavaScriptAST?
-   */
-  private static List<JsniMethod> collectJsniMethods(TreeLogger logger,
-      String loc, SourceCache sourceCache, CompiledClass compiledClass,
-      JsProgram program) {
-    TypeDeclaration typeDecl = compiledClass.getTypeDeclaration();
-    int[] lineEnds = typeDecl.compilationResult.getLineSeparatorPositions();
-    List<JsniMethod> jsniMethods = new ArrayList<JsniMethod>();
-    String enclosingType = InternalName.toBinaryName(compiledClass.getInternalName());
+  private static void collectJsniMethods(CompilationUnitDeclaration cud,
+      TypeDeclaration typeDecl, String source, JsProgram jsProgram,
+      Map<AbstractMethodDeclaration, JsniMethod> results) {
     AbstractMethodDeclaration[] methods = typeDecl.methods;
-    if (methods != null) {
-      for (AbstractMethodDeclaration method : methods) {
-        if (!method.isNative()) {
-          continue;
-        }
-        String source = sourceCache.get();
-        Interval interval = findJsniSource(source, method);
-        if (interval == null) {
-          String msg = "No JavaScript body found for native method '" + method
-              + "' in type '" + compiledClass.getSourceName() + "'";
-          logger.log(TreeLogger.ERROR, msg, null);
-          continue;
-        }
+    if (methods == null) {
+      return;
+    }
 
-        String js = source.substring(interval.start, interval.end);
-        int startLine = Util.getLineNumber(interval.start, lineEnds, 0,
-            lineEnds.length - 1);
+    // Lazy initialize these when a native method is actually hit.
+    String enclosingType = null;
+    String loc = null;
+    boolean lazyInitialized = false;
+
+    for (AbstractMethodDeclaration method : methods) {
+      if (!method.isNative()) {
+        continue;
+      }
+
+      if (!lazyInitialized) {
+        char[] constantPoolName = typeDecl.binding.constantPoolName();
+        if (constantPoolName == null) {
+          // Unreachable local type
+          return;
+        }
+        enclosingType = InternalName.toBinaryName(String.valueOf(constantPoolName));
+        loc = String.valueOf(cud.getFileName());
+        lazyInitialized = true;
+      }
+      JsFunction jsFunction = parseJsniFunction(method, source, enclosingType,
+          loc, jsProgram);
+      if (jsFunction != null) {
         String jsniSignature = getJsniSignature(enclosingType, method);
-        String[] paramNames = getParamNames(method);
-
-        jsniMethods.add(new JsniMethodImpl(jsniSignature, js.toCharArray(),
-            paramNames, startLine, loc, program));
+        results.put(method, new JsniMethodImpl(jsniSignature, jsFunction));
       }
     }
-    return jsniMethods;
   }
 
   /**
@@ -354,30 +314,6 @@ public class JsniCollector {
     int p1line = findLine(p1, indexes, 0, indexes.length);
     int p2line = findLine(p2, indexes, 0, indexes.length);
     return p2line - p1line;
-  }
-
-  private static Interval findJsniSource(String source,
-      AbstractMethodDeclaration method) {
-    assert (method.isNative());
-    int bodyStart = method.bodyStart;
-    int bodyEnd = method.bodyEnd;
-    String js = source.substring(bodyStart, bodyEnd + 1);
-
-    int jsniStart = js.indexOf(JSNI_BLOCK_START);
-    if (jsniStart == -1) {
-      return null;
-    }
-
-    int jsniEnd = js.indexOf(JSNI_BLOCK_END, jsniStart);
-    if (jsniEnd == -1) {
-      // Suspicious, but maybe this is just a weird comment, so let it slide.
-      //
-      return null;
-    }
-
-    int srcStart = bodyStart + jsniStart + JSNI_BLOCK_START.length();
-    int srcEnd = bodyStart + jsniEnd;
-    return new Interval(srcStart, srcEnd);
   }
 
   private static int findLine(int pos, int[] indexes, int lo, int tooHi) {
@@ -419,73 +355,6 @@ public class JsniCollector {
     }
     sb.append(")");
     return sb.toString();
-  }
-
-  private static String[] getParamNames(AbstractMethodDeclaration method) {
-    if (method.arguments != null) {
-      String[] paramNames = new String[method.arguments.length];
-      for (int i = 0; i < paramNames.length; ++i) {
-        paramNames[i] = String.valueOf(method.arguments[i].name);
-      }
-      return paramNames;
-    }
-    return Empty.STRINGS;
-  }
-
-  /**
-   * TODO: rip out problem reporting code from BuildTypeMap and attach errors to
-   * the compilation units.
-   */
-  private static JsFunction parseAsAnonymousFunction(TreeLogger logger,
-      JsProgram program, String js, String[] paramNames, String location,
-      int startLine) {
-
-    // Wrap the code in an anonymous function and parse it.
-    StringReader r;
-    {
-      StringBuilder sb = new StringBuilder();
-      sb.append("function (");
-      boolean first = true;
-      for (String paramName : paramNames) {
-        if (first) {
-          first = false;
-        } else {
-          sb.append(',');
-        }
-        sb.append(paramName);
-      }
-      sb.append(") {");
-      sb.append(js);
-      sb.append('}');
-      r = new StringReader(sb.toString());
-    }
-
-    try {
-      List<JsStatement> stmts = JsParser.parse(program.createSourceInfo(
-          startLine, location), program.getScope(), r);
-
-      return (JsFunction) ((JsExprStmt) stmts.get(0)).getExpression();
-    } catch (IOException e) {
-      // Should never happen.
-      throw new RuntimeException(e);
-    } catch (JsParserException e) {
-      SourceDetail dtl = e.getSourceDetail();
-      if (dtl != null) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(location);
-        sb.append("(");
-        sb.append(dtl.getLine());
-        sb.append(", ");
-        sb.append(dtl.getLineOffset());
-        sb.append("): ");
-        sb.append(e.getMessage());
-        logger.log(TreeLogger.ERROR, sb.toString(), e);
-        return null;
-      } else {
-        logger.log(TreeLogger.ERROR, "Error parsing JSNI source", e);
-        return null;
-      }
-    }
   }
 
   private static void reportJsniProblem(SourceInfo info,

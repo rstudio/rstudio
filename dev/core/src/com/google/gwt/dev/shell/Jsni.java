@@ -233,7 +233,7 @@ public class Jsni {
    */
   public static String getJavaScriptForHostedMode(TreeLogger logger,
       DispatchIdOracle dispatchInfo, JsniMethod jsniMethod) {
-    JsFunction func = jsniMethod.function(logger);
+    JsFunction func = jsniMethod.function();
     if (func == null) {
       return null;
     }

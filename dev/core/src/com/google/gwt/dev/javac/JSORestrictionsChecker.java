@@ -34,13 +34,8 @@ import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 
 /**
@@ -67,116 +62,19 @@ public class JSORestrictionsChecker {
    */
   public static class CheckerState {
 
-    /**
-     * This maps JSO implementation types to their implemented SingleJsoImpl
-     * interfaces.
-     */
-    private final Map<TypeDeclaration, Set<String>> jsoImplsToInterfaces = new HashMap<TypeDeclaration, Set<String>>();
+    private final Map<String, String> interfacesToJsoImpls = new HashMap<String, String>();
 
-    /**
-     * Used for error reporting.
-     */
-    private final Map<TypeDeclaration, CompilationUnitDeclaration> nodesToCuds = new IdentityHashMap<TypeDeclaration, CompilationUnitDeclaration>();
-
-    /**
-     * This method should be called after all CUDs are passed into check().
-     */
-    public void finalCheck() {
-      /*
-       * Ensure that every interfaces has exactly zero or one JSO subtype that
-       * implements it.
-       */
-      Map<String, TypeDeclaration> singleImplementations = new HashMap<String, TypeDeclaration>();
-      for (Map.Entry<TypeDeclaration, Set<String>> entry : jsoImplsToInterfaces.entrySet()) {
-        TypeDeclaration node = entry.getKey();
-        for (String intfName : entry.getValue()) {
-
-          if (!singleImplementations.containsKey(intfName)) {
-            singleImplementations.put(intfName, node);
-          } else {
-            /*
-             * Emit an error if the previously-defined type is neither a
-             * supertype nor subtype of the current type
-             */
-            TypeDeclaration previous = singleImplementations.get(intfName);
-            if (!(hasSupertypeNamed(node, previous.binding.compoundName) || hasSupertypeNamed(
-                previous, node.binding.compoundName))) {
-              String nodeName = CharOperation.toString(node.binding.compoundName);
-              String previousName = CharOperation.toString(previous.binding.compoundName);
-
-              // Provide consistent reporting, regardless of visitation order
-              if (nodeName.compareTo(previousName) < 0) {
-                String msg = errAlreadyImplemented(intfName, nodeName,
-                    previousName);
-                errorOn(node, nodesToCuds.get(node), msg);
-                errorOn(previous, nodesToCuds.get(previous), msg);
-              } else {
-                String msg = errAlreadyImplemented(intfName, previousName,
-                    nodeName);
-                errorOn(previous, nodesToCuds.get(previous), msg);
-                errorOn(node, nodesToCuds.get(node), msg);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    public void retainAll(Collection<CompilationUnit> units) {
-      // Fast-path for removing everything
-      if (units.isEmpty()) {
-        jsoImplsToInterfaces.clear();
-        nodesToCuds.clear();
-        return;
-      }
-
-      // Build up a list of the types that should be retained
-      Set<String> retainedTypeNames = new HashSet<String>();
-
-      for (CompilationUnit u : units) {
-        for (CompiledClass c : u.getCompiledClasses()) {
-          // Can't rely on getJdtCud() because those are pruned
-          retainedTypeNames.add(c.getSourceName());
-        }
-      }
-
-      // Loop over all TypeDeclarations that we have
-      for (Iterator<TypeDeclaration> it = nodesToCuds.keySet().iterator(); it.hasNext();) {
-        TypeDeclaration decl = it.next();
-
-        // Remove the TypeDeclaration if it's not in the list of retained types
-        if (!retainedTypeNames.contains(CharOperation.toString(decl.binding.compoundName))) {
-          it.remove();
-
-          jsoImplsToInterfaces.remove(decl);
-        }
-      }
-    }
-
-    private void add(Map<TypeDeclaration, Set<String>> map,
-        TypeDeclaration key, String value) {
-      Set<String> set = map.get(key);
-      if (set == null) {
-        map.put(key, set = new HashSet<String>());
-      }
-      set.add(value);
-    }
-
-    private void addJsoInterface(TypeDeclaration jsoType,
+    public void addJsoInterface(TypeDeclaration jsoType,
         CompilationUnitDeclaration cud, String interfaceName) {
-      nodesToCuds.put(jsoType, cud);
-      add(jsoImplsToInterfaces, jsoType, interfaceName);
-    }
-
-    private boolean hasSupertypeNamed(TypeDeclaration type, char[][] qType) {
-      ReferenceBinding b = type.binding;
-      while (b != null) {
-        if (CharOperation.equals(b.compoundName, qType)) {
-          return true;
-        }
-        b = b.superclass();
+      String alreadyImplementor = interfacesToJsoImpls.get(interfaceName);
+      String myName = CharOperation.toString(jsoType.binding.compoundName);
+      if (alreadyImplementor == null) {
+        interfacesToJsoImpls.put(interfaceName, myName);
+      } else {
+        String msg = errAlreadyImplemented(interfaceName, alreadyImplementor,
+            myName);
+        errorOn(jsoType, cud, msg);
       }
-      return false;
     }
   }
 
@@ -290,8 +188,13 @@ public class JSORestrictionsChecker {
           }
 
           if (interf.methods().length > 0) {
-            String intfName = CharOperation.toString(interf.compoundName);
-            state.addJsoInterface(type, cud, intfName);
+            // See if any of my superTypes implement it.
+            ReferenceBinding superclass = type.binding.superclass();
+            if (superclass == null
+                || !superclass.implementsInterface(interf, true)) {
+              String intfName = CharOperation.toString(interf.compoundName);
+              state.addJsoInterface(type, cud, intfName);
+            }
           }
         }
       }

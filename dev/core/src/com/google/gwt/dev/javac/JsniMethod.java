@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
 
@@ -27,7 +26,7 @@ public abstract class JsniMethod {
    * If non-null, an anonymous function containing the parameters and body of
    * this JSNI method.
    */
-  public abstract JsFunction function(TreeLogger logger);
+  public abstract JsFunction function();
 
   /**
    * Starting line number of the method.

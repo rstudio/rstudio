@@ -273,13 +273,6 @@ public class JRealClassType extends JClassType {
     return superclass;
   }
 
-  /**
-   * TODO: solve this better.
-   */
-  public void invalidate() {
-    oracle.invalidate(this);
-  }
-
   @Override
   public boolean isAbstract() {
     return 0 != (modifierBits & TypeOracle.MOD_ABSTRACT);
@@ -417,13 +410,6 @@ public class JRealClassType extends JClassType {
   @Override
   public JWildcardType isWildcard() {
     return null;
-  }
-
-  /**
-   * TODO: solve this better.
-   */
-  public void resurrect() {
-    oracle.resurrect(this);
   }
 
   /**

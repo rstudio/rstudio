@@ -288,14 +288,16 @@ public class Precompile {
   private static class DistillerRebindPermutationOracle implements
       RebindPermutationOracle {
 
-    private StandardGeneratorContext generatorContext;
-    private Permutation[] permutations;
-    private StaticPropertyOracle[] propertyOracles;
-    private RebindOracle[] rebindOracles;
+    private final CompilationState compilationState;
+    private final StandardGeneratorContext generatorContext;
+    private final Permutation[] permutations;
+    private final StaticPropertyOracle[] propertyOracles;
+    private final RebindOracle[] rebindOracles;
 
     public DistillerRebindPermutationOracle(ModuleDef module,
         CompilationState compilationState, ArtifactSet generatorArtifacts,
         PropertyPermutations perms, File genDir, File generatorResourcesDir) {
+      this.compilationState = compilationState;
       permutations = new Permutation[perms.size()];
       propertyOracles = new StaticPropertyOracle[perms.size()];
       rebindOracles = new RebindOracle[perms.size()];
@@ -331,6 +333,10 @@ public class Precompile {
         permutations[i].putRebindAnswer(requestTypeName, resultTypeName);
       }
       return Util.toArray(String.class, answers);
+    }
+
+    public CompilationState getCompilationState() {
+      return compilationState;
     }
 
     public StandardGeneratorContext getGeneratorContext() {
@@ -439,8 +445,8 @@ public class Precompile {
       CompilationState compilationState = module.getCompilationState(logger);
       if (dumpSignatureFile != null) {
         // Dump early to avoid generated types.
-        SignatureDumper.dumpSignatures(logger, module.getTypeOracle(logger),
-            dumpSignatureFile);
+        SignatureDumper.dumpSignatures(logger,
+            compilationState.getTypeOracle(), dumpSignatureFile);
       }
 
       String[] declEntryPts = module.getEntryPointTypeNames();
@@ -460,6 +466,11 @@ public class Precompile {
           module, compilationState, generatorArtifacts,
           new PropertyPermutations(module.getProperties()), genDir,
           generatorResourcesDir);
+      if (dumpSignatureFile != null) {
+        // Dump early to avoid generated types.
+        SignatureDumper.dumpSignatures(logger,
+            compilationState.getTypeOracle(), dumpSignatureFile);
+      }
       // Never optimize on a validation run.
       jjsOptions.setOptimizePrecompile(false);
       getCompiler(module).precompile(logger, module, rpo, declEntryPts,
@@ -480,8 +491,8 @@ public class Precompile {
       CompilationState compilationState = module.getCompilationState(logger);
       if (dumpSignatureFile != null) {
         // Dump early to avoid generated types.
-        SignatureDumper.dumpSignatures(logger, module.getTypeOracle(logger),
-            dumpSignatureFile);
+        SignatureDumper.dumpSignatures(logger,
+            compilationState.getTypeOracle(), dumpSignatureFile);
       }
 
       String[] declEntryPts = module.getEntryPointTypeNames();
@@ -599,9 +610,6 @@ public class Precompile {
             "Precompilation (minimal) succeeded, number of permutations: "
                 + numPermutations);
       } else {
-        // TODO: All JDT checks now before even building TypeOracle?
-        module.getCompilationState(logger);
-
         if (options.isValidateOnly()) {
           TreeLogger branch = logger.branch(TreeLogger.INFO,
               "Validating compilation " + module.getName());

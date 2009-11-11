@@ -17,6 +17,7 @@ package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 
 /**
@@ -32,7 +33,12 @@ public interface RebindPermutationOracle {
       throws UnableToCompleteException;
 
   /**
-   * Returns the global StandardGeneratorContext.
+   * Returns the CompilationState.
+   */
+  CompilationState getCompilationState();
+
+  /**
+   * Returns the StandardGeneratorContext.
    */
   StandardGeneratorContext getGeneratorContext();
 }

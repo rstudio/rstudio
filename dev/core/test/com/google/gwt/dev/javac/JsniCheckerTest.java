@@ -36,8 +36,8 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("  }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 7, "Referencing class \'Buggy$1: "
-        + "JSNI references to anonymous classes are deprecated");
+    shouldGenerateError(code, 8, "Referencing class \'Buggy$1: "
+        + "JSNI references to anonymous classes are illegal");
   }
 
   /**
@@ -58,8 +58,8 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("  }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 9, "Referencing class \'Buggy$1.A: "
-        + "JSNI references to anonymous classes are deprecated");
+    shouldGenerateError(code, 10, "Referencing class \'Buggy$1.A: "
+        + "JSNI references to anonymous classes are illegal");
   }
 
   public void testCyclicReferences() {
@@ -80,7 +80,7 @@ public class JsniCheckerTest extends CheckerTestCase {
       extra.append("  }-*/;\n");
       extra.append("}\n");
 
-      shouldGenerateError(buggy, extra, 3, "Referencing field 'Extra.along': "
+      shouldGenerateError(buggy, extra, 4, "Referencing field 'Extra.along': "
           + "type 'long' is not safe to access in JSNI code");
     }
 
@@ -103,7 +103,7 @@ public class JsniCheckerTest extends CheckerTestCase {
       extra.append("  }-*/;\n");
       extra.append("}\n");
 
-      shouldGenerateError(buggy, extra, 4, "Referencing field 'Extra.along': "
+      shouldGenerateError(buggy, extra, 5, "Referencing field 'Extra.along': "
           + "type 'long' is not safe to access in JSNI code");
     }
   }
@@ -117,7 +117,7 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("  }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 3, "Referencing deprecated field 'Buggy.bar'");
+    shouldGenerateWarning(code, 4, "Referencing deprecated field 'Buggy.bar'");
   }
 
   public void testDeprecationMethod() {
@@ -129,7 +129,7 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("  }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 3, "Referencing deprecated method 'Buggy.foo'");
+    shouldGenerateWarning(code, 4, "Referencing deprecated method 'Buggy.foo'");
   }
 
   public void testDeprecationSuppression() {
@@ -168,7 +168,7 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("  }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 5, "Referencing deprecated class 'D'");
+    shouldGenerateWarning(code, 6, "Referencing deprecated class 'D'");
   }
 
   public void testFieldAccess() {
@@ -179,7 +179,7 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("  $wnd.alert(\"x is: \"+this.@Buggy::x); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateError(code, 3,
+    shouldGenerateError(code, 4,
         "Referencing field 'Buggy.x': type 'long' is not safe to access in JSNI code");
   }
 
@@ -194,7 +194,7 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("  }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateError(code, 5, "Referencing field 'Buggy.Inner.x': "
+    shouldGenerateError(code, 6, "Referencing field 'Buggy.Inner.x': "
         + "type 'long' is not safe to access in JSNI code");
   }
 
@@ -209,7 +209,7 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("  }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateError(code, 5, "Referencing field 'Buggy$Inner.x': "
+    shouldGenerateError(code, 6, "Referencing field 'Buggy$Inner.x': "
         + "type 'long' is not safe to access in JSNI code");
   }
 
@@ -272,7 +272,7 @@ public class JsniCheckerTest extends CheckerTestCase {
 
     shouldGenerateError(
         code,
-        3,
+        4,
         "Referencing method 'Buggy.m': return type 'long' is not safe to access in JSNI code");
   }
 
@@ -321,7 +321,7 @@ public class JsniCheckerTest extends CheckerTestCase {
 
     shouldGenerateError(
         code,
-        4,
+        5,
         "Referencing method 'Buggy.m': return type 'long' is not safe to access in JSNI code");
   }
 
@@ -389,7 +389,7 @@ public class JsniCheckerTest extends CheckerTestCase {
       shouldGenerateError(
           buggy,
           extra,
-          2,
+          3,
           "Referencing field 'Extra.Inner.x': type 'long' is not safe to access in JSNI code");
     }
   }

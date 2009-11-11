@@ -110,6 +110,11 @@ public class Shared {
     return (pos < 0) ? qualifiedTypeName : qualifiedTypeName.substring(pos + 1);
   }
 
+  public static String getSlashedPackageFrom(String internalName) {
+    int pos = internalName.lastIndexOf('/');
+    return (pos < 0) ? "" : internalName.substring(0, pos);
+  }
+
   public static String getTypeName(Resource sourceFile) {
     String path = sourceFile.getPath();
     assert (path.endsWith(".java"));
@@ -143,6 +148,11 @@ public class Shared {
   public static String readSource(Resource sourceFile) {
     InputStream contents = sourceFile.openContents();
     return Util.readStreamAsString(contents);
+  }
+
+  public static String toInternalName(String path) {
+    assert (path.endsWith(".java"));
+    return path.substring(0, path.lastIndexOf('.'));
   }
 
   public static String toPath(String qualifiedTypeName) {

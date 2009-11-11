@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.resource.impl.DefaultFilters;
@@ -79,8 +80,6 @@ public class ModuleDef implements PublicOracle {
   private final List<String> entryPointTypeNames = new ArrayList<String>();
 
   private final Set<File> gwtXmlFiles = new HashSet<File>();
-
-  private CompilationState lazyCompilationState;
 
   private ResourceOracleImpl lazyPublicOracle;
 
@@ -179,15 +178,12 @@ public class ModuleDef implements PublicOracle {
 
   /**
    * Free up memory no longer needed in later compile stages. After calling this
-   * method, the TypeOracle, ResourceOracle, and CompilationState will be empty
-   * and unusable. Calling {@link #refresh(TreeLogger)} will restore them.
+   * method, the ResourceOraclewill be empty and unusable. Calling
+   * {@link #refresh(TreeLogger)} will restore them.
    */
   public void clear() {
     if (lazySourceOracle != null) {
       lazySourceOracle.clear();
-    }
-    if (lazyCompilationState != null) {
-      lazyCompilationState.clear();
     }
     rules.dispose();
   }
@@ -281,11 +277,10 @@ public class ModuleDef implements PublicOracle {
 
   public synchronized CompilationState getCompilationState(TreeLogger logger)
       throws UnableToCompleteException {
-    if (lazyCompilationState == null) {
-      lazyCompilationState = new CompilationState(logger, lazySourceOracle);
-      checkForSeedTypes(logger);
-    }
-    return lazyCompilationState;
+    CompilationState compilationState = CompilationStateBuilder.buildFrom(
+        logger, lazySourceOracle.getResources());
+    checkForSeedTypes(logger, compilationState);
+    return compilationState;
   }
 
   public synchronized String[] getEntryPointTypeNames() {
@@ -356,11 +351,6 @@ public class ModuleDef implements PublicOracle {
     return styles;
   }
 
-  public synchronized TypeOracle getTypeOracle(TreeLogger logger)
-      throws UnableToCompleteException {
-    return getCompilationState(logger).getTypeOracle();
-  }
-
   public boolean isGwtXmlFileStale() {
     return lastModified() > moduleDefCreationTime;
   }
@@ -387,8 +377,7 @@ public class ModuleDef implements PublicOracle {
     servletClassNamesByPath.put(path, servletClassName);
   }
 
-  public synchronized void refresh(TreeLogger logger)
-      throws UnableToCompleteException {
+  public synchronized void refresh(TreeLogger logger) {
     PerfLogger.start("ModuleDef.refresh");
     logger = logger.branch(TreeLogger.DEBUG, "Refreshing module '" + getName()
         + "'");
@@ -399,12 +388,6 @@ public class ModuleDef implements PublicOracle {
 
     if (lazyResourcesOracle != null) {
       lazyResourcesOracle.refresh(logger);
-    }
-
-    // Update the compilation state to reflect the resource oracle changes.
-    if (lazyCompilationState != null) {
-      lazyCompilationState.refresh(logger);
-      checkForSeedTypes(logger);
     }
     PerfLogger.end();
   }
@@ -481,11 +464,11 @@ public class ModuleDef implements PublicOracle {
     PerfLogger.end();
   }
 
-  private void checkForSeedTypes(TreeLogger logger)
-      throws UnableToCompleteException {
+  private void checkForSeedTypes(TreeLogger logger,
+      CompilationState compilationState) throws UnableToCompleteException {
     // Sanity check the seed types and don't even start it they're missing.
     boolean seedTypesMissing = false;
-    TypeOracle typeOracle = lazyCompilationState.getTypeOracle();
+    TypeOracle typeOracle = compilationState.getTypeOracle();
     if (typeOracle.findType("java.lang.Object") == null) {
       Util.logMissingTypeErrorWithHints(logger, "java.lang.Object");
       seedTypesMissing = true;

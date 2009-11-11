@@ -19,30 +19,17 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.commons.EmptyVisitor;
-import com.google.gwt.dev.jdt.TypeRefVisitor;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashMap;
-import com.google.gwt.dev.util.collect.HashSet;
-import com.google.gwt.dev.util.collect.IdentityHashMap;
-import com.google.gwt.dev.util.collect.Lists;
-import com.google.gwt.dev.util.collect.Sets;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
-import org.eclipse.jdt.internal.compiler.ASTVisitor;
-import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.Expression;
-import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
-import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
-import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
-import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
-import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
-import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -179,88 +166,6 @@ public abstract class CompilationUnit {
       return null;
     }
   }
-  /**
-   * Tracks the state of a compilation unit through the compile and recompile
-   * process.
-   */
-  enum State {
-    /**
-     * All internal state is cleared; the unit's source has not yet been
-     * compiled by JDT.
-     */
-    FRESH,
-    /**
-     * In this intermediate state, the unit's source has been compiled by JDT.
-     * The unit will contain a set of CompiledClasses.
-     */
-    COMPILED,
-    /**
-     * In this final state, the unit was compiled, but contained one or more
-     * errors. Those errors are cached inside the unit, but all other internal
-     * state is cleared.
-     */
-    ERROR,
-    /**
-     * In this final state, the unit has been compiled and is error free.
-     * Additionally, all other units this unit depends on (transitively) are
-     * also error free. The unit contains a set of checked CompiledClasses. The
-     * unit and each contained CompiledClass releases all references to the JDT
-     * AST. Each class contains a reference to a valid JRealClassType, which has
-     * been added to the module's TypeOracle, as well as byte code, JSNI
-     * methods, and all other final state.
-     */
-    CHECKED,
-    /**
-     * A CHECKED generated unit enters this state at the start of a refresh. If
-     * a generator generates the same unit with identical source, the unit is
-     * immediately promoted to CHECKED, bypassing costly compilation,
-     * validation, and TypeOracle building.
-     */
-    GRAVEYARD,
-  }
-
-  private class FindTypesInCud extends ASTVisitor {
-    Map<SourceTypeBinding, CompiledClass> map = new IdentityHashMap<SourceTypeBinding, CompiledClass>();
-
-    public Set<CompiledClass> getClasses() {
-      return new HashSet<CompiledClass>(map.values());
-    }
-
-    @Override
-    public boolean visit(TypeDeclaration typeDecl, BlockScope scope) {
-      CompiledClass enclosingClass = map.get(typeDecl.binding.enclosingType());
-      assert (enclosingClass != null);
-      /*
-       * Weird case: if JDT determines that this local class is totally
-       * uninstantiable, it won't bother allocating a local name.
-       */
-      if (typeDecl.binding.constantPoolName() != null) {
-        CompiledClass newClass = new CompiledClass(CompilationUnit.this,
-            typeDecl, enclosingClass);
-        map.put(typeDecl.binding, newClass);
-      }
-      return true;
-    }
-
-    @Override
-    public boolean visit(TypeDeclaration typeDecl, ClassScope scope) {
-      CompiledClass enclosingClass = map.get(typeDecl.binding.enclosingType());
-      assert (enclosingClass != null);
-      CompiledClass newClass = new CompiledClass(CompilationUnit.this,
-          typeDecl, enclosingClass);
-      map.put(typeDecl.binding, newClass);
-      return true;
-    }
-
-    @Override
-    public boolean visit(TypeDeclaration typeDecl, CompilationUnitScope scope) {
-      assert (typeDecl.binding.enclosingType() == null);
-      CompiledClass newClass = new CompiledClass(CompilationUnit.this,
-          typeDecl, null);
-      map.put(typeDecl.binding, newClass);
-      return true;
-    }
-  }
 
   protected static final DiskCache diskCache = new DiskCache();
 
@@ -281,30 +186,9 @@ public abstract class CompilationUnit {
    * @return true iff class or any of its enclosing classes are anonymous or
    *         synthetic.
    */
+  @Deprecated
   public static boolean isClassnameGenerated(String className) {
     return GENERATED_CLASSNAME_PATTERN.matcher(className).matches();
-  }
-
-  private static Set<String> computeFileNameRefs(CompilationUnitDeclaration cud) {
-    final Set<String> result = new HashSet<String>();
-    cud.traverse(new TypeRefVisitor(cud) {
-      @Override
-      protected void onBinaryTypeRef(BinaryTypeBinding referencedType,
-          CompilationUnitDeclaration unitOfReferrer, Expression expression) {
-        String fileName = String.valueOf(referencedType.getFileName());
-        if (fileName.endsWith(".java")) {
-          result.add(fileName);
-        }
-      }
-
-      @Override
-      protected void onTypeRef(SourceTypeBinding referencedType,
-          CompilationUnitDeclaration unitOfReferrer) {
-        // Map the referenced type to the target compilation unit file.
-        result.add(String.valueOf(referencedType.getFileName()));
-      }
-    }, cud.scope);
-    return Sets.normalize(result);
   }
 
   /**
@@ -312,14 +196,9 @@ public abstract class CompilationUnit {
    * the part of className after the compilation unit name. Emma-specific.
    */
   private Map<String, String> anonymousClassMap = null;
-  private CompilationUnitDeclaration cud;
-  private CategorizedProblem[] errors;
-  private Set<CompiledClass> exposedCompiledClasses;
-  private Set<String> fileNameRefs;
-  private List<JsniMethod> jsniMethods = null;
-  private State state = State.FRESH;
 
-  public boolean constructAnonymousClassMappings(TreeLogger logger) {
+  @Deprecated
+  public final boolean constructAnonymousClassMappings(TreeLogger logger) {
     /*
      * Check if the unit has one or more classes with generated names. 'javac'
      * below refers to the compiler that was used to compile the java files on
@@ -346,7 +225,8 @@ public abstract class CompilationUnit {
     return true;
   }
 
-  public boolean createdClassMapping() {
+  @Deprecated
+  public final boolean createdClassMapping() {
     return anonymousClassMap != null;
   }
 
@@ -358,7 +238,8 @@ public abstract class CompilationUnit {
     return super.equals(obj);
   }
 
-  public Map<String, String> getAnonymousClassMap() {
+  @Deprecated
+  public final Map<String, String> getAnonymousClassMap() {
     /*
      * Return an empty map so that class-rewriter does not need to check for
      * null. A null value indicates that anonymousClassMap was never created
@@ -377,13 +258,7 @@ public abstract class CompilationUnit {
    */
   public abstract String getDisplayLocation();
 
-  public boolean getJsniInjected() {
-    return jsniMethods != null;
-  }
-
-  public List<JsniMethod> getJsniMethods() {
-    return jsniMethods;
-  }
+  public abstract List<JsniMethod> getJsniMethods();
 
   /**
    * Returns the last modified time of the compilation unit.
@@ -393,6 +268,7 @@ public abstract class CompilationUnit {
   /**
    * Returns the source code for this unit.
    */
+  @Deprecated
   public abstract String getSource();
 
   /**
@@ -400,7 +276,8 @@ public abstract class CompilationUnit {
    */
   public abstract String getTypeName();
 
-  public boolean hasAnonymousClasses() {
+  @Deprecated
+  public final boolean hasAnonymousClasses() {
     for (CompiledClass cc : getCompiledClasses()) {
       if (isAnonymousClass(cc)) {
         return true;
@@ -421,24 +298,28 @@ public abstract class CompilationUnit {
    * Returns <code>true</code> if this unit is compiled and valid.
    */
   public boolean isCompiled() {
-    return state == State.COMPILED || state == State.CHECKED
-        || state == State.GRAVEYARD;
+    return true;
   }
 
+  /**
+   * Returns <code>true</code> if this unit had errors.
+   */
   public boolean isError() {
-    return state == State.ERROR;
+    return false;
   }
 
   /**
    * Returns <code>true</code> if this unit was generated by a
    * {@link com.google.gwt.core.ext.Generator}.
    */
+  @Deprecated
   public abstract boolean isGenerated();
 
   /**
    * 
    * @return true if the Compilation Unit is from a super-source.
    */
+  @Deprecated
   public abstract boolean isSuperSource();
 
   /**
@@ -449,94 +330,19 @@ public abstract class CompilationUnit {
     return getDisplayLocation();
   }
 
-  /*
-   * A unit that will not be resurrected without being re-compiled.
+  /**
+   * Returns all contained classes.
    */
-  public boolean willNotBeResurrected() {
-    return state == State.FRESH || state == State.ERROR;
-  }
+  abstract Collection<CompiledClass> getCompiledClasses();
 
   /**
-   * If compiled, returns all contained classes; otherwise returns
-   * <code>null</code>.
+   * Returns the content ID for the source with which this unit was compiled.
    */
-  Set<CompiledClass> getCompiledClasses() {
-    if (!isCompiled()) {
-      return null;
-    }
-    if (exposedCompiledClasses == null) {
-      FindTypesInCud typeFinder = new FindTypesInCud();
-      cud.traverse(typeFinder, cud.scope);
-      Set<CompiledClass> compiledClasses = typeFinder.getClasses();
-      exposedCompiledClasses = Sets.normalizeUnmodifiable(compiledClasses);
-    }
-    return exposedCompiledClasses;
-  }
+  abstract ContentId getContentId();
 
-  CategorizedProblem[] getErrors() {
-    return errors;
-  }
+  abstract Set<ContentId> getDependencies();
 
-  Set<String> getFileNameRefs() {
-    return fileNameRefs;
-  }
-
-  /**
-   * If compiled, returns the JDT compilation unit declaration; otherwise
-   * <code>null</code>.
-   */
-  CompilationUnitDeclaration getJdtCud() {
-    return cud;
-  }
-
-  State getState() {
-    return state;
-  }
-
-  void setChecked() {
-    assert cud != null || state == State.GRAVEYARD;
-    for (CompiledClass compiledClass : getCompiledClasses()) {
-      compiledClass.checked();
-    }
-    cud = null;
-    state = State.CHECKED;
-  }
-
-  /**
-   * Sets the compiled JDT AST for this unit.
-   */
-  void setCompiled(CompilationUnitDeclaration cud) {
-    assert (state == State.FRESH || state == State.ERROR);
-    this.cud = cud;
-    fileNameRefs = computeFileNameRefs(cud);
-    state = State.COMPILED;
-  }
-
-  void setError() {
-    this.errors = cud.compilationResult().getErrors();
-    invalidate();
-    state = State.ERROR;
-  }
-
-  void setFresh() {
-    this.errors = null;
-    invalidate();
-    state = State.FRESH;
-  }
-
-  void setGraveyard() {
-    assert (state == State.CHECKED);
-    if (exposedCompiledClasses != null) {
-      for (CompiledClass compiledClass : exposedCompiledClasses) {
-        compiledClass.graveyard();
-      }
-    }
-    state = State.GRAVEYARD;
-  }
-
-  void setJsniMethods(List<JsniMethod> jsniMethods) {
-    this.jsniMethods = Lists.normalizeUnmodifiable(jsniMethods);
-  }
+  abstract CategorizedProblem[] getProblems();
 
   private List<String> getJdtClassNames(String topLevelClass) {
     List<String> classNames = new ArrayList<String>();
@@ -558,21 +364,6 @@ public abstract class CompilationUnit {
       }
     }
     return topLevelClasses;
-  }
-
-  /**
-   * Removes all accumulated state associated with compilation.
-   */
-  private void invalidate() {
-    cud = null;
-    fileNameRefs = null;
-    jsniMethods = null;
-    if (exposedCompiledClasses != null) {
-      for (CompiledClass compiledClass : exposedCompiledClasses) {
-        compiledClass.invalidate();
-      }
-      exposedCompiledClasses = null;
-    }
   }
 
   /**

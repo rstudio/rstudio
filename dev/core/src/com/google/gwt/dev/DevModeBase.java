@@ -18,10 +18,10 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.BrowserChannelServer;
@@ -94,12 +94,8 @@ abstract class DevModeBase implements DoneCallback {
         ModuleDef moduleDef = loadModule(logger, moduleName, true);
         assert (moduleDef != null);
 
-        // Create a sandbox for the module.
-        // TODO(jat): consider multiple instances of the same module open at
-        // once
-        TypeOracle typeOracle = moduleDef.getTypeOracle(logger);
         ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(logger,
-            typeOracle, moduleDef);
+            moduleDef.getCompilationState(logger), moduleDef);
 
         loadedModules.put(host, module);
         return host;
@@ -770,10 +766,10 @@ abstract class DevModeBase implements DoneCallback {
    * @return ShellModuleSpaceHost instance
    */
   protected final ShellModuleSpaceHost doCreateShellModuleSpaceHost(
-      TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef) {
+      TreeLogger logger, CompilationState compilationState, ModuleDef moduleDef) {
     // Clear out the shell temp directory.
     Util.recursiveDelete(options.getShellBaseWorkDir(moduleDef), true);
-    return new ShellModuleSpaceHost(logger, typeOracle, moduleDef,
+    return new ShellModuleSpaceHost(logger, compilationState, moduleDef,
         options.getGenDir(), new File(options.getShellBaseWorkDir(moduleDef),
             "gen"), doCreateArtifactAcceptor(moduleDef));
   }

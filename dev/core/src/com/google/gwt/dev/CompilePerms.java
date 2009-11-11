@@ -357,7 +357,6 @@ public class CompilePerms {
        * take a precise list. Then figure out a way to avoid copying the
        * generated artifacts into every perm result on a shard.
        */
-      module.getCompilationState(logger).refresh(logger);
       PropertyPermutations onePerm = new PropertyPermutations(allPermutations,
           permId, 1);
 

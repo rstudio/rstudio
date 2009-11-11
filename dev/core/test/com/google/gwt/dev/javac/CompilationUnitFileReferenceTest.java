@@ -187,13 +187,13 @@ public class CompilationUnitFileReferenceTest extends CompilationStateTestBase {
     Map<String, CompilationUnit> unitMap = state.getCompilationUnitMap();
     for (MockJavaResource file : files) {
       String typeName = file.getTypeName();
-      Set<String> sourceFileRefs = unitMap.get(typeName).getFileNameRefs();
+      Set<ContentId> dependencies = unitMap.get(typeName).getDependencies();
       Set<String> expectedTypeNames = EXPECTED_DEPENDENCIES.get(typeName);
-      assertEquals(expectedTypeNames.size(), sourceFileRefs.size());
+      assertEquals(expectedTypeNames.size(), dependencies.size());
       for (String expectedTypeName : expectedTypeNames) {
         CompilationUnit expectedUnit = unitMap.get(expectedTypeName);
         assertNotNull(expectedUnit);
-        assertTrue(sourceFileRefs.contains(expectedUnit.getDisplayLocation()));
+        assertTrue(dependencies.contains(expectedUnit.getContentId()));
       }
     }
   }

@@ -17,7 +17,6 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.javac.CompilationStateTestBase.GeneratedSourceFileCompilationUnit;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.resource.Resource;
 
@@ -70,11 +69,7 @@ public class TypeOracleTestingUtils {
       Set<Resource> resources, Set<GeneratedUnit> generatedUnits) {
     CompilationState state = CompilationStateBuilder.buildFrom(logger,
         resources);
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    for (GeneratedUnit unit : generatedUnits) {
-      units.add(new GeneratedSourceFileCompilationUnit(unit));
-    }
-    state.addGeneratedCompilationUnits(logger, units);
+    state.addGeneratedCompilationUnits(logger, generatedUnits);
     return state.getTypeOracle();
   }
 

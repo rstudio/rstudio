@@ -15,17 +15,15 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.util.StringKey;
+
 /**
- * A generated Java compilation unit.
+ * A key that encapsulates one revision of the source code content for a type.
  */
-public interface GeneratedUnit {
-  long creationTime();
+class ContentId extends StringKey {
 
-  String getSource();
+  public ContentId(String sourceTypeName, String strongHash) {
+    super(sourceTypeName + ':' + strongHash);
+  }
 
-  String getStrongHash();
-
-  String getTypeName();
-
-  String optionalFileLocation();
 }

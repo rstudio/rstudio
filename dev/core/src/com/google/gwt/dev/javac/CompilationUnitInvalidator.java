@@ -18,11 +18,9 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
-import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 
 import java.util.Collection;
@@ -40,172 +38,100 @@ import java.util.Set;
  */
 public class CompilationUnitInvalidator {
 
-  /**
-   * Maintain cross-validation state.
-   */
-  public static class InvalidatorState {
-    private final JSORestrictionsChecker.CheckerState jsoState = new JSORestrictionsChecker.CheckerState();
+  public static void reportErrors(TreeLogger logger, CompilationUnit unit) {
+    reportErrors(logger, unit.getProblems(), unit.getDisplayLocation(),
+        unit.isError());
+  }
 
-    public void retainAll(Collection<CompilationUnit> toRetain) {
-      jsoState.retainAll(toRetain);
+  public static void reportErrors(TreeLogger logger,
+      CompilationUnitDeclaration cud, String sourceForDump) {
+    CategorizedProblem[] problems = cud.compilationResult().getProblems();
+    String fileName = String.valueOf(cud.getFileName());
+    boolean isError = cud.compilationResult().hasErrors();
+    TreeLogger branch = reportErrors(logger, problems, fileName, isError);
+    if (branch != null) {
+      Util.maybeDumpSource(branch, fileName, sourceForDump,
+          String.valueOf(cud.getMainTypeName()));
     }
   }
 
-  /**
-   * For all units containing one or more errors whose state is currently
-   * {@link State#COMPILED}, each unit's error(s) will be logged to
-   * <code>logger</code> and each unit's state will be set to
-   * {@link State#ERROR}.
-   * 
-   * @return <code>true</code> if any units changed state
-   */
-  public static boolean invalidateUnitsWithErrors(TreeLogger logger,
-      Collection<CompilationUnit> units) {
-    logger = logger.branch(TreeLogger.TRACE, "Removing units with errors");
-    // Start by removing units with a known problem.
-    boolean anyRemoved = false;
+  public static void retainValidUnits(Collection<CompilationUnit> units) {
+    retainValidUnits(units, Collections.<ContentId> emptySet());
+  }
+
+  public static void retainValidUnits(Collection<CompilationUnit> units,
+      Set<ContentId> knownValidRefs) {
+    // Assume all units are valid at first.
+    Set<CompilationUnit> currentlyValidUnits = new HashSet<CompilationUnit>();
+    Set<ContentId> currentlyValidRefs = new HashSet<ContentId>(knownValidRefs);
     for (CompilationUnit unit : units) {
-      if (unit.getState() != State.COMPILED) {
-        continue;
-      }
-      CompilationResult result = unit.getJdtCud().compilationResult();
-      if (result.hasProblems()) {
-
-        // Log the errors and GWT warnings.
-        TreeLogger branch = null;
-        for (CategorizedProblem problem : result.getProblems()) {
-          TreeLogger.Type logLevel;
-          if (problem.isError()) {
-            // Log errors.
-            logLevel = TreeLogger.ERROR;
-            // Only log GWT-specific warnings.
-          } else if (problem.isWarning() && problem instanceof GWTProblem) {
-            logLevel = TreeLogger.WARN;
-          } else {
-            // Ignore all other problems.
-            continue;
-          }
-          // Append 'Line #: msg' to the error message.
-          StringBuffer msgBuf = new StringBuffer();
-          int line = problem.getSourceLineNumber();
-          if (line > 0) {
-            msgBuf.append("Line ");
-            msgBuf.append(line);
-            msgBuf.append(": ");
-          }
-          msgBuf.append(problem.getMessage());
-
-          HelpInfo helpInfo = null;
-          if (problem instanceof GWTProblem) {
-            GWTProblem gwtProblem = (GWTProblem) problem;
-            helpInfo = gwtProblem.getHelpInfo();
-          }
-          if (branch == null) {
-            Type branchType = result.hasErrors() ? TreeLogger.ERROR
-                : TreeLogger.WARN;
-            String branchString = result.hasErrors() ? "Errors" : "Warnings";
-            branch = logger.branch(branchType, branchString + " in '"
-                + unit.getDisplayLocation() + "'", null);
-          }
-          branch.log(logLevel, msgBuf.toString(), null, helpInfo);
-        }
-
-        if (branch != null) {
-          Util.maybeDumpSource(branch, unit.getDisplayLocation(),
-              unit.getSource(), unit.getTypeName());
-        }
-
-        // Invalidate the unit if there are errors.
-        if (result.hasErrors()) {
-          unit.setError();
-          anyRemoved = true;
-        }
-      }
-    }
-
-    return anyRemoved;
-  }
-
-  /**
-   * Invalidate any units that contain either a) references to non-compiled
-   * units or b) references to unknown units.
-   * 
-   * @param logger
-   * @param unitsToCheck to units that might be invalid, this should be a closed
-   *          set that reference each other
-   */
-  public static void invalidateUnitsWithInvalidRefs(TreeLogger logger,
-      Collection<CompilationUnit> unitsToCheck) {
-    invalidateUnitsWithInvalidRefs(logger, unitsToCheck,
-        Collections.<CompilationUnit> emptySet());
-  }
-
-  /**
-   * Invalidate any units that contain either a) references to non-compiled
-   * units or b) references to unknown units.
-   * 
-   * @param logger
-   * @param unitsToCheck to units that might be invalid, these will be the only
-   *          units we will invalidate
-   * @param knownUnits a set of reference units (may contain invalid units) (set
-   *          may be empty)
-   */
-  public static void invalidateUnitsWithInvalidRefs(TreeLogger logger,
-      Collection<CompilationUnit> unitsToCheck,
-      Collection<CompilationUnit> knownUnits) {
-    logger = logger.branch(TreeLogger.TRACE, "Removing invalidated units");
-
-    Set<String> knownValidRefs = new HashSet<String>();
-    for (CompilationUnit unit : knownUnits) {
       if (unit.isCompiled()) {
-        knownValidRefs.add(unit.getDisplayLocation());
-      }
-    }
-
-    // Assume all compiled units are valid at first.
-    Set<CompilationUnit> currentlyValidUnitsToCheck = new HashSet<CompilationUnit>();
-    for (CompilationUnit unit : unitsToCheck) {
-      if (unit.isCompiled()) {
-        currentlyValidUnitsToCheck.add(unit);
-        knownValidRefs.add(unit.getDisplayLocation());
+        currentlyValidUnits.add(unit);
+        currentlyValidRefs.add(unit.getContentId());
       }
     }
 
     boolean changed;
     do {
       changed = false;
-      for (Iterator<CompilationUnit> it = currentlyValidUnitsToCheck.iterator(); it.hasNext();) {
-        CompilationUnit currentlyValidUnitToCheck = it.next();
-        TreeLogger branch = null;
-        for (String ref : currentlyValidUnitToCheck.getFileNameRefs()) {
-          if (!knownValidRefs.contains(ref)) {
-            if (branch == null) {
-              branch = logger.branch(TreeLogger.DEBUG, "Compilation unit '"
-                  + currentlyValidUnitToCheck
-                  + "' is removed due to invalid reference(s):");
-              it.remove();
-              knownValidRefs.remove(currentlyValidUnitToCheck.getDisplayLocation());
-              currentlyValidUnitToCheck.setFresh();
-              changed = true;
-            }
-            branch.log(TreeLogger.DEBUG, ref);
+      iterating : for (Iterator<CompilationUnit> it = currentlyValidUnits.iterator(); it.hasNext();) {
+        CompilationUnit unitToCheck = it.next();
+        for (ContentId ref : unitToCheck.getDependencies()) {
+          if (!currentlyValidRefs.contains(ref)) {
+            it.remove();
+            currentlyValidRefs.remove(unitToCheck.getDisplayLocation());
+            changed = true;
+            continue iterating;
           }
         }
       }
     } while (changed);
+
+    units.retainAll(currentlyValidUnits);
   }
 
-  public static void validateCompilationUnits(InvalidatorState state,
-      Collection<CompilationUnit> units) {
-    for (CompilationUnit unit : units) {
-      if (unit.getState() == State.COMPILED) {
-        CompilationUnitDeclaration jdtCud = unit.getJdtCud();
-        JSORestrictionsChecker.check(state.jsoState, jdtCud);
-        JsniChecker.check(jdtCud);
-        ArtificialRescueChecker.check(jdtCud, unit.isGenerated());
-        BinaryTypeReferenceRestrictionsChecker.check(jdtCud);
-      }
+  private static TreeLogger reportErrors(TreeLogger logger,
+      CategorizedProblem[] problems, String fileName, boolean isError) {
+    if (problems == null || problems.length == 0) {
+      return null;
     }
-    state.jsoState.finalCheck();
+    TreeLogger branch = null;
+    // Log the errors and GWT warnings.
+    for (CategorizedProblem problem : problems) {
+      TreeLogger.Type logLevel;
+      if (problem.isError()) {
+        // Log errors.
+        logLevel = TreeLogger.ERROR;
+        // Only log GWT-specific warnings.
+      } else if (problem.isWarning() && problem instanceof GWTProblem) {
+        logLevel = TreeLogger.WARN;
+      } else {
+        // Ignore all other problems.
+        continue;
+      }
+      // Append 'Line #: msg' to the error message.
+      StringBuffer msgBuf = new StringBuffer();
+      int line = problem.getSourceLineNumber();
+      if (line > 0) {
+        msgBuf.append("Line ");
+        msgBuf.append(line);
+        msgBuf.append(": ");
+      }
+      msgBuf.append(problem.getMessage());
+
+      HelpInfo helpInfo = null;
+      if (problem instanceof GWTProblem) {
+        GWTProblem gwtProblem = (GWTProblem) problem;
+        helpInfo = gwtProblem.getHelpInfo();
+      }
+      if (branch == null) {
+        Type branchType = isError ? TreeLogger.ERROR : TreeLogger.WARN;
+        String branchString = isError ? "Errors" : "Warnings";
+        branch = logger.branch(branchType, branchString + " in '" + fileName
+            + "'", null);
+      }
+      branch.log(logLevel, msgBuf.toString(), null, helpInfo);
+    }
+    return branch;
   }
 }

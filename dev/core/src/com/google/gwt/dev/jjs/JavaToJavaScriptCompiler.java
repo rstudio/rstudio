@@ -420,8 +420,7 @@ public class JavaToJavaScriptCompiler {
     // Compile the source and get the compiler so we can get the parse tree
     //
     CompilationUnitDeclaration[] goldenCuds = WebModeCompilerFrontEnd.getCompilationUnitDeclarations(
-        logger, allRootTypes.toArray(new String[allRootTypes.size()]),
-        module.getCompilationState(logger), rpo);
+        logger, allRootTypes.toArray(new String[allRootTypes.size()]), rpo);
 
     // Free up memory.
     if (!options.isCompilationStateRetained()) {

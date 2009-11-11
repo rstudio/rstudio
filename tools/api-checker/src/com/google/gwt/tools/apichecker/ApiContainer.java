@@ -23,9 +23,9 @@ import com.google.gwt.core.ext.typeinfo.JConstructor;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.CompilationUnitBuilder;
 import com.google.gwt.dev.javac.CompilationUnitInvalidator;
 import com.google.gwt.dev.javac.JdtCompiler;
-import com.google.gwt.dev.javac.SourceFileCompilationUnit;
 import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.resource.Resource;
 
@@ -183,19 +183,27 @@ public final class ApiContainer {
 
   private TypeOracle createTypeOracle(Set<Resource> resources)
       throws UnableToCompleteException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
     for (Resource resource : resources) {
-      units.add(new SourceFileCompilationUnit(resource));
+      CompilationUnitBuilder builder = CompilationUnitBuilder.create(resource);
+      builders.add(builder);
     }
-    JdtCompiler.compile(units);
-    if (CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units)) {
+    List<CompilationUnit> units = JdtCompiler.compile(builders);
+    boolean anyError = false;
+    TreeLogger branch = logger.branch(TreeLogger.TRACE,
+        "Checking for compile errors");
+    for (CompilationUnit unit : units) {
+      CompilationUnitInvalidator.reportErrors(branch, unit);
+      anyError |= unit.isError();
+    }
+    if (anyError) {
       logger.log(TreeLogger.ERROR, "Unable to build typeOracle for "
           + getName());
       throw new UnableToCompleteException();
     }
 
     TypeOracleMediator mediator = new TypeOracleMediator();
-    mediator.refresh(logger, units);
+    mediator.addNewUnits(logger, units);
     logger.log(TreeLogger.INFO, "API " + name
         + ", Finished with building typeOracle, added " + units.size()
         + " files", null);

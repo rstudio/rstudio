@@ -15,13 +15,11 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.javac.CompilationUnitBuilder.ResourceCompilationUnitBuilder;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.resource.Resource;
 
 import junit.framework.TestCase;
-
-import org.eclipse.jdt.internal.compiler.CompilationResult;
-import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,54 +31,48 @@ import java.util.List;
 public class JdtCompilerTest extends TestCase {
 
   static void assertUnitHasErrors(CompilationUnit unit, int numErrors) {
-    CompilationUnitDeclaration cud = unit.getJdtCud();
-    CompilationResult result = cud.compilationResult();
-    assertTrue(result.hasErrors());
-    assertEquals(numErrors, result.getErrors().length);
-    assertTrue(result.getClassFiles().length > 0);
+    assertTrue(unit.isError());
+    assertEquals(numErrors, unit.getProblems().length);
   }
 
   static void assertUnitsCompiled(Collection<CompilationUnit> units) {
     for (CompilationUnit unit : units) {
-      CompilationUnitDeclaration cud = unit.getJdtCud();
-      assertFalse(cud.hasErrors());
-      CompilationResult result = cud.compilationResult();
-      assertFalse(result.hasProblems());
-      assertTrue(result.getClassFiles().length > 0);
+      assertFalse(unit.isError());
+      assertTrue(unit.getCompiledClasses().size() > 0);
     }
   }
 
   public void testCompile() {
-    List<CompilationUnit> units = new ArrayList<CompilationUnit>();
-    addAll(units, JavaResourceBase.getStandardResources());
-    addAll(units, JavaResourceBase.FOO, JavaResourceBase.BAR);
-    JdtCompiler.compile(units);
+    List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
+    addAll(builders, JavaResourceBase.getStandardResources());
+    addAll(builders, JavaResourceBase.FOO, JavaResourceBase.BAR);
+    Collection<CompilationUnit> units = JdtCompiler.compile(builders);
     assertUnitsCompiled(units);
   }
 
   public void testCompileError() {
-    List<CompilationUnit> units = new ArrayList<CompilationUnit>();
-    addAll(units, JavaResourceBase.getStandardResources());
-    addAll(units, JavaResourceBase.BAR);
-    JdtCompiler.compile(units);
+    List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
+    addAll(builders, JavaResourceBase.getStandardResources());
+    addAll(builders, JavaResourceBase.BAR);
+    List<CompilationUnit> units = JdtCompiler.compile(builders);
     assertUnitsCompiled(units.subList(0, units.size() - 1));
     assertUnitHasErrors(units.get(units.size() - 1), 1);
   }
 
   public void testCompileIncremental() {
-    List<CompilationUnit> units = new ArrayList<CompilationUnit>();
-    addAll(units, JavaResourceBase.getStandardResources());
-    JdtCompiler.compile(units);
+    List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
+    addAll(builders, JavaResourceBase.getStandardResources());
+    Collection<CompilationUnit> units = JdtCompiler.compile(builders);
     assertUnitsCompiled(units);
-    addAll(units, JavaResourceBase.FOO, JavaResourceBase.BAR);
-    JdtCompiler.compile(units);
+    addAll(builders, JavaResourceBase.FOO, JavaResourceBase.BAR);
+    JdtCompiler.compile(builders);
     assertUnitsCompiled(units);
   }
 
-  private void addAll(Collection<CompilationUnit> units,
+  private void addAll(Collection<CompilationUnitBuilder> units,
       Resource... sourceFiles) {
     for (Resource sourceFile : sourceFiles) {
-      units.add(new SourceFileCompilationUnit(sourceFile));
+      units.add(new ResourceCompilationUnitBuilder(sourceFile));
     }
   }
 }

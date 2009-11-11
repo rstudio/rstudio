@@ -50,15 +50,9 @@ public class TypeOracleMediatorTest extends TestCase {
 
   private abstract class MutableJavaResource extends MockJavaResource {
     private String extraSource = "";
-    private long lastModified = System.currentTimeMillis();
 
     public MutableJavaResource(String qualifiedTypeName) {
       super(qualifiedTypeName);
-    }
-
-    @Override
-    public long getLastModified() {
-      return lastModified;
     }
 
     @Override
@@ -69,8 +63,8 @@ public class TypeOracleMediatorTest extends TestCase {
     public abstract String getSource();
 
     public void touch() {
+      super.touch();
       extraSource += '\n';
-      lastModified = System.currentTimeMillis();
     }
   }
 

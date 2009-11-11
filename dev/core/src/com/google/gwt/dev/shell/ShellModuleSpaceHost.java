@@ -18,9 +18,9 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Rules;
+import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 
 import java.io.File;
@@ -31,9 +31,9 @@ import java.io.File;
  */
 public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
-  protected final File genDir;
+  protected final CompilationState compilationState;
 
-  protected final TypeOracle typeOracle;
+  protected final File genDir;
 
   private final ArtifactAcceptor artifactAcceptor;
 
@@ -53,11 +53,11 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
    * @param module the module associated with the hosted module space
    * @param saveJsni
    */
-  public ShellModuleSpaceHost(TreeLogger logger, TypeOracle typeOracle,
-      ModuleDef module, File genDir, File shellDir,
-      ArtifactAcceptor artifactAcceptor) {
+  public ShellModuleSpaceHost(TreeLogger logger,
+      CompilationState compilationState, ModuleDef module, File genDir,
+      File shellDir, ArtifactAcceptor artifactAcceptor) {
     this.logger = logger;
-    this.typeOracle = typeOracle;
+    this.compilationState = compilationState;
     this.module = module;
     this.genDir = genDir;
     this.shellDir = shellDir;
@@ -92,8 +92,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     //
     Rules rules = module.getRules();
     StandardGeneratorContext genCtx = new StandardGeneratorContext(
-        module.getCompilationState(logger), module, genDir, shellDir,
-        new ArtifactSet());
+        compilationState, module, genDir, shellDir, new ArtifactSet());
     rebindOracle = new StandardRebindOracle(propOracle, rules, genCtx);
 
     // Create a completely isolated class loader which owns all classes
@@ -107,8 +106,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     // accidentally 'escaping' its domain and loading classes from the system
     // class loader (the one that loaded the shell itself).
     //
-    classLoader = new CompilingClassLoader(logger,
-        module.getCompilationState(logger), readySpace);
+    classLoader = new CompilingClassLoader(logger, compilationState, readySpace);
   }
 
   public String rebind(TreeLogger logger, String sourceTypeName)

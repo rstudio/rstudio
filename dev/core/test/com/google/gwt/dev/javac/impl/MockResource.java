@@ -41,8 +41,8 @@ public abstract class MockResource extends Resource {
     return currentTime;
   }
 
+  private long creationTime = getNextCreationTime();
   private final String path;
-  private final long creationTime = getNextCreationTime();
 
   public MockResource(String path) {
     this.path = path;
@@ -78,4 +78,8 @@ public abstract class MockResource extends Resource {
   }
 
   protected abstract CharSequence getContent();
+
+  protected void touch() {
+    creationTime = getNextCreationTime();
+  }
 }

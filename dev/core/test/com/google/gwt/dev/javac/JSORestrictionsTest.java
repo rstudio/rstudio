@@ -112,9 +112,7 @@ public class JSORestrictionsTest extends TestCase {
     buggyCode.append("  }\n");
     buggyCode.append("}\n");
 
-    shouldGenerateError(buggyCode, "Line 6: "
-        + JSORestrictionsChecker.errAlreadyImplemented("Buggy$Squeaks",
-            "Buggy$Squeaker", "Buggy$Squeaker2"), "Line 10: "
+    shouldGenerateError(buggyCode, "Line 10: "
         + JSORestrictionsChecker.errAlreadyImplemented("Buggy$Squeaks",
             "Buggy$Squeaker", "Buggy$Squeaker2"));
   }

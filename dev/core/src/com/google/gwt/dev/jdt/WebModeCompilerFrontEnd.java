@@ -18,7 +18,6 @@ package com.google.gwt.dev.jdt;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.ArtificialRescueChecker;
-import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor.MessageSendSite;
 import com.google.gwt.dev.jjs.impl.FragmentLoaderCreator;
 import com.google.gwt.dev.util.Empty;
@@ -43,10 +42,9 @@ public class WebModeCompilerFrontEnd extends BasicWebModeCompiler {
 
   public static CompilationUnitDeclaration[] getCompilationUnitDeclarations(
       TreeLogger logger, String[] seedTypeNames,
-      CompilationState compilationState,
       RebindPermutationOracle rebindPermOracle)
       throws UnableToCompleteException {
-    return new WebModeCompilerFrontEnd(compilationState, rebindPermOracle).getCompilationUnitDeclarations(
+    return new WebModeCompilerFrontEnd(rebindPermOracle).getCompilationUnitDeclarations(
         logger, seedTypeNames);
   }
 
@@ -59,9 +57,8 @@ public class WebModeCompilerFrontEnd extends BasicWebModeCompiler {
    * generator infrastructure, and therefore needs access to more parts of the
    * compiler than WebModeCompilerFrontEnd currently has.
    */
-  private WebModeCompilerFrontEnd(CompilationState compilationState,
-      RebindPermutationOracle rebindPermOracle) {
-    super(compilationState);
+  private WebModeCompilerFrontEnd(RebindPermutationOracle rebindPermOracle) {
+    super(rebindPermOracle.getCompilationState());
     this.rebindPermOracle = rebindPermOracle;
     this.fragmentLoaderCreator = new FragmentLoaderCreator(
         rebindPermOracle.getGeneratorContext());
