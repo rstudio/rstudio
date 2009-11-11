@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.Compiler.CompilerOptionsImpl;
 import com.google.gwt.dev.util.Util;
@@ -38,6 +39,7 @@ public class SoycTest extends TestCase {
     options.addModuleName("com.google.gwt.sample.hello.Hello");
     options.setWarDir(Utility.makeTemporaryDirectory(null, "hellowar"));
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
+    logger.setMaxDetail(TreeLogger.ERROR);
     new Compiler(options).run(logger);
 
     // make sure the files have been produced
