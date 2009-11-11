@@ -133,7 +133,12 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
     assert Name.isInternalName(internalName);
     outerClass = enclosingClass;
     JRealClassType classType = binaryMapper.get(internalName);
-    boolean resolveSuccess = resolver.resolveClass(logger, classType);
+    // TODO(jat): failures here are likely binary-only annotations or local
+    // classes that have been elided from TypeOracle -- what should we do in
+    // those cases?  Currently we log an error and replace them with Object,
+    // but we may can do something better.
+    boolean resolveSuccess = classType == null ? false
+        : resolver.resolveClass(logger, classType);
     returnTypeRef[0] = classType;
     if (!resolveSuccess || returnTypeRef[0] == null) {
       logger.log(TreeLogger.ERROR, "Unable to resolve class " + internalName);
