@@ -36,24 +36,6 @@
 
   <!-- Last-matches wins, so this will selectively override the previous rule -->
   <generate-with
-    class="com.google.gwt.resources.rebind.context.MhtmlClientBundleGenerator">
-
-    <!-- We have a number of conditions that must be satisfied -->
-    <all>
-      <!-- Is inlining enabled? -->
-      <when-property-is name="ClientBundle.enableInlining" value="true" />
-
-      <!-- Again, it's necessary to specify which types the generator runs on -->
-      <when-type-assignable
-        class="com.google.gwt.resources.client.ClientBundle" />
-
-      <!-- Do this only with IE6 browsers -->
-      <when-property-is name="user.agent" value="ie6" />
-    </all>
-  </generate-with>
-
-  <!-- Last-matches wins, so this will selectively override the previous rule -->
-  <generate-with
     class="com.google.gwt.resources.rebind.context.InlineClientBundleGenerator">
 
     <!-- We have a number of conditions that must be satisfied -->
