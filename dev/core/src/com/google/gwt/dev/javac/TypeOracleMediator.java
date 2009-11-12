@@ -93,6 +93,9 @@ public class TypeOracleMediator {
   /**
    * Returns the binary name of a type. This is the same name that would be
    * returned by {@link Class#getName()} for this type.
+   * 
+   * @param type TypeOracle type to get the name for
+   * @return binary name for a type 
    */
   public static String computeBinaryClassName(JType type) {
     JPrimitiveType primitiveType = type.isPrimitive();
@@ -231,10 +234,18 @@ public class TypeOracleMediator {
 
   private Resolver resolver;
 
+  /**
+   * Construct a TypeOracleMediator.
+   */
   public TypeOracleMediator() {
     this(null);
   }
 
+  /**
+   * Construct a TypeOracleMediator.
+   * 
+   * @param typeOracle TypeOracle instance to use, or null to create a new one
+   */
   // @VisibleForTesting
   public TypeOracleMediator(TypeOracle typeOracle) {
     if (typeOracle == null) {
@@ -272,8 +283,12 @@ public class TypeOracleMediator {
 
   /**
    * Adds new units to an existing TypeOracle.
+   * 
+   * @param logger logger to use
+   * @param units collection of compilation units to process 
    */
-  public void addNewUnits(TreeLogger logger, Collection<CompilationUnit> units) {
+  public void addNewUnits(TreeLogger logger,
+      Collection<CompilationUnit> units) {
     PerfLogger.start("TypeOracleMediator.addNewUnits");
     // First collect all class data.
     classMap = new HashMap<String, CollectClassData>();
@@ -349,10 +364,16 @@ public class TypeOracleMediator {
     PerfLogger.end();
   }
 
+  /**
+   * @return a map from binary class names to JRealClassType.
+   */
   public Map<String, JRealClassType> getBinaryMapper() {
     return binaryMapper;
   }
 
+  /**
+   * @return the TypeOracle managed by the mediator.
+   */
   public TypeOracle getTypeOracle() {
     return typeOracle;
   }
@@ -390,7 +411,7 @@ public class TypeOracleMediator {
     String jpkgName = compiledClass.getPackageName();
     JPackage pkg = typeOracle.getOrCreatePackage(jpkgName);
     boolean isIntf = (access & Opcodes.ACC_INTERFACE) != 0;
-    boolean isLocalType = classData.isLocal();
+    boolean isLocalType = classData.hasNoExternalName();
     String enclosingTypeName = null;
     if (enclosingClassData != null) {
       enclosingTypeName = InternalName.toSourceName(InternalName.getClassName(enclosingClassData.getName()));
@@ -526,7 +547,7 @@ public class TypeOracleMediator {
   private CollectClassData processClass(CompiledClass compiledClass) {
     byte[] classBytes = compiledClass.getBytes();
     ClassReader reader = new ClassReader(classBytes);
-    CollectClassData mcv = new CollectClassData(classBytes);
+    CollectClassData mcv = new CollectClassData();
     ClassVisitor cv = mcv;
     if (false) {
       cv = new TraceClassVisitor(cv, new PrintWriter(System.out));
@@ -688,7 +709,7 @@ public class TypeOracleMediator {
     assert classData != null;
     int access = classData.getAccess();
 
-    assert (!classData.getClassType().isLocal());
+    assert (!classData.getClassType().hasNoExternalName());
 
     logger = logger.branch(TreeLogger.SPAM, "Found type '"
         + type.getQualifiedSourceName() + "'", null);

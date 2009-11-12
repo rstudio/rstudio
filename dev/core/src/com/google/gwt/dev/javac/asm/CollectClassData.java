@@ -60,12 +60,7 @@ public class CollectClassData extends EmptyVisitor {
      */
     Anonymous {
       @Override
-      public boolean hasOuter() {
-        return true;
-      }
-
-      @Override
-      public boolean isLocal() {
+      public boolean hasNoExternalName() {
         return true;
       }
     },
@@ -74,31 +69,33 @@ public class CollectClassData extends EmptyVisitor {
      * A named class defined inside a method.
      */
     Local {
-      @Override
-      public boolean hasHiddenConstructorArg() {
-        return true;
-      }
+      /*
+       * Note that we do not return true for hasHiddenConstructorArg since Local
+       * classes inside a static method will not have one and AFAICT there is no
+       * way to distinguish these cases without looking up the declaring method.
+       * However, since we are dropping any classes for which
+       * hasNoExternalName() returns true in TypeOracleMediator.addNewUnits, it
+       * doesn't matter if we leave the synthetic argument in the list.
+       */
 
       @Override
-      public boolean hasOuter() {
-        return true;
-      }
-
-      @Override
-      public boolean isLocal() {
+      public boolean hasNoExternalName() {
         return true;
       }
     };
 
+    /**
+     * @return true if this class type has a hidden constructor argument
+     * for the containing instance (ie, this$0).
+     */
     public boolean hasHiddenConstructorArg() {
       return false;
     }
 
-    public boolean hasOuter() {
-      return false;
-    }
-
-    public boolean isLocal() {
+   /**
+    * @return true if this class type is not visible outside a method.
+    */
+    public boolean hasNoExternalName() {
       return false;
     }
   }
@@ -110,20 +107,26 @@ public class CollectClassData extends EmptyVisitor {
     private final String desc;
     private final String value;
 
+    /**
+     * Construct the value of an Enum-valued annotation.
+     * 
+     * @param desc type descriptor of this enum
+     * @param value actual value in this enum
+     */
     public AnnotationEnum(String desc, String value) {
       this.desc = desc;
       this.value = value;
     }
 
     /**
-     * @return the descriptor
+     * @return the type descriptor of the enum type.
      */
     public String getDesc() {
       return desc;
     }
 
     /**
-     * @return the value
+     * @return the annotation value.
      */
     public String getValue() {
       return value;
@@ -144,7 +147,6 @@ public class CollectClassData extends EmptyVisitor {
 
   // internal names of interfaces
   private String[] interfaces;
-  private byte[] bytes;
   private List<CollectMethodData> methods = new ArrayList<CollectMethodData>();
   private List<CollectFieldData> fields = new ArrayList<CollectFieldData>();
   private int access;
@@ -153,29 +155,24 @@ public class CollectClassData extends EmptyVisitor {
   private String outerMethodDesc;
   private CollectClassData.ClassType classType = ClassType.TopLevel;
 
-  public CollectClassData(byte[] bytes) {
-    this.bytes = bytes;
+  /**
+   * Construct a visitor that will collect data about a class.
+   */
+  public CollectClassData() {
   }
 
   /**
-   * @return the access
+   * @return the access flags for this class (ie, bitwise or of Opcodes.ACC_*).
    */
   public int getAccess() {
     return access;
   }
 
   /**
-   * @return annotations on this class
+   * @return a list of annotations on this class.
    */
   public List<CollectAnnotationData> getAnnotations() {
     return annotations;
-  }
-
-  /**
-   * @return the bytes
-   */
-  public byte[] getBytes() {
-    return bytes;
   }
 
   /**
@@ -186,21 +183,14 @@ public class CollectClassData extends EmptyVisitor {
   }
 
   /**
-   * @return the fields
+   * @return a list of fields in this class.
    */
   public List<CollectFieldData> getFields() {
     return fields;
   }
 
-//  /**
-//   * @return the innerClasses
-//   */
-//  public List<Resource> getInnerClasses() {
-//    return innerClasses;
-//  }
-
   /**
-   * @return the interfaces
+   * @return an array of internal names of interfaces implemented by this class.
    */
   public String[] getInterfaces() {
     return interfaces;
@@ -262,19 +252,19 @@ public class CollectClassData extends EmptyVisitor {
     return superName;
   }
 
+  /**
+   * @return true if this class has no external name (ie, is defined inside
+   * a method).
+   */
   public boolean hasNoExternalName() {
-    return classType == ClassType.Anonymous || classType == ClassType.Local;
+    return classType.hasNoExternalName();
   }
 
+  /**
+   * @return true if this class has no source name at all.
+   */
   public boolean isAnonymous() {
     return classType == ClassType.Anonymous;
-  }
-
-  public boolean isLocal() {
-    if (name.matches("\\$\\d") && !isAnonymous()) {
-      throw new IllegalStateException("Not anonymous with name of " + name);
-    }
-    return classType.isLocal();
   }
 
   @Override

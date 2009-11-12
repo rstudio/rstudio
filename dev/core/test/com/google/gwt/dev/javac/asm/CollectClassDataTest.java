@@ -72,6 +72,37 @@ public class CollectClassDataTest extends AsmTestCase {
       annotatedField = field;
     }
   }
+  
+  /**
+   * Test local classes.
+   */
+  public static class Three {
+    
+    public int foo;
+
+    /**
+     * Static method that has a local class in it.
+     */
+    public static void methodWithLocalStatic() {
+      class Foo {
+      }
+      
+      Foo x = new Foo();
+    }
+
+    /**
+     * Method that has a local class in it.
+     */
+    public void methodWithLocal() {
+      class Foo {
+        Foo() {
+          foo = 1;
+        }
+      }
+      
+      Foo x = new Foo();
+    }
+  }
 
   public void testAnonymous() {
     CollectClassData cd = collect(One.class.getName() + "$1");
@@ -216,6 +247,22 @@ public class CollectClassDataTest extends AsmTestCase {
     assertEquals(ClassType.Inner, cd.getClassType());
   }
 
+  public void testLocal() {
+    CollectClassData cd = collect(Three.class.getName() + "$2Foo");
+    // Don't check for super bit, as it will depend on the JDK used to compile.
+    assertEquals(0, cd.getAccess() & ~Opcodes.ACC_SUPER);
+    assertEquals(ClassType.Local, cd.getClassType());
+    assertEquals("methodWithLocal", cd.getOuterMethodName());
+  }
+
+  public void testLocalStatic() {
+    CollectClassData cd = collect(Three.class.getName() + "$1Foo");
+    // Don't check for super bit, as it will depend on the JDK used to compile.
+    assertEquals(0, cd.getAccess() & ~Opcodes.ACC_SUPER);
+    assertEquals(ClassType.Local, cd.getClassType());
+    assertEquals("methodWithLocalStatic", cd.getOuterMethodName());
+  }
+
   private CollectClassData collect(Class<?> clazz) {
     return collect(clazz.getName());
   }
@@ -223,7 +270,7 @@ public class CollectClassDataTest extends AsmTestCase {
   private CollectClassData collect(String className) {
     byte[] bytes = getClassBytes(className);
     assertNotNull("Couldn't load bytes for " + className, bytes);
-    CollectClassData cv = new CollectClassData(bytes);
+    CollectClassData cv = new CollectClassData();
     ClassReader reader = new ClassReader(bytes);
     reader.accept(cv, 0);
     return cv;

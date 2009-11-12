@@ -43,7 +43,17 @@ public class CollectMethodData extends EmptyVisitor {
   private int access;
   private int syntheticArgs;
 
-  @SuppressWarnings("unchecked")
+  /**
+   * Prepare to collect data for a method from bytecode.
+   * 
+   * @param classType
+   * @param access
+   * @param name
+   * @param desc
+   * @param signature
+   * @param exceptions
+   */
+  @SuppressWarnings("unchecked") // for new List[]
   public CollectMethodData(CollectClassData.ClassType classType, int access,
       String name, String desc, String signature, String[] exceptions) {
     this.access = access;
@@ -55,9 +65,16 @@ public class CollectMethodData extends EmptyVisitor {
     argTypes = Type.getArgumentTypes(desc);
     // Non-static instance methods and constructors of non-static inner
     // classes have an extra synthetic parameter that isn't in the source,
-    // so we remove it.
+    // so we remove it.  Note that for local classes, they may or may not
+    // have this synthetic parameter depending on whether the containing
+    // method is static, but we can't get that info here.  However, since
+    // local classes are dropped from TypeOracle, we don't care.
     if (classType.hasHiddenConstructorArg() && "<init>".equals(name)) {
       // remove "this$1" as a parameter
+      if (argTypes.length < 1) {
+        throw new IllegalStateException(
+            "Missing synthetic argument in constructor");
+      }
       syntheticArgs = 1;
       int n = argTypes.length - syntheticArgs;
       Type[] newArgTypes = new Type[n];

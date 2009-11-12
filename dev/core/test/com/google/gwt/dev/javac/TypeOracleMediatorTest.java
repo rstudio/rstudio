@@ -46,6 +46,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Test TypeOracleMediator.
+ */
 public class TypeOracleMediatorTest extends TestCase {
 
   private abstract class MutableJavaResource extends MockJavaResource {
@@ -124,6 +127,38 @@ public class TypeOracleMediatorTest extends TestCase {
       StringBuffer sb = new StringBuffer();
       sb.append("package test.assim;\n");
       sb.append("class AfterAssimilate extends BeforeAssimilate { }");
+      return sb.toString();
+    }
+  };
+
+
+  protected CheckedJavaResource CU_AnonymousClass = new CheckedJavaResource(
+      "test", "Enclosing") {
+
+    @Override
+    public void check(JClassType type) {
+      final String name = type.getSimpleSourceName();
+      assertEquals("Enclosing", name);
+      checkEnclosing(type);
+    }
+
+    public void checkEnclosing(JClassType type) {
+      assertEquals("Enclosing", type.getSimpleSourceName());
+      assertEquals("test.Enclosing", type.getQualifiedSourceName());
+      // verify the anonymous class doesn't show up
+      JClassType[] nested = type.getNestedTypes();
+      assertEquals(0, nested.length);
+    }
+
+    @Override
+    public String getSource() {
+      StringBuffer sb = new StringBuffer();
+      sb.append("package test;\n");
+      sb.append("public class Enclosing {\n");
+      sb.append("   public static Object getLocal() {");
+      sb.append("     return new Object() { };\n");
+      sb.append("   }\n");
+      sb.append("}\n");
       return sb.toString();
     }
   };
@@ -631,7 +666,7 @@ public class TypeOracleMediatorTest extends TestCase {
   };
 
   protected CheckedJavaResource CU_LocalClass = new CheckedJavaResource("test",
-      "Enclosing", "Enclosing.1") {
+      "Enclosing") {
 
     @Override
     public void check(JClassType type) {
@@ -643,7 +678,7 @@ public class TypeOracleMediatorTest extends TestCase {
     public void checkEnclosing(JClassType type) {
       assertEquals("Enclosing", type.getSimpleSourceName());
       assertEquals("test.Enclosing", type.getQualifiedSourceName());
-      // verify the anonymous class doesn't show up
+      // verify the local class doesn't show up
       JClassType[] nested = type.getNestedTypes();
       assertEquals(0, nested.length);
     }
@@ -654,7 +689,43 @@ public class TypeOracleMediatorTest extends TestCase {
       sb.append("package test;\n");
       sb.append("public class Enclosing {\n");
       sb.append("   public static Object getLocal() {");
-      sb.append("     return new Object() { };\n");
+      sb.append("     class MyObject { }\n");
+      sb.append("     return new MyObject();\n");
+      sb.append("   }\n");
+      sb.append("}\n");
+      return sb.toString();
+    }
+  };
+
+  protected CheckedJavaResource CU_LocalClass2 = new CheckedJavaResource("test",
+      "Enclosing") {
+
+    @Override
+    public void check(JClassType type) {
+      final String name = type.getSimpleSourceName();
+      assertEquals("Enclosing", name);
+      checkEnclosing(type);
+    }
+
+    public void checkEnclosing(JClassType type) {
+      assertEquals("Enclosing", type.getSimpleSourceName());
+      assertEquals("test.Enclosing", type.getQualifiedSourceName());
+      // verify the local class doesn't show up
+      JClassType[] nested = type.getNestedTypes();
+      assertEquals(0, nested.length);
+    }
+
+    @Override
+    public String getSource() {
+      StringBuffer sb = new StringBuffer();
+      sb.append("package test;\n");
+      sb.append("public class Enclosing {\n");
+      sb.append("   public int foo;\n");
+      sb.append("   public Object getLocal() {\n");
+      sb.append("     class MyObject {\n");
+      sb.append("       int getFoo() { return foo; }\n");
+      sb.append("     }\n");
+      sb.append("     return new MyObject() {};\n");
       sb.append("   }\n");
       sb.append("}\n");
       return sb.toString();
@@ -1185,6 +1256,14 @@ public class TypeOracleMediatorTest extends TestCase {
   public void testLocal() throws TypeOracleException {
     resources.add(CU_Object);
     resources.add(CU_LocalClass);
+    compileAndRefresh();
+    JClassType[] types = typeOracle.getTypes();
+    assertEquals(2, types.length);
+  }
+
+  public void testLocalWithSynthetic() throws TypeOracleException {
+    resources.add(CU_Object);
+    resources.add(CU_LocalClass2);
     compileAndRefresh();
     JClassType[] types = typeOracle.getTypes();
     assertEquals(2, types.length);
