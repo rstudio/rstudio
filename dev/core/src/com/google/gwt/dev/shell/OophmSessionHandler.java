@@ -155,7 +155,7 @@ public class OophmSessionHandler extends SessionHandler {
   }
 
   @Override
-  public TreeLogger loadModule(TreeLogger loadModuleLogger,
+  public synchronized TreeLogger loadModule(TreeLogger loadModuleLogger,
       BrowserChannel channel, String moduleName, String userAgent, String url,
       String tabKey, String sessionKey, byte[] userAgentIcon) {
     logger = loadModuleLogger;
