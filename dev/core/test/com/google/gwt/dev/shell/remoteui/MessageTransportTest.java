@@ -281,8 +281,8 @@ public class MessageTransportTest extends TestCase {
       fail("Should not have timed out");
     } catch (ExecutionException e) {
       // This is where we should hit
-      assertTrue("Expected: IllegalStateException, actual:" + e.getCause(),
-          e.getCause() instanceof IllegalStateException);
+      assertTrue("Expected: MessageTransport.RequestException, actual:"
+          + e.getCause(), e.getCause() instanceof RequestException);
       RequestException re = (RequestException) e.getCause();
       assertEquals(re.getMessage(), "Unable to process the request.");
     } catch (Exception e) {
