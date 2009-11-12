@@ -65,15 +65,6 @@ public class WebModeCompilerFrontEnd extends BasicWebModeCompiler {
   }
 
   @Override
-  protected void doCompilationUnitDeclarationValidation(
-      CompilationUnitDeclaration cud, TreeLogger logger) {
-    /*
-     * Anything that makes it here was already checked by AstCompiler while
-     * building TypeOracle; no need to rerun checks.
-     */
-  }
-
-  @Override
   protected String[] doFindAdditionalTypesUsingArtificialRescues(
       TreeLogger logger, CompilationUnitDeclaration cud) {
     List<String> types = ArtificialRescueChecker.collectReferencedTypes(cud);
