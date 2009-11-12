@@ -101,7 +101,7 @@ public abstract class ResourceFactory {
   /**
    * Clears the resource cache.
    */
-  public static void clearCache() {
+  public static synchronized void clearCache() {
     cache.clear();
   }
 
@@ -116,8 +116,8 @@ public abstract class ResourceFactory {
    *          {@link com.google.gwt.core.ext.GeneratorContext#getResourcesOracle()}.{@link com.google.gwt.dev.resource.ResourceOracle#getResourceMap() getResourceMap()}
    * @return resource list
    */
-  public static ResourceList getBundle(TreeLogger logger, JClassType topClass,
-      GwtLocale bundleLocale, boolean isConstants,
+  public static synchronized ResourceList getBundle(TreeLogger logger,
+      JClassType topClass, GwtLocale bundleLocale, boolean isConstants,
       Map<String, Resource> resourceMap) {
     List<GwtLocale> locales = bundleLocale.getCompleteSearchList();
     List<JClassType> classes = new ArrayList<JClassType>();

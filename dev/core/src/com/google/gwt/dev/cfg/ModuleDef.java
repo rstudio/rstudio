@@ -311,7 +311,7 @@ public class ModuleDef implements PublicOracle {
     return properties;
   }
 
-  public ResourceOracle getResourcesOracle() {
+  public synchronized ResourceOracle getResourcesOracle() {
     if (lazyResourcesOracle == null) {
       lazyResourcesOracle = new ResourceOracleImpl(TreeLogger.NULL);
       PathPrefixSet pathPrefixes = lazySourceOracle.getPathPrefixes();

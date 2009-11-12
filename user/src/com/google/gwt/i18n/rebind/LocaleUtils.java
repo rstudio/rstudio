@@ -56,7 +56,7 @@ public class LocaleUtils {
 
   private static final Set<GwtLocale> runtimeLocales = new HashSet<GwtLocale>();
 
-  public static void clear() {
+  public static synchronized void clear() {
     allCompileLocales.clear();
     allLocales.clear();
     compileLocale = null;
@@ -69,7 +69,7 @@ public class LocaleUtils {
    * 
    * @return unmodifiable set of all compile-time locales
    */
-  public static Set<GwtLocale> getAllCompileLocales() {
+  public static synchronized Set<GwtLocale> getAllCompileLocales() {
     return Collections.unmodifiableSet(allCompileLocales);
   }
 
@@ -79,14 +79,14 @@ public class LocaleUtils {
    * 
    * @return unmodifiable set of all locales
    */
-  public static Set<GwtLocale> getAllLocales() {
+  public static synchronized Set<GwtLocale> getAllLocales() {
     return Collections.unmodifiableSet(allLocales);
   }
 
   /**
    * @return the static compile-time locale for this permutation.
    */
-  public static GwtLocale getCompileLocale() {
+  public static synchronized GwtLocale getCompileLocale() {
     return compileLocale;
   }
 
@@ -95,7 +95,7 @@ public class LocaleUtils {
    * 
    * @return singleton GwtLocaleFactory instance.
    */
-  public static GwtLocaleFactory getLocaleFactory() {
+  public static synchronized GwtLocaleFactory getLocaleFactory() {
     return factory;
   }
 
@@ -105,7 +105,7 @@ public class LocaleUtils {
    * 
    * @return unmodifiable list of matching locales
    */
-  public static Set<GwtLocale> getRuntimeLocales() {
+  public static synchronized Set<GwtLocale> getRuntimeLocales() {
     return Collections.unmodifiableSet(runtimeLocales);
   }
 
@@ -116,7 +116,7 @@ public class LocaleUtils {
    * @param logger
    * @param propertyOracle
    */
-  public static void init(TreeLogger logger, PropertyOracle propertyOracle) {
+  public static synchronized void init(TreeLogger logger, PropertyOracle propertyOracle) {
     try {
       SelectionProperty localeProp
           = propertyOracle.getSelectionProperty(logger, PROP_LOCALE);
