@@ -47,6 +47,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
   private final CollectMethodData methodData;
   private final Type[] argTypes;
   private final String[] argNames;
+  private final boolean argNamesAreReal;
 
   private JType[] returnType = new JType[1];
   private List<JType[]> params = new ArrayList<JType[]>();
@@ -54,10 +55,23 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
   private JTypeParameter currentParam = null;
   private ArrayList<JType[]> bounds = null;
 
+  /**
+   * Resolve a method signature.
+   * 
+   * @param resolver
+   * @param logger
+   * @param method
+   * @param typeParamLookup
+   * @param hasReturnType
+   * @param methodData
+   * @param argTypes
+   * @param argNames
+   * @param argNamesAreReal
+   */
   public ResolveMethodSignature(Resolver resolver, TreeLogger logger,
       JAbstractMethod method, TypeParameterLookup typeParamLookup,
       boolean hasReturnType, CollectMethodData methodData, Type[] argTypes,
-      String[] argNames) {
+      String[] argNames, boolean argNamesAreReal) {
     this.resolver = resolver;
     this.logger = logger;
     this.method = method;
@@ -66,6 +80,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
     this.methodData = methodData;
     this.argTypes = argTypes;
     this.argNames = argNames;
+    this.argNamesAreReal = argNamesAreReal;
   }
 
   /**
@@ -103,7 +118,8 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
           declaredAnnotations);
 
       // JParameter adds itself to the method
-      new JParameter(method, argType, argNames[i], declaredAnnotations);
+      new JParameter(method, argType, argNames[i], declaredAnnotations,
+          argNamesAreReal);
     }
 
     // Handle thrown exceptions

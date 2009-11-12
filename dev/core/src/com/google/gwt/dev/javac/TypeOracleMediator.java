@@ -937,14 +937,13 @@ public class TypeOracleMediator {
     }
 
     String signature = methodData.getSignature();
-    Type[] argTypes = methodData.getArgTypes();
-    String[] argNames = methodData.getArgNames();
     if (signature != null) {
       // If we have a signature, use it for superclass and interfaces
       SignatureReader reader = new SignatureReader(signature);
       ResolveMethodSignature methodResolver = new ResolveMethodSignature(
           resolver, logger, method, typeParamLookup, hasReturnType, methodData,
-          argTypes, argNames);
+          methodData.getArgTypes(), methodData.getArgNames(),
+          methodData.hasActualArgNames());
       // TraceSignatureVisitor trace = new TraceSignatureVisitor(
       // methodData.getAccess());
       // reader.accept(trace);
