@@ -112,7 +112,11 @@ public class MessageTransportTest extends TestCase {
     // Set up a transport on the client side
     MessageTransport messageTransport = new MessageTransport(
         network.getClientSocket().getInputStream(),
-        network.getClientSocket().getOutputStream(), requestProcessor);
+        network.getClientSocket().getOutputStream(), requestProcessor,
+        new MessageTransport.TerminationCallback() {
+          public void onTermination(Exception e) {
+          }
+        });
 
     Message.Request.Builder requestMessageBuilder = Message.Request.newBuilder();
     requestMessageBuilder.setServiceType(Message.Request.ServiceType.DEV_MODE);
@@ -132,7 +136,8 @@ public class MessageTransportTest extends TestCase {
     } catch (TimeoutException te) {
       fail("Should not have timed out");
     } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof IllegalStateException);
+      assertTrue("Expected: IllegalStateException, actual:" + e.getCause(),
+          e.getCause() instanceof IllegalStateException);
     } catch (Exception e) {
       fail("Should not have thrown any other exception");
     }
@@ -164,7 +169,7 @@ public class MessageTransportTest extends TestCase {
     // Set up a transport on the client side
     MessageTransport messageTransport = new MessageTransport(
         network.getClientSocket().getInputStream(),
-        network.getClientSocket().getOutputStream(), requestProcessor);
+        network.getClientSocket().getOutputStream(), requestProcessor, null);
 
     // Generate a new request
     DevModeRequest.Builder devModeRequestBuilder = DevModeRequest.newBuilder();
@@ -235,7 +240,11 @@ public class MessageTransportTest extends TestCase {
     // Set up a message transport on the client side
     MessageTransport messageTransport = new MessageTransport(
         network.getClientSocket().getInputStream(),
-        network.getClientSocket().getOutputStream(), requestProcessor);
+        network.getClientSocket().getOutputStream(), requestProcessor,
+        new MessageTransport.TerminationCallback() {
+          public void onTermination(Exception e) {
+          }
+        });
 
     // Generate a new request
     Message.Request.Builder requestMessageBuilder = Message.Request.newBuilder();
@@ -272,7 +281,8 @@ public class MessageTransportTest extends TestCase {
       fail("Should not have timed out");
     } catch (ExecutionException e) {
       // This is where we should hit
-      assertTrue(e.getCause() instanceof RequestException);
+      assertTrue("Expected: IllegalStateException, actual:" + e.getCause(),
+          e.getCause() instanceof IllegalStateException);
       RequestException re = (RequestException) e.getCause();
       assertEquals(re.getMessage(), "Unable to process the request.");
     } catch (Exception e) {
@@ -307,7 +317,11 @@ public class MessageTransportTest extends TestCase {
     // Set up a message transport on the client side
     MessageTransport messageTransport = new MessageTransport(
         network.getClientSocket().getInputStream(),
-        network.getClientSocket().getOutputStream(), requestProcessor);
+        network.getClientSocket().getOutputStream(), requestProcessor,
+        new MessageTransport.TerminationCallback() {
+          public void onTermination(Exception e) {
+          }
+        });
 
     Message.Request.Builder requestMessageBuilder = Message.Request.newBuilder();
     requestMessageBuilder.setServiceType(Message.Request.ServiceType.DEV_MODE);
@@ -324,7 +338,8 @@ public class MessageTransportTest extends TestCase {
       fail("Should not have timed out");
     } catch (ExecutionException e) {
       // This is where we should hit
-      assertTrue(e.getCause() instanceof IllegalStateException);
+      assertTrue("Expected: IllegalStateException, actual:" + e.getCause(),
+          e.getCause() instanceof IllegalStateException);
     } catch (Exception e) {
       fail("Should not have thrown any other exception");
     }
@@ -372,9 +387,12 @@ public class MessageTransportTest extends TestCase {
     };
 
     // Start up the message transport on the server side
-    MessageTransport messageTransport = new MessageTransport(
-        network.getClientSocket().getInputStream(),
-        network.getClientSocket().getOutputStream(), requestProcessor);
+    new MessageTransport(network.getClientSocket().getInputStream(),
+        network.getClientSocket().getOutputStream(), requestProcessor,
+        new MessageTransport.TerminationCallback() {
+          public void onTermination(Exception e) {
+          }
+        });
 
     // Send the request from the client to the server
     Message.Builder clientRequestMsgBuilder = Message.newBuilder();
@@ -423,9 +441,12 @@ public class MessageTransportTest extends TestCase {
     };
 
     // Start up the message transport on the server side
-    MessageTransport messageTransport = new MessageTransport(
-        network.getClientSocket().getInputStream(),
-        network.getClientSocket().getOutputStream(), requestProcessor);
+    new MessageTransport(network.getClientSocket().getInputStream(),
+        network.getClientSocket().getOutputStream(), requestProcessor,
+        new MessageTransport.TerminationCallback() {
+          public void onTermination(Exception e) {
+          }
+        });
 
     // Send a request to the server
     Message.Request.Builder clientRequestBuilder = Message.Request.newBuilder();

@@ -245,20 +245,6 @@ public class MessageTransport {
    * @param outputStream an output stream for writing messages
    * @param requestProcessor a callback interface for handling remote client
    *          requests
-   */
-  public MessageTransport(InputStream inputStream, OutputStream outputStream,
-      RequestProcessor requestProcessor) {
-    this(inputStream, outputStream, requestProcessor, null);
-  }
-
-  /**
-   * Create a new instance using the given streams and request processor.
-   * Closing either stream will cause the termination of the transport.
-   * 
-   * @param inputStream an input stream for reading messages
-   * @param outputStream an output stream for writing messages
-   * @param requestProcessor a callback interface for handling remote client
-   *          requests
    * @param terminationCallback a callback that is invoked when the transport
    *          terminates
    */

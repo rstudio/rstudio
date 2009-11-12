@@ -39,15 +39,15 @@ import java.util.List;
 public class RemoteUI extends DevModeUI implements
     MessageTransport.TerminationCallback {
 
-  private final List<ModuleHandle> modules = new ArrayList<ModuleHandle>();
-  private final Object modulesLock = new Object();
-
+  private final int browserChannelPort;
   private final String clientId;
   private final DevModeServiceRequestProcessor devModeRequestProcessor;
+  private final List<ModuleHandle> modules = new ArrayList<ModuleHandle>();
+  private final Object modulesLock = new Object();
+  private final Socket transportSocket;
   private final MessageTransport transport;
   private ViewerServiceClient viewerServiceClient = null;
   private final int webServerPort;
-  private final int browserChannelPort;
 
   public RemoteUI(String host, int port, String clientId, int webServerPort,
       int browserChannelPort) {
@@ -56,12 +56,12 @@ public class RemoteUI extends DevModeUI implements
       this.browserChannelPort = browserChannelPort;
       this.webServerPort = webServerPort;
 
-      Socket socket = new Socket(host, port);
-      socket.setKeepAlive(true);
-      socket.setTcpNoDelay(true);
+      transportSocket = new Socket(host, port);
+      transportSocket.setKeepAlive(true);
+      transportSocket.setTcpNoDelay(true);
       devModeRequestProcessor = new DevModeServiceRequestProcessor(this);
-      transport = new MessageTransport(socket.getInputStream(),
-          socket.getOutputStream(), devModeRequestProcessor, this);
+      transport = new MessageTransport(transportSocket.getInputStream(),
+          transportSocket.getOutputStream(), devModeRequestProcessor, this);
     } catch (UnknownHostException e) {
       throw new RuntimeException(e);
     } catch (IOException e) {
@@ -126,9 +126,17 @@ public class RemoteUI extends DevModeUI implements
     getTopLogger().log(
         TreeLogger.INFO,
         "Remote UI connection terminated due to exception: "
-            + e.getLocalizedMessage());
+            + e);
     getTopLogger().log(TreeLogger.INFO,
         "Shutting down development mode server.");
+    
+    try {
+      // Close the transport socket
+      transportSocket.close();
+    } catch (IOException e1) {
+      // Purposely ignored
+    }
+
     ((DoneCallback) getCallback(DoneEvent.getType())).onDone();
   }
 
