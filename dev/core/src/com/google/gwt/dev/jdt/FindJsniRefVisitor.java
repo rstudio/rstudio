@@ -26,10 +26,6 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.dev.js.rhino.Context;
-import com.google.gwt.dev.js.rhino.ErrorReporter;
-import com.google.gwt.dev.js.rhino.EvaluatorException;
-import com.google.gwt.dev.js.rhino.TokenStream;
 
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
@@ -37,7 +33,6 @@ import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.io.StringReader;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -51,32 +46,7 @@ import java.util.Set;
  * quickly but it will return a superset of the actual JSNI references.
  */
 public class FindJsniRefVisitor extends ASTVisitor {
-  /**
-   * A Rhino error reporter that discards any errors it sees.
-   */
-  private static ErrorReporter NullErrorReporter = new ErrorReporter() {
-    public void error(String message, String sourceName, int line,
-        String lineSource, int lineOffset) {
-      // ignore it
-    }
-
-    public EvaluatorException runtimeError(String message, String sourceName,
-        int line, String lineSource, int lineOffset) {
-      throw new InternalCompilerException("Rhino run-time error: " + message);
-    }
-
-    public void warning(String message, String sourceName, int line,
-        String lineSource, int lineOffset) {
-      // ignore it
-    }
-  };
-
   private final Set<String> jsniRefs = new LinkedHashSet<String>();
-  private boolean sloppy = false;
-
-  public void beSloppy() {
-    sloppy = true;
-  }
 
   public Set<String> getJsniRefs() {
     return Collections.unmodifiableSet(jsniRefs);
@@ -97,12 +67,7 @@ public class FindJsniRefVisitor extends ASTVisitor {
       return false;
     }
 
-    if (sloppy) {
-      findJsniRefsSloppily(jsniCode);
-    } else {
-      findJsniRefsAccurately(methodDeclaration, jsniCode);
-    }
-
+    findJsniRefsAccurately(methodDeclaration, jsniCode);
     return false;
   }
 
@@ -144,33 +109,6 @@ public class FindJsniRefVisitor extends ASTVisitor {
     }
   }
 
-  private void findJsniRefsSloppily(String jsniCode) {
-    StringReader reader = new StringReader(jsniCode);
-    int idx = 0;
-    while (true) {
-      idx = jsniCode.indexOf('@', idx);
-      if (idx < 0) {
-        break;
-      }
-      try {
-        reader.reset();
-        // Ignore return value, since we know the index is valid.
-        reader.skip(idx);
-      } catch (IOException e) {
-        throw new InternalCompilerException(e.getMessage(), e);
-      }
-      String jsniRefString = readJsIdentifier(reader);
-      if (jsniRefString == null) {
-        // badly formatted identifier; skip to the next @ sign
-        idx++;
-      } else {
-        assert (jsniRefString.charAt(0) == '@');
-        jsniRefs.add(jsniRefString.substring(1));
-        idx += jsniRefString.length();
-      }
-    }
-  }
-
   private String getJSNICode(MethodDeclaration methodDeclaration) {
     char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
     String jsniCode = String.valueOf(source, methodDeclaration.bodyStart,
@@ -186,26 +124,6 @@ public class FindJsniRefVisitor extends ASTVisitor {
 
     jsniCode = jsniCode.substring(startPos, endPos);
     return jsniCode;
-  }
-
-  /**
-   * Read a JavaScript identifier using Rhino. If the parse fails, returns null.
-   */
-  private String readJsIdentifier(Reader reader)
-      throws InternalCompilerException {
-    try {
-      Context.enter().setErrorReporter(NullErrorReporter);
-      TokenStream tokStr = new TokenStream(reader, "(memory)", 0);
-      if (tokStr.getToken() == TokenStream.NAME) {
-        return tokStr.getString();
-      } else {
-        return null;
-      }
-    } catch (IOException e) {
-      throw new InternalCompilerException(e.getMessage(), e);
-    } finally {
-      Context.exit();
-    }
   }
 
 }
