@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.util.collect.Maps;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -88,7 +90,7 @@ class AnnotationProxyFactory {
     public AnnotationProxyInvocationHandler(
         Map<String, Object> identifierToValue,
         Class<? extends Annotation> annotationClass) {
-      this.identifierToValue = identifierToValue;
+      this.identifierToValue = Maps.normalizeUnmodifiable(identifierToValue);
       this.annotationClass = annotationClass;
     }
 
