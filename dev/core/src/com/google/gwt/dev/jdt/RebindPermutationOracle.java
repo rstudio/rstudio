@@ -27,6 +27,13 @@ import com.google.gwt.dev.javac.StandardGeneratorContext;
 public interface RebindPermutationOracle {
 
   /**
+   * Called when the compiler is done with this oracle, so memory can be freed
+   * up. After calling this method, the only legal method to call is
+   * {@link #getAllPossibleRebindAnswers}.
+   */
+  void clear();
+
+  /**
    * Always answers with at least one name.
    */
   String[] getAllPossibleRebindAnswers(TreeLogger logger, String sourceTypeName)

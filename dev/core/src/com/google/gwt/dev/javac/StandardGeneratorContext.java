@@ -208,7 +208,7 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private final Set<GeneratedUnit> committedGeneratedCups = new HashSet<GeneratedUnit>();
 
-  private final CompilationState compilationState;
+  private CompilationState compilationState;
 
   private Class<? extends Generator> currentGenerator;
 
@@ -245,6 +245,14 @@ public class StandardGeneratorContext implements GeneratorContext {
     if (diskCache == null) {
       diskCache = new DiskCache();
     }
+  }
+
+  /**
+   * Frees memory used up by compilation state.
+   */
+  public void clear() {
+    compilationState = null;
+    generators.clear();
   }
 
   /**

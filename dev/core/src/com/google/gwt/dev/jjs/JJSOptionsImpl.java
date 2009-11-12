@@ -23,7 +23,6 @@ import java.io.Serializable;
 public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   private boolean aggressivelyOptimize = true;
-  private boolean compilationStateRetained = false;
   private boolean disableCastChecking = false;
   private boolean disableClassMetadata = false;
   private boolean draftCompile = false;
@@ -45,7 +44,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setAggressivelyOptimize(other.isAggressivelyOptimize());
     setCastCheckingDisabled(other.isCastCheckingDisabled());
     setClassMetadataDisabled(other.isClassMetadataDisabled());
-    setCompilationStateRetained(other.isCompilationStateRetained());
     setDraftCompile(other.isDraftCompile());
     setEnableAssertions(other.isEnableAssertions());
     setOutput(other.getOutput());
@@ -68,10 +66,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public boolean isClassMetadataDisabled() {
     return disableClassMetadata;
-  }
-
-  public boolean isCompilationStateRetained() {
-    return compilationStateRetained;
   }
 
   public boolean isDraftCompile() {
@@ -108,10 +102,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void setClassMetadataDisabled(boolean disabled) {
     disableClassMetadata = disabled;
-  }
-
-  public void setCompilationStateRetained(boolean retained) {
-    compilationStateRetained = retained;
   }
 
   public void setDraftCompile(boolean draft) {

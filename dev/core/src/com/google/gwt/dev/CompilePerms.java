@@ -334,7 +334,6 @@ public class CompilePerms {
       File compilerWorkDir, PrecompileOptions precompilationOptions)
       throws UnableToCompleteException {
     precompilationOptions.setOptimizePrecompile(false);
-    precompilationOptions.setCompilationStateRetained(true);
     precompilationOptions.setGenDir(null);
 
     ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);

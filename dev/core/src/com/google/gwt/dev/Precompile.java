@@ -176,10 +176,6 @@ public class Precompile {
       return jjsOptions.isClassMetadataDisabled();
     }
 
-    public boolean isCompilationStateRetained() {
-      return jjsOptions.isCompilationStateRetained();
-    }
-
     public boolean isDraftCompile() {
       return jjsOptions.isDraftCompile();
     }
@@ -226,10 +222,6 @@ public class Precompile {
 
     public void setClassMetadataDisabled(boolean disabled) {
       jjsOptions.setClassMetadataDisabled(disabled);
-    }
-
-    public void setCompilationStateRetained(boolean retained) {
-      jjsOptions.setCompilationStateRetained(retained);
     }
 
     public void setDisableUpdateCheck(boolean disabled) {
@@ -288,8 +280,8 @@ public class Precompile {
   private static class DistillerRebindPermutationOracle implements
       RebindPermutationOracle {
 
-    private final CompilationState compilationState;
-    private final StandardGeneratorContext generatorContext;
+    private CompilationState compilationState;
+    private StandardGeneratorContext generatorContext;
     private final Permutation[] permutations;
     private final StaticPropertyOracle[] propertyOracles;
     private final RebindOracle[] rebindOracles;
@@ -315,6 +307,12 @@ public class Precompile {
             generatorContext);
         permutations[i] = new Permutation(i, propertyOracles[i]);
       }
+    }
+
+    public void clear() {
+      generatorContext.clear();
+      compilationState = null;
+      generatorContext = null;
     }
 
     public String[] getAllPossibleRebindAnswers(TreeLogger logger,
@@ -466,6 +464,8 @@ public class Precompile {
           module, compilationState, generatorArtifacts,
           new PropertyPermutations(module.getProperties()), genDir,
           generatorResourcesDir);
+      // Allow GC later.
+      compilationState = null;
       if (dumpSignatureFile != null) {
         // Dump early to avoid generated types.
         SignatureDumper.dumpSignatures(logger,
@@ -505,6 +505,8 @@ public class Precompile {
       DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
           module, compilationState, generatedArtifacts, allPermutations,
           genDir, generatorResourcesDir);
+      // Allow GC later.
+      compilationState = null;
       PerfLogger.start("Precompile");
       UnifiedAst unifiedAst = getCompiler(module).precompile(logger, module,
           rpo, declEntryPts, null, jjsOptions, rpo.getPermuationCount() == 1);
