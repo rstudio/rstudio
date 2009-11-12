@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!-- The HTML 4.01 Transitional DOCTYPE declaration-->
+<!-- above set at the top of the file will set     -->
+<!-- the browser's rendering engine into           -->
+<!-- "Quirks Mode". Replacing this declaration     -->
+<!-- with a "Standards Mode" doctype is supported, -->
+<!-- but may lead to some differences in layout.   -->
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>Google Web Toolkit Developer Plugin Not Installed</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+
+    <script>
+      var troubleshootingUrl = "http://code.google.com/webtoolkit/doc/1.6/FAQ_Troubleshooting.html";
+
+      // The missing plugin module expects downloadInfo.inferredDownloadId to contain the key to use
+      // in allDownloads field.
+      var downloadInfo = {
+        "inferredDownloadId" : null,
+        "troubleshootingUrl" : troubleshootingUrl,
+        "allDownloads" : {
+          "unknown" :
+          {
+            "caption" : "Regrettably, this browser is currently unsupported :-(",
+            "url" : troubleshootingUrl,
+            "supported" : false
+          },
+
+          "firefox-old" :
+          {
+            "caption" : "Sorry, the GWT Developer Plugin only supports Firefox 3.0 and 3.5 at present",
+            "url" : "http://www.getfirefox.com",
+            "supported" : false
+          },
+
+          "opera" :
+          {
+            "caption" : "Sorry, there is currently no GWT Developer Plugin for Opera",
+            // TODO(you): If you are reading this, maybe you would be interested in contributing an Opera version?
+            "url" : "http://code.google.com/webtoolkit/makinggwtbetter.html#contributingcode",
+            "supported" : false
+          },
+
+          "safari-mac-sl" :
+          {
+            "caption" : "Sorry, at the moment, there is not yet a GWT Developer Plugin for Safari on Mac OS X 10.6",
+            "url" : troubleshootingUrl,
+            "supported" : false
+          },
+
+          "safari-iphone" :
+          {
+            "caption" : "Sorry, there is currently no GWT Developer Plugin for mobile Safari",
+            "url" : troubleshootingUrl,
+            "supported" : false
+          },
+
+          "webkit-android" :
+          {
+            "caption" : "Sorry, there is currently no GWT Developer Plugin for mobile WebKit",
+            "url" : troubleshootingUrl,
+            "supported" : false
+          },
+
+          "chrome-lin" :
+          {
+            "caption" : "Sorry, there is currently no GWT Developer Plugin for Chrome on Linux",
+            "url" : troubleshootingUrl,
+            "supported" : false
+          },
+
+          "chrome-mac" :
+          {
+            "caption" : "Sorry, there is currently no GWT Developer Plugin for Chrome on OS X",
+            "url" : troubleshootingUrl,
+            "supported" : false
+          },
+
+          "chrome-win" :
+          {
+            "caption" : "The GWT Developer Plugin requires Chrome 4 or later,<br>so click here to learn about switching to the Chrome DevChannel to get early access",
+            "url" : "http://dev.chromium.org/getting-involved/dev-channel",
+            "supported" : false
+          },
+
+          "safari-win" :
+          {
+            "caption" : "Sorry, there is currently no GWT Developer Plugin for Safar on Windows",
+            "url" : troubleshootingUrl,
+            "supported" : false
+          },
+
+          "firefox" :
+          {
+            "caption" : "Download the GWT Developer Plugin<br>For Firefox",
+            "url" : "https://dl-ssl.google.com/gwt/plugins/firefox/gwt-dev-plugin.xpi",
+            "platforms" : "Win x86, Linux x86/x86_64, Mac x86/PPC",
+            "supported" : true
+          },
+
+          "ie" :
+          {
+            "caption" : "Download the GWT Developer Plugin<br>For Internet Explorer",
+            "url" : "http://google-web-toolkit.googlecode.com/svn/trunk/plugins/ie/prebuilt/GwtDevModeIePluginInstaller.msi",
+            "platforms" : "Win x86",
+            "supported" : true
+          },
+
+          "chrome4-win" :
+          {
+            "caption" : "Download the GWT Developer Plugin<br>For Chrome",
+            "url" : "https://dl-ssl.google.com/gwt/plugins/chrome/gwt-dev-plugin.crx",
+            "platforms" : "Win x86",
+            "supported" : true
+          },
+
+          "safari-mac" :
+          {
+            "caption" : "Download the GWT Developer Plugin<br>For Safari",
+            "url" : "http://google-web-toolkit.googlecode.com/svn/trunk/plugins/webkit/prebuilt/oophm.dmg",
+            "platforms" : "Mac x86/PPC",
+            "supported" : true
+          }
+        }
+      };
+
+      var ua = navigator.userAgent.toLowerCase();
+
+      var id = 'unsupported';
+      if (ua.indexOf("webkit") != -1) {
+        if ( (ua.indexOf("iphone") != -1) || (ua.indexOf("ipod") != -1) ) {
+          id = 'safari-iphone';
+        } else if (ua.indexOf("android") != -1) {
+          id = 'webkit-android';
+        } else if (ua.indexOf("chrome") != -1) {
+          if (ua.indexOf("windows") != -1) {
+            var ver = /chrome\/(\d+)(\.\d+)*/.exec(ua);
+            if (ver && ver.length > 1 && ver[1] >= 4) {
+              id = 'chrome4-win';
+            } else {
+              id = 'chrome-win';
+            }
+          } else if (ua.indexOf("linux") != -1) {
+            id = 'chrome-lin';
+          } else if (ua.indexOf("macintosh") != -1) {
+            id = 'chrome-mac';
+          } else {
+            // unknown Chrome platform
+          }
+        } else if (ua.indexOf("macintosh") != -1) {
+          if (ua.indexOf("mac os x 10_6") != -1) {
+            id = 'safari-mac-sl';
+          } else {
+            id = 'safari-mac';
+          }
+        } else if (ua.indexOf("windows") != -1) {
+          id = 'safari-win';
+        }
+      } else if (ua.indexOf("msie") != -1) {
+        id = 'ie';
+      } else if (ua.indexOf("opera") != -1) {
+        id = 'opera';
+      } else if (ua.indexOf("gecko") != -1) {
+        if (ua.indexOf("rv:1.9") != -1) {
+          id = 'firefox';
+        } else {
+          id = 'firefox-old';
+        }
+      }
+      downloadInfo.inferredDownloadId = id;
+    </script>
+
+    <script type="text/javascript" language="javascript" src="missingplugin/missingplugin.nocache.js"></script>
+  </head>
+
+  <noscript>
+    <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
+      The Google Web Toolkit Developer Plugin does not appear to be installed.
+      However, you also don't seem to have a browser that is willing to run JavaScript.
+      Please enable JavaScript or switch to a browser that supports JavaScript and try again.
+    </div>
+  </noscript>
+  </body>
+</html>
+
