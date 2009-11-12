@@ -117,6 +117,7 @@ public class MessageTransportTest extends TestCase {
           public void onTermination(Exception e) {
           }
         });
+    messageTransport.start();
 
     Message.Request.Builder requestMessageBuilder = Message.Request.newBuilder();
     requestMessageBuilder.setServiceType(Message.Request.ServiceType.DEV_MODE);
@@ -170,6 +171,7 @@ public class MessageTransportTest extends TestCase {
     MessageTransport messageTransport = new MessageTransport(
         network.getClientSocket().getInputStream(),
         network.getClientSocket().getOutputStream(), requestProcessor, null);
+    messageTransport.start();
 
     // Generate a new request
     DevModeRequest.Builder devModeRequestBuilder = DevModeRequest.newBuilder();
@@ -245,6 +247,7 @@ public class MessageTransportTest extends TestCase {
           public void onTermination(Exception e) {
           }
         });
+    messageTransport.start();
 
     // Generate a new request
     Message.Request.Builder requestMessageBuilder = Message.Request.newBuilder();
@@ -322,6 +325,7 @@ public class MessageTransportTest extends TestCase {
           public void onTermination(Exception e) {
           }
         });
+    messageTransport.start();
 
     Message.Request.Builder requestMessageBuilder = Message.Request.newBuilder();
     requestMessageBuilder.setServiceType(Message.Request.ServiceType.DEV_MODE);
@@ -387,12 +391,14 @@ public class MessageTransportTest extends TestCase {
     };
 
     // Start up the message transport on the server side
-    new MessageTransport(network.getClientSocket().getInputStream(),
+    MessageTransport messageTransport = new MessageTransport(
+        network.getClientSocket().getInputStream(),
         network.getClientSocket().getOutputStream(), requestProcessor,
         new MessageTransport.TerminationCallback() {
           public void onTermination(Exception e) {
           }
         });
+    messageTransport.start();
 
     // Send the request from the client to the server
     Message.Builder clientRequestMsgBuilder = Message.newBuilder();
@@ -441,12 +447,14 @@ public class MessageTransportTest extends TestCase {
     };
 
     // Start up the message transport on the server side
-    new MessageTransport(network.getClientSocket().getInputStream(),
+    MessageTransport messageTransport = new MessageTransport(
+        network.getClientSocket().getInputStream(),
         network.getClientSocket().getOutputStream(), requestProcessor,
         new MessageTransport.TerminationCallback() {
           public void onTermination(Exception e) {
           }
         });
+    messageTransport.start();
 
     // Send a request to the server
     Message.Request.Builder clientRequestBuilder = Message.Request.newBuilder();

@@ -33,6 +33,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -228,18 +229,18 @@ public class MessageTransport {
 
   private static final int DEFAULT_SERVICE_THREADS = 2;
 
-  private final Thread messageProcessingThread;
+  private final AtomicBoolean isStarted = new AtomicBoolean(false);
   private final AtomicInteger nextMessageId = new AtomicInteger();
   private final RequestProcessor requestProcessor;
   private final LinkedBlockingQueue<PendingSend> sendQueue = new LinkedBlockingQueue<PendingSend>();
-  private final Thread sendThread;
   private final ExecutorService serverRequestExecutor;
   private final PendingRequestMap pendingRequestMap = new PendingRequestMap();
   private final TerminationCallback terminationCallback;
+  private final InputStream inputStream;
+  private final OutputStream outputStream;
 
   /**
    * Create a new instance using the given streams and request processor.
-   * Closing either stream will cause the termination of the transport.
    * 
    * @param inputStream an input stream for reading messages
    * @param outputStream an output stream for writing messages
@@ -253,45 +254,9 @@ public class MessageTransport {
       TerminationCallback terminationCallback) {
     this.requestProcessor = requestProcessor;
     this.terminationCallback = terminationCallback;
+    this.inputStream = inputStream;
+    this.outputStream = outputStream;
     serverRequestExecutor = Executors.newFixedThreadPool(DEFAULT_SERVICE_THREADS);
-
-    // This thread terminates on interruption or IO failure
-    messageProcessingThread = new Thread(new Runnable() {
-      public void run() {
-        try {
-          while (true) {
-            Message message = Message.parseDelimitedFrom(inputStream);
-            // TODO: This is where we would do a protocol check
-            processMessage(message);
-          }
-        } catch (IOException e) {
-          terminateDueToException(e);
-        } catch (InterruptedException e) {
-          terminateDueToException(e);
-        }
-      }
-    });
-    messageProcessingThread.start();
-
-    // This thread only terminates if it is interrupted
-    sendThread = new Thread(new Runnable() {
-      public void run() {
-        while (true) {
-          try {
-            PendingSend pendingSend = sendQueue.take();
-            try {
-              pendingSend.send(outputStream);
-            } catch (IOException e) {
-              pendingSend.failed(e);
-            }
-          } catch (InterruptedException e) {
-            break;
-          }
-        }
-      }
-    });
-    sendThread.setDaemon(true);
-    sendThread.start();
   }
 
   /**
@@ -319,6 +284,58 @@ public class MessageTransport {
     });
 
     return responseFuture;
+  }
+
+  /**
+   * Starts up the message transport. The message transport creates its own
+   * threads, so it is not necessary to invoke this method from a separate
+   * thread.
+   * 
+   * Closing either stream will cause the termination of the transport.
+   */
+  public void start() {
+
+    if (isStarted.getAndSet(true)) {
+      return;
+    }
+
+    // This thread terminates on interruption or IO failure
+    Thread messageProcessingThread = new Thread(new Runnable() {
+      public void run() {
+        try {
+          while (true) {
+            Message message = Message.parseDelimitedFrom(inputStream);
+            // TODO: This is where we would do a protocol check
+            processMessage(message);
+          }
+        } catch (IOException e) {
+          terminateDueToException(e);
+        } catch (InterruptedException e) {
+          terminateDueToException(e);
+        }
+      }
+    });
+    messageProcessingThread.start();
+
+    // This thread only terminates if it is interrupted
+    Thread sendThread = new Thread(new Runnable() {
+      public void run() {
+        while (true) {
+          try {
+            PendingSend pendingSend = sendQueue.take();
+            try {
+              pendingSend.send(outputStream);
+            } catch (IOException e) {
+              pendingSend.failed(e);
+            }
+          } catch (InterruptedException e) {
+            break;
+          }
+        }
+      }
+    });
+    sendThread.setDaemon(true);
+    sendThread.start();
   }
 
   private void processClientRequest(int messageId, Request request)

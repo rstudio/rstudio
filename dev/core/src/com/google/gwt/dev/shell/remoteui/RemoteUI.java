@@ -62,6 +62,7 @@ public class RemoteUI extends DevModeUI implements
       devModeRequestProcessor = new DevModeServiceRequestProcessor(this);
       transport = new MessageTransport(transportSocket.getInputStream(),
           transportSocket.getOutputStream(), devModeRequestProcessor, this);
+      transport.start();
     } catch (UnknownHostException e) {
       throw new RuntimeException(e);
     } catch (IOException e) {
@@ -123,13 +124,11 @@ public class RemoteUI extends DevModeUI implements
   }
 
   public void onTermination(Exception e) {
-    getTopLogger().log(
-        TreeLogger.INFO,
-        "Remote UI connection terminated due to exception: "
-            + e);
+    getTopLogger().log(TreeLogger.INFO,
+        "Remote UI connection terminated due to exception: " + e);
     getTopLogger().log(TreeLogger.INFO,
         "Shutting down development mode server.");
-    
+
     try {
       // Close the transport socket
       transportSocket.close();
