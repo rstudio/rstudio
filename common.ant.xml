@@ -179,7 +179,8 @@
       <antcall target="-create.emma.coverage.if.enabled">
     	  <param name="test.emma.coverage" value="@{test.emma.coverage}"/>
       </antcall>
-      <condition property="emma.lib" value="${emma.dir}/emma-2.0.5312-patched.jar" else="">
+      <condition property="emma.lib" value="${emma.dir}/emma-2.0.5312-patched.jar"
+            else="${emma.dir}/no-emma-requested">
         <isset property="emma.enabled" />
       </condition>
 
