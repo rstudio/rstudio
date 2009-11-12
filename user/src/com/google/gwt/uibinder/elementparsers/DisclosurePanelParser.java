@@ -34,7 +34,6 @@ public class DisclosurePanelParser implements ElementParser {
   private static final String CUSTOM = "customHeader";
   private static final String HEADER = "header";
   private static final String OPEN_IMAGE = "openImage";
-
   private static final String CLOSED_IMAGE = "closedImage";
 
   public void parse(final XMLElement panelElem, String panelField,
@@ -64,21 +63,19 @@ public class DisclosurePanelParser implements ElementParser {
     }
 
     if (null != children.header) {
-      String openImage = children.header.consumeAttributeWithDefault(
-          OPEN_IMAGE, null);
-      String closedImage = children.header.consumeAttributeWithDefault(
-          CLOSED_IMAGE, null);
+      String openImage = children.header.consumeImageResourceAttribute(OPEN_IMAGE);
+      String closedImage = children.header.consumeImageResourceAttribute(CLOSED_IMAGE);
       String headerText = children.header.consumeInnerTextEscapedAsHtmlStringLiteral(new TextInterpreter(
           writer));
 
-      if ((openImage == null || closedImage == null)
-          && !(openImage == closedImage)) {
+      if (("".equals(openImage) || "".equals(closedImage))
+          && !(openImage.equals(closedImage))) {
         writer.die("In %s of %s, both %s and %s must be specified, or neither",
             children.header, panelElem, OPEN_IMAGE, CLOSED_IMAGE);
       }
 
       String panelTypeName = type.getQualifiedSourceName();
-      if (openImage != null) {
+      if (!"".equals(openImage)) {
         writer.setFieldInitializer(panelField, String.format(
             "new %s(%s, %s, \"%s\")", panelTypeName, openImage, closedImage,
             headerText));

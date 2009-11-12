@@ -24,10 +24,32 @@ import com.google.gwt.user.client.ui.Label;
  * such properties can be set via templates.
  */
 public class FooLabel extends Composite {
+  int rawInt;
+  Integer objectInteger;
+  
+  boolean rawBoolean;
+  Boolean objectBoolean;
+
   @UiConstructor
   public FooLabel() {
     Label l = new Label();
     initWidget(l);
+  }
+
+  public Boolean getObjectBoolean() {
+    return objectBoolean;
+  }
+
+  public Integer getObjectInteger() {
+    return objectInteger;
+  }
+
+  public boolean getRawBoolean() {
+    return rawBoolean;
+  }
+
+  public int getRawInt() {
+    return rawInt;
   }
 
   /**
@@ -37,9 +59,25 @@ public class FooLabel extends Composite {
     return getLabel().getText();
   }
 
+  public void setObjectBoolean(Boolean objectBoolean) {
+    this.objectBoolean = objectBoolean;
+  }
+
+  public void setObjectInteger(Integer objectInteger) {
+    this.objectInteger = objectInteger;
+  }
+
   public void setPojo(ArbitraryPojo pojo) {
     getLabel().setText("This widget has non primitive properties: "
         + pojo.toString());
+  }
+
+  public void setRawBoolean(boolean rawBoolean) {
+    this.rawBoolean = rawBoolean;
+  }
+
+  public void setRawInt(int rawInt) {
+    this.rawInt = rawInt;
   }
 
   private Label getLabel() {

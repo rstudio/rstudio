@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.attributeparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 
 /**
@@ -23,8 +24,12 @@ import com.google.gwt.uibinder.rebind.MortalLogger;
  */
 class DoubleAttributeParser extends StrictAttributeParser {
 
-  public String parse(String value, MortalLogger logger)
-      throws UnableToCompleteException {
+  DoubleAttributeParser(FieldReferenceConverter converter,
+      JType doubleType, MortalLogger logger) {
+    super(converter, doubleType, logger);
+  }
+
+  public String parse(String value) throws UnableToCompleteException {
     try {
       Double.parseDouble(value);
       // Happy double
@@ -32,6 +37,10 @@ class DoubleAttributeParser extends StrictAttributeParser {
     } catch (NumberFormatException e) {
       // Not a double, maybe super sees a field ref
     }
-    return super.parse(value, logger);
+    String fieldMaybe = super.parse(value);
+    if ("".equals(fieldMaybe)) {
+      return "";
+    }
+    return "(double)" + fieldMaybe;
   }
 }

@@ -137,7 +137,7 @@ public class BeanParser implements ElementParser {
         }
 
         String value = elem.consumeAttributeWithDefault(attribute.getName(),
-            null,getParamTypes(setter));
+            null, getParamTypes(setter));
 
         if (value == null) {
           writer.die("In %s, unable to parse %s.", elem, attribute);

@@ -127,7 +127,17 @@ public class WidgetBasedUi extends Composite {
   @UiField Label lblDebugId;
   @UiField HasHTML mixedMessageWidget;
   @UiField SpanElement mixedMessageSpan;
-  
+  @UiField FooLabel primitiveIntoObject;
+  @UiField FooLabel objectIntoPrimitive;
+  @UiField FooLabel allObject;
+  @UiField FooLabel allPrimitive;
+  @UiField FooLabel mismatchPrimitiveIntoObject;
+  @UiField FooLabel allMismatchPrimitive;
+  @UiField FooLabel primitiveBooleanIntoObject;
+  @UiField FooLabel objectBooleanIntoPrimitive;
+  @UiField FooLabel allObjectBoolean;
+  @UiField FooLabel allPrimitiveBoolean;
+
   public WidgetBasedUi() {
     external.style().ensureInjected();
     initWidget(binder.createAndBindUi(this));

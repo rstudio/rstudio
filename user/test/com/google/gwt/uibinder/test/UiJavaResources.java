@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.uibinder.elementparsers;
+package com.google.gwt.uibinder.test;
 
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
@@ -27,7 +27,7 @@ import java.util.Set;
  * A pared down, very low fidelity set of GWT widget Java source files for code
  * generator testing.
  */
-class UiJavaResources {
+public class UiJavaResources {
 
   public static final MockJavaResource DIALOG_BOX = new MockJavaResource(
       "com.google.gwt.user.client.ui.DialogBox") {
@@ -47,6 +47,32 @@ class UiJavaResources {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class DockLayoutPanel extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource HAS_HORIZONTAL_ALIGNMENT = new MockJavaResource(
+      "com.google.gwt.user.client.ui.HasHorizontalAlignment") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class HasHorizontalAlignment {\n");
+      code.append("  public static class HorizontalAlignmentConstant {\n");
+      code.append("  }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource HAS_VERTICAL_ALIGNMENT = new MockJavaResource(
+      "com.google.gwt.user.client.ui.HasVerticalAlignment") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class HasVerticalAlignment {\n");
+      code.append("  public static class VerticalAlignmentConstant {\n");
+      code.append("  }\n");
       code.append("}\n");
       return code;
     }
@@ -119,7 +145,7 @@ class UiJavaResources {
     }
   };
   public static final MockJavaResource UI_OBJECT = new MockJavaResource(
-  "com.google.gwt.user.client.ui.UIObject") {
+      "com.google.gwt.user.client.ui.UIObject") {
     @Override
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
@@ -150,6 +176,8 @@ class UiJavaResources {
         Arrays.asList(JavaResourceBase.getStandardResources()));
     rtn.add(DIALOG_BOX);
     rtn.add(DOCK_LAYOUT_PANEL);
+    rtn.add(HAS_HORIZONTAL_ALIGNMENT);
+    rtn.add(HAS_VERTICAL_ALIGNMENT);
     rtn.add(LABEL);
     rtn.add(SPLIT_LAYOUT_PANEL);
     rtn.add(STACK_LAYOUT_PANEL);

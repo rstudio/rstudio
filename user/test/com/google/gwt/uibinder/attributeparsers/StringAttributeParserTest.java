@@ -20,24 +20,21 @@ import com.google.gwt.uibinder.attributeparsers.StringAttributeParser.FieldRefer
 import junit.framework.TestCase;
 
 /**
- * Tests StringAttributeParser. Actually, tests its static inner class which
- * does all of the actual work, so that we don't have to struggle to mock
- * UiBinderWriter.
+ * Tests StringAttributeParser. 
  */
 public class StringAttributeParserTest extends TestCase {
-  FieldReferenceConverter bp = new FieldReferenceConverter(
-      new FieldReferenceDelegate());
+  FieldReferenceConverter converter = new FieldReferenceConverter(null);
 
   public void testSimple() {
     String before = "{able.baker.charlie.prawns}";
     String expected = "\"\" + able.baker().charlie().prawns() + \"\"";
-    assertEquals(expected, bp.convert(before));
+    assertEquals(expected, converter.convert(before, new FieldReferenceDelegate(null)));
   }
 
   public void testEscaping() {
     String before = "{able.baker.charlie} \"Howdy\nfriend\" {prawns.are.yummy}";
     String expected = "\"\" + able.baker().charlie() + \" \\\"Howdy\\nfriend\\\" \" + prawns.are().yummy() + \"\"";
-    String after = bp.convert(before);
+    String after = converter.convert(before, new FieldReferenceDelegate(null));
     assertEquals(expected, after);
   }
 }

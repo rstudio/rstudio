@@ -29,17 +29,18 @@ public class IntAttributeParserTest extends TestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    parser = new IntAttributeParser();
+    parser = new IntAttributeParser(new FieldReferenceConverter(null), null,
+        MortalLogger.NULL);
   }
 
   public void testGood() throws UnableToCompleteException {
-    assertEquals("1234", parser.parse("1234", MortalLogger.NULL));
-    assertEquals("-4321", parser.parse("-4321", MortalLogger.NULL));
+    assertEquals("1234", parser.parse("1234"));
+    assertEquals("-4321", parser.parse("-4321"));
   }
 
   public void testBad() {
     try {
-      parser.parse("fnord", MortalLogger.NULL);
+      parser.parse("fnord");
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
       /* pass */
@@ -47,7 +48,6 @@ public class IntAttributeParserTest extends TestCase {
   }
 
   public void testFieldRef() throws UnableToCompleteException {
-    assertEquals("foo.bar().baz()", parser.parse("{foo.bar.baz}",
-        MortalLogger.NULL));
+    assertEquals("(int)foo.bar().baz()", parser.parse("{foo.bar.baz}"));
   }
 }

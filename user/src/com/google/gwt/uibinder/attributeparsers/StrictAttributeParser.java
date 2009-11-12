@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.attributeparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.attributeparsers.FieldReferenceConverter.Delegate;
 import com.google.gwt.uibinder.attributeparsers.FieldReferenceConverter.IllegalFieldReferenceException;
 import com.google.gwt.uibinder.rebind.MortalLogger;
@@ -25,12 +26,21 @@ import com.google.gwt.uibinder.rebind.MortalLogger;
  */
 class StrictAttributeParser implements AttributeParser {
 
-  /** 
+  /**
    * Package protected for testing
    */
   static class FieldReferenceDelegate implements Delegate {
-    boolean sawReference = false;
+    private boolean sawReference = false;
+    private final JType type;
     
+    FieldReferenceDelegate(JType type) {
+      this.type = type;
+    }
+
+    public JType getType() {
+      return type;
+    }
+
     public String handleFragment(String fragment)
         throws IllegalFieldReferenceException {
       if (fragment.length() > 0) {
@@ -53,6 +63,17 @@ class StrictAttributeParser implements AttributeParser {
     }
   }
 
+  private final FieldReferenceConverter converter;
+  protected final MortalLogger logger;
+  private final JType type;
+
+  StrictAttributeParser(FieldReferenceConverter converter, JType type,
+      MortalLogger logger) {
+    this.converter = converter;
+    this.type = type;
+    this.logger = logger;
+  }
+
   /**
    * If the value holds a single field reference "{like.this}", converts it to a
    * Java Expression.
@@ -60,11 +81,10 @@ class StrictAttributeParser implements AttributeParser {
    * In any other case (e.g. more than one field reference), an
    * UnableToCompleteException is thrown.
    */
-  public String parse(String value, MortalLogger logger)
-      throws UnableToCompleteException {
+  public String parse(String value) throws UnableToCompleteException {
 
     try {
-      return new FieldReferenceConverter(new FieldReferenceDelegate()).convert(value);
+      return converter.convert(value, new FieldReferenceDelegate(type));
     } catch (IllegalFieldReferenceException e) {
       logger.die("Cannot parse value: \"%s\"", value);
       return null; // Unreachable

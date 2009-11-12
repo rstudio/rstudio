@@ -29,20 +29,21 @@ import java.util.Map;
 class EnumAttributeParser extends StrictAttributeParser {
   private final Map<String, JEnumConstant> values = new HashMap<String, JEnumConstant>();
 
-  public EnumAttributeParser(JEnumType enumType) {
+  EnumAttributeParser(FieldReferenceConverter converter, JEnumType enumType,
+      MortalLogger logger) {
+    super(converter, enumType, logger);
     JEnumConstant[] constants = enumType.getEnumConstants();
     for (JEnumConstant c : constants) {
       values.put(c.getName(), c);
     }
   }
 
-  public String parse(String value, MortalLogger logger)
-      throws UnableToCompleteException {
+  public String parse(String value) throws UnableToCompleteException {
     JEnumConstant c = values.get(value);
     if (c != null) {
-      return String.format("%s.%s", c.getEnclosingType().getQualifiedSourceName(),
-          value);
+      return String.format("%s.%s",
+          c.getEnclosingType().getQualifiedSourceName(), value);
     }
-    return super.parse(value, logger);
+    return super.parse(value);
   }
 }

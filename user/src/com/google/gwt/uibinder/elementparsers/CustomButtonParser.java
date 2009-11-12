@@ -66,7 +66,7 @@ public class CustomButtonParser implements ElementParser {
       }
 
       if (child.hasAttribute("image")) {
-        String image = child.consumeAttribute("image");
+        String image = child.consumeImageResourceAttribute("image");
         writer.addStatement("%s.%s().setImage(new %s(%s));",
             fieldName, faceNameGetter(faceName), IMAGE_CLASS, image);
       }

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.uibinder.attributeparsers;
 
-import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 
 /**
@@ -23,7 +23,18 @@ import com.google.gwt.uibinder.rebind.UiBinderWriter;
  */
 class StringAttributeParser implements AttributeParser {
   /* package private for testing */
-  static class FieldReferenceDelegate implements FieldReferenceConverter.Delegate {
+  static class FieldReferenceDelegate implements
+      FieldReferenceConverter.Delegate {
+    private final JType type;
+
+    FieldReferenceDelegate(JType type) {
+      this.type = type;
+    }
+
+    public JType getType() {
+      return type;
+    }
+
     public String handleFragment(String literal) {
       return "\"" + UiBinderWriter.escapeTextForJavaStringLiteral(literal)
           + "\"";
@@ -34,10 +45,16 @@ class StringAttributeParser implements AttributeParser {
     }
   }
 
-  final FieldReferenceConverter braceReplacor = new FieldReferenceConverter(
-      new FieldReferenceDelegate());
+  private final FieldReferenceConverter converter;
+  private final JType type;
 
-  public String parse(String value, MortalLogger ignored) {
-    return braceReplacor.convert(value);
+  StringAttributeParser(FieldReferenceConverter converter,
+      JType stringType) {
+    this.converter = converter;
+    this.type = stringType;
+  }
+
+  public String parse(String value) {
+    return converter.convert(value, new FieldReferenceDelegate(type));
   }
 }

@@ -68,6 +68,30 @@ public class UiBinderTest extends GWTTestCase {
     RootPanel.get().clear();
     super.gwtTearDown();
   }
+  
+  public void testAutoboxingFieldRef() {
+    FakeBundle fakeBundle = new FakeBundle();
+
+    assertEquals(new Integer(fakeBundle.anInt()),
+        widgetUi.primitiveIntoObject.getObjectInteger());
+    assertEquals(fakeBundle.anIntegerObject().intValue(),
+        widgetUi.objectIntoPrimitive.getRawInt());
+    assertEquals(fakeBundle.anIntegerObject(),
+        widgetUi.allObject.getObjectInteger());
+    assertEquals(fakeBundle.anInt(), widgetUi.allPrimitive.getRawInt());
+
+    assertEquals(new Integer((int) fakeBundle.aDouble()),
+        widgetUi.mismatchPrimitiveIntoObject.getObjectInteger());
+    assertEquals((int) fakeBundle.aDouble(), widgetUi.allMismatchPrimitive.getRawInt());
+
+    assertEquals(new Boolean(fakeBundle.aBoolean()),
+        widgetUi.primitiveBooleanIntoObject.getObjectBoolean());
+    assertEquals(fakeBundle.aBooleanObject().booleanValue(),
+        widgetUi.objectBooleanIntoPrimitive.getRawBoolean());
+    assertEquals(fakeBundle.aBooleanObject(),
+        widgetUi.allObjectBoolean.getObjectBoolean());
+    assertEquals(fakeBundle.aBoolean(), widgetUi.allPrimitiveBoolean.getRawBoolean());
+  }
 
   public void testAccessToNonStandardElement() {
     Element elm = widgetUi.nonStandardElement;

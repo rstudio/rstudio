@@ -17,6 +17,10 @@ package com.google.gwt.uibinder.attributeparsers;
 
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.core.ext.typeinfo.TypeOracleException;
+import com.google.gwt.uibinder.rebind.FieldManager;
+import com.google.gwt.uibinder.rebind.MortalLogger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,91 +29,89 @@ import java.util.Map;
  * Managers access to all implementations of {@link AttributeParser}
  */
 public class AttributeParsers {
+  private static final String VERT_CONSTANT = "com.google.gwt.user.client.ui.HasVerticalAlignment."
+      + "VerticalAlignmentConstant";
+  private static final String HORIZ_CONSTANT = "com.google.gwt.user.client.ui.HasHorizontalAlignment."
+      + "HorizontalAlignmentConstant";
+  private static final String INT = "int";
+  private static final String STRING = String.class.getCanonicalName();
   private static final String DOUBLE = "double";
   private static final String BOOLEAN = "boolean";
 
-  private static AttributeParser getAttributeParserByClassName(
-      String parserClassName) {
-    try {
-      Class<? extends AttributeParser> parserClass = Class.forName(
-          parserClassName).asSubclass(AttributeParser.class);
-      return parserClass.newInstance();
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException("Unable to instantiate parser", e);
-    } catch (ClassCastException e) {
-      throw new RuntimeException(parserClassName
-          + " must extend AttributeParser");
-    } catch (InstantiationException e) {
-      throw new RuntimeException("Unable to instantiate parser", e);
-    } catch (IllegalAccessException e) {
-      throw new RuntimeException("Unable to instantiate parser", e);
-    }
-  }
+  private final MortalLogger logger;
+  private final FieldReferenceConverter converter;
 
   /**
    * Class names of parsers for values of attributes with no namespace prefix,
    * keyed by method parameter signatures.
    */
-  private final Map<String, String> parsers = new HashMap<String, String>();
+  private final Map<String, AttributeParser> parsers = new HashMap<String, AttributeParser>();
 
-  public AttributeParsers() {
-    
-    addAttributeParser(BOOLEAN,
-        "com.google.gwt.uibinder.attributeparsers.BooleanAttributeParser");
+  public AttributeParsers(TypeOracle types, FieldManager fieldManager,
+      MortalLogger logger) {
+    this.logger = logger;
+    converter = new FieldReferenceConverter(fieldManager);
 
-    addAttributeParser("java.lang.String",
-        "com.google.gwt.uibinder.attributeparsers.StringAttributeParser");
-
-    addAttributeParser("int",
-        "com.google.gwt.uibinder.attributeparsers.IntAttributeParser");
-
-    addAttributeParser(DOUBLE,
-        "com.google.gwt.uibinder.attributeparsers.DoubleAttributeParser");
-
-    addAttributeParser("int,int",
-        "com.google.gwt.uibinder.attributeparsers.IntPairParser");
-
-    addAttributeParser("com.google.gwt.user.client.ui.HasHorizontalAlignment."
-        + "HorizontalAlignmentConstant",
-        "com.google.gwt.uibinder.attributeparsers.HorizontalAlignmentConstantParser");
-
-    addAttributeParser("com.google.gwt.user.client.ui.HasVerticalAlignment."
-        + "VerticalAlignmentConstant",
-        "com.google.gwt.uibinder.attributeparsers.VerticalAlignmentConstantParser");
+    try {
+      BooleanAttributeParser boolParser = new BooleanAttributeParser(converter,
+          types.parse(BOOLEAN), logger);
+      addAttributeParser(BOOLEAN, boolParser);
+      addAttributeParser(Boolean.class.getCanonicalName(), boolParser);
+      
+      IntAttributeParser intParser = new IntAttributeParser(converter,
+          types.parse(INT), logger);
+      addAttributeParser(INT, intParser);
+      addAttributeParser(Integer.class.getCanonicalName(), intParser);
+      
+      DoubleAttributeParser doubleParser = new DoubleAttributeParser(converter,
+          types.parse(DOUBLE), logger);
+      addAttributeParser(DOUBLE, doubleParser);
+      addAttributeParser(Double.class.getCanonicalName(), doubleParser);
+      
+      addAttributeParser("int,int", new IntPairParser());
+      
+      addAttributeParser(HORIZ_CONSTANT, new HorizontalAlignmentConstantParser(
+          converter, types.parse(HORIZ_CONSTANT), logger));
+      addAttributeParser(VERT_CONSTANT, new VerticalAlignmentConstantParser(
+          converter, types.parse(VERT_CONSTANT), logger));
+      
+      addAttributeParser(STRING, new StringAttributeParser(converter,
+          types.parse(STRING)));
+    } catch (TypeOracleException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public AttributeParser get(JType... types) {
+    if (types.length == 0) {
+      throw new RuntimeException("Asked for attribute parser of no type");
+    }
+
     AttributeParser rtn = getForKey(getParametersKey(types));
     if (rtn != null || types.length > 1) {
       return rtn;
     }
 
-    if (types.length == 1) {
-      /* Maybe it's an enum */
-      JEnumType enumType = types[0].isEnum();
-      if (enumType != null) {
-        return new EnumAttributeParser(enumType);
-      }
+    /* Maybe it's an enum */
+    JEnumType enumType = types[0].isEnum();
+    if (enumType != null) {
+      return new EnumAttributeParser(converter, enumType, logger);
     }
 
     /*
      * Dunno what it is, so let a StrictAttributeParser look for a
      * {field.reference}
      */
-    return new StrictAttributeParser();
+    return new StrictAttributeParser(converter, types[0], logger);
   }
-  
-  private void addAttributeParser(String signature, String className) {
-    parsers.put(signature, className);
+
+  private void addAttributeParser(String signature,
+      AttributeParser attributeParser) {
+    parsers.put(signature, attributeParser);
   }
 
   private AttributeParser getForKey(String key) {
-    String parserClassName = parsers.get(key);
-    if (parserClassName != null) {
-      return getAttributeParserByClassName(parserClassName);
-    }
-
-    return null;
+    return parsers.get(key);
   }
 
   /**

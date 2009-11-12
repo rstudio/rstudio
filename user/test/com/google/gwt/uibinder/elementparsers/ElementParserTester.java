@@ -33,6 +33,7 @@ import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.XMLElementProvider;
 import com.google.gwt.uibinder.rebind.XMLElementProviderImpl;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
+import com.google.gwt.uibinder.test.UiJavaResources;
 
 import junit.framework.Assert;
 
@@ -45,12 +46,12 @@ import java.io.PrintWriter;
 import java.util.Set;
 
 /**
- * Utility for testing {@link ElementParser} implementations in
- * isolation. For a new test you'll probably need to extend the
- * mock class hierarchy in {@link UiJavaResources}.
+ * Utility for testing {@link ElementParser} implementations in isolation. For a
+ * new test you'll probably need to extend the mock class hierarchy in
+ * {@link UiJavaResources}.
  */
 class ElementParserTester {
-   static final MockJavaResource BINDER_OWNER_JAVA = new MockJavaResource(
+  static final MockJavaResource BINDER_OWNER_JAVA = new MockJavaResource(
       "my.Ui") {
     @Override
     protected CharSequence getContent() {
@@ -74,6 +75,7 @@ class ElementParserTester {
     logger.setMaxDetail(TreeLogger.ERROR);
     return logger;
   }
+
   final JClassType parsedType;
   final MockMortalLogger logger = new MockMortalLogger();
 
@@ -90,14 +92,14 @@ class ElementParserTester {
     this.parser = parser;
     String templatePath = "TemplatePath.ui.xml";
     String implName = "ImplClass";
-    CompilationState state = CompilationStateBuilder.buildFrom(createLogger(), 
+    CompilationState state = CompilationStateBuilder.buildFrom(createLogger(),
         getUiResources());
     types = state.getTypeOracle();
 
-    elemProvider = new XMLElementProviderImpl(new AttributeParsers(), null,
-        types, logger);
+    elemProvider = new XMLElementProviderImpl(new AttributeParsers(types, null,
+        logger), null, types, logger);
 
-    fieldManager = new FieldManager(logger);
+    fieldManager = new FieldManager(types, logger);
     JClassType baseType = types.findType("my.Ui.BaseClass");
     MessagesWriter messages = new MessagesWriter(BINDER_URI, logger,
         templatePath, baseType.getPackage().getName(), implName);
@@ -126,8 +128,8 @@ class ElementParserTester {
     String tag = "g:" + parsedType.getName();
     Element w3cElem = (Element) doc.getDocumentElement().getElementsByTagName(
         tag).item(0);
-    Assert.assertNotNull(String.format("Expected to find <%s> element in test DOM", tag), 
-        w3cElem);
+    Assert.assertNotNull(String.format(
+        "Expected to find <%s> element in test DOM", tag), w3cElem);
     XMLElement elem = elemProvider.get(w3cElem);
     return elem;
   }

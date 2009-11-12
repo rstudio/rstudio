@@ -15,6 +15,9 @@
  */
 package com.google.gwt.uibinder.attributeparsers;
 
+import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.uibinder.rebind.FieldManager;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,19 +39,49 @@ import java.util.regex.Pattern;
  * converted to "{foo}", with no field reference detected.
  */
 public class FieldReferenceConverter {
-  
   /**
    * May be thrown by the {@link #Delegate} for badly formatted input.
    */
   @SuppressWarnings("serial")
-  public static class IllegalFieldReferenceException extends RuntimeException {    
+  public static class IllegalFieldReferenceException extends RuntimeException {
   }
-  
+
   /**
-   * Responsible for the bits around and between the field references.
-   * May throw IllegalFieldReferenceException as it sees fit.
+   * Used by {@link #hasFieldReferences}. Passthrough implementation that notes
+   * when handleReference has been called.
    */
-  public interface Delegate {
+  private static final class Telltale implements
+      FieldReferenceConverter.Delegate {
+    boolean hasComputed = false;
+
+    public JType getType() {
+      return null;
+    }
+
+    public String handleFragment(String fragment) {
+      return fragment;
+    }
+
+    public String handleReference(String reference) {
+      hasComputed = true;
+      return reference;
+    }
+
+    public boolean hasComputed() {
+      return hasComputed;
+    }
+  }
+
+  /**
+   * Responsible for the bits around and between the field references. May throw
+   * IllegalFieldReferenceException as it sees fit.
+   */
+  interface Delegate {
+    /**
+     * @return the type any parsed field references are expected to return
+     */
+    JType getType();
+
     /**
      * Called for fragment around and between field references.
      * <p>
@@ -70,28 +103,6 @@ public class FieldReferenceConverter {
         throws IllegalFieldReferenceException;
   }
 
-  /**
-   * Used by {@link #hasFieldReferences}. Passthrough implementation that notes
-   * when handleReference has been called.
-   */
-  private static final class Telltale implements
-      FieldReferenceConverter.Delegate {
-    boolean hasComputed = false;
-
-    public String handleFragment(String fragment) {
-      return fragment;
-    }
-
-    public String handleReference(String reference) {
-      hasComputed = true;
-      return reference;
-    }
-
-    public boolean hasComputed() {
-      return hasComputed;
-    }
-  }
-
   private static final Pattern BRACES = Pattern.compile("[{]([^}]*)[}]");
 
   private static final Pattern LEGAL_FIRST_CHAR = Pattern.compile("^[$_a-zA-Z].*");
@@ -101,20 +112,23 @@ public class FieldReferenceConverter {
    */
   public static boolean hasFieldReferences(String string) {
     Telltale telltale = new Telltale();
-    new FieldReferenceConverter(telltale).convert(string);
+    new FieldReferenceConverter(null).convert(string, telltale);
     return telltale.hasComputed();
   }
 
-  private final Delegate delegate;
+  private final FieldManager fieldManager;
 
-  public FieldReferenceConverter(Delegate delegate) {
-    this.delegate = delegate;
+  /**
+   * @param fieldManager to register parsed references with. May be null
+   */
+  FieldReferenceConverter(FieldManager fieldManager) {
+    this.fieldManager = fieldManager;
   }
 
   /**
    * @throws IllegalFieldReferenceException if the delegate does
    */
-  public String convert(String in) {
+  public String convert(String in, Delegate delegate) {
     StringBuilder b = new StringBuilder();
     int nextFindStart = 0;
     int lastMatchEnd = 0;
@@ -128,15 +142,18 @@ public class FieldReferenceConverter {
       }
 
       String precedingFragment = in.substring(lastMatchEnd, m.start());
-      precedingFragment = handleFragment(precedingFragment);
+      precedingFragment = handleFragment(precedingFragment, delegate);
       b.append(precedingFragment);
 
+      if (fieldManager != null) {
+        fieldManager.registerFieldReference(fieldReference, delegate.getType());
+      }
       fieldReference = expandDots(fieldReference);
       b.append(delegate.handleReference(fieldReference));
       nextFindStart = lastMatchEnd = m.end();
     }
 
-    b.append(handleFragment(in.substring(lastMatchEnd)));
+    b.append(handleFragment(in.substring(lastMatchEnd), delegate));
     return b.toString();
   }
 
@@ -154,7 +171,7 @@ public class FieldReferenceConverter {
     return b.toString();
   }
 
-  private String handleFragment(String fragment) {
+  private String handleFragment(String fragment, Delegate delegate) {
     fragment = fragment.replace("{{", "{");
     return delegate.handleFragment(fragment);
   }

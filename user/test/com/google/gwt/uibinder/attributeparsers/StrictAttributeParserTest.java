@@ -26,18 +26,18 @@ import junit.framework.TestCase;
  * UiBinderWriter.
  */
 public class StrictAttributeParserTest extends TestCase {
-  FieldReferenceConverter bp = new FieldReferenceConverter(new FieldReferenceDelegate());
+  FieldReferenceConverter converter = new FieldReferenceConverter(null);
 
   public void testSimple() {
     String before = "{able.baker.charlie.prawns}";
     String expected = "able.baker().charlie().prawns()";
-    assertEquals(expected, bp.convert(before));
+    assertEquals(expected, converter.convert(before, new FieldReferenceDelegate(null)));
   }
   
   public void testNoneShouldFail() {
     String before = "able.baker.charlie.prawns";
     try {
-      bp.convert(before);
+      converter.convert(before, new FieldReferenceDelegate(null));
       fail();
     } catch (IllegalFieldReferenceException e) {
       /* pass */
@@ -47,7 +47,7 @@ public class StrictAttributeParserTest extends TestCase {
   public void testTooManyShouldFail() {
     String before = "{able.baker.charlie} {prawns.are.yummy}";
     try {
-      bp.convert(before);
+      converter.convert(before, new FieldReferenceDelegate(null));
       fail();
     } catch (IllegalFieldReferenceException e) {
       /* pass */
@@ -57,7 +57,7 @@ public class StrictAttributeParserTest extends TestCase {
   public void testMixedShouldFail() {
     String before = "{able.baker.charlie} prawns are still yummy}";
     try {
-      bp.convert(before);
+      converter.convert(before, new FieldReferenceDelegate(null));
       fail();
     } catch (IllegalFieldReferenceException e) {
       /* pass */

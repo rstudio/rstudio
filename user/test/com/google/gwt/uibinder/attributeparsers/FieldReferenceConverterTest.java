@@ -16,6 +16,8 @@
 package com.google.gwt.uibinder.attributeparsers;
 
 
+import com.google.gwt.core.ext.typeinfo.JType;
+
 import junit.framework.TestCase;
 
 /**
@@ -23,7 +25,7 @@ import junit.framework.TestCase;
  */
 public class FieldReferenceConverterTest extends TestCase {
 
-  FieldReferenceConverter.Delegate provider = new FieldReferenceConverter.Delegate() {
+  FieldReferenceConverter.Delegate frDelegate = new FieldReferenceConverter.Delegate() {
     public String handleFragment(String path) {
       return "*" + path + "*";
     }
@@ -31,8 +33,12 @@ public class FieldReferenceConverterTest extends TestCase {
     public String handleReference(String reference) {
       return String.format(" & %s & ", reference);
     }
+    
+    public JType getType() {
+      return null;
+    }
   };
-  FieldReferenceConverter converter = new FieldReferenceConverter(provider);
+  FieldReferenceConverter converter = new FieldReferenceConverter(null);
 
   @Override
   protected void setUp() throws Exception {
@@ -43,42 +49,42 @@ public class FieldReferenceConverterTest extends TestCase {
     String before = "able.baker.charlie";
     String expected = "*able.baker.charlie*";
 
-    assertEquals(expected, converter.convert(before));
+    assertEquals(expected, converter.convert(before, frDelegate));
   }
 
   public void testReplaceSimple() {
     String before = "able {baker} charlie";
     String expected = "*able * & baker & * charlie*";
 
-    assertEquals(expected, converter.convert(before));
+    assertEquals(expected, converter.convert(before, frDelegate));
   }
 
   public void testReplaceSeveral() {
     String before = "{foo.bar.baz} baker {bang.zoom} delta {zap}";
     String expected = "** & foo.bar().baz() & * baker * & bang.zoom() & * delta * & zap & **";
 
-    assertEquals(expected, converter.convert(before));
+    assertEquals(expected, converter.convert(before, frDelegate));
   }
 
   public void testEscaping() {
     String before = "Well {{Hi mom}!";
     String expected = "*Well {Hi mom}!*";
 
-    assertEquals(expected, converter.convert(before));
+    assertEquals(expected, converter.convert(before, frDelegate));
   }
 
   public void testIgnoreEmpty() {
     String before = "Hi {} mom";
     String expected = "*Hi {} mom*";
 
-    assertEquals(expected, converter.convert(before));
+    assertEquals(expected, converter.convert(before, frDelegate));
   }
 
   public void testIgnoreNonIdentifierFirstChar() {
     String before = "Hi { } mom, how { are } {1you}?";
     String expected = "*Hi { } mom, how { are } {1you}?*";
 
-    assertEquals(expected, converter.convert(before));
+    assertEquals(expected, converter.convert(before, frDelegate));
   }
   
   public void testHasFieldReferences() {

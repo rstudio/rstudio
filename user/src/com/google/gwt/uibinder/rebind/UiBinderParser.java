@@ -252,9 +252,8 @@ public class UiBinderParser {
     ImplicitCssResource cssMethod = bundleClass.createCssResource(name, source,
         publicType, body, importTypes);
 
-    FieldWriter field = fieldManager.registerFieldOfGeneratedType(
-        cssMethod.getPackageName(), cssMethod.getClassName(),
-        cssMethod.getName());
+    FieldWriter field = fieldManager.registerFieldForGeneratedCssResource(
+        cssMethod);
     field.setInitializer(String.format("%s.%s()", bundleClass.getFieldName(),
         cssMethod.getName()));
   }

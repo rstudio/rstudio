@@ -20,10 +20,10 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
-import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockResourceOracle;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 import com.google.gwt.uibinder.elementparsers.NullInterpreter;
+import com.google.gwt.uibinder.test.UiJavaResources;
 
 import junit.framework.TestCase;
 
@@ -33,6 +33,7 @@ import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,26 +42,34 @@ import java.util.Set;
  */
 public class XMLElementTest extends TestCase {
   private static final String STRING_WITH_DOUBLEQUOTE = "I have a \" quote in me";
+
   private static final W3cDomHelper docHelper = new W3cDomHelper(
       TreeLogger.NULL);
+
+  private static TreeLogger createCompileLogger() {
+    PrintWriterTreeLogger logger = new PrintWriterTreeLogger(new PrintWriter(
+        System.err, true));
+    logger.setMaxDetail(TreeLogger.ERROR);
+    return logger;
+  }
+
   private Document doc;
   private Element item;
   private XMLElement elm;
   private XMLElementProvider elemProvider;
-  private TypeOracle oracle;
+  private TypeOracle types;
+
   private MockMortalLogger logger;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    MockResourceOracle resourceOracle = new MockResourceOracle(
-        JavaResourceBase.getStandardResources());
-    CompilationState state = CompilationStateBuilder.buildFrom(TreeLogger.NULL,
-        resourceOracle.getResources()); 
-    oracle = state.getTypeOracle();
+    CompilationState state = CompilationStateBuilder.buildFrom(createCompileLogger(),
+        UiJavaResources.getUiResources());
+    types = state.getTypeOracle();
     logger = new MockMortalLogger();
-    elemProvider = new XMLElementProviderImpl(new AttributeParsers(), null,
-        oracle, logger);
+    elemProvider = new XMLElementProviderImpl(new AttributeParsers(types, null,
+        logger), null, types, logger);
 
     init("<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
   }
@@ -73,8 +82,7 @@ public class XMLElementTest extends TestCase {
     } catch (UnableToCompleteException e) {
       assertTrue("Expect extra attributes list",
           logger.died.contains("\"yes\""));
-      assertTrue("Expect extra attributes list",
-          logger.died.contains("\"no\""));
+      assertTrue("Expect extra attributes list", logger.died.contains("\"no\""));
     }
   }
 
@@ -122,6 +130,36 @@ public class XMLElementTest extends TestCase {
     }
   }
 
+  public void testConsumeBooleanConstant() throws SAXException, IOException,
+      UnableToCompleteException {
+    init("<doc><elm yes='true' no='false' "
+        + "fnord='fnord' ref='{foo.bar.baz}' empty=''/></doc>");
+
+    assertNull(elm.consumeBooleanConstantAttribute("foo"));
+
+    assertTrue(elm.consumeBooleanConstantAttribute("yes"));
+    assertNull(elm.consumeBooleanConstantAttribute("yes"));
+
+    assertFalse(elm.consumeBooleanConstantAttribute("no"));
+    assertNull(elm.consumeBooleanConstantAttribute("no"));
+
+    assertNull(elm.consumeBooleanConstantAttribute("empty"));
+
+    try {
+      elm.consumeBooleanConstantAttribute("ref");
+      fail("Should throw UnableToCompleteException on field ref");
+    } catch (UnableToCompleteException c) {
+      assertNotNull(logger.died);
+    }
+
+    try {
+      elm.consumeBooleanConstantAttribute("fnord");
+      fail("Should throw UnableToCompleteException on misparse");
+    } catch (UnableToCompleteException c) {
+      assertNotNull(logger.died);
+    }
+  }
+
   public void testConsumeBooleanDefault() throws SAXException, IOException,
       UnableToCompleteException {
     init("<doc><elm yes='true' no='false' "
@@ -147,30 +185,13 @@ public class XMLElementTest extends TestCase {
     }
   }
 
-  public void testConsumeBooleanConstant() throws SAXException, IOException,
-      UnableToCompleteException {
-    init("<doc><elm yes='true' no='false' "
-        + "fnord='fnord' ref='{foo.bar.baz}'/></doc>");
-
-    assertNull(elm.consumeBooleanConstantAttribute("foo"));
-
-    assertTrue(elm.consumeBooleanConstantAttribute("yes"));
-    assertNull(elm.consumeBooleanConstantAttribute("yes"));
-
-    assertFalse(elm.consumeBooleanConstantAttribute("no"));
-    assertNull(elm.consumeBooleanConstantAttribute("no"));
-
+  public void testConsumeChildrenNoTextAllowed() throws SAXException,
+      IOException {
+    init("<doc><elm><child>Hi.</child> Stray text is bad</elm></doc>");
     try {
-      elm.consumeBooleanConstantAttribute("ref");
-      fail("Should throw UnableToCompleteException on field ref");
-    } catch (UnableToCompleteException c) {
-      assertNotNull(logger.died);
-    }
-
-    try {
-      elm.consumeBooleanConstantAttribute("fnord");
-      fail("Should throw UnableToCompleteException on misparse");
-    } catch (UnableToCompleteException c) {
+      elm.consumeChildElements();
+      fail();
+    } catch (UnableToCompleteException e) {
       assertNotNull(logger.died);
     }
   }
@@ -178,15 +199,21 @@ public class XMLElementTest extends TestCase {
   public void testConsumeDouble() throws UnableToCompleteException,
       SAXException, IOException {
     init("<doc><elm minus='-123.45' plus='123.45' minus-one='-1' "
-        + "plus-one='1' fnord='fnord' ref='{foo.bar.baz}'/></doc>");
+        + "plus-one='1' fnord='fnord' ref='{foo.bar.baz}' empty=''/></doc>");
     assertEquals("1", elm.consumeDoubleAttribute("plus-one"));
+    assertEquals("", elm.consumeDoubleAttribute("plus-one"));
     assertEquals("-1", elm.consumeDoubleAttribute("minus-one"));
+    assertEquals("", elm.consumeDoubleAttribute("minus-one"));
     assertEquals("123.45", elm.consumeDoubleAttribute("plus"));
+    assertEquals("", elm.consumeDoubleAttribute("plus"));
     assertEquals("-123.45", elm.consumeDoubleAttribute("minus"));
-    assertEquals("foo.bar().baz()", elm.consumeBooleanAttribute("ref"));
+    assertEquals("", elm.consumeDoubleAttribute("minus"));
+    assertEquals("(double)foo.bar().baz()", elm.consumeDoubleAttribute("ref"));
+    assertEquals("", elm.consumeDoubleAttribute("ref"));
+    assertEquals("", elm.consumeDoubleAttribute("empty"));
 
     try {
-      elm.consumeBooleanAttribute("fnord");
+      elm.consumeDoubleAttribute("fnord");
       fail("Should throw UnableToCompleteException on misparse");
     } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
@@ -226,6 +253,38 @@ public class XMLElementTest extends TestCase {
       elm.consumeRequiredRawAttribute("unsetthing");
       fail("Should have thrown UnableToCompleteException");
     } catch (UnableToCompleteException e) {
+      assertNotNull(logger.died);
+    }
+  }
+
+  public void testConsumeRequiredDouble() throws UnableToCompleteException,
+      SAXException, IOException {
+    init("<doc><elm minus='-123.45' plus='123.45' minus-one='-1' "
+        + "plus-one='1' fnord='fnord' ref='{foo.bar.baz}'/></doc>");
+    assertEquals("1", elm.consumeRequiredDoubleAttribute("plus-one"));
+    assertEquals("-1", elm.consumeRequiredDoubleAttribute("minus-one"));
+    assertEquals("123.45", elm.consumeRequiredDoubleAttribute("plus"));
+    assertEquals("-123.45", elm.consumeRequiredDoubleAttribute("minus"));
+    assertEquals("(double)foo.bar().baz()", elm.consumeRequiredDoubleAttribute("ref"));
+
+    try {
+      elm.consumeRequiredDoubleAttribute("fnord");
+      fail("Should throw UnableToCompleteException on misparse");
+    } catch (UnableToCompleteException c) {
+      assertNotNull(logger.died);
+    }
+
+    try {
+      elm.consumeRequiredDoubleAttribute("plus-one");
+      fail("Should throw UnableToCompleteException consumed attribute");
+    } catch (UnableToCompleteException c) {
+      assertNotNull(logger.died);
+    }
+
+    try {
+      elm.consumeRequiredDoubleAttribute("empty");
+      fail("Should throw UnableToCompleteException on no such attribute");
+    } catch (UnableToCompleteException c) {
       assertNotNull(logger.died);
     }
   }
@@ -288,17 +347,6 @@ public class XMLElementTest extends TestCase {
     XMLElement elm = elemProvider.get(item);
     assertEquals("br", item.getTagName());
     assertEquals("", elm.getClosingTag());
-  }
-
-  public void testConsumeChildrenNoTextAllowed() throws SAXException,
-      IOException {
-    init("<doc><elm><child>Hi.</child> Stray text is bad</elm></doc>");
-    try {
-      elm.consumeChildElements();
-      fail();
-    } catch (UnableToCompleteException e) {
-      assertNotNull(logger.died);
-    }
   }
 
   private void appendText(final String text) {

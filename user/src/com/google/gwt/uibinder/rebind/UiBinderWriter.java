@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dom.client.TagName;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.uibinder.attributeparsers.AttributeParser;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 import com.google.gwt.uibinder.attributeparsers.BundleAttributeParser;
@@ -121,10 +122,6 @@ public class UiBinderWriter {
     return text;
   }
 
-  private static String capitalizePropName(String propName) {
-    return propName.substring(0, 1).toUpperCase() + propName.substring(1);
-  }
-
   /**
    * Returns a list of the given type and all its superclasses and implemented
    * interfaces in a breadth-first traversal.
@@ -132,7 +129,7 @@ public class UiBinderWriter {
    * @param type the base type
    * @return a breadth-first collection of its type hierarchy
    */
-  private static Iterable<JClassType> getClassHierarchyBreadthFirst(
+  static Iterable<JClassType> getClassHierarchyBreadthFirst(
       JClassType type) {
     LinkedList<JClassType> list = new LinkedList<JClassType>();
     LinkedList<JClassType> q = new LinkedList<JClassType>();
@@ -156,6 +153,10 @@ public class UiBinderWriter {
     }
 
     return list;
+  }
+
+  private static String capitalizePropName(String propName) {
+    return propName.substring(0, 1).toUpperCase() + propName.substring(1);
   }
 
   private final MortalLogger logger;
@@ -232,8 +233,7 @@ public class UiBinderWriter {
     this.messages = messagesWriter;
 
     // Check for possible misuse 'GWT.create(UiBinder.class)'
-    JClassType uibinderItself =
-      oracle.findType(UiBinder.class.getCanonicalName());
+    JClassType uibinderItself = oracle.findType(UiBinder.class.getCanonicalName());
     if (uibinderItself.equals(baseClass)) {
       die("You must use a subtype of UiBinder in GWT.create(). E.g.,\n"
           + "  interface Binder extends UiBinder<Widget, MyClass> {}\n"
@@ -251,7 +251,7 @@ public class UiBinderWriter {
     if (typeArgs.length < 2) {
       throw new RuntimeException(
           "Root and owner type parameters are required for type %s"
-          + uiBinderType.getName());
+              + uiBinderType.getName());
     }
     uiRootType = typeArgs[0];
     uiOwnerType = typeArgs[1];
@@ -261,7 +261,7 @@ public class UiBinderWriter {
         this.implClassName, CLIENT_BUNDLE_FIELD, logger);
     handlerEvaluator = new HandlerEvaluator(ownerClass, logger, oracle);
 
-    attributeParsers = new AttributeParsers();
+    attributeParsers = new AttributeParsers(oracle, fieldManager, logger);
     bundleParsers = new BundleAttributeParsers(oracle, gwtPrefix, logger,
         getOwnerClass(), templatePath, uiOwnerType);
   }
@@ -426,6 +426,7 @@ public class UiBinderWriter {
   /**
    * End the current attachable section. This will detach the element if it was
    * ever attached and execute any detach statements.
+   * 
    * @see #beginAttachedSection(String)
    */
   public void endAttachedSection() {
@@ -459,9 +460,9 @@ public class UiBinderWriter {
   }
 
   /**
-   * Ensure that the specified field is attached to the DOM. The field
-   * must hold an object that responds to Element getElement(). Convenience
-   * wrapper for {@link ensureAttached}<code>(field + ".getElement()")</code>.
+   * Ensure that the specified field is attached to the DOM. The field must hold
+   * an object that responds to Element getElement(). Convenience wrapper for
+   * {@link ensureAttached}<code>(field + ".getElement()")</code>.
    * 
    * @param field variable name of the field to be attached
    * @see #beginAttachedSection(String)
@@ -664,9 +665,11 @@ public class UiBinderWriter {
    * Entry point for the code generation logic. It generates the
    * implementation's superstructure, and parses the root widget (leading to all
    * of its children being parsed as well).
+   * 
    * @param doc TODO
    */
-  void parseDocument(Document doc, PrintWriter printWriter) throws UnableToCompleteException {
+  void parseDocument(Document doc, PrintWriter printWriter)
+      throws UnableToCompleteException {
     JClassType uiBinderClass = getOracle().findType(UiBinder.class.getName());
     if (!baseClass.isAssignableTo(uiBinderClass)) {
       die(baseClass.getName() + " must implement UiBinder");
@@ -687,7 +690,8 @@ public class UiBinderWriter {
 
   private void addWidgetParser(String className) {
     String gwtClass = "com.google.gwt.user.client.ui." + className;
-    String parser = "com.google.gwt.uibinder.elementparsers." + className + "Parser";
+    String parser = "com.google.gwt.uibinder.elementparsers." + className
+        + "Parser";
     addElementParser(gwtClass, parser);
   }
 
@@ -835,7 +839,7 @@ public class UiBinderWriter {
 
     parsers.add(new BeanParser());
     parsers.add(new IsEmptyParser());
-    
+
     return parsers;
   }
 
@@ -873,12 +877,16 @@ public class UiBinderWriter {
    */
   private String parseDocumentElement(XMLElement elem)
       throws UnableToCompleteException {
-    fieldManager.registerFieldOfGeneratedType(bundleClass.getPackageName(),
-        bundleClass.getClassName(), bundleClass.getFieldName());
+    fieldManager.registerFieldOfGeneratedType(
+        oracle.findType(ClientBundle.class.getName()),
+        bundleClass.getPackageName(), bundleClass.getClassName(),
+        bundleClass.getFieldName());
     // Allow GWT.create() to init the field, the default behavior
 
     String rootField = new UiBinderParser(this, messages, fieldManager, oracle,
         bundleClass).parse(elem);
+
+    fieldManager.validate();
 
     StringWriter stringWriter = new StringWriter();
     IndentedWriter niceWriter = new IndentedWriter(
@@ -1079,10 +1087,10 @@ public class UiBinderWriter {
 
       } else if (fieldWriter != null) {
         // ownerField is a widget.
-        JClassType type = fieldWriter.getType();
+        JClassType type = fieldWriter.getInstantiableType();
         if (type != null) {
-          maybeWriteFieldSetter(niceWriter, ownerField, fieldWriter.getType(),
-              fieldName);
+          maybeWriteFieldSetter(niceWriter, ownerField,
+              fieldWriter.getInstantiableType(), fieldName);
         } else {
           // Must be a generated type
           if (!ownerField.isProvided()) {

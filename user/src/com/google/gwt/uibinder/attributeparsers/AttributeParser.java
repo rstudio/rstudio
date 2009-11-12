@@ -16,7 +16,6 @@
 package com.google.gwt.uibinder.attributeparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.uibinder.rebind.MortalLogger;
 
 /**
  * Attribute parsers are classes that parse xml attribute values, turning them
@@ -28,10 +27,9 @@ public interface AttributeParser {
    * Parse the given attribute value.
    * 
    * @param value the attribute value to be parsed
-   * @param logger the logger
    * @return a valid Java expression
    * @throws UnableToCompleteException on parse error
    */
-  String parse(String value, MortalLogger logger)
+  String parse(String value)
       throws UnableToCompleteException;
 }

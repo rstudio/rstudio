@@ -50,7 +50,7 @@ public class DockLayoutPanelParserTest extends TestCase {
       tester.parse(b.toString());
       fail();
     } catch (UnableToCompleteException e) {
-      assertTrue("expect \"must contain a widget\" error", 
+      assertTrue("expect \"must contain a widget\" error",
           tester.logger.died.contains("must contain a widget"));
     }
   }
@@ -128,8 +128,9 @@ public class DockLayoutPanelParserTest extends TestCase {
       assertNotNull(tester.logger.died);
     }
   }
-   
-  public void testNoUnits() throws SAXException, IOException, UnableToCompleteException {
+
+  public void testNoUnits() throws SAXException, IOException,
+      UnableToCompleteException {
     StringBuffer b = new StringBuffer();
     b.append("<g:DockLayoutPanel>");
     b.append("</g:DockLayoutPanel>");
@@ -140,5 +141,22 @@ public class DockLayoutPanelParserTest extends TestCase {
 
     Iterator<String> i = tester.writer.statements.iterator();
     assertFalse(i.hasNext());
+  }
+
+  public void testNoSize() throws SAXException, IOException {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:DockLayoutPanel>");
+    b.append("  <g:north>");
+    b.append("    <g:Label id='north'>north</g:Label>");
+    b.append("  </g:north>");
+    b.append("</g:DockLayoutPanel>");
+
+    try {
+      tester.parse(b.toString());
+      fail();
+    } catch (UnableToCompleteException e) {
+      assertTrue("Expect to hear about required attribute size", 
+          tester.logger.died.contains("required attribute \"size\""));
+    }
   }
 }

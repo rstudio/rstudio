@@ -100,7 +100,7 @@ public class DockLayoutPanelParser implements ElementParser {
         }
         center = new CenterChild(child, widgetName);
       } else {
-        String size = child.consumeDoubleAttribute("size");
+        String size = child.consumeRequiredDoubleAttribute("size");
         writer.addStatement("%s.%s(%s, %s);", fieldName, addMethodName(child),
             widgetName, size);
       }

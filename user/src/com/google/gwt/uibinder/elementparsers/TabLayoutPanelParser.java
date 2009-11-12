@@ -42,7 +42,7 @@ public class TabLayoutPanelParser implements ElementParser {
       UiBinderWriter writer) throws UnableToCompleteException {
     // TabLayoutPanel requires tabBar size and unit ctor args.
 
-    String size = panelElem.consumeDoubleAttribute("barHeight");
+    String size = panelElem.consumeRequiredDoubleAttribute("barHeight");
     if ("".equals(size)) {
       writer.die("In %s, barHeight attribute is required", panelElem);
     }

@@ -74,10 +74,7 @@ public class StackLayoutPanelParser implements ElementParser {
       if (children.header != null) {
         HtmlInterpreter htmlInt = HtmlInterpreter.newInterpreterForUiObject(
             writer, fieldName);
-        String size = children.header.consumeDoubleAttribute("size");
-        if ("".equals(size)) {
-          writer.die("In %s, %s must have a size", panelElem, stackElem);
-        }
+        String size = children.header.consumeRequiredDoubleAttribute("size");
         String html = children.header.consumeInnerHtml(htmlInt);
         writer.addStatement("%s.add(%s, " 
             + "new com.google.gwt.user.client.ui.HTML(\"%s\"), " 
@@ -86,10 +83,7 @@ public class StackLayoutPanelParser implements ElementParser {
       } else if (children.customHeader != null) {
         XMLElement headerElement =
           children.customHeader.consumeSingleChildElement();
-        String size = children.customHeader.consumeDoubleAttribute("size");
-        if ("".equals(size)) {
-          writer.die("In %s, %s must have a size", panelElem, stackElem);
-        }
+        String size = children.customHeader.consumeRequiredDoubleAttribute("size");
         if (!writer.isWidgetElement(headerElement)) {
           writer.die("In %s of %s, %s is not a widget", children.customHeader,
               stackElem, headerElement);

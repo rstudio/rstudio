@@ -124,6 +124,14 @@ public class ImplicitCssResource {
     return packageName;
   }
 
+  public String getQualifiedSourceName() {
+    if (packageName.length() == 0) {
+      return name;
+    }
+
+    return String.format("%s.%s", packageName, className);
+  }
+
   /**
    * @return the name of the .css file(s), separate by white space
    */

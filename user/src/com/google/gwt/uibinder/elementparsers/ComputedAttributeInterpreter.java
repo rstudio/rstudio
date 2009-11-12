@@ -49,8 +49,7 @@ class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
 
       if (parser != null) {
         // Legacy res:style='style.pretty'
-        String parsedValue = parser.parse(att.consumeRawValue(),
-            writer.getLogger());
+        String parsedValue = parser.parse(att.consumeRawValue());
         String attToken = writer.tokenForExpression(parsedValue);
 
         // Use localName so <div res:style='...'> becomes <div style='...'>

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JType;
 
 /**
  * Models a field to be written in the generated binder code. Note that this is
@@ -34,16 +35,33 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
  */
 public interface FieldWriter {
 
-  String getQualifiedSourceName();
+  /**
+   * @return the type of this field, or for generated types the type it extends
+   */
+  // TODO(rjrjr) When ui:style is able to implement multiple interfaces,
+  // this will need to become a set
+  JClassType getAssignableType();
 
   String getInitializer();
-  
+
   /**
    * @return the type of this field, or null if this field is of a type that has
    *         not yet been generated
    */
-  JClassType getType();
+  JClassType getInstantiableType();
 
+  /**
+   * @return the qualified source name of this type
+   */
+  String getQualifiedSourceName();
+
+  /**
+   * @return the return type found at the end of the given method call
+   * path, which must begin with the receiver's name, or null if the
+   * path is invalid
+   */
+  JType getReturnType(String[] path, MonitoredLogger logger);
+  
   /**
    * Declares that the receiver depends upon the given field.
    */
@@ -56,7 +74,7 @@ public interface FieldWriter {
    * <p>
    * TODO(rjrjr) Should be able to make this a constructor argument when
    * BundleAttributeParser dies.
-   *
+   * 
    * @throws UnableToCompleteException
    * @throws IllegalStateException on second attempt to set the initializer
    */
@@ -64,8 +82,8 @@ public interface FieldWriter {
 
   /**
    * @deprecated needed only by
-   *             {@link com.google.gwt.uibinder.attributeparsers.BundleAttributeParser},
-   *             which will die soon
+   *             {@link com.google.gwt.uibinder.attributeparsers.BundleAttributeParser}
+   *             , which will die soon
    * @throws IllegalStateException if initializer in a later call doesn't match
    *           earlier call
    */
@@ -75,6 +93,5 @@ public interface FieldWriter {
   /**
    * Write the field delcaration.
    */
-  void write(IndentedWriter w)
-      throws UnableToCompleteException;
+  void write(IndentedWriter w) throws UnableToCompleteException;
 }

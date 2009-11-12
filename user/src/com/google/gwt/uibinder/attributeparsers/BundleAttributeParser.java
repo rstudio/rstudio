@@ -16,7 +16,6 @@
 package com.google.gwt.uibinder.attributeparsers;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.uibinder.rebind.MortalLogger;
 
 /**
  * Interprets an attribute's contents as a method call on a resource class (one
@@ -53,7 +52,7 @@ public class BundleAttributeParser implements AttributeParser {
     return isBundleStatic;
   }
 
-  public String parse(String attribute, MortalLogger ignored) {
+  public String parse(String attribute) {
     StringBuilder b = new StringBuilder();
     String[] values = attribute.split(" ");
     boolean first = true;

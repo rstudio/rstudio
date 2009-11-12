@@ -119,7 +119,7 @@ public class UiBinderGenerator extends Generator {
         templatePath, interfaceType.getPackage().getName(), implName);
 
     UiBinderWriter uiBinderWriter = new UiBinderWriter(interfaceType, implName,
-        templatePath, oracle, logger, new FieldManager(logger), messages);
+        templatePath, oracle, logger, new FieldManager(oracle, logger), messages);
 
     Document doc = getW3cDoc(logger, templatePath);
 

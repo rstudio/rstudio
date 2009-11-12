@@ -501,8 +501,24 @@
       </demo:StrictLabel></p>
       <p><demo:NeedlesslyAnnotatedLabel ui:field="needlessLabel"
         text="Sometimes people do things they don't need to do. Don't punish them."/></p>
+
       <demo:FooLabel ui:field='theFoo' pojo="{values.pojo}"/>
+      
+      <demo:FooLabel ui:field='primitiveIntoObject' objectInteger='{values.anInt}'/>
+      <demo:FooLabel ui:field='objectIntoPrimitive' rawInt='{values.anIntegerObject}' />
+      <demo:FooLabel ui:field='allObject'  objectInteger='{values.anIntegerObject}' />
+      <demo:FooLabel ui:field='allPrimitive' rawInt='{values.anInt}' />
+      
+      <demo:FooLabel ui:field='mismatchPrimitiveIntoObject' objectInteger='{values.aDouble}'/>
+      <demo:FooLabel ui:field='allMismatchPrimitive' rawInt='{values.aDouble}' />
+
+      <demo:FooLabel ui:field='primitiveBooleanIntoObject' objectBoolean='{values.aBoolean}'/>
+      <demo:FooLabel ui:field='objectBooleanIntoPrimitive' rawBoolean='{values.aBooleanObject}' />
+      <demo:FooLabel ui:field='allObjectBoolean'  objectBoolean='{values.aBooleanObject}' />
+      <demo:FooLabel ui:field='allPrimitiveBoolean' rawBoolean='{values.aBoolean}' />
+      
       <demo:EnumeratedLabel ui:field='enumLabel' suffix='tail'>This label uses an enum for its</demo:EnumeratedLabel>
+
       <gwt:PushButton ui:field='pushButton' enabled='true'>
         <gwt:upFace><b>click me</b></gwt:upFace>
         <gwt:downFace image='{prettyImage}'/>

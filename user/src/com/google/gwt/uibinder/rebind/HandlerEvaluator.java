@@ -149,7 +149,7 @@ class HandlerEvaluator {
 
         // Retrieves the "add handler" method in the object.
         JMethod addHandlerMethodType = getAddHandlerMethodForObject(
-            fieldWriter.getType(), handlerType);
+            fieldWriter.getInstantiableType(), handlerType);
         if (addHandlerMethodType == null) {
           logger.die("Field '%s' does not have an 'add%s' method associated.",
               objectName, handlerType.getName());

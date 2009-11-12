@@ -16,10 +16,10 @@
 package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.attributeparsers.AttributeParser;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 
@@ -105,11 +105,10 @@ public class XMLElement {
 
   private final XMLElementProvider provider;
 
-  private JClassType stringType;
-
   private JType booleanType;
-
+  private JType imageResourceType;
   private JType doubleType;
+  private JType stringType;
 
   {
     // from com/google/gxp/compiler/schema/html.xml
@@ -198,28 +197,25 @@ public class XMLElement {
   }
 
   /**
-   * Consumes the given attribute as a literal or field reference. The optional
-   * types parameters determine how (or if) the value is parsed.
+   * Consumes the given attribute as a literal or field reference. The 
+   * type parameter is required to determine how the value is parsed and
+   * validated.
    * 
    * @param name the attribute's full name (including prefix)
    * @param types the type(s) this attribute is expected to provide
    * @return the attribute's value as a Java expression, or "" if it is not set
    * @throws UnableToCompleteException on parse failure
    */
-  public String consumeAttribute(String name, JType... types)
+  public String consumeAttribute(String name, JType type)
       throws UnableToCompleteException {
     String value = consumeRawAttribute(name);
-    return getParser(getAttribute(name), types).parse(value, logger);
-    /*
-     * TODO(rjrjr) If we get a field reference, enforce that its type matches
-     * the given type. CssResourceGenerator.validateValue() has similar logic,
-     * says Bob.
-     */
+    return getParser(getAttribute(name), type).parse(value);
   }
 
   /**
-   * Consumes the given attribute as a literal or field reference. The optional
-   * types parameters determine how (or if) the value is parsed.
+   * Consumes the given attribute as a literal or field reference. The 
+   * type parameter is required to determine how the value is parsed and
+   * validated.
    * 
    * @param name the attribute's full name (including prefix)
    * @param defaultValue the value to @return if the attribute was unset
@@ -229,21 +225,25 @@ public class XMLElement {
    * @throws UnableToCompleteException on parse failure
    */
   public String consumeAttributeWithDefault(String name, String defaultValue,
-      JType... types) throws UnableToCompleteException {
+      JType type) throws UnableToCompleteException {
+    return consumeAttributeWithDefault(name, defaultValue, new JType[] {type});
+  }
+
+  /**
+   * Like {@link #consumeAttributeWithDefault(String, String, JType)}, but 
+   * accomodates more complex type signatures.
+   */
+  public String consumeAttributeWithDefault(String name, String defaultValue,
+      JType[] types) throws UnableToCompleteException {
     String value = consumeRawAttribute(name);
     if ("".equals(value)) {
       return defaultValue;
     }
-    value = getParser(getAttribute(name), types).parse(value, logger);
+    value = getParser(getAttribute(name), types).parse(value);
     if ("".equals(value)) {
       return defaultValue;
     }
     return value;
-    /*
-     * TODO(rjrjr) If we get a field reference, enforce that its type matches
-     * the given type. CssResourceGenerator.validateValue() has similar logic,
-     * says Bob.
-     */
   }
 
   /**
@@ -358,6 +358,19 @@ public class XMLElement {
   public String consumeDoubleAttribute(String name)
       throws UnableToCompleteException {
     return consumeAttribute(name, getDoubleType());
+  }
+
+  /**
+   * Convenience method for parsing the named attribute as an ImageResource
+   * value or reference.
+   * 
+   * @return an expression that will evaluate toan ImageResource value in the
+   *         generated code, or "" if there is no such attribute
+   * @throws UnableToCompleteException on unparseable value
+   */
+  public String consumeImageResourceAttribute(String name)
+      throws UnableToCompleteException {
+    return consumeAttribute(name, getImageResourceType());
   }
 
   /**
@@ -504,13 +517,45 @@ public class XMLElement {
   }
 
   /**
-   * Consumes the named attribute, or dies if it is missing.
+   * Consumes the given required attribute as a literal or field reference. The 
+   * types parameters are required to determine how the value is parsed and
+   * validated.
+   * 
+   * @param name the attribute's full name (including prefix)
+   * @param types the type(s) this attribute is expected to provide
+   * @return the attribute's value as a Java expression, or "" if it is not set
+   * @throws UnableToCompleteException on parse failure, or if the attribute is
+   *           empty or unspecified
+   */
+  public String consumeRequiredAttribute(String name, JType... types)
+      throws UnableToCompleteException {
+    String value = consumeRequiredRawAttribute(name);
+    return getParser(getAttribute(name), types).parse(value);
+  }
+
+  /**
+   * Convenience method for parsing the named required attribute as a double
+   * value or reference.
+   * 
+   * @return a double literal, an expression that will evaluate to a double
+   *         value in the generated code, or "" if there is no such attribute
+   * 
+   * @throws UnableToCompleteException on unparseable value, or if the attribute
+   *           is empty or unspecified
+   */
+  public String consumeRequiredDoubleAttribute(String name)
+      throws UnableToCompleteException {
+    return consumeRequiredAttribute(name, getDoubleType());
+  }
+
+  /**
+   * Consumes the named attribute, or dies if it is missing or empty.
    */
   public String consumeRequiredRawAttribute(String name)
       throws UnableToCompleteException {
     String value = consumeRawAttribute(name);
     if ("".equals(value)) {
-      logger.die("In %s, missing required attribute name \"%s\"", this, name);
+      logger.die("In %s, missing required attribute \"%s\"", this, name);
     }
     return value;
   }
@@ -554,7 +599,7 @@ public class XMLElement {
 
     String[] strings = consumeRawArrayAttribute(name);
     for (int i = 0; i < strings.length; i++) {
-      strings[i] = parser.parse(strings[i], logger);
+      strings[i] = parser.parse(strings[i]);
     }
     return strings;
   }
@@ -735,6 +780,13 @@ public class XMLElement {
     return doubleType;
   }
 
+  private JType getImageResourceType() {
+    if (imageResourceType == null) {
+      imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
+    }
+    return imageResourceType;
+  }
+
   private String getOpeningTag() {
     StringBuilder b = new StringBuilder().append("<").append(elem.getTagName());
 
@@ -762,7 +814,7 @@ public class XMLElement {
     return rtn;
   }
 
-  private JClassType getStringType() {
+  private JType getStringType() {
     if (stringType == null) {
       stringType = oracle.findType(String.class.getCanonicalName());
     }
