@@ -29,12 +29,32 @@ try {
 }
 
 function loadIframe(url) {
-  var iframe = $doc.createElement('iframe');
-  iframe.src = url;
-  iframe.style.width = "100%";
-  iframe.style.height = "100%";
-  iframe.style.borderWidth = "0px";
-  $doc.body.insertBefore(iframe, $doc.body.firstChild);
+  var topDoc = window.top.document;
+
+  // create an iframe
+  var iframeDiv = topDoc.createElement("div");
+  iframeDiv.innerHTML = "<iframe scrolling=no frameborder=0 src='" + url + "'>";
+  var iframe = iframeDiv.firstChild;
+  
+  // mess with the iframe style a little
+  var iframeStyle = iframe.style;
+  iframeStyle.position = "absolute";
+  iframeStyle.borderWidth = "0";
+  iframeStyle.left = "0";
+  iframeStyle.top = "0";
+  iframeStyle.width = "100%";
+  iframeStyle.backgroundColor = "#ffffff";
+  iframeStyle.zIndex = "1";
+  iframeStyle.height = "100%";
+
+  // update the top window's document's body's style
+  var hostBodyStyle = window.top.document.body.style; 
+  hostBodyStyle.margin = "0";
+  hostBodyStyle.height = iframeStyle.height;
+  hostBodyStyle.overflow = "hidden";
+
+  // insert the iframe
+  topDoc.body.insertBefore(iframe, topDoc.body.firstChild);
 }
 
 if ($legacyHosted) {
