@@ -31,6 +31,9 @@ import java.io.File;
  */
 public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
+  // TODO(jat): hack to try and serialize rebinds
+  private static final Object rebindLock = new Object[0];
+
   protected final CompilationState compilationState;
 
   protected final File genDir;
@@ -111,13 +114,15 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
   public String rebind(TreeLogger logger, String sourceTypeName)
       throws UnableToCompleteException {
-    checkForModuleSpace();
-    return rebindOracle.rebind(logger, sourceTypeName, new ArtifactAcceptor() {
-      public void accept(TreeLogger logger, ArtifactSet newlyGeneratedArtifacts)
-          throws UnableToCompleteException {
-        artifactAcceptor.accept(logger, newlyGeneratedArtifacts);
-      }
-    });
+    synchronized (rebindLock) {
+      checkForModuleSpace();
+      return rebindOracle.rebind(logger, sourceTypeName, new ArtifactAcceptor() {
+        public void accept(TreeLogger logger, ArtifactSet newlyGeneratedArtifacts)
+        throws UnableToCompleteException {
+          artifactAcceptor.accept(logger, newlyGeneratedArtifacts);
+        }
+      });
+    }
   }
 
   private void checkForModuleSpace() {
