@@ -49,6 +49,12 @@
     	font-family: Verdana;
     	padding-top: 10px;
     }
+    
+    .license {
+        padding-top: 2em;
+        font-family: Verdana;
+        font-size: 9pt;
+    }
   </ui:style>
 
   <g:HTMLPanel styleName='{style.pane}'>
@@ -63,6 +69,14 @@
       For more information, see the
       <a ui:field="troubleshootingLink" style="color:#000;">Troubleshooting FAQ</a>
       .
+    </div>
+    <div class="{style.license}">
+      All plugins are licensed under the <a
+      href="http://code.google.com/webtoolkit/terms.html">Apache 2.0 open source
+      license</a>, which includes limitations of liability and disclaimers of
+      warranty for the product. Please note that some included libraries may be
+      licensed under other open source licenses listed <a
+      href="http://code.google.com/webtoolkit/terms.html#licenses">here</a>.
     </div>
   </g:HTMLPanel>
 
