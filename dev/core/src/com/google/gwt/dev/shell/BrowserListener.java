@@ -43,7 +43,7 @@ public class BrowserListener {
   }
 
   public static String getDevModeURLParams(String endpointIdentifier) {
-    return "gwt.hosted=" + endpointIdentifier;
+    return "gwt.codesvr=" + endpointIdentifier;
   }
 
   private ServerSocket listenSocket;

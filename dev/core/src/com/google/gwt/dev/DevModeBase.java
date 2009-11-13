@@ -873,7 +873,7 @@ abstract class DevModeBase implements DoneCallback {
       getTopLogger().log(TreeLogger.ERROR, "Invalid URL " + url, e);
       throw new UnableToCompleteException();
     }
-    System.err.println("Using a browser with the GWT Development Plugin, please browse to");
+    System.err.println("Using a browser with the GWT Developer Plugin, please browse to");
     System.err.println("the following URL:");
     System.err.println("  " + url);
     final URL helpInfoUrl = parsedUrl;
