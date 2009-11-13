@@ -45,6 +45,7 @@ import java.net.ServerSocket;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -361,12 +362,14 @@ public class EmbeddedTomcatServer {
     String prefix = "";
     String urlString = url.toString();
     if (urlString.startsWith("jar:")) {
-      assert urlString.toLowerCase().contains(".jar!/" + tomcatEtcDir);
+      assert urlString.toLowerCase(Locale.ENGLISH).contains(".jar!/"
+          + tomcatEtcDir);
       urlString = urlString.substring(4, urlString.indexOf('!'));
       url = new URL(urlString);
       prefix = tomcatEtcDir;
     } else if (urlString.startsWith("zip:")) {
-      assert urlString.toLowerCase().contains(".zip!/" + tomcatEtcDir);
+      assert urlString.toLowerCase(Locale.ENGLISH).contains(".zip!/"
+          + tomcatEtcDir);
       urlString = urlString.substring(4, urlString.indexOf('!'));
       url = new URL(urlString);
       prefix = tomcatEtcDir;

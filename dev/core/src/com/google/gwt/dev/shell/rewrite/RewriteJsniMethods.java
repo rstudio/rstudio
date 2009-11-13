@@ -26,6 +26,7 @@ import com.google.gwt.dev.shell.JavaScriptHost;
 import com.google.gwt.dev.util.Name.InternalName;
 
 import java.lang.reflect.Modifier;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -119,8 +120,8 @@ public class RewriteJsniMethods extends ClassAdapter {
       for (Class<?> c : primitives) {
         Type type = Type.getType(c);
         String typeName = type.getClassName();
-        typeName = Character.toUpperCase(typeName.charAt(0))
-            + typeName.substring(1);
+        String firstChar = typeName.substring(0, 1).toUpperCase(Locale.ENGLISH);
+        typeName = firstChar + typeName.substring(1);
         SORT_MAP[type.getSort()] = new JavaScriptHostInfo(type, "invokeNative"
             + typeName);
       }

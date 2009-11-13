@@ -17,6 +17,7 @@ package com.google.gwt.dev;
 
 import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
+import java.util.Locale;
 
 /**
  * Initializes platform stuff.
@@ -62,7 +63,7 @@ public class BootStrapPlatform {
    * Return true if we are running on a Mac.
    */
   private static boolean isMac() {
-    String lcOSName = System.getProperty("os.name").toLowerCase();
+    String lcOSName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
     return lcOSName.startsWith("mac ");
   }
 

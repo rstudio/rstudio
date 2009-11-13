@@ -17,6 +17,8 @@ package com.google.gwt.dev.resource.impl;
 
 import junit.framework.TestCase;
 
+import java.util.Locale;
+
 /**
  * Tests the trie and filtering behavior of path prefix set.
  */
@@ -72,7 +74,7 @@ public class PathPrefixSetTest extends TestCase {
     PathPrefixSet pps = new PathPrefixSet();
     ResourceFilter allowsGifs = new ResourceFilter() {
       public boolean allows(String path) {
-        return path.toLowerCase().endsWith(".gif");
+        return path.toLowerCase(Locale.ENGLISH).endsWith(".gif");
       }
     };
 

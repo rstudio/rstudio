@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -124,9 +125,9 @@ public class BrowserWidgetHostChecker {
   public static String checkHost(String hostUnderConsideration,
       Set<String> hosts) {
     // TODO(jat): build a single regex instead of looping
-    hostUnderConsideration = hostUnderConsideration.toLowerCase();
+    hostUnderConsideration = hostUnderConsideration.toLowerCase(Locale.ENGLISH);
     for (String rule : hosts) {
-      rule = rule.toLowerCase();
+      rule = rule.toLowerCase(Locale.ENGLISH);
       // match on lowercased regex
       if (hostUnderConsideration.matches(".*" + rule + ".*")) {
         return rule;

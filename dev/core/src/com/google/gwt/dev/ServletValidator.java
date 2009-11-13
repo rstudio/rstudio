@@ -31,6 +31,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -117,7 +118,8 @@ class ServletValidator {
   static String suggestServletName(String servletClass) {
     int pos = servletClass.lastIndexOf('.');
     String suggest = (pos < 0) ? servletClass : servletClass.substring(pos + 1);
-    suggest = Character.toLowerCase(suggest.charAt(0)) + suggest.substring(1);
+    String firstChar = suggest.substring(0, 1).toLowerCase(Locale.ENGLISH);
+    suggest = firstChar + suggest.substring(1);
     return suggest;
   }
 

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.util;
 
+import java.util.Locale;
+
 /**
  * Holds information about the browser used in the UI.
  */
@@ -35,7 +37,7 @@ public class BrowserInfo {
    * @return short name of user agent
    */
   public static String getShortName(String userAgent) {
-    String lcAgent = userAgent.toLowerCase();
+    String lcAgent = userAgent.toLowerCase(Locale.ENGLISH);
     if (lcAgent.contains("msie")) {
       return IE;
     } else if (lcAgent.contains("chrome")) {

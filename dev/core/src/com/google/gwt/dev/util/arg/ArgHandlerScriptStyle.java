@@ -18,6 +18,8 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.util.tools.ArgHandler;
 
+import java.util.Locale;
+
 /**
  * Argument handler for processing the script style flag.
  */
@@ -47,7 +49,7 @@ public final class ArgHandlerScriptStyle extends ArgHandler {
 
   public int handle(String[] args, int startIndex) {
     if (startIndex + 1 < args.length) {
-      String style = args[startIndex + 1].toLowerCase();
+      String style = args[startIndex + 1].toLowerCase(Locale.ENGLISH);
       if (style.startsWith("obf")) {
         option.setOutput(JsOutputOption.OBFUSCATED);
         return 1;

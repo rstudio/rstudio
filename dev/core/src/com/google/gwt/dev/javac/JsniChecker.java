@@ -51,6 +51,7 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -320,13 +321,13 @@ public class JsniChecker {
               Expression valueExpr = pair.value;
               if (valueExpr instanceof StringLiteral) {
                 // @SuppressWarnings("Foo")
-                return Sets.create(((StringLiteral) valueExpr).constant.stringValue().toLowerCase());
+                return Sets.create(((StringLiteral) valueExpr).constant.stringValue().toLowerCase(Locale.ENGLISH));
               } else if (valueExpr instanceof ArrayInitializer) {
                 // @SuppressWarnings({ "Foo", "Bar"})
                 ArrayInitializer ai = (ArrayInitializer) valueExpr;
                 String[] values = new String[ai.expressions.length];
                 for (int i = 0, j = values.length; i < j; i++) {
-                  values[i] = ((StringLiteral) ai.expressions[i]).constant.stringValue().toLowerCase();
+                  values[i] = ((StringLiteral) ai.expressions[i]).constant.stringValue().toLowerCase(Locale.ENGLISH);
                 }
                 return Sets.create(values);
               } else {

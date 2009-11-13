@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -167,7 +168,7 @@ public class ResourceOracleImpl implements ResourceOracle {
       throws URISyntaxException, IOException {
     if (url.getProtocol().equals("file")) {
       File f = new File(url.toURI());
-      String lowerCaseFileName = f.getName().toLowerCase();
+      String lowerCaseFileName = f.getName().toLowerCase(Locale.ENGLISH);
       if (f.isDirectory()) {
         return new DirectoryClassPathEntry(f);
       } else if (f.isFile() && lowerCaseFileName.endsWith(".jar")) {

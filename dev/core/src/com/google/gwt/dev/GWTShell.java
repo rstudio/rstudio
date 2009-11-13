@@ -28,6 +28,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 
 import java.io.File;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -127,7 +128,7 @@ public class GWTShell extends DevModeBase {
 
   public static String checkHost(String hostUnderConsideration,
       Set<String> hosts) {
-    hostUnderConsideration = hostUnderConsideration.toLowerCase();
+    hostUnderConsideration = hostUnderConsideration.toLowerCase(Locale.ENGLISH);
     for (String rule : hosts) {
       // match on lowercased regex
       if (hostUnderConsideration.matches(".*" + rule + ".*")) {
