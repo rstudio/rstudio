@@ -12,25 +12,22 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 <project name="MissingPlugin" default="build" basedir=".">
-  <!-- Configure path to GWT SDK -->
-  <property environment="env"/>
-  <property name="gwt.sdk" location="../../build/staging/gwt-${env.GWT_VERSION}" />
+  <property name="gwt.root" location="../.." />
+  <property name="project.tail" value="plugins/MissingPlugin" />
+  <import file="${gwt.root}/common.ant.xml" />
+
+  <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
 
   <path id="project.class.path">
     <pathelement location="war/WEB-INF/classes"/>
-    <pathelement location="${gwt.sdk}/gwt-user.jar"/>
-    <fileset dir="${gwt.sdk}" includes="gwt-dev*.jar"/>
+    <pathelement location="${gwt.user.jar}" />
+    <pathelement location="${gwt.dev.jar}" />
     <!-- Add any additional non-server libs (such as JUnit) -->
     <fileset dir="war/WEB-INF/lib" includes="**/*.jar"/>
   </path>
 
-  <target name="libs" description="Copy libs to WEB-INF/lib">
-    <mkdir dir="war/WEB-INF/lib" />
-    <copy todir="war/WEB-INF/lib" file="${gwt.sdk}/gwt-servlet.jar" />
-    <!-- Add any additional server libs that need to be copied -->
-  </target>
-
-  <target name="javac" depends="libs" description="Compile java source">
+  <target name="javac" description="Compile java source">
     <mkdir dir="war/WEB-INF/classes"/>
     <javac srcdir="src" includes="**" encoding="utf-8"
         destdir="war/WEB-INF/classes"
@@ -44,6 +41,11 @@
   </target>
 
   <target name="gwtc" depends="javac" description="GWT compile to JavaScript">
+    <gwt.javac destdir="war/WEB-INF/classes">
+      <classpath>
+        <path refid="project.class.path"/>
+      </classpath>
+    </gwt.javac>
     <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
       <classpath>
         <pathelement location="src"/>
@@ -56,7 +58,7 @@
     </java>
   </target>
 
-  <target name="devMode" depends="javac" description="Run development mode">
+  <target name="devmode" depends="javac" description="Run development mode">
     <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
       <classpath>
         <pathelement location="src"/>
