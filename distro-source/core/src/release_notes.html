@@ -29,6 +29,7 @@
       <h1>Google Web Toolkit Release Notes</h1>
       <ul>
         <li><a href="#Release_Notes_Current">@GWT_VERSION@</a></li>
+        <li><a href="#Release_Notes_1_7_1">1.7.1</a></li>
         <li><a href="#Release_Notes_1_7_0">1.7.0</a></li>
         <li><a href="#Release_Notes_1_6_4">1.6.4</a></li>
         <li><a href="#Release_Notes_1_6_3">1.6.3</a></li>
@@ -52,6 +53,101 @@
       <hr/>
       <a name="Release_Notes_Current"></a>
       <h2>Release Notes for @GWT_VERSION@</h2>
+      <p>
+        This release contains big changes to improve developer productivity, make cross-browser development easier, and produce faster web applications. 
+      </p>
+      
+      <h3>Things that are changing with GWT 2.0 that might otherwise be confusing without explanation</h3> 
+      <ul>
+        <li>
+          Terminology changes: We're going to start using the term "development mode" rather than the old term "hosted mode." 
+          The term "hosted mode" was sometimes confusing to people, so we'll be using the more descriptive term "development mode" from now on. 
+          For similar reasons, we'll be using the term "production mode" rather than "web mode" when referring to compiled script.
+        </li>
+        <li>
+          Changes to the distribution: Note that there's only one download, and it's no longer platform-specific. 
+          You download the same zip file for every development platform. 
+          This is made possible by the new plugin approach used to implement development mode (see below). 
+          The distribution file does not include the browser plugins themselves; those are downloaded separately the first time you use development mode in a browser that doesn't have the plugin installed. 
+        </li>
+      </ul>
+      
+      <h3>Major New Features</h3> 
+      <ul>
+        <li>
+          In-Browser Development Mode: Prior to 2.0, GWT hosted mode provided a special-purpose "hosted browser" to debug your GWT code. 
+          In 2.0, the web page being debugged is viewed within a regular-old browser. 
+          Development mode is supported through the use of a native-code plugin called the "Google Web Toolkit Developer Plugin" for many popular browsers. 
+          In other words, you can use development mode directly from Safari, Firefox, IE, and Chrome. 
+        </li>
+        <li>
+          Code Splitting: Developer-guided code splitting with <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/core/client/GWT.html#runAsync(com.google.gwt.core.client.RunAsyncCallback)">GWT.runAsync()</a> allows you to chunk your GWT code into multiple fragments for faster startup. 
+          Imagine having to download a whole movie before being able to watch it. 
+          Well, that's what you have to do with most Ajax apps these days -- download the whole thing before using it. 
+          With code splitting, you can arrange to load just the minimum script needed to get the application running and the user interacting, while the rest of the app is downloaded as needed. 
+        </li>
+        <li>
+          Declarative User Interface: GWT's <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/uibinder/client/UiBinder.html">UiBinder</a> now allows you to create  user interfaces mostly declaratively. 
+          Previously, widgets had to be created and assembled programmatically, requiring lots of code. 
+          Now, you can use XML to declare your UI, making the code more readable, easier to maintain, and faster to develop. 
+          The Mail sample has been updated to show a practical example of using UiBinder.
+        </li> 
+        <li>
+          Bundling of resources via <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/resources/client/ClientBundle.html">ClientBundle</a>.
+          GWT introduced <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/user/client/ui/ImageBundle.html">ImageBundle</a> in 1.4 to provide automatic spriting of images. 
+          ClientBundle generalizes this technique, bringing the power of combining and optimizing resources into one download to things like text files, CSS, and XML. 
+          This means fewer network round trips, which in turn can decrease application latency -- especially on mobile applications. 
+        </li>
+        <li>
+          Using HtmlUnit for running test cases based on <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/junit/client/GWTTestCase.html">GWTTestCase</a>: 
+          Prior to 2.0, GWTTestCase relied on SWT and native code versions of actual browsers to run unit tests.
+          As a result, running unit tests required starting an actual browser.          
+          As of 2.0, GWTTestCase no longer uses SWT or native code. 
+          Instead, it uses HtmlUnit as the built-in browser. 
+          Because HtmlUnit is written entirely in the Java language, there is no longer any native code involved in typical test-driven development.
+          Debugging GWT Tests in development mode can be done entirely in a Java debugger.
+        </li>
+      </ul> 
+    
+      <h3>Breaking changes and known issues/bugs/problems</h3> 
+      <ul>
+        <li>
+          Prior to 2.0, GWT tools such as the compiler were provide in a platform-specific jar (that is, with names like <code>gwt-dev-windows.jar</code>).
+          As of 2.0, GWT tools are no longer platform specific and they reside in generically-named <code>gwt-dev.jar</code>.
+          You are quite likely to have to update build scripts to remove the platform-specific suffix, but that's the extent of it. 
+        </li>
+        <li>
+          The development mode entry point has changed a few times since GWT 1.0.
+          It was originally called <code>GWTShell</code>, and in GWT 1.6 a replacement entry point called <code>HostedMode</code> was introduced.
+          As of GWT 2.0, to reflect the new "development mode" terminology, the new entry point for development mode is <code>com.google.gwt.dev.DevMode</code>.
+          Sorry to keep changing that on ya, but the good news is that the prior entry point still works. 
+          But, to really stay current, we recommend you switch to the new <code>DevMode</code> entry point.
+        </li>
+        <li>
+          Also due to the "development mode" terminology change, the name of the ant build target produced by <code>webAppCreator</code> has changed from <code>hostd</code> to <code>devmode</code>.
+          In other words, to start development mode from the command-line, type <code>ant devmode</code>.
+        </li>
+        <li>
+          HtmlUnit does not attempt to emulate authentic browser layout. 
+          Consequently, tests that are sensitive to browser layout are very likely to fail.
+          However, since GWTTestCase supports other methods of running tests, such as Selenium, that do support accurate layout testing, it can still make sense to keep layout-sensitive tests in the same test case as non-layout-sensitive tests.  
+          If you want such tests to be ignored by HtmlUnit, simply annotate the test methods with @DoNotRunWith({Platform.Htmlunit}). 
+        </li>
+        <li>
+          Versions of Google Plugin for Eclipse prior to 1.2 will only allow you to add GWT release directories that include a file with a name like <code>gwt-dev-windows.jar</code>. 
+          You can fool it by sym linking or copying gwt-dev.jar to the appropriate name. 
+        </li>
+        <li>
+          The way arguments are passed to the GWT testing infrastructure has been revamped. 
+          There is now a consistent syntax to support arbitrary "run styles", including user-written, with no changes to GWT itself.
+          For example, <code>-selenium FF3</code> has become <code>-runStyle selenium:FF3</code>. 
+          This change likely does not affect typical test invocation scripts, but if you do use <code>-Dgwt.args</code> to pass arguments to GWTTestCase, be aware that you may need to make some changes.
+        </li>
+      </ul>
+
+      <hr/>
+      <a name="Release_Notes_1_7_1"></a>
+      <h2>Release Notes for 1.7.1</h2>
       <p>
         This release adds support for Mac OS X version 10.6 (Snow Leopard) by allowing hosted mode to run with a 1.6 JRE in 32-bit
         mode (using the -d32 flag).
