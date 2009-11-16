@@ -2,24 +2,29 @@
 <Wix
   xmlns='http://schemas.microsoft.com/wix/2006/wi'>
 
+  <!-- Variables. -->
+  <?define appName = "Google Web Toolkit Developer Plugin for IE" ?>
+  <?define version = "0.9.0" ?>
+  <?define upgradeCode = "9a5e649a-ec63-4c7d-99bf-75adb345e7e5" ?>
+
   <!--
     The main product to install. We generate a new GUID (*) on each
     compile to ensure that windows installer completely removes the old
     version and reinstalls the new version without complaining.
   -->
   <Product
-    Name='Google Web Toolkit Developer Plugin'
+    Name='$(var.appName)'
     Id='*'
-    UpgradeCode='9a5e649a-ec63-4c7d-99bf-75adb345e7e5'
+    UpgradeCode='$(var.upgradeCode)'
     Language='1033'
     Codepage='1252'
-    Version='1.0.0'
+    Version='$(var.version)'
     Manufacturer='Google'>
 
     <Package
       Id='*'
       Keywords='Installer'
-      Description='Google Web Toolkit Developer Plugin Installer'
+      Description='$(var.appName) Installer'
       Manufacturer='Google'
       InstallerVersion='100'
       Languages='1033'
@@ -30,9 +35,12 @@
       Cabinet='product.cab'
       EmbedCab='yes' />
 
+    <!-- Suppress reboot prompts. -->
+    <Property Id='REBOOT'>ReallySuppress</Property>
+
     <!-- Remove old version completely when upgrading.  -->
     <Upgrade
-      Id='9a5e649a-ec63-4c7d-99bf-75adb345e7e5'>
+      Id='$(var.upgradeCode)'>
       <UpgradeVersion
         OnlyDetect='no'
         Property='PREVIOUSFOUND'
@@ -72,6 +80,30 @@
       </Directory>
     </Directory>
 
+    <!-- Set some registry values. -->
+    <Component
+      Id='registryValues'
+      Directory='INSTALLDIR'
+      Guid='*'>
+      <RegistryKey
+        Root='HKLM'
+        Action='createAndRemoveOnUninstall'
+        Key='SOFTWARE\Google\Update\Clients\{$(var.upgradeCode)}'>
+        <RegistryValue
+          Name='pv'
+          Value='$(var.version)'
+          Type='string' />
+        <RegistryValue
+          Name='name'
+          Value='$(var.appName)'
+          Type='string' />
+        <RegistryValue
+          Name='lang'
+          Value='en'
+          Type='string' />
+      </RegistryKey>
+    </Component>
+
     <!-- Define the features to install. -->
     <Feature
       Id='CompleteFeature'
@@ -84,6 +116,8 @@
       -->
       <ComponentGroupRef
         Id='oophmDll' />
+      <ComponentRef
+        Id='registryValues' />
     </Feature>
 
   </Product>
