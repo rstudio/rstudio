@@ -22,7 +22,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import java.util.Date;
 
 /**
- * Tests formatting functionality in {@link DateTimeFormat} for the German
+ * Tests formatting functionality in {@link DateTimeFormat} for the English
  * language.
  */
 public class DateTimeFormat_en_Test extends GWTTestCase {
@@ -414,5 +414,17 @@ public class DateTimeFormat_en_Test extends GWTTestCase {
     date.setTime(Date.UTC(2006 - 1900, 10 - 1, 29, 9, 0, 0));
     assertEquals("10/29/2006 01:00:00 PST", DateTimeFormat.getFormat(
         "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
+  }
+  
+  public void testPre1970Milliseconds() {
+    Date date = new Date(-631151998945L); // Jan 1, 1950 00:00:01.055 UTC
+    
+    long midnight = Date.UTC(1950 - 1900, 0, 1, 0, 0, 1);
+    assertEquals(-631151998945L, midnight + 55);
+    
+    TimeZone utc = TimeZone.createTimeZone(0);
+    assertEquals("055", DateTimeFormat.getFormat("SSS").format(date, utc));
+    assertEquals("06", DateTimeFormat.getFormat("SS").format(date, utc));
+    assertEquals("1", DateTimeFormat.getFormat("S").format(date, utc));
   }
 }

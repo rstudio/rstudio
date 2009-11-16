@@ -989,7 +989,13 @@ public class DateTimeFormat {
     // Fractional seconds should be left-justified, ie. zero must be padded
     // from left. For example, if value in milliseconds is 5, and count is 3,
     // the output need to be "005".
-    int value = (int) (date.getTime() % 1000);
+    long time = date.getTime();
+    int value;
+    if (time < 0) {
+      value = 1000 - (int) (-time % 1000);
+    } else {
+      value = (int) (time % 1000);
+    }
     if (count == 1) {
       value = (value + 50) / 100; // Round to 100ms.
       buf.append(Integer.toString(value));
