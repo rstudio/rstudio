@@ -1,57 +1,11 @@
 <html>
 <head>
 <title>Missing GWT Browser Plugin</title>
-<!-- TODO: add JS code to detect browser/platform and just show that link -->
 </head>
 <body>
 <h1>No GWT Browser Plugin Detected</h1>
-<!-- TODO: alter language for final naming decisions -->
-GWT Development Mode needs a browser plugin to operate.  Please install the
+GWT Development Mode needs a browser plugin to operate.  Please <a
+  href="http://gwt-dev-plugin-missing.appspot.com/">install</a> the
 appropriate one for your browser.
-
-<ul>
- <li><b><font size="+1">Chrome</font></b>
- <br><font color="red"><b>Note: this is relatively untested, but appears to
-     work.</b></font><br>
-     If you are running the DevChannel version of Google Chrome on Windows x86
-     (<a href="http://dev.chromium.org/getting-involved/dev-channel">instructions</a> for
-     switching to DevChannel), you can install the
-     <a href="http://google-web-toolkit.googlecode.com/svn/trunk/plugins/npapi/prebuilt/gwtdmp.crx">GWT Chrome extension</a>.
-     Note that performance is slower than the other
-     browsers right now because the plugin runs in an isolated process, though
-     we may be able to improve performance before the final release.  Also, you
-     may get a "plugin unresponsive" warning which is annoying but harmless.
-     <p>
- <li><b><font size="+1">Firefox</font></b>
-  <br>Install the appropriate Firefox plugin via the normal plugin install
-  process.
- <ul>
-  <li><a href="http://google-web-toolkit.googlecode.com/svn/trunk/plugins/xpcom/prebuilt/gwt-dmp-ff2.xpi">Version 1.5-2.0</a> (Mac PPC/x86, Linux x86/x86_64)
-  <li><a
-    href="http://google-web-toolkit.googlecode.com/svn/trunk/plugins/xpcom/prebuilt/gwt-dmp-ff3.xpi">Version
-    3.0</a> (Win x86, Mac PPC/x86, Linux x86/x86_64)
-  <br><i>note that some Linux
-  distributions need a plugin built with alternate libraries which will be
-  available soon</i>
-  <li><a href="http://google-web-toolkit.googlecode.com/svn/trunk/plugins/xpcom/prebuilt/gwt-dmp-ff3+.xpi">Version 3.0 alternate libraries</a> (try this if the one above doesn't work on Linux, known to be needed on Fedora Core 10))
-  <li><a href="http://google-web-toolkit.googlecode.com/svn/trunk/plugins/xpcom/prebuilt/gwt-dmp-ff35.xpi">Version 3.5</a> (Win x86, Mac PPC/x86, Linux x86/x86_64)
- </ul>
- <br>
- <li><b><font size="+1">Safari 3/4 (Mac PPC/x86)</font></b>
- <ul>
-  <li>Run the installer from this <a href="http://google-web-toolkit.googlecode.com/svn/trunk/plugins/webkit/prebuilt/oophm.dmg">disk image</a>.
-  <br><font color="red">Note that x86_64 is not yet supported, which means
-    Safari on Snow Leopard is not yet supported.</font>
- </ul>
- <br>
- <li><b><font size="+1">Internet Explorer on Windows (32-bit IE)</font></b>
- <ul>
-   <li>Download and run the "<a href="http://google-web-toolkit.googlecode.com/svn/trunk/plugins/ie/prebuilt/GwtDevModeIePluginInstaller.msi">GWT Dev Mode Plugin for IE</a>" installer.
- </ul>
-</ul>
-
-<h2>Troubleshooting</h2>
-If you believe you have the plugin installed in your current browser (and
-profile, in the case of Firefox), see the <a href="http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM">TroubleshootingOOPHM</a> wiki page.
 </body>
 </html>

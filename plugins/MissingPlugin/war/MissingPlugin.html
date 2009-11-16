@@ -48,13 +48,6 @@
             "supported" : false
           },
 
-          "safari-mac-sl" :
-          {
-            "caption" : "Sorry, at the moment, there is not yet a GWT Developer Plugin for Safari on Mac OS X 10.6",
-            "url" : troubleshootingUrl,
-            "supported" : false
-          },
-
           "safari-iphone" :
           {
             "caption" : "Sorry, there is currently no GWT Developer Plugin for mobile Safari",
@@ -124,8 +117,8 @@
           "safari-mac" :
           {
             "caption" : "Download the GWT Developer Plugin<br>For Safari",
-            "url" : "http://google-web-toolkit.googlecode.com/svn/trunk/plugins/webkit/prebuilt/oophm.dmg",
-            "platforms" : "Mac x86/PPC",
+            "url" : "https://dl-ssl.google.com/gwt/plugins/safari/gwt-dev-plugin.dmg",
+            "platforms" : "Mac x86/x86_64/PPC",
             "supported" : true
           }
         }
@@ -133,7 +126,7 @@
 
       var ua = navigator.userAgent.toLowerCase();
 
-      var id = 'unsupported';
+      var id = 'unknown';
       if (ua.indexOf("webkit") != -1) {
         if ( (ua.indexOf("iphone") != -1) || (ua.indexOf("ipod") != -1) ) {
           id = 'safari-iphone';
@@ -155,11 +148,7 @@
             // unknown Chrome platform
           }
         } else if (ua.indexOf("macintosh") != -1) {
-          if (ua.indexOf("mac os x 10_6") != -1) {
-            id = 'safari-mac-sl';
-          } else {
-            id = 'safari-mac';
-          }
+          id = 'safari-mac';
         } else if (ua.indexOf("windows") != -1) {
           id = 'safari-win';
         }
