@@ -113,7 +113,7 @@ public class XMLHttpRequest extends JavaScriptObject {
   public final native void clearOnReadyStateChange() /*-{
     var self = this;
     $wnd.setTimeout(function() {
-      self.onreadystatechange = @null::nullMethod();
+      self.onreadystatechange = function(){};
     }, 0);
   }-*/;
 
