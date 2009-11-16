@@ -51,7 +51,7 @@ public class RPC {
    * Static map of classes to sets of interfaces (e.g. classes). Optimizes
    * lookup of interfaces for security.
    */
-  private static final Map<Class<?>, Set<String>> serviceToImplementedInterfacesMap = new com.google.gwt.dev.util.collect.HashMap<Class<?>, Set<String>>();
+  private static final Map<Class<?>, Set<String>> serviceToImplementedInterfacesMap = new HashMap<Class<?>, Set<String>>();
 
   static {
     // The space is needed to prevent name collisions
