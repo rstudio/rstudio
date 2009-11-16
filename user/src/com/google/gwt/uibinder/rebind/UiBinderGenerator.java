@@ -130,7 +130,7 @@ public class UiBinderGenerator extends Generator {
     }
 
     ImplicitClientBundle bundleClass = uiBinderWriter.getBundleClass();
-    new BundleWriter(bundleClass, writerManager, oracle, writerManager).write();
+    new BundleWriter(bundleClass, writerManager, oracle, logger).write();
 
     writerManager.commit();
   }

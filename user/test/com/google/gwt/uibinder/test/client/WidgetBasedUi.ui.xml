@@ -100,7 +100,7 @@
 <ui:style field='myTotallyPrivateStyle'>
   /* An inline style tied to no public type */
   
-  .superPrivateColor {
+  .super-private-color {
     background-color: Gold;
   }
 </ui:style>
@@ -422,7 +422,7 @@
       </p>
       <p ui:field='reallyPrivateStyleParagraph' class='{myOtherStyle.privateColor}'>
         And this style is defined right here inside the ui.xml file. 
-        <span ui:field='totallyPrivateStyleSpan' class='{myTotallyPrivateStyle.superPrivateColor}'>
+        <span ui:field='totallyPrivateStyleSpan' class='{myTotallyPrivateStyle.super-private-color}'>
           (This one too, but even more so.)
         </span>
       </p>

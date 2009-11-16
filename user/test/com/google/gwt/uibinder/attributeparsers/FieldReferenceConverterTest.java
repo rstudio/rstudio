@@ -52,6 +52,13 @@ public class FieldReferenceConverterTest extends TestCase {
     assertEquals(expected, converter.convert(before, frDelegate));
   }
 
+  public void testOne() {
+    String before = "{baker}";
+    String expected = "** & baker & **";
+
+    assertEquals(expected, converter.convert(before, frDelegate));
+  }
+  
   public void testReplaceSimple() {
     String before = "able {baker} charlie";
     String expected = "*able * & baker & * charlie*";
@@ -59,13 +66,20 @@ public class FieldReferenceConverterTest extends TestCase {
     assertEquals(expected, converter.convert(before, frDelegate));
   }
 
+  public void testDashes() {
+    String before = "{foo-bar.baz-bangZoom.zip-zap}";
+    String expected = "** & fooBar.bazBangZoom().zipZap() & **";
+    
+    assertEquals(expected, converter.convert(before, frDelegate));
+  }
+  
   public void testReplaceSeveral() {
     String before = "{foo.bar.baz} baker {bang.zoom} delta {zap}";
     String expected = "** & foo.bar().baz() & * baker * & bang.zoom() & * delta * & zap & **";
 
     assertEquals(expected, converter.convert(before, frDelegate));
   }
-
+  
   public void testEscaping() {
     String before = "Well {{Hi mom}!";
     String expected = "*Well {Hi mom}!*";

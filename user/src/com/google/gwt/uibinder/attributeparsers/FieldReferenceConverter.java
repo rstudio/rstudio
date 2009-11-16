@@ -35,6 +35,10 @@ import java.util.regex.Pattern;
  * that can legally start a java identifier&mdash;that is a letter, $, or
  * underscore. Braces not followed by such a character are left in place.
  * <p>
+ * For convenience when dealing with generated CssResources, field segments with
+ * dashes are converted to camel case. That is, {able.baker-charlie} is the same
+ * as {able.bakerCharlie}
+ * <p>
  * Opening braces may be escape by doubling them. That is, "{{foo}" will
  * converted to "{foo}", with no field reference detected.
  */
@@ -44,32 +48,6 @@ public class FieldReferenceConverter {
    */
   @SuppressWarnings("serial")
   public static class IllegalFieldReferenceException extends RuntimeException {
-  }
-
-  /**
-   * Used by {@link #hasFieldReferences}. Passthrough implementation that notes
-   * when handleReference has been called.
-   */
-  private static final class Telltale implements
-      FieldReferenceConverter.Delegate {
-    boolean hasComputed = false;
-
-    public JType getType() {
-      return null;
-    }
-
-    public String handleFragment(String fragment) {
-      return fragment;
-    }
-
-    public String handleReference(String reference) {
-      hasComputed = true;
-      return reference;
-    }
-
-    public boolean hasComputed() {
-      return hasComputed;
-    }
   }
 
   /**
@@ -103,10 +81,36 @@ public class FieldReferenceConverter {
         throws IllegalFieldReferenceException;
   }
 
-  private static final Pattern BRACES = Pattern.compile("[{]([^}]*)[}]");
+  /**
+   * Used by {@link #hasFieldReferences}. Passthrough implementation that notes
+   * when handleReference has been called.
+   */
+  private static final class Telltale implements
+      FieldReferenceConverter.Delegate {
+    boolean hasComputed = false;
 
+    public JType getType() {
+      return null;
+    }
+
+    public String handleFragment(String fragment) {
+      return fragment;
+    }
+
+    public String handleReference(String reference) {
+      hasComputed = true;
+      return reference;
+    }
+
+    public boolean hasComputed() {
+      return hasComputed;
+    }
+  }
+
+  private static final Pattern BRACES = Pattern.compile("[{]([^}]*)[}]");
   private static final Pattern LEGAL_FIRST_CHAR = Pattern.compile("^[$_a-zA-Z].*");
 
+  
   /**
    * @return true if the given string holds one or more field references
    */
@@ -116,6 +120,7 @@ public class FieldReferenceConverter {
     return telltale.hasComputed();
   }
 
+  private final CssNameConverter cssConverter = new CssNameConverter();
   private final FieldManager fieldManager;
 
   /**
@@ -162,6 +167,7 @@ public class FieldReferenceConverter {
     String[] segments = value.split("[.]");
 
     for (String segment : segments) {
+      segment = cssConverter.convertName(segment);
       if (b.length() == 0) {
         b.append(segment); // field name
       } else {

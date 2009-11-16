@@ -40,7 +40,8 @@ public class BundleWriter {
   private final ImplicitClientBundle bundleClass;
   private final IndentedWriter writer;
   private final PrintWriterManager writerManager;
-  private final TypeOracle oracle;
+  private final TypeOracle types;
+  private final MortalLogger logger;
 
   private final JClassType clientBundleType;
   private final JClassType dataResourceType;
@@ -50,27 +51,28 @@ public class BundleWriter {
   private final JClassType importAnnotationType;
 
   public BundleWriter(ImplicitClientBundle bundleClass,
-      PrintWriterManager writerManager, TypeOracle oracle,
-      PrintWriterManager printWriterProvider) {
+      PrintWriterManager writerManager, TypeOracle types, MortalLogger logger) {
     this.bundleClass = bundleClass;
     this.writer = new IndentedWriter(
         writerManager.makePrintWriterFor(bundleClass.getClassName()));
     this.writerManager = writerManager;
-    this.oracle = oracle;
+    this.types = types;
+    this.logger = logger;
 
-    clientBundleType = oracle.findType(ClientBundle.class.getName());
-    dataResourceType = oracle.findType(DataResource.class.getCanonicalName());
-    imageOptionType = oracle.findType(ImageOptions.class.getCanonicalName());
-    imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
-    repeatStyleType = oracle.findType(RepeatStyle.class.getCanonicalName());
-    importAnnotationType =  oracle.findType(Import.class.getCanonicalName());
+    clientBundleType = types.findType(ClientBundle.class.getName());
+    dataResourceType = types.findType(DataResource.class.getCanonicalName());
+    imageOptionType = types.findType(ImageOptions.class.getCanonicalName());
+    imageResourceType = types.findType(ImageResource.class.getCanonicalName());
+    repeatStyleType = types.findType(RepeatStyle.class.getCanonicalName());
+    importAnnotationType = types.findType(Import.class.getCanonicalName());
   }
 
   public void write() throws UnableToCompleteException {
     writeBundleClass();
     for (ImplicitCssResource css : bundleClass.getCssMethods()) {
-      new CssResourceWriter(css, oracle,
-          writerManager.makePrintWriterFor(css.getClassName())).write();
+      new CssResourceWriter(css, types,
+          writerManager.makePrintWriterFor(css.getClassName()),
+          logger).write();
     }
   }
 
@@ -94,7 +96,7 @@ public class BundleWriter {
     writer.write("public interface %s extends ClientBundle {",
         bundleClass.getClassName());
     writer.indent();
-    
+
     // Write css methods
     for (ImplicitCssResource css : bundleClass.getCssMethods()) {
       writeCssSource(css);
@@ -102,7 +104,7 @@ public class BundleWriter {
       writer.write("%s %s();", css.getClassName(), css.getName());
       writer.newline();
     }
-    
+
     // Write data methods
     for (ImplicitDataResource data : bundleClass.getDataMethods()) {
       writer.write("@Source(\"%s\")", data.getSource());
