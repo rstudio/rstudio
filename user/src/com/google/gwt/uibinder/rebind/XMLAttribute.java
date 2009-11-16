@@ -67,6 +67,7 @@ public class XMLAttribute {
 
   @Override
   public String toString() {
-    return w3cAttr.getName() + "='" + w3cAttr.getValue() + "'";
+    return String.format("<%s:%s ... %s=%s ...>", xmlElem.getPrefix(),
+        xmlElem.getLocalName(), w3cAttr.getName(), w3cAttr.getValue());
   }
 }

@@ -25,6 +25,7 @@ import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
+import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.MockMortalLogger;
@@ -87,6 +88,7 @@ class ElementParserTester {
 
   final ElementParser parser;
 
+  @SuppressWarnings("deprecation")
   ElementParserTester(String parsedTypeName, ElementParser parser)
       throws UnableToCompleteException {
     this.parser = parser;
@@ -97,7 +99,8 @@ class ElementParserTester {
     types = state.getTypeOracle();
 
     elemProvider = new XMLElementProviderImpl(new AttributeParsers(types, null,
-        logger), null, types, logger);
+        logger), new BundleAttributeParsers(types, logger, null, templatePath,
+        null), types, logger);
 
     fieldManager = new FieldManager(types, logger);
     JClassType baseType = types.findType("my.Ui.BaseClass");

@@ -137,6 +137,21 @@ public class UiBinderTest extends GWTTestCase {
     foo.setPojo(pojo);
     assertEquals(foo.getText(), widgetUi.theFoo.getText());
   }
+  
+  public void testBundleLegacyBeansText() {
+    assertEquals(widgetUi.legacyValuesForBeans.helloText(),
+        widgetUi.bundledLabelLegacy.getText());
+  }
+
+  public void testBundleLegacyBeansOther() {
+    assertEquals(widgetUi.legacyValuesForBeans.helloText(),
+        widgetUi.bundledLabelLegacy.getStyleName());
+  }
+
+  public void testBundleLegacyHtml() {
+    assertEquals(widgetUi.legacyValuesForHtml.helloText(),
+        widgetUi.bundledDivLegacy.getClassName());
+  }
 
   public void testCenter() {
     // TODO(rjrjr) More of a test of HTMLPanelParser

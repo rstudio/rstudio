@@ -22,6 +22,7 @@ import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
+import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 import com.google.gwt.uibinder.elementparsers.NullInterpreter;
 import com.google.gwt.uibinder.test.UiJavaResources;
 
@@ -61,6 +62,7 @@ public class XMLElementTest extends TestCase {
 
   private MockMortalLogger logger;
 
+  @SuppressWarnings("deprecation")
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -69,7 +71,8 @@ public class XMLElementTest extends TestCase {
     types = state.getTypeOracle();
     logger = new MockMortalLogger();
     elemProvider = new XMLElementProviderImpl(new AttributeParsers(types, null,
-        logger), null, types, logger);
+        logger), new BundleAttributeParsers(types, logger, null, "templatePath",
+            null), types, logger);
 
     init("<doc><elm attr1=\"attr1Value\" attr2=\"attr2Value\"/></doc>");
   }
@@ -247,7 +250,7 @@ public class XMLElementTest extends TestCase {
         "otherDefault"));
   }
 
-  public void testConsumeRequired() throws UnableToCompleteException {
+  public void testConsumeRequiredRaw() throws UnableToCompleteException {
     assertEquals("attr1Value", elm.consumeRequiredRawAttribute("attr1"));
     try {
       elm.consumeRequiredRawAttribute("unsetthing");
@@ -255,6 +258,11 @@ public class XMLElementTest extends TestCase {
     } catch (UnableToCompleteException e) {
       assertNotNull(logger.died);
     }
+  }
+  
+  public void testConsumeRequired() throws UnableToCompleteException {
+    assertEquals("\"attr1Value\"", elm.consumeRequiredAttribute("attr1",
+        types.findType("java.lang.String")));
   }
 
   public void testConsumeRequiredDouble() throws UnableToCompleteException,

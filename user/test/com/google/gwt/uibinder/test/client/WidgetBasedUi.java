@@ -62,8 +62,13 @@ public class WidgetBasedUi extends Composite {
   
   interface Binder extends UiBinder<Widget, WidgetBasedUi> {
   }
-  private static final Binder binder = GWT.create(Binder.class);
+  static class FakeBundle2 extends FakeBundle {
+  }
 
+  static class FakeBundle3 extends FakeBundle {
+  }
+  private static final Binder binder = GWT.create(Binder.class);
+  
   @UiField(provided = true)
   final WidgetBasedUiExternalResources external = GWT.create(WidgetBasedUiExternalResources.class);
 
@@ -137,6 +142,12 @@ public class WidgetBasedUi extends Composite {
   @UiField FooLabel objectBooleanIntoPrimitive;
   @UiField FooLabel allObjectBoolean;
   @UiField FooLabel allPrimitiveBoolean;
+  @UiField(provided = true)
+  FakeBundle2 legacyValuesForBeans = new FakeBundle2();
+  @UiField(provided = true)
+  FakeBundle3 legacyValuesForHtml = new FakeBundle3();
+  @UiField Label bundledLabelLegacy;
+  @UiField DivElement bundledDivLegacy;
 
   public WidgetBasedUi() {
     external.style().ensureInjected();

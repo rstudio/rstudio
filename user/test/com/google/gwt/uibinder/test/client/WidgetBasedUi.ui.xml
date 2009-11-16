@@ -49,6 +49,9 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:gwt='urn:import:com.google.gwt.user.client.ui'
   xmlns:demo='urn:import:com.google.gwt.uibinder.test.client'
+  
+  xmlns:legacyValuesForBeans='urn:with:com.google.gwt.uibinder.test.client.WidgetBasedUi.FakeBundle2'
+  xmlns:legacyValuesForHtml='urn:with:com.google.gwt.uibinder.test.client.WidgetBasedUi.FakeBundle3'
 
   ui:defaultLocale="en_US"
   ui:generateKeys="com.google.gwt.i18n.rebind.keygen.MD5KeyGenerator"
@@ -407,6 +410,8 @@
        this label gets its text from somplace tricky and its style from a ClientBundle
        defined outside of this UI:</p>
       <gwt:Label ui:field='bundledLabel' text="{values.helloText}" styleName="{external.style.prettyText}"/>
+      <gwt:Label ui:field='bundledLabelLegacy' legacyValuesForBeans:text="helloText" legacyValuesForBeans:styleName="helloText" />
+      <div ui:field='bundledDivLegacy' legacyValuesForHtml:class="helloText"/>
       <!-- Note use of id rather than ui:field, to test that ids work on dom elements -->
       <p class="{external.style.prettyText}" id='prettyPara'>
         This stylish paragraph also gets its good looks from the

@@ -197,9 +197,8 @@ public class XMLElement {
   }
 
   /**
-   * Consumes the given attribute as a literal or field reference. The 
-   * type parameter is required to determine how the value is parsed and
-   * validated.
+   * Consumes the given attribute as a literal or field reference. The type
+   * parameter is required to determine how the value is parsed and validated.
    * 
    * @param name the attribute's full name (including prefix)
    * @param types the type(s) this attribute is expected to provide
@@ -208,14 +207,12 @@ public class XMLElement {
    */
   public String consumeAttribute(String name, JType type)
       throws UnableToCompleteException {
-    String value = consumeRawAttribute(name);
-    return getParser(getAttribute(name), type).parse(value);
+    return consumeAttributeWithDefault(name, "", type);
   }
 
   /**
-   * Consumes the given attribute as a literal or field reference. The 
-   * type parameter is required to determine how the value is parsed and
-   * validated.
+   * Consumes the given attribute as a literal or field reference. The type
+   * parameter is required to determine how the value is parsed and validated.
    * 
    * @param name the attribute's full name (including prefix)
    * @param defaultValue the value to @return if the attribute was unset
@@ -230,20 +227,12 @@ public class XMLElement {
   }
 
   /**
-   * Like {@link #consumeAttributeWithDefault(String, String, JType)}, but 
+   * Like {@link #consumeAttributeWithDefault(String, String, JType)}, but
    * accomodates more complex type signatures.
    */
   public String consumeAttributeWithDefault(String name, String defaultValue,
       JType[] types) throws UnableToCompleteException {
-    String value = consumeRawAttribute(name);
-    if ("".equals(value)) {
-      return defaultValue;
-    }
-    value = getParser(getAttribute(name), types).parse(value);
-    if ("".equals(value)) {
-      return defaultValue;
-    }
-    return value;
+    return consumeAttributeWithDefault(false, name, defaultValue, types);
   }
 
   /**
@@ -272,11 +261,8 @@ public class XMLElement {
    */
   public String consumeBooleanAttribute(String name, boolean defaultValue)
       throws UnableToCompleteException {
-    String parsed = consumeAttribute(name, getBooleanType());
-    if ("".equals(parsed)) {
-      return Boolean.toString(defaultValue);
-    }
-    return parsed;
+    return consumeAttributeWithDefault(name, Boolean.toString(defaultValue),
+        getBooleanType());
   }
 
   /**
@@ -517,7 +503,7 @@ public class XMLElement {
   }
 
   /**
-   * Consumes the given required attribute as a literal or field reference. The 
+   * Consumes the given required attribute as a literal or field reference. The
    * types parameters are required to determine how the value is parsed and
    * validated.
    * 
@@ -529,8 +515,19 @@ public class XMLElement {
    */
   public String consumeRequiredAttribute(String name, JType... types)
       throws UnableToCompleteException {
+    /*
+     * TODO(rjrjr) We have to get the attribute to
+     * get the parser, and we must get the attribute before we consume the
+     * value. This nasty subtlety is all down to BundleParsers, which we'll
+     * hopefully kill off soon.
+     */
+    XMLAttribute attribute = getAttribute(name);
+    if (attribute == null) {
+      failRequired(name);
+    }
+    AttributeParser parser = getParser(attribute, types);
     String value = consumeRequiredRawAttribute(name);
-    return getParser(getAttribute(name), types).parse(value);
+    return parser.parse(value);
   }
 
   /**
@@ -555,7 +552,7 @@ public class XMLElement {
       throws UnableToCompleteException {
     String value = consumeRawAttribute(name);
     if ("".equals(value)) {
-      logger.die("In %s, missing required attribute \"%s\"", this, name);
+      failRequired(name);
     }
     return value;
   }
@@ -748,6 +745,30 @@ public class XMLElement {
     return debugString;
   }
 
+  private String consumeAttributeWithDefault(boolean required, String name,
+      String defaultValue, JType[] types) throws UnableToCompleteException {
+    /*
+     * TODO(rjrjr) The only reason we need the attribute here is for getParser,
+     * and getParser only needs it for horrible old BundleAttributeParsers. When
+     * that dies, this gets much simpler.
+     */
+    XMLAttribute attribute = getAttribute(name);
+    if (attribute == null) {
+      if (required) {
+        failRequired(name);
+      }
+      return defaultValue;
+    }
+    String value = attribute.consumeRawValue();
+    if ("".equals(value)) {
+      if (required) {
+        failRequired(name);
+      }
+      return defaultValue;
+    }
+    return getParser(attribute, types).parse(value);
+  }
+
   private Iterable<XMLElement> consumeChildElementsNoEmptyCheck() {
     try {
       Iterable<XMLElement> rtn = consumeChildElements(new NoBrainInterpeter<Boolean>(
@@ -756,6 +777,10 @@ public class XMLElement {
     } catch (UnableToCompleteException e) {
       throw new RuntimeException("Impossible exception", e);
     }
+  }
+
+  private void failRequired(String name) throws UnableToCompleteException {
+    logger.die("In %s, missing required attribute \"%s\"", this, name);
   }
 
   private JType getBooleanType() {
@@ -804,13 +829,11 @@ public class XMLElement {
   @SuppressWarnings("deprecation")
   private AttributeParser getParser(XMLAttribute xmlAttribute, JType... types)
       throws UnableToCompleteException {
-    AttributeParser rtn = null;
-    if (xmlAttribute != null) {
-      rtn = bundleParsers.get(xmlAttribute);
-    }
+    AttributeParser rtn = bundleParsers.get(xmlAttribute);
     if (rtn == null) {
       rtn = attributeParsers.get(types);
     }
+
     return rtn;
   }
 

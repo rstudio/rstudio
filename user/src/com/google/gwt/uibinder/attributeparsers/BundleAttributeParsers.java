@@ -38,7 +38,6 @@ public class BundleAttributeParsers {
   private static final String BUNDLE_URI_SCHEME = "urn:with:";
 
   private final TypeOracle oracle;
-  private final String gwtPrefix;
   private final MortalLogger logger;
   private final OwnerClass ownerClass;
   private final String templatePath;
@@ -49,11 +48,9 @@ public class BundleAttributeParsers {
    */
   private final Map<String, BundleAttributeParser> parsers = new LinkedHashMap<String, BundleAttributeParser>();
 
-  public BundleAttributeParsers(TypeOracle oracle, String gwtPrefix,
-      MortalLogger logger, OwnerClass ownerClass, String templatePath,
-      JClassType uiOwnerType) {
+  public BundleAttributeParsers(TypeOracle oracle, MortalLogger logger,
+      OwnerClass ownerClass, String templatePath, JClassType uiOwnerType) {
     this.oracle = oracle;
-    this.gwtPrefix = gwtPrefix;
     this.logger = logger;
     this.ownerClass = ownerClass;
     this.templatePath = templatePath;
@@ -66,12 +63,10 @@ public class BundleAttributeParsers {
 
   public BundleAttributeParser get(XMLAttribute attribute)
       throws UnableToCompleteException {
-    if (attribute.getNamespaceUri() == null) {
-      return null;
-    }
-
     String attributePrefixUri = attribute.getNamespaceUri();
-    if (!attributePrefixUri.startsWith(BUNDLE_URI_SCHEME)) {
+
+    if ((attributePrefixUri == null)
+        || !attributePrefixUri.startsWith(BUNDLE_URI_SCHEME)) {
       return null;
     }
 
@@ -100,10 +95,9 @@ public class BundleAttributeParsers {
       XMLAttribute attribute) throws UnableToCompleteException {
 
     final String templateResourceName = attribute.getName().split(":")[0];
-    warn("The %1$s mechanism is deprecated. Instead, declare the following "
-        + "%2$s:with element as a child of your %2$s:UiBinder element: "
-        + "<%2$s:with field='%3$s' type='%4$s.%5$s' />", BUNDLE_URI_SCHEME,
-        gwtPrefix, templateResourceName, bundleClass.getPackage().getName(),
+    warn("\"%s\" is deprecated by "
+        + "<ui:with field='%s' type='%s.%s' />", BUNDLE_URI_SCHEME,
+        templateResourceName, bundleClass.getPackage().getName(),
         bundleClass.getName());
 
     // Try to find any bundle instance created with UiField.

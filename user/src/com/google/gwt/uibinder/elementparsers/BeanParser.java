@@ -116,7 +116,7 @@ public class BeanParser implements ElementParser {
       String propertyName = attribute.getLocalName();
       if (setterValues.keySet().contains(propertyName)
           || requiredValues.containsKey(propertyName)) {
-        writer.die("Duplicate attribute name: %s", propertyName);
+        writer.die("In %s, duplicate attribute name: %s", elem, propertyName);
       }
 
       if (unfilledRequiredParams.keySet().contains(propertyName)) {
