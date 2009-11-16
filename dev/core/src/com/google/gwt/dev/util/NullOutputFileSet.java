@@ -22,7 +22,7 @@ import java.io.OutputStream;
  * An {@link OutputFileSet} that discards all data sent to it.
  */
 public class NullOutputFileSet extends OutputFileSet {
-  private static class NullOutputStream extends OutputStream {
+  static class NullOutputStream extends OutputStream {
     @Override
     public void write(byte[] b) throws IOException {
     }

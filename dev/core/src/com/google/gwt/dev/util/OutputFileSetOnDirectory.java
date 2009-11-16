@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.util;
 
+import com.google.gwt.dev.util.NullOutputFileSet.NullOutputStream;
 import com.google.gwt.dev.util.collect.HashSet;
 
 import java.io.File;
@@ -42,14 +43,28 @@ public class OutputFileSetOnDirectory extends OutputFileSet {
   }
 
   @Override
-  public OutputStream openForWrite(String path, long lastModifiedTime)
+  public OutputStream openForWrite(String path, final long lastModifiedTime)
       throws IOException {
+    final File file = makeFileForPath(path);
+    if (file.exists() && file.lastModified() >= lastModifiedTime) {
+      return new NullOutputStream();
+    }
+    mkdirs(file.getParentFile());
+    return new FileOutputStream(file) {
+      @Override
+      public void close() throws IOException {
+        super.close();
+        file.setLastModified(lastModifiedTime);
+      }
+    };
+  }
+
+  private File makeFileForPath(String path) {
     File file = dir;
     for (String part : (prefix + path).split("/")) {
       file = new File(file, part);
     }
-    mkdirs(file.getParentFile());
-    return new FileOutputStream(file);
+    return file;
   }
 
   /**
