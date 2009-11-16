@@ -168,15 +168,6 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   /**
-   * Get the unique key for this module.
-   * 
-   * @return the unique key
-   */
-  public Object getKey() {
-    return key;
-  }
-
-  /**
    * Get the module name.
    * 
    * @return the module name
