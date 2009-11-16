@@ -5,7 +5,7 @@ Congratulations, you've successfully generated a starter project!  What next?
 -- Option A: Import your project into Eclipse (recommended) --
 
 If you use Eclipse, you can simply import the generated project into Eclipse.
-We've tested against Eclipse 3.3 and 3.4.  Later versions will likely also
+We've tested against Eclipse 3.4 and 3.5.  Later versions will likely also
 work, earlier versions may not.
 
 If the directory containing this file does not have a .classpath or .project
@@ -24,17 +24,15 @@ In Eclipse, go to the File menu and choose:
   
 You can now browse the project in Eclipse.
 
-To launch your web app in GWT hosted mode, go to the Run menu and choose:
+To launch your web app in GWT development mode, go to the Run menu and choose:
 
   Run -> Open Debug Dialog...
 
   Under Java Application, you should find a launch configuration
   named "@moduleShortName".  Select and click "Debug".
 
-  You can now use the built-in debugger to debug your web app in hosted mode.
+  You can now use the built-in debugger to debug your web app in development mode.
 
-To compile for web mode, just run your app in hosted mode and press the
-"Compile/Browse" button.
 
 -- Option B: Build from the command line with Ant --
 
@@ -44,7 +42,7 @@ which describes exactly how to build your project.  This file has been tested
 to work against Ant 1.7.1.  The following assumes 'ant' is on your command
 line path.
 
-To run hosted mode, just type 'ant hosted'.
+To run development mode, just type 'ant devmode'.
 
 To compile your project for deployment, just type 'ant'.
 
@@ -58,7 +56,7 @@ GWT projects can be run in other IDEs as well, but will require some manual
 setup.  If you go this route, be sure to:
 
 * Have your IDE build .class files into 'war/WEB-INF/classes'.
-* Add gwt-user.jar and gwt-dev-<platform>.jar to your project build path.
+* Add gwt-user.jar and gwt-dev.jar to your project build path.
 * When creating a launch configuration, add a classpath entry for your 'src'
   folder (this is somewhat unusual but GWT needs access to your source files).
 
