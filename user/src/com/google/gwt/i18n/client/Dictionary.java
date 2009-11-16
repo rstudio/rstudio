@@ -143,20 +143,19 @@ public final class Dictionary {
    * @throws MissingResourceException if the value is not found
    */
   public native String get(String key) /*-{
-   var value = this.@com.google.gwt.i18n.client.Dictionary::dict[key];
-   var keys = this.@com.google.gwt.i18n.client.Dictionary::accessedKeys;
-   keys.unshift(key);
-   // only keep the last 30 elements. Shrink it when array exceeds 60
-   if (keys.length > 60) {
-     keys.splice(30);
-   }
-   if (value == null || !Object.prototype.hasOwnProperty.call(
-       this.@com.google.gwt.i18n.client.Dictionary::dict, key))
-   {
-     this.@com.google.gwt.i18n.client.Dictionary::resourceError(Ljava/lang/String;)(key);
-   }
-   return String(value);
-   }-*/;
+    var map = this.@com.google.gwt.i18n.client.Dictionary::dict;
+    var value = map[key];
+    var keys = this.@com.google.gwt.i18n.client.Dictionary::accessedKeys;
+    keys.unshift(key);
+    // only keep the last 30 elements. Shrink it when array exceeds 60
+    if (keys.length > 60) {
+      keys.splice(30);
+    }
+    if (value == null || !map.hasOwnProperty(key)) {
+      this.@com.google.gwt.i18n.client.Dictionary::resourceError(Ljava/lang/String;)(key);
+    }
+    return String(value);
+  }-*/;
 
   /**
    * The set of keys associated with this dictionary.
@@ -196,15 +195,21 @@ public final class Dictionary {
   }
 
   private native void addKeys(HashSet<String> s) /*-{
-    for (x in this.@com.google.gwt.i18n.client.Dictionary::dict) {
-      s.@java.util.HashSet::add(Ljava/lang/Object;)(x);
+    var map = this.@com.google.gwt.i18n.client.Dictionary::dict
+    for (var key in map) {
+      if (map.hasOwnProperty(key)) {
+        s.@java.util.HashSet::add(Ljava/lang/Object;)(key);
+      }
     }
   }-*/;
 
   private native void addValues(ArrayList<String> s) /*-{
-    for (x in this.@com.google.gwt.i18n.client.Dictionary::dict) {
-      var value = this.@com.google.gwt.i18n.client.Dictionary::get(Ljava/lang/String;)(x);
-      s.@java.util.ArrayList::add(Ljava/lang/Object;)(value);
+    var map = this.@com.google.gwt.i18n.client.Dictionary::dict
+    for (var key in map) {
+      if (map.hasOwnProperty(key)) {
+        var value = this.@com.google.gwt.i18n.client.Dictionary::get(Ljava/lang/String;)(key);
+        s.@java.util.ArrayList::add(Ljava/lang/Object;)(value);
+      }
     }
   }-*/;
 

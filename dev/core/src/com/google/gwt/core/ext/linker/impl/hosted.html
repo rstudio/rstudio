@@ -72,12 +72,21 @@ if ($legacyHosted) {
     external.gwtOnLoad(window, null, $hostedHtmlVersion);
   };
 } else {
-  // install eval wrapper on FF to avoid EvalError problem
-  if (navigator.userAgent.toLowerCase().indexOf("gecko") != -1) {
+  var ua = navigator.userAgent.toLowerCase();
+  if (ua.indexOf("gecko") != -1) {
+    // install eval wrapper on FF to avoid EvalError problem
+    // TODO(jat): should this UA check be more specific (this hits chrome too)?
     var __eval = window.eval;
     window.eval = function(s) {
       return __eval(s);
     }
+  }
+  if (ua.indexOf("chrome") != -1) {
+    // work around __gwt_ObjectId appearing in JS objects
+    var hop = Object.prototype.hasOwnProperty;
+    Object.prototype.hasOwnProperty = function(prop) {
+      return prop != "__gwt_ObjectId" && hop.call(this, prop);
+    };
   }
 
   // wrapper to call JS methods, which we need both to be able to supply a
