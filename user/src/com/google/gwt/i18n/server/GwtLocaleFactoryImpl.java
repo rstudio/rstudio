@@ -24,31 +24,38 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Creates server-side GwtLocale instances.
+ * Creates server-side GwtLocale instances.  Thread-safe.
  */
 public class GwtLocaleFactoryImpl implements GwtLocaleFactory {
 
-  // TODO(jat): remove code duplication here by combining these
   private static boolean isAlpha(String str, int min, int max) {
-    int len = str.length();
-    if (len < min || len > max) {
-      return false;
-    }
-    for (int i = 0; i < len; ++i) {
-      if (!Character.isLetter(str.charAt(i))) {
-        return false;
-      }
-    }
-    return true;
+    return matches(str, min, max, true);
   }
 
   private static boolean isDigit(String str, int min, int max) {
+    return matches(str, min, max, false);
+  }
+
+  /**
+   * Check if the supplied string matches length and composition requirements.
+   * 
+   * @param str string to check
+   * @param min minimum length
+   * @param max maximum length
+   * @param lettersNotDigits true if all characters should be letters, false if
+   *     all characters should be digits
+   * @return true if the string is of a proper length and contains only the
+   *     specified characters 
+   */
+  private static boolean matches(String str, int min, int max,
+      boolean lettersNotDigits) {
     int len = str.length();
     if (len < min || len > max) {
       return false;
     }
     for (int i = 0; i < len; ++i) {
-      if (!Character.isDigit(str.charAt(i))) {
+      if ((lettersNotDigits && !Character.isLetter(str.charAt(i)))
+          || (!lettersNotDigits && !Character.isDigit(str.charAt(i)))) {
         return false;
       }
     }
@@ -63,13 +70,24 @@ public class GwtLocaleFactoryImpl implements GwtLocaleFactory {
         str.substring(1).toLowerCase(Locale.ENGLISH);
   }
 
+  private final Object instanceCacheLock = new Object[0];
+  
   // Locales are stored pointing at themselves. A new instance is created,
   // which is pretty cheap, then looked up here. If it exists, the old
   // one is used instead to preserved cached data structures.
-  private Map<GwtLocaleImpl, GwtLocaleImpl> instanceCache = new HashMap<GwtLocaleImpl, GwtLocaleImpl>();
+  private Map<GwtLocaleImpl, GwtLocaleImpl> instanceCache
+      = new HashMap<GwtLocaleImpl, GwtLocaleImpl>();
 
+  /**
+   * Clear an embedded cache of instances when they are no longer needed.
+   * <p>
+   * Note that GwtLocale instances constructed after this is called will not
+   * maintain identity with instances constructed before this call.
+   */
   public void clear() {
-    instanceCache.clear();
+    synchronized (instanceCacheLock) {
+      instanceCache.clear();     
+    }
   }
 
   public GwtLocale fromComponents(String language, String script,
@@ -100,10 +118,12 @@ public class GwtLocaleFactoryImpl implements GwtLocaleFactory {
     }
     GwtLocaleImpl locale = new GwtLocaleImpl(this, language, region, script,
         variant);
-    if (instanceCache.containsKey(locale)) {
-      return instanceCache.get(locale);
+    synchronized (instanceCacheLock) {
+      if (instanceCache.containsKey(locale)) {
+        return instanceCache.get(locale);
+      }
+      instanceCache.put(locale, locale);
     }
-    instanceCache.put(locale, locale);
     return locale;
   }
 
@@ -185,5 +205,4 @@ public class GwtLocaleFactoryImpl implements GwtLocaleFactory {
   public GwtLocale getDefault() {
     return fromComponents(null, null, null, null);
   }
-
 }

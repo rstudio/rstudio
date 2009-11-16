@@ -40,9 +40,9 @@ public class GwtLocaleImpl implements GwtLocale {
    * Maps deprecated language codes to the canonical code.  Strings are always
    * in pairs, with the first being the canonical code and the second being
    * a deprecated code which maps to it.
-   * 
+   * <p>
    * Source: http://www.loc.gov/standards/iso639-2/php/code_changes.php
-   * 
+   * <p> 
    * TODO: consider building maps if this list grows much.
    */
   private static final String[] deprecatedLanguages = new String[] {
@@ -62,9 +62,9 @@ public class GwtLocaleImpl implements GwtLocale {
    * cannot be done automatically (such as cs -> rs/me) -- perhaps we could
    * have a way of flagging region codes which are no longer valid and allow
    * an appropriate warning message.
-   * 
+   * <p>
    * Source: http://en.wikipedia.org/wiki/ISO_3166-1
-   * 
+   * <p>
    * TODO: consider building maps if this list grows much.
    */
   private static final String[] deprecatedRegions = new String[] {
@@ -233,9 +233,13 @@ public class GwtLocaleImpl implements GwtLocale {
 
   private final String variant;
 
-  private ArrayList<GwtLocale> cachedSearchList;
+  private final Object cacheLock = new Object[0];
+  
+  // protected by cacheLock
+  private List<GwtLocale> cachedSearchList;
 
-  private ArrayList<GwtLocale> cachedAliases;
+  // protected by cacheLock
+  private List<GwtLocale> cachedAliases;
 
   /**
    * Must only be called from a factory to preserve instance caching.
@@ -280,40 +284,44 @@ public class GwtLocaleImpl implements GwtLocale {
 
   public List<GwtLocale> getAliases() {
     // TODO(jat): more locale aliases? better way to encode them?
-    if (cachedAliases == null) {
-      cachedAliases = new ArrayList<GwtLocale>();
-      GwtLocale canonicalForm = getCanonicalForm();
-      Set<GwtLocale> seen = new HashSet<GwtLocale>();
-      cachedAliases.add(canonicalForm);
-      ArrayList<GwtLocale> nextGroup = new ArrayList<GwtLocale>();
-      nextGroup.add(this);
-      // Account for default script
-      String defaultScript = DefaultLanguageScripts.getDefaultScript(language);
-      if (defaultScript != null) {
-        if (script == null) {
-          nextGroup.add(factory.fromComponents(language, defaultScript, region,
-              variant));
-        } else if (script.equals(defaultScript)) {
-          nextGroup.add(factory.fromComponents(language, null, region, variant));
-        }
-      }
-      while (!nextGroup.isEmpty()) {
-        List<GwtLocale> thisGroup = nextGroup;
-        nextGroup = new ArrayList<GwtLocale>();
-        for (GwtLocale locale : thisGroup) {
-          if (seen.contains(locale)) {
-            continue;
+    synchronized (cacheLock) {
+      if (cachedAliases == null) {
+        cachedAliases = new ArrayList<GwtLocale>();
+        GwtLocale canonicalForm = getCanonicalForm();
+        Set<GwtLocale> seen = new HashSet<GwtLocale>();
+        cachedAliases.add(canonicalForm);
+        ArrayList<GwtLocale> nextGroup = new ArrayList<GwtLocale>();
+        nextGroup.add(this);
+        // Account for default script
+        String defaultScript = DefaultLanguageScripts.getDefaultScript(language);
+        if (defaultScript != null) {
+          if (script == null) {
+            nextGroup.add(factory.fromComponents(language, defaultScript,
+                region, variant));
+          } else if (script.equals(defaultScript)) {
+            nextGroup.add(factory.fromComponents(language, null, region,
+                variant));
           }
-          seen.add(locale);
-          if (!locale.equals(canonicalForm)) {
-            cachedAliases.add(locale);
-          }
-          addDeprecatedPairs(factory, locale, nextGroup);
-          addSpecialAliases(factory, locale, nextGroup);
         }
+        while (!nextGroup.isEmpty()) {
+          List<GwtLocale> thisGroup = nextGroup;
+          nextGroup = new ArrayList<GwtLocale>();
+          for (GwtLocale locale : thisGroup) {
+            if (seen.contains(locale)) {
+              continue;
+            }
+            seen.add(locale);
+            if (!locale.equals(canonicalForm)) {
+              cachedAliases.add(locale);
+            }
+            addDeprecatedPairs(factory, locale, nextGroup);
+            addSpecialAliases(factory, locale, nextGroup);
+          }
+        }
+        cachedAliases = Collections.unmodifiableList(cachedAliases);
       }
+      return cachedAliases;    
     }
-    return Collections.unmodifiableList(cachedAliases);
   }
 
   public String getAsString() {
@@ -408,42 +416,45 @@ public class GwtLocaleImpl implements GwtLocale {
 
   public List<GwtLocale> getCompleteSearchList() {
     // TODO(jat): get zh_Hant to come before zh in search list for zh_TW
-    if (cachedSearchList == null) {
-      cachedSearchList = new ArrayList<GwtLocale>();
-      Set<GwtLocale> seen = new HashSet<GwtLocale>();
-      List<GwtLocale> thisGroup = new ArrayList<GwtLocale>(this.getAliases());
-      seen.addAll(thisGroup);
-      GwtLocale defLocale = factory.getDefault();
-      seen.add(defLocale);
-      while (!thisGroup.isEmpty()) {
-        cachedSearchList.addAll(thisGroup);
-        List<GwtLocale> nextGroup = new ArrayList<GwtLocale>();
-        for (GwtLocale locale : thisGroup) {
-          List<GwtLocale> work = new ArrayList<GwtLocale>(locale.getAliases());
-          work.removeAll(seen);
-          nextGroup.addAll(work);
-          seen.addAll(work);
-          work.clear();
-          if (locale.getRegion() != null) {
-            addImmediateParentRegions(factory, locale, work);
-          } else if (locale.getVariant() != null) {
-            work.add(factory.fromComponents(locale.getLanguage(),
-                locale.getScript(), null, null));
-          } else if (locale.getScript() != null) {
-            work.add(factory.fromComponents(locale.getLanguage(), null, null,
-                null));
+    synchronized (cacheLock) {
+      if (cachedSearchList == null) {
+        cachedSearchList = new ArrayList<GwtLocale>();
+        Set<GwtLocale> seen = new HashSet<GwtLocale>();
+        List<GwtLocale> thisGroup = new ArrayList<GwtLocale>(this.getAliases());
+        seen.addAll(thisGroup);
+        GwtLocale defLocale = factory.getDefault();
+        seen.add(defLocale);
+        while (!thisGroup.isEmpty()) {
+          cachedSearchList.addAll(thisGroup);
+          List<GwtLocale> nextGroup = new ArrayList<GwtLocale>();
+          for (GwtLocale locale : thisGroup) {
+            List<GwtLocale> work = new ArrayList<GwtLocale>(locale.getAliases());
+            work.removeAll(seen);
+            nextGroup.addAll(work);
+            seen.addAll(work);
+            work.clear();
+            if (locale.getRegion() != null) {
+              addImmediateParentRegions(factory, locale, work);
+            } else if (locale.getVariant() != null) {
+              work.add(factory.fromComponents(locale.getLanguage(),
+                  locale.getScript(), null, null));
+            } else if (locale.getScript() != null) {
+              work.add(factory.fromComponents(locale.getLanguage(), null, null,
+                  null));
+            }
+            work.removeAll(seen);
+            nextGroup.addAll(work);
+            seen.addAll(work);
           }
-          work.removeAll(seen);
-          nextGroup.addAll(work);
-          seen.addAll(work);
+          thisGroup = nextGroup;
         }
-        thisGroup = nextGroup;
+        if (!isDefault()) {
+          cachedSearchList.add(defLocale);
+        }
+        cachedSearchList = Collections.unmodifiableList(cachedSearchList);
       }
-      if (!isDefault()) {
-        cachedSearchList.add(defLocale);
-      }
+      return cachedSearchList;
     }
-    return cachedSearchList;
   }
 
   /**

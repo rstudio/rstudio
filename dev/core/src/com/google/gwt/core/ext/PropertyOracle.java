@@ -25,6 +25,11 @@ public interface PropertyOracle {
    * <code>BadPropertyValueException</code> if the property is undefined. The
    * result of invoking this method with the same <code>propertyName</code> must
    * be stable.
+   * 
+   * @param propertyName 
+   * @return the configuration property instance (never null)
+   * @throws BadPropertyValueException if the property is unknown or not a
+   *     configuration property
    */
   ConfigurationProperty getConfigurationProperty(String propertyName)
       throws BadPropertyValueException;
@@ -38,6 +43,8 @@ public interface PropertyOracle {
    * @param logger the current logger
    * @param propertyName the name of the property
    * @return a value for the property
+   * @throws BadPropertyValueException if the property is unknown or not of the
+   *     right type
    */
   @Deprecated
   String getPropertyValue(TreeLogger logger, String propertyName)
@@ -53,6 +60,8 @@ public interface PropertyOracle {
    * @param logger the current logger
    * @param propertyName the name of the property
    * @return the possible values for the property
+   * @throws BadPropertyValueException if the property is unknown or not of the
+   *     right type 
    */
   @Deprecated
   String[] getPropertyValueSet(TreeLogger logger, String propertyName)
@@ -63,6 +72,11 @@ public interface PropertyOracle {
    * <code>BadPropertyValueException</code> if the property is either undefined
    * or has a value that is unsupported. The result of invoking this method with
    * the same <code>propertyName</code> must be stable.
+   * @param logger 
+   * @param propertyName 
+   * @return the selection property instance (never null)
+   * @throws BadPropertyValueException if the property is unknown or not a
+   *     selection property
    */
   SelectionProperty getSelectionProperty(TreeLogger logger, String propertyName)
       throws BadPropertyValueException;

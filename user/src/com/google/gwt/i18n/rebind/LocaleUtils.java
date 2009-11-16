@@ -25,8 +25,10 @@ import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.i18n.shared.GwtLocaleFactory;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
@@ -34,9 +36,57 @@ import java.util.SortedSet;
  * Utility methods for dealing with locales.
  */
 public class LocaleUtils {
-  // TODO(jat): rewrite to avoid statics
+
+  /**
+   * A key for lookup of computed values in a cache.
+   */
+  private static class CacheKey {
+    private final SelectionProperty localeProperty;
+    private final ConfigurationProperty runtimeLocaleProperty;
+
+    /**
+     * Create a key for cache lookup.
+     * 
+     * @param localeProperty "locale" property, must not be null
+     * @param runtimeLocaleProperty "runtime.locales" property, must not be null
+     */
+    public CacheKey(SelectionProperty localeProperty,
+        ConfigurationProperty runtimeLocaleProperty) {
+      this.localeProperty = localeProperty;
+      this.runtimeLocaleProperty = runtimeLocaleProperty;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+      CacheKey other = (CacheKey) obj;
+      return localeProperty.equals(other.localeProperty)
+          && runtimeLocaleProperty.equals(other.runtimeLocaleProperty);
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + localeProperty.hashCode();
+      result = prime * result + runtimeLocaleProperty.hashCode();
+      return result;
+    }
+  }
 
   private static final GwtLocaleFactoryImpl factory = new GwtLocaleFactoryImpl();
+
+  private static final Object cacheLock = new Object[0];
+  
+  private static Map<CacheKey, LocaleUtils> cache;
 
   /**
    * The token representing the locale property controlling Localization.
@@ -48,46 +98,53 @@ public class LocaleUtils {
    */
   private static final String PROP_RUNTIME_LOCALES = "runtime.locales";
 
-  private static GwtLocale compileLocale;
-
-  private static final Set<GwtLocale> allLocales = new HashSet<GwtLocale>();
-
-  private static final Set<GwtLocale> allCompileLocales = new HashSet<GwtLocale>();
-
-  private static final Set<GwtLocale> runtimeLocales = new HashSet<GwtLocale>();
-
+  /**
+   * Clear any static state associated with LocaleUtils.
+   */
   public static synchronized void clear() {
-    allCompileLocales.clear();
-    allLocales.clear();
-    compileLocale = null;
     factory.clear();
-    runtimeLocales.clear();
+    synchronized (cacheLock) {
+      cache = null;
+    }
   }
 
   /**
-   * Returns the set of all compile-time locales.
+   * Create a new LocaleUtils instance for the given PropertyOracle.  Returned
+   * instances will be immutable and can be shared across threads.
    * 
-   * @return unmodifiable set of all compile-time locales
+   * @param logger
+   * @param propertyOracle
+   * @return LocaleUtils instance
    */
-  public static synchronized Set<GwtLocale> getAllCompileLocales() {
-    return Collections.unmodifiableSet(allCompileLocales);
-  }
-
-  /**
-   * Returns the set of all available locales, whether compile-time locales or
-   * runtime locales.
-   * 
-   * @return unmodifiable set of all locales
-   */
-  public static synchronized Set<GwtLocale> getAllLocales() {
-    return Collections.unmodifiableSet(allLocales);
-  }
-
-  /**
-   * @return the static compile-time locale for this permutation.
-   */
-  public static synchronized GwtLocale getCompileLocale() {
-    return compileLocale;
+  public static LocaleUtils getInstance(TreeLogger logger,
+      PropertyOracle propertyOracle) {
+    try {
+      SelectionProperty localeProp
+          = propertyOracle.getSelectionProperty(logger, PROP_LOCALE);
+      ConfigurationProperty runtimeLocaleProp
+          = propertyOracle.getConfigurationProperty(PROP_RUNTIME_LOCALES);
+      CacheKey key = new CacheKey(localeProp, runtimeLocaleProp);
+      synchronized (cacheLock) {
+        if (cache == null) {
+          cache = new HashMap<CacheKey, LocaleUtils>();
+        }
+        LocaleUtils localeUtils = cache.get(key);
+        if (localeUtils == null) {
+          localeUtils = createInstance(logger, localeProp, runtimeLocaleProp);
+          cache.put(key, localeUtils);
+        }
+        return localeUtils;
+      }
+    } catch (BadPropertyValueException e) {
+      // if we don't have locale properties defined, just return a basic one
+      logger.log(TreeLogger.WARN,
+          "Unable to get locale properties, using defaults", e);
+      GwtLocale defaultLocale = factory.fromString("default");
+      Set<GwtLocale> allLocales = new HashSet<GwtLocale>();
+      allLocales.add(defaultLocale);
+      return new LocaleUtils(defaultLocale, allLocales, allLocales,
+          Collections.<GwtLocale>emptySet());
+    }
   }
 
   /**
@@ -99,75 +156,100 @@ public class LocaleUtils {
     return factory;
   }
 
+  private static LocaleUtils createInstance(TreeLogger logger,
+      SelectionProperty localeProp, ConfigurationProperty prop) {
+    GwtLocale compileLocale = null;
+    Set<GwtLocale> allLocales = new HashSet<GwtLocale>();
+    Set<GwtLocale> allCompileLocales = new HashSet<GwtLocale>();
+    Set<GwtLocale> runtimeLocales = new HashSet<GwtLocale>();
+    String localeName = localeProp.getCurrentValue();
+    SortedSet<String> localeValues = localeProp.getPossibleValues();
+
+    GwtLocaleFactory factoryInstance = getLocaleFactory();
+    GwtLocale newCompileLocale = factoryInstance.fromString(localeName);
+    compileLocale = newCompileLocale;
+    for (String localeValue : localeValues) {
+      allCompileLocales.add(factoryInstance.fromString(localeValue));
+    }
+    allLocales.addAll(allCompileLocales);
+
+    List<String> rtLocaleNames = prop.getValues();
+    if (rtLocaleNames != null) {
+      for (String rtLocale : rtLocaleNames) {
+        GwtLocale locale = factoryInstance.fromString(rtLocale);
+        // TODO(jat): remove use of labels
+        existingLocales:
+        for (GwtLocale existing : allCompileLocales) {
+          for (GwtLocale alias : existing.getAliases()) {
+            if (!alias.isDefault() && locale.inheritsFrom(alias)
+                && locale.usesSameScript(alias)) {
+              allLocales.add(locale);
+              break existingLocales;
+            }
+          }
+        }
+        if (!compileLocale.isDefault()
+            && locale.inheritsFrom(compileLocale)
+            && locale.usesSameScript(compileLocale)) {
+          // TODO(jat): don't include runtime locales which also inherit
+          // from a more-specific compile locale than this one
+          runtimeLocales.add(locale);
+        }
+      }
+    }
+    return new LocaleUtils(compileLocale, allLocales, allCompileLocales,
+        runtimeLocales);
+  }
+
+  private final Set<GwtLocale> allCompileLocales;
+
+  private final Set<GwtLocale> allLocales;
+
+  private final GwtLocale compileLocale;
+
+  private final Set<GwtLocale> runtimeLocales;
+
+  private LocaleUtils(GwtLocale compileLocale, Set<GwtLocale> allLocales,
+      Set<GwtLocale> allCompileLocales, Set<GwtLocale> runtimeLocales) {
+    this.compileLocale = compileLocale;
+    this.allLocales = Collections.unmodifiableSet(allLocales);
+    this.allCompileLocales = Collections.unmodifiableSet(allCompileLocales);
+    this.runtimeLocales = Collections.unmodifiableSet(runtimeLocales);
+  }
+
+  /**
+   * Returns the set of all compile-time locales.
+   * 
+   * @return unmodifiable set of all compile-time locales
+   */
+  public Set<GwtLocale> getAllCompileLocales() {
+    return allCompileLocales;
+  }
+
+  /**
+   * Returns the set of all available locales, whether compile-time locales or
+   * runtime locales.
+   * 
+   * @return unmodifiable set of all locales
+   */
+  public Set<GwtLocale> getAllLocales() {
+    return allLocales;
+  }
+
+  /**
+   * @return the static compile-time locale for this permutation.
+   */
+  public GwtLocale getCompileLocale() {
+    return compileLocale;
+  }
+
   /**
    * Returns a list of locales which are children of the current compile-time
    * locale.
    * 
    * @return unmodifiable list of matching locales
    */
-  public static synchronized Set<GwtLocale> getRuntimeLocales() {
-    return Collections.unmodifiableSet(runtimeLocales);
-  }
-
-  /**
-   * Initialize from properties. Only needs to be called once, before any other
-   * calls.
-   * 
-   * @param logger
-   * @param propertyOracle
-   */
-  public static synchronized void init(TreeLogger logger, PropertyOracle propertyOracle) {
-    try {
-      SelectionProperty localeProp
-          = propertyOracle.getSelectionProperty(logger, PROP_LOCALE);
-      String localeName = localeProp.getCurrentValue();
-      SortedSet<String> localeValues = localeProp.getPossibleValues();
-
-      GwtLocale newCompileLocale = factory.fromString(localeName);
-      if (newCompileLocale.equals(compileLocale)) {
-        return;
-      }
-      compileLocale = newCompileLocale;
-      allLocales.clear();
-      allCompileLocales.clear();
-      runtimeLocales.clear();
-      for (String localeValue : localeValues) {
-        allCompileLocales.add(factory.fromString(localeValue));
-      }
-      allLocales.addAll(allCompileLocales);
-      
-      ConfigurationProperty prop
-          = propertyOracle.getConfigurationProperty(PROP_RUNTIME_LOCALES);
-      List<String> rtLocaleNames = prop.getValues();
-      if (rtLocaleNames != null) {
-        for (String rtLocale : rtLocaleNames) {
-          GwtLocale locale = factory.fromString(rtLocale);
-          // TODO(jat): remove use of labels
-          existingLocales:
-          for (GwtLocale existing : allCompileLocales) {
-            for (GwtLocale alias : existing.getAliases()) {
-              if (!alias.isDefault() && locale.inheritsFrom(alias)
-                  && locale.usesSameScript(alias)) {
-                allLocales.add(locale);
-                break existingLocales;
-              }
-            }
-          }
-          if (!compileLocale.isDefault()
-              && locale.inheritsFrom(compileLocale)
-              && locale.usesSameScript(compileLocale)) {
-            // TODO(jat): don't include runtime locales which also inherit
-            // from a more-specific compile locale than this one
-            runtimeLocales.add(locale);
-          }
-        }
-      }
-    } catch (BadPropertyValueException e) {
-      logger.log(TreeLogger.TRACE,
-          "Unable to get locale properties, using defaults", e);
-      compileLocale = factory.fromString("default");
-      allLocales.add(compileLocale);
-      return;
-    }
+  public Set<GwtLocale> getRuntimeLocales() {
+    return runtimeLocales;
   }
 }

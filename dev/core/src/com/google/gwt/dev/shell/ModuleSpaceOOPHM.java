@@ -100,7 +100,7 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
   @Override
   protected JsValue doInvoke(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
-    TreeLogger branch = host.getLogger().branch(TreeLogger.DEBUG,
+    TreeLogger branch = host.getLogger().branch(TreeLogger.SPAM,
         "Invoke native method " + name, null);
     CompilingClassLoader isolatedClassLoader = getIsolatedClassLoader();
     JsValueOOPHM jsthis = new JsValueOOPHM();
@@ -121,7 +121,7 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
           returnVal);
       branch.log(TreeLogger.SPAM, "  returned " + returnVal);
     } catch (Throwable t) {
-      branch.log(TreeLogger.DEBUG, "exception thrown", t);
+      branch.log(TreeLogger.SPAM, "exception thrown", t);
       throw t;
     }
     return returnVal;

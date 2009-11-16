@@ -81,7 +81,8 @@ public class LocaleInfoGenerator extends Generator {
     TypeOracle typeOracle = context.getTypeOracle();
     // Get the current locale and interface type.
     PropertyOracle propertyOracle = context.getPropertyOracle();
-    LocaleUtils.init(logger, propertyOracle);
+    LocaleUtils localeUtils = LocaleUtils.getInstance(logger,
+        propertyOracle);
 
     JClassType targetClass;
     try {
@@ -90,12 +91,14 @@ public class LocaleInfoGenerator extends Generator {
       logger.log(TreeLogger.ERROR, "No such type " + typeName, e);
       throw new UnableToCompleteException();
     }
-    assert (LocaleInfoImpl.class.getName().equals(targetClass.getQualifiedSourceName()));
+    assert (LocaleInfoImpl.class.getName().equals(
+        targetClass.getQualifiedSourceName()));
 
     String packageName = targetClass.getPackage().getName();
     String superClassName = targetClass.getName().replace('.', '_') + "_shared";
-    Set<GwtLocale> localeSet = LocaleUtils.getAllLocales();
-    GwtLocaleImpl[] allLocales = localeSet.toArray(new GwtLocaleImpl[localeSet.size()]);
+    Set<GwtLocale> localeSet = localeUtils.getAllLocales();
+    GwtLocaleImpl[] allLocales = localeSet.toArray(
+        new GwtLocaleImpl[localeSet.size()]);
     // sort for deterministic output
     Arrays.sort(allLocales);
     PrintWriter pw = context.tryCreate(logger, packageName, superClassName);
@@ -184,10 +187,10 @@ public class LocaleInfoGenerator extends Generator {
       writer.println("}-*/;");
       writer.commit(logger);
     }
-    GwtLocale locale = LocaleUtils.getCompileLocale();
+    GwtLocale locale = localeUtils.getCompileLocale();
     String className = targetClass.getName().replace('.', '_') + "_"
         + locale.getAsString();
-    Set<GwtLocale> runtimeLocales = LocaleUtils.getRuntimeLocales();
+    Set<GwtLocale> runtimeLocales = localeUtils.getRuntimeLocales();
     if (!runtimeLocales.isEmpty()) {
       className += "_runtimeSelection";
     }
@@ -219,7 +222,6 @@ public class LocaleInfoGenerator extends Generator {
       writer.println("public DateTimeConstants getDateTimeConstants() {");
       LocalizableGenerator localizableGenerator = new LocalizableGenerator();
       // Avoid warnings for trying to create the same type multiple times
-      @SuppressWarnings("hiding")
       GeneratorContext subContext = new CachedGeneratorContext(context);
       generateConstantsLookup(logger, subContext, writer, localizableGenerator,
           runtimeLocales, locale,

@@ -16,6 +16,8 @@
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.DefaultConfigurationProperty;
+import com.google.gwt.core.ext.DefaultSelectionProperty;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
@@ -45,6 +47,12 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
 
   private final ModuleSpace space;
 
+  /**
+   * Create a property oracle that computes its properties from a module.
+   * 
+   * @param props
+   * @param space
+   */
   public ModuleSpacePropertyOracle(Properties props, ModuleSpace space) {
     this.space = space;
     this.props = props;
@@ -57,15 +65,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       final ConfigurationProperty cprop = (ConfigurationProperty) prop;
       final String name = cprop.getName();
       final List<String> values = cprop.getValues();
-      return new com.google.gwt.core.ext.ConfigurationProperty() {
-        public String getName() {
-          return name;
-        }
-
-        public List<String> getValues() {
-          return values;
-        }
-      };
+      return new DefaultConfigurationProperty(name, values);
     } else {
       throw new BadPropertyValueException(propertyName);
     }
@@ -132,24 +132,8 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       for (String v : cprop.getDefinedValues()) {
         possibleValues.add(v);
       }
-      return new com.google.gwt.core.ext.SelectionProperty() {
-
-        public String getCurrentValue() {
-          return value;
-        }
-
-        public String getFallbackValue() {
-          return fallback;
-        }
-
-        public String getName() {
-          return name;
-        }
-
-        public SortedSet<String> getPossibleValues() {
-          return possibleValues;
-        }
-      };
+      return new DefaultSelectionProperty(value, fallback, name,
+          possibleValues);
     } else {
       throw new BadPropertyValueException(propertyName);
     }

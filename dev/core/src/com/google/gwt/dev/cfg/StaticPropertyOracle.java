@@ -16,12 +16,12 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.DefaultConfigurationProperty;
+import com.google.gwt.core.ext.DefaultSelectionProperty;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
@@ -36,6 +36,13 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
 
   private final String[] orderedPropValues;
 
+  /**
+   * Create a property oracle that will return the supplied values.
+   * 
+   * @param orderedProps array of binding properties
+   * @param orderedPropValues values of the above binding properties
+   * @param configProps array of config properties
+   */
   public StaticPropertyOracle(BindingProperty[] orderedProps,
       String[] orderedPropValues, ConfigurationProperty[] configProps) {
     this.orderedProps = orderedProps;
@@ -58,24 +65,23 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
       String propertyName) throws BadPropertyValueException {
     for (final ConfigurationProperty prop : configProps) {
       if (prop.getName().equals(propertyName)) {
-        return new com.google.gwt.core.ext.ConfigurationProperty() {
-          public String getName() {
-            return prop.getName();
-          }
-
-          public List<String> getValues() {
-            return prop.getValues();
-          }
-        };
+        return new DefaultConfigurationProperty(prop.getName(),
+            prop.getValues());
       }
     }
     throw new BadPropertyValueException(propertyName);
   }
 
+  /**
+   * @return an array of binding properties.
+   */
   public BindingProperty[] getOrderedProps() {
     return orderedProps;
   }
 
+  /**
+   * @return an array of binding property values.
+   */
   public String[] getOrderedPropValues() {
     return orderedPropValues;
   }
@@ -138,7 +144,6 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
     for (int i = 0; i < orderedProps.length; i++) {
       final BindingProperty prop = orderedProps[i];
       final String name = prop.getName();
-      final String fallback = prop.getFallback();
       if (name.equals(propertyName)) {
         final String value = orderedPropValues[i];
         String[] values = prop.getDefinedValues();
@@ -146,24 +151,8 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
         for (String v : values) {
           possibleValues.add(v);
         }
-
-        return new com.google.gwt.core.ext.SelectionProperty() {
-          public String getCurrentValue() {
-            return value;
-          }
-
-          public String getFallbackValue() {
-            return fallback;
-          }
-
-          public String getName() {
-            return name;
-          }
-
-          public SortedSet<String> getPossibleValues() {
-            return possibleValues;
-          }
-        };
+        return new DefaultSelectionProperty(value, prop.getFallback(), name,
+            possibleValues);
       }
     }
 
