@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The main executable class for the hosted mode shell. This class must not have
@@ -400,10 +401,10 @@ abstract class DevModeBase implements DoneCallback {
     private File logDir;
     private int port;
     private int portHosted;
-    private final List<String> startupURLs = new ArrayList<String>();
     private String remoteUIClientId;
     private String remoteUIHost;
     private int remoteUIHostPort;
+    private final List<String> startupURLs = new ArrayList<String>();
 
     public void addStartupURL(String url) {
       startupURLs.add(url);
@@ -575,6 +576,8 @@ abstract class DevModeBase implements DoneCallback {
 
   private static final Random RNG = new Random();
 
+  private static final AtomicLong uniqueId = new AtomicLong();
+
   public static String normalizeURL(String unknownUrlText, int port, String host) {
     if (unknownUrlText.indexOf(":") != -1) {
       // Assume it's a full url.
@@ -722,7 +725,7 @@ abstract class DevModeBase implements DoneCallback {
     try {
       // Eager AWT init for OS X to ensure safe coexistence with SWT.
       BootStrapPlatform.initGui();
-        
+
       if (startUp()) {
         // The web server is running now, so launch browsers for startup urls.
         launchStartupUrls(getTopLogger());
@@ -753,7 +756,8 @@ abstract class DevModeBase implements DoneCallback {
 
   protected abstract HostedModeBaseOptions createOptions();
 
-  protected abstract ArtifactAcceptor doCreateArtifactAcceptor(ModuleDef module);
+  protected abstract ArtifactAcceptor doCreateArtifactAcceptor(
+      TreeLogger logger, ModuleDef module) throws UnableToCompleteException;
 
   /**
    * Creates an instance of ShellModuleSpaceHost (or a derived class) using the
@@ -766,12 +770,16 @@ abstract class DevModeBase implements DoneCallback {
    * @return ShellModuleSpaceHost instance
    */
   protected final ShellModuleSpaceHost doCreateShellModuleSpaceHost(
-      TreeLogger logger, CompilationState compilationState, ModuleDef moduleDef) {
+      TreeLogger logger, CompilationState compilationState, ModuleDef moduleDef)
+      throws UnableToCompleteException {
     // Clear out the shell temp directory.
-    Util.recursiveDelete(options.getShellBaseWorkDir(moduleDef), true);
+    File shellBaseWorkDir = options.getShellBaseWorkDir(moduleDef);
+    File sessionWorkDir = new File(shellBaseWorkDir,
+        String.valueOf(uniqueId.getAndIncrement()));
+    Util.recursiveDelete(sessionWorkDir, true);
     return new ShellModuleSpaceHost(logger, compilationState, moduleDef,
-        options.getGenDir(), new File(options.getShellBaseWorkDir(moduleDef),
-            "gen"), doCreateArtifactAcceptor(moduleDef));
+        options.getGenDir(), new File(sessionWorkDir, "gen"),
+        doCreateArtifactAcceptor(logger, moduleDef));
   }
 
   protected abstract void doShutDownServer();
@@ -847,8 +855,8 @@ abstract class DevModeBase implements DoneCallback {
 
   protected void launchURL(String url) throws UnableToCompleteException {
     /*
-     * TODO(jat): properly support launching arbitrary browsers -- need some
-     * UI API tweaks to support that.
+     * TODO(jat): properly support launching arbitrary browsers -- need some UI
+     * API tweaks to support that.
      */
     URL parsedUrl = null;
     try {
@@ -883,7 +891,7 @@ abstract class DevModeBase implements DoneCallback {
           public String getAnchorText() {
             return "Launch default browser";
           }
-          
+
           @Override
           public String getPrefix() {
             return "";

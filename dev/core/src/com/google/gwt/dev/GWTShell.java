@@ -192,7 +192,8 @@ public class GWTShell extends DevModeBase {
   }
 
   @Override
-  protected ArtifactAcceptor doCreateArtifactAcceptor(final ModuleDef module) {
+  protected ArtifactAcceptor doCreateArtifactAcceptor(TreeLogger logger,
+      final ModuleDef module) {
     return new ArtifactAcceptor() {
       public void accept(TreeLogger logger, ArtifactSet artifacts)
           throws UnableToCompleteException {

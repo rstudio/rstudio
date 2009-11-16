@@ -41,8 +41,6 @@ import com.google.gwt.util.tools.Utility;
 import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * The main executable class for the hosted mode shell. NOTE: the public API for
@@ -204,10 +202,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       return new File(new File(getWorkDir(), moduleDef.getName()), "shell");
     }
 
-    public File getShellPublicGenDir(ModuleDef moduleDef) {
-      return new File(getShellBaseWorkDir(moduleDef), "public");
-    }
-
     public File getWarDir() {
       return warDir;
     }
@@ -259,17 +253,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   protected final HostedModeOptionsImpl options = (HostedModeOptionsImpl) super.options;
 
   /**
-   * Maps each active linker stack by module.
-   */
-  private final Map<String, StandardLinkerContext> linkerStacks = new HashMap<String, StandardLinkerContext>();
-
-  /**
-   * The set of specified modules by name; the keys represent the renamed name
-   * of each module rather than the canonical name.
-   */
-  private Map<String, ModuleDef> modulesByName = new HashMap<String, ModuleDef>();
-
-  /**
    * The server that was started.
    */
   private ServletContainer server;
@@ -302,11 +285,13 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   }
 
   @Override
-  protected ArtifactAcceptor doCreateArtifactAcceptor(final ModuleDef module) {
+  protected ArtifactAcceptor doCreateArtifactAcceptor(TreeLogger logger,
+      final ModuleDef module) throws UnableToCompleteException {
+    final StandardLinkerContext linkerContext = link(logger, module);
     return new ArtifactAcceptor() {
-      public void accept(TreeLogger logger, ArtifactSet newlyGeneratedArtifacts)
+      public void accept(TreeLogger relinkLogger, ArtifactSet newArtifacts)
           throws UnableToCompleteException {
-        relink(logger, module, newlyGeneratedArtifacts);
+        relink(relinkLogger, linkerContext, module, newArtifacts);
       }
     };
   }
@@ -355,6 +340,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       TreeLogger moduleBranch = branch.branch(TreeLogger.INFO, moduleName);
       try {
         ModuleDef module = loadModule(moduleBranch, moduleName, false);
+        Util.recursiveDelete(options.getShellBaseWorkDir(module), false);
         validateServletTags(moduleBranch, servletValidator, module, webXml);
         TreeLogger loadLogger = moduleBranch.branch(TreeLogger.DEBUG,
             "Bootstrap link for command-line module '" + moduleName + "'");
@@ -404,22 +390,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     return options.getServletContainerLauncher().getName();
   }
 
-  /*
-   * Overridden to keep our map up to date.
-   */
-  @Override
-  protected ModuleDef loadModule(TreeLogger logger, String moduleName,
-      boolean refresh) throws UnableToCompleteException {
-    ModuleDef module = super.loadModule(logger, moduleName, refresh);
-    modulesByName.put(module.getName(), module);
-    return module;
-  }
-
-  protected void restartServer(TreeLogger logger)
-      throws UnableToCompleteException {
-    server.refresh();
-  }
-
   /**
    * Perform an initial hosted mode link, without overwriting newer or
    * unmodified files in the output folder.
@@ -428,7 +398,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
    * @param module the module to link
    * @throws UnableToCompleteException
    */
-  private void link(TreeLogger logger, ModuleDef module)
+  private StandardLinkerContext link(TreeLogger logger, ModuleDef module)
       throws UnableToCompleteException {
     TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG, "Linking module '"
         + module.getName() + "'");
@@ -436,13 +406,12 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     // Create a new active linker stack for the fresh link.
     StandardLinkerContext linkerStack = new StandardLinkerContext(linkLogger,
         module, options);
-    linkerStacks.put(module.getName(), linkerStack);
-
     ArtifactSet artifacts = linkerStack.invokeLink(linkLogger);
     produceOutput(linkLogger, linkerStack, artifacts, module);
+    return linkerStack;
   }
 
-  private void produceOutput(TreeLogger logger,
+  private synchronized void produceOutput(TreeLogger logger,
       StandardLinkerContext linkerStack, ArtifactSet artifacts, ModuleDef module)
       throws UnableToCompleteException {
     TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG, "Linking module '"
@@ -477,18 +446,15 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
    * @param newlyGeneratedArtifacts the set of new artifacts
    * @throws UnableToCompleteException
    */
-  private void relink(TreeLogger logger, ModuleDef module,
-      ArtifactSet newlyGeneratedArtifacts) throws UnableToCompleteException {
+  private void relink(TreeLogger logger, StandardLinkerContext linkerContext,
+      ModuleDef module, ArtifactSet newlyGeneratedArtifacts)
+      throws UnableToCompleteException {
     TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG,
         "Relinking module '" + module.getName() + "'");
 
-    // Find the existing linker stack.
-    StandardLinkerContext linkerStack = linkerStacks.get(module.getName());
-    assert linkerStack != null;
-
-    ArtifactSet artifacts = linkerStack.invokeRelink(linkLogger,
+    ArtifactSet artifacts = linkerContext.invokeRelink(linkLogger,
         newlyGeneratedArtifacts);
-    produceOutput(linkLogger, linkerStack, artifacts, module);
+    produceOutput(linkLogger, linkerContext, artifacts, module);
   }
 
   private void validateServletTags(TreeLogger logger,
