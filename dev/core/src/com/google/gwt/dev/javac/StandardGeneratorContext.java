@@ -202,7 +202,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
   }
 
-  private static DiskCache diskCache;
+  private static DiskCache diskCache = new DiskCache();
 
   private final ArtifactSet allGeneratedArtifacts;
 
@@ -242,9 +242,6 @@ public class StandardGeneratorContext implements GeneratorContext {
     this.genDir = genDir;
     this.generatorResourcesDir = generatorResourcesDir;
     this.allGeneratedArtifacts = allGeneratedArtifacts;
-    if (diskCache == null) {
-      diskCache = new DiskCache();
-    }
   }
 
   /**
