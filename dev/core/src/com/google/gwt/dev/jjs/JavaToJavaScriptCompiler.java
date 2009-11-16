@@ -952,7 +952,7 @@ public class JavaToJavaScriptCompiler {
       SyntheticArtifact dependencies, JavaToJavaScriptMap jjsmap,
       Map<JsName, String> obfuscateMap) throws IOException,
       UnableToCompleteException {
-    List<Artifact<?>> soycArtifacts = new ArrayList<Artifact<?>>();
+    List<SyntheticArtifact> soycArtifacts = new ArrayList<SyntheticArtifact>();
 
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -991,6 +991,10 @@ public class JavaToJavaScriptCompiler {
       soycArtifacts.add(dependencies);
     }
 
+    // Set all of the main SOYC artifacts private.
+    for (SyntheticArtifact soycArtifact : soycArtifacts) {
+      soycArtifact.setPrivate(true);
+    }
     PerfLogger.end();
 
     if (sizeBreakdowns != null) {
