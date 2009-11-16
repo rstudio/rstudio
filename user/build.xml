@@ -308,7 +308,7 @@
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
     <gwt.junit test.name="test.dev.selenium"
-        test.args="${test.dev.selenium.args} -out www -runStyle Selenium:${gwt.hosts.dev.selenium} -batch module"
+        test.args='${test.dev.selenium.args} -out www -runStyle "Selenium:${gwt.hosts.dev.selenium}" -batch module'
         test.out="${junit.out}/dev-selenium"
         test.cases="test.dev.selenium.tests" >
       <extraclasspaths>

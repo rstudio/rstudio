@@ -40,16 +40,20 @@ public class RunStyleSelenium extends RunStyle {
   }
 
   /**
-   * Implements SeleniumWrapper using DefaultSelenium.
+   * Implements SeleniumWrapper using DefaultSelenium. Visible for testing.
    */
-  private static class RCSelenium implements SeleniumWrapper {
+  static class RCSelenium implements SeleniumWrapper {
 
     private static final Pattern PATTERN =
-        Pattern.compile("([\\w\\.-]+):([\\d]+)/([\\w\\s\\*(/\\w+)*]+)");
+        Pattern.compile("([\\w\\.-]+):([\\d]+)/(.+)");
 
-    private String browser;
-    private String host;
-    private int port;
+    /*
+     * Visible for testing.
+     */
+    String browser;
+    String host;
+    int port;
+
     private Selenium selenium;
     private final String specifier;
 
