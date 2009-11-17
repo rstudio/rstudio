@@ -18,12 +18,11 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
-import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.cfg.ModuleDef;
-import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.WorkDirs;
 import com.google.gwt.dev.shell.tomcat.EmbeddedTomcatServer;
-import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.OutputFileSetOnDirectory;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 
@@ -123,9 +122,6 @@ public class GWTShell extends DevModeBase {
     }
   }
 
-  public static final String GWT_SHELL_PATH = ".gwt-tmp" + File.separator
-      + "shell";
-
   public static String checkHost(String hostUnderConsideration,
       Set<String> hosts) {
     hostUnderConsideration = hostUnderConsideration.toLowerCase(Locale.ENGLISH);
@@ -192,28 +188,6 @@ public class GWTShell extends DevModeBase {
   }
 
   @Override
-  protected ArtifactAcceptor doCreateArtifactAcceptor(TreeLogger logger,
-      final ModuleDef module) {
-    return new ArtifactAcceptor() {
-      public void accept(TreeLogger logger, ArtifactSet artifacts)
-          throws UnableToCompleteException {
-
-        /*
-         * Copied from StandardLinkerContext.produceOutputDirectory() for legacy
-         * GWTShellServlet support.
-         */
-        for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
-          if (!artifact.isPrivate()) {
-            File outFile = new File(options.getShellPublicGenDir(module),
-                artifact.getPartialPath());
-            Util.copy(logger, artifact.getContents(logger), outFile);
-          }
-        }
-      }
-    };
-  }
-
-  @Override
   protected void doShutDownServer() {
     // Stop the HTTP server.
     //
@@ -233,5 +207,19 @@ public class GWTShell extends DevModeBase {
       return -1;
     }
     return EmbeddedTomcatServer.getPort();
+  }
+
+  protected synchronized void produceOutput(TreeLogger logger,
+      StandardLinkerContext linkerStack, ArtifactSet artifacts, ModuleDef module)
+      throws UnableToCompleteException {
+    TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG, "Linking module '"
+        + module.getName() + "'");
+
+    File outputDir = options.getShellPublicGenDir(module);
+    outputDir.mkdirs();
+    OutputFileSetOnDirectory outFileSet = new OutputFileSetOnDirectory(
+        outputDir, "");
+    linkerStack.produceOutput(linkLogger, artifacts, false, outFileSet);
+    outFileSet.close();
   }
 }
