@@ -80,6 +80,7 @@ public class SelectElement extends Element {
    * The control is unavailable in this context.
    * 
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
+   * @deprecated use {@link #isDisabled()} instead.
    */
   public final native String getDisabled() /*-{
      return this.disabled;
@@ -161,6 +162,15 @@ public class SelectElement extends Element {
    }-*/;
 
   /**
+   * The control is unavailable in this context.
+   * 
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
+   */
+  public final native boolean isDisabled() /*-{
+     return !!this.disabled;
+   }-*/;
+
+  /**
    * If true, multiple OPTION elements may be selected in this SELECT.
    * 
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-multiple">W3C HTML Specification</a>
@@ -178,6 +188,15 @@ public class SelectElement extends Element {
   public final void remove(int index) {
     DOMImpl.impl.selectRemoveOption(this, index);
   }
+
+  /**
+   * The control is unavailable in this context.
+   * 
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
+   */
+  public final native void setDisabled(boolean disabled) /*-{
+     this.disabled = disabled;
+   }-*/;
 
   /**
    * The control is unavailable in this context.

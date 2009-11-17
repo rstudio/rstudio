@@ -84,6 +84,16 @@ public class ElementTest extends GWTTestCase {
     assertFalse(input.isDisabled());
     input.setDisabled(true);
     assertTrue(input.isDisabled());
+    
+    SelectElement select = Document.get().createSelectElement();
+    assertFalse(select.isDisabled());
+    select.setDisabled(true);
+    assertTrue(select.isDisabled());
+    
+    OptGroupElement optgroup = Document.get().createOptGroupElement();
+    assertFalse(optgroup.isDisabled());
+    optgroup.setDisabled(true);
+    assertTrue(optgroup.isDisabled());
   }
 
   /**
