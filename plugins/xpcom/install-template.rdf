@@ -4,7 +4,7 @@
 
   <Description about="urn:mozilla:install-manifest">
     <em:id>gwt-dev-plugin@google.com</em:id>
-    <em:name>GWT Developer Plugin for Firefox</em:name>
+    <em:name>Google Web Toolkit Developer Plugin for Firefox</em:name>
     <em:version>GWT_DEV_PLUGIN_VERSION</em:version>
     <em:type>2</em:type>
     <em:targetApplication>
@@ -37,10 +37,12 @@
     # replace default about dialog
     <em:aboutURL>chrome://gwt-dmp/content/about.xul</em:aboutURL>
 
-    # more platforms - any others?  OS/ABI for FreeBSD?
+    # more platforms - any others?
     <em:targetPlatform>SunOS_sparc-sunc</em:targetPlatform>
     <em:targetPlatform>SunOS_x86-sunc</em:targetPlatform>
     <em:targetPlatform>SunOS_x86_64-sunc</em:targetPlatform>
+    <em:targetPlatform>FreeBSD_x86-gcc3</em:targetPlatform>
+    <em:targetPlatform>FreeBSD_x86_64-gcc3</em:targetPlatform>
     -->
 
   </Description>
