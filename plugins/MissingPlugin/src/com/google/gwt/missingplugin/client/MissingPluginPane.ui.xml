@@ -16,44 +16,42 @@
 
   <ui:style>
     .pane {
-    	background-image: initial;
-    	background-attachment: initial;
-    	background-origin: initial;
-    	background-clip: initial;
-    	background-color: #ffff88;
-    	padding-top: 5px;
-    	padding-right: 10px;
-    	padding-bottom: 20px;
-    	padding-left: 10px;
-    	z-index: 10000;
-    	font-size: 9pt;
-    	font-family: Verdana;
-    	border-bottom-width: 2px;
-    	border-bottom-style: solid;
-    	border-bottom-color: rgb(221, 221, 153);
-    	\-webkit-box-shadow: rgba(0, 0, 0, 0.199219) 0px 3px 5px;
-    	\-moz-box-shadow: rgba(0, 0, 0, 0.199219) 0px 3px 5px;
-    	background-position: initial initial;
-    	background-repeat: initial initial;
+      background-image: initial;
+      background-attachment: initial;
+      background-origin: initial;
+      background-clip: initial;
+      background-color: #ffff88;
+      padding-top: 5px;
+      padding-right: 10px;
+      padding-bottom: 20px;
+      padding-left: 10px;
+      z-index: 10000;
+      font-size: 9pt;
+      font-family: Verdana;
+      border-bottom-width: 2px;
+      border-bottom-style: solid;
+      border-bottom-color: rgb(221, 221, 153);
+      background-position: initial initial;
+      background-repeat: initial initial;
     }
     
     .title {
-    	font-size: 11pt;
-    	font-family: Verdana;
-    	padding-top: 10px;
-    	font-weight: bold;
+      font-size: 11pt;
+      font-family: Verdana;
+      padding-top: 10px;
+      font-weight: bold;
     }
     
     .text {
-    	font-size: 9pt;
-    	font-family: Verdana;
-    	padding-top: 10px;
+      font-size: 9pt;
+      font-family: Verdana;
+      padding-top: 10px;
     }
     
     .license {
-        padding-top: 2em;
-        font-family: Verdana;
-        font-size: 9pt;
+      padding-top: 2em;
+      font-family: Verdana;
+      font-size: 9pt;
     }
   </ui:style>
 
@@ -66,9 +64,7 @@
     <m:AllDownloadsPane ui:field="allDownloadsPane" visible="false" />
 
     <div class="{style.text}">
-      For more information, see the
-      <a ui:field="troubleshootingLink" style="color:#000;">Troubleshooting FAQ</a>
-      .
+      For help or troubleshooting, ask questions in the <a ui:field="troubleshootingLink" style="color:#000;">Google Web Toolkit Developer Forum</a>.
     </div>
     <div class="{style.license}">
       All plugins are licensed under the <a
@@ -81,4 +77,3 @@
   </g:HTMLPanel>
 
 </ui:UiBinder> 
- 
