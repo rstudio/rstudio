@@ -76,7 +76,7 @@ public class CookieTest extends GWTTestCase {
     Cookies.setCookie(lateCookie, "late", expiresLate);
     Cookies.setCookie(sessionCookie, "forever", null);
 
-    delayTestFinish(6 * 1000);
+    delayTestFinish(7000);
     // Wait until the cookie expires before checking it
     Timer timer = new Timer() {
       @Override
@@ -96,7 +96,7 @@ public class CookieTest extends GWTTestCase {
         finishTest();
       }
     };
-    timer.schedule(5010);
+    timer.schedule(6000);
   }
 
   /**
