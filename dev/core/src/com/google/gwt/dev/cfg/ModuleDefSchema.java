@@ -38,7 +38,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 // CHECKSTYLE_NAMING_OFF
@@ -358,12 +357,12 @@ public class ModuleDefSchema extends Schema {
 
     @SuppressWarnings("unused")
     protected Schema __property_provider_begin(BindingProperty property) {
-      return fChild = new PropertyProviderBodySchema();
+      return fChild = new ScriptSchema();
     }
 
     protected void __property_provider_end(BindingProperty property)
         throws UnableToCompleteException {
-      PropertyProviderBodySchema childSchema = ((PropertyProviderBodySchema) fChild);
+      ScriptSchema childSchema = ((ScriptSchema) fChild);
       String script = childSchema.getScript();
       if (script == null) {
         // This is a problem.
@@ -415,30 +414,21 @@ public class ModuleDefSchema extends Schema {
      * @param src a partial or full url to a script file to inject
      * @return <code>null</code> since there can be no children
      */
+    @SuppressWarnings("unused")
     protected Schema __script_begin(String src) {
-      return fChild = new ScriptReadyBodySchema();
+      return fChild = new ScriptSchema();
     }
 
-    protected void __script_end(String src) throws UnableToCompleteException {
-      ScriptReadyBodySchema childSchema = (ScriptReadyBodySchema) fChild;
-      String js = childSchema.getScriptReadyBlock();
+    protected void __script_end(String src) {
+      ScriptSchema childSchema = (ScriptSchema) fChild;
+      String js = childSchema.getScript();
       if (js != null) {
         logger.log(
             TreeLogger.WARN,
             "Injected scripts no longer require an associated JavaScript block.",
             null);
       }
-
-      // For consistency, we allow the ready functions to use $wnd even though
-      // they'll be running in the context of the host html window anyway.
-      // We make up the difference by injecting a local variable into the
-      // function we wrap around their code.
-      js = "var $wnd = window; " + js;
-
-      int lineNumber = childSchema.getStartLineNumber();
-      JsFunction fn = parseJsBlock(lineNumber, js);
-      Script script = new Script(src, fn);
-      moduleDef.getScripts().append(script);
+      moduleDef.getScripts().append(new Script(src));
     }
 
     protected Schema __servlet_begin(String path, String servletClass)
@@ -852,56 +842,6 @@ public class ModuleDefSchema extends Schema {
   }
 
   /**
-   * Creates singleton instances of objects based on an attribute containing a
-   * class name.
-   */
-  private final class ObjAttrCvt<T> extends AttributeConverter {
-
-    private final Class<T> fReqdSuperclass;
-
-    public ObjAttrCvt(Class<T> reqdSuperclass) {
-      fReqdSuperclass = reqdSuperclass;
-    }
-
-    public Object convertToArg(Schema schema, int lineNumber, String elemName,
-        String attrName, String attrValue) throws UnableToCompleteException {
-
-      Object found = singletonsByName.get(attrValue);
-      if (found != null) {
-        // Found in the cache.
-        //
-        return found;
-      }
-
-      Class<?> foundClass = null;
-      try {
-        // Load the class.
-        //
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        foundClass = cl.loadClass(attrValue);
-        Class<? extends T> clazz = foundClass.asSubclass(fReqdSuperclass);
-
-        T object = clazz.newInstance();
-        singletonsByName.put(attrValue, object);
-        return object;
-      } catch (ClassCastException e) {
-        Messages.INVALID_CLASS_DERIVATION.log(logger, foundClass,
-            fReqdSuperclass, null);
-        throw new UnableToCompleteException();
-      } catch (ClassNotFoundException e) {
-        Messages.UNABLE_TO_LOAD_CLASS.log(logger, attrValue, e);
-        throw new UnableToCompleteException();
-      } catch (InstantiationException e) {
-        Messages.UNABLE_TO_CREATE_OBJECT.log(logger, attrValue, e);
-        throw new UnableToCompleteException();
-      } catch (IllegalAccessException e) {
-        Messages.UNABLE_TO_CREATE_OBJECT.log(logger, attrValue, e);
-        throw new UnableToCompleteException();
-      }
-    }
-  }
-
-  /**
    * Converts property names into their corresponding property objects.
    */
   private final class PropertyAttrCvt extends AttributeConverter {
@@ -1019,32 +959,6 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
-  private static class PropertyProviderBodySchema extends Schema {
-
-    private StringBuffer script;
-
-    private int startLineNumber = -1;
-
-    public PropertyProviderBodySchema() {
-    }
-
-    public void __text(String text) {
-      if (script == null) {
-        script = new StringBuffer();
-        startLineNumber = getLineNumber();
-      }
-      script.append(text);
-    }
-
-    public String getScript() {
-      return script != null ? script.toString() : null;
-    }
-
-    public int getStartLineNumber() {
-      return startLineNumber;
-    }
-  }
-
   private static class PropertyValue {
     public final String token;
 
@@ -1090,13 +1004,13 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
-  private static class ScriptReadyBodySchema extends Schema {
+  private static class ScriptSchema extends Schema {
 
     private StringBuffer script;
 
     private int startLineNumber = -1;
 
-    public ScriptReadyBodySchema() {
+    public ScriptSchema() {
     }
 
     public void __text(String text) {
@@ -1107,7 +1021,7 @@ public class ModuleDefSchema extends Schema {
       script.append(text);
     }
 
-    public String getScriptReadyBlock() {
+    public String getScript() {
       return script != null ? script.toString() : null;
     }
 
@@ -1128,8 +1042,6 @@ public class ModuleDefSchema extends Schema {
    */
   private static final HashMap<String, String> propertySettings = new HashMap<String, String>();
 
-  private static final Map<String, Object> singletonsByName = new HashMap<String, Object>();
-
   private static void addPrefix(String[] strings, String prefix) {
     for (int i = 0; i < strings.length; ++i) {
       strings[i] = prefix + strings[i];
@@ -1137,8 +1049,8 @@ public class ModuleDefSchema extends Schema {
   }
 
   /**
-   * Returns <code>true</code> if the string equals "true" or "yes" using a case
-   * insensitive comparison.
+   * Returns <code>true</code> if the string equals "true" or "yes" using a
+   * case insensitive comparison.
    */
   private static boolean toPrimitiveBoolean(String s) {
     return "yes".equalsIgnoreCase(s) || "true".equalsIgnoreCase(s);

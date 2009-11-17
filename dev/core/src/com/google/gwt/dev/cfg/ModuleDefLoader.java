@@ -128,7 +128,7 @@ public final class ModuleDefLoader {
   }
 
   private static ModuleDef tryGetLoadedModule(TreeLogger logger,
-      String moduleName, boolean refresh) throws UnableToCompleteException {
+      String moduleName, boolean refresh) {
     ModuleDef moduleDef = loadedModules.get(moduleName);
     if (moduleDef == null || moduleDef.isGwtXmlFileStale()) {
       return null;
