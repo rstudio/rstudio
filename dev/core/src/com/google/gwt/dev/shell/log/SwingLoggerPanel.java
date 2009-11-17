@@ -30,6 +30,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.HeadlessException;
 import java.awt.Point;
 import java.awt.datatransfer.Clipboard;
@@ -60,11 +61,14 @@ import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
+import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.HyperlinkEvent.EventType;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
@@ -375,6 +379,11 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     details.setContentType("text/html");
     details.setForeground(Color.BLACK);
     details.addHyperlinkListener(this);
+    // font trick from http://explodingpixels.wordpress.com/2008/10/28/make-jeditorpane-use-the-system-font/
+    Font font = UIManager.getFont("Label.font");
+    String bodyRule = "body { font-family: " + font.getFamily() + "; "
+        + "font-size: " + font.getSize() + "pt; }";
+    ((HTMLDocument) details.getDocument()).getStyleSheet().addRule(bodyRule);
     JScrollPane msgView = new JScrollPane(details);
     JSplitPane splitter = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
     splitter.setTopComponent(treeView);
