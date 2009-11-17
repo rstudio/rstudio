@@ -31,6 +31,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Map;
 
 import javax.swing.Icon;
@@ -181,7 +182,12 @@ public class SwingUI extends DevModeUI {
   @Override
   public void initialize(Type logLevel) {
     super.initialize(logLevel);
-    ImageIcon gwtIcon = loadImageIcon("icon24.png");
+    ImageIcon gwtIcon16 = loadImageIcon("icon16.png");
+    ImageIcon gwtIcon24 = loadImageIcon("icon24.png");
+    ImageIcon gwtIcon32 = loadImageIcon("icon32.png");
+    ImageIcon gwtIcon48 = loadImageIcon("icon48.png");
+    ImageIcon gwtIcon64 = loadImageIcon("icon64.png");
+    ImageIcon gwtIcon128 = loadImageIcon("icon128.png");
     frame = new JFrame("GWT Development Mode");
     tabs = new JTabbedPane();
     if (options.alsoLogToFile()) {
@@ -189,7 +195,7 @@ public class SwingUI extends DevModeUI {
     }
     mainWnd = new ShellMainWindow(logLevel, options.getLogFile("main.log"));
     topLogger = mainWnd.getLogger();
-    tabs.addTab("Development Mode", gwtIcon, mainWnd, "GWT Development Mode");
+    tabs.addTab("Development Mode", gwtIcon24, mainWnd, "GWT Development Mode");
     frame.getContentPane().add(tabs);
     frame.setSize(950, 700);
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -202,7 +208,9 @@ public class SwingUI extends DevModeUI {
         }
       }
     });
-    frame.setIconImage(loadImageIcon("icon16.png").getImage());
+    frame.setIconImages(Arrays.asList(gwtIcon48.getImage(),
+        gwtIcon32.getImage(), gwtIcon64.getImage(), gwtIcon128.getImage(),
+        gwtIcon16.getImage()));
     frame.setVisible(true);
   }
 
