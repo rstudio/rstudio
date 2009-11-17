@@ -22,20 +22,43 @@
     border-top: 1px solid #888;
   }
 
-  @sprite .mailboxesIcon {
-    gwt-image: 'mailboxesgroup';
-    float: left;
-  }
-
-  @sprite .tasksIcon {
-    gwt-image: 'tasksgroup';
-    float: left;
-  }
-
-  @sprite .contactsIcon {
-    gwt-image: 'contactsgroup';
-    float: left;
-  }
+  @if user.agent ie6 {
+	  .mailboxesIcon {
+	    background-image: url(mailboxesgroup_ie6.gif);
+	    width: 31px;
+	    height: 22px;
+	    float: left;
+	  }
+	
+	  .tasksIcon {
+	    background-image: url(tasksgroup_ie6.gif);
+      width: 31px;
+      height: 22px;
+	    float: left;
+	  }
+	
+	  .contactsIcon {
+	    background-image: url(contactsgroup_ie6.gif);
+      width: 31px;
+      height: 22px;
+	    float: left;
+	  }
+  } @else {
+    @sprite .mailboxesIcon {
+      gwt-image: 'mailboxesgroup';
+      float: left;
+    }
+  
+    @sprite .tasksIcon {
+      gwt-image: 'tasksgroup';
+      float: left;
+    }
+  
+    @sprite .contactsIcon {
+      gwt-image: 'contactsgroup';
+      float: left;
+    }
+ 	}
   </ui:style>
 
   <ui:image field='mailboxesgroup' src='mailboxesgroup.png'/>

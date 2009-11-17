@@ -18,9 +18,18 @@
     text-align: right;
   }
 
-  @sprite .logo {
-    gwt-image: 'logo';
-    position: absolute;
+  @if user.agent ie6 {
+    .logo {
+      background-image: url(logo_ie6.gif);
+      width: 140px;
+      height: 75px;
+      position: absolute;
+    }
+  } @else {
+    @sprite .logo {
+      gwt-image: 'logo';
+      position: absolute;
+    }
   }
   </ui:style>
 
