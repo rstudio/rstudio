@@ -25,7 +25,7 @@
 IESessionHandler::IESessionHandler(HostChannel* channel,
                                    IHTMLWindow2* window) : SessionData(channel, window, this), jsObjectId(1)
 {
-  window->put_defaultStatus(L"GWT OOPHM Plugin active");
+  // window->put_defaultStatus(L"GWT Developer Plugin active");
 }
 
 IESessionHandler::~IESessionHandler(void) {
