@@ -795,6 +795,13 @@ public class JUnitShell extends GWTShell {
     }
   }
 
+  @Override
+  protected ModuleDef loadModule(TreeLogger logger, String moduleName,
+      boolean refresh) throws UnableToCompleteException {
+    // Never refresh modules in JUnit.
+    return super.loadModule(logger, moduleName, false);
+  }
+
   /**
    * Checks to see if this test run is complete.
    */

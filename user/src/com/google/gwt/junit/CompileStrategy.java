@@ -168,7 +168,7 @@ public abstract class CompileStrategy {
      */
     ModuleDef moduleDef = ModuleDefLoader.createSyntheticModule(treeLogger,
         syntheticModuleName, new String[] {
-            moduleName, strategy.getModuleInherit()}, true);
+            moduleName, strategy.getModuleInherit()}, false);
 
     // Replace any user entry points with our test runner.
     moduleDef.clearEntryPoints();
