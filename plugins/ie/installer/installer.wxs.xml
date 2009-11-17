@@ -4,7 +4,7 @@
 
   <!-- Variables. -->
   <?define appName = "Google Web Toolkit Developer Plugin for IE" ?>
-  <?define version = "0.9.0" ?>
+  <?define version = "0.9.0.0" ?>
   <?define upgradeCode = "9a5e649a-ec63-4c7d-99bf-75adb345e7e5" ?>
 
   <!--
@@ -44,7 +44,7 @@
       <UpgradeVersion
         OnlyDetect='no'
         Property='PREVIOUSFOUND'
-        Minimum='0.0.0'
+        Minimum='0.0.0.0'
         IncludeMinimum='yes'
         RemoveFeatures='all' />
     </Upgrade>
@@ -86,7 +86,7 @@
       Directory='INSTALLDIR'
       Guid='*'>
       <RegistryKey
-        Root='HKLM'
+        Root='HKCU'
         Action='createAndRemoveOnUninstall'
         Key='SOFTWARE\Google\Update\Clients\{$(var.upgradeCode)}'>
         <RegistryValue
