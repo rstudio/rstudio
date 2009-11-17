@@ -1108,8 +1108,7 @@ public class JUnitShell extends GWTShell {
     // Get the module definition for the current test.
     if (!sameTest) {
       currentModule = compileStrategy.maybeCompileModule(moduleName,
-          syntheticModuleName, strategy, runStyle, batchingStrategy,
-          getTopLogger());
+          syntheticModuleName, strategy, batchingStrategy, getTopLogger());
       currentCompilationState = currentModule.getCompilationState(getTopLogger());
     }
     assert (currentModule != null);

@@ -78,6 +78,7 @@ public abstract class CompileStrategy {
    * 
    * @throws UnableToCompleteException if the compilation fails
    */
+  @SuppressWarnings("unused")
   public void maybeCompileAhead() throws UnableToCompleteException {
   }
 
@@ -87,14 +88,13 @@ public abstract class CompileStrategy {
    * @param moduleName the module name
    * @param syntheticModuleName the synthetic module name
    * @param strategy the strategy
-   * @param runStyle the run style
    * @param batchingStrategy the batching strategy
    * @param treeLogger the logger
    * @return the {@link ModuleDef} describing the synthetic module
    * @throws UnableToCompleteException
    */
   public abstract ModuleDef maybeCompileModule(String moduleName,
-      String syntheticModuleName, Strategy strategy, RunStyle runStyle,
+      String syntheticModuleName, Strategy strategy,
       BatchingStrategy batchingStrategy, TreeLogger treeLogger)
       throws UnableToCompleteException;
 
@@ -104,19 +104,17 @@ public abstract class CompileStrategy {
    * @param moduleName the module name
    * @param syntheticModuleName the synthetic module name
    * @param strategy the strategy
-   * @param runStyle the run style
    * @param batchingStrategy the batching strategy
    * @param treeLogger the logger
    * @return the {@link ModuleDef} describing the synthetic module
    */
   protected ModuleDef maybeCompileModuleImpl(String moduleName,
-      String syntheticModuleName, Strategy strategy, RunStyle runStyle,
+      String syntheticModuleName, Strategy strategy,
       BatchingStrategy batchingStrategy, TreeLogger treeLogger)
       throws UnableToCompleteException {
 
-    // Let the runstyle compile the module.
     ModuleDef moduleDef = maybeCompileModuleImpl2(moduleName,
-        syntheticModuleName, strategy, runStyle, treeLogger);
+        syntheticModuleName, strategy, treeLogger);
 
     // Add all test blocks for the module if we haven't seen this module before.
     if (!compiledModuleNames.contains(syntheticModuleName)) {
@@ -151,20 +149,19 @@ public abstract class CompileStrategy {
   }
 
   /**
-   * Let the {@link RunStyle} compile the module if needed
+   * Compile the module if needed.
    * 
    * Visible for testing and mocking.
    * 
    * @param moduleName the module name
    * @param syntheticModuleName the synthetic module name
    * @param strategy the strategy
-   * @param runStyle the run style
    * @param treeLogger the logger
    * @return the {@link ModuleDef} describing the synthetic module
    */
   ModuleDef maybeCompileModuleImpl2(String moduleName,
-      String syntheticModuleName, Strategy strategy, RunStyle runStyle,
-      TreeLogger treeLogger) throws UnableToCompleteException {
+      String syntheticModuleName, Strategy strategy, TreeLogger treeLogger)
+      throws UnableToCompleteException {
     /*
      * Synthesize a synthetic module that derives from the user-specified module
      * but also includes JUnit support.
@@ -208,12 +205,6 @@ class ParallelCompileStrategy extends PreCompileStrategy {
   private List<String> modulesToCompile = new ArrayList<String>();
 
   /**
-   * The {@link RunStyle} used to compile, which is set on the first compilation
-   * and is the same across all compilations.
-   */
-  private RunStyle runStyle;
-
-  /**
    * The {@link TreeLogger} used to compile, which is set on the first
    * compilation and is the same across all compilations.
    */
@@ -230,19 +221,18 @@ class ParallelCompileStrategy extends PreCompileStrategy {
       TestModuleInfo moduleInfo = GWTTestCase.getTestsForModule(nextModule);
       String syntheticModuleName = moduleInfo.getSyntheticModuleName();
       maybeCompileModuleImpl(moduleInfo.getModuleName(), syntheticModuleName,
-          moduleInfo.getStrategy(), runStyle, batchingStrategy, treeLogger);
+          moduleInfo.getStrategy(), batchingStrategy, treeLogger);
     }
   }
 
   @Override
   public ModuleDef maybeCompileModule(String moduleName,
-      String syntheticModuleName, Strategy strategy, RunStyle runStyle,
+      String syntheticModuleName, Strategy strategy,
       BatchingStrategy batchingStrategy, TreeLogger treeLogger)
       throws UnableToCompleteException {
 
     // Initialize the map of modules.
     if (preCompiledModuleDefs == null) {
-      this.runStyle = runStyle;
       this.batchingStrategy = batchingStrategy;
       this.treeLogger = treeLogger;
       preCompiledModuleDefs = new HashMap<String, ModuleDef>();
@@ -256,19 +246,19 @@ class ParallelCompileStrategy extends PreCompileStrategy {
     ModuleDef moduleDef = preCompiledModuleDefs.get(syntheticModuleName);
     if (moduleDef == null) {
       moduleDef = maybeCompileModuleImpl(moduleName, syntheticModuleName,
-          strategy, runStyle, batchingStrategy, treeLogger);
+          strategy, batchingStrategy, treeLogger);
     }
     return moduleDef;
   }
 
   @Override
   protected ModuleDef maybeCompileModuleImpl(String moduleName,
-      String syntheticModuleName, Strategy strategy, RunStyle runStyle,
+      String syntheticModuleName, Strategy strategy,
       BatchingStrategy batchingStrategy, TreeLogger treeLogger)
       throws UnableToCompleteException {
     modulesToCompile.remove(syntheticModuleName);
     ModuleDef moduleDef = super.maybeCompileModuleImpl(moduleName,
-        syntheticModuleName, strategy, runStyle, batchingStrategy, treeLogger);
+        syntheticModuleName, strategy, batchingStrategy, treeLogger);
     preCompiledModuleDefs.put(syntheticModuleName, moduleDef);
     return moduleDef;
   }
@@ -291,10 +281,10 @@ class PreCompileStrategy extends CompileStrategy {
 
   @Override
   public ModuleDef maybeCompileModule(String moduleName,
-      String syntheticModuleName, Strategy strategy, RunStyle runStyle,
+      String syntheticModuleName, Strategy strategy,
       BatchingStrategy batchingStrategy, TreeLogger treeLogger)
       throws UnableToCompleteException {
-    maybePrecompileModules(runStyle, batchingStrategy, treeLogger);
+    maybePrecompileModules(batchingStrategy, treeLogger);
 
     // Since all test blocks from a module are added to the queue at the
     // same time, we can safely take the module out of the hash map at
@@ -305,9 +295,8 @@ class PreCompileStrategy extends CompileStrategy {
   /**
    * Precompile all modules if needed.
    */
-  private void maybePrecompileModules(RunStyle runStyle,
-      BatchingStrategy batchingStrategy, TreeLogger treeLogger)
-      throws UnableToCompleteException {
+  private void maybePrecompileModules(BatchingStrategy batchingStrategy,
+      TreeLogger treeLogger) throws UnableToCompleteException {
     if (preCompiledModuleDefs == null) {
       preCompiledModuleDefs = new HashMap<String, ModuleDef>();
       for (String moduleName : GWTTestCase.getAllTestModuleNames()) {
@@ -315,7 +304,7 @@ class PreCompileStrategy extends CompileStrategy {
         String syntheticModuleName = moduleInfo.getSyntheticModuleName();
         ModuleDef moduleDef = maybeCompileModuleImpl(
             moduleInfo.getModuleName(), syntheticModuleName,
-            moduleInfo.getStrategy(), runStyle, batchingStrategy, treeLogger);
+            moduleInfo.getStrategy(), batchingStrategy, treeLogger);
         preCompiledModuleDefs.put(syntheticModuleName, moduleDef);
       }
     }
@@ -333,10 +322,10 @@ class SimpleCompileStrategy extends CompileStrategy {
 
   @Override
   public ModuleDef maybeCompileModule(String moduleName,
-      String syntheticModuleName, Strategy strategy, RunStyle runStyle,
+      String syntheticModuleName, Strategy strategy,
       BatchingStrategy batchingStrategy, TreeLogger treeLogger)
       throws UnableToCompleteException {
     return maybeCompileModuleImpl(moduleName, syntheticModuleName, strategy,
-        runStyle, batchingStrategy, treeLogger);
+        batchingStrategy, treeLogger);
   }
 }
