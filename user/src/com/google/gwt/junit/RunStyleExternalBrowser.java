@@ -68,7 +68,7 @@ class RunStyleExternalBrowser extends RunStyle {
   }
 
   private ExternalBrowser[] externalBrowsers;
-  
+
   /**
    * @param shell the containing shell
    */
@@ -99,9 +99,11 @@ class RunStyleExternalBrowser extends RunStyle {
   @Override
   public boolean initialize(String args) {
     if (args == null || args.length() == 0) {
-      getLogger().log(TreeLogger.ERROR, "ExternalBrowser runstyle requires an "
-          + "argument listing one or more executables of external browsers to "
-          + "launch");
+      getLogger().log(
+          TreeLogger.ERROR,
+          "ExternalBrowser runstyle requires an "
+              + "argument listing one or more executables of external browsers to "
+              + "launch");
       return false;
     }
     String browsers[] = args.split(",");

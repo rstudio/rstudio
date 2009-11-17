@@ -48,9 +48,9 @@ public class JUnitMessageQueue {
    * Holds the state of an individual client.
    */
   public static class ClientStatus {
+    public int blockIndex = 0;
     public final String clientId;
     public boolean isNew = true;
-    public int blockIndex = 0;
 
     public ClientStatus(String clientId) {
       this.clientId = clientId;
@@ -70,11 +70,6 @@ public class JUnitMessageQueue {
    * Records results for each client; must lock before accessing.
    */
   private final Map<String, ClientStatus> clientStatuses = new HashMap<String, ClientStatus>();
-  
-  /**
-   * A set of the GWT user agents (eg. ie6, gecko) that have connected. 
-   */
-  private final Set<String> userAgents = new HashSet<String>();
 
   /**
    * The lock used to synchronize access to clientStatuses.
@@ -82,9 +77,20 @@ public class JUnitMessageQueue {
   private final Object clientStatusesLock = new Object();
 
   /**
+   * Set to true when the last test block has been added. This is used to tell
+   * clients that all tests are complete.
+   */
+  private boolean isLastTestBlockAvailable;
+
+  /**
    * The number of TestCase clients executing in parallel.
    */
   private int numClients = 1;
+
+  /**
+   * The list of test blocks to run.
+   */
+  private final List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>();
 
   /**
    * Maps the TestInfo to the results from each clientId. If JUnitResult is
@@ -94,22 +100,16 @@ public class JUnitMessageQueue {
   private final Map<TestInfo, Map<String, JUnitResult>> testResults = new HashMap<TestInfo, Map<String, JUnitResult>>();
 
   /**
-   * The list of test blocks to run.
+   * A set of the GWT user agents (eg. ie6, gecko) that have connected.
    */
-  private final List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>();
-
-  /**
-   * Set to true when the last test block has been added. This is used to tell
-   * clients that all tests are complete.
-   */
-  private boolean isLastTestBlockAvailable;
+  private final Set<String> userAgents = new HashSet<String>();
 
   /**
    * Only instantiable within this package.
    */
   JUnitMessageQueue() {
   }
-  
+
   /**
    * Called by the servlet to query for for the next block to test.
    * 
@@ -117,8 +117,8 @@ public class JUnitMessageQueue {
    * @param userAgent the user agent property of the client
    * @param blockIndex the index of the test block to get
    * @param timeout how long to wait for an answer
-   * @return the next test to run, or <code>null</code> if <code>timeout</code>
-   *         is exceeded or the next test does not match
+   * @return the next test to run, or <code>null</code> if
+   *         <code>timeout</code> is exceeded or the next test does not match
    *         <code>testClassName</code>
    */
   public TestBlock getTestBlock(String clientId, String userAgent,
@@ -457,7 +457,7 @@ public class JUnitMessageQueue {
   }
 
   /**
-   * Ensure that a {@link ClientStatus} for the clientId exists. 
+   * Ensure that a {@link ClientStatus} for the clientId exists.
    * 
    * @param clientId the id of the client
    * @return the {@link ClientStatus} for the client
@@ -487,7 +487,8 @@ public class JUnitMessageQueue {
     return results;
   }
 
-  private boolean isMember(Throwable exception, Set<Class<? extends Throwable>> throwableSet) {
+  private boolean isMember(Throwable exception,
+      Set<Class<? extends Throwable>> throwableSet) {
     for (Class<? extends Throwable> throwable : throwableSet) {
       if (throwable.isInstance(exception)) {
         return true;

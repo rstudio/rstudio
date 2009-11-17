@@ -133,12 +133,12 @@ class RunStyleRemoteWeb extends RunStyle {
 
   private static final int RESPONSE_TIMEOUT_MS = 10000;
 
-  private RemoteBrowser[] remoteBrowsers;
-
   /**
    * The list of hosts that were interrupted.
    */
   private Set<String> interruptedHosts;
+
+  private RemoteBrowser[] remoteBrowsers;
 
   /**
    * A separate lock to control access to {@link #interruptedHosts}. This keeps

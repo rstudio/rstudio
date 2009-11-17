@@ -37,8 +37,8 @@ class RunStyleManual extends RunStyle {
       try {
         numClients = Integer.parseInt(args);
       } catch (NumberFormatException e) {
-        getLogger().log(TreeLogger.ERROR, "Error parsing argument \""
-            + args + "\"", e);
+        getLogger().log(TreeLogger.ERROR,
+            "Error parsing argument \"" + args + "\"", e);
         return false;
       }
     }

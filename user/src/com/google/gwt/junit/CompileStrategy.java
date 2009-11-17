@@ -197,6 +197,12 @@ public abstract class CompileStrategy {
 class ParallelCompileStrategy extends PreCompileStrategy {
 
   /**
+   * The {@link BatchingStrategy} used to compile, which is set on the first
+   * compilation and is the same across all compilations.
+   */
+  private BatchingStrategy batchingStrategy;
+
+  /**
    * The list of all synthetic module names to be compiled.
    */
   private List<String> modulesToCompile = new ArrayList<String>();
@@ -206,12 +212,6 @@ class ParallelCompileStrategy extends PreCompileStrategy {
    * and is the same across all compilations.
    */
   private RunStyle runStyle;
-
-  /**
-   * The {@link BatchingStrategy} used to compile, which is set on the first
-   * compilation and is the same across all compilations.
-   */
-  private BatchingStrategy batchingStrategy;
 
   /**
    * The {@link TreeLogger} used to compile, which is set on the first

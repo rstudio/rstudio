@@ -34,78 +34,16 @@ import java.util.List;
 public class CompileStrategyTest extends TestCase {
 
   /**
-   * A mock {@link RunStyle} used for testing.
-   */
-  private static class MockRunStyle extends RunStyle {
-
-    public MockRunStyle() {
-      super(null);
-    }
-
-    @Override
-    public void launchModule(String moduleName) {
-    }
-  }
-
-  /**
-   * A mock {@link JUnitMessageQueue} used for testing.
-   */
-  private static class MockJUnitMessageQueue extends JUnitMessageQueue {
-
-    /**
-     * The test blocks added to the queue.
-     */
-    private List<TestInfo[]> testBlocks;
-
-    /**
-     * Indicates that this is the last test block.
-     */
-    private boolean isLastBlock;
-
-    public MockJUnitMessageQueue() {
-      super();
-    }
-
-    @Override
-    void addTestBlocks(List<TestInfo[]> newTestBlocks, boolean isLastBlock) {
-      assertNull(testBlocks);
-      this.testBlocks = newTestBlocks;
-      this.isLastBlock = isLastBlock;
-    }
-
-    void assertIsLastBlock(boolean expected) {
-      assertEquals(expected, isLastBlock);
-    }
-
-    void assertTestBlocks(List<TestInfo[]> expected) {
-      if (expected == null || testBlocks == null) {
-        assertEquals(expected, testBlocks);
-        return;
-      }
-
-      assertEquals(expected.size(), testBlocks.size());
-      for (int i = 0; i < testBlocks.size(); i++) {
-        TestInfo[] actualBlock = testBlocks.get(i);
-        TestInfo[] expectedBlock = expected.get(i);
-        assertEquals(expectedBlock.length, actualBlock.length);
-        for (int j = 0; j < expectedBlock.length; j++) {
-          assertEquals(expectedBlock[j], actualBlock[j]);
-        }
-      }
-    }
-  }
-
-  /**
    * A mock {@link CompileStrategy} used for testing.
    */
   private static class MockCompileStrategy extends CompileStrategy {
+
+    private MockJUnitMessageQueue messageQueue = new MockJUnitMessageQueue();
 
     /**
      * The number of modules to mock.
      */
     private int mockModuleCount;
-
-    private MockJUnitMessageQueue messageQueue = new MockJUnitMessageQueue();
 
     /**
      * Construct a new {@link MockCompileStrategy}.
@@ -167,6 +105,81 @@ public class CompileStrategyTest extends TestCase {
     }
   }
 
+  /**
+   * A mock {@link JUnitMessageQueue} used for testing.
+   */
+  private static class MockJUnitMessageQueue extends JUnitMessageQueue {
+
+    /**
+   * Indicates that this is the last test block.
+   */
+    private boolean isLastBlock;
+
+    /**
+                         * The test blocks added to the queue.
+                         */
+    private List<TestInfo[]> testBlocks;
+
+    public MockJUnitMessageQueue() {
+      super();
+    }
+
+    @Override
+    void addTestBlocks(List<TestInfo[]> newTestBlocks, boolean isLastBlock) {
+      assertNull(testBlocks);
+      this.testBlocks = newTestBlocks;
+      this.isLastBlock = isLastBlock;
+    }
+
+    void assertIsLastBlock(boolean expected) {
+      assertEquals(expected, isLastBlock);
+    }
+
+    void assertTestBlocks(List<TestInfo[]> expected) {
+      if (expected == null || testBlocks == null) {
+        assertEquals(expected, testBlocks);
+        return;
+      }
+
+      assertEquals(expected.size(), testBlocks.size());
+      for (int i = 0; i < testBlocks.size(); i++) {
+        TestInfo[] actualBlock = testBlocks.get(i);
+        TestInfo[] expectedBlock = expected.get(i);
+        assertEquals(expectedBlock.length, actualBlock.length);
+        for (int j = 0; j < expectedBlock.length; j++) {
+          assertEquals(expectedBlock[j], actualBlock[j]);
+        }
+      }
+    }
+  }
+
+  /**
+ * A mock {@link RunStyle} used for testing.
+ */
+  private static class MockRunStyle extends RunStyle {
+
+    public MockRunStyle() {
+      super(null);
+    }
+
+    @Override
+    public void launchModule(String moduleName) {
+    }
+  }
+
+  public void testMaybeAddTestBlockForCurrentTestWithBatching() {
+    BatchingStrategy batchingStrategy = new ModuleBatchingStrategy();
+    assertFalse(batchingStrategy.isSingleTestOnly());
+
+    // Maybe add the current test.
+    GWTTestCase testCase = new MockGWTTestCase();
+    MockCompileStrategy strategy = new MockCompileStrategy(-1);
+    strategy.maybeAddTestBlockForCurrentTest(testCase, batchingStrategy);
+
+    // Verify the test is not added to the queue.
+    strategy.getMessageQueue().assertTestBlocks(null);
+  }
+
   public void testMaybeAddTestBlockForCurrentTestWithoutBatching() {
     BatchingStrategy batchingStrategy = new NoBatchingStrategy();
     assertTrue(batchingStrategy.isSingleTestOnly());
@@ -185,39 +198,6 @@ public class CompileStrategyTest extends TestCase {
     // Verify the test is added to the queue.
     strategy.getMessageQueue().assertIsLastBlock(false);
     strategy.getMessageQueue().assertTestBlocks(testBlocks);
-  }
-
-  public void testMaybeAddTestBlockForCurrentTestWithBatching() {
-    BatchingStrategy batchingStrategy = new ModuleBatchingStrategy();
-    assertFalse(batchingStrategy.isSingleTestOnly());
-
-    // Maybe add the current test.
-    GWTTestCase testCase = new MockGWTTestCase();
-    MockCompileStrategy strategy = new MockCompileStrategy(-1);
-    strategy.maybeAddTestBlockForCurrentTest(testCase, batchingStrategy);
-
-    // Verify the test is not added to the queue.
-    strategy.getMessageQueue().assertTestBlocks(null);
-  }
-
-  public void testMaybeCompileModuleImplWithoutBatching() {
-    BatchingStrategy batchingStrategy = new NoBatchingStrategy();
-    assertTrue(batchingStrategy.isSingleTestOnly());
-
-    // Maybe add the current test.
-    RunStyle runStyle = new MockRunStyle();
-    GWTTestCase testCase = new MockGWTTestCase();
-    MockCompileStrategy strategy = new MockCompileStrategy(-1);
-    try {
-      strategy.maybeCompileModuleImpl(testCase.getModuleName(),
-          testCase.getSyntheticModuleName(), testCase.getStrategy(), runStyle,
-          batchingStrategy, TreeLogger.NULL);
-    } catch (UnableToCompleteException e) {
-      fail("Unexpected UnableToCompleteException: " + e.getMessage());
-    }
-
-    // Verify the test block is not added to the queue.
-    strategy.getMessageQueue().assertTestBlocks(null);
   }
 
   public void testMaybeCompileModuleImplWithBatchingLastModule() {
@@ -262,5 +242,25 @@ public class CompileStrategyTest extends TestCase {
     strategy.getMessageQueue().assertIsLastBlock(false);
     strategy.getMessageQueue().assertTestBlocks(
         batchingStrategy.getTestBlocks(testCase.getSyntheticModuleName()));
+  }
+
+  public void testMaybeCompileModuleImplWithoutBatching() {
+    BatchingStrategy batchingStrategy = new NoBatchingStrategy();
+    assertTrue(batchingStrategy.isSingleTestOnly());
+
+    // Maybe add the current test.
+    RunStyle runStyle = new MockRunStyle();
+    GWTTestCase testCase = new MockGWTTestCase();
+    MockCompileStrategy strategy = new MockCompileStrategy(-1);
+    try {
+      strategy.maybeCompileModuleImpl(testCase.getModuleName(),
+          testCase.getSyntheticModuleName(), testCase.getStrategy(), runStyle,
+          batchingStrategy, TreeLogger.NULL);
+    } catch (UnableToCompleteException e) {
+      fail("Unexpected UnableToCompleteException: " + e.getMessage());
+    }
+
+    // Verify the test block is not added to the queue.
+    strategy.getMessageQueue().assertTestBlocks(null);
   }
 }

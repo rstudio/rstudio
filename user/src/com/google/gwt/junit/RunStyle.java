@@ -26,16 +26,16 @@ import java.net.UnknownHostException;
  */
 abstract class RunStyle {
 
-  protected int tries = 1;
-  
   /**
    * The containing shell.
    */
   protected final JUnitShell shell;
 
+  protected int tries = 1;
+
   /**
-   * Constructor for RunStyle.  Any subclass must provide a constructor with
-   * the same signature since this will be how the RunStyle is created via
+   * Constructor for RunStyle. Any subclass must provide a constructor with the
+   * same signature since this will be how the RunStyle is created via
    * reflection.
    * 
    * @param shell the containing shell
@@ -57,7 +57,7 @@ abstract class RunStyle {
    * Get the host name of the local system to use in URLs. This method returns
    * the host address instead of the host name in case the test target cannot
    * resolve the host name.
-   *  
+   * 
    * @return the host name of the local system
    */
   public String getLocalHostName() {
@@ -80,8 +80,8 @@ abstract class RunStyle {
    * Initialize the runstyle with any supplied arguments.
    * 
    * @param args arguments passed in -runStyle option, null if none supplied
-   * @return true if this runstyle is initialized successfully, false if it
-   *     was unsuccessful
+   * @return true if this runstyle is initialized successfully, false if it was
+   *         unsuccessful
    */
   public boolean initialize(String args) {
     return true;
@@ -102,22 +102,22 @@ abstract class RunStyle {
   }
 
   /**
-   * Setup this RunStyle for the selected mode. 
+   * Setup this RunStyle for the selected mode.
    * 
-   * @param logger TreeLogger to use for any messages 
-   * @param developmentMode true if we are running in development mode
-   *     rather that web/production mode
-   * @return false if we should abort processing due to an unsupported mode
-   *     or an error setting up for that mode
+   * @param logger TreeLogger to use for any messages
+   * @param developmentMode true if we are running in development mode rather
+   *          that web/production mode
+   * @return false if we should abort processing due to an unsupported mode or
+   *         an error setting up for that mode
    */
   public boolean setupMode(TreeLogger logger, boolean developmentMode) {
     return true;
   }
 
   /**
-   * Whether the embedded server should ever generate resources.  Hosted mode
-   * needs this, but not noserver hosted.  TODO(spoon) does web mode get
-   * simpler if this is turned on?
+   * Whether the embedded server should ever generate resources. Hosted mode
+   * needs this, but not noserver hosted. TODO(spoon) does web mode get simpler
+   * if this is turned on?
    */
   public boolean shouldAutoGenerateResources() {
     return true;

@@ -356,7 +356,7 @@ public class JUnitShell extends GWTShell {
           return true;
         }
       });
-      
+
       registerHandler(new ArgHandlerInt() {
         @Override
         public String getPurpose() {
@@ -372,12 +372,12 @@ public class JUnitShell extends GWTShell {
         public String[] getTagArgs() {
           return new String[] {"1"};
         }
-        
+
         @Override
         public boolean isRequired() {
           return false;
         }
-        
+
         @Override
         public boolean isUndocumented() {
           return false;
@@ -616,27 +616,18 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
-   * Determines how to batch up tests for execution.
-   */
-  private BatchingStrategy batchingStrategy = new NoBatchingStrategy();
-
-  /**
    * The amount of time to wait for all clients to complete a single test
-   * method, in milliseconds, measured from when the <i>last</i> client connects
-   * (and thus starts the test). Set by the -testMethodTimeout argument.
+   * method, in milliseconds, measured from when the <i>last</i> client
+   * connects (and thus starts the test). Set by the -testMethodTimeout
+   * argument.
    */
   private long baseTestMethodTimeoutMillis;
 
   /**
-   * Test method timeout as modified by the batching strategy.
+   * Determines how to batch up tests for execution.
    */
-  private long testBatchingMethodTimeoutMillis;
+  private BatchingStrategy batchingStrategy = new NoBatchingStrategy();
 
-  /**
-   * Max number of times a test method must be tried. 
-   */
-  private int tries;
-  
   /**
    * Determines how modules are compiled.
    */
@@ -644,14 +635,14 @@ public class JUnitShell extends GWTShell {
       JUnitShell.this);
 
   /**
-   * Name of the module containing the current/last module to run.
-   */
-  private ModuleDef currentModule;
-
-  /**
    * A type oracle for the current module, used to validate class existence.
    */
   private CompilationState currentCompilationState;
+
+  /**
+   * Name of the module containing the current/last module to run.
+   */
+  private ModuleDef currentModule;
 
   /**
    * The name of the current test case being run.
@@ -712,14 +703,19 @@ public class JUnitShell extends GWTShell {
   private RunStyle runStyle = null;
 
   /**
-   * The argument passed to -runStyle.  This is parsed later so we can pass in
-   * a logger.
+   * The argument passed to -runStyle. This is parsed later so we can pass in a
+   * logger.
    */
   private String runStyleName = "HtmlUnit";
 
   private boolean shouldAutoGenerateResources = true;
 
   private boolean standardsMode = false;
+
+  /**
+   * Test method timeout as modified by the batching strategy.
+   */
+  private long testBatchingMethodTimeoutMillis;
 
   /**
    * The time the test actually began.
@@ -739,6 +735,11 @@ public class JUnitShell extends GWTShell {
    * testBeginTimeout interval is done.
    */
   private long testMethodTimeout;
+
+  /**
+   * Max number of times a test method must be tried.
+   */
+  private int tries;
 
   /**
    * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
@@ -778,14 +779,16 @@ public class JUnitShell extends GWTShell {
       // RunStyle already logged reasons for its failure
       return false;
     }
-    
+
     if (tries >= 1) {
       runStyle.setTries(tries);
     }
-    
+
     if (!runStyle.setupMode(getTopLogger(), developmentMode)) {
-      getTopLogger().log(TreeLogger.ERROR, "Run style does not support "
-          + (developmentMode ? "development" : "production") + " mode");
+      getTopLogger().log(
+          TreeLogger.ERROR,
+          "Run style does not support "
+              + (developmentMode ? "development" : "production") + " mode");
       return false;
     }
     return true;
@@ -828,16 +831,19 @@ public class JUnitShell extends GWTShell {
         }
         userAgentList += remoteUserAgents[i];
       }
-      getTopLogger().log(TreeLogger.INFO,
+      getTopLogger().log(
+          TreeLogger.INFO,
           "All clients connected (Limiting future permutations to: "
-          + userAgentList + ")");
+              + userAgentList + ")");
     }
 
     long currentTimeMillis = System.currentTimeMillis();
     if (activeClients >= numClients) {
       if (activeClients > numClients) {
-        getTopLogger().log(TreeLogger.WARN, "Too many clients: expected "
-            + numClients + ", found " + activeClients);
+        getTopLogger().log(
+            TreeLogger.WARN,
+            "Too many clients: expected " + numClients + ", found "
+                + activeClients);
       }
       firstLaunch = false;
 
@@ -927,7 +933,7 @@ public class JUnitShell extends GWTShell {
   /**
    * Accessor method to HostedModeBase.setHeadless -- without this, we get
    * IllegalAccessError from the -notHeadless arg handler. Compiler bug?
-   *
+   * 
    * @param headlessMode
    */
   void setHeadlessAccessor(boolean headlessMode) {
@@ -937,7 +943,8 @@ public class JUnitShell extends GWTShell {
   /**
    * Set the expected number of clients.
    * 
-   * <p>Should only be called by RunStyle subtypes.
+   * <p>
+   * Should only be called by RunStyle subtypes.
    * 
    * @param numClients
    */
@@ -951,8 +958,10 @@ public class JUnitShell extends GWTShell {
   }
 
   private void checkArgs() {
-    if (runStyle.getTries() > 1 && !(batchingStrategy instanceof NoBatchingStrategy)) {
-      throw new JUnitFatalLaunchException("Batching does not work with tries > 1");
+    if (runStyle.getTries() > 1
+        && !(batchingStrategy instanceof NoBatchingStrategy)) {
+      throw new JUnitFatalLaunchException(
+          "Batching does not work with tries > 1");
     }
   }
 
@@ -1073,8 +1082,8 @@ public class JUnitShell extends GWTShell {
   /**
    * Runs a particular test case.
    */
-  private void runTestImpl(GWTTestCase testCase, TestResult testResult, int numTries)
-      throws UnableToCompleteException {
+  private void runTestImpl(GWTTestCase testCase, TestResult testResult,
+      int numTries) throws UnableToCompleteException {
 
     testBatchingMethodTimeoutMillis = batchingStrategy.getTimeoutMultiplier()
         * baseTestMethodTimeoutMillis;
