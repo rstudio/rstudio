@@ -31,7 +31,7 @@ abstract class RunStyle {
    */
   protected final JUnitShell shell;
 
-  protected int tries = 1;
+  private int tries = 1;
 
   /**
    * Constructor for RunStyle. Any subclass must provide a constructor with the
@@ -77,15 +77,13 @@ abstract class RunStyle {
   }
 
   /**
-   * Initialize the runstyle with any supplied arguments.
+   * Initialize the runstyle with any supplied arguments, and return the number
+   * of clients this runstyle controls.
    * 
    * @param args arguments passed in -runStyle option, null if none supplied
-   * @return true if this runstyle is initialized successfully, false if it was
-   *         unsuccessful
+   * @return the number of clients, or -1 if initialization was unsuccessful
    */
-  public boolean initialize(String args) {
-    return true;
-  }
+  public abstract int initialize(String args);
 
   /**
    * Requests initial launch of the browser. This should only be called once per

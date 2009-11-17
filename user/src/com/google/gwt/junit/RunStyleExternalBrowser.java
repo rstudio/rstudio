@@ -97,17 +97,16 @@ class RunStyleExternalBrowser extends RunStyle {
   }
 
   @Override
-  public boolean initialize(String args) {
+  public int initialize(String args) {
     if (args == null || args.length() == 0) {
       getLogger().log(
           TreeLogger.ERROR,
           "ExternalBrowser runstyle requires an "
               + "argument listing one or more executables of external browsers to "
               + "launch");
-      return false;
+      return -1;
     }
     String browsers[] = args.split(",");
-    shell.setNumClients(browsers.length);
     synchronized (this) {
       this.externalBrowsers = new ExternalBrowser[browsers.length];
       for (int i = 0; i < browsers.length; ++i) {
@@ -115,7 +114,7 @@ class RunStyleExternalBrowser extends RunStyle {
       }
     }
     Runtime.getRuntime().addShutdownHook(new ShutdownCb());
-    return true;
+    return browsers.length;
   }
 
   @Override

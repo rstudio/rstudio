@@ -168,11 +168,11 @@ class RunStyleRemoteWeb extends RunStyle {
   }
 
   @Override
-  public boolean initialize(String args) {
+  public int initialize(String args) {
     if (args == null || args.length() == 0) {
       getLogger().log(TreeLogger.ERROR,
           "RemoteWeb runstyle requires comma-separated RMI URLs");
-      return false;
+      return -1;
     }
     String[] urls = args.split(",");
     try {
@@ -180,10 +180,9 @@ class RunStyleRemoteWeb extends RunStyle {
     } catch (IOException e) {
       getLogger().log(TreeLogger.ERROR,
           "RemoteWeb: Error initializing RMISocketFactory", e);
-      return false;
+      return -1;
     }
     int numClients = urls.length;
-    shell.setNumClients(numClients);
     BrowserManager[] browserManagers = new BrowserManager[numClients];
     for (int i = 0; i < numClients; ++i) {
       long callStart = System.currentTimeMillis();
@@ -200,7 +199,7 @@ class RunStyleRemoteWeb extends RunStyle {
           cause = e.getCause();
         }
         getLogger().log(TreeLogger.ERROR, message, cause);
-        return false;
+        return -1;
       }
     }
     synchronized (this) {
@@ -210,7 +209,7 @@ class RunStyleRemoteWeb extends RunStyle {
       }
     }
     Runtime.getRuntime().addShutdownHook(new ShutdownCb());
-    return true;
+    return numClients;
   }
 
   @Override

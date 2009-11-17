@@ -107,7 +107,8 @@ public class JUnitMessageQueue {
   /**
    * Only instantiable within this package.
    */
-  JUnitMessageQueue() {
+  JUnitMessageQueue(int numClients) {
+    this.numClients = numClients;
   }
 
   /**
@@ -244,6 +245,10 @@ public class JUnitMessageQueue {
       clientStatusesLock.notifyAll();
       return results.toArray(new String[results.size()]);
     }
+  }
+
+  int getNumClients() {
+    return numClients;
   }
 
   /**
@@ -428,22 +433,6 @@ public class JUnitMessageQueue {
   void removeResults(TestInfo testInfo) {
     synchronized (clientStatusesLock) {
       testResults.remove(testInfo);
-    }
-  }
-
-  /**
-   * Set the number of clients. This must be called before adding any tests.
-   * 
-   * @param numClients The number of parallel clients being served by this
-   *          queue.
-   */
-  void setNumClients(int numClients) {
-    synchronized (clientStatusesLock) {
-      if (testBlocks.size() > 0) {
-        throw new IllegalStateException(
-            "Cannot change number of clients after adding tests");
-      }
-      this.numClients = numClients;
     }
   }
 

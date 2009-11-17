@@ -192,12 +192,7 @@ public class RunStyleHtmlUnit extends RunStyle {
   }
 
   @Override
-  public int getTries() {
-    return tries;
-  }
-
-  @Override
-  public boolean initialize(String args) {
+  public int initialize(String args) {
     if (args == null || args.length() == 0) {
       // If no browsers specified, default to Firefox 3.
       args = "FF3";
@@ -210,14 +205,14 @@ public class RunStyleHtmlUnit extends RunStyle {
             TreeLogger.ERROR,
             "RunStyleHtmlUnit: Unknown browser " + "name " + browserName
                 + ", expected browser name: one of " + BROWSER_MAP.keySet());
-        return false;
+        return -1;
       }
       browserSet.add(browser);
     }
     browsers = Collections.unmodifiableSet(browserSet);
 
     setTries(DEFAULT_TRIES); // set to the default value for this RunStyle
-    return true;
+    return browsers.size();
   }
 
   @Override

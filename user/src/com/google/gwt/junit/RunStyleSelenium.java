@@ -119,11 +119,11 @@ public class RunStyleSelenium extends RunStyle {
   }
 
   @Override
-  public boolean initialize(String args) {
+  public int initialize(String args) {
     if (args == null || args.length() == 0) {
       getLogger().log(TreeLogger.ERROR,
           "Selenium runstyle requires comma-separated Selenium-RC targets");
-      return false;
+      return -1;
     }
     String[] targetsIn = args.split(",");
     SeleniumWrapper targets[] = new SeleniumWrapper[targetsIn.length];
@@ -133,12 +133,11 @@ public class RunStyleSelenium extends RunStyle {
         targets[i] = createSeleniumWrapper(targetsIn[i]);
       } catch (IllegalArgumentException e) {
         getLogger().log(TreeLogger.ERROR, e.getMessage());
-        return false;
+        return -1;
       }
     }
 
     this.remotes = targets;
-    shell.setNumClients(targets.length);
 
     // Install a shutdown hook that will close all of our outstanding Selenium
     // sessions.
@@ -158,7 +157,7 @@ public class RunStyleSelenium extends RunStyle {
       }
     });
     start();
-    return true;
+    return targets.length;
   }
 
   @Override

@@ -120,7 +120,7 @@ public class CompileStrategyTest extends TestCase {
     private List<TestInfo[]> testBlocks;
 
     public MockJUnitMessageQueue() {
-      super();
+      super(1);
     }
 
     @Override

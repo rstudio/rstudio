@@ -31,7 +31,7 @@ class RunStyleManual extends RunStyle {
   }
 
   @Override
-  public boolean initialize(String args) {
+  public int initialize(String args) {
     numClients = 1;
     if (args != null) {
       try {
@@ -39,11 +39,10 @@ class RunStyleManual extends RunStyle {
       } catch (NumberFormatException e) {
         getLogger().log(TreeLogger.ERROR,
             "Error parsing argument \"" + args + "\"", e);
-        return false;
+        return -1;
       }
     }
-    shell.setNumClients(numClients);
-    return true;
+    return numClients;
   }
 
   @Override
