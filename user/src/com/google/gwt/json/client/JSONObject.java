@@ -195,9 +195,7 @@ public class JSONObject extends JSONValue {
   private native void addAllKeys(Collection<String> s) /*-{
     var jsObject = this.@com.google.gwt.json.client.JSONObject::jsObject;
     for (var key in jsObject) {
-      if (jsObject.hasOwnProperty(key)) {
-        s.@java.util.Collection::add(Ljava/lang/Object;)(key);
-      }
+      s.@java.util.Collection::add(Ljava/lang/Object;)(key);
     }
   }-*/;
 
@@ -215,9 +213,7 @@ public class JSONObject extends JSONValue {
     var jsObject = this.@com.google.gwt.json.client.JSONObject::jsObject;
     var i = 0;
     for (var key in jsObject) {
-      if (jsObject.hasOwnProperty(key)) {
-        result[i++] = key;
-      }
+      result[i++] = key;
     }
     return result;
   }-*/;
@@ -226,19 +222,13 @@ public class JSONObject extends JSONValue {
     var jsObject = this.@com.google.gwt.json.client.JSONObject::jsObject;
     var size = 0;
     for (var key in jsObject) {
-      if (jsObject.hasOwnProperty(key)) {
-        ++size;
-      }
+      ++size;
     }
     return size;
   }-*/;
 
   private native JSONValue get0(String key) /*-{
-    var jsObject = this.@com.google.gwt.json.client.JSONObject::jsObject;
-    var v;
-    if (jsObject.hasOwnProperty(key)) {
-      v = jsObject[key];
-    }
+    var v = this.@com.google.gwt.json.client.JSONObject::jsObject[key];
     var func = @com.google.gwt.json.client.JSONParser::typeMap[typeof v];
     return func ? func(v) : @com.google.gwt.json.client.JSONParser::throwUnknownTypeException(Ljava/lang/String;)(typeof v);
   }-*/;
