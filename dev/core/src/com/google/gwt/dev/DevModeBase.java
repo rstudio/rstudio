@@ -150,6 +150,57 @@ abstract class DevModeBase implements DoneCallback {
   }
 
   /**
+   * Handles the -portHosted command line flag.
+   */
+  protected static class ArgHandlerCodeServerPort extends ArgHandlerString {
+
+    private static final String CODE_SERVER_PORT_TAG = "-codeServerPort";
+    private static final String DEFAULT_PORT = "9997";
+    
+    private final OptionCodeServerPort options;
+
+    public ArgHandlerCodeServerPort(OptionCodeServerPort options) {
+      this.options = options;
+    }
+
+    @Override
+    public String[] getDefaultArgs() {
+      return new String[] {CODE_SERVER_PORT_TAG, DEFAULT_PORT};
+    }
+
+    @Override
+    public String getPurpose() {
+      return "Specifies the TCP port for the code server (defaults to " + 
+        DEFAULT_PORT + ")";
+    }
+
+    @Override
+    public String getTag() {
+      return CODE_SERVER_PORT_TAG;
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[] {"port-number | \"auto\""};
+    }
+
+    @Override
+    public boolean setString(String value) {
+      if (value.equals("auto")) {
+        options.setCodeServerPort(getFreeSocketPort());
+      } else {
+        try {
+          options.setCodeServerPort(Integer.parseInt(value));
+        } catch (NumberFormatException e) {
+          System.err.println("A port must be an integer or \"auto\"");
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  /**
    * Handles the -logdir command line option.
    */
   protected static class ArgHandlerLogDir extends ArgHandlerString {
@@ -255,57 +306,6 @@ abstract class DevModeBase implements DoneCallback {
     }
   }
 
-  /**
-   * Handles the -portHosted command line flag.
-   */
-  protected static class ArgHandlerCodeServerPort extends ArgHandlerString {
-
-    private static final String CODE_SERVER_PORT_TAG = "-codeServerPort";
-    private static final String DEFAULT_PORT = "9997";
-    
-    private final OptionCodeServerPort options;
-
-    public ArgHandlerCodeServerPort(OptionCodeServerPort options) {
-      this.options = options;
-    }
-
-    @Override
-    public String[] getDefaultArgs() {
-      return new String[] {CODE_SERVER_PORT_TAG, DEFAULT_PORT};
-    }
-
-    @Override
-    public String getPurpose() {
-      return "Specifies the TCP port for the code server (defaults to " + 
-        DEFAULT_PORT + ")";
-    }
-
-    @Override
-    public String getTag() {
-      return CODE_SERVER_PORT_TAG;
-    }
-
-    @Override
-    public String[] getTagArgs() {
-      return new String[] {"port-number | \"auto\""};
-    }
-
-    @Override
-    public boolean setString(String value) {
-      if (value.equals("auto")) {
-        options.setCodeServerPort(getFreeSocketPort());
-      } else {
-        try {
-          options.setCodeServerPort(Integer.parseInt(value));
-        } catch (NumberFormatException e) {
-          System.err.println("A port must be an integer or \"auto\"");
-          return false;
-        }
-      }
-      return true;
-    }
-  }
-
   protected static class ArgHandlerRemoteUI extends ArgHandlerString {
 
     private final HostedModeBaseOptions options;
@@ -361,8 +361,6 @@ abstract class DevModeBase implements DoneCallback {
     }
   }
 
-  protected static final Map<String, ModuleDef> startupModules = new HashMap<String, ModuleDef>();
-  
   /**
    * Handles the -whitelist command line flag.
    */
@@ -387,7 +385,7 @@ abstract class DevModeBase implements DoneCallback {
       return BrowserWidgetHostChecker.whitelistRegexes(whitelistStr);
     }
   }
-
+  
   protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir,
       OptionLogLevel, OptionGenDir, OptionNoServer, OptionPort,
       OptionCodeServerPort, OptionStartupURLs, OptionRemoteUI {
@@ -429,6 +427,10 @@ abstract class DevModeBase implements DoneCallback {
       return remoteUIClientId;
     }
 
+    public int getCodeServerPort() {
+      return portHosted;
+    }
+
     public File getLogDir() {
       return logDir;
     }
@@ -442,10 +444,6 @@ abstract class DevModeBase implements DoneCallback {
 
     public int getPort() {
       return port;
-    }
-
-    public int getCodeServerPort() {
-      return portHosted;
     }
 
     public String getRemoteUIHost() {
@@ -472,6 +470,10 @@ abstract class DevModeBase implements DoneCallback {
       this.remoteUIClientId = clientId;
     }
 
+    public void setCodeServerPort(int port) {
+      portHosted = port;
+    }
+
     public void setLogFile(String filename) {
       logDir = new File(filename);
     }
@@ -482,10 +484,6 @@ abstract class DevModeBase implements DoneCallback {
 
     public void setPort(int port) {
       this.port = port;
-    }
-
-    public void setCodeServerPort(int port) {
-      portHosted = port;
     }
 
     public void setRemoteUIHost(String remoteUIHost) {
@@ -499,6 +497,12 @@ abstract class DevModeBase implements DoneCallback {
     public boolean useRemoteUI() {
       return remoteUIHost != null;
     }
+  }
+
+  protected interface OptionCodeServerPort {
+    int getCodeServerPort();
+
+    void setCodeServerPort(int codeServerPort);
   }
 
   /**
@@ -533,12 +537,6 @@ abstract class DevModeBase implements DoneCallback {
     int getPort();
 
     void setPort(int port);
-  }
-
-  protected interface OptionCodeServerPort {
-    int getCodeServerPort();
-
-    void setCodeServerPort(int codeServerPort);
   }
 
   /**
@@ -584,6 +582,8 @@ abstract class DevModeBase implements DoneCallback {
       registerHandler(new ArgHandlerRemoteUI(options));
     }
   }
+
+  protected static final Map<String, ModuleDef> startupModules = new HashMap<String, ModuleDef>();
 
   private static final Random RNG = new Random();
 
