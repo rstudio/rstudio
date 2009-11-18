@@ -96,11 +96,8 @@ public abstract class CompoundAssignmentNormalizer {
       JExpression newLhs = replacer.accept(x.getLhs());
       exitTempUsageScope();
 
-      JExpression operation = new JBinaryOperation(x.getSourceInfo(),
+      JBinaryOperation operation = new JBinaryOperation(x.getSourceInfo(),
           newLhs.getType(), op.getNonAssignmentOf(), newLhs, x.getRhs());
-      
-      operation = modifyResultOperation((JBinaryOperation) operation);
-      
       // newLhs is cloned below because it was used in operation
       JBinaryOperation asg = new JBinaryOperation(x.getSourceInfo(), newLhs.getType(),
           JBinaryOperator.ASG, cloner.cloneExpression(newLhs),
@@ -399,17 +396,6 @@ public abstract class CompoundAssignmentNormalizer {
 
   protected abstract String getTempPrefix();
 
-  /**
-   * Decide what expression to return when breaking up
-   * a compound assignment of the form <code>lhs op= rhs</code>. The breakup
-   * creates an expression of the form <code>lhs = lhs op rhs</code>, and
-   * the right hand side of the newly created expression is passed to this
-   * method.
-   */
-  protected JExpression modifyResultOperation(JBinaryOperation op) {
-    return op;  
-  }
-  
   protected abstract boolean shouldBreakUp(JBinaryOperation x);
 
   protected abstract boolean shouldBreakUp(JPostfixOperation x);
