@@ -15,10 +15,9 @@
  */
 package com.google.gwt.uibinder.attributeparsers;
 
-import com.google.gwt.dev.util.collect.Sets;
-
 import junit.framework.TestCase;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,11 +38,12 @@ public class CssNameConverterTest extends TestCase {
   private final CssNameConverter converter = new CssNameConverter();
 
   public void testCollision() {
-    Set<String> in = Sets.create("charlie-delta", "baker", "charlieDelta",
+    Set<String> in = makeOrderedSet("charlie-delta", "baker", "charlieDelta",
         "echo");
 
     try {
       converter.convertSet(in);
+      fail();
     } catch (CssNameConverter.Failure e) {
       assertContains(e.getMessage(), "charlie-delta");
       assertContains(e.getMessage(), "charlieDelta");
@@ -62,7 +62,7 @@ public class CssNameConverterTest extends TestCase {
   }
 
   public void testNoOp() throws CssNameConverter.Failure {
-    Set<String> in = Sets.create("able", "baker", "charlieDelta", "echo");
+    Set<String> in = makeOrderedSet("able", "baker", "charlieDelta", "echo");
     Map<String, String> out = converter.convertSet(in);
 
     for (Map.Entry<String, String> entry : out.entrySet()) {
@@ -74,11 +74,12 @@ public class CssNameConverterTest extends TestCase {
   }
 
   public void testReverseCollision() {
-    Set<String> in = Sets.create("charlieDelta", "baker", "charlie-delta",
+    Set<String> in = makeOrderedSet("charlieDelta", "baker", "charlie-delta",
         "echo");
 
     try {
       converter.convertSet(in);
+      fail();
     } catch (CssNameConverter.Failure e) {
       assertContains(e.getMessage(), "charlie-delta");
       assertContains(e.getMessage(), "charlieDelta");
@@ -86,7 +87,7 @@ public class CssNameConverterTest extends TestCase {
   }
 
   public void testSomeOp() throws CssNameConverter.Failure {
-    Set<String> in = Sets.create("able", "-baker-", "charlie-delta", "echo",
+    Set<String> in = makeOrderedSet("able", "-baker-", "charlie-delta", "echo",
         "foxtrot-Tango");
     Pair[] expected = {
         new Pair("able", "able"), new Pair("-baker-", "baker"),
@@ -106,5 +107,13 @@ public class CssNameConverterTest extends TestCase {
   private void assertContains(String string, String fragment) {
     assertTrue(String.format("%s should contain %s", string, fragment),
         string.contains(fragment));
+  }
+
+  private Set<String> makeOrderedSet(String... strings) {
+    LinkedHashSet<String> set = new LinkedHashSet<String>();
+    for (String string : strings) {
+      set.add(string);
+    }
+    return set;
   }
 }

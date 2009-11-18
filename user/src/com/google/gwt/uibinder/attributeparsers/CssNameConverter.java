@@ -28,7 +28,7 @@ public class CssNameConverter {
    */
   public static class Failure extends Exception {
     Failure(String message, Object... params) {
-       super(String.format(message, params));
+      super(String.format(message, params));
     }
   }
 
@@ -59,20 +59,17 @@ public class CssNameConverter {
    *         identifiers, with the order of the input set preserved
    * @throws Failure on collisions due to conversions
    */
-  public Map<String, String> convertSet(Set<String> classNames)
-      throws Failure {
+  public Map<String, String> convertSet(Set<String> classNames) throws Failure {
     Map<String, String> rawToConverted = new LinkedHashMap<String, String>();
     Map<String, String> convertedToRaw = new LinkedHashMap<String, String>();
     for (String className : classNames) {
       String converted = convertName(className);
       String already = convertedToRaw.get(converted);
       if (already != null) {
-        throw new Failure("CSS class name collision: \"%s\" and \"%s\"", already,
-            className);
+        throw new Failure("CSS class name collision: \"%s\" and \"%s\"",
+            already, className);
       }
-      if (!converted.equals(className)) {
-        convertedToRaw.put(converted, className);
-      }
+      convertedToRaw.put(converted, className);
       rawToConverted.put(className, converted);
     }
     return rawToConverted;
