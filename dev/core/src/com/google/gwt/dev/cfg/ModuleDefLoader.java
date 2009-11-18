@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.Reader;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -60,11 +61,17 @@ public final class ModuleDefLoader {
 
   /**
    * Keep soft references to loaded modules so the VM can gc them when memory is
-   * tight.
+   * tight.  The module's physical name is used as a key.
    */
   @SuppressWarnings("unchecked")
   private static final Map<String, ModuleDef> loadedModules = new ReferenceMap(
       AbstractReferenceMap.HARD, AbstractReferenceMap.SOFT);
+  
+  /**
+   * A mapping from effective to physical module names.
+   */
+  private static final Map<String, String> moduleEffectiveNameToPhysicalName =
+    new HashMap<String, String>();
 
   /**
    * Creates a module in memory that is not associated with a
@@ -96,7 +103,8 @@ public final class ModuleDefLoader {
   }
 
   /**
-   * Loads a new module from the class path.
+   * Loads a new module from the class path.  Equivalent to
+   * {@link #loadFromClassPath(logger, moduleName, false)}.
    * 
    * @param logger logs the process
    * @param moduleName the module to load
@@ -107,7 +115,7 @@ public final class ModuleDefLoader {
       throws UnableToCompleteException {
     return loadFromClassPath(logger, moduleName, false);
   }
-
+  
   /**
    * Loads a new module from the class path.
    * 
@@ -119,6 +127,12 @@ public final class ModuleDefLoader {
    */
   public static ModuleDef loadFromClassPath(TreeLogger logger,
       String moduleName, boolean refresh) throws UnableToCompleteException {
+    // Look up the module's physical name; if null, we are either encountering
+    // the module for the first time, or else the name is already physical
+    String physicalName = moduleEffectiveNameToPhysicalName.get(moduleName);
+    if (physicalName != null) {
+      moduleName = physicalName;
+    }
     ModuleDef moduleDef = tryGetLoadedModule(logger, moduleName, refresh);
     if (moduleDef != null) {
       return moduleDef;
@@ -275,8 +289,8 @@ public final class ModuleDefLoader {
     // Add the "physical" module name: com.google.Module
     loadedModules.put(moduleName, moduleDef);
 
-    // Add the module's effective name: some.other.Module
-    loadedModules.put(moduleDef.getName(), moduleDef);
+    // Add a mapping from the module's effective name to its physical name
+    moduleEffectiveNameToPhysicalName.put(moduleDef.getName(), moduleName);
     return moduleDef;
   }
 }

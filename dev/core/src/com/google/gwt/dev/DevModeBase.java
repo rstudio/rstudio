@@ -55,6 +55,7 @@ import java.net.ServerSocket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -96,6 +97,8 @@ abstract class DevModeBase implements DoneCallback {
         // Try to find an existing loaded version of the module def.
         ModuleDef moduleDef = loadModule(logger, moduleName, true);
         assert (moduleDef != null);
+        // Release the hard reference to the module if it is present.
+        startupModules.remove(moduleDef.getName());
 
         ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(logger,
             moduleDef.getCompilationState(logger), moduleDef);
@@ -354,6 +357,8 @@ abstract class DevModeBase implements DoneCallback {
     }
   }
 
+  protected static final Map<String, ModuleDef> startupModules = new HashMap<String, ModuleDef>();
+  
   /**
    * Handles the -whitelist command line flag.
    */

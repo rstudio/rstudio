@@ -325,6 +325,9 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       TreeLogger moduleBranch = branch.branch(TreeLogger.INFO, moduleName);
       try {
         ModuleDef module = loadModule(moduleBranch, moduleName, false);
+        // Create a hard reference to the module to avoid gc-ing it until we
+        // actually load the module from the browser.
+        startupModules.put(module.getName(), module);
         Util.recursiveDelete(options.getShellBaseWorkDir(module), false);
         validateServletTags(moduleBranch, servletValidator, module, webXml);
         TreeLogger loadLogger = moduleBranch.branch(TreeLogger.DEBUG,
