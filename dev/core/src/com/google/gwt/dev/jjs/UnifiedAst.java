@@ -185,7 +185,7 @@ public class UnifiedAst implements Serializable {
       diskCache.transferToStream(serializedAstToken, stream);
     } else if (initialAst != null) {
       // Serialize into raw bytes.
-      Util.writeObjectToStream(stream, stream);
+      Util.writeObjectToStream(stream, initialAst);
     } else {
       throw new IllegalStateException(
           "No serialized AST was cached and AST was already consumed.");
