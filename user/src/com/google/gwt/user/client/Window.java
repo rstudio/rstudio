@@ -339,6 +339,78 @@ public class Window {
   }
 
   /**
+   * This class provides access to the browser's navigator object. The mimeTypes
+   * and plugins properties are not included.
+   */
+  public static class Navigator {
+    /**
+     * Gets the navigator.appCodeName.
+     *
+     * @return the window's navigator.appCodeName.
+     */
+    public static native String getAppCodeName() /*-{
+      return $wnd.navigator.appCodeName;
+    }-*/;
+
+    /**
+     * Gets the navigator.appName.
+     *
+     * @return the window's navigator.appName.
+     */
+    public static native String getAppName() /*-{
+      return $wnd.navigator.appName;
+    }-*/;
+
+    /**
+     * Gets the navigator.appVersion.
+     *
+     * @return the window's navigator.appVersion.
+     */
+    public static native String getAppVersion() /*-{
+      return $wnd.navigator.appVersion;
+    }-*/;
+
+    /**
+     * Gets the navigator.platform.
+     *
+     * @return the window's navigator.platform.
+     */
+    public static native String getPlatform() /*-{
+      return $wnd.navigator.platform;
+    }-*/;
+
+    /**
+     * Gets the navigator.userAgent.
+     *
+     * @return the window's navigator.userAgent.
+     */
+    public static native String getUserAgent() /*-{
+      return $wnd.navigator.userAgent;
+    }-*/;
+
+    /**
+     * Gets the navigator.cookieEnabled.
+     *
+     * @return the window's navigator.cookieEnabled.
+     */
+    public static native boolean isCookieEnabled() /*-{
+      return $wnd.navigator.cookieEnabled;
+    }-*/;
+
+    /**
+     * Tests whether Java is enabled in the current browser.
+     *
+     * @return the window's navigator.javaEnabled.
+     */
+    public static native boolean isJavaEnabled() /*-{
+      return $wnd.navigator.javaEnabled();
+    }-*/;
+
+    private Navigator() {
+    }
+  }
+
+  /**
    * Fired when the browser window is scrolled.
    */
   public static class ScrollEvent extends GwtEvent<Window.ScrollHandler> {

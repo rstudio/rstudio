@@ -15,12 +15,14 @@
  */
 package com.google.gwt.user.client;
 
+import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Window.Location;
+import com.google.gwt.user.client.Window.Navigator;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 
@@ -29,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Test Case for {@link Cookies}.
+ * Test Case for {@link Window}.
  */
 public class WindowTest extends GWTTestCase {
 
@@ -165,6 +167,23 @@ public class WindowTest extends GWTTestCase {
     assertEquals(map.get("foo").get(0), "bar baz:qux");
   }
 
+  public void testNavigator() {
+    assertNotNull(Navigator.getAppCodeName());
+    assertNotNull(Navigator.getAppName());
+    assertNotNull(Navigator.getAppVersion());
+    assertNotNull(Navigator.getPlatform());
+    assertNotNull(Navigator.getUserAgent());
+    assertTrue(Navigator.isCookieEnabled());
+    // We don't care if Java is enabled, but need to make sure this call does
+    // not throw. The try/catch block keeps the compiled code from being
+    // optimized away.
+    try {
+      Navigator.isJavaEnabled();
+    } catch (JavaScriptException e) {
+      throw e;
+    }
+  }
+
   /**
    * Tests the ability of the Window to get the client size correctly with and
    * without visible scroll bars.
@@ -183,6 +202,12 @@ public class WindowTest extends GWTTestCase {
     assertTrue("Expect positive oldClientHeight. "
         + "This will fail in WebKit if run headless", oldClientHeight > 0);
     assertTrue(oldClientWidth > 0);
+
+    // Firefox hides scrollbar if clientHeight < 49 even when it should show.
+    // If we are in this case, simply return.
+    if (oldClientHeight < 49 && Navigator.getUserAgent().contains("Firefox")) {
+      return;
+    }
 
     // Compare to the dimensions with scroll bars
     Window.enableScrolling(true);
