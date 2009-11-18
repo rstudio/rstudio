@@ -121,6 +121,18 @@ public class FieldSerializerCreator {
 
     return sb.toString();
   }
+  
+  /**
+   * Returns the depth of the given class in the class hierarchy 
+   * (where the depth of java.lang.Object == 0).
+   */
+  private int getDepth(JClassType clazz) {
+    int depth = 0;
+    while ((clazz = clazz.getSuperclass()) != null) {
+      depth++;
+    }
+    return depth;
+  }
 
   private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx) {
     String qualifiedSerializerName = SerializationUtils.getFieldSerializerName(
@@ -272,7 +284,9 @@ public class FieldSerializerCreator {
      */
     if (serializableClass.isEnhanced()) {
       sourceWriter.println(WEAK_MAPPING_CLASS_NAME + ".set(instance, "
-          + "\"server-enhanced-data\", streamReader.readString());");
+          + "\"server-enhanced-data-"
+          + getDepth(serializableClass)
+          + "\", streamReader.readString());");
     }
     
     for (JField serializableField : serializableFields) {
@@ -320,7 +334,9 @@ public class FieldSerializerCreator {
     
     if (serializableClass.isEnhanced()) {
       sourceWriter.println("streamWriter.writeString((String) "
-          + WEAK_MAPPING_CLASS_NAME + ".get(instance, \"server-enhanced-data\"));");
+          + WEAK_MAPPING_CLASS_NAME
+          + ".get(instance, \"server-enhanced-data-"
+          + getDepth(serializableClass) + "\"));");
     }
     
     for (JField serializableField : serializableFields) {
