@@ -104,20 +104,18 @@ public class RemoteUI extends DevModeUI implements
     synchronized (modulesLock) {
       modules.add(handle);
     }
-    // Copied from SwingUI.loadModule
-    TreeLogger branch = moduleLogger.branch(TreeLogger.INFO, "Loading module "
-        + moduleName);
+    
     if (url != null) {
-      branch.log(TreeLogger.INFO, "Top URL: " + url);
+      moduleLogger.log(TreeLogger.SPAM, "Top URL: " + url);
     }
 
-    branch.log(TreeLogger.INFO, "User agent: " + userAgent);
-    branch.log(TreeLogger.TRACE, "Remote socket: " + remoteSocket);
+    moduleLogger.log(TreeLogger.SPAM, "User agent: " + userAgent);
+    moduleLogger.log(TreeLogger.SPAM, "Remote socket: " + remoteSocket);
     if (tabKey != null) {
-      branch.log(TreeLogger.DEBUG, "Tab key: " + tabKey);
+      moduleLogger.log(TreeLogger.SPAM, "Tab key: " + tabKey);
     }
     if (sessionKey != null) {
-      branch.log(TreeLogger.DEBUG, "Session key: " + sessionKey);
+      moduleLogger.log(TreeLogger.SPAM, "Session key: " + sessionKey);
     }
 
     return handle;

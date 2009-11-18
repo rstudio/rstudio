@@ -145,7 +145,7 @@ public class JettyLauncher extends ServletContainerLauncher {
     }
 
     public void info(String msg, Object arg0, Object arg1) {
-      logger.log(TreeLogger.INFO, format(msg, arg0, arg1));
+      logger.log(TreeLogger.TRACE, format(msg, arg0, arg1));
     }
 
     public boolean isDebugEnabled() {
@@ -471,7 +471,7 @@ public class JettyLauncher extends ServletContainerLauncher {
   @Override
   public ServletContainer start(TreeLogger logger, int port, File appRootDir)
       throws Exception {
-    TreeLogger branch = logger.branch(TreeLogger.INFO,
+    TreeLogger branch = logger.branch(TreeLogger.TRACE,
         "Starting Jetty on port " + port, null);
 
     checkStartParams(branch, port, appRootDir);

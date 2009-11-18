@@ -62,15 +62,15 @@ public class BrowserListener {
       listenSocket.setReuseAddress(true);
       listenSocket.bind(new InetSocketAddress(port));
 
-      logger.log(TreeLogger.INFO, "Listening at: "
-          + listenSocket.getLocalSocketAddress(), null);
+      logger.log(TreeLogger.TRACE, "Started code server on port "
+          + listenSocket.getLocalPort(), null);
       listenThread = new Thread() {
         @Override
         public void run() {
           while (true) {
             try {
               Socket sock = listenSocket.accept();
-              TreeLogger branch = logger.branch(TreeLogger.INFO,
+              TreeLogger branch = logger.branch(TreeLogger.TRACE,
                   "Connection received from "
                       + sock.getInetAddress().getCanonicalHostName() + ":"
                       + sock.getPort());
