@@ -703,7 +703,7 @@ abstract class DevModeBase implements DoneCallback {
     try {
       for (String prenormalized : options.getStartupURLs()) {
         startupURL = normalizeURL(prenormalized, getPort(), getHost());
-        logger.log(TreeLogger.INFO, "Starting URL: " + startupURL, null);
+        logger.log(TreeLogger.TRACE, "Starting URL: " + startupURL, null);
         launchURL(startupURL);
       }
     } catch (UnableToCompleteException e) {
@@ -764,7 +764,7 @@ abstract class DevModeBase implements DoneCallback {
    * subclasses that need to change the behavior of ShellModuleSpaceHost.
    * 
    * @param logger TreeLogger to use
-   * @param typeOracle
+   * @param compilationState
    * @param moduleDef
    * @return ShellModuleSpaceHost instance
    */
@@ -881,9 +881,6 @@ abstract class DevModeBase implements DoneCallback {
       getTopLogger().log(TreeLogger.ERROR, "Invalid URL " + url, e);
       throw new UnableToCompleteException();
     }
-    System.err.println("Using a browser with the GWT Developer Plugin, please browse to");
-    System.err.println("the following URL:");
-    System.err.println("  " + url);
     final URL helpInfoUrl = parsedUrl;
     getTopLogger().log(TreeLogger.INFO,
         "Waiting for browser connection to " + url, null, new HelpInfo() {

@@ -344,7 +344,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       ui.setCallback(RestartServerEvent.getType(), this);
       // TODO(jat): find a safe way to get an icon for the servlet container
       TreeLogger serverLogger = ui.getWebServerLogger(getWebServerName(), null);
-      serverLogger.log(TreeLogger.INFO, "Starting HTTP on port " + getPort(),
+      serverLogger.log(TreeLogger.TRACE, "Starting HTTP on port " + getPort(),
           null);
       server = options.getServletContainerLauncher().start(serverLogger,
           getPort(), options.getWarDir());
@@ -375,6 +375,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     return options.getServletContainerLauncher().getName();
   }
 
+  @Override
   protected synchronized void produceOutput(TreeLogger logger,
       StandardLinkerContext linkerStack, ArtifactSet artifacts, ModuleDef module)
       throws UnableToCompleteException {
