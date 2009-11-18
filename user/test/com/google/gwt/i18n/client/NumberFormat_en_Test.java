@@ -357,4 +357,62 @@ public class NumberFormat_en_Test extends GWTTestCase {
     str = NumberFormat.getFormat("#").format(0);
     assertEquals("0", str);
   }
+  
+  public void testRounding() {
+    String str;
+    
+    str = NumberFormat.getFormat("#0.##").format(0.555);
+    assertEquals("0.56", str);
+    
+    str = NumberFormat.getFormat("#.##").format(30.555);
+    assertEquals("30.56", str);
+    
+    str = NumberFormat.getFormat("#.00").format(0.997);
+    assertEquals("1.00", str);
+    
+    str = NumberFormat.getFormat("#.00").format(-0.997);
+    assertEquals("-1.00", str);
+    
+    str = NumberFormat.getFormat("#.00").format(27.997);
+    assertEquals("28.00", str);
+    
+    str = NumberFormat.getFormat("#.00").format(-27.997);
+    assertEquals("-28.00", str);
+    
+    str = NumberFormat.getFormat("#0.00000").format(1.23456789E-03);
+    assertEquals("0.00123", str);
+    
+    str = NumberFormat.getFormat("#0.0000000").format(1.23456789E-03);
+    assertEquals("0.0012346", str);
+    
+    str = NumberFormat.getFormat("#0.0000").format(1.2E-03);
+    assertEquals("0.0012", str);
+    
+    str = NumberFormat.getFormat("#0.000").format(1.2E-03);
+    assertEquals("0.001", str);
+    
+    str = NumberFormat.getFormat("#0.00").format(1.2E-03);
+    assertEquals("0.00", str);
+    
+    str = NumberFormat.getFormat("#0.0").format(1.2E-03);
+    assertEquals("0.0", str);
+    
+    str = NumberFormat.getFormat("#0.00").format(11.2E-03);
+    assertEquals("0.01", str);
+    
+    str = NumberFormat.getFormat("#0.00").format(111.2E-03);
+    assertEquals("0.11", str);
+    
+    str = NumberFormat.getFormat("#0.00").format(1111.2E-03);
+    assertEquals("1.11", str);
+    
+    str = NumberFormat.getFormat("#0.00000").format(1.23456789E-05);
+    assertEquals("0.00001", str);
+    
+    str = NumberFormat.getFormat("#0.0000000").format(1.23456789E-05);
+    assertEquals("0.0000123", str);
+    
+    str = NumberFormat.getFormat("#0.0000000").format(1.23756789E-05);
+    assertEquals("0.0000124", str);
+  }
 }

@@ -580,6 +580,10 @@ public class NumberFormat {
     return "\u00A0";
   }
 
+  private static native String toFixed(double d, int digits) /*-{
+    return d.toFixed(digits);
+  }-*/;
+
   // The currency code.
   private final String currencyCode;
 
@@ -1308,15 +1312,38 @@ public class NumberFormat {
    */
   private void subformatFixed(double number, StringBuffer result,
       int minIntDigits) {
-    // Round the number.
     double power = Math.pow(10, maximumFractionDigits);
-    double intValue = Math.floor(number);
-    // we don't want to use Math.round, 'cause that returns a long which JS
-    // then has to emulate... Math.floor(x + 0.5d) is defined to be equivalent
-    double fracValue = Math.floor((number - intValue) * power + 0.5d);
-    if (fracValue >= power) {
-      intValue += 1.0;
-      fracValue -= power;
+    // Use 3 extra digits to allow us to do our own rounding since
+    // Java rounds up on .5 whereas some browsers might use 'round to even'
+    // or other rules.
+    
+    // There are cases where more digits would be required to get
+    // guaranteed results, but this at least makes such cases rarer.
+    String fixedString = toFixed(number, maximumFractionDigits + 3);
+
+    double intValue = 0, fracValue = 0;
+    int exponentIndex = fixedString.indexOf('e');
+    if (exponentIndex != -1) {
+      // Large numbers may be returned in exponential notation: such numbers
+      // are integers anyway
+      intValue = Math.floor(number);
+    } else {
+      int decimalIndex = fixedString.indexOf('.');
+      int len = fixedString.length();
+      if (decimalIndex == -1) {
+        decimalIndex = len;
+      }
+      if (decimalIndex > 0) {
+        intValue = Double.parseDouble(fixedString.substring(0, decimalIndex));
+      }
+      if (decimalIndex < len - 1) {
+        fracValue = Double.parseDouble(fixedString.substring(decimalIndex + 1));
+        fracValue = (((int) fracValue) + 500) / 1000;
+        if (fracValue >= power) {
+          fracValue -= power;
+          intValue++;
+        }
+      }
     }
 
     boolean fractionPresent = (minimumFractionDigits > 0) || (fracValue > 0);
