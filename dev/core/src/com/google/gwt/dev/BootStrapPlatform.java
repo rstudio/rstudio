@@ -37,6 +37,9 @@ public class BootStrapPlatform {
    */
   public static void initGui() {
     if (isMac() && !GraphicsEnvironment.isHeadless()) {
+      // This has to be set before any UI components are initialized
+      System.setProperty("com.apple.mrj.application.apple.menu.about.name",
+          "Development Mode");
       GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
       Toolkit.getDefaultToolkit();
     }

@@ -224,6 +224,8 @@ public class SwingUI extends DevModeUI {
     setIconImages(topLogger, gwtIcon48, gwtIcon32, gwtIcon64, gwtIcon128,
         gwtIcon16);
     frame.setVisible(true);
+
+    maybeInitializeOsXApplication();
   }
 
   @Override
@@ -315,6 +317,52 @@ public class SwingUI extends DevModeUI {
           }, moduleName);
     }
     return moduleTabPanel;
+  }
+
+  /**
+   * This method contains code that will call certain Apple extensions to make
+   * the DevMode app integrate into the system UI a bit better. These methods
+   * are called reflectively so that we don't have to build gwt-dev against a
+   * no-op stub library.
+   */
+  private void maybeInitializeOsXApplication() {
+    Throwable ex;
+    try {
+      Class<?> applicationClass = Class.forName("com.apple.eawt.Application");
+
+      topLogger.log(TreeLogger.SPAM, "Got Application class, on OS X");
+
+      Object application = applicationClass.getMethod("getApplication").invoke(
+          null);
+      assert application != null : "application";
+
+      // Remove the about menu entry
+      applicationClass.getMethod("removeAboutMenuItem").invoke(application);
+
+      // Remove the preferences menu entry
+      applicationClass.getMethod("removePreferencesMenuItem").invoke(
+          application);
+
+      // Make the Dock icon pretty
+      applicationClass.getMethod("setDockIconImage", Image.class).invoke(
+          application, loadImageIcon("icon128.png").getImage());
+
+      return;
+    } catch (ClassNotFoundException e) {
+      // Nothing to do here, this is expected on non-Apple JVMs.
+      return;
+    } catch (RuntimeException e) {
+      ex = e;
+    } catch (IllegalAccessException e) {
+      ex = e;
+    } catch (InvocationTargetException e) {
+      ex = e;
+    } catch (NoSuchMethodException e) {
+      ex = e;
+    }
+
+    topLogger.log(TreeLogger.WARN, "Unable to initialize some OS X UI support",
+        ex);
   }
 
   /**
