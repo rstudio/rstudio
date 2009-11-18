@@ -228,10 +228,6 @@ public final class WebAppCreator {
           + About.getGwtVersionNum() + "/distro-source/core/src/gwt-module.dtd\">";
     }
 
-    // Figure out what platform we're on
-    boolean isMacOsX = gwtDevPath.substring(gwtDevPath.lastIndexOf('/') + 1).indexOf(
-        "mac") >= 0;
-
     // Compute module package and name.
     int pos = moduleName.lastIndexOf('.');
     String modulePackageName = moduleName.substring(0, pos);
@@ -262,9 +258,6 @@ public final class WebAppCreator {
     replacements.put("@shellClass", DevMode.class.getName());
     replacements.put("@compileClass", Compiler.class.getName());
     replacements.put("@startupUrl", moduleShortName + ".html");
-    replacements.put("@antVmargs", isMacOsX
-        ? "\n<jvmarg value=\"-XstartOnFirstThread\"/>" : "");
-    replacements.put("@vmargs", isMacOsX ? "&#10;-XstartOnFirstThread" : "");
     replacements.put("@renameTo", moduleShortName.toLowerCase());
 
     String antEclipseRule = "";
