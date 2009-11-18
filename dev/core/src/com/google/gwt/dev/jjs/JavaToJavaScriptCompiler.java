@@ -245,10 +245,10 @@ public class JavaToJavaScriptCompiler {
       // (5) "Normalize" the high-level Java tree into a lower-level tree more
       // suited for JavaScript code generation. Don't go reordering these
       // willy-nilly because there are some subtle interdependencies.
-      LongCastNormalizer.exec(jprogram);
       JsoDevirtualizer.exec(jprogram);
       CatchBlockNormalizer.exec(jprogram);
       PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
+      LongCastNormalizer.exec(jprogram);
       LongEmulationNormalizer.exec(jprogram);
       CastNormalizer.exec(jprogram, options.isCastCheckingDisabled());
       ArrayNormalizer.exec(jprogram);
