@@ -130,10 +130,10 @@ public class JUnitShell extends GWTShell {
       });
 
       // Override port to set auto by default.
-      registerHandler(new ArgHandlerPortHosted(options) {
+      registerHandler(new ArgHandlerCodeServerPort(options) {
         @Override
         public String[] getDefaultArgs() {
-          return new String[] {"-portHosted", "auto"};
+          return new String[] {this.getTag(), "auto"};
         }
       });
 

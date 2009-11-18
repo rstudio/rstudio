@@ -258,27 +258,31 @@ abstract class DevModeBase implements DoneCallback {
   /**
    * Handles the -portHosted command line flag.
    */
-  protected static class ArgHandlerPortHosted extends ArgHandlerString {
+  protected static class ArgHandlerCodeServerPort extends ArgHandlerString {
 
-    private final OptionPortHosted options;
+    private static final String CODE_SERVER_PORT_TAG = "-codeServerPort";
+    private static final String DEFAULT_PORT = "9997";
+    
+    private final OptionCodeServerPort options;
 
-    public ArgHandlerPortHosted(OptionPortHosted options) {
+    public ArgHandlerCodeServerPort(OptionCodeServerPort options) {
       this.options = options;
     }
 
     @Override
     public String[] getDefaultArgs() {
-      return new String[] {"-portHosted", "9997"};
+      return new String[] {CODE_SERVER_PORT_TAG, DEFAULT_PORT};
     }
 
     @Override
     public String getPurpose() {
-      return "Listens on the specified port for hosted mode connections";
+      return "Specifies the TCP port for the code server (defaults to " + 
+        DEFAULT_PORT + ")";
     }
 
     @Override
     public String getTag() {
-      return "-portHosted";
+      return CODE_SERVER_PORT_TAG;
     }
 
     @Override
@@ -289,10 +293,10 @@ abstract class DevModeBase implements DoneCallback {
     @Override
     public boolean setString(String value) {
       if (value.equals("auto")) {
-        options.setPortHosted(getFreeSocketPort());
+        options.setCodeServerPort(getFreeSocketPort());
       } else {
         try {
-          options.setPortHosted(Integer.parseInt(value));
+          options.setCodeServerPort(Integer.parseInt(value));
         } catch (NumberFormatException e) {
           System.err.println("A port must be an integer or \"auto\"");
           return false;
@@ -386,7 +390,7 @@ abstract class DevModeBase implements DoneCallback {
 
   protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir,
       OptionLogLevel, OptionGenDir, OptionNoServer, OptionPort,
-      OptionPortHosted, OptionStartupURLs, OptionRemoteUI {
+      OptionCodeServerPort, OptionStartupURLs, OptionRemoteUI {
 
     /**
      * The base shell work directory.
@@ -440,7 +444,7 @@ abstract class DevModeBase implements DoneCallback {
       return port;
     }
 
-    public int getPortHosted() {
+    public int getCodeServerPort() {
       return portHosted;
     }
 
@@ -480,7 +484,7 @@ abstract class DevModeBase implements DoneCallback {
       this.port = port;
     }
 
-    public void setPortHosted(int port) {
+    public void setCodeServerPort(int port) {
       portHosted = port;
     }
 
@@ -531,10 +535,10 @@ abstract class DevModeBase implements DoneCallback {
     void setPort(int port);
   }
 
-  protected interface OptionPortHosted {
-    int getPortHosted();
+  protected interface OptionCodeServerPort {
+    int getCodeServerPort();
 
-    void setPortHosted(int portHosted);
+    void setCodeServerPort(int codeServerPort);
   }
 
   /**
@@ -576,7 +580,7 @@ abstract class DevModeBase implements DoneCallback {
       registerHandler(new ArgHandlerLogDir(options));
       registerHandler(new ArgHandlerLogLevel(options));
       registerHandler(new ArgHandlerGenDir(options));
-      registerHandler(new ArgHandlerPortHosted(options));
+      registerHandler(new ArgHandlerCodeServerPort(options));
       registerHandler(new ArgHandlerRemoteUI(options));
     }
   }
@@ -832,7 +836,7 @@ abstract class DevModeBase implements DoneCallback {
 
   protected void ensureCodeServerListener() {
     if (listener == null) {
-      codeServerPort = options.getPortHosted();
+      codeServerPort = options.getCodeServerPort();
       listener = new BrowserListener(getTopLogger(), codeServerPort,
           new OophmSessionHandler(browserHost));
       listener.start();
@@ -1010,7 +1014,7 @@ abstract class DevModeBase implements DoneCallback {
       if (options.useRemoteUI()) {
         return new RemoteUI(options.getRemoteUIHost(),
             options.getRemoteUIHostPort(), options.getClientId(),
-            options.getPort(), options.getPortHosted());
+            options.getPort(), options.getCodeServerPort());
       }
     }
 
