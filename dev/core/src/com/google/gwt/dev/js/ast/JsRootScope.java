@@ -74,34 +74,86 @@ public final class JsRootScope extends JsScope {
         // B.2 Additional Properties (non-normative)
         "escape", "unescape",
 
-        // Window props (http://www.w3schools.com/HTMLDOM/dom_obj_window.asp)
-        "closed", "defaultStatus", "document", "frames", "history", "length",
-        "location", "name", "opener", "outerHeight", "outerWidth",
-        "pageXOffset", "pageYOffset", "parent", "personalbar", "scrollbars",
-        "self", "status", "statusbar", "toolbar", "top",
+        // Window props (https://developer.mozilla.org/en/DOM/window)
+        "applicationCache", "closed", "Components", "content", "controllers",
+        "crypto", "defaultStatus", "dialogArguments", "directories",
+        "document", "frameElement", "frames", "fullScreen", "globalStorage",
+        "history", "innerHeight", "innerWidth", "length",
+        "location", "locationbar", "localStorage", "menubar",
+        "mozInnerScreenX", "mozInnerScreenY", "mozScreenPixelsPerCssPixel",
+        "name", "navigator", "opener", "outerHeight", "outerWidth",
+        "pageXOffset", "pageYOffset", "parent", "personalbar", "pkcs11",
+        "returnValue", "screen", "scrollbars", "scrollMaxX", "scrollMaxY",
+        "self", "sessionStorage", "sidebar", "status", "statusbar", "toolbar",
+        "top", "window",
 
-        // Window methods (http://www.w3schools.com/HTMLDOM/dom_obj_window.asp)
-        "alert", "blur", "clearInterval", "clearTimeout", "close", "confirm",
-        "createPopup", "focus", "moveBy", "moveTo", "open", "print", "prompt",
-        "resizeBy", "resizeTo", "scrollBy", "scrollTo", "setInterval",
-        "setTimeout",
+        // Window methods (https://developer.mozilla.org/en/DOM/window)
+        "alert", "addEventListener", "atob", "back", "blur", "btoa",
+        "captureEvents", "clearInterval", "clearTimeout", "close", "confirm",
+        "disableExternalCapture", "dispatchEvent", "dump",
+        "enableExternalCapture", "escape", "find", "focus", "forward",
+        "GeckoActiveXObject", "getAttention", "getAttentionWithCycleCount",
+        "getComputedStyle", "getSelection", "home", "maximize", "minimize",
+        "moveBy", "moveTo", "open", "openDialog", "postMessage", "print",
+        "prompt", "QueryInterface", "releaseEvents", "removeEventListener",
+        "resizeBy", "resizeTo", "restore", "routeEvent", "scroll", "scrollBy",
+        "scrollByLines", "scrollByPages", "scrollTo", "setInterval",
+        "setResizeable", "setTimeout", "showModalDialog", "sizeToContent",
+        "stop", "uuescape", "updateCommands", "XPCNativeWrapper",
+        "XPCSafeJSOjbectWrapper",
 
-        // IE event methods
+        // Mozilla Window event handlers, same cite
+        "onabort", "onbeforeunload", "onchange", "onclick", "onclose",
+        "oncontextmenu", "ondragdrop", "onerror", "onfocus", "onhashchange",
+        "onkeydown", "onkeypress", "onkeyup", "onload", "onmousedown",
+        "onmousemove", "onmouseout", "onmouseover", "onmouseup",
+        "onmozorientation", "onpaint", "onreset", "onresize", "onscroll",
+        "onselect", "onsubmit", "onunload",
+        
+        // extra window methods
+        "uneval",
+        
+        // keywords https://developer.mozilla.org/en/New_in_JavaScript_1.7,
+        // https://developer.mozilla.org/en/New_in_JavaScript_1.8.1
+        "getPrototypeOf", "let", 
+        
+        // "future reserved words"
+        "abstract", "int", "short", "boolean", "interface", "static", "byte",
+        "long", "char", "final", "native", "synchronized", "float", "package",
+        "throws", "goto", "private", "transient", "implements", "protected",
+        "volatile", "double", "public",
+        
+        // IE methods
         // (http://msdn.microsoft.com/en-us/library/ms535873(VS.85).aspx#)
+        "attachEvent", "clientInformation", "clipboardData", "createPopup",
+        "dialogHeight", "dialogLeft", "dialogTop", "dialogWidth",
         "onafterprint", "onbeforedeactivate", "onbeforeprint",
-        "onbeforeunload", "onblur", "oncontrolselect", "ondeactivate",
-        "onerror", "onfocus", "onhashchange  ", "onhelp", "onload", "onresize",
-        "onresizeend", "onscroll",
-        "onunload",
+        "oncontrolselect", "ondeactivate", "onhelp", "onresizeend", 
 
         // Common browser-defined identifiers not defined in ECMAScript
-        "window", "dispatchEvent", "event", "external", "navigator", "screen",
-        "Debug", "Enumerator", "Global", "Image", "ActiveXObject", "VBArray",
-        "Components",
+        "event", "external", "Debug", "Enumerator", "Global", "Image",
+        "ActiveXObject", "VBArray", "Components",
 
         // Functions commonly defined on Object
         "toString", "getClass", "constructor", "prototype",
 
+        // Client-side JavaScript identifiers, which are needed for linkers
+        // that don't ensure GWT's window != $wnd, document != $doc, etc.
+        // Taken from the Rhino book, pg 715
+        "Anchor", "Applet", "Attr", "Canvas", "CanvasGradient", 
+        "CanvasPattern", "CanvasRenderingContext2D", "CDATASection",
+        "CharacterData", "Comment", "CSS2Properties", "CSSRule",
+        "CSSStyleSheet", "Document", "DocumentFragment", "DocumentType",
+        "DOMException", "DOMImplementation", "DOMParser", "Element", "Event",
+        "ExternalInterface", "FlashPlayer", "Form", "Frame", "History",
+        "HTMLCollection", "HTMLDocument", "HTMLElement", "IFrame", "Image",
+        "Input", "JSObject", "KeyEvent", "Link", "Location", "MimeType",
+        "MouseEvent", "Navigator", "Node", "NodeList", "Option", "Plugin",
+        "ProcessingInstruction", "Range", "RangeException", "Screen", "Select",
+        "Table", "TableCell", "TableRow", "TableSelection", "Text", "TextArea",
+        "UIEvent", "Window", "XMLHttpRequest", "XMLSerializer",
+        "XPathException", "XPathResult", "XSLTProcessor",
+        
         /*
          * These keywords trigger the loading of the java-plugin. For the
          * next-generation plugin, this results in starting a new Java process.
