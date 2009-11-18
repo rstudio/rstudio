@@ -48,11 +48,17 @@ public class SwingUI extends DevModeUI {
   /**
    * Module handle for Swing UI.
    */
-  public class SwingModuleHandle implements ModuleHandle {
+  protected class SwingModuleHandle implements ModuleHandle {
 
     private final TreeLogger logger;
     private final ModulePanel tab;
 
+    /**
+     * Create an immutable module handle.
+     * 
+     * @param logger logger to use for this module
+     * @param tab the module panel associated with this instance
+     */
     public SwingModuleHandle(TreeLogger logger, ModulePanel tab) {
       this.logger = logger;
       this.tab = tab;
@@ -62,6 +68,9 @@ public class SwingUI extends DevModeUI {
       return logger;
     }
     
+    /**
+     * @return the ModulePanel associated with this module instance.
+     */
     public ModulePanel getTab() {
       return tab;
     }
@@ -70,7 +79,7 @@ public class SwingUI extends DevModeUI {
   /**
    * Interface to group activities related to adding and deleting tabs.
    */
-  public interface TabPanelCollection {
+  protected interface TabPanelCollection {
     
     /**
      * Add a new tab containing a ModuleTabPanel.
