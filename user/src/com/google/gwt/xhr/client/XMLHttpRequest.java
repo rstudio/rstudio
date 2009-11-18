@@ -76,6 +76,13 @@ public class XMLHttpRequest extends JavaScriptObject {
   public static final int DONE = 4;
 
   /**
+   * This is used to clear the onReadyStateChange handler. It is used by
+   * {@link #clearOnReadyStateChange()}.
+   */
+  @SuppressWarnings("unused")
+  private static final JavaScriptObject NULL_FUNCTION = JavaScriptObject.createFunction();
+
+  /**
    * Creates an XMLHttpRequest object.
    * 
    * @return the created object
@@ -113,7 +120,7 @@ public class XMLHttpRequest extends JavaScriptObject {
   public final native void clearOnReadyStateChange() /*-{
     var self = this;
     $wnd.setTimeout(function() {
-      self.onreadystatechange = function(){};
+      self.onreadystatechange = @com.google.gwt.xhr.client.XMLHttpRequest::NULL_FUNCTION;
     }, 0);
   }-*/;
 
