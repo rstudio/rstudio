@@ -113,7 +113,9 @@ public class XMLHttpRequest extends JavaScriptObject {
   public final native void clearOnReadyStateChange() /*-{
     var self = this;
     $wnd.setTimeout(function() {
-      self.onreadystatechange = function(){};
+      // Using a function literal here leaks memory on ie6
+      // Using the same function object kills HtmlUnit
+      self.onreadystatechange = new Function();
     }, 0);
   }-*/;
 
