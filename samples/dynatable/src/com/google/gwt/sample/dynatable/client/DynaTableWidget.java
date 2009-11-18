@@ -176,7 +176,7 @@ public class DynaTableWidget extends Composite {
       + "successfully return data, the server component must be available.</p>"
       + "<p>If you are running this demo from compiled code, the server "
       + "component may not be available to respond to the RPC requests from "
-      + "DynaTable.  Try running DynaTable in hosted mode to see the demo "
+      + "DynaTable.  Try running DynaTable in development mode to see the demo "
       + "in action.</p> "
       + "<p>Click on the Remote Procedure Call link above for more information "
       + "on GWT's RPC infrastructure.";
