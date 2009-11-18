@@ -40,7 +40,7 @@ import java.util.Map;
 /**
  * Example file.
  */
-@ShowcaseRaw({"ExampleConstants.java", "ExampleConstants.properties"})
+@ShowcaseRaw( {"ExampleConstants.java", "ExampleConstants.properties"})
 public class CwConstantsExample extends ContentWidget {
   /**
    * The constants used in this Content Widget.
@@ -195,7 +195,7 @@ public class CwConstantsExample extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwConstantsExample.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -205,6 +205,11 @@ public class CwConstantsExample extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchInternationalization();
   }
 
   /**

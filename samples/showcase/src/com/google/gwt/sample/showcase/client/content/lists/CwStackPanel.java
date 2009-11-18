@@ -42,7 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle(value = {
+@ShowcaseStyle( {
     ".gwt-DecoratedStackPanel", "html>body .gwt-DecoratedStackPanel",
     "* html .gwt-DecoratedStackPanel", ".cw-StackPanelHeader"})
 public class CwStackPanel extends ContentWidget {
@@ -171,7 +171,7 @@ public class CwStackPanel extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwStackPanel.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -181,6 +181,11 @@ public class CwStackPanel extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchListsAndMenus();
   }
 
   private void addItem(TreeItem root, ImageResource image, String label) {

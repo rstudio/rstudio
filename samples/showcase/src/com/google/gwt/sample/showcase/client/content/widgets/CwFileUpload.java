@@ -120,7 +120,7 @@ public class CwFileUpload extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwFileUpload.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -130,5 +130,10 @@ public class CwFileUpload extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchWidgets();
   }
 }

@@ -73,12 +73,6 @@ public class CwPluralFormsExample extends ContentWidget {
   private CwConstants constants;
 
   /**
-   * The plural messages used in this example.
-   */
-  @ShowcaseData
-  private PluralMessages pluralMessages = null;
-
-  /**
    * The {@link Label} used to display the message.
    */
   @ShowcaseData
@@ -94,6 +88,12 @@ public class CwPluralFormsExample extends ContentWidget {
    * The widget used to display {@link PluralMessages} java source.
    */
   private HTML javaWidget = null;
+
+  /**
+   * The plural messages used in this example.
+   */
+  @ShowcaseData
+  private PluralMessages pluralMessages = null;
 
   /**
    * Indicates whether or not we have loaded the {@link ErrorMessages}
@@ -213,7 +213,7 @@ public class CwPluralFormsExample extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwPluralFormsExample.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -223,6 +223,11 @@ public class CwPluralFormsExample extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchInternationalization();
   }
 
   /**
@@ -250,5 +255,4 @@ public class CwPluralFormsExample extends ContentWidget {
       // Ignore.
     }
   }
-
 }

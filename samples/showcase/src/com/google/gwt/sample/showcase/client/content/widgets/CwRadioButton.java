@@ -121,7 +121,7 @@ public class CwRadioButton extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwRadioButton.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -131,5 +131,10 @@ public class CwRadioButton extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchWidgets();
   }
 }

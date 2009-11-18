@@ -32,7 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({
+@ShowcaseStyle( {
     ".gwt-MenuBar", ".gwt-MenuBarPopup", "html>body .gwt-MenuBarPopup",
     "* html .gwt-MenuBarPopup"})
 public class CwMenuBar extends ContentWidget {
@@ -168,7 +168,7 @@ public class CwMenuBar extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwMenuBar.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -178,5 +178,10 @@ public class CwMenuBar extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchListsAndMenus();
   }
 }

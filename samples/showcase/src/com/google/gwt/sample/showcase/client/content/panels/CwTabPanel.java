@@ -33,7 +33,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({
+@ShowcaseStyle( {
     ".gwt-DecoratedTabBar", "html>body .gwt-DecoratedTabBar",
     "* html .gwt-DecoratedTabBar", ".gwt-TabPanel"})
 public class CwTabPanel extends ContentWidget {
@@ -113,7 +113,7 @@ public class CwTabPanel extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwTabPanel.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -123,5 +123,10 @@ public class CwTabPanel extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchPanels();
   }
 }

@@ -21,6 +21,8 @@ import com.google.gwt.core.client.impl.AsyncFragmentLoader.Logger;
 
 import junit.framework.TestCase;
 
+import static java.util.Arrays.asList;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -28,7 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-/** Tests the fragment loader. */
+/**
+ * Tests that the fragment loader requests the right fragments and logs the
+ * correct lightweight metrics under a variety of request patterns.
+ */
 public class AsyncFragmentLoaderTest extends TestCase {
   private static class MockErrorHandler implements LoadErrorHandler {
     private boolean wasCalled = false;
@@ -179,7 +184,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
   public void testDownloadFailures() {
     MockLoadStrategy reqs = new MockLoadStrategy();
     MockProgressLogger progress = new MockProgressLogger();
-    int numEntries = 6;
+    int numEntries = 10;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
         1, 2, 3}, reqs, progress);
 
@@ -237,7 +242,6 @@ public class AsyncFragmentLoaderTest extends TestCase {
     loadFailed(reqs, numEntries); // leftovers fails!
     assertFalse(error3try2.getWasCalled()); // 3 should have succeeded
     assertTrue(error5try1.getWasCalled()); // 5 failed
-    reqs.errorHandlers.get(numEntries);
 
     // now try 5 again, and have everything succeed
     MockErrorHandler error5try2 = new MockErrorHandler();
@@ -255,6 +259,110 @@ public class AsyncFragmentLoaderTest extends TestCase {
     assertFalse(error5try2.getWasCalled());
     progress.assertEvent("download5", END, 5);
 
+    // try 6 but have it fail
+    MockErrorHandler error6try1 = new MockErrorHandler();
+    loader.inject(6, error6try1);
+    reqs.assertFragmentsRequested(6);
+    progress.assertEvent("download6", BEGIN, 6);
+
+    loadFailed(reqs, 6);
+    assertTrue(error6try1.getWasCalled());
+
+    // try 7 and have it succeed
+    loader.inject(7, NULL_ERROR_HANDLER);
+    reqs.assertFragmentsRequested(7);
+    progress.assertEvent("download7", BEGIN, 7);
+
+    loader.fragmentHasLoaded(7);
+    reqs.assertFragmentsRequested();
+    progress.assertEvent("download7", END, 7);
+
+    // try 6 again and have it succeed this time
+    MockErrorHandler error6try2 = new MockErrorHandler();
+    loader.inject(6, error6try2);
+    reqs.assertFragmentsRequested(6);
+    progress.assertEvent("download6", BEGIN, 6);
+
+    loader.fragmentHasLoaded(6);
+    reqs.assertFragmentsRequested();
+    assertFalse(error6try2.getWasCalled());
+    progress.assertEvent("download6", END, 6);
+
+    progress.assertNoEvents();
+  }
+
+  public void testExclusivesLoadSequentially1() {
+    MockLoadStrategy reqs = new MockLoadStrategy();
+    MockProgressLogger progress = new MockProgressLogger();
+    int numEntries = 6;
+    AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries,
+        new int[] {}, reqs, progress);
+
+    // Load fragment 1
+    loader.inject(1, NULL_ERROR_HANDLER);
+    reqs.assertFragmentsRequested(numEntries); // leftovers
+    progress.assertEvent("leftoversDownload", BEGIN, numEntries);
+    loader.fragmentHasLoaded(numEntries);
+    reqs.assertFragmentsRequested(1);
+    progress.assertEvent("leftoversDownload", END, numEntries);
+    progress.assertEvent("download1", BEGIN, 1);
+    loader.fragmentHasLoaded(1);
+    progress.assertEvent("download1", END, 1);
+    progress.assertNoEvents();
+
+    // Request 2 and 3 immediately
+    loader.inject(2, NULL_ERROR_HANDLER);
+    reqs.assertFragmentsRequested(2);
+    progress.assertEvent("download2", BEGIN, 2);
+    loader.inject(3, NULL_ERROR_HANDLER);
+    progress.assertNoEvents(); // waiting on 2 to finish
+
+    // 2 loads, 3 should be requested
+    loader.fragmentHasLoaded(2);
+    reqs.assertFragmentsRequested(3);
+    progress.assertEvent("download2", END, 2);
+    progress.assertEvent("download3", BEGIN, 3);
+    progress.assertNoEvents();
+
+    // 3 loads
+    loader.fragmentHasLoaded(3);
+    progress.assertEvent("download3", END, 3);
+    progress.assertNoEvents();
+  }
+
+  public void testExclusivesLoadSequentially2() {
+    MockLoadStrategy reqs = new MockLoadStrategy();
+    MockProgressLogger progress = new MockProgressLogger();
+    int numEntries = 6;
+    AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries,
+        new int[] {}, reqs, progress);
+
+    // Request 1
+    loader.inject(1, NULL_ERROR_HANDLER);
+    reqs.assertFragmentsRequested(numEntries);
+    progress.assertEvent("leftoversDownload", BEGIN, numEntries);
+
+    // Request 2, resulting in two fragments being queued behind the leftovers
+    // download
+    loader.inject(2, NULL_ERROR_HANDLER);
+    progress.assertNoEvents();
+
+    // Leftovers arrives, but only fragment 1 should initially be requested
+    loader.leftoversFragmentHasLoaded();
+    reqs.assertFragmentsRequested(1);
+    progress.assertEvent("leftoversDownload", END, numEntries);
+    progress.assertEvent("download1", BEGIN, 1);
+    progress.assertNoEvents();
+
+    // fragment 1 arrives, 2 requested
+    loader.fragmentHasLoaded(1);
+    reqs.assertFragmentsRequested(2);
+    progress.assertEvent("download1", END, 1);
+    progress.assertEvent("download2", BEGIN, 2);
+
+    // fragment 2 arrives, all done
+    loader.fragmentHasLoaded(2);
+    progress.assertEvent("download2", END, 2);
     progress.assertNoEvents();
   }
 
@@ -290,18 +398,18 @@ public class AsyncFragmentLoaderTest extends TestCase {
     progress.assertEvent("download3", BEGIN, 3);
 
     loader.fragmentHasLoaded(3);
-    // last initial, so it should now request the leftovers
-    reqs.assertFragmentsRequested(numEntries);
-    progress.assertEvent("download3", END, 3);
-    progress.assertEvent(LEFTOVERS_DOWNLOAD, BEGIN, numEntries);
-
-    loader.fragmentHasLoaded(numEntries);
     reqs.assertFragmentsRequested();
-    progress.assertEvent(LEFTOVERS_DOWNLOAD, END, numEntries);
+    progress.assertEvent("download3", END, 3);
+    progress.assertNoEvents();
 
     // check that exclusives now load
     loader.inject(5, NULL_ERROR_HANDLER);
+    reqs.assertFragmentsRequested(numEntries);
+    progress.assertEvent(LEFTOVERS_DOWNLOAD, BEGIN, numEntries);
+
+    loader.fragmentHasLoaded(numEntries);
     reqs.assertFragmentsRequested(5);
+    progress.assertEvent(LEFTOVERS_DOWNLOAD, END, numEntries);
     progress.assertEvent("download5", BEGIN, 5);
 
     loader.fragmentHasLoaded(5);
@@ -336,6 +444,228 @@ public class AsyncFragmentLoaderTest extends TestCase {
       assertTrue(error.getWasCalled());
       progress.assertNoEvents();
     }
+  }
+
+  public void testPrefetch() {
+    MockLoadStrategy reqs = new MockLoadStrategy();
+    MockProgressLogger progress = new MockProgressLogger();
+    int numEntries = 20;
+    AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
+        1, 2, 3}, reqs, progress);
+    loader.startPrefetching();
+    // request a prefetch of something in the initial load sequence
+    loader.setPrefetchQueue(asList(2));
+    reqs.assertFragmentsRequested(1);
+    progress.assertEvent("download1", BEGIN, 1);
+
+    loader.fragmentHasLoaded(1);
+    reqs.assertFragmentsRequested(2);
+    progress.assertEvent("download1", END, 1);
+    progress.assertEvent("download2", BEGIN, 2);
+
+    loader.fragmentHasLoaded(2);
+    reqs.assertFragmentsRequested();
+    progress.assertEvent("download2", END, 2);
+    progress.assertNoEvents();
+    // request a prefetch of an exclusive
+    loader.setPrefetchQueue(asList(4));
+    reqs.assertFragmentsRequested(3);
+    progress.assertEvent("download3", BEGIN, 3);
+
+    loader.fragmentHasLoaded(3);
+    reqs.assertFragmentsRequested(numEntries);
+    progress.assertEvent("download3", END, 3);
+    progress.assertEvent("leftoversDownload", BEGIN, numEntries);
+
+    loader.leftoversFragmentHasLoaded();
+    reqs.assertFragmentsRequested(4);
+    progress.assertEvent("leftoversDownload", END, numEntries);
+    progress.assertEvent("download4", BEGIN, 4);
+
+    loader.fragmentHasLoaded(4);
+    reqs.assertFragmentsRequested();
+    progress.assertEvent("download4", END, 4);
+    progress.assertNoEvents();
+    // request a prefetch, but check that an inject call takes priority
+    loader.setPrefetchQueue(asList(5,6));
+    reqs.assertFragmentsRequested(5);
+    progress.assertEvent("download5", BEGIN, 5);
+
+    loader.inject(7, NULL_ERROR_HANDLER);
+    reqs.assertFragmentsRequested();
+    progress.assertNoEvents();
+
+    loader.fragmentHasLoaded(5);
+    reqs.assertFragmentsRequested(7);
+    progress.assertEvent("download5", END, 5);
+    progress.assertEvent("download7", BEGIN, 7);
+
+    loader.fragmentHasLoaded(7);
+    reqs.assertFragmentsRequested(6);
+    progress.assertEvent("download7", END, 7);
+    progress.assertEvent("download6", BEGIN, 6);
+
+    loader.fragmentHasLoaded(6);
+    reqs.assertFragmentsRequested();
+    progress.assertEvent("download6", END, 6);
+    progress.assertNoEvents();
+    // request prefetches, then request different prefetches
+    loader.setPrefetchQueue(asList(8,9));
+    reqs.assertFragmentsRequested(8);
+    progress.assertEvent("download8", BEGIN, 8);
+    loader.setPrefetchQueue(asList(10));
+    reqs.assertFragmentsRequested();
+    progress.assertNoEvents();
+
+    loader.fragmentHasLoaded(8);
+    reqs.assertFragmentsRequested(10);
+    progress.assertEvent("download8", END, 8);
+    progress.assertEvent("download10", BEGIN, 10);
+
+    loader.fragmentHasLoaded(10);
+    reqs.assertFragmentsRequested();
+    progress.assertEvent("download10", END, 10);
+    progress.assertNoEvents();
+    // request prefetches that have already been loaded
+    loader.setPrefetchQueue(asList(1, 3, 7, 10));
+    reqs.assertFragmentsRequested();
+    progress.assertNoEvents();
+  }
+
+  /**
+   * Prefetch initial split points out of order.
+   */
+  public void testPrefetchInitialsOutOfOrder() {
+    MockLoadStrategy reqs = new MockLoadStrategy();
+    MockProgressLogger progress = new MockProgressLogger();
+    int numEntries = 20;
+    AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
+        1, 2, 3}, reqs, progress);
+    loader.startPrefetching();
+    // request a prefetch of something in the initial load sequence
+    loader.setPrefetchQueue(asList(3, 2, 1));
+    reqs.assertFragmentsRequested(1);
+    progress.assertEvent("download1", BEGIN, 1);
+
+    loader.fragmentHasLoaded(1);
+    reqs.assertFragmentsRequested(2);
+    progress.assertEvent("download1", END, 1);
+    progress.assertEvent("download2", BEGIN, 2);
+
+    loader.fragmentHasLoaded(2);
+    reqs.assertFragmentsRequested(3);
+    progress.assertEvent("download2", END, 2);
+    progress.assertEvent("download3", BEGIN, 3);
+
+    loader.fragmentHasLoaded(3);
+    progress.assertEvent("download3", END, 3);
+    reqs.assertFragmentsRequested();
+    progress.assertNoEvents();
+
+    // check that the loader is in a sane state by downloading an exclusive
+    loader.inject(5, NULL_ERROR_HANDLER);
+    reqs.assertFragmentsRequested(numEntries);
+    progress.assertEvent("leftoversDownload", BEGIN, numEntries);
+
+    loader.leftoversFragmentHasLoaded();
+    reqs.assertFragmentsRequested(5);
+    progress.assertEvent("leftoversDownload", END, numEntries);
+    progress.assertEvent("download5", BEGIN, 5);
+
+    loader.fragmentHasLoaded(5);
+    reqs.assertFragmentsRequested();
+    progress.assertEvent("download5", END, 5);
+    progress.assertNoEvents();
+  }
+
+  /**
+   * Test that no prefetching happens if prefetching is turned off.
+   */
+  public void testPrefetchingDisabled() {
+    MockLoadStrategy reqs = new MockLoadStrategy();
+    MockProgressLogger progress = new MockProgressLogger();
+    int numEntries = 20;
+    AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries,
+        new int[] {}, reqs, progress);
+    loader.stopPrefetching();
+    // Prefetch 1, but leave prefetching off
+    loader.setPrefetchQueue(asList(1));
+    reqs.assertFragmentsRequested();
+    progress.assertNoEvents();
+
+    // Inject 2, which should lead to leftovers and 2 loading
+    loader.inject(2, NULL_ERROR_HANDLER);
+    reqs.assertFragmentsRequested(numEntries);
+    progress.assertEvent("leftoversDownload", BEGIN, numEntries);
+
+    loader.leftoversFragmentHasLoaded();
+    reqs.assertFragmentsRequested(2);
+    progress.assertEvent("leftoversDownload", END, numEntries);
+    progress.assertEvent("download2", BEGIN, 2);
+
+    loader.fragmentHasLoaded(2);
+    reqs.assertFragmentsRequested();
+    progress.assertEvent("download2", END, 2);
+    progress.assertNoEvents();
+
+    // Enable prefetching; now 1 should load
+    loader.startPrefetching();
+    reqs.assertFragmentsRequested(1);
+    progress.assertEvent("download1", BEGIN, 1);
+
+    loader.fragmentHasLoaded(1);
+    reqs.assertFragmentsRequested();
+    progress.assertEvent("download1", END, 1);
+    progress.assertNoEvents();
+  }
+
+  /**
+   * Test prefetching an item and then injecting it while the prefetch is in
+   * progress.
+   */
+  public void testPrefetchThenInjectOfSame() {
+    MockLoadStrategy reqs = new MockLoadStrategy();
+    MockProgressLogger progress = new MockProgressLogger();
+    int numEntries = 20;
+    AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries,
+        new int[] {}, reqs, progress);
+    loader.startPrefetching();
+
+    // Load the leftovers and one fragment
+    loader.inject(1, NULL_ERROR_HANDLER);
+    reqs.assertFragmentsRequested(numEntries);
+    progress.assertEvent("leftoversDownload", BEGIN, numEntries);
+
+    loader.leftoversFragmentHasLoaded();
+    reqs.assertFragmentsRequested(1);
+    progress.assertEvent("leftoversDownload", END, numEntries);
+    progress.assertEvent("download1", BEGIN, 1);
+
+    loader.fragmentHasLoaded(1);
+    reqs.assertFragmentsRequested();
+    progress.assertEvent("download1", END, 1);
+    progress.assertNoEvents();
+    // Start prefetching a fragment
+    loader.setPrefetchQueue(asList(2));
+    reqs.assertFragmentsRequested(2);
+    progress.assertEvent("download2", BEGIN, 2);
+
+    // Inject the same fragment and another one
+    loader.inject(2, NULL_ERROR_HANDLER);
+    loader.inject(3, NULL_ERROR_HANDLER);
+    reqs.assertFragmentsRequested();
+    progress.assertNoEvents();
+
+    // Finish the fragment loads
+    loader.fragmentHasLoaded(2);
+    reqs.assertFragmentsRequested(3);
+    progress.assertEvent("download2", END, 2);
+    progress.assertEvent("download3", BEGIN, 3);
+
+    loader.fragmentHasLoaded(3);
+    reqs.assertFragmentsRequested();
+    progress.assertEvent("download3", END, 3);
+    progress.assertNoEvents();
   }
 
   /**

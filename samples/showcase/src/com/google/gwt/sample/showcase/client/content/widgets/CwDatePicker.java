@@ -38,10 +38,11 @@ import java.util.Date;
 /**
  * Example file.
  */
-@ShowcaseStyle({
+@ShowcaseStyle( {
     ".gwt-DatePicker", ".datePicker", "td.datePickerMonth", ".gwt-DateBox",
     ".dateBox"})
 public class CwDatePicker extends ContentWidget {
+
   /**
    * The constants used in this Content Widget.
    */
@@ -120,7 +121,7 @@ public class CwDatePicker extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwDatePicker.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -130,5 +131,10 @@ public class CwDatePicker extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchWidgets();
   }
 }

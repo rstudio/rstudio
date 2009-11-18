@@ -135,7 +135,7 @@ public class CwBasicText extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwBasicText.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -147,9 +147,14 @@ public class CwBasicText extends ContentWidget {
     });
   }
 
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchTextInput();
+  }
+
   /**
-   * Create a TextBox example that includes the text box and an optional
-   * handler that updates a Label with the currently selected text.
+   * Create a TextBox example that includes the text box and an optional handler
+   * that updates a Label with the currently selected text.
    * 
    * @param textBox the text box to handle
    * @param addSelection add handlers to update label

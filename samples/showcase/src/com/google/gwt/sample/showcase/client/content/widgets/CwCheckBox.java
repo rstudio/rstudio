@@ -110,4 +110,9 @@ public class CwCheckBox extends ContentWidget {
      */
     callback.onSuccess(onInitialize());
   }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchWidgets();
+  }
 }

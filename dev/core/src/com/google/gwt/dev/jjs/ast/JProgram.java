@@ -80,7 +80,8 @@ public class JProgram extends JNode {
           "com.google.gwt.core.client.RunAsyncCallback",
           "com.google.gwt.core.client.impl.AsyncFragmentLoader",
           "com.google.gwt.core.client.impl.Impl",
-          "com.google.gwt.lang.EntryMethodHolder",}));
+          "com.google.gwt.lang.EntryMethodHolder",
+          "com.google.gwt.core.client.prefetch.RunAsyncCode",}));
 
   static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
 

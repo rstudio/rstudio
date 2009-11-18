@@ -37,7 +37,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle(value = {
+@ShowcaseStyle( {
     ".gwt-PopupPanel", "html>body .gwt-PopupPanel", "* html .gwt-PopupPanel",
     ".gwt-DecoratedPopupPanel", "html>body .gwt-DecoratedPopupPanel",
     "* html .gwt-DecoratedPopupPanel"})
@@ -148,7 +148,7 @@ public class CwBasicPopup extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwBasicPopup.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -158,5 +158,10 @@ public class CwBasicPopup extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchPopups();
   }
 }

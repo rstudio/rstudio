@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 /**
  * Example file.
  */
-@ShowcaseRaw({"ErrorMessages.java", "ErrorMessages.properties"})
+@ShowcaseRaw( {"ErrorMessages.java", "ErrorMessages.properties"})
 public class CwMessagesExample extends ContentWidget {
   /**
    * The constants used in this Content Widget.
@@ -249,7 +249,7 @@ public class CwMessagesExample extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwMessagesExample.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -259,6 +259,11 @@ public class CwMessagesExample extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchInternationalization();
   }
 
   /**

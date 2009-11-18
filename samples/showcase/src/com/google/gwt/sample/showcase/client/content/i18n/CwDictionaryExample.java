@@ -123,7 +123,7 @@ public class CwDictionaryExample extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwDictionaryExample.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -134,4 +134,10 @@ public class CwDictionaryExample extends ContentWidget {
       }
     });
   }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchInternationalization();
+  }
+
 }

@@ -32,10 +32,11 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({
+@ShowcaseStyle( {
     ".gwt-SuggestBox", ".gwt-SuggestBoxPopup",
     "html>body .gwt-SuggestBoxPopup", "* html .gwt-SuggestBoxPopup"})
 public class CwSuggestBox extends ContentWidget {
+
   /**
    * The constants used in this Content Widget.
    */
@@ -103,7 +104,7 @@ public class CwSuggestBox extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwSuggestBox.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -113,5 +114,10 @@ public class CwSuggestBox extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchListsAndMenus();
   }
 }

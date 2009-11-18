@@ -15,7 +15,10 @@
  */
 package com.google.gwt.sample.showcase.client;
 
+import static com.google.gwt.core.client.prefetch.RunAsyncCode.runAsyncCode;
+
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.prefetch.Prefetcher;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.http.client.Request;
@@ -26,6 +29,42 @@ import com.google.gwt.http.client.Response;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsExample;
+import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsWithLookupExample;
+import com.google.gwt.sample.showcase.client.content.i18n.CwDateTimeFormat;
+import com.google.gwt.sample.showcase.client.content.i18n.CwDictionaryExample;
+import com.google.gwt.sample.showcase.client.content.i18n.CwMessagesExample;
+import com.google.gwt.sample.showcase.client.content.i18n.CwNumberFormat;
+import com.google.gwt.sample.showcase.client.content.i18n.CwPluralFormsExample;
+import com.google.gwt.sample.showcase.client.content.lists.CwListBox;
+import com.google.gwt.sample.showcase.client.content.lists.CwMenuBar;
+import com.google.gwt.sample.showcase.client.content.lists.CwStackPanel;
+import com.google.gwt.sample.showcase.client.content.lists.CwSuggestBox;
+import com.google.gwt.sample.showcase.client.content.lists.CwTree;
+import com.google.gwt.sample.showcase.client.content.other.CwAnimation;
+import com.google.gwt.sample.showcase.client.content.other.CwCookies;
+import com.google.gwt.sample.showcase.client.content.panels.CwAbsolutePanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwDecoratorPanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwDisclosurePanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwDockPanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwFlowPanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwHorizontalPanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwHorizontalSplitPanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwTabPanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwVerticalPanel;
+import com.google.gwt.sample.showcase.client.content.panels.CwVerticalSplitPanel;
+import com.google.gwt.sample.showcase.client.content.popups.CwBasicPopup;
+import com.google.gwt.sample.showcase.client.content.popups.CwDialogBox;
+import com.google.gwt.sample.showcase.client.content.tables.CwFlexTable;
+import com.google.gwt.sample.showcase.client.content.tables.CwGrid;
+import com.google.gwt.sample.showcase.client.content.text.CwBasicText;
+import com.google.gwt.sample.showcase.client.content.text.CwRichText;
+import com.google.gwt.sample.showcase.client.content.widgets.CwBasicButton;
+import com.google.gwt.sample.showcase.client.content.widgets.CwCustomButton;
+import com.google.gwt.sample.showcase.client.content.widgets.CwDatePicker;
+import com.google.gwt.sample.showcase.client.content.widgets.CwFileUpload;
+import com.google.gwt.sample.showcase.client.content.widgets.CwHyperlink;
+import com.google.gwt.sample.showcase.client.content.widgets.CwRadioButton;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -36,7 +75,9 @@ import com.google.gwt.user.client.ui.TabBar;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -51,14 +92,11 @@ import java.util.Map;
  * first time the {@link Widget} is added to the page.. The data in the source
  * and css tabs are loaded using an RPC call to the server.
  * </p>
- * <h3>CSS Style Rules</h3>
- * <ul class="css">
- * <li>.sc-ContentWidget { Applied to the entire widget }</li>
- * <li>.sc-ContentWidget-tabBar { Applied to the TabBar }</li>
- * <li>.sc-ContentWidget-deckPanel { Applied to the DeckPanel }</li>
- * <li>.sc-ContentWidget-name { Applied to the name }</li>
- * <li>.sc-ContentWidget-description { Applied to the description }</li>
- * </ul>
+ * <h3>CSS Style Rules</h3> <ul class="css"> <li>.sc-ContentWidget { Applied to
+ * the entire widget }</li> <li>.sc-ContentWidget-tabBar { Applied to the TabBar
+ * }</li> <li>.sc-ContentWidget-deckPanel { Applied to the DeckPanel }</li> <li>
+ * .sc-ContentWidget-name { Applied to the name }</li> <li>
+ * .sc-ContentWidget-description { Applied to the description }</li> </ul>
  */
 public abstract class ContentWidget extends LazyPanel implements
     SelectionHandler<Integer> {
@@ -82,6 +120,14 @@ public abstract class ContentWidget extends LazyPanel implements
    * The static loading image displayed when loading CSS or source code.
    */
   private static String loadingImage;
+
+  private static <T> List<T> list(T... elems) {
+    List<T> list = new ArrayList<T>(elems.length);
+    for (T elem : elems) {
+      list.add(elem);
+    }
+    return list;
+  }
 
   /**
    * The tab bar of options.
@@ -327,6 +373,59 @@ public abstract class ContentWidget extends LazyPanel implements
     }
   }
 
+  protected void prefetchInternationalization() {
+    Prefetcher.prefetch(list(runAsyncCode(CwNumberFormat.class),
+        runAsyncCode(CwDateTimeFormat.class),
+        runAsyncCode(CwMessagesExample.class),
+        runAsyncCode(CwPluralFormsExample.class),
+        runAsyncCode(CwConstantsExample.class),
+        runAsyncCode(CwConstantsWithLookupExample.class),
+        runAsyncCode(CwDictionaryExample.class)));
+  }
+
+  protected void prefetchListsAndMenus() {
+    Prefetcher.prefetch(list(runAsyncCode(CwListBox.class),
+        runAsyncCode(CwSuggestBox.class), runAsyncCode(CwTree.class),
+        runAsyncCode(CwMenuBar.class), runAsyncCode(CwStackPanel.class)));
+  }
+
+  protected void prefetchOther() {
+    Prefetcher.prefetch(list(runAsyncCode(CwAnimation.class),
+        runAsyncCode(CwCookies.class)));
+  }
+
+  protected void prefetchPanels() {
+    Prefetcher.prefetch(list(runAsyncCode(CwDecoratorPanel.class),
+        runAsyncCode(CwFlowPanel.class), runAsyncCode(CwHorizontalPanel.class),
+        runAsyncCode(CwVerticalPanel.class),
+        runAsyncCode(CwAbsolutePanel.class), runAsyncCode(CwDockPanel.class),
+        runAsyncCode(CwDisclosurePanel.class), runAsyncCode(CwTabPanel.class),
+        runAsyncCode(CwHorizontalSplitPanel.class),
+        runAsyncCode(CwVerticalSplitPanel.class)));
+  }
+
+  protected void prefetchPopups() {
+    Prefetcher.prefetch(list(runAsyncCode(CwBasicPopup.class),
+        runAsyncCode(CwDialogBox.class)));
+  }
+
+  protected void prefetchTables() {
+    Prefetcher.prefetch(list(runAsyncCode(CwGrid.class),
+        runAsyncCode(CwFlexTable.class)));
+  }
+
+  protected void prefetchTextInput() {
+    Prefetcher.prefetch(list(runAsyncCode(CwBasicText.class),
+        runAsyncCode(CwRichText.class)));
+  }
+
+  protected void prefetchWidgets() {
+    Prefetcher.prefetch(list(runAsyncCode(CwRadioButton.class),
+        runAsyncCode(CwBasicButton.class), runAsyncCode(CwCustomButton.class),
+        runAsyncCode(CwFileUpload.class), runAsyncCode(CwDatePicker.class),
+        runAsyncCode(CwHyperlink.class)));
+  }
+
   /**
    * Load the contents of a remote file into the specified widget.
    * 
@@ -374,6 +473,12 @@ public abstract class ContentWidget extends LazyPanel implements
   }
 
   /**
+   * Start prefetches for this widget that are likely to show up after this
+   * widget is clicked.
+   */
+  protected abstract void setRunAsyncPrefetches();
+
+  /**
    * Ensure that the demo widget has been initialized. Note that initialization
    * can fail if there is a network failure.
    */
@@ -401,5 +506,7 @@ public abstract class ContentWidget extends LazyPanel implements
         onInitializeComplete();
       }
     });
+
+    setRunAsyncPrefetches();
   }
 }

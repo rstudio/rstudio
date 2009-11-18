@@ -20,11 +20,10 @@ import com.google.gwt.xhr.client.ReadyStateChangeHandler;
 import com.google.gwt.xhr.client.XMLHttpRequest;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 
 /**
  * <p>
@@ -167,11 +166,12 @@ public class AsyncFragmentLoader {
   }
 
   /**
-   * Handles a failure to download a fragment in the initial sequence.
+   * Internal load error handler. This calls all user-provided error handlers
+   * and cancels all pending downloads.
    */
-  private class InitialFragmentDownloadFailed implements LoadErrorHandler {
+  private class ResetAfterDownloadFailure implements LoadErrorHandler {
     public void loadFailed(Throwable reason) {
-      initialFragmentsLoading = false;
+      assert fragmentLoading >= 0;
 
       // Cancel all pending downloads.
 
@@ -181,26 +181,21 @@ public class AsyncFragmentLoader {
        */
       List<LoadErrorHandler> handlersToRun = new ArrayList<LoadErrorHandler>();
 
-      // add handlers that are waiting pending the initials download
-      assert waitingForInitialFragments.size() == waitingForInitialFragmentsErrorHandlers.size();
-      while (waitingForInitialFragments.size() > 0) {
-        handlersToRun.add(waitingForInitialFragmentsErrorHandlers.remove());
-        waitingForInitialFragments.remove();
-      }
-
       /*
-       * Call clear() here so that waitingForInitialFragments makes all of its
-       * space available for later requests.
+       * Call clear() here so that requestedExclusives makes all of its space
+       * available for later requests.
        */
-      waitingForInitialFragments.clear();
+      requestedExclusives.clear();
 
-      // add handlers for pending initial fragment downloads
-      handlersToRun.addAll(initialFragmentErrorHandlers.values());
-      initialFragmentErrorHandlers.clear();
+      // add handlers for pending downloads
+      handlersToRun.addAll(pendingDownloadErrorHandlers.values());
+      pendingDownloadErrorHandlers.clear();
+
+      fragmentLoading = -1;
 
       /*
-       * If an exception is thrown while canceling any of them, remember and
-       * throw the last one.
+       * Run the handlers. If an exception is thrown while canceling any of
+       * them, remember and throw the last one.
        */
       RuntimeException lastException = null;
 
@@ -311,12 +306,13 @@ public class AsyncFragmentLoader {
     private native void gwtInstallCode(String text) /*-{
       __gwtInstallCode(text);
     }-*/;
- 
+
     /**
      * Call the linker-supplied __gwtStartLoadingFragment function. It should
-     * either start the download and return null or undefined, or it should return
-     * a URL that should be downloaded to get the code. If it starts the download
-     * itself, it can synchronously load it, e.g. from cache, if that makes sense.
+     * either start the download and return null or undefined, or it should
+     * return a URL that should be downloaded to get the code. If it starts the
+     * download itself, it can synchronously load it, e.g. from cache, if that
+     * makes sense.
      */
     private native String gwtStartLoadingFragment(int fragment,
         LoadErrorHandler loadErrorHandler) /*-{
@@ -357,17 +353,9 @@ public class AsyncFragmentLoader {
   }
 
   /**
-   * Error handlers for failure to download an initial fragment.
-   * 
-   * TODO(spoon) make it a lightweight integer map
+   * The fragment currently loading, or -1 if there aren't any.
    */
-  private Map<Integer, LoadErrorHandler> initialFragmentErrorHandlers = new HashMap<Integer, LoadErrorHandler>();
-
-  /**
-   * Indicates that the next fragment in {@link #remainingInitialFragments} is
-   * currently downloading.
-   */
-  private boolean initialFragmentsLoading = false;
+  private int fragmentLoading = -1;
 
   /**
    * The sequence of fragments to load initially, before anything else can be
@@ -379,7 +367,12 @@ public class AsyncFragmentLoader {
    */
   private final int[] initialLoadSequence;
 
-  private LoadingStrategy loadingStrategy = new XhrLoadingStrategy();
+  /**
+   * This array indicates which fragments have been successfully loaded.
+   */
+  private final boolean[] isLoaded;
+
+  private final LoadingStrategy loadingStrategy;
 
   private final Logger logger;
 
@@ -390,25 +383,37 @@ public class AsyncFragmentLoader {
   private final int numEntries;
 
   /**
+   * Externally provided handlers for all outstanding and queued download
+   * requests.
+   * 
+   * TODO(spoon) make it a lightweight integer map
+   */
+  private Map<Integer, LoadErrorHandler> pendingDownloadErrorHandlers = new HashMap<Integer, LoadErrorHandler>();
+
+  /**
+   * Whether prefetching is currently enabled.
+   */
+  private boolean prefetching = false;
+
+  /**
+   * This queue has fragments that have been requested to be prefetched. If it's
+   * <code>null</code>, that indicates no prefetch requests, which should cause
+   * all of this class's prefetching code to drop out of the compiled output.
+   */
+  private BoundedIntQueue prefetchQueue = null;
+
+  /**
    * Base fragments that remain to be downloaded. It is lazily initialized in
-   * the first call to {@link #startLoadingNextInitial()}. It does include the
+   * the first call to {@link #startLoadingNextFragment()}. It does include the
    * leftovers fragment.
    */
   private BoundedIntQueue remainingInitialFragments = null;
 
   /**
-   * Split points that have been reached, but that cannot be downloaded until
-   * the initial fragments finish downloading. TODO(spoon) use something lighter
-   * than a LinkedList
+   * Exclusive fragments that have been requested but that are not yet
+   * downloading.
    */
-  private final BoundedIntQueue waitingForInitialFragments;
-
-  /**
-   * Error handlers for the above queue.
-   * 
-   * TODO(spoon) change this to a lightweight JS collection
-   */
-  private Queue<LoadErrorHandler> waitingForInitialFragmentsErrorHandlers = new LinkedList<LoadErrorHandler>();
+  private final BoundedIntQueue requestedExclusives;
 
   public AsyncFragmentLoader(int numEntries, int[] initialLoadSequence,
       LoadingStrategy loadingStrategy, Logger logger) {
@@ -416,7 +421,8 @@ public class AsyncFragmentLoader {
     this.initialLoadSequence = initialLoadSequence;
     this.loadingStrategy = loadingStrategy;
     this.logger = logger;
-    waitingForInitialFragments = new BoundedIntQueue(numEntries + 1);
+    requestedExclusives = new BoundedIntQueue(numEntries + 1);
+    isLoaded = new boolean[numEntries + 1];
   }
 
   /**
@@ -424,57 +430,41 @@ public class AsyncFragmentLoader {
    */
   public void fragmentHasLoaded(int fragment) {
     logFragmentLoaded(fragment);
+    pendingDownloadErrorHandlers.remove(fragment);
 
     if (isInitial(fragment)) {
       assert (fragment == remainingInitialFragments.peek());
       remainingInitialFragments.remove();
-      initialFragmentErrorHandlers.remove(fragment);
-
-      startLoadingNextInitial();
     }
+
+    assert (fragment == fragmentLoading);
+    fragmentLoading = -1;
+
+    assert !isLoaded[fragment];
+    isLoaded[fragment] = true;
+
+    startLoadingNextFragment();
   }
 
   /**
-   * Loads the specified split point.
+   * Requests a load of the code for the specified split point. If the load
+   * fails, <code>loadErrorHandler</code> will be invoked. If it succeeds, then
+   * the code will be installed, and the code is expected to invoke its own
+   * on-success hooks, including a call to either
+   * {@link #leftoversFragmentHasLoaded()} or {@link #fragmentHasLoaded(int)}.
    * 
    * @param splitPoint the split point whose code needs to be loaded
    */
   public void inject(int splitPoint, LoadErrorHandler loadErrorHandler) {
-
-    if (haveInitialFragmentsLoaded()) {
-      /*
-       * The initial fragments has loaded. Immediately start loading the
-       * requested code.
-       */
-      logDownloadStart(splitPoint);
-      startLoadingFragment(splitPoint, loadErrorHandler);
-      return;
+    pendingDownloadErrorHandlers.put(splitPoint, loadErrorHandler);
+    if (!isInitial(splitPoint)) {
+      requestedExclusives.add(splitPoint);
     }
+    startLoadingNextFragment();
+  }
 
-    if (isInitial(splitPoint)) {
-      /*
-       * The loading of an initial fragment will happen via
-       * startLoadingNextInitial(), so don't start it here. Do, however, record
-       * the error handler.
-       */
-      initialFragmentErrorHandlers.put(splitPoint, loadErrorHandler);
-    } else {
-      /*
-       * For a non-initial fragment, queue it for later loading, once the
-       * initial fragments have all been loaded.
-       */
-
-      assert (waitingForInitialFragments.size() == waitingForInitialFragmentsErrorHandlers.size());
-      waitingForInitialFragments.add(splitPoint);
-      waitingForInitialFragmentsErrorHandlers.add(loadErrorHandler);
-    }
-
-    /*
-     * Start the initial downloads if they aren't running already.
-     */
-    if (!initialFragmentsLoading) {
-      startLoadingNextInitial();
-    }
+  public boolean isAlreadyLoaded(int splitPoint) {
+   return isLoaded[splitPoint];
   }
 
   public void leftoversFragmentHasLoaded() {
@@ -488,6 +478,54 @@ public class AsyncFragmentLoader {
     logEventProgress(eventGroup, type, null, null);
   }
 
+  /**
+   * Request that a sequence of split points be prefetched. Code for the split
+   * points in <code>splitPoints</code> will be downloaded and installed
+   * whenever there is nothing else to download. Each call to this method
+   * overwrites the entire prefetch queue with the newly specified one.
+   */
+  public void setPrefetchQueue(Collection<? extends Integer> splitPoints) {
+    if (prefetchQueue == null) {
+      prefetchQueue = new BoundedIntQueue(numEntries);
+    }
+    prefetchQueue.clear();
+    for (Integer sp : splitPoints) {
+      prefetchQueue.add(sp);
+    }
+    startLoadingNextFragment();
+  }
+
+  public void startPrefetching() {
+    prefetching = true;
+    startLoadingNextFragment();
+  }
+
+  public void stopPrefetching() {
+    prefetching = false;
+  }
+
+  private boolean anyPrefetchesRequested() {
+    return prefetching && prefetchQueue != null && prefetchQueue.size() > 0;
+  }
+
+  /**
+   * Clear out any inject and prefetch requests that are already loaded. Only
+   * remove items from the head of each queue; any stale entries later in the
+   * queue will be removed later.
+   */
+  private void clearRequestsAlreadyLoaded() {
+    while (requestedExclusives.size() > 0
+        && isLoaded[requestedExclusives.peek()]) {
+      pendingDownloadErrorHandlers.remove(requestedExclusives.remove());
+    }
+
+    if (prefetchQueue != null) {
+      while (prefetchQueue.size() > 0 && isLoaded[prefetchQueue.peek()]) {
+        prefetchQueue.remove();
+      }
+    }
+  }
+
   private String downloadGroup(int fragment) {
     return (fragment == leftoversFragment()) ? LwmLabels.LEFTOVERS_DOWNLOAD
         : LwmLabels.downloadGroupForExclusive(fragment);
@@ -499,6 +537,20 @@ public class AsyncFragmentLoader {
   private boolean haveInitialFragmentsLoaded() {
     return remainingInitialFragments != null
         && remainingInitialFragments.size() == 0;
+  }
+
+  /**
+   * Initialize {@link #remainingInitialFragments} if it isn't already.
+   */
+  private void initializeRemainingInitialFragments() {
+    if (remainingInitialFragments == null) {
+      remainingInitialFragments = new BoundedIntQueue(
+          initialLoadSequence.length + 1);
+      for (int sp : initialLoadSequence) {
+        remainingInitialFragments.add(sp);
+      }
+      remainingInitialFragments.add(leftoversFragment());
+    }
   }
 
   private boolean isInitial(int splitPoint) {
@@ -536,57 +588,54 @@ public class AsyncFragmentLoader {
     logEventProgress(logGroup, LwmLabels.END, fragment, null);
   }
 
-  private void startLoadingFragment(int fragment,
-      final LoadErrorHandler loadErrorHandler) {
-    loadingStrategy.startLoadingFragment(fragment, loadErrorHandler);
+  private void startLoadingFragment(int fragment) {
+    assert (fragmentLoading < 0);
+    fragmentLoading = fragment;
+    logDownloadStart(fragment);
+    loadingStrategy.startLoadingFragment(fragment,
+        new ResetAfterDownloadFailure());
   }
 
   /**
-   * Start downloading the next fragment in the initial sequence, if there are
-   * any left.
+   * Start downloading the next fragment queued up, if there are any.
    */
-  private void startLoadingNextInitial() {
-    if (remainingInitialFragments == null) {
-      // first call, so initialize remainingInitialFragments
-      remainingInitialFragments = new BoundedIntQueue(
-          initialLoadSequence.length + 1);
-      for (int sp : initialLoadSequence) {
-        remainingInitialFragments.add(sp);
-      }
-      remainingInitialFragments.add(leftoversFragment());
+  private void startLoadingNextFragment() {
+    if (fragmentLoading >= 0) {
+      // Already loading something
+      return;
     }
 
-    if (initialFragmentErrorHandlers.isEmpty()
-        && waitingForInitialFragmentsErrorHandlers.isEmpty()
-        && remainingInitialFragments.size() > 1) {
+    initializeRemainingInitialFragments();
+    clearRequestsAlreadyLoaded();
+
+    if (pendingDownloadErrorHandlers.isEmpty() && !anyPrefetchesRequested()) {
       /*
-       * No further requests are pending, and more than the leftovers fragment
-       * is left outstanding. Stop loading stuff for now.
+       * Don't load anything if there aren't any requests outstanding.
        */
-      initialFragmentsLoading = false;
       return;
     }
 
+    // Check if an initial needs downloading
     if (remainingInitialFragments.size() > 0) {
-      // start loading the next initial fragment
-      initialFragmentsLoading = true;
-      int nextSplitPoint = remainingInitialFragments.peek();
-      logDownloadStart(nextSplitPoint);
-      startLoadingFragment(nextSplitPoint, new InitialFragmentDownloadFailed());
+      startLoadingFragment(remainingInitialFragments.peek());
       return;
     }
 
-    // all initials are finished
-    initialFragmentsLoading = false;
     assert (haveInitialFragmentsLoaded());
 
-    // start loading any pending fragments
-    assert (waitingForInitialFragments.size() == waitingForInitialFragmentsErrorHandlers.size());
-    while (waitingForInitialFragments.size() > 0) {
-      int nextSplitPoint = waitingForInitialFragments.remove();
-      LoadErrorHandler handler = waitingForInitialFragmentsErrorHandlers.remove();
-      logDownloadStart(nextSplitPoint);
-      startLoadingFragment(nextSplitPoint, handler);
+    // Check if an exclusive is pending
+    if (requestedExclusives.size() > 0) {
+      startLoadingFragment(requestedExclusives.remove());
+      return;
     }
+
+    // Check the prefetch queue
+    if (anyPrefetchesRequested()) {
+      startLoadingFragment(prefetchQueue.remove());
+      return;
+    }
+
+    // Nothing needed downloading after all?!
+    assert false;
   }
 }

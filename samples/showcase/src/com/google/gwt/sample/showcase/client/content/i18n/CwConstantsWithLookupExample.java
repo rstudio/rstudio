@@ -41,7 +41,7 @@ import java.util.MissingResourceException;
 /**
  * Example file.
  */
-@ShowcaseRaw({"ColorConstants.java", "ColorConstants.properties"})
+@ShowcaseRaw( {"ColorConstants.java", "ColorConstants.properties"})
 public class CwConstantsWithLookupExample extends ContentWidget {
   /**
    * The constants used in this Content Widget.
@@ -217,7 +217,7 @@ public class CwConstantsWithLookupExample extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwConstantsWithLookupExample.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -227,6 +227,11 @@ public class CwConstantsWithLookupExample extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchInternationalization();
   }
 
   /**

@@ -35,7 +35,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({".gwt-PushButton", ".gwt-ToggleButton"})
+@ShowcaseStyle( {".gwt-PushButton", ".gwt-ToggleButton"})
 public class CwCustomButton extends ContentWidget {
   /**
    * The constants used in this Content Widget.
@@ -129,7 +129,7 @@ public class CwCustomButton extends ContentWidget {
 
   @Override
   protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
-    GWT.runAsync(new RunAsyncCallback() {
+    GWT.runAsync(CwCustomButton.class, new RunAsyncCallback() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -139,5 +139,10 @@ public class CwCustomButton extends ContentWidget {
         callback.onSuccess(onInitialize());
       }
     });
+  }
+
+  @Override
+  protected void setRunAsyncPrefetches() {
+    prefetchWidgets();
   }
 }

@@ -17,6 +17,7 @@ package com.google.gwt.sample.showcase.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.prefetch.Prefetcher;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.HeadElement;
 import com.google.gwt.dom.client.Node;
@@ -228,6 +229,9 @@ public class Showcase implements EntryPoint {
       app.getMainMenu().ensureSelectedItemVisible();
       displayContentWidget(itemWidgets.get(firstItem));
     }
+    
+    // Always prefetch
+    Prefetcher.start();
   }
 
   /**

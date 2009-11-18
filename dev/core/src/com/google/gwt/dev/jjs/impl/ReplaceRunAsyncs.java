@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
@@ -30,7 +31,9 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,7 +41,10 @@ import java.util.Map;
  * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback)}
  * and
  * {@link com.google.gwt.core.client.GWT#runAsync(Class, com.google.gwt.core.client.RunAsyncCallback)
- * by calls to a fragment loader.
+ * by calls to a fragment loader. Additionally, replaces access to
+ * 
+ * @link RunAsyncCode#forSplitPoint(Class)} by an equivalent call using an
+ *       integer rather than a class literal.
  */
 public class ReplaceRunAsyncs {
   /**
@@ -112,7 +118,7 @@ public class ReplaceRunAsyncs {
             asyncCallback = x.getArgs().get(0);
             break;
           case 2:
-            name = ((JClassLiteral) x.getArgs().get(0)).getRefType().getName();
+            name = nameFromClassLiteral((JClassLiteral) x.getArgs().get(0));
             asyncCallback = x.getArgs().get(1);
             break;
           default:
@@ -151,11 +157,70 @@ public class ReplaceRunAsyncs {
           && method.getName().equals("runAsync");
     }
   }
+  private class ReplaceRunAsyncResources extends JModVisitor {
+    private Map<String, List<RunAsyncReplacement>> replacementsByName;
 
-  public static void exec(TreeLogger logger, JProgram program) {
-    logger.log(TreeLogger.TRACE,
+    public ReplaceRunAsyncResources() {
+      replacementsByName = new HashMap<String, List<RunAsyncReplacement>>();
+      for (RunAsyncReplacement replacement : runAsyncReplacements.values()) {
+        String name = replacement.getName();
+        if (name != null) {
+          List<RunAsyncReplacement> list = replacementsByName.get(name);
+          if (list == null) {
+            list = new ArrayList<RunAsyncReplacement>();
+            replacementsByName.put(name, list);
+          }
+          list.add(replacement);
+        }
+      }
+    }
+
+    @Override
+    public void endVisit(JMethodCall x, Context ctx) {
+      if (x.getTarget() == program.getIndexedMethod("RunAsyncCode.runAsyncCode")) {
+        JClassLiteral lit = (JClassLiteral) x.getArgs().get(0);
+        String name = nameFromClassLiteral(lit);
+        List<RunAsyncReplacement> matches = replacementsByName.get(name);
+        if (matches == null || matches.size() == 0) {
+          error("No runAsync call is named " + name);
+          return;
+        }
+        if (matches.size() > 1) {
+          TreeLogger branch = error("Multiple runAsync calls are named " + name);
+          for (RunAsyncReplacement match : matches) {
+            branch.log(TreeLogger.ERROR, "One call is in " + methodDescription(match.getEnclosingMethod()));
+          }
+          return;
+        }
+        Integer splitPoint = matches.get(0).getNumber();
+
+        JMethodCall newCall = new JMethodCall(x.getSourceInfo(), null,
+            program.getIndexedMethod("RunAsyncCode.forSplitPointNumber"));
+        newCall.addArg(program.getLiteralInt(splitPoint));
+        ctx.replaceMe(newCall);
+      }
+    }
+
+    private String methodDescription(JMethod method) {
+      StringBuilder desc = new StringBuilder();
+      desc.append(method.getEnclosingType().getName());
+      desc.append(".");
+      desc.append(method.getName());
+      desc.append(" (");
+      desc.append(method.getSourceInfo().getFileName());
+      desc.append(':');
+      desc.append(method.getSourceInfo().getStartLine());
+      desc.append(")");
+      
+      return desc.toString();
+    }
+  }
+
+  public static void exec(TreeLogger logger, JProgram program)
+      throws UnableToCompleteException {
+    TreeLogger branch = logger.branch(TreeLogger.TRACE,
         "Replacing GWT.runAsync with island loader calls");
-    new ReplaceRunAsyncs(program).execImpl();
+    new ReplaceRunAsyncs(branch, program).execImpl();
   }
 
   /**
@@ -169,19 +234,38 @@ public class ReplaceRunAsyncs {
     return constructorCall;
   }
 
+  /**
+   * Convert a class literal to a runAsync name.
+   */
+  private static String nameFromClassLiteral(JClassLiteral classLiteral) {
+    return classLiteral.getRefType().getName();
+  }
+
+  private boolean errorsFound = false;
+  private final TreeLogger logger;
   private JProgram program;
 
   private Map<Integer, RunAsyncReplacement> runAsyncReplacements = new HashMap<Integer, RunAsyncReplacement>();
 
-  private ReplaceRunAsyncs(JProgram program) {
+  private ReplaceRunAsyncs(TreeLogger logger, JProgram program) {
+    this.logger = logger;
     this.program = program;
   }
 
-  private void execImpl() {
+  private TreeLogger error(String message) {
+    errorsFound = true;
+    return logger.branch(TreeLogger.ERROR, message);
+  }
+
+  private void execImpl() throws UnableToCompleteException {
     AsyncCreateVisitor visitor = new AsyncCreateVisitor();
     visitor.accept(program);
     setNumEntriesInAsyncFragmentLoader(visitor.entryCount);
     program.setRunAsyncReplacements(runAsyncReplacements);
+    new ReplaceRunAsyncResources().accept(program);
+    if (errorsFound) {
+      throw new UnableToCompleteException();
+    }
   }
 
   private JClassType getFragmentLoader(int fragmentNumber) {
