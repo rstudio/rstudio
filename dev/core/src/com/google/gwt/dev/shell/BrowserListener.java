@@ -33,6 +33,13 @@ import java.net.UnknownHostException;
  */
 public class BrowserListener {
 
+  /**
+   * Get the endpoint identifier (in form host:port) for this listener.
+   * 
+   * @param browserChannelPort
+   * @throws RuntimeException if the local host's address cannot be determined
+   * @return a string of the form host:port
+   */
   public static String computeEndpointIdentifier(int browserChannelPort) {
     try {
       return InetAddress.getLocalHost().getHostAddress() + ":"
@@ -42,6 +49,13 @@ public class BrowserListener {
     }
   }
 
+  /**
+   * Get a query parameter to be added to the URL that specifies the address
+   * of this listener.
+   * 
+   * @param endpointIdentifier
+   * @return a query parameter
+   */
   public static String getDevModeURLParams(String endpointIdentifier) {
     return "gwt.codesvr=" + endpointIdentifier;
   }
@@ -54,6 +68,10 @@ public class BrowserListener {
 
   /**
    * Listens for new connections from browsers.
+   * 
+   * @param logger 
+   * @param port 
+   * @param handler 
    */
   public BrowserListener(final TreeLogger logger, int port,
       final SessionHandler handler) {
@@ -97,7 +115,7 @@ public class BrowserListener {
           }
         }
       };
-      listenThread.setName("Hosted mode listener");
+      listenThread.setName("Code server listener");
       listenThread.setDaemon(true);
     } catch (BindException e) {
       logger.log(TreeLogger.ERROR, "Unable to bind socket on port " + port

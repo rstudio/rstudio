@@ -61,6 +61,10 @@ public class BrowserChannelServer extends BrowserChannel
     }
   }
 
+  /**
+   * Full qualified class name of JavaScriptObject.  This must be a string
+   * because this class is in a different class loader.
+   */
   public static final String JSO_CLASS = "com.google.gwt.core.client.JavaScriptObject";
 
   private static Map<String, byte[]> iconCache = new HashMap<String, byte[]>();
@@ -81,6 +85,15 @@ public class BrowserChannelServer extends BrowserChannel
 
   private int protocolVersion = -1;
 
+  /**
+   * Create a code server for the supplied socket.
+   * 
+   * @param initialLogger
+   * @param socket
+   * @param handler
+   * @param ignoreRemoteDeath
+   * @throws IOException
+   */
   public BrowserChannelServer(TreeLogger initialLogger, Socket socket,
       SessionHandler handler, boolean ignoreRemoteDeath) throws IOException {
     super(socket, new ServerObjectRefFactory());
@@ -99,6 +112,11 @@ public class BrowserChannelServer extends BrowserChannel
     init(initialLogger);
   }
 
+  /**
+   * Indicate that Java no longer has references to the supplied JS objects.
+   * 
+   * @param ids array of JS object IDs that have been freeded
+   */
   public void freeJsValue(int[] ids) {
     try {
       new FreeMessage(this, ids).send();
@@ -109,6 +127,9 @@ public class BrowserChannelServer extends BrowserChannel
     }
   }
 
+  /**
+   * @return the table of Java objects which have been sent to the browser.
+   */
   public ServerObjectsTable getJavaObjectsExposedInBrowser() {
     return javaObjectsInBrowser;
   }
@@ -177,6 +198,11 @@ public class BrowserChannelServer extends BrowserChannel
     }
   }
 
+  /**
+   * Load the supplied JSNI code into the browser.
+   * 
+   * @param jsni JSNI source to load into the browser
+   */
   public void loadJsni(String jsni) {
     try {
       LoadJsniMessage jsniMessage = new LoadJsniMessage(this, jsni);
@@ -204,6 +230,11 @@ public class BrowserChannelServer extends BrowserChannel
     }
   }
 
+  /**
+   * Close the connection to the browser.
+   * 
+   * @throws IOException
+   */
   public void shutdown() throws IOException {
     QuitMessage.send(this);
   }
@@ -340,8 +371,8 @@ public class BrowserChannelServer extends BrowserChannel
       }
     }
     Thread.currentThread().setName(
-        "Hosting " + moduleName + " for " + userAgent + " on " + url + " @ "
-        + sessionKey);
+        "Code server for " + moduleName + " from " + userAgent + " on " + url
+        + " @ " + sessionKey);
     logger = handler.loadModule(logger, this, moduleName, userAgent, url,
         tabKey, sessionKey, iconBytes);
     try {
@@ -473,7 +504,7 @@ public class BrowserChannelServer extends BrowserChannel
     this.logger = initialLogger;
     Thread thread = new Thread(this);
     thread.setDaemon(true);
-    thread.setName("Hosted mode worker");
+    thread.setName("Code server (initializing)");
     thread.start();
   }
 
