@@ -94,6 +94,18 @@ public abstract class AbstractRemoteServiceServlet extends HttpServlet {
    * @param e the exception which was thrown
    */
   protected void doUnexpectedFailure(Throwable e) {
+    try {
+      getThreadLocalResponse().reset();
+    } catch (IllegalStateException ex) {
+      /*
+       * If we can't reset the request, the only way to signal that something
+       * has gone wrong is to throw an exception from here. It should be the
+       * case that we call the user's implementation code before emitting data
+       * into the response, so the only time that gets tripped is if the object
+       * serialization code blows up.
+       */
+      throw new RuntimeException("Unable to report failure", e);
+    }
     ServletContext servletContext = getServletContext();
     RPCServletUtils.writeResponseForUnexpectedFailure(servletContext,
         getThreadLocalResponse(), e);

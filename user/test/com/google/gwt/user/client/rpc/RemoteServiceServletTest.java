@@ -206,4 +206,26 @@ public class RemoteServiceServletTest extends RpcTestBase {
     });
     assertTrue(req.isPending());
   }
+
+  /**
+   * Verify behavior when the RPC method throws a RuntimeException (possibly one
+   * unknown to the client).
+   */
+  public void testUnknownRuntimeException() {
+    RemoteServiceServletTestServiceAsync service = getAsyncService();
+
+    delayTestFinishForRpc();
+
+    service.throwUnknownRuntimeException(new AsyncCallback<Void>() {
+
+      public void onFailure(Throwable caught) {
+        assertTrue(caught instanceof InvocationException);
+        finishTest();
+      }
+
+      public void onSuccess(Void result) {
+        fail();
+      }
+    });
+  }
 }

@@ -258,7 +258,12 @@ public class RPCServletUtils {
     try {
       response.setContentType("text/plain");
       response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-      response.getWriter().write(GENERIC_FAILURE_MSG);
+      try {
+        response.getOutputStream().write(GENERIC_FAILURE_MSG.getBytes("UTF-8"));
+      } catch (IllegalStateException e) {
+        // Handle the (unexpected) case where getWriter() was previously used
+        response.getWriter().write(GENERIC_FAILURE_MSG);
+      }
     } catch (IOException ex) {
       servletContext.log(
           "respondWithUnexpectedFailure failed while sending the previous failure to the client",

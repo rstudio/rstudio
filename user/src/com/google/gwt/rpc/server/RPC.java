@@ -210,8 +210,13 @@ public class RPC {
       throw securityException;
     } catch (InvocationTargetException e) {
       // Try to encode the caught exception
-      //
       Throwable cause = e.getCause();
+
+      // Don't allow random RuntimeExceptions to be thrown back to the client
+      if (cause instanceof RuntimeException) {
+        throw new SerializationException(
+            "RuntimeException thrown by service method", cause);
+      }
 
       streamResponse(clientOracle, cause, sink, true);
     }

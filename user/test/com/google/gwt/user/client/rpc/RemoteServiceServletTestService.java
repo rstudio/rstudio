@@ -25,4 +25,6 @@ public interface RemoteServiceServletTestService extends RemoteService {
   void testExpectCustomHeader();
 
   void testExpectPermutationStrongName(String expectedStrongName);
+
+  void throwUnknownRuntimeException();
 }

@@ -26,6 +26,15 @@ import javax.servlet.http.HttpServletRequest;
 public class RemoteServiceServletTestServiceImplBase extends
     HybridServiceServlet implements RemoteServiceServletTestService {
 
+  /**
+   * A RuntimeException the client code shouldn't know anything about.
+   */
+  public static class FooException extends RuntimeException {
+    public FooException() {
+      super("This is OK.  Simulating random backend code exception.");
+    }
+  }
+
   public void test() {
   }
 
@@ -45,5 +54,9 @@ public class RemoteServiceServletTestServiceImplBase extends
       throw new RuntimeException(expectedStrongName + " != "
           + getPermutationStrongName());
     }
+  }
+
+  public void throwUnknownRuntimeException() {
+    throw new FooException();
   }
 }
