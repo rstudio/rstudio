@@ -236,6 +236,47 @@ public class JsniCheckerTest extends CheckerTestCase {
         + "type 'long' is not safe to access in JSNI code");
   }
 
+  public void testInnerNew() {
+    StringBuffer code = new StringBuffer();
+    code.append("public class Buggy {\n");
+    code.append("  class Inner {\n");
+    code.append("    long x = 3;\n");
+    code.append("    Inner(boolean b) { };\n");
+    code.append("  }\n");
+    code.append("  native void jsniMeth() /*-{\n");
+    code.append("    $wnd.alert(@Buggy.Inner::new(Z)(true).toString());\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+
+    // Cannot resolve, missing synthetic enclosing instance.
+    shouldGenerateWarning(code, 7, "Referencing method 'Buggy.Inner.new(Z)': "
+        + "unable to resolve method, expect subsequent failures");
+
+    code = new StringBuffer();
+    code.append("public class Buggy {\n");
+    code.append("  static class Inner {\n");
+    code.append("    long x = 3;\n");
+    code.append("    Inner(boolean b) { };\n");
+    code.append("  }\n");
+    code.append("  native void jsniMeth() /*-{\n");
+    code.append("    $wnd.alert(@Buggy.Inner::new(Z)(this, true).toString());\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+    shouldGenerateNoWarning(code);
+
+    code = new StringBuffer();
+    code.append("public class Buggy {\n");
+    code.append("  class Inner {\n");
+    code.append("    long x = 3;\n");
+    code.append("    Inner(boolean b) { };\n");
+    code.append("  }\n");
+    code.append("  native void jsniMeth() /*-{\n");
+    code.append("    $wnd.alert(@Buggy.Inner::new(LBuggy;Z)(this, true).toString());\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+    shouldGenerateNoWarning(code);
+  }
+
   /**
    * The proper behavior here is a close call. In hosted mode, Java arrays are
    * completely unusable in JavaScript, so the current reasoning is to allow
@@ -307,6 +348,25 @@ public class JsniCheckerTest extends CheckerTestCase {
         code,
         4,
         "Referencing method 'Buggy.m': return type 'long' is not safe to access in JSNI code");
+  }
+
+  public void testNew() {
+    StringBuffer code = new StringBuffer();
+    code.append("class Buggy {\n");
+    code.append("  static native Object main() /*-{\n");
+    code.append("    return @Buggy::new()();\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+    shouldGenerateNoWarning(code);
+
+    code = new StringBuffer();
+    code.append("class Buggy {\n");
+    code.append("  Buggy(boolean b) { }\n");
+    code.append("  static native Object main() /*-{\n");
+    code.append("    return @Buggy::new(Z)(true);\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+    shouldGenerateNoWarning(code);
   }
 
   public void testNullField() {

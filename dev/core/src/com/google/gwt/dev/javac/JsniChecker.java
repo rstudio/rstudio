@@ -45,8 +45,10 @@ import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
+import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ProblemReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
+import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding;
@@ -307,9 +309,37 @@ public class JsniChecker {
 
     private MethodBinding getMethod(ReferenceBinding clazz, JsniRef jsniRef) {
       assert jsniRef.isMethod();
-      for (MethodBinding findMethod : clazz.getMethods(jsniRef.memberName().toCharArray())) {
-        if (paramTypesMatch(findMethod, jsniRef)) {
-          return findMethod;
+      String methodName = jsniRef.memberName();
+      if ("new".equals(methodName)) {
+        for (MethodBinding findMethod : clazz.getMethods(INIT_CTOR_CHARS)) {
+          StringBuilder methodSig = new StringBuilder();
+          if (clazz instanceof NestedTypeBinding) {
+            // Match synthetic args for enclosing instances.
+            NestedTypeBinding nestedBinding = (NestedTypeBinding) clazz;
+            if (nestedBinding.enclosingInstances != null) {
+              for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
+                SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
+                methodSig.append(arg.type.signature());
+              }
+            }
+          }
+          if (findMethod.parameters != null) {
+            for (TypeBinding binding : findMethod.parameters) {
+              methodSig.append(binding.signature());
+            }
+          }
+          if (methodSig.toString().equals(jsniRef.paramTypesString())) {
+            return findMethod;
+          }
+        }
+      } else {
+        while (clazz != null) {
+          for (MethodBinding findMethod : clazz.getMethods(methodName.toCharArray())) {
+            if (paramTypesMatch(findMethod, jsniRef)) {
+              return findMethod;
+            }
+          }
+          clazz = clazz.superclass();
         }
       }
       return null;
@@ -373,6 +403,8 @@ public class JsniChecker {
       return String.valueOf(type.shortReadableName());
     }
   }
+
+  private static final char[] INIT_CTOR_CHARS = "<init>".toCharArray();
 
   private static final char[][] UNSAFE_LONG_ANNOTATION_CHARS = CharOperation.splitOn(
       '.', UnsafeNativeLong.class.getName().toCharArray());
