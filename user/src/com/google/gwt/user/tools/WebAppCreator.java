@@ -27,6 +27,7 @@ import com.google.gwt.user.tools.util.CreatorUtilities;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
+import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
@@ -61,6 +62,7 @@ public final class WebAppCreator {
       registerHandler(new ArgHandlerOutDirExtension());
       registerHandler(new ArgHandlerNoEclipse());
       registerHandler(new ArgHandlerOnlyEclipse());
+      registerHandler(new ArgHandlerJUnitPath());
     }
 
     @Override
@@ -174,6 +176,45 @@ public final class WebAppCreator {
     }
   }
 
+  private final class ArgHandlerJUnitPath extends ArgHandlerString {
+
+    @Override
+    public String[] getDefaultArgs() {
+      return null;
+    }
+
+    @Override
+    public String getPurpose() {
+      return "Specifies the path to your junit.jar (optional)";
+    }
+
+    @Override
+    public String getTag() {
+      return "-junit";
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[] {"pathToJUnitJar"};
+    }
+
+    @Override
+    public boolean isRequired() {
+      return false;
+    }
+
+    @Override
+    public boolean setString(String str) {
+      File f = new File(str);
+      if (!f.exists() || !f.isFile()) {
+        System.err.println("File not found: " + str);
+        return false;
+      }
+      junitPath = str;
+      return true;
+    }
+  }
+
   private static final class FileCreator {
     private final File destDir;
     private final String destName;
@@ -203,6 +244,7 @@ public final class WebAppCreator {
   private boolean onlyEclipse;
   private File outDir;
   private boolean overwrite = false;
+  private String junitPath = null;
 
   /**
    * Create the sample app.
@@ -225,13 +267,19 @@ public final class WebAppCreator {
       gwtModuleDtd = "\n<!DOCTYPE module PUBLIC \"-//Google Inc.//DTD Google Web Toolkit "
           + About.getGwtVersionNum()
           + "//EN\" \"http://google-web-toolkit.googlecode.com/svn/tags/"
-          + About.getGwtVersionNum() + "/distro-source/core/src/gwt-module.dtd\">";
+          + About.getGwtVersionNum()
+          + "/distro-source/core/src/gwt-module.dtd\">";
     }
 
     // Compute module package and name.
     int pos = moduleName.lastIndexOf('.');
     String modulePackageName = moduleName.substring(0, pos);
     String moduleShortName = moduleName.substring(pos + 1);
+
+    // pro-actively let user know that this script can also create tests.
+    if (junitPath == null) {
+      System.err.println("Not creating tests because -junit argument was not specified.\n");
+    }
 
     // Compute module name and directories
     File srcDir = Utility.getDirectory(outDir, "src", true);
@@ -242,6 +290,8 @@ public final class WebAppCreator {
         '.', '/'), true);
     File clientDir = Utility.getDirectory(moduleDir, "client", true);
     File serverDir = Utility.getDirectory(moduleDir, "server", true);
+    File clientTestDir = Utility.getDirectory(outDir, "test/"
+        + modulePackageName.replace('.', '/') + "/client", true);
 
     // Create a map of replacements
     Map<String, String> replacements = new HashMap<String, String>();
@@ -280,6 +330,26 @@ public final class WebAppCreator {
     }
     replacements.put("@antEclipseRule", antEclipseRule);
 
+    {
+      String testTargetsBegin = "";
+      String testTargetsEnd = "";
+      String junitJarPath = junitPath;
+      String eclipseTestDir = "";
+      if (junitPath != null) {
+        eclipseTestDir = "\n   <classpathentry kind=\"src\" path=\"test\"/>";
+      } else {
+        testTargetsBegin = "\n<!--"
+            + "\n"
+            + "Test targets suppressed because -junit argument was not specified when running webAppCreator.\n";
+        testTargetsEnd = "-->\n";
+        junitJarPath = "path_to_the_junit_jar";
+      }
+      replacements.put("@testTargetsBegin", testTargetsBegin);
+      replacements.put("@testTargetsEnd", testTargetsEnd);
+      replacements.put("@junitJar", junitJarPath);
+      replacements.put("@eclipseTestDir", eclipseTestDir);
+    }
+
     List<FileCreator> files = new ArrayList<FileCreator>();
     List<FileCreator> libs = new ArrayList<FileCreator>();
     if (!onlyEclipse) {
@@ -299,6 +369,11 @@ public final class WebAppCreator {
           "RpcServerTemplate.java"));
       files.add(new FileCreator(outDir, "build.xml", "project.ant.xml"));
       files.add(new FileCreator(outDir, "README.txt", "README.txt"));
+      if (junitPath != null) {
+        // create the test file.
+        files.add(new FileCreator(clientTestDir, moduleShortName + "Test"
+            + ".java", "JUnitClassTemplate.java"));
+      }
     }
     if (!noEclipse) {
       assert new File(gwtDevPath).isAbsolute();
@@ -307,6 +382,12 @@ public final class WebAppCreator {
       files.add(new FileCreator(outDir, ".classpath", ".classpath"));
       files.add(new FileCreator(outDir, moduleShortName + ".launch",
           "App.launch"));
+      if (junitPath != null) {
+        files.add(new FileCreator(outDir, moduleShortName + "Test-dev.launch",
+            "JUnit-dev.launch"));
+        files.add(new FileCreator(outDir, moduleShortName + "Test-prod.launch",
+            "JUnit-prod.launch"));
+      }
     }
 
     // copy source files, replacing the content as needed

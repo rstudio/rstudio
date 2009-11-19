@@ -1,3 +1,0 @@
-#!/bin/sh
-APPDIR=`dirname $0`;
-java @vmargs -Dgwt.args="-out www-test" -Xmx256M -cp "$APPDIR/src:$APPDIR/test:$APPDIR/war/WEB-INF/classes:@junitPath:@gwtUserPath:@gwtDevPath@extraClassPathsColon" junit.textui.TestRunner @clientPackage.@className "$@";

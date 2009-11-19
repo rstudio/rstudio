@@ -33,6 +33,9 @@ To launch your web app in GWT development mode, go to the Run menu and choose:
 
   You can now use the built-in debugger to debug your web app in development mode.
 
+If you supplied the junit path when invoking webAppCreator, you should see
+launch configurations for running your tests in development and production
+mode.
 
 -- Option B: Build from the command line with Ant --
 
@@ -48,6 +51,9 @@ To compile your project for deployment, just type 'ant'.
 
 To compile and also bundle into a .war file, type 'ant war'.
 
+If you supplied the junit path when invoking webAppCreator, you can type 'ant
+test' to run tests in development and production mode.
+ 
 For a full listing of other targets, type 'ant -p'.
 
 -- Option C: Using another IDE --

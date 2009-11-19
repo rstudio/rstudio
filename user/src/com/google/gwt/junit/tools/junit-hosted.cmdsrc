@@ -1,1 +1,0 @@
-@java -Dgwt.args="-out www-test" -Xmx256M -cp "%~dp0\src;%~dp0\test;%~dp0\war\WEB-INF\classes;@junitPath;@gwtUserPath;@gwtDevPath@extraClassPathsSemicolon" junit.textui.TestRunner @clientPackage.@className %*
