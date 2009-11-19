@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Collection;
@@ -33,7 +34,7 @@ public class CookieTest extends GWTTestCase {
   public void test() {
     // Make the cookie expire in one minute, so that they don't hang around
     // past the end of this test.
-    Date expires = new Date(new Date().getTime() + (60 * 1000));
+    Date expires = new Date(getClientTime() + (60 * 1000));
 
     // Test setting a simple cookie.
     Cookies.setCookie("foo", "bar", expires);
@@ -70,8 +71,8 @@ public class CookieTest extends GWTTestCase {
     final String sessionCookie = "shouldNotExpire" + uniqueId;
 
     // Test that the cookie expires in 5 seconds
-    Date expiresEarly = new Date(new Date().getTime() + (5 * 1000));
-    Date expiresLate  = new Date(new Date().getTime() + (60 * 1000));
+    Date expiresEarly = new Date(getClientTime() + (5 * 1000));
+    Date expiresLate  = new Date(getClientTime() + (60 * 1000));
     Cookies.setCookie(earlyCookie, "early", expiresEarly);
     Cookies.setCookie(lateCookie, "late", expiresLate);
     Cookies.setCookie(sessionCookie, "forever", null);
@@ -279,4 +280,22 @@ public class CookieTest extends GWTTestCase {
     cookies = Cookies.getCookieNames();
     assertEquals(curCount, cookies.size());
   }
+
+  /**
+   * Get the current time in milliseconds from the client. Some tests rely on
+   * exact timings that will fail in development mode if the current time on the
+   * host and client are off by more than 1000ms.
+   * 
+   * @return the time on the client
+   */
+  private long getClientTime() {
+    if (GWT.isScript()) {
+      return (new Date()).getTime();
+    }
+    return (long) getClientTimeImpl();
+  }
+
+  private native double getClientTimeImpl() /*-{
+    return (new Date()).getTime();
+  }-*/;
 }
