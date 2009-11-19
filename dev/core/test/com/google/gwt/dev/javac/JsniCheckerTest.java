@@ -176,7 +176,28 @@ public class JsniCheckerTest extends CheckerTestCase {
     code.append("    @D::bar;\n");
     code.append("  }-*/;\n");
     code.append("}\n");
+    shouldGenerateNoWarning(code);
 
+    // Check inherited suppress warnings.
+    code = new StringBuffer();
+    code.append("@Deprecated class D {\n");
+    code.append("  int bar;\n");
+    code.append("}\n");
+    code.append("@SuppressWarnings(\"deprecation\")\n");
+    code.append("class Buggy {\n");
+    code.append("  @Deprecated void foo(){}\n");
+    code.append("  @Deprecated int bar;\n");
+    code.append("  native void jsniMethod1() /*-{\n");
+    code.append("    @Buggy::foo();\n");
+    code.append("    @Buggy::bar;\n");
+    code.append("    @D::bar;\n");
+    code.append("  }-*/;\n");
+    code.append("  native void jsniMethod2() /*-{\n");
+    code.append("    @Buggy::foo();\n");
+    code.append("    @Buggy::bar;\n");
+    code.append("    @D::bar;\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
     shouldGenerateNoWarning(code);
   }
 

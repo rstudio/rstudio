@@ -39,10 +39,13 @@ import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.StringLiteral;
+import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeReference;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
+import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
@@ -56,6 +59,7 @@ import org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 /**
  * Tests for access to Java from JSNI. Issues a warning for:
@@ -90,6 +94,43 @@ public class JsniChecker {
           new JsniRefChecker(meth, hasUnsafeLongsAnnotation).check(jsniMethod.function());
         }
       }
+      suppressWarningsStack.pop();
+    }
+
+    public void endVisit(TypeDeclaration typeDeclaration, BlockScope scope) {
+      suppressWarningsStack.pop();
+    }
+
+    public void endVisit(TypeDeclaration typeDeclaration, ClassScope scope) {
+      suppressWarningsStack.pop();
+    }
+
+    public void endVisit(TypeDeclaration typeDeclaration,
+        CompilationUnitScope scope) {
+      suppressWarningsStack.pop();
+    }
+
+    @Override
+    public boolean visit(MethodDeclaration meth, ClassScope scope) {
+      suppressWarningsStack.push(getSuppressedWarnings(meth.annotations));
+      return true;
+    }
+
+    public boolean visit(TypeDeclaration typeDeclaration, BlockScope scope) {
+      suppressWarningsStack.push(getSuppressedWarnings(typeDeclaration.annotations));
+      return true;
+    }
+
+    @Override
+    public boolean visit(TypeDeclaration typeDeclaration, ClassScope scope) {
+      suppressWarningsStack.push(getSuppressedWarnings(typeDeclaration.annotations));
+      return true;
+    }
+
+    public boolean visit(TypeDeclaration typeDeclaration,
+        CompilationUnitScope scope) {
+      suppressWarningsStack.push(getSuppressedWarnings(typeDeclaration.annotations));
+      return true;
     }
 
     private void checkDecl(MethodDeclaration meth, ClassScope scope) {
@@ -125,13 +166,11 @@ public class JsniChecker {
     private transient SourceInfo errorInfo;
     private final boolean hasUnsafeLongsAnnotation;
     private final MethodDeclaration method;
-    private final Set<String> suppressWarnings;
 
     public JsniRefChecker(MethodDeclaration method,
         boolean hasUnsafeLongsAnnotation) {
       this.method = method;
       this.hasUnsafeLongsAnnotation = hasUnsafeLongsAnnotation;
-      this.suppressWarnings = getSuppressedWarnings(method);
     }
 
     public void check(JsFunction function) {
@@ -281,9 +320,11 @@ public class JsniChecker {
     }
 
     private void emitWarning(String category, String msg) {
-      if (suppressWarnings.contains(category)
-          || suppressWarnings.contains("all")) {
-        return;
+      for (Set<String> suppressWarnings : suppressWarningsStack) {
+        if (suppressWarnings.contains(category)
+            || suppressWarnings.contains("all")) {
+          return;
+        }
       }
       JsniCollector.reportJsniWarning(errorInfo, method, msg);
     }
@@ -345,40 +386,6 @@ public class JsniChecker {
       return null;
     }
 
-    private Set<String> getSuppressedWarnings(MethodDeclaration method) {
-      Annotation[] annotations = method.annotations;
-      if (annotations == null) {
-        return Sets.create();
-      }
-
-      for (Annotation a : annotations) {
-        if (SuppressWarnings.class.getName().equals(
-            CharOperation.toString(((ReferenceBinding) a.resolvedType).compoundName))) {
-          for (MemberValuePair pair : a.memberValuePairs()) {
-            if (String.valueOf(pair.name).equals("value")) {
-              Expression valueExpr = pair.value;
-              if (valueExpr instanceof StringLiteral) {
-                // @SuppressWarnings("Foo")
-                return Sets.create(((StringLiteral) valueExpr).constant.stringValue().toLowerCase(Locale.ENGLISH));
-              } else if (valueExpr instanceof ArrayInitializer) {
-                // @SuppressWarnings({ "Foo", "Bar"})
-                ArrayInitializer ai = (ArrayInitializer) valueExpr;
-                String[] values = new String[ai.expressions.length];
-                for (int i = 0, j = values.length; i < j; i++) {
-                  values[i] = ((StringLiteral) ai.expressions[i]).constant.stringValue().toLowerCase(Locale.ENGLISH);
-                }
-                return Sets.create(values);
-              } else {
-                throw new InternalCompilerException(
-                    "Unable to analyze SuppressWarnings annotation");
-              }
-            }
-          }
-        }
-      }
-      return Sets.create();
-    }
-
     private boolean looksLikeAnonymousClass(JsniRef jsniRef) {
       char[][] compoundName = getCompoundName(jsniRef);
       for (char[] part : compoundName) {
@@ -420,8 +427,42 @@ public class JsniChecker {
     new JsniChecker(cud, typeResolver, jsniMethods).check();
   }
 
+  static Set<String> getSuppressedWarnings(Annotation[] annotations) {
+    if (annotations != null) {
+      for (Annotation a : annotations) {
+        if (SuppressWarnings.class.getName().equals(
+            CharOperation.toString(((ReferenceBinding) a.resolvedType).compoundName))) {
+          for (MemberValuePair pair : a.memberValuePairs()) {
+            if (String.valueOf(pair.name).equals("value")) {
+              Expression valueExpr = pair.value;
+              if (valueExpr instanceof StringLiteral) {
+                // @SuppressWarnings("Foo")
+                return Sets.create(((StringLiteral) valueExpr).constant.stringValue().toLowerCase(
+                    Locale.ENGLISH));
+              } else if (valueExpr instanceof ArrayInitializer) {
+                // @SuppressWarnings({ "Foo", "Bar"})
+                ArrayInitializer ai = (ArrayInitializer) valueExpr;
+                String[] values = new String[ai.expressions.length];
+                for (int i = 0, j = values.length; i < j; i++) {
+                  values[i] = ((StringLiteral) ai.expressions[i]).constant.stringValue().toLowerCase(
+                      Locale.ENGLISH);
+                }
+                return Sets.create(values);
+              } else {
+                throw new InternalCompilerException(
+                    "Unable to analyze SuppressWarnings annotation");
+              }
+            }
+          }
+        }
+      }
+    }
+    return Sets.create();
+  }
+
   private final CompilationUnitDeclaration cud;
   private final Map<AbstractMethodDeclaration, JsniMethod> jsniMethods;
+  private final Stack<Set<String>> suppressWarningsStack = new Stack<Set<String>>();
   private final TypeResolver typeResolver;
 
   private JsniChecker(CompilationUnitDeclaration cud,
