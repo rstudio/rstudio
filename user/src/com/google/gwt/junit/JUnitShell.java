@@ -148,7 +148,7 @@ public class JUnitShell extends GWTShell {
       registerHandler(new ArgHandlerFlag() {
         @Override
         public String getPurpose() {
-          return "Causes your test to run in -noserver hosted mode (defaults to hosted mode)";
+          return "Causes your test to run in -noserver development mode (defaults to development mode)";
         }
 
         @Override
@@ -166,7 +166,7 @@ public class JUnitShell extends GWTShell {
       registerHandler(new ArgHandlerFlag() {
         @Override
         public String getPurpose() {
-          return "Causes your test to run in web (compiled) mode (defaults to hosted mode)";
+          return "Causes your test to run in web (compiled) mode (defaults to development mode)";
         }
 
         @Override
@@ -648,7 +648,7 @@ public class JUnitShell extends GWTShell {
   private TestInfo currentTestInfo;
 
   /**
-   * True if we are running the test in hosted mode.
+   * True if we are running the test in development mode.
    */
   private boolean developmentMode = true;
 
@@ -689,7 +689,7 @@ public class JUnitShell extends GWTShell {
   private String[] remoteUserAgents;
 
   /**
-   * What type of test we're running; Local hosted, local web, or remote web.
+   * What type of test we're running; Local development, local web, or remote web.
    */
   private RunStyle runStyle = null;
 
@@ -747,7 +747,7 @@ public class JUnitShell extends GWTShell {
         + (standardsMode ? "/junit-standards.html" : "/junit.html");
     if (developmentMode) {
       // CHECKSTYLE_OFF
-      url += "?gwt.hosted=" + localhost + ":" + codeServerPort;
+      url += "?gwt.codesvr=" + localhost + ":" + codeServerPort;
       // CHECKSTYLE_ON
     }
     return url;
@@ -933,7 +933,7 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
-   * Accessor method to HostedModeBase.setHeadless -- without this, we get
+   * Accessor method to DevModeBase.setHeadless -- without this, we get
    * IllegalAccessError from the -notHeadless arg handler. Compiler bug?
    * 
    * @param headlessMode
