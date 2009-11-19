@@ -195,7 +195,9 @@ public class JSONObject extends JSONValue {
   private native void addAllKeys(Collection<String> s) /*-{
     var jsObject = this.@com.google.gwt.json.client.JSONObject::jsObject;
     for (var key in jsObject) {
-      s.@java.util.Collection::add(Ljava/lang/Object;)(key);
+      if (jsObject.hasOwnProperty(key)) {
+        s.@java.util.Collection::add(Ljava/lang/Object;)(key);
+      }
     }
   }-*/;
 
@@ -213,7 +215,9 @@ public class JSONObject extends JSONValue {
     var jsObject = this.@com.google.gwt.json.client.JSONObject::jsObject;
     var i = 0;
     for (var key in jsObject) {
-      result[i++] = key;
+      if (jsObject.hasOwnProperty(key)) {
+        result[i++] = key;
+      }
     }
     return result;
   }-*/;
@@ -222,15 +226,26 @@ public class JSONObject extends JSONValue {
     var jsObject = this.@com.google.gwt.json.client.JSONObject::jsObject;
     var size = 0;
     for (var key in jsObject) {
-      ++size;
+      if (jsObject.hasOwnProperty(key)) {
+        ++size;
+      }
     }
     return size;
   }-*/;
 
   private native JSONValue get0(String key) /*-{
-    var v = this.@com.google.gwt.json.client.JSONObject::jsObject[key];
+    var jsObject = this.@com.google.gwt.json.client.JSONObject::jsObject;
+    var v;
+    // In Firefox, jsObject.hasOwnProperty(key) fails when key is
+    // a String object rather than a primitive string.        
+    if (jsObject.hasOwnProperty(key)
+        || ((typeof key == 'object') && (key.constructor == String)
+        && jsObject.hasOwnProperty(key.toString()))) {
+      v = jsObject[key];
+    }
     var func = @com.google.gwt.json.client.JSONParser::typeMap[typeof v];
-    return func ? func(v) : @com.google.gwt.json.client.JSONParser::throwUnknownTypeException(Ljava/lang/String;)(typeof v);
+    var ret = func ? func(v) : @com.google.gwt.json.client.JSONParser::throwUnknownTypeException(Ljava/lang/String;)(typeof v);
+    return ret;
   }-*/;
 
   private native void put0(String key, JSONValue value) /*-{
