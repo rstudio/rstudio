@@ -15,14 +15,12 @@
  */
 package com.google.gwt.dev.javac.impl;
 
-import com.google.gwt.dev.javac.Shared;
-
-public class StaticJavaResource extends MockResource {
+public class StaticJavaResource extends MockJavaResource {
 
   private final CharSequence source;
 
-  public StaticJavaResource(String typeName, CharSequence source) {
-    super(Shared.toPath(typeName));
+  public StaticJavaResource(String qualifiedTypeName, CharSequence source) {
+    super(qualifiedTypeName);
     this.source = source;
   }
 

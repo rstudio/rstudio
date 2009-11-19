@@ -84,7 +84,9 @@ public class JsniChecker {
           checkDecl(meth, scope);
         }
         JsniMethod jsniMethod = jsniMethods.get(meth);
-        new JsniRefChecker(meth, hasUnsafeLongsAnnotation).check(jsniMethod.function());
+        if (jsniMethod != null) {
+          new JsniRefChecker(meth, hasUnsafeLongsAnnotation).check(jsniMethod.function());
+        }
       }
     }
 
@@ -156,6 +158,9 @@ public class JsniChecker {
       }
       FieldBinding target = getField(clazz, jsniRef);
       if (target == null) {
+        emitWarning("jsni", "Referencing field '" + jsniRef.className() + "."
+            + jsniRef.memberName()
+            + "': unable to resolve field, expect subsequent failures");
         return;
       }
       if (target.isDeprecated()) {
@@ -177,6 +182,9 @@ public class JsniChecker {
       assert jsniRef.isMethod();
       MethodBinding target = getMethod(clazz, jsniRef);
       if (target == null) {
+        emitWarning("jsni", "Referencing method '" + jsniRef.className() + "."
+            + jsniRef.memberSignature()
+            + "': unable to resolve method, expect subsequent failures");
         return;
       }
       if (target.isDeprecated()) {
@@ -262,7 +270,7 @@ public class JsniChecker {
         }
       } else {
         emitWarning("jsni", "Referencing class '" + className
-            + ": unable to resolve class, expect subsequent failures");
+            + "': unable to resolve class, expect subsequent failures");
       }
     }
 

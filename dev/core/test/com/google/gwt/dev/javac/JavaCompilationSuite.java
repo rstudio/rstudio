@@ -39,6 +39,7 @@ public class JavaCompilationSuite {
     suite.addTestSuite(JdtCompilerTest.class);
     suite.addTestSuite(JSORestrictionsTest.class);
     suite.addTestSuite(JsniCheckerTest.class);
+    suite.addTestSuite(JsniCollectorTest.class);
     suite.addTestSuite(TypeOracleMediatorTest.class);
 
     suite.addTestSuite(CollectClassDataTest.class);

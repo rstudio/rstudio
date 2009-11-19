@@ -17,7 +17,6 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.javac.impl.MockResource;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
@@ -48,7 +47,7 @@ public abstract class CompilationStateTestBase extends TestCase {
     boolean reallyLog = false;
     if (reallyLog) {
       AbstractTreeLogger logger = new PrintWriterTreeLogger();
-      logger.setMaxDetail(TreeLogger.ALL);
+      logger.setMaxDetail(TreeLogger.WARN);
       return logger;
     }
     return TreeLogger.NULL;
@@ -102,7 +101,7 @@ public abstract class CompilationStateTestBase extends TestCase {
   protected CompilationState state = isolatedBuilder.doBuildFrom(
       createTreeLogger(), oracle.getResources());
 
-  protected void addGeneratedUnits(MockJavaResource... sourceFiles) {
+  protected void addGeneratedUnits(MockResource... sourceFiles) {
     state.addGeneratedCompilationUnits(createTreeLogger(),
         getGeneratedUnits(sourceFiles));
   }
