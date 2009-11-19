@@ -899,6 +899,7 @@ public class JUnitShell extends GWTShell {
     return true;
   }
 
+  @Override
   protected boolean shouldAutoGenerateResources() {
     return shouldAutoGenerateResources;
   }

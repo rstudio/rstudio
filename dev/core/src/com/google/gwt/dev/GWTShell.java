@@ -200,7 +200,7 @@ public class GWTShell extends DevModeBase {
     TreeLogger logger = ui.getWebServerLogger("Tomcat", null);
     // TODO(bruce): make tomcat work in terms of the modular launcher
     String whyFailed = EmbeddedTomcatServer.start(isHeadless() ? getTopLogger()
-        : logger, getPort(), options);
+        : logger, getPort(), options, shouldAutoGenerateResources());
 
     if (whyFailed != null) {
       getTopLogger().log(TreeLogger.ERROR, "Starting Tomcat: " + whyFailed);
@@ -221,5 +221,9 @@ public class GWTShell extends DevModeBase {
         outputDir, "");
     linkerStack.produceOutput(linkLogger, artifacts, false, outFileSet);
     outFileSet.close();
+  }
+
+  protected boolean shouldAutoGenerateResources() {
+    return true;
   }
 }
