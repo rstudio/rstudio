@@ -52,9 +52,12 @@ public class JettyLauncher extends ServletContainerLauncher {
       RequestLog {
 
     private final TreeLogger logger;
+    private final TreeLogger.Type normalLogLevel;
 
-    public JettyRequestLogger(TreeLogger logger) {
+    public JettyRequestLogger(TreeLogger logger, TreeLogger.Type normalLogLevel) {
       this.logger = logger;
+      assert (normalLogLevel != null);
+      this.normalLogLevel = normalLogLevel;
     }
 
     /**
@@ -71,13 +74,28 @@ public class JettyLauncher extends ServletContainerLauncher {
       if (status >= 500) {
         logStatus = TreeLogger.ERROR;
         logHeaders = TreeLogger.INFO;
+      } else if (status == 404) {
+        if ("/favicon.ico".equals(request.getRequestURI())
+            && request.getQueryString() == null) {
+          /*
+           * We do not want to call the developer's attention to a 404 when
+           * requesting favicon.ico. This is a very common 404.
+           */
+          logStatus = normalLogLevel;
+          logHeaders = TreeLogger.DEBUG;
+        } else {
+          logStatus = TreeLogger.WARN;
+          logHeaders = TreeLogger.INFO;
+        }
+        logHeaders = TreeLogger.INFO;
       } else if (status >= 400) {
         logStatus = TreeLogger.WARN;
         logHeaders = TreeLogger.INFO;
       } else {
-        logStatus = TreeLogger.INFO;
+        logStatus = normalLogLevel;
         logHeaders = TreeLogger.DEBUG;
       }
+
       String userString = request.getRemoteUser();
       if (userString == null) {
         userString = "";
@@ -235,7 +253,7 @@ public class JettyLauncher extends ServletContainerLauncher {
       try {
         server.stop();
         server.setStopAtShutdown(false);
-        branch.log(TreeLogger.INFO, "Stopped successfully");
+        branch.log(TreeLogger.TRACE, "Stopped successfully");
       } catch (Exception e) {
         branch.log(TreeLogger.ERROR, "Unable to stop embedded Jetty server", e);
         throw new UnableToCompleteException();
@@ -405,8 +423,8 @@ public class JettyLauncher extends ServletContainerLauncher {
     private final TreeLogger logger;
 
     /**
-     * In the usual case of launching {@link com.google.gwt.dev.DevMode},
-     * this will always by the system app ClassLoader.
+     * In the usual case of launching {@link com.google.gwt.dev.DevMode}, this
+     * will always by the system app ClassLoader.
      */
     private final ClassLoader systemClassLoader = Thread.currentThread().getContextClassLoader();
 
@@ -458,6 +476,9 @@ public class JettyLauncher extends ServletContainerLauncher {
     System.setProperty("build.compiler", antJavaC);
   }
 
+  private final Object privateInstanceLock = new Object();
+  private TreeLogger.Type baseLogLevel;
+
   @Override
   public String getIconPath() {
     return null;
@@ -466,6 +487,17 @@ public class JettyLauncher extends ServletContainerLauncher {
   @Override
   public String getName() {
     return "Jetty";
+  }
+
+  /*
+   * TODO: This is a hack to pass the base log level to the SCL. We'll have to
+   * figure out a better way to do this for SCLs in general. Please do not
+   * depend on this method, as it is subject to change.
+   */
+  public void setBaseLogLevel(TreeLogger.Type baseLogLevel) {
+    synchronized (privateInstanceLock) {
+      this.baseLogLevel = baseLogLevel;
+    }
   }
 
   @Override
@@ -499,7 +531,7 @@ public class JettyLauncher extends ServletContainerLauncher {
         appRootDir.getAbsolutePath(), "/");
 
     RequestLogHandler logHandler = new RequestLogHandler();
-    logHandler.setRequestLog(new JettyRequestLogger(logger));
+    logHandler.setRequestLog(new JettyRequestLogger(logger, getBaseLogLevel()));
     logHandler.setHandler(wac);
     server.setHandler(logHandler);
     server.start();
@@ -528,6 +560,16 @@ public class JettyLauncher extends ServletContainerLauncher {
 
     if (appRootDir == null) {
       throw new NullPointerException("app root direcotry cannot be null");
+    }
+  }
+
+  /*
+   * TODO: This is a hack to pass the base log level to the SCL. We'll have to
+   * figure out a better way to do this for SCLs in general.
+   */
+  private TreeLogger.Type getBaseLogLevel() {
+    synchronized (privateInstanceLock) {
+      return this.baseLogLevel;
     }
   }
 

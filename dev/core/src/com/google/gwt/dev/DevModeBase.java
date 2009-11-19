@@ -143,7 +143,7 @@ abstract class DevModeBase implements DoneCallback {
 
     private static final String CODE_SERVER_PORT_TAG = "-codeServerPort";
     private static final String DEFAULT_PORT = "9997";
-    
+
     private final OptionCodeServerPort options;
 
     public ArgHandlerCodeServerPort(OptionCodeServerPort options) {
@@ -157,8 +157,8 @@ abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String getPurpose() {
-      return "Specifies the TCP port for the code server (defaults to " + 
-        DEFAULT_PORT + ")";
+      return "Specifies the TCP port for the code server (defaults to "
+          + DEFAULT_PORT + ")";
     }
 
     @Override
@@ -372,7 +372,7 @@ abstract class DevModeBase implements DoneCallback {
       return BrowserWidgetHostChecker.whitelistRegexes(whitelistStr);
     }
   }
-  
+
   protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir,
       OptionLogLevel, OptionGenDir, OptionNoServer, OptionPort,
       OptionCodeServerPort, OptionStartupURLs, OptionRemoteUI {
@@ -576,7 +576,7 @@ abstract class DevModeBase implements DoneCallback {
 
   private static final AtomicLong uniqueId = new AtomicLong();
 
-  public static String normalizeURL(String unknownUrlText, int port,
+  public static String normalizeURL(String unknownUrlText, int port, 
       String host) {
     if (unknownUrlText.indexOf(":") != -1) {
       // Assume it's a full url.
@@ -649,6 +649,7 @@ abstract class DevModeBase implements DoneCallback {
   protected final HostedModeBaseOptions options;
 
   protected DevModeUI ui = null;
+  protected TreeLogger.Type baseLogLevelForUI = null;
 
   /**
    * Cheat on the first load's refresh by assuming the module loaded by
@@ -679,6 +680,20 @@ abstract class DevModeBase implements DoneCallback {
     options.addStartupURL(url);
   }
 
+  /**
+   * Gets the base log level recommended by the UI for INFO-level messages. This
+   * method can only be called once {@link #createUI()} has been called. Please
+   * do not depend on this method, as it is subject to change.
+   */
+  public TreeLogger.Type getBaseLogLevelForUI() {
+    if (baseLogLevelForUI == null) {
+      throw new IllegalStateException(
+          "The ui must be created before calling this method.");
+    }
+
+    return baseLogLevelForUI;
+  }
+
   public final int getPort() {
     return options.getPort();
   }
@@ -703,8 +718,8 @@ abstract class DevModeBase implements DoneCallback {
         URL url = processUrl(startupURL);
         startupUrls.put(prenormalized, url);
       } catch (UnableToCompleteException e) {
-        logger.log(TreeLogger.ERROR,
-            "Unable to process startup URL " + startupURL, null);
+        logger.log(TreeLogger.ERROR, "Unable to process startup URL "
+            + startupURL, null);
       }
     }
     ui.setStartupUrls(startupUrls);
@@ -961,8 +976,8 @@ abstract class DevModeBase implements DoneCallback {
         return false;
       }
       options.setPort(resultPort);
-      getTopLogger().log(TreeLogger.TRACE, "Started web server on port "
-          + resultPort);
+      getTopLogger().log(TreeLogger.TRACE,
+          "Started web server on port " + resultPort);
     }
 
     return true;
@@ -979,18 +994,32 @@ abstract class DevModeBase implements DoneCallback {
     };
   }
 
+  /**
+   * Create the UI and set the base log level for the UI.
+   */
   private DevModeUI createUI() {
+    DevModeUI newUI = null;
+
     if (headlessMode) {
-      return new HeadlessUI(options);
+      newUI = new HeadlessUI(options);
     } else {
       if (options.useRemoteUI()) {
-        return new RemoteUI(options.getRemoteUIHost(),
+        newUI = new RemoteUI(options.getRemoteUIHost(),
             options.getRemoteUIHostPort(), options.getClientId(),
             options.getPort(), options.getCodeServerPort());
+        baseLogLevelForUI = TreeLogger.Type.TRACE;
       }
     }
 
-    return new SwingUI(options);
+    if (newUI == null) {
+      newUI = new SwingUI(options);
+    }
+
+    if (baseLogLevelForUI == null) {
+      baseLogLevelForUI = TreeLogger.Type.INFO;
+    }
+
+    return newUI;
   }
 
   /**

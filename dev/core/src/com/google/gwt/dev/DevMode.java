@@ -349,8 +349,17 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       TreeLogger serverLogger = ui.getWebServerLogger(getWebServerName(), null);
       serverLogger.log(TreeLogger.TRACE, "Starting HTTP on port " + getPort(),
           null);
-      server = options.getServletContainerLauncher().start(serverLogger,
-          getPort(), options.getWarDir());
+
+      ServletContainerLauncher scl = options.getServletContainerLauncher();
+      /*
+       * TODO: This is a hack to pass the base log level to the SCL. We'll have
+       * to figure out a better way to do this for SCLs in general.
+       */
+      if (scl instanceof JettyLauncher) {
+        ((JettyLauncher) scl).setBaseLogLevel(getBaseLogLevelForUI());
+      }
+
+      server = scl.start(serverLogger, getPort(), options.getWarDir());
       assert (server != null);
       return server.getPort();
     } catch (BindException e) {
