@@ -19,7 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 
 /**
  * Forks logging over two child loggers. This provides the graphics + file
- * logging of HostedModeBase's -logfile option.
+ * logging of DevModeBase's -logfile option.
  */
 public class CompositeTreeLogger extends TreeLogger {
 

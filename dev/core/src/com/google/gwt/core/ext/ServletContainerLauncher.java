@@ -20,7 +20,7 @@ import java.net.BindException;
 
 /**
  * Defines the service provider interface for launching servlet containers that
- * can be used by the GWT hosted mode.
+ * can be used by the GWT development mode.
  */
 public abstract class ServletContainerLauncher {
 
