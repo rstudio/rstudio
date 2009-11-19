@@ -210,17 +210,21 @@ public class GWTShell extends DevModeBase {
   }
 
   protected synchronized void produceOutput(TreeLogger logger,
-      StandardLinkerContext linkerStack, ArtifactSet artifacts, ModuleDef module)
-      throws UnableToCompleteException {
-    TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG, "Linking module '"
-        + module.getName() + "'");
-
-    File outputDir = options.getShellPublicGenDir(module);
-    outputDir.mkdirs();
-    OutputFileSetOnDirectory outFileSet = new OutputFileSetOnDirectory(
-        outputDir, "");
-    linkerStack.produceOutput(linkLogger, artifacts, false, outFileSet);
-    outFileSet.close();
+      StandardLinkerContext linkerStack, ArtifactSet artifacts,
+      ModuleDef module, boolean isRelink) throws UnableToCompleteException {
+    /*
+     * Legacy: in GWTShell we only copy generated artifacts into the public gen
+     * folder. Public files and "autogen" files have special handling (that
+     * needs to die).
+     */
+    if (isRelink) {
+      File outputDir = options.getShellPublicGenDir(module);
+      outputDir.mkdirs();
+      OutputFileSetOnDirectory outFileSet = new OutputFileSetOnDirectory(
+          outputDir, "");
+      linkerStack.produceOutput(logger, artifacts, false, outFileSet);
+      outFileSet.close();
+    }
   }
 
   protected boolean shouldAutoGenerateResources() {

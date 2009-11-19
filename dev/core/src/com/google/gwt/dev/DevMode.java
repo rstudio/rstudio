@@ -380,20 +380,17 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
   @Override
   protected synchronized void produceOutput(TreeLogger logger,
-      StandardLinkerContext linkerStack, ArtifactSet artifacts, ModuleDef module)
-      throws UnableToCompleteException {
-    TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG, "Linking module '"
-        + module.getName() + "'");
-
+      StandardLinkerContext linkerStack, ArtifactSet artifacts,
+      ModuleDef module, boolean isRelink) throws UnableToCompleteException {
     OutputFileSetOnDirectory outFileSet = new OutputFileSetOnDirectory(
         options.getWarDir(), module.getName() + "/");
-    linkerStack.produceOutput(linkLogger, artifacts, false, outFileSet);
+    linkerStack.produceOutput(logger, artifacts, false, outFileSet);
     outFileSet.close();
 
     if (options.getExtraDir() != null) {
       OutputFileSetOnDirectory extraFileSet = new OutputFileSetOnDirectory(
           options.getExtraDir(), module.getName() + "/");
-      linkerStack.produceOutput(linkLogger, artifacts, true, extraFileSet);
+      linkerStack.produceOutput(logger, artifacts, true, extraFileSet);
       extraFileSet.close();
     }
   }

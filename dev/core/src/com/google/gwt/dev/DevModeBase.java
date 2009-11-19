@@ -868,7 +868,7 @@ abstract class DevModeBase implements DoneCallback {
     StandardLinkerContext linkerStack = new StandardLinkerContext(linkLogger,
         module, options);
     ArtifactSet artifacts = linkerStack.invokeLink(linkLogger);
-    produceOutput(linkLogger, linkerStack, artifacts, module);
+    produceOutput(linkLogger, linkerStack, artifacts, module, false);
     return linkerStack;
   }
 
@@ -923,8 +923,8 @@ abstract class DevModeBase implements DoneCallback {
   }
 
   protected abstract void produceOutput(TreeLogger logger,
-      StandardLinkerContext linkerStack, ArtifactSet artifacts, ModuleDef module)
-      throws UnableToCompleteException;
+      StandardLinkerContext linkerStack, ArtifactSet artifacts,
+      ModuleDef module, boolean isRelink) throws UnableToCompleteException;
 
   protected final void setDone() {
     blockUntilDone.release();
@@ -1010,6 +1010,6 @@ abstract class DevModeBase implements DoneCallback {
 
     ArtifactSet artifacts = linkerContext.invokeRelink(linkLogger,
         newlyGeneratedArtifacts);
-    produceOutput(linkLogger, linkerContext, artifacts, module);
+    produceOutput(linkLogger, linkerContext, artifacts, module, true);
   }
 }
