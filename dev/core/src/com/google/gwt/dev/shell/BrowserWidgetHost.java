@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.ModuleHandle;
 
 /**
  * Interface that unifies access to the <code>BrowserWidget</code>,
@@ -25,9 +25,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 public interface BrowserWidgetHost {
 
   /**
-   * For OOPHM.
+   * Create a logger for a module instance.
    * 
-   * @param logger
    * @param moduleName
    * @param userAgent
    * @param url URL of top-level window, may be null for old browser plugins
@@ -37,16 +36,22 @@ public interface BrowserWidgetHost {
    * @param serverChannel connection from the client
    * @param userAgentIcon byte array containing an icon (which fits in 24x24)
    *     for this user agent or null if unavailable
+   * @return ModuleHandle instance -- caller is responsible for calling
+   *     {@link ModuleHandle#unload()} on it when done
    */
-  ModuleSpaceHost createModuleSpaceHost(TreeLogger logger, String moduleName,
-      String userAgent, String url, String tabKey, String sessionKey,
-      BrowserChannelServer serverChannel, byte[] userAgentIcon)
-      throws UnableToCompleteException;
-
-  TreeLogger getLogger();
+  ModuleHandle createModuleLogger(String moduleName, String userAgent,
+      String url, String tabKey, String sessionKey,
+      BrowserChannelServer serverChannel, byte[] userAgentIcon);
 
   /**
-   * For OOPHM.
+   * Create a ModuleSpaceHost for the specified module.
+   * 
+   * @param module ModuleHandle returned from a previous createModuleLogger
+   *     call.
+   * @param moduleName name of module to create
+   * @return ModuleSpaceHost instance
+   * @throws UnableToCompleteException 
    */
-  void unloadModule(ModuleSpaceHost moduleSpaceHost);
+  ModuleSpaceHost createModuleSpaceHost(ModuleHandle module, String moduleName)
+      throws UnableToCompleteException;
 }

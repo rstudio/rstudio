@@ -17,7 +17,6 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
@@ -38,7 +37,6 @@ import com.google.gwt.dev.shell.remoteui.RemoteUI;
 import com.google.gwt.dev.ui.DevModeUI;
 import com.google.gwt.dev.ui.DoneCallback;
 import com.google.gwt.dev.ui.DoneEvent;
-import com.google.gwt.dev.ui.DevModeUI.ModuleHandle;
 import com.google.gwt.dev.util.BrowserInfo;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
@@ -57,7 +55,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -77,22 +74,25 @@ abstract class DevModeBase implements DoneCallback {
    */
   public class UiBrowserWidgetHostImpl implements BrowserWidgetHost {
 
-    public ModuleSpaceHost createModuleSpaceHost(TreeLogger mainLogger,
-        String moduleName, String userAgent, String url, String tabKey,
-        String sessionKey, BrowserChannelServer serverChannel,
-        byte[] userAgentIcon) throws UnableToCompleteException {
+    public ModuleHandle createModuleLogger(String moduleName, String userAgent,
+        String url, String tabKey, String sessionKey,
+        BrowserChannelServer serverChannel, byte[] userAgentIcon) {
       if (sessionKey == null) {
         // if we don't have a unique session key, make one up
         sessionKey = randomString();
       }
-      TreeLogger logger = mainLogger;
       TreeLogger.Type maxLevel = options.getLogLevel();
       String agentTag = BrowserInfo.getShortName(userAgent);
       String remoteSocket = serverChannel.getRemoteEndpoint();
-      ModuleHandle module = ui.loadModule(userAgent, remoteSocket, url, tabKey,
-          moduleName, sessionKey, agentTag, userAgentIcon, maxLevel);
+      ModuleHandle module = ui.getModuleLogger(userAgent, remoteSocket, url,
+          tabKey, moduleName, sessionKey, agentTag, userAgentIcon, maxLevel);
+      return module;
+    }
+
+    public ModuleSpaceHost createModuleSpaceHost(ModuleHandle module,
+        String moduleName) throws UnableToCompleteException {
       // TODO(jat): add support for closing an active module
-      logger = module.getLogger();
+      TreeLogger logger = module.getLogger();
       try {
         // Try to find an existing loaded version of the module def.
         ModuleDef moduleDef = loadModule(logger, moduleName, true);
@@ -102,24 +102,11 @@ abstract class DevModeBase implements DoneCallback {
 
         ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(logger,
             moduleDef.getCompilationState(logger), moduleDef);
-
-        loadedModules.put(host, module);
         return host;
       } catch (RuntimeException e) {
         logger.log(TreeLogger.ERROR, "Exception initializing module", e);
-        ui.unloadModule(module);
+        module.unload();
         throw e;
-      }
-    }
-
-    public TreeLogger getLogger() {
-      return getTopLogger();
-    }
-
-    public void unloadModule(ModuleSpaceHost moduleSpaceHost) {
-      ModuleHandle module = loadedModules.remove(moduleSpaceHost);
-      if (module != null) {
-        ui.unloadModule(module);
       }
     }
   }
@@ -589,7 +576,8 @@ abstract class DevModeBase implements DoneCallback {
 
   private static final AtomicLong uniqueId = new AtomicLong();
 
-  public static String normalizeURL(String unknownUrlText, int port, String host) {
+  public static String normalizeURL(String unknownUrlText, int port,
+      String host) {
     if (unknownUrlText.indexOf(":") != -1) {
       // Assume it's a full url.
       return unknownUrlText;
@@ -676,8 +664,6 @@ abstract class DevModeBase implements DoneCallback {
 
   private boolean headlessMode = false;
 
-  private final Map<ModuleSpaceHost, ModuleHandle> loadedModules = new IdentityHashMap<ModuleSpaceHost, ModuleHandle>();
-
   private boolean started;
 
   private TreeLogger topLogger;
@@ -709,16 +695,19 @@ abstract class DevModeBase implements DoneCallback {
   public void launchStartupUrls(final TreeLogger logger) {
     ensureCodeServerListener();
     String startupURL = "";
-    try {
-      for (String prenormalized : options.getStartupURLs()) {
-        startupURL = normalizeURL(prenormalized, getPort(), getHost());
-        logger.log(TreeLogger.TRACE, "Starting URL: " + startupURL, null);
-        launchURL(startupURL);
+    Map<String, URL> startupUrls = new HashMap<String, URL>();
+    for (String prenormalized : options.getStartupURLs()) {
+      startupURL = normalizeURL(prenormalized, getPort(), getHost());
+      logger.log(TreeLogger.TRACE, "Starting URL: " + startupURL, null);
+      try {
+        URL url = processUrl(startupURL);
+        startupUrls.put(prenormalized, url);
+      } catch (UnableToCompleteException e) {
+        logger.log(TreeLogger.ERROR,
+            "Unable to process startup URL " + startupURL, null);
       }
-    } catch (UnableToCompleteException e) {
-      logger.log(TreeLogger.ERROR,
-          "Unable to open new window for startup URL: " + startupURL, null);
     }
+    ui.setStartupUrls(startupUrls);
   }
 
   /**
@@ -737,7 +726,7 @@ abstract class DevModeBase implements DoneCallback {
       // Eager AWT init for OS X to ensure safe coexistence with SWT.
       BootStrapPlatform.initGui();
 
-      if (startUp() && !options.useRemoteUI()) {
+      if (startUp()) {
         // The web server is running now, so launch browsers for startup urls.
         launchStartupUrls(getTopLogger());
       }
@@ -838,7 +827,7 @@ abstract class DevModeBase implements DoneCallback {
     if (listener == null) {
       codeServerPort = options.getCodeServerPort();
       listener = new BrowserListener(getTopLogger(), codeServerPort,
-          new OophmSessionHandler(browserHost));
+          new OophmSessionHandler(getTopLogger(), browserHost));
       listener.start();
       try {
         // save the port we actually used if it was auto
@@ -860,55 +849,6 @@ abstract class DevModeBase implements DoneCallback {
    */
   protected final boolean isHeadless() {
     return headlessMode;
-  }
-
-  protected void launchURL(String url) throws UnableToCompleteException {
-    /*
-     * TODO(jat): properly support launching arbitrary browsers -- need some UI
-     * API tweaks to support that.
-     */
-    URL parsedUrl = null;
-    try {
-      parsedUrl = new URL(url);
-      String path = parsedUrl.getPath();
-      String query = parsedUrl.getQuery();
-      String hash = parsedUrl.getRef();
-      String hostedParam = BrowserListener.getDevModeURLParams(listener.getEndpointIdentifier());
-      if (query == null) {
-        query = hostedParam;
-      } else {
-        query += '&' + hostedParam;
-      }
-      path += '?' + query;
-      if (hash != null) {
-        path += '#' + hash;
-      }
-      parsedUrl = new URL(parsedUrl.getProtocol(), parsedUrl.getHost(),
-          parsedUrl.getPort(), path);
-      url = parsedUrl.toExternalForm();
-    } catch (MalformedURLException e) {
-      getTopLogger().log(TreeLogger.ERROR, "Invalid URL " + url, e);
-      throw new UnableToCompleteException();
-    }
-    
-    final URL helpInfoUrl = parsedUrl;
-    getTopLogger().log(TreeLogger.INFO,
-        "Waiting for browser connection to " + url, null, new HelpInfo() {
-          @Override
-          public String getAnchorText() {
-            return "Launch default browser";
-          }
-
-          @Override
-          public String getPrefix() {
-            return "";
-          }
-
-          @Override
-          public URL getURL() {
-            return helpInfoUrl;
-          }
-        });
   }
 
   /**
@@ -951,6 +891,37 @@ abstract class DevModeBase implements DoneCallback {
     return moduleDef;
   }
 
+  protected URL processUrl(String url) throws UnableToCompleteException {
+    /*
+     * TODO(jat): properly support launching arbitrary browsers -- need some UI
+     * API tweaks to support that.
+     */
+    URL parsedUrl = null;
+    try {
+      parsedUrl = new URL(url);
+      String path = parsedUrl.getPath();
+      String query = parsedUrl.getQuery();
+      String hash = parsedUrl.getRef();
+      String hostedParam = BrowserListener.getDevModeURLParams(listener.getEndpointIdentifier());
+      if (query == null) {
+        query = hostedParam;
+      } else {
+        query += '&' + hostedParam;
+      }
+      path += '?' + query;
+      if (hash != null) {
+        path += '#' + hash;
+      }
+      parsedUrl = new URL(parsedUrl.getProtocol(), parsedUrl.getHost(),
+          parsedUrl.getPort(), path);
+      url = parsedUrl.toExternalForm();
+    } catch (MalformedURLException e) {
+      getTopLogger().log(TreeLogger.ERROR, "Invalid URL " + url, e);
+      throw new UnableToCompleteException();
+    }
+    return parsedUrl;
+  }
+
   protected abstract void produceOutput(TreeLogger logger,
       StandardLinkerContext linkerStack, ArtifactSet artifacts, ModuleDef module)
       throws UnableToCompleteException;
@@ -990,8 +961,8 @@ abstract class DevModeBase implements DoneCallback {
         return false;
       }
       options.setPort(resultPort);
-      getTopLogger().log(TreeLogger.TRACE,
-          "Started web server on port " + resultPort);
+      getTopLogger().log(TreeLogger.TRACE, "Started web server on port "
+          + resultPort);
     }
 
     return true;

@@ -156,9 +156,9 @@ public class BrowserChannelServerTest extends TestCase {
     }
 
     @Override
-    public TreeLogger loadModule(TreeLogger logger, BrowserChannel channel,
-        String moduleName, String userAgent, String url, String tabKey,
-        String sessionKey, byte[] userAgentIcon) {
+    public TreeLogger loadModule(BrowserChannel channel, String moduleName,
+        String userAgent, String url, String tabKey, String sessionKey,
+        byte[] userAgentIcon) {
       loadedModule = moduleName;
       this.moduleName = moduleName;
       this.userAgent = userAgent;
@@ -166,7 +166,7 @@ public class BrowserChannelServerTest extends TestCase {
       this.tabKey = tabKey;
       this.sessionKey = sessionKey;
       this.userAgentIcon = userAgentIcon;
-      return logger;
+      return new FailErrorLogger();
     }
 
     @Override

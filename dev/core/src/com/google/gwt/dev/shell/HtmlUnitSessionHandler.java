@@ -250,9 +250,9 @@ public class HtmlUnitSessionHandler extends SessionHandler {
   }
 
   @Override
-  public TreeLogger loadModule(TreeLogger logger, BrowserChannel channel,
-      String moduleName, String userAgent, String url, String tabKey,
-      String sessionKey, byte[] userAgentIcon) {
+  public TreeLogger loadModule(BrowserChannel channel, String moduleName,
+      String userAgent, String url, String tabKey, String sessionKey,
+      byte[] userAgentIcon) {
     throw new UnsupportedOperationException("loadModule must not be called");
   }
 

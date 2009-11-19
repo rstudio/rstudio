@@ -34,17 +34,16 @@ public class HeadlessUI extends DevModeUI {
   }
 
   @Override
-  public ModuleHandle loadModule(String userAgent, String remoteSocket,
+  public ModuleHandle getModuleLogger(String userAgent, String remoteSocket,
       String url, String tabKey, String moduleName, String sessionKey,
       String agentTag, byte[] agentIcon, Type logLevel) {
     return new ModuleHandle() {
       public TreeLogger getLogger() {
         return getConsoleLogger();
       }
-    };
-  }
 
-  @Override
-  public void unloadModule(ModuleHandle module) {
+      public void unload() {
+      }
+    };
   }
 }

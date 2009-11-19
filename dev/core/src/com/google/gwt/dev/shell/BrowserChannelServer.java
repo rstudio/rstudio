@@ -373,7 +373,7 @@ public class BrowserChannelServer extends BrowserChannel
     Thread.currentThread().setName(
         "Code server for " + moduleName + " from " + userAgent + " on " + url
         + " @ " + sessionKey);
-    logger = handler.loadModule(logger, this, moduleName, userAgent, url,
+    logger = handler.loadModule(this, moduleName, userAgent, url,
         tabKey, sessionKey, iconBytes);
     try {
       // send LoadModule response

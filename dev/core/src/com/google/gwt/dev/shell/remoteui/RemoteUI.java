@@ -17,6 +17,7 @@ package com.google.gwt.dev.shell.remoteui;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.dev.ModuleHandle;
 import com.google.gwt.dev.shell.BrowserListener;
 import com.google.gwt.dev.ui.DevModeUI;
 import com.google.gwt.dev.ui.DoneCallback;
@@ -85,7 +86,7 @@ public class RemoteUI extends DevModeUI implements
   }
 
   @Override
-  public ModuleHandle loadModule(String userAgent, String remoteSocket,
+  public ModuleHandle getModuleLogger(String userAgent, String remoteSocket,
       String url, String tabKey, String moduleName, String sessionKey,
       String agentTag, byte[] agentIcon, Type logLevel) {
 
@@ -99,6 +100,24 @@ public class RemoteUI extends DevModeUI implements
     ModuleHandle handle = new ModuleHandle() {
       public TreeLogger getLogger() {
         return moduleLogger;
+      }
+
+      public void unload() {
+        synchronized (modulesLock) {
+          if (!modules.contains(this)) {
+            return;
+          }
+        }
+
+        ViewerServiceTreeLogger moduleLogger = (ViewerServiceTreeLogger) (getLogger());
+
+        try {
+          viewerServiceClient.disconnectLog(moduleLogger.getLogHandle());
+        } finally {
+          synchronized (modulesLock) {
+            modules.remove(this);
+          }
+        }
       }
     };
     synchronized (modulesLock) {
@@ -153,24 +172,5 @@ public class RemoteUI extends DevModeUI implements
 
   public boolean supportsRestartWebServer() {
     return hasCallback(RestartServerEvent.getType());
-  }
-
-  @Override
-  public void unloadModule(ModuleHandle module) {
-    synchronized (modulesLock) {
-      if (!modules.contains(module)) {
-        return;
-      }
-    }
-
-    ViewerServiceTreeLogger moduleLogger = (ViewerServiceTreeLogger) (module.getLogger());
-
-    try {
-      viewerServiceClient.disconnectLog(moduleLogger.getLogHandle());
-    } finally {
-      synchronized (modulesLock) {
-        modules.remove(module);
-      }
-    }
   }
 }

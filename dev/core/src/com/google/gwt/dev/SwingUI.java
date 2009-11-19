@@ -16,6 +16,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.DevModeBase.HostedModeBaseOptions;
 import com.google.gwt.dev.WebServerPanel.RestartAction;
@@ -35,6 +36,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -77,6 +79,12 @@ public class SwingUI extends DevModeUI {
      */
     public ModulePanel getTab() {
       return tab;
+    }
+
+    public void unload() {
+      if (tab != null) {
+        tab.disconnect();
+      }
     }
   }
 
@@ -164,6 +172,36 @@ public class SwingUI extends DevModeUI {
   }
 
   @Override
+  public ModuleHandle getModuleLogger(String userAgent, String remoteSocket,
+      String url, String tabKey, String moduleName, String sessionKey,
+      String agentTag, byte[] agentIcon, TreeLogger.Type logLevel) {
+    // TODO(jat): add support for closing an active module
+    ModuleTabPanel tabPanel = null;
+    ModulePanel tab = null;
+    tabPanel = findModuleTab(userAgent, remoteSocket, url, tabKey,
+        moduleName, agentIcon);
+    tab = tabPanel.addModuleSession(logLevel, moduleName, sessionKey,
+        options.getLogFile(String.format("%s-%s-%d.log", moduleName, agentTag,
+            getNextSessionCounter(options.getLogDir()))));
+    TreeLogger logger = tab.getLogger();
+    TreeLogger branch = logger.branch(TreeLogger.INFO, "Loading module "
+        + moduleName);
+    if (url != null) {
+      branch.log(TreeLogger.INFO, "Top URL: " + url);
+    }
+    branch.log(TreeLogger.INFO, "User agent: " + userAgent);
+    branch.log(TreeLogger.TRACE, "Remote socket: " + remoteSocket);
+    if (tabKey != null) {
+      branch.log(TreeLogger.DEBUG, "Tab key: " + tabKey);
+    }
+    if (sessionKey != null) {
+      branch.log(TreeLogger.DEBUG, "Session key: " + sessionKey);
+    }
+    // TODO: Switch to a wait cursor?
+    return new SwingModuleHandle(logger, tab);
+  }
+
+  @Override
   public TreeLogger getTopLogger() {
     return topLogger;
   }
@@ -229,41 +267,30 @@ public class SwingUI extends DevModeUI {
   }
 
   @Override
-  public ModuleHandle loadModule(String userAgent, String remoteSocket,
-      String url, String tabKey, String moduleName, String sessionKey,
-      String agentTag, byte[] agentIcon, TreeLogger.Type logLevel) {
-    // TODO(jat): add support for closing an active module
-    ModuleTabPanel tabPanel = null;
-    ModulePanel tab = null;
-    tabPanel = findModuleTab(userAgent, remoteSocket, url, tabKey,
-        moduleName, agentIcon);
-    tab = tabPanel.addModuleSession(logLevel, moduleName, sessionKey,
-        options.getLogFile(String.format("%s-%s-%d.log", moduleName, agentTag,
-            getNextSessionCounter(options.getLogDir()))));
-    TreeLogger logger = tab.getLogger();
-    TreeLogger branch = logger.branch(TreeLogger.INFO, "Loading module "
-        + moduleName);
-    if (url != null) {
-      branch.log(TreeLogger.INFO, "Top URL: " + url);
-    }
-    branch.log(TreeLogger.INFO, "User agent: " + userAgent);
-    branch.log(TreeLogger.TRACE, "Remote socket: " + remoteSocket);
-    if (tabKey != null) {
-      branch.log(TreeLogger.DEBUG, "Tab key: " + tabKey);
-    }
-    if (sessionKey != null) {
-      branch.log(TreeLogger.DEBUG, "Session key: " + sessionKey);
-    }
-    // TODO: Switch to a wait cursor?
-    return new SwingModuleHandle(logger, tab);
-  }
+  public void setStartupUrls(Map<String, URL> urls) {
+    // TODO(jat): provide UI for selecting URLs and launching
+    ArrayList<String> keys = new ArrayList<String>(urls.keySet());
+    Collections.sort(keys);
+    for (String url : keys) {
+      final URL helpInfoUrl = urls.get(url);
+      getTopLogger().log(TreeLogger.INFO, "Waiting for browser connection to "
+          + helpInfoUrl.toExternalForm(), null,
+          new HelpInfo() {
+            @Override
+            public String getAnchorText() {
+              return "Launch default browser";
+            }
 
-  @Override
-  public void unloadModule(ModuleHandle module) {
-    SwingModuleHandle handle = (SwingModuleHandle) module;
-    Disconnectable tab = handle.getTab();
-    if (tab != null) {
-      tab.disconnect();
+            @Override
+            public String getPrefix() {
+              return "";
+            }
+
+            @Override
+            public URL getURL() {
+              return helpInfoUrl;
+            }
+          });
     }
   }
 

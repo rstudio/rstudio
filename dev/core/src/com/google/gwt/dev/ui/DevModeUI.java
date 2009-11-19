@@ -17,8 +17,10 @@ package com.google.gwt.dev.ui;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.dev.ModuleHandle;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,19 +29,6 @@ import java.util.Map;
  * alternate UIs can be implemented.
  */
 public abstract class DevModeUI {
-
-  /**
-   * Opaque handle to a module - it is returned from loadModule and the client
-   * can only pass it to unloadModule or get a logger for messages about that
-   * module.
-   */
-  public interface ModuleHandle {
-
-    /**
-     * @return the logger for this module.
-     */
-    TreeLogger getLogger();
-  }
 
   /**
    * Map of callbacks.
@@ -56,45 +45,6 @@ public abstract class DevModeUI {
    * Log level for all logging in this UI.
    */
   private Type logLevel;
-
-  /**
-   * Create a top-level logger for messages which are not associated with the
-   * web server or any module.  Defaults to logging to stdout.
-   * 
-   * @return TreeLogger instance to use
-   */
-  public TreeLogger getTopLogger() {
-    return getConsoleLogger();
-  }
-
-  /**
-   * Create the web server portion of the UI if not already created, and
-   * return its TreeLogger instance.
-   * 
-   * <p>Note that the {@link RestartServerEvent} should already have a callback
-   * registered when this is called -- the UI is not required to change the
-   * UI if it is registered later.
-   * 
-   * @param serverName short name of the web server or null if only the icon
-   *     should be used
-   * @param serverIcon byte array containing an icon (fitting into 24x24) to
-   *     use for the server, or null if only the name should be used
-   * @return TreeLogger instance
-   */
-  public abstract TreeLogger getWebServerLogger(String serverName,
-      byte[] serverIcon);
-  
-  /**
-   * Initialize the UI - must be called exactly once and before any other method
-   * on this class.
-   * 
-   * <p>Subclasses should call super.initialize(logLevel).
-   * 
-   * @param logLevel log level for all logging
-   */
-  public void initialize(Type logLevel) {
-    this.logLevel = logLevel;
-  }
 
   /**
    * Show that a module is loaded in the UI.
@@ -117,9 +67,48 @@ public abstract class DevModeUI {
    * @param logLevel logging detail requested
    * @return a handle to the module
    */
-  public abstract ModuleHandle loadModule(String userAgent,
+  public abstract ModuleHandle getModuleLogger(String userAgent,
       String remoteSocket, String url, String tabKey, String moduleName,
       String sessionKey, String agentTag, byte[] agentIcon, Type logLevel);
+
+  /**
+   * Create a top-level logger for messages which are not associated with the
+   * web server or any module.  Defaults to logging to stdout.
+   * 
+   * @return TreeLogger instance to use
+   */
+  public TreeLogger getTopLogger() {
+    return getConsoleLogger();
+  }
+  
+  /**
+   * Create the web server portion of the UI if not already created, and
+   * return its TreeLogger instance.
+   * 
+   * <p>Note that the {@link RestartServerEvent} should already have a callback
+   * registered when this is called -- the UI is not required to change the
+   * UI if it is registered later.
+   * 
+   * @param serverName short name of the web server or null if only the icon
+   *     should be used
+   * @param serverIcon byte array containing an icon (fitting into 24x24) to
+   *     use for the server, or null if only the name should be used
+   * @return TreeLogger instance
+   */
+  public abstract TreeLogger getWebServerLogger(String serverName,
+      byte[] serverIcon);
+
+  /**
+   * Initialize the UI - must be called exactly once and before any other method
+   * on this class.
+   * 
+   * <p>Subclasses should call super.initialize(logLevel).
+   * 
+   * @param logLevel log level for all logging
+   */
+  public void initialize(Type logLevel) {
+    this.logLevel = logLevel;
+  }
   
   /**
    * Sets the callback for a given event type..
@@ -135,13 +124,15 @@ public abstract class DevModeUI {
   }
 
   /**
-   * Show that a previously loaded module has been unloaded.
+   * Set the URLs that should be available to start.
    * 
-   * @param module ModuleHandle instance returned from loadModule on this UI
-   *     instance
+   * @param urls map of URLs -- the key is the name supplied with -startupUrls,
+   *     and the value is the mapped URL with all parameters included
    */
-  public abstract void unloadModule(ModuleHandle module);
-
+  public void setStartupUrls(Map<String, URL> urls) {
+    // do nothing by default
+  }
+  
   /**
    * Call callback for a given event.
    * 

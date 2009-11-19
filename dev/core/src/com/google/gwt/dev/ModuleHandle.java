@@ -13,22 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.ui;
+package com.google.gwt.dev;
 
-import com.google.gwt.dev.ModuleHandle;
+import com.google.gwt.core.ext.TreeLogger;
 
 /**
- * Callback for a request to close an active module from the UI.
+ * Opaque handle to a module instance - external code can only get a logger or
+ * notify the module handle it is no longer needed.
  */
-public interface CloseModuleCallback extends UiCallback {
+public interface ModuleHandle {
+
+  /**
+   * @return the logger for this module.
+   */
+  TreeLogger getLogger();
   
   /**
-   * The user has requested that a module should be closed.  In the event the
-   * user closes multiple modules at once (such as closing one window or tab in
-   * the UI), there will be separate calls for each one.
-   * 
-   * @param moduleHandle module handle returned from
-   *     {@link DevModeUI#getModuleLogger}. 
+   * Mark the module instance associated with this handle as unloaded.
    */
-  void onCloseModule(ModuleHandle moduleHandle);
+  void unload();
 }

@@ -254,8 +254,7 @@ public abstract class BrowserChannel {
 
     /**
      * Load a new instance of a module.
-     * 
-     * @param logger
+     *
      * @param channel
      * @param moduleName
      * @param userAgent
@@ -267,9 +266,9 @@ public abstract class BrowserChannel {
      *     24x24) representing the user agent or null if unavailable
      * @return a TreeLogger to use for the module's logs
      */
-    public abstract TreeLogger loadModule(TreeLogger logger,
-        BrowserChannel channel, String moduleName, String userAgent, String url,
-        String tabKey, String sessionKey, byte[] userAgentIcon);
+    public abstract TreeLogger loadModule(BrowserChannel channel,
+        String moduleName, String userAgent, String url, String tabKey,
+        String sessionKey, byte[] userAgentIcon);
 
     public abstract ExceptionOrReturnValue setProperty(BrowserChannel channel,
         int refId, int dispId, Value newValue);

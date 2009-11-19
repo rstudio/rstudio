@@ -16,6 +16,7 @@
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.ModuleHandle;
 import com.google.gwt.dev.shell.BrowserChannel.SessionHandler;
 import com.google.gwt.dev.shell.BrowserChannel.Value;
 import com.google.gwt.dev.shell.JsValue.DispatchMethod;
@@ -34,16 +35,20 @@ public class OophmSessionHandler extends SessionHandler {
 
   private BrowserWidgetHost host;
 
-  private TreeLogger logger;
-
   private Map<BrowserChannelServer, ModuleSpace> moduleMap = Collections.synchronizedMap(new HashMap<BrowserChannelServer, ModuleSpace>());
+
+  private Map<BrowserChannelServer, ModuleHandle> moduleHandleMap = Collections.synchronizedMap(new HashMap<BrowserChannelServer, ModuleHandle>());
+
+  private final TreeLogger topLogger;
 
   /**
    * Listens for new connections from browsers.
+   * @param topLogger logger to use for non-module-related messages
+   * @param host BrowserWidgetHost instance
    */
-  public OophmSessionHandler(BrowserWidgetHost host) {
+  public OophmSessionHandler(TreeLogger topLogger, BrowserWidgetHost host) {
     this.host = host;
-    logger = host.getLogger();
+    this.topLogger = topLogger;
   }
 
   @Override
@@ -60,7 +65,9 @@ public class OophmSessionHandler extends SessionHandler {
       int dispId) {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
     ModuleSpace moduleSpace = moduleMap.get(serverChannel);
-    assert moduleSpace != null;
+    ModuleHandle moduleHandle = moduleHandleMap.get(serverChannel);
+    assert moduleSpace != null && moduleHandle != null;
+    TreeLogger logger = moduleHandle.getLogger();
     ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
     try {
       JsValueOOPHM obj = new JsValueOOPHM();
@@ -94,7 +101,9 @@ public class OophmSessionHandler extends SessionHandler {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
     ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
     ModuleSpace moduleSpace = moduleMap.get(serverChannel);
-    assert moduleSpace != null;
+    ModuleHandle moduleHandle = moduleHandleMap.get(serverChannel);
+    assert moduleSpace != null && moduleHandle != null;
+    TreeLogger logger = moduleHandle.getLogger();
     CompilingClassLoader cl = moduleSpace.getIsolatedClassLoader();
 
     // Treat dispatch id 0 as toString()
@@ -155,21 +164,21 @@ public class OophmSessionHandler extends SessionHandler {
   }
 
   @Override
-  public synchronized TreeLogger loadModule(TreeLogger loadModuleLogger,
-      BrowserChannel channel, String moduleName, String userAgent, String url,
-      String tabKey, String sessionKey, byte[] userAgentIcon) {
-    logger = loadModuleLogger;
+  public synchronized TreeLogger loadModule(BrowserChannel channel,
+      String moduleName, String userAgent, String url, String tabKey,
+      String sessionKey, byte[] userAgentIcon) {
+    PerfLogger.start("OophmSessionHandler.loadModule " + moduleName);
+    BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
+    ModuleHandle moduleHandle = host.createModuleLogger(moduleName, userAgent,
+        url, tabKey, sessionKey, serverChannel, userAgentIcon);
+    TreeLogger logger = moduleHandle.getLogger();
+    moduleHandleMap.put(serverChannel, moduleHandle);
+    ModuleSpace moduleSpace = null;
     try {
-      PerfLogger.start("OophmSessionHandler.loadModule " + moduleName);
       // Attach a new ModuleSpace to make it programmable.
-      //
-      BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
-      ModuleSpaceHost msh = host.createModuleSpaceHost(loadModuleLogger,
-          moduleName, userAgent, url, tabKey, sessionKey, serverChannel,
-          userAgentIcon);
-      logger = msh.getLogger();
-      ModuleSpace moduleSpace = new ModuleSpaceOOPHM(msh, moduleName,
-          serverChannel);
+      ModuleSpaceHost msh = host.createModuleSpaceHost(moduleHandle,
+          moduleName);
+      moduleSpace = new ModuleSpaceOOPHM(msh, moduleName, serverChannel);
       moduleMap.put(serverChannel, moduleSpace);
       PerfLogger.start("ModuleSpace.onLoad");
       moduleSpace.onLoad(logger);
@@ -178,14 +187,20 @@ public class OophmSessionHandler extends SessionHandler {
       // that can go wrong trying to load a module, including Error-derived
       // things like NoClassDefFoundError.
       // 
-      this.logger.log(TreeLogger.ERROR, "Failed to load module '" + moduleName
-          + "' from user agent '" + userAgent + "' at "
+      moduleHandle.getLogger().log(TreeLogger.ERROR, "Failed to load module '"
+          + moduleName + "' from user agent '" + userAgent + "' at "
           + channel.getRemoteEndpoint(), e);
+      if (moduleSpace != null) {
+        moduleSpace.dispose();        
+      }
+      moduleHandle.unload();
+      moduleMap.remove(serverChannel);
+      moduleHandleMap.remove(serverChannel);
     } finally {
       PerfLogger.end();
       PerfLogger.end();
     }
-    return this.logger;
+    return moduleHandle.getLogger();
   }
 
   @Override
@@ -193,7 +208,9 @@ public class OophmSessionHandler extends SessionHandler {
       int dispId, Value newValue) {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
     ModuleSpace moduleSpace = moduleMap.get(serverChannel);
-    assert moduleSpace != null;
+    ModuleHandle moduleHandle = moduleHandleMap.get(serverChannel);
+    assert moduleSpace != null && moduleHandle != null;
+    TreeLogger logger = moduleHandle.getLogger();
     ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
     try {
       JsValueOOPHM obj = new JsValueOOPHM();
@@ -220,16 +237,18 @@ public class OophmSessionHandler extends SessionHandler {
   @Override
   public void unloadModule(BrowserChannel channel, String moduleName) {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
+    ModuleHandle moduleHandle = moduleHandleMap.get(serverChannel);
     ModuleSpace moduleSpace = moduleMap.get(serverChannel);
-    if (moduleSpace == null) {
-      logger.log(TreeLogger.ERROR, "Unload request without a module loaded",
+    if (moduleSpace == null || moduleHandle == null) {
+      topLogger.log(TreeLogger.ERROR, "Unload request without a module loaded",
           null);
       return;
     }
-    logger.log(TreeLogger.INFO, "Unloading module "
+    moduleHandle.getLogger().log(TreeLogger.INFO, "Unloading module "
         + moduleSpace.getModuleName() + " (" + moduleName + ")", null);
-    host.unloadModule(moduleSpace.host);
     moduleSpace.dispose();
+    moduleHandle.unload();
     moduleMap.remove(serverChannel);
+    moduleHandleMap.remove(serverChannel);
   }
 }
