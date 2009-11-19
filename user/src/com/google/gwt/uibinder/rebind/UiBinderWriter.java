@@ -941,6 +941,7 @@ public class UiBinderWriter {
     addWidgetParser("CellPanel");
     addWidgetParser("CustomButton");
     addWidgetParser("DialogBox");
+    addWidgetParser("LayoutPanel");
     addWidgetParser("DockLayoutPanel");
     addWidgetParser("StackLayoutPanel");
     addWidgetParser("TabLayoutPanel");

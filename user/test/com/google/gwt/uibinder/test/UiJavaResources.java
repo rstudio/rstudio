@@ -88,6 +88,17 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource LAYOUT_PANEL = new MockJavaResource(
+      "com.google.gwt.user.client.ui.LayoutPanel") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class LayoutPanel extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource SPLIT_LAYOUT_PANEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.SplitLayoutPanel") {
     @Override
@@ -117,7 +128,7 @@ public class UiJavaResources {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.dom.client;\n");
       code.append("public class Style  {\n");
-      code.append("  public enum Unit { PX, PT, EM };\n");
+      code.append("  public enum Unit { PX, PCT, EM, EX, PT, PC, IN, CM, MM };\n");
       code.append("}\n");
       return code;
     }
@@ -179,6 +190,7 @@ public class UiJavaResources {
     rtn.add(HAS_HORIZONTAL_ALIGNMENT);
     rtn.add(HAS_VERTICAL_ALIGNMENT);
     rtn.add(LABEL);
+    rtn.add(LAYOUT_PANEL);
     rtn.add(SPLIT_LAYOUT_PANEL);
     rtn.add(STACK_LAYOUT_PANEL);
     rtn.add(STYLE);

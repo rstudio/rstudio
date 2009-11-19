@@ -18,11 +18,13 @@ package com.google.gwt.uibinder;
 import com.google.gwt.uibinder.attributeparsers.CssNameConverterTest;
 import com.google.gwt.uibinder.attributeparsers.FieldReferenceConverterTest;
 import com.google.gwt.uibinder.attributeparsers.IntAttributeParserTest;
+import com.google.gwt.uibinder.attributeparsers.LengthAttributeParserTest;
 import com.google.gwt.uibinder.attributeparsers.StrictAttributeParserTest;
 import com.google.gwt.uibinder.attributeparsers.StringAttributeParserTest;
 import com.google.gwt.uibinder.elementparsers.DialogBoxParserTest;
 import com.google.gwt.uibinder.elementparsers.DockLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.IsEmptyParserTest;
+import com.google.gwt.uibinder.elementparsers.LayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.StackLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.TabLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.UIObjectParserTest;
@@ -61,11 +63,13 @@ public class UiBinderJreSuite {
     suite.addTestSuite(FieldReferenceConverterTest.class);
     suite.addTestSuite(StrictAttributeParserTest.class);
     suite.addTestSuite(StringAttributeParserTest.class);
+    suite.addTestSuite(LengthAttributeParserTest.class);
 
     // elementparsers
     suite.addTestSuite(DialogBoxParserTest.class);
     suite.addTestSuite(DockLayoutPanelParserTest.class);
     suite.addTestSuite(IsEmptyParserTest.class);
+    suite.addTestSuite(LayoutPanelParserTest.class);
     suite.addTestSuite(StackLayoutPanelParserTest.class);
     suite.addTestSuite(TabLayoutPanelParserTest.class);
     suite.addTestSuite(UIObjectParserTest.class);

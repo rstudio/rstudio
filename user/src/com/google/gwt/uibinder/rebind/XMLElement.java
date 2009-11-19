@@ -16,9 +16,11 @@
 package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.attributeparsers.AttributeParser;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
@@ -223,7 +225,7 @@ public class XMLElement {
    */
   public String consumeAttributeWithDefault(String name, String defaultValue,
       JType type) throws UnableToCompleteException {
-    return consumeAttributeWithDefault(name, defaultValue, new JType[] {type});
+    return consumeAttributeWithDefault(name, defaultValue, new JType[] { type });
   }
 
   /**
@@ -444,6 +446,21 @@ public class XMLElement {
   }
 
   /**
+   * Convenience method for parsing the named attribute as a CSS length value.
+   * 
+   * @return a (double, Unit) pair literal, an expression that will evaluate to
+   *         such a pair in the generated code, or "" if there is no such
+   *         attribute
+   * 
+   * @throws UnableToCompleteException on unparseable value
+   */
+  public String consumeLengthAttribute(String name)
+      throws UnableToCompleteException {
+    return consumeAttributeWithDefault(name, "", new JType[] { getDoubleType(),
+        getUnitType() });
+  }
+
+  /**
    * Consumes all attributes, and returns a string representing the entire
    * opening tag. E.g., "<div able='baker'>"
    */
@@ -516,10 +533,9 @@ public class XMLElement {
   public String consumeRequiredAttribute(String name, JType... types)
       throws UnableToCompleteException {
     /*
-     * TODO(rjrjr) We have to get the attribute to
-     * get the parser, and we must get the attribute before we consume the
-     * value. This nasty subtlety is all down to BundleParsers, which we'll
-     * hopefully kill off soon.
+     * TODO(rjrjr) We have to get the attribute to get the parser, and we must
+     * get the attribute before we consume the value. This nasty subtlety is all
+     * down to BundleParsers, which we'll hopefully kill off soon.
      */
     XMLAttribute attribute = getAttribute(name);
     if (attribute == null) {
@@ -807,7 +823,8 @@ public class XMLElement {
 
   private JType getImageResourceType() {
     if (imageResourceType == null) {
-      imageResourceType = oracle.findType(ImageResource.class.getCanonicalName());
+      imageResourceType = oracle.findType(
+          ImageResource.class.getCanonicalName());
     }
     return imageResourceType;
   }
@@ -842,5 +859,9 @@ public class XMLElement {
       stringType = oracle.findType(String.class.getCanonicalName());
     }
     return stringType;
+  }
+
+  private JClassType getUnitType() {
+    return oracle.findType(Unit.class.getCanonicalName()).isEnum();
   }
 }

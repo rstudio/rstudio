@@ -26,9 +26,9 @@ public class StackLayoutPanelExample implements EntryPoint {
   public void onModuleLoad() {
     // Create a three-item stack, with headers sized in EMs. 
     StackLayoutPanel p = new StackLayoutPanel(Unit.EM);
-    p.add(new HTML("this"), new HTML("[this]"), 128);
-    p.add(new HTML("that"), new HTML("[that]"), 384);
-    p.add(new HTML("the other"), new HTML("[the other]"), 0);
+    p.add(new HTML("this"), new HTML("[this]"), 4);
+    p.add(new HTML("that"), new HTML("[that]"), 4);
+    p.add(new HTML("the other"), new HTML("[the other]"), 4);
 
     // Attach the LayoutPanel to the RootLayoutPanel. The latter will listen for
     // resize events on the window to ensure that its children are informed of

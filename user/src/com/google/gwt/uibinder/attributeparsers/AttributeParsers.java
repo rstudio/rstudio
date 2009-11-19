@@ -37,6 +37,7 @@ public class AttributeParsers {
   private static final String STRING = String.class.getCanonicalName();
   private static final String DOUBLE = "double";
   private static final String BOOLEAN = "boolean";
+  private static final String UNIT = "com.google.gwt.dom.client.Style.Unit";
 
   private final MortalLogger logger;
   private final FieldReferenceConverter converter;
@@ -77,6 +78,11 @@ public class AttributeParsers {
       
       addAttributeParser(STRING, new StringAttributeParser(converter,
           types.parse(STRING)));
+
+      EnumAttributeParser unitParser = new EnumAttributeParser(converter,
+          (JEnumType) types.parse(UNIT), logger);
+      addAttributeParser(DOUBLE + "," + UNIT, new LengthAttributeParser(
+          doubleParser, unitParser, logger));
     } catch (TypeOracleException e) {
       throw new RuntimeException(e);
     }
