@@ -41,6 +41,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
     getElement().appendChild(containerElem);
 
     // Prevent IE standard mode bug when a AbsolutePanel is contained.
+    DOM.setStyleAttribute(getElement(), "position", "relative");
     DOM.setStyleAttribute(containerElem, "position", "relative");
 
     // Hack to account for the IE6/7 scrolling bug described here:
