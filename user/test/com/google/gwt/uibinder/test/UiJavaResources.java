@@ -29,6 +29,49 @@ import java.util.Set;
  */
 public class UiJavaResources {
 
+  public static final MockJavaResource BUTTON = new MockJavaResource(
+      "com.google.gwt.user.client.ui.Button") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("import com.google.gwt.event.dom.client.ClickEvent;\n");
+      code.append("import com.google.gwt.event.dom.client.ClickHandler;\n");
+      code.append("import com.google.gwt.event.dom.client.MouseOverEvent;\n");
+      code.append("import com.google.gwt.event.dom.client.MouseOverHandler;\n");
+      code.append("public class Button extends Widget");
+      code.append("  implements ClickHandler, MouseOverHandler {\n");
+      code.append("  public void onMouseOver(MouseOverEvent event){}\n");
+      code.append("  public void onClick(ClickEvent event){}\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource CLICK_EVENT = new MockJavaResource(
+      "com.google.gwt.event.dom.client.ClickEvent") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.event.dom.client;\n");
+      code.append("import com.google.gwt.event.shared.GwtEvent;\n");
+      code.append("public class ClickEvent extends GwtEvent<ClickHandler> {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource CLICK_HANDLER = new MockJavaResource(
+      "com.google.gwt.event.dom.client.ClickHandler") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.event.dom.client;\n");
+      code.append("import com.google.gwt.event.shared.EventHandler;\n");
+      code.append("public interface ClickHandler extends EventHandler {\n");
+      code.append("  void onClick(ClickEvent event);\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource DIALOG_BOX = new MockJavaResource(
       "com.google.gwt.user.client.ui.DialogBox") {
     @Override
@@ -47,6 +90,53 @@ public class UiJavaResources {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class DockLayoutPanel extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource EVENT_HANDLER = new MockJavaResource(
+      "com.google.gwt.event.shared.EventHandler") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.event.shared;\n");
+      code.append("public interface EventHandler {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource GWT_EVENT = new MockJavaResource(
+      "com.google.gwt.event.shared.GwtEvent") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.event.shared;\n");
+      code.append("public abstract class GwtEvent<H extends EventHandler> {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource HANDLER_REGISTRATION = new MockJavaResource(
+      "com.google.gwt.event.shared.HandlerRegistration") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.event.shared;\n");
+      code.append("public interface HandlerRegistration {\n");
+      code.append("  void removeHandler();");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource HAS_CLICK_HANDLERS = new MockJavaResource(
+      "com.google.gwt.event.dom.client.HasClickHandlers") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.event.dom.client;\n");
+      code.append("import com.google.gwt.event.shared.HandlerRegistration;\n");
+      code.append("public interface HasClickHandlers {\n");
+      code.append("  HandlerRegistration addClickHandler(ClickHandler handler);");
       code.append("}\n");
       return code;
     }
@@ -83,7 +173,14 @@ public class UiJavaResources {
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
-      code.append("public class Label extends Widget {\n");
+      code.append("import com.google.gwt.event.dom.client.ClickEvent;\n");
+      code.append("import com.google.gwt.event.dom.client.ClickHandler;\n");
+      code.append("import com.google.gwt.event.dom.client.MouseOverEvent;\n");
+      code.append("import com.google.gwt.event.dom.client.MouseOverHandler;\n");
+      code.append("public class Label extends Widget");
+      code.append("  implements ClickHandler, MouseOverHandler {\n");
+      code.append("  public void onMouseOver(MouseOverEvent event){}\n");
+      code.append("  public void onClick(ClickEvent event){}\n");
       code.append("}\n");
       return code;
     }
@@ -95,6 +192,31 @@ public class UiJavaResources {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class LayoutPanel extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource MOUSE_OVER_EVENT = new MockJavaResource(
+      "com.google.gwt.event.dom.client.MouseOverEvent") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.event.dom.client;\n");
+      code.append("import com.google.gwt.event.shared.GwtEvent;\n");
+      code.append("public class MouseOverEvent extends GwtEvent<MouseOverHandler> {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource MOUSE_OVER_HANDLER = new MockJavaResource(
+      "com.google.gwt.event.dom.client.MouseOverHandler") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.event.dom.client;\n");
+      code.append("import com.google.gwt.event.shared.EventHandler;\n");
+      code.append("public interface MouseOverHandler extends EventHandler {\n");
+      code.append("  void onMouseOver(MouseOverEvent event);\n");
       code.append("}\n");
       return code;
     }
@@ -155,6 +277,19 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource UI_FACTORY = new MockJavaResource(
+      "com.google.gwt.uibinder.client.UiFactory") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.uibinder.client;\n");
+      code.append("import java.lang.annotation.Target;\n");
+      // code.append("@Target(ElementType.METHOD)");
+      code.append("public @interface UiFactory {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource UI_OBJECT = new MockJavaResource(
       "com.google.gwt.user.client.ui.UIObject") {
     @Override
@@ -185,18 +320,28 @@ public class UiJavaResources {
   public static Set<Resource> getUiResources() {
     Set<Resource> rtn = new HashSet<Resource>(
         Arrays.asList(JavaResourceBase.getStandardResources()));
+    rtn.add(BUTTON);
+    rtn.add(CLICK_EVENT);
+    rtn.add(CLICK_HANDLER);
     rtn.add(DIALOG_BOX);
     rtn.add(DOCK_LAYOUT_PANEL);
+    rtn.add(EVENT_HANDLER);
+    rtn.add(GWT_EVENT);
+    rtn.add(HANDLER_REGISTRATION);
+    rtn.add(HAS_CLICK_HANDLERS);
     rtn.add(HAS_HORIZONTAL_ALIGNMENT);
     rtn.add(HAS_VERTICAL_ALIGNMENT);
     rtn.add(LABEL);
     rtn.add(LAYOUT_PANEL);
+    rtn.add(MOUSE_OVER_EVENT);
+    rtn.add(MOUSE_OVER_HANDLER);
     rtn.add(SPLIT_LAYOUT_PANEL);
     rtn.add(STACK_LAYOUT_PANEL);
     rtn.add(STYLE);
     rtn.add(TAB_LAYOUT_PANEL);
     rtn.add(UI_OBJECT);
     rtn.add(UI_BINDER);
+    rtn.add(UI_FACTORY);
     rtn.add(WIDGET);
     return rtn;
   }

@@ -13,28 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.uibinder;
+package com.google.gwt.uibinder.test.client;
 
-import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.uibinder.test.client.TestParameterizedWidgets;
-import com.google.gwt.uibinder.test.client.UiBinderTest;
-
-import junit.framework.Test;
+import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Test suite for UiBinder GWTTestCases.
+ * Test that {@literal @}UiFactory and parameterized return types get along.
  */
-public class UiBinderGwtSuite {
-  public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
-        "Test suite for UiBinder GWTTestCases");
-
-    suite.addTestSuite(UiBinderTest.class);
-    suite.addTestSuite(TestParameterizedWidgets.class);
-
-    return suite;
+public class TestParameterizedWidgets extends GWTTestCase {
+  @Override
+  public String getModuleName() {
+    return "com.google.gwt.uibinder.test.UiBinderTestApp";
   }
 
-  private UiBinderGwtSuite() {
+  public void testHappy() {
+    ParameterizedWidgets ui = new ParameterizedWidgets();
+    assertNotNull(ui.a);
   }
 }

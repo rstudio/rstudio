@@ -18,7 +18,9 @@ package com.google.gwt.uibinder.rebind.model;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
+import com.google.gwt.core.ext.typeinfo.JGenericType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -85,6 +87,11 @@ public class OwnerClass {
    * @return the factory method, or null if none exists
    */
   public JMethod getUiFactoryMethod(JClassType forType) {
+    JGenericType genericType = forType.isGenericType();
+    if (genericType != null) {
+      forType = genericType.getRawType();
+    }
+
     return uiFactories.get(forType);
   }
 
@@ -147,6 +154,11 @@ public class OwnerClass {
         if (factoryType == null) {
           logger.die("Factory return type is not a class in method "
               + method.getName());
+        }
+        
+        JParameterizedType paramType = factoryType.isParameterized();
+        if (paramType != null) {
+          factoryType = paramType.getRawType();
         }
 
         if (uiFactories.containsKey(factoryType)) {
