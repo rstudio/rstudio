@@ -236,11 +236,9 @@ public class JSONObject extends JSONValue {
   private native JSONValue get0(String key) /*-{
     var jsObject = this.@com.google.gwt.json.client.JSONObject::jsObject;
     var v;
-    // In Firefox, jsObject.hasOwnProperty(key) fails when key is
-    // a String object rather than a primitive string.        
-    if (jsObject.hasOwnProperty(key)
-        || ((typeof key == 'object') && (key.constructor == String)
-        && jsObject.hasOwnProperty(key.toString()))) {
+    // In Firefox, jsObject.hasOwnProperty(key) requires a primitive string
+    key = String(key);       
+    if (jsObject.hasOwnProperty(key)) {
       v = jsObject[key];
     }
     var func = @com.google.gwt.json.client.JSONParser::typeMap[typeof v];
