@@ -51,7 +51,11 @@ class LayoutImpl {
     Style style = ruler.getStyle();
     style.setPosition(Position.ABSOLUTE);
     style.setZIndex(-32767);
-    style.setLeft(-10000, PX);
+
+    // Position the ruler off the left/top edges, double the size just to be
+    // extra sure it doesn't show up on the screen.
+    style.setLeft(-20, widthUnit);
+    style.setTop(-20, heightUnit);
 
     // Note that we are making the ruler element 10x10, because some browsers
     // generate non-integral ratios (e.g., 1em == 13.3px), so we need a little
