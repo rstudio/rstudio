@@ -48,9 +48,7 @@ import java.util.Set;
  * <h3>Advanced Example</h3> The following example shows a more advanced way of
  * using this class to create an adapter between GWT RPC entities and POJOs.
  * 
- * {@example
- * com.google.gwt.examples.rpc.server.AdvancedExample#doPost(javax.servlet.http.
- * HttpServletRequest, javax.servlet.http.HttpServletResponse)}
+ * {@example com.google.gwt.examples.rpc.server.AdvancedExample#doPost(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}
  */
 public final class RPC {
 
