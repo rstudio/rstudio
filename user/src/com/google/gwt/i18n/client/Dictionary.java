@@ -143,6 +143,8 @@ public final class Dictionary {
    * @throws MissingResourceException if the value is not found
    */
   public native String get(String key) /*-{
+    // In Firefox, jsObject.hasOwnProperty(key) requires a primitive string
+    key = String(key);
     var map = this.@com.google.gwt.i18n.client.Dictionary::dict;
     var value = map[key];
     var keys = this.@com.google.gwt.i18n.client.Dictionary::accessedKeys;
