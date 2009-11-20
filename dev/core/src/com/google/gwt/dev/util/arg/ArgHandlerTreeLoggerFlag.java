@@ -36,6 +36,11 @@ public final class ArgHandlerTreeLoggerFlag extends ArgHandlerFlag {
     return "-treeLogger";
   }
 
+  @Override
+  public boolean isUndocumented() {
+    return true;
+  }
+
   public boolean setFlag() {
     option.setUseGuiLogger(true);
     return true;

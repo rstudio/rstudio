@@ -37,7 +37,7 @@ public class ArgHandlerLocalWorkers extends ArgHandlerInt {
 
   @Override
   public String getPurpose() {
-    return "Specifies the number of local workers to use when compiling permutations";
+    return "The number of local workers to use when compiling permutations";
   }
 
   @Override

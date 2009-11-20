@@ -35,7 +35,7 @@ public final class ArgHandlerWarDir extends ArgHandlerDir {
   }
 
   public String getPurpose() {
-    return "The war directory to write output files into (defaults to war)";
+    return "The directory into which deployable output files will be written (defaults to 'war')";
   }
 
   public String getTag() {

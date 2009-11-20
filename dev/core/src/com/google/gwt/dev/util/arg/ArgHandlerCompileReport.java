@@ -30,7 +30,7 @@ public class ArgHandlerCompileReport extends ArgHandlerFlag {
 
   @Override
   public String getPurpose() {
-    return "Enable Compile Report (Story of Your Compile)";
+    return "Create a compile report that tells the Story of Your Compile";
   }
 
   @Override

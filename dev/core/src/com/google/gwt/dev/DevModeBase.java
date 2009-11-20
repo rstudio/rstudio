@@ -315,6 +315,11 @@ abstract class DevModeBase implements DoneCallback {
     public String[] getTagArgs() {
       return new String[] {"port-number:client-id-string | host-string:port-number:client-id-string"};
     }
+    
+    @Override
+    public boolean isUndocumented() {
+      return true;
+    }
 
     @Override
     public boolean setString(String str) {

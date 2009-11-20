@@ -33,7 +33,7 @@ public final class ArgHandlerExtraDir extends ArgHandlerDir {
   }
 
   public String getPurpose() {
-    return "The directory into which extra, non-deployed files will be written";
+    return "The directory into which extra files, not intended for deployment, will be written";
   }
 
   public String getTag() {

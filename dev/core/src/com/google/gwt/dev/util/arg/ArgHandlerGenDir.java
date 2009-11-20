@@ -31,7 +31,7 @@ public final class ArgHandlerGenDir extends ArgHandlerDir {
   }
 
   public String getPurpose() {
-    return "The directory into which generated files will be written for review";
+    return "Debugging: causes normally-transient generated types to be saved in the specified directory";
   }
 
   public String getTag() {
