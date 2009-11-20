@@ -38,6 +38,8 @@ import com.google.gwt.util.tools.Utility;
 import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The main executable class for the hosted mode shell. NOTE: the public API for
@@ -254,6 +256,8 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
    */
   private ServletContainer server;
 
+  private final Map<String, ModuleDef> startupModules = new HashMap<String, ModuleDef>();
+
   /**
    * Tracks whether we created a temp workdir that we need to destroy.
    */
@@ -385,6 +389,16 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
   protected String getWebServerName() {
     return options.getServletContainerLauncher().getName();
+  }
+
+  @Override
+  protected ModuleDef loadModule(TreeLogger logger, String moduleName,
+      boolean refresh) throws UnableToCompleteException {
+    if (startupModules.containsKey(moduleName)) {
+      // First load of a startup module; remove from list, no need to refresh.
+      return startupModules.remove(moduleName);
+    }
+    return super.loadModule(logger, moduleName, refresh);
   }
 
   @Override
