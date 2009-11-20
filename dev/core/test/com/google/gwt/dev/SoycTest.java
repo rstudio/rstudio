@@ -37,18 +37,18 @@ public class SoycTest extends TestCase {
   public void testSoyc() throws UnableToCompleteException, IOException {
     options.setSoycEnabled(true);
     options.addModuleName("com.google.gwt.sample.hello.Hello");
-    options.setWarDir(Utility.makeTemporaryDirectory(null, "hellowar"));
+    options.setExtraDir(Utility.makeTemporaryDirectory(null, "helloextra"));
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(TreeLogger.ERROR);
     new Compiler(options).run(logger);
 
     // make sure the files have been produced
-    assertTrue(new File(options.getWarDir() + "/hello/compile-report/index.html").exists());
-    assertTrue(new File(options.getWarDir() + "/hello/compile-report/SoycDashboard-0-index.html").exists());
-    assertTrue(new File(options.getWarDir() + "/hello/compile-report/total-0-overallBreakdown.html").exists());
-    assertTrue(new File(options.getWarDir() + "/hello/compile-report/soyc.css").exists());
+    assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/index.html").exists());
+    assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/SoycDashboard-1-index.html").exists());
+    assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/total-1-overallBreakdown.html").exists());
+    assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/soyc.css").exists());
 
-    assertFalse(new File(options.getWarDir() + "/hello/compile-report/index2.html").exists());
-    Util.recursiveDelete(options.getWarDir(), false);
+    assertFalse(new File(options.getExtraDir() + "/hello/soycReport/compile-report/index2.html").exists());
+    Util.recursiveDelete(options.getExtraDir(), false);
   }
 }

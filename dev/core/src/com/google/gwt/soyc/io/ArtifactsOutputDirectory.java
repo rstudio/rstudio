@@ -51,7 +51,7 @@ public class ArtifactsOutputDirectory implements OutputDirectory {
         SyntheticArtifact newArtifact = new SyntheticArtifact(
             SoycReportLinker.class, COMPILE_REPORT_DIRECTORY + "/" + path,
             baos.toByteArray());
-        newArtifact.setPrivate(false);
+        newArtifact.setPrivate(true);
         artifacts.add(newArtifact);
         baos = null;
       }
