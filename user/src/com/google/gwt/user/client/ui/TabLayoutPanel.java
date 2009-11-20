@@ -358,7 +358,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     }
 
     Element container = panel.getWidgetContainerElement(children.get(index));
-    container.getStyle().setVisibility(Visibility.VISIBLE);
+    container.getStyle().clearVisibility();
     tabs.get(index).setSelected(true);
     selectedIndex = index;
 
