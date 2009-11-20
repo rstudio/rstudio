@@ -21,6 +21,7 @@ import com.google.gwt.resources.css.ExtractClassNamesVisitor;
 import com.google.gwt.resources.css.GenerateCssAst;
 import com.google.gwt.resources.css.ast.CssStylesheet;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
+import com.google.gwt.uibinder.attributeparsers.CssNameConverter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 
 import java.io.BufferedWriter;
@@ -41,6 +42,7 @@ import java.util.Set;
  * Models a method returning a CssResource on a generated ClientBundle.
  */
 public class ImplicitCssResource {
+  private static final CssNameConverter nameConverter = new CssNameConverter();
   private final String packageName;
   private final String className;
   private final String name;
@@ -51,10 +53,15 @@ public class ImplicitCssResource {
   private final Set<JClassType> imports;
 
   private File generatedFile;
+  private Set<String> cssClassNames;
+  private Set<String> normalizedCssClassNames;
 
-  ImplicitCssResource(String packageName, String className, String name,
+  /**
+   * Visible for testing only, get instances from {@link ImplicitClientBundle}.
+   */
+  public ImplicitCssResource(String packageName, String className, String name,
       String[] source, JClassType extendedInterface, String body,
-      MortalLogger logger, HashSet<JClassType> importTypes) {
+      MortalLogger logger, Set<JClassType> importTypes) {
     this.packageName = packageName;
     this.className = className;
     this.name = name;
@@ -80,21 +87,23 @@ public class ImplicitCssResource {
    */
   public Set<String> getCssClassNames() throws UnableToCompleteException {
     List<URL> urls = getExternalCss();
-
-    final File bodyFile = getGeneratedFile();
-    if (bodyFile != null) {
-      try {
-        urls.add(bodyFile.toURI().toURL());
-      } catch (MalformedURLException e) {
-        throw new RuntimeException(e);
+    if (cssClassNames == null) {
+      final File bodyFile = getGeneratedFile();
+      if (bodyFile != null) {
+        try {
+          urls.add(bodyFile.toURI().toURL());
+        } catch (MalformedURLException e) {
+          throw new RuntimeException(e);
+        }
       }
-    }
-    assert urls.size() > 0;
+      assert urls.size() > 0;
 
-    CssStylesheet sheet = GenerateCssAst.exec(logger.getTreeLogger(),
-        urls.toArray(new URL[urls.size()]));
-    return ExtractClassNamesVisitor.exec(sheet,
-        imports.toArray(new JClassType[imports.size()]));
+      CssStylesheet sheet = GenerateCssAst.exec(logger.getTreeLogger(),
+          urls.toArray(new URL[urls.size()]));
+      cssClassNames = ExtractClassNamesVisitor.exec(sheet,
+          imports.toArray(new JClassType[imports.size()]));
+    }
+    return cssClassNames;
   }
 
   /**
@@ -104,6 +113,9 @@ public class ImplicitCssResource {
     return extendedInterface;
   }
 
+  /**
+   * @return the set of CssResource types whose scopes are imported
+   */
   public Set<JClassType> getImports() {
     return imports;
   }
@@ -117,6 +129,21 @@ public class ImplicitCssResource {
   }
 
   /**
+   * @return css class names with dashed-names normalized like so: dashedNames
+   */
+  public Set<String> getNormalizedCssClassNames()
+      throws UnableToCompleteException {
+    if (normalizedCssClassNames == null) {
+      Set<String> rawNames = getCssClassNames();
+      normalizedCssClassNames = new HashSet<String>();
+      for (String rawName : rawNames) {
+        normalizedCssClassNames.add(nameConverter.convertName(rawName));
+      }
+    }
+    return normalizedCssClassNames;
+  }
+
+  /**
    * @return the package in which the generated CssResource interface should
    *         reside
    */
@@ -124,6 +151,9 @@ public class ImplicitCssResource {
     return packageName;
   }
 
+  /**
+   * @return name of the generated type
+   */
   public String getQualifiedSourceName() {
     if (packageName.length() == 0) {
       return name;

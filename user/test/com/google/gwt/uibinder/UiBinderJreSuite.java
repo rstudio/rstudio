@@ -28,6 +28,7 @@ import com.google.gwt.uibinder.elementparsers.LayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.StackLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.TabLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.UIObjectParserTest;
+import com.google.gwt.uibinder.rebind.FieldWriterOfGeneratedCssResourceTest;
 import com.google.gwt.uibinder.rebind.GwtResourceEntityResolverTest;
 import com.google.gwt.uibinder.rebind.HandlerEvaluatorTest;
 import com.google.gwt.uibinder.rebind.TokenatorTest;
@@ -47,6 +48,7 @@ public class UiBinderJreSuite {
     TestSuite suite = new TestSuite("UiBinder tests that require the JRE");
 
     // rebind
+    suite.addTestSuite(FieldWriterOfGeneratedCssResourceTest.class);
     suite.addTestSuite(GwtResourceEntityResolverTest.class);
     suite.addTestSuite(HandlerEvaluatorTest.class);
     suite.addTestSuite(TokenatorTest.class);
