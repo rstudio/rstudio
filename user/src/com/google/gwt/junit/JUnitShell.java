@@ -747,7 +747,7 @@ public class JUnitShell extends GWTShell {
         + (standardsMode ? "/junit-standards.html" : "/junit.html");
     if (developmentMode) {
       // CHECKSTYLE_OFF
-      url += "?gwt.hosted=" + localhost + ":" + codeServerPort;
+      url += "?gwt.codesvr=" + localhost + ":" + codeServerPort;
       // CHECKSTYLE_ON
     }
     return url;
