@@ -56,6 +56,10 @@ public class RemoteServiceServletTestServiceImplBase extends
     }
   }
 
+  public void throwDeclaredRuntimeException() {
+    throw new NullPointerException("expected");
+  }
+
   public void throwUnknownRuntimeException() {
     throw new FooException();
   }

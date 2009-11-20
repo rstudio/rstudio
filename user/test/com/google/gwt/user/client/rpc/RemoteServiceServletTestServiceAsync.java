@@ -29,5 +29,7 @@ public interface RemoteServiceServletTestServiceAsync {
   void testExpectPermutationStrongName(String expectedStrongName,
       AsyncCallback<Void> callback);
 
+  void throwDeclaredRuntimeException(AsyncCallback<Void> callback);
+
   void throwUnknownRuntimeException(AsyncCallback<Void> callback);
 }

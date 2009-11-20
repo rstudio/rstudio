@@ -18,6 +18,7 @@ package com.google.gwt.user.server.rpc;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletContext;
@@ -86,6 +87,42 @@ public class RPCServletUtils {
    */
   public static boolean exceedsUncompressedContentLengthLimit(String content) {
     return (content.length() * 2) > UNCOMPRESSED_BYTE_SIZE_LIMIT;
+  }
+
+  /**
+   * Returns true if the {@link java.lang.reflect.Method Method} definition on
+   * the service is specified to throw the exception contained in the
+   * InvocationTargetException or false otherwise. NOTE we do not check that the
+   * type is serializable here. We assume that it must be otherwise the
+   * application would never have been allowed to run.
+   * 
+   * @param serviceIntfMethod the method from the RPC request
+   * @param cause the exception that the method threw
+   * @return true if the exception's type is in the method's signature
+   */
+  public static boolean isExpectedException(Method serviceIntfMethod,
+      Throwable cause) {
+    assert (serviceIntfMethod != null);
+    assert (cause != null);
+
+    Class<?>[] exceptionsThrown = serviceIntfMethod.getExceptionTypes();
+    if (exceptionsThrown.length <= 0) {
+      // The method is not specified to throw any exceptions
+      //
+      return false;
+    }
+
+    Class<? extends Throwable> causeType = cause.getClass();
+
+    for (Class<?> exceptionThrown : exceptionsThrown) {
+      assert (exceptionThrown != null);
+
+      if (exceptionThrown.isAssignableFrom(causeType)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**

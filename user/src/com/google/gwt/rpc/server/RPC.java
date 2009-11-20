@@ -26,6 +26,8 @@ import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.RPCRequest;
+import com.google.gwt.user.server.rpc.RPCServletUtils;
+import com.google.gwt.user.server.rpc.UnexpectedException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -213,9 +215,10 @@ public class RPC {
       Throwable cause = e.getCause();
 
       // Don't allow random RuntimeExceptions to be thrown back to the client
-      if (cause instanceof RuntimeException) {
-        throw new SerializationException(
-            "RuntimeException thrown by service method", cause);
+      if (!RPCServletUtils.isExpectedException(serviceMethod, cause)) {
+        throw new UnexpectedException("Service method '"
+            + getSourceRepresentation(serviceMethod)
+            + "' threw an unexpected exception: " + cause.toString(), cause);
       }
 
       streamResponse(clientOracle, cause, sink, true);

@@ -48,7 +48,9 @@ import java.util.Set;
  * <h3>Advanced Example</h3> The following example shows a more advanced way of
  * using this class to create an adapter between GWT RPC entities and POJOs.
  * 
- * {@example com.google.gwt.examples.rpc.server.AdvancedExample#doPost(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)}
+ * {@example
+ * com.google.gwt.examples.rpc.server.AdvancedExample#doPost(javax.servlet.http.
+ * HttpServletRequest, javax.servlet.http.HttpServletResponse)}
  */
 public final class RPC {
 
@@ -270,7 +272,8 @@ public final class RPC {
 
       int paramCount = streamReader.readInt();
       if (paramCount > streamReader.getNumberOfTokens()) {
-        throw new IncompatibleRemoteServiceException("Invalid number of parameters");
+        throw new IncompatibleRemoteServiceException(
+            "Invalid number of parameters");
       }
       Class<?>[] parameterTypes = new Class[paramCount];
 
@@ -372,7 +375,8 @@ public final class RPC {
       throw new NullPointerException("serializationPolicy");
     }
 
-    if (serviceMethod != null && !RPC.isExpectedException(serviceMethod, cause)) {
+    if (serviceMethod != null
+        && !RPCServletUtils.isExpectedException(serviceMethod, cause)) {
       throw new UnexpectedException("Service method '"
           + getSourceRepresentation(serviceMethod)
           + "' threw an unexpected exception: " + cause.toString(), cause);
@@ -771,42 +775,6 @@ public final class RPC {
     Class<?>[] intfs = clazz.getInterfaces();
     for (Class<?> intf : intfs) {
       if (implementsInterfaceRecursive(intf, intfName)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * Returns true if the {@link java.lang.reflect.Method Method} definition on
-   * the service is specified to throw the exception contained in the
-   * InvocationTargetException or false otherwise. NOTE we do not check that the
-   * type is serializable here. We assume that it must be otherwise the
-   * application would never have been allowed to run.
-   * 
-   * @param serviceIntfMethod the method from the RPC request
-   * @param cause the exception that the method threw
-   * @return true if the exception's type is in the method's signature
-   */
-  private static boolean isExpectedException(Method serviceIntfMethod,
-      Throwable cause) {
-    assert (serviceIntfMethod != null);
-    assert (cause != null);
-
-    Class<?>[] exceptionsThrown = serviceIntfMethod.getExceptionTypes();
-    if (exceptionsThrown.length <= 0) {
-      // The method is not specified to throw any exceptions
-      //
-      return false;
-    }
-
-    Class<? extends Throwable> causeType = cause.getClass();
-
-    for (Class<?> exceptionThrown : exceptionsThrown) {
-      assert (exceptionThrown != null);
-
-      if (exceptionThrown.isAssignableFrom(causeType)) {
         return true;
       }
     }

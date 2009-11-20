@@ -208,8 +208,31 @@ public class RemoteServiceServletTest extends RpcTestBase {
   }
 
   /**
-   * Verify behavior when the RPC method throws a RuntimeException (possibly one
-   * unknown to the client).
+   * Verify behavior when the RPC method throws a RuntimeException declared on
+   * the RemoteService interface.
+   */
+  public void testDeclaredRuntimeException() {
+    RemoteServiceServletTestServiceAsync service = getAsyncService();
+
+    delayTestFinishForRpc();
+
+    service.throwDeclaredRuntimeException(new AsyncCallback<Void>() {
+
+      public void onFailure(Throwable caught) {
+        assertTrue(caught instanceof NullPointerException);
+        assertEquals("expected", caught.getMessage());
+        finishTest();
+      }
+
+      public void onSuccess(Void result) {
+        fail();
+      }
+    });
+  }
+
+  /**
+   * Verify behavior when the RPC method throws an unknown RuntimeException
+   * (possibly one unknown to the client).
    */
   public void testUnknownRuntimeException() {
     RemoteServiceServletTestServiceAsync service = getAsyncService();
