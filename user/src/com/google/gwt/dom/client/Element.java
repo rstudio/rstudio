@@ -392,7 +392,7 @@ public class Element extends Node {
    }-*/;
 
   /**
-   * The height of the scroll view of an element.
+   * The width of the scroll view of an element.
    */
   public final native int getScrollWidth() /*-{
      return this.scrollWidth || 0;
