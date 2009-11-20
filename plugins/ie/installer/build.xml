@@ -23,11 +23,26 @@
           output="${wix.log}">
       <arg line="file oophm.dll" />
       <arg line="-out ${project.build}/oophm.wxs.xml" />
-      <arg line="-ag -g1" />
+      <arg line="-gg -g1" />
       <arg line="-dr INSTALLDIR" />
       <arg line="-cg oophmDll" />
       <arg line="-var var.SourceDir" />
+      <arg line="-indent 2" />
     </exec>
+    <replace file="${project.build}/oophm.wxs.xml"
+             token='KeyPath="yes"'
+             value='KeyPath="no"' />
+    <replace file="${project.build}/oophm.wxs.xml"
+             token='Directory="dir8D1DE08B7ED2BEAAD2CDE02C8AF2005E"'
+             value='Directory="INSTALLDIR"' />
+    <replace file="${project.build}/oophm.wxs.xml">
+      <replacetoken><![CDATA[<File]]></replacetoken>
+      <replacevalue><![CDATA[
+      <RegistryKey Root="HKCU" Key="SOFTWARE\Google\Google Web Toolkit\Installer" Action="createAndRemoveOnUninstall">
+        <RegistryValue Name="oophmDllRemove" Value="" Type="string" KeyPath="yes"/>
+      </RegistryKey>
+      <File]]></replacevalue>
+    </replace>
 
     <echo message="Compiling WIX scripts" />
     <exec executable="${wix.bin}/candle.exe"
