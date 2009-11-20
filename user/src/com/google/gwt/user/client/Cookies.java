@@ -40,6 +40,16 @@ public class Cookies {
   static String rawCookies;
 
   /**
+   * Indicates whether or not cookies are enabled.
+   */
+  private static boolean isCookieEnabled = false;
+
+  /**
+   * Indicates whether or not we've checked if cookies are enabled.
+   */
+  private static boolean isCookieChecked = false;
+
+  /**
    * Flag that indicates whether cookies should be URIencoded (when set) and
    * URIdecoded (when retrieved). Defaults to URIencoding.
    */
@@ -71,6 +81,26 @@ public class Cookies {
    */
   public static boolean getUriEncode() {
     return uriEncoding;
+  }
+
+  /**
+   * Checks whether or not cookies are enabled or disabled.
+   * 
+   * @return true if a cookie can be set, false if not
+   */
+  public static boolean isCookieEnabled() {
+    if (!isCookieChecked) {
+      // The only way to know for sure that cookies are enabled is to set and
+      // retrieve one. Checking navigator.cookieEnabled may return the wrong
+      // value if the browser has security software installed. In IE, it alerts
+      // the user of an unspecified security risk when the app is embedded in an
+      // iframe.
+      isCookieChecked = true;
+      Cookies.setCookie("__gwtCookieCheck", "isEnabled");
+      isCookieEnabled = "isEnabled".equals(Cookies.getCookie("__gwtCookieCheck"));
+      Cookies.removeCookie("__gwtCookieCheck");
+    }
+    return isCookieEnabled;
   }
 
   /**

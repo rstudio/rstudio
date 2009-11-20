@@ -389,13 +389,13 @@ public class Window {
     }-*/;
 
     /**
-     * Gets the navigator.cookieEnabled.
+     * Checks whether or not cookies are enabled or disabled.
      *
-     * @return the window's navigator.cookieEnabled.
+     * @return true if a cookie can be set, false if not
      */
-    public static native boolean isCookieEnabled() /*-{
-      return $wnd.navigator.cookieEnabled;
-    }-*/;
+    public static boolean isCookieEnabled() {
+      return Cookies.isCookieEnabled();
+    }
 
     /**
      * Tests whether Java is enabled in the current browser.

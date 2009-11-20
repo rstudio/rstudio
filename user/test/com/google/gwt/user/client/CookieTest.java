@@ -100,6 +100,10 @@ public class CookieTest extends GWTTestCase {
     timer.schedule(6000);
   }
 
+  public void testIsCookieEnabled() {
+    assertTrue(Cookies.isCookieEnabled());
+  }
+
   /**
    * Test that removing cookies works correctly.
    */
