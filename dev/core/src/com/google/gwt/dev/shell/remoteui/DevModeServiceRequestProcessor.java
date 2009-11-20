@@ -72,11 +72,9 @@ public class DevModeServiceRequestProcessor implements RequestProcessor {
     c1Builder.setCapability(DevModeRequest.RequestType.CAPABILITY_EXCHANGE);
     capabilityExchangeBuilder.addCapabilities(c1Builder);
 
-    if (remoteUI.supportsRestartWebServer()) {
-      CapabilityExchange.Capability.Builder c2Builder = CapabilityExchange.Capability.newBuilder();
-      c2Builder.setCapability(DevModeRequest.RequestType.CAPABILITY_EXCHANGE);
-      capabilityExchangeBuilder.addCapabilities(c2Builder);
-    }
+    CapabilityExchange.Capability.Builder c2Builder = CapabilityExchange.Capability.newBuilder();
+    c2Builder.setCapability(DevModeRequest.RequestType.RESTART_WEB_SERVER);
+    capabilityExchangeBuilder.addCapabilities(c2Builder);
 
     DevModeResponse.Builder devModeResponseBuilder = DevModeResponse.newBuilder();
     devModeResponseBuilder.setResponseType(DevModeResponse.ResponseType.CAPABILITY_EXCHANGE);
@@ -91,7 +89,7 @@ public class DevModeServiceRequestProcessor implements RequestProcessor {
   private Response processRestartServer() {
     if (!remoteUI.restartWebServer()) {
       throw new IllegalStateException(
-          "Unable to restart the web server. This server may not have the capability to be restarted.");
+          "Unable to restart the web server. It is still in the process of starting up. Wait a few seconds and try again.");
     }
 
     DevModeResponse.Builder devModeResponseBuilder = DevModeResponse.newBuilder();

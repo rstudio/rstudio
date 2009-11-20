@@ -351,7 +351,9 @@ public class MessageTransport {
     } catch (Exception e) {
       messageBuilder.setMessageType(Message.MessageType.FAILURE);
       Message.Failure.Builder failureMessage = Message.Failure.newBuilder();
-      failureMessage.setMessage(e.getLocalizedMessage());
+      
+      failureMessage.setMessage(e.getLocalizedMessage() != null
+          ? e.getLocalizedMessage() : e.getClass().getName());
       StringWriter sw = new StringWriter();
       e.printStackTrace(new PrintWriter(sw, true));
       failureMessage.setStackTrace(sw.getBuffer().toString());

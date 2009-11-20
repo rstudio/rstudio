@@ -72,20 +72,6 @@ public class RemoteUI extends DevModeUI implements
   }
 
   @Override
-  public TreeLogger getWebServerLogger(String serverName, byte[] serverIcon) {
-    return getConsoleLogger();
-  }
-
-  @Override
-  public void initialize(Type logLevel) {
-    super.initialize(logLevel);
-    viewerServiceClient = new ViewerServiceClient(transport);
-    String devModeQueryParam = BrowserListener.getDevModeURLParams(BrowserListener.computeEndpointIdentifier(browserChannelPort));
-    viewerServiceClient.initialize(clientId, devModeQueryParam, webServerPort);
-    viewerServiceClient.checkCapabilities();
-  }
-
-  @Override
   public ModuleHandle getModuleLogger(String userAgent, String remoteSocket,
       String url, String tabKey, String moduleName, String sessionKey,
       String agentTag, byte[] agentIcon, Type logLevel) {
@@ -140,6 +126,20 @@ public class RemoteUI extends DevModeUI implements
     return handle;
   }
 
+  @Override
+  public TreeLogger getWebServerLogger(String serverName, byte[] serverIcon) {
+    return getConsoleLogger();
+  }
+
+  @Override
+  public void initialize(Type logLevel) {
+    super.initialize(logLevel);
+    viewerServiceClient = new ViewerServiceClient(transport);
+    String devModeQueryParam = BrowserListener.getDevModeURLParams(BrowserListener.computeEndpointIdentifier(browserChannelPort));
+    viewerServiceClient.initialize(clientId, devModeQueryParam, webServerPort);
+    viewerServiceClient.checkCapabilities();
+  }
+
   public void onTermination(Exception e) {
     getTopLogger().log(TreeLogger.INFO,
         "Remote UI connection terminated due to exception: " + e);
@@ -157,20 +157,17 @@ public class RemoteUI extends DevModeUI implements
   }
 
   public boolean restartWebServer() {
-    if (!supportsRestartWebServer()) {
-      return false;
-    }
-
     TreeLogger webServerLogger = getConsoleLogger();
-    if (webServerLogger == null) {
-      return false;
+    assert (webServerLogger != null);
+
+    RestartServerCallback callback = ((RestartServerCallback) getCallback(RestartServerEvent.getType()));
+    if (callback != null) {
+      callback.onRestartServer(webServerLogger);
+      return true;
+    } else {
+      // The server is still starting up
     }
 
-    ((RestartServerCallback) getCallback(RestartServerEvent.getType())).onRestartServer(webServerLogger);
-    return true;
-  }
-
-  public boolean supportsRestartWebServer() {
-    return hasCallback(RestartServerEvent.getType());
+    return false;
   }
 }
