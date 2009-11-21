@@ -115,7 +115,7 @@ public class OophmSessionHandler extends SessionHandler {
     serverChannel.convertToJsValue(cl, localObjects, thisVal, jsThis);
 
     TreeLogger branch = TreeLogger.NULL;
-    if (logger.isLoggable(TreeLogger.DEBUG)) {
+    if (logger.isLoggable(TreeLogger.SPAM)) {
       StringBuffer logMsg = new StringBuffer();
       logMsg.append("Client invoke of ");
       logMsg.append(methodDispatchId);
@@ -130,13 +130,13 @@ public class OophmSessionHandler extends SessionHandler {
       }
       logMsg.append(" on ");
       logMsg.append(jsThis.toString());
-      branch = logger.branch(TreeLogger.DEBUG, logMsg.toString(), null);
+      branch = logger.branch(TreeLogger.SPAM, logMsg.toString(), null);
     }
     JsValueOOPHM[] jsArgs = new JsValueOOPHM[args.length];
     for (int i = 0; i < args.length; ++i) {
       jsArgs[i] = new JsValueOOPHM();
       serverChannel.convertToJsValue(cl, localObjects, args[i], jsArgs[i]);
-      branch.log(TreeLogger.DEBUG, " arg " + i + " = " + jsArgs[i].toString(),
+      branch.log(TreeLogger.SPAM, " arg " + i + " = " + jsArgs[i].toString(),
           null);
     }
     JsValueOOPHM jsRetVal = new JsValueOOPHM();
@@ -196,6 +196,7 @@ public class OophmSessionHandler extends SessionHandler {
       moduleHandle.unload();
       moduleMap.remove(serverChannel);
       moduleHandleMap.remove(serverChannel);
+      return null;
     } finally {
       PerfLogger.end();
       PerfLogger.end();

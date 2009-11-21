@@ -264,7 +264,8 @@ public abstract class BrowserChannel {
      * @param sessionKey opaque key for this session, null if using an old plugin
      * @param userAgentIcon byte array containing an icon (which fits within
      *     24x24) representing the user agent or null if unavailable
-     * @return a TreeLogger to use for the module's logs
+     * @return a TreeLogger to use for the module's logs, or null if the module
+     *     load failed
      */
     public abstract TreeLogger loadModule(BrowserChannel channel,
         String moduleName, String userAgent, String url, String tabKey,
@@ -1290,6 +1291,13 @@ public abstract class BrowserChannel {
    * <p>See {@link UserAgentIconMessage}.
    */
   protected static class RequestIconMessage extends Message {
+
+    /**
+     * Receive a RequestIconMessage, assuming the message tag has already been
+     * read.
+     * 
+     * @throws IOException
+     */
     public static RequestIconMessage receive(BrowserChannel channel)
         throws IOException {
       return new RequestIconMessage(channel);
@@ -1603,8 +1611,7 @@ public abstract class BrowserChannel {
   }
 
   protected BrowserChannel(InputStream inputStream, OutputStream outputStream,
-      ObjectRefFactory objectRefFactory)
-      throws IOException {
+      ObjectRefFactory objectRefFactory) {
     streamFromOtherSide = new DataInputStream(inputStream);
     streamToOtherSide = new DataOutputStream(outputStream);
     socket = null;
@@ -1684,10 +1691,11 @@ public abstract class BrowserChannel {
    * React to messages from the other side, where a return value is expected.
    * 
    * @param handler
+   * @throws BrowserChannelException 
    * @throws RemoteDeathError
    */
   public ReturnMessage reactToMessagesWhileWaitingForReturn(
-      SessionHandler handler) {
+      SessionHandler handler) throws BrowserChannelException, RemoteDeathError {
     do {
       try {
         getStreamToOtherSide().flush();

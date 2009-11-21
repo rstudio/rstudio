@@ -30,7 +30,7 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
 
   public ModuleSpaceOOPHM(ModuleSpaceHost msh, String moduleName,
       BrowserChannelServer channel) {
-    super(msh.getLogger(), msh, moduleName, moduleName);
+    super(msh.getLogger(), msh, moduleName);
     this.channel = channel;
     msh.getLogger().log(TreeLogger.DEBUG,
         "Created ModuleSpaceOOPHM for " + moduleName, null);

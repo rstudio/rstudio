@@ -60,7 +60,8 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     try {
       Class<?> javaScriptExceptionClass = Class.forName(
           "com.google.gwt.core.client.JavaScriptException", true, cl);
-      Constructor<?> ctor = javaScriptExceptionClass.getDeclaredConstructor(Object.class);
+      Constructor<?> ctor = javaScriptExceptionClass.getDeclaredConstructor(
+          Object.class);
       return (RuntimeException) ctor.newInstance(new Object[] {exception});
     } catch (InstantiationException e) {
       caught = e;
@@ -123,17 +124,14 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
 
   protected final ModuleSpaceHost host;
 
-  private final Object key;
-
   private final TreeLogger logger;
 
   private final String moduleName;
 
   protected ModuleSpace(TreeLogger logger, ModuleSpaceHost host,
-      String moduleName, Object key) {
+      String moduleName) {
     this.host = host;
     this.moduleName = moduleName;
-    this.key = key;
     this.logger = logger;
     threadLocalLogger.set(host.getLogger());
   }

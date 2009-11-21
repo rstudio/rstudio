@@ -105,7 +105,7 @@ public class BrowserChannelServer extends BrowserChannel
   // @VisibleForTesting
   BrowserChannelServer(TreeLogger initialLogger, InputStream inputStream,
       OutputStream outputStream, SessionHandler handler,
-      boolean ignoreRemoteDeath) throws IOException {
+      boolean ignoreRemoteDeath) {
     super(inputStream, outputStream, new ServerObjectRefFactory());
     this.handler = handler;
     this.ignoreRemoteDeath = ignoreRemoteDeath;
@@ -166,30 +166,34 @@ public class BrowserChannelServer extends BrowserChannel
       Value returnValue = msg.getReturnValue();
       convertToJsValue(ccl, remoteObjects, returnValue, returnJsValue);
       if (msg.isException()) {
+        Object exceptionValue;
         if (returnValue.isNull() || returnValue.isUndefined()) {
-          throw ModuleSpace.createJavaScriptException(ccl, null);
-
+          exceptionValue = null;
         } else if (returnValue.isString()) {
-          throw ModuleSpace.createJavaScriptException(ccl,
-              returnValue.getString());
-
+          exceptionValue = returnValue.getString();
         } else if (returnValue.isJsObject()) {
-          Object jso = JsValueGlue.createJavaScriptObject(returnJsValue, ccl);
-          throw ModuleSpace.createJavaScriptException(ccl, jso);
-
+          exceptionValue = JsValueGlue.createJavaScriptObject(returnJsValue,
+              ccl);
         } else if (returnValue.isJavaObject()) {
           Object object = remoteObjects.get(returnValue.getJavaObject().getRefid());
           Object target = ((JsValueOOPHM.DispatchObjectOOPHM) object).getTarget();
           if (target instanceof Throwable) {
             throw (Throwable) (target);
           } else {
-            // JS throwing random Java Objects, which we'll wrap is JSException
-            throw ModuleSpace.createJavaScriptException(ccl, target);
+            // JS throwing random Java Objects, which we'll wrap in JSException
+            exceptionValue = target;
           }
+        } else {
+          // JS throwing random primitives, which we'll wrap as a string in
+          // JSException
+          exceptionValue = returnValue.getValue().toString();
         }
-        // JS throwing random primitives, which we'll wrap is JSException
-        throw ModuleSpace.createJavaScriptException(ccl,
-            returnValue.getValue().toString());
+        RuntimeException exception = ModuleSpace.createJavaScriptException(
+            ccl, exceptionValue);
+        // reset the stack trace to here to minimize GWT infrastructure in
+        // the stack trace
+        exception.fillInStackTrace();
+        throw exception;
       }
     } catch (IOException e) {
       throw new RemoteDeathError(e);
@@ -375,6 +379,18 @@ public class BrowserChannelServer extends BrowserChannel
         + " @ " + sessionKey);
     logger = handler.loadModule(this, moduleName, userAgent, url,
         tabKey, sessionKey, iconBytes);
+    if (logger == null) {
+      // got an error
+      try {
+        Value errMsg = new Value();
+        errMsg.setString("An error occurred loading the GWT module "
+            + moduleName);
+        ReturnMessage.send(this, true, errMsg);
+        return;
+      } catch (IOException e) {
+        throw new RemoteDeathError(e);
+      }
+    }
     try {
       // send LoadModule response
       try {

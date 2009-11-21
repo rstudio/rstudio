@@ -176,7 +176,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
       if (helpInfo != null) {
         URL url = helpInfo.getURL();
         String anchorText = helpInfo.getAnchorText();
-        if (anchorText == null) {
+        if (anchorText == null && url != null) {
           anchorText = url.toExternalForm();
         }
         String prefix = helpInfo.getPrefix();
