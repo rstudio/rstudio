@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.ErrorEvent;
@@ -43,6 +44,8 @@ import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.dom.client.MouseWheelHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.ClippedImageImpl;
 
@@ -57,16 +60,20 @@ import java.util.HashMap;
  * image is constructed, and how it is transformed after construction. Methods
  * will operate differently depending on the mode that the image is in. These
  * differences are detailed in the documentation for each method.
- *
+ * 
  * <p>
  * If an image transitions between clipped mode and unclipped mode, any
  * {@link Element}-specific attributes added by the user (including style
  * attributes, style names, and style modifiers), except for event listeners,
  * will be lost.
  * </p>
- *
- * <h3>CSS Style Rules</h3> <ul class="css"> <li>.gwt-Image { }</li> </ul>
- *
+ * 
+ * <h3>CSS Style Rules</h3>
+ * <dl>
+ * <dt>.gwt-Image</dt>
+ * </dd>The outer element</dd>
+ * </dl>
+ * 
  * Tranformations between clipped and unclipped state will result in a loss of
  * any style names that were set/added; the only style names that are preserved
  * are those that are mentioned in the static CSS style rules. Due to
@@ -75,7 +82,7 @@ import java.util.HashMap;
  * expected when an image is in clipped mode. These limitations can usually be
  * easily worked around by encapsulating the image in a container widget that
  * can itself be styled.
- *
+ * 
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.ImageExample}
@@ -85,6 +92,12 @@ import java.util.HashMap;
 public class Image extends Widget implements SourcesLoadEvents,
     HasLoadHandlers, HasErrorHandlers, SourcesClickEvents, HasClickHandlers,
     HasAllMouseHandlers, SourcesMouseEvents {
+
+  /**
+   * The attribute that is set when an image fires a native load or error event
+   * before it is attached.
+   */
+  private static final String UNHANDLED_EVENT_ATTR = "__gwtLastUnhandledEvent";
 
   /**
    * Implementation of behaviors associated with the clipped state of an image.
@@ -119,6 +132,11 @@ public class Image extends Widget implements SourcesLoadEvents,
     }
 
     @Override
+    public ImageElement getImageElement(Image image) {
+      return impl.getImgElement(image).cast();
+    }
+
+    @Override
     public int getOriginLeft() {
       return left;
     }
@@ -140,7 +158,10 @@ public class Image extends Widget implements SourcesLoadEvents,
 
     @Override
     public void setUrl(Image image, String url) {
-      image.changeState(new UnclippedState(image, url));
+      image.changeState(new UnclippedState(image));
+      // Need to make sure we change the state before an onload event can fire,
+      // or handlers will be fired while we are in the old state.
+      image.setUrl(url);
     }
 
     @Override
@@ -156,7 +177,7 @@ public class Image extends Widget implements SourcesLoadEvents,
         this.height = height;
 
         impl.adjust(image.getElement(), url, left, top, width, height);
-        impl.fireSyntheticLoadEvent(image);
+        fireSyntheticLoadEvent(image);
       }
     }
 
@@ -177,7 +198,7 @@ public class Image extends Widget implements SourcesLoadEvents,
         this.height = height;
 
         impl.adjust(image.getElement(), url, left, top, width, height);
-        impl.fireSyntheticLoadEvent(image);
+        fireSyntheticLoadEvent(image);
       }
     }
 
@@ -196,6 +217,8 @@ public class Image extends Widget implements SourcesLoadEvents,
 
     public abstract int getHeight(Image image);
 
+    public abstract ImageElement getImageElement(Image image);
+
     public abstract int getOriginLeft();
 
     public abstract int getOriginTop();
@@ -204,6 +227,16 @@ public class Image extends Widget implements SourcesLoadEvents,
 
     public abstract int getWidth(Image image);
 
+    public void onLoad(Image image) {
+      // If an onload event fired while the image wasn't attached, we need to
+      // synthesize one now.
+      String unhandledEvent = getImageElement(image).getPropertyString(
+          UNHANDLED_EVENT_ATTR);
+      if ("load".equals(unhandledEvent)) {
+        fireSyntheticLoadEvent(image);
+      }
+    }
+
     public abstract void setUrl(Image image, String url);
 
     public abstract void setUrlAndVisibleRect(Image image, String url,
@@ -211,6 +244,27 @@ public class Image extends Widget implements SourcesLoadEvents,
 
     public abstract void setVisibleRect(Image image, int left, int top,
         int width, int height);
+
+    /**
+     * We need to synthesize a load event in case the image loads synchronously,
+     * before our handlers can be attached.
+     * 
+     * @param image the image on which to dispatch the event
+     */
+    protected void fireSyntheticLoadEvent(final Image image) {
+      /*
+       * We use a deferred command here to simulate the native version of the
+       * event as closely as possible. In the native event case, it is unlikely
+       * that a second load event would occur while you are in the load event
+       * handler.
+       */
+      DeferredCommand.addCommand(new Command() {
+        public void execute() {
+          NativeEvent evt = Document.get().createLoadEvent();
+          getImageElement(image).dispatchEvent(evt);
+        }
+      });
+    }
 
     // This method is used only by unit tests.
     protected abstract String getStateName();
@@ -248,7 +302,12 @@ public class Image extends Widget implements SourcesLoadEvents,
 
     @Override
     public int getHeight(Image image) {
-      return image.getImageElement().getHeight();
+      return getImageElement(image).getHeight();
+    }
+
+    @Override
+    public ImageElement getImageElement(Image image) {
+      return image.getElement().cast();
     }
 
     @Override
@@ -263,17 +322,18 @@ public class Image extends Widget implements SourcesLoadEvents,
 
     @Override
     public String getUrl(Image image) {
-      return image.getImageElement().getSrc();
+      return getImageElement(image).getSrc();
     }
 
     @Override
     public int getWidth(Image image) {
-      return image.getImageElement().getWidth();
+      return getImageElement(image).getWidth();
     }
 
     @Override
     public void setUrl(Image image, String url) {
-      image.getImageElement().setSrc(url);
+      image.clearUnhandledEvent();
+      getImageElement(image).setSrc(url);
     }
 
     @Override
@@ -305,7 +365,7 @@ public class Image extends Widget implements SourcesLoadEvents,
 
   /**
    * Causes the browser to pre-fetch the image at a given URL.
-   *
+   * 
    * @param url the URL of the image to be prefetched
    */
   public static void prefetch(String url) {
@@ -316,11 +376,11 @@ public class Image extends Widget implements SourcesLoadEvents,
 
   /**
    * Creates a Image widget that wraps an existing &lt;img&gt; element.
-   *
+   * 
    * This element must already be attached to the document. If the element is
    * removed from the document, you must call
    * {@link RootPanel#detachNow(Widget)}.
-   *
+   * 
    * @param element the element to be wrapped
    */
   public static Image wrap(Element element) {
@@ -349,18 +409,18 @@ public class Image extends Widget implements SourcesLoadEvents,
 
   /**
    * Creates an image whose size and content are defined by an ImageResource.
-   *
+   * 
    * @param resource the ImageResource to be displayed
    */
   public Image(ImageResource resource) {
-    this(resource.getURL(), resource.getLeft(),
-         resource.getTop(), resource.getWidth(), resource.getHeight());
+    this(resource.getURL(), resource.getLeft(), resource.getTop(),
+        resource.getWidth(), resource.getHeight());
   }
 
   /**
    * Creates an image with a specified URL. The load event will be fired once
    * the image at the given URL has been retrieved by the browser.
-   *
+   * 
    * @param url the URL of the image to be displayed
    */
   public Image(String url) {
@@ -377,7 +437,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * the width and height are specified explicitly by the user, this behavior
    * will not cause problems with retrieving the width and height of a clipped
    * image in a load event handler.
-   *
+   * 
    * @param url the URL of the image to be displayed
    * @param left the horizontal co-ordinate of the upper-left vertex of the
    *          visibility rectangle
@@ -394,7 +454,7 @@ public class Image extends Widget implements SourcesLoadEvents,
   /**
    * This constructor may be used by subclasses to explicitly use an existing
    * element. This element must be an &lt;img&gt; element.
-   *
+   * 
    * @param element the element to be used
    */
   protected Image(Element element) {
@@ -436,9 +496,9 @@ public class Image extends Widget implements SourcesLoadEvents,
   }
 
   /**
-   * @deprecated Use {@link #addMouseOverHandler} {@link
-   * #addMouseMoveHandler}, {@link #addMouseDownHandler}, {@link
-   * #addMouseUpHandler} and {@link #addMouseOutHandler} instead
+   * @deprecated Use {@link #addMouseOverHandler} {@link #addMouseMoveHandler},
+   *             {@link #addMouseDownHandler}, {@link #addMouseUpHandler} and
+   *             {@link #addMouseOutHandler} instead
    */
   @Deprecated
   public void addMouseListener(MouseListener listener) {
@@ -477,7 +537,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * Gets the height of the image. When the image is in the unclipped state, the
    * height of the image is not known until the image has been loaded (i.e. load
    * event has been fired for the image).
-   *
+   * 
    * @return the height of the image, or 0 if the height is unknown
    */
   public int getHeight() {
@@ -489,7 +549,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * visibility rectangle. If the image is in the unclipped state, then the
    * visibility rectangle is assumed to be the rectangle which encompasses the
    * entire image, which has an upper-left vertex of (0,0).
-   *
+   * 
    * @return the horizontal co-ordinate of the upper-left vertex of the image's
    *         visibility rectangle
    */
@@ -502,7 +562,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * visibility rectangle. If the image is in the unclipped state, then the
    * visibility rectangle is assumed to be the rectangle which encompasses the
    * entire image, which has an upper-left vertex of (0,0).
-   *
+   * 
    * @return the vertical co-ordinate of the upper-left vertex of the image's
    *         visibility rectangle
    */
@@ -514,7 +574,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * Gets the URL of the image. The URL that is returned is not necessarily the
    * URL that was passed in by the user. It may have been transformed to an
    * absolute URL.
-   *
+   * 
    * @return the image URL
    */
   public String getUrl() {
@@ -525,16 +585,27 @@ public class Image extends Widget implements SourcesLoadEvents,
    * Gets the width of the image. When the image is in the unclipped state, the
    * width of the image is not known until the image has been loaded (i.e. load
    * event has been fired for the image).
-   *
+   * 
    * @return the width of the image, or 0 if the width is unknown
    */
   public int getWidth() {
     return state.getWidth(this);
   }
 
+  @Override
+  public void onBrowserEvent(Event event) {
+    // We have to clear the unhandled event before firing handlers because the
+    // handlers could trigger onLoad, which would refire the event.
+    if (event.getTypeInt() == Event.ONLOAD) {
+      clearUnhandledEvent();
+    }
+
+    super.onBrowserEvent(event);
+  }
+
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on
-   * the object returned by {@link #addClickHandler} instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by {@link #addClickHandler} instead
    */
   @Deprecated
   public void removeClickListener(ClickListener listener) {
@@ -542,8 +613,8 @@ public class Image extends Widget implements SourcesLoadEvents,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by an add*Handler method instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by an add*Handler method instead
    */
   @Deprecated
   public void removeLoadListener(LoadListener listener) {
@@ -551,8 +622,8 @@ public class Image extends Widget implements SourcesLoadEvents,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by an add*Handler method instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by an add*Handler method instead
    */
   @Deprecated
   public void removeMouseListener(MouseListener listener) {
@@ -560,9 +631,8 @@ public class Image extends Widget implements SourcesLoadEvents,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link #addMouseWheelHandler}
-   * instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by {@link #addMouseWheelHandler} instead
    */
   @Deprecated
   public void removeMouseWheelListener(MouseWheelListener listener) {
@@ -576,7 +646,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * image's current url or current visibility rectangle co-ordinates. If the
    * image is currently in the unclipped state, a call to this method will cause
    * a transition to the clipped state.
-   *
+   * 
    * @param resource the ImageResource to display
    */
   public void setResource(ImageResource resource) {
@@ -589,7 +659,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * state, a call to this method will cause a transition of the image to the
    * unclipped state. Regardless of whether or not the image is in the clipped
    * or unclipped state, a load event will be fired.
-   *
+   * 
    * @param url the image URL
    */
   public void setUrl(String url) {
@@ -603,7 +673,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * visibility rectangle co-ordinates. If the image is currently in the
    * unclipped state, a call to this method will cause a transition to the
    * clipped state.
-   *
+   * 
    * @param url the image URL
    * @param left the horizontal coordinate of the upper-left vertex of the
    *          visibility rectangle
@@ -626,7 +696,7 @@ public class Image extends Widget implements SourcesLoadEvents,
    * is in the unclipped state, a call to this method will cause a transition of
    * the image to the clipped state. This transition will cause a load event to
    * fire.
-   *
+   * 
    * @param left the horizontal coordinate of the upper-left vertex of the
    *          visibility rectangle
    * @param top the vertical coordinate of the upper-left vertex of the
@@ -638,11 +708,25 @@ public class Image extends Widget implements SourcesLoadEvents,
     state.setVisibleRect(this, left, top, width, height);
   }
 
+  @Override
+  protected void onLoad() {
+    super.onLoad();
+
+    // Issue 863: the state may need to fire a synthetic event if the native
+    // onload event fired while the image was detached.
+    state.onLoad(this);
+  }
+
   private void changeState(State newState) {
     state = newState;
   }
 
-  private ImageElement getImageElement() {
-    return getElement().cast();
+  /**
+   * Clear the unhandled event.
+   */
+  private void clearUnhandledEvent() {
+    if (state != null) {
+      state.getImageElement(this).setPropertyString(UNHANDLED_EVENT_ATTR, "");
+    }
   }
 }

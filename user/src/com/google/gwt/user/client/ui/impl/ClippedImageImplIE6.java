@@ -16,11 +16,7 @@
 package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Image;
 
@@ -113,25 +109,6 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
     return clipper;
   }
 
-  public void fireSyntheticLoadEvent(final Image image) {
-    if (!isIE6) {
-      super.fireSyntheticLoadEvent(image);
-      return;
-    }
-    
-    // This is the same as the superclass' implementation, except that it
-    // explicitly checks for the 'clipper' element, and dispatches the event
-    // on the img (you can't dispatch events on the clipper).
-    DeferredCommand.addCommand(new Command() {
-      public void execute() {
-        NativeEvent evt = Document.get().createLoadEvent();
-        Element clipper = image.getElement();
-        Element img = clipper.getFirstChildElement();
-        img.dispatchEvent(evt);
-      }
-    });
-  }
-
   @Override
   public String getHTML(String url, int left, int top, int width, int height) {
     if (!isIE6) {
@@ -158,12 +135,20 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
      */
     String clippedImgHtml = "<gwt:clipper style=\""
         + clipperStyle
-        + "\"><img src='"
+        + "\"><img onload='this.__gwtLastUnhandledEvent=\"load\";' src='"
         + moduleBaseUrlProtocol
         + "' onerror='if(window.__gwt_transparentImgHandler)window.__gwt_transparentImgHandler(this);else this.src=\"" + GWT.getModuleBaseURL() + "clear.cache.gif\"' style=\""
         + imgStyle + "\" width=" + (left + width) + " height=" + (top + height)
         + " border='0'></gwt:clipper>";
 
     return clippedImgHtml;
+  }
+
+  @Override
+  public Element getImgElement(Image image) {
+    if (!isIE6) {
+      return super.getImgElement(image);
+    }
+    return image.getElement().getFirstChildElement();
   }
 }

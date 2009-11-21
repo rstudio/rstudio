@@ -59,7 +59,7 @@ public class DOMImplOpera extends DOMImplStandard {
     elem.onscroll      = (bits & 0x04000) ?
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     elem.onload        = (bits & 0x08000) ?
-        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchUnhandledEvent : null;
     elem.onerror       = (bits & 0x10000) ?
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     elem.onmousewheel  = (bits & 0x20000) ?

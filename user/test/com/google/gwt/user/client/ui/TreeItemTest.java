@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -39,6 +41,7 @@ public class TreeItemTest extends GWTTestCase {
     assertEquals("Test", widget.getText());
   }
 
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testSetWidgetNullWithError() {
     // Create a widget that will throw an exception onUnload.
     BadWidget badWidget = new BadWidget();

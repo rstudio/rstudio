@@ -31,6 +31,9 @@ public abstract class DOMImplTrident extends DOMImpl {
   @SuppressWarnings("unused")
   private static JavaScriptObject dispatchDblClickEvent;
 
+  @SuppressWarnings("unused")
+  private static JavaScriptObject dispatchUnhandledEvent;
+
   /**
    * Let every GWT app on the page preview the current event. If any app cancels
    * the event, the event will be canceled for all apps.
@@ -151,6 +154,11 @@ public abstract class DOMImplTrident extends DOMImpl {
       }
     });
 
+    @com.google.gwt.user.client.impl.DOMImplTrident::dispatchUnhandledEvent = $entry(function() {
+      this.__gwtLastUnhandledEvent = $wnd.event.type;
+      @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent.call(this);
+    });
+
     // We need to create these delegate functions to fix up the 'this' context.
     // Normally, 'this' is the firing element, but this is only true for
     // 'onclick = ...' event handlers, not for handlers setup via attachEvent().
@@ -243,7 +251,7 @@ public abstract class DOMImplTrident extends DOMImpl {
     if (chMask & 0x04000) elem.onscroll      = (bits & 0x04000) ?
         @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
     if (chMask & 0x08000) elem.onload        = (bits & 0x08000) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchUnhandledEvent : null;
     if (chMask & 0x10000) elem.onerror       = (bits & 0x10000) ?
         @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
     if (chMask & 0x20000) elem.onmousewheel  = (bits & 0x20000) ? 

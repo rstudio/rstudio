@@ -41,6 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Functional test of UiBinder.
  */
+@DoNotRunWith({Platform.HtmlUnit})
 public class UiBinderTest extends GWTTestCase {
   private WidgetBasedUi widgetUi;
   private DomBasedUi domUi;
