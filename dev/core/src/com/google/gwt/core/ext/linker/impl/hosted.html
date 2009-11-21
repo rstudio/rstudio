@@ -146,6 +146,50 @@ function __gwt_makeResult(isException, result) {
   return [isException, result];
 }
 
+function __gwt_disconnected() {
+  var doc = window.top.document;
+  var outer = doc.createElement("div");
+  outer.innerHTML = 
+    '  <div style="position:absolute;z-index:2147483646;left:0px;top:0px;right:0px;bottom:0px;filter:alpha(opacity=80);opacity:0.80;background-color:#000000;"></div>' +
+    '  <div style="position:absolute;z-index:2147483647;left:0px;top:0px;width:600px;margin:50px;color:#FFFFFF;font-family:verdana;">' +
+    '    <div style="font-size:30px;font-weight:bold;">GWT Code Server Disconnected</div>' +
+    '    <p style="font-size:15px;"> Most likely, you closed GWT development mode. Or you might have lost network connectivity. To fix this, try restarting GWT Development Mode and <a style="color: #FFFFFF; font-weight: bold;" href="javascript:location.reload()">REFRESH</a> this page.</p>' +
+    '  </div>'
+  ;
+  doc.body.appendChild(outer);
+  var glass = outer.firstChild;
+  var glassStyle = glass.style;
+
+
+  // Scroll to the top and remove scrollbars.
+  window.scrollTo(0, 0);
+  if (doc.compatMode == "BackCompat") {
+    doc.body.style["overflow"] = "hidden";
+  } else {
+    doc.documentElement.style["overflow"] = "hidden";
+  }
+  
+  // Steal focus.
+  glass.focus();
+  
+  // Setup resize handler for IE6.
+  if (navigator.userAgent.indexOf("MSIE 6") >= 0) {
+    if (doc.compatMode == "BackCompat") {
+      glassStyle.height = "100%";
+      var resizeFunc = function () {
+        glassStyle.width = doc.body.clientWidth + 'px';
+      }
+    } else {
+      var resizeFunc = function () {
+        glassStyle.width = doc.documentElement.clientWidth + 'px';
+        glassStyle.height = doc.documentElement.clientHeight + 'px';
+      }
+    }
+    window.onresize = resizeFunc;
+    resizeFunc();
+  }
+}
+
 function findPluginObject() {
   try {
     return document.getElementById('pluginObject');
