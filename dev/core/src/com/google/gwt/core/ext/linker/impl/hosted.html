@@ -18,15 +18,6 @@ var $hostedHtmlVersion="2.0";
 
 var gwtOnLoad;
 var $hosted = "localhost:9997";
-var $legacyHosted = false;
-try {
-  // try/catch perhaps unnecessary, but I recall issues on IE if it isn't
-  // present
-  if (external.gwtOnLoad) {
-    $legacyHosted = true;
-  }
-} catch(e) {
-}
 
 function loadIframe(url) {
   var topDoc = window.top.document;
@@ -57,229 +48,213 @@ function loadIframe(url) {
   topDoc.body.insertBefore(iframe, topDoc.body.firstChild);
 }
 
-if ($legacyHosted) {
-  gwtOnLoad = function(errFn, modName, modBase) {
-    $moduleName = modName;
-    $moduleBase = modBase;
-    if (!external.gwtOnLoad(window, modName, $hostedHtmlVersion)) {
-      if (errFn) {
-        errFn(modName);
-      }
-    }
+var ua = navigator.userAgent.toLowerCase();
+if (ua.indexOf("gecko") != -1) {
+  // install eval wrapper on FF to avoid EvalError problem
+  // TODO(jat): should this UA check be more specific (this hits chrome too)?
+  var __eval = window.eval;
+  window.eval = function(s) {
+    return __eval(s);
   }
-
-  window.onunload = function() {
-    external.gwtOnLoad(window, null, $hostedHtmlVersion);
+}
+if (ua.indexOf("chrome") != -1) {
+  // work around __gwt_ObjectId appearing in JS objects
+  var hop = Object.prototype.hasOwnProperty;
+  Object.prototype.hasOwnProperty = function(prop) {
+    return prop != "__gwt_ObjectId" && hop.call(this, prop);
   };
-} else {
-  var ua = navigator.userAgent.toLowerCase();
-  if (ua.indexOf("gecko") != -1) {
-    // install eval wrapper on FF to avoid EvalError problem
-    // TODO(jat): should this UA check be more specific (this hits chrome too)?
-    var __eval = window.eval;
-    window.eval = function(s) {
-      return __eval(s);
-    }
-  }
-  if (ua.indexOf("chrome") != -1) {
-    // work around __gwt_ObjectId appearing in JS objects
-    var hop = Object.prototype.hasOwnProperty;
-    Object.prototype.hasOwnProperty = function(prop) {
-      return prop != "__gwt_ObjectId" && hop.call(this, prop);
-    };
-  }
+}
 
-  // wrapper to call JS methods, which we need both to be able to supply a
-  // different this for method lookup and to get the exception back
-  function __gwt_jsInvoke(thisObj, methodName) {
-    try {
-      var args = Array.prototype.slice.call(arguments, 2);
-      return [0, window[methodName].apply(thisObj, args)];
-    } catch (e) {
-      return [1, e];
-    }
+// wrapper to call JS methods, which we need both to be able to supply a
+// different this for method lookup and to get the exception back
+function __gwt_jsInvoke(thisObj, methodName) {
+  try {
+    var args = Array.prototype.slice.call(arguments, 2);
+    return [0, window[methodName].apply(thisObj, args)];
+  } catch (e) {
+    return [1, e];
   }
+}
 
-  var __gwt_javaInvokes = [];
-  function __gwt_makeJavaInvoke(argCount) {
-    return __gwt_javaInvokes[argCount] || __gwt_doMakeJavaInvoke(argCount);
+var __gwt_javaInvokes = [];
+function __gwt_makeJavaInvoke(argCount) {
+  return __gwt_javaInvokes[argCount] || __gwt_doMakeJavaInvoke(argCount);
+}
+
+function __gwt_doMakeJavaInvoke(argCount) {
+  // IE6 won't eval() anonymous functions except as r-values
+  var argList = "";
+  for (var i = 0; i < argCount; i++) {
+    argList += ",p" + i;
   }
+  var argListNoComma = argList.substring(1);
 
-  function __gwt_doMakeJavaInvoke(argCount) {
-    // IE6 won't eval() anonymous functions except as r-values
-    var argList = "";
-    for (var i = 0; i < argCount; i++) {
-      argList += ",p" + i;
-    }
-    var argListNoComma = argList.substring(1);
+  return eval(
+    "__gwt_javaInvokes[" + argCount + "] =\n" +
+    "  function(thisObj, dispId" + argList + ") {\n" +
+    "    var result = __static(dispId, thisObj" + argList + ");\n" +
+    "    if (result[0]) {\n" +
+    "      throw result[1];\n" +
+    "    } else {\n" +
+    "      return result[1];\n" +
+    "    }\n" +
+    "  }\n"
+  ); 
+}
 
-    return eval(
-      "__gwt_javaInvokes[" + argCount + "] =\n" +
-      "  function(thisObj, dispId" + argList + ") {\n" +
-      "    var result = __static(dispId, thisObj" + argList + ");\n" +
-      "    if (result[0]) {\n" +
-      "      throw result[1];\n" +
-      "    } else {\n" +
-      "      return result[1];\n" +
-      "    }\n" +
-      "  }\n"
-    ); 
+/*
+ * This is used to create tear-offs of Java methods.  Each function corresponds
+ * to exactly one dispId, and also embeds the argument count.  We get the "this"
+ * value from the context in which the function is being executed.
+ * Function-object identity is preserved by caching in a sparse array.
+ */
+var __gwt_tearOffs = [];
+var __gwt_tearOffGenerators = [];
+function __gwt_makeTearOff(proxy, dispId, argCount) {
+  return __gwt_tearOffs[dispId] || __gwt_doMakeTearOff(dispId, argCount);
+}
+
+function __gwt_doMakeTearOff(dispId, argCount) {
+  return __gwt_tearOffs[dispId] = 
+      (__gwt_tearOffGenerators[argCount] || __gwt_doMakeTearOffGenerator(argCount))(dispId);
+}
+
+function __gwt_doMakeTearOffGenerator(argCount) {
+  // IE6 won't eval() anonymous functions except as r-values
+  var argList = "";
+  for (var i = 0; i < argCount; i++) {
+    argList += ",p" + i;
   }
+  var argListNoComma = argList.substring(1);
+
+  return eval(
+    "__gwt_tearOffGenerators[" + argCount + "] =\n" +
+    "  function(dispId) {\n" +
+    "    return function(" + argListNoComma + ") {\n" +
+    "      var result = __static(dispId, this" + argList + ");\n" +
+    "      if (result[0]) {\n" +
+    "        throw result[1];\n" +
+    "      } else {\n" +
+    "        return result[1];\n" +
+    "      }\n" +
+    "    }\n" +
+    "  }\n"
+  ); 
+}
+
+function __gwt_makeResult(isException, result) {
+  return [isException, result];
+}
+
+function findPluginObject() {
+  try {
+    return document.getElementById('pluginObject');
+  } catch (e) {
+    return null;
+  }
+}
+
+function findPluginEmbed() {
+  try {
+    return document.getElementById('pluginEmbed')
+  } catch (e) {
+    return null;
+  }
+}
+
+function findPluginXPCOM() {
+  try {
+    return __gwt_HostedModePlugin;
+  } catch (e) {
+    return null;
+  }
+}
+
+gwtOnLoad = function(errFn, modName, modBase){
+  $moduleName = modName;
+  $moduleBase = modBase;
 
   /*
-   * This is used to create tear-offs of Java methods.  Each function corresponds
-   * to exactly one dispId, and also embeds the argument count.  We get the "this"
-   * value from the context in which the function is being executed.
-   * Function-object identity is preserved by caching in a sparse array.
+   * NOTE: this presently sucks and is the only formulation I can find that will
+   * work across browsers.  On a Windows box where both plugins are registered,
+   * FF will instantiate the (non-working) IE plugin.  But plugins have problems
+   * that prevent making this easy.
+   *
+   * The IE plugin will throw an exception in FF if you try to resolve
+   * "pluginObject.connect" as a value.  Thus the try/catch below.
+   *
+   * The FF plugin will actually do illegal crashy things in IE if you try to
+   * resolve "pluginEmbed.connect" as a value.  Thus we have to try the IE
+   * plugin first.
+   *
+   * Both plugins need some work to make them truly safe.
    */
-  var __gwt_tearOffs = [];
-  var __gwt_tearOffGenerators = [];
-  function __gwt_makeTearOff(proxy, dispId, argCount) {
-    return __gwt_tearOffs[dispId] || __gwt_doMakeTearOff(dispId, argCount);
-  }
-
-  function __gwt_doMakeTearOff(dispId, argCount) {
-    return __gwt_tearOffs[dispId] = 
-        (__gwt_tearOffGenerators[argCount] || __gwt_doMakeTearOffGenerator(argCount))(dispId);
-  }
-
-  function __gwt_doMakeTearOffGenerator(argCount) {
-    // IE6 won't eval() anonymous functions except as r-values
-    var argList = "";
-    for (var i = 0; i < argCount; i++) {
-      argList += ",p" + i;
+  var pluginFinders = [
+    findPluginXPCOM,
+    findPluginObject,
+    findPluginEmbed,
+  ];
+  var topWin = window.top;
+  var url = topWin.location.href;
+  if (!topWin.__gwt_SessionID) {
+    var ASCII_EXCLAMATION = 33;
+    var ASCII_TILDE = 126;
+    var chars = [];
+    for (var i = 0; i < 16; ++i) {
+      chars.push(Math.floor(ASCII_EXCLAMATION
+          + Math.random() * (ASCII_TILDE - ASCII_EXCLAMATION + 1)));
     }
-    var argListNoComma = argList.substring(1);
-
-    return eval(
-      "__gwt_tearOffGenerators[" + argCount + "] =\n" +
-      "  function(dispId) {\n" +
-      "    return function(" + argListNoComma + ") {\n" +
-      "      var result = __static(dispId, this" + argList + ");\n" +
-      "      if (result[0]) {\n" +
-      "        throw result[1];\n" +
-      "      } else {\n" +
-      "        return result[1];\n" +
-      "      }\n" +
-      "    }\n" +
-      "  }\n"
-    ); 
+    topWin.__gwt_SessionID = String.fromCharCode.apply(null, chars);
   }
-
-  function __gwt_makeResult(isException, result) {
-    return [isException, result];
-  }
-
-  function findPluginObject() {
+  var plugin = null;
+  for (var i = 0; i < pluginFinders.length; ++i) {
     try {
-      return document.getElementById('pluginObject');
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function findPluginEmbed() {
-    try {
-      return document.getElementById('pluginEmbed')
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function findPluginXPCOM() {
-    try {
-      return __gwt_HostedModePlugin;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  gwtOnLoad = function(errFn, modName, modBase){
-    $moduleName = modName;
-    $moduleBase = modBase;
-
-    /*
-     * NOTE: this presently sucks and is the only formulation I can find that will
-     * work across browsers.  On a Windows box where both plugins are registered,
-     * FF will instantiate the (non-working) IE plugin.  But plugins have problems
-     * that prevent making this easy.
-     *
-     * The IE plugin will throw an exception in FF if you try to resolve
-     * "pluginObject.connect" as a value.  Thus the try/catch below.
-     *
-     * The FF plugin will actually do illegal crashy things in IE if you try to
-     * resolve "pluginEmbed.connect" as a value.  Thus we have to try the IE
-     * plugin first.
-     *
-     * Both plugins need some work to make them truly safe.
-     */
-    var pluginFinders = [
-      findPluginXPCOM,
-      findPluginObject,
-      findPluginEmbed,
-    ];
-    var topWin = window.top;
-    var url = topWin.location.href;
-    if (!topWin.__gwt_SessionID) {
-      var ASCII_EXCLAMATION = 33;
-      var ASCII_TILDE = 126;
-      var chars = [];
-      for (var i = 0; i < 16; ++i) {
-        chars.push(Math.floor(ASCII_EXCLAMATION
-            + Math.random() * (ASCII_TILDE - ASCII_EXCLAMATION + 1)));
+      var maybePlugin = pluginFinders[i]();
+      if (maybePlugin != null && maybePlugin.init(window)) {
+        plugin = maybePlugin;
+        break;
       }
-      topWin.__gwt_SessionID = String.fromCharCode.apply(null, chars);
+    } catch (e) {
     }
-    var plugin = null;
+  }
+  if (!plugin) {
+    // try searching for a v1 plugin for backwards compatibility
+    var found = false;
     for (var i = 0; i < pluginFinders.length; ++i) {
       try {
-        var maybePlugin = pluginFinders[i]();
-        if (maybePlugin != null && maybePlugin.init(window)) {
-          plugin = maybePlugin;
-          break;
+        plugin = pluginFinders[i]();
+        if (plugin != null && plugin.connect($hosted, $moduleName, window)) {
+          return;
         }
       } catch (e) {
       }
     }
-    if (!plugin) {
-      // try searching for a v1 plugin for backwards compatibility
-      var found = false;
-      for (var i = 0; i < pluginFinders.length; ++i) {
+    loadIframe("http://gwt.google.com/samples/MissingPlugin");
+  } else {
+    if (plugin.connect(url, topWin.__gwt_SessionID, $hosted, $moduleName,
+        $hostedHtmlVersion)) {
+      window.onUnload = function() {
         try {
-          plugin = pluginFinders[i]();
-          if (plugin != null && plugin.connect($hosted, $moduleName, window)) {
-            return;
-          }
+          // wrap in try/catch since plugins are not required to supply this
+          plugin.disconnect();
         } catch (e) {
         }
-      }
-      loadIframe("http://gwt.google.com/samples/MissingPlugin");
+      };
     } else {
-      if (plugin.connect(url, topWin.__gwt_SessionID, $hosted, $moduleName,
-          $hostedHtmlVersion)) {
-        window.onUnload = function() {
-          try {
-            // wrap in try/catch since plugins are not required to supply this
-            plugin.disconnect();
-          } catch (e) {
-          }
-        };
+      if (errFn) {
+        errFn(modName);
       } else {
-        if (errFn) {
-          errFn(modName);
-        } else {
-          alert("Plugin failed to connect to hosted mode server at " + $hosted);
-          loadIframe("http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM");
-        }
+        alert("Plugin failed to connect to hosted mode server at " + $hosted);
+        loadIframe("http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM");
       }
     }
   }
-
-  window.onunload = function() {
-    // TODO: do we need to do anything here or just rely on the plugins
-    // unload call?
-  };
 }
+
+window.onunload = function() {
+  // TODO: do we need to do anything here or just rely on the plugins
+  // unload call?
+};
 
 // Lightweight metrics
 window.fireOnModuleLoadStart = function(className) {
@@ -296,36 +271,34 @@ $stats && $stats({moduleName:$moduleName, sessionId:$sessionId, subSystem:'start
 
 // OOPHM currently only supports IFrameLinker
 var query = parent.location.search;
-if (!$legacyHosted) {
-  if (!findPluginXPCOM()) {
-    document.write('<embed id="pluginEmbed" type="application/x-gwt-hosted-mode" width="10" height="10">');
-    document.write('</embed>');
-    document.write('<object id="pluginObject" CLASSID="CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E">');
-    document.write('</object>');
-  }
+if (!findPluginXPCOM()) {
+  document.write('<embed id="pluginEmbed" type="application/x-gwt-hosted-mode" width="10" height="10">');
+  document.write('</embed>');
+  document.write('<object id="pluginObject" CLASSID="CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E">');
+  document.write('</object>');
+}
 
-  // look for the old query parameter if we don't find the new one
-  var idx = query.indexOf("gwt.codesvr=");
+// look for the old query parameter if we don't find the new one
+var idx = query.indexOf("gwt.codesvr=");
+if (idx >= 0) {
+  idx += 12;  // "gwt.codesvr=".length() == 12
+} else {
+  idx = query.indexOf("gwt.hosted=");
   if (idx >= 0) {
-    idx += 12;  // "gwt.codesvr=".length() == 12
+    idx += 11;  // "gwt.hosted=".length() == 11
+  }
+}
+if (idx >= 0) {
+  var amp = query.indexOf("&", idx);
+  if (amp >= 0) {
+    $hosted = query.substring(idx, amp);
   } else {
-    idx = query.indexOf("gwt.hosted=");
-    if (idx >= 0) {
-      idx += 11;  // "gwt.hosted=".length() == 11
-    }
+    $hosted = query.substring(idx);
   }
-  if (idx >= 0) {
-    var amp = query.indexOf("&", idx);
-    if (amp >= 0) {
-      $hosted = query.substring(idx, amp);
-    } else {
-      $hosted = query.substring(idx);
-    }
 
-    // According to RFC 3986, some of this component's characters (e.g., ':')
-    // are reserved and *may* be escaped.
-    $hosted = decodeURIComponent($hosted);
-  }
+  // According to RFC 3986, some of this component's characters (e.g., ':')
+  // are reserved and *may* be escaped.
+  $hosted = decodeURIComponent($hosted);
 }
 
 query = window.location.search.substring(1);
