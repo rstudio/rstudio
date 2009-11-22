@@ -355,12 +355,12 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
         }
         int insertIndex = findInsertionPoint(parentNode, idx);
         panel.treeModel.insertNodeInto(node, parentNode, insertIndex);
+        if (logEvent.type.needsAttention()) {
+          panel.tree.makeVisible(new TreePath(node.getPath()));
+        }
         if (parentNode == panel.treeModel.getRoot()
             && parentNode.getChildCount() == 1) {
           panel.treeModel.reload();
-        }
-        if (logEvent.type.needsAttention()) {
-          panel.tree.makeVisible(new TreePath(node.getPath()));
         }
         // Propagate our priority to our ancestors
         Type priority = logEvent.getInheritedPriority();
