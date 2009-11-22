@@ -43,14 +43,13 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
   public static class LogEvent {
 
     private static final Color DEBUG_COLOR = Color.decode("0x007777");
-    private static final Color SPAM_COLOR = Color.decode("0x005500");
-    private static final Color WARN_COLOR = Color.decode("0x888800");
-
     private static final Date firstLog = new Date();
+    private static final Map<Type, Color> logColors = new HashMap<Type, Color>();
+    private static final Map<Type, Icon> logIcons = new HashMap<Type, Icon>();
     private static NumberFormat minHr = NumberFormat.getIntegerInstance();
     private static NumberFormat seconds = NumberFormat.getNumberInstance();
-    private static final Map<Type, Color> logColors = new HashMap<Type, Color>();
-    private static final Map<Type,Icon> logIcons = new HashMap<Type, Icon>();
+    private static final Color SPAM_COLOR = Color.decode("0x005500");
+    private static final Color WARN_COLOR = Color.decode("0x888800");
 
     static {
       seconds.setMinimumFractionDigits(3);
@@ -194,7 +193,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
 
     /**
      * @return the inherited priority, which will be the highest priority of
-     *     this event or any child.
+     *         this event or any child.
      */
     public Type getInheritedPriority() {
       return inheritedPriority;
@@ -275,8 +274,8 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
 
     private String htmlEscape(String str) {
       // TODO(jat): call real implementation instead
-      return str.replace("&", "&amp;").replace("<", "&lt;").replace(">",
-          "&gt;").replace("\n", "<br>");
+      return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace(
+          "\n", "<br>");
     }
   }
 
@@ -284,7 +283,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
   final DefaultMutableTreeNode treeNode;
 
   private SwingLoggerPanel panel;
-  
+
   /**
    * Constructs the top-level TreeItemLogger.
    * 
@@ -297,7 +296,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
   /**
    * Used to create a branch treelogger, supplying a tree node to use rather
    * than the panel's.
-   *  
+   * 
    * @param panel
    * @param treeNode
    */
@@ -319,8 +318,8 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
       Type type, String msg, Throwable caught, HelpInfo helpInfo) {
     SwingTreeLogger commitChild = (SwingTreeLogger) childBeingCommitted;
     assert commitChild.treeNode.getUserObject() == null;
-    addUpdate(new LogEvent(commitChild, true,
-        commitChild.getBranchedIndex(), type, msg, caught, helpInfo));
+    addUpdate(new LogEvent(commitChild, true, commitChild.getBranchedIndex(),
+        type, msg, caught, helpInfo));
   }
 
   @Override
@@ -331,7 +330,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
 
   /**
    * Add a log event to be processed on the event thread.
-   *
+   * 
    * @param logEvent LogEvent to process
    */
   private void addUpdate(final LogEvent logEvent) {
@@ -344,8 +343,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
         DefaultMutableTreeNode parentNode;
         int idx;
         if (logEvent.isBranchCommit) {
-          SwingTreeLogger parentLogger
-          = (SwingTreeLogger) logger.getParentLogger();
+          SwingTreeLogger parentLogger = (SwingTreeLogger) logger.getParentLogger();
           logger.treeNode.setUserObject(logEvent);
           parentNode = parentLogger.treeNode;
           idx = logger.getBranchedIndex();
@@ -384,8 +382,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
         int low = 0;
         while (low <= high) {
           final int mid = low + ((high - low) >> 1);
-          DefaultMutableTreeNode midChild
-              = (DefaultMutableTreeNode) parentNode.getChildAt(mid);
+          DefaultMutableTreeNode midChild = (DefaultMutableTreeNode) parentNode.getChildAt(mid);
           final Object userObject = midChild.getUserObject();
           int compIdx = -1;
           if (userObject instanceof LogEvent) {
