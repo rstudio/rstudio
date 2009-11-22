@@ -154,8 +154,9 @@ function __gwt_disconnected() {
 }
 
 function __gwt_disconnected_impl() {
-  var doc = window.top.document;
-  var outer = doc.createElement("div");
+  var topWin = window.top;
+  var topDoc = topWin.document;
+  var outer = topDoc.createElement("div");
   // Do not insert whitespace or outer.firstChild will get a text node.
   outer.innerHTML = 
     '<div style="position:absolute;z-index:2147483646;left:0px;top:0px;right:0px;bottom:0px;filter:alpha(opacity=80);opacity:0.80;background-color:#000000;"></div>' +
@@ -164,16 +165,16 @@ function __gwt_disconnected_impl() {
       '<p style="font-size:15px;"> Most likely, you closed GWT development mode. Or you might have lost network connectivity. To fix this, try restarting GWT Development Mode and <a style="color: #FFFFFF; font-weight: bold;" href="javascript:location.reload()">REFRESH</a> this page.</p>' +
     '</div>'
   ;
-  doc.body.appendChild(outer);
+  topDoc.body.appendChild(outer);
   var glass = outer.firstChild;
   var glassStyle = glass.style;
 
   // Scroll to the top and remove scrollbars.
-  window.scrollTo(0, 0);
-  if (doc.compatMode == "BackCompat") {
-    doc.body.style["overflow"] = "hidden";
+  topWin.scrollTo(0, 0);
+  if (topDoc.compatMode == "BackCompat") {
+    topDoc.body.style["overflow"] = "hidden";
   } else {
-    doc.documentElement.style["overflow"] = "hidden";
+    topDoc.documentElement.style["overflow"] = "hidden";
   }
   
   // Steal focus.
@@ -181,18 +182,18 @@ function __gwt_disconnected_impl() {
   
   // Setup resize handler for IE6.
   if (navigator.userAgent.indexOf("MSIE 6") >= 0) {
-    if (doc.compatMode == "BackCompat") {
+    if (topDoc.compatMode == "BackCompat") {
       glassStyle.height = "100%";
       var resizeFunc = function () {
-        glassStyle.width = doc.body.clientWidth + 'px';
+        glassStyle.width = topDoc.body.clientWidth + 'px';
       }
     } else {
       var resizeFunc = function () {
-        glassStyle.width = doc.documentElement.clientWidth + 'px';
-        glassStyle.height = doc.documentElement.clientHeight + 'px';
+        glassStyle.width = topDoc.documentElement.clientWidth + 'px';
+        glassStyle.height = topDoc.documentElement.clientHeight + 'px';
       }
     }
-    window.onresize = resizeFunc;
+    topWin.onresize = resizeFunc;
     resizeFunc();
   }
 }
