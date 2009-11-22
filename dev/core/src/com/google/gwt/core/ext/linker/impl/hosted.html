@@ -147,6 +147,13 @@ function __gwt_makeResult(isException, result) {
 }
 
 function __gwt_disconnected() {
+  // Prevent double-invocation.
+  __gwt_disconnected = new Function();
+  // Do it in a timeout so we can be sure we have a clean stack.
+  window.setTimeout(__gwt_disconnected_impl, 1);
+}
+
+function __gwt_disconnected_impl() {
   var doc = window.top.document;
   var outer = doc.createElement("div");
   // Do not insert whitespace or outer.firstChild will get a text node.
