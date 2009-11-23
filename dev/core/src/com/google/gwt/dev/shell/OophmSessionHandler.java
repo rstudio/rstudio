@@ -43,6 +43,7 @@ public class OophmSessionHandler extends SessionHandler {
 
   /**
    * Listens for new connections from browsers.
+   * 
    * @param topLogger logger to use for non-module-related messages
    * @param host BrowserWidgetHost instance
    */
@@ -182,6 +183,8 @@ public class OophmSessionHandler extends SessionHandler {
       moduleMap.put(serverChannel, moduleSpace);
       PerfLogger.start("ModuleSpace.onLoad");
       moduleSpace.onLoad(logger);
+      moduleHandle.getLogger().log(TreeLogger.INFO,
+          "Module " + moduleName + " has been loaded");
     } catch (Throwable e) {
       // We do catch Throwable intentionally because there are a ton of things
       // that can go wrong trying to load a module, including Error-derived
@@ -245,8 +248,10 @@ public class OophmSessionHandler extends SessionHandler {
           null);
       return;
     }
-    moduleHandle.getLogger().log(TreeLogger.INFO, "Unloading module "
-        + moduleSpace.getModuleName() + " (" + moduleName + ")", null);
+    moduleHandle.getLogger().log(
+        TreeLogger.INFO,
+        "Unloading module " + moduleSpace.getModuleName() + " (" + moduleName
+            + ")", null);
     moduleSpace.dispose();
     moduleHandle.unload();
     moduleMap.remove(serverChannel);
