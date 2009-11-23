@@ -102,7 +102,10 @@ class PrefixTree extends AbstractCollection<String> {
     private native void addTree(PrefixTree tree, String prefix) /*-{
       var suffixes = [];
       for (var suffix in tree.@com.google.gwt.user.client.ui.PrefixTree::suffixes) {
-        suffixes.push(suffix);
+        // Ignore object properties that aren't colon-prepended keys
+        if (suffix.indexOf(':') == 0) {
+          suffixes.push(suffix);
+        }
       }
 
       var frame = {
@@ -154,6 +157,9 @@ class PrefixTree extends AbstractCollection<String> {
             // Otherwise, put all of the subtrees on the stack.
           } else {
             for (key in frame.subtrees) {
+              if (key.indexOf(':') != 0) {
+                continue;
+              }
               var target = frame.prefix + unsafe(key);
               var subtree = frame.subtrees[key];
               this.@com.google.gwt.user.client.ui.PrefixTree$PrefixTreeIterator::addTree(Lcom/google/gwt/user/client/ui/PrefixTree;Ljava/lang/String;)(subtree, target);
@@ -165,6 +171,9 @@ class PrefixTree extends AbstractCollection<String> {
        // Put all subframes on the stack, and return to top of loop.
        } else {
          for (var key in frame.subtrees) {
+           if (key.indexOf(':') != 0) {
+             continue;
+           }
            var target = frame.prefix + unsafe(key);
            var subtree = frame.subtrees[key];
 
@@ -416,6 +425,9 @@ class PrefixTree extends AbstractCollection<String> {
     } else {
      // Check local suffixes.
      for (var suffix in suffixes) {
+       if (suffix.indexOf(':') != 0) {
+         continue;
+       }
        var target = prefix + @com.google.gwt.user.client.ui.PrefixTree::unsafe(Ljava/lang/String;)(suffix);
        if (target.indexOf(search) == 0) {
          output.@java.util.Collection::add(Ljava/lang/Object;)(target);
@@ -429,6 +441,9 @@ class PrefixTree extends AbstractCollection<String> {
      // Check the subtree keys.  If the key matches, that implies that all
      // elements of the subtree would match.
      for (var key in subtrees) {
+       if (key.indexOf(':') != 0) {
+         continue;
+       }
        var target = prefix + @com.google.gwt.user.client.ui.PrefixTree::unsafe(Ljava/lang/String;)(key);
        var subtree = subtrees[key];
 
@@ -446,12 +461,16 @@ class PrefixTree extends AbstractCollection<String> {
 
            // Always fully-specify suffixes.
            for (var suffix in subtree.@com.google.gwt.user.client.ui.PrefixTree::suffixes) {
-             output.@java.util.Collection::add(Ljava/lang/Object;)(target + @com.google.gwt.user.client.ui.PrefixTree::unsafe(Ljava/lang/String;)(suffix));
+             if (suffix.indexOf(':') == 0) {
+               output.@java.util.Collection::add(Ljava/lang/Object;)(target + @com.google.gwt.user.client.ui.PrefixTree::unsafe(Ljava/lang/String;)(suffix));
+             }
            }
 
            // Give the keys of the subtree.
            for (var subkey in subtree.@com.google.gwt.user.client.ui.PrefixTree::subtrees) {
-             output.@java.util.Collection::add(Ljava/lang/Object;)(target + @com.google.gwt.user.client.ui.PrefixTree::unsafe(Ljava/lang/String;)(subkey) + "...");
+             if (subkey.indexOf(':') == 0) {
+               output.@java.util.Collection::add(Ljava/lang/Object;)(target + @com.google.gwt.user.client.ui.PrefixTree::unsafe(Ljava/lang/String;)(subkey) + "...");
+             }
            }
          }
        }
