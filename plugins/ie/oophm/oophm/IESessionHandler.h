@@ -36,6 +36,7 @@ public:
   virtual void makeValueRef(_variant_t& value, const Value& in);
 
 protected:
+  virtual void disconnectDetectedImpl();
   virtual void fatalError(HostChannel& channel, const std::string& messsage);
   virtual void freeValue(HostChannel& channel, int idCount, const int* ids);
   virtual void loadJsni(HostChannel& channel, const std::string& js);

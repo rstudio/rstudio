@@ -33,6 +33,7 @@
 class HostChannel {
   Socket sock;
   static ByteOrder byteOrder;
+  SessionHandler* handler;
 
 public:
   ~HostChannel() {
@@ -95,10 +96,12 @@ public:
 
   bool readByte(char& data) {
     if (!isConnected()) {
+      handler->disconnectDetected();
       return false;
     }
     int c = sock.readByte();
     if (c < 0) {
+      handler->disconnectDetected();
       return false;
     }
     data = static_cast<char>(c);
@@ -107,9 +110,14 @@ public:
 
   bool sendByte(const char data) {
     if (!isConnected()) {
+      handler->disconnectDetected();
       return false;
     }
-    return sock.writeByte(data);
+    if (!sock.writeByte(data)) {
+      handler->disconnectDetected();
+      return false;
+    }
+    return true;
   }
 
   bool readStringLength(uint32_t& data);
@@ -133,7 +141,15 @@ public:
   }
 
   bool flush() {
-    return sock.flush();
+    if (!sock.isConnected()) {
+      handler->disconnectDetected();
+      return false;
+    }
+    if (!sock.flush()) {
+      handler->disconnectDetected();
+      return false;
+    }
+    return true;
   }
 
   ReturnMessage* reactToMessagesWhileWaitingForReturn(SessionHandler* handler) {

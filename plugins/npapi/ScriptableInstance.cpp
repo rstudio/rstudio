@@ -63,6 +63,7 @@ ScriptableInstance::ScriptableInstance(NPP npp) : NPObjectWrapper<ScriptableInst
     connectedID(NPN_GetStringIdentifier("connected")),
     statsID(NPN_GetStringIdentifier("stats")),
     gwtId(NPN_GetStringIdentifier("__gwt_ObjectId")),
+    jsDisconnectedID(NPN_GetStringIdentifier("__gwt_disconnected")),
     jsInvokeID(NPN_GetStringIdentifier("__gwt_jsInvoke")),
     jsResultID(NPN_GetStringIdentifier("__gwt_makeResult")),
     jsTearOffID(NPN_GetStringIdentifier("__gwt_makeTearOff")),
@@ -542,24 +543,27 @@ bool ScriptableInstance::JavaObject_invoke(int objectId, int dispId,
   for (unsigned i = 0; i < numArgs; ++i) {
     vargs[i] = NPVariantProxy::getAsValue(args[i], *this);
   }
+  bool isException = false;
+  Value returnValue;
   if (!InvokeMessage::send(*_channel, javaThis, dispId, numArgs, vargs.get())) {
     Debug::log(Debug::Error) << "JavaObject_invoke: failed to send invoke message" << Debug::flush;
-    // TODO(jat): returning false here spams the browser console
-    return true;
-  }
-  Debug::log(Debug::Debugging) << " return from invoke" << Debug::flush;
-  scoped_ptr<ReturnMessage> retMsg(_channel->reactToMessagesWhileWaitingForReturn(this));
-  if (!retMsg.get()) {
-    Debug::log(Debug::Error) << "JavaObject_invoke: failed to get return value" << Debug::flush;
-    return false;
-  }
-  if (isRawToString) {
-    // toString() needs the raw value
-    NPVariantProxy::assignFrom(*this, *result, retMsg->getReturnValue());
-    return !retMsg->isException();
+  } else {
+    Debug::log(Debug::Debugging) << " return from invoke" << Debug::flush;
+    scoped_ptr<ReturnMessage> retMsg(_channel->reactToMessagesWhileWaitingForReturn(this));
+    if (!retMsg.get()) {
+      Debug::log(Debug::Error) << "JavaObject_invoke: failed to get return value" << Debug::flush;
+    } else {
+      if (isRawToString) {
+        // toString() needs the raw value
+        NPVariantProxy::assignFrom(*this, *result, retMsg->getReturnValue());
+        return !retMsg->isException();
+      }
+      isException = retMsg->isException();
+      returnValue = retMsg->getReturnValue();
+    }
   }
   // Wrap the result
-  return makeResult(retMsg->isException(), retMsg->getReturnValue(), result);
+  return makeResult(isException, returnValue, result);
 }
 
 bool ScriptableInstance::JavaObject_getProperty(int objectId, int dispId,
@@ -649,6 +653,11 @@ void ScriptableInstance::destroyJavaWrapper(JavaObject* jObj) {
   }
   Debug::log(Debug::Debugging) << "destroyJavaWrapper(id=" << objectId << ")" << Debug::flush;
   javaObjectsToFree.insert(objectId);
+}
+
+void ScriptableInstance::disconnectDetectedImpl() {
+  NPVariantWrapper result(*this);
+  NPN_Invoke(getNPP(), window, jsDisconnectedID, 0, 0, result.addressForReturn());
 }
 
 void ScriptableInstance::sendFreeValues(HostChannel& channel) {

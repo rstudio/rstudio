@@ -41,6 +41,7 @@ public:
   void disconnect();
 
 protected:
+  virtual void disconnectDetectedImpl();
   virtual void freeValue(HostChannel& channel, int idCount, const int* ids);
   virtual void loadJsni(HostChannel& channel, const std::string& js);
   virtual bool invoke(HostChannel& channel, const Value& thisObj, const std::string& methodName,

@@ -359,17 +359,21 @@ JSBool JavaObject::invokeJava(JSContext* ctx, SessionData* data,
   for (int i = 0; i < numArgs; ++i) {
     data->makeValueFromJsval(args[i], ctx, jsargs[i]);
   }
+
+  bool isException = false;
+  Value returnValue;
   if (!InvokeMessage::send(*channel, javaThis, dispId, numArgs, args.get())) {
     Debug::log(Debug::Debugging) << "JavaObject::call failed to send invoke message" << Debug::flush;
-    return false;
+  } else {
+    Debug::log(Debug::Spam) << " return from invoke" << Debug::flush;
+    scoped_ptr<ReturnMessage> retMsg(channel->reactToMessagesWhileWaitingForReturn(handler));
+    if (!retMsg.get()) {
+      Debug::log(Debug::Debugging) << "JavaObject::call failed to get return value" << Debug::flush;
+    } else {
+      isException = retMsg->isException();
+      returnValue = retMsg->getReturnValue();
+    }
   }
-  Debug::log(Debug::Spam) << " return from invoke" << Debug::flush;
-  scoped_ptr<ReturnMessage> retMsg(channel->reactToMessagesWhileWaitingForReturn(handler));
-  if (!retMsg.get()) {
-    Debug::log(Debug::Debugging) << "JavaObject::call failed to get return value" << Debug::flush;
-    return false;
-  }
-  Value returnValue = retMsg->getReturnValue();
   // Since we can set exceptions normally, we always return false to the
   // wrapper function and set the exception ourselves if one occurs.
   // TODO: cleanup exception case
@@ -379,7 +383,7 @@ JSBool JavaObject::invokeJava(JSContext* ctx, SessionData* data,
   jsval retJsVal;
   Debug::log(Debug::Spam) << "  result is " << returnValue << Debug::flush;
   data->makeJsvalFromValue(retJsVal, ctx, returnValue);
-  if (retMsg->isException()) {
+  if (isException) {
     JS_SetPendingException(ctx, retJsVal);
     return false;
   }

@@ -128,6 +128,26 @@ FFSessionHandler::~FFSessionHandler(void) {
   }
 }
 
+void FFSessionHandler::disconnectDetectedImpl() {
+  JSContext* ctx = getJSContext();
+  if (!ctx) {
+    return;
+  }
+
+  Debug::log(Debug::Debugging) << "Getting function \"__gwt_disconnected\""
+        << Debug::flush;
+
+  jsval funcVal;
+  if (!JS_GetProperty(ctx, global, "__gwt_disconnected", &funcVal)
+      || funcVal == JSVAL_VOID) {
+    Debug::log(Debug::Error) << "Could not get function \"__gwt_disconnected\""
+        << Debug::flush;
+    return;
+  }
+  jsval rval;
+  JS_CallFunctionValue(ctx, global, funcVal, 0, 0, &rval);
+}
+
 void FFSessionHandler::freeValue(HostChannel& channel, int idCount, const int* ids) {
   Debug::DebugStream& dbg = Debug::log(Debug::Spam)
       << "FFSessionHandler::freeValue [ ";

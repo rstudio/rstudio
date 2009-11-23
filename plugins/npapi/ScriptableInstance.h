@@ -72,6 +72,10 @@ public:
   void destroyJavaWrapper(JavaObject*);
 
   static const uint32_t VERSION = 1;
+
+protected:
+  virtual void disconnectDetectedImpl();
+
 private:  
   // Map of object ID to JavaObject
   hash_map<int, JavaObject*> javaObjects;
@@ -94,6 +98,7 @@ private:
   const NPIdentifier statsID;
   const NPIdentifier gwtId;
 
+  const NPIdentifier jsDisconnectedID;
   const NPIdentifier jsInvokeID;
   const NPIdentifier jsResultID;
   const NPIdentifier jsTearOffID;

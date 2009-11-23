@@ -68,6 +68,7 @@ bool HostChannel::connectToHost(const char* host, unsigned port) {
 
 bool HostChannel::init(SessionHandler* handler, int minProtoVers,
     int maxProtoVers, const std::string& hostedHtmlVers) {
+  this->handler = handler;
   Debug::log(Debug::Debugging)
       << "  negotiating versions - we support protocol " << minProtoVers
       << " through " << maxProtoVers << ", hostedHtmlVersion=" << hostedHtmlVers

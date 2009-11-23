@@ -38,8 +38,7 @@ private:
   }
 
 public:
-  LocalObjectTable() {
-    dontFree = false;
+  LocalObjectTable(): nextId(0), dontFree(false) {
   }
 
   virtual ~LocalObjectTable();
@@ -68,11 +67,11 @@ public:
       Debug::log(Debug::Error) << "Freeing freed object slot " << id << Debug::flush;
       return;
     }
-    setFree(id);
     if (!dontFree) {
       NPObject* obj = it->second;
       NPN_ReleaseObject(obj);
     }
+    setFree(id);
   }
 
   void freeAll() {

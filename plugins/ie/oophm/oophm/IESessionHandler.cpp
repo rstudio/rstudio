@@ -45,6 +45,22 @@ IESessionHandler::~IESessionHandler(void) {
   channel->disconnectFromHost();
 }
 
+void IESessionHandler::disconnectDetectedImpl() {
+  DISPID dispId;
+  LPOLESTR gwtDisconnectedName = L"__gwt_disconnected";
+  if (!SUCCEEDED(getWindow()->GetIDsOfNames(IID_NULL, &gwtDisconnectedName, 1,
+    LOCALE_SYSTEM_DEFAULT, &dispId))) {
+      Debug::log(Debug::Error) << "Unable to get dispId for __gwt_disconnected" << Debug::flush;
+      return;
+  }
+
+  DISPPARAMS dispParams = {NULL, NULL, 0, 0};
+  CComPtr<IDispatchEx> dispEx;
+  getWindow()->QueryInterface(&dispEx);
+  dispEx->InvokeEx(dispId, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD,
+    &dispParams, NULL, NULL, NULL);
+}
+
 void IESessionHandler::fatalError(HostChannel& channel,
     const std::string& message) {
   // TODO: better way of reporting error?

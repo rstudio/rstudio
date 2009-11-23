@@ -49,6 +49,24 @@ public:
     SetProperty = SPECIAL_SET_PROPERTY
   };
 protected:
+  SessionHandler(): alreadyDisconnected(false) {
+  }
+
+  /**
+   * Called by the server socket when it cannot read, write, or flush.
+   */
+  void disconnectDetected() {
+    if (!alreadyDisconnected) {
+      alreadyDisconnected = true;
+      disconnectDetectedImpl();
+    }
+  }
+
+  /**
+   * Implementors should invoke __gwt_disconnected() in the hosted.html window
+   * to "glass" the screen with a disconnect message.
+   */
+  virtual void disconnectDetectedImpl() = 0;
 
   /**
    * Report a fatal error -- the channel will be closed after this method
@@ -84,6 +102,9 @@ protected:
   virtual void sendFreeValues(HostChannel& channel) = 0;
 
   virtual ~SessionHandler() {}
+
+private:
+  bool alreadyDisconnected;
 };
 
 #endif

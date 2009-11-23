@@ -152,32 +152,30 @@ STDMETHODIMP CJavaObject::InvokeEx(DISPID dispidMember, LCID lcid, WORD wFlags,
       javaDispatchId.setInt(0);
     }
 
+    bool isException = false;
+    Value returnValue;
     if (!InvokeMessage::send(*channel, thisRef, javaDispatchId.getInt(), numArgs, args.get())) {
       Debug::log(Debug::Error) << "Unable to send method invocation" << Debug::flush;
-      return E_FAIL;
-    }
-
-    scoped_ptr<ReturnMessage> m(channel->reactToMessagesWhileWaitingForReturn(
+    } else {
+      scoped_ptr<ReturnMessage> m(channel->reactToMessagesWhileWaitingForReturn(
       sessionData->getSessionHandler()));
 
-    if (!m.get()) {
-      Debug::log(Debug::Error) << "Did not receive ReturnMessage" << Debug::flush;
-      if (pvarResult) {
-        VariantClear(pvarResult);
+      if (!m.get()) {
+        Debug::log(Debug::Error) << "Did not receive ReturnMessage" << Debug::flush;
+      } else {
+        if (dispidMember == DISPID_TOSTRING) {
+          // raw toString();
+          if (pvarResult) {
+            // This will be NULL when the caller doesn't care about the return value
+            _variant_t returnVariant;
+            sessionData->makeValueRef(returnVariant, m->getReturnValue());
+            *pvarResult = returnVariant.Detach();
+          }
+          return m->isException() ? E_FAIL : S_OK;
+        }
+        isException = m->isException();
+        returnValue = m->getReturnValue();
       }
-      // XXX better error handling
-      return E_FAIL;
-    }
-
-    if (dispidMember == DISPID_TOSTRING) {
-      // raw toString();
-      if (pvarResult) {
-        // This will be NULL when the caller doesn't care about the return value
-        _variant_t returnVariant;
-        sessionData->makeValueRef(returnVariant, m->getReturnValue());
-        *pvarResult = returnVariant.Detach();
-      }
-      return m->isException() ? E_FAIL : S_OK;
     }
 
     DISPID dispId;
@@ -191,8 +189,8 @@ STDMETHODIMP CJavaObject::InvokeEx(DISPID dispidMember, LCID lcid, WORD wFlags,
     // Call __gwt_makeResult(isException, returnValue)
     scoped_array<_variant_t> varArgs(new _variant_t[2]);
     // Args go backwards.
-    varArgs[1] = (m->isException() ? 1 : 0);
-    sessionData->makeValueRef(varArgs[0], m->getReturnValue());
+    varArgs[1] = (isException ? 1 : 0);
+    sessionData->makeValueRef(varArgs[0], returnValue);
     DISPPARAMS dispParams = {varArgs.get(), NULL, 2, 0};
     CComPtr<IDispatchEx> dispEx;
     sessionData->getWindow()->QueryInterface(&dispEx);
