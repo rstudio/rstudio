@@ -216,8 +216,7 @@ public class JavaToJavaScriptCompiler {
     PropertyOracle[] propertyOracles = permutation.getPropertyOracles();
     int permutationId = permutation.getId();
     Map<String, String> rebindAnswers = permutation.getRebindAnswers();
-    int printId = permutationId + 1;
-    logger.log(TreeLogger.INFO, "Compiling permutation " + printId + "...");
+    logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId + "...");
     long permStart = System.currentTimeMillis();
     try {
       if (JProgram.isTracingEnabled()) {
