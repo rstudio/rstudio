@@ -91,6 +91,10 @@ WebScriptSessionHandler::~WebScriptSessionHandler() {
   pthread_mutex_destroy(&javaObjectsLock);
 }
 
+void WebScriptSessionHandler::disconnectDetectedImpl() {
+  crashHandler->crash(__PRETTY_FUNCTION__, "Server disconnect detected");
+}
+
 void WebScriptSessionHandler::fatalError(HostChannel& channel,
     const std::string& message) {
   // TODO: better way of reporting error?
@@ -269,48 +273,53 @@ JSValueRef WebScriptSessionHandler::javaFunctionCallbackImpl (int dispatchId,
    */
   Debug::log(Debug::Debugging) << "Java method " << dispatchId << " invoked" << Debug::flush;
 
-  /*
-   * If a JS function is evaluated without an meaningful this object or the global
-   * object is implicitly used as the this object, we'll assume that the
-   * Java-derived method is static, and send a null this object to the server
-   */
-  Value thisValue;
-  if (JSValueIsEqual(contextRef, thisObject, JSContextGetGlobalObject(contextRef), NULL)) {
-    thisValue = Value();
-    thisValue.setNull();
-  } else {
-    makeValue(thisValue, thisObject);
-  }
-
-  // Argument conversion is straightforward
-  Value args[argumentCount];
-  for (int i = 0; i < argumentCount; i++) {
-    makeValue(args[i], arguments[i]);
-  }
-
-  if (!InvokeMessage::send(*channel, thisValue, dispatchId,
-                           argumentCount, args)) {
-    initiateAutodestructSequence(__PRETTY_FUNCTION__, "Unable to send invocation message");
-    *exception = makeException("Unable to send invocation message");
-    return JSValueMakeUndefined(contextRef);
-  }
-
-  scoped_ptr<ReturnMessage> ret(channel->reactToMessagesWhileWaitingForReturn(sessionHandler));
-
-  if (!ret.get()) {
-    initiateAutodestructSequence(__PRETTY_FUNCTION__, "Unable to receive return message");
-    *exception = makeException("Unable to receive return message");
-    return JSValueMakeUndefined(contextRef);
-  }
-
-  Value v = ret->getReturnValue();
-
   JSValueRef toReturn;
-  if (ret->isException()) {
-    *exception = makeValueRef(v);
-    toReturn = JSValueMakeUndefined(contextRef);
+  if (crashHandler->hasCrashed()) {
+    Debug::log(Debug::Debugging) << "Not executing method since we have crashed" << Debug::flush;
+    toReturn =  JSValueMakeUndefined(contextRef);
   } else {
-    toReturn = makeValueRef(v);
+    /*
+     * If a JS function is evaluated without an meaningful this object or the global
+     * object is implicitly used as the this object, we'll assume that the
+     * Java-derived method is static, and send a null this object to the server
+     */
+    Value thisValue;
+    if (JSValueIsEqual(contextRef, thisObject, JSContextGetGlobalObject(contextRef), NULL)) {
+      thisValue = Value();
+      thisValue.setNull();
+    } else {
+      makeValue(thisValue, thisObject);
+    }
+
+    // Argument conversion is straightforward
+    Value args[argumentCount];
+    for (int i = 0; i < argumentCount; i++) {
+      makeValue(args[i], arguments[i]);
+    }
+
+    if (!InvokeMessage::send(*channel, thisValue, dispatchId,
+                             argumentCount, args)) {
+      initiateAutodestructSequence(__PRETTY_FUNCTION__, "Unable to send invocation message");
+      *exception = makeException("Unable to send invocation message");
+      return JSValueMakeUndefined(contextRef);
+    }
+
+    scoped_ptr<ReturnMessage> ret(channel->reactToMessagesWhileWaitingForReturn(sessionHandler));
+
+    if (!ret.get()) {
+      initiateAutodestructSequence(__PRETTY_FUNCTION__, "Unable to receive return message");
+      *exception = makeException("Unable to receive return message");
+      return JSValueMakeUndefined(contextRef);
+    }
+
+    Value v = ret->getReturnValue();
+
+    if (ret->isException()) {
+      *exception = makeValueRef(v);
+      toReturn = JSValueMakeUndefined(contextRef);
+    } else {
+      toReturn = makeValueRef(v);
+    }
   }
 
   JSValueRef makeResultArguments[] = {JSValueMakeBoolean(contextRef, false), toReturn};
@@ -334,6 +343,11 @@ void WebScriptSessionHandler::javaObjectFinalizeImpl(int objId) {
 JSValueRef WebScriptSessionHandler::javaObjectGetPropertyImpl (TrackingDataRef tracker, JSObjectRef object,
                                                                JSStringRef propertyName, JSValueRef* exception) {
   *exception = NULL;
+  
+  if (crashHandler->hasCrashed()) {
+    Debug::log(Debug::Debugging) << "Not executing since we have crashed" << Debug::flush;
+    return JSValueMakeUndefined(contextRef);
+  }
 
   // Convert the name
   int maxLength = JSStringGetMaximumUTF8CStringSize(propertyName);
@@ -403,6 +417,12 @@ bool WebScriptSessionHandler::javaObjectHasPropertyImpl (TrackingDataRef tracker
 bool WebScriptSessionHandler::javaObjectSetPropertyImpl (TrackingDataRef tracker, JSObjectRef object,
                                                          JSStringRef propertyName, JSValueRef jsValue,
                                                          JSValueRef* exception) {
+
+  if (crashHandler->hasCrashed()) {
+    Debug::log(Debug::Debugging) << "Not executing since we have crashed" << Debug::flush;
+    return true;
+  }
+
   int maxLength = JSStringGetMaximumUTF8CStringSize(propertyName);
   scoped_array<char> propertyNameChars(new char[maxLength]);
   JSStringGetUTF8CString(propertyName, propertyNameChars.get(), maxLength);

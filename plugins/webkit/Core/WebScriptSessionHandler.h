@@ -25,6 +25,7 @@
 class CrashHandler {
 public:
   virtual void crash(const char* functionName, const char* message) = 0;
+  virtual bool hasCrashed() = 0;
 };
 typedef CrashHandler* CrashHandlerRef;
 
@@ -88,6 +89,7 @@ public:
   JSValueRef makeException(const char* message);
 
 protected:
+  virtual void disconnectDetectedImpl();
   virtual void fatalError(HostChannel& channel, const std::string& message);
   virtual void freeValue(HostChannel& channel, int idCount, const int* ids);
   virtual void loadJsni(HostChannel& channel, const std::string& js);

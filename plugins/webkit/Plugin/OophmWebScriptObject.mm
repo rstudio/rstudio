@@ -19,7 +19,6 @@
 #import <WebKit/WebKit.h>
 #import "BrowserChannel.h"
 #import "Debug.h"
-#import "GTMStackTrace.h"
 #import "GTMSystemVersion.h"
 #import "NSMutableString+HtmlReplacement.h"
 #import "LoadModuleMessage.h"
@@ -41,6 +40,7 @@ public:
     NSString* str = [NSString stringWithFormat:@"%s\n\n%s", message, functionName];
     [obj crashWithMessage:str];
   }
+  virtual bool hasCrashed();
 private:
   OophmWebScriptObject* const obj;
 };
@@ -48,6 +48,7 @@ private:
 @interface OophmWebScriptObject (Private)
 + (void)logAndThrowString: (NSString*)message;
 - (void)addAllowedHost: (NSString*)host;
+- (BOOL)hasCrashed;
 - (void)connectAlertDidEnd: (NSAlert*)alert
                 returnCode: (int)returnCode
                contextInfo: (void*)contextInfo;
@@ -58,6 +59,11 @@ private:
    withHostedHtmlVersion: (NSString*) hostedHtmlVersion;
 	
 @end
+
+// This is declared here so that we can access the category method
+bool PluginCrashHandler::hasCrashed() {
+  return [obj hasCrashed] ? true : false;
+}
 
 @implementation OophmWebScriptObject
 + (void)initialize {
@@ -188,7 +194,27 @@ private:
     return;
   }
   self->_hasCrashed = YES;
+  
+#ifdef GWT_DEBUGDISABLE
+  // We'll call out to the JS support function
+  JSGlobalContextRef contextRef = self->_contextRef;
+  JSStringRef disconnectedName = JSStringCreateWithUTF8CString("__gwt_disconnected");
+  JSValueRef disconnected = JSObjectGetProperty(contextRef, JSContextGetGlobalObject(contextRef), disconnectedName, NULL);
+  JSStringRelease(disconnectedName);
+  
+  if (JSValueIsObject(contextRef, disconnected)) {
+    // Found hosted.html's crash support
+    JSObjectRef disconnectedFunction = JSValueToObject(contextRef, disconnected, NULL);
+    JSValueRef exception = NULL;
+    JSObjectCallAsFunction(contextRef, disconnectedFunction, JSContextGetGlobalObject(contextRef), 0, NULL, &exception);
+    if (!exception) {
+      // Couldn't invoke the crash handler.
+      return;
+    }
+  }
+#endif //GWT_DEBUGDISABLE
 
+  // Use a simple crash page built into the bundle
   NSBundle* oophmBundle = [NSBundle bundleForClass:[self class]];
   NSString* path = [oophmBundle pathForResource:@"crash" ofType:@"html"];
   NSMutableString* crashPage = [NSMutableString stringWithContentsOfFile:path];
@@ -264,6 +290,10 @@ private:
   [mutableDict setObject:mutableHosts forKey:@"allowedHosts"];
   [shared setPersistentDomain:mutableDict forName:bundleIdentifier];
   [shared synchronize];
+}
+
+- (BOOL)hasCrashed{
+  return self->_hasCrashed;
 }
 
 - (void)connectAlertDidEnd:(NSAlert *)alert
