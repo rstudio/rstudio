@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string>gwtlogo</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.google.gwt.oophm</string>
+	<string>com.google.gwt.plugin</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -19,20 +19,25 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>0.1</string>
+	<string>0.9</string>
 	<key>NSPrincipalClass</key>
 	<string>OophmPlugin</string>
 	<key>WebPluginDescription</key>
-	<string>Google Web Toolkit Development Mode plugin</string>
+	<string>Google Web Toolkit Developer Plugin</string>
 	<key>WebPluginMIMETypes</key>
 	<dict>
-		<key>application/x-gwt-hosted-mode</key>
+		<key>application/x-gwt-dev-mode</key>
 		<dict>
 			<key>WebPluginTypeDescription</key>
 			<string>Google Web Toolkit Development Mode</string>
 		</dict>
+		<key>application/x-gwt-hosted-mode</key>
+		<dict>
+			<key>WebPluginTypeDescription</key>
+			<string>Google Web Toolkit Development Mode (Legacy)</string>
+		</dict>
 	</dict>
 	<key>WebPluginName</key>
-	<string>GWT DMP</string>
+	<string>${PRODUCT_NAME}</string>
 </dict>
 </plist>

@@ -22,6 +22,7 @@
 @private
   JSGlobalContextRef _contextRef;
   CrashHandlerRef _crashHandler;
+  BOOL _hasCrashed;
   HostChannel* _hostChannel;
   WebScriptSessionHandlerRef _sessionHandler;
   WebView* _webView;

@@ -3,22 +3,10 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 42;
+	objectVersion = 45;
 	objects = {
 
 /* Begin PBXAggregateTarget section */
-		48420E420DD52761001F3839 /* oophm.dmg */ = {
-			isa = PBXAggregateTarget;
-			buildConfigurationList = 48420E5A0DD527AD001F3839 /* Build configuration list for PBXAggregateTarget "oophm.dmg" */;
-			buildPhases = (
-				48420E460DD52768001F3839 /* ShellScript */,
-			);
-			dependencies = (
-				48420E480DD5278D001F3839 /* PBXTargetDependency */,
-			);
-			name = oophm.dmg;
-			productName = oophm_package;
-		};
 		48547E030DD882170047AC8A /* symlinks */ = {
 			isa = PBXAggregateTarget;
 			buildConfigurationList = 48547E080DD8823B0047AC8A /* Build configuration list for PBXAggregateTarget "symlinks" */;
@@ -47,7 +35,6 @@
 		48108DE00E2C15BD007FA76C /* Socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 48108DDD0E2C15BD007FA76C /* Socket.cpp */; };
 		48338DDF0E4A2CA7008ACF0F /* oophm_bypass.plist in Resources */ = {isa = PBXBuildFile; fileRef = 48338DDB0E4A2C49008ACF0F /* oophm_bypass.plist */; };
 		48420D410DD51A3D001F3839 /* GTMNSString+HTML.m in Sources */ = {isa = PBXBuildFile; fileRef = 48420D3E0DD51A3D001F3839 /* GTMNSString+HTML.m */; };
-		48420D420DD51A3D001F3839 /* GTMStackTrace.c in Sources */ = {isa = PBXBuildFile; fileRef = 48420D3F0DD51A3D001F3839 /* GTMStackTrace.c */; };
 		4851A9D50DD1198300C577B2 /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 48FD98A00DC62FD800E011A2 /* JavaScriptCore.framework */; };
 		48547F000DD889DA0047AC8A /* GTMSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 48547EFF0DD889DA0047AC8A /* GTMSystemVersion.m */; };
 		48547F4B0DD88D110047AC8A /* NSMutableString+HtmlReplacement.m in Sources */ = {isa = PBXBuildFile; fileRef = 48547F4A0DD88D110047AC8A /* NSMutableString+HtmlReplacement.m */; };
@@ -81,13 +68,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		48420E470DD5278D001F3839 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 8D5B49AC048680CD000E48DA;
-			remoteInfo = oophm;
-		};
 		48547E060DD8821D0047AC8A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
@@ -128,8 +108,6 @@
 		48420D3C0DD51A23001F3839 /* GTMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMDefines.h; path = GTM/GTMDefines.h; sourceTree = "<group>"; };
 		48420D3D0DD51A3D001F3839 /* GTMNSString+HTML.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "GTMNSString+HTML.h"; path = "GTM/Foundation/GTMNSString+HTML.h"; sourceTree = "<group>"; };
 		48420D3E0DD51A3D001F3839 /* GTMNSString+HTML.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "GTMNSString+HTML.m"; path = "GTM/Foundation/GTMNSString+HTML.m"; sourceTree = "<group>"; };
-		48420D3F0DD51A3D001F3839 /* GTMStackTrace.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = GTMStackTrace.c; path = GTM/Foundation/GTMStackTrace.c; sourceTree = "<group>"; };
-		48420D400DD51A3D001F3839 /* GTMStackTrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMStackTrace.h; path = GTM/Foundation/GTMStackTrace.h; sourceTree = "<group>"; };
 		48547EFE0DD889DA0047AC8A /* GTMSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMSystemVersion.h; path = GTM/Foundation/GTMSystemVersion.h; sourceTree = "<group>"; };
 		48547EFF0DD889DA0047AC8A /* GTMSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GTMSystemVersion.m; path = GTM/Foundation/GTMSystemVersion.m; sourceTree = "<group>"; };
 		48547F490DD88D110047AC8A /* NSMutableString+HtmlReplacement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableString+HtmlReplacement.h"; sourceTree = "<group>"; };
@@ -188,7 +166,7 @@
 		48FD99520DC6349F00E011A2 /* OophmWebScriptObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OophmWebScriptObject.h; sourceTree = "<group>"; };
 		48FD99530DC6349F00E011A2 /* OophmWebScriptObject.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = OophmWebScriptObject.mm; sourceTree = "<group>"; };
 		48FFCFC80DD35DA900805659 /* Platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Platform.h; sourceTree = "<group>"; };
-		8D5B49B6048680CD000E48DA /* oophm.webplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = oophm.webplugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D5B49B6048680CD000E48DA /* gwt-dev.webplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "gwt-dev.webplugin"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D5B49B7048680CD000E48DA /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D2F7E65807B2D6F200F64583 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
@@ -277,7 +255,7 @@
 		19C28FB8FE9D52D311CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8D5B49B6048680CD000E48DA /* oophm.webplugin */,
+				8D5B49B6048680CD000E48DA /* gwt-dev.webplugin */,
 				48A23BA20DD0E5B4004EF5CA /* Browser.app */,
 			);
 			name = Products;
@@ -299,8 +277,6 @@
 				48547EFF0DD889DA0047AC8A /* GTMSystemVersion.m */,
 				48420D3D0DD51A3D001F3839 /* GTMNSString+HTML.h */,
 				48420D3E0DD51A3D001F3839 /* GTMNSString+HTML.m */,
-				48420D3F0DD51A3D001F3839 /* GTMStackTrace.c */,
-				48420D400DD51A3D001F3839 /* GTMStackTrace.h */,
 				48420D3C0DD51A23001F3839 /* GTMDefines.h */,
 			);
 			comments = "We just need a subset of the functionality available in GTM, so we'll pull in only the files we need as opposed to creating a cross-project dependency and having to package the framework in the plugin.";
@@ -440,9 +416,9 @@
 			productReference = 48A23BA20DD0E5B4004EF5CA /* Browser.app */;
 			productType = "com.apple.product-type.application";
 		};
-		8D5B49AC048680CD000E48DA /* oophm */ = {
+		8D5B49AC048680CD000E48DA /* gwt-dev */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1DEB913A08733D840010E9CD /* Build configuration list for PBXNativeTarget "oophm" */;
+			buildConfigurationList = 1DEB913A08733D840010E9CD /* Build configuration list for PBXNativeTarget "gwt-dev" */;
 			buildPhases = (
 				8D5B49AF048680CD000E48DA /* Resources */,
 				8D5B49B1048680CD000E48DA /* Sources */,
@@ -452,10 +428,10 @@
 			);
 			dependencies = (
 			);
-			name = oophm;
+			name = "gwt-dev";
 			productInstallPath = "$(HOME)/Library/Bundles";
 			productName = oophm;
-			productReference = 8D5B49B6048680CD000E48DA /* oophm.webplugin */;
+			productReference = 8D5B49B6048680CD000E48DA /* gwt-dev.webplugin */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -464,15 +440,14 @@
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB913E08733D840010E9CD /* Build configuration list for PBXProject "oophm" */;
-			compatibilityVersion = "Xcode 2.4";
+			compatibilityVersion = "Xcode 3.1";
 			hasScannedForEncodings = 1;
 			mainGroup = 089C166AFE841209C02AAC07 /* oophm */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				48A23BA10DD0E5B4004EF5CA /* Browser */,
-				8D5B49AC048680CD000E48DA /* oophm */,
-				48420E420DD52761001F3839 /* oophm.dmg */,
+				8D5B49AC048680CD000E48DA /* gwt-dev */,
 				48547E030DD882170047AC8A /* symlinks */,
 			);
 		};
@@ -504,36 +479,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		48420E460DD52768001F3839 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"$(BUILT_PRODUCTS_DIR)/oophm.webplugin",
-			);
-			outputPaths = (
-				"$(BUILT_PRODUCTS_DIR)/oophm.dmg",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "#set -x\n## This is because the PackageMaker definition has \"Release\" hard-coded into it\n#if [ \"${CONFIGURATION}\" != \"Release\" ]; then\n#  echo error: Must be in Release configuration to build disk image\n#  exit 1\n#fi\n#\n#/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker --doc \"${PROJECT_DIR}/oophm.pmdoc\" --out \"${TEMP_FILES_DIR}/oophm.mpkg\"\n#\n#hdiutil create -ov -srcfolder \"${TEMP_FILES_DIR}/oophm.mpkg\" -format UDBZ \"${BUILT_PRODUCTS_DIR}/oophm.dmg\"\n#hdiutil internet-enable \"${BUILT_PRODUCTS_DIR}/oophm.dmg\"";
-		};
 		48547E020DD882170047AC8A /* Make symlink */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
-				"$(BUILT_PRODUCTS_DIR)/oophm.webplugin",
+				"$(BUILT_PRODUCTS_DIR)/{$PluginShortName}.webplugin",
 			);
 			name = "Make symlink";
 			outputPaths = (
-				"$(USER_LIBRARY_DIR)/Internet Plug-Ins/oophm.webplugin/Contents",
+				"$(USER_LIBRARY_DIR)/Internet Plug-Ins/${PluginShortName}.webplugin/Contents",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#set -x\n#ln -sf \"${BUILT_PRODUCTS_DIR}/oophm.webplugin\" \"${USER_LIBRARY_DIR}/Internet Plug-Ins/.\"";
+			shellScript = "set -x\nrm -r \"${USER_LIBRARY_DIR}/Internet Plug-Ins/${PluginShortName}.webplugin\"\nln -sf \"${BUILT_PRODUCTS_DIR}/${PluginShortName}.webplugin\" \"${USER_LIBRARY_DIR}/Internet Plug-Ins/.\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -562,7 +522,6 @@
 				4856DF8E0DCF95B8000BF47C /* ReturnMessage.cpp in Sources */,
 				4856DF900DCF95B8000BF47C /* ServerMethods.cpp in Sources */,
 				48420D410DD51A3D001F3839 /* GTMNSString+HTML.m in Sources */,
-				48420D420DD51A3D001F3839 /* GTMStackTrace.c in Sources */,
 				48547F000DD889DA0047AC8A /* GTMSystemVersion.m in Sources */,
 				48547F4B0DD88D110047AC8A /* NSMutableString+HtmlReplacement.m in Sources */,
 				485CD0AA0DDDEAF300AEE666 /* Debug.mm in Sources */,
@@ -583,14 +542,9 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		48420E480DD5278D001F3839 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 8D5B49AC048680CD000E48DA /* oophm */;
-			targetProxy = 48420E470DD5278D001F3839 /* PBXContainerItemProxy */;
-		};
 		48547E070DD8821D0047AC8A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 8D5B49AC048680CD000E48DA /* oophm */;
+			target = 8D5B49AC048680CD000E48DA /* gwt-dev */;
 			targetProxy = 48547E060DD8821D0047AC8A /* PBXContainerItemProxy */;
 		};
 		485CD0C50DDDED1700AEE666 /* PBXTargetDependency */ = {
@@ -625,10 +579,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
-				);
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/GTM/build/TigerOrLater-Release\"";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
@@ -641,7 +591,7 @@
 				GCC_WARN_PEDANTIC = NO;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Library/Bundles";
-				PRODUCT_NAME = oophm;
+				PRODUCT_NAME = "${PluginShortName}";
 				WRAPPER_EXTENSION = webplugin;
 				ZERO_LINK = YES;
 			};
@@ -650,14 +600,6 @@
 		1DEB913C08733D840010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_1)",
-				);
 				FRAMEWORK_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)/GTM/build/TigerOrLater-Release\"";
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = G5;
@@ -668,7 +610,7 @@
 				GCC_WARN_PEDANTIC = NO;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Library/Bundles";
-				PRODUCT_NAME = oophm;
+				PRODUCT_NAME = "${PluginShortName}";
 				STRIP_INSTALLED_PRODUCT = YES;
 				STRIP_STYLE = "non-global";
 				WRAPPER_EXTENSION = webplugin;
@@ -684,9 +626,10 @@
 				GCC_PREPROCESSOR_DEFINITIONS = "GWT_DEBUGLEVEL=Debugging";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				OTHER_CFLAGS = "-mmacosx-version-min=10.4";
+				OTHER_CFLAGS = "-mmacosx-version-min=10.5";
 				PREBINDING = NO;
-				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
+				PluginShortName = "gwt-dev";
+				SDKROOT = macosx10.5;
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = "non-global";
 				SYMROOT = build;
@@ -696,37 +639,18 @@
 		1DEB914008733D840010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PREPROCESSOR_DEFINITIONS = GWT_DEBUGDISABLE;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				OTHER_CFLAGS = "-mmacosx-version-min=10.4";
+				OTHER_CFLAGS = "-mmacosx-version-min=10.5";
 				PREBINDING = NO;
-				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
+				PluginShortName = "gwt-dev";
+				SDKROOT = macosx10.5;
 				STRIP_STYLE = "non-global";
 				SYMROOT = build;
-			};
-			name = Release;
-		};
-		48420E430DD52761001F3839 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				PRODUCT_NAME = oophm_package;
-			};
-			name = Debug;
-		};
-		48420E440DD52761001F3839 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				PRODUCT_NAME = oophm_package;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -736,7 +660,7 @@
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				PRODUCT_NAME = oophm.symlink;
+				PRODUCT_NAME = "${PluginShortName}.symlinks";
 			};
 			name = Debug;
 		};
@@ -746,7 +670,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				PRODUCT_NAME = oophm.symlink;
+				PRODUCT_NAME = "${PluginShortName}.symlinks";
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -810,7 +734,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1DEB913A08733D840010E9CD /* Build configuration list for PBXNativeTarget "oophm" */ = {
+		1DEB913A08733D840010E9CD /* Build configuration list for PBXNativeTarget "gwt-dev" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1DEB913B08733D840010E9CD /* Debug */,
@@ -824,15 +748,6 @@
 			buildConfigurations = (
 				1DEB913F08733D840010E9CD /* Debug */,
 				1DEB914008733D840010E9CD /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		48420E5A0DD527AD001F3839 /* Build configuration list for PBXAggregateTarget "oophm.dmg" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				48420E430DD52761001F3839 /* Debug */,
-				48420E440DD52761001F3839 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

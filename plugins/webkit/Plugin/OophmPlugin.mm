@@ -48,7 +48,7 @@
   WebView* view = [frame webView];
   _slowScriptProxy = [[SlowScriptProxy alloc] initWithWebView: view];
   if ([_slowScriptProxy respondsToSelector:@selector(webView:setStatusText:)]) {
-    [_slowScriptProxy webView:view setStatusText:@"GWT OOPHM Plugin Active"];
+    [_slowScriptProxy webView:view setStatusText:@"GWT Developer Plugin Active"];
   }
   
   return self;

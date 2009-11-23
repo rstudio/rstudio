@@ -153,11 +153,11 @@ private:
 
   // Otherwise, bring up an alert dialog
   // TODO(jat): add an include/exclude option, currently treat as only include
-  NSAlert* alert = [NSAlert alertWithMessageText:@"Initiate hosted-mode session"
+  NSAlert* alert = [NSAlert alertWithMessageText:@"Initiate development mode session"
                                    defaultButton:@"Deny"
                                  alternateButton:nil
                                      otherButton:@"Allow"
-                       informativeTextWithFormat:@"The current web-page would like to initiate a hosted-mode connection to %@", host];
+                       informativeTextWithFormat:@"The current web-page would like to initiate a development-mode connection to %@", host];
   
   if ([alert respondsToSelector:@selector(setShowsSuppressionButton:)]) {
     [alert setShowsSuppressionButton:YES];
@@ -184,6 +184,11 @@ private:
 }
 
 - (void)crashWithMessage: (NSString*)message {
+  if (self->_hasCrashed) {
+    return;
+  }
+  self->_hasCrashed = YES;
+
   NSBundle* oophmBundle = [NSBundle bundleForClass:[self class]];
   NSString* path = [oophmBundle pathForResource:@"crash" ofType:@"html"];
   NSMutableString* crashPage = [NSMutableString stringWithContentsOfFile:path];
@@ -201,13 +206,9 @@ private:
           withStringLiteral:[NSString stringWithUTF8String:__DATE__]];
   [crashPage replacePattern:@"__TIME__"
           withStringLiteral:[NSString stringWithUTF8String:__TIME__]];  
-  
-  NSString* trace = GTMStackTrace();
-  [crashPage replacePattern:@"__BACKTRACE__" withStringLiteral:trace];
-  
 
   NSURL* currentUrl = [[[[_webView mainFrame] dataSource] response] URL];
-  
+
   [[_webView mainFrame] loadAlternateHTMLString:crashPage
                                         baseURL:[NSURL fileURLWithPath:path]
                               forUnreachableURL:currentUrl];
