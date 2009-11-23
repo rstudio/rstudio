@@ -166,12 +166,35 @@ public class JUnitShell extends GWTShell {
       registerHandler(new ArgHandlerFlag() {
         @Override
         public String getPurpose() {
-          return "Causes your test to run in web (compiled) mode (defaults to development mode)";
+          return "Synonym for -prod (deprecated)";
         }
 
         @Override
         public String getTag() {
           return "-web";
+        }
+        
+        @Override
+        public boolean isUndocumented() {
+          return true;
+        }
+
+        @Override
+        public boolean setFlag() {
+          developmentMode = false;
+          return true;
+        }
+      });
+      
+      registerHandler(new ArgHandlerFlag() {
+        @Override
+        public String getPurpose() {
+          return "Causes your test to run in production (compiled) mode (defaults to development mode)";
+        }
+
+        @Override
+        public String getTag() {
+          return "-prod";
         }
 
         @Override
@@ -689,7 +712,8 @@ public class JUnitShell extends GWTShell {
   private String[] remoteUserAgents;
 
   /**
-   * What type of test we're running; Local development, local web, or remote web.
+   * What type of test we're running; Local development, local production,
+   * or remote production.
    */
   private RunStyle runStyle = null;
 

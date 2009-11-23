@@ -91,7 +91,7 @@
     <mkdir dir="reports/htmlunit.prod" />
     <junit fork="yes" printsummary="yes" haltonfailure="yes">
       <jvmarg line="-Xmx256m" />
-      <sysproperty key="gwt.args" value="-web -logLevel WARN -out www-test" />
+      <sysproperty key="gwt.args" value="-prod -logLevel WARN -out www-test" />
       <sysproperty key="java.awt.headless" value="true" />
       <classpath>
         <pathelement location="test" />
