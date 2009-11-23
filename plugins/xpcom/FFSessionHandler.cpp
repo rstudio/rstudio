@@ -57,6 +57,8 @@ static JSContext* getJSContext() {
 FFSessionHandler::FFSessionHandler(HostChannel* channel)
     : SessionData(channel, this, getJSContext()), jsObjectId(0),
     jsObjectsById(NULL), stringObjectClass(NULL) {
+  Debug::log(Debug::Debugging) << "FFSessionHandler::FFSessionHandler(this="
+      << this << ")" << Debug::flush;
   // TODO(jat): is there a way to avoid calling this twice, without keeping
   // JSContext in an instance field?
   JSContext* ctx = getJSContext();
@@ -118,7 +120,8 @@ void FFSessionHandler::getToStringTearOff(JSContext* ctx) {
 }
 
 FFSessionHandler::~FFSessionHandler(void) {
-  Debug::log(Debug::Debugging) << "FFSessionHandler::~FFSessionHandler" << Debug::flush;
+  Debug::log(Debug::Debugging) << "FFSessionHandler::~FFSessionHandler(this="
+      << this << ")" << Debug::flush;
   disconnect();
   if (runtime) {
     JS_RemoveRootRT(runtime, &jsObjectsById);

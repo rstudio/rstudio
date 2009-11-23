@@ -45,8 +45,8 @@
 NS_IMPL_ISUPPORTS2_CI(ExternalWrapper, IOOPHM, nsISecurityCheckedComponent)
 
 ExternalWrapper::ExternalWrapper() {
-  Debug::log(Debug::Spam) << "ExternalWrapper::ExternalWrapper()"
-      << Debug::flush;
+  Debug::log(Debug::Debugging) << "ExternalWrapper::ExternalWrapper(this="
+      << this << ")" << Debug::flush;
   preferences = new Preferences();
   windowWatcher = do_GetService(NS_WINDOWWATCHER_CONTRACTID);
   if (!windowWatcher) {
@@ -57,7 +57,8 @@ ExternalWrapper::ExternalWrapper() {
 }
 
 ExternalWrapper::~ExternalWrapper() {
-  Debug::log(Debug::Spam) << "ExternalWrapper::~ExternalWrapper" << Debug::flush;
+  Debug::log(Debug::Debugging) << "ExternalWrapper::~ExternalWrapper(this="
+      << this << ")" << Debug::flush;
 }
 
 // define the CID for nsIHttpProtocolHandler
