@@ -680,7 +680,7 @@ public class Arrays {
     for (int i = 0; i < array1.length; ++i) {
       Object val1 = array1[i];
       Object val2 = array2[i];
-      if (Utility.equalsWithNullCheck(val1, val2)) {
+      if (!val1.equals(val2)) {
         return false;
       }
     }
