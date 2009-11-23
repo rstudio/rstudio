@@ -148,7 +148,7 @@ function __gwt_makeResult(isException, result) {
 
 function __gwt_disconnected() {
   // Prevent double-invocation.
-  __gwt_disconnected = new Function();
+  window.__gwt_disconnected = new Function();
   // Do it in a timeout so we can be sure we have a clean stack.
   window.setTimeout(__gwt_disconnected_impl, 1);
 }
@@ -180,21 +180,16 @@ function __gwt_disconnected_impl() {
   // Steal focus.
   glass.focus();
   
-  // Setup resize handler for IE6.
   if (navigator.userAgent.indexOf("MSIE 6") >= 0) {
+    glassStyle.width = "125%"; // Get past scroll bar area.
     if (topDoc.compatMode == "BackCompat") {
+      // Works in quirks mode.
       glassStyle.height = "100%";
-      var resizeFunc = function () {
-        glassStyle.width = topDoc.body.clientWidth + 'px';
-      }
     } else {
-      var resizeFunc = function () {
-        glassStyle.width = topDoc.documentElement.clientWidth + 'px';
-        glassStyle.height = topDoc.documentElement.clientHeight + 'px';
-      }
+      // Use a nasty CSS expression in standards mode; ideally we'd use the
+      // onresize event, but the outer window won't let us add one in IE6.
+      glassStyle.setExpression("height", "document.documentElement.clientHeight");
     }
-    topWin.onresize = resizeFunc;
-    resizeFunc();
   }
 }
 
