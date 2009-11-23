@@ -65,7 +65,14 @@ public class SoycDashboard {
     }
   }
 
-  public static void main(final String[] args) {
+  public static void main(final String[] args) throws InterruptedException {
+
+    System.out.println("WARNING: The direct use of the SoycDashboard is deprecated and will be removed. " +
+      "The preferred usage is to invoke the compiler with the -compileReport option, which " +
+      "writes the compile report directly to the extra directory.");
+    Thread.currentThread();
+    Thread.sleep(5000);
+
     Settings settings;
     try {
       settings = Settings.fromArgumentList(args);
