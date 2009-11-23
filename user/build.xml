@@ -224,7 +224,7 @@
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
     <gwt.junit test.name="test.emma.selenium"
-        test.args="${test.emma.selenium.args} -out www -runStyle Selenium:${gwt.hosts.dev.selenium} -batch module"
+        test.args='${test.emma.selenium.args} -out www -runStyle "Selenium:${gwt.hosts.dev.selenium}" -batch module'
         test.out="${junit.out}/emma-selenium"
         test.cases="test.emma.selenium.tests" >
       <extraclasspaths>
@@ -288,7 +288,7 @@
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.name="test.web.selenium"
-        test.args="${test.web.selenium.args} -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module"
+        test.args='${test.web.selenium.args} -web -out www -runStyle "Selenium:${gwt.hosts.web.selenium}" -batch module'
         test.out="${junit.out}/web-selenium"
         test.cases="test.web.selenium.tests" >
       <extraclasspaths>
@@ -328,7 +328,7 @@
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.name="test.nometa.selenium"
-        test.args="${test.nometa.selenium.args} -XdisableClassMetadata -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module"
+        test.args='${test.nometa.selenium.args} -XdisableClassMetadata -web -out www -runStyle "Selenium:${gwt.hosts.web.selenium}" -batch module'
         test.out="${junit.out}/nometa-selenium"
         test.cases="test.nometa.selenium.tests" >
       <extraclasspaths>
@@ -348,7 +348,7 @@
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.name="test.draft.selenium"
-        test.args="${test.draft.selenium.args} -draftCompile -web -out www -runStyle Selenium:${gwt.hosts.web.selenium} -batch module"
+        test.args='${test.draft.selenium.args} -draftCompile -web -out www -runStyle "Selenium:${gwt.hosts.web.selenium}" -batch module'
         test.out="${junit.out}/draft-selenium"
         test.cases="test.draft.selenium.tests" >
       <extraclasspaths>
