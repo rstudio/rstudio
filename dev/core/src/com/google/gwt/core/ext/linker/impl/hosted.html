@@ -1,7 +1,5 @@
 <html>
 <head><script>
-// TODO(jat): wrap these to reduce namespace issues, and refactor code into
-//    separate functions.
 var $wnd = parent;
 var $doc = $wnd.document;
 var $moduleName, $moduleBase, $entry
@@ -51,7 +49,6 @@ function loadIframe(url) {
 var ua = navigator.userAgent.toLowerCase();
 if (ua.indexOf("gecko") != -1) {
   // install eval wrapper on FF to avoid EvalError problem
-  // TODO(jat): should this UA check be more specific (this hits chrome too)?
   var __eval = window.eval;
   window.eval = function(s) {
     return __eval(s);
@@ -221,21 +218,7 @@ gwtOnLoad = function(errFn, modName, modBase){
   $moduleName = modName;
   $moduleBase = modBase;
 
-  /*
-   * NOTE: this presently sucks and is the only formulation I can find that will
-   * work across browsers.  On a Windows box where both plugins are registered,
-   * FF will instantiate the (non-working) IE plugin.  But plugins have problems
-   * that prevent making this easy.
-   *
-   * The IE plugin will throw an exception in FF if you try to resolve
-   * "pluginObject.connect" as a value.  Thus the try/catch below.
-   *
-   * The FF plugin will actually do illegal crashy things in IE if you try to
-   * resolve "pluginEmbed.connect" as a value.  Thus we have to try the IE
-   * plugin first.
-   *
-   * Both plugins need some work to make them truly safe.
-   */
+  // Note that the order is important
   var pluginFinders = [
     findPluginXPCOM,
     findPluginObject,
@@ -299,8 +282,6 @@ gwtOnLoad = function(errFn, modName, modBase){
 }
 
 window.onunload = function() {
-  // TODO: do we need to do anything here or just rely on the plugins
-  // unload call?
 };
 
 // Lightweight metrics
