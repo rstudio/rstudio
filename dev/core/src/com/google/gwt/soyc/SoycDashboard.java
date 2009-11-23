@@ -87,7 +87,7 @@ public class SoycDashboard {
         settings.out.get()));
 
     try {
-      Map<String, String> permInfo = readPermutationInfo(settings);
+      Map<String, List<String>> permInfo = readPermutationInfo(settings);
       SoycDashboard dashboard = new SoycDashboard(outDir);
       for (String permutationId : permInfo.keySet()) {
         dashboard.startNewPermutation(permutationId);
@@ -227,14 +227,13 @@ public class SoycDashboard {
     return handler;
   }
 
-  private static Map<String, String> readPermutationInfo(Settings settings)
+  private static Map<String, List<String>> readPermutationInfo(Settings settings)
       throws FileNotFoundException {
-    Map<String, String> allPermsInfo = new TreeMap<String, String>();
+    Map<String, List<String>> allPermsInfo = new TreeMap<String, List<String>>();
     if (settings.symbolMapsDir.get() == null) {
       String permutationId = settings.storiesFileName;
       permutationId = permutationId.replaceAll(".*/stories", "");
       permutationId = permutationId.replaceAll("\\.xml(\\.gz)?", "");
-      allPermsInfo.put(permutationId, "");
     } else {
       File dir = new File(settings.symbolMapsDir.get());
       String files[] = dir.list();
@@ -246,25 +245,31 @@ public class SoycDashboard {
 
         String permutationId = "";
         String permutationInfo = "";
-        int lineCount = 0;
-        while ((sc.hasNextLine()) && (lineCount < 2)) {
+        List<String> permutationInfoList = new ArrayList<String>();
+        boolean firstLine = true;
+        String curLine = sc.nextLine();
+        curLine = curLine.trim();
+        while (curLine.startsWith("# {")) {
 
-          String curLine = sc.nextLine();
-          curLine = curLine.trim();
-
-          if (curLine.startsWith("# {")) {
             curLine = curLine.replace("# {", "");
             curLine = curLine.replace("}", "");
             curLine = curLine.trim();
-            if (lineCount == 0) {
+            if (firstLine) {
               permutationId = curLine;
+              firstLine = false;
             } else {
-              permutationInfo = curLine;
+              if (permutationInfo.length() > 0) {
+                permutationInfo += "<br>";
+              }
+              permutationInfo += curLine;
+              permutationInfoList.add(curLine);
             }
-            lineCount++;
-          }
+            if (sc.hasNextLine()) {
+              curLine = sc.nextLine();
+              curLine = curLine.trim();
+            }
         }
-        allPermsInfo.put(permutationId, permutationInfo);
+        allPermsInfo.put(permutationId, permutationInfoList);
       }
     }
     return allPermsInfo;
@@ -295,7 +300,7 @@ public class SoycDashboard {
     this.outDir = outDir;
   }
 
-  public void generateCrossPermutationFiles(Map<String, String> permInfo)
+  public void generateCrossPermutationFiles(Map<String, List<String>> permInfo)
       throws IOException {
     StaticResources.emit(outDir);
     MakeTopLevelHtmlForPerm.makeTopLevelHtmlForAllPerms(permInfo, outDir);

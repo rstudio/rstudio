@@ -29,7 +29,11 @@ import com.google.gwt.soyc.SoycDashboard;
 import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 
 /**
@@ -65,22 +69,22 @@ public class SoycReportLinker extends Linker {
     return results;
   }
 
-  private Map<String, String> extractPermutationDescriptions(
+  private Map<String, List<String>> extractPermutationDescriptions(
       ArtifactSet artifacts) {
-    Map<String, String> permDescriptions = new TreeMap<String, String>();
+    Map<String, List<String>> permutationDescriptions = new TreeMap<String, List<String>>();
 
     for (CompilationResult res : artifacts.find(CompilationResult.class)) {
       String permId = Integer.toString(res.getPermutationId());
-      /*
-       * TODO(kprobst,spoon) support permutations that collapsed to the same
-       * compilation result
-       */
-      Map<SelectionProperty, String> propertyMap = res.getPropertyMap().iterator().next();
-      String permDesc = SymbolMapsLinker.propertyMapToString(propertyMap);
-      permDescriptions.put(permId, permDesc);
+      List<String> permDescList = new ArrayList<String>();
+      SortedSet<SortedMap<SelectionProperty, String>> allPropertiesMap = res.getPropertyMap();
+      for (SortedMap<SelectionProperty, String> propertyMap : allPropertiesMap) {
+         String permDesc = SymbolMapsLinker.propertyMapToString(propertyMap);
+         permDescList.add(permDesc);
+      }
+      permutationDescriptions.put(permId, permDescList);
     }
 
-    return permDescriptions;
+    return permutationDescriptions;
   }
 
   private boolean includesReports(ArtifactSet artifacts) {

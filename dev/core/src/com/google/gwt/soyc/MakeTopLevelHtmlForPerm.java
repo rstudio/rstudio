@@ -113,18 +113,21 @@ public class MakeTopLevelHtmlForPerm {
   }
 
   public static void makeTopLevelHtmlForAllPerms(
-      Map<String, String> allPermsInfo, OutputDirectory outDir)
+      Map<String, List<String>> allPermsInfo, OutputDirectory outDir)
       throws IOException {
     PrintWriter outFile = new PrintWriter(outDir.getOutputStream("index.html"));
     addStandardHtmlProlog(outFile, "Compile report", "Compile report",
         "Overview of permutations");
     outFile.println("<ul>");
     for (String permutationId : allPermsInfo.keySet()) {
-      String permutationInfo = allPermsInfo.get(permutationId);
+      List<String> permutationInfoList = allPermsInfo.get(permutationId);
       outFile.print("<li><a href=\"SoycDashboard" + "-" + permutationId
-          + "-index.html\">Permutation " + permutationId);
-      if (permutationInfo.length() > 0) {
-        outFile.println(" (" + permutationInfo + ")" + "</a></li>");
+        + "-index.html\">Permutation " + permutationId);
+      if (permutationInfoList.size() > 0) {
+        for (String desc : permutationInfoList) {
+          outFile.println("  (" + desc + ")" );
+        }
+        outFile.println("</a></li>");
       } else {
         outFile.println("</a>");
       }
