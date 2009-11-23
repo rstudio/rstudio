@@ -264,7 +264,7 @@ public class StackPanel extends ComplexPanel implements InsertPanel {
   }
 
   private int findDividerIndex(Element elem) {
-    while (elem != getElement()) {
+    while (elem != null && elem != getElement()) {
       String expando = DOM.getElementProperty(elem, "__index");
       if (expando != null) {
         // Make sure it belongs to me!
