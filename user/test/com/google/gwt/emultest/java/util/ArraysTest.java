@@ -71,6 +71,40 @@ public class ArraysTest extends EmulTestBase {
     Arrays.hashCode(a);
   }
 
+  public void testArraysEqualsWithEmptyArrays() {
+    assertTrue(Arrays.equals(new String[0], new String[0]));
+  }
+
+  public void testArraysEqualsWithoutNullElementsEqual() {
+    assertTrue(Arrays.equals(
+        new String[] { "foo" }, new String[]{ "foo" }));
+  }
+
+  public void testArraysEqualsWithoutNullElementsNotEqual() {
+    assertFalse(Arrays.equals(
+        new String[] { "foo" }, new String[]{ "bar" }));
+  }
+
+  public void testArraysEqualsWithNullElementsEqual() {
+    assertTrue(Arrays.equals(new String[2], new String[2]));
+  }
+
+  public void testArraysEqualsWithNullElementsNotEqual() {
+    assertFalse(Arrays.equals(new String[2], new String[1]));
+  }
+
+  public void testArraysEqualsWithNullAndNonNullElementsEqual() {
+    assertTrue(Arrays.equals(
+        new String[]{ null, "foo", null, "bar" },
+        new String[]{ null, "foo", null, "bar" }));
+  }
+
+  public void testArraysEqualsWithNullAndNonNullElementsNotEqual() {
+    assertFalse(Arrays.equals(
+        new String[]{ null, "bar", null, "foo" },
+        new String[]{ null, "foo", null, "foo" }));
+  }
+
   /**
    * Tests {@link Arrays#asList(Object[])}.
    */
@@ -606,7 +640,7 @@ public class ArraysTest extends EmulTestBase {
    * Advance the permutation to the next value. It leaves the first index set to
    * -1 if the range has been exceeded.
    * 
-   * @param permutation array of indices -- see {@link getPermutation} for
+   * @param permutation array of indices -- see {@link #getPermutation} for
    *          details.
    */
   private void nextPermutation(int[] permutation) {
@@ -621,7 +655,7 @@ public class ArraysTest extends EmulTestBase {
 
   /**
    * Checks to see if this permutation is valid; ie, if all of the indices are
-   * between 0 and n-i (see {@link getPermutation} for details).
+   * between 0 and n-i (see {@link #getPermutation} for details).
    * 
    * @param permutations array of indices
    * @param n length of source array.
