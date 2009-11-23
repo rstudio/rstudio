@@ -249,12 +249,17 @@
     </xs:complexType>
 
     <!-- Used for north, south, west, and east in the DockLayoutPanel. -->
-    <xs:complexType name="DockDirectionType">
-      <xs:complexContent>
-          <xs:extension base="SingleChildWidgetType">
-              <xs:attribute name="size" type="xs:string" use="required" />
-          </xs:extension>
-      </xs:complexContent>
+    <xs:complexType
+        name="DockDirectionType">
+        <xs:complexContent>
+            <xs:extension
+                base="SingleChildWidgetType">
+                <xs:attribute
+                    name="size"
+                    type="xs:string"
+                    use="required" />
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
 
     <xs:complexType
@@ -301,6 +306,65 @@
                 processContents="lax" />
         </xs:complexType>
     </xs:element>
+
+    <xs:element
+        name="LayoutPanel">
+        <xs:complexType>
+
+            <!-- Allow any number of "layer" children -->
+            <xs:choice
+                minOccurs="0"
+                maxOccurs="unbounded">
+                <xs:element
+                    name="layer"
+                    type="LayoutPanelLayer">
+                </xs:element>
+            </xs:choice>
+
+            <xs:anyAttribute
+                processContents="lax" />
+
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType
+        name="LayoutPanelLayer">
+        <xs:complexContent>
+            <!-- Each "layer" element contains one child widget -->
+            <xs:extension
+                base="SingleChildWidgetType">
+
+                <!--
+                    ...and can contain any of these attributes. We do not
+                    express the pair constraints here.
+                -->
+                <xs:attribute
+                    name="left"
+                    type="xs:string" />
+
+                <xs:attribute
+                    name="right"
+                    type="xs:string" />
+
+                <xs:attribute
+                    name="width"
+                    type="xs:string" />
+
+                <xs:attribute
+                    name="top"
+                    type="xs:string" />
+
+                <xs:attribute
+                    name="bottom"
+                    type="xs:string" />
+
+                <xs:attribute
+                    name="height"
+                    type="xs:string" />
+
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
 
     <xs:complexType
         name="MenuBarType">
