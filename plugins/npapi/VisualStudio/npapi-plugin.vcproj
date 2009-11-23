@@ -191,67 +191,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\platform\Win\AllowDialog.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\AllowedConnections.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\BrowserChannel.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\CheckVersionsMessage.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\ChooseTransportMessage.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\Debug.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\DebugLevel.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\FatalErrorMessage.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\FreeValueMessage.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\HashMap.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\HostChannel.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\InvokeMessage.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\InvokeSpecialMessage.h"
-				>
-			</File>
-			<File
 				RelativePath="..\JavaObject.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\LoadJsniMessage.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\LoadModuleMessage.h"
 				>
 			</File>
 			<File
@@ -259,19 +199,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\Message.h"
-				>
-			</File>
-			<File
 				RelativePath="..\mozincludes.h"
-				>
-			</File>
-			<File
-				RelativePath="..\npapi\npapi.h"
-				>
-			</File>
-			<File
-				RelativePath="..\npapi\nphostapi.h"
 				>
 			</File>
 			<File
@@ -279,15 +207,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\npapi\npruntime.h"
-				>
-			</File>
-			<File
 				RelativePath="..\NPVariantWrapper.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\Platform.h"
 				>
 			</File>
 			<File
@@ -295,53 +215,145 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\platform\Win\Preferences.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\ProtocolVersionMessage.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\QuitMessage.h"
-				>
-			</File>
-			<File
 				RelativePath="..\resource.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\ReturnMessage.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\scoped_ptr\scoped_ptr.h"
 				>
 			</File>
 			<File
 				RelativePath="..\ScriptableInstance.h"
 				>
 			</File>
-			<File
-				RelativePath="..\..\common\ServerMethods.h"
+			<Filter
+				Name="common"
 				>
-			</File>
-			<File
-				RelativePath="..\..\common\SessionHandler.h"
+				<File
+					RelativePath="..\..\common\AllowedConnections.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\BrowserChannel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\CheckVersionsMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\ChooseTransportMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\Debug.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\DebugLevel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\FatalErrorMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\FreeValueMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\HashMap.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\HostChannel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\InvokeMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\InvokeSpecialMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\LoadJsniMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\LoadModuleMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\Message.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\Platform.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\ProtocolVersionMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\QuitMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\ReturnMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\scoped_ptr\scoped_ptr.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\ServerMethods.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\SessionHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\Socket.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\SwitchTransportMessage.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\Value.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="win"
 				>
-			</File>
-			<File
-				RelativePath="..\..\common\Socket.h"
+				<File
+					RelativePath="..\..\platform\Win\AllowDialog.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\platform\Win\Preferences.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="npapi"
 				>
-			</File>
-			<File
-				RelativePath="..\..\common\SwitchTransportMessage.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\Value.h"
-				>
-			</File>
+				<File
+					RelativePath="..\npapi\npapi.h"
+					>
+				</File>
+				<File
+					RelativePath="..\npapi\nphostapi.h"
+					>
+				</File>
+				<File
+					RelativePath="..\npapi\npruntime.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -359,55 +371,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\platform\Win\AllowDialog.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\AllowedConnections.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\CheckVersionsMessage.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\ChooseTransportMessage.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\Debug.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\FatalErrorMessage.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\FreeValueMessage.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\HostChannel.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\InvokeMessage.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\InvokeSpecialMessage.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\JavaObject.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\LoadJsniMessage.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\LoadModuleMessage.cpp"
 				>
 			</File>
 			<File
@@ -419,11 +383,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\npn_bindings.cc"
+				RelativePath="..\npGwtDevPlugin.def"
 				>
 			</File>
 			<File
-				RelativePath="..\npGwtDevPlugin.def"
+				RelativePath="..\npn_bindings.cc"
 				>
 			</File>
 			<File
@@ -431,33 +395,89 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\platform\Win\Preferences.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\ProtocolVersionMessage.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\ReturnMessage.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\ScriptableInstance.cpp"
 				>
 			</File>
-			<File
-				RelativePath="..\..\common\ServerMethods.cpp"
+			<Filter
+				Name="common"
 				>
-			</File>
-			<File
-				RelativePath="..\..\common\Socket.cpp"
+				<File
+					RelativePath="..\..\common\AllowedConnections.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\CheckVersionsMessage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\ChooseTransportMessage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\Debug.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\FatalErrorMessage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\FreeValueMessage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\HostChannel.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\InvokeMessage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\InvokeSpecialMessage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\LoadJsniMessage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\LoadModuleMessage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\ProtocolVersionMessage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\ReturnMessage.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\ServerMethods.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\Socket.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\common\SwitchTransportMessage.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="win"
 				>
-			</File>
-			<File
-				RelativePath="..\..\common\SwitchTransportMessage.cpp"
-				>
-			</File>
+				<File
+					RelativePath="..\..\platform\Win\AllowDialog.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\platform\Win\Preferences.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>
