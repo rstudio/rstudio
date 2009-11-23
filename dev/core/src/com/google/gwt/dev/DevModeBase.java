@@ -311,7 +311,7 @@ abstract class DevModeBase implements DoneCallback {
     public String[] getTagArgs() {
       return new String[] {"port-number:client-id-string | host-string:port-number:client-id-string"};
     }
-    
+
     @Override
     public boolean isUndocumented() {
       return true;
@@ -575,8 +575,7 @@ abstract class DevModeBase implements DoneCallback {
 
   private static final AtomicLong uniqueId = new AtomicLong();
 
-  public static String normalizeURL(String unknownUrlText, int port, 
-      String host) {
+  public static String normalizeURL(String unknownUrlText, int port, String host) {
     if (unknownUrlText.indexOf(":") != -1) {
       // Assume it's a full url.
       return unknownUrlText;
@@ -993,10 +992,16 @@ abstract class DevModeBase implements DoneCallback {
       newUI = new HeadlessUI(options);
     } else {
       if (options.useRemoteUI()) {
-        newUI = new RemoteUI(options.getRemoteUIHost(),
-            options.getRemoteUIHostPort(), options.getClientId(),
-            options.getPort(), options.getCodeServerPort());
-        baseLogLevelForUI = TreeLogger.Type.TRACE;
+        try {
+          newUI = new RemoteUI(options.getRemoteUIHost(),
+              options.getRemoteUIHostPort(), options.getClientId(),
+              options.getPort(), options.getCodeServerPort());
+          baseLogLevelForUI = TreeLogger.Type.TRACE;
+        } catch (Throwable t) {
+          System.err.println("Could not connect to remote UI listening at "
+              + options.getRemoteUIHost() + ":" + options.getRemoteUIHostPort()
+              + ". Using default UI instead.");
+        }
       }
     }
 
