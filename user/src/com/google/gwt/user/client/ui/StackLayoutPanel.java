@@ -35,21 +35,9 @@ import java.util.NoSuchElementException;
  * </p>
  * 
  * <p>
- * NOTE: This class is still very new, and its interface may change without
- * warning. Use at your own risk.
- * </p>
- * 
- * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.StackLayoutPanelExample}
  * </p>
- * 
- * TODO(jgw):
- * - implement insert().
- * - add() methods with default widgets for headers.
- * - some way to get the header widget associated with a child.
- * - make animation configurable (with {@link HasAnimation}).
- * - default style.
  */
 public class StackLayoutPanel extends Composite implements HasWidgets,
     RequiresResize, ProvidesResize {

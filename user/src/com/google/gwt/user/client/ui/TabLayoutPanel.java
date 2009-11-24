@@ -39,24 +39,24 @@ import java.util.Iterator;
  * associated with them. The tabs can contain arbitrary text, HTML, or widgets.
  * 
  * <p>
- * This widget will <em>only</em> work in standards mode, which requires
- * that the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
+ * This widget will <em>only</em> work in standards mode, which requires that
+ * the HTML page in which it is run have an explicit &lt;!DOCTYPE&gt;
  * declaration.
  * </p>
  * 
- * <p>
- * NOTE: This class is still very new, and its interface may change without
- * warning. Use at your own risk.
- * </p>
+ * <h3>CSS Style Rules</h3>
+ * <ul class='css'>
+ * <li>.gwt-TabLayoutPanel { the panel itself }</li>
+ * <li>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabs { the tab bar element }</li>
+ * <li>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTab { an individual tab }</li>
+ * <li>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabInner { an element nested in
+ * each tab (useful for styling) }</li>
+ * </ul>
  * 
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.TabLayoutPanelExample}
  * </p>
- * 
- * TODO:
- * - Aria, RTL, DebugId
- * - Update style mechanism (gwt-Tab, etc. not really sufficient).
  */
 public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     ProvidesResize, IndexedPanel, HasBeforeSelectionHandlers<Integer>,
@@ -72,8 +72,8 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       getElement().appendChild(anchor = Document.get().createAnchorElement());
 
       setWidget(child);
-      setStyleName("gwt-Tab");
-      anchor.setClassName("gwt-TabInner");
+      setStyleName("gwt-TabLayoutPanelTab");
+      anchor.setClassName("gwt-TabLayoutPanelTabInner");
 
       // TODO: float:left may not be enough. If there are tabs of differeing
       // heights, the shorter ones will top-align, rather than bottom-align,

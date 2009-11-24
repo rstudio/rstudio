@@ -35,11 +35,6 @@ import com.google.gwt.layout.client.Layout.Layer;
  * </p>
  * 
  * <p>
- * NOTE: This class is still very new, and its interface may change without
- * warning. Use at your own risk.
- * </p>
- * 
- * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.LayoutPanelExample}
  * </p>
