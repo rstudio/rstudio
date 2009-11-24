@@ -8,6 +8,7 @@
 
   .contacts {
     padding: 0.5em;
+    line-height: 150%;
   }
 
   .item {

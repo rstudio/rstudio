@@ -139,7 +139,6 @@ public class MailList extends ResizeComposite {
       table.getCellFormatter().setWordWrap(i, 0, false);
       table.getCellFormatter().setWordWrap(i, 1, false);
       table.getCellFormatter().setWordWrap(i, 2, false);
-      table.getFlexCellFormatter().setColSpan(i, 2, 2);
     }
   }
 

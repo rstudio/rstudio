@@ -8,7 +8,6 @@ body {
 }
 a:link, a:visited, a:hover, a:active {
   color: #000;
-  text-decoration: none;
 }
 
 /* Dialog boxes */
@@ -51,4 +50,13 @@ a:link, a:visited, a:hover, a:active {
 }
 .gwt-Tree .gwt-TreeItem-selected {
   background: #ccc;
+}
+
+/* Splitters */
+.gwt-SplitLayoutPanel-HDragger {
+  cursor: col-resize;
+}
+
+.gwt-SplitLayoutPanel-VDragger {
+  cursor: row-resize;
 }

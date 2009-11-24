@@ -17,6 +17,7 @@ package com.google.gwt.sample.mail.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -46,9 +47,11 @@ class NavBar extends Composite {
   }
 
   public void update(int startIndex, int count, int max) {
-    newerButton.setVisible(startIndex != 0);
-    olderButton.setVisible(startIndex + MailList.VISIBLE_EMAIL_COUNT < count);
-    countLabel.setInnerText("" + (startIndex + 1) + " - " + max + " of " + count);
+    setVisibility(newerButton, startIndex != 0);
+    setVisibility(olderButton,
+        startIndex + MailList.VISIBLE_EMAIL_COUNT < count);
+    countLabel.setInnerText("" + (startIndex + 1) + " - " + max + " of "
+        + count);
   }
 
   @UiHandler("newerButton")
@@ -59,5 +62,10 @@ class NavBar extends Composite {
   @UiHandler("olderButton")
   void onOlderClicked(ClickEvent event) {
     outer.older();
+  }
+
+  private void setVisibility(Widget widget, boolean visible) {
+    widget.getElement().getStyle().setVisibility(
+        visible ? Visibility.VISIBLE : Visibility.HIDDEN);
   }
 }

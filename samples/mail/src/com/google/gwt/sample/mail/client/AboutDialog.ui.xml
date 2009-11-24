@@ -2,20 +2,40 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
 
+  <ui:image field='logo' src='gwt-logo.png'/>
+
   <ui:style>
-  .aboutText {
+  .panel {
     padding: 10px;
+ 	}
+
+  .aboutText {
     text-align: left;
+  }
+
+  @sprite .logo {
+    gwt-image: 'logo';
+    float: left;
+    padding-right: 1em;
+  }
+
+  .buttons {
+    text-align: right;
   }
   </ui:style>
 
-  <g:HTMLPanel width='24em'>
+  <g:HTMLPanel width='24em' styleName='{style.panel}'>
+    <div class='{style.logo}'/>
+
     <div class='{style.aboutText}'>
     This sample application demonstrates the
     construction of a complex user interface using GWT's built-in
     widgets. Have a look at the code to see how easy it is to build
     your own apps!
     </div>
-    <g:Button text='Close' ui:field='closeButton' />
+
+    <div class='{style.buttons}'>
+      <g:Button text='Close' ui:field='closeButton' />
+    </div>
   </g:HTMLPanel>
 </ui:UiBinder>
