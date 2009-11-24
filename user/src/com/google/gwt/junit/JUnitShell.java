@@ -1068,7 +1068,7 @@ public class JUnitShell extends GWTShell {
 
       // Let the user know the browser in which the failure happened.
       if (exception != null) {
-        String msg = "Remote test failed at " + client.clientDesc;
+        String msg = "Remote test failed at " + client.getDesc();
         if (exception instanceof AssertionFailedError) {
           String oldMessage = exception.getMessage();
           if (oldMessage != null) {

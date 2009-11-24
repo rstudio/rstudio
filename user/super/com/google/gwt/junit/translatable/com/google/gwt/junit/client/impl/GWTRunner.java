@@ -19,10 +19,11 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.junit.client.impl.JUnitHost.ClientInfo;
+import com.google.gwt.junit.client.impl.JUnitHost.InitialResponse;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -40,11 +41,32 @@ import java.util.HashMap;
  */
 public abstract class GWTRunner implements EntryPoint {
 
+  private final class InitialResponseListener implements
+      AsyncCallback<InitialResponse> {
+
+    /**
+     * Delegate to the {@link TestBlockListener}.
+     */
+    public void onFailure(Throwable caught) {
+      testBlockListener.onFailure(caught);
+    }
+
+    /**
+     * Update our client info with the server-provided session id then delegate
+     * to the {@link TestBlockListener}.
+     */
+    public void onSuccess(InitialResponse result) {
+      clientInfo = new ClientInfo(result.getSessionId(),
+          clientInfo.getUserAgent());
+      testBlockListener.onSuccess(result.getTestBlock());
+    }
+  }
+
   /**
    * The RPC callback object for {@link GWTRunner#junitHost}. When
    * {@link #onSuccess} is called, it's time to run the next test case.
    */
-  private final class JUnitHostListener implements AsyncCallback<TestBlock> {
+  private final class TestBlockListener implements AsyncCallback<TestBlock> {
 
     /**
      * The number of times we've failed to communicate with the server on the
@@ -99,12 +121,12 @@ public abstract class GWTRunner implements EntryPoint {
   /**
    * The singleton instance.
    */
-  private static GWTRunner sInstance;
+  static GWTRunner sInstance;
 
   /**
    * A query param specifying my unique session cookie.
    */
-  private static final String SESSIONCOOKIE_QUERY_PARAM = "gwt.junit.sessionCookie";
+  private static final String SESSIONID_QUERY_PARAM = "gwt.junit.sessionId";
 
   /**
    * A query param specifying the test class to run, for serverless mode.
@@ -132,6 +154,11 @@ public abstract class GWTRunner implements EntryPoint {
   }
 
   /**
+   * This client's info.
+   */
+  private ClientInfo clientInfo;
+
+  /**
    * The current block of tests to execute.
    */
   private TestBlock currentBlock;
@@ -157,9 +184,14 @@ public abstract class GWTRunner implements EntryPoint {
   private final JUnitHostAsync junitHost = (JUnitHostAsync) GWT.create(JUnitHost.class);
 
   /**
-   * Handles all RPC responses.
+   * Handles all {@link InitialResponse InitialResponses}.
    */
-  private final JUnitHostListener junitHostListener = new JUnitHostListener();
+  private final InitialResponseListener initialResponseListener = new InitialResponseListener();
+
+  /**
+   * Handles all {@link TestBlock TestBlocks}.
+   */
+  private final TestBlockListener testBlockListener = new TestBlockListener();
 
   /**
    * The maximum number of times to retry communication with the server per
@@ -187,12 +219,8 @@ public abstract class GWTRunner implements EntryPoint {
   }
 
   public void onModuleLoad() {
-    // Try to import a session cookie from the previous module.
-    String value = Window.Location.getParameter(SESSIONCOOKIE_QUERY_PARAM);
-    if (value != null) {
-      Cookies.setCookie(SESSIONCOOKIE_QUERY_PARAM, value);
-    }
-
+    clientInfo = new ClientInfo(parseQueryParamInteger(
+        SESSIONID_QUERY_PARAM, -1), getUserAgentProperty());
     maxRetryCount = parseQueryParamInteger(RETRYCOUNT_QUERY_PARAM, -1);
     currentBlock = checkForQueryParamTestToRun();
     if (currentBlock != null) {
@@ -278,10 +306,10 @@ public abstract class GWTRunner implements EntryPoint {
       builder.setParameter(BLOCKINDEX_QUERY_PARAM,
           Integer.toString(currentBlock.getIndex())).setPath(
           newModule + pathSuffix);
-      // Hand off the session cookie to the next module.
-      String sessionCookie = Cookies.getCookie(SESSIONCOOKIE_QUERY_PARAM);
-      if (sessionCookie != null) {
-        builder.setParameter(SESSIONCOOKIE_QUERY_PARAM, sessionCookie);
+      // Hand off the session id to the next module.
+      if (clientInfo.getSessionId() >= 0) {
+        builder.setParameter(SESSIONID_QUERY_PARAM,
+            String.valueOf(clientInfo.getSessionId()));
       }
       Window.Location.replace(builder.buildString());
       currentBlock = null;
@@ -348,12 +376,11 @@ public abstract class GWTRunner implements EntryPoint {
   private void syncToServer() {
     if (currentBlock == null) {
       int firstBlockIndex = parseQueryParamInteger(BLOCKINDEX_QUERY_PARAM, 0);
-      junitHost.getTestBlock(firstBlockIndex, getUserAgentProperty(),
-          junitHostListener);
+      junitHost.getTestBlock(firstBlockIndex, clientInfo,
+          initialResponseListener);
     } else {
       junitHost.reportResultsAndGetTestBlock(currentResults,
-          currentBlock.getIndex() + 1, getUserAgentProperty(),
-          junitHostListener);
+          currentBlock.getIndex() + 1, clientInfo, testBlockListener);
     }
   }
 

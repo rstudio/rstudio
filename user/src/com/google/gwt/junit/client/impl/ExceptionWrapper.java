@@ -15,13 +15,13 @@
  */
 package com.google.gwt.junit.client.impl;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
+import java.io.Serializable;
 
 /**
  * A helper class for converting a generic {@link Throwable} into an Object that
  * can be serialized for RPC.
  */
-public final class ExceptionWrapper implements IsSerializable {
+public final class ExceptionWrapper implements Serializable {
 
   /**
    * Corresponds to {@link Throwable#getCause()}.

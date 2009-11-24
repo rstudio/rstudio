@@ -16,9 +16,9 @@
 package com.google.gwt.junit.client.impl;
 
 import com.google.gwt.junit.client.TimeoutException;
-import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.rpc.RemoteService;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -28,11 +28,79 @@ import java.util.HashMap;
 public interface JUnitHost extends RemoteService {
 
   /**
+   * Information about the client browser.
+   */
+  public static class ClientInfo implements Serializable {
+    /**
+     * This client's unique session id.
+     */
+    private int sessionId;
+
+    /**
+     * The GWT user.agent property of this client, e.g. "ie6", "safari", etc.
+     */
+    private String userAgent;
+
+    public ClientInfo(int sessionId, String userAgent) {
+      this.sessionId = sessionId;
+      this.userAgent = userAgent;
+    }
+
+    /**
+     * Constructor for serialization.
+     */
+    ClientInfo() {
+    }
+
+    public int getSessionId() {
+      return sessionId;
+    }
+
+    public String getUserAgent() {
+      return userAgent;
+    }
+  }
+
+  /**
+   * An initial response that sets the client session id.
+   */
+  public static class InitialResponse implements Serializable {
+    /**
+     * The unique client session id.
+     */
+    private int sessionId;
+
+    /**
+     * The first test block to run.
+     */
+    private TestBlock testBlock;
+
+    public InitialResponse(int sessionId, TestBlock testBlock) {
+      this.sessionId = sessionId;
+      this.testBlock = testBlock;
+    }
+
+    /**
+     * Constructor for serialization.
+     */
+    InitialResponse() {
+    }
+
+    public int getSessionId() {
+      return sessionId;
+    }
+
+    public TestBlock getTestBlock() {
+      return testBlock;
+    }
+  }
+
+  /**
    * Returned from the server to tell the system what test to run next.
    */
-  public static class TestBlock implements IsSerializable {
-    private TestInfo[] tests;
+  public static class TestBlock implements Serializable {
     private int index;
+    private TestInfo[] tests;
 
     public TestBlock(TestInfo[] tests, int index) {
       this.tests = tests;
@@ -57,7 +125,7 @@ public interface JUnitHost extends RemoteService {
   /**
    * Returned from the server to tell the system what test to run next.
    */
-  public static class TestInfo implements IsSerializable {
+  public static class TestInfo implements Serializable {
     private String testClass;
     private String testMethod;
     private String testModule;
@@ -112,11 +180,12 @@ public interface JUnitHost extends RemoteService {
    * Gets a specific block of tests to run.
    * 
    * @param blockIndex the index of the test block to retrieve
-   * @param userAgent the user agent property of this client
-   * @return the test block
+   * @param clientInfo the info for this client
+   * @return the initial response
    * @throws TimeoutException if the wait for the next method times out.
    */
-  TestBlock getTestBlock(int blockIndex, String userAgent) throws TimeoutException;
+  InitialResponse getTestBlock(int blockIndex, ClientInfo clientInfo)
+      throws TimeoutException;
 
   /**
    * Reports results for the last method run and gets the name of next method to
@@ -124,11 +193,11 @@ public interface JUnitHost extends RemoteService {
    * 
    * @param results the results of executing the test
    * @param blockIndex the index of the test block to retrieve
-   * @param userAgent the user agent property of this client
+   * @param clientInfo the info for this client
    * @return the next test block
    * @throws TimeoutException if the wait for the next method times out.
    */
   TestBlock reportResultsAndGetTestBlock(
-      HashMap<TestInfo, JUnitResult> results, int blockIndex, String userAgent)
-      throws TimeoutException;
+      HashMap<TestInfo, JUnitResult> results, int blockIndex,
+      ClientInfo clientInfo) throws TimeoutException;
 }

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.junit.client.impl;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
+import java.io.Serializable;
 
 /**
  * Encapsulates the results of the execution of a single benchmark. A TestResult
@@ -28,7 +28,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
  * @see com.google.gwt.junit.JUnitMessageQueue
  * @see com.google.gwt.junit.JUnitShell
  */
-public class JUnitResult implements IsSerializable {
+public class JUnitResult implements Serializable {
 
   // Computed at the server, via HTTP header.
   private transient String agent;

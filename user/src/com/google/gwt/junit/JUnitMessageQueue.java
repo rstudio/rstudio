@@ -15,15 +15,16 @@
  */
 package com.google.gwt.junit;
 
-import com.google.gwt.dev.util.collect.HashSet;
-import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.JUnitResult;
+import com.google.gwt.junit.client.impl.JUnitHost.ClientInfo;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,17 +47,51 @@ import java.util.Map.Entry;
 public class JUnitMessageQueue {
 
   /**
+   * Server-side client info that includes a description.
+   */
+  public static class ClientInfoExt extends ClientInfo {
+    /**
+     * A description of this client.
+     */
+    private final String desc;
+
+    public ClientInfoExt(int sessionId, String userAgent, String desc) {
+      super(sessionId, userAgent);
+      this.desc = desc;
+    }
+
+    public String getDesc() {
+      return desc;
+    }
+  }
+
+  /**
    * Holds the state of an individual client.
    */
   public static class ClientStatus {
-    public int blockIndex = 0;
-    public final String clientId;
-    public String clientDesc;
-    public boolean isNew = true;
+    private int blockIndex = 0;
+    private ClientInfoExt clientInfo;
+    private boolean isNew = true;
 
-    public ClientStatus(String clientId, String clientDesc) {
-      this.clientId = clientId;
-      this.clientDesc = clientDesc;
+    public ClientStatus(ClientInfoExt clientInfo) {
+      this.clientInfo = clientInfo;
+    }
+
+    public String getDesc() {
+      return clientInfo.getDesc();
+    }
+
+    public int getId() {
+      return clientInfo.getSessionId();
+    }
+
+    @Override
+    public String toString() {
+      return clientInfo.getDesc();
+    }
+
+    public void updateClientInfo(ClientInfoExt clientInfo) {
+      this.clientInfo = clientInfo;
     }
   }
 
@@ -72,7 +107,7 @@ public class JUnitMessageQueue {
   /**
    * Records results for each client; must lock before accessing.
    */
-  private final Map<String, ClientStatus> clientStatuses = new HashMap<String, ClientStatus>();
+  private final Map<Integer, ClientStatus> clientStatuses = new HashMap<Integer, ClientStatus>();
 
   /**
    * The lock used to synchronize access to clientStatuses.
@@ -117,19 +152,18 @@ public class JUnitMessageQueue {
   /**
    * Called by the servlet to query for for the next block to test.
    * 
-   * @param clientId the ID of the client
-   * @param userAgent the user agent property of the client
+   * @param clientInfo information about the client
    * @param blockIndex the index of the test block to get
    * @param timeout how long to wait for an answer
    * @return the next test to run, or <code>null</code> if
    *         <code>timeout</code> is exceeded or the next test does not match
    *         <code>testClassName</code>
    */
-  public TestBlock getTestBlock(String clientId, String clientDesc,
-      String userAgent, int blockIndex, long timeout) throws TimeoutException {
+  public TestBlock getTestBlock(ClientInfoExt clientInfo, int blockIndex,
+      long timeout) throws TimeoutException {
     synchronized (clientStatusesLock) {
-      userAgents.add(userAgent);
-      ClientStatus clientStatus = ensureClientStatus(clientId, clientDesc);
+      userAgents.add(clientInfo.getUserAgent());
+      ClientStatus clientStatus = ensureClientStatus(clientInfo);
       clientStatus.blockIndex = blockIndex;
 
       // The client has finished all of the tests.
@@ -145,8 +179,8 @@ public class JUnitMessageQueue {
           double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
           throw new TimeoutException("The servlet did not respond to the "
               + "next query to test within " + timeout + "ms.\n"
-              + " Client id: " + clientId + "\n" + " Actual time elapsed: "
-              + elapsed + " seconds.\n");
+              + " Client description: " + clientInfo.getDesc() + "\n"
+              + " Actual time elapsed: " + elapsed + " seconds.\n");
         }
         try {
           clientStatusesLock.wait(timeToWait);
@@ -170,32 +204,36 @@ public class JUnitMessageQueue {
     }
   }
 
-  public void reportFatalLaunch(String clientId, String clientDesc, String userAgent,
-      JUnitResult result) {
+  /**
+   * Reports a failure from a client that cannot startup.
+   * 
+   * @param clientInfo information about the client
+   * @param result the failure result
+   */
+  public void reportFatalLaunch(ClientInfoExt clientInfo, JUnitResult result) {
     // Fatal launch error, cause this client to fail the whole block.
-    ClientStatus clientStatus = ensureClientStatus(clientId, clientDesc);
+    ClientStatus clientStatus = ensureClientStatus(clientInfo);
     Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
     for (TestInfo testInfo : testBlocks.get(clientStatus.blockIndex)) {
       results.put(testInfo, result);
     }
-    reportResults(clientId, clientDesc, userAgent, results);
+    reportResults(clientInfo, results);
   }
 
   /**
    * Called by the servlet to report the results of the last test to run.
    * 
-   * @param clientId the ID of the client
-   * @param userAgent the user agent property of the client
+   * @param clientInfo information about the client
    * @param results the result of running the test block
    */
-  public void reportResults(String clientId, String clientDesc, String userAgent,
+  public void reportResults(ClientInfoExt clientInfo,
       Map<TestInfo, JUnitResult> results) {
     synchronized (clientStatusesLock) {
       if (results == null) {
         throw new IllegalArgumentException("results cannot be null");
       }
-      userAgents.add(userAgent);
-      ClientStatus clientStatus = ensureClientStatus(clientId, clientDesc);
+      userAgents.add(clientInfo.getUserAgent());
+      ClientStatus clientStatus = ensureClientStatus(clientInfo);
 
       // Cache the test results.
       for (Map.Entry<TestInfo, JUnitResult> entry : results.entrySet()) {
@@ -240,7 +278,7 @@ public class JUnitMessageQueue {
       List<String> results = new ArrayList<String>();
       for (ClientStatus clientStatus : clientStatuses.values()) {
         if (clientStatus.isNew) {
-          results.add(clientStatus.clientDesc);
+          results.add(clientStatus.getDesc());
           // Record that this client is no longer new.
           clientStatus.isNew = false;
         }
@@ -323,7 +361,7 @@ public class JUnitMessageQueue {
         } else {
           buf.append(" - (ok): ");
         }
-        buf.append(clientStatus.clientDesc);
+        buf.append(clientStatus.getDesc());
         ++lineCount;
       }
       int difference = numClients - getNumClientsRetrievedTest(testInfo);
@@ -365,7 +403,7 @@ public class JUnitMessageQueue {
       if (results != null) {
         for (Map.Entry<ClientStatus, JUnitResult> entry : results.entrySet()) {
           if (entry.getValue() == null) {
-            buf.append(entry.getKey().clientDesc);
+            buf.append(entry.getKey().getDesc());
             buf.append("\n");
             itemCount++;
           }
@@ -454,14 +492,15 @@ public class JUnitMessageQueue {
    * @param clientId the id of the client
    * @return the {@link ClientStatus} for the client
    */
-  private ClientStatus ensureClientStatus(String clientId, String clientDesc) {
-    ClientStatus clientStatus = clientStatuses.get(clientId);
+  private ClientStatus ensureClientStatus(ClientInfoExt clientInfo) {
+    int id = clientInfo.getSessionId();
+    ClientStatus clientStatus = clientStatuses.get(id);
     if (clientStatus == null) {
-      clientStatus = new ClientStatus(clientId, clientDesc);
-      clientStatuses.put(clientId, clientStatus);
+      clientStatus = new ClientStatus(clientInfo);
+      clientStatuses.put(id, clientStatus);
     } else {
-      // Maybe update the description (ip might change if through a proxy).
-      clientStatus.clientDesc = clientDesc;
+      // Maybe update the client info (IP might change if through a proxy).
+      clientStatus.updateClientInfo(clientInfo);
     }
     return clientStatus;
   }

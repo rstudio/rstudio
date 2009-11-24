@@ -15,6 +15,8 @@
  */
 package com.google.gwt.junit.client.impl;
 
+import com.google.gwt.junit.client.impl.JUnitHost.ClientInfo;
+import com.google.gwt.junit.client.impl.JUnitHost.InitialResponse;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -30,12 +32,11 @@ public interface JUnitHostAsync {
    * Gets a specific block of tests to run.
    * 
    * @param blockIndex the index of the test block to retrieve
-   * @param userAgent the user agent property of this client
-   * @param callBack the object that will receive the name of the next method to
-   *          run
+   * @param clientInfo the info for this client
+   * @param callBack the object that will receive the initial response
    */
-  void getTestBlock(int blockIndex, String userAgent,
-      AsyncCallback<TestBlock> callBack);
+  void getTestBlock(int blockIndex, ClientInfo clientInfo,
+      AsyncCallback<InitialResponse> callBack);
 
   /**
    * Reports results for the last method run and gets the name of next method to
@@ -43,10 +44,9 @@ public interface JUnitHostAsync {
    * 
    * @param results the results of executing the test
    * @param blockIndex the index of the test block to retrieve
-   * @param userAgent the user agent property of this client
-   * @param callBack the object that will receive the name of the next method to
-   *          run
+   * @param clientInfo the info for this client
+   * @param callBack the object that will receive the next test block
    */
   void reportResultsAndGetTestBlock(HashMap<TestInfo, JUnitResult> results,
-      int blockIndex, String userAgent, AsyncCallback<TestBlock> callBack);
+      int blockIndex, ClientInfo clientInfo, AsyncCallback<TestBlock> callBack);
 }

@@ -18,6 +18,7 @@ package com.google.gwt.junit.server;
 import com.google.gwt.junit.JUnitFatalLaunchException;
 import com.google.gwt.junit.JUnitMessageQueue;
 import com.google.gwt.junit.JUnitShell;
+import com.google.gwt.junit.JUnitMessageQueue.ClientInfoExt;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.ExceptionWrapper;
 import com.google.gwt.junit.client.impl.JUnitHost;
@@ -31,10 +32,9 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -57,7 +57,10 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
    */
   private static final int TIME_TO_WAIT_FOR_TESTNAME = 300000;
 
-  private static final AtomicLong uniqueSessionId = new AtomicLong();
+  /**
+   * Monotonic increase counter to create unique client session ids.
+   */
+  private static final AtomicInteger uniqueSessionId = new AtomicInteger();
 
   /**
    * Tries to grab the GWTUnitTestShell sHost environment to communicate with
@@ -85,28 +88,32 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
     fld.set(obj, value);
   }
 
-  public TestBlock getTestBlock(int blockIndex, String userAgent)
+  public InitialResponse getTestBlock(int blockIndex, ClientInfo clientInfo)
       throws TimeoutException {
-    return getHost().getTestBlock(
-        getClientId(getThreadLocalRequest(), getThreadLocalResponse()),
-        getClientDesc(getThreadLocalRequest()), userAgent, blockIndex,
-        TIME_TO_WAIT_FOR_TESTNAME);
+    ClientInfoExt clientInfoExt;
+    if (clientInfo.getSessionId() < 0) {
+      clientInfoExt = createNewClientInfo(clientInfo.getUserAgent());
+    } else {
+      clientInfoExt = createClientInfo(clientInfo);
+    }
+    TestBlock initialTestBlock = getHost().getTestBlock(clientInfoExt,
+        blockIndex, TIME_TO_WAIT_FOR_TESTNAME);
+    // Send back the updated session id.
+    return new InitialResponse(clientInfoExt.getSessionId(), initialTestBlock);
   }
 
   public TestBlock reportResultsAndGetTestBlock(
-      HashMap<TestInfo, JUnitResult> results, int testBlock, String userAgent)
-      throws TimeoutException {
+      HashMap<TestInfo, JUnitResult> results, int testBlock,
+      ClientInfo clientInfo) throws TimeoutException {
     for (JUnitResult result : results.values()) {
       initResult(getThreadLocalRequest(), result);
       ExceptionWrapper ew = result.getExceptionWrapper();
       result.setException(deserialize(ew));
     }
     JUnitMessageQueue host = getHost();
-    String clientId = getClientId(getThreadLocalRequest(),
-        getThreadLocalResponse());
-    String clientDesc = getClientDesc(getThreadLocalRequest());
-    host.reportResults(clientId, clientDesc, userAgent, results);
-    return host.getTestBlock(clientId, clientDesc, userAgent, testBlock,
+    ClientInfoExt clientInfoExt = createClientInfo(clientInfo);
+    host.reportResults(clientInfoExt, results);
+    return host.getTestBlock(clientInfoExt, testBlock,
         TIME_TO_WAIT_FOR_TESTNAME);
   }
 
@@ -119,11 +126,25 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
       JUnitResult result = new JUnitResult();
       initResult(request, result);
       result.setException(new JUnitFatalLaunchException(requestPayload));
-      getHost().reportFatalLaunch(getClientId(request, response),
-          getClientDesc(request), null, result);
+      getHost().reportFatalLaunch(createNewClientInfo(null), result);
     } else {
       super.service(request, response);
     }
+  }
+
+  private ClientInfoExt createClientInfo(ClientInfo clientInfo) {
+    assert (clientInfo.getSessionId() >= 0);
+    return new ClientInfoExt(clientInfo.getSessionId(),
+        clientInfo.getUserAgent(), getClientDesc(getThreadLocalRequest()));
+  }
+
+  private ClientInfoExt createNewClientInfo(String userAgent) {
+    return new ClientInfoExt(createSessionId(), userAgent,
+        getClientDesc(getThreadLocalRequest()));
+  }
+
+  private int createSessionId() {
+    return uniqueSessionId.getAndIncrement();
   }
 
   /**
@@ -232,28 +253,13 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
     return result;
   }
 
+  /**
+   * Returns a client description for the current request.
+   */
   private String getClientDesc(HttpServletRequest request) {
     String machine = request.getRemoteHost();
     String agent = request.getHeader("User-Agent");
     return machine + " / " + agent;
-  }
-
-  /**
-   * Returns a "client id" for the current request.
-   */
-  private String getClientId(HttpServletRequest request,
-      HttpServletResponse response) {
-    Cookie[] cookies = request.getCookies();
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        if ("gwt.junit.sessionCookie".equals(cookie.getName())) {
-          return cookie.getValue();
-        }
-      }
-    }
-    String cookie = String.valueOf(uniqueSessionId.getAndIncrement());
-    response.addCookie(new Cookie("gwt.junit.sessionCookie", cookie));
-    return cookie;
   }
 
   private void initResult(HttpServletRequest request, JUnitResult result) {
