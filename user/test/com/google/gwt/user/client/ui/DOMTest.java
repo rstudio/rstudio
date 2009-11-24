@@ -120,6 +120,7 @@ public class DOMTest extends GWTTestCase {
    * Tests {@link DOM#getAbsoluteLeft(Element)} and
    * {@link DOM#getAbsoluteTop(Element)}.
    */
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testGetAbsolutePosition() {
     final int border = 8;
     final int margin = 9;
