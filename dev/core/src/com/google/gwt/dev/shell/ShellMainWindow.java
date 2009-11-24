@@ -20,7 +20,6 @@ import com.google.gwt.dev.shell.log.SwingLoggerPanel;
 import com.google.gwt.dev.util.BrowserLauncher;
 
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
 import java.awt.HeadlessException;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -44,6 +43,63 @@ import javax.swing.JPanel;
  * Top-level window for the Swing DevMode UI.
  */
 public class ShellMainWindow extends JPanel {
+
+  /**
+   * Launches a URL by copying it to the clipboard.
+   */
+  private class CopyToClipboardLauncher extends LaunchMethod {
+
+    public CopyToClipboardLauncher() {
+      super("Copy URL to clipboard");
+    }
+
+    @Override
+    public void launchUrl(URL url) {
+      getLogger().log(TreeLogger.INFO, "Paste " + url.toExternalForm()
+          + " in a browser");
+      // is it better to use SwingUtilities2.canAccessSystemClipboard() here?
+      Throwable caught = null;
+      try {
+        Clipboard clipboard = logWindow.getToolkit().getSystemClipboard();
+        StringSelection selection = new StringSelection(url.toExternalForm());
+        clipboard.setContents(selection, selection);
+        return;
+      } catch (SecurityException e) {
+        caught = e;
+      } catch (HeadlessException e) {
+        caught = e;
+      }
+      getLogger().log(TreeLogger.ERROR, "Unable to copy URL to clipboard",
+          caught);
+    }
+  }
+
+  /**
+   * Launches a URL using the default browser, as defined by
+   * {@link BrowserLauncher}.
+   */
+  private class DefaultBrowserLauncher extends LaunchMethod {
+
+    public DefaultBrowserLauncher() {
+      super("Default browser");
+    }
+
+    @Override
+    public void launchUrl(URL url) {
+      Throwable caught = null;
+      try {
+        BrowserLauncher.browse(url.toExternalForm());
+        return;
+      } catch (IOException e) {
+        caught = e;
+      } catch (URISyntaxException e) {
+        caught = e;
+      }
+      TreeLogger branch = getLogger().branch(TreeLogger.ERROR,
+          "Unable to launch default browser", caught);
+      branch.log(TreeLogger.INFO, url.toExternalForm());
+    }
+  }
 
   /**
    * A class for implementing different methods of launching a URL.
@@ -76,60 +132,6 @@ public class ShellMainWindow extends JPanel {
   }
 
   /**
-   * Launches a URL using the default browser, as defined by
-   * {@link BrowserLauncher}.
-   */
-  private class DefaultBrowserLauncher extends LaunchMethod {
-
-    public DefaultBrowserLauncher() {
-      super("Default browser");
-    }
-
-    @Override
-    public void launchUrl(URL url) {
-      Throwable caught = null;
-      try {
-        BrowserLauncher.browse(url.toExternalForm());
-        return;
-      } catch (IOException e) {
-        caught = e;
-      } catch (URISyntaxException e) {
-        caught = e;
-      }
-      getLogger().log(TreeLogger.ERROR, "Unable to launch default browser",
-          caught);
-    }
-  }
-
-  /**
-   * Launches a URL by copying it to the clipboard.
-   */
-  private class CopyToClipboardLauncher extends LaunchMethod {
-
-    public CopyToClipboardLauncher() {
-      super("Copy URL to clipboard");
-    }
-
-    @Override
-    public void launchUrl(URL url) {
-      // is it better to use SwingUtilities2.canAccessSystemClipboard() here?
-      Throwable caught = null;
-      try {
-        Clipboard clipboard = logWindow.getToolkit().getSystemClipboard();
-        StringSelection selection = new StringSelection(url.toExternalForm());
-        clipboard.setContents(selection, selection);
-        return;
-      } catch (SecurityException e) {
-        caught = e;
-      } catch (HeadlessException e) {
-        caught = e;
-      }
-      getLogger().log(TreeLogger.ERROR, "Unable to copy URL to clipboard",
-          caught);
-    }
-  }
-
-  /**
    * User-visible URL and complete URL for use in combo box.
    */
   private static class UrlComboEntry {
@@ -151,27 +153,22 @@ public class ShellMainWindow extends JPanel {
       return urlFragment;
     }
   }
+
   private SwingLoggerPanel logWindow;
   private JComboBox launchCombo;
   private JButton launchButton;
-
   private JComboBox urlCombo;
 
   /**
+   * Create the main window with the top-level logger and launch controls.
+   * <p>
+   * MUST BE CALLED FROM THE UI THREAD
+   *
    * @param maxLevel
    * @param logFile
    */
   public ShellMainWindow(TreeLogger.Type maxLevel, File logFile) {
     super(new BorderLayout());
-    // TODO(jat): add back when we have real options
-    if (false) {
-      JPanel panel = new JPanel(new GridLayout(2, 1));
-      JPanel optionPanel = new JPanel();
-      optionPanel.setBorder(BorderFactory.createTitledBorder("Options"));
-      optionPanel.add(new JLabel("Miscellaneous options here"));
-      panel.add(optionPanel);
-      add(panel, BorderLayout.NORTH);
-    }
     JPanel launchPanel = new JPanel();
     launchPanel.setBorder(BorderFactory.createTitledBorder(
         "Launch GWT Module"));
@@ -206,10 +203,18 @@ public class ShellMainWindow extends JPanel {
   }
 
   /**
-   * Indicate that URLs specified in {@link #setStartupUrls(Map)} are now
-   * launchable.
+   * Indicate that all modules have been loaded -- on success, URLs previously
+   * specified in {@link #setStartupUrls(Map)} may be launched.
+   * <p>
+   * MUST BE CALLED FROM THE UI THREAD
+   * 
+   * @param successfulLoad true if all modules were successfully loaded
    */
-  public void setLaunchable() {
+  public void moduleLoadComplete(boolean successfulLoad) {
+    if (!successfulLoad) {
+      launchButton.setText("Module Load Failure");
+      return;
+    }
     if (urlCombo.getItemCount() == 0) {
       launchButton.setText("No URLs to Launch");
       urlCombo.addItem("No startup URLs");
@@ -222,11 +227,14 @@ public class ShellMainWindow extends JPanel {
 
   /**
    * Create the UI to show available startup URLs.  These should not be
-   * launchable by the user until the {@link #setLaunchable()} method is called.
-   * 
+   * launchable by the user until the {@link #moduleLoadComplete(boolean)} method is
+   * called.
+   * <p>
+   * MUST BE CALLED FROM THE UI THREAD
+
    * @param urls map of user-specified URL fragments to final URLs
    */
-  public void setStartupUrls(Map<String, URL> urls) {
+  public void setStartupUrls(final Map<String, URL> urls) {
     urlCombo.removeAllItems();
     ArrayList<String> keys = new ArrayList<String>(urls.keySet());
     Collections.sort(keys);
@@ -236,15 +244,30 @@ public class ShellMainWindow extends JPanel {
     urlCombo.revalidate();
   }
 
+  /**
+   * Launch the selected URL with the selected launch method.
+   * <p>
+   * MUST BE CALLED FROM THE UI THREAD
+   */
   protected void launch() {
     LaunchMethod launcher = (LaunchMethod) launchCombo.getSelectedItem();
     UrlComboEntry selectedUrl = (UrlComboEntry) urlCombo.getSelectedItem();
+    if (launcher == null || selectedUrl == null) {
+      // Shouldn't happen - should we log anything?
+      return;
+    }
     URL url = selectedUrl.getUrl();
     launcher.launchUrl(url);
   }
 
+  /**
+   * Populate the launch method combo box with possible choices.
+   * <p>
+   * MUST BE CALLED FROM THE UI THREAD
+   */
   private void populateLaunchComboBox() {
-    // TODO(jat): support scanning for other browsers and launching them
+    // TODO(jat): support scanning for other browsers and launching them, as
+    // well as user preferences of launch methods and their order.
     launchCombo.addItem(new DefaultBrowserLauncher());
     launchCombo.addItem(new CopyToClipboardLauncher());
   }

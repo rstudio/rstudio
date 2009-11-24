@@ -127,7 +127,7 @@ public class RemoteUI extends DevModeUI implements
   }
 
   @Override
-  public void launchStartupUrls() {
+  public void moduleLoadComplete(boolean success) {
     /*
      * TODO: Send a message to the server indicating that the URLs are
      * launchable.

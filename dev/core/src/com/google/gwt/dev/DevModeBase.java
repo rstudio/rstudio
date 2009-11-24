@@ -687,11 +687,11 @@ abstract class DevModeBase implements DoneCallback {
       // Eager AWT init for OS X to ensure safe coexistence with SWT.
       BootStrapPlatform.initGui();
 
-      if (startUp()) {
-        // The web server is running now, so launch browsers for startup urls.
-        launchStartupUrls();
-      }
+      boolean success = startUp();
 
+      // The web server is running now, so launch browsers for startup urls.
+      ui.moduleLoadComplete(success);
+      
       blockUntilDone.acquire();
     } catch (Exception e) {
       e.printStackTrace();
@@ -1002,14 +1002,6 @@ abstract class DevModeBase implements DoneCallback {
   }
 
   /**
-   * Actually launch (or indicate to the user they can be launched) previously
-   * specified (via {@link #setStartupUrls(TreeLogger)}) URLs.
-   */
-  private void launchStartupUrls() {
-    ui.launchStartupUrls();
-  }
-
-  /**
    * Perform hosted mode relink when new artifacts are generated, without
    * overwriting newer or unmodified files in the output folder.
    * 
@@ -1030,10 +1022,11 @@ abstract class DevModeBase implements DoneCallback {
   }
 
   /**
-   * Set the set of startup URLs.  This is done before launching to allow the
-   * UI to better present the options to the user, but note that the UI should
-   * not attempt to launch the URLs until {@link #launchStartupUrls()}
-   * is called.
+   * Set the set of startup URLs. This is done before launching to allow the UI
+   * to better present the options to the user, but note that the UI should not
+   * attempt to launch the URLs until
+   * {@link DevModeUI#moduleLoadComplete(boolean)} is called, and should not
+   * automatically launch any URLs if they
    * 
    * @param logger TreeLogger instance to use
    */

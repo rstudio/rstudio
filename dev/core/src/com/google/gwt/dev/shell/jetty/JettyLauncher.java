@@ -81,13 +81,12 @@ public class JettyLauncher extends ServletContainerLauncher {
            * We do not want to call the developer's attention to a 404 when
            * requesting favicon.ico. This is a very common 404.
            */
-          logStatus = normalLogLevel;
+          logStatus = TreeLogger.TRACE;
           logHeaders = TreeLogger.DEBUG;
         } else {
           logStatus = TreeLogger.WARN;
           logHeaders = TreeLogger.INFO;
         }
-        logHeaders = TreeLogger.INFO;
       } else if (status >= 400) {
         logStatus = TreeLogger.WARN;
         logHeaders = TreeLogger.INFO;

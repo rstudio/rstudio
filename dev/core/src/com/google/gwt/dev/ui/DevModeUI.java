@@ -27,6 +27,18 @@ import java.util.Map;
 /**
  * Defines the interaction between DevelopmentMode and the UI, so that
  * alternate UIs can be implemented.
+ * <p>
+ * Sequence of calls:
+ * <ul>
+ * <li>{@link #initialize(Type)}
+ * <li>{@link #getTopLogger()}
+ * <li>possibly {@link #getWebServerLogger(String, byte[])}
+ * <li>{@link #setStartupUrls(Map)}
+ * <li>{@link #moduleLoadComplete(boolean)} or 
+ * <li>zero or more {@link #getModuleLogger}
+ * </ul>
+ * {@link #setCallback(com.google.gwt.dev.ui.UiEvent.Type, UiCallback)} may be
+ * interspersed among these calls after {@link #initialize(Type)} is called.
  */
 public abstract class DevModeUI {
 
@@ -111,10 +123,13 @@ public abstract class DevModeUI {
   }
 
   /**
-   * Indicate to the user that URLs may be started, or actually launch browsers
-   * with the URLs specified in {@link #setStartupUrls(Map)}.
+   * Indicates that all modules have been loaded (loading the XML, not
+   * completing onModuleLoad), and that URLs previously specified in
+   * {@link #setStartupUrls(Map)} may be launched if successful.
+   * 
+   * @param success true if all modules were successfully loaded
    */
-  public void launchStartupUrls() {
+  public void moduleLoadComplete(boolean success) {
     // do nothing by default
   }
 

@@ -27,6 +27,7 @@ import com.google.gwt.dev.ui.RestartServerCallback;
 import com.google.gwt.dev.ui.RestartServerEvent;
 import com.google.gwt.dev.util.collect.HashMap;
 
+import java.awt.EventQueue;
 import java.awt.Image;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -37,6 +38,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -54,22 +58,18 @@ public class SwingUI extends DevModeUI {
    */
   protected class SwingModuleHandle implements ModuleHandle {
 
-    private final TreeLogger logger;
     private final ModulePanel tab;
 
     /**
      * Create an immutable module handle.
-     * 
-     * @param logger logger to use for this module
      * @param tab the module panel associated with this instance
      */
-    public SwingModuleHandle(TreeLogger logger, ModulePanel tab) {
-      this.logger = logger;
+    public SwingModuleHandle(ModulePanel tab) {
       this.tab = tab;
     }
 
     public TreeLogger getLogger() {
-      return logger;
+      return tab.getLogger();
     }
     
     /**
@@ -170,18 +170,24 @@ public class SwingUI extends DevModeUI {
   }
 
   @Override
-  public ModuleHandle getModuleLogger(String userAgent, String remoteSocket,
-      String url, String tabKey, String moduleName, String sessionKey,
-      String agentTag, byte[] agentIcon, TreeLogger.Type logLevel) {
+  public ModuleHandle getModuleLogger(final String userAgent,
+      final String remoteSocket, final String url, final String tabKey,
+      final String moduleName, final String sessionKey, final String agentTag,
+      final byte[] agentIcon, final TreeLogger.Type logLevel) {
     // TODO(jat): add support for closing an active module
-    ModuleTabPanel tabPanel = null;
-    ModulePanel tab = null;
-    tabPanel = findModuleTab(userAgent, remoteSocket, url, tabKey,
-        moduleName, agentIcon);
-    tab = tabPanel.addModuleSession(logLevel, moduleName, sessionKey,
-        options.getLogFile(String.format("%s-%s-%d.log", moduleName, agentTag,
-            getNextSessionCounter(options.getLogDir()))));
-    TreeLogger logger = tab.getLogger();
+    ModuleHandle handle = invokeAndGet(new Callable<ModuleHandle>() {
+          public ModuleHandle call() throws Exception {
+            ModuleTabPanel tabPanel = findModuleTab(userAgent, remoteSocket,
+                url, tabKey, moduleName, agentIcon);
+            ModulePanel tab = tabPanel.addModuleSession(logLevel, moduleName,
+                sessionKey, options.getLogFile(String.format("%s-%s-%d.log",
+                    moduleName, agentTag, getNextSessionCounter(
+                        options.getLogDir()))));
+            // TODO: Switch to a wait cursor?
+            return new SwingModuleHandle(tab);
+          }
+        });
+    TreeLogger logger = handle.getLogger();
     TreeLogger branch = logger.branch(TreeLogger.INFO, "Loading module "
         + moduleName);
     if (url != null) {
@@ -195,8 +201,7 @@ public class SwingUI extends DevModeUI {
     if (sessionKey != null) {
       branch.log(TreeLogger.DEBUG, "Session key: " + sessionKey);
     }
-    // TODO: Switch to a wait cursor?
-    return new SwingModuleHandle(logger, tab);
+    return handle;
   }
 
   @Override
@@ -229,51 +234,63 @@ public class SwingUI extends DevModeUI {
   }
 
   @Override
-  public void initialize(Type logLevel) {
+  public void initialize(final Type logLevel) {
     super.initialize(logLevel);
-    ImageIcon gwtIcon16 = loadImageIcon("icon16.png");
-    ImageIcon gwtIcon24 = loadImageIcon("icon24.png");
-    ImageIcon gwtIcon32 = loadImageIcon("icon32.png");
-    ImageIcon gwtIcon48 = loadImageIcon("icon48.png");
-    ImageIcon gwtIcon64 = loadImageIcon("icon64.png");
-    ImageIcon gwtIcon128 = loadImageIcon("icon128.png");
-    frame = new JFrame("GWT Development Mode");
-    tabs = new JTabbedPane();
-    if (options.alsoLogToFile()) {
-      options.getLogDir().mkdirs();
-    }
-    mainWnd = new ShellMainWindow(logLevel, options.getLogFile("main.log"));
-    topLogger = mainWnd.getLogger();
-    tabs.addTab("Development Mode", gwtIcon24, mainWnd, "GWT Development Mode");
-    frame.getContentPane().add(tabs);
-    frame.setSize(950, 700);
-    frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-    frame.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowClosed(WindowEvent e) {
-        DoneCallback callback = getCallback(DoneEvent.getType());
-        if (callback != null) {
-          callback.onDone();
+    invokeAndWait(new Runnable() {
+      public void run() {
+        ImageIcon gwtIcon16 = loadImageIcon("icon16.png");
+        ImageIcon gwtIcon24 = loadImageIcon("icon24.png");
+        ImageIcon gwtIcon32 = loadImageIcon("icon32.png");
+        ImageIcon gwtIcon48 = loadImageIcon("icon48.png");
+        ImageIcon gwtIcon64 = loadImageIcon("icon64.png");
+        ImageIcon gwtIcon128 = loadImageIcon("icon128.png");
+        frame = new JFrame("GWT Development Mode");
+        tabs = new JTabbedPane();
+        if (options.alsoLogToFile()) {
+          options.getLogDir().mkdirs();
         }
+        mainWnd = new ShellMainWindow(logLevel, options.getLogFile("main.log"));
+        topLogger = mainWnd.getLogger();
+        tabs.addTab("Development Mode", gwtIcon24, mainWnd,
+            "GWT Development Mode");
+        frame.getContentPane().add(tabs);
+        frame.setSize(950, 700);
+        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowClosed(WindowEvent e) {
+            DoneCallback callback = getCallback(DoneEvent.getType());
+            if (callback != null) {
+              callback.onDone();
+            }
+          }
+        });
+        setIconImages(topLogger, gwtIcon48, gwtIcon32, gwtIcon64, gwtIcon128,
+            gwtIcon16);
+        frame.setVisible(true);
       }
     });
-    setIconImages(topLogger, gwtIcon48, gwtIcon32, gwtIcon64, gwtIcon128,
-        gwtIcon16);
-    frame.setVisible(true);
-
     maybeInitializeOsXApplication();
   }
 
   @Override
-  public void launchStartupUrls() {
-    mainWnd.setLaunchable();
-  }
-  
-  @Override
-  public void setStartupUrls(Map<String, URL> urls) {
-    mainWnd.setStartupUrls(urls);
+  public void moduleLoadComplete(final boolean success) {
+    EventQueue.invokeLater(new Runnable() {
+      public void run() {
+        mainWnd.moduleLoadComplete(success);
+      }
+    });
   }
 
+  @Override
+  public void setStartupUrls(final Map<String, URL> urls) {
+    invokeAndWait(new Runnable() {
+      public void run() {
+        mainWnd.setStartupUrls(urls);
+      }
+    });
+  }
+  
   protected int getNextSessionCounter(File logdir) {
     synchronized (sessionCounterLock) {
       if (sessionCounter == 0 && logdir != null) {
@@ -324,6 +341,45 @@ public class SwingUI extends DevModeUI {
           }, moduleName);
     }
     return moduleTabPanel;
+  }
+
+  /**
+   * Invoke a Callable on the UI thread, wait for it to finish, and return the
+   * result.
+   * 
+   * @param <T> return type
+   * @param callable wrapper of the method to run on the UI thread
+   * @return the return value of callable.call()
+   * @throws RuntimeException if an error occurs
+   */
+  private <T> T invokeAndGet(Callable<T> callable) {
+    FutureTask<T> task = new FutureTask<T>(callable);
+    try {
+      EventQueue.invokeAndWait(task);
+      return task.get();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    } catch (InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Invoke a Runnable on the UI thread and wait for it to finish.
+   * 
+   * @param runnable
+   * @throws RuntimeException if an error occurs
+   */
+  private void invokeAndWait(Runnable runnable) {
+    try {
+      EventQueue.invokeAndWait(runnable);
+    } catch (InterruptedException e) {
+      throw new RuntimeException("Error running on Swing UI thread", e);
+    } catch (InvocationTargetException e) {
+      throw new RuntimeException("Error running on Swing UI thread", e);
+    }
   }
 
   /**
