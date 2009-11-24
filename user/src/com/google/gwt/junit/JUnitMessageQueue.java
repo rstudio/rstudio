@@ -16,6 +16,7 @@
 package com.google.gwt.junit;
 
 import com.google.gwt.dev.util.collect.HashSet;
+import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
@@ -50,10 +51,12 @@ public class JUnitMessageQueue {
   public static class ClientStatus {
     public int blockIndex = 0;
     public final String clientId;
+    public String clientDesc;
     public boolean isNew = true;
 
-    public ClientStatus(String clientId) {
+    public ClientStatus(String clientId, String clientDesc) {
       this.clientId = clientId;
+      this.clientDesc = clientDesc;
     }
   }
 
@@ -97,7 +100,7 @@ public class JUnitMessageQueue {
    * null, it means that the client requested the test but did not report the
    * results yet.
    */
-  private final Map<TestInfo, Map<String, JUnitResult>> testResults = new HashMap<TestInfo, Map<String, JUnitResult>>();
+  private final Map<TestInfo, Map<ClientStatus, JUnitResult>> testResults = new HashMap<TestInfo, Map<ClientStatus, JUnitResult>>();
 
   /**
    * A set of the GWT user agents (eg. ie6, gecko) that have connected.
@@ -122,11 +125,11 @@ public class JUnitMessageQueue {
    *         <code>timeout</code> is exceeded or the next test does not match
    *         <code>testClassName</code>
    */
-  public TestBlock getTestBlock(String clientId, String userAgent,
-      int blockIndex, long timeout) throws TimeoutException {
+  public TestBlock getTestBlock(String clientId, String clientDesc,
+      String userAgent, int blockIndex, long timeout) throws TimeoutException {
     synchronized (clientStatusesLock) {
       userAgents.add(userAgent);
-      ClientStatus clientStatus = ensureClientStatus(clientId);
+      ClientStatus clientStatus = ensureClientStatus(clientId, clientDesc);
       clientStatus.blockIndex = blockIndex;
 
       // The client has finished all of the tests.
@@ -161,21 +164,21 @@ public class JUnitMessageQueue {
       // Record that this client has retrieved the current tests.
       TestInfo[] tests = testBlocks.get(blockIndex);
       for (TestInfo testInfo : tests) {
-        ensureResults(testInfo).put(clientId, null);
+        ensureResults(testInfo).put(clientStatus, null);
       }
       return new TestBlock(tests, blockIndex);
     }
   }
 
-  public void reportFatalLaunch(String clientId, String userAgent,
+  public void reportFatalLaunch(String clientId, String clientDesc, String userAgent,
       JUnitResult result) {
     // Fatal launch error, cause this client to fail the whole block.
-    ClientStatus clientStatus = ensureClientStatus(clientId);
+    ClientStatus clientStatus = ensureClientStatus(clientId, clientDesc);
     Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
     for (TestInfo testInfo : testBlocks.get(clientStatus.blockIndex)) {
       results.put(testInfo, result);
     }
-    reportResults(clientId, userAgent, results);
+    reportResults(clientId, clientDesc, userAgent, results);
   }
 
   /**
@@ -185,19 +188,19 @@ public class JUnitMessageQueue {
    * @param userAgent the user agent property of the client
    * @param results the result of running the test block
    */
-  public void reportResults(String clientId, String userAgent,
+  public void reportResults(String clientId, String clientDesc, String userAgent,
       Map<TestInfo, JUnitResult> results) {
     synchronized (clientStatusesLock) {
       if (results == null) {
         throw new IllegalArgumentException("results cannot be null");
       }
       userAgents.add(userAgent);
-      ensureClientStatus(clientId);
+      ClientStatus clientStatus = ensureClientStatus(clientId, clientDesc);
 
       // Cache the test results.
       for (Map.Entry<TestInfo, JUnitResult> entry : results.entrySet()) {
         TestInfo testInfo = entry.getKey();
-        ensureResults(testInfo).put(clientId, entry.getValue());
+        ensureResults(testInfo).put(clientStatus, entry.getValue());
       }
 
       clientStatusesLock.notifyAll();
@@ -237,7 +240,7 @@ public class JUnitMessageQueue {
       List<String> results = new ArrayList<String>();
       for (ClientStatus clientStatus : clientStatuses.values()) {
         if (clientStatus.isNew) {
-          results.add(clientStatus.clientId);
+          results.add(clientStatus.clientDesc);
           // Record that this client is no longer new.
           clientStatus.isNew = false;
         }
@@ -259,7 +262,7 @@ public class JUnitMessageQueue {
   int getNumClientsRetrievedTest(TestInfo testInfo) {
     synchronized (clientStatusesLock) {
       int count = 0;
-      Map<String, JUnitResult> results = testResults.get(testInfo);
+      Map<ClientStatus, JUnitResult> results = testResults.get(testInfo);
       if (results != null) {
         count = results.size();
       }
@@ -282,7 +285,7 @@ public class JUnitMessageQueue {
    * @param testInfo the {@link TestInfo} to check for results
    * @return A map of results from all clients.
    */
-  Map<String, JUnitResult> getResults(TestInfo testInfo) {
+  Map<ClientStatus, JUnitResult> getResults(TestInfo testInfo) {
     synchronized (clientStatusesLock) {
       return testResults.get(testInfo);
     }
@@ -307,7 +310,7 @@ public class JUnitMessageQueue {
    */
   String getUnretrievedClients(TestInfo testInfo) {
     synchronized (clientStatusesLock) {
-      Map<String, JUnitResult> results = testResults.get(testInfo);
+      Map<ClientStatus, JUnitResult> results = testResults.get(testInfo);
       StringBuilder buf = new StringBuilder();
       int lineCount = 0;
       for (ClientStatus clientStatus : clientStatuses.values()) {
@@ -315,12 +318,12 @@ public class JUnitMessageQueue {
           buf.append('\n');
         }
 
-        if (results == null || !results.containsKey(clientStatus.clientId)) {
+        if (results == null || !results.containsKey(clientStatus)) {
           buf.append(" - NO RESPONSE: ");
         } else {
           buf.append(" - (ok): ");
         }
-        buf.append(clientStatus.clientId);
+        buf.append(clientStatus.clientDesc);
         ++lineCount;
       }
       int difference = numClients - getNumClientsRetrievedTest(testInfo);
@@ -358,11 +361,11 @@ public class JUnitMessageQueue {
       // Print a list of clients that have connected but not returned results.
       int itemCount = 0;
       StringBuilder buf = new StringBuilder();
-      Map<String, JUnitResult> results = testResults.get(testInfo);
+      Map<ClientStatus, JUnitResult> results = testResults.get(testInfo);
       if (results != null) {
-        for (Map.Entry<String, JUnitResult> entry : results.entrySet()) {
+        for (Map.Entry<ClientStatus, JUnitResult> entry : results.entrySet()) {
           if (entry.getValue() == null) {
-            buf.append(entry.getKey());
+            buf.append(entry.getKey().clientDesc);
             buf.append("\n");
             itemCount++;
           }
@@ -391,7 +394,7 @@ public class JUnitMessageQueue {
    */
   boolean hasResults(TestInfo testInfo) {
     synchronized (clientStatusesLock) {
-      Map<String, JUnitResult> results = testResults.get(testInfo);
+      Map<ClientStatus, JUnitResult> results = testResults.get(testInfo);
       if (results == null || results.size() < numClients) {
         return false;
       }
@@ -410,14 +413,14 @@ public class JUnitMessageQueue {
    * THROWABLES_NOT_RETRIED}.
    */
   boolean needsRerunning(TestInfo testInfo) {
-    Map<String, JUnitResult> results = getResults(testInfo);
+    Map<ClientStatus, JUnitResult> results = getResults(testInfo);
     if (results == null) {
       return true;
     }
     if (results.size() != numClients) {
       return true;
     }
-    for (Entry<String, JUnitResult> entry : results.entrySet()) {
+    for (Entry<ClientStatus, JUnitResult> entry : results.entrySet()) {
       JUnitResult result = entry.getValue();
       if (result == null) {
         return true;
@@ -451,11 +454,14 @@ public class JUnitMessageQueue {
    * @param clientId the id of the client
    * @return the {@link ClientStatus} for the client
    */
-  private ClientStatus ensureClientStatus(String clientId) {
+  private ClientStatus ensureClientStatus(String clientId, String clientDesc) {
     ClientStatus clientStatus = clientStatuses.get(clientId);
     if (clientStatus == null) {
-      clientStatus = new ClientStatus(clientId);
+      clientStatus = new ClientStatus(clientId, clientDesc);
       clientStatuses.put(clientId, clientStatus);
+    } else {
+      // Maybe update the description (ip might change if through a proxy).
+      clientStatus.clientDesc = clientDesc;
     }
     return clientStatus;
   }
@@ -467,10 +473,10 @@ public class JUnitMessageQueue {
    * @param testInfo the {@link TestInfo}
    * @return the map of all results
    */
-  private Map<String, JUnitResult> ensureResults(TestInfo testInfo) {
-    Map<String, JUnitResult> results = testResults.get(testInfo);
+  private Map<ClientStatus, JUnitResult> ensureResults(TestInfo testInfo) {
+    Map<ClientStatus, JUnitResult> results = testResults.get(testInfo);
     if (results == null) {
-      results = new HashMap<String, JUnitResult>();
+      results = new IdentityHashMap<ClientStatus, JUnitResult>();
       testResults.put(testInfo, results);
     }
     return results;

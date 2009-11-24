@@ -40,6 +40,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
+import com.google.gwt.junit.JUnitMessageQueue.ClientStatus;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.JUnitResult;
@@ -1054,20 +1055,20 @@ public class JUnitShell extends GWTShell {
   private void processTestResult(TestCase testCase, TestResult testResult,
       Strategy strategy) {
 
-    Map<String, JUnitResult> results = messageQueue.getResults(currentTestInfo);
+    Map<ClientStatus, JUnitResult> results = messageQueue.getResults(currentTestInfo);
     assert results != null;
     assert results.size() == messageQueue.getNumClients() : results.size()
         + " != " + messageQueue.getNumClients();
 
-    for (Entry<String, JUnitResult> entry : results.entrySet()) {
-      String clientId = entry.getKey();
+    for (Entry<ClientStatus, JUnitResult> entry : results.entrySet()) {
+      ClientStatus client = entry.getKey();
       JUnitResult result = entry.getValue();
       assert (result != null);
       Throwable exception = result.getException();
 
       // Let the user know the browser in which the failure happened.
       if (exception != null) {
-        String msg = "Remote test failed at " + clientId;
+        String msg = "Remote test failed at " + client.clientDesc;
         if (exception instanceof AssertionFailedError) {
           String oldMessage = exception.getMessage();
           if (oldMessage != null) {

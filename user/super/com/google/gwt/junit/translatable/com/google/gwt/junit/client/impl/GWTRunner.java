@@ -22,6 +22,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -99,6 +100,11 @@ public abstract class GWTRunner implements EntryPoint {
    * The singleton instance.
    */
   private static GWTRunner sInstance;
+
+  /**
+   * A query param specifying my unique session cookie.
+   */
+  private static final String SESSIONCOOKIE_QUERY_PARAM = "gwt.junit.sessionCookie";
 
   /**
    * A query param specifying the test class to run, for serverless mode.
@@ -181,6 +187,12 @@ public abstract class GWTRunner implements EntryPoint {
   }
 
   public void onModuleLoad() {
+    // Try to import a session cookie from the previous module.
+    String value = Window.Location.getParameter(SESSIONCOOKIE_QUERY_PARAM);
+    if (value != null) {
+      Cookies.setCookie(SESSIONCOOKIE_QUERY_PARAM, value);
+    }
+
     maxRetryCount = parseQueryParamInteger(RETRYCOUNT_QUERY_PARAM, -1);
     currentBlock = checkForQueryParamTestToRun();
     if (currentBlock != null) {
@@ -266,6 +278,11 @@ public abstract class GWTRunner implements EntryPoint {
       builder.setParameter(BLOCKINDEX_QUERY_PARAM,
           Integer.toString(currentBlock.getIndex())).setPath(
           newModule + pathSuffix);
+      // Hand off the session cookie to the next module.
+      String sessionCookie = Cookies.getCookie(SESSIONCOOKIE_QUERY_PARAM);
+      if (sessionCookie != null) {
+        builder.setParameter(SESSIONCOOKIE_QUERY_PARAM, sessionCookie);
+      }
       Window.Location.replace(builder.buildString());
       currentBlock = null;
       currentTestIndex = 0;

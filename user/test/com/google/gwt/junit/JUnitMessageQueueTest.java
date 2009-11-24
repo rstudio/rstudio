@@ -16,6 +16,7 @@
 package com.google.gwt.junit;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.junit.JUnitMessageQueue.ClientStatus;
 import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
@@ -26,15 +27,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Tests of {@link JUnitMessageQueue}.
  */
 public class JUnitMessageQueueTest extends TestCase {
 
-  private final static int TWO_CLIENTS = 2;
   private final static int ONE_BLOCK = 1;
   private final static int ONE_TEST_PER_BLOCK = 1;
+  private final static int TWO_CLIENTS = 2;
 
   public void testAddTestBlocks() {
     JUnitMessageQueue queue = new JUnitMessageQueue(10);
@@ -89,25 +91,25 @@ public class JUnitMessageQueueTest extends TestCase {
 
     // Add some clients in a few ways.
     {
-      queue.getTestBlock("client0", "ie6", 0, timeout);
-      queue.reportFatalLaunch("client1", "gecko", null);
-      queue.reportResults("client2", "safari", createTestResults(0));
+      queue.getTestBlock("client0", "desc0", "ie6", 0, timeout);
+      queue.reportFatalLaunch("client1", "desc1", "gecko", null);
+      queue.reportResults("client2", "desc2", "safari", createTestResults(0));
       assertEquals(3, queue.getNumConnectedClients());
     }
 
     // Add duplicate clients.
     {
-      queue.getTestBlock("client3", "ie6", 0, timeout);
-      queue.reportFatalLaunch("client3", "ie6", null);
-      queue.reportResults("client4", "safari", createTestResults(0));
+      queue.getTestBlock("client3", "desc3", "ie6", 0, timeout);
+      queue.reportFatalLaunch("client3", "desc3", "ie6", null);
+      queue.reportResults("client4", "desc3", "safari", createTestResults(0));
       assertEquals(5, queue.getNumConnectedClients());
     }
 
     // Add existing clients.
     {
-      queue.getTestBlock("client0", "ie6", 0, timeout);
-      queue.reportFatalLaunch("client1", "gecko", null);
-      queue.reportResults("client2", "safari", createTestResults(0));
+      queue.getTestBlock("client0", "desc0", "ie6", 0, timeout);
+      queue.reportFatalLaunch("client1", "desc1", "gecko", null);
+      queue.reportResults("client2", "desc2", "safari", createTestResults(0));
       assertEquals(5, queue.getNumConnectedClients());
     }
   }
@@ -132,7 +134,7 @@ public class JUnitMessageQueueTest extends TestCase {
 
     // First client retrieves the first test block.
     {
-      queue.getTestBlock("client0", "ie6", 0, timeout);
+      queue.getTestBlock("client0", "desc0", "ie6", 0, timeout);
       assertEquals(1, queue.getNumClientsRetrievedTest(test0_0));
       assertEquals(1, queue.getNumClientsRetrievedTest(test0_1));
       assertEquals(1, queue.getNumClientsRetrievedTest(test0_2));
@@ -143,7 +145,7 @@ public class JUnitMessageQueueTest extends TestCase {
 
     // Second client retrieves the first test block.
     {
-      queue.getTestBlock("client1", "ie6", 0, timeout);
+      queue.getTestBlock("client1", "desc1", "ie6", 0, timeout);
       assertEquals(2, queue.getNumClientsRetrievedTest(test0_0));
       assertEquals(2, queue.getNumClientsRetrievedTest(test0_1));
       assertEquals(2, queue.getNumClientsRetrievedTest(test0_2));
@@ -154,7 +156,7 @@ public class JUnitMessageQueueTest extends TestCase {
 
     // First client retrieves the second test block.
     {
-      queue.getTestBlock("client0", "ie6", 1, timeout);
+      queue.getTestBlock("client0", "desc0", "ie6", 1, timeout);
       assertEquals(2, queue.getNumClientsRetrievedTest(test0_0));
       assertEquals(2, queue.getNumClientsRetrievedTest(test0_1));
       assertEquals(2, queue.getNumClientsRetrievedTest(test0_2));
@@ -165,7 +167,7 @@ public class JUnitMessageQueueTest extends TestCase {
 
     // First client retrieves the second test block again.
     {
-      queue.getTestBlock("client0", "ie6", 1, timeout);
+      queue.getTestBlock("client0", "desc0", "ie6", 1, timeout);
       assertEquals(2, queue.getNumClientsRetrievedTest(test0_0));
       assertEquals(2, queue.getNumClientsRetrievedTest(test0_1));
       assertEquals(2, queue.getNumClientsRetrievedTest(test0_2));
@@ -192,28 +194,39 @@ public class JUnitMessageQueueTest extends TestCase {
     {
       Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
       results.put(test0_0, result0);
-      queue.reportResults("client0", "ie6", results);
+      queue.reportResults("client0", "desc0", "ie6", results);
     }
 
     // Client 1 reports results for first test case.
     {
       Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
       results.put(test0_0, result1);
-      queue.reportResults("client1", "ie6", results);
+      queue.reportResults("client1", "desc1", "ie6", results);
     }
 
     // Client 2 reports results for first test case.
     {
       Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
       results.put(test0_0, result2);
-      queue.reportResults("client2", "ie6", results);
+      queue.reportResults("client2", "desc2", "ie6", results);
     }
 
     // Get the results
-    Map<String, JUnitResult> results = queue.getResults(test0_0);
-    assertEquals(result0, results.get("client0"));
-    assertEquals(result1, results.get("client1"));
-    assertEquals(result2, results.get("client2"));
+    Map<ClientStatus, JUnitResult> results = queue.getResults(test0_0);
+    assertEquals(3, results.size());
+    for (Entry<ClientStatus, JUnitResult> entry : results.entrySet()) {
+      ClientStatus client = entry.getKey();
+      JUnitResult result = entry.getValue();
+      if ("client0".equals(client.clientId)) {
+        assertEquals(result0, result);
+      } else if ("client1".equals(client.clientId)) {
+        assertEquals(result1, result);
+      } else if ("client2".equals(client.clientId)) {
+        assertEquals(result2, result);
+      } else {
+        fail("Unexpected client");
+      }
+    }
   }
 
   public void testGetTestBlock() {
@@ -224,21 +237,23 @@ public class JUnitMessageQueueTest extends TestCase {
 
     // Get the first test block.
     {
-      TestBlock block = queue.getTestBlock("client0", "ie6", 0, timeout);
+      TestBlock block = queue.getTestBlock("client0", "desc0", "ie6", 0,
+          timeout);
       assertEquals(testBlock0, block.getTests());
       assertEquals(0, block.getIndex());
     }
 
     // Get the second test block.
     {
-      TestBlock block = queue.getTestBlock("client0", "ie6", 1, timeout);
+      TestBlock block = queue.getTestBlock("client0", "desc0", "ie6", 1,
+          timeout);
       assertEquals(testBlock1, block.getTests());
       assertEquals(1, block.getIndex());
     }
 
     // Get the third test block.
     {
-      assertNull(queue.getTestBlock("client0", "ie6", 2, timeout));
+      assertNull(queue.getTestBlock("client0", "desc0", "ie6", 2, timeout));
     }
   }
 
@@ -249,28 +264,28 @@ public class JUnitMessageQueueTest extends TestCase {
 
     // Add some clients in a few ways.
     {
-      queue.getTestBlock("client0", "ie6", 0, timeout);
-      queue.reportFatalLaunch("client1", "gecko", null);
-      queue.reportResults("client2", "safari", createTestResults(0));
+      queue.getTestBlock("client0", "desc0", "ie6", 0, timeout);
+      queue.reportFatalLaunch("client1", "desc1", "gecko", null);
+      queue.reportResults("client2", "desc2", "safari", createTestResults(0));
       assertSimilar(new String[] {"ie6", "gecko", "safari"},
           queue.getUserAgents());
     }
 
     // Add duplicate clients.
     {
-      queue.getTestBlock("client3", "ie7", 0, timeout);
-      queue.reportFatalLaunch("client3", "ie7", null);
-      queue.reportResults("client4", "gecko1_8", createTestResults(0));
-      queue.getTestBlock("client3", "ie7", 0, timeout);
+      queue.getTestBlock("client3", "desc3", "ie7", 0, timeout);
+      queue.reportFatalLaunch("client3", "desc3", "ie7", null);
+      queue.reportResults("client4", "desc4", "gecko1_8", createTestResults(0));
+      queue.getTestBlock("client3", "desc3", "ie7", 0, timeout);
       assertSimilar(new String[] {"ie6", "ie7", "gecko", "gecko1_8", "safari"},
           queue.getUserAgents());
     }
 
     // Add existing clients.
     {
-      queue.getTestBlock("client0", "ie6", 0, timeout);
-      queue.reportFatalLaunch("client1", "gecko", null);
-      queue.reportResults("client2", "safari", createTestResults(0));
+      queue.getTestBlock("client0", "desc0", "ie6", 0, timeout);
+      queue.reportFatalLaunch("client1", "desc1", "gecko", null);
+      queue.reportResults("client2", "desc2", "safari", createTestResults(0));
       assertSimilar(new String[] {"ie6", "ie7", "gecko", "gecko1_8", "safari"},
           queue.getUserAgents());
     }
@@ -297,7 +312,7 @@ public class JUnitMessageQueueTest extends TestCase {
     {
       Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
       results.put(test0_0, new JUnitResult());
-      queue.reportResults("client0", "ie6", results);
+      queue.reportResults("client0", "desc0", "ie6", results);
       assertFalse(queue.hasResults(test0_0));
       assertFalse(queue.hasResults(test0_1));
       assertFalse(queue.hasResults(test0_2));
@@ -310,7 +325,7 @@ public class JUnitMessageQueueTest extends TestCase {
     {
       Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
       results.put(test0_0, new JUnitResult());
-      queue.reportResults("client1", "ie6", results);
+      queue.reportResults("client1", "desc1", "ie6", results);
       assertFalse(queue.hasResults(test0_0));
       assertFalse(queue.hasResults(test0_1));
       assertFalse(queue.hasResults(test0_2));
@@ -323,7 +338,7 @@ public class JUnitMessageQueueTest extends TestCase {
     {
       Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
       results.put(test0_1, new JUnitResult());
-      queue.reportResults("client0", "ie6", results);
+      queue.reportResults("client0", "desc0", "ie6", results);
       assertFalse(queue.hasResults(test0_0));
       assertFalse(queue.hasResults(test0_1));
       assertFalse(queue.hasResults(test0_2));
@@ -336,7 +351,7 @@ public class JUnitMessageQueueTest extends TestCase {
     {
       Map<TestInfo, JUnitResult> results = new HashMap<TestInfo, JUnitResult>();
       results.put(test0_0, new JUnitResult());
-      queue.reportResults("client2", "ie6", results);
+      queue.reportResults("client2", "desc2", "ie6", results);
       assertTrue(queue.hasResults(test0_0));
       assertFalse(queue.hasResults(test0_1));
       assertFalse(queue.hasResults(test0_2));
@@ -355,12 +370,13 @@ public class JUnitMessageQueueTest extends TestCase {
     JUnitResult junitResult = new JUnitResult();
     junitResult.setException(new UnableToCompleteException());
     results.put(testInfo, junitResult);
-    queue.reportResults("client0", "ie6", results);
+    queue.reportResults("client0", "desc0", "ie6", results);
     results = new HashMap<TestInfo, JUnitResult>();
     junitResult = new JUnitResult();
     junitResult.setException(new JUnitFatalLaunchException());
     results.put(testInfo, junitResult);
-    queue.reportResults("client1", "ff3", createTestResults(ONE_TEST_PER_BLOCK));
+    queue.reportResults("client1", "desc1", "ff3",
+        createTestResults(ONE_TEST_PER_BLOCK));
     assertTrue(queue.needsRerunning(testInfo));
 
     // an exception but exception in launch module
@@ -369,8 +385,9 @@ public class JUnitMessageQueueTest extends TestCase {
     junitResult = new JUnitResult();
     junitResult.setException(new JUnitFatalLaunchException());
     results.put(testInfo, junitResult);
-    queue.reportResults("client0", "ie6", results);
-    queue.reportResults("client1", "ff3", createTestResults(ONE_TEST_PER_BLOCK));
+    queue.reportResults("client0", "desc0", "ie6", results);
+    queue.reportResults("client1", "desc1", "ff3",
+        createTestResults(ONE_TEST_PER_BLOCK));
     assertFalse(queue.needsRerunning(testInfo));
   }
 
@@ -381,11 +398,11 @@ public class JUnitMessageQueueTest extends TestCase {
 
     // incomplete results
     assertTrue(queue.needsRerunning(testInfo));
-    queue.reportResults("client0", "ff3", createTestResults(1));
+    queue.reportResults("client0", "desc0", "ff3", createTestResults(1));
     assertTrue(queue.needsRerunning(testInfo));
-    
+
     // complete results
-    queue.reportResults("client1", "ie7", createTestResults(1));
+    queue.reportResults("client1", "desc1", "ie7", createTestResults(1));
     assertFalse(queue.needsRerunning(testInfo));
   }
 
@@ -396,29 +413,29 @@ public class JUnitMessageQueueTest extends TestCase {
 
     // Add some clients in a few ways.
     {
-      queue.getTestBlock("client0", "ie6", 0, timeout);
-      queue.reportFatalLaunch("client1", "gecko", null);
-      queue.reportResults("client2", "safari", createTestResults(0));
-      assertSimilar(new String[] {"client0", "client1", "client2"},
+      queue.getTestBlock("client0", "desc0", "ie6", 0, timeout);
+      queue.reportFatalLaunch("client1", "desc1", "gecko", null);
+      queue.reportResults("client2", "desc2", "safari", createTestResults(0));
+      assertSimilar(new String[] {"desc0", "desc1", "desc2"},
           queue.getNewClients());
       assertEquals(0, queue.getNewClients().length);
     }
 
     // Add duplicate clients.
     {
-      queue.getTestBlock("client3", "ie6", 0, timeout);
-      queue.reportFatalLaunch("client3", "ie6", null);
-      queue.reportResults("client4", "safari", createTestResults(0));
-      queue.getTestBlock("client3", "ie6", 0, timeout);
-      assertSimilar(new String[] {"client3", "client4"}, queue.getNewClients());
+      queue.getTestBlock("client3", "desc3", "ie6", 0, timeout);
+      queue.reportFatalLaunch("client3", "desc3", "ie6", null);
+      queue.reportResults("client4", "desc4", "safari", createTestResults(0));
+      queue.getTestBlock("client3", "desc3", "ie6", 0, timeout);
+      assertSimilar(new String[] {"desc3", "desc4"}, queue.getNewClients());
       assertEquals(0, queue.getNewClients().length);
     }
 
     // Add existing clients.
     {
-      queue.getTestBlock("client0", "ie6", 0, timeout);
-      queue.reportFatalLaunch("client1", "gecko", null);
-      queue.reportResults("client2", "safari", createTestResults(0));
+      queue.getTestBlock("client0", "desc0", "ie6", 0, timeout);
+      queue.reportFatalLaunch("client1", "desc1", "gecko", null);
+      queue.reportResults("client2", "desc2", "safari", createTestResults(0));
       assertEquals(0, queue.getNewClients().length);
     }
   }
@@ -429,9 +446,11 @@ public class JUnitMessageQueueTest extends TestCase {
     TestInfo testInfo = queue.getTestBlocks().get(0)[0];
     assertFalse(queue.hasResults(testInfo));
 
-    queue.reportResults("client0", "ie6", createTestResults(ONE_TEST_PER_BLOCK));
+    queue.reportResults("client0", "desc0", "ie6",
+        createTestResults(ONE_TEST_PER_BLOCK));
     assertFalse(queue.hasResults(testInfo));
-    queue.reportResults("client1", "ff3", createTestResults(ONE_TEST_PER_BLOCK));
+    queue.reportResults("client1", "desc1", "ff3",
+        createTestResults(ONE_TEST_PER_BLOCK));
     assertTrue(queue.hasResults(testInfo));
 
     queue.removeResults(testInfo);
@@ -446,17 +465,27 @@ public class JUnitMessageQueueTest extends TestCase {
     JUnitResult junitResult = new JUnitResult();
     junitResult.setException(new AssertionError());
     results.put(testInfo, junitResult);
-    queue.reportResults("client0", "ff3", results);
+    queue.reportResults("client0", "desc0", "ff3", results);
     assertTrue(queue.needsRerunning(testInfo));
-    assertTrue(queue.getResults(testInfo).get("client0").getException() != null);
+    Map<ClientStatus, JUnitResult> queueResults = queue.getResults(testInfo);
+    assertEquals(1, queueResults.size());
+    for (JUnitResult result : queueResults.values()) {
+      assertNotNull(result.getException());
+    }
 
     queue.removeResults(testInfo);
 
-    queue.reportResults("client0", "ff3", createTestResults(ONE_TEST_PER_BLOCK));
-    queue.reportResults("client1", "ie6", createTestResults(ONE_TEST_PER_BLOCK));
+    queue.reportResults("client0", "desc0", "ff3",
+        createTestResults(ONE_TEST_PER_BLOCK));
+    queue.reportResults("client1", "desc1", "ie6",
+        createTestResults(ONE_TEST_PER_BLOCK));
     assertFalse(queue.needsRerunning(testInfo));
     // check that the updated result appears now.
-    assertTrue(queue.getResults(testInfo).get("client0").getException() == null);
+    queueResults = queue.getResults(testInfo);
+    assertEquals(2, queueResults.size());
+    for (JUnitResult result : queueResults.values()) {
+      assertNull(result.getException());
+    }
   }
 
   /**
