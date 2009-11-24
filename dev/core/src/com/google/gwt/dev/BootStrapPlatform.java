@@ -50,6 +50,14 @@ public class BootStrapPlatform {
   }
 
   /**
+   * Return true if we are running on a Mac.
+   */
+  public static boolean isMac() {
+    String lcOSName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+    return lcOSName.startsWith("mac ");
+  }
+
+  /**
    * This works around apple radr:5569300. When -XstartOnFirstThread is passed
    * as a jvm argument, the main thread returns null for
    * {@link Thread#getContextClassLoader()}.
@@ -60,14 +68,6 @@ public class BootStrapPlatform {
       Thread.currentThread().setContextClassLoader(
           BootStrapPlatform.class.getClassLoader());
     }
-  }
-
-  /**
-   * Return true if we are running on a Mac.
-   */
-  private static boolean isMac() {
-    String lcOSName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
-    return lcOSName.startsWith("mac ");
   }
 
   /**

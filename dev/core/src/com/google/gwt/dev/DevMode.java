@@ -36,6 +36,7 @@ import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.BindException;
 import java.util.HashMap;
@@ -227,6 +228,11 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     }
   }
 
+  /**
+   * Startup development mode.
+   * 
+   * @param args command line arguments
+   */
   public static void main(String[] args) {
     /*
      * NOTE: main always exits with a call to System.exit to terminate any
@@ -302,10 +308,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   }
 
   @Override
-  protected boolean doStartup() {
-    if (!super.doStartup()) {
-      return false;
-    }
+  protected boolean doSlowStartup() {
     tempWorkDir = options.getWorkDir() == null;
     if (tempWorkDir) {
       try {
@@ -389,6 +392,19 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
   protected String getWebServerName() {
     return options.getServletContainerLauncher().getName();
+  }
+
+  @Override
+  protected void inferStartupUrls() {
+    // Look for any HTML files directly under war
+    File warDir = options.getWarDir();
+    for (File htmlFile : warDir.listFiles(new FilenameFilter() {
+          public boolean accept(File dir, String name) {
+            return name.matches(".*\\.html");
+          }
+        })) {
+      options.addStartupURL(htmlFile.getName());
+    }
   }
 
   @Override

@@ -674,6 +674,8 @@ abstract class DevModeBase implements DoneCallback {
    * Gets the base log level recommended by the UI for INFO-level messages. This
    * method can only be called once {@link #createUI()} has been called. Please
    * do not depend on this method, as it is subject to change.
+   *
+   * @return the log level to use for INFO-level messages 
    */
   public TreeLogger.Type getBaseLogLevelForUI() {
     if (baseLogLevelForUI == null) {
@@ -690,29 +692,6 @@ abstract class DevModeBase implements DoneCallback {
 
   public TreeLogger getTopLogger() {
     return topLogger;
-  }
-
-  /**
-   * Launch the arguments as Urls in separate windows.
-   * 
-   * @param logger TreeLogger instance to use
-   */
-  public void launchStartupUrls(final TreeLogger logger) {
-    ensureCodeServerListener();
-    String startupURL = "";
-    Map<String, URL> startupUrls = new HashMap<String, URL>();
-    for (String prenormalized : options.getStartupURLs()) {
-      startupURL = normalizeURL(prenormalized, getPort(), getHost());
-      logger.log(TreeLogger.TRACE, "Starting URL: " + startupURL, null);
-      try {
-        URL url = processUrl(startupURL);
-        startupUrls.put(prenormalized, url);
-      } catch (UnableToCompleteException e) {
-        logger.log(TreeLogger.ERROR, "Unable to process startup URL "
-            + startupURL, null);
-      }
-    }
-    ui.setStartupUrls(startupUrls);
   }
 
   /**
@@ -733,7 +712,7 @@ abstract class DevModeBase implements DoneCallback {
 
       if (startUp()) {
         // The web server is running now, so launch browsers for startup urls.
-        launchStartupUrls(getTopLogger());
+        launchStartupUrls();
       }
 
       blockUntilDone.acquire();
@@ -786,6 +765,18 @@ abstract class DevModeBase implements DoneCallback {
   }
 
   protected abstract void doShutDownServer();
+
+  /**
+   * Perform any slower startup tasks, such as loading modules.  This is
+   * separate from {@link #doStartup()} so that the UI can be updated as
+   * soon as possible and the web server can be started earlier.
+   * 
+   * @return false if startup failed
+   */
+  protected boolean doSlowStartup() {
+    // do nothing by default
+    return true;
+  }
 
   /**
    * Perform any startup tasks, including initializing the UI (if any) and the
@@ -845,6 +836,14 @@ abstract class DevModeBase implements DoneCallback {
 
   protected String getHost() {
     return "localhost";
+  }
+
+  /**
+   * Add any plausible HTML files which might be used as startup URLs. Found
+   * URLs should be added to {@code options.addStartupUrl(url)}.
+   */
+  protected void inferStartupUrls() {
+    // do nothing by default
   }
 
   /**
@@ -967,6 +966,16 @@ abstract class DevModeBase implements DoneCallback {
       getTopLogger().log(TreeLogger.TRACE,
           "Started web server on port " + resultPort);
     }
+    
+    if (options.getStartupURLs().isEmpty()) {
+      inferStartupUrls();
+    }
+
+    setStartupUrls(topLogger);
+    
+    if (!doSlowStartup()) {
+      return false;
+    }
 
     return true;
   }
@@ -1017,6 +1026,14 @@ abstract class DevModeBase implements DoneCallback {
   }
 
   /**
+   * Actually launch (or indicate to the user they can be launched) previously
+   * specified (via {@link #setStartupUrls(TreeLogger)}) URLs.
+   */
+  private void launchStartupUrls() {
+    ui.launchStartupUrls();
+  }
+
+  /**
    * Perform hosted mode relink when new artifacts are generated, without
    * overwriting newer or unmodified files in the output folder.
    * 
@@ -1034,5 +1051,31 @@ abstract class DevModeBase implements DoneCallback {
     ArtifactSet artifacts = linkerContext.invokeRelink(linkLogger,
         newlyGeneratedArtifacts);
     produceOutput(linkLogger, linkerContext, artifacts, module, true);
+  }
+
+  /**
+   * Set the set of startup URLs.  This is done before launching to allow the
+   * UI to better present the options to the user, but note that the UI should
+   * not attempt to launch the URLs until {@link #launchStartupUrls()}
+   * is called.
+   * 
+   * @param logger TreeLogger instance to use
+   */
+  private void setStartupUrls(final TreeLogger logger) {
+    ensureCodeServerListener();
+    Map<String, URL> startupUrls = new HashMap<String, URL>();
+    for (String prenormalized : options.getStartupURLs()) {
+      String startupURL = normalizeURL(prenormalized, getPort(), getHost());
+      logger.log(TreeLogger.DEBUG, "URL " + prenormalized + " normalized as "
+          + startupURL, null);
+      try {
+        URL url = processUrl(startupURL);
+        startupUrls.put(prenormalized, url);
+      } catch (UnableToCompleteException e) {
+        logger.log(TreeLogger.ERROR, "Unable to process startup URL "
+            + startupURL, null);
+      }
+    }
+    ui.setStartupUrls(startupUrls);
   }
 }

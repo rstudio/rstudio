@@ -209,6 +209,7 @@ public class GWTShell extends DevModeBase {
     return EmbeddedTomcatServer.getPort();
   }
 
+  @Override
   protected synchronized void produceOutput(TreeLogger logger,
       StandardLinkerContext linkerStack, ArtifactSet artifacts,
       ModuleDef module, boolean isRelink) throws UnableToCompleteException {

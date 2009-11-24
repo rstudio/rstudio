@@ -80,7 +80,7 @@ public abstract class DevModeUI {
   public TreeLogger getTopLogger() {
     return getConsoleLogger();
   }
-  
+
   /**
    * Create the web server portion of the UI if not already created, and
    * return its TreeLogger instance.
@@ -109,7 +109,15 @@ public abstract class DevModeUI {
   public void initialize(Type logLevel) {
     this.logLevel = logLevel;
   }
-  
+
+  /**
+   * Indicate to the user that URLs may be started, or actually launch browsers
+   * with the URLs specified in {@link #setStartupUrls(Map)}.
+   */
+  public void launchStartupUrls() {
+    // do nothing by default
+  }
+
   /**
    * Sets the callback for a given event type..
    * 
@@ -132,7 +140,7 @@ public abstract class DevModeUI {
   public void setStartupUrls(Map<String, URL> urls) {
     // do nothing by default
   }
-  
+
   /**
    * Call callback for a given event.
    * 
@@ -144,7 +152,7 @@ public abstract class DevModeUI {
       UiEvent.Type<?> eventType) {
     return (C) callbacks.get(eventType);
   }
-  
+
   /**
    * @return a console-based logger.
    */
@@ -155,14 +163,14 @@ public abstract class DevModeUI {
     }
     return consoleLogger;
   }
-  
+
   /**
    * @return the log level for all logging.
    */
   protected final Type getLogLevel() {
     return logLevel;
   }
-  
+
   /**
    * Returns true if a callback has been registered for an event.
    * 

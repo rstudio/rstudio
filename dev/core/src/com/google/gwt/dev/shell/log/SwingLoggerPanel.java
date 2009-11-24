@@ -17,6 +17,7 @@ package com.google.gwt.dev.shell.log;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.dev.BootStrapPlatform;
 import com.google.gwt.dev.shell.CloseButton;
 import com.google.gwt.dev.shell.CloseButton.Callback;
 import com.google.gwt.dev.shell.log.SwingTreeLogger.LogEvent;
@@ -101,14 +102,14 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
 
   private class FindBox extends JPanel {
 
+    private Popup findPopup;
+    private String lastSearch;
+
+    private ArrayList<DefaultMutableTreeNode> matches;
+
+    private int matchNumber;
     private JTextField searchField;
     private JLabel searchStatus;
-
-    private Popup findPopup;
-
-    private String lastSearch;
-    private int matchNumber;
-    private ArrayList<DefaultMutableTreeNode> matches;
 
     public FindBox() {
       super(new BorderLayout());
@@ -241,39 +242,49 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     }
   }
 
-  private static final Color DISCONNECTED_COLOR = Color.decode("0xFFDDDD");
+  /**
+   * The mask to use for Ctrl -- mapped to Command on Mac.
+   */
+  private static int ctrlKeyDown;
   
+
+  private static final Color DISCONNECTED_COLOR = Color.decode("0xFFDDDD");
+
+  static {
+    ctrlKeyDown = BootStrapPlatform.isMac() ?  InputEvent.ALT_DOWN_MASK
+        : InputEvent.CTRL_DOWN_MASK;
+  }
+
   // package protected for SwingTreeLogger to access
+  Type levelFilter;
+
+  String regexFilter;
 
   final JTree tree;
 
   DefaultTreeModel treeModel;
 
-  Type levelFilter;
-
-  String regexFilter;
-
-  private final JEditorPane details;
-
-  private final TreeLogger logger;
-
-  private DefaultMutableTreeNode root;
-
-  private JTextField regexField;
-
-  private JComboBox levelComboBox;
-
-  private JPanel topPanel;
-
-  private FindBox findBox;
-
-  private JScrollPane treeView;
+  private CloseHandler closeHandler;
 
   private CloseButton closeLogger;
 
-  private CloseHandler closeHandler;
-  
+  private final JEditorPane details;
+
   private boolean disconnected = false;
+
+  private FindBox findBox;
+
+  private JComboBox levelComboBox;
+
+  private final TreeLogger logger;
+
+  private JTextField regexField;
+  
+  private DefaultMutableTreeNode root;
+
+  private JPanel topPanel;
+  
+  private JScrollPane treeView;
 
   /**
    * Create a Swing-based logger panel, with a tree section and a detail
@@ -407,15 +418,14 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
       }
     }
     logger = bestLogger;
-    KeyStroke key = KeyStroke.getKeyStroke(KeyEvent.VK_F,
-        InputEvent.CTRL_DOWN_MASK);
+    KeyStroke key = getCommandKeyStroke(KeyEvent.VK_F);
     getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(key, "find");
     getActionMap().put("find", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         showFindBox();
       }
     });
-    key = KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK);
+    key = getCommandKeyStroke(KeyEvent.VK_C);
     tree.getInputMap().put(key, "copy");
     tree.getActionMap().put("copy", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -423,14 +433,14 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
       }
     });
     findBox = new FindBox();
-    key = KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK);
+    key = getCommandKeyStroke(KeyEvent.VK_N);
     tree.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(key, "findnext");
     tree.getActionMap().put("findnext", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         findBox.nextMatch();
       }
     });
-    key = KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK);
+    key = getCommandKeyStroke(KeyEvent.VK_P);
     tree.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(key, "findprev");
     tree.getActionMap().put("findprev", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -566,7 +576,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
         JOptionPane.WARNING_MESSAGE);
     return response != JOptionPane.YES_OPTION;
   }
-  
+
   protected ArrayList<DefaultMutableTreeNode> doFind(String search) {
     @SuppressWarnings("unchecked")
     Enumeration<DefaultMutableTreeNode> children = root.preorderEnumeration();
@@ -630,6 +640,17 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     treeLogTraverse(text, node, 0);
     StringSelection selection = new StringSelection(text.toString());
     clipboard.setContents(selection, selection);
+  }
+
+  /**
+   * Returns a keystroke which adds the appropriate modifier for a command key:
+   * Command on mac, Ctrl everywhere else.
+   * 
+   * @param key
+   * @return KeyStroke of the Ctrl/Command-key
+   */
+  private KeyStroke getCommandKeyStroke(int key) {
+    return KeyStroke.getKeyStroke(key, ctrlKeyDown);
   }
 
   private String htmlUnescape(String str) {

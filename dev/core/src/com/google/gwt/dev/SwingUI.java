@@ -16,7 +16,6 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.DevModeBase.HostedModeBaseOptions;
 import com.google.gwt.dev.WebServerPanel.RestartAction;
@@ -36,7 +35,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -267,31 +265,13 @@ public class SwingUI extends DevModeUI {
   }
 
   @Override
+  public void launchStartupUrls() {
+    mainWnd.setLaunchable();
+  }
+  
+  @Override
   public void setStartupUrls(Map<String, URL> urls) {
-    // TODO(jat): provide UI for selecting URLs and launching
-    ArrayList<String> keys = new ArrayList<String>(urls.keySet());
-    Collections.sort(keys);
-    for (String url : keys) {
-      final URL helpInfoUrl = urls.get(url);
-      getTopLogger().log(TreeLogger.INFO, "Waiting for browser connection to "
-          + helpInfoUrl.toExternalForm(), null,
-          new HelpInfo() {
-            @Override
-            public String getAnchorText() {
-              return "Launch default browser";
-            }
-
-            @Override
-            public String getPrefix() {
-              return "";
-            }
-
-            @Override
-            public URL getURL() {
-              return helpInfoUrl;
-            }
-          });
-    }
+    mainWnd.setStartupUrls(urls);
   }
 
   protected int getNextSessionCounter(File logdir) {
