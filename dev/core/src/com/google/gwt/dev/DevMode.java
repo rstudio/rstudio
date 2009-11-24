@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * The main executable class for the hosted mode shell. NOTE: the public API for
@@ -229,6 +230,12 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   }
 
   /**
+   * The pattern for files usable as startup URLs.
+   */
+  private static final Pattern STARTUP_FILE_PATTERN = Pattern.compile(
+      ".*\\.(html|jsp)", Pattern.CASE_INSENSITIVE);
+
+  /**
    * Startup development mode.
    * 
    * @param args command line arguments
@@ -396,11 +403,11 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
   @Override
   protected void inferStartupUrls() {
-    // Look for any HTML files directly under war
+    // Look for launchable files directly under war
     File warDir = options.getWarDir();
     for (File htmlFile : warDir.listFiles(new FilenameFilter() {
           public boolean accept(File dir, String name) {
-            return name.matches(".*\\.html");
+            return STARTUP_FILE_PATTERN.matcher(name).matches();
           }
         })) {
       options.addStartupURL(htmlFile.getName());

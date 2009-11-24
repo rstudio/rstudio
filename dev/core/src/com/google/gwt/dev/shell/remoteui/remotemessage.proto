@@ -134,8 +134,7 @@ message Message {
       
       message Initialize {
         optional string clientId = 1;
-        optional string devModeQueryParam = 2;
-        optional sint32 webServerPort = 3;         
+        repeated string startupURLs = 2;       
       }
       
       required RequestType requestType = 1;

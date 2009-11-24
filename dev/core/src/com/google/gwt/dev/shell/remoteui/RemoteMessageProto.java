@@ -3929,19 +3929,17 @@ public final class RemoteMessageProto {
           public boolean hasClientId() { return hasClientId; }
           public java.lang.String getClientId() { return clientId_; }
           
-          // optional string devModeQueryParam = 2;
-          public static final int DEVMODEQUERYPARAM_FIELD_NUMBER = 2;
-          private boolean hasDevModeQueryParam;
-          private java.lang.String devModeQueryParam_ = "";
-          public boolean hasDevModeQueryParam() { return hasDevModeQueryParam; }
-          public java.lang.String getDevModeQueryParam() { return devModeQueryParam_; }
-          
-          // optional sint32 webServerPort = 3;
-          public static final int WEBSERVERPORT_FIELD_NUMBER = 3;
-          private boolean hasWebServerPort;
-          private int webServerPort_ = 0;
-          public boolean hasWebServerPort() { return hasWebServerPort; }
-          public int getWebServerPort() { return webServerPort_; }
+          // repeated string startupURLs = 2;
+          public static final int STARTUPURLS_FIELD_NUMBER = 2;
+          private java.util.List<java.lang.String> startupURLs_ =
+            java.util.Collections.emptyList();
+          public java.util.List<java.lang.String> getStartupURLsList() {
+            return startupURLs_;
+          }
+          public int getStartupURLsCount() { return startupURLs_.size(); }
+          public java.lang.String getStartupURLs(int index) {
+            return startupURLs_.get(index);
+          }
           
           public final boolean isInitialized() {
             return true;
@@ -3952,11 +3950,8 @@ public final class RemoteMessageProto {
             if (hasClientId()) {
               output.writeString(1, getClientId());
             }
-            if (hasDevModeQueryParam()) {
-              output.writeString(2, getDevModeQueryParam());
-            }
-            if (hasWebServerPort()) {
-              output.writeSInt32(3, getWebServerPort());
+            for (java.lang.String element : getStartupURLsList()) {
+              output.writeString(2, element);
             }
             getUnknownFields().writeTo(output);
           }
@@ -3971,13 +3966,14 @@ public final class RemoteMessageProto {
               size += com.google.gwt.dev.protobuf.CodedOutputStream
                 .computeStringSize(1, getClientId());
             }
-            if (hasDevModeQueryParam()) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
-                .computeStringSize(2, getDevModeQueryParam());
-            }
-            if (hasWebServerPort()) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
-                .computeSInt32Size(3, getWebServerPort());
+            {
+              int dataSize = 0;
+              for (java.lang.String element : getStartupURLsList()) {
+                dataSize += com.google.gwt.dev.protobuf.CodedOutputStream
+                  .computeStringSizeNoTag(element);
+              }
+              size += dataSize;
+              size += 1 * getStartupURLsList().size();
             }
             size += getUnknownFields().getSerializedSize();
             memoizedSerializedSize = size;
@@ -4112,6 +4108,10 @@ public final class RemoteMessageProto {
                 throw new IllegalStateException(
                   "build() has already been called on this Builder.");
               }
+              if (result.startupURLs_ != java.util.Collections.EMPTY_LIST) {
+                result.startupURLs_ =
+                  java.util.Collections.unmodifiableList(result.startupURLs_);
+              }
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize returnMe = result;
               result = null;
               return returnMe;
@@ -4131,11 +4131,11 @@ public final class RemoteMessageProto {
               if (other.hasClientId()) {
                 setClientId(other.getClientId());
               }
-              if (other.hasDevModeQueryParam()) {
-                setDevModeQueryParam(other.getDevModeQueryParam());
-              }
-              if (other.hasWebServerPort()) {
-                setWebServerPort(other.getWebServerPort());
+              if (!other.startupURLs_.isEmpty()) {
+                if (result.startupURLs_.isEmpty()) {
+                  result.startupURLs_ = new java.util.ArrayList<java.lang.String>();
+                }
+                result.startupURLs_.addAll(other.startupURLs_);
               }
               this.mergeUnknownFields(other.getUnknownFields());
               return this;
@@ -4167,11 +4167,7 @@ public final class RemoteMessageProto {
                     break;
                   }
                   case 18: {
-                    setDevModeQueryParam(input.readString());
-                    break;
-                  }
-                  case 24: {
-                    setWebServerPort(input.readSInt32());
+                    addStartupURLs(input.readString());
                     break;
                   }
                 }
@@ -4200,42 +4196,43 @@ public final class RemoteMessageProto {
               return this;
             }
             
-            // optional string devModeQueryParam = 2;
-            public boolean hasDevModeQueryParam() {
-              return result.hasDevModeQueryParam();
+            // repeated string startupURLs = 2;
+            public java.util.List<java.lang.String> getStartupURLsList() {
+              return java.util.Collections.unmodifiableList(result.startupURLs_);
             }
-            public java.lang.String getDevModeQueryParam() {
-              return result.getDevModeQueryParam();
+            public int getStartupURLsCount() {
+              return result.getStartupURLsCount();
             }
-            public Builder setDevModeQueryParam(java.lang.String value) {
+            public java.lang.String getStartupURLs(int index) {
+              return result.getStartupURLs(index);
+            }
+            public Builder setStartupURLs(int index, java.lang.String value) {
               if (value == null) {
     throw new NullPointerException();
   }
-  result.hasDevModeQueryParam = true;
-              result.devModeQueryParam_ = value;
+  result.startupURLs_.set(index, value);
               return this;
             }
-            public Builder clearDevModeQueryParam() {
-              result.hasDevModeQueryParam = false;
-              result.devModeQueryParam_ = getDefaultInstance().getDevModeQueryParam();
+            public Builder addStartupURLs(java.lang.String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  if (result.startupURLs_.isEmpty()) {
+                result.startupURLs_ = new java.util.ArrayList<java.lang.String>();
+              }
+              result.startupURLs_.add(value);
               return this;
             }
-            
-            // optional sint32 webServerPort = 3;
-            public boolean hasWebServerPort() {
-              return result.hasWebServerPort();
-            }
-            public int getWebServerPort() {
-              return result.getWebServerPort();
-            }
-            public Builder setWebServerPort(int value) {
-              result.hasWebServerPort = true;
-              result.webServerPort_ = value;
+            public Builder addAllStartupURLs(
+                java.lang.Iterable<? extends java.lang.String> values) {
+              if (result.startupURLs_.isEmpty()) {
+                result.startupURLs_ = new java.util.ArrayList<java.lang.String>();
+              }
+              super.addAll(values, result.startupURLs_);
               return this;
             }
-            public Builder clearWebServerPort() {
-              result.hasWebServerPort = false;
-              result.webServerPort_ = 0;
+            public Builder clearStartupURLs() {
+              result.startupURLs_ = java.util.Collections.emptyList();
               return this;
             }
           }
@@ -10519,7 +10516,7 @@ public final class RemoteMessageProto {
     java.lang.String[] descriptorData = {
       "\n>core/src/com/google/gwt/dev/shell/remo" +
       "teui/remotemessage.proto\022!com.google.gwt" +
-      ".dev.shell.remoteui\"\326\'\n\007Message\022\027\n\017proto" +
+      ".dev.shell.remoteui\"\271\'\n\007Message\022\027\n\017proto" +
       "colVersion\030\001 \001(\t\022K\n\013messageType\030\002 \002(\01626." +
       "com.google.gwt.dev.shell.remoteui.Messag" +
       "e.MessageType\022\021\n\tmessageId\030\003 \002(\r\022C\n\007requ" +
@@ -10528,13 +10525,13 @@ public final class RemoteMessageProto {
       "3.com.google.gwt.dev.shell.remoteui.Mess" +
       "age.Response\022C\n\007failure\030\006 \001(\01322.com.goog",
       "le.gwt.dev.shell.remoteui.Message.Failur" +
-      "e\032\344\026\n\007Request\022S\n\013serviceType\030\001 \002(\0162>.com" +
+      "e\032\307\026\n\007Request\022S\n\013serviceType\030\001 \002(\0162>.com" +
       ".google.gwt.dev.shell.remoteui.Message.R" +
       "equest.ServiceType\022W\n\rviewerRequest\030\002 \001(" +
       "\0132@.com.google.gwt.dev.shell.remoteui.Me" +
       "ssage.Request.ViewerRequest\022Y\n\016devModeRe" +
       "quest\030\003 \001(\0132A.com.google.gwt.dev.shell.r" +
-      "emoteui.Message.Request.DevModeRequest\032\345" +
+      "emoteui.Message.Request.DevModeRequest\032\310" +
       "\020\n\rViewerRequest\022a\n\013requestType\030\001 \002(\0162L." +
       "com.google.gwt.dev.shell.remoteui.Messag",
       "e.Request.ViewerRequest.RequestType\022o\n\022c" +
@@ -10583,71 +10580,70 @@ public final class RemoteMessageProto {
       "exInLog\030\002 \002(\r\022Y\n\007logData\030\003 \002(\0132H.com.goo" +
       "gle.gwt.dev.shell.remoteui.Message.Reque" +
       "st.ViewerRequest.LogData\032\"\n\rDisconnectLo" +
-      "g\022\021\n\tlogHandle\030\001 \002(\r\032P\n\nInitialize\022\020\n\010cl" +
-      "ientId\030\001 \001(\t\022\031\n\021devModeQueryParam\030\002 \001(\t\022" +
-      "\025\n\rwebServerPort\030\003 \001(\021\"~\n\013RequestType\022\027\n" +
-      "\023CAPABILITY_EXCHANGE\020\000\022\013\n\007ADD_LOG\020\001\022\022\n\016A",
-      "DD_LOG_BRANCH\020\002\022\021\n\rADD_LOG_ENTRY\020\003\022\022\n\016DI" +
-      "SCONNECT_LOG\020\004\022\016\n\nINITIALIZE\020\005\032\276\003\n\016DevMo" +
-      "deRequest\022b\n\013requestType\030\001 \002(\0162M.com.goo" +
-      "gle.gwt.dev.shell.remoteui.Message.Reque" +
-      "st.DevModeRequest.RequestType\022p\n\022capabil" +
-      "ityExchange\030\002 \001(\0132T.com.google.gwt.dev.s" +
-      "hell.remoteui.Message.Request.DevModeReq" +
-      "uest.CapabilityExchange\022l\n\020restartWebSer" +
-      "ver\030\003 \001(\0132R.com.google.gwt.dev.shell.rem" +
-      "oteui.Message.Request.DevModeRequest.Res",
-      "tartWebServer\032\024\n\022CapabilityExchange\032\022\n\020R" +
-      "estartWebServer\">\n\013RequestType\022\027\n\023CAPABI" +
-      "LITY_EXCHANGE\020\000\022\026\n\022RESTART_WEB_SERVER\020\001\"" +
-      "\'\n\013ServiceType\022\n\n\006VIEWER\020\000\022\014\n\010DEV_MODE\020\001" +
-      "\032\262\r\n\010Response\022Z\n\016viewerResponse\030\001 \001(\0132B." +
-      "com.google.gwt.dev.shell.remoteui.Messag" +
-      "e.Response.ViewerResponse\022\\\n\017devModeResp" +
-      "onse\030\002 \001(\0132C.com.google.gwt.dev.shell.re" +
-      "moteui.Message.Response.DevModeResponse\032" +
-      "\265\006\n\016ViewerResponse\022e\n\014responseType\030\001 \002(\016",
+      "g\022\021\n\tlogHandle\030\001 \002(\r\0323\n\nInitialize\022\020\n\010cl" +
+      "ientId\030\001 \001(\t\022\023\n\013startupURLs\030\002 \003(\t\"~\n\013Req" +
+      "uestType\022\027\n\023CAPABILITY_EXCHANGE\020\000\022\013\n\007ADD" +
+      "_LOG\020\001\022\022\n\016ADD_LOG_BRANCH\020\002\022\021\n\rADD_LOG_EN",
+      "TRY\020\003\022\022\n\016DISCONNECT_LOG\020\004\022\016\n\nINITIALIZE\020" +
+      "\005\032\276\003\n\016DevModeRequest\022b\n\013requestType\030\001 \002(" +
+      "\0162M.com.google.gwt.dev.shell.remoteui.Me" +
+      "ssage.Request.DevModeRequest.RequestType" +
+      "\022p\n\022capabilityExchange\030\002 \001(\0132T.com.googl" +
+      "e.gwt.dev.shell.remoteui.Message.Request" +
+      ".DevModeRequest.CapabilityExchange\022l\n\020re" +
+      "startWebServer\030\003 \001(\0132R.com.google.gwt.de" +
+      "v.shell.remoteui.Message.Request.DevMode" +
+      "Request.RestartWebServer\032\024\n\022CapabilityEx",
+      "change\032\022\n\020RestartWebServer\">\n\013RequestTyp" +
+      "e\022\027\n\023CAPABILITY_EXCHANGE\020\000\022\026\n\022RESTART_WE" +
+      "B_SERVER\020\001\"\'\n\013ServiceType\022\n\n\006VIEWER\020\000\022\014\n" +
+      "\010DEV_MODE\020\001\032\262\r\n\010Response\022Z\n\016viewerRespon" +
+      "se\030\001 \001(\0132B.com.google.gwt.dev.shell.remo" +
+      "teui.Message.Response.ViewerResponse\022\\\n\017" +
+      "devModeResponse\030\002 \001(\0132C.com.google.gwt.d" +
+      "ev.shell.remoteui.Message.Response.DevMo" +
+      "deResponse\032\265\006\n\016ViewerResponse\022e\n\014respons" +
+      "eType\030\001 \002(\0162O.com.google.gwt.dev.shell.r",
+      "emoteui.Message.Response.ViewerResponse." +
+      "ResponseType\022q\n\022capabilityExchange\030\002 \001(\013" +
+      "2U.com.google.gwt.dev.shell.remoteui.Mes" +
+      "sage.Response.ViewerResponse.CapabilityE" +
+      "xchange\022Y\n\006addLog\030\003 \001(\0132I.com.google.gwt" +
+      ".dev.shell.remoteui.Message.Response.Vie" +
+      "werResponse.AddLog\022e\n\014addLogBranch\030\004 \001(\013" +
       "2O.com.google.gwt.dev.shell.remoteui.Mes" +
-      "sage.Response.ViewerResponse.ResponseTyp" +
-      "e\022q\n\022capabilityExchange\030\002 \001(\0132U.com.goog" +
-      "le.gwt.dev.shell.remoteui.Message.Respon" +
-      "se.ViewerResponse.CapabilityExchange\022Y\n\006" +
-      "addLog\030\003 \001(\0132I.com.google.gwt.dev.shell." +
-      "remoteui.Message.Response.ViewerResponse" +
-      ".AddLog\022e\n\014addLogBranch\030\004 \001(\0132O.com.goog" +
-      "le.gwt.dev.shell.remoteui.Message.Respon" +
-      "se.ViewerResponse.AddLogBranch\032\374\001\n\022Capab",
-      "ilityExchange\022v\n\014capabilities\030\002 \003(\0132`.co" +
-      "m.google.gwt.dev.shell.remoteui.Message." +
-      "Response.ViewerResponse.CapabilityExchan" +
-      "ge.Capability\032n\n\nCapability\022`\n\ncapabilit" +
-      "y\030\001 \002(\0162L.com.google.gwt.dev.shell.remot" +
-      "eui.Message.Request.ViewerRequest.Reques" +
-      "tType\032\033\n\006AddLog\022\021\n\tlogHandle\030\001 \002(\r\032!\n\014Ad" +
-      "dLogBranch\022\021\n\tlogHandle\030\001 \002(\r\"H\n\014Respons" +
-      "eType\022\027\n\023CAPABILITY_EXCHANGE\020\000\022\013\n\007ADD_LO" +
-      "G\020\001\022\022\n\016ADD_LOG_BRANCH\020\002\032\263\005\n\017DevModeRespo",
-      "nse\022f\n\014responseType\030\001 \002(\0162P.com.google.g" +
-      "wt.dev.shell.remoteui.Message.Response.D" +
-      "evModeResponse.ResponseType\022r\n\022capabilit" +
-      "yExchange\030\002 \001(\0132V.com.google.gwt.dev.she" +
-      "ll.remoteui.Message.Response.DevModeResp" +
-      "onse.CapabilityExchange\022n\n\020restartWebSer" +
-      "ver\030\003 \001(\0132T.com.google.gwt.dev.shell.rem" +
-      "oteui.Message.Response.DevModeResponse.R" +
-      "estartWebServer\032\376\001\n\022CapabilityExchange\022w" +
-      "\n\014capabilities\030\002 \003(\0132a.com.google.gwt.de",
+      "sage.Response.ViewerResponse.AddLogBranc" +
+      "h\032\374\001\n\022CapabilityExchange\022v\n\014capabilities",
+      "\030\002 \003(\0132`.com.google.gwt.dev.shell.remote" +
+      "ui.Message.Response.ViewerResponse.Capab" +
+      "ilityExchange.Capability\032n\n\nCapability\022`" +
+      "\n\ncapability\030\001 \002(\0162L.com.google.gwt.dev." +
+      "shell.remoteui.Message.Request.ViewerReq" +
+      "uest.RequestType\032\033\n\006AddLog\022\021\n\tlogHandle\030" +
+      "\001 \002(\r\032!\n\014AddLogBranch\022\021\n\tlogHandle\030\001 \002(\r" +
+      "\"H\n\014ResponseType\022\027\n\023CAPABILITY_EXCHANGE\020" +
+      "\000\022\013\n\007ADD_LOG\020\001\022\022\n\016ADD_LOG_BRANCH\020\002\032\263\005\n\017D" +
+      "evModeResponse\022f\n\014responseType\030\001 \002(\0162P.c",
+      "om.google.gwt.dev.shell.remoteui.Message" +
+      ".Response.DevModeResponse.ResponseType\022r" +
+      "\n\022capabilityExchange\030\002 \001(\0132V.com.google." +
+      "gwt.dev.shell.remoteui.Message.Response." +
+      "DevModeResponse.CapabilityExchange\022n\n\020re" +
+      "startWebServer\030\003 \001(\0132T.com.google.gwt.de" +
       "v.shell.remoteui.Message.Response.DevMod" +
-      "eResponse.CapabilityExchange.Capability\032" +
-      "o\n\nCapability\022a\n\ncapability\030\001 \002(\0162M.com." +
-      "google.gwt.dev.shell.remoteui.Message.Re" +
-      "quest.DevModeRequest.RequestType\032\022\n\020Rest" +
-      "artWebServer\"?\n\014ResponseType\022\027\n\023CAPABILI" +
-      "TY_EXCHANGE\020\000\022\026\n\022RESTART_WEB_SERVER\020\001\032.\n" +
-      "\007Failure\022\017\n\007message\030\001 \001(\t\022\022\n\nstackTrace\030" +
-      "\002 \001(\t\"5\n\013MessageType\022\013\n\007REQUEST\020\000\022\014\n\010RES" +
-      "PONSE\020\001\022\013\n\007FAILURE\020\002B\024B\022RemoteMessagePro",
-      "to"
+      "eResponse.RestartWebServer\032\376\001\n\022Capabilit" +
+      "yExchange\022w\n\014capabilities\030\002 \003(\0132a.com.go" +
+      "ogle.gwt.dev.shell.remoteui.Message.Resp",
+      "onse.DevModeResponse.CapabilityExchange." +
+      "Capability\032o\n\nCapability\022a\n\ncapability\030\001" +
+      " \002(\0162M.com.google.gwt.dev.shell.remoteui" +
+      ".Message.Request.DevModeRequest.RequestT" +
+      "ype\032\022\n\020RestartWebServer\"?\n\014ResponseType\022" +
+      "\027\n\023CAPABILITY_EXCHANGE\020\000\022\026\n\022RESTART_WEB_" +
+      "SERVER\020\001\032.\n\007Failure\022\017\n\007message\030\001 \001(\t\022\022\n\n" +
+      "stackTrace\030\002 \001(\t\"5\n\013MessageType\022\013\n\007REQUE" +
+      "ST\020\000\022\014\n\010RESPONSE\020\001\022\013\n\007FAILURE\020\002B\024B\022Remot" +
+      "eMessageProto"
     };
     com.google.gwt.dev.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.gwt.dev.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -10763,7 +10759,7 @@ public final class RemoteMessageProto {
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_Initialize_fieldAccessorTable = new
             com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_Initialize_descriptor,
-              new java.lang.String[] { "ClientId", "DevModeQueryParam", "WebServerPort", },
+              new java.lang.String[] { "ClientId", "StartupURLs", },
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize.class,
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize.Builder.class);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_descriptor =

@@ -225,12 +225,10 @@ public class ViewerServiceClient {
     waitForResponse(responseFuture);
   }
 
-  public void initialize(String clientId, String devModeQueryParam,
-      int webServerPort) {
+  public void initialize(String clientId, List<String> startupURLs) {
     ViewerRequest.Initialize.Builder initializationBuilder = ViewerRequest.Initialize.newBuilder();
     initializationBuilder.setClientId(clientId);
-    initializationBuilder.setDevModeQueryParam(devModeQueryParam);
-    initializationBuilder.setWebServerPort(webServerPort);
+    initializationBuilder.addAllStartupURLs(startupURLs);
 
     ViewerRequest.Builder viewerRequestBuilder = ViewerRequest.newBuilder();
     viewerRequestBuilder.setRequestType(ViewerRequest.RequestType.INITIALIZE);

@@ -18,7 +18,6 @@ package com.google.gwt.dev.shell.remoteui;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.ModuleHandle;
-import com.google.gwt.dev.shell.BrowserListener;
 import com.google.gwt.dev.ui.DevModeUI;
 import com.google.gwt.dev.ui.DoneCallback;
 import com.google.gwt.dev.ui.DoneEvent;
@@ -27,9 +26,11 @@ import com.google.gwt.dev.ui.RestartServerEvent;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * An implementation of a UI for the development mode server that sends UI
@@ -40,7 +41,6 @@ import java.util.List;
 public class RemoteUI extends DevModeUI implements
     MessageTransport.TerminationCallback {
 
-  private final int browserChannelPort;
   private final String clientId;
   private final DevModeServiceRequestProcessor devModeRequestProcessor;
   private final List<ModuleHandle> modules = new ArrayList<ModuleHandle>();
@@ -48,15 +48,10 @@ public class RemoteUI extends DevModeUI implements
   private final Socket transportSocket;
   private final MessageTransport transport;
   private ViewerServiceClient viewerServiceClient = null;
-  private final int webServerPort;
 
-  public RemoteUI(String host, int port, String clientId, int webServerPort,
-      int browserChannelPort) {
+  public RemoteUI(String host, int port, String clientId) {
     try {
       this.clientId = clientId;
-      this.browserChannelPort = browserChannelPort;
-      this.webServerPort = webServerPort;
-
       transportSocket = new Socket(host, port);
       transportSocket.setKeepAlive(true);
       transportSocket.setTcpNoDelay(true);
@@ -109,7 +104,7 @@ public class RemoteUI extends DevModeUI implements
     synchronized (modulesLock) {
       modules.add(handle);
     }
-    
+
     if (url != null) {
       moduleLogger.log(TreeLogger.SPAM, "Top URL: " + url);
     }
@@ -132,12 +127,11 @@ public class RemoteUI extends DevModeUI implements
   }
 
   @Override
-  public void initialize(Type logLevel) {
-    super.initialize(logLevel);
-    viewerServiceClient = new ViewerServiceClient(transport);
-    String devModeQueryParam = BrowserListener.getDevModeURLParams(BrowserListener.computeEndpointIdentifier(browserChannelPort));
-    viewerServiceClient.initialize(clientId, devModeQueryParam, webServerPort);
-    viewerServiceClient.checkCapabilities();
+  public void launchStartupUrls() {
+    /*
+     * TODO: Send a message to the server indicating that the URLs are
+     * launchable.
+     */
   }
 
   public void onTermination(Exception e) {
@@ -169,5 +163,18 @@ public class RemoteUI extends DevModeUI implements
     }
 
     return false;
+  }
+
+  @Override
+  public void setStartupUrls(Map<String, URL> urls) {
+    viewerServiceClient = new ViewerServiceClient(transport);
+    List<String> stringURLs = new ArrayList<String>();
+    for (URL url : urls.values()) {
+      stringURLs.add(url.toExternalForm());
+    }
+
+    viewerServiceClient.initialize(clientId, stringURLs);
+    viewerServiceClient.checkCapabilities();
+    super.setStartupUrls(urls);
   }
 }

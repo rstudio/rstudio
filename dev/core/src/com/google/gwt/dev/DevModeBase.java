@@ -47,9 +47,7 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.ServerSocket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -170,7 +168,7 @@ abstract class DevModeBase implements DoneCallback {
     @Override
     public boolean setString(String value) {
       if (value.equals("auto")) {
-        options.setCodeServerPort(getFreeSocketPort());
+        options.setCodeServerPort(0);
       } else {
         try {
           options.setCodeServerPort(Integer.parseInt(value));
@@ -276,7 +274,7 @@ abstract class DevModeBase implements DoneCallback {
     @Override
     public boolean setString(String value) {
       if (value.equals("auto")) {
-        options.setPort(getFreeSocketPort());
+        options.setPort(0);
       } else {
         try {
           options.setPort(Integer.parseInt(value));
@@ -594,27 +592,6 @@ abstract class DevModeBase implements DoneCallback {
     } else {
       return "http://" + host + "/" + unknownUrlText;
     }
-  }
-
-  /**
-   * Returns a free port. The returned port should not be returned again unless
-   * the ephemeral port range is exhausted.
-   */
-  protected static int getFreeSocketPort() {
-    ServerSocket socket = null;
-    try {
-      socket = new ServerSocket(0);
-      return socket.getLocalPort();
-    } catch (IOException e) {
-    } finally {
-      if (socket != null) {
-        try {
-          socket.close();
-        } catch (IOException e) {
-        }
-      }
-    }
-    return -1;
   }
 
   /**
@@ -1003,8 +980,7 @@ abstract class DevModeBase implements DoneCallback {
       if (options.useRemoteUI()) {
         try {
           newUI = new RemoteUI(options.getRemoteUIHost(),
-              options.getRemoteUIHostPort(), options.getClientId(),
-              options.getPort(), options.getCodeServerPort());
+              options.getRemoteUIHostPort(), options.getClientId());
           baseLogLevelForUI = TreeLogger.Type.TRACE;
         } catch (Throwable t) {
           System.err.println("Could not connect to remote UI listening at "
