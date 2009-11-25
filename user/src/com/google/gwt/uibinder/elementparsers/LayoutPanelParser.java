@@ -21,7 +21,7 @@ import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
 /**
- * Parses {@link LayoutPanel} widgets.
+ * Parses {@link com.google.gwt.user.client.ui.LayoutPanel LayoutPanel} widgets.
  */
 public class LayoutPanelParser implements ElementParser {
 
@@ -46,9 +46,9 @@ public class LayoutPanelParser implements ElementParser {
       writer.addStatement("%1$s.add(%2$s);", fieldName, childFieldName);
 
       // Parse the horizontal layout constraints.
-      String left = maybeConsumeLengthAttribute(layerElem, "left");
-      String right = maybeConsumeLengthAttribute(layerElem, "right");
-      String width = maybeConsumeLengthAttribute(layerElem, "width");
+      String left = layerElem.consumeLengthAttribute("left");
+      String right = layerElem.consumeLengthAttribute("right");
+      String width = layerElem.consumeLengthAttribute("width");
 
       if (left != null) {
         if (right != null) {
@@ -73,9 +73,9 @@ public class LayoutPanelParser implements ElementParser {
       }
 
       // Parse the vertical layout constraints.
-      String top = maybeConsumeLengthAttribute(layerElem, "top");
-      String bottom = maybeConsumeLengthAttribute(layerElem, "bottom");
-      String height = maybeConsumeLengthAttribute(layerElem, "height");
+      String top = layerElem.consumeLengthAttribute("top");
+      String bottom = layerElem.consumeLengthAttribute("bottom");
+      String height = layerElem.consumeLengthAttribute("height");
 
       if (top != null) {
         if (bottom != null) {
@@ -110,10 +110,5 @@ public class LayoutPanelParser implements ElementParser {
   private boolean isElementType(XMLElement parent, XMLElement child, String type) {
     return parent.getNamespaceUri().equals(child.getNamespaceUri())
         && type.equals(child.getLocalName());
-  }
-
-  private String maybeConsumeLengthAttribute(XMLElement elem, String name)
-      throws UnableToCompleteException {
-    return elem.hasAttribute(name) ? elem.consumeLengthAttribute(name) : null;
   }
 }

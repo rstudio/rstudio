@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasHTML;
 import com.google.gwt.user.client.ui.Image;
@@ -143,14 +144,15 @@ public class WidgetBasedUi extends Composite {
   @UiField FooLabel objectBooleanIntoPrimitive;
   @UiField FooLabel allObjectBoolean;
   @UiField FooLabel allPrimitiveBoolean;
-  @UiField(provided = true)
+  @UiField(provided = true) @SuppressWarnings("uibinder")
   FakeBundle2 legacyValuesForBeans = new FakeBundle2();
-  @UiField(provided = true)
+  @UiField(provided = true) @SuppressWarnings("uibinder")
   FakeBundle3 legacyValuesForHtml = new FakeBundle3();
   @UiField Label bundledLabelLegacy;
   @UiField DivElement bundledDivLegacy;
   @UiField ToggleButton toggle;
-  
+  @UiField HTML styleLess;
+
   public WidgetBasedUi() {
     external.style().ensureInjected();
     initWidget(binder.createAndBindUi(this));

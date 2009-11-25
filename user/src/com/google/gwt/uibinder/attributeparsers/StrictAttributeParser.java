@@ -82,11 +82,13 @@ class StrictAttributeParser implements AttributeParser {
    * UnableToCompleteException is thrown.
    */
   public String parse(String value) throws UnableToCompleteException {
-
+    if ("".equals(value.trim())) {
+      logger.die("Cannot use empty value as type %s", type.getSimpleSourceName());
+    }
     try {
       return converter.convert(value, new FieldReferenceDelegate(type));
     } catch (IllegalFieldReferenceException e) {
-      logger.die("Cannot parse value: \"%s\"", value);
+      logger.die("Cannot parse value: \"%s\" as type %s", value, type.getSimpleSourceName());
       return null; // Unreachable
     }
   }

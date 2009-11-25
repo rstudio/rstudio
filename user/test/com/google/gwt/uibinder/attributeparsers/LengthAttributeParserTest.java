@@ -49,7 +49,7 @@ public class LengthAttributeParserTest extends TestCase {
     DoubleAttributeParser doubleParser = new DoubleAttributeParser(converter,
         types.parse("double"), logger);
 
-    JEnumType enumType = (JEnumType) types.findType(
+    JEnumType enumType = types.findType(
         Unit.class.getCanonicalName()).isEnum();
     EnumAttributeParser enumParser = new EnumAttributeParser(converter,
         enumType, logger);

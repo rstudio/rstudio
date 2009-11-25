@@ -25,13 +25,25 @@ import junit.framework.TestCase;
 public class StringAttributeParserTest extends TestCase {
   FieldReferenceConverter converter = new FieldReferenceConverter(null);
 
-  public void testSimple() {
+  public void testSimpleParse() {
+    String before = "snot";
+    String expected = "\"snot\"";
+    assertEquals(expected, converter.convert(before, new FieldReferenceDelegate(null)));
+  }
+  
+  public void testParseEmpty() {
+    String before = "";
+    String expected = "\"\"";
+    assertEquals(expected, converter.convert(before, new FieldReferenceDelegate(null)));
+  }
+  
+  public void testSimpleFieldRef() {
     String before = "{able.baker.charlie.prawns}";
     String expected = "\"\" + able.baker().charlie().prawns() + \"\"";
     assertEquals(expected, converter.convert(before, new FieldReferenceDelegate(null)));
   }
 
-  public void testEscaping() {
+  public void testBraceEscaping() {
     String before = "{able.baker.charlie} \"Howdy\nfriend\" {prawns.are.yummy}";
     String expected = "\"\" + able.baker().charlie() + \" \\\"Howdy\\nfriend\\\" \" + prawns.are().yummy() + \"\"";
     String after = converter.convert(before, new FieldReferenceDelegate(null));

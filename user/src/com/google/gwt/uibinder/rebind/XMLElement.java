@@ -204,12 +204,12 @@ public class XMLElement {
    * 
    * @param name the attribute's full name (including prefix)
    * @param types the type(s) this attribute is expected to provide
-   * @return the attribute's value as a Java expression, or "" if it is not set
+   * @return the attribute's value as a Java expression, or null if it is not set
    * @throws UnableToCompleteException on parse failure
    */
   public String consumeAttribute(String name, JType type)
       throws UnableToCompleteException {
-    return consumeAttributeWithDefault(name, "", type);
+    return consumeAttributeWithDefault(name, null, type);
   }
 
   /**
@@ -234,7 +234,17 @@ public class XMLElement {
    */
   public String consumeAttributeWithDefault(String name, String defaultValue,
       JType[] types) throws UnableToCompleteException {
-    return consumeAttributeWithDefault(false, name, defaultValue, types);
+    /*
+     * TODO(rjrjr) The only reason we need the attribute here is for getParser,
+     * and getParser only needs it for horrible old BundleAttributeParsers. When
+     * that dies, this gets much simpler.
+     */
+    XMLAttribute attribute = getAttribute(name);
+    if (attribute == null) {
+      return defaultValue;
+    }
+    String value = attribute.consumeRawValue();
+    return getParser(attribute, types).parse(value);
   }
 
   /**
@@ -242,7 +252,7 @@ public class XMLElement {
    * reference.
    * 
    * @return an expression that will evaluate to a boolean value in the
-   *         generated code, or "" if there is no such attribute
+   *         generated code, or null if there is no such attribute
    * 
    * @throws UnableToCompleteException on unparseable value
    */
@@ -280,7 +290,7 @@ public class XMLElement {
   public Boolean consumeBooleanConstantAttribute(String name)
       throws UnableToCompleteException {
     String value = consumeRawAttribute(name);
-    if ("".equals(value)) {
+    if (value == null) {
       return null;
     }
     if (value.equals("true") || value.equals("false")) {
@@ -335,25 +345,11 @@ public class XMLElement {
   }
 
   /**
-   * Convenience method for parsing the named attribute as a double value or
-   * reference.
-   * 
-   * @return a double literal, an expression that will evaluate to a double
-   *         value in the generated code, or "" if there is no such attribute
-   * 
-   * @throws UnableToCompleteException on unparseable value
-   */
-  public String consumeDoubleAttribute(String name)
-      throws UnableToCompleteException {
-    return consumeAttribute(name, getDoubleType());
-  }
-
-  /**
    * Convenience method for parsing the named attribute as an ImageResource
    * value or reference.
    * 
    * @return an expression that will evaluate toan ImageResource value in the
-   *         generated code, or "" if there is no such attribute
+   *         generated code, or null if there is no such attribute
    * @throws UnableToCompleteException on unparseable value
    */
   public String consumeImageResourceAttribute(String name)
@@ -449,14 +445,14 @@ public class XMLElement {
    * Convenience method for parsing the named attribute as a CSS length value.
    * 
    * @return a (double, Unit) pair literal, an expression that will evaluate to
-   *         such a pair in the generated code, or "" if there is no such
+   *         such a pair in the generated code, or null if there is no such
    *         attribute
    * 
    * @throws UnableToCompleteException on unparseable value
    */
   public String consumeLengthAttribute(String name)
       throws UnableToCompleteException {
-    return consumeAttributeWithDefault(name, "", new JType[] { getDoubleType(),
+    return consumeAttributeWithDefault(name, null, new JType[] { getDoubleType(),
         getUnitType() });
   }
 
@@ -498,6 +494,9 @@ public class XMLElement {
    * @return the attribute's value, or ""
    */
   public String consumeRawAttribute(String name) {
+    if (!elem.hasAttribute(name)) {
+      return null;
+    }
     String value = elem.getAttribute(name);
     elem.removeAttribute(name);
     return value.trim();
@@ -513,7 +512,7 @@ public class XMLElement {
    */
   public String consumeRawAttribute(String name, String defaultValue) {
     String value = consumeRawAttribute(name);
-    if ("".equals(value)) {
+    if (value == null) {
       return defaultValue;
     }
     return value;
@@ -526,7 +525,7 @@ public class XMLElement {
    * 
    * @param name the attribute's full name (including prefix)
    * @param types the type(s) this attribute is expected to provide
-   * @return the attribute's value as a Java expression, or "" if it is not set
+   * @return the attribute's value as a Java expression
    * @throws UnableToCompleteException on parse failure, or if the attribute is
    *           empty or unspecified
    */
@@ -551,7 +550,7 @@ public class XMLElement {
    * value or reference.
    * 
    * @return a double literal, an expression that will evaluate to a double
-   *         value in the generated code, or "" if there is no such attribute
+   *         value in the generated code
    * 
    * @throws UnableToCompleteException on unparseable value, or if the attribute
    *           is empty or unspecified
@@ -562,12 +561,12 @@ public class XMLElement {
   }
 
   /**
-   * Consumes the named attribute, or dies if it is missing or empty.
+   * Consumes the named attribute, or dies if it is missing.
    */
   public String consumeRequiredRawAttribute(String name)
       throws UnableToCompleteException {
     String value = consumeRawAttribute(name);
-    if ("".equals(value)) {
+    if (value == null) {
       failRequired(name);
     }
     return value;
@@ -622,7 +621,7 @@ public class XMLElement {
    * reference.
    * 
    * @return an expression that will evaluate to a String value in the generated
-   *         code, or "" if there is no such attribute
+   *         code, or null if there is no such attribute
    * @throws UnableToCompleteException on unparseable value
    */
   public String consumeStringAttribute(String name)
@@ -759,30 +758,6 @@ public class XMLElement {
   @Override
   public String toString() {
     return debugString;
-  }
-
-  private String consumeAttributeWithDefault(boolean required, String name,
-      String defaultValue, JType[] types) throws UnableToCompleteException {
-    /*
-     * TODO(rjrjr) The only reason we need the attribute here is for getParser,
-     * and getParser only needs it for horrible old BundleAttributeParsers. When
-     * that dies, this gets much simpler.
-     */
-    XMLAttribute attribute = getAttribute(name);
-    if (attribute == null) {
-      if (required) {
-        failRequired(name);
-      }
-      return defaultValue;
-    }
-    String value = attribute.consumeRawValue();
-    if ("".equals(value)) {
-      if (required) {
-        failRequired(name);
-      }
-      return defaultValue;
-    }
-    return getParser(attribute, types).parse(value);
   }
 
   private Iterable<XMLElement> consumeChildElementsNoEmptyCheck() {

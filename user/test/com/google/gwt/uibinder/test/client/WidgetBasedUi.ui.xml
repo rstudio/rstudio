@@ -140,7 +140,7 @@
 
 <gwt:DockPanel ui:field="root" width="100%" verticalAlignment="ALIGN_TOP">
   <gwt:Dock direction='NORTH'>
-    <gwt:HTML>
+    <gwt:HTML ui:field='styleLess' styleName=''>
       <div style='border: 4px solid gray; padding: 4px; margin: 4px;'>
         <img src='http://www.google.com/images/logo_sm.gif' alt="logo" />
         <span ui:field="trimmedMessage"><ui:msg description='"title" of the doc'

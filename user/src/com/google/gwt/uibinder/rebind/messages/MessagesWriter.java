@@ -135,7 +135,7 @@ public class MessagesWriter {
    */
   public String consumeMessageAttribute(String attName, XMLElement elem) {
     String fullAttName = getMessagesPrefix() + ":" + attName;
-    return elem.consumeRawAttribute(fullAttName);
+    return elem.consumeRawAttribute(fullAttName, "");
   }
 
   /**

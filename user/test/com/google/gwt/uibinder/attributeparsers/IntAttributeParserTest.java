@@ -15,8 +15,13 @@
  */
 package com.google.gwt.uibinder.attributeparsers;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.uibinder.rebind.MortalLogger;
+import com.google.gwt.uibinder.test.UiJavaResources;
 
 import junit.framework.TestCase;
 
@@ -29,8 +34,11 @@ public class IntAttributeParserTest extends TestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    parser = new IntAttributeParser(new FieldReferenceConverter(null), null,
-        MortalLogger.NULL);
+    CompilationState state = CompilationStateBuilder.buildFrom(TreeLogger.NULL,
+        UiJavaResources.getUiResources());
+    TypeOracle types = state.getTypeOracle();
+    parser = new IntAttributeParser(new FieldReferenceConverter(null),
+        types.parse("int"), MortalLogger.NULL);
   }
 
   public void testGood() throws UnableToCompleteException {

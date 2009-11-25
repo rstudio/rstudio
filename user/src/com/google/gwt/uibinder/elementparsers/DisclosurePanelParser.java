@@ -68,14 +68,13 @@ public class DisclosurePanelParser implements ElementParser {
       String headerText = children.header.consumeInnerTextEscapedAsHtmlStringLiteral(new TextInterpreter(
           writer));
 
-      if (("".equals(openImage) || "".equals(closedImage))
-          && !(openImage.equals(closedImage))) {
+      if ((openImage == null) ^ (closedImage == null)) {
         writer.die("In %s of %s, both %s and %s must be specified, or neither",
             children.header, panelElem, OPEN_IMAGE, CLOSED_IMAGE);
       }
 
       String panelTypeName = type.getQualifiedSourceName();
-      if (!"".equals(openImage)) {
+      if (openImage != null) {
         writer.setFieldInitializer(panelField, String.format(
             "new %s(%s, %s, \"%s\")", panelTypeName, openImage, closedImage,
             headerText));

@@ -224,6 +224,10 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("They might show up in body text that has been marked for "
         + "translation: funny characters \" \" ' ' & < > > { }", t);
   }
+  
+  public void testEmptyAttributesOkay() {
+    assertEquals("", widgetUi.styleLess.getStyleName());
+  }
 
   public void testMixOfWidgetsAndElementsInUiMsg() {
     assertEquals("single translatable message", widgetUi.mixedMessageWidget.getText());

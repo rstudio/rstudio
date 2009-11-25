@@ -135,8 +135,8 @@ public class BeanParser implements ElementParser {
           writer.die("In %s, class %s has no appropriate set%s() method", elem,
               elem.getLocalName(), initialCap(propertyName));
         }
-
-        String value = elem.consumeAttributeWithDefault(attribute.getName(),
+        String n = attribute.getName();
+        String value = elem.consumeAttributeWithDefault(n,
             null, getParamTypes(setter));
 
         if (value == null) {
