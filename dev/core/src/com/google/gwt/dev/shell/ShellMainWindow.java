@@ -20,6 +20,7 @@ import com.google.gwt.dev.shell.log.SwingLoggerPanel;
 import com.google.gwt.dev.util.BrowserLauncher;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.HeadlessException;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -56,7 +57,7 @@ public class ShellMainWindow extends JPanel {
     @Override
     public void launchUrl(URL url) {
       getLogger().log(TreeLogger.INFO, "Paste " + url.toExternalForm()
-          + " in a browser");
+          + " into a browser");
       // is it better to use SwingUtilities2.canAccessSystemClipboard() here?
       Throwable caught = null;
       try {
@@ -103,6 +104,9 @@ public class ShellMainWindow extends JPanel {
 
   /**
    * A class for implementing different methods of launching a URL.
+   * <p> 
+   * Note that this is retained despite the UI change because we plan to support
+   * multiple launcher types in the future.
    */
   private abstract static class LaunchMethod {
 
@@ -155,9 +159,10 @@ public class ShellMainWindow extends JPanel {
   }
 
   private SwingLoggerPanel logWindow;
-  private JComboBox launchCombo;
-  private JButton launchButton;
   private JComboBox urlCombo;
+  private JButton defaultBrowserButton;
+  private JButton copyToClipboardButton;
+  private JLabel loadingMessage;
 
   /**
    * Create the main window with the top-level logger and launch controls.
@@ -178,18 +183,26 @@ public class ShellMainWindow extends JPanel {
     urlCombo.addItem("Computing...");
     startupPanel.add(urlCombo);
     launchPanel.add(startupPanel);
-    launchPanel.add(new JLabel("Launch Method:"));
-    launchCombo = new JComboBox();
-    populateLaunchComboBox();
-    launchPanel.add(launchCombo);
-    launchButton = new JButton("Loading...");
-    launchButton.setEnabled(false);
-    launchButton.addActionListener(new ActionListener() {
+    loadingMessage = new JLabel("Loading...");
+    launchPanel.add(loadingMessage);
+    defaultBrowserButton = new JButton("Launch Default Browser");
+    defaultBrowserButton.setEnabled(false);
+    defaultBrowserButton.setVisible(false);
+    defaultBrowserButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        launch();
+        launch(new DefaultBrowserLauncher());
       }
     });
-    launchPanel.add(launchButton);
+    launchPanel.add(defaultBrowserButton);
+    copyToClipboardButton = new JButton("Copy to Clipboard");
+    copyToClipboardButton.setEnabled(false);
+    copyToClipboardButton.setVisible(false);
+    copyToClipboardButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        launch(new CopyToClipboardLauncher());
+      }
+    });
+    launchPanel.add(copyToClipboardButton);
     add(launchPanel, BorderLayout.NORTH);
     logWindow = new SwingLoggerPanel(maxLevel, logFile);
     add(logWindow);
@@ -212,17 +225,22 @@ public class ShellMainWindow extends JPanel {
    */
   public void moduleLoadComplete(boolean successfulLoad) {
     if (!successfulLoad) {
-      launchButton.setText("Module Load Failure");
+      loadingMessage.setText("Module Load Failure");
+      loadingMessage.setForeground(Color.RED);
       return;
     }
     if (urlCombo.getItemCount() == 0) {
-      launchButton.setText("No URLs to Launch");
+      loadingMessage.setText("No URLs to Launch");
+      loadingMessage.setForeground(Color.RED);
       urlCombo.addItem("No startup URLs");
       urlCombo.setEnabled(false);
       return;
     }
-    launchButton.setText("Launch");
-    launchButton.setEnabled(true);
+    loadingMessage.setVisible(false);
+    defaultBrowserButton.setVisible(true);
+    defaultBrowserButton.setEnabled(true);
+    copyToClipboardButton.setVisible(true);
+    copyToClipboardButton.setEnabled(true);
   }
 
   /**
@@ -248,9 +266,9 @@ public class ShellMainWindow extends JPanel {
    * Launch the selected URL with the selected launch method.
    * <p>
    * MUST BE CALLED FROM THE UI THREAD
+   * @param launcher 
    */
-  protected void launch() {
-    LaunchMethod launcher = (LaunchMethod) launchCombo.getSelectedItem();
+  protected void launch(LaunchMethod launcher) {
     UrlComboEntry selectedUrl = (UrlComboEntry) urlCombo.getSelectedItem();
     if (launcher == null || selectedUrl == null) {
       // Shouldn't happen - should we log anything?
@@ -258,17 +276,5 @@ public class ShellMainWindow extends JPanel {
     }
     URL url = selectedUrl.getUrl();
     launcher.launchUrl(url);
-  }
-
-  /**
-   * Populate the launch method combo box with possible choices.
-   * <p>
-   * MUST BE CALLED FROM THE UI THREAD
-   */
-  private void populateLaunchComboBox() {
-    // TODO(jat): support scanning for other browsers and launching them, as
-    // well as user preferences of launch methods and their order.
-    launchCombo.addItem(new DefaultBrowserLauncher());
-    launchCombo.addItem(new CopyToClipboardLauncher());
   }
 }
