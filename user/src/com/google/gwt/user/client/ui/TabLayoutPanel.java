@@ -65,15 +65,15 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   private static final int BIG_ENOUGH_TO_NOT_WRAP = 16384;
 
   private static class Tab extends SimplePanel {
-    private Element anchor;
+    private Element inner;
 
     public Tab(Widget child) {
-      super(Document.get().createSpanElement());
-      getElement().appendChild(anchor = Document.get().createAnchorElement());
+      super(Document.get().createDivElement());
+      getElement().appendChild(inner = Document.get().createDivElement());
 
       setWidget(child);
       setStyleName("gwt-TabLayoutPanelTab");
-      anchor.setClassName("gwt-TabLayoutPanelTabInner");
+      inner.setClassName("gwt-TabLayoutPanelTabInner");
 
       // TODO: float:left may not be enough. If there are tabs of differeing
       // heights, the shorter ones will top-align, rather than bottom-align,
@@ -100,7 +100,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
     @Override
     protected com.google.gwt.user.client.Element getContainerElement() {
-      return anchor.cast();
+      return inner.cast();
     }
   }
 
