@@ -79,6 +79,8 @@ public class XSLinker extends SelectionScriptLinker {
     out.newlineOpt();
     out.print("var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;");
     out.newlineOpt();
+    out.print("var $sessionId = $wnd.__gwtStatsSessionId ? $wnd.__gwtStatsSessionId : null;");
+    out.newlineOpt();
     out.print("$stats && $stats({moduleName:'" + context.getModuleName()
         + "',sessionId:$sessionId"
         + ",subSystem:'startup',evtGroup:'moduleStartup'"
