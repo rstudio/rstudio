@@ -19,8 +19,8 @@ package com.google.gwt.soyc;
 import java.util.TreeSet;
 
 /**
- * Holds a set of all classes in a SOYC report, and can calculate size summaries
- * for them.
+ * Holds a set of all classes in a Compile Report, and can calculate size
+ * summaries for them.
  */
 public class CodeCollection {
 

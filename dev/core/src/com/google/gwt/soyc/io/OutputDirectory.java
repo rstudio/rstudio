@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * An abstraction over output directories. The SOYC dashboard writes to this
- * interface so that it can, depending on how it is invoked, both write to the
+ * An abstraction over output directories. The Compile Report dashboard writes to
+ * this interface so that it can, depending on how it is invoked, both write to the
  * filesystem and generate GWT compiler artifacts.
  */
 public interface OutputDirectory {

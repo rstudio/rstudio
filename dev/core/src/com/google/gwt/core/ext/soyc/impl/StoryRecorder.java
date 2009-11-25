@@ -47,7 +47,7 @@ import java.util.TreeSet;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * Records {@link Story}s to a file for SOYC.
+ * Records {@link Story}s to a file for Compile Reports.
  */
 public class StoryRecorder {
 

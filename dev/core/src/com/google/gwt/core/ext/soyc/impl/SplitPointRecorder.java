@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * Records split points to a file for SOYC reports.
+ * Records split points to a file for Compile Reports.
  */
 public class SplitPointRecorder {
   /**

@@ -22,7 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Command-line settings for SOYC.
+ * Command-line settings for Compile Reports (SOYC).
  */
 public class Settings {
   /**

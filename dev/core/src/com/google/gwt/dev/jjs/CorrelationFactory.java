@@ -92,8 +92,8 @@ public abstract class CorrelationFactory implements Serializable {
   public static final class RealCorrelationFactory extends CorrelationFactory {
     /*
      * NB: The Correlation type uses AST nodes in its factory methods to make it
-     * easier to extract whatever information we want to include in the SOYC
-     * reports without having to update call sites with additional parameters.
+     * easier to extract whatever information we want to include in the Compile
+     * Reports without having to update call sites with additional parameters.
      * 
      * In the general case, references to AST nodes should not be exposed to any
      * public-API consumers of the Correlation.

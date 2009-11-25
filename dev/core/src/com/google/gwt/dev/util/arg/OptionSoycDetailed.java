@@ -16,23 +16,23 @@
 package com.google.gwt.dev.util.arg;
 
 /**
- * Option to request extra SOYC output at the expense of more compile time.
+ * Option to request extra Compile Report (SOYC) output at the expense of more compile time.
  */
 public interface OptionSoycDetailed {
 
   /**
-   * Returns true if the compiler should record and emit extra SOYC information.
+   * Returns true if the compiler should record and emit extra Compile Report information.
    */
   boolean isSoycExtra();
 
   /**
-   * Sets whether or not the compiler should record and emit SOYC information
+   * Sets whether or not the compiler should record and emit Compile Report information
    * and build the dashboard.
    */
   void setSoycEnabled(boolean enabled);
 
   /**
-   * Sets whether or not the compiler should record and emit extra SOYC
+   * Sets whether or not the compiler should record and emit extra Compile Report
    * information.
    */
   void setSoycExtra(boolean soycExtra);

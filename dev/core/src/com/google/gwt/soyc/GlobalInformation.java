@@ -25,7 +25,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * SOYC information about a compiled module.
+ * Compile Report information about a compiled module.
  */
 public class GlobalInformation {
   private static final SizeBreakdown[] EMPTY_SIZE_BREAKDOWN = new SizeBreakdown[0];

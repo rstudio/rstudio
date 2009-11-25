@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * The control-flow dependency recorder for SOYC.
+ * The control-flow dependency recorder for Compile Report.
  */
 public class DependencyRecorder implements MultipleDependencyGraphRecorder {
   /**
