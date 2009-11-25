@@ -29,6 +29,7 @@
       <h1>Google Web Toolkit Release Notes</h1>
       <ul>
         <li><a href="#Release_Notes_Current">@GWT_VERSION@</a></li>
+        <li><a href="#Release_Notes_2_0_0_rc1">2.0.0-rc1</a></li>
         <li><a href="#Release_Notes_1_7_1">1.7.1</a></li>
         <li><a href="#Release_Notes_1_7_0">1.7.0</a></li>
         <li><a href="#Release_Notes_1_6_4">1.6.4</a></li>
@@ -53,6 +54,114 @@
       <hr/>
       <a name="Release_Notes_Current"></a>
       <h2>Release Notes for @GWT_VERSION@</h2>
+      <h3>New Features</h3> 
+      <ul>
+        <li>
+          GWT 2.0 introduces a number of new panels, which together form a stable basis for fast and predictable
+          application-level layout. The official doc is still in progress, but for an overview please see
+          <a href="http://code.google.com/p/google-web-toolkit/wiki/LayoutDesign">Layout Design</a> on the wiki.
+          The new set of panels includes
+          <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/user/client/ui/RootLayoutPanel.html">RootLayoutPanel</a>,
+          <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/user/client/ui/LayoutPanel.html">LayoutPanel</a>,
+          <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/user/client/ui/DockLayoutPanel.html">DockLayoutPanel</a>,
+          <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/user/client/ui/SplitLayoutPanel.html">SplitLayoutPanel</a>,
+          <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/user/client/ui/StackLayoutPanel.html">StackLayoutPanel</a>, and
+          <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/user/client/ui/TabLayoutPanel.html">TabLayoutPanel</a>.
+        </li>
+        <li>
+            UiBinder now directly supports <code>LayoutPanel</code>. For example:<pre style="margin-left: 2em;">
+&lt;g:LayoutPanel&gt;
+  &lt;g:layer left='1em' width='20px'&gt;&lt;g:Label&gt;left-width&lt;/g:Label&gt;&lt;/g:Layer&gt;
+  &lt;g:layer right='1em' width='20px'&gt;&lt;g:Label&gt;right-width&lt;/g:Label&gt;&lt;/g:Layer&gt;
+  &lt;g:layer&gt;&lt;g:Label&gt;nada&lt;/g:Label&gt;&lt;/g:Layer&gt;
+&lt;/g:LayoutPanel&gt;</pre>
+        </li>
+        <li>
+          <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/user/client/Window.Navigator.html">Window.Navigator</a>
+          now provides access to the native browser's navigator object.
+        </li>
+      </ul> 
+
+      <h3>Breaking changes and known issues/bugs/problems</h3> 
+      <ul>
+        <li>
+          Windows users who have previously installed the <i>Google Web Toolkit Developer Plugin for IE</i> will have
+          to uninstall the old version. Use the following steps:
+          <ol>
+            <li>From the Windows "Start" Menu, open "Control Panel"</li>
+            <li>Select "Add/Remove Programs"</li>
+            <li>Select "Google Web Toolkit Developer Plugin for IE" then click "Uninstall"</li>
+            <li>
+              Run Internet Explorer and browse to
+              <a href="http://gwt.google.com/samples/MissingPlugin">http://gwt.google.com/samples/MissingPlugin</a>
+              to install the new  version of the plugin
+            </li>
+          </ol>
+        </li>
+        <li>
+          Running a <code>GWTTestCase</code> as compiled script was previously done using <code>-Dgwt.args="-web"</code>.
+          The <code>-web</code> argument is now deprecated in favor of <code>-prod</code>, consistent with the
+          terminology change from <i>web mode</i> to <i>production mode</i>.
+        </li>
+        <li>
+          The <code>-portHosted</code> command line argument for <code>DevMode</code> and <code>GWTTestCase</code>
+          has changed to <code>-codeServerPort</code> to be consistent with the new term <i>code server</i>.
+        </li>
+        <li>
+          The <code>junitCreator</code> command line utility has been removed.  Instead, the <code>webAppCreator</code>
+          utility takes new argument: <code>-junit <i>&lt;path-to-junit-jar&gt;</i></code>, which incorporates the
+          functionality previously in junitCreator and generates <code>ant test</code> targets.
+        </li>
+        <li>
+          When running development mode on on Chrome, any JavaScript objects that pass into Java code will
+          be assigned a new property <code>__gwt_ObjectId</code>.  This could break native code that looks
+          iterates through the properties of such an object.  To work around this issue, see this
+          <a href="http://code.google.com/p/google-web-toolkit/source/diff?old=4807&r=7063&format=side&path=/trunk/user/src/com/google/gwt/json/client/JSONObject.java">example</a>
+          of our changes to <code>JSONObject</code> (scroll to the bottom). 
+        </li>
+        <li>
+          Compile reports (formerly SOYC reports) are now generated with the <code>-compileReport</code> command
+          line flag to <code>Compiler</code>.  The generated reports are now written to the private <i>extra</i>
+          directory. If no <code>-extra</code> argument is specified, this directory defaults to <code>extras/</code>.
+          This eliminates an unlikely security risk of accidentally deploying compile reports to a publicly accessible location. 
+        </li>
+      </ul>
+      <h3>Fixed Issues</h3>
+      <ul>
+        <li>
+          Image.onload event does not fire on Internet Explorer when image is in cache 
+          (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=863">#863</a>)
+        </li>
+        <li>
+          In UiBinder <code>&lt;ui:style&gt;</code> blocks, css class names may contain dashes.
+        </li>
+        <li>
+          Non-Java method safe characters in inline <ui:style> class names doesn't work
+          (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4052">#4052</a>)
+        </li>
+        <li>
+          @external does not work reliably for inline styles in <ui:style>
+          (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4053">#4053</a>)
+        </li>
+        <li>
+          Various false alarm warnings about invalid JSNI references have been fixed.
+        </li>
+        <li>
+          Various Swing UI improvements.
+        </li>
+        <li>
+          RPC calls leaking memory for IE
+          (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4133">#4133</a>)
+        </li>
+        <li>
+          deRPC raise an Error 500 instead of propagating the correct RuntimeException in ProdMode
+          (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4237">#4237</a>)
+        </li>
+      </ul>
+
+      <hr/>
+      <a name="Release_Notes_2_0_0_rc1"></a>
+      <h2>Release Notes for 2.0.0-rc1</h2>
       <p>
         This release contains big changes to improve developer productivity, make cross-browser development easier, and produce faster web applications. 
       </p>
@@ -77,8 +186,8 @@
         <li>
           In-Browser Development Mode: Prior to 2.0, GWT hosted mode provided a special-purpose "hosted browser" to debug your GWT code. 
           In 2.0, the web page being debugged is viewed within a regular-old browser. 
-          Development mode is supported through the use of a native-code plugin called the "Google Web Toolkit Developer Plugin" for many popular browsers. 
-          In other words, you can use development mode directly from Safari, Firefox, IE, and Chrome. 
+          Development mode is supported through the use of a native-code plugin called the <i>Google Web Toolkit Developer Plugin</i> for many popular browsers. 
+          In other words, you can use development mode directly from Safari, Firefox, Internet Explorer, and Chrome. 
         </li>
         <li>
           Code Splitting: Developer-guided code splitting with <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/core/client/GWT.html#runAsync(com.google.gwt.core.client.RunAsyncCallback)">GWT.runAsync()</a> allows you to chunk your GWT code into multiple fragments for faster startup. 
@@ -100,10 +209,10 @@
         </li>
         <li>
           Using HtmlUnit for running test cases based on <a href="http://google-web-toolkit.googlecode.com/svn/javadoc/2.0/com/google/gwt/junit/client/GWTTestCase.html">GWTTestCase</a>: 
-          Prior to 2.0, GWTTestCase relied on SWT and native code versions of actual browsers to run unit tests.
+          Prior to 2.0, <code>GWTTestCase</code> relied on SWT and native code versions of actual browsers to run unit tests.
           As a result, running unit tests required starting an actual browser.          
-          As of 2.0, GWTTestCase no longer uses SWT or native code. 
-          Instead, it uses HtmlUnit as the built-in browser. 
+          As of 2.0, <code>GWTTestCase</code> no longer uses SWT or native code. 
+          Instead, it uses <i>HtmlUnit</i> as the built-in browser. 
           Because HtmlUnit is written entirely in the Java language, there is no longer any native code involved in typical test-driven development.
           Debugging GWT Tests in development mode can be done entirely in a Java debugger.
         </li>
@@ -124,14 +233,14 @@
           But, to really stay current, we recommend you switch to the new <code>DevMode</code> entry point.
         </li>
         <li>
-          Also due to the "development mode" terminology change, the name of the ant build target produced by <code>webAppCreator</code> has changed from <code>hostd</code> to <code>devmode</code>.
+          Also due to the "development mode" terminology change, the name of the ant build target produced by <code>webAppCreator</code> has changed from <code>hosted</code> to <code>devmode</code>.
           In other words, to start development mode from the command-line, type <code>ant devmode</code>.
         </li>
         <li>
           HtmlUnit does not attempt to emulate authentic browser layout. 
           Consequently, tests that are sensitive to browser layout are very likely to fail.
-          However, since GWTTestCase supports other methods of running tests, such as Selenium, that do support accurate layout testing, it can still make sense to keep layout-sensitive tests in the same test case as non-layout-sensitive tests.  
-          If you want such tests to be ignored by HtmlUnit, simply annotate the test methods with @DoNotRunWith({Platform.Htmlunit}). 
+          However, since <code>GWTTestCase</code> supports other methods of running tests, such as Selenium, that do support accurate layout testing, it can still make sense to keep layout-sensitive tests in the same test case as non-layout-sensitive tests.  
+          If you want such tests to be ignored by HtmlUnit, simply annotate the test methods with <code>@DoNotRunWith({Platform.Htmlunit})</code>. 
         </li>
         <li>
           Versions of Google Plugin for Eclipse prior to 1.2 will only allow you to add GWT release directories that include a file with a name like <code>gwt-dev-windows.jar</code>. 
@@ -141,7 +250,7 @@
           The way arguments are passed to the GWT testing infrastructure has been revamped. 
           There is now a consistent syntax to support arbitrary "run styles", including user-written, with no changes to GWT itself.
           For example, <code>-selenium FF3</code> has become <code>-runStyle selenium:FF3</code>. 
-          This change likely does not affect typical test invocation scripts, but if you do use <code>-Dgwt.args</code> to pass arguments to GWTTestCase, be aware that you may need to make some changes.
+          This change likely does not affect typical test invocation scripts, but if you do use <code>-Dgwt.args</code> to pass arguments to <code>GWTTestCase</code>, be aware that you may need to make some changes.
         </li>
       </ul>
 
