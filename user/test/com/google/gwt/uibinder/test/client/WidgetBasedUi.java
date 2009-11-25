@@ -43,6 +43,7 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.StackPanel;
+import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -148,7 +149,8 @@ public class WidgetBasedUi extends Composite {
   FakeBundle3 legacyValuesForHtml = new FakeBundle3();
   @UiField Label bundledLabelLegacy;
   @UiField DivElement bundledDivLegacy;
-
+  @UiField ToggleButton toggle;
+  
   public WidgetBasedUi() {
     external.style().ensureInjected();
     initWidget(binder.createAndBindUi(this));

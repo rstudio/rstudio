@@ -178,6 +178,10 @@ public class UiBinderTest extends GWTTestCase {
     WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
     assertEquals(resources.style().tmText(), widgetUi.tmElement.getClassName());
   }
+  
+  public void testCustomButtonBody() {
+    assertEquals("Hi mom", widgetUi.toggle.getText());
+  }
 
   public void testDomAccessAndComputedAttributeOnPlaceholderedElement() {
     WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
