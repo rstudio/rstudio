@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.util;
 
+import java.util.regex.Pattern;
+
 /**
  * Utility methods for dealing with the various types of Java names.
  */
@@ -87,7 +89,7 @@ public class Name {
     public static String toSourceName(String binaryName) {
       assert isBinaryName(binaryName);
       // don't change a trailing $ to a .
-      return binaryName.replaceAll("[$](\\w)", ".$1");
+      return NON_TRAILING_DOLLAR.matcher(binaryName).replaceAll(".$1");
     }
     
     private BinaryName() {
@@ -167,7 +169,7 @@ public class Name {
       public static String toSourceName(String internalName) {
         assert isInternalName(internalName);
         // don't change a trailing $ or slash to a .
-        return internalName.replaceAll("[$/](\\w)", ".$1");
+        return NON_TRAILING_DOLLAR_SLASH.matcher(internalName).replaceAll(".$1");
       }
   
       private InternalName() {
@@ -219,9 +221,17 @@ public static class SourceName {
 
     public static String toSourceName(String dottedName) {
       // don't change a trailing $ to a .
-      return dottedName.replaceAll("[$](\\w)", ".$1");
+      return NON_TRAILING_DOLLAR.matcher(dottedName).replaceAll(".$1");
     }
   }
+
+  // Non-trailing $
+  private static final Pattern NON_TRAILING_DOLLAR =
+    Pattern.compile("[$](\\p{javaJavaIdentifierStart})");
+
+  // Non-trailing $ or /
+  private static final Pattern NON_TRAILING_DOLLAR_SLASH =
+    Pattern.compile("[$/](\\p{javaJavaIdentifierStart})");
 
   /**
    * Get the binary name for a Java class.
