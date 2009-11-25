@@ -29,7 +29,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -119,7 +121,16 @@ public class MakeTopLevelHtmlForPerm {
     addStandardHtmlProlog(outFile, "Compile report", "Compile report",
         "Overview of permutations");
     outFile.println("<ul>");
+    
+    // in order to print these in ascending order, we have to sort by 
+    // integers
+    SortedSet<Integer> sortedPermIds = new TreeSet<Integer>();
     for (String permutationId : allPermsInfo.keySet()) {
+      sortedPermIds.add(Integer.parseInt(permutationId));
+    }
+   
+    for (Integer sortedPermId : sortedPermIds) {
+      String permutationId = Integer.toString(sortedPermId);
       List<String> permutationInfoList = allPermsInfo.get(permutationId);
       outFile.print("<li><a href=\"SoycDashboard" + "-" + permutationId
         + "-index.html\">Permutation " + permutationId);
