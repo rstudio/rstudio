@@ -418,14 +418,14 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
       }
     }
     logger = bestLogger;
-    KeyStroke key = getCommandKeyStroke(KeyEvent.VK_F);
+    KeyStroke key = getCommandKeyStroke(KeyEvent.VK_F, false);
     getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(key, "find");
     getActionMap().put("find", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         showFindBox();
       }
     });
-    key = getCommandKeyStroke(KeyEvent.VK_C);
+    key = getCommandKeyStroke(KeyEvent.VK_C, false);
     tree.getInputMap().put(key, "copy");
     tree.getActionMap().put("copy", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -433,14 +433,14 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
       }
     });
     findBox = new FindBox();
-    key = getCommandKeyStroke(KeyEvent.VK_N);
+    key = getCommandKeyStroke(KeyEvent.VK_G, false);
     tree.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(key, "findnext");
     tree.getActionMap().put("findnext", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         findBox.nextMatch();
       }
     });
-    key = getCommandKeyStroke(KeyEvent.VK_P);
+    key = getCommandKeyStroke(KeyEvent.VK_G, true);
     tree.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(key, "findprev");
     tree.getActionMap().put("findprev", new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -646,11 +646,16 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
    * Returns a keystroke which adds the appropriate modifier for a command key:
    * Command on mac, Ctrl everywhere else.
    * 
-   * @param key
+   * @param key virtual key defined in {@code KeyEvent#VK_*}
+   * @param shift true if the Ctrl/Command key must be shifted
    * @return KeyStroke of the Ctrl/Command-key
    */
-  private KeyStroke getCommandKeyStroke(int key) {
-    return KeyStroke.getKeyStroke(key, ctrlKeyDown);
+  private KeyStroke getCommandKeyStroke(int key, boolean shift) {
+    int mask = ctrlKeyDown;
+    if (shift) {
+      mask |= InputEvent.SHIFT_DOWN_MASK;
+    }
+    return KeyStroke.getKeyStroke(key, mask);
   }
 
   private String htmlUnescape(String str) {
