@@ -276,12 +276,7 @@ public class HostedTest extends GWTTestCase {
     assertEquals("VAL3-foo", TestEnum.VAL3.foo());
   }
 
-  /**
-   * Returning Float.MAX_VALUE or Double.MAX_VALUE causes firefox to crash on
-   * Windows in dev mode
-   * TODO (jat): Enable this test before shipping GWT 2.0.
-   */
-  public void disabledTestFloat() {
+  public void testFloat() {
     storeFloat(Float.MIN_VALUE);
     float f = getFloat();
     assertTrue(f == Float.MIN_VALUE);
@@ -415,12 +410,8 @@ public class HostedTest extends GWTTestCase {
   /**
    * More test cases resulting from issue 2426 to show that primitives can be
    * passed through JSNI methods unmolested.
-   * 
-   * Returning Float.MAX_VALUE or Double.MAX_VALUE causes firefox to crash on
-   * Windows in dev mode
-   * TODO(jat): Enable this test before shipping GWT 2.0. 
    */
-  public void disabledTestJsniPassthroughPrimitives() {
+  public void testJsniPassthroughPrimitives() {
     class Inner {
       native boolean nativeBoolean(boolean param) /*-{
         return param;

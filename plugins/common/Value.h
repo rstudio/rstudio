@@ -301,7 +301,7 @@ public:
   }
 
   std::string toString() const {
-    char buf[30];
+    char buf[64];
     switch (type) {
       case NULL_TYPE:
         return "null";
@@ -326,10 +326,10 @@ public:
             static_cast<long long>(getLong()));
         return std::string(buf);
       case FLOAT:
-        snprintf(buf, sizeof(buf), "float(%f)", getFloat());
+        snprintf(buf, sizeof(buf), "float(%g)", getFloat());
         return std::string(buf);
       case DOUBLE:
-        snprintf(buf, sizeof(buf), "double(%lf)", getDouble());
+        snprintf(buf, sizeof(buf), "double(%g)", getDouble());
         return std::string(buf);
       case STRING:
         snprintf(buf, sizeof(buf), "string(%.20s)", getString().c_str());
@@ -381,7 +381,10 @@ private:
 };
 
 inline Debug::DebugStream& operator<<(Debug::DebugStream& dbg, const Value& val) {
-  return dbg << val.toString();
+  if (dbg.isActive()) {
+    dbg << val.toString();
+  }
+  return dbg;
 }
 
 #endif
