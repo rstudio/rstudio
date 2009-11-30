@@ -102,12 +102,6 @@ public class Compiler {
       return linkOptions.getWarDir();
     }
 
-    public void postProcessArgs() {
-      if ((isSoycEnabled()) && (getExtraDir() == null)) {
-          setExtraDir(new File("extras"));
-      }
-    }
-
     public void setExtraDir(File extraDir) {
       linkOptions.setExtraDir(extraDir);
     }
@@ -141,7 +135,6 @@ public class Compiler {
      */
     final CompilerOptions options = new CompilerOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
-      ((CompilerOptionsImpl)options).postProcessArgs();
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           FutureTask<UpdateResult> updater = null;
@@ -178,6 +171,9 @@ public class Compiler {
       if (options.getWorkDir() == null) {
         options.setWorkDir(Utility.makeTemporaryDirectory(null, "gwtc"));
         tempWorkDir = true;
+      }
+      if (options.isSoycEnabled() && options.getExtraDir() == null) {
+        options.setExtraDir(new File("extras"));
       }
 
       for (String moduleName : options.getModuleNames()) {
@@ -219,7 +215,6 @@ public class Compiler {
 
           File absPath = new File(options.getWarDir(), module.getName());
           absPath = absPath.getAbsoluteFile();
-
 
           String logMessage = "Linking into " + absPath;
           if (options.getExtraDir() != null) {
