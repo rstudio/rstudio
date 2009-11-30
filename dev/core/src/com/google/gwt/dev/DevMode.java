@@ -329,7 +329,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     ServletValidator servletValidator = null;
     File webXml = new File(options.getWarDir(), "WEB-INF/web.xml");
-    if (webXml.exists()) {
+    if (!options.isNoServer() && webXml.exists()) {
       servletValidator = ServletValidator.create(getTopLogger(), webXml);
     }
 
@@ -343,7 +343,9 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
         // actually load the module from the browser.
         startupModules.put(module.getName(), module);
         Util.recursiveDelete(options.getShellBaseWorkDir(module), false);
-        validateServletTags(moduleBranch, servletValidator, module, webXml);
+        if (!options.isNoServer()) {
+          validateServletTags(moduleBranch, servletValidator, module, webXml);
+        }
         TreeLogger loadLogger = moduleBranch.branch(TreeLogger.DEBUG,
             "Bootstrap link for command-line module '" + moduleName + "'");
         link(loadLogger, module);
@@ -406,10 +408,10 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     // Look for launchable files directly under war
     File warDir = options.getWarDir();
     for (File htmlFile : warDir.listFiles(new FilenameFilter() {
-          public boolean accept(File dir, String name) {
-            return STARTUP_FILE_PATTERN.matcher(name).matches();
-          }
-        })) {
+      public boolean accept(File dir, String name) {
+        return STARTUP_FILE_PATTERN.matcher(name).matches();
+      }
+    })) {
       options.addStartupURL(htmlFile.getName());
     }
   }
