@@ -67,6 +67,15 @@ public class InternalCompilerException extends RuntimeException {
    */
   private static final ThreadLocal<InternalCompilerException> pendingICE = new ThreadLocal<InternalCompilerException>();
 
+  /**
+   * Force this class to be preloaded. If we don't preload this class, we can
+   * get into bad behavior if we later try to load this class under out of
+   * memory or out of stack conditions.
+   */
+  public static void preload() {
+    // Nothing to do, JVM will initialize this class on static invocation.
+  }
+
   private final List<NodeInfo> nodeTrace = new ArrayList<NodeInfo>();
 
   /**
