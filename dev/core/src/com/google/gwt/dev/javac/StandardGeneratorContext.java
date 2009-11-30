@@ -393,7 +393,7 @@ public class StandardGeneratorContext implements GeneratorContext {
   public String runGenerator(TreeLogger logger,
       Class<? extends Generator> generatorClass, String typeName)
       throws UnableToCompleteException {
-    String msg = "Invoking " + toString();
+    String msg = "Invoking generator " + generatorClass.getName();
     logger = logger.branch(TreeLogger.DEBUG, msg, null);
 
     Generator generator = generators.get(generatorClass);
