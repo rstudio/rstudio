@@ -243,7 +243,8 @@ public class JUnitShell extends GWTShell {
           return "Selects the runstyle to use for this test.  The name is "
               + "a suffix of com.google.gwt.junit.RunStyle or is a fully "
               + "qualified class name, and may be followed with a colon and "
-              + "an argument for this runstyle.";
+              + "an argument for this runstyle.  The specified class must"
+              + "extend RunStyle.";
         }
 
         @Override
