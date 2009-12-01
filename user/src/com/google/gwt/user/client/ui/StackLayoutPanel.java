@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Event;
 
@@ -132,7 +130,7 @@ public class StackLayoutPanel extends Composite implements HasWidgets,
    * @param header the header widget
    * @param headerSize the size of the header widget
    */
-  public void add(Widget widget, Widget header, double headerSize) {
+  public void add(final Widget widget, Widget header, double headerSize) {
     ClickWrapper wrapper = new ClickWrapper(widget, header);
     layoutPanel.add(wrapper);
     layoutPanel.add(widget);
@@ -144,8 +142,9 @@ public class StackLayoutPanel extends Composite implements HasWidgets,
     layoutData.add(data);
 
     if (visibleWidget == null) {
-      // Don't animate the initial widget display.
-      showWidget(widget, 0);
+      // If there's no visible widget, display the first one. The layout will
+      // be updated onLoad().
+      visibleWidget = widget;
     }
   }
 
@@ -205,6 +204,12 @@ public class StackLayoutPanel extends Composite implements HasWidgets,
     showWidget(widget, ANIMATION_TIME);
   }
 
+  @Override
+  protected void onLoad() {
+    // When the widget becomes attached, update its layout.
+    animate(0);
+  }
+
   private void animate(int duration) {
     int top = 0, bottom = 0;
     int i = 0, visibleIndex = -1;
@@ -241,10 +246,6 @@ public class StackLayoutPanel extends Composite implements HasWidgets,
 
   private void showWidget(Widget widget, final int duration) {
     visibleWidget = widget;
-    Scheduler.get().scheduleFinally(new ScheduledCommand() {
-      public void execute() {
-        animate(duration);
-      }
-    });
+    animate(duration);
   }
 }
