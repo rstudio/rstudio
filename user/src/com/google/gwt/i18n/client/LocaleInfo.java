@@ -115,7 +115,7 @@ public class LocaleInfo {
   }
   
   /**
-   * @return a NumberConstants interface for this locale.
+   * @return a DateTimeConstants instance for this locale.
    */
   public final DateTimeConstants getDateTimeConstants() {
     ensureDateTimeConstants();
@@ -130,7 +130,7 @@ public class LocaleInfo {
   }
 
   /**
-   * @return a NumberConstants interface for this locale.
+   * @return a NumberConstants instance for this locale.
    */
   public final NumberConstants getNumberConstants() {
     ensureNumberConstants();

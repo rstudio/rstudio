@@ -113,6 +113,13 @@ import java.util.Date;
  * </tr>
  * 
  * <tr>
+ * <td><code>c</code></td>
+ * <td>standalone day of week</td>
+ * <td>Text</td>
+ * <td><code>Tuesday</code></td>
+ * </tr>
+ * 
+ * <tr>
  * <td><code>a</code></td>
  * <td>am/pm marker</td>
  * <td>Text</td>
