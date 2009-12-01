@@ -187,6 +187,7 @@
       <junit dir="@{test.out}" fork="yes" printsummary="yes"
              failureproperty="junit.failure" tempdir="@{test.out}">
         <jvmarg line="-Xmx768m" />
+        <jvmarg line="-Xss512k" />
         <jvmarg value="-Demma.coverage.out.file=@{test.emma.coverage}/coverage.emma" />
         <jvmarg value="-Demma.coverage.out.merge=true" />
         <sysproperty key="gwt.args" value="@{test.args}" />
