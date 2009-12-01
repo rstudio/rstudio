@@ -41,7 +41,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\common&quot;;..\prebuilt\ff35\include;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\WINNT_x86-msvc\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\caps&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\dom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\js&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\necko&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\string&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\widget&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpcom&quot;;&quot;..\..\..\..\plugin-sdks\gecko-sdks\gecko-1.9.1\include\xpconnect&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Warning;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;FIREFOXPLUGIN_EXPORTS;GWT_DEBUGLEVEL=Debugging;XPCOM_GLUE;XPCOM_GLUE_USE_NSPR;MOZILLA_STRICT_API;BROWSER_FF3"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
