@@ -25,24 +25,27 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConst
  * cell's size may be set independently. Each child widget can take up a subset
  * of its cell and can be aligned within it.
  * 
- * <h3>In UiBinder templates</h3>
- * 
+ * <h3>Use in UiBinder Templates</h3>
+ * <P>
  * When working with CellPanel subclasses in 
  * {@link com.google.gwt.uibinder.client.UiBinder UiBinder} templates, wrap
  * child widgets in <code>&lt;g:cell></code> elements. (Note the lower case
  * "c", meant to signal that the cell is not a runtime object, and so cannot
  * have a <code>ui:field</code> attribute.) Cell elements can have
- * attributes setting their height, width and alignment:
+ * attributes setting their height, width and alignment.
+ * <h4>&lt;g:cell> attributes</h4>
  * <p>
  * <dl>
  * <dt>horizontalAlignment
- * <dd>Values interpreted as the static members of {@link HorizontalAlignmentConstant}
+ * <dd>Interpreted as a static member of {@link HorizontalAlignmentConstant}
+ * and used as the <code>align</code> argument to {@link #setCellHorizontalAlignment}
  * <dt>verticalAlignment
- * <dd>Values interpreted as the static members of {@link VerticalAlignmentConstant}
+ * <dd>Interpreted as a static member of {@link VerticalAlignmentConstant}
+ * and used as the <code>align</code> argument to {@link #setCellVerticalAlignment}
  * <dt>width
- * <dd>Values used as the width argument to {@link #setCellWidth} 
+ * <dd>Used as the <code>width</code> argument to {@link #setCellWidth} 
  * <dt>height
- * <dd>Values used as the height argument to {@link #setCellHeight} 
+ * <dd>Used as the <code>height</code> argument to {@link #setCellHeight} 
  * </dl>
  * <p>
  * For example:<pre>

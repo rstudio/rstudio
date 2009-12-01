@@ -81,7 +81,7 @@ import com.google.gwt.user.client.DOM;
  * {@link #addStyleName(String)} for details.
  * </p>
  * 
- * <h3>In UiBinder templates</h3>
+ * <h3>Use in UiBinder Templates</h3>
  * <p>
  * Setter methods that follow JavaBean property conventions are exposed as
  * attributes in {@link com.google.gwt.uibinder.client.UiBinder UiBinder}

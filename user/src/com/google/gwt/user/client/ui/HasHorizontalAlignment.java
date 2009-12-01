@@ -21,11 +21,24 @@ import com.google.gwt.i18n.client.LocaleInfo;
 /**
  * Characteristic interface which indicates that a widget can be aligned
  * horizontally.
+ * 
+ * <h3>Use in UiBinder Templates</h3>
+ * 
+ * <p>
+ * The names of the static members of {@link HorizontalAlignmentConstant}
+ * can be used as values for a <code>horizontalAlignment</code> attribute
+ * of any widget that implements this interface. (In fact, this will work 
+ * for any widget method that takes a single  HorizontalAlignmentConstant value.)
+ * <p>
+ * For example,<pre>
+ * &lt;g:Label horizontalAlignment='ALIGN_RIGHT'>Hi there.&lt;/g:Label>
+ * </pre>
  */
 public interface HasHorizontalAlignment {
 
   /**
    * Horizontal alignment constant.
+   * 
    */
   public static class HorizontalAlignmentConstant {
     private String textAlignString;

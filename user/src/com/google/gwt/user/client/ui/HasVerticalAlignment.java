@@ -15,9 +15,24 @@
  */
 package com.google.gwt.user.client.ui;
 
+
 /**
  * Characteristic interface which indicates that a widget has an associated
  * vertical alignment.
+ * 
+ * <h3>Use in UiBinder Templates</h3>
+ * 
+ * <p>
+ * The names of the static members of {@link VerticalAlignmentConstant} can
+ * be used as values for a <code>verticalAlignment</code> attribute of any
+ * widget that implements this interface. (In fact, this will work for any
+ * widget method that takes a single VerticalAlignmentConstant value.)
+ * <p>
+ * For example,
+ * 
+ * <pre>
+ * &lt;g:VerticalPanel verticalAlignment='ALIGN_BOTTOM' />
+ * </pre>
  */
 public interface HasVerticalAlignment {
 
