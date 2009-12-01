@@ -34,33 +34,6 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     return "com.google.gwt.i18n.I18NTest_en";
   }
 
-  private int parse(String pattern, String toParse, int startIndex, Date output) {
-    DateTimeFormat fmt = DateTimeFormat.getFormat(pattern);
-    return fmt.parse(toParse, startIndex, output);
-  }
-
-  private String format(String pattern, Date toFormat) {
-    DateTimeFormat fmt = DateTimeFormat.getFormat(pattern);
-    return fmt.format(toFormat);
-  }
-
-  public void testParseConsumesAllCharacters() {
-    String toParse = "July 11, 1938";
-    DateTimeFormat longDateFormat = DateTimeFormat.getLongDateFormat();
-
-    Date actualDate = longDateFormat.parse(toParse);
-    String actualFormat = longDateFormat.format(actualDate);
-    assertEquals(toParse, actualFormat);
-
-    try {
-      String toParseMangled = toParse + " asdfasdfasdf";
-      longDateFormat.parse(toParseMangled);
-      fail("Should have thrown an exception on failure to parse");
-    } catch (IllegalArgumentException e) {
-      // Success.
-    }
-  }
-
   public void testAbutField() {
     Date date = new Date();
 
@@ -131,6 +104,15 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     assertEquals(2097 - 1900, date.getYear());
   }
 
+  public void testDayOfWeek() {
+    Date date = new Date();
+    
+    assertTrue(parse("EEE", "Wed", 0, date) > 0);
+    assertEquals(3, date.getDay());
+    assertTrue(parse("EEEE", "Thursday", 0, date) > 0);
+    assertEquals(4, date.getDay());
+  }
+
   public void testEnglishDate() {
     Date date = new Date();
 
@@ -165,6 +147,70 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     assertEquals(12, date.getMinutes());
     assertEquals(13, date.getSeconds());
     assertEquals(900, (date.getTime() % 1000));
+  }
+
+  public void testHourParsingFhh() {
+    Date date = new Date();
+
+    assertTrue(parse("hhmm", "0022", 0, date) > 0);
+    assertTrue(date.getHours() == 00);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmm", "1122", 0, date) > 0);
+    assertTrue(date.getHours() == 11);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmm", "1222", 0, date) > 0);
+    assertTrue(date.getHours() == 0);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmm", "2322", 0, date) > 0);
+    assertTrue(date.getHours() == 23);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmm", "2422", 0, date) > 0);
+    assertTrue(date.getHours() == 0);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmma", "0022am", 0, date) > 0);
+    assertTrue(date.getHours() == 00);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmma", "1122am", 0, date) > 0);
+    assertTrue(date.getHours() == 11);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmma", "1222am", 0, date) > 0);
+    assertTrue(date.getHours() == 0);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmma", "2322am", 0, date) > 0);
+    assertTrue(date.getHours() == 23);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmma", "2422am", 0, date) > 0);
+    assertTrue(date.getHours() == 0);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmma", "0022pm", 0, date) > 0);
+    assertTrue(date.getHours() == 12);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmma", "1122pm", 0, date) > 0);
+    assertTrue(date.getHours() == 23);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmma", "1222pm", 0, date) > 0);
+    assertTrue(date.getHours() == 12);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmma", "2322pm", 0, date) > 0);
+    assertTrue(date.getHours() == 23);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("hhmma", "2422pm", 0, date) > 0);
+    assertTrue(date.getHours() == 0);
+    assertTrue(date.getMinutes() == 22);
   }
 
   public void testHourParsingFHH() {
@@ -230,66 +276,65 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     assertEquals(22, date.getMinutes());
   }
 
-  public void testHourParsingFhh() {
+  public void testHourParsingFkk() {
     Date date = new Date();
-
-    assertTrue(parse("hhmm", "0022", 0, date) > 0);
+    assertTrue(parse("kkmm", "0022", 0, date) > 0);
     assertTrue(date.getHours() == 00);
     assertTrue(date.getMinutes() == 22);
 
-    assertTrue(parse("hhmm", "1122", 0, date) > 0);
+    assertTrue(parse("kkmm", "1122", 0, date) > 0);
     assertTrue(date.getHours() == 11);
     assertTrue(date.getMinutes() == 22);
 
-    assertTrue(parse("hhmm", "1222", 0, date) > 0);
-    assertTrue(date.getHours() == 0);
+    assertTrue(parse("kkmm", "1222", 0, date) > 0);
+    assertTrue(date.getHours() == 12);
     assertTrue(date.getMinutes() == 22);
 
-    assertTrue(parse("hhmm", "2322", 0, date) > 0);
+    assertTrue(parse("kkmm", "2322", 0, date) > 0);
     assertTrue(date.getHours() == 23);
     assertTrue(date.getMinutes() == 22);
 
-    assertTrue(parse("hhmm", "2422", 0, date) > 0);
+    assertTrue(parse("kkmm", "2422", 0, date) > 0);
     assertTrue(date.getHours() == 0);
     assertTrue(date.getMinutes() == 22);
 
-    assertTrue(parse("hhmma", "0022am", 0, date) > 0);
+    assertTrue(parse("kkmma", "0022am", 0, date) > 0);
     assertTrue(date.getHours() == 00);
     assertTrue(date.getMinutes() == 22);
 
-    assertTrue(parse("hhmma", "1122am", 0, date) > 0);
+    assertTrue(parse("kkmma", "1122am", 0, date) > 0);
     assertTrue(date.getHours() == 11);
     assertTrue(date.getMinutes() == 22);
 
-    assertTrue(parse("hhmma", "1222am", 0, date) > 0);
-    assertTrue(date.getHours() == 0);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("hhmma", "2322am", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("hhmma", "2422am", 0, date) > 0);
-    assertTrue(date.getHours() == 0);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("hhmma", "0022pm", 0, date) > 0);
+    assertTrue(parse("kkmma", "1222am", 0, date) > 0);
     assertTrue(date.getHours() == 12);
     assertTrue(date.getMinutes() == 22);
 
-    assertTrue(parse("hhmma", "1122pm", 0, date) > 0);
+    assertTrue(parse("kkmma", "2322am", 0, date) > 0);
     assertTrue(date.getHours() == 23);
     assertTrue(date.getMinutes() == 22);
 
-    assertTrue(parse("hhmma", "1222pm", 0, date) > 0);
+    assertTrue(parse("kkmma", "2422am", 0, date) > 0);
+    assertTrue(date.getHours() == 0);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("kkmma", "0022pm", 0, date) > 0);
     assertTrue(date.getHours() == 12);
     assertTrue(date.getMinutes() == 22);
 
-    assertTrue(parse("hhmma", "2322pm", 0, date) > 0);
+    assertTrue(parse("kkmma", "1122pm", 0, date) > 0);
     assertTrue(date.getHours() == 23);
     assertTrue(date.getMinutes() == 22);
 
-    assertTrue(parse("hhmma", "2422pm", 0, date) > 0);
+    assertTrue(parse("kkmma", "1222pm", 0, date) > 0);
+    assertTrue(date.getHours() == 12);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("kkmma", "2322pm", 0, date) > 0);
+    assertTrue(date.getHours() == 23);
+    assertTrue(date.getMinutes() == 22);
+
+    assertTrue(parse("kkmma", "2422pm", 0, date) > 0);
     assertTrue(date.getHours() == 0);
     assertTrue(date.getMinutes() == 22);
   }
@@ -357,67 +402,26 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     assertTrue(date.getMinutes() == 22);
   }
 
-  public void testHourParsingFkk() {
-    Date date = new Date();
-    assertTrue(parse("kkmm", "0022", 0, date) > 0);
-    assertTrue(date.getHours() == 00);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmm", "1122", 0, date) > 0);
-    assertTrue(date.getHours() == 11);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmm", "1222", 0, date) > 0);
-    assertTrue(date.getHours() == 12);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmm", "2322", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmm", "2422", 0, date) > 0);
-    assertTrue(date.getHours() == 0);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmma", "0022am", 0, date) > 0);
-    assertTrue(date.getHours() == 00);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmma", "1122am", 0, date) > 0);
-    assertTrue(date.getHours() == 11);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmma", "1222am", 0, date) > 0);
-    assertTrue(date.getHours() == 12);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmma", "2322am", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmma", "2422am", 0, date) > 0);
-    assertTrue(date.getHours() == 0);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmma", "0022pm", 0, date) > 0);
-    assertTrue(date.getHours() == 12);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmma", "1122pm", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmma", "1222pm", 0, date) > 0);
-    assertTrue(date.getHours() == 12);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmma", "2322pm", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
-
-    assertTrue(parse("kkmma", "2422pm", 0, date) > 0);
-    assertTrue(date.getHours() == 0);
-    assertTrue(date.getMinutes() == 22);
+  public void testInvalidDayAndMonth() {
+    DateTimeFormat fmt = DateTimeFormat.getFormat("MM/dd/yyyy");
+    try {
+      fmt.parseStrict("00/22/1999");
+      fail("Should have thrown an exception on failure to parse");
+    } catch (IllegalArgumentException e) {
+      // Success
+    }
+    try {
+      fmt.parseStrict("01/00/1999");
+      fail("Should have thrown an exception on failure to parse");
+    } catch (IllegalArgumentException e) {
+      // Success
+    }
+    try {
+      fmt.parseStrict("01/22/1999");
+      // success
+    } catch (IllegalArgumentException e) {
+      fail("Should succeed to parse");
+    }
   }
 
   public void testLeapYear() {
@@ -430,24 +434,6 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     assertTrue(parse("MMdd, yyyy", "0229, 2000", 0, date) > 0);
     assertTrue(date.getMonth() == 2 - 1);
     assertTrue(date.getDate() == 29);
-  }
-
-  public void testPartialParsing() {
-    // Only specify a date
-    DateTimeFormat fmt = DateTimeFormat.getFormat("MM-dd-yyyy");
-    Date dateActual = new Date(87, 10, 22);
-    Date dateOnly = fmt.parse("11-22-1987");
-    assertEquals(dateOnly.getHours(), 0);
-    assertEquals(dateOnly.getMinutes(), 0);
-    assertEquals(dateOnly.getSeconds(), 0);
-    assertEquals(dateOnly.getTime(), dateActual.getTime());
-
-    // Only specify a time, should use current date
-    fmt = DateTimeFormat.getFormat("hha");
-    dateOnly = fmt.parse("4PM");
-    assertEquals(dateOnly.getHours(), 16);
-    assertEquals(dateOnly.getMinutes(), 0);
-    assertEquals(dateOnly.getSeconds(), 0);
   }
 
   public void testLenientParsing() {
@@ -530,6 +516,52 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     assertEquals(0, yyFmt.parseStrict(sAmbNext, 0, date));
   }
 
+  public void testMonth() {
+    Date date = new Date(1980, 1, 1);
+    
+    assertTrue(parse("MM", "03", 0, date) > 0);
+    assertEquals(2, date.getMonth());
+    assertTrue(parse("MMM", "Feb", 0, date) > 0);
+    assertEquals(1, date.getMonth());
+    assertTrue(parse("MMMM", "July", 0, date) > 0);
+    assertEquals(6, date.getMonth());
+  }
+
+  public void testParseConsumesAllCharacters() {
+    String toParse = "July 11, 1938";
+    DateTimeFormat longDateFormat = DateTimeFormat.getLongDateFormat();
+
+    Date actualDate = longDateFormat.parse(toParse);
+    String actualFormat = longDateFormat.format(actualDate);
+    assertEquals(toParse, actualFormat);
+
+    try {
+      String toParseMangled = toParse + " asdfasdfasdf";
+      longDateFormat.parse(toParseMangled);
+      fail("Should have thrown an exception on failure to parse");
+    } catch (IllegalArgumentException e) {
+      // Success.
+    }
+  }
+
+  public void testPartialParsing() {
+    // Only specify a date
+    DateTimeFormat fmt = DateTimeFormat.getFormat("MM-dd-yyyy");
+    Date dateActual = new Date(87, 10, 22);
+    Date dateOnly = fmt.parse("11-22-1987");
+    assertEquals(dateOnly.getHours(), 0);
+    assertEquals(dateOnly.getMinutes(), 0);
+    assertEquals(dateOnly.getSeconds(), 0);
+    assertEquals(dateOnly.getTime(), dateActual.getTime());
+
+    // Only specify a time, should use current date
+    fmt = DateTimeFormat.getFormat("hha");
+    dateOnly = fmt.parse("4PM");
+    assertEquals(dateOnly.getHours(), 16);
+    assertEquals(dateOnly.getMinutes(), 0);
+    assertEquals(dateOnly.getSeconds(), 0);
+  }
+
   public void testRFC3339() {
     Date date = new Date();
 
@@ -574,6 +606,26 @@ public class DateTimeParse_en_Test extends GWTTestCase {
       // Make sure our parse captured the extra 520 milliseconds.
       assertEquals(520, date.getTime() % 1000);
     }
+  }
+
+  public void testStandloneDayOfWeek() {
+    Date date = new Date(1980, 1, 1);
+    
+    assertTrue(parse("ccc", "Wed", 0, date) > 0);
+    assertEquals(3, date.getDay());
+    assertTrue(parse("cccc", "Thursday", 0, date) > 0);
+    assertEquals(4, date.getDay());
+  }
+
+  public void testStandloneMonth() {
+    Date date = new Date(1980, 1, 1);
+    
+    assertTrue(parse("LL", "03", 0, date) > 0);
+    assertEquals(2, date.getMonth());
+    assertTrue(parse("LLL", "Feb", 0, date) > 0);
+    assertEquals(1, date.getMonth());
+    assertTrue(parse("LLLL", "July", 0, date) > 0);
+    assertEquals(6, date.getMonth());
   }
 
   public void testTimeZone() {
@@ -638,25 +690,13 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     assertTrue(date.getDate() == 02);
   }
 
-  public void testInvalidDayAndMonth() {
-    DateTimeFormat fmt = DateTimeFormat.getFormat("MM/dd/yyyy");
-    try {
-      fmt.parseStrict("00/22/1999");
-      fail("Should have thrown an exception on failure to parse");
-    } catch (IllegalArgumentException e) {
-      // Success
-    }
-    try {
-      fmt.parseStrict("01/00/1999");
-      fail("Should have thrown an exception on failure to parse");
-    } catch (IllegalArgumentException e) {
-      // Success
-    }
-    try {
-      fmt.parseStrict("01/22/1999");
-      // success
-    } catch (IllegalArgumentException e) {
-      fail("Should succeed to parse");
-    }
+  private String format(String pattern, Date toFormat) {
+    DateTimeFormat fmt = DateTimeFormat.getFormat(pattern);
+    return fmt.format(toFormat);
+  }
+
+  private int parse(String pattern, String toParse, int startIndex, Date output) {
+    DateTimeFormat fmt = DateTimeFormat.getFormat(pattern);
+    return fmt.parse(toParse, startIndex, output);
   }
 }

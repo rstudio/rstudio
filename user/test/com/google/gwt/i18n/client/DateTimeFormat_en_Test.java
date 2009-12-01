@@ -25,10 +25,59 @@ import java.util.Date;
  * Tests formatting functionality in {@link DateTimeFormat} for the English
  * language.
  */
+@SuppressWarnings("deprecation")
 public class DateTimeFormat_en_Test extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest";
+  }
+
+  public void test_ccc() {
+    Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
+    assertEquals("Thu", DateTimeFormat.getFormat("ccc").format(date));
+  }
+
+  public void test_cccc() {
+    Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
+    assertEquals("Thursday", DateTimeFormat.getFormat("cccc").format(date));
+  }
+
+  public void test_ccccc() {
+    Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
+    assertEquals("T", DateTimeFormat.getFormat("ccccc").format(date));
+  }
+
+  public void test_daylightTimeTransition() {
+    // US PST transitioned to PDT on 2006/4/2 2:00am, jump to 2006/4/2 3:00am.
+    // That's UTC time 2006/4/2 10:00am
+
+    TimeZoneConstants timeZoneData = GWT.create(TimeZoneConstants.class);
+    String str = timeZoneData.americaLosAngeles();
+    TimeZone usPacific = TimeZone.createTimeZone(str);
+
+    Date date = new Date();
+    date.setTime(Date.UTC(2006 - 1900, 3, 2, 9, 59, 0));
+    assertEquals("04/02/2006 01:59:00 PST", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
+    date.setTime(Date.UTC(2006 - 1900, 3, 2, 10, 01, 0));
+    assertEquals("04/02/2006 03:01:00 PDT", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
+    date.setTime(Date.UTC(2006 - 1900, 3, 2, 10, 0, 0));
+    assertEquals("04/02/2006 03:00:00 PDT", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
+
+    // US PDT transition to PST on 2006/10/29 2:00am, jump back to PDT
+    // 2006/4/2 1:00am
+    date.setTime(Date.UTC(2006 - 1900, 10 - 1, 29, 8, 59, 0));
+    assertEquals("10/29/2006 01:59:00 PDT", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
+    date.setTime(Date.UTC(2006 - 1900, 10 - 1, 29, 9, 01, 0));
+    assertEquals("10/29/2006 01:01:00 PST", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
+    date.setTime(Date.UTC(2006 - 1900, 10 - 1, 29, 9, 0, 0));
+    assertEquals("10/29/2006 01:00:00 PST", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
   }
 
   public void test_EEEEMMMddyy() {
@@ -52,6 +101,26 @@ public class DateTimeFormat_en_Test extends GWTTestCase {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
     assertEquals("1:10:10 PM", DateTimeFormat.getFormat("h:mm:ss a").format(
         date));
+  }
+
+  public void test_LL() {
+    Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
+    assertEquals("07", DateTimeFormat.getFormat("LL").format(date));
+  }
+
+  public void test_LLL() {
+    Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
+    assertEquals("Jul", DateTimeFormat.getFormat("LLL").format(date));
+  }
+
+  public void test_LLLL() {
+    Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
+    assertEquals("July", DateTimeFormat.getFormat("LLLL").format(date));
+  }
+
+  public void test_LLLLL() {
+    Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
+    assertEquals("J", DateTimeFormat.getFormat("LLLLL").format(date));
   }
 
   public void test_predefinedFormat() {
@@ -228,10 +297,59 @@ public class DateTimeFormat_en_Test extends GWTTestCase {
     assertEquals("13 '", DateTimeFormat.getFormat("HH ''").format(date));
   }
 
-  public void test_yyyyyMMMMM() {
-    Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
-    assertEquals("2006.J.27 AD 01:10 PM", DateTimeFormat.getFormat(
-        "yyyyy.MMMMM.dd GGG hh:mm aaa").format(date));
+  public void test_simepleTimezonev() {
+    TimeZone simpleTimeZone = TimeZone.createTimeZone(480);
+
+    Date date = new Date();
+    date.setTime(Date.UTC(2006 - 1900, 6, 27, 14, 10, 10));
+
+    assertEquals("07/27/2006 06:10:10 Etc/GMT+8", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss v").format(date, simpleTimeZone));
+
+    assertEquals("07/27/2006 06:10:10 Etc/GMT+8", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss vv").format(date, simpleTimeZone));
+
+    assertEquals("07/27/2006 06:10:10 Etc/GMT+8", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss vvv").format(date, simpleTimeZone));
+
+    assertEquals("07/27/2006 06:10:10 Etc/GMT+8", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss vvvv").format(date, simpleTimeZone));
+  }
+
+  public void test_simpleTimezonez() {
+    TimeZone simpleTimeZone = TimeZone.createTimeZone(420);
+    Date date = new Date();
+    date.setTime(Date.UTC(2006 - 1900, 6, 27, 13, 10, 10));
+
+    assertEquals("07/27/2006 06:10:10 UTC-7", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss z").format(date, simpleTimeZone));
+
+    assertEquals("07/27/2006 06:10:10 UTC-7", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss zz").format(date, simpleTimeZone));
+
+    assertEquals("07/27/2006 06:10:10 UTC-7", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss zzz").format(date, simpleTimeZone));
+
+    assertEquals("07/27/2006 06:10:10 UTC-7", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss zzzz").format(date, simpleTimeZone));
+  }
+
+  public void test_simpleTimezoneZ() {
+    TimeZone simpleTimeZone = TimeZone.createTimeZone(420);
+    Date date = new Date();
+    date.setTime(Date.UTC(2006 - 1900, 6, 27, 13, 10, 10));
+
+    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss Z").format(date, simpleTimeZone));
+
+    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss ZZ").format(date, simpleTimeZone));
+
+    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss ZZZ").format(date, simpleTimeZone));
+
+    assertEquals("07/27/2006 06:10:10 GMT-07:00", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss ZZZZ").format(date, simpleTimeZone));
   }
 
   public void test_timezonev() {
@@ -257,77 +375,6 @@ public class DateTimeFormat_en_Test extends GWTTestCase {
     assertEquals("07/27/2006 06:10:10 America/Los_Angeles",
         DateTimeFormat.getFormat("MM/dd/yyyy HH:mm:ss vvvv").format(date,
             usPacific));
-  }
-
-  public void test_simepleTimezonev() {
-    TimeZone simpleTimeZone = TimeZone.createTimeZone(480);
-
-    Date date = new Date();
-    date.setTime(Date.UTC(2006 - 1900, 6, 27, 14, 10, 10));
-
-    assertEquals("07/27/2006 06:10:10 Etc/GMT+8", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss v").format(date, simpleTimeZone));
-
-    assertEquals("07/27/2006 06:10:10 Etc/GMT+8", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss vv").format(date, simpleTimeZone));
-
-    assertEquals("07/27/2006 06:10:10 Etc/GMT+8", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss vvv").format(date, simpleTimeZone));
-
-    assertEquals("07/27/2006 06:10:10 Etc/GMT+8", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss vvvv").format(date, simpleTimeZone));
-  }
-
-  public void test_timezoneZ() {
-    TimeZoneConstants timeZoneData = GWT.create(TimeZoneConstants.class);
-    String str = timeZoneData.americaLosAngeles();
-    TimeZone usPacific = TimeZone.createTimeZone(str);
-
-    Date date = new Date();
-    date.setTime(Date.UTC(2006 - 1900, 6, 27, 13, 10, 10));
-
-    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss Z").format(date, usPacific));
-
-    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss ZZ").format(date, usPacific));
-
-    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss ZZZ").format(date, usPacific));
-
-    assertEquals("07/27/2006 06:10:10 GMT-07:00", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss ZZZZ").format(date, usPacific));
-
-    date.setTime(Date.UTC(2006 - 1900, 1, 27, 13, 10, 10));
-    assertEquals("02/27/2006 05:10:10 -0800", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss Z").format(date, usPacific));
-
-    assertEquals("02/27/2006 05:10:10 -0800", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss ZZ").format(date, usPacific));
-
-    assertEquals("02/27/2006 05:10:10 -0800", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss ZZZ").format(date, usPacific));
-
-    assertEquals("02/27/2006 05:10:10 GMT-08:00", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss ZZZZ").format(date, usPacific));
-  }
-
-  public void test_simpleTimezoneZ() {
-    TimeZone simpleTimeZone = TimeZone.createTimeZone(420);
-    Date date = new Date();
-    date.setTime(Date.UTC(2006 - 1900, 6, 27, 13, 10, 10));
-
-    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss Z").format(date, simpleTimeZone));
-
-    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss ZZ").format(date, simpleTimeZone));
-
-    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss ZZZ").format(date, simpleTimeZone));
-
-    assertEquals("07/27/2006 06:10:10 GMT-07:00", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss ZZZZ").format(date, simpleTimeZone));
   }
 
   public void test_timezonez() {
@@ -366,54 +413,44 @@ public class DateTimeFormat_en_Test extends GWTTestCase {
             usPacific));
   }
 
-  public void test_simpleTimezonez() {
-    TimeZone simpleTimeZone = TimeZone.createTimeZone(420);
-    Date date = new Date();
-    date.setTime(Date.UTC(2006 - 1900, 6, 27, 13, 10, 10));
-
-    assertEquals("07/27/2006 06:10:10 UTC-7", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss z").format(date, simpleTimeZone));
-
-    assertEquals("07/27/2006 06:10:10 UTC-7", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss zz").format(date, simpleTimeZone));
-
-    assertEquals("07/27/2006 06:10:10 UTC-7", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss zzz").format(date, simpleTimeZone));
-
-    assertEquals("07/27/2006 06:10:10 UTC-7", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss zzzz").format(date, simpleTimeZone));
-  }
-
-  public void test_daylightTimeTransition() {
-    // US PST transitioned to PDT on 2006/4/2 2:00am, jump to 2006/4/2 3:00am.
-    // That's UTC time 2006/4/2 10:00am
-
+  public void test_timezoneZ() {
     TimeZoneConstants timeZoneData = GWT.create(TimeZoneConstants.class);
     String str = timeZoneData.americaLosAngeles();
     TimeZone usPacific = TimeZone.createTimeZone(str);
 
     Date date = new Date();
-    date.setTime(Date.UTC(2006 - 1900, 3, 2, 9, 59, 0));
-    assertEquals("04/02/2006 01:59:00 PST", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
-    date.setTime(Date.UTC(2006 - 1900, 3, 2, 10, 01, 0));
-    assertEquals("04/02/2006 03:01:00 PDT", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
-    date.setTime(Date.UTC(2006 - 1900, 3, 2, 10, 0, 0));
-    assertEquals("04/02/2006 03:00:00 PDT", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
+    date.setTime(Date.UTC(2006 - 1900, 6, 27, 13, 10, 10));
 
-    // US PDT transition to PST on 2006/10/29 2:00am, jump back to PDT
-    // 2006/4/2 1:00am
-    date.setTime(Date.UTC(2006 - 1900, 10 - 1, 29, 8, 59, 0));
-    assertEquals("10/29/2006 01:59:00 PDT", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
-    date.setTime(Date.UTC(2006 - 1900, 10 - 1, 29, 9, 01, 0));
-    assertEquals("10/29/2006 01:01:00 PST", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
-    date.setTime(Date.UTC(2006 - 1900, 10 - 1, 29, 9, 0, 0));
-    assertEquals("10/29/2006 01:00:00 PST", DateTimeFormat.getFormat(
-        "MM/dd/yyyy HH:mm:ss z").format(date, usPacific));
+    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss Z").format(date, usPacific));
+
+    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss ZZ").format(date, usPacific));
+
+    assertEquals("07/27/2006 06:10:10 -0700", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss ZZZ").format(date, usPacific));
+
+    assertEquals("07/27/2006 06:10:10 GMT-07:00", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss ZZZZ").format(date, usPacific));
+
+    date.setTime(Date.UTC(2006 - 1900, 1, 27, 13, 10, 10));
+    assertEquals("02/27/2006 05:10:10 -0800", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss Z").format(date, usPacific));
+
+    assertEquals("02/27/2006 05:10:10 -0800", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss ZZ").format(date, usPacific));
+
+    assertEquals("02/27/2006 05:10:10 -0800", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss ZZZ").format(date, usPacific));
+
+    assertEquals("02/27/2006 05:10:10 GMT-08:00", DateTimeFormat.getFormat(
+        "MM/dd/yyyy HH:mm:ss ZZZZ").format(date, usPacific));
+  }
+
+  public void test_yyyyyMMMMM() {
+    Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
+    assertEquals("2006.J.27 AD 01:10 PM", DateTimeFormat.getFormat(
+        "yyyyy.MMMMM.dd GGG hh:mm aaa").format(date));
   }
   
   public void testPre1970Milliseconds() {

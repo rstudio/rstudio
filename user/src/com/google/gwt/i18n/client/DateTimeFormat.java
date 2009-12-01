@@ -50,6 +50,13 @@ import java.util.Date;
  * </tr>
  * 
  * <tr>
+ * <td><code>L</code></td>
+ * <td>standalone month in year</td>
+ * <td>Text or Number</td>
+ * <td><code>July (or) 07</code></td>
+ * </tr>
+ * 
+ * <tr>
  * <td><code>M</code></td>
  * <td>month in year</td>
  * <td>Text or Number</td>
@@ -185,7 +192,9 @@ import java.util.Date;
  * <dd>3 or more, use text, otherwise use number. (e.g. <code>"M"</code>
  * produces <code>"1"</code>, <code>"MM"</code> produces <code>"01"</code>,
  * <code>"MMM"</code> produces <code>"Jan"</code>, and <code>"MMMM"</code>
- * produces <code>"January"</code>.</dd>
+ * produces <code>"January"</code>.  Some pattern letters also treat a count
+ * of 5 specially, meaning a single-letter abbreviation: <code>L</code>,
+ * <code>M</code>, <code>E</code>, and <code>c</code>.</dd>
  * </dl>
  * 
  * <p>
@@ -407,9 +416,10 @@ public class DateTimeFormat {
   private static DateTimeFormat cachedShortDateTimeFormat;
 
   private static final int NUM_MILLISECONDS_IN_DAY = 24 * 60 * 60000;
-  private static final String PATTERN_CHARS = "GyMdkHmsSEDahKzZv";
+  private static final String PATTERN_CHARS = "GyMLdkHmsSEcDahKzZv";
 
-  private static final String NUMERIC_FORMAT_CHARS = "MydhHmsSDkK";
+  // Note: M & L must be the first two characters
+  private static final String NUMERIC_FORMAT_CHARS = "MLydhHmsSDkK";
 
   private static final String WHITE_SPACE = " \t\r\n";
 
@@ -918,8 +928,6 @@ public class DateTimeFormat {
    * Formats AM/PM field according to pattern specified.
    * 
    * @param buf where formatted string will be appended to
-   * @param count number of time pattern char repeats; this controls how a field
-   *          should be formatted
    * @param date hold the date object to be formatted
    */
   private void formatAmPm(StringBuffer buf, Date date) {
@@ -953,7 +961,9 @@ public class DateTimeFormat {
    */
   private void formatDayOfWeek(StringBuffer buf, int count, Date date) {
     int value = date.getDay();
-    if (count >= 4) {
+    if (count == 5) {
+      buf.append(dateTimeConstants.narrowWeekdays()[value]);
+    } else if (count == 4) {
       buf.append(dateTimeConstants.weekdays()[value]);
     } else {
       buf.append(dateTimeConstants.shortWeekdays()[value]);
@@ -1039,7 +1049,7 @@ public class DateTimeFormat {
         buf.append(dateTimeConstants.narrowMonths()[value]);
         break;
       case 4:
-        buf.append(dateTimeConstants.standaloneMonths()[value]);
+        buf.append(dateTimeConstants.months()[value]);
         break;
       case 3:
         buf.append(dateTimeConstants.shortMonths()[value]);
@@ -1236,7 +1246,8 @@ public class DateTimeFormat {
       return false;
     }
     int i = NUMERIC_FORMAT_CHARS.indexOf(part.text.charAt(0));
-    return (i > 0 || (i == 0 && part.count < 3));
+    // M & L (index 0 and 1) are only numeric if there are less than 3 chars
+    return (i > 1 || (i >= 0 && part.count < 3));
   }
 
   /**
@@ -1697,50 +1708,54 @@ public class DateTimeFormat {
     }
 
     switch (ch) {
-      case 'G': // 'G' - ERA
+      case 'G': // era
         value = matchString(text, start, dateTimeConstants.eras(), pos);
         cal.setEra(value);
         return true;
-      case 'M': // 'M' - MONTH
+      case 'M': // month
         return subParseMonth(text, pos, cal, value, start);
-      case 'E':
+      case 'L': // standalone month
+        return subParseStandaloneMonth(text, pos, cal, value, start);
+      case 'E': // day of week
         return subParseDayOfWeek(text, pos, start, cal);
-      case 'a': // 'a' - AM_PM
+      case 'c': // standalone day of week
+        return subParseStandaloneDay(text, pos, start, cal);
+      case 'a': // AM/PM
         value = matchString(text, start, dateTimeConstants.ampms(), pos);
         cal.setAmpm(value);
         return true;
-      case 'y': // 'y' - YEAR
+      case 'y': // year
         return subParseYear(text, pos, start, value, part, cal);
-      case 'd': // 'd' - DATE
+      case 'd': // day of month
         if (value <= 0) {
           return false;
         }
         cal.setDayOfMonth(value);
         return true;
-      case 'S': // 'S' - FRACTIONAL_SECOND
+      case 'S': // fractional seconds
         return subParseFractionalSeconds(value, start, pos[0], cal);
-      case 'h': // 'h' - HOUR (1..12)
+      case 'h': // hour (1..12)
         if (value == 12) {
           value = 0;
         }
         // fall through
-      case 'K': // 'K' - HOUR (0..11)
-      case 'H': // 'H' - HOUR_OF_DAY (0..23)
+      case 'K': // hour (0..11)
+      case 'H': // hour (0..23)
         cal.setHours(value);
         return true;
-      case 'k': // 'k' - HOUR_OF_DAY (1..24)
+      case 'k': // hour (1..24)
         cal.setHours(value);
         return true;
-      case 'm': // 'm' - MINUTE
+      case 'm': // minute
         cal.setMinutes(value);
         return true;
-      case 's': // 's' - SECOND
+      case 's': // second
         cal.setSeconds(value);
         return true;
 
-      case 'z': // 'z' - ZONE_OFFSET
-      case 'Z': // 'Z' - TIMEZONE_RFC
-      case 'v': // 'v' - TIMEZONE_GENERIC
+      case 'z': // time zone offset
+      case 'Z': // time zone RFC
+      case 'v': // time zone generic
         return subParseTimeZoneInGMT(text, start, pos, cal);
       default:
         return false;
@@ -1807,7 +1822,7 @@ public class DateTimeFormat {
   }
 
   /**
-   * Method subParseMonth parses Month field.
+   * Parses Month field.
    * 
    * @param text the time text to be parsed
    * @param pos Parse position
@@ -1827,6 +1842,72 @@ public class DateTimeFormat {
       value = matchString(text, start, dateTimeConstants.months(), pos);
       if (value < 0) { // count == 4 failed, now try count == 3.
         value = matchString(text, start, dateTimeConstants.shortMonths(), pos);
+      }
+      if (value < 0) {
+        return false;
+      }
+      cal.setMonth(value);
+      return true;
+    } else if (value > 0) {
+      cal.setMonth(value - 1);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Parses standalone day of the week field.
+   * 
+   * @param text the time text to be parsed
+   * @param pos Parse position
+   * @param start from where parse start
+   * @param cal DateRecord object that holds parsed value
+   * 
+   * @return <code>true</code> if parsing successful, otherwise
+   *         <code>false</code>
+   */
+  private boolean subParseStandaloneDay(String text, int[] pos, int start,
+      DateRecord cal) {
+    int value;
+    // 'c' - DAY_OF_WEEK
+    // Want to be able to parse both short and long forms.
+    // Try count == 4 (cccc) first:
+    value = matchString(text, start, dateTimeConstants.standaloneWeekdays(),
+        pos);
+    if (value < 0) {
+      value = matchString(text, start,
+          dateTimeConstants.standaloneShortWeekdays(), pos);
+    }
+    if (value < 0) {
+      return false;
+    }
+    cal.setDayOfWeek(value);
+    return true;
+  }
+
+  /**
+   * Parses a standalone month field.
+   * 
+   * @param text the time text to be parsed
+   * @param pos Parse position
+   * @param cal DateRecord object that will hold parsed value
+   * @param value numeric value if this field is expressed using numberic
+   *          pattern
+   * @param start from where parse start
+   * 
+   * @return <code>true</code> if parsing successful
+   */
+  private boolean subParseStandaloneMonth(String text, int[] pos,
+      DateRecord cal, int value, int start) {
+    // When month is symbols, i.e., LLL or LLLL, value will be -1.
+    if (value < 0) {
+      // Want to be able to parse both short and long forms.
+      // Try count == 4 first:
+      value = matchString(text, start,
+          dateTimeConstants.standaloneMonths(), pos);
+      if (value < 0) { // count == 4 failed, now try count == 3.
+        value = matchString(text, start,
+            dateTimeConstants.standaloneShortMonths(), pos);
       }
       if (value < 0) {
         return false;
