@@ -28,8 +28,8 @@ package com.google.gwt.uibinder.client;
  * the code generator at it.)
  *
  * @param <U> The type of the root object of the generated UI, typically a
- *          subclass of {@link com.google.gwt.dom.client.Element} or
- *          {@link com.google.gwt.user.client.ui.UIObject}
+ *          subclass of {@link com.google.gwt.dom.client.Element Element} or
+ *          {@link com.google.gwt.user.client.ui.UIObject UiObject}
  * @param <O> The type of the object that will own the generated UI
  */
 public interface UiBinder<U, O> {

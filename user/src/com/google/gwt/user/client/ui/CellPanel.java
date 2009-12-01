@@ -24,6 +24,37 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConst
  * A panel whose child widgets are contained within the cells of a table. Each
  * cell's size may be set independently. Each child widget can take up a subset
  * of its cell and can be aligned within it.
+ * 
+ * <h3>In UiBinder templates</h3>
+ * 
+ * When working with CellPanel subclasses in 
+ * {@link com.google.gwt.uibinder.client.UiBinder UiBinder} templates, wrap
+ * child widgets in <code>&lt;g:cell></code> elements. (Note the lower case
+ * "c", meant to signal that the cell is not a runtime object, and so cannot
+ * have a <code>ui:field</code> attribute.) Cell elements can have
+ * attributes setting their height, width and alignment:
+ * <p>
+ * <dl>
+ * <dt>horizontalAlignment
+ * <dd>Values interpreted as the static members of {@link HorizontalAlignmentConstant}
+ * <dt>verticalAlignment
+ * <dd>Values interpreted as the static members of {@link VerticalAlignmentConstant}
+ * <dt>width
+ * <dd>Values used as the width argument to {@link #setCellWidth} 
+ * <dt>height
+ * <dd>Values used as the height argument to {@link #setCellHeight} 
+ * </dl>
+ * <p>
+ * For example:<pre>
+ * &lt;g:HorizontalPanel>
+ *   &lt;g:cell width='5em' horizontalAlignment='ALIGN_RIGHT'>
+ *     &lt;g:Label ui:field='leftSide' />
+ *   &lt;/g:cell>
+ *   &lt;g:cell width='15em' horizontalAlignment='ALIGN_LEFT'>
+ *     &lt;g:Label ui:field='rightSide' />
+ *   &lt;/g:cell>
+ * &lt;/g:HorizontalPanel>
+ * </pre>
  */
 public abstract class CellPanel extends ComplexPanel {
 

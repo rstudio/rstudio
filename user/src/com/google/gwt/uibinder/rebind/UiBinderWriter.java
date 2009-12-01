@@ -920,7 +920,7 @@ public class UiBinderWriter {
 
   private void registerParsers() {
     // TODO(rjrjr): Allow third-party parsers to register themselves
-    // automagically, according to http://b/issue?id=1867118
+    // automagically
 
     addElementParser("com.google.gwt.dom.client.Element",
         "com.google.gwt.uibinder.elementparsers.DomElementParser");

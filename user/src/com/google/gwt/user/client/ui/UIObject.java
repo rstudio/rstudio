@@ -58,8 +58,8 @@ import com.google.gwt.user.client.DOM;
  * 
  * <h3>Style Name Specifics</h3>
  * <p>
- * Every <code>UIObject</code> has a <i>primary style name</i> that
- * identifies the key CSS style rule that should always be applied to it. Use
+ * Every <code>UIObject</code> has a <i>primary style name</i> that identifies
+ * the key CSS style rule that should always be applied to it. Use
  * {@link #setStylePrimaryName(String)} to specify an object's primary style
  * name. In most cases, the primary style name is set in a widget's constructor
  * and never changes again during execution. In the case that no primary style
@@ -69,9 +69,9 @@ import com.google.gwt.user.client.DOM;
  * <p>
  * More complex styling behavior can be achieved by manipulating an object's
  * <i>secondary style names</i>. Secondary style names can be added and removed
- * using {@link #addStyleName(String)} and {@link #removeStyleName(String)}.
- * The purpose of secondary style names is to associate a variety of CSS style
- * rules over time as an object progresses through different visual states.
+ * using {@link #addStyleName(String)} and {@link #removeStyleName(String)}. The
+ * purpose of secondary style names is to associate a variety of CSS style rules
+ * over time as an object progresses through different visual states.
  * </p>
  * 
  * <p>
@@ -80,17 +80,57 @@ import com.google.gwt.user.client.DOM;
  * name prefixed with the primary style name of the widget itself. See
  * {@link #addStyleName(String)} for details.
  * </p>
+ * 
+ * <h3>In UiBinder templates</h3>
+ * <p>
+ * Setter methods that follow JavaBean property conventions are exposed as
+ * attributes in {@link com.google.gwt.uibinder.client.UiBinder UiBinder}
+ * templates. For example, because UiObject implements {@link #setWidth(String)}
+ * you can set the width of any widget like so:
+ * 
+ * <pre>
+ * &lt;g:Label width='15em'>Hello there&lt;/g:Label></pre>
+ * 
+ * Generally speaking, values are parsed as if they were Java literals, so
+ * methods like {@link #setVisible(boolean)} are also available:
+ * 
+ * <pre>
+ * &lt;g:Label width='15em' visible='false'>Hello there&lt;/g:Label></pre>
+ * Enum properties work this way too. Imagine a Bagel widget with a handy Type
+ * enum and a setType(Type) method:
+ * 
+ * <pre>
+ * enum Type { poppy, sesame, raisin, jalapeno }
+ * 
+ * &lt;my:Bagel type='poppy' /></pre>
+ * 
+ * There is also special case handling for two common method signatures,
+ * <code>(int, int)</code> and <code>(double, {@link 
+ * com.google.gwt.dom.clientStyle.Unit Unit})</code>
+ * 
+ * <pre>
+ * &lt;g:Label pixelSize='100, 100'>Hello there&lt;/g:Label></pre>
+ * 
+ * Finally, a few UiObject methods get special handling. The debug id (see
+ * {@link #ensureDebugId}) of any UiObject can be set via the
+ * <code>debugId</code> attribute, and addtional style names and dependent style
+ * names can be set with the <code>addStyleNames</code> and
+ * <code>addStyleDependentNames</code> attributes.<pre>
+ * &lt;g:Label debugId='helloLabel' 
+ *     addStyleNames='pretty rounded big'>Hello there&lt;/g:Label></pre>
+ * 
+ * Style names can be space or comma separated.
  */
 public abstract class UIObject {
 
   /*
    * WARNING: For historical reasons, there are two Element classes being used
    * in this code. The dom.Element (com.google.gwt.dom.client.Element) class is
-   * explicitly imported, while user.Element (com.google.gwt.user.client.Element)
-   * is fully-qualified in the code.
+   * explicitly imported, while user.Element
+   * (com.google.gwt.user.client.Element) is fully-qualified in the code.
    * 
-   * All new methods should use dom.Element, because user.Element extends it
-   * but adds no methods.
+   * All new methods should use dom.Element, because user.Element extends it but
+   * adds no methods.
    */
 
   /**
@@ -113,7 +153,6 @@ public abstract class UIObject {
    * The implementation of the setDebugId method, which sets the id of the
    * {@link Element}s in this {@link UIObject}.
    */
-  @SuppressWarnings("unused")
   public static class DebugIdImplEnabled extends DebugIdImpl {
     @Override
     public void ensureDebugId(UIObject uiObject, String id) {
@@ -147,8 +186,8 @@ public abstract class UIObject {
   /**
    * <p>
    * Ensure that elem has an ID property set, which allows it to integrate with
-   * third-party libraries and test tools.  If  elem already has an ID, this
-   * method WILL override it.  The ID that you specify will be prefixed by the
+   * third-party libraries and test tools. If elem already has an ID, this
+   * method WILL override it. The ID that you specify will be prefixed by the
    * static string {@link #DEBUG_ID_PREFIX}.
    * </p>
    * 
@@ -238,8 +277,8 @@ public abstract class UIObject {
    * 
    * @param elem the element whose style is to be modified
    * @param style the secondary style name to be added or removed
-   * @param add <code>true</code> to add the given style, <code>false</code>
-   *          to remove it
+   * @param add <code>true</code> to add the given style, <code>false</code> to
+   *          remove it
    */
   protected static void setStyleName(Element elem, String style, boolean add) {
     if (elem == null) {
@@ -290,10 +329,10 @@ public abstract class UIObject {
     if (!classes) {
       return;
     }
-    
+
     var oldPrimaryStyle = classes[0];
     var oldPrimaryStyleLen = oldPrimaryStyle.length;
-   
+
     classes[0] = newPrimaryStyle;
     for (var i = 1, n = classes.length; i < n; i++) {
       var name = classes[i];
@@ -328,8 +367,8 @@ public abstract class UIObject {
   /**
    * Adds a secondary or dependent style name to this object. A secondary style
    * name is an additional style name that is, in HTML/CSS terms, included as a
-   * space-separated token in the value of the CSS <code>class</code>
-   * attribute for this object's root element.
+   * space-separated token in the value of the CSS <code>class</code> attribute
+   * for this object's root element.
    * 
    * <p>
    * The most important use for this method is to add a special kind of
@@ -337,8 +376,8 @@ public abstract class UIObject {
    * dependent style name, use {@link #addStyleDependentName(String)}, which
    * will prefix the 'style' argument with the result of
    * {@link #getStylePrimaryName()} (followed by a '-'). For example, suppose
-   * the primary style name is <code>gwt-TextBox</code>. If the following
-   * method is called as <code>obj.setReadOnly(true)</code>:
+   * the primary style name is <code>gwt-TextBox</code>. If the following method
+   * is called as <code>obj.setReadOnly(true)</code>:
    * </p>
    * 
    * <pre class="code">
@@ -637,8 +676,8 @@ public abstract class UIObject {
   /**
    * Sets whether this object is visible.
    * 
-   * @param visible <code>true</code> to show the object, <code>false</code>
-   *          to hide it
+   * @param visible <code>true</code> to show the object, <code>false</code> to
+   *          hide it
    */
   public void setVisible(boolean visible) {
     setVisible(getElement(), visible);
@@ -750,8 +789,8 @@ public abstract class UIObject {
    * method before attempting to call any other methods, and it may only be
    * called once.
    * 
-   * This method exists for backwards compatibility with pre-1.5 code.
-   * As of GWT 1.5, {@link #setElement(Element)} is the preferred method.
+   * This method exists for backwards compatibility with pre-1.5 code. As of GWT
+   * 1.5, {@link #setElement(Element)} is the preferred method.
    * 
    * @param elem the object's element
    */
