@@ -147,16 +147,16 @@ generate-install:: $(EXTENSION_OUTDIR) install-template.rdf
 	sed -e s/GWT_DEV_PLUGIN_VERSION/$(VERSION)/ install-template.rdf >$(INSTALL_RDF)
 
 linuxplatforms:
-	$(MAKE) BROWSER=ff3 ARCH=x86
-	$(MAKE) BROWSER=ff3+ ARCH=x86
-	$(MAKE) BROWSER=ff35 ARCH=x86
-	$(MAKE) BROWSER=ff3 ARCH=x86_64
-	$(MAKE) BROWSER=ff3+ ARCH=x86_64
-	$(MAKE) BROWSER=ff35 ARCH=x86_64
+	$(MAKE) lib BROWSER=ff3 ARCH=x86
+	$(MAKE) lib BROWSER=ff3+ ARCH=x86
+	$(MAKE) lib BROWSER=ff35 ARCH=x86
+	$(MAKE) lib BROWSER=ff3 ARCH=x86_64
+	$(MAKE) lib BROWSER=ff3+ ARCH=x86_64
+	$(MAKE) lib BROWSER=ff35 ARCH=x86_64
 
 macplatforms:
-	$(MAKE) BROWSER=ff3
-	$(MAKE) BROWSER=ff35
+	$(MAKE) lib BROWSER=ff3
+	$(MAKE) lib BROWSER=ff35
 
 SRCS =	\
 		ExternalWrapper.cpp \
