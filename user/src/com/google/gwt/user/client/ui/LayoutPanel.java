@@ -38,6 +38,69 @@ import com.google.gwt.layout.client.Layout.Layer;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.LayoutPanelExample}
  * </p>
+ * 
+ * <h3>Use in UiBinder Templates</h3>
+ * <p>
+ * LayoutPanel elements in {@link com.google.gwt.uibinder.client.UiBinder
+ * UiBinder} templates lay out their children with arbitrary constraints, using
+ * &lt;g:layer> elements. Each layer may have any of the following constraint
+ * attributes specified as CSS length attributes: <code>left</code>,
+ * <code>top</code>, <code>right</code>, <code>bottom</code>, <code>width</code>
+ * , and <code>height</code>.
+ * 
+ * <p>
+ * Precisely zero or two constraints are required for each axis (horizontal and
+ * vertial). Specifying no constraints implies that the child should fill that
+ * axis completely.
+ * 
+ * <p>
+ * The valid sets of horizontal constraints are:
+ * <dl>
+ * <dt>(none)
+ * <dd>Fill the parent's horizontal axis
+ * <dt>left, width
+ * <dd>Fixed width, positioned from parent's left edge
+ * <dt>right, width
+ * <dd>Fixed width, positioned from parent's right edge
+ * <dt>left, right
+ * <dd>Width implied by fixed distance from parent's left and right edges
+ * </dl>
+ * 
+ * <p>
+ * The valid sets of vertical constraints are:
+ * <dl>
+ * <dt>(none)
+ * <dd>Fill the parent's vertical axis
+ * <dt>top, height
+ * <dd>Fixed height, positioned from parent's top edge
+ * <dt>bottom, height
+ * <dd>Fixed height, positioned from parent's bottom edge
+ * <dt>top, bottom
+ * <dd>Height implied by fixed distance from parent's top and bottom edges
+ * </dl>
+ * 
+ * <p>
+ * The values of constraint attributes can be any valid <a
+ * href='http://www.w3.org/TR/CSS21/syndata.html#length-units'>CSS length</a>,
+ * such as <code>1px</code>, <code>3em</code>, or <code>0</code> (zero lengths require no
+ * units).
+ * 
+ * <p>
+ * For example:
+ * 
+ * <pre>
+ * &lt;g:LayoutPanel>
+ *   &lt;!-- No constraints causes the layer to fill the parent -->
+ *   &lt;g:layer>
+ *     &lt;g:Label>Lorem ipsum...&lt;/g:Label>
+ *   &lt;/g:layer>
+ *   &lt;!-- Position horizontally 25% from each edge;
+ *        Vertically 4px from the top and 10em tall. -->
+ *   &lt;g:layer left='25%' right='25%' top='4px' height='10em'>
+ *     &lt;g:Label>Header&lt;/g:Label>
+ *   &lt;/g:layer>
+ * &lt;/g:LayoutPanel>
+ * </pre>
  */
 public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
     RequiresResize, ProvidesResize {

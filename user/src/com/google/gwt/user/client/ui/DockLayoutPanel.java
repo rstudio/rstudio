@@ -35,6 +35,50 @@ import com.google.gwt.layout.client.Layout.Layer;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.DockLayoutPanelExample}
  * </p>
+ * 
+ * <h3>Use in UiBinder Templates</h3>
+ * <p>
+ * DockLayoutPanel elements in  
+ * {@link com.google.gwt.uibinder.client.UiBinder UiBinder} templates
+ * lay out their children in elements tagged with the cardinal directions,
+ * and center:
+ * 
+ * <p>
+ * <dl>
+ * <dt>&lt;g:center>
+ * <dt>&lt;g:north>
+ * <dt>&lt;g:south>
+ * <dt>&lt;g:west>
+ * <dt>&lt;g:east>
+ * </dl>
+ * 
+ * <p>
+ * Each child can hold only widget, and there can be only one &lt;g:center>.
+ * However, there can be any number of the directional children.
+ *<p>
+ * (Note that the tags of the child elements are not
+ * capitalized. This is meant to signal that they are not runtime objects, 
+ * and so cannot have a <code>ui:field</code> attribute.) 
+ * <p>
+ * For example:<pre>
+ * &lt;g:DockLayoutPanel unit='EM'>
+ *   &lt;g:north size='5'>
+ *     &lt;g:Label>Top&lt;/g:Label>
+ *   &lt;/g:north>
+ *   &lt;g:center>
+ *     &lt;g:Label>Body&lt;/g:Label>
+ *   &lt;/g:center>
+ *   &lt;g:west size='192'>
+ *     &lt;g:HTML>
+ *       &lt;ul>
+ *         &lt;li>Sidebar&lt;/li>
+ *         &lt;li>Sidebar&lt;/li>
+ *         &lt;li>Sidebar&lt;/li>
+ *       &lt;/ul>
+ *     &lt;/g:HTML>
+ *   &lt;/g:west>
+ * &lt;/g:DockLayoutPanel>
+ * </pre>
  */
 public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
     RequiresResize, ProvidesResize {

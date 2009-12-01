@@ -104,6 +104,40 @@ import java.util.List;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.MenuBarExample}
  * </p>
+ * 
+ * <h3>Use in UiBinder Templates</h3>
+ * <p>
+ * MenuBar elements in UiBinder template files can have a <code>vertical</code>
+ * boolean attribute (which defaults to false), and may have only MenuItem
+ * elements as children. MenuItems may contain HTML and MenuBars.
+ * <p>
+ * For example:
+ * 
+ * <pre>
+ * &lt;g:MenuBar>
+ *   &lt;g:MenuItem>Higgledy
+ *     &lt;g:MenuBar vertical="true">
+ *       &lt;g:MenuItem>able&lt;/g:MenuItem>
+ *       &lt;g:MenuItem>baker&lt;/g:MenuItem>
+ *       &lt;g:MenuItem>charlie&lt;/g:MenuItem>
+ *     &lt;/g:MenuBar>
+ *   &lt;/g:MenuItem>
+ *   &lt;g:MenuItem>Piggledy
+ *     &lt;g:MenuBar vertical="true">
+ *       &lt;g:MenuItem>foo&lt;/g:MenuItem>
+ *       &lt;g:MenuItem>bar&lt;/g:MenuItem>
+ *       &lt;g:MenuItem>baz&lt;/g:MenuItem>
+ *     &lt;/g:MenuBar>
+ *   &lt;/g:MenuItem>
+ *   &lt;g:MenuItem>&lt;b>Pop!&lt;/b>
+ *     &lt;g:MenuBar vertical="true">
+ *       &lt;g:MenuItem>uno&lt;/g:MenuItem>
+ *       &lt;g:MenuItem>dos&lt;/g:MenuItem>
+ *       &lt;g:MenuItem>tres&lt;/g:MenuItem>
+ *     &lt;/g:MenuBar>
+ *   &lt;/g:MenuItem>
+ * &lt;/g:MenuBar>
+ * </pre>
  */
 // Nothing we can do about MenuBar implementing PopupListener until next
 // release.

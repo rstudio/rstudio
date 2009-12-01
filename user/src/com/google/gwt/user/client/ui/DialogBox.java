@@ -79,6 +79,26 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.DialogBoxExample}
  * </p>
+ * 
+ * <h3>Use in UiBinder Templates</h3>
+ * <p>
+ * DialogBox elements in  
+ * {@link com.google.gwt.uibinder.client.UiBinder UiBinder} templates can 
+ * have one widget child and one &lt;g:caption> child. (Note the lower case
+ * "c", meant to signal that the caption is not a runtime object, and so cannot
+ * have a <code>ui:field</code> attribute.) The body of the
+ * caption can be html.
+ * <p>
+ * For example: <pre>
+ * &lt;g:DialogBox autoHide="true" modal="true">
+ *   &lt;g:caption>&lt;b>Caption text&lt;/b>&lt;/g:caption>
+ *   &lt;g:HTMLPanel>
+ *     Body text
+ *     &lt;g:Button ui:field='cancelButton'>Cancel&lt;/g:Button>
+ *     &lt;g:Button ui:field='okButton'>Okay&lt;/g:Button>
+ *   &lt;/g:HTMLPanel>
+ * &lt;/g:DialogBox>
+ * </pre>
  */
 @SuppressWarnings("deprecation")
 public class DialogBox extends DecoratedPopupPanel implements HasHTML,

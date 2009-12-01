@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -99,6 +100,38 @@ import com.google.gwt.user.client.Event;
  * </table>
  * </p>
  * 
+ * <h3>Use in UiBinder Templates</h3>
+ * 
+ * When working with CustomButton subclasses in 
+ * {@link com.google.gwt.uibinder.client.UiBinder UiBinder} templates, you
+ * can set text and assign ImageResources for their various faces via
+ * child elements:
+ * <p>
+ * <dl>
+ * <dt>&lt;g:upFace>
+ * <dt>&lt;g:downFace>
+ * <dt>&lt;g:upHoveringFace>
+ * <dt>&lt;g:downHoveringFace>
+ * <dt>&lt;g:upDisabledFace>
+ * <dt>&lt;g:downDisabledFace>
+ * </dl>
+ * 
+ * Each face element can take an optional <code>image</code> attribute
+ * and an html body. For example:<pre>
+ * &lt;ui:image field='downButton'/> &lt;!-- define an {@link ImageResource} -->
+ *
+ * &lt;g:PushButton ui:field='pushButton' enabled='true'>
+ *   &lt;g:upFace>
+ *     &lt;b>click me&lt;/b>
+ *   &lt;/gwt:upFace>
+ *   &lt;g:upHoveringFace>
+ *     &lt;b>Click ME!&lt;/b>
+ *   &lt;/gwt:upHoveringFace>
+ *   
+ *   &lt;g:downFace image='{downButton}'/>
+ *   &lt;g:downHoveringFace image='{downButton}'/>
+ * &lt;/g:PushButton>
+ * </pre>
  */
 public abstract class CustomButton extends ButtonBase {
   /**

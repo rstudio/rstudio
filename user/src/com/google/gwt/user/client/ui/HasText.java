@@ -18,6 +18,18 @@ package com.google.gwt.user.client.ui;
 /**
  * An object that implements this interface contains text, which can be set and
  * retrieved using these methods.
+ * 
+ * <h3>Use in UiBinder Templates</h3>
+ * <p>
+ * The body of an XML element representing a widget that implements
+ * HasText will be parsed as text and be used in a call to its
+ * {@link #setText(String)} method. HasText elements must only
+ * contain text. (This behavior is overridden for {@link HasHTML}
+ * widgets.)
+ * 
+ * <p>For example:<pre>
+ * &lt;g:Label>Hello.&lt;/g:Label>
+ * </pre>
  */
 public interface HasText {
 

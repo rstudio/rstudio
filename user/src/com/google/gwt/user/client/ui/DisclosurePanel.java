@@ -37,11 +37,15 @@ import java.util.Iterator;
  * A widget that consists of a header and a content panel that discloses the
  * content when a user clicks on the header.
  * 
- * <h3>CSS Style Rules</h3> <ul class="css"> <li>.gwt-DisclosurePanel { the
- * panel's primary style }</li> <li>.gwt-DisclosurePanel-open { dependent style
- * set when panel is open }</li> <li>.gwt-DisclosurePanel-closed { dependent
- * style set when panel is closed }</li>
- * 
+ * <h3>CSS Style Rules</h3> 
+ * <dl class="css"> 
+ * <dt>.gwt-DisclosurePanel 
+ * <dd>the panel's primary style 
+ * <dt>.gwt-DisclosurePanel-open 
+ * <dd> dependent style set when panel is open 
+ * <dt>.gwt-DisclosurePanel-closed 
+ * <dd> dependent style set when panel is closed
+ * </dl>
  * <p>
  * <img class='gallery' src='DisclosurePanel.png'/>
  * </p>
@@ -51,6 +55,29 @@ import java.util.Iterator;
  * selector:<br/>
  * .gwt-DisclosurePanel-open .header { ... }
  * </p>
+ * <h3>Use in UiBinder Templates</h3>
+ * <p>
+ * DisclosurePanel elements in  
+ * {@link com.google.gwt.uibinder.client.UiBinder UiBinder} templates can 
+ * have one widget child and one of two types of header elements. A 
+ * &lt;g:header> element can hold html, or a &lt;g:customHeader> element
+ * can hold a widget. (Note that the tags of the header elements are not
+ * capitalized. This is meant to signal that the head is not a runtime object, 
+ * and so cannot have a <code>ui:field</code> attribute.) 
+ * <p>
+ * For example:<pre>
+ * &lt;g:DisclosurePanel>
+ *   &lt;g:header>&lt;b>Text header&lt;/b>&lt;/gwt:caption>
+ *   &lt;g:Label>Widget body&lt;/g:Label>
+ * &lt;/g:DisclosurePanel>
+ *
+ * &lt;g:DisclosurePanel>
+ *   &lt;g:customeHeader>
+ *     &lt;g:Label>Widget header&lt;/g:Label>
+ *   &lt;/g:customeHeader>
+ *   &lt;g:Label>Widget body&lt;/g:Label>
+ * &lt;/g:DisclosurePanel>
+ * </pre>
  */
 @SuppressWarnings("deprecation")
 public final class DisclosurePanel extends Composite implements

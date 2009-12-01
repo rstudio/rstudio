@@ -19,6 +19,16 @@ package com.google.gwt.user.client.ui;
  * An object that implements this interface contains text, which can be set and
  * retrieved using these methods. The object's text can be set either as HTML or
  * as text.
+ * 
+ * <h3>Use in UiBinder Templates</h3>
+ * <p>
+ * The body of an XML element representing a widget that implements
+ * HasHTML will be parsed as HTML and be used in a call to its
+ * {@link #setHTML(String)} method.
+ * 
+ * <p>For example:<pre>
+ * &lt;g:PushButton>&lt;b>Click me!&lt;/b>&lt;/g:PushButton>
+ * </pre>
  */
 public interface HasHTML extends HasText {
 

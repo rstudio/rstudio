@@ -45,18 +45,47 @@ import java.util.Iterator;
  * </p>
  * 
  * <h3>CSS Style Rules</h3>
- * <ul class='css'>
- * <li>.gwt-TabLayoutPanel { the panel itself }</li>
- * <li>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabs { the tab bar element }</li>
- * <li>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTab { an individual tab }</li>
- * <li>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabInner { an element nested in
- * each tab (useful for styling) }</li>
- * </ul>
+ * <dl>
+ * <dt>.gwt-TabLayoutPanel <dd> the panel itself 
+ * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabs <dd> the tab bar element 
+ * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTab <dd> an individual tab 
+ * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabInner <dd> an element nested in
+ * each tab (useful for styling)
+ * </dl>
  * 
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.TabLayoutPanelExample}
- * </p>
+ * 
+ * <h3>Use in UiBinder Templates</h3>
+ * <p>
+ * A TabLayoutPanel element in a {@link com.google.gwt.uibinder.client.UiBinder
+ * UiBinder} template must have a <code>barHeight</code> attribute with a double
+ * value, and may have a <code>barUnit</code> attribute with a
+ * {@link com.google.gwt.dom.client.Style.Unit Style.Unit} value.
+ * <code>barUnit</code> defaults to PX.
+ * <p>
+ * The children of a TabLayoutPanel element are laid out in &lt;g:tab>
+ * elements. Each tab can have one widget child and one of two types of header
+ * elements. A &lt;g:header> element can hold html, or a &lt;g:customHeader>
+ * element can hold a widget. (Note that the tags of the header elements are
+ * not capitalized. This is meant to signal that the head is not a runtime
+ * object, and so cannot have a <code>ui:field</code> attribute.) 
+ * <p>
+ * For example:<pre>
+ * &lt;g:TabLayoutPanel barUnit='PX' barHeight='3'>
+ *  &lt;g:tab>
+ *    &lt;g:header size='7'>&lt;b>HTML&lt;/b> header&lt;/g:header>
+ *    &lt;g:Label>able&lt;/g:Label>
+ *  &lt;/g:tab>
+ *  &lt;g:tab>
+ *    &lt;g:customHeader size='7'>
+ *      &lt;g:Label>Custom header&lt;/g:Label>
+ *    &lt;/g:customHeader>
+ *    &lt;g:Label>baker&lt;/g:Label>
+ *  &lt;/g:tab>
+ * &lt;/g:TabLayoutPanel>
+ * </pre>
  */
 public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     ProvidesResize, IndexedPanel, HasBeforeSelectionHandlers<Integer>,
@@ -113,7 +142,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   private int selectedIndex = -1;
 
   /**
-   * Creates an empty tab panel. 
+   * Creates an empty tab panel.
    * 
    * @param barHeight the size of the tab bar
    * @param barUnit the unit in which the tab bar size is specified
@@ -250,8 +279,8 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   }
 
   /**
-   * Inserts a widget into the panel. If the Widget is already attached, it will be
-   * moved to the requested index.
+   * Inserts a widget into the panel. If the Widget is already attached, it will
+   * be moved to the requested index.
    * 
    * @param child the widget to be added
    * @param text the text to be shown on its tab
@@ -269,8 +298,8 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   }
 
   /**
-   * Inserts a widget into the panel. If the Widget is already attached, it will be
-   * moved to the requested index.
+   * Inserts a widget into the panel. If the Widget is already attached, it will
+   * be moved to the requested index.
    * 
    * @param child the widget to be added
    * @param text the text to be shown on its tab
@@ -281,8 +310,8 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   }
 
   /**
-   * Inserts a widget into the panel. If the Widget is already attached, it will be
-   * moved to the requested index.
+   * Inserts a widget into the panel. If the Widget is already attached, it will
+   * be moved to the requested index.
    * 
    * @param child the widget to be added
    * @param tab the widget to be placed in the associated tab
@@ -344,8 +373,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
     // Fire the before selection event, giving the recipients a chance to
     // cancel the selection.
-    BeforeSelectionEvent<Integer> event =
-      BeforeSelectionEvent.fire(this, index);
+    BeforeSelectionEvent<Integer> event = BeforeSelectionEvent.fire(this, index);
     if ((event != null) && event.isCanceled()) {
       return;
     }

@@ -32,7 +32,6 @@
   which are not part of XML. (The file is also available as 
   https://dl-ssl.google.com/gwt/DTD/xhtml.ent.)
   
-    
   Next, the bit in square brackets is even more optional. It shows how
   to add your own entities, in this case pulling in additional
   definitions for &point-left; and &point-right; from local file
