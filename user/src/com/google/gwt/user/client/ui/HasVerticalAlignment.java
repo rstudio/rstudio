@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-
 /**
  * Characteristic interface which indicates that a widget has an associated
  * vertical alignment.

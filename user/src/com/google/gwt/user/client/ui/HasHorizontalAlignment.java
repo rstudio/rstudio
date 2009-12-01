@@ -38,7 +38,6 @@ public interface HasHorizontalAlignment {
 
   /**
    * Horizontal alignment constant.
-   * 
    */
   public static class HorizontalAlignmentConstant {
     private String textAlignString;
