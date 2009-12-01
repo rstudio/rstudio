@@ -265,7 +265,7 @@ JSBool JavaObject::enumerate(JSContext* ctx, JSObject* obj, JSIterateOp op,
 }
 
 void JavaObject::finalize(JSContext* ctx, JSObject* obj) {
-  Debug::log(Debug::Debugging) << "JavaObject::finalize obj=" << obj
+  Debug::log(Debug::Spam) << "JavaObject::finalize obj=" << obj
       << " objId=" << JavaObject::getObjectId(ctx, obj) << Debug::flush;
   SessionData* data = JavaObject::getSessionData(ctx, obj);
   if (data) {
