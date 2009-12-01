@@ -177,7 +177,7 @@ static bool getTopWindow(nsIDOMWindow* win, nsIDOMWindowInternal** topWinRet,
         << Debug::flush;
     return false;
   }
-  *topWinRet = topWinInt;
+  NS_ADDREF(*topWinRet = topWinInt);
   return true;
 }
 
