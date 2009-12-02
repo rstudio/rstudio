@@ -18,6 +18,7 @@ package com.google.gwt.user.server.rpc;
 import static com.google.gwt.user.client.rpc.impl.AbstractSerializationStream.RPC_SEPARATOR_CHAR;
 
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
+import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.SerializableException;
 import com.google.gwt.user.client.rpc.SerializationException;
@@ -66,6 +67,24 @@ public class RPCTest extends TestCase {
 
   private static interface B {
     void method1();
+  }
+
+  /**
+   * Test error message for an out=of-range int value.
+   * 
+   * @see RPCTest#testDecodeBadIntegerValue()
+   */
+  private static class Wrapper implements IsSerializable {
+    byte value1;
+    char value2;
+    short value3;
+    int value4;
+    public Wrapper() { }
+  }
+
+  @SuppressWarnings("rpc-validation")
+  private static interface WrapperIF extends RemoteService {
+    void method1(Wrapper w);
   }
 
   private static final String VALID_ENCODED_REQUEST = ""
@@ -164,6 +183,90 @@ public class RPCTest extends TestCase {
       "1\uffff" + // interface name
       "2\uffff" + // method name
       "0\uffff"; // param count
+  
+  /**
+   * Tests that out-of-range or other illegal integer values generated
+   * by client-side serialization get a nested exception with a reasonable
+   * error message.
+   */
+  public void testDecodeBadIntegerValue() {
+    String requestBase = "" +
+        AbstractSerializationStream.SERIALIZATION_STREAM_VERSION +
+        RPC_SEPARATOR_CHAR + // version
+        "0" + RPC_SEPARATOR_CHAR + // flags
+        "6" + RPC_SEPARATOR_CHAR + // string table entry count
+        WrapperIF.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #1
+        "method1" + RPC_SEPARATOR_CHAR + // string table entry #2
+        "moduleBaseURL" + RPC_SEPARATOR_CHAR + // string table entry #3
+        "whitelistHashcode" + RPC_SEPARATOR_CHAR + // string table entry #4
+        Wrapper.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #5
+        Wrapper.class.getName() +
+        "/316143997" + RPC_SEPARATOR_CHAR + // string table entry #6
+        "3" + RPC_SEPARATOR_CHAR + // module base URL
+        "4" + RPC_SEPARATOR_CHAR + // whitelist hashcode
+        "1" + RPC_SEPARATOR_CHAR + // interface name
+        "2" + RPC_SEPARATOR_CHAR + // method name
+        "1" + RPC_SEPARATOR_CHAR + // param count
+        "5" + RPC_SEPARATOR_CHAR + // IntWrapper class name
+        "6" + RPC_SEPARATOR_CHAR; // IntWrapper signature
+    
+    // Valid values
+    String goodRequest = requestBase + "12" + RPC_SEPARATOR_CHAR + // byte
+    "345" + RPC_SEPARATOR_CHAR + // char
+    "678" + RPC_SEPARATOR_CHAR + // short
+    "9101112" + RPC_SEPARATOR_CHAR; // int
+    
+    RPC.decodeRequest(goodRequest); // should succeed
+    
+    // Create bad RPC messages with out of range, fractional, and non-numerical
+    // values for byte, char, short, and int fields.
+    for (int idx = 0; idx < 12; idx++) {
+      String b = "12";
+      String c = "345";
+      String s = "678";
+      String i = "9101112";
+      String message = null;
+      String badValue = null;
+      
+      // Choose type of bad value and expected error message string
+      switch (idx / 4) {
+        case 0:
+          badValue = "123456789123456789";
+          message = "out-of-range";
+          break;
+        case 1:
+          badValue = "1.25";
+          message = "fractional";
+          break;
+        case 2:
+          badValue = "123ABC";
+          message = "non-numerical";
+          break;
+      }
+      
+      // Choose field to hold bad value
+      switch (idx % 4) {
+        case 0: b = badValue; break;
+        case 1: c = badValue; break;
+        case 2: s = badValue; break;
+        case 3: i = badValue; break;
+      }
+      
+      // Form the request
+      String request = requestBase + b + RPC_SEPARATOR_CHAR + // byte
+          c + RPC_SEPARATOR_CHAR + // char
+          s + RPC_SEPARATOR_CHAR + // short
+          i + RPC_SEPARATOR_CHAR; // int
+      
+      // Check that request fails with the expected message
+      try {
+        RPC.decodeRequest(request);
+        fail();
+      } catch (IncompatibleRemoteServiceException e) {
+        assertTrue(e.getMessage().contains(message));
+      }
+    }
+  }
 
   /**
    * Tests that seeing obsolete RPC formats throws an

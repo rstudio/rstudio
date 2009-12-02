@@ -457,12 +457,18 @@ public final class ServerSerializationStreamReader extends
   }
 
   public byte readByte() throws SerializationException {
-    return Byte.parseByte(extract());
+    String value = extract();
+    try {
+      return Byte.parseByte(value);
+    } catch (NumberFormatException e) {
+      throw getNumberFormatException(value, "byte",
+          Byte.MIN_VALUE, Byte.MAX_VALUE);
+    }
   }
 
   public char readChar() throws SerializationException {
     // just use an int, it's more foolproof
-    return (char) Integer.parseInt(extract());
+    return (char) readInt();
   }
 
   public double readDouble() throws SerializationException {
@@ -474,7 +480,13 @@ public final class ServerSerializationStreamReader extends
   }
 
   public int readInt() throws SerializationException {
-    return Integer.parseInt(extract());
+    String value = extract();
+    try {
+      return Integer.parseInt(value);
+    } catch (NumberFormatException e) {
+      throw getNumberFormatException(value, "int",
+          Integer.MIN_VALUE, Integer.MAX_VALUE);
+    }
   }
 
   public long readLong() throws SerializationException {
@@ -484,7 +496,13 @@ public final class ServerSerializationStreamReader extends
   }
 
   public short readShort() throws SerializationException {
-    return Short.parseShort(extract());
+    String value = extract();
+    try {
+      return Short.parseShort(value);
+    } catch (NumberFormatException e) {
+      throw getNumberFormatException(value, "short",
+          Short.MIN_VALUE, Short.MAX_VALUE);
+    }
   }
 
   public String readString() throws SerializationException {
@@ -770,6 +788,36 @@ public final class ServerSerializationStreamReader extends
     } catch (IndexOutOfBoundsException e) {
       throw new SerializationException("Too few tokens in RPC request", e);
     }
+  }
+  
+  /**
+   * Returns a suitable NumberFormatException with an explanatory message
+   * when a numerical value cannot be parsed according to its expected
+   * type.
+   *  
+   * @param value the value as read from the RPC stream
+   * @param type the name of the expected type
+   * @param minValue the smallest valid value for the expected type
+   * @param maxValue the largest valid value for the expected type
+   * @return a NumberFormatException with an explanatory message
+   */
+  private NumberFormatException getNumberFormatException(String value,
+      String type, double minValue, double maxValue) {
+    String message = "a non-numerical value";
+    try {
+      // Check the field contents in order to produce a more comprehensible
+      // error message
+      double d = Double.parseDouble(value);
+      if (d < minValue || d > maxValue) {
+        message = "an out-of-range value";
+      } else if (d != Math.floor(d)) {
+        message = "a fractional value";
+      }
+    } catch (NumberFormatException e2) {
+    }
+
+    return new NumberFormatException("Expected type '" + type + "' but received " +
+        message + ": " + value);
   }
 
   /**
