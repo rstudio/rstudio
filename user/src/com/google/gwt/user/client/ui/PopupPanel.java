@@ -145,6 +145,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
      */
     private boolean glassShowing;
 
+    private HandlerRegistration resizeRegistration;
+
     /**
      * Create a new {@link ResizeAnimation}.
      * 
@@ -276,14 +278,19 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         if (curPanel.isGlassEnabled) {
           Document.get().getBody().appendChild(curPanel.glass);
           impl.onShow(curPanel.glass);
-          glassShowing = true;
 
-          Window.addResizeHandler(curPanel.glassResizer);
+          resizeRegistration = Window.addResizeHandler(curPanel.glassResizer);
           curPanel.glassResizer.onResize(null);
+
+          glassShowing = true;
         }
       } else if (glassShowing) {
         Document.get().getBody().removeChild(curPanel.glass);
         impl.onHide(curPanel.glass);
+
+        resizeRegistration.removeHandler();
+        resizeRegistration = null;
+
         glassShowing = false;
       }
     }
