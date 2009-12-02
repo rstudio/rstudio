@@ -25,7 +25,6 @@ import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
-import com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.FieldWriter;
 import com.google.gwt.uibinder.rebind.MockMortalLogger;
@@ -44,6 +43,7 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -89,18 +89,22 @@ class ElementParserTester {
   final ElementParser parser;
 
   @SuppressWarnings("deprecation")
-  ElementParserTester(String parsedTypeName, ElementParser parser)
-      throws UnableToCompleteException {
+  ElementParserTester(String parsedTypeName, ElementParser parser,
+      Resource... moreJava) throws UnableToCompleteException {
     this.parser = parser;
     String templatePath = "TemplatePath.ui.xml";
     String implName = "ImplClass";
+    Set<Resource> uiResources = getUiResources();
+    uiResources.addAll(Arrays.asList(moreJava));
     CompilationState state = CompilationStateBuilder.buildFrom(createLogger(),
-        getUiResources());
+        uiResources);
     types = state.getTypeOracle();
 
+    // Fully qualified to avoid deprecation warning on the import line
+    com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers bundleParsers = new com.google.gwt.uibinder.attributeparsers.BundleAttributeParsers(
+        types, logger, null, templatePath, null);
     elemProvider = new XMLElementProviderImpl(new AttributeParsers(types, null,
-        logger), new BundleAttributeParsers(types, logger, null, templatePath,
-        null), types, logger);
+        logger), bundleParsers, types, logger);
 
     fieldManager = new FieldManager(types, logger);
     JClassType baseType = types.findType("my.Ui.BaseClass");
@@ -113,6 +117,17 @@ class ElementParserTester {
     parsedType = types.findType(parsedTypeName);
   }
 
+  public XMLElement getElem(String string, String tag) throws SAXException,
+      IOException {
+    Document doc = docHelper.documentFor(string);
+    Element w3cElem = (Element) doc.getDocumentElement().getElementsByTagName(
+        tag).item(0);
+    Assert.assertNotNull(String.format(
+        "Expected to find <%s> element in test DOM", tag), w3cElem);
+    XMLElement elem = elemProvider.get(w3cElem);
+    return elem;
+  }
+
   public FieldWriter parse(String xml) throws UnableToCompleteException,
       SAXException, IOException {
 
@@ -122,19 +137,9 @@ class ElementParserTester {
     b.append(xml);
     b.append("</ui:UiBinder>");
 
-    parser.parse(getElem(b.toString()), FIELD_NAME, parsedType, writer);
-    return fieldManager.lookup(FIELD_NAME);
-  }
-
-  private XMLElement getElem(String string) throws SAXException, IOException {
-    Document doc = docHelper.documentFor(string);
     String tag = "g:" + parsedType.getName();
-    Element w3cElem = (Element) doc.getDocumentElement().getElementsByTagName(
-        tag).item(0);
-    Assert.assertNotNull(String.format(
-        "Expected to find <%s> element in test DOM", tag), w3cElem);
-    XMLElement elem = elemProvider.get(w3cElem);
-    return elem;
+    parser.parse(getElem(b.toString(), tag), FIELD_NAME, parsedType, writer);
+    return fieldManager.lookup(FIELD_NAME);
   }
 
   private Set<Resource> getUiResources() {

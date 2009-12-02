@@ -79,6 +79,7 @@ public class UiJavaResources {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
       code.append("public class DialogBox extends Widget {\n");
+      code.append("  public DialogBox(boolean autoHide, boolean modal) {} ");
       code.append("}\n");
       return code;
     }

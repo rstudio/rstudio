@@ -534,6 +534,11 @@
 
 	<gwt:ToggleButton ui:field='toggle'>Hi mom</gwt:ToggleButton>
 
+    <demo:FooDialog ui:field='fooDialog'>
+      <gwt:caption>Custom dialog am I</gwt:caption>
+      <gwt:Label>body</gwt:Label>
+    </demo:FooDialog>
+
     <h2>How to use the debugId, addStyleNames, addDependentStyleNames attributes</h2>
     <p>You can use the <strong>debugId</strong>, <strong>addStyleNames</strong>, and <strong>addDependentStyleNames</strong>
        attributes on any widget that extends UIObject.

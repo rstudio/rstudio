@@ -182,6 +182,13 @@ public class UiBinderTest extends GWTTestCase {
   public void testCustomButtonBody() {
     assertEquals("Hi mom", widgetUi.toggle.getText());
   }
+  
+  public void testCustomDialogBox() {
+    assertEquals("Custom dialog am I", widgetUi.fooDialog.getText());
+    Widget body = widgetUi.fooDialog.iterator().next();
+    assertTrue(body instanceof Label);
+    assertEquals("body", ((Label)body).getText());
+  }
 
   public void testDomAccessAndComputedAttributeOnPlaceholderedElement() {
     WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);

@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.uibinder.rebind.FieldWriter;
 
 import junit.framework.TestCase;
@@ -31,6 +32,20 @@ import java.util.Iterator;
 public class DialogBoxParserTest extends TestCase {
 
   private static final String PARSED_TYPE = "com.google.gwt.user.client.ui.DialogBox";
+
+  private static final MockJavaResource DIALOG_SUBCLASS = new MockJavaResource(
+      "my.MyDialogBox") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package my;\n");
+      code.append("import com.google.gwt.user.client.ui.DialogBox;\n");
+      code.append("public class MyDialogBox extends DialogBox {\n");
+      code.append("  public MyDialogBox() { super(false, true); }");
+      code.append("}\n");
+      return code;
+    }
+  };
 
   private ElementParserTester tester;
 
@@ -143,7 +158,7 @@ public class DialogBoxParserTest extends TestCase {
       assertNotNull(tester.logger.died);
     }
   }
-  
+
   public void testBadElemContent() throws SAXException, IOException {
     StringBuffer b = new StringBuffer();
 
@@ -158,7 +173,7 @@ public class DialogBoxParserTest extends TestCase {
       assertNotNull(tester.logger.died);
     }
   }
-  
+
   public void testBadTextContent() throws SAXException, IOException {
     StringBuffer b = new StringBuffer();
 
@@ -174,5 +189,41 @@ public class DialogBoxParserTest extends TestCase {
     } catch (UnableToCompleteException e) {
       assertNotNull(tester.logger.died);
     }
+  }
+
+  public void testSubclassOkay() throws UnableToCompleteException,
+      SAXException, IOException {
+    DialogBoxParser parser = new DialogBoxParser();
+    String typeName = "my.MyDialogBox";
+    tester = new ElementParserTester(typeName, parser,
+        DIALOG_SUBCLASS);
+
+    StringBuffer b = new StringBuffer();
+
+    b.append("<ui:UiBinder xmlns:ui='" + ElementParserTester.BINDER_URI + "'");
+    b.append("    xmlns:my='urn:import:my'");
+    b.append("    xmlns:g='urn:import:com.google.gwt.user.client.ui'>");
+    b.append("  <my:MyDialogBox>");
+    b.append("    <g:caption>Hello, I <b>caption</b>you.</g:caption>");
+    b.append("    <g:Label>And your little dog, too!</g:Label>");
+    b.append("  </my:MyDialogBox> ");
+    b.append("</ui:UiBinder>");
+    
+    String[] expected = {
+        "fieldName.setHTML(\"Hello, I <b>caption</b>you.\");",
+        "fieldName.setWidget(<g:Label>);",};
+
+    parser.parse(tester.getElem(b.toString(), "my:MyDialogBox"), "fieldName", 
+        tester.parsedType, tester.writer);
+    FieldWriter w = tester.fieldManager.lookup("fieldName");
+    
+    assertNull(w.getInitializer());
+
+    Iterator<String> i = tester.writer.statements.iterator();
+    for (String e : expected) {
+      assertEquals(e, i.next());
+    }
+    assertFalse(i.hasNext());
+    assertNull(tester.logger.died);
   }
 }

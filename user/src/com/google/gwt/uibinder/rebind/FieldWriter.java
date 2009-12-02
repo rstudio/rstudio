@@ -42,6 +42,9 @@ public interface FieldWriter {
   // this will need to become a set
   JClassType getAssignableType();
 
+  /**
+   * @return the custom initializer for this field, or null if it is not set
+   */
   String getInitializer();
 
   /**

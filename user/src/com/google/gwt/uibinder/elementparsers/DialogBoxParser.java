@@ -27,18 +27,15 @@ import com.google.gwt.user.client.ui.DialogBox;
 public class DialogBoxParser implements ElementParser {
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
-
-    String autoHide = elem.consumeBooleanAttribute("autoHide", false);
-    String modal = elem.consumeBooleanAttribute("modal", true);
-
+    
     String caption = null;
     String body = null;
 
     for (XMLElement child : elem.consumeChildElements()) {
       if ("caption".equals(child.getLocalName())) {
         if (caption != null) {
-          writer.die("In %s, may have only one <%s:caption>",
-              elem, elem.getPrefix());
+          writer.die("In %s, may have only one <%s:caption>", elem,
+              elem.getPrefix());
         }
 
         HtmlInterpreter interpreter = HtmlInterpreter.newInterpreterForUiObject(
@@ -53,17 +50,34 @@ public class DialogBoxParser implements ElementParser {
           writer.die("In %s, found non-widget %s", elem, child);
         }
         body = writer.parseElementToField(child);
-     }
+      }
     }
+
+    handleConstructorArgs(elem, fieldName, type, writer);
     
-    writer.setFieldInitializerAsConstructor(fieldName,
-        writer.getOracle().findType(DialogBox.class.getCanonicalName()),
-        autoHide, modal);
     if (caption != null) {
       writer.addStatement("%s.setHTML(\"%s\");", fieldName, caption);
     }
     if (body != null) {
       writer.addStatement("%s.setWidget(%s);", fieldName, body);
+    }
+  }
+
+  /**
+   * If this is DialogBox (not a subclass), parse constructor args
+   * and generate the constructor call. For subtypes do nothing.
+   */
+  private void handleConstructorArgs(XMLElement elem, String fieldName,
+      JClassType type, UiBinderWriter writer) throws UnableToCompleteException {
+    boolean custom = !type.equals(writer.getOracle().findType(
+        DialogBox.class.getCanonicalName()));
+    if (!custom) {
+      String autoHide = elem.consumeBooleanAttribute("autoHide", false);
+      String modal = elem.consumeBooleanAttribute("modal", true);
+
+      writer.setFieldInitializerAsConstructor(fieldName,
+          writer.getOracle().findType(DialogBox.class.getCanonicalName()),
+          autoHide, modal);
     }
   }
 }

@@ -152,6 +152,7 @@ public class WidgetBasedUi extends Composite {
   @UiField DivElement bundledDivLegacy;
   @UiField ToggleButton toggle;
   @UiField HTML styleLess;
+  @UiField FooDialog fooDialog;
 
   public WidgetBasedUi() {
     external.style().ensureInjected();
