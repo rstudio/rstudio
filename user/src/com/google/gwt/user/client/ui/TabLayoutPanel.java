@@ -108,7 +108,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       // heights, the shorter ones will top-align, rather than bottom-align,
       // which is what we would want. display:inline-block fixes this, but
       // needs lots of cross-browser hacks to work properly.
-      getElement().getStyle().setProperty("float", "left");
+      getElement().getStyle().setProperty("cssFloat", "left");
     }
 
     public HandlerRegistration addClickHandler(ClickHandler handler) {
