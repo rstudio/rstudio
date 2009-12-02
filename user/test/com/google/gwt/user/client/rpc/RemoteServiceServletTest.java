@@ -126,6 +126,29 @@ public class RemoteServiceServletTest extends RpcTestBase {
     });
   }
 
+  /**
+   * Verify behavior when the RPC method throws a RuntimeException declared on
+   * the RemoteService interface.
+   */
+  public void testDeclaredRuntimeException() {
+    RemoteServiceServletTestServiceAsync service = getAsyncService();
+
+    delayTestFinishForRpc();
+
+    service.throwDeclaredRuntimeException(new AsyncCallback<Void>() {
+
+      public void onFailure(Throwable caught) {
+        assertTrue(caught instanceof NullPointerException);
+        assertEquals("expected", caught.getMessage());
+        finishTest();
+      }
+
+      public void onSuccess(Void result) {
+        fail();
+      }
+    });
+  }
+
   public void testManualSend() throws RequestException {
     RemoteServiceServletTestServiceAsync service = getAsyncService();
 
@@ -168,6 +191,15 @@ public class RemoteServiceServletTest extends RpcTestBase {
   }
 
   /**
+   * Test that the policy strong name is available from browser-side Java code.
+   */
+  public void testPolicyStrongName() {
+    String policy = ((ServiceDefTarget) getAsyncService()).getSerializationPolicyName();
+    assertNotNull(policy);
+    assertTrue(!policy.isEmpty());
+  }
+
+  /**
    * Ensure that each doFoo method is called.
    */
   public void testRpcRequestBuilder() {
@@ -205,38 +237,6 @@ public class RemoteServiceServletTest extends RpcTestBase {
       }
     });
     assertTrue(req.isPending());
-  }
-
-  /**
-   * Verify behavior when the RPC method throws a RuntimeException declared on
-   * the RemoteService interface.
-   */
-  public void testDeclaredRuntimeException() {
-    RemoteServiceServletTestServiceAsync service = getAsyncService();
-
-    delayTestFinishForRpc();
-
-    service.throwDeclaredRuntimeException(new AsyncCallback<Void>() {
-
-      public void onFailure(Throwable caught) {
-        assertTrue(caught instanceof NullPointerException);
-        assertEquals("expected", caught.getMessage());
-        finishTest();
-      }
-
-      public void onSuccess(Void result) {
-        fail();
-      }
-    });
-  }
-
-  /**
-   * Test that the policy strong name is available from browser-side Java code.
-   */
-  public void testPolicyStrongName() {
-    String policy = ((ServiceDefTarget) getAsyncService()).getSerializationPolicyName();
-    assertNotNull(policy);
-    assertTrue(!policy.isEmpty());
   }
 
   /**
