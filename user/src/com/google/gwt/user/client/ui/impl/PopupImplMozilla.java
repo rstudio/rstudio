@@ -15,10 +15,12 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
-import com.google.gwt.user.client.Element;
 
 /**
  * Implementation class used by {@link com.google.gwt.user.client.ui.PopupPanel}.
@@ -87,7 +89,7 @@ public class PopupImplMozilla extends PopupImpl {
       // of underlying scrollbars. To get around this problem, we introduce an
       // inner div which acts as the new containing element for the PopupPanel,
       // and this element is the one to which all styling is applied to.
-      DOM.setInnerHTML(outerElem, "<div></div>");
+      outerElem.setInnerHTML("<div></div>");
 
       // Mozilla determines the default stacking order for heavyweight elements
       // by their order on the page. If the PopupPanel is declared before
@@ -99,7 +101,7 @@ public class PopupImplMozilla extends PopupImpl {
       // the PopupPanel becomes the highest element in the stacking order.
       DeferredCommand.addCommand(new Command() {
         public void execute() {
-          DOM.setStyleAttribute(outerElem, "overflow", "auto");
+          outerElem.getStyle().setOverflow(Overflow.AUTO);
         }
       });
     }
@@ -109,7 +111,7 @@ public class PopupImplMozilla extends PopupImpl {
 
   @Override
   public Element getContainerElement(Element outerElem) {
-    return isFF2Mac ? DOM.getFirstChild(outerElem) : outerElem;
+    return isFF2Mac ? outerElem.getFirstChildElement() : outerElem;
   }
 
   @Override
@@ -120,7 +122,7 @@ public class PopupImplMozilla extends PopupImpl {
   @Override
   public void setClip(Element popup, String rect) {
     super.setClip(popup, rect);
-    DOM.setStyleAttribute(popup, "display", "none");
-    DOM.setStyleAttribute(popup, "display", "");
+    popup.getStyle().setDisplay(Display.NONE);
+    popup.getStyle().clearDisplay();
   }
 }

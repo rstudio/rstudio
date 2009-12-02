@@ -18,6 +18,7 @@ a:link, a:visited, a:hover, a:active {
 .gwt-DialogBox {
   background-color: white;
   border: 1px solid #666;
+  z-index: 2;
 }
 .gwt-DialogBox .Caption {
   background: #d3d6dd url(gradient_bg_th.png) repeat-x bottom left;
@@ -33,10 +34,11 @@ a:link, a:visited, a:hover, a:active {
 .gwt-DialogBox .gwt-Button {
   margin: 10px;
 }
-.gwt-PopupGlass {
+.gwt-PopupPanelGlass {
   background-color: #000;
   opacity: 0.3;
   filter: literal("alpha(opacity=30)");
+  z-index: 2;
 }
 
 /* GWT Tree */

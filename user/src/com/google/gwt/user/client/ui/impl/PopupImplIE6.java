@@ -15,7 +15,7 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * Internet Explorer 6 implementation of
@@ -59,7 +59,7 @@ public class PopupImplIE6 extends PopupImpl {
     style.filter = 'alpha(opacity=0)';
 
     // Visibility of frame should match visiblity of popup element.
-    style.visibility = popup.style.visibility;
+    style.visibility = popup.currentStyle.visibility;
   
     // Issue 2443: remove styles that affect the size of the iframe
     style.border = 0;
@@ -71,14 +71,14 @@ public class PopupImplIE6 extends PopupImpl {
     style.top = popup.offsetTop;
     style.width = popup.offsetWidth;
     style.height = popup.offsetHeight;
-    style.zIndex = popup.style.zIndex;
+    style.zIndex = popup.currentStyle.zIndex;
 
     // updates position and dimensions as popup is moved & resized
     style.setExpression('left', 'this.__popup.offsetLeft');
     style.setExpression('top', 'this.__popup.offsetTop');
     style.setExpression('width', 'this.__popup.offsetWidth');
     style.setExpression('height', 'this.__popup.offsetHeight');
-    style.setExpression('zIndex', 'this.__popup.style.zIndex');
+    style.setExpression('zIndex', 'this.__popup.currentStyle.zIndex');
     popup.parentElement.insertBefore(frame, popup);
   }-*/;
   

@@ -463,7 +463,7 @@ a, a:visited, a:hover {
   overflow: hidden;
 }
 
-.gwt-PopupGlass {
+.gwt-PopupPanelGlass {
   background-color: #0cf;
   opacity: 0.3;
   filter: alpha(opacity=30);

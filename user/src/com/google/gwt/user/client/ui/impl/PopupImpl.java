@@ -15,8 +15,8 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 
 /**
  * Implementation class used by {@link com.google.gwt.user.client.ui.PopupPanel}.
@@ -24,7 +24,7 @@ import com.google.gwt.user.client.Element;
 public class PopupImpl {
 
   public Element createElement() {
-    return DOM.createDiv();
+    return Document.get().createDivElement();
   }
 
   public Element getContainerElement(Element popup) {
@@ -32,7 +32,7 @@ public class PopupImpl {
   }
 
   public Element getStyleElement(Element popup) {
-    return DOM.getParent(popup);
+    return popup.getParentElement();
   }
 
   /**
@@ -52,7 +52,7 @@ public class PopupImpl {
    * @param rect the clip rect
    */
   public void setClip(Element popup, String rect) {
-    DOM.setStyleAttribute(popup, "clip", rect);
+    popup.getStyle().setProperty("clip", rect);
   }
 
   /**

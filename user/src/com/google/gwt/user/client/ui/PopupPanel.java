@@ -64,6 +64,14 @@ import java.util.List;
  * </p>
  * 
  * <p>
+ * The PopupPanel can be optionally displayed with a "glass" element behind it,
+ * which is commonly used to gray out the widgets behind it. It can be enabled
+ * using {@link #setGlassEnabled(boolean)}. It has a default style name of
+ * "gwt-PopupPanelGlass", which can be changed using
+ * {@link #setGlassStyleName()}.
+ * </p>
+ * 
+ * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.PopupPanelExample}
  * </p>
@@ -73,7 +81,7 @@ import java.util.List;
  * <dd>the outside of the popup</dd>
  * <dt>.gwt-PopupPanel .popupContent</dt>
  * <dd>the wrapper around the content</dd>
- * <dt>.gwt-PopupGlass</dt>
+ * <dt>.gwt-PopupPanelGlass</dt>
  * <dd>the glass background behind the popup</dd>
  * </dl>
  */
@@ -267,6 +275,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       if (showing) {
         if (curPanel.isGlassEnabled) {
           Document.get().getBody().appendChild(curPanel.glass);
+          impl.onShow(curPanel.glass);
           glassShowing = true;
 
           Window.addResizeHandler(curPanel.glassResizer);
@@ -274,6 +283,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         }
       } else if (glassShowing) {
         Document.get().getBody().removeChild(curPanel.glass);
+        impl.onHide(curPanel.glass);
         glassShowing = false;
       }
     }
@@ -360,6 +370,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   private Element glass;
 
+  private String glassStyleName = "gwt-PopupPanelGlass";
+
   /**
    * A boolean indicating that a glass element should be used.
    */
@@ -386,7 +398,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   public PopupPanel() {
     super();
-    DOM.appendChild(super.getContainerElement(), impl.createElement());
+    super.getContainerElement().appendChild(impl.createElement());
 
     // Default position of popup should be in the upper-left corner of the
     // window. By setting a default position, the popup will not appear in
@@ -477,6 +489,16 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         setVisible(true);
       }
     }
+  }
+
+  /**
+   * Gets the style name to be used on the glass element. By default, this is
+   * "gwt-PopupPanelGlass".
+   * 
+   * @return the glass element's style name
+   */
+  public String getGlassStyleName() {
+    return glassStyleName;
   }
 
   /**
@@ -681,7 +703,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       autoHidePartners.remove(partner);
     }
   }
-
+  
   /**
    * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
    *             object returned by {@link #addCloseHandler} instead
@@ -716,11 +738,24 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     this.isGlassEnabled = enabled;
     if (enabled && glass == null) {
       glass = Document.get().createDivElement();
-      glass.setClassName("gwt-PopupGlass");
+      glass.setClassName(glassStyleName);
 
       glass.getStyle().setPosition(Position.ABSOLUTE);
       glass.getStyle().setLeft(0, Unit.PX);
       glass.getStyle().setTop(0, Unit.PX);
+    }
+  }
+
+  /**
+   * Sets the style name to be used on the glass element. By default, this is
+   * "gwt-PopupPanelGlass".
+   * 
+   * @param glassStyleName the glass element's style name
+   */
+  public void setGlassStyleName(String glassStyleName) {
+    this.glassStyleName = glassStyleName;
+    if (glass != null) {
+      glass.setClassName(glassStyleName);
     }
   }
 
@@ -850,6 +885,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     // If the PopupImpl creates an iframe shim, it's also necessary to hide it
     // as well.
     impl.setVisible(getElement(), visible);
+    if (glass != null) {
+      impl.setVisible(glass, visible);
+    }
   }
 
   @Override
@@ -914,7 +952,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   @Override
   protected com.google.gwt.user.client.Element getContainerElement() {
-    return impl.getContainerElement(getPopupImplElement());
+    return impl.getContainerElement(getPopupImplElement()).cast();
   }
 
   /**
@@ -929,7 +967,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   @Override
   protected com.google.gwt.user.client.Element getStyleElement() {
-    return impl.getStyleElement(getPopupImplElement());
+    return impl.getStyleElement(getPopupImplElement()).cast();
   }
 
   protected void onPreviewNativeEvent(NativePreviewEvent event) {
