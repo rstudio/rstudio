@@ -4,7 +4,6 @@
 
   <!-- Variables. -->
   <?define appName = "Google Web Toolkit Developer Plugin for IE" ?>
-  <?define version = "0.9.7135.0" ?>
   <?define upgradeCode = "9a5e649a-ec63-4c7d-99bf-75adb345e7e5" ?>
   <?define updateRegKey = "SOFTWARE\Google\Update\Clients\{$(var.upgradeCode)}" ?>
   <?define gwtRegKey = "SOFTWARE\Google\Google Web Toolkit\Installer" ?>

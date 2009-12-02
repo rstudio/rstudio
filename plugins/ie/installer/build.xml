@@ -13,6 +13,18 @@
   <property name="wix.log" location="${project.build}/wix.log" />
   <property name="installer.name" value="gwt-dev-plugin.msi" />
 
+  <!-- Verify that this is a windows system. -->
+  <fail unless="build.host.iswindows"
+    	message="Installer can only be built on a Windows system." />
+
+  <!-- Verify that wix is installed. -->
+  <property.ensure name="wix.bin.exists" location="${wix.bin}"
+     	message="You must install Wix (http://wix.sourceforge.net) to build the installer." />
+
+  <!-- Verify that the version has been specified. -->
+  <fail unless="installer.version"
+    	message="You must specify installer.version parameter in the form major.minor.build.revision (ex. -Dinstaller.version=0.9.1234.0)" />
+
   <target name="build" description="Build the installer">
     <mkdir dir="${project.build}" />
 
@@ -51,6 +63,7 @@
           append="true">
       <arg line="-out ${project.build}/" />
       <arg line="-dSourceDir=..\\" />
+      <arg line="-dversion=${installer.version}" />
       <arg line="${project.build}/oophm.wxs.xml" />
       <arg line="installer.wxs.xml" />
     </exec>
