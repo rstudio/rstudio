@@ -212,6 +212,10 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     clientSerializationStreamWriter.prepareToWrite();
     return clientSerializationStreamWriter;
   }
+  
+  public String getSerializationPolicyName() {
+    return serializationPolicyName;
+  }
 
   /**
    * @see ServiceDefTarget#getServiceEntryPoint()

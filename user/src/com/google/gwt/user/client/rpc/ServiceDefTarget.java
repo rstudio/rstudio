@@ -34,6 +34,12 @@ public interface ServiceDefTarget {
       super("Service implementation URL not specified");
     }
   }
+  
+  /**
+   * Return the strong name of the serialization policy to be used with this RPC
+   * instance.
+   */
+  String getSerializationPolicyName();
 
   /**
    * Gets the URL of a service implementation.

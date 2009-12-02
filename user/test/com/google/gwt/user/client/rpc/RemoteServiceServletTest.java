@@ -231,6 +231,15 @@ public class RemoteServiceServletTest extends RpcTestBase {
   }
 
   /**
+   * Test that the policy strong name is available from browser-side Java code.
+   */
+  public void testPolicyStrongName() {
+    String policy = ((ServiceDefTarget) getAsyncService()).getSerializationPolicyName();
+    assertNotNull(policy);
+    assertTrue(!policy.isEmpty());
+  }
+
+  /**
    * Verify behavior when the RPC method throws an unknown RuntimeException
    * (possibly one unknown to the client).
    */

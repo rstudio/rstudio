@@ -31,7 +31,7 @@ public class RpcServiceProxy extends RemoteServiceProxy {
 
   protected RpcServiceProxy(String moduleBaseURL,
       String remoteServiceRelativePath, TypeOverrides typeOverrides) {
-    super(moduleBaseURL, remoteServiceRelativePath, null, null);
+    super(moduleBaseURL, remoteServiceRelativePath, "(unused)", null);
     this.typeOverrides = typeOverrides;
   }
 
