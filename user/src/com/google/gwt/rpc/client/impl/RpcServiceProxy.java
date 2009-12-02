@@ -15,6 +15,7 @@
  */
 package com.google.gwt.rpc.client.impl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.SerializationException;
@@ -31,7 +32,8 @@ public class RpcServiceProxy extends RemoteServiceProxy {
 
   protected RpcServiceProxy(String moduleBaseURL,
       String remoteServiceRelativePath, TypeOverrides typeOverrides) {
-    super(moduleBaseURL, remoteServiceRelativePath, "(unused)", null);
+    super(moduleBaseURL, remoteServiceRelativePath,
+        GWT.getPermutationStrongName(), null);
     this.typeOverrides = typeOverrides;
   }
 
