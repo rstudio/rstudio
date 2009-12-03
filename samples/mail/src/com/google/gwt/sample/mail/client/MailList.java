@@ -131,15 +131,6 @@ public class MailList extends ResizeComposite {
     // Initialize the table.
     table.getColumnFormatter().setWidth(0, "128px");
     table.getColumnFormatter().setWidth(1, "192px");
-
-    for (int i = 0; i < VISIBLE_EMAIL_COUNT; ++i) {
-      table.setText(i, 0, "");
-      table.setText(i, 1, "");
-      table.setText(i, 2, "");
-      table.getCellFormatter().setWordWrap(i, 0, false);
-      table.getCellFormatter().setWordWrap(i, 1, false);
-      table.getCellFormatter().setWordWrap(i, 2, false);
-    }
   }
 
   /**
@@ -208,9 +199,7 @@ public class MailList extends ResizeComposite {
 
     // Clear any remaining slots.
     for (; i < VISIBLE_EMAIL_COUNT; ++i) {
-      table.setHTML(i, 0, "&nbsp;");
-      table.setHTML(i, 1, "&nbsp;");
-      table.setHTML(i, 2, "&nbsp;");
+      table.removeRow(table.getRowCount() - 1);
     }
   }
 }
