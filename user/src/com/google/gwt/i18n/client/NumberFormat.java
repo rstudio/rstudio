@@ -117,7 +117,7 @@ import com.google.gwt.i18n.client.impl.CurrencyList;
  * </tr>
  * 
  * <tr>
- * <td><code>;</code></td>
+ * <td><code>E</code></td>
  * <td>Number</td>
  * <td>Yes</td>
  * <td>Separates mantissa and exponent in scientific notation; need not be
@@ -125,7 +125,7 @@ import com.google.gwt.i18n.client.impl.CurrencyList;
  * </tr>
  * 
  * <tr>
- * <td><code>E</code></td>
+ * <td><code>;</code></td>
  * <td>Subpattern boundary</td>
  * <td>Yes</td>
  * <td>Separates positive and negative subpatterns</td>
