@@ -269,6 +269,7 @@ public class CwStackPanel extends ContentWidget {
     addItem(mailPanelRoot, images.templates(), mailFolders[2]);
     addItem(mailPanelRoot, images.sent(), mailFolders[3]);
     addItem(mailPanelRoot, images.trash(), mailFolders[4]);
+    mailPanelRoot.setState(true);
     return mailPanel;
   }
 

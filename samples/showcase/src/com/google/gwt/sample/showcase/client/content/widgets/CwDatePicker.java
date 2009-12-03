@@ -107,7 +107,9 @@ public class CwDatePicker extends ContentWidget {
     datePicker.setValue(new Date(), true);
 
     // Create a DateBox
+    DateTimeFormat dateFormat = DateTimeFormat.getLongDateFormat();
     DateBox dateBox = new DateBox();
+    dateBox.setFormat(new DateBox.DefaultFormat(dateFormat));
 
     // Combine the widgets into a panel and return them
     VerticalPanel vPanel = new VerticalPanel();
