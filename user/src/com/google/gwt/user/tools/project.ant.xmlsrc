@@ -73,6 +73,7 @@
       <sysproperty key="gwt.args" value="-logLevel WARN" />
       <sysproperty key="java.awt.headless" value="true" />
       <classpath>
+        <pathelement location="src" />
         <pathelement location="test" />
         <path refid="project.class.path" />
         <pathelement location="@junitJar" />
@@ -94,6 +95,7 @@
       <sysproperty key="gwt.args" value="-prod -logLevel WARN -out www-test" />
       <sysproperty key="java.awt.headless" value="true" />
       <classpath>
+        <pathelement location="src" />
         <pathelement location="test" />
         <path refid="project.class.path" />
         <pathelement location="@junitJar" />
