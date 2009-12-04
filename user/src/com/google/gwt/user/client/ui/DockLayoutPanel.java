@@ -189,7 +189,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   }
 
   public void animate(int duration) {
-    animate(0, null);
+    animate(duration, null);
   }
 
   public void animate(int duration, final Layout.AnimationCallback callback) {
@@ -338,7 +338,15 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
     widget.removeFromParent();
 
     // Logical attach.
-    getChildren().add(widget);
+    WidgetCollection children = getChildren();
+    if (before == null) {
+      children.add(widget);
+    }
+    else {
+      int index = children.indexOf(before);
+      children.insert(widget, index);
+    }
+
     if (direction == Direction.CENTER) {
       center = widget;
     }

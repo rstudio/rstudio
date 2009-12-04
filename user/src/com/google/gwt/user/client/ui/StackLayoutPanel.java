@@ -211,7 +211,7 @@ public class StackLayoutPanel extends Composite implements HasWidgets,
   }
 
   private void animate(int duration) {
-    int top = 0, bottom = 0;
+    double top = 0, bottom = 0;
     int i = 0, visibleIndex = -1;
     for (; i < layoutData.size(); ++i) {
       LayoutData data = layoutData.get(i);
