@@ -155,8 +155,9 @@ public class AsyncFragmentLoader {
   private static class HttpDownloadFailure extends RuntimeException {
     private final int statusCode;
 
-    public HttpDownloadFailure(int statusCode) {
-      super("HTTP download failed with status " + statusCode);
+    public HttpDownloadFailure(String url, int statusCode, String statusText) {
+      super("Download of " + url + " failed with status " + statusCode + "("
+          + statusText + ")");
       this.statusCode = statusCode;
     }
 
@@ -263,7 +264,7 @@ public class AsyncFragmentLoader {
   private static class XhrLoadingStrategy implements LoadingStrategy {
     public void startLoadingFragment(int fragment,
         final LoadErrorHandler loadErrorHandler) {
-      String fragmentUrl = gwtStartLoadingFragment(fragment, loadErrorHandler);
+      final String fragmentUrl = gwtStartLoadingFragment(fragment, loadErrorHandler);
 
       if (fragmentUrl == null) {
         // The download has already started; nothing more to do
@@ -289,8 +290,8 @@ public class AsyncFragmentLoader {
                 loadErrorHandler.loadFailed(e);
               }
             } else {
-              loadErrorHandler.loadFailed(new HttpDownloadFailure(
-                  xhr.getStatus()));
+              loadErrorHandler.loadFailed(new HttpDownloadFailure(fragmentUrl,
+                  xhr.getStatus(), xhr.getStatusText()));
             }
           }
         }
