@@ -55,12 +55,15 @@ public class CompilationUnitInvalidator {
     }
   }
 
-  public static void retainValidUnits(Collection<CompilationUnit> units) {
-    retainValidUnits(units, Collections.<ContentId> emptySet());
+  public static void retainValidUnits(TreeLogger logger,
+      Collection<CompilationUnit> units) {
+    retainValidUnits(logger, units, Collections.<ContentId> emptySet());
   }
 
-  public static void retainValidUnits(Collection<CompilationUnit> units,
-      Set<ContentId> knownValidRefs) {
+  public static void retainValidUnits(TreeLogger logger,
+      Collection<CompilationUnit> units, Set<ContentId> knownValidRefs) {
+    logger = logger.branch(TreeLogger.TRACE, "Removing invalidated units");
+
     // Assume all units are valid at first.
     Set<CompilationUnit> currentlyValidUnits = new HashSet<CompilationUnit>();
     Set<ContentId> currentlyValidRefs = new HashSet<ContentId>(knownValidRefs);
@@ -74,14 +77,19 @@ public class CompilationUnitInvalidator {
     boolean changed;
     do {
       changed = false;
-      iterating : for (Iterator<CompilationUnit> it = currentlyValidUnits.iterator(); it.hasNext();) {
+      for (Iterator<CompilationUnit> it = currentlyValidUnits.iterator(); it.hasNext();) {
         CompilationUnit unitToCheck = it.next();
+        TreeLogger branch = null;
         for (ContentId ref : unitToCheck.getDependencies()) {
           if (!currentlyValidRefs.contains(ref)) {
-            it.remove();
-            currentlyValidRefs.remove(unitToCheck.getContentId());
-            changed = true;
-            continue iterating;
+            if (branch == null) {
+              branch = logger.branch(TreeLogger.DEBUG, "Compilation unit '"
+                  + unitToCheck + "' is removed due to invalid reference(s):");
+              it.remove();
+              currentlyValidRefs.remove(unitToCheck.getContentId());
+              changed = true;
+            }
+            branch.log(TreeLogger.DEBUG, ref.get());
           }
         }
       }
