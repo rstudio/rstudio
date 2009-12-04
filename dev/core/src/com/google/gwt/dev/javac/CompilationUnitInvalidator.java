@@ -79,7 +79,7 @@ public class CompilationUnitInvalidator {
         for (ContentId ref : unitToCheck.getDependencies()) {
           if (!currentlyValidRefs.contains(ref)) {
             it.remove();
-            currentlyValidRefs.remove(unitToCheck.getDisplayLocation());
+            currentlyValidRefs.remove(unitToCheck.getContentId());
             changed = true;
             continue iterating;
           }
