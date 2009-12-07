@@ -263,7 +263,7 @@ public class RpcServlet extends AbstractRemoteServiceServlet {
    * @return the module's base path, modulo protocol and host, as reported by
    *         {@link com.google.gwt.core.client.GWT#getModuleBaseURL()} or
    *         <code>null</code> if the request did not contain the
-   *         {@value #MODULE_BASE_HEADER} header
+   *         {@value com.google.gwt.user.client.rpc.RpcRequestBuilder#MODULE_BASE_HEADER} header
    */
   protected final String getRequestModuleBasePath() {
     try {

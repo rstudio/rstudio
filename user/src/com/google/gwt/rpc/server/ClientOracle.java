@@ -72,7 +72,7 @@ public abstract class ClientOracle {
    * Return the name of a field from a client-side id. This will search
    * superclasses for the first instance of the named field.
    * 
-   * @returns The field's declaring class and the name of the field
+   * @return The field's declaring class and the name of the field
    */
   public abstract Pair<Class<?>, String> getFieldName(Class<?> clazz,
       String fieldId);
