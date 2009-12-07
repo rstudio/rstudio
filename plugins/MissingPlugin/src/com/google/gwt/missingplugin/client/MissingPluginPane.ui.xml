@@ -47,32 +47,18 @@
       font-family: Verdana;
       padding-top: 10px;
     }
-    
-    .license {
-      padding-top: 2em;
-      font-family: Verdana;
-      font-size: 9pt;
-    }
   </ui:style>
 
   <g:HTMLPanel styleName='{style.pane}'>
-    <div class="{style.title}">The Google Web Toolkit Developer Plugin is Not Installed</div>
+    <div class="{style.title}">Development Mode requires the Google Web Toolkit Developer Plugin</div>
 
-    <div class="{style.text}">Development Mode requires that you install the GWT Developer Plugin in this browser.</div>
+    <div class="{style.text}">By downloading, you agree to the <a href="http://code.google.com/webtoolkit/terms.html">Terms &amp; Conditions</a> and <a href="http://code.google.com/webtoolkit/privacy.html">Privacy Policy</a>.</div>
 
     <m:InferredDownloadPane ui:field="inferredDownloadPane" visible="true" />
     <m:AllDownloadsPane ui:field="allDownloadsPane" visible="false" />
 
     <div class="{style.text}">
-      For help or troubleshooting, ask questions in the <a ui:field="troubleshootingLink" style="color:#000;">Google Web Toolkit Developer Forum</a>.
-    </div>
-    <div class="{style.license}">
-      All plugins are licensed under the <a
-      href="http://code.google.com/webtoolkit/terms.html">Apache 2.0 open source
-      license</a>, which includes limitations of liability and disclaimers of
-      warranty for the product. Please note that some included libraries may be
-      licensed under other open source licenses listed <a
-      href="http://code.google.com/webtoolkit/terms.html#licenses">here</a>.
+      For help or troubleshooting, ask questions in the <a ui:field="troubleshootingLink" style="color:#000;">discussion group</a>.
     </div>
   </g:HTMLPanel>
 
