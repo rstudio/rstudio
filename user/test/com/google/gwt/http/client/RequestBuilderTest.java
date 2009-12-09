@@ -183,6 +183,7 @@ public class RequestBuilderTest extends RequestTestBase {
     testSend(builder, SERVLET_GET_RESPONSE);
   }
 
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testSend_HEAD() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.HEAD,
         getTestBaseURL());
@@ -197,6 +198,7 @@ public class RequestBuilderTest extends RequestTestBase {
     testSend(builder, SERVLET_POST_RESPONSE);
   }
 
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testSend_PUT() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.PUT,
         getTestBaseURL());
@@ -217,6 +219,7 @@ public class RequestBuilderTest extends RequestTestBase {
     testSendRequest(builder, null, SERVLET_GET_RESPONSE);
   }
 
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testSendRequest_HEAD() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.HEAD,
         getTestBaseURL());
@@ -230,6 +233,7 @@ public class RequestBuilderTest extends RequestTestBase {
     testSendRequest(builder, "method=test+request", SERVLET_POST_RESPONSE);
   }
 
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testSendRequest_PUT() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.PUT,
         getTestBaseURL());
