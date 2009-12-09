@@ -597,6 +597,10 @@ public class TypeOracleMediator {
             + value.getClass().getCanonicalName());
         return null;
       }
+      if (componentType.isPrimitive()) {
+        // primitive arrays are already resolved
+        return value;
+      }
       // resolve each element in the array
       int n = Array.getLength(value);
       Object newArray = Array.newInstance(componentType, n);

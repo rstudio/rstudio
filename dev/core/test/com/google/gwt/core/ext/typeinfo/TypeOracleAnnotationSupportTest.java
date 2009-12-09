@@ -251,5 +251,11 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
 
     short s = annotation.s();
     assertTrue(s > 0);
+    
+    int[] ia = annotation.ia();
+    assertEquals(3, ia.length);
+    for (int it = 0; it < 3; ++it) {
+      assertEquals(it, ia[it]);
+    }
   }
 }
