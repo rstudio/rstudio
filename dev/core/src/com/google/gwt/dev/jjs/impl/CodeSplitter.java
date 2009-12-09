@@ -167,7 +167,7 @@ public class CodeSplitter {
     public Map<JField, Integer> fields = new HashMap<JField, Integer>();
     public Map<JMethod, Integer> methods = new HashMap<JMethod, Integer>();
     public Map<String, Integer> strings = new HashMap<String, Integer>();
-    public Map<JReferenceType, Integer> types = new HashMap<JReferenceType, Integer>();
+    public Map<JDeclaredType, Integer> types = new HashMap<JDeclaredType, Integer>();
   }
 
   /**
@@ -184,16 +184,16 @@ public class CodeSplitter {
       this.fragment = fragment;
     }
 
+    public boolean isLive(JDeclaredType type) {
+      return checkMap(fragmentMap.types, type);
+    }
+
     public boolean isLive(JField field) {
       return checkMap(fragmentMap.fields, field);
     }
 
     public boolean isLive(JMethod method) {
       return checkMap(fragmentMap.methods, method);
-    }
-
-    public boolean isLive(JReferenceType type) {
-      return checkMap(fragmentMap.types, type);
     }
 
     public boolean isLive(String literal) {
@@ -458,6 +458,19 @@ public class CodeSplitter {
     return cfa;
   }
 
+  /**
+   * Extract the types from a set that happen to be declared types.
+   */
+  private static Set<JDeclaredType> declaredTypesIn(Set<JReferenceType> types) {
+    Set<JDeclaredType> result = new HashSet<JDeclaredType>();
+    for (JReferenceType type : types) {
+      if (type instanceof JDeclaredType) {
+        result.add((JDeclaredType) type);
+      }
+    }
+    return result;
+  }
+
   private static String fullNameString(JField field) {
     return field.getEnclosingType().getName() + "." + field.getName();
   }
@@ -487,8 +500,8 @@ public class CodeSplitter {
   private static void installInitialLoadSequenceField(JProgram program,
       LinkedHashSet<Integer> initialLoadSequence) {
     JMethodCall constructorCall = ReplaceRunAsyncs.getBrowserLoaderConstructor(program);
-    assert constructorCall.getArgs().get(1).getType() instanceof JArrayType;
-    assert ((JArrayType) constructorCall.getArgs().get(1).getType()).getElementType() == JPrimitiveType.INT;
+    assert ((JReferenceType) constructorCall.getArgs().get(1).getType()).getUnderlyingType() instanceof JArrayType;
+    assert ((JArrayType) ((JReferenceType) constructorCall.getArgs().get(1).getType()).getUnderlyingType()).getElementType() == JPrimitiveType.INT;
 
     SourceInfo info = program.createSourceInfoSynthetic(ReplaceRunAsyncs.class,
         "array with initial load sequence");
@@ -600,7 +613,6 @@ public class CodeSplitter {
   }
 
   private final MultipleDependencyGraphRecorder dependencyRecorder;
-
   private final Map<JField, JClassLiteral> fieldToLiteralOfClass;
   private final FragmentExtractor fragmentExtractor;
   private final LinkedHashSet<Integer> initialLoadSequence;
@@ -933,12 +945,12 @@ public class CodeSplitter {
 
   private void fixUpLoadOrderDependenciesForTypes(ExclusivityMap fragmentMap) {
     int numFixups = 0;
-    Queue<JReferenceType> typesToCheck = new ArrayBlockingQueue<JReferenceType>(
+    Queue<JDeclaredType> typesToCheck = new ArrayBlockingQueue<JDeclaredType>(
         jprogram.getDeclaredTypes().size());
     typesToCheck.addAll(jprogram.getDeclaredTypes());
 
     while (!typesToCheck.isEmpty()) {
-      JReferenceType type = typesToCheck.remove();
+      JDeclaredType type = typesToCheck.remove();
       if (type.getSuperClass() != null) {
         int typeFrag = getOrZero(fragmentMap.types, type);
         int supertypeFrag = getOrZero(fragmentMap.types, type.getSuperClass());
@@ -995,8 +1007,9 @@ public class CodeSplitter {
           allButOne.getLiveFieldsAndMethods(), allMethods);
       updateMap(entry, fragmentMap.strings, allButOne.getLiveStrings(),
           everything.getLiveStrings());
-      updateMap(entry, fragmentMap.types, allButOne.getInstantiatedTypes(),
-          everything.getInstantiatedTypes());
+      updateMap(entry, fragmentMap.types,
+          declaredTypesIn(allButOne.getInstantiatedTypes()),
+          declaredTypesIn(everything.getInstantiatedTypes()));
     }
   }
 

@@ -26,7 +26,6 @@ import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.JType;
 
 /**
  * Update polymorphic method calls to tighter bindings based on the type of the
@@ -54,7 +53,7 @@ public class MethodCallTightener {
         return;
       }
 
-      JType instanceType = instance.getType();
+      JReferenceType instanceType = ((JReferenceType) instance.getType()).getUnderlyingType();
       JReferenceType enclosingType = method.getEnclosingType();
 
       if (instanceType == enclosingType

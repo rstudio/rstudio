@@ -16,42 +16,47 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
-import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.jjs.SourceOrigin;
 
 /**
- * Java null reference type.
+ * A type including all the values in some other type except for
+ * <code>null</code>.
  */
-public class JNullType extends JReferenceType {
+public class JNonNullType extends JReferenceType {
 
-  public static final JNullType INSTANCE = new JNullType(SourceOrigin.UNKNOWN);
+  private final JReferenceType ref;
 
-  private JNullType(SourceInfo sourceInfo) {
-    super(sourceInfo, "<null>");
+  JNonNullType(JReferenceType ref) {
+    super(ref.getSourceInfo(), ref.getName());
+    assert ref.canBeNull();
+    this.ref = ref;
+  }
+
+  @Override
+  public boolean canBeNull() {
+    return false;
   }
 
   @Override
   public String getClassLiteralFactoryMethod() {
-    throw new InternalCompilerException(
-        "Cannot get class literal for null type");
+    return ref.getClassLiteralFactoryMethod();
   }
 
   @Override
-  public String getJavahSignatureName() {
-    return "N";
+  public JClassType getSuperClass() {
+    return ref.getSuperClass();
   }
 
   @Override
-  public String getJsniSignatureName() {
-    return "N";
+  public JReferenceType getUnderlyingType() {
+    return ref;
   }
 
   public boolean isAbstract() {
-    return false;
+    return ref.isAbstract();
   }
 
   public boolean isFinal() {
-    return true;
+    return ref.isFinal();
   }
 
   @Override
@@ -60,12 +65,6 @@ public class JNullType extends JReferenceType {
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
-    if (visitor.visit(this, ctx)) {
-    }
-    visitor.endVisit(this, ctx);
-  }
-
-  private Object readResolve() {
-    return INSTANCE;
+    visitor.accept(ref);
   }
 }

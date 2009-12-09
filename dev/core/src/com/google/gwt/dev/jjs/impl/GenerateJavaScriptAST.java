@@ -1086,7 +1086,7 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JNewInstance x, Context ctx) {
       JsNew newOp = new JsNew(x.getSourceInfo());
-      JsNameRef nameRef = names.get(x.getType()).makeRef(x.getSourceInfo());
+      JsNameRef nameRef = names.get(x.getClassType()).makeRef(x.getSourceInfo());
       newOp.setConstructorExpression(nameRef);
       push(newOp);
     }
@@ -1949,7 +1949,7 @@ public class GenerateJavaScriptAST {
    * Because we modify String's prototype, all fields and polymorphic methods on
    * String's super types need special handling.
    */
-  private final Set<JReferenceType> specialObfuscatedTypes = new HashSet<JReferenceType>();
+  private final Set<JDeclaredType> specialObfuscatedTypes = new HashSet<JDeclaredType>();
 
   /**
    * Maps JsNames to machine-usable identifiers.
@@ -1961,7 +1961,7 @@ public class GenerateJavaScriptAST {
    */
   private final JsScope topScope;
 
-  private final Map<JsStatement, JReferenceType> typeForStatMap = new HashMap<JsStatement, JReferenceType>();
+  private final Map<JsStatement, JClassType> typeForStatMap = new HashMap<JsStatement, JClassType>();
 
   private final JTypeOracle typeOracle;
 
@@ -2121,11 +2121,11 @@ public class GenerateJavaScriptAST {
     generator.accept(program);
     final Map<JsName, JMethod> nameToMethodMap = new HashMap<JsName, JMethod>();
     final HashMap<JsName, JField> nameToFieldMap = new HashMap<JsName, JField>();
-    final HashMap<JsName, JReferenceType> constructorNameToTypeMap = new HashMap<JsName, JReferenceType>();
+    final HashMap<JsName, JClassType> constructorNameToTypeMap = new HashMap<JsName, JClassType>();
     for (JDeclaredType type : program.getDeclaredTypes()) {
       JsName typeName = names.get(type);
-      if (typeName != null) {
-        constructorNameToTypeMap.put(typeName, type);
+      if (type instanceof JClassType && typeName != null) {
+        constructorNameToTypeMap.put(typeName, (JClassType) type);
       }
       for (JField field : type.getFields()) {
         if (field.isStatic()) {
@@ -2152,7 +2152,7 @@ public class GenerateJavaScriptAST {
         return names.get(method);
       }
 
-      public JsName nameForType(JReferenceType type) {
+      public JsName nameForType(JClassType type) {
         return names.get(type);
       }
 
@@ -2164,11 +2164,11 @@ public class GenerateJavaScriptAST {
         return nameToMethodMap.get(name);
       }
 
-      public JReferenceType nameToType(JsName name) {
+      public JClassType nameToType(JsName name) {
         return constructorNameToTypeMap.get(name);
       }
 
-      public JReferenceType typeForStatement(JsStatement stat) {
+      public JClassType typeForStatement(JsStatement stat) {
         return typeForStatMap.get(stat);
       }
 

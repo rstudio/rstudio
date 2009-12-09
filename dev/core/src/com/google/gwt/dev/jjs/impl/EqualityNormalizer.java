@@ -28,37 +28,36 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 
 /**
- * Handle all of the cases where Java reference identity causes problems in
- * JavaScript due to the <code>null === undefined</code> problem. Reference
- * identity checks will generally fall into one of two cases right now.
- * 
  * <p>
- * If something that may be a String is compared to something that may not be a
- * <code>String</code>, we must use the <code>===</code> to prevent
- * JavaScript compare-as-strings behavior. However, this invites the
- * <code>null === undefined</code> problem, so we must emit calls to mask off
- * <code>undefined</code> as <code>null</code>. These cases include:
+ * Rewrite Java <code>==</code> so that it will execute correctly in JavaScript.
+ * After this pass, Java's <code>==</code> is considered equivalent to
+ * JavaScript's <code>===</code>.
+ *</p>
+ *<p>
+ * Whenever possible, a Java <code>==</code> is replaced by a JavaScript
+ * <code>==</code>. This is shorter than <code>===</code>, and it avoids any
+ * complication due to GWT treating both <code>null</code> and
+ * <code>undefined</code> as a valid translation of a Java <code>null</code>.
+ * </p>
+ * <p>
+ * However, whenever something that may be a String is compared to something
+ * that may not be a <code>String</code>, use <code>===</code>. A Java object
+ * compared to a string should always yield false, but that's not true when
+ * comparing in JavaScript using <code>==</code>. The cases where
+ * <code>===</code> must be used are:
  * </p>
  * <ul>
  * <li>One or both sides have unknown <code>String</code> status.</li>
- * <li>One side is definitely <code>String</code> and one side is definitely !<code>String</code>.
- * <br/>TODO: This case could be optimized as
- * <code>(a == null) &amp; (b == null)</code>. </li>
+ * <li>One side is definitely <code>String</code> and one side is definitely !
+ * <code>String</code>. <br/>
+ * TODO: This case could be optimized as
+ * <code>(a == null) &amp; (b == null)</code>.</li>
  * </ul>
- * 
  * <p>
- * Otherwise, we can use the <code>==</code> operator to avoid having to mask
- * of <code>undefined</code>. These cases include:
+ * Since <code>null !== undefined</code>, it is also necessary to normalize
+ * <code>null</code> vs. <code>undefined</code> if it's possible for one side to
+ * be <code>null</code> and the other to be <code>undefined</code>.
  * </p>
- * <ul>
- * <li>Comparing two things statically typed as <code>String</code>.</li>
- * <li>Comparing two things statically typed as !<code>String</code>.</li>
- * <li>Comparing anything to something that is definitely <code>null</code>.</li>
- * </ul>
- * 
- * TODO: There will be a third case when we can identity things that are
- * definitely not <code>null</code>. The presence of a definitely not null
- * operand allows us to use <code>===</code> with impunity.
  */
 public class EqualityNormalizer {
 
@@ -84,45 +83,60 @@ public class EqualityNormalizer {
 
       StringStatus lhsStatus = getStringStatus((JReferenceType) lhsType);
       StringStatus rhsStatus = getStringStatus((JReferenceType) rhsType);
+      int strat = COMPARISON_STRAT[lhsStatus.getIndex()][rhsStatus.getIndex()];
 
-      if ((USE_TRIPLE_EQUALS[lhsStatus.getIndex()][rhsStatus.getIndex()] == 1)) {
-        // Mask each side to prevent null === undefined.
-        lhs = maskUndefined(lhs);
-        rhs = maskUndefined(rhs);
-        JBinaryOperation binOp = new JBinaryOperation(x.getSourceInfo(),
-            x.getType(), x.getOp(), lhs, rhs);
-        ctx.replaceMe(binOp);
-      } else {
-        boolean lhsNullLit = lhs == program.getLiteralNull();
-        boolean rhsNullLit = rhs == program.getLiteralNull();
-        if ((lhsNullLit && rhsStatus == StringStatus.NOTSTRING)
-            || (rhsNullLit && lhsStatus == StringStatus.NOTSTRING)) {
-          /*
-           * If either side is a null literal and the other is non-String,
-           * replace with a null-check.
-           */
-          String methodName;
-          if (op == JBinaryOperator.EQ) {
-            methodName = "Cast.isNull";
-          } else {
-            methodName = "Cast.isNotNull";
+      switch (strat) {
+        case STRAT_TRIPLE: {
+          if (canBeNull(lhs) && canBeNull(rhs)) {
+            /*
+             * If it's possible for one side to be null and the other side
+             * undefined, then mask both sides.
+             */
+            lhs = maskUndefined(lhs);
+            rhs = maskUndefined(rhs);
           }
-          JMethod isNullMethod = program.getIndexedMethod(methodName);
-          JMethodCall call = new JMethodCall(x.getSourceInfo(), null, isNullMethod);
-          call.addArg(lhsNullLit ? rhs : lhs);
-          ctx.replaceMe(call);
-        } else {
-          // Replace with a call to Cast.jsEquals, which does a == internally.
-          String methodName;
-          if (op == JBinaryOperator.EQ) {
-            methodName = "Cast.jsEquals";
+
+          JBinaryOperation binOp = new JBinaryOperation(x.getSourceInfo(),
+              x.getType(), x.getOp(), lhs, rhs);
+          ctx.replaceMe(binOp);
+          break;
+        }
+
+        case STRAT_DOUBLE: {
+          boolean lhsNullLit = lhs == program.getLiteralNull();
+          boolean rhsNullLit = rhs == program.getLiteralNull();
+          if ((lhsNullLit && rhsStatus == StringStatus.NOTSTRING)
+              || (rhsNullLit && lhsStatus == StringStatus.NOTSTRING)) {
+            /*
+             * If either side is a null literal and the other is non-String,
+             * replace with a null-check.
+             */
+            String methodName;
+            if (op == JBinaryOperator.EQ) {
+              methodName = "Cast.isNull";
+            } else {
+              methodName = "Cast.isNotNull";
+            }
+            JMethod isNullMethod = program.getIndexedMethod(methodName);
+            JMethodCall call = new JMethodCall(x.getSourceInfo(), null,
+                isNullMethod);
+            call.addArg(lhsNullLit ? rhs : lhs);
+            ctx.replaceMe(call);
           } else {
-            methodName = "Cast.jsNotEquals";
+            // Replace with a call to Cast.jsEquals, which does a == internally.
+            String methodName;
+            if (op == JBinaryOperator.EQ) {
+              methodName = "Cast.jsEquals";
+            } else {
+              methodName = "Cast.jsNotEquals";
+            }
+            JMethod eqMethod = program.getIndexedMethod(methodName);
+            JMethodCall call = new JMethodCall(x.getSourceInfo(), null,
+                eqMethod);
+            call.addArgs(lhs, rhs);
+            ctx.replaceMe(call);
           }
-          JMethod eqMethod = program.getIndexedMethod(methodName);
-          JMethodCall call = new JMethodCall(x.getSourceInfo(), null, eqMethod);
-          call.addArgs(lhs, rhs);
-          ctx.replaceMe(call);
+          break;
         }
       }
     }
@@ -141,9 +155,11 @@ public class EqualityNormalizer {
     }
 
     private JExpression maskUndefined(JExpression lhs) {
+      assert ((JReferenceType) lhs.getType()).canBeNull();
+
       JMethod maskMethod = program.getIndexedMethod("Cast.maskUndefined");
-      JMethodCall lhsCall = new JMethodCall(lhs.getSourceInfo(), null, maskMethod,
-          lhs.getType());
+      JMethodCall lhsCall = new JMethodCall(lhs.getSourceInfo(), null,
+          maskMethod, lhs.getType());
       lhsCall.addArg(lhs);
       return lhsCall;
     }
@@ -152,8 +168,6 @@ public class EqualityNormalizer {
   /**
    * Represents what we know about an operand type in terms of its type and
    * <code>null</code> status.
-   * 
-   * TODO: represent definitely non-null things.
    */
   private enum StringStatus {
     NOTSTRING(2), NULL(3), STRING(1), UNKNOWN(0);
@@ -170,18 +184,32 @@ public class EqualityNormalizer {
   }
 
   /**
-   * A map of the combinations where <code>===</code> should be used.
+   * A map of the combinations where each comparison strategy should be used.
    */
-  private static int[][] USE_TRIPLE_EQUALS = {
+  private static int[][] COMPARISON_STRAT = {
   // ..U..S.!S..N
-      {1, 1, 1, 0}, // UNKNOWN
-      {1, 0, 1, 0}, // STRING
-      {1, 1, 0, 0}, // NOTSTRING
-      {0, 0, 0, 0}, // NULL
+      {1, 1, 1, 0,}, // UNKNOWN
+      {1, 0, 1, 0,}, // STRING
+      {1, 1, 0, 0,}, // NOTSTRING
+      {0, 0, 0, 0,}, // NULL
   };
+
+  /**
+   * The comparison strategy of using ==.
+   */
+  private static final int STRAT_DOUBLE = 0;
+
+  /**
+   * The comparison strategy of using ===.
+   */
+  private static final int STRAT_TRIPLE = 1;
 
   public static void exec(JProgram program) {
     new EqualityNormalizer(program).execImpl();
+  }
+
+  private static boolean canBeNull(JExpression x) {
+    return ((JReferenceType) x.getType()).canBeNull();
   }
 
   private final JProgram program;

@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * New array expression.
  */
-public class JNewArray extends JExpression implements HasSettableType {
+public class JNewArray extends JExpression {
 
   public static JNewArray createDims(JProgram program, SourceInfo info,
       JArrayType arrayType, List<JExpression> dims) {
@@ -45,39 +45,40 @@ public class JNewArray extends JExpression implements HasSettableType {
       classLiterals.add(classLit);
       cur = ((JArrayType) cur).getElementType();
     }
-    return new JNewArray(info, arrayType, dims, null, classLiterals);
+    return new JNewArray(info, program.getNonNullType(arrayType), dims, null,
+        classLiterals);
   }
 
   public static JNewArray createInitializers(JProgram program, SourceInfo info,
       JArrayType arrayType, List<JExpression> initializers) {
     List<JClassLiteral> classLiterals = new ArrayList<JClassLiteral>();
     classLiterals.add(program.getLiteralClass(arrayType));
-    return new JNewArray(info, arrayType, null, initializers, classLiterals);
+    return new JNewArray(info, program.getNonNullType(arrayType), null,
+        initializers, classLiterals);
   }
 
   public final List<JExpression> dims;
 
   public final List<JExpression> initializers;
 
-  private JArrayType arrayType;
+  private JNonNullType type;
 
   /**
    * The list of class literals that will be needed to support this expression.
    */
   private final List<JClassLiteral> classLiterals;
 
-  public JNewArray(SourceInfo info, JArrayType arrayType,
-      List<JExpression> dims, List<JExpression> initializers,
-      List<JClassLiteral> classLits) {
+  public JNewArray(SourceInfo info, JNonNullType type, List<JExpression> dims,
+      List<JExpression> initializers, List<JClassLiteral> classLits) {
     super(info);
-    this.arrayType = arrayType;
+    setType(type);
     this.dims = dims;
     this.initializers = initializers;
     this.classLiterals = classLits;
   }
 
   public JArrayType getArrayType() {
-    return arrayType;
+    return (JArrayType) type.getUnderlyingType();
   }
 
   /**
@@ -98,8 +99,8 @@ public class JNewArray extends JExpression implements HasSettableType {
     return classLiterals;
   }
 
-  public JType getType() {
-    return arrayType;
+  public JNonNullType getType() {
+    return type;
   }
 
   @Override
@@ -122,8 +123,9 @@ public class JNewArray extends JExpression implements HasSettableType {
     return false;
   }
 
-  public void setType(JType arrayType) {
-    this.arrayType = (JArrayType) arrayType;
+  public void setType(JNonNullType type) {
+    assert type.getUnderlyingType() instanceof JArrayType;
+    this.type = type;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

@@ -31,6 +31,16 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
     super(info, name, JNullLiteral.INSTANCE);
   }
 
+  /**
+   * Returns <code>true</code> if it's possible for this type to be
+   * <code>null</code>.
+   * 
+   * @see JNonNullType
+   */
+  public boolean canBeNull() {
+    return true;
+  }
+
   @Override
   public String getJavahSignatureName() {
     return "L" + name.replaceAll("_", "_1").replace('.', '_') + "_2";
@@ -52,6 +62,13 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
    */
   public JClassType getSuperClass() {
     return superClass;
+  }
+
+  /**
+   * If this type is a non-null type, returns the underlying (original) type.
+   */
+  public JReferenceType getUnderlyingType() {
+    return this;
   }
 
   /**

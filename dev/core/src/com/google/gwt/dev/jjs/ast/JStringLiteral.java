@@ -22,13 +22,13 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JStringLiteral extends JValueLiteral {
 
-  private final JClassType stringType;
+  private final JNonNullType stringType;
   private final String value;
 
   /**
    * These are only supposed to be constructed by JProgram.
    */
-  JStringLiteral(SourceInfo sourceInfo, String value, JClassType stringType) {
+  JStringLiteral(SourceInfo sourceInfo, String value, JNonNullType stringType) {
     super(sourceInfo);
     this.value = value;
     this.stringType = stringType;

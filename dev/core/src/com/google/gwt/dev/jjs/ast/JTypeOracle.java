@@ -177,35 +177,6 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * Determine whether a type is instantiated, given an assumed list of
-   * instantiated types.
-   * 
-   * @param type any type
-   * @param instantiatedTypes a set of types assumed to be instantiated. If
-   *          <code>null</code>, then there are no assumptions about which types
-   *          are instantiated.
-   * @return whether the type is instantiated
-   */
-  private static boolean isInstantiatedType(JReferenceType type,
-      Set<JReferenceType> instantiatedTypes) {
-    if (instantiatedTypes == null) {
-      return true;
-    }
-
-    if (type instanceof JNullType) {
-      return true;
-    }
-
-    if (type instanceof JArrayType) {
-      JArrayType arrayType = (JArrayType) type;
-      if (arrayType.getLeafType() instanceof JNullType) {
-        return true;
-      }
-    }
-    return instantiatedTypes.contains(type);
-  }
-
-  /**
    * A map of all interfaces to the set of classes that could theoretically
    * implement them.
    */
@@ -229,6 +200,11 @@ public class JTypeOracle implements Serializable {
    */
   private final Map<JClassType, Set<JInterfaceType>> implementsMap = new IdentityHashMap<JClassType, Set<JInterfaceType>>();
 
+  /**
+   * The types in the program that are instantiable. All types in this set
+   * should be run-time types as defined at
+   * {@link JProgram#getRunTimeType(JReferenceType)}.
+   */
   private Set<JReferenceType> instantiatedTypes = null;
 
   /**
@@ -291,6 +267,15 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean canTheoreticallyCast(JReferenceType type, JReferenceType qType) {
+    if (!type.canBeNull() && qType == program.getTypeNull()) {
+      // Cannot cast non-nullable to null
+      return false;
+    }
+
+    // Compare the underlying types.
+    type = type.getUnderlyingType();
+    qType = qType.getUnderlyingType();
+
     JClassType jlo = program.getTypeJavaLangObject();
     if (type == qType || type == jlo) {
       return true;
@@ -346,6 +331,15 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean canTriviallyCast(JReferenceType type, JReferenceType qType) {
+    if (type.canBeNull() && !qType.canBeNull()) {
+      // Cannot reliably cast nullable to non-nullable
+      return false;
+    }
+
+    // Compare the underlying types.
+    type = type.getUnderlyingType();
+    qType = qType.getUnderlyingType();
+
     JClassType jlo = program.getTypeJavaLangObject();
     if (type == qType || qType == jlo) {
       return true;
@@ -419,8 +413,7 @@ public class JTypeOracle implements Serializable {
     jsoSingleImpls.clear();
     dualImpls.clear();
 
-    for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
-      JReferenceType type = program.getDeclaredTypes().get(i);
+    for (JDeclaredType type : program.getDeclaredTypes()) {
       if (type instanceof JClassType) {
         recordSuperSubInfo((JClassType) type);
       } else {
@@ -451,20 +444,17 @@ public class JTypeOracle implements Serializable {
       }
     }
 
-    for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
-      JReferenceType type = program.getDeclaredTypes().get(i);
+    for (JDeclaredType type : program.getDeclaredTypes()) {
       if (type instanceof JClassType) {
         computeImplements((JClassType) type);
       }
     }
-    for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
-      JReferenceType type = program.getDeclaredTypes().get(i);
+    for (JDeclaredType type : program.getDeclaredTypes()) {
       if (type instanceof JClassType) {
         computeCouldImplement((JClassType) type);
       }
     }
-    for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
-      JReferenceType type = program.getDeclaredTypes().get(i);
+    for (JDeclaredType type : program.getDeclaredTypes()) {
       if (type instanceof JClassType) {
         computeVirtualUpRefs((JClassType) type);
       }
@@ -538,12 +528,12 @@ public class JTypeOracle implements Serializable {
     return results;
   }
 
-  public Set<JInterfaceType> getInterfacesWithJavaAndJsoImpls() {
-    return Collections.unmodifiableSet(dualImpls);
+  public JClassType getSingleJsoImpl(JReferenceType maybeSingleJsoIntf) {
+    return jsoSingleImpls.get(maybeSingleJsoIntf.getUnderlyingType());
   }
 
-  public Map<JInterfaceType, JClassType> getSingleJsoImpls() {
-    return Collections.unmodifiableMap(jsoSingleImpls);
+  public boolean isDualJsoInterface(JReferenceType maybeDualImpl) {
+    return dualImpls.contains(maybeDualImpl.getUnderlyingType());
   }
 
   public boolean isInstantiatedType(JReferenceType type) {
@@ -813,6 +803,37 @@ public class JTypeOracle implements Serializable {
    */
   private boolean implementsInterface(JClassType type, JInterfaceType qType) {
     return get(implementsMap, type).contains(qType);
+  }
+
+  /**
+   * Determine whether a type is instantiated, given an assumed list of
+   * instantiated types.
+   * 
+   * @param type any type
+   * @param instantiatedTypes a set of types assumed to be instantiated. If
+   *          <code>null</code>, then there are no assumptions about which types
+   *          are instantiated.
+   * @return whether the type is instantiated
+   */
+  private boolean isInstantiatedType(JReferenceType type,
+      Set<JReferenceType> instantiatedTypes) {
+    type = program.getRunTimeType(type);
+
+    if (instantiatedTypes == null) {
+      return true;
+    }
+
+    if (type instanceof JNullType) {
+      return true;
+    }
+
+    if (type instanceof JArrayType) {
+      JArrayType arrayType = (JArrayType) type;
+      if (arrayType.getLeafType() instanceof JNullType) {
+        return true;
+      }
+    }
+    return instantiatedTypes.contains(type);
   }
 
   private boolean isSameOrSuper(JClassType type, JClassType qType) {

@@ -464,8 +464,7 @@ public class ControlFlowAnalyzer {
      */
     private void maybeRescueJavaScriptObjectPassingIntoJava(JType type) {
       boolean doIt = false;
-      if (program.isJavaScriptObject(type)
-          || type == program.getTypeJavaLangString()) {
+      if (program.isJavaScriptObject(type) || program.isJavaLangString(type)) {
         doIt = true;
       } else if (type instanceof JArrayType) {
         /*
@@ -475,7 +474,7 @@ public class ControlFlowAnalyzer {
         JArrayType arrayType = (JArrayType) type;
         JType elementType = arrayType.getElementType();
         if (elementType instanceof JPrimitiveType
-            || elementType == program.getTypeJavaLangString()
+            || program.isJavaLangString(elementType)
             || program.isJavaScriptObject(elementType)) {
           doIt = true;
         }
@@ -527,32 +526,39 @@ public class ControlFlowAnalyzer {
 
     private void rescue(JReferenceType type, boolean isReferenced,
         boolean isInstantiated) {
-      if (type != null) {
+      if (type == null) {
+        return;
+      }
 
-        boolean doVisit = false;
-        if (isInstantiated && !instantiatedTypes.contains(type)) {
-          instantiatedTypes.add(type);
-          doVisit = true;
-        }
+      /*
+       * Track references and instantiability at the granularity of run-time
+       * types. For example, ignore nullness.
+       */
+      type = program.getRunTimeType(type);
 
-        if (isReferenced && !referencedTypes.contains(type)) {
-          referencedTypes.add(type);
-          doVisit = true;
-        }
+      boolean doVisit = false;
+      if (isInstantiated && !instantiatedTypes.contains(type)) {
+        instantiatedTypes.add(type);
+        doVisit = true;
+      }
 
-        if (doVisit) {
-          accept(type);
+      if (isReferenced && !referencedTypes.contains(type)) {
+        referencedTypes.add(type);
+        doVisit = true;
+      }
 
-          if (type instanceof JDeclaredType) {
-            for (JNode artificial : ((JDeclaredType) type).getArtificialRescues()) {
-              if (artificial instanceof JReferenceType) {
-                rescue((JReferenceType) artificial, true, true);
-                rescue(program.getLiteralClass((JReferenceType) artificial).getField());
-              } else if (artificial instanceof JVariable) {
-                rescue((JVariable) artificial);
-              } else if (artificial instanceof JMethod) {
-                rescue((JMethod) artificial);
-              }
+      if (doVisit) {
+        accept(type);
+
+        if (type instanceof JDeclaredType) {
+          for (JNode artificial : ((JDeclaredType) type).getArtificialRescues()) {
+            if (artificial instanceof JReferenceType) {
+              rescue((JReferenceType) artificial, true, true);
+              rescue(program.getLiteralClass((JReferenceType) artificial).getField());
+            } else if (artificial instanceof JVariable) {
+              rescue((JVariable) artificial);
+            } else if (artificial instanceof JMethod) {
+              rescue((JMethod) artificial);
             }
           }
         }
@@ -602,10 +608,11 @@ public class ControlFlowAnalyzer {
      * Handle special rescues needed implicitly to support concat.
      */
     private void rescueByConcat(JType type) {
-      JClassType stringType = program.getTypeJavaLangString();
       JPrimitiveType charType = program.getTypePrimitiveChar();
-      if (type instanceof JReferenceType && type != stringType
-          && type != program.getTypeNull()) {
+      JClassType stringType = program.getTypeJavaLangString();
+      if (type instanceof JReferenceType
+          && !program.typeOracle.canTriviallyCast((JReferenceType) type,
+              stringType) && type != program.getTypeNull()) {
         /*
          * Any reference types (except String, which works by default) that take
          * part in a concat must rescue java.lang.Object.toString().
@@ -789,7 +796,7 @@ public class ControlFlowAnalyzer {
     }
   }
 
-  public void traverseFromReferenceTo(JReferenceType type) {
+  public void traverseFromReferenceTo(JDeclaredType type) {
     rescuer.rescue(type, true, false);
   }
 

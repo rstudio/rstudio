@@ -50,7 +50,7 @@ public class LongEmulationNormalizer {
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       // Concats are handled by CastNormalizer.ConcatVisitor.
-      if (x.getType() == program.getTypeJavaLangString()) {
+      if (program.isJavaLangString(x.getType())) {
         return;
       }
       JType lhsType = x.getLhs().getType();

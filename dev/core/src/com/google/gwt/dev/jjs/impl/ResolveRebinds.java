@@ -18,11 +18,11 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 
 import java.util.List;
@@ -91,7 +91,7 @@ public class ResolveRebinds {
       throw new InternalCompilerException("Unexpected failure to rebind '"
           + reqType + "'");
     }
-    JReferenceType result = program.getFromTypeMap(reboundClassName);
+    JDeclaredType result = program.getFromTypeMap(reboundClassName);
     assert (result != null);
     return (JClassType) result;
   }

@@ -20,7 +20,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Conditional expression.
  */
-public class JConditional extends JExpression implements HasSettableType {
+public class JConditional extends JExpression {
 
   private JExpression elseExpr;
   private JExpression ifTest;

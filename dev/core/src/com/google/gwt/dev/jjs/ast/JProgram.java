@@ -283,6 +283,8 @@ public class JProgram extends JNode {
 
   private List<JsonObject> jsonTypeTable;
 
+  private Map<JReferenceType, JNonNullType> nonNullTypes = new IdentityHashMap<JReferenceType, JNonNullType>();
+
   private JField nullField;
 
   private JMethod nullMethod;
@@ -316,6 +318,8 @@ public class JProgram extends JNode {
   private JClassType typeJavaLangObject;
 
   private final Map<String, JDeclaredType> typeNameMap = new HashMap<String, JDeclaredType>();
+
+  private JNonNullType typeNonNullString;
 
   private JClassType typeSpecialClassLiteralHolder;
 
@@ -397,6 +401,7 @@ public class JProgram extends JNode {
         typeJavaLangObject = x;
       } else if (sname.equals("java.lang.String")) {
         typeString = x;
+        typeNonNullString = getNonNullType(x);
       } else if (sname.equals("java.lang.Enum")) {
         typeJavaLangEnum = x;
       } else if (sname.equals("java.lang.Class")) {
@@ -544,6 +549,10 @@ public class JProgram extends JNode {
     return createSourceInfo(0, caller.getName()).makeChild(caller, description);
   }
 
+  /**
+   * Return the least upper bound of a set of types. That is, the smallest type
+   * that is a supertype of all the input types.
+   */
   public JReferenceType generalizeTypes(
       Collection<? extends JReferenceType> types) {
     assert (types != null);
@@ -556,11 +565,30 @@ public class JProgram extends JNode {
     return curType;
   }
 
+  /**
+   * Return the least upper bound of two types. That is, the smallest type that
+   * is a supertype of both types.
+   */
   public JReferenceType generalizeTypes(JReferenceType type1,
       JReferenceType type2) {
     if (type1 == type2) {
       return type1;
     }
+
+    if (type1 instanceof JNonNullType && type2 instanceof JNonNullType) {
+      // Neither can be null.
+      type1 = type1.getUnderlyingType();
+      type2 = type2.getUnderlyingType();
+      return getNonNullType(generalizeTypes(type1, type2));
+    } else if (type1 instanceof JNonNullType) {
+      // type2 can be null, so the result can be null
+      type1 = type1.getUnderlyingType();
+    } else if (type2 instanceof JNonNullType) {
+      // type1 can be null, so the result can be null
+      type2 = type2.getUnderlyingType();
+    }
+    assert !(type1 instanceof JNonNullType);
+    assert !(type2 instanceof JNonNullType);
 
     int classify1 = classifyType(type1);
     int classify2 = classifyType(type2);
@@ -679,8 +707,8 @@ public class JProgram extends JNode {
       int lesser = Math.min(classify1, classify2);
       int greater = Math.max(classify1, classify2);
 
-      JReferenceType tLesser = classify1 > classify2 ? type1 : type2;
-      JReferenceType tGreater = classify1 < classify2 ? type1 : type2;
+      JReferenceType tLesser = classify1 < classify2 ? type1 : type2;
+      JReferenceType tGreater = classify1 > classify2 ? type1 : type2;
 
       if (lesser == IS_INTERFACE && greater == IS_CLASS) {
 
@@ -730,7 +758,7 @@ public class JProgram extends JNode {
   }
 
   public JThisRef getExprThisRef(SourceInfo info, JClassType enclosingType) {
-    return new JThisRef(info, enclosingType);
+    return new JThisRef(info, getNonNullType(enclosingType));
   }
 
   public int getFragmentCount() {
@@ -884,11 +912,23 @@ public class JProgram extends JNode {
     JStringLiteral toReturn = stringLiteralMap.get(s);
     if (toReturn == null) {
       toReturn = new JStringLiteral(stringPoolSourceInfo.makeChild(
-          JProgram.class, "String literal: " + s), s, getTypeJavaLangString());
+          JProgram.class, "String literal: " + s), s, typeNonNullString);
       stringLiteralMap.put(s, toReturn);
     }
     toReturn.getSourceInfo().merge(sourceInfo);
     return toReturn;
+  }
+
+  public JNonNullType getNonNullType(JReferenceType type) {
+    if (type instanceof JNonNullType) {
+      return (JNonNullType) type;
+    }
+    JNonNullType nonNullType = nonNullTypes.get(type);
+    if (nonNullType == null) {
+      nonNullType = new JNonNullType(type);
+      nonNullTypes.put(type, nonNullType);
+    }
+    return nonNullType;
   }
 
   public JField getNullField() {
@@ -910,6 +950,7 @@ public class JProgram extends JNode {
   }
 
   public int getQueryId(JReferenceType elementType) {
+    assert (elementType == getRunTimeType(elementType));
     Integer integer = queryIds.get(elementType);
     if (integer == null) {
       return 0;
@@ -922,6 +963,25 @@ public class JProgram extends JNode {
     return runAsyncReplacements;
   }
 
+  /**
+   * A run-time type is a type at the granularity that GWT tests at run time.
+   * These include declared types, arrays of declared types, arrays of
+   * primitives, and null. This is also the granularity for the notion of
+   * instantiability recorded in {@link JTypeOracle}. This method returns the
+   * narrowest supertype of <code>type</code> that is a run-time type.
+   */
+  public JReferenceType getRunTimeType(JReferenceType type) {
+    type = type.getUnderlyingType();
+    if (type instanceof JArrayType) {
+      JArrayType typeArray = (JArrayType) type;
+      if (typeArray.getLeafType() instanceof JNonNullType) {
+        JNonNullType leafType = (JNonNullType) typeArray.getLeafType();
+        type = getTypeArray(leafType.getUnderlyingType(), typeArray.getDims());
+      }
+    }
+    return type;
+  }
+
   public List<Integer> getSplitPointInitialSequence() {
     return splitPointInitialSequence;
   }
@@ -931,6 +991,7 @@ public class JProgram extends JNode {
   }
 
   public JArrayType getTypeArray(JType leafType, int dimensions) {
+    assert (!(leafType instanceof JArrayType));
     HashMap<JType, JArrayType> typeToArrayType;
 
     // Create typeToArrayType maps for index slots that don't exist yet.
@@ -1014,6 +1075,7 @@ public class JProgram extends JNode {
   }
 
   public int getTypeId(JReferenceType referenceType) {
+    assert (referenceType == getRunTimeType(referenceType));
     Integer integer = typeIdMap.get(referenceType);
     if (integer == null) {
       return 0;
@@ -1086,9 +1148,13 @@ public class JProgram extends JNode {
     this.jsonTypeTable = jsonObjects;
   }
 
+  public boolean isJavaLangString(JType type) {
+    return type == typeString || type == typeNonNullString;
+  }
+
   public boolean isJavaScriptObject(JType type) {
-    if (type instanceof JClassType && typeSpecialJavaScriptObject != null) {
-      return typeOracle.canTriviallyCast((JClassType) type,
+    if (type instanceof JReferenceType && typeSpecialJavaScriptObject != null) {
+      return typeOracle.canTriviallyCast((JReferenceType) type,
           typeSpecialJavaScriptObject);
     }
     return false;
@@ -1145,9 +1211,18 @@ public class JProgram extends JNode {
     return staticToInstanceMap.get(method);
   }
 
+  /**
+   * Return the greatest lower bound of two types. That is, return the largest
+   * type that is a subtype of both inputs.
+   */
   public JReferenceType strongerType(JReferenceType type1, JReferenceType type2) {
     if (type1 == type2) {
       return type1;
+    }
+
+    if (type1 instanceof JNonNullType != type2 instanceof JNonNullType) {
+      // If either is non-nullable, the result should be non-nullable.
+      return strongerType(getNonNullType(type1), getNonNullType(type2));
     }
 
     if (typeOracle.canTriviallyCast(type1, type2)) {
@@ -1171,6 +1246,7 @@ public class JProgram extends JNode {
   }
 
   private int classifyType(JReferenceType type) {
+    assert !(type instanceof JNonNullType);
     if (type instanceof JNullType) {
       return IS_NULL;
     } else if (type instanceof JInterfaceType) {

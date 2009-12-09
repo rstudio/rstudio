@@ -16,10 +16,11 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsEmpty;
@@ -65,7 +66,7 @@ public class FragmentExtractor {
       return cfa.getLiveFieldsAndMethods().contains(method);
     }
 
-    public boolean isLive(JReferenceType type) {
+    public boolean isLive(JDeclaredType type) {
       return cfa.getInstantiatedTypes().contains(type);
     }
 
@@ -107,7 +108,7 @@ public class FragmentExtractor {
 
     boolean isLive(JMethod method);
 
-    boolean isLive(JReferenceType type);
+    boolean isLive(JDeclaredType type);
 
     boolean isLive(String literal);
 
@@ -133,7 +134,7 @@ public class FragmentExtractor {
       return false;
     }
 
-    public boolean isLive(JReferenceType type) {
+    public boolean isLive(JDeclaredType type) {
       return false;
     }
 
@@ -258,7 +259,7 @@ public class FragmentExtractor {
     /**
      * The type whose vtables can currently be installed.
      */
-    JReferenceType currentVtableType = null;
+    JClassType currentVtableType = null;
 
     for (int frag = 0; frag < jsprogram.getFragmentCount(); frag++) {
       List<JsStatement> stats = jsprogram.getFragmentBlock(frag).getStatements();
@@ -284,7 +285,7 @@ public class FragmentExtractor {
           if (vtableTypeAssigned(stat) != null) {
             currentVtableType = vtableTypeAssigned(stat);
           }
-          JReferenceType vtableType = vtableTypeNeeded(stat);
+          JClassType vtableType = vtableTypeNeeded(stat);
           if (vtableType != null && vtableType != currentVtableType) {
             extractedStats.add(vtableStatFor(vtableType));
             currentVtableType = vtableType;
@@ -379,7 +380,7 @@ public class FragmentExtractor {
   }
 
   private boolean isLive(JsStatement stat, LivenessPredicate livenessPredicate) {
-    JReferenceType type = map.typeForStatement(stat);
+    JClassType type = map.typeForStatement(stat);
     if (type != null) {
       // This is part of the code only needed once a type is instantiable
       return livenessPredicate.isLive(type);
@@ -478,7 +479,7 @@ public class FragmentExtractor {
    * <code>_ = foo.prototype</code>, where <code>foo</code> is the constructor
    * function for <code>vtableType</code>.
    */
-  private JsStatement vtableStatFor(JReferenceType vtableType) {
+  private JsStatement vtableStatFor(JClassType vtableType) {
     JsNameRef prototypeField = new JsNameRef(
         jsprogram.createSourceInfoSynthetic(FragmentExtractor.class,
             "prototype field"), "prototype");
@@ -506,10 +507,8 @@ public class FragmentExtractor {
   /**
    * If <code>state</code> is of the form <code>_ = Foo.prototype = exp</code>,
    * then return <code>Foo</code>. Otherwise return <code>null</code>.
-   * 
-   * TODO(spoon): get this information via source info on the statement
    */
-  private JReferenceType vtableTypeAssigned(JsStatement stat) {
+  private JClassType vtableTypeAssigned(JsStatement stat) {
     if (!(stat instanceof JsExprStmt)) {
       return null;
     }
@@ -552,11 +551,11 @@ public class FragmentExtractor {
     return map.typeForStatement(stat);
   }
 
-  private JReferenceType vtableTypeNeeded(JsStatement stat) {
+  private JClassType vtableTypeNeeded(JsStatement stat) {
     JMethod meth = map.vtableInitToMethod(stat);
     if (meth != null) {
       if (!meth.isStatic()) {
-        return meth.getEnclosingType();
+        return (JClassType) meth.getEnclosingType();
       }
     }
     return null;

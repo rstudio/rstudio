@@ -22,10 +22,10 @@ import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
-import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -33,14 +33,13 @@ import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
+import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
-import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 
 /**
@@ -110,8 +109,8 @@ public class JavaScriptObjectNormalizer {
      */
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      JType targetClass = x.getTarget().getEnclosingType();
-      if (jsoSingleImpls.containsKey(targetClass)) {
+      JDeclaredType targetClass = x.getTarget().getEnclosingType();
+      if (program.typeOracle.getSingleJsoImpl(targetClass) != null) {
 
         SourceInfo info = x.getSourceInfo().makeChild(
             JavaScriptObjectNormalizer.class,
@@ -121,7 +120,7 @@ public class JavaScriptObjectNormalizer {
         JMethod jsoMethod = findJsoMethod(x.getTarget());
         assert jsoMethod != null;
 
-        if (dualImpls.contains(targetClass)) {
+        if (program.typeOracle.isDualJsoInterface(targetClass)) {
           /*
            * This is the special-case code to handle interfaces.
            */
@@ -163,7 +162,7 @@ public class JavaScriptObjectNormalizer {
 
     @Override
     public void endVisit(JNewArray x, Context ctx) {
-      x.setType(translate(x.getType()));
+      x.setType((JNonNullType) translate(x.getType()));
     }
 
     @Override
@@ -198,7 +197,7 @@ public class JavaScriptObjectNormalizer {
     }
 
     private JMethod findJsoMethod(JMethod interfaceMethod) {
-      JClassType jsoClass = jsoSingleImpls.get(interfaceMethod.getEnclosingType());
+      JClassType jsoClass = program.typeOracle.getSingleJsoImpl(interfaceMethod.getEnclosingType());
       assert program.isJavaScriptObject(jsoClass);
       assert jsoClass != null;
 
@@ -245,22 +244,28 @@ public class JavaScriptObjectNormalizer {
     }
 
     private JType translate(JType type) {
-      if (program.isJavaScriptObject(type)) {
-        return program.getJavaScriptObject();
+      if (!(type instanceof JReferenceType)) {
+        return type;
+      }
+      JReferenceType refType = (JReferenceType) type;
+      boolean canBeNull = refType.canBeNull();
+      refType = refType.getUnderlyingType();
 
-      } else if (jsoSingleImpls.containsKey(type) && !dualImpls.contains(type)) {
+      if (program.isJavaScriptObject(refType)) {
+        refType = program.getJavaScriptObject();
+      } else if (program.typeOracle.getSingleJsoImpl(refType) != null
+          && !program.typeOracle.isDualJsoInterface(refType)) {
         // Optimization: narrow to JSO if it's not a dual impl.
-        return program.getJavaScriptObject();
-
-      } else if (type instanceof JArrayType) {
-        JArrayType arrayType = (JArrayType) type;
+        refType = program.getJavaScriptObject();
+      } else if (refType instanceof JArrayType) {
+        JArrayType arrayType = (JArrayType) refType;
         JType leafType = arrayType.getLeafType();
         JType replacement = translate(leafType);
         if (leafType != replacement) {
-          return program.getTypeArray(replacement, arrayType.getDims());
+          refType = program.getTypeArray(replacement, arrayType.getDims());
         }
       }
-      return type;
+      return canBeNull ? refType : program.getNonNullType(refType);
     }
   }
 
@@ -268,22 +273,10 @@ public class JavaScriptObjectNormalizer {
     new JavaScriptObjectNormalizer(program).execImpl();
   }
 
-  /**
-   * Interfaces implemented both by a JSO type and a regular Java type.
-   */
-  private final Set<JInterfaceType> dualImpls;
-
-  /**
-   * Maps SingleJsoImpl interfaces onto the single JSO implementation.
-   */
-  private final Map<JInterfaceType, JClassType> jsoSingleImpls;
-
   private final JProgram program;
 
   private JavaScriptObjectNormalizer(JProgram program) {
     this.program = program;
-    dualImpls = program.typeOracle.getInterfacesWithJavaAndJsoImpls();
-    jsoSingleImpls = program.typeOracle.getSingleJsoImpls();
   }
 
   private void execImpl() {

@@ -24,21 +24,23 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JNewInstance extends JExpression {
 
-  private final JClassType classType;
+  private final JNonNullType type;
 
-  public JNewInstance(SourceInfo info, JClassType classType) {
+  public JNewInstance(SourceInfo info, JNonNullType type) {
     super(info);
-    this.classType = classType;
+    assert type.getUnderlyingType() instanceof JClassType;
+    this.type = type;
   }
 
   public JClassType getClassType() {
-    return classType;
+    return (JClassType) type.getUnderlyingType();
   }
 
-  public JType getType() {
-    return classType;
+  public JNonNullType getType() {
+    return type;
   }
 
+  @Override
   public boolean hasSideEffects() {
     // The actual new operation itself has no side effects (see class comment).
     return false;

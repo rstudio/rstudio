@@ -22,13 +22,21 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JArrayRef extends JExpression {
 
-  private JExpression instance;
   private JExpression indexExpr;
+  private JExpression instance;
 
   public JArrayRef(SourceInfo info, JExpression instance, JExpression indexExpr) {
     super(info);
     this.instance = instance;
     this.indexExpr = indexExpr;
+  }
+
+  public JArrayType getArrayType() {
+    JType type = instance.getType();
+    if (type instanceof JNullType) {
+      return null;
+    }
+    return (JArrayType) ((JReferenceType) type).getUnderlyingType();
   }
 
   public JExpression getIndexExpr() {
@@ -40,12 +48,9 @@ public class JArrayRef extends JExpression {
   }
 
   public JType getType() {
-    JType type = instance.getType();
-    if (type instanceof JNullType) {
-      return JNullType.INSTANCE;
-    }
-    JArrayType arrayType = (JArrayType) type;
-    return arrayType.getElementType();
+    JArrayType arrayType = getArrayType();
+    return (arrayType == null) ? JNullType.INSTANCE
+        : arrayType.getElementType();
   }
 
   public boolean hasSideEffects() {

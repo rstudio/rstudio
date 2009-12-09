@@ -66,6 +66,7 @@ import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
+import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
@@ -790,7 +791,8 @@ public class GenerateJavaAST {
         }
         call = new JMethodCall(makeSourceInfo(x), null, targetMethod);
       } else {
-        JNewInstance newInstance = new JNewInstance(info, newType);
+        JNewInstance newInstance = new JNewInstance(info,
+            (JNonNullType) ctor.getType());
         call = new JMethodCall(info, newInstance, ctor);
       }
 
@@ -904,7 +906,7 @@ public class GenerateJavaAST {
           op = JBinaryOperator.SHRU;
           break;
         case BinaryExpression.PLUS:
-          if (typeMap.get(x.resolvedType) == program.getTypeJavaLangString()) {
+          if (program.isJavaLangString((JType) typeMap.get(x.resolvedType))) {
             op = JBinaryOperator.CONCAT;
           } else {
             op = JBinaryOperator.ADD;
@@ -975,7 +977,7 @@ public class GenerateJavaAST {
 
       switch (x.operator) {
         case CompoundAssignment.PLUS:
-          if (typeMap.get(x.resolvedType) == program.getTypeJavaLangString()) {
+          if (program.isJavaLangString((JType) typeMap.get(x.resolvedType))) {
             op = JBinaryOperator.ASG_CONCAT;
           } else {
             op = JBinaryOperator.ASG_ADD;
@@ -1214,8 +1216,8 @@ public class GenerateJavaAST {
       SourceInfo info = makeSourceInfo(x);
       MethodBinding b = x.binding;
       JMethod ctor = (JMethod) typeMap.get(b);
-      JClassType enclosingType = (JClassType) ctor.getEnclosingType();
-      JNewInstance newInstance = new JNewInstance(info, enclosingType);
+      JNewInstance newInstance = new JNewInstance(info,
+          (JNonNullType) ctor.getType());
       JMethodCall call = new JMethodCall(info, newInstance, ctor);
       JExpression qualifier = dispProcessExpression(x.enclosingInstance);
       List<JExpression> qualList = new ArrayList<JExpression>();
@@ -2155,7 +2157,7 @@ public class GenerateJavaAST {
      * world would we need to do this? It turns out that when making an
      * unqualified explicit super constructor call to something that needs a
      * synthetic outer this arg, the correct value to pass in can be one of
-     * several of the calling constructor's own synthetic ags. The catch is,
+     * several of the calling constructor's own synthetic args. The catch is,
      * it's possible none of the args are exactly the right type-- we have to
      * make one of them the right type by following each of their synthetic this
      * refs up an arbitrarily big tree of enclosing classes and
@@ -2167,6 +2169,8 @@ public class GenerateJavaAST {
      * prefer the current expression as one of its supertypes over a synthetic
      * this ref rooted off the current expression that happens to be the correct
      * type. We have observed this to be consistent with how Java handles it.
+     * 
+     * TODO(scottb): could we get this info directly from JDT?
      */
     private JExpression createThisRef(JReferenceType qualType,
         List<JExpression> list) {
@@ -2174,7 +2178,7 @@ public class GenerateJavaAST {
       workList.addAll(list);
       while (!workList.isEmpty()) {
         JExpression expr = workList.removeFirst();
-        JClassType classType = (JClassType) expr.getType();
+        JClassType classType = (JClassType) ((JReferenceType) expr.getType()).getUnderlyingType();
         for (; classType != null; classType = classType.getSuperClass()) {
           // prefer myself or myself-as-supertype over any of my this$ fields
           // that may have already been added to the work list
@@ -2226,7 +2230,7 @@ public class GenerateJavaAST {
           JClassType fieldEnclosingType = (JClassType) field.getEnclosingType();
           instance = createThisRef(info, fieldEnclosingType);
           if (!program.typeOracle.canTriviallyCast(
-              (JClassType) instance.getType(), fieldEnclosingType)) {
+              (JReferenceType) instance.getType(), fieldEnclosingType)) {
             throw new InternalCompilerException(
                 "FieldRef referencing field in a different type.");
           }
@@ -2344,8 +2348,8 @@ public class GenerateJavaAST {
      * expression. Beware that when autoboxing, the type of the expression is
      * not necessarily the same as the type of the box to be created. The JDT
      * figures out what the necessary conversion is, depending on the context
-     * the expression appears in, and stores it in <code>x.implicitConversion</code>,
-     * so extract it from there.
+     * the expression appears in, and stores it in
+     * <code>x.implicitConversion</code>, so extract it from there.
      */
     private JPrimitiveType implicitConversionTargetType(Expression x)
         throws InternalCompilerException {
@@ -2862,8 +2866,7 @@ public class GenerateJavaAST {
 
           JLiteral initializer = field.getConstInitializer();
           JType type = initializer.getType();
-          if (type instanceof JPrimitiveType
-              || type == program.getTypeJavaLangString()) {
+          if (type instanceof JPrimitiveType || program.isJavaLangString(type)) {
             GenerateJavaScriptLiterals generator = new GenerateJavaScriptLiterals(
                 jsProgram);
             generator.accept(initializer);
@@ -2882,10 +2885,9 @@ public class GenerateJavaAST {
 
       private void processMethod(JsNameRef nameRef, SourceInfo info,
           JMethod method, JsContext<JsExpression> ctx) {
-        JReferenceType enclosingType = method.getEnclosingType();
+        JDeclaredType enclosingType = method.getEnclosingType();
         if (enclosingType != null) {
-          JClassType jsoImplType = program.typeOracle.getSingleJsoImpls().get(
-              enclosingType);
+          JClassType jsoImplType = program.typeOracle.getSingleJsoImpl(enclosingType);
           if (jsoImplType != null) {
             JsniCollector.reportJsniError(info, methodDecl,
                 "Illegal reference to method '" + method.getName()

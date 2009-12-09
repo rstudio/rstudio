@@ -17,9 +17,9 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.jjs.Correlation.Axis;
 import com.google.gwt.dev.jjs.Correlation.Literal;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
@@ -51,7 +51,7 @@ public abstract class CorrelationFactory implements Serializable {
     }
 
     @Override
-    public Correlation by(JReferenceType type) {
+    public Correlation by(JDeclaredType type) {
       return null;
     }
 
@@ -155,7 +155,7 @@ public abstract class CorrelationFactory implements Serializable {
     }
 
     @Override
-    public Correlation by(JReferenceType type) {
+    public Correlation by(JDeclaredType type) {
       Correlation toReturn = canonicalMap.get(type);
       if (toReturn == null) {
         toReturn = new Correlation(Axis.CLASS, type.getName(), type);
@@ -225,7 +225,7 @@ public abstract class CorrelationFactory implements Serializable {
 
   public abstract Correlation by(JMethod method);
 
-  public abstract Correlation by(JReferenceType type);
+  public abstract Correlation by(JDeclaredType type);
 
   public abstract Correlation by(JsFunction function);
 

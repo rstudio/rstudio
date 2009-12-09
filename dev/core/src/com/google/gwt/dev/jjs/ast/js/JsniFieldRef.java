@@ -29,7 +29,7 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 public class JsniFieldRef extends JFieldRef {
 
   private final String ident;
-  private boolean isLvalue;
+  private final boolean isLvalue;
 
   public JsniFieldRef(SourceInfo info, String ident, JField field,
       JDeclaredType enclosingType, boolean isLvalue) {
@@ -47,6 +47,7 @@ public class JsniFieldRef extends JFieldRef {
     return isLvalue;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

@@ -29,6 +29,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
+import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
@@ -168,8 +169,8 @@ public class BuildTypeMap {
         String name = enclosingType.getShortName();
         SourceInfo info = makeSourceInfo(ctorDecl, enclosingType);
         JMethod newMethod = program.createMethod(info, name.toCharArray(),
-            enclosingType, enclosingType, false, false, true, b.isPrivate(),
-            false);
+            enclosingType, program.getNonNullType(enclosingType), false, false,
+            true, b.isPrivate(), false);
 
         // Enums have hidden arguments for name and value
         if (enclosingType.isEnumOrSubclass() != null) {
@@ -400,12 +401,13 @@ public class BuildTypeMap {
       // Define the method
       JMethod synthetic = program.createMethod(type.getSourceInfo().makeChild(
           BuildDeclMapVisitor.class, "Synthetic constructor"),
-          "new".toCharArray(), type, type, false, true, true, false, false);
+          "new".toCharArray(), type, program.getNonNullType(type), false, true,
+          true, false, false);
 
       // new Foo() : Create the instance
       JNewInstance newInstance = new JNewInstance(
           type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-              "new instance"), type);
+              "new instance"), (JNonNullType) synthetic.getType());
 
       // (new Foo()).Foo() : Invoke the constructor method on the instance
       JMethodCall call = new JMethodCall(type.getSourceInfo().makeChild(

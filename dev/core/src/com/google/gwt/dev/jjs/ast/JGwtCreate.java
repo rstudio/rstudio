@@ -25,7 +25,7 @@ import java.util.List;
  * finalized. Replaced with the entry call for the appropriate rebind result in
  * that permutation.
  */
-public class JGwtCreate extends JExpression implements HasSettableType {
+public class JGwtCreate extends JExpression {
 
   public static JExpression createInstantiationExpression(SourceInfo info,
       JClassType classType) {
@@ -46,7 +46,8 @@ public class JGwtCreate extends JExpression implements HasSettableType {
       return null;
     }
     // Call it, using a new expression as a qualifier
-    JNewInstance newInstance = new JNewInstance(info, classType);
+    JNewInstance newInstance = new JNewInstance(info,
+        (JNonNullType) noArgCtor.getType());
     return new JMethodCall(info, newInstance, noArgCtor);
   }
 

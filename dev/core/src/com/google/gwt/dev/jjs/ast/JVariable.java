@@ -21,7 +21,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
  * Base class for any storage location.
  */
 public abstract class JVariable extends JNode implements CanBeSetFinal,
-    CanHaveInitializer, HasName, HasSettableType {
+    CanHaveInitializer, HasName, HasType {
 
   protected JDeclarationStatement declStmt = null;
   private boolean isFinal;

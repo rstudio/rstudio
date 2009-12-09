@@ -17,12 +17,12 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.util.TextOutput;
 
 /**
@@ -99,7 +99,7 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
   @Override
   public boolean visit(JProgram x, Context ctx) {
     for (int i = 0; i < x.getDeclaredTypes().size(); ++i) {
-      JReferenceType type = x.getDeclaredTypes().get(i);
+      JDeclaredType type = x.getDeclaredTypes().get(i);
       accept(type);
       newline();
       newline();

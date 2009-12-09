@@ -16,8 +16,8 @@
 package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.SizeBreakdown;
@@ -182,7 +182,7 @@ public class SizeMapRecorder {
       return new TypedProgramReference("method", desc);
     }
 
-    JReferenceType type = jjsmap.nameToType(name);
+    JClassType type = jjsmap.nameToType(name);
     if (type != null) {
       return new TypedProgramReference("type", type.getName());
     }

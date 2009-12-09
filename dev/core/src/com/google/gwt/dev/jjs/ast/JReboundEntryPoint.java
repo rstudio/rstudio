@@ -28,9 +28,9 @@ public class JReboundEntryPoint extends JStatement {
 
   private final List<JExpression> entryCalls;
   private final List<JClassType> resultTypes;
-  private final JReferenceType sourceType;
+  private final JDeclaredType sourceType;
 
-  public JReboundEntryPoint(SourceInfo info, JReferenceType sourceType,
+  public JReboundEntryPoint(SourceInfo info, JDeclaredType sourceType,
       List<JClassType> resultTypes, List<JExpression> entryCalls) {
     super(info);
     this.sourceType = sourceType;
@@ -46,7 +46,7 @@ public class JReboundEntryPoint extends JStatement {
     return resultTypes;
   }
 
-  public JReferenceType getSourceType() {
+  public JDeclaredType getSourceType() {
     return sourceType;
   }
 

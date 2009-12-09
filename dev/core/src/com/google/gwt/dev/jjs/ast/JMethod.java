@@ -31,7 +31,7 @@ import java.util.Set;
  * A Java method implementation.
  */
 public final class JMethod extends JNode implements HasEnclosingType, HasName,
-    HasSettableType, CanBeAbstract, CanBeSetFinal, CanBeNative, CanBeStatic {
+    HasType, CanBeAbstract, CanBeSetFinal, CanBeNative, CanBeStatic {
 
   private static final String TRACE_METHOD_WILDCARD = "*";
 

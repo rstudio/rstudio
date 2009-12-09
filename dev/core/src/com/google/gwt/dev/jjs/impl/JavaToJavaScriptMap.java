@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsStatement;
 
@@ -33,7 +33,7 @@ public interface JavaToJavaScriptMap {
   /**
    * Return the JavaScript name corresponding to a Java type.
    */
-  JsName nameForType(JReferenceType type);
+  JsName nameForType(JClassType type);
 
   /**
    * If <code>name</code> is the name of a
@@ -52,13 +52,13 @@ public interface JavaToJavaScriptMap {
    * If <code>name</code> is the name of a constructor function corresponding to
    * a Java type, then return that type. Otherwise, return <code>null</code>.
    */
-  JReferenceType nameToType(JsName name);
+  JClassType nameToType(JsName name);
 
   /**
    * If <code>stat</code> is used to set up the definition of some class, return
    * that class. Otherwise, return null.
    */
-  JReferenceType typeForStatement(JsStatement stat);
+  JClassType typeForStatement(JsStatement stat);
 
   /**
    * If <code>stat</code> is used to set up a vtable entry for a method, then

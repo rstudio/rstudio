@@ -306,7 +306,8 @@ public class TypeTightener {
          */
         JMethod staticImplFor = program.staticImplFor(x);
         if (staticImplFor == null
-            || !staticImplFor.getEnclosingType().getMethods().contains(staticImplFor)) {
+            || !staticImplFor.getEnclosingType().getMethods().contains(
+                staticImplFor)) {
           // The instance method has already been pruned.
           return true;
         }
@@ -404,17 +405,18 @@ public class TypeTightener {
       if (triviallyTrue) {
         // remove the cast operation
         ctx.replaceMe(x.getExpr());
-      } else if (triviallyFalse) {
-        // replace with a magic NULL cast
+      } else if (triviallyFalse && toType != program.getTypeNull()) {
+        // replace with a magic NULL cast, unless it's already a cast to NULL
         JCastOperation newOp = new JCastOperation(x.getSourceInfo(),
             program.getTypeNull(), x.getExpr());
         ctx.replaceMe(newOp);
       } else {
         // If possible, try to use a narrower cast
-        JClassType concreteType = getSingleConcreteType(toType);
-        if (concreteType != null) {
+        JReferenceType tighterType = getSingleConcreteType(toType);
+
+        if (tighterType != null && tighterType != toType) {
           JCastOperation newOp = new JCastOperation(x.getSourceInfo(),
-              concreteType, x.getExpr());
+              tighterType, x.getExpr());
           ctx.replaceMe(newOp);
         }
       }
@@ -442,10 +444,10 @@ public class TypeTightener {
 
     @Override
     public void endVisit(JGwtCreate x, Context ctx) {
-      List<JClassType> typeList = new ArrayList<JClassType>();
+      List<JReferenceType> typeList = new ArrayList<JReferenceType>();
       for (JExpression expr : x.getInstantiationExpressions()) {
-        JType type = expr.getType();
-        typeList.add((JClassType) type);
+        JReferenceType type = (JReferenceType) expr.getType();
+        typeList.add(type);
       }
 
       JReferenceType resultType = program.generalizeTypes(typeList);
@@ -493,7 +495,7 @@ public class TypeTightener {
         ctx.replaceMe(program.getLiteralBoolean(false));
       } else {
         // If possible, try to use a narrower cast
-        JClassType concreteType = getSingleConcreteType(toType);
+        JReferenceType concreteType = getSingleConcreteType(toType);
         if (concreteType != null) {
           JInstanceOf newOp = new JInstanceOf(x.getSourceInfo(), concreteType,
               x.getExpr());
@@ -528,7 +530,7 @@ public class TypeTightener {
         return;
       }
 
-      JClassType concreteType = getSingleConcreteType(x.getType());
+      JReferenceType concreteType = getSingleConcreteType(x.getType());
       if (concreteType != null) {
         x.setType(concreteType);
         myDidChange = true;
@@ -545,13 +547,6 @@ public class TypeTightener {
       // tighten based on both returned types and possible overrides
       List<JReferenceType> typeList = new ArrayList<JReferenceType>();
 
-      /*
-       * Always assume at least one null assignment; if there really aren't any
-       * other assignments, then this variable will get the null type. If there
-       * are, it won't hurt anything because null type will always lose.
-       */
-      typeList.add(typeNull);
-
       Set<JExpression> myReturns = returns.get(x);
       if (myReturns != null) {
         for (JExpression expr : myReturns) {
@@ -565,7 +560,13 @@ public class TypeTightener {
         }
       }
 
-      JReferenceType resultType = program.generalizeTypes(typeList);
+      JReferenceType resultType;
+      if (typeList.isEmpty()) {
+        // The method returns nothing
+        resultType = typeNull;
+      } else {
+        resultType = program.generalizeTypes(typeList);
+      }
       resultType = program.strongerType(refType, resultType);
       if (refType != resultType) {
         x.setType(resultType);
@@ -657,14 +658,18 @@ public class TypeTightener {
      * Given an abstract type, return the single concrete implementation of that
      * type.
      */
-    private JClassType getSingleConcreteType(JType type) {
+    private JReferenceType getSingleConcreteType(JType type) {
       if (type instanceof JReferenceType) {
         JReferenceType refType = (JReferenceType) type;
         if (refType.isAbstract()) {
-          JClassType singleConcrete = getSingleConcrete((JReferenceType) type,
-              implementors);
+          JClassType singleConcrete = getSingleConcrete(
+              refType.getUnderlyingType(), implementors);
           assert (singleConcrete == null || program.typeOracle.isInstantiatedType(singleConcrete));
-          return singleConcrete;
+          if (singleConcrete == null) {
+            return null;
+          }
+          return refType.canBeNull() ? singleConcrete
+              : program.getNonNullType(singleConcrete);
         }
       }
       return null;
@@ -715,7 +720,7 @@ public class TypeTightener {
       }
 
       // tighten based on leaf types
-      JClassType leafType = getSingleConcreteType(refType);
+      JReferenceType leafType = getSingleConcreteType(refType);
       if (leafType != null) {
         x.setType(leafType);
         myDidChange = true;
@@ -726,15 +731,13 @@ public class TypeTightener {
       List<JReferenceType> typeList = new ArrayList<JReferenceType>();
 
       /*
-       * For non-parameters, always assume at least one null assignment; if
-       * there really aren't any other assignments, then this variable will get
-       * the null type. If there are, it won't hurt anything because null type
-       * will always lose.
-       * 
-       * For parameters, don't perform any tightening if we can't find any
-       * actual assignments. The method should eventually get pruned.
+       * For fields without an initializer, add a null assignment, because the
+       * field might be accessed before initialized. Technically even a field
+       * with an initializer might be accessed before initialization, but
+       * presumably that is not the programmer's intent, so the compiler cheats
+       * and assumes the initial null will not be seen.
        */
-      if (!(x instanceof JParameter)) {
+      if ((x instanceof JField) && !x.hasInitializer()) {
         typeList.add(typeNull);
       }
 
@@ -758,12 +761,22 @@ public class TypeTightener {
         }
       }
 
-      if (typeList.isEmpty()) {
-        return;
+      JReferenceType resultType;
+      if (!typeList.isEmpty()) {
+        resultType = program.generalizeTypes(typeList);
+        resultType = program.strongerType(refType, resultType);
+      } else {
+        if (x instanceof JParameter) {
+          /*
+           * There is no need to tighten unused parameters, because they will be
+           * pruned.
+           */
+          resultType = refType;
+        } else {
+          resultType = typeNull;
+        }
       }
 
-      JReferenceType resultType = program.generalizeTypes(typeList);
-      resultType = program.strongerType(refType, resultType);
       if (refType != resultType) {
         x.setType(resultType);
         myDidChange = true;

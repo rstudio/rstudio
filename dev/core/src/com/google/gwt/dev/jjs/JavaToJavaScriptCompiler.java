@@ -724,7 +724,7 @@ public class JavaToJavaScriptCompiler {
       throw new UnableToCompleteException();
     }
 
-    JMethod entryMethod = findMainMethodRecurse(reboundEntryType);
+    JMethod entryMethod = findMainMethodRecurse(entryClass);
     if (entryMethod == null) {
       logger.log(TreeLogger.ERROR,
           "Could not find entry method 'onModuleLoad()' method in entry point class '"
@@ -738,7 +738,7 @@ public class JavaToJavaScriptCompiler {
               + originalMainClassName + "' must not be abstract", null);
       throw new UnableToCompleteException();
     }
-    SourceInfo sourceInfo = reboundEntryType.getSourceInfo().makeChild(
+    SourceInfo sourceInfo = entryClass.getSourceInfo().makeChild(
         JavaToJavaScriptCompiler.class, "Rebound entry point");
 
     JExpression qualifier = null;

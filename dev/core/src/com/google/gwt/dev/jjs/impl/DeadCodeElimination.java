@@ -1161,11 +1161,7 @@ public class DeadCodeElimination {
     }
 
     private boolean isTypeString(JExpression exp) {
-      return isTypeString(exp.getType());
-    }
-
-    private boolean isTypeString(JType type) {
-      return type == program.getTypeJavaLangString();
+      return program.isJavaLangString(exp.getType());
     }
 
     private boolean isUnconditionalBreak(JStatement statement) {

@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.impl.FragmentExtractor;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsBlock;
@@ -121,7 +121,7 @@ public class JsSourceGenerationVisitorWithSizeBreakdown extends
   private JsName nameToBillTo(JsVisitable node) {
     if (node instanceof JsStatement) {
       JsStatement stat = (JsStatement) node;
-      JReferenceType type = map.typeForStatement(stat);
+      JClassType type = map.typeForStatement(stat);
       if (type != null) {
         return map.nameForType(type);
       }

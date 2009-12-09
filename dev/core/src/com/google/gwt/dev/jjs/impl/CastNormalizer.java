@@ -71,7 +71,6 @@ import java.util.Set;
  * </p>
  */
 public class CastNormalizer {
-
   private class AssignTypeIdsVisitor extends JVisitor {
 
     Set<JReferenceType> alreadyRan = new HashSet<JReferenceType>();
@@ -147,17 +146,17 @@ public class CastNormalizer {
      */
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
-      if (x.getOp() == JBinaryOperator.ASG && x.getLhs() instanceof JArrayRef) {
+      if (x.getOp().isAssignment() && x.getLhs() instanceof JArrayRef) {
 
         // first, calculate the transitive closure of all possible runtime types
         // the lhs could be
-        JExpression instance = ((JArrayRef) x.getLhs()).getInstance();
-        if (instance.getType() instanceof JNullType) {
+        JArrayRef lhsArrayRef = (JArrayRef) x.getLhs();
+        JType elementType = lhsArrayRef.getType();
+        if (elementType instanceof JNullType) {
           // will generate a null pointer exception instead
           return;
         }
-        JArrayType lhsArrayType = (JArrayType) instance.getType();
-        JType elementType = lhsArrayType.getElementType();
+        JArrayType lhsArrayType = lhsArrayRef.getArrayType();
 
         // primitives are statically correct
         if (!(elementType instanceof JReferenceType)) {
@@ -183,7 +182,7 @@ public class CastNormalizer {
           if (typeOracle.canTheoreticallyCast(arrayType, lhsArrayType)) {
             JType itElementType = arrayType.getElementType();
             if (itElementType instanceof JReferenceType) {
-              recordCastInternal((JReferenceType) itElementType, refRhsType);
+              recordCast(itElementType, x.getRhs());
             }
           }
         }
@@ -214,6 +213,7 @@ public class CastNormalizer {
       if (type == null || alreadyRan.contains(type)) {
         return;
       }
+      assert (type == program.getRunTimeType(type));
 
       alreadyRan.add(type);
 
@@ -288,14 +288,13 @@ public class CastNormalizer {
 
     private void recordCast(JType targetType, JExpression rhs) {
       if (targetType instanceof JReferenceType) {
+        targetType = program.getRunTimeType((JReferenceType) targetType);
         // unconditional cast b/c it would've been a semantic error earlier
-        JReferenceType rhsType = (JReferenceType) rhs.getType();
+        JReferenceType rhsType = program.getRunTimeType((JReferenceType) rhs.getType());
         // don't record a type for trivial casts that won't generate code
-        if (rhsType instanceof JClassType) {
-          if (program.typeOracle.canTriviallyCast(rhsType,
-              (JReferenceType) targetType)) {
-            return;
-          }
+        if (program.typeOracle.canTriviallyCast(rhsType,
+            (JReferenceType) targetType)) {
+          return;
         }
 
         // If the target type is a JavaScriptObject, don't record an id.
@@ -307,9 +306,10 @@ public class CastNormalizer {
       }
     }
 
-    private void recordCastInternal(JReferenceType targetType,
+    private void recordCastInternal(JReferenceType toType,
         JReferenceType rhsType) {
-      JReferenceType toType = targetType;
+      toType = program.getRunTimeType(toType);
+      rhsType = program.getRunTimeType(rhsType);
       Set<JReferenceType> querySet = queriedTypes.get(toType);
       if (querySet == null) {
         queryIds.put(toType, nextQueryId++);
@@ -434,7 +434,7 @@ public class CastNormalizer {
         replaceExpr = call;
       } else if (toType instanceof JReferenceType) {
         JExpression curExpr = expr;
-        JReferenceType refType = (JReferenceType) toType;
+        JReferenceType refType = program.getRunTimeType((JReferenceType) toType);
         JReferenceType argType = (JReferenceType) expr.getType();
         if (program.typeOracle.canTriviallyCast(argType, refType)) {
           // just remove the cast
@@ -442,11 +442,11 @@ public class CastNormalizer {
         } else {
 
           JMethod method;
-          boolean isJsoCast = program.isJavaScriptObject(toType);
+          boolean isJsoCast = program.isJavaScriptObject(refType);
           if (isJsoCast) {
             // A cast to a concrete JSO subtype
             method = program.getIndexedMethod("Cast.dynamicCastJso");
-          } else if (program.typeOracle.getSingleJsoImpls().containsKey(toType)) {
+          } else if (program.typeOracle.isDualJsoInterface(refType)) {
             // An interface that should succeed when the object is a JSO
             method = program.getIndexedMethod("Cast.dynamicCastAllowJso");
           } else {
@@ -549,6 +549,8 @@ public class CastNormalizer {
     public void endVisit(JInstanceOf x, Context ctx) {
       JReferenceType argType = (JReferenceType) x.getExpr().getType();
       JReferenceType toType = x.getTestType();
+      // Only tests on run-time types are supported
+      assert (toType == program.getRunTimeType(toType));
       if (program.typeOracle.canTriviallyCast(argType, toType)) {
         // trivially true if non-null; replace with a null test
         JNullLiteral nullLit = program.getLiteralNull();
@@ -559,7 +561,7 @@ public class CastNormalizer {
       } else {
         JMethod method;
         boolean isJsoCast = false;
-        if (program.typeOracle.getSingleJsoImpls().containsKey(toType)) {
+        if (program.typeOracle.getSingleJsoImpl(toType) != null) {
           method = program.getIndexedMethod("Cast.instanceOfOrJso");
         } else if (program.isJavaScriptObject(toType)) {
           isJsoCast = true;

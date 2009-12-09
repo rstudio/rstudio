@@ -59,7 +59,7 @@ public class LongCastNormalizer {
       JType resultType = x.getType();
       JBinaryOperator op = x.getOp();
 
-      if (resultType == program.getTypeJavaLangString()) {
+      if (program.isJavaLangString(resultType)) {
         // Don't mess with concat.
         return;
       }
@@ -123,8 +123,8 @@ public class LongCastNormalizer {
       if (init != null) {
         init = checkAndReplace(init, x.getVariableRef().getType());
         if (init != x.getInitializer()) {
-          JDeclarationStatement newStmt = new JDeclarationStatement(x.getSourceInfo(),
-              x.getVariableRef(), init);
+          JDeclarationStatement newStmt = new JDeclarationStatement(
+              x.getSourceInfo(), x.getVariableRef(), init);
           ctx.replaceMe(newStmt);
         }
       }

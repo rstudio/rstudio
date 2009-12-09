@@ -49,12 +49,11 @@ public class ArrayNormalizer {
     public void endVisit(JBinaryOperation x, Context ctx) {
       if (x.getOp() == JBinaryOperator.ASG && x.getLhs() instanceof JArrayRef) {
         JArrayRef arrayRef = (JArrayRef) x.getLhs();
-        if (arrayRef.getType() instanceof JNullType) {
+        JType elementType = arrayRef.getType();
+        if (elementType instanceof JNullType) {
           // will generate a null pointer exception instead
           return;
         }
-        JArrayType arrayType = (JArrayType) arrayRef.getInstance().getType();
-        JType elementType = arrayType.getElementType();
 
         /*
          * See if we need to do a checked store. Primitives and (effectively)
@@ -62,7 +61,9 @@ public class ArrayNormalizer {
          */
         if (elementType instanceof JReferenceType) {
           if (!((JReferenceType) elementType).isFinal()
-              || elementType != x.getRhs().getType()) {
+              || !program.typeOracle.canTriviallyCast(
+                  (JReferenceType) x.getRhs().getType(),
+                  (JReferenceType) elementType)) {
             // replace this assignment with a call to setCheck()
             JMethodCall call = new JMethodCall(x.getSourceInfo(), null,
                 setCheckMethod);
@@ -137,10 +138,14 @@ public class ArrayNormalizer {
       SourceInfo sourceInfo = x.getSourceInfo().makeChild(ArrayVisitor.class,
           "Creating dimensions");
       JMethodCall call = new JMethodCall(sourceInfo, null, initDims, arrayType);
-      JsonArray classLitList = new JsonArray(sourceInfo, program.getJavaScriptObject());
-      JsonArray typeIdList = new JsonArray(sourceInfo, program.getJavaScriptObject());
-      JsonArray queryIdList = new JsonArray(sourceInfo, program.getJavaScriptObject());
-      JsonArray dimList = new JsonArray(sourceInfo, program.getJavaScriptObject());
+      JsonArray classLitList = new JsonArray(sourceInfo,
+          program.getJavaScriptObject());
+      JsonArray typeIdList = new JsonArray(sourceInfo,
+          program.getJavaScriptObject());
+      JsonArray queryIdList = new JsonArray(sourceInfo,
+          program.getJavaScriptObject());
+      JsonArray dimList = new JsonArray(sourceInfo,
+          program.getJavaScriptObject());
       JType cur = arrayType;
       for (int i = 0; i < dims; ++i) {
         // Walk down each type from most dims to least.
@@ -168,11 +173,13 @@ public class ArrayNormalizer {
       // override the type of the called method with the array's type
       SourceInfo sourceInfo = x.getSourceInfo().makeChild(ArrayVisitor.class,
           "Array initializer");
-      JMethodCall call = new JMethodCall(sourceInfo, null, initValues, arrayType);
+      JMethodCall call = new JMethodCall(sourceInfo, null, initValues,
+          arrayType);
       JLiteral classLit = x.getClassLiteral();
       JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(arrayType));
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
-      JsonArray initList = new JsonArray(sourceInfo, program.getJavaScriptObject());
+      JsonArray initList = new JsonArray(sourceInfo,
+          program.getJavaScriptObject());
       for (int i = 0; i < x.initializers.size(); ++i) {
         initList.exprs.add(x.initializers.get(i));
       }
@@ -184,7 +191,7 @@ public class ArrayNormalizer {
       JType elementType = type.getElementType();
       int leafTypeId = -1;
       if (elementType instanceof JReferenceType) {
-        leafTypeId = program.getQueryId((JReferenceType) elementType);
+        leafTypeId = program.getQueryId(program.getRunTimeType((JReferenceType) elementType));
       }
       return leafTypeId;
     }

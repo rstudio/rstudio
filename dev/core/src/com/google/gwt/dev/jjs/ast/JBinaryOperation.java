@@ -20,7 +20,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Binary operator expression.
  */
-public class JBinaryOperation extends JExpression implements HasSettableType {
+public class JBinaryOperation extends JExpression {
 
   private JExpression lhs;
   private final JBinaryOperator op;
