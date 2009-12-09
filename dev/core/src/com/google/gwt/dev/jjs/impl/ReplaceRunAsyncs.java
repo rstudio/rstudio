@@ -230,7 +230,7 @@ public class ReplaceRunAsyncs {
   static JMethodCall getBrowserLoaderConstructor(JProgram program) {
     JField field = program.getIndexedField("AsyncFragmentLoader.BROWSER_LOADER");
     JMethodCall constructorCall = (JMethodCall) field.getDeclarationStatement().getInitializer();
-    assert constructorCall.getArgs().size() == 4;
+    assert constructorCall.getArgs().size() == 2;
     return constructorCall;
   }
 

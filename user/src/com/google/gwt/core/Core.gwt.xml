@@ -23,6 +23,7 @@
   <inherits name="com.google.gwt.xhr.XMLHttpRequest" />
   <inherits name="com.google.gwt.core.CompilerParameters" />
   <inherits name="com.google.gwt.core.EmulateJsStack" />
+  <inherits name="com.google.gwt.core.AsyncFragmentLoader" />
 
   <super-source path="translatable" />
 
@@ -37,4 +38,5 @@
 
   <add-linker name="soycReport" />
   <add-linker name="symbolMaps" />
+  
 </module>
