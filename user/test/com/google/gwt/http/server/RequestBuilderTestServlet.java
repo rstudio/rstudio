@@ -37,7 +37,12 @@ public class RequestBuilderTestServlet extends HttpServlet {
   @Override
   protected void doDelete(HttpServletRequest request,
       HttpServletResponse response) {
-    response.setStatus(HttpServletResponse.SC_OK);
+    try {
+      response.setStatus(HttpServletResponse.SC_OK);
+      response.getWriter().print(RequestBuilderTest.SERVLET_DELETE_RESPONSE);
+    } catch (IOException e) {
+      response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Override
@@ -90,12 +95,7 @@ public class RequestBuilderTestServlet extends HttpServlet {
 
   @Override
   protected void doHead(HttpServletRequest request, HttpServletResponse response) {
-    try {
-      response.setStatus(HttpServletResponse.SC_OK);
-      response.getWriter().print(RequestBuilderTest.SERVLET_HEAD_RESPONSE);
-    } catch (IOException e) {
-      response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-    }
+    response.setStatus(HttpServletResponse.SC_OK);
   }
 
   @Override

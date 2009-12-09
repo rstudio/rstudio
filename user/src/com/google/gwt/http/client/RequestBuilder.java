@@ -25,17 +25,6 @@ import java.util.Map;
 /**
  * Builder for constructing {@link com.google.gwt.http.client.Request} objects.
  * 
- * <p>
- * By default, this builder is restricted to building HTTP GET and POST requests
- * due to a bug in Safari's implementation of the <code>XmlHttpRequest</code>
- * object.
- * </p>
- * 
- * <p>
- * Please see <a href="http://bugs.webkit.org/show_bug.cgi?id=3812">
- * http://bugs.webkit.org/show_bug.cgi?id=3812</a> for more details.
- * </p>
- * 
  * <h3>Required Module</h3> Modules that use this class should inherit
  * <code>com.google.gwt.http.HTTP</code>.
  * 
@@ -61,14 +50,29 @@ public class RequestBuilder {
   }
 
   /**
+   * Specifies that the HTTP DELETE method should be used.
+   */
+  public static final Method DELETE = new Method("DELETE");
+
+  /**
    * Specifies that the HTTP GET method should be used.
    */
   public static final Method GET = new Method("GET");
 
   /**
+   * Specifies that the HTTP HEAD method should be used.
+   */
+  public static final Method HEAD = new Method("HEAD");
+
+  /**
    * Specifies that the HTTP POST method should be used.
    */
   public static final Method POST = new Method("POST");
+
+  /**
+   * Specifies that the HTTP PUT method should be used.
+   */
+  public static final Method PUT = new Method("PUT");
 
   /**
    * The callback to call when the request completes.
@@ -136,13 +140,6 @@ public class RequestBuilder {
    *          how to do this.
    * @throws IllegalArgumentException if the httpMethod or URL are empty
    * @throws NullPointerException if the httpMethod or the URL are null
-   * 
-   *           <p>
-   *           <b>WARNING:</b>This method is provided in order to allow the
-   *           creation of HTTP request other than GET and POST to be made. If
-   *           this is done, the developer must accept that the behavior on
-   *           Safari is undefined.
-   *           </p>
    */
   protected RequestBuilder(String httpMethod, String url) {
 

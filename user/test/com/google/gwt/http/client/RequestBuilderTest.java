@@ -24,9 +24,11 @@ import com.google.gwt.junit.Platform;
  */
 public class RequestBuilderTest extends RequestTestBase {
 
+  public static final String SERVLET_DELETE_RESPONSE = "delete";
   public static final String SERVLET_GET_RESPONSE = "get";
   public static final String SERVLET_POST_RESPONSE = "post";
-  public static final String SERVLET_HEAD_RESPONSE = "head";
+  // W3C's XMLHttpRequest requires it be the empty string
+  public static final String SERVLET_HEAD_RESPONSE = "";
   public static final String SERVLET_PUT_RESPONSE = "put";
 
   private static String getTestBaseURL() {
@@ -154,7 +156,7 @@ public class RequestBuilderTest extends RequestTestBase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.http.client.RequestBuilder#RequestBuilder(java.lang.String, java.lang.String)}. *
+   * {@link com.google.gwt.http.client.RequestBuilder#RequestBuilder(java.lang.String, java.lang.String)}.
    */
   public void testRequestBuilderStringString_HTTPMethodRestrictionOverride() {
     new RequestBuilder(RequestBuilder.GET, "FOO");
@@ -169,96 +171,71 @@ public class RequestBuilderTest extends RequestTestBase {
     // should reach here without any exceptions being thrown
   }
 
-  /**
-   * Test method for
-   * {@link com.google.gwt.http.client.RequestBuilder#sendRequest(java.lang.String, com.google.gwt.http.client.RequestCallback)}.
-   */
-  public void testSend_GET() throws RequestException {
-    delayTestFinishForRequest();
+  public void testSend_DELETE() throws RequestException {
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.DELETE,
+        getTestBaseURL());
+    testSend(builder, SERVLET_DELETE_RESPONSE);
+  }
 
+  public void testSend_GET() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
         getTestBaseURL() + "send_GET");
-    builder.setCallback(new RequestCallback() {
-      public void onError(Request request, Throwable exception) {
-        fail(exception.getMessage());
-      }
-
-      public void onResponseReceived(Request request, Response response) {
-        assertEquals(SERVLET_GET_RESPONSE, response.getText());
-        assertEquals(200, response.getStatusCode());
-        finishTest();
-      }
-    });
-    builder.send();
+    testSend(builder, SERVLET_GET_RESPONSE);
   }
 
-  /**
-   * Test method for {@link com.google.gwt.http.client.RequestBuilder#send()}.
-   */
-  public void testSend_POST() throws RequestException {
-    delayTestFinishForRequest();
+  public void testSend_HEAD() throws RequestException {
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.HEAD,
+        getTestBaseURL());
+    testSend(builder, SERVLET_HEAD_RESPONSE);
+  }
 
+  public void testSend_POST() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
         getTestBaseURL() + "sendRequest_POST");
     builder.setHeader("Content-Type", "application/x-www-form-urlencoded");
-    builder.setCallback(new RequestCallback() {
-      public void onError(Request request, Throwable exception) {
-        fail(exception.getMessage());
-      }
-
-      public void onResponseReceived(Request request, Response response) {
-        assertEquals(SERVLET_POST_RESPONSE, response.getText());
-        assertEquals(200, response.getStatusCode());
-        finishTest();
-      }
-    });
     builder.setRequestData("method=test+request");
-    builder.send();
+    testSend(builder, SERVLET_POST_RESPONSE);
   }
 
-  /**
-   * Test method for
-   * {@link com.google.gwt.http.client.RequestBuilder#sendRequest(java.lang.String, com.google.gwt.http.client.RequestCallback)}.
-   */
-  public void testSendRequest_GET() throws RequestException {
-    delayTestFinishForRequest();
+  public void testSend_PUT() throws RequestException {
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.PUT,
+        getTestBaseURL());
+    builder.setHeader("Content-Type", "text/html");
+    builder.setRequestData("<html><body>Put Me</body></html>");
+    testSend(builder, SERVLET_PUT_RESPONSE);
+  }
 
+  public void testSendRequest_DELETE() throws RequestException {
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.DELETE,
+        getTestBaseURL());
+    testSendRequest(builder, null, SERVLET_DELETE_RESPONSE);
+  }
+
+  public void testSendRequest_GET() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
         getTestBaseURL() + "sendRequest_GET");
-    builder.sendRequest(null, new RequestCallback() {
-      public void onError(Request request, Throwable exception) {
-        fail(exception.getMessage());
-      }
-
-      public void onResponseReceived(Request request, Response response) {
-        assertEquals(SERVLET_GET_RESPONSE, response.getText());
-        assertEquals(200, response.getStatusCode());
-        finishTest();
-      }
-    });
+    testSendRequest(builder, null, SERVLET_GET_RESPONSE);
   }
 
-  /**
-   * Test method for
-   * {@link com.google.gwt.http.client.RequestBuilder#sendRequest(java.lang.String, com.google.gwt.http.client.RequestCallback)}.
-   */
-  public void testSendRequest_POST() throws RequestException {
-    delayTestFinishForRequest();
+  public void testSendRequest_HEAD() throws RequestException {
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.HEAD,
+        getTestBaseURL());
+    testSendRequest(builder, null, SERVLET_HEAD_RESPONSE);
+  }
 
+  public void testSendRequest_POST() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
         getTestBaseURL() + "sendRequest_POST");
     builder.setHeader("Content-Type", "application/x-www-form-urlencoded");
-    builder.sendRequest("method=test+request", new RequestCallback() {
-      public void onError(Request request, Throwable exception) {
-        fail(exception.getMessage());
-      }
+    testSendRequest(builder, "method=test+request", SERVLET_POST_RESPONSE);
+  }
 
-      public void onResponseReceived(Request request, Response response) {
-        assertEquals(SERVLET_POST_RESPONSE, response.getText());
-        assertEquals(200, response.getStatusCode());
-        finishTest();
-      }
-    });
+  public void testSendRequest_PUT() throws RequestException {
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.PUT,
+        getTestBaseURL());
+    builder.setHeader("Content-Type", "application/x-www-form-urlencoded");
+    testSendRequest(builder, "<html><body>Put Me</body></html>",
+        SERVLET_PUT_RESPONSE);
   }
 
   public void testSetCallback() {
@@ -430,5 +407,52 @@ public class RequestBuilderTest extends RequestTestBase {
       fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
     }
+  }
+
+  /**
+   * Helper method to test {@link RequestBuilder#send()}.
+   * 
+   * @param builder the {@link RequestBuilder}
+   * @param expectedResponse the expected response
+   */
+  private void testSend(RequestBuilder builder, final String expectedResponse)
+      throws RequestException {
+    delayTestFinishForRequest();
+    builder.setCallback(new RequestCallback() {
+      public void onError(Request request, Throwable exception) {
+        fail(exception.getMessage());
+      }
+
+      public void onResponseReceived(Request request, Response response) {
+        assertEquals(expectedResponse, response.getText());
+        assertEquals(200, response.getStatusCode());
+        finishTest();
+      }
+    });
+    builder.send();
+  }
+
+  /**
+   * Helper method to test
+   * {@link RequestBuilder#sendRequest(String, RequestCallback)}.
+   * 
+   * @param builder the {@link RequestBuilder}
+   * @param requestData the data to request
+   * @param expectedResponse the expected response
+   */
+  private void testSendRequest(RequestBuilder builder, String requestData,
+      final String expectedResponse) throws RequestException {
+    delayTestFinishForRequest();
+    builder.sendRequest(requestData, new RequestCallback() {
+      public void onError(Request request, Throwable exception) {
+        fail(exception.getMessage());
+      }
+
+      public void onResponseReceived(Request request, Response response) {
+        assertEquals(expectedResponse, response.getText());
+        assertEquals(200, response.getStatusCode());
+        finishTest();
+      }
+    });
   }
 }
