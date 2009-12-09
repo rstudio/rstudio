@@ -81,7 +81,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   public ArrayList(Collection<? extends E> c) {
     // Avoid calling overridable methods from constructors
     spliceArray(array, 0, 0, c.toArray());
-    size = c.size();
+    size = array.length;
   }
 
   public ArrayList(int initialCapacity) {
@@ -107,23 +107,27 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public boolean addAll(Collection<? extends E> c) {
-    if (c.isEmpty()) {
+    Object[] cArray = c.toArray();
+    int len = cArray.length;
+    if (len == 0) {
       return false;
     }
-    spliceArray(array, size, 0, c.toArray());
-    size += c.size();
+    spliceArray(array, size, 0, cArray);
+    size += len;
     return true;
   }
 
   public boolean addAll(int index, Collection<? extends E> c) {
-    if (c.isEmpty()) {
-      return false;
-    }
     if (index < 0 || index > size) {
       indexOutOfBounds(index, size);
     }
-    spliceArray(array, index, 0, c.toArray());
-    size += c.size();
+    Object[] cArray = c.toArray();
+    int len = cArray.length;
+    if (len == 0) {
+      return false;
+    }
+    spliceArray(array, index, 0, cArray);
+    size += len;
     return true;
   }
 
