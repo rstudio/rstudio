@@ -52,8 +52,7 @@ public final class System {
 
     Class<?> srcComp = srcType.getComponentType();
     Class<?> destComp = destType.getComponentType();
-    if (srcComp.modifiers != destComp.modifiers
-        || (srcComp.isPrimitive() && !srcComp.equals(destComp))) {
+    if (!arrayTypeMatch(srcComp, destComp)) {
       throw new ArrayStoreException("Array types must match");
     }
     int srclen = getArrayLength(src);
@@ -92,7 +91,7 @@ public final class System {
 
   public static long currentTimeMillis() {
     return (long) currentTimeMillis0();
-  };
+  }
 
   /**
    * Has no effect; just here for source compatibility.
@@ -100,7 +99,7 @@ public final class System {
    * @skip
    */
   public static void gc() {
-  };
+  }
 
   public static int identityHashCode(Object o) {
     return (o == null) ? 0 : (!(o instanceof String)) ? Impl.getHashCode(o)
@@ -114,6 +113,14 @@ public final class System {
   public static native void setOut(PrintStream out) /*-{
     @java.lang.System::out = out;
   }-*/;
+
+  private static boolean arrayTypeMatch(Class<?> srcComp, Class<?> destComp) {
+    if (srcComp.isPrimitive()) {
+      return srcComp.equals(destComp);
+    } else {
+      return !destComp.isPrimitive();
+    }
+  }
 
   private static native double currentTimeMillis0() /*-{
     return (new Date()).getTime();

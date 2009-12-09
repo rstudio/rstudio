@@ -17,6 +17,8 @@ package com.google.gwt.emultest.java.lang;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.Arrays;
+
 /**
  * Tests java.lang.System.
  */
@@ -27,13 +29,73 @@ public class SystemTest extends GWTTestCase {
     }
   }
 
+  private enum EnumImpl implements Interfaz {
+    FOO,
+    BAR,
+    BAZ
+  }
+
   private static class Foo {
     public Foo() {
     }
   }
 
+  private interface Interfaz {
+  }
+
+  private static class InterfazImpl implements Interfaz {
+
+    private final String data;
+
+    /**
+     * @param data non-null string
+     */
+    InterfazImpl(String data) {
+      this.data = data;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return (obj instanceof InterfazImpl) && ((InterfazImpl) obj).data.equals(
+          data);
+    }
+
+    @Override
+    public int hashCode() {
+      return data.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "InterfazImpl[data=" + data + "]";
+    }
+  }
+
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
+  }
+
+  public void testArraycopyEnumToInterface() {
+    EnumImpl[] src = new EnumImpl[]{ EnumImpl.FOO, null, EnumImpl.BAZ };
+    Interfaz[] dest = new Interfaz[5];
+    Arrays.fill(dest, null);  // undefined != null, wierd.
+
+    System.arraycopy(src, 0, dest, 1, 3);
+    assertEquals(
+        Arrays.asList(null, EnumImpl.FOO, null, EnumImpl.BAZ, null),
+        Arrays.asList(dest));
+  }
+
+  public void testArraycopyEnumToObject() {
+    EnumImpl[] src = new EnumImpl[]{ EnumImpl.FOO, null, EnumImpl.BAZ };
+    Object[] dest = new Object[5];
+    Arrays.fill(dest, null);  // undefined != null, wierd.
+
+    System.arraycopy(src, 0, dest, 1, 3);
+    assertEquals(
+        Arrays.asList(null, EnumImpl.FOO, null, EnumImpl.BAZ, null),
+        Arrays.asList(dest));
   }
 
   public void testArraycopyFailures() {
@@ -91,6 +153,17 @@ public class SystemTest extends GWTTestCase {
       fail("Should have thrown ArrayStoreException: primitive/reference mismatch");
     } catch (ArrayStoreException e) {
     }
+  }
+
+  public void testArraycopyInterfaceToObject() {
+    Interfaz[] src = new Interfaz[]{
+        new InterfazImpl("foo"), null, new InterfazImpl("bar") };
+    Object[] dest = new Object[5];
+    Arrays.fill(dest, null);  // undefined != null, wierd.
+
+    System.arraycopy(src, 0, dest, 1, 3);
+    assertEquals(Arrays.asList(null, new InterfazImpl("foo"), null,
+        new InterfazImpl("bar"), null), Arrays.asList(dest));
   }
 
   public void testArraycopyMultidim() {
@@ -151,7 +224,7 @@ public class SystemTest extends GWTTestCase {
       assertNull(barArray[3]);
     }
   }
-
+  
   public void testArraycopyOverlap() {
     int[] intArray = new int[] {0, 1, 2, 3};
     String[] strArray = new String[] {"0", "1", "2", "3"};
@@ -165,18 +238,21 @@ public class SystemTest extends GWTTestCase {
     for (int i = 0; i < intArray.length - 1; ++i) {
       assertEquals("fwd int copy index " + i, i, intArray[i]);
     }
-    assertEquals("fwd int copy index " + (intArray.length - 2), intArray.length - 2,
-        intArray[intArray.length - 1]);
+    assertEquals("fwd int copy index " + (intArray.length - 2),
+        intArray.length - 2, intArray[intArray.length - 1]);
     System.arraycopy(strArray, 0, strArray, 1, strArray.length - 1);
     assertEquals(0, Integer.valueOf(strArray[0]).intValue());
     for (int i = 1; i < strArray.length; ++i) {
-      assertEquals("rev str copy index " + i, i - 1, Integer.valueOf(strArray[i]).intValue());
+      assertEquals("rev str copy index " + i, i - 1, Integer.valueOf(
+          strArray[i]).intValue());
     }
     System.arraycopy(strArray, 1, strArray, 0, strArray.length - 1);
     for (int i = 0; i < strArray.length - 1; ++i) {
-      assertEquals("fwd str copy index " + i, i, Integer.valueOf(strArray[i]).intValue());
+      assertEquals("fwd str copy index " + i, i, Integer.valueOf(
+          strArray[i]).intValue());
     }
-    assertEquals("fwd str copy index " + (strArray.length - 2), strArray.length - 2,
+    assertEquals("fwd str copy index " + (strArray.length - 2),
+        strArray.length - 2,
         Integer.valueOf(strArray[strArray.length - 1]).intValue());
     /*
      * TODO(jat): how is it supposed to behave with overlapped copies if there
