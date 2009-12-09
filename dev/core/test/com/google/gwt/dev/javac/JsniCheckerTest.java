@@ -357,6 +357,28 @@ public class JsniCheckerTest extends CheckerTestCase {
         "Parameter 1 of method \'Buggy.print\': type 'long' may not be passed out of JSNI code");
   }
 
+  /**
+   * Test JSNI references to methods defined in superclass/superinterfaces.
+   */
+  public void testMethodInheritance() {
+    StringBuffer code = new StringBuffer();
+    code.append("class Buggy {\n");
+    code.append("  interface A1 { void a1(); }\n");
+    code.append("  interface A2 extends A1 { void a2(); }\n");
+    code.append("  static abstract class C1 implements A2 { public abstract void c1(); }\n");
+    code.append("  native void jsniMeth(Object o) /*-{\n");
+    code.append("    o.@Buggy.A1::a1()();\n");
+    code.append("    o.@Buggy.A2::a1()();\n");
+    code.append("    o.@Buggy.A2::a2()();\n");
+    code.append("    o.@Buggy.C1::a1()();\n");
+    code.append("    o.@Buggy.C1::a2()();\n");
+    code.append("    o.@Buggy.C1::c1()();\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+
+    shouldGenerateNoWarning(code);
+  }
+
   public void testMethodReturn() {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");

@@ -56,8 +56,11 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding;
 
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
@@ -374,13 +377,23 @@ public class JsniChecker {
           }
         }
       } else {
-        while (clazz != null) {
+        Queue<ReferenceBinding> work = new LinkedList<ReferenceBinding>();
+        work.add(clazz);
+        while (!work.isEmpty()) {
+          clazz = work.remove();
           for (MethodBinding findMethod : clazz.getMethods(methodName.toCharArray())) {
             if (paramTypesMatch(findMethod, jsniRef)) {
               return findMethod;
             }
           }
-          clazz = clazz.superclass();
+          ReferenceBinding[] superInterfaces = clazz.superInterfaces();
+          if (superInterfaces != null) {
+            work.addAll(Arrays.asList(superInterfaces));
+          }
+          ReferenceBinding superclass = clazz.superclass();
+          if (superclass != null) {
+            work.add(superclass);
+          }
         }
       }
       return null;
