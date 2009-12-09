@@ -17,17 +17,32 @@ package com.google.gwt.emultest.java.util;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 
 /**
  * Tests <code>TreeMap</code> with Strings and the natural comparator.
  */
 public class TreeMapStringStringTest extends TreeMapTest<String, String> {
 
+  public void testHeadMapClear() {
+    TreeMap<String, String> map = new TreeMap<String, String>();
+    map.put("a", "value a");
+    map.put("b", "value b");
+    map.put("c", "value c");
+
+    SortedMap<String, String> headMap = map.headMap("b");
+    assertEquals("headMap.size", 1, headMap.size());
+    assertEquals("headMap.isEmpty", false, headMap.isEmpty());
+
+    headMap.clear();
+    assertEquals("headMap.size", 0, headMap.size());
+    assertEquals("headMap.isEmpty", true, headMap.isEmpty());
+  }
+    
   public void testHeadMapEqualsFirst() {
     SortedMap<String, String> sortedMap = createKnownKeysMap();
     SortedMap<String, String> subMap = sortedMap.headMap("aa");
@@ -70,6 +85,21 @@ public class TreeMapStringStringTest extends TreeMapTest<String, String> {
     assertEquals("lastKey", "bb", subMap.lastKey());
   }
 
+  public void testSubMapClear() {
+    TreeMap<String, String> map = new TreeMap<String, String>();
+    map.put("a", "value a");
+    map.put("b", "value b");
+    map.put("c", "value c");
+
+    SortedMap<String, String> subMap = map.subMap("a", "c");
+    assertEquals("subMap.size", 2, subMap.size());
+    assertEquals("subMap.isEmpty", false, subMap.isEmpty());
+
+    subMap.clear();
+    assertEquals("subMap.size", 0, subMap.size());
+    assertEquals("subMap.isEmpty", true, subMap.isEmpty());
+  }
+
   /**
    * Tests that compositing submap operations function as expected.
    */
@@ -82,6 +112,21 @@ public class TreeMapStringStringTest extends TreeMapTest<String, String> {
         subMap2);
     assertEquals("headMap(tailMap) should equal subMap", subMap1, subMap3);
     assertEquals("headMap(tailMap) size", 2, subMap1.size());
+  }
+  
+  public void testTailMapClear() {
+    TreeMap<String, String> map = new TreeMap<String, String>();
+    map.put("a", "value a");
+    map.put("b", "value b");
+    map.put("c", "value c");
+
+    SortedMap<String, String> tailMap = map.tailMap("b");
+    assertEquals("tailMap.size", 2, tailMap.size());
+    assertEquals("tailMap.isEmpty", false, tailMap.isEmpty());
+
+    tailMap.clear();
+    assertEquals("tailMap.size", 0, tailMap.size());
+    assertEquals("tailMap.isEmpty", true, tailMap.isEmpty());
   }
 
   public void testTailMapPastEnd() {

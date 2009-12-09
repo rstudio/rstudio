@@ -466,7 +466,8 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
       } else {
         node = getFirstNode();
       }
-      return node;
+      // The map is empty if the first key after fromKey is out of range.
+      return node != null && inRange(node.getKey()) ? node : null;
     }
 
     private Node<K, V> getLastSubmapNode() {
@@ -476,7 +477,8 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
       } else {
         node = getLastNode();
       }
-      return node;
+      // The map is empty if the last key before toKey is out of range.
+      return node != null && inRange(node.getKey()) ? node : null;
     }
 
     private boolean inRange(K key) {
