@@ -196,7 +196,7 @@ public class RemoteServiceServletTest extends RpcTestBase {
   public void testPolicyStrongName() {
     String policy = ((ServiceDefTarget) getAsyncService()).getSerializationPolicyName();
     assertNotNull(policy);
-    assertTrue(!policy.isEmpty());
+    assertTrue(policy.length() != 0);
   }
 
   /**
