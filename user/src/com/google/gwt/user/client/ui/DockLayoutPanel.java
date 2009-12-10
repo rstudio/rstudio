@@ -341,8 +341,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
     WidgetCollection children = getChildren();
     if (before == null) {
       children.add(widget);
-    }
-    else {
+    } else {
       int index = children.indexOf(before);
       children.insert(widget, index);
     }
