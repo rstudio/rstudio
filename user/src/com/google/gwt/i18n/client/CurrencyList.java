@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.gwt.i18n.client.impl;
+package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -51,19 +51,16 @@ public class CurrencyList implements Iterable<CurrencyData> {
   }
 
   /**
-   * JS Object which contains a map of currency codes to CurrencyData
-   * objects.  Each currency code is prefixed with a ':' to allow
-   * enumeration to find only the values we added, and not values
-   * which various JSVMs add to objects.
+   * JS Object which contains a map of currency codes to CurrencyDataImpl
+   * objects.  Each currency code is assumed to be a valid JS object key.
    */
   protected JavaScriptObject dataMap;
 
   /**
-   * JS Object which contains a map of currency codes to localized
-   * currency names.  This is kept separate from the CurrencyData
-   * map above so that the names can be completely removed by the
-   * compiler if they are not used.  As iteration is not required,
-   * no prefix is added to currency codes in this map.
+   * JS Object which contains a map of currency codes to localized currency
+   * names. This is kept separate from {@link #dataMap} above so that the names
+   * can be completely removed by the compiler if they are not used. Each
+   * currency code is assumed to be a valid JS object key.
    */
   protected JavaScriptObject namesMap;
 
@@ -159,7 +156,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
    * @return currency data
    */
   protected final native CurrencyData getEntry(String code) /*-{
-    return this.@com.google.gwt.i18n.client.impl.CurrencyList::dataMap[code];
+    return this.@com.google.gwt.i18n.client.CurrencyList::dataMap[code];
   }-*/;
 
   /**
@@ -169,7 +166,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
    * @return currency name, or the currency code if not known
    */
   protected final native String getNamesEntry(String code) /*-{
-    return this.@com.google.gwt.i18n.client.impl.CurrencyList::namesMap[code] || code;
+    return this.@com.google.gwt.i18n.client.CurrencyList::namesMap[code] || code;
   }-*/;
 
   /**
@@ -178,7 +175,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
    * Generated implementations override this method.
    */
   protected native void loadCurrencyMap() /*-{
-    this.@com.google.gwt.i18n.client.impl.CurrencyList::dataMap = {
+    this.@com.google.gwt.i18n.client.CurrencyList::dataMap = {
         "USD": [ "USD", "$", 2 ],
         "EUR": [ "EUR", "€", 2 ],
         "GBP": [ "GBP", "UK£", 2 ],
@@ -192,7 +189,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
    * Generated implementations override this method.
    */
   protected native void loadNamesMap() /*-{
-    this.@com.google.gwt.i18n.client.impl.CurrencyList::namesMap = {
+    this.@com.google.gwt.i18n.client.CurrencyList::namesMap = {
         "USD": "US Dollar",
         "EUR": "Euro",
         "GBP": "British Pound Sterling",
@@ -208,7 +205,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
    * @param override JS object with currency code -> CurrencyData pairs
    */
   protected final native void overrideCurrencyMap(JavaScriptObject override) /*-{
-    var map = this.@com.google.gwt.i18n.client.impl.CurrencyList::dataMap;
+    var map = this.@com.google.gwt.i18n.client.CurrencyList::dataMap;
     for (var key in override) {
       if (override.hasOwnProperty(key)) {
         map[key] = override[key];
@@ -224,7 +221,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
    * @param override JS object with currency code -> name pairs
    */
   protected final native void overrideNamesMap(JavaScriptObject override) /*-{
-    var map = this.@com.google.gwt.i18n.client.impl.CurrencyList::namesMap;
+    var map = this.@com.google.gwt.i18n.client.CurrencyList::namesMap;
     for (var key in override) {
       if (override.hasOwnProperty(key)) {
         map[key] = override[key];
@@ -237,11 +234,11 @@ public class CurrencyList implements Iterable<CurrencyData> {
    */
   private native void loadCurrencyKeys(ArrayList<String> keys,
       boolean includeDeprecated) /*-{
-    var map = this.@com.google.gwt.i18n.client.impl.CurrencyList::dataMap;
+    var map = this.@com.google.gwt.i18n.client.CurrencyList::dataMap;
     for (var key in map) {
       if (map.hasOwnProperty(key)) {
         if (includeDeprecated
-            || !@com.google.gwt.i18n.client.impl.CurrencyList::isDeprecated(Lcom/google/gwt/i18n/client/impl/CurrencyData;)(map[key])) {
+            || !@com.google.gwt.i18n.client.CurrencyList::isDeprecated(Lcom/google/gwt/i18n/client/CurrencyData;)(map[key])) {
           keys.@java.util.ArrayList::add(Ljava/lang/Object;)(key);
         }
       }

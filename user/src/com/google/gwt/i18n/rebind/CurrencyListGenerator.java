@@ -23,8 +23,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.i18n.client.impl.CurrencyData;
-import com.google.gwt.i18n.client.impl.CurrencyList;
+import com.google.gwt.i18n.client.CurrencyList;
+import com.google.gwt.i18n.client.impl.CurrencyDataImpl;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -135,7 +135,7 @@ public class CurrencyListGenerator extends Generator {
       }
       int currencyFlags = currencyFractionDigits;
       if (currencyObsolete) {
-        currencyFlags |= CurrencyData.DEPRECATED_FLAG;
+        currencyFlags |= CurrencyDataImpl.DEPRECATED_FLAG;
       }
       String currencyPortableSymbol = "";
       if (extraData != null) {
@@ -148,16 +148,16 @@ public class CurrencyListGenerator extends Generator {
         currencyPortableSymbol = extraSplit[0];
         if (extraSplit.length > 1) {
           if (extraSplit[1].contains("SymPrefix")) {
-            currencyFlags |= CurrencyData.POS_FIXED_FLAG;
+            currencyFlags |= CurrencyDataImpl.POS_FIXED_FLAG;
           } else if (extraSplit[1].contains("SymSuffix")) {
-            currencyFlags |= CurrencyData.POS_FIXED_FLAG
-                | CurrencyData.POS_SUFFIX_FLAG;
+            currencyFlags |= CurrencyDataImpl.POS_FIXED_FLAG
+                | CurrencyDataImpl.POS_SUFFIX_FLAG;
           }
           if (extraSplit[1].contains("ForceSpace")) {
-            currencyFlags |= CurrencyData.SPACING_FIXED_FLAG
-                | CurrencyData.SPACE_FORCED_FLAG;
+            currencyFlags |= CurrencyDataImpl.SPACING_FIXED_FLAG
+                | CurrencyDataImpl.SPACE_FORCED_FLAG;
           } else if (extraSplit[1].contains("ForceNoSpace")) {
-            currencyFlags |= CurrencyData.SPACING_FIXED_FLAG;
+            currencyFlags |= CurrencyDataImpl.SPACING_FIXED_FLAG;
           }
         }
         // If a non-empty override is supplied, use it for the currency
@@ -209,19 +209,21 @@ public class CurrencyListGenerator extends Generator {
     }
   }
 
-  private static final String CURRENCY_DATA = CurrencyData.class.getCanonicalName();
+  private static final String CURRENCY_DATA = CurrencyDataImpl.class.getCanonicalName();
 
   /**
    * Prefix for properties files containing CLDR-derived currency data for each
    * locale.
    */
-  private static final String CURRENCY_DATA_PREFIX = "com/google/gwt/i18n/client/impl/cldr/CurrencyData";
+  private static final String CURRENCY_DATA_PREFIX =
+      "com/google/gwt/i18n/client/impl/cldr/CurrencyData";
 
   /**
    * Prefix for properties files containing additional flags about currencies
    * each locale, which are not present in CLDR.
    */
-  private static final String CURRENCY_EXTRA_PREFIX = "com/google/gwt/i18n/client/constants/CurrencyExtra";
+  private static final String CURRENCY_EXTRA_PREFIX =
+      "com/google/gwt/i18n/client/constants/CurrencyExtra";
 
   private static final String CURRENCY_LIST = CurrencyList.class.getCanonicalName();
 
@@ -230,7 +232,8 @@ public class CurrencyListGenerator extends Generator {
    * locale. We use this only to get the default currency for our current
    * locale.
    */
-  private static final String NUMBER_CONSTANTS_PREFIX = "com/google/gwt/i18n/client/constants/NumberConstantsImpl";
+  private static final String NUMBER_CONSTANTS_PREFIX =
+      "com/google/gwt/i18n/client/constants/NumberConstantsImpl";
 
   /**
    * Backslash-escape any double quotes in the supplied string.
@@ -288,8 +291,8 @@ public class CurrencyListGenerator extends Generator {
    * @param locale
    * @return generated class name for the requested locale
    */
-  private String generateLocaleTree(TreeLogger logger,
-      GeneratorContext context, JClassType targetClass, GwtLocale locale) {
+  private String generateLocaleTree(TreeLogger logger, GeneratorContext context,
+      JClassType targetClass, GwtLocale locale) {
     String superClassName = CURRENCY_LIST;
     List<GwtLocale> searchList = locale.getCompleteSearchList();
 
@@ -334,9 +337,9 @@ public class CurrencyListGenerator extends Generator {
         defCurrencyCode = lastDefaultCurrencyCode;
       }
       if (!currencyData.isEmpty() || defCurrencyCode != null) {
-        String newClass = generateOneLocale(logger, context, targetClass,
-            search, superClassName, currencies, allCurrencyData,
-            defCurrencyCode);
+        String newClass =
+            generateOneLocale(logger, context, targetClass, search,
+                superClassName, currencies, allCurrencyData, defCurrencyCode);
         superClassName = newClass;
         lastDefaultCurrencyCode = defCurrencyCode;
       }
@@ -355,7 +358,7 @@ public class CurrencyListGenerator extends Generator {
    * @param superClassName
    * @param currencies the set of currencies defined in this locale
    * @param allCurrencyData map of currency code -> unparsed CurrencyInfo for
-   *          that code
+   *        that code
    * @param defCurrencyCode default currency code for this locale
    * @return fully-qualified class name generated
    */
@@ -363,14 +366,13 @@ public class CurrencyListGenerator extends Generator {
       JClassType targetClass, GwtLocale locale, String superClassName,
       String[] currencies, Map<String, CurrencyInfo> allCurrencyData,
       String defCurrencyCode) {
-
     String packageName = targetClass.getPackage().getName();
     String className = targetClass.getName().replace('.', '_') + "_"
         + locale.getAsString();
     PrintWriter pw = context.tryCreate(logger, packageName, className);
     if (pw != null) {
-      ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
-          packageName, className);
+      ClassSourceFileComposerFactory factory =
+          new ClassSourceFileComposerFactory(packageName, className);
       factory.setSuperclass(superClassName);
       factory.addImport(CURRENCY_LIST);
       factory.addImport(CURRENCY_DATA);
@@ -409,15 +411,16 @@ public class CurrencyListGenerator extends Generator {
    * @return fully-qualified class name that was generated
    */
   private String generateRuntimeSelection(TreeLogger logger,
-      GeneratorContext context, JClassType targetClass,
-      GwtLocale compileLocale, Set<GwtLocale> locales) {
+      GeneratorContext context, JClassType targetClass, GwtLocale compileLocale,
+      Set<GwtLocale> locales) {
     String packageName = targetClass.getPackage().getName();
-    String className = targetClass.getName().replace('.', '_') + "_"
-        + compileLocale.getAsString() + "_runtimeSelection";
+    String className =
+        targetClass.getName().replace('.', '_') + "_"
+            + compileLocale.getAsString() + "_runtimeSelection";
     PrintWriter pw = context.tryCreate(logger, packageName, className);
     if (pw != null) {
-      ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
-          packageName, className);
+      ClassSourceFileComposerFactory factory =
+          new ClassSourceFileComposerFactory(packageName, className);
       factory.setSuperclass(targetClass.getQualifiedSourceName());
       factory.addImport(CURRENCY_LIST);
       factory.addImport(CURRENCY_DATA);
@@ -451,9 +454,11 @@ public class CurrencyListGenerator extends Generator {
       writer.println("  return;");
       writer.println("}");
       boolean fetchedLocale = false;
-      Map<String, Set<GwtLocale>> localeMap = new TreeMap<String, Set<GwtLocale>>();
-      String compileLocaleClass = processChildLocale(logger, context,
-          targetClass, localeMap, compileLocale);
+      Map<String, Set<GwtLocale>> localeMap = new TreeMap<String,
+          Set<GwtLocale>>();
+      String compileLocaleClass =
+          processChildLocale(logger, context, targetClass, localeMap,
+              compileLocale);
       if (compileLocaleClass == null) {
         // already gave warning, just use default implementation
         return null;
@@ -499,7 +504,7 @@ public class CurrencyListGenerator extends Generator {
   /**
    * Return a map of currency data for the requested locale, or null if there is
    * not one (not that inheritance is not handled here).
-   * 
+   * <p/>
    * The keys are ISO4217 currency codes. The format of the map values is:
    * 
    * <pre>
@@ -531,8 +536,7 @@ public class CurrencyListGenerator extends Generator {
    */
   private String getDefaultCurrency(GwtLocale locale) {
     String defCurrencyCode = null;
-    LocalizedProperties numberConstants = getProperties(
-        NUMBER_CONSTANTS_PREFIX, locale);
+    LocalizedProperties numberConstants = getProperties(NUMBER_CONSTANTS_PREFIX, locale);
     if (numberConstants != null) {
       defCurrencyCode = numberConstants.getProperty("defCurrencyCode");
     }
@@ -593,9 +597,9 @@ public class CurrencyListGenerator extends Generator {
    * @param locale
    * @return class name of the generated class, or null if failed
    */
-  private String processChildLocale(TreeLogger logger,
-      GeneratorContext context, JClassType targetClass,
-      Map<String, Set<GwtLocale>> localeMap, GwtLocale locale) {
+  private String processChildLocale(TreeLogger logger, GeneratorContext context,
+      JClassType targetClass, Map<String, Set<GwtLocale>> localeMap,
+      GwtLocale locale) {
     String generatedClass = generateLocaleTree(logger, context, targetClass,
         locale);
     if (generatedClass == null) {
@@ -623,11 +627,11 @@ public class CurrencyListGenerator extends Generator {
    * method is omitted entirely.
    * 
    * @param allCurrencyData map of currency codes to currency data for the
-   *          current locale, including all inherited currencies data
+   *        current locale, including all inherited currencies data
    * @param className name of the class we are generating
    * @param writer SourceWriter instance to use for writing the class
    * @param currencies array of valid currency names in the order they should be
-   *          listed
+   *        listed
    */
   private void writeCurrencyMethod(String className, SourceWriter writer,
       String[] currencies, Map<String, CurrencyInfo> allCurrencyData) {
@@ -644,9 +648,9 @@ public class CurrencyListGenerator extends Generator {
         writer.println("@Override");
         writer.println("protected native void loadCurrencyMap() /*-{");
         writer.indent();
-        writer.println("this.@com.google.gwt.i18n.client.impl." + className
+        writer.println("this.@com.google.gwt.i18n.client." + className
             + "::loadSuperCurrencyMap()();");
-        writer.println("this.@com.google.gwt.i18n.client.impl." + className
+        writer.println("this.@com.google.gwt.i18n.client." + className
             + "::overrideCurrencyMap(Lcom/google/gwt/core/client/"
             + "JavaScriptObject;)({");
         writer.indent();
@@ -673,7 +677,7 @@ public class CurrencyListGenerator extends Generator {
    * @param className name of the class we are generating
    * @param writer SourceWriter instance to use for writing the class
    * @param currencies array of valid currency names in the order they should be
-   *          listed
+   *        listed
    */
   private void writeNamesMethod(String className, SourceWriter writer,
       String[] currencies, Map<String, CurrencyInfo> allCurrencyData) {
@@ -692,9 +696,9 @@ public class CurrencyListGenerator extends Generator {
           writer.println("@Override");
           writer.println("protected native void loadNamesMap() /*-{");
           writer.indent();
-          writer.println("this.@com.google.gwt.i18n.client.impl." + className
+          writer.println("this.@com.google.gwt.i18n.client." + className
               + "::loadSuperNamesMap()();");
-          writer.println("this.@com.google.gwt.i18n.client.impl." + className
+          writer.println("this.@com.google.gwt.i18n.client." + className
               + "::overrideNamesMap(Lcom/google/gwt/core/"
               + "client/JavaScriptObject;)({");
           writer.indent();

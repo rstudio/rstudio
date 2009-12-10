@@ -17,6 +17,7 @@ package com.google.gwt.i18n;
 
 import com.google.gwt.i18n.client.AnnotationsTest;
 import com.google.gwt.i18n.client.ArabicPluralsTest;
+import com.google.gwt.i18n.client.CurrencyTest;
 import com.google.gwt.i18n.client.CustomPluralsTest;
 import com.google.gwt.i18n.client.DateTimeFormat_de_Test;
 import com.google.gwt.i18n.client.DateTimeFormat_en_Test;
@@ -40,7 +41,6 @@ import com.google.gwt.i18n.client.NumberParse_fr_Test;
 import com.google.gwt.i18n.client.RuntimeLocalesTest;
 import com.google.gwt.i18n.client.TimeZoneInfoTest;
 import com.google.gwt.i18n.client.TimeZoneTest;
-import com.google.gwt.i18n.client.impl.CurrencyTest;
 import com.google.gwt.i18n.rebind.MessageFormatParserTest;
 import com.google.gwt.i18n.server.GwtLocaleTest;
 import com.google.gwt.i18n.server.RegionInheritanceTest;

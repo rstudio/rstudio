@@ -18,8 +18,6 @@ package com.google.gwt.i18n.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.I18N_es_MX_Test.MyConstants;
 import com.google.gwt.i18n.client.I18N_es_MX_Test.MyMessages;
-import com.google.gwt.i18n.client.impl.CurrencyData;
-import com.google.gwt.i18n.client.impl.CurrencyList;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Arrays;

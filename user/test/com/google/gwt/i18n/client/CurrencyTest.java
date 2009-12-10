@@ -13,8 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.i18n.client.impl;
+package com.google.gwt.i18n.client;
 
+import com.google.gwt.i18n.client.CurrencyData;
+import com.google.gwt.i18n.client.CurrencyList;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Iterator;
@@ -28,6 +30,16 @@ public class CurrencyTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest_es_MX";
+  }
+
+  public void testCustom() {
+    CurrencyData currencyData = new DefaultCurrencyData("CAD", "/", 3);
+    NumberFormat format = NumberFormat.getCurrencyFormat(currencyData);
+    String formatted = format.format(1.23);
+    assertEquals("/\u00A01.230", formatted);
+    format = NumberFormat.getFormat("#0.0000\u00A4", currencyData);
+    formatted = format.format(1234.23);
+    assertEquals("1234.2300/", formatted);
   }
 
   public void testIterator() {

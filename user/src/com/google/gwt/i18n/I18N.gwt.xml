@@ -81,7 +81,7 @@
     <when-type-is class="com.google.gwt.i18n.client.impl.LocaleInfoImpl" />
   </generate-with>
   <generate-with class="com.google.gwt.i18n.rebind.CurrencyListGenerator">
-    <when-type-is class="com.google.gwt.i18n.client.impl.CurrencyList" />
+    <when-type-is class="com.google.gwt.i18n.client.CurrencyList" />
   </generate-with>
   
   <!--

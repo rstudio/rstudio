@@ -17,8 +17,6 @@ package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.constants.NumberConstants;
-import com.google.gwt.i18n.client.impl.CurrencyData;
-import com.google.gwt.i18n.client.impl.CurrencyList;
 
 /**
  * Formats and parses numbers using locale-sensitive patterns.
@@ -370,15 +368,29 @@ public class NumberFormat {
    * Provides the standard currency format for the default locale using a
    * specified currency.
    * 
+   * @param currencyData currency data to use
+   * @return a <code>NumberFormat</code> capable of producing and consuming
+   *         currency format for the default locale
+   */
+  public static NumberFormat getCurrencyFormat(CurrencyData currencyData) {
+    return new NumberFormat(defaultNumberConstants.currencyPattern(),
+        currencyData, false);
+  }
+  
+  /**
+   * Provides the standard currency format for the default locale using a
+   * specified currency.
+   * 
    * @param currencyCode valid currency code, as defined in 
    *     com.google.gwt.i18n.client.constants.CurrencyCodeMapConstants.properties
    * @return a <code>NumberFormat</code> capable of producing and consuming
    *         currency format for the default locale
+   * @throws IllegalArgumentException if the currency code is unknown
    */
   public static NumberFormat getCurrencyFormat(String currencyCode) {
     // TODO(jat): consider caching values per currency code.
     return new NumberFormat(defaultNumberConstants.currencyPattern(),
-        CurrencyList.get().lookup(currencyCode), false);
+        lookupCurrency(currencyCode), false);
   }
 
   /**
@@ -413,12 +425,27 @@ public class NumberFormat {
    * using the specified pattern and currency code.
    * 
    * @param pattern pattern for this formatter
-   * @param currencyCode international currency code
+   * @param currencyData currency data
    * @return a NumberFormat instance
    * @throws IllegalArgumentException if the specified pattern is invalid
    */
+  public static NumberFormat getFormat(String pattern,
+      CurrencyData currencyData) {
+    return new NumberFormat(pattern, currencyData, true);
+  }
+
+  /**
+   * Gets a custom <code>NumberFormat</code> instance for the default locale
+   * using the specified pattern and currency code.
+   * 
+   * @param pattern pattern for this formatter
+   * @param currencyCode international currency code
+   * @return a NumberFormat instance
+   * @throws IllegalArgumentException if the specified pattern is invalid
+   *     or the currency code is unknown
+   */
   public static NumberFormat getFormat(String pattern, String currencyCode) {
-    return new NumberFormat(pattern, CurrencyList.get().lookup(currencyCode), true);
+    return new NumberFormat(pattern, lookupCurrency(currencyCode), true);
   }
 
   /**
@@ -483,7 +510,8 @@ public class NumberFormat {
    * @param orig localized NumberConstants instance
    * @return NumberConstants instance using latin digits/etc
    */
-  protected static NumberConstants createLatinNumberConstants(final NumberConstants orig) {
+  protected static NumberConstants createLatinNumberConstants(
+      final NumberConstants orig) {
     final String groupingSeparator = remapSeparator(
         orig.groupingSeparator());
     final String decimalSeparator = remapSeparator(
@@ -578,6 +606,23 @@ public class NumberFormat {
       return ",";
     }
     return "\u00A0";
+  }
+
+  /**
+   * Lookup a currency code.
+   * 
+   * @param currencyCode ISO4217 currency code
+   * @return a CurrencyData instance
+   * @throws IllegalArgumentException if the currency code is unknown
+   */
+  private static CurrencyData lookupCurrency(String currencyCode) {
+    CurrencyData currencyData = CurrencyList.get().lookup(currencyCode);
+    if (currencyData == null) {
+      throw new IllegalArgumentException("Currency code " + currencyCode
+          + " is unkown in locale "
+          + LocaleInfo.getCurrentLocale().getLocaleName());
+    }
+    return currencyData;
   }
 
   private static native String toFixed(double d, int digits) /*-{

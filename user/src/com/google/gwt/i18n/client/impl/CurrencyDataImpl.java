@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.i18n.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.i18n.client.CurrencyData;
 
 /**
  * JSO Overlay type that wraps currency data.
@@ -32,7 +32,8 @@ import com.google.gwt.core.client.JavaScriptObject;
  *       d6:    spacing around currency symbol is based on d5
  *   3 - portable currency symbol (optional)
  */
-public final class CurrencyData extends JavaScriptObject {
+public final class CurrencyDataImpl extends JavaScriptObject
+    implements CurrencyData {
   
   /**
    * Public so CurrencyListGenerator can get to them. As usual with an impl
@@ -45,33 +46,21 @@ public final class CurrencyData extends JavaScriptObject {
   public static final int SPACING_FIXED_FLAG = 64;
   public static final int DEPRECATED_FLAG = 128;
 
-  protected CurrencyData() {
+  protected CurrencyDataImpl() {
   }
 
-  /**
-   * @return the ISO4217 code for this currency
-   */
   public native String getCurrencyCode() /*-{
     return this[0];
   }-*/;
 
-  /**
-   * @return the default symbol to use for this currency
-   */
   public native String getCurrencySymbol() /*-{
     return this[1];
   }-*/;
 
-  /**
-   * @return the default number of decimal positions for this currency
-   */
   public int getDefaultFractionDigits() {
     return getFlagsAndPrecision() & PRECISION_MASK;
   }
 
-  /**
-   * @return the default symbol to use for this currency
-   */
   public native String getPortableCurrencySymbol() /*-{
     return this[3] || this[1];
   }-*/;
