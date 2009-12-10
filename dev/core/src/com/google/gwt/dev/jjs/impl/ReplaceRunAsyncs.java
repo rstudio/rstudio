@@ -225,13 +225,13 @@ public class ReplaceRunAsyncs {
 
   /**
    * Extract the initializer of AsyncFragmentLoader.BROWSER_LOADER. A couple of
-   * parts of the compiler modify this constructor call.
+   * parts of the compiler modify this initializer call.
    */
   static JMethodCall getBrowserLoaderConstructor(JProgram program) {
     JField field = program.getIndexedField("AsyncFragmentLoader.BROWSER_LOADER");
-    JMethodCall constructorCall = (JMethodCall) field.getDeclarationStatement().getInitializer();
-    assert constructorCall.getArgs().size() == 2;
-    return constructorCall;
+    JMethodCall initializerCall = (JMethodCall) field.getDeclarationStatement().getInitializer();
+    assert initializerCall.getArgs().size() == 2;
+    return initializerCall;
   }
 
   /**
