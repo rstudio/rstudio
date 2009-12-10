@@ -26,7 +26,9 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Hydrates a Report from its XML representation.
@@ -56,10 +58,18 @@ class ReportXml {
     report.setGwtVersion(element.getAttribute("gwt_version"));
 
     List<Element> children = getElementChildren(element, "category");
-    report.setCategories(new ArrayList<Category>(children.size()));
-    for (int i = 0; i < children.size(); ++i) {
-      report.getCategories().add(CategoryXml.fromXml(children.get(i)));
+    Map<String, Category> categories = new HashMap<String, Category>();
+    for (Element child : children) {
+      Category newCategory = CategoryXml.fromXml(child);
+      Category oldCategory = categories.get(newCategory.getName());
+      if (oldCategory != null) {
+        // if a category with the same name exists, combine the benchmarks
+        oldCategory.getBenchmarks().addAll(newCategory.getBenchmarks());
+      } else {
+        categories.put(newCategory.getName(), newCategory);
+      }
     }
+    report.setCategories(new ArrayList<Category>(categories.values()));
 
     return report;
   }

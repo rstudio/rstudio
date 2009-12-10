@@ -476,7 +476,9 @@ public class JettyLauncher extends ServletContainerLauncher {
   }
 
   private final Object privateInstanceLock = new Object();
-  private TreeLogger.Type baseLogLevel;
+  
+  // default value used if setBaseLogLevel isn't called
+  private TreeLogger.Type baseLogLevel = TreeLogger.INFO;
 
   @Override
   public String getIconPath() {

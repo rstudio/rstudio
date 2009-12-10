@@ -178,7 +178,7 @@ public class BrowserLauncher {
       throw new UnsupportedOperationException("no suitable browser found");
     }
 
-    public void browse(String url) throws IOException, URISyntaxException {
+    public void browse(String url) throws IOException {
       Runtime.getRuntime().exec(new String[] { browserExecutable, url });
       // TODO(jat): do we need to wait for it to exit and check exit status?
       // That would be best for Firefox, but bad for some of the other browsers.
@@ -190,7 +190,7 @@ public class BrowserLauncher {
    */
   private static class WindowsLauncher implements Launcher {
 
-    public void browse(String url) throws IOException, URISyntaxException {
+    public void browse(String url) throws IOException {
       Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url);
       // TODO(jat): do we need to wait for it to exit and check exit status?
     }
