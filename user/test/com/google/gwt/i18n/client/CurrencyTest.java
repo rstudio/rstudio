@@ -15,8 +15,6 @@
  */
 package com.google.gwt.i18n.client;
 
-import com.google.gwt.i18n.client.CurrencyData;
-import com.google.gwt.i18n.client.CurrencyList;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Iterator;
