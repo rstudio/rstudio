@@ -130,6 +130,10 @@ public class ExpressionAnalyzer extends JVisitor {
       accessesFieldNonFinal = true;
     }
 
+    if (x.hasClinit()) {
+      recordMethodCall();
+    }
+
     JExpression instance = x.getInstance();
     if (instance == null) {
       return;
@@ -159,15 +163,7 @@ public class ExpressionAnalyzer extends JVisitor {
 
   @Override
   public void endVisit(JMethodCall x, Context ctx) {
-    /*
-     * We can't assume anything about method calls right now, except that it
-     * can't assign to one of our locals or one of our parameters. It's possible
-     * that it could read from a field, assign to a field or throw an exception
-     * that we can't see.
-     */
-    assignmentToField = true;
-    accessesField = true;
-    canThrowException = true;
+    recordMethodCall();
   }
 
   @Override
@@ -296,5 +292,20 @@ public class ExpressionAnalyzer extends JVisitor {
     } else if (expr instanceof JLocalRef) {
       assignmentToLocal = true;
     }
+  }
+
+  /**
+   * We can't assume anything about method calls right now, except that it can't
+   * access any of our locals or parameters.
+   * 
+   * TODO: what about accessing arrays? Should be treated like field refs I
+   * guess.
+   */
+  private void recordMethodCall() {
+    assignmentToField = true;
+    accessesField = true;
+    accessesFieldNonFinal = true;
+    canThrowException = true;
+    createsObject = true;
   }
 }

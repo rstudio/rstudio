@@ -116,6 +116,22 @@ public class ExpressionAnalyzerTest extends OptimizerTestBase {
     analyzeExpression("int", "0").check();
   }
 
+  public void testFieldAccessClinit() throws Exception {
+    sourceOracle.addOrReplace(new MockJavaResource("test.Foo") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuffer code = new StringBuffer();
+        code.append("package test;\n");
+        code.append("public class Foo {\n");
+        code.append("  static final boolean value = trueMethod();");
+        code.append("  static boolean trueMethod() { return true; }");
+        code.append("}\n");
+        return code;
+      }
+    });
+    analyzeExpression("boolean", "Foo.value").accessesFieldNonFinal().canThrowException().createsObject().hasAssignmentToField().check();
+  }
+
   public void testFieldAccessInstance() throws Exception {
     sourceOracle.addOrReplace(new MockJavaResource("test.Foo") {
       @Override
