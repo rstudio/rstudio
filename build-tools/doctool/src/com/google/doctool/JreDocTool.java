@@ -16,7 +16,7 @@
 
 package com.google.doctool;
 
-import com.google.doctool.custom.WikiDoclet;
+import com.google.doctool.custom.EztDoclet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,18 +39,12 @@ public class JreDocTool {
       } else if (null != (arg = tryParseArg(args, i, "-classpath"))) {
         i++;
         factory.setClasspath(arg);
-      } else if (null != (arg = tryParseArg(args, i, "-out"))) {
-        i++;
-        factory.setOutputFile(arg);
       } else if (null != (arg = tryParseArg(args, i, "-packages"))) {
         i++;
         factory.setPackages(arg);
       } else if (null != (arg = tryParseArg(args, i, "-sourcepath"))) {
         i++;
         factory.setSourcepath(arg);
-      } else if (null != (arg = tryParseArg(args, i, "-header"))) {
-        i++;
-        factory.setHeaderFile(arg);
       }
     }
 
@@ -66,23 +60,19 @@ public class JreDocTool {
   private static void printHelp() {
     String s = "";
     s += "JreDocTool\n";
-    s += "    Creates wiki format member listing from Java source";
-    s += " for emulated JRE classes.\n";
+    s += "    Creates EZT format member listing from Java source";
+    s += "    for emulated JRE classes.\n";
     s += "\n";
     s += "Required arguments:\n";
     s += "  -classpath\n";
-    s += "    The path to find imported classes for this doc set\n";
+    s += "    The path to find imported classes for this doc set.\n";
     s += "  -sourcepath\n";
-    s += "    The path to find Java source for this doc set\n";
-    s += "  -out\n";
-    s += "    The path and filename of the wiki output\n";
+    s += "    The path to find Java source for this doc set.\n";
+    s += "    E.g. /gwt/src/trunk/user/super/com/google/gwt/emul\n";
     s += "  -packages\n";
-    s += "    A semicolon-separated list of fully-qualified package names\n";
+    s += "    A semicolon-separated list of fully-qualified package names.\n";
+    s += "    E.g. java.lang;java.lang.annotation;java.util;java.io;java.sql\n";
     s += "\n";
-    s += "Optional arguments:\n";
-    s += "  -header\n";
-    s += "    The path and filename of the content to use at the top of the";
-    s += " output wiki file\n";
     System.out.println(s);
   }
 
@@ -122,21 +112,14 @@ public class JreDocTool {
 
   private String classpath;
 
-  private String headerFile;
-
-  private String outputFile;
-
   private String packages;
 
   private String sourcepath;
 
-  JreDocTool(String classpath, String outputFile, String packages,
-      String sourcepath, String headerFile) {
+  JreDocTool(String classpath, String packages, String sourcepath) {
     this.classpath = classpath;
-    this.outputFile = outputFile;
     this.packages = packages;
     this.sourcepath = sourcepath;
-    this.headerFile = headerFile;
   }
 
   private void process() {
@@ -150,19 +133,13 @@ public class JreDocTool {
     args.add("1.5");
 
     args.add("-doclet");
-    args.add(WikiDoclet.class.getName());
+    args.add(EztDoclet.class.getName());
 
     args.add("-classpath");
     args.add(this.classpath);
 
-    args.add("-wkout");
-    args.add(this.outputFile);
-
     args.add("-sourcepath");
     args.add(this.sourcepath);
-
-    args.add("-wkhead");
-    args.add(this.headerFile);
 
     args.addAll(Arrays.asList(this.packages.split(";")));
 
