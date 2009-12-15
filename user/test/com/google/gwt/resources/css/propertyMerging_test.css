@@ -45,6 +45,14 @@
   group: five;
 }
 
+.noMergeImportant1 {
+  property: is;
+}
+
+.noMergeImportant2 {
+  property: is !important;
+}
+
 .noMergeExact1 {
   group: three;
   border: blue;

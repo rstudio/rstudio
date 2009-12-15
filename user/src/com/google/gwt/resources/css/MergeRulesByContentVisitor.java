@@ -55,6 +55,9 @@ public class MergeRulesByContentVisitor extends CssModVisitor {
     StringBuilder b = new StringBuilder();
     for (CssProperty p : x.getProperties()) {
       b.append(p.getName()).append(":").append(p.getValues().getExpression());
+      if (p.isImportant()) {
+        b.append("!important");
+      }
     }
 
     String content = b.toString();
