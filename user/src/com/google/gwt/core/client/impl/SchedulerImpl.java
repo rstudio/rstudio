@@ -70,6 +70,39 @@ public class SchedulerImpl extends Scheduler {
   }
 
   /**
+   * Calls {@link SchedulerImpl#flushPostEventPumpCommands()}.
+   */
+  private final class Flusher implements RepeatingCommand {
+    public boolean execute() {
+      flushRunning = true;
+      flushPostEventPumpCommands();
+      /*
+       * No finally here, we want this to be clear only on a normal exit. An
+       * abnormal exit would indicate that an exception isn't being caught
+       * correctly or that a slow script warning canceled the timer.
+       */
+      flushRunning = false;
+      return shouldBeRunning = isWorkQueued();
+    }
+  }
+
+  /**
+   * Keeps {@link Flusher} running.
+   */
+  private final class Rescuer implements RepeatingCommand {
+    public boolean execute() {
+      if (flushRunning) {
+        /*
+         * Since JS is single-threaded, if we're here, then than means that
+         * FLUSHER.execute() started, but did not finish. Reschedule FLUSHER.
+         */
+        scheduleFixedDelay(flusher, FLUSHER_DELAY);
+      }
+      return shouldBeRunning;
+    }
+  }
+
+  /**
    * Use a GWT.create() here to make it simple to hijack the default
    * implementation.
    */
@@ -92,11 +125,29 @@ public class SchedulerImpl extends Scheduler {
   private static final double TIME_SLICE = 100;
 
   /**
+   * Extract boilerplate code.
+   */
+  private static JsArray<Task> createQueue() {
+    return JavaScriptObject.createArray().cast();
+  }
+
+  /**
    * Called from scheduledFixedInterval to give $entry a static function.
    */
   @SuppressWarnings("unused")
   private static boolean execute(RepeatingCommand cmd) {
     return cmd.execute();
+  }
+
+  /**
+   * Provides lazy-init pattern for the task queues.
+   */
+  private static JsArray<Task> push(JsArray<Task> queue, Task task) {
+    if (queue == null) {
+      queue = createQueue();
+    }
+    queue.push(task);
+    return queue;
   }
 
   /**
@@ -106,6 +157,8 @@ public class SchedulerImpl extends Scheduler {
    *         <code>tasks</code>
    */
   private static JsArray<Task> runRepeatingTasks(JsArray<Task> tasks) {
+    assert tasks != null : "tasks";
+
     boolean canceledSomeTasks = false;
     int length = tasks.length();
     double start = Duration.currentTimeMillis();
@@ -129,16 +182,15 @@ public class SchedulerImpl extends Scheduler {
     }
 
     if (canceledSomeTasks) {
-      JsArray<Task> newTasks = JavaScriptObject.createArray().cast();
+      JsArray<Task> newTasks = createQueue();
       // Remove tombstones
       for (int i = 0; i < length; i++) {
-        if (tasks.get(i) == null) {
-          continue;
+        if (tasks.get(i) != null) {
+          newTasks.push(tasks.get(i));
         }
-        newTasks.push(tasks.get(i));
       }
       assert newTasks.length() < length;
-      return newTasks;
+      return newTasks.length() == 0 ? null : newTasks;
     } else {
       return tasks;
     }
@@ -150,9 +202,14 @@ public class SchedulerImpl extends Scheduler {
    * that want to repeat will be pushed onto the <code>rescheduled</code> queue.
    * The contents of <code>tasks</code> may not be altered while this method is
    * executing.
+   * 
+   * @return <code>rescheduled</code> or a newly-allocated array if
+   *         <code>rescheduled</code> is null.
    */
-  private static void runScheduledTasks(JsArray<Task> tasks,
+  private static JsArray<Task> runScheduledTasks(JsArray<Task> tasks,
       JsArray<Task> rescheduled) {
+    assert tasks != null : "tasks";
+
     for (int i = 0, j = tasks.length(); i < j; i++) {
       assert tasks.length() == j : "Working array length changed "
           + tasks.length() + " != " + j;
@@ -162,7 +219,7 @@ public class SchedulerImpl extends Scheduler {
         // Move repeating commands to incremental commands queue
         if (t.isRepeating()) {
           if (t.executeRepeating()) {
-            rescheduled.push(t);
+            rescheduled = push(rescheduled, t);
           }
         } else {
           t.executeScheduled();
@@ -173,6 +230,7 @@ public class SchedulerImpl extends Scheduler {
         }
       }
     }
+    return rescheduled;
   }
 
   private static native void scheduleFixedDelayImpl(RepeatingCommand cmd,
@@ -211,36 +269,13 @@ public class SchedulerImpl extends Scheduler {
    * A RepeatingCommand that calls flushPostEventPumpCommands(). It repeats if
    * there are any outstanding deferred or incremental commands.
    */
-  final RepeatingCommand flusher = new RepeatingCommand() {
-    public boolean execute() {
-      flushRunning = true;
-      flushPostEventPumpCommands();
-      /*
-       * No finally here, we want this to be clear only on a normal exit. An
-       * abnormal exit would indicate that an exception isn't being caught
-       * correctly or that a slow script warning canceled the timer.
-       */
-      flushRunning = false;
-      return shouldBeRunning = isWorkQueued();
-    }
-  };
+  Flusher flusher;
 
   /**
    * This provides some backup for the main flusher task in case it gets shut
    * down by a slow-script warning.
    */
-  final RepeatingCommand rescue = new RepeatingCommand() {
-    public boolean execute() {
-      if (flushRunning) {
-        /*
-         * Since JS is single-threaded, if we're here, then than means that
-         * FLUSHER.execute() started, but did not finish. Reschedule FLUSHER.
-         */
-        scheduleFixedDelay(flusher, FLUSHER_DELAY);
-      }
-      return shouldBeRunning;
-    }
-  };
+  Rescuer rescue;
 
   /*
    * Work queues. Timers store their state on the function, so we don't need to
@@ -248,35 +283,74 @@ public class SchedulerImpl extends Scheduler {
    * Processing the values in the queues is a one-shot, and then the array is
    * discarded.
    */
-  JsArray<Task> deferredCommands = JavaScriptObject.createArray().cast();
-  JsArray<Task> incrementalCommands = JavaScriptObject.createArray().cast();
-  JsArray<Task> finallyCommands = JavaScriptObject.createArray().cast();
+  JsArray<Task> deferredCommands;
+  JsArray<Task> entryCommands;
+  JsArray<Task> finallyCommands;
+  JsArray<Task> incrementalCommands;
 
   /*
    * These two flags are used to control the state of the flusher and rescuer
    * commands.
    */
-  private boolean shouldBeRunning = false;
   private boolean flushRunning = false;
+  private boolean shouldBeRunning = false;
+
+  /**
+   * Called by {@link Impl#entry(JavaScriptObject)}.
+   */
+  public void flushEntryCommands() {
+    if (entryCommands != null) {
+      JsArray<Task> rescheduled = null;
+      // This do-while loop handles commands scheduling commands
+      do {
+        JsArray<Task> oldQueue = entryCommands;
+        entryCommands = null;
+        rescheduled = runScheduledTasks(oldQueue, rescheduled);
+      } while (entryCommands != null);
+      entryCommands = rescheduled;
+    }
+  }
 
   /**
    * Called by {@link Impl#entry(JavaScriptObject)}.
    */
   public void flushFinallyCommands() {
-    JsArray<Task> oldFinally = finallyCommands;
-    finallyCommands = JavaScriptObject.createArray().cast();
-    runScheduledTasks(oldFinally, finallyCommands);
+    if (finallyCommands != null) {
+      JsArray<Task> rescheduled = null;
+      // This do-while loop handles commands scheduling commands
+      do {
+        JsArray<Task> oldQueue = finallyCommands;
+        finallyCommands = null;
+        rescheduled = runScheduledTasks(oldQueue, rescheduled);
+      } while (finallyCommands != null);
+      finallyCommands = rescheduled;
+    }
   }
 
   @Override
   public void scheduleDeferred(ScheduledCommand cmd) {
-    deferredCommands.push(Task.create(cmd));
+    deferredCommands = push(deferredCommands, Task.create(cmd));
     maybeSchedulePostEventPumpCommands();
   }
 
   @Override
+  public void scheduleEntry(RepeatingCommand cmd) {
+    entryCommands = push(entryCommands, Task.create(cmd));
+  }
+
+  @Override
+  public void scheduleEntry(ScheduledCommand cmd) {
+    entryCommands = push(entryCommands, Task.create(cmd));
+  }
+
+  @Override
+  public void scheduleFinally(RepeatingCommand cmd) {
+    finallyCommands = push(finallyCommands, Task.create(cmd));
+  }
+
+  @Override
   public void scheduleFinally(ScheduledCommand cmd) {
-    finallyCommands.push(Task.create(cmd));
+    finallyCommands = push(finallyCommands, Task.create(cmd));
   }
 
   @Override
@@ -292,7 +366,7 @@ public class SchedulerImpl extends Scheduler {
   @Override
   public void scheduleIncremental(RepeatingCommand cmd) {
     // Push repeating commands onto the same initial queue for relative order
-    deferredCommands.push(Task.create(cmd));
+    deferredCommands = push(deferredCommands, Task.create(cmd));
     maybeSchedulePostEventPumpCommands();
   }
 
@@ -300,21 +374,38 @@ public class SchedulerImpl extends Scheduler {
    * Called by Flusher.
    */
   void flushPostEventPumpCommands() {
-    JsArray<Task> oldDeferred = deferredCommands;
-    deferredCommands = JavaScriptObject.createArray().cast();
+    if (deferredCommands != null) {
+      JsArray<Task> oldDeferred = deferredCommands;
+      deferredCommands = null;
 
-    runScheduledTasks(oldDeferred, incrementalCommands);
-    incrementalCommands = runRepeatingTasks(incrementalCommands);
+      /* We might not have any incremental commands queued. */
+      if (incrementalCommands == null) {
+        incrementalCommands = createQueue();
+      }
+      runScheduledTasks(oldDeferred, incrementalCommands);
+    }
+
+    if (incrementalCommands != null) {
+      incrementalCommands = runRepeatingTasks(incrementalCommands);
+    }
   }
 
   boolean isWorkQueued() {
-    return deferredCommands.length() > 0 || incrementalCommands.length() > 0;
+    return deferredCommands != null || incrementalCommands != null;
   }
 
   private void maybeSchedulePostEventPumpCommands() {
     if (!shouldBeRunning) {
       shouldBeRunning = true;
+
+      if (flusher == null) {
+        flusher = new Flusher();
+      }
       scheduleFixedDelayImpl(flusher, FLUSHER_DELAY);
+
+      if (rescue == null) {
+        rescue = new Rescuer();
+      }
       scheduleFixedDelayImpl(rescue, RESCUE_DELAY);
     }
   }

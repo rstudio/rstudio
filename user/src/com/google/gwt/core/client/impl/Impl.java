@@ -53,7 +53,15 @@ public final class Impl {
    */
   public static native JavaScriptObject entry(JavaScriptObject jsFunction) /*-{
     return function() {
-      return @com.google.gwt.core.client.impl.Impl::entry0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)(jsFunction, this, arguments);
+      try {
+        return @com.google.gwt.core.client.impl.Impl::entry0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)(jsFunction, this, arguments);
+      } catch (e) {
+        // This catch block is here to ensure that the finally block in entry0
+        // will be executed correctly on IE6/7.  We can't put a catch Throwable
+        // in entry0 because this would always cause the unhandled exception to
+        // be wrapped in a JavaScriptException type.
+        throw e;
+      }
     };
   }-*/;
 
@@ -128,6 +136,20 @@ public final class Impl {
   }-*/;
 
   /**
+   * Indicates if <code>$entry</code> has been called.
+   */
+  public static boolean isEntryOnStack() {
+    return entryDepth > 0;
+  }
+
+  /**
+   * Indicates if <code>$entry</code> is present on the stack more than once.
+   */
+  public static boolean isNestedEntry() {
+    return entryDepth > 1;
+  }
+
+  /**
    * Implicitly called by JavaToJavaScriptCompiler.findEntryPoints().
    */
   public static native JavaScriptObject registerEntry() /*-{
@@ -161,7 +183,11 @@ public final class Impl {
     assert entryDepth >= 0 : "Negative entryDepth value at entry " + entryDepth;
 
     // We want to disable some actions in the reentrant case
-    return entryDepth++ == 0;
+    if (entryDepth++ == 0) {
+      SchedulerImpl.INSTANCE.flushEntryCommands();
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -194,6 +220,11 @@ public final class Impl {
         // Can't handle any exceptions, let them percolate normally
         return apply(jsFunction, thisObj, arguments);
       }
+
+      /*
+       * DO NOT ADD catch(Throwable t) here, it would always wrap the thrown
+       * value. Instead, entry() has a general catch-all block.
+       */
     } finally {
       exit(initialEntry);
     }

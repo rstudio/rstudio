@@ -57,10 +57,47 @@ public abstract class Scheduler {
   public abstract void scheduleDeferred(ScheduledCommand cmd);
 
   /**
+   * An "entry" command will be executed before GWT-generated code is invoked by
+   * the browser's event loop. The {@link RepeatingCommand} will be called once
+   * per entry from the event loop until <code>false</code> is returned. This
+   * type of command is appropriate for instrumentation or code that needs to
+   * know when "something happens."
+   * <p>
+   * If an entry command schedules another entry command, the second command
+   * will be executed before control flow continues to the GWT-generated code.
+   */
+  public abstract void scheduleEntry(RepeatingCommand cmd);
+
+  /**
+   * An "entry" command will be executed before GWT-generated code is invoked by
+   * the browser's event loop. This type of command is appropriate for code that
+   * needs to know when "something happens."
+   * <p>
+   * If an entry command schedules another entry command, the second command
+   * will be executed before control flow continues to the GWT-generated code.
+   */
+  public abstract void scheduleEntry(ScheduledCommand cmd);
+
+  /**
+   * A "finally" command will be executed before GWT-generated code returns
+   * control to the browser's event loop. The {@link RepeatingCommand#execute()}
+   * method will be called once per exit to the event loop until
+   * <code>false</code> is returned. This type of command is appropriate for
+   * instrumentation or cleanup code.
+   * <p>
+   * If a finally command schedules another finally command, the second command
+   * will be executed before control flow returns to the browser.
+   */
+  public abstract void scheduleFinally(RepeatingCommand cmd);
+
+  /**
    * A "finally" command will be executed before GWT-generated code returns
    * control to the browser's event loop. This type of command is used to
    * aggregate small amounts of work before performing a non-recurring,
    * heavyweight operation.
+   * <p>
+   * If a finally command schedules another finally command, the second command
+   * will be executed before control flow returns to the browser.
    * <p>
    * Consider the following:
    * 

@@ -15,12 +15,16 @@
  */
 package com.google.gwt.core.client.impl;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.core.client.impl.SchedulerImpl.Task;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Tests that poke at the internal state of SchedulerImpl.
+ * This is a white-box test of the Scheduler API implementation.
  */
 public class SchedulerImplTest extends GWTTestCase {
 
@@ -59,6 +63,20 @@ public class SchedulerImplTest extends GWTTestCase {
     }
   }
 
+  /**
+   * The EntryCommand and FinallyCommand queues should have the same behavior,
+   * so we use this interface to reuse the same test logic.
+   */
+  interface QueueTester {
+    void flush();
+
+    JsArray<Task> queue();
+
+    void schedule(RepeatingCommand cmd);
+
+    void schedule(ScheduledCommand cmd);
+  }
+
   private static final int TEST_DELAY = 5000;
 
   @Override
@@ -66,6 +84,8 @@ public class SchedulerImplTest extends GWTTestCase {
     return "com.google.gwt.core.Core";
   }
 
+  @DoNotRunWith(Platform.HtmlUnit)
+  // TODO(amitmanjhi) This tickles a devmode HtmlUnit deadlock
   public void testDeferredCommands() {
     final SchedulerImpl impl = new SchedulerImpl();
 
@@ -82,7 +102,7 @@ public class SchedulerImplTest extends GWTTestCase {
     impl.scheduleDeferred(new ScheduledCommand() {
       public void execute() {
         assertTrue(values[0]);
-        assertEquals(0, impl.deferredCommands.length());
+        assertNull(impl.deferredCommands);
         finishTest();
       }
     });
@@ -90,25 +110,51 @@ public class SchedulerImplTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
   }
 
-  public void testFinallyCommands() {
-    SchedulerImpl impl = new SchedulerImpl();
+  public void testEntryCommands() {
+    final SchedulerImpl impl = new SchedulerImpl();
 
-    final boolean[] values = {false};
-    impl.scheduleFinally(new ArraySetterCommand(values));
+    testQueue(new QueueTester() {
+      public void flush() {
+        impl.flushEntryCommands();
+      }
 
-    assertEquals(1, impl.finallyCommands.length());
+      public JsArray<Task> queue() {
+        return impl.entryCommands;
+      }
 
-    ScheduledCommand nullCommand = new NullCommand();
-    impl.scheduleFinally(nullCommand);
-    assertEquals(2, impl.finallyCommands.length());
-    assertSame(nullCommand, impl.finallyCommands.get(1).getScheduled());
+      public void schedule(RepeatingCommand cmd) {
+        impl.scheduleEntry(cmd);
+      }
 
-    impl.flushFinallyCommands();
-
-    assertTrue(values[0]);
-    assertEquals(0, impl.finallyCommands.length());
+      public void schedule(ScheduledCommand cmd) {
+        impl.scheduleEntry(cmd);
+      }
+    });
   }
 
+  public void testFinallyCommands() {
+    final SchedulerImpl impl = new SchedulerImpl();
+
+    testQueue(new QueueTester() {
+      public void flush() {
+        impl.flushFinallyCommands();
+      }
+
+      public JsArray<Task> queue() {
+        return impl.finallyCommands;
+      }
+
+      public void schedule(RepeatingCommand cmd) {
+        impl.scheduleFinally(cmd);
+      }
+
+      public void schedule(ScheduledCommand cmd) {
+        impl.scheduleFinally(cmd);
+      }
+    });
+  }
+
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testFixedDelayCommands() {
     final SchedulerImpl impl = new SchedulerImpl();
     final int[] values = {0, 4};
@@ -131,6 +177,7 @@ public class SchedulerImplTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
   }
 
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testFixedPeriodCommands() {
     final SchedulerImpl impl = new SchedulerImpl();
     final int[] values = {0, 4};
@@ -153,6 +200,7 @@ public class SchedulerImplTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
   }
 
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testIncrementalCommands() {
     final SchedulerImpl impl = new SchedulerImpl();
 
@@ -166,13 +214,16 @@ public class SchedulerImplTest extends GWTTestCase {
     impl.scheduleDeferred(new ScheduledCommand() {
       public void execute() {
         // After the incremental command has fired, it's moved to a new queue
-        assertEquals(0, impl.deferredCommands.length());
+        assertNull(impl.deferredCommands);
         assertTrue(String.valueOf(values[0]), values[0] <= values[1]);
 
         if (values[0] == values[1]) {
+          // Haven't yet cleared the queue, still in flushPostEventPumpCommands
+          assertNotNull(impl.incrementalCommands);
           assertEquals(0, impl.incrementalCommands.length());
           finishTest();
         } else {
+          assertNotNull(impl.incrementalCommands);
           assertEquals(1, impl.incrementalCommands.length());
           assertSame(counter, impl.incrementalCommands.get(0).getRepeating());
           impl.scheduleDeferred(this);
@@ -183,5 +234,42 @@ public class SchedulerImplTest extends GWTTestCase {
     assertEquals(2, impl.deferredCommands.length());
 
     delayTestFinish(TEST_DELAY);
+  }
+
+  private void testQueue(final QueueTester impl) {
+    boolean[] oneShotValues = {false};
+    final boolean[] chainedValues = {false};
+    int[] counterValues = {0, 2};
+
+    impl.schedule(new ArraySetterCommand(oneShotValues));
+    impl.schedule(new CountingCommand(counterValues));
+    impl.schedule(new ScheduledCommand() {
+      public void execute() {
+        // Schedule another entry
+        impl.schedule(new ArraySetterCommand(chainedValues));
+      }
+    });
+
+    assertEquals(3, impl.queue().length());
+
+    ScheduledCommand nullCommand = new NullCommand();
+    impl.schedule(nullCommand);
+    assertEquals(4, impl.queue().length());
+    assertSame(nullCommand, impl.queue().get(3).getScheduled());
+
+    impl.flush();
+
+    // Ensure the command-schedules-command case has been executed
+    assertTrue(chainedValues[0]);
+
+    // Test that the RepeatingCommand is still scheduled
+    assertEquals(1, counterValues[0]);
+    assertEquals(1, impl.queue().length());
+    impl.flush();
+
+    // Everything should be finished now
+    assertEquals(2, counterValues[0]);
+    assertTrue(oneShotValues[0]);
+    assertNull(impl.queue());
   }
 }
