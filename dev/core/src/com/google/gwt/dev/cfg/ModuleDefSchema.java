@@ -425,7 +425,7 @@ public class ModuleDefSchema extends Schema {
       if (js != null) {
         logger.log(
             TreeLogger.WARN,
-            "Injected scripts no longer require an associated JavaScript block.",
+            "Injected scripts no longer use an associated JavaScript block; ignoring.",
             null);
       }
       moduleDef.getScripts().append(new Script(src));
