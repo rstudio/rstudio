@@ -60,21 +60,21 @@ import java.util.Iterator;
  * DisclosurePanel elements in  
  * {@link com.google.gwt.uibinder.client.UiBinder UiBinder} templates can 
  * have one widget child and one of two types of header elements. A 
- * &lt;g:header> element can hold html, or a &lt;g:customHeader> element
+ * &lt;g:header> element can hold text (not html), or a &lt;g:customHeader> element
  * can hold a widget. (Note that the tags of the header elements are not
- * capitalized. This is meant to signal that the head is not a runtime object, 
+ * capitalized. This is meant to signal that the header is not a runtime object, 
  * and so cannot have a <code>ui:field</code> attribute.) 
  * <p>
  * For example:<pre>
  * &lt;g:DisclosurePanel>
- *   &lt;g:header>&lt;b>Text header&lt;/b>&lt;/gwt:caption>
+ *   &lt;g:header>Text header&lt;/g:header>
  *   &lt;g:Label>Widget body&lt;/g:Label>
  * &lt;/g:DisclosurePanel>
  *
  * &lt;g:DisclosurePanel>
- *   &lt;g:customeHeader>
+ *   &lt;g:customHeader>
  *     &lt;g:Label>Widget header&lt;/g:Label>
- *   &lt;/g:customeHeader>
+ *   &lt;/g:customHeader>
  *   &lt;g:Label>Widget body&lt;/g:Label>
  * &lt;/g:DisclosurePanel>
  * </pre>
