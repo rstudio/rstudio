@@ -15,7 +15,7 @@
  */
 package com.google.gwt.resources.css.ast;
 
-import com.google.gwt.resources.css.ast.CssProperty.IdentValue;
+import com.google.gwt.resources.css.ast.CssProperty.DotPathValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
 
 import java.util.Collections;
@@ -29,9 +29,12 @@ public class CssUrl extends CssDef {
   private final List<Value> values;
 
   public CssUrl(String key, String functionPath) {
+    this(key, new DotPathValue(functionPath));
+  }
+
+  public CssUrl(String key, DotPathValue functionValue) {
     super(key);
-    Value functionValue = new IdentValue(functionPath);
-    values = Collections.singletonList(functionValue);
+    values = Collections.<Value> singletonList(functionValue);
   }
 
   @Override

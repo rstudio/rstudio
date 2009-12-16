@@ -240,9 +240,9 @@ public class CssNodeCloner extends CssVisitor {
   @Override
   public boolean visit(CssUrl x, Context ctx) {
     assert x.getValues().size() == 1;
-    assert x.getValues().get(0).isIdentValue() != null;
-    String ident = x.getValues().get(0).isIdentValue().getIdent();
-    CssUrl newUrl = new CssUrl(x.getKey(), ident);
+    assert x.getValues().get(0).isDotPathValue() != null;
+    CssUrl newUrl = new CssUrl(x.getKey(),
+        x.getValues().get(0).isDotPathValue());
     addToNodes(newUrl);
     return true;
   }

@@ -16,7 +16,8 @@
 package com.google.gwt.resources.css;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.css.ast.Context;
 import com.google.gwt.resources.css.ast.CssCompilerException;
@@ -24,11 +25,13 @@ import com.google.gwt.resources.css.ast.CssDef;
 import com.google.gwt.resources.css.ast.CssProperty;
 import com.google.gwt.resources.css.ast.CssUrl;
 import com.google.gwt.resources.css.ast.CssVisitor;
+import com.google.gwt.resources.css.ast.CssProperty.DotPathValue;
 import com.google.gwt.resources.css.ast.CssProperty.ExpressionValue;
 import com.google.gwt.resources.css.ast.CssProperty.IdentValue;
 import com.google.gwt.resources.css.ast.CssProperty.ListValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
 import com.google.gwt.resources.ext.ResourceContext;
+import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,12 +43,15 @@ import java.util.Map;
  */
 public class SubstitutionReplacer extends CssVisitor {
   private final ResourceContext context;
+  private final JClassType dataResourceType;
   private final TreeLogger logger;
   private final Map<String, CssDef> substitutions;
 
   public SubstitutionReplacer(TreeLogger logger, ResourceContext context,
       Map<String, CssDef> substitutions) {
     this.context = context;
+    this.dataResourceType = context.getGeneratorContext().getTypeOracle().findType(
+        DataResource.class.getCanonicalName());
     this.logger = logger;
     this.substitutions = substitutions;
   }
@@ -74,31 +80,20 @@ public class SubstitutionReplacer extends CssVisitor {
         continue;
       } else if (def instanceof CssUrl) {
         assert def.getValues().size() == 1;
-        assert def.getValues().get(0).isIdentValue() != null;
-        String functionName = def.getValues().get(0).isIdentValue().getIdent();
+        assert def.getValues().get(0).isDotPathValue() != null;
+        DotPathValue functionName = def.getValues().get(0).isDotPathValue();
 
-        // Find the method
-        JMethod methods[] = context.getClientBundleType().getOverridableMethods();
-        boolean foundMethod = false;
-        if (methods != null) {
-          for (JMethod method : methods) {
-            if (method.getName().equals(functionName)) {
-              foundMethod = true;
-              break;
-            }
-          }
-        }
-
-        if (!foundMethod) {
-          logger.log(TreeLogger.ERROR, "Unable to find DataResource method "
-              + functionName + " in "
-              + context.getClientBundleType().getQualifiedSourceName());
-          throw new CssCompilerException("Cannot find data function");
+        try {
+          ResourceGeneratorUtil.getMethodByPath(context.getClientBundleType(),
+              functionName.getParts(), dataResourceType);
+        } catch (NotFoundException e) {
+          logger.log(TreeLogger.ERROR, e.getMessage());
+          throw new CssCompilerException("Cannot find data method");
         }
 
         String instance = "((" + DataResource.class.getName() + ")("
             + context.getImplementationSimpleSourceName() + ".this."
-            + functionName + "()))";
+            + functionName.getExpression() + "))";
 
         StringBuilder expression = new StringBuilder();
         expression.append("\"url('\" + ");

@@ -17,10 +17,12 @@
 @def DIRECTION ltr;
 @eval RED com.google.gwt.resources.client.CSSResourceTest.red();
 @url BACKGROUND dataMethod;
+@url NESTEDBACKGROUND nested.dataMethod;
 
 /* Check @def expansion */
 @def SPRITEWIDTH value("spriteMethod.getWidth", "px");
 @def SPRITESIZE SPRITEWIDTH value("spriteMethod.getHeight", "px");
+@def NESTEDSPRITEWIDTH value("nested.spriteMethod.getWidth", "px");
 
 /*
  * We'll use the token FAIL to indicate text that should never be seen in the output.
@@ -30,6 +32,10 @@
 @sprite .spriteClass, .extraSpriteClass {
   gwt-image: "spriteMethod";
   more: properties;
+}
+
+@sprite .nestedSprite {
+  gwt-image: "nested.spriteMethod";
 }
 
 .affectedBySprite {
@@ -49,7 +55,8 @@
 div {
     border: BIG solid RED;
     direction: DIRECTION;
-    background: BACKGROUND;
+    backgroundTopLevel: BACKGROUND;
+    backgroundNested: NESTEDBACKGROUND;
 }
 
 div[foo="bar"] {

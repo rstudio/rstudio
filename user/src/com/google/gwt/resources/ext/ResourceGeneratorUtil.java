@@ -23,6 +23,9 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
+import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
+import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.collect.Maps;
@@ -291,6 +294,81 @@ public final class ResourceGeneratorUtil {
     URL[] toReturn = findResources(logger, locators, context, method,
         defaultSuffixes);
     return toReturn;
+  }
+
+  /**
+   * Finds a method by following a dotted path interpreted as a series of no-arg
+   * method invocations from an instance of a given root type.
+   * 
+   * @param rootType the type from which the search begins
+   * @param pathElements a sequence of no-arg method names
+   * @param expectedReturnType the expected return type of the method to locate,
+   *          or <code>null</code> if no constraint on the return type is
+   *          necessary
+   * 
+   * @return the requested JMethod
+   * @throws NotFoundException if the requested method could not be found
+   */
+  public static JMethod getMethodByPath(JClassType rootType,
+      List<String> pathElements, JType expectedReturnType)
+      throws NotFoundException {
+    if (pathElements.isEmpty()) {
+      throw new NotFoundException("No path specified");
+    }
+
+    JMethod currentMethod = null;
+    JType currentType = rootType;
+    for (String pathElement : pathElements) {
+
+      JClassType referenceType = currentType.isClassOrInterface();
+      if (referenceType == null) {
+        throw new NotFoundException("Cannot resolve member " + pathElement
+            + " on type " + currentType.getQualifiedSourceName());
+      }
+
+      currentMethod = null;
+      searchType : for (JClassType searchType : referenceType.getFlattenedSupertypeHierarchy()) {
+        for (JMethod method : searchType.getOverloads(pathElement)) {
+          if (method.getParameters().length == 0) {
+            currentMethod = method;
+            break searchType;
+          }
+        }
+      }
+
+      if (currentMethod == null) {
+        throw new NotFoundException("Could not find no-arg method named "
+            + pathElement + " in type " + currentType.getQualifiedSourceName());
+      }
+      currentType = currentMethod.getReturnType();
+    }
+
+    if (expectedReturnType != null) {
+      JPrimitiveType expectedIsPrimitive = expectedReturnType.isPrimitive();
+      JClassType expectedIsClassType = expectedReturnType.isClassOrInterface();
+      boolean error = false;
+
+      if (expectedIsPrimitive != null) {
+        if (!expectedIsPrimitive.equals(currentMethod.getReturnType())) {
+          error = true;
+        }
+      } else {
+        JClassType returnIsClassType = currentMethod.getReturnType().isClassOrInterface();
+        if (returnIsClassType == null) {
+          error = true;
+        } else if (!expectedIsClassType.isAssignableFrom(returnIsClassType)) {
+          error = true;
+        }
+      }
+
+      if (error) {
+        throw new NotFoundException("Expecting return type "
+            + expectedReturnType.getQualifiedSourceName() + " found "
+            + currentMethod.getReturnType().getQualifiedSourceName());
+      }
+    }
+
+    return currentMethod;
   }
 
   /**

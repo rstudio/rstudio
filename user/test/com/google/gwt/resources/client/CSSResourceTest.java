@@ -108,6 +108,8 @@ public class CSSResourceTest extends GWTTestCase {
 
     String multiClassB();
 
+    String nestedSprite();
+
     String replacement();
 
     @ClassName("replacement-not-java-ident")
@@ -161,6 +163,14 @@ public class CSSResourceTest extends GWTTestCase {
     String replacement();
   }
 
+  interface NestedResources extends ClientBundle {
+    @Source("32x32.png")
+    DataResource dataMethod();
+
+    @Source("16x16.png")
+    ImageResource spriteMethod();
+  }
+
   interface Resources extends ClientBundle {
     Resources INSTANCE = GWT.create(Resources.class);
 
@@ -185,6 +195,9 @@ public class CSSResourceTest extends GWTTestCase {
 
     // Make sure an empty, no-op CssResource works
     CssResource empty();
+
+    // Test nested ClientBundles
+    NestedResources nested();
 
     @Source("16x16.png")
     ImageResource spriteMethod();
@@ -289,7 +302,10 @@ public class CSSResourceTest extends GWTTestCase {
     assertTrue(text.contains("top:expression(document.compatMode==\"CSS1Compat\" ? documentElement.scrollTop:document.body.scrollTop \\ 2);"));
 
     // Check data URL expansion
-    assertTrue(text.contains(Resources.INSTANCE.dataMethod().getUrl()));
+    assertTrue(text.contains("backgroundTopLevel:url('"
+        + Resources.INSTANCE.dataMethod().getUrl() + "')"));
+    assertTrue(text.contains("backgroundNested:url('"
+        + Resources.INSTANCE.nested().dataMethod().getUrl() + "')"));
 
     // Check @eval expansion
     assertTrue(text.contains(red() + ";"));

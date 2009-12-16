@@ -15,6 +15,7 @@
  */
 package com.google.gwt.resources.css.ast;
 
+import com.google.gwt.resources.css.ast.CssProperty.DotPathValue;
 import com.google.gwt.resources.css.ast.CssProperty.ListValue;
 import com.google.gwt.resources.css.ast.CssProperty.StringValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
@@ -156,18 +157,18 @@ public class CssSprite extends CssRule {
     }
   }
 
-  private String resourceFunction;
+  private DotPathValue resourceFunction;
 
   @Override
   public List<CssProperty> getProperties() {
     return new SpritePropertyList(super.getProperties());
   }
 
-  public String getResourceFunction() {
+  public DotPathValue getResourceFunction() {
     return resourceFunction;
   }
 
-  public void setResourceFunction(String resourceFunction) {
+  public void setResourceFunction(DotPathValue resourceFunction) {
     this.resourceFunction = resourceFunction;
   }
 
@@ -192,13 +193,14 @@ public class CssSprite extends CssRule {
     ListValue listValue;
 
     if ((stringValue = value.isStringValue()) != null) {
-      resourceFunction = stringValue.getValue();
+      String s = stringValue.getValue();
 
       // Allow the user to use both raw idents and quoted strings
-      if (resourceFunction.startsWith("\"")) {
-        resourceFunction = resourceFunction.substring(1,
-            resourceFunction.length() - 1);
+      if (s.startsWith("\"")) {
+        s = s.substring(1, s.length() - 1);
       }
+
+      resourceFunction = new DotPathValue(s);
 
     } else if ((listValue = value.isListValue()) != null) {
       List<Value> values = listValue.getValues();

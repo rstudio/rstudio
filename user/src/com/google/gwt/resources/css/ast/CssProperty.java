@@ -35,15 +35,34 @@ public class CssProperty extends CssNode {
     private final String path;
     private final String suffix;
 
+    public DotPathValue(String path) {
+      assert path != null : "path";
+      this.path = path;
+      this.suffix = null;
+    }
+
     public DotPathValue(String path, String suffix) {
+      assert path != null : "path";
+      assert suffix != null : "suffix";
       this.path = path;
       this.suffix = suffix;
     }
 
     @Override
     public String getExpression() {
-      return path.replace(".", "().") + "() + \"" + Generator.escape(suffix)
-          + "\"";
+      StringBuilder toReturn = new StringBuilder();
+      toReturn.append(path.replace(".", "()."));
+      toReturn.append("()");
+      if (suffix != null) {
+        toReturn.append(" + \"");
+        toReturn.append(Generator.escape(suffix));
+        toReturn.append("\"");
+      }
+      return toReturn.toString();
+    }
+
+    public List<String> getParts() {
+      return Arrays.asList(path.split("\\."));
     }
 
     public String getPath() {

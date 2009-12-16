@@ -18,6 +18,7 @@ package com.google.gwt.resources.css;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
@@ -27,9 +28,11 @@ import com.google.gwt.resources.css.ast.CssModVisitor;
 import com.google.gwt.resources.css.ast.CssProperty;
 import com.google.gwt.resources.css.ast.CssRule;
 import com.google.gwt.resources.css.ast.CssSprite;
+import com.google.gwt.resources.css.ast.CssProperty.DotPathValue;
 import com.google.gwt.resources.css.ast.CssProperty.ExpressionValue;
 import com.google.gwt.resources.css.ast.CssProperty.IdentValue;
 import com.google.gwt.resources.ext.ResourceContext;
+import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 
 import java.util.List;
 
@@ -52,7 +55,7 @@ public class Spriter extends CssModVisitor {
   @Override
   public void endVisit(CssSprite x, Context ctx) {
     JClassType bundleType = context.getClientBundleType();
-    String functionName = x.getResourceFunction();
+    DotPathValue functionName = x.getResourceFunction();
 
     if (functionName == null) {
       logger.log(TreeLogger.ERROR, "The @sprite rule " + x.getSelectors()
@@ -60,35 +63,20 @@ public class Spriter extends CssModVisitor {
       throw new CssCompilerException("No image property specified");
     }
 
-    // Find the image accessor method
-    JMethod imageMethod = null;
-    JMethod[] allMethods = bundleType.getOverridableMethods();
-    for (int i = 0; imageMethod == null && i < allMethods.length; i++) {
-      JMethod candidate = allMethods[i];
-      // If the function name matches and takes no parameters
-      if (candidate.getName().equals(functionName)
-          && candidate.getParameters().length == 0) {
-        // We have a match
-        imageMethod = candidate;
-      }
-    }
-
-    // Method unable to be located
-    if (imageMethod == null) {
-      logger.log(TreeLogger.ERROR, "Unable to find ImageResource method "
-          + functionName + " in " + bundleType.getQualifiedSourceName());
-      throw new CssCompilerException("Cannot find image function");
-    }
-
     JClassType imageResourceType = context.getGeneratorContext().getTypeOracle().findType(
         ImageResource.class.getName());
     assert imageResourceType != null;
 
-    if (!imageResourceType.isAssignableFrom(imageMethod.getReturnType().isClassOrInterface())) {
-      logger.log(TreeLogger.ERROR, "The return type of " + functionName
-          + " is not assignable to " + imageResourceType.getSimpleSourceName());
-      throw new CssCompilerException("Incorrect return type for "
-          + CssSprite.IMAGE_PROPERTY_NAME + " method");
+    // Find the image accessor method
+    JMethod imageMethod;
+    try {
+      imageMethod = ResourceGeneratorUtil.getMethodByPath(bundleType,
+          functionName.getParts(), imageResourceType);
+    } catch (NotFoundException e) {
+      logger.log(TreeLogger.ERROR, "Unable to find ImageResource method "
+          + functionName + " in " + bundleType.getQualifiedSourceName() + " : "
+          + e.getMessage());
+      throw new CssCompilerException("Cannot find image function");
     }
 
     ImageOptions options = imageMethod.getAnnotation(ImageOptions.class);
@@ -100,7 +88,7 @@ public class Spriter extends CssModVisitor {
     }
 
     String instance = "(" + context.getImplementationSimpleSourceName()
-        + ".this." + functionName + "())";
+        + ".this." + functionName.getExpression() + ")";
 
     CssRule replacement = new CssRule();
     replacement.getSelectors().addAll(x.getSelectors());

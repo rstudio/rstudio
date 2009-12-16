@@ -16,10 +16,10 @@
 package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.dev.util.collect.HashSet;
-import com.google.gwt.dev.util.collect.Sets;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -34,15 +34,18 @@ public abstract class JClassType extends JType implements HasAnnotations,
 
   /**
    * Returns all of the superclasses and superinterfaces for a given type
-   * including the type itself.
+   * including the type itself. The returned set maintains an internal
+   * breadth-first ordering of the type, followed by its interfaces (and their
+   * super-interfaces), then the supertype and its interfaces, and so on.
    */
   protected static Set<JClassType> getFlattenedSuperTypeHierarchy(
       JClassType type) {
     Set<JClassType> flattened = type.flattenedSupertypes;
     if (flattened == null) {
-      flattened = new HashSet<JClassType>();
+      flattened = new LinkedHashSet<JClassType>();
       getFlattenedSuperTypeHierarchyRecursive(type, flattened);
-      type.flattenedSupertypes = Sets.normalizeUnmodifiable(flattened);
+      // flattened.size() > 1 for all types other than Object
+      type.flattenedSupertypes = Collections.unmodifiableSet(flattened);
     }
     return flattened;
   }
@@ -316,16 +319,16 @@ public abstract class JClassType extends JType implements HasAnnotations,
     }
     typesSeen.add(type);
 
-    // Superclass
-    JClassType superclass = type.getSuperclass();
-    if (superclass != null) {
-      typesSeen.addAll(getFlattenedSuperTypeHierarchy(superclass));
-    }
-
     // Check the interfaces
     JClassType[] intfs = type.getImplementedInterfaces();
     for (JClassType intf : intfs) {
       typesSeen.addAll(getFlattenedSuperTypeHierarchy(intf));
+    }
+    
+    // Superclass
+    JClassType superclass = type.getSuperclass();
+    if (superclass != null) {
+      typesSeen.addAll(getFlattenedSuperTypeHierarchy(superclass));
     }
   }
 
@@ -452,6 +455,17 @@ public abstract class JClassType extends JType implements HasAnnotations,
   public abstract JField getField(String name);
 
   public abstract JField[] getFields();
+
+  /**
+   * Returns all of the superclasses and superinterfaces for a given type
+   * including the type itself. The returned set maintains an internal
+   * breadth-first ordering of the type, followed by its interfaces (and their
+   * super-interfaces), then the supertype and its interfaces, and so on.
+   */
+  public Set<JClassType> getFlattenedSupertypeHierarchy() {
+    // Retuns an immutable set
+    return getFlattenedSuperTypeHierarchy(this);
+  }
 
   public abstract JClassType[] getImplementedInterfaces();
 

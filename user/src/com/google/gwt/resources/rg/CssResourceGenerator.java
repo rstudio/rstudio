@@ -24,7 +24,6 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
-import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.DefaultTextOutput;
@@ -335,35 +334,14 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
 
     DotPathValue dot = value.isDotPathValue();
     if (dot != null) {
-      String[] elements = dot.getPath().split("\\.");
-      if (elements.length == 0) {
-        logger.log(TreeLogger.ERROR, "value() functions must specify a path");
+      try {
+        // This will either succeed or throw an exception
+        ResourceGeneratorUtil.getMethodByPath(resourceBundleType,
+            dot.getParts(), null);
+      } catch (NotFoundException e) {
+        logger.log(TreeLogger.ERROR, e.getMessage());
         throw new UnableToCompleteException();
       }
-
-      JType currentType = resourceBundleType;
-      for (Iterator<String> i = Arrays.asList(elements).iterator(); i.hasNext();) {
-        String pathElement = i.next();
-
-        JClassType referenceType = currentType.isClassOrInterface();
-        if (referenceType == null) {
-          logger.log(TreeLogger.ERROR, "Cannot resolve member " + pathElement
-              + " on non-reference type "
-              + currentType.getQualifiedSourceName());
-          throw new UnableToCompleteException();
-        }
-
-        try {
-          JMethod m = referenceType.getMethod(pathElement, new JType[0]);
-          currentType = m.getReturnType();
-        } catch (NotFoundException e) {
-          logger.log(TreeLogger.ERROR, "Could not find no-arg method named "
-              + pathElement + " in type "
-              + currentType.getQualifiedSourceName());
-          throw new UnableToCompleteException();
-        }
-      }
-      return;
     }
   }
 
@@ -729,10 +707,10 @@ public final class CssResourceGenerator extends AbstractResourceGenerator {
    * also perform some limited sanity-checking for the now-deprecated Strict
    * annotation.
    */
-  @SuppressWarnings("deprecation") // keep references to deprecated Strict annotation local
+  @SuppressWarnings("deprecation")
+  // keep references to deprecated Strict annotation local
   private boolean isStrict(TreeLogger logger, JMethod method) {
-    com.google.gwt.resources.client.CssResource.Strict strictAnnotation =
-      method.getAnnotation(com.google.gwt.resources.client.CssResource.Strict.class);
+    com.google.gwt.resources.client.CssResource.Strict strictAnnotation = method.getAnnotation(com.google.gwt.resources.client.CssResource.Strict.class);
     NotStrict nonStrictAnnotation = method.getAnnotation(NotStrict.class);
     boolean strict = true;
 
