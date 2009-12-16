@@ -118,6 +118,9 @@ public class OwnerFieldClassTest extends TestCase {
     void setNothing(int x) {
       throw new UnsupportedOperationException("Should never get called");
     }
+    
+    public void set() {
+    }
 
     public int setNothing2(String x) {
       throw new UnsupportedOperationException("Should never get called");

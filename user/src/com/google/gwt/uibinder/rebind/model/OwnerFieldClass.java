@@ -265,6 +265,7 @@ public class OwnerFieldClass {
     // All setter methods should be public void setSomething(...)
     return method.isPublic() && !method.isStatic()
         && method.getName().startsWith("set")
+        && method.getName().length() > 3
         && method.getReturnType() == JPrimitiveType.VOID;
   }
 
