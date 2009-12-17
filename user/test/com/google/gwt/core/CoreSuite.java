@@ -21,7 +21,6 @@ import com.google.gwt.core.client.JavaScriptExceptionTest;
 import com.google.gwt.core.client.JsArrayTest;
 import com.google.gwt.core.client.SchedulerTest;
 import com.google.gwt.core.client.impl.AsyncFragmentLoaderTest;
-import com.google.gwt.core.client.impl.EmulatedStackTraceTest;
 import com.google.gwt.core.client.impl.SchedulerImplTest;
 import com.google.gwt.core.client.impl.StackTraceCreatorTest;
 import com.google.gwt.core.client.impl.XhrLoadingStrategyTest;
@@ -38,7 +37,6 @@ public class CoreSuite {
 
     // $JUnit-BEGIN$
     suite.addTestSuite(AsyncFragmentLoaderTest.class);
-    suite.addTestSuite(EmulatedStackTraceTest.class);
     suite.addTestSuite(GWTTest.class);
     suite.addTestSuite(HttpThrowableReporterTest.class);
     suite.addTestSuite(JavaScriptExceptionTest.class);

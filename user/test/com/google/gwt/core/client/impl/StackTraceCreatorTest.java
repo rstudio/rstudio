@@ -53,7 +53,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
     if (!GWT.isScript()) {
       myName = "testJavaScriptException";
     } else {
-      myName = testJavaScriptExceptionName();
+      myName = Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::testJavaScriptException()");
     }
 
     checkStack(myName, t);
@@ -97,7 +97,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
     if (!GWT.isScript()) {
       myName = "testStackTraces";
     } else {
-      myName = testStackTracesName();
+      myName = Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceCreatorTest::testStackTraces()");
     }
 
     checkStack(myName, t);
@@ -158,16 +158,6 @@ public class StackTraceCreatorTest extends GWTTestCase {
       return JavaScriptObject.createArray().cast();
     }
   }
-
-  private static native String testJavaScriptExceptionName() /*-{
-    var fn = @com.google.gwt.core.client.impl.StackTraceCreatorTest::testJavaScriptException();
-    return @com.google.gwt.core.client.impl.StackTraceCreator::extractNameFromToString(Ljava/lang/String;)(fn.toString());
-  }-*/;
-
-  private static native String testStackTracesName() /*-{
-    var fn = @com.google.gwt.core.client.impl.StackTraceCreatorTest::testStackTraces();
-    return @com.google.gwt.core.client.impl.StackTraceCreator::extractNameFromToString(Ljava/lang/String;)(fn.toString());
-  }-*/;
 
   private static native void throwNative() /*-{
     null.a();

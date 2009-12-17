@@ -15,6 +15,8 @@
  */
 package com.google.gwt.junit.server;
 
+import com.google.gwt.dev.util.JsniRef;
+import com.google.gwt.dev.util.StringKey;
 import com.google.gwt.junit.JUnitFatalLaunchException;
 import com.google.gwt.junit.JUnitMessageQueue;
 import com.google.gwt.junit.JUnitShell;
@@ -28,10 +30,14 @@ import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.server.rpc.HybridServiceServlet;
 import com.google.gwt.user.server.rpc.RPCServletUtils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.ServletException;
@@ -44,6 +50,18 @@ import javax.servlet.http.HttpServletResponse;
  * test process.
  */
 public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
+
+  private static class StrongName extends StringKey {
+    protected StrongName(String value) {
+      super(value);
+    }
+  }
+
+  private static class SymbolName extends StringKey {
+    protected SymbolName(String value) {
+      super(value);
+    }
+  }
 
   /**
    * A hook into GWTUnitTestShell, the underlying unit test process.
@@ -87,6 +105,8 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
     fld.setAccessible(true);
     fld.set(obj, value);
   }
+
+  private Map<StrongName, Map<SymbolName, String>> symbolMaps = new HashMap<StrongName, Map<SymbolName, String>>();
 
   public InitialResponse getTestBlock(int blockIndex, ClientInfo clientInfo)
       throws TimeoutException {
@@ -216,8 +236,9 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
    */
   private StackTraceElement deserialize(StackTraceWrapper stw) {
     StackTraceElement ste = null;
-    Object[] args = new Object[] {
-        stw.className, stw.methodName, stw.fileName, stw.lineNumber};
+
+    Object[] args = resymbolize(stw);
+
     try {
       try {
         // Try the 4-arg ctor (JRE 1.5)
@@ -267,5 +288,72 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
     result.setAgent(agent);
     String machine = request.getRemoteHost();
     result.setHost(machine);
+  }
+
+  private synchronized Map<SymbolName, String> loadSymbolMap(
+      StrongName strongName) {
+    Map<SymbolName, String> toReturn = symbolMaps.get(strongName);
+    if (toReturn != null) {
+      return toReturn;
+    }
+    toReturn = new HashMap<SymbolName, String>();
+
+    /*
+     * Collaborate with SymbolMapsLinker for the location of the symbol data
+     * because the -aux directory isn't accessible via the servlet context.
+     */
+    String path = getRequestModuleBasePath() + "/.junit_symbolMaps/"
+        + strongName.get() + ".symbolMap";
+    InputStream in = getServletContext().getResourceAsStream(path);
+    if (in == null) {
+      symbolMaps.put(strongName, null);
+      return null;
+    }
+
+    BufferedReader bin = new BufferedReader(new InputStreamReader(in));
+    String line;
+    try {
+      while ((line = bin.readLine()) != null) {
+        if (line.charAt(0) == '#') {
+          continue;
+        }
+        int idx = line.indexOf(',');
+        toReturn.put(new SymbolName(line.substring(0, idx)),
+            line.substring(idx + 1));
+      }
+    } catch (IOException e) {
+      toReturn = null;
+    }
+
+    symbolMaps.put(strongName, toReturn);
+    return toReturn;
+  }
+
+  /**
+   * @return {className, methodName, fileName, lineNumber}
+   */
+  private Object[] resymbolize(StackTraceWrapper stw) {
+    Object[] toReturn;
+    StrongName strongName = new StrongName(getPermutationStrongName());
+    Map<SymbolName, String> map = loadSymbolMap(strongName);
+    String symbolData = map == null ? null : map.get(new SymbolName(
+        stw.methodName));
+
+    if (symbolData != null) {
+      // jsniIdent, className, memberName, sourceUri, sourceLine
+      String[] parts = symbolData.split(",");
+      assert parts.length == 5 : "Expected 5, have " + parts.length;
+
+      JsniRef ref = JsniRef.parse(parts[0].substring(0,
+          parts[0].lastIndexOf(')') + 1));
+      toReturn = new Object[] {
+          ref.className(), ref.memberName(), stw.fileName, stw.lineNumber};
+
+    } else {
+      // Use the raw data from the client
+      toReturn = new Object[] {
+          stw.className, stw.methodName, stw.fileName, stw.lineNumber};
+    }
+    return toReturn;
   }
 }

@@ -259,7 +259,7 @@ public class IFrameLinker extends SelectionScriptLinker {
     out.newlineOpt();
 
     // Setup the well-known variables.
-    out.print("<head><script>");
+    out.print("<head><meta charset=\"UTF-8\" /><script>");
     out.newlineOpt();
     out.print("var $gwt_version = \"" + About.getGwtVersionNum() + "\";");
     out.newlineOpt();
