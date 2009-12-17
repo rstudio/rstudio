@@ -122,6 +122,48 @@ public class DateTimeFormat_en_Test extends GWTTestCase {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
     assertEquals("J", DateTimeFormat.getFormat("LLLLL").format(date));
   }
+  
+  public void test_S() {
+    Date date = new Date(0);
+    assertEquals("0", DateTimeFormat.getFormat("S").format(date));
+    
+    date = new Date(55);
+    assertEquals("1", DateTimeFormat.getFormat("S").format(date));
+    
+    date = new Date(555);
+    assertEquals("6", DateTimeFormat.getFormat("S").format(date));
+    
+    date = new Date(999);
+    assertEquals("9", DateTimeFormat.getFormat("S").format(date));
+  }
+  
+  public void test_SS() {
+    Date date = new Date(0);
+    assertEquals("00", DateTimeFormat.getFormat("SS").format(date));
+    
+    date = new Date(55);
+    assertEquals("06", DateTimeFormat.getFormat("SS").format(date));
+    
+    date = new Date(555);
+    assertEquals("56", DateTimeFormat.getFormat("SS").format(date));
+    
+    date = new Date(999);
+    assertEquals("99", DateTimeFormat.getFormat("SS").format(date));
+  }
+  
+  public void test_SSS() {    
+    Date date = new Date(0);
+    assertEquals("000", DateTimeFormat.getFormat("SSS").format(date));
+    
+    date = new Date(55);
+    assertEquals("055", DateTimeFormat.getFormat("SSS").format(date));
+    
+    date = new Date(555);
+    assertEquals("555", DateTimeFormat.getFormat("SSS").format(date));
+    
+    date = new Date(999);
+    assertEquals("999", DateTimeFormat.getFormat("SSS").format(date));
+  }
 
   public void test_predefinedFormat() {
     Date date = new Date(2006 - 1900, 7, 4, 13, 49, 24);

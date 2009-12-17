@@ -1003,9 +1003,15 @@ public class DateTimeFormat {
    * @param date hold the date object to be formatted
    */
   private void formatFractionalSeconds(StringBuffer buf, int count, Date date) {
-    // Fractional seconds should be left-justified, ie. zero must be padded
-    // from left. For example, if value in milliseconds is 5, and count is 3,
-    // the output need to be "005".
+    /*
+     * Fractional seconds should be left-justified, ie. zero must be padded from
+     * left. For example, if the value in milliseconds is 5, and the count is 3,
+     * the output will be "005".
+     * 
+     * Values with less than three digits are rounded to the desired number of
+     * places, but the rounded values are truncated at 9 or 99 in order to avoid
+     * changing the values of seconds.
+     */
     long time = date.getTime();
     int value;
     if (time < 0) {
@@ -1014,10 +1020,10 @@ public class DateTimeFormat {
       value = (int) (time % 1000);
     }
     if (count == 1) {
-      value = (value + 50) / 100; // Round to 100ms.
-      buf.append(Integer.toString(value));
+      value = Math.min((value + 50) / 100, 9); // Round to 100ms, clamp to 9
+      buf.append((char) ('0' + value));
     } else if (count == 2) {
-      value = (value + 5) / 10; // Round to 10ms.
+      value = Math.min((value + 5) / 10, 99); // Round to 10ms, clamp to 99
       zeroPaddingNumber(buf, value, 2);
     } else {
       zeroPaddingNumber(buf, value, 3);
@@ -1192,7 +1198,7 @@ public class DateTimeFormat {
       zeroPaddingNumber(buf, value % 100, 2);
     } else {
       // count != 2
-      buf.append(Integer.toString(value));
+      buf.append(value);
     }
   }
 
@@ -2044,6 +2050,6 @@ public class DateTimeFormat {
       }
       b *= NUMBER_BASE;
     }
-    buf.append(Integer.toString(value));
+    buf.append(value);
   }
 }
