@@ -40,6 +40,12 @@ public class SameParameterValueOptimizerTest extends OptimizerTestBase {
         "public static int foo(int i){", "  return i;", "}");
   }
 
+  public void testNumericCast() throws Exception {
+    assertOptimize("foo", "static void foo(long i) { long j = i; }",
+        "foo(1); foo(1);").into("public static void foo(long i){",
+        "  long j = 1L;", "}");
+  }
+
   public void testSameParameter() throws Exception {
     assertOptimize("foo", "static void foo(int i) { int j = i; }",
         "foo(1); foo(1);").into("public static void foo(int i){",

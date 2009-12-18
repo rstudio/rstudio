@@ -173,7 +173,6 @@ public class SameParameterValueOptimizer {
    * all calls.
    */
   private Map<JParameter, JValueLiteral> parameterValues = new IdentityHashMap<JParameter, JValueLiteral>();
-
   private final JProgram program;
 
   /**
@@ -183,9 +182,11 @@ public class SameParameterValueOptimizer {
    * TODO: support polymorphic calls properly.
    */
   private Set<JMethod> rescuedMethods = new HashSet<JMethod>();
+  private final Simplifier simplifier;
 
   private SameParameterValueOptimizer(JProgram program) {
     this.program = program;
+    simplifier = new Simplifier(program);
   }
 
   private boolean execImpl(JNode node) {
@@ -200,7 +201,7 @@ public class SameParameterValueOptimizer {
       JValueLiteral valueLiteral = parameterValues.get(parameter);
       if (valueLiteral != null) {
         SubstituteParameterVisitor substituteParameterVisitor = new SubstituteParameterVisitor(
-            parameter, valueLiteral);
+            parameter, simplifier.cast(parameter.getType(), valueLiteral));
         substituteParameterVisitor.accept(parameter.getEnclosingMethod());
         madeChanges |= substituteParameterVisitor.didChange();
       }
