@@ -51,11 +51,11 @@ public class SameParameterValueOptimizer {
         parameterValues.put(((JParameterRef) x.getLhs()).getParameter(), null);
       }
     }
-    
+
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
-      
+
       if (x.canBePolymorphic() || rescuedMethods.contains(method)) {
         return;
       }
@@ -112,27 +112,27 @@ public class SameParameterValueOptimizer {
         rescuedMethods.add(x);
       } else {
         JMethod staticImpl = program.staticImplFor(x);
-        if (staticImpl != null && 
-            staticImpl.getEnclosingType().getMethods().contains(staticImpl)) {
+        if (staticImpl != null
+            && staticImpl.getEnclosingType().getMethods().contains(staticImpl)) {
           // instance method is still alive.
           rescuedMethods.add(x);
         }
       }
       return true;
     }
-    
+
     private boolean equalLiterals(JValueLiteral l1, JValueLiteral l2) {
       Object v1 = l1.getValueObj();
       Object v2 = l2.getValueObj();
-      
+
       if (v1 == v2) {
         return true;
       }
-      
+
       if (v1 == null || v2 == null) {
         return false;
       }
-      
+
       return v1.equals(v2);
     }
   }
@@ -167,23 +167,22 @@ public class SameParameterValueOptimizer {
   /**
    * Parameter values.
    * 
-   * If doesn't contain a parameter, then its value is unknown.
-   * If contains parameter, and value is null - the parameter's value is not the 
-   * same across all calls.
-   * If value is not null - the parameter's value is the same across all calls.
+   * If doesn't contain a parameter, then its value is unknown. If contains
+   * parameter, and value is null - the parameter's value is not the same across
+   * all calls. If value is not null - the parameter's value is the same across
+   * all calls.
    */
-  private Map<JParameter, JValueLiteral> parameterValues = 
-    new IdentityHashMap<JParameter, JValueLiteral>();
+  private Map<JParameter, JValueLiteral> parameterValues = new IdentityHashMap<JParameter, JValueLiteral>();
+
+  private final JProgram program;
 
   /**
-   * These methods should not be tried to optimized due to their polymorphic 
+   * These methods should not be tried to optimized due to their polymorphic
    * nature.
    * 
    * TODO: support polymorphic calls properly.
    */
   private Set<JMethod> rescuedMethods = new HashSet<JMethod>();
-  
-  private final JProgram program;
 
   private SameParameterValueOptimizer(JProgram program) {
     this.program = program;
@@ -200,8 +199,8 @@ public class SameParameterValueOptimizer {
       }
       JValueLiteral valueLiteral = parameterValues.get(parameter);
       if (valueLiteral != null) {
-        SubstituteParameterVisitor substituteParameterVisitor = 
-          new SubstituteParameterVisitor(parameter, valueLiteral);
+        SubstituteParameterVisitor substituteParameterVisitor = new SubstituteParameterVisitor(
+            parameter, valueLiteral);
         substituteParameterVisitor.accept(parameter.getEnclosingMethod());
         madeChanges |= substituteParameterVisitor.didChange();
       }
