@@ -19,34 +19,36 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
- * TODO: document me.
+ * Test various collections.
  */
 public class CollectionsTest extends EmulTestBase {
 
-  LinkedHashMap dummy() {
-    return new LinkedHashMap();
-  }
-
-  public static List createSortedList() {
-    ArrayList l = new ArrayList();
-    l.add("a");
-    l.add("b");
-    l.add("c");
-    return l;
-  }
-
-  public static List createRandomList() {
-    ArrayList l = new ArrayList();
+  public static List<Integer> createRandomList() {
+    ArrayList<Integer> l = new ArrayList<Integer>();
     l.add(new Integer(5));
     l.add(new Integer(2));
     l.add(new Integer(3));
     l.add(new Integer(1));
     l.add(new Integer(4));
     return l;
+  }
+
+  public static List<String> createSortedList() {
+    ArrayList<String> l = new ArrayList<String>();
+    l.add("a");
+    l.add("b");
+    l.add("c");
+    return l;
+  }
+
+  private static Entry<String, String> dummyEntry() {
+    return Collections.singletonMap("foo", "bar").entrySet().iterator().next();
   }
 
   /**
@@ -57,15 +59,17 @@ public class CollectionsTest extends EmulTestBase {
    * smaller than all elements
    */
   public void testBinarySearchObject() {
-    List a1 = new ArrayList();
+    List<String> a1 = new ArrayList<String>();
     int ret = Collections.binarySearch(a1, "");
     assertEquals(-1, ret);
-    List a2 = new ArrayList(Arrays.asList(new String[] {"a", "g", "y"}));
+    List<String> a2 = new ArrayList<String>(Arrays.asList(new String[] {
+        "a", "g", "y"}));
     ret = Collections.binarySearch(a2, "c");
     assertEquals(-2, ret);
     ret = Collections.binarySearch(a2, "y");
     assertEquals(2, ret);
-    List a3 = new ArrayList(Arrays.asList(new String[] {"b", "c", "x", "y"}));
+    List<String> a3 = new ArrayList<String>(Arrays.asList(new String[] {
+        "b", "c", "x", "y"}));
     ret = Collections.binarySearch(a3, "z");
     assertEquals(-5, ret);
     ret = Collections.binarySearch(a3, "a");
@@ -82,20 +86,22 @@ public class CollectionsTest extends EmulTestBase {
    * smaller than all elements null Comparator uses natural ordering
    */
   public void testBinarySearchObjectComparator() {
-    Comparator inverseSort = new Comparator() {
-      public int compare(Object o1, Object o2) {
-        return ((Comparable) o2).compareTo(o1);
+    Comparator<String> inverseSort = new Comparator<String>() {
+      public int compare(String o1, String o2) {
+        return o2.compareTo(o1);
       }
     };
-    List a1 = new ArrayList();
+    List<String> a1 = new ArrayList<String>();
     int ret = Collections.binarySearch(a1, "", inverseSort);
     assertEquals(-1, ret);
-    List a2 = new ArrayList(Arrays.asList(new String[] {"y", "g", "a"}));
+    List<String> a2 = new ArrayList<String>(Arrays.asList(new String[] {
+        "y", "g", "a"}));
     ret = Collections.binarySearch(a2, "c", inverseSort);
     assertEquals(-3, ret);
     ret = Collections.binarySearch(a2, "a", inverseSort);
     assertEquals(2, ret);
-    List a3 = new ArrayList(Arrays.asList(new String[] {"y", "x", "c", "b"}));
+    List<String> a3 = new ArrayList<String>(Arrays.asList(new String[] {
+        "y", "x", "c", "b"}));
     ret = Collections.binarySearch(a3, "a", inverseSort);
     assertEquals(-5, ret);
     ret = Collections.binarySearch(a3, "z", inverseSort);
@@ -103,51 +109,68 @@ public class CollectionsTest extends EmulTestBase {
     ret = Collections.binarySearch(a3, "y", inverseSort);
     assertEquals(0, ret);
 
-    List a4 = new ArrayList(
-        Arrays.asList(new String[] {"a", "b", "c", "d", "e"}));
+    List<String> a4 = new ArrayList<String>(Arrays.asList(new String[] {
+        "a", "b", "c", "d", "e"}));
     ret = Collections.binarySearch(a4, "d", null); // should not NPE
     assertEquals(3, ret);
   }
 
+  public void testEntrySetToArrayOversized() {
+    Map<String, String> delegate = new HashMap<String, String>();
+    delegate.put("key", "value");
+    Map<String, String> unmodifiable = Collections.unmodifiableMap(delegate);
+
+    @SuppressWarnings("unchecked")
+    Entry<String, String>[] oversizedArray = new Entry[3];
+    oversizedArray[0] = dummyEntry();
+    oversizedArray[1] = dummyEntry();
+    oversizedArray[2] = dummyEntry();
+
+    Entry<String, String>[] result = unmodifiable.entrySet().toArray(
+        oversizedArray);
+    assertSame(result, oversizedArray);
+    assertEquals("key", result[0].getKey());
+    assertEquals("value", result[0].getValue());
+    assertNull("The element after last should be null.", result[1]);
+  }
+
   public void testFill() {
-    List a = createSortedList();
+    List<String> a = createSortedList();
     Collections.fill(a, null);
     assertEquals(new Object[a.size()], a);
 
-    List b = createRandomList();
+    List<Integer> b = createRandomList();
     Collections.fill(b, null);
     assertEquals(new Object[b.size()], b);
   }
 
   public void testReverse() {
-    List a = createSortedList();
+    List<String> a = createSortedList();
     Collections.reverse(a);
     Object[] x = {"c", "b", "a"};
     assertEquals(x, a);
 
-    List b = createRandomList();
+    List<Integer> b = createRandomList();
     Collections.reverse(b);
     Collections.reverse(b);
     assertEquals(b, createRandomList());
   }
 
   public void testSort() {
-    List a = createSortedList();
+    List<String> a = createSortedList();
     Collections.reverse(a);
     Collections.sort(a);
     assertEquals(createSortedList(), a);
   }
 
   public void testSortWithComparator() {
-    Comparator x = new Comparator() {
-      public int compare(Object o1, Object o2) {
-        String s1 = (String) o1;
-        String s2 = (String) o2;
+    Comparator<String> x = new Comparator<String>() {
+      public int compare(String s1, String s2) {
         // sort into reverse order
         return s2.compareTo(s1);
       }
     };
-    List a = createSortedList();
+    List<String> a = createSortedList();
     Collections.sort(a, x);
     Object[] expected = {"c", "b", "a"};
     assertEquals(expected, a);
@@ -162,5 +185,4 @@ public class CollectionsTest extends EmulTestBase {
       assertEquals(val, testArray[i]);
     }
   }
-
 }

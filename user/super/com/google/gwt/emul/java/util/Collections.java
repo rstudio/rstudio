@@ -230,19 +230,31 @@ public class Collections {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public Object[] toArray() {
-        return toArray(super.toArray());
+        Object[] array = super.toArray();
+        wrap(array, array.length);
+        return array;
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public <T> T[] toArray(T[] a) {
         Object[] result = super.toArray(a);
-        for (int i = 0, c = result.length; i < c; ++i) {
-          result[i] = new UnmodifiableEntry<K, V>((Map.Entry<K, V>) result[i]);
-        }
+        wrap(result, coll.size());
         return (T[]) result;
+      }
+
+      /**
+       * Wrap an array of Map.Entries as UnmodifiableEntries.
+       * 
+       * @param array array to wrap
+       * @param size number of entries to wrap
+       */
+      @SuppressWarnings("unchecked")
+      private void wrap(Object[] array, int size) {
+        for (int i = 0; i < size; ++i) {
+          array[i] = new UnmodifiableEntry<K, V>((Map.Entry<K, V>) array[i]);
+        }
       }
     }
 
