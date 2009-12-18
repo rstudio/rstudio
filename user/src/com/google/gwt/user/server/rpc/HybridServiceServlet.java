@@ -86,8 +86,7 @@ public class HybridServiceServlet extends RpcServlet implements
               + strongName
               + "' for module '"
               + moduleBaseURL
-              + "'; a legacy, 1.3.3 compatible, serialization policy will be used.  You may experience SerializationExceptions as a result.",
-          null);
+              + "'; a legacy, 1.3.3 compatible, serialization policy will be used.  You may experience SerializationExceptions as a result.");
       serializationPolicy = RPC.getDefaultSerializationPolicy();
     }
 

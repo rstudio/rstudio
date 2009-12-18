@@ -71,7 +71,7 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
           + ", is not in the same web application as this servlet, "
           + contextPath
           + ".  Your module may not be properly configured or your client and server code maybe out of date.";
-      servlet.log(message, null);
+      servlet.log(message);
     } else {
       // Strip off the context path from the module base URL. It should be a
       // strict prefix.
@@ -146,8 +146,7 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
               + strongName
               + "' for module '"
               + moduleBaseURL
-              + "'; a legacy, 1.3.3 compatible, serialization policy will be used.  You may experience SerializationExceptions as a result.",
-          null);
+              + "'; a legacy, 1.3.3 compatible, serialization policy will be used.  You may experience SerializationExceptions as a result.");
       serializationPolicy = RPC.getDefaultSerializationPolicy();
     }
 
