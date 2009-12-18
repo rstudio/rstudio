@@ -85,8 +85,19 @@ public class JSORestrictionsChecker {
 
     @Override
     public void endVisit(AllocationExpression exp, BlockScope scope) {
+      // In rare cases we might not be able to resolve the expression.
+      if (exp.type == null) {
+        return;
+      }
+      TypeBinding resolvedType = exp.resolvedType;
+      if (resolvedType == null) {
+        if (scope == null) {
+          return;
+        }
+        resolvedType = exp.type.resolveType(scope);
+      }
       // Anywhere an allocation occurs is wrong.
-      if (exp.type != null && isJsoSubclass(exp.type.resolveType(scope))) {
+      if (isJsoSubclass(resolvedType)) {
         errorOn(exp, ERR_NEW_JSO);
       }
     }
