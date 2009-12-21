@@ -164,7 +164,7 @@ public abstract class Number implements Serializable {
   private static native double __parseDouble(String str) /*-{
     var floatRegex = @java.lang.Number::floatRegex;
     if (!floatRegex) {
-      floatRegex = @java.lang.Number::floatRegex = /^[+-]?\d*\.?\d*(e[+-]?\d+)?$/i;
+      floatRegex = @java.lang.Number::floatRegex = /^\s*[+-]?\d*\.?\d*([eE][+-]?\d+)?\s*$/i;
     }
     if (floatRegex.test(str)) {
       return parseFloat(str);

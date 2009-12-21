@@ -78,5 +78,20 @@ public class DoubleTest extends GWTTestCase {
     assertTrue(
         "Can't parse MAX_VALUE",
         Double.MAX_VALUE == Double.parseDouble(String.valueOf(Double.MAX_VALUE)));
+    
+    // Test that leading and trailing whitespace is ignored
+    // Test that both 'e' and 'E' may be used as the exponent delimiter
+    assertTrue(2.56789e1 == Double.parseDouble("2.56789e1"));
+    assertTrue(2.56789e1 == Double.parseDouble("  2.56789E+1"));
+    assertTrue(2.56789e1 == Double.parseDouble("2.56789e1   "));
+    assertTrue(2.56789e1 == Double.parseDouble("   2.56789E01   "));
+    assertTrue(2.56789e1 == Double.parseDouble("+2.56789e1"));
+    assertTrue(2.56789e1 == Double.parseDouble("  +2.56789E+01"));
+    assertTrue(2.56789e1 == Double.parseDouble("+2.56789e1   "));
+    assertTrue(2.56789e1 == Double.parseDouble("   +2.56789E1   "));
+    assertTrue(-2.56789e1 == Double.parseDouble("-2.56789e+1"));
+    assertTrue(-2.56789e1 == Double.parseDouble("  -2.56789E1"));
+    assertTrue(-2.56789e1 == Double.parseDouble("-2.56789e+01   "));
+    assertTrue(-2.56789e1 == Double.parseDouble("   -2.56789E1   "));
   }
 }

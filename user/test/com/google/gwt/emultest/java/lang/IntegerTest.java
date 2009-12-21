@@ -76,6 +76,27 @@ public class IntegerTest extends GWTTestCase {
     } catch (NumberFormatException e) {
       // Expected behavior
     }
+
+    try {
+      Integer.parseInt("-");
+      fail("parseInt should reject \"-\"");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+
+    try {
+      Integer.parseInt(" -12345");
+      fail("parseInt should reject leading whitespace");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+
+    try {
+      Integer.parseInt("-12345 ");
+      fail("parseInt should reject trailing whitespace");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
   }
 
   public void testBinaryString() {
