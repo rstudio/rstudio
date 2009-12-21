@@ -64,6 +64,8 @@ public class JjsTypeTest extends TestCase {
   private SourceInfo synthSource;
   private JReferenceType typeNull;
   private JTypeOracle typeOracle;
+  private JReferenceType intfSerializable;
+  private JReferenceType intfCloneable;
 
   public void testCanTheoreticallyCast() {
     assertFalse(typeOracle.canTheoreticallyCast(classBnn, typeNull));
@@ -90,6 +92,12 @@ public class JjsTypeTest extends TestCase {
 
     assertTrue(typeOracle.canTheoreticallyCast(intfIBase, classBase));
     assertFalse(typeOracle.canTheoreticallyCast(intfJ, classA));
+
+    assertTrue(typeOracle.canTheoreticallyCast(arrayOfA, intfSerializable));
+    assertTrue(typeOracle.canTheoreticallyCast(intfSerializable, arrayOfA));
+
+    assertTrue(typeOracle.canTheoreticallyCast(arrayOfA, intfCloneable));
+    assertTrue(typeOracle.canTheoreticallyCast(intfCloneable, arrayOfA));
   }
 
   public void testCanTriviallyCast() {
@@ -133,6 +141,12 @@ public class JjsTypeTest extends TestCase {
 
     assertTrue(typeOracle.canTriviallyCast(classJso, classJso1));
     assertTrue(typeOracle.canTriviallyCast(classJso, classJso1));
+    
+    assertTrue(typeOracle.canTriviallyCast(arrayOfA, intfSerializable));
+    assertFalse(typeOracle.canTriviallyCast(intfSerializable, arrayOfA));
+
+    assertTrue(typeOracle.canTriviallyCast(arrayOfA, intfCloneable));
+    assertFalse(typeOracle.canTriviallyCast(intfCloneable, arrayOfA));
 
     /*
      * Test that two types cannot both be trivially castable to each other,
@@ -172,6 +186,9 @@ public class JjsTypeTest extends TestCase {
 
     assertSame(classObject, generalizeTypes(intfI, arrayOfInt));
 
+    assertSame(intfSerializable, generalizeTypes(intfSerializable, arrayOfA));
+    assertSame(intfCloneable, generalizeTypes(intfCloneable, arrayOfA));
+
     for (JReferenceType type1 : severalTypes()) {
       for (JReferenceType type2 : severalTypes()) {
         JReferenceType generalized = generalizeTypes(type1, type2);
@@ -187,6 +204,8 @@ public class JjsTypeTest extends TestCase {
     assertSame(classB, program.strongerType(classB, classBase));
     assertSame(classB, program.strongerType(classBase, classB));
     assertSame(intfI, program.strongerType(intfI, intfJ));
+    assertSame(arrayOfA, program.strongerType(intfSerializable, arrayOfA));
+    assertSame(arrayOfA, program.strongerType(intfCloneable, arrayOfA));
   }
 
   @Override
@@ -219,6 +238,9 @@ public class JjsTypeTest extends TestCase {
     classString = createClass("java.lang.String", classObject, false, true);
     classJso = createClass("com.google.gwt.core.client.JavaScriptObject",
         classObject, false, false);
+
+    intfSerializable = createInterface("java.io.Serializable");
+    intfCloneable = createInterface("java.lang.Cloneable");
 
     intfIBase = createInterface("IBase");
 

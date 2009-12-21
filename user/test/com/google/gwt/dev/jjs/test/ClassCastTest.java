@@ -16,9 +16,12 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.ui.Widget;
+
+import java.io.Serializable;
 
 /**
- * TODO: document me.
+ * Test type casts and <code>instanceof</code>.
  */
 @SuppressWarnings("unused")
 public class ClassCastTest extends GWTTestCase {
@@ -32,12 +35,25 @@ public class ClassCastTest extends GWTTestCase {
   static abstract class Food {
   }
 
-  private final Food foodItem = new Apple();
+  private volatile Object arrayOfInt = new int[3];
+  private volatile Object arrayOfWidget = new Widget[4];
+  private volatile Food foodItem = new Apple();
+  private volatile CanEatRaw rawFoodItem = new Apple();
 
-  private final CanEatRaw rawFoodItem = new Apple();
-
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
+  }
+
+  public void testArrayInterfaces() {
+    assertTrue(arrayOfInt instanceof Serializable);
+    assertTrue(arrayOfWidget instanceof Serializable);
+
+    assertTrue(arrayOfInt instanceof Cloneable);
+    assertTrue(arrayOfWidget instanceof Cloneable);
+
+    assertFalse(arrayOfInt instanceof Food);
+    assertFalse(arrayOfWidget instanceof Food);
   }
 
   public void testBaseToInterface() {

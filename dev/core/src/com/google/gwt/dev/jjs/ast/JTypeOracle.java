@@ -262,6 +262,9 @@ public class JTypeOracle implements Serializable {
    */
   private final Map<JMethod, Map<JClassType, Set<JMethod>>> virtualUpRefMap = new IdentityHashMap<JMethod, Map<JClassType, Set<JMethod>>>();
 
+  private JDeclaredType javaIoSerializable;
+  private JDeclaredType javaLangCloneable;
+
   public JTypeOracle(JProgram program) {
     this.program = program;
   }
@@ -310,6 +313,12 @@ public class JTypeOracle implements Serializable {
         }
       }
 
+      /*
+       * Warning: If this code is ever updated to consider casts of array types
+       * to interface types, then be sure to consider that casting an array to
+       * Serializable and Cloneable succeeds. Currently all casts of an array to
+       * an interface return true, which is overly conservative but is safe.
+       */
     } else if (type instanceof JClassType) {
 
       JClassType cType = (JClassType) type;
@@ -369,6 +378,10 @@ public class JTypeOracle implements Serializable {
           }
         }
       }
+
+      if (qType == javaIoSerializable || qType == javaLangCloneable) {
+        return true;
+      }
     } else if (type instanceof JClassType) {
 
       JClassType cType = (JClassType) type;
@@ -402,6 +415,9 @@ public class JTypeOracle implements Serializable {
 
   public void computeBeforeAST() {
     javaLangObject = program.getTypeJavaLangObject();
+    javaIoSerializable = program.getFromTypeMap(Serializable.class.getName());
+    javaLangCloneable = program.getFromTypeMap(Cloneable.class.getName());
+
     superClassMap.clear();
     subClassMap.clear();
     superInterfaceMap.clear();

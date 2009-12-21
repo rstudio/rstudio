@@ -71,10 +71,10 @@ public class JProgram extends JNode {
 
   public static final Set<String> INDEX_TYPES_SET = new LinkedHashSet<String>(
       Arrays.asList(new String[] {
-          "java.lang.Object", "java.lang.String", "java.lang.Class",
-          "java.lang.CharSequence", "java.lang.Comparable", "java.lang.Enum",
-          "java.lang.Iterable", "java.util.Iterator",
-          "com.google.gwt.core.client.GWT",
+          "java.io.Serializable", "java.lang.Object", "java.lang.String",
+          "java.lang.Class", "java.lang.CharSequence", "java.lang.Cloneable",
+          "java.lang.Comparable", "java.lang.Enum", "java.lang.Iterable",
+          "java.util.Iterator", "com.google.gwt.core.client.GWT",
           "com.google.gwt.core.client.JavaScriptObject",
           "com.google.gwt.lang.ClassLiteralHolder",
           "com.google.gwt.core.client.RunAsyncCallback",
@@ -313,6 +313,10 @@ public class JProgram extends JNode {
 
   private Map<JReferenceType, Integer> typeIdMap = new HashMap<JReferenceType, Integer>();
 
+  private JInterfaceType typeJavaIoSerializable;
+
+  private JInterfaceType typeJavaLangCloneable;
+
   private JClassType typeJavaLangEnum;
 
   private JClassType typeJavaLangObject;
@@ -334,10 +338,10 @@ public class JProgram extends JNode {
   /**
    * Constructor.
    * 
-   * @param enableSourceInfoDescendants Controls whether or not SourceInfo nodes
-   *          created via the JProgram will record descendant information.
-   *          Enabling this feature will collect extra data during the
-   *          compilation cycle, but at a cost of memory and object allocations.
+   * @param correlator Controls whether or not SourceInfo nodes created via the
+   *          JProgram will record descendant information. Enabling this feature
+   *          will collect extra data during the compilation cycle, but at a
+   *          cost of memory and object allocations.
    */
   public JProgram(CorrelationFactory correlator) {
     super(correlator.makeSourceInfo(SourceOrigin.create(0,
@@ -467,6 +471,11 @@ public class JProgram extends JNode {
 
     if (INDEX_TYPES_SET.contains(sname)) {
       indexedTypes.put(x.getShortName(), x);
+      if (sname.equals("java.lang.Cloneable")) {
+        typeJavaLangCloneable = x;
+      } else if (sname.equals("java.io.Serializable")) {
+        typeJavaIoSerializable = x;
+      }
     }
 
     return x;
@@ -720,6 +729,9 @@ public class JProgram extends JNode {
         // unrelated
         return typeJavaLangObject;
 
+      } else if (greater == IS_ARRAY
+          && ((tLesser == typeJavaLangCloneable) || (tLesser == typeJavaIoSerializable))) {
+        return tLesser;
       } else {
 
         // unrelated: the best commonality between an interface and array, or
