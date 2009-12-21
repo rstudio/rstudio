@@ -16,6 +16,7 @@
 
 package com.google.gwt.soyc;
 
+import com.google.gwt.core.ext.soyc.impl.SizeMapRecorder;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.soyc.io.OutputDirectory;
 
@@ -106,12 +107,7 @@ public class MakeTopLevelHtmlForPerm {
   private static final Pattern PATTERN_SP_INT = Pattern.compile("sp([0-9]+)");
 
   private static String escapeXml(String unescaped) {
-    String escaped = unescaped.replaceAll("\\&", "&amp;");
-    escaped = escaped.replaceAll("\\<", "&lt;");
-    escaped = escaped.replaceAll("\\>", "&gt;");
-    escaped = escaped.replaceAll("\\\"", "&quot;");
-    escaped = escaped.replaceAll("\\'", "&apos;");
-    return escaped;
+      return SizeMapRecorder.escapeXml(unescaped);
   }
 
   public static void makeTopLevelHtmlForAllPerms(

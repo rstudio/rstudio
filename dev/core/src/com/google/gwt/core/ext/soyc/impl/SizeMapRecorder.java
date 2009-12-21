@@ -56,6 +56,22 @@ public class SizeMapRecorder {
   }
 
   /**
+   * Returns the hexadecimal representation of a character
+   */
+  public static StringBuilder charToHex(char c) {
+    char hexDigit[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+      'A', 'B', 'C', 'D', 'E', 'F' };
+    StringBuilder toReturn = new StringBuilder();
+    byte charByte = (byte) (c >>> 8);
+    toReturn.append(hexDigit[(charByte >> 4) & 0x0F]);
+    toReturn.append(hexDigit[charByte & 0x0F]);
+    charByte = (byte) (c & 0xFF);
+    toReturn.append(hexDigit[(charByte >> 4) & 0x0F]);
+    toReturn.append(hexDigit[charByte & 0x0F]);
+    return toReturn;
+  }
+
+  /**
    * Escapes '&', '<', '>', '"', and '\'' to their XML entity equivalents.
    */
   public static String escapeXml(String unescaped) {
@@ -78,36 +94,40 @@ public class SizeMapRecorder {
    * @param builder a StringBuilder to be appended with the output.
    */
   public static void escapeXml(String code, int start, int end,
-      boolean quoteApostrophe, StringBuilder builder) {
+    boolean quoteApostrophe, StringBuilder builder) {
+    // See http://www.w3.org/TR/2006/REC-xml11-20060816/#charsets.
     int lastIndex = 0;
     int len = end - start;
     char[] c = new char[len];
 
     code.getChars(start, end, c, 0);
     for (int i = 0; i < len; i++) {
-      if ((c[i] >= '\uD800') && (c[i] <= '\uDBFF')) {
+      if ((c[i] < '\u0020')) {
         builder.append(c, lastIndex, i - lastIndex);
-        builder.append("(non-valid utf-8 character)");
+        if (c[i] == '\u0000') {
+         builder.append("\\0");
+        }
+        else if (c[i] == '\u0009') {
+         builder.append("\\t");
+        }
+        else if (c[i] == '\n') {
+         builder.append("\\n");
+        }
+        else if (c[i] == '\r') {
+         builder.append("\\r");
+        }
+        else {
+            builder.append("(invalid xml character: \\u" + charToHex(c[i]) + ")");
+        }
         lastIndex = i + 1;
-        break;
-      } else if ((c[i] >= '\uDC00') && (c[i] <= '\uDFFF')) {
+      } else if (((c[i] >= '\u007F') && (c[i] <= '\u0084')) ||
+            ((c[i] >= '\u0086') && (c[i] <= '\u009F')) ||
+            ((c[i] >= '\uD800') && (c[i] <= '\uDBFF')) || 
+            ((c[i] >= '\uDC00') && (c[i] <= '\uDFFF')) ||
+            ((c[i] >= '\uFDD0') && (c[i] <= '\uFDDF')) ||
+            (c[i] == '\u00A0') || (c[i] == '\uFFFF') || (c[i] == '\uFFFE')) {
         builder.append(c, lastIndex, i - lastIndex);
-        builder.append("(non-valid utf-8 character)");
-        lastIndex = i + 1;
-        break;
-      } else if (c[i] == '\0') {
-        builder.append(c, lastIndex, i - lastIndex);
-        builder.append("(null)");
-        lastIndex = i + 1;
-        break;
-      } else if (c[i] == '\uffff') {
-        builder.append(c, lastIndex, i - lastIndex);
-        builder.append("(uffff)");
-        lastIndex = i + 1;
-        break;
-      } else if (c[i] == '\ufffe') {
-        builder.append(c, lastIndex, i - lastIndex);
-        builder.append("(ufffe)");
+        builder.append("(invalid xml character: \\u" + charToHex(c[i]) + ")");
         lastIndex = i + 1;
       } else if (c[i] == '&') {
         builder.append(c, lastIndex, i - lastIndex);
@@ -131,6 +151,10 @@ public class SizeMapRecorder {
           builder.append("&apos;");
           lastIndex = i + 1;
         }
+      } else if (c[i] > '\u007F') {
+        builder.append(c, lastIndex, i - lastIndex);
+        builder.append("&#x" + charToHex(c[i]) + ";");
+        lastIndex = i + 1;
       }
     }
     builder.append(c, lastIndex, len - lastIndex);
