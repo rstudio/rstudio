@@ -69,7 +69,7 @@ public class History {
           + "include the history frame in your host page? Try "
           + "<iframe src=\"javascript:''\" id='__gwt_historyFrame' "
           + "style='position:absolute;width:0;height:0;border:0'>"
-          + "</iframe>", null);
+          + "</iframe>");
     }
   }
 

@@ -196,18 +196,14 @@ public final class GWT {
    * Logs a message to the development shell logger in hosted mode. Calls are
    * optimized out in web mode.
    */
-  @SuppressWarnings("unused")
   public static void log(String message) {
-    if (sGWTBridge != null) {
-      sGWTBridge.log(message, null);
-    }
+    log(message, null);
   }
 
   /**
    * Logs a message to the development shell logger in hosted mode. Calls are
    * optimized out in web mode.
    */
-  @SuppressWarnings("unused")
   public static void log(String message, Throwable e) {
     if (sGWTBridge != null) {
       sGWTBridge.log(message, e);

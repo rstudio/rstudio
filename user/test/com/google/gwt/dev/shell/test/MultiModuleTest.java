@@ -158,7 +158,7 @@ public class MultiModuleTest extends GWTTestCase {
       panel.add(new Label("Frame 2b inner"));
       markLoaded(2);
     } else {
-      GWT.log("Unexpected frame name " + frameName, null);
+      GWT.log("Unexpected frame name " + frameName);
     }
   }
 

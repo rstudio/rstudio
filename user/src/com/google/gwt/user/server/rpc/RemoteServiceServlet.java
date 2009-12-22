@@ -99,7 +99,7 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
           String message = "ERROR: The serialization policy file '"
               + serializationPolicyFilePath
               + "' was not found; did you forget to include it in this deployment?";
-          servlet.log(message, null);
+          servlet.log(message);
         }
       } finally {
         if (is != null) {
