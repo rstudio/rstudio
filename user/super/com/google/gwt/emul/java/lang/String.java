@@ -23,6 +23,7 @@
 package java.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Window;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -465,6 +466,10 @@ public final class String implements Comparable<String>, CharSequence,
     if (!(other instanceof String)) {
       return false;
     }
+    return __equals(this, other);
+  }
+
+  public boolean equals(String other) {
     return __equals(this, other);
   }
 
