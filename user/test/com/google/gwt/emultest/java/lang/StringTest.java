@@ -429,6 +429,14 @@ public class StringTest extends GWTTestCase {
         0));
     // issue 2742
     compareList("issue2742", new String[] {}, hideFromCompiler("/").split("/", 0));
+    
+    // Splitting an empty string should result in an array containing a single
+    // empty string.
+    String[] s = "".split(",");
+    assertTrue(s != null);
+    assertTrue(s.length == 1);
+    assertTrue(s[0] != null);
+    assertTrue(s[0].length() == 0);
   }
 
   public void testStartsWith() {
