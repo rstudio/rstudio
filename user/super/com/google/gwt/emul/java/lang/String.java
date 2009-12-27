@@ -468,10 +468,6 @@ public final class String implements Comparable<String>, CharSequence,
     return __equals(this, other);
   }
 
-  public boolean equals(String other) {
-    return __equals(this, other);
-  }
-
   public native boolean equalsIgnoreCase(String other) /*-{
     if (other == null)
       return false;
