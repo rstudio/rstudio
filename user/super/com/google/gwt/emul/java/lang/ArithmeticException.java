@@ -16,10 +16,11 @@
 package java.lang;
 
 /**
- * NOTE: in GWT this is only thrown for division by zero on longs.
- * 
+ * NOTE: in GWT this is only thrown for division by zero on longs and
+ * BigInteger/BigDecimal.
+ * <p>
  * See <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/ArrayIndexOutOfBoundsException.html">the
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/ArithmeticException.html">the
  * official Java API doc</a> for details.
  */
 public class ArithmeticException extends RuntimeException {

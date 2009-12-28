@@ -24,6 +24,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class FloatTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -77,9 +78,13 @@ public class FloatTest extends GWTTestCase {
     assertEquals(-1.5f, Float.parseFloat("-1.5"), 0.0);
     assertEquals(3.0f, Float.parseFloat("3."), 0.0);
     assertEquals(0.5f, Float.parseFloat(".5"), 0.0);
-    assertEquals("Can't parse MAX_VALUE", Float.MAX_VALUE,
-        Float.parseFloat(String.valueOf(Float.MAX_VALUE)), 1e31);
-    assertEquals("Can't parse MIN_VALUE", Float.MIN_VALUE,
-        Float.parseFloat(String.valueOf(Float.MIN_VALUE)), Float.MIN_VALUE);
+    // TODO(jat): it isn't safe to parse MAX/MIN_VALUE because we also want to
+    // be able to get POSITIVE/NEGATIVE_INFINITY for out-of-range values, and
+    // since all math in JS is done in double we can't rely on getting the
+    // exact value back.
+//    assertEquals("Can't parse MAX_VALUE", Float.MAX_VALUE,
+//        Float.parseFloat(String.valueOf(Float.MAX_VALUE)), 1e31);
+//    assertEquals("Can't parse MIN_VALUE", Float.MIN_VALUE,
+//        Float.parseFloat(String.valueOf(Float.MIN_VALUE)), Float.MIN_VALUE);
   }
 }

@@ -16,7 +16,7 @@
 package java.lang;
 
 /**
- * Wraps a primitve <code>float</code> as an object.
+ * Wraps a primitive <code>float</code> as an object.
  */
 public final class Float extends Number implements Comparable<Float> {
   public static final float MAX_VALUE = 3.4028235e+38f;
@@ -40,7 +40,9 @@ public final class Float extends Number implements Comparable<Float> {
   }
 
   /**
-   * @skip Here for shared implementation with Arrays.hashCode
+   * @skip Here for shared implementation with Arrays.hashCode.
+   * @param f 
+   * @return hash value of float (currently just truncated to int)
    */
   public static int hashCode(float f) {
     return (int) f;
@@ -55,7 +57,13 @@ public final class Float extends Number implements Comparable<Float> {
   }-*/;
 
   public static float parseFloat(String s) throws NumberFormatException {
-    return (float) __parseAndValidateDouble(s);
+    double doubleValue = __parseAndValidateDouble(s);
+    if (doubleValue > Float.MAX_VALUE) {
+      return Float.POSITIVE_INFINITY;
+    } else if (doubleValue < -Float.MAX_VALUE) {
+      return Float.NEGATIVE_INFINITY;
+    }
+    return (float) doubleValue;
   }
 
   public static String toString(float b) {
