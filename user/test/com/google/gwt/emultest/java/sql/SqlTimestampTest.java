@@ -174,5 +174,40 @@ public class SqlTimestampTest extends GWTTestCase {
     Timestamp expected = new Timestamp(2000 - 1900, 1 - 1, 1, 12, 34, 56, 123456789);
     Timestamp actual = Timestamp.valueOf("2000-01-01 12:34:56.123456789");
     assertEquals(expected, actual);
+    
+    expected = new Timestamp(2000 - 1900, 1 - 1, 1, 12, 34, 56, 0);
+    actual = Timestamp.valueOf("2000-01-01 12:34:56");
+    assertEquals(expected, actual);
+    
+    expected = new Timestamp(2000 - 1900, 1 - 1, 1, 12, 34, 56, 100000000);
+    actual = Timestamp.valueOf("2000-01-01 12:34:56.1");
+    assertEquals(expected, actual);
+    
+    expected = new Timestamp(2000 - 1900, 1 - 1, 1, 12, 34, 56, 120000000);
+    actual = Timestamp.valueOf("2000-01-01 12:34:56.12");
+    assertEquals(expected, actual);
+    
+    expected = new Timestamp(2000 - 1900, 1 - 1, 1, 12, 34, 56, 123000000);
+    actual = Timestamp.valueOf("2000-01-01 12:34:56.123");
+    assertEquals(expected, actual);
+    
+    expected = new Timestamp(2000 - 1900, 1 - 1, 1, 12, 34, 56, 123400000);
+    actual = Timestamp.valueOf("2000-01-01 12:34:56.1234");
+    assertEquals(expected, actual);
+    
+    expected = new Timestamp(2000 - 1900, 1 - 1, 1, 12, 34, 56, 123450000);
+    actual = Timestamp.valueOf("2000-01-01 12:34:56.12345");
+    assertEquals(expected, actual);
+    
+    expected = new Timestamp(2000 - 1900, 1 - 1, 1, 12, 34, 56, 123456000);
+    actual = Timestamp.valueOf("2000-01-01 12:34:56.123456");
+    assertEquals(expected, actual);
+    
+    expected = new Timestamp(2000 - 1900, 1 - 1, 1, 12, 34, 56, 123456700);
+    actual = Timestamp.valueOf("2000-01-01 12:34:56.1234567");
+    assertEquals(expected, actual);
+    
+    expected = new Timestamp(2000 - 1900, 1 - 1, 1, 12, 34, 56, 123456780);
+    actual = Timestamp.valueOf("2000-01-01 12:34:56.12345678");
   }
 }

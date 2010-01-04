@@ -29,19 +29,36 @@ public class Timestamp extends java.util.Date {
     }
 
     String[] timeComponents = components[1].split("\\.");
-    if (timeComponents.length != 2) {
-      throw new IllegalArgumentException("Invalid escape format: " + s);
-    } else if (timeComponents[1].length() != 9) {
+    boolean hasNanos = true;
+    int nanos = 0;
+ 
+    if (timeComponents.length == 1) {
+      // Allow timestamps without .fffffffff nanoseconds field
+      hasNanos = false;
+    } else if (timeComponents.length != 2) {
       throw new IllegalArgumentException("Invalid escape format: " + s);
     }
 
     Date d = Date.valueOf(components[0]);
     Time t = Time.valueOf(timeComponents[0]);
-    int nanos;
-    try {
-      nanos = Integer.valueOf(timeComponents[1]);
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("Invalid escape format: " + s);
+    if (hasNanos) {
+      String nanosString = timeComponents[1];
+      int len = nanosString.length();
+      assert(len > 0); // len must be > 0 if hasNanos is true
+      if (len > 9) {
+        throw new IllegalArgumentException("Invalid escape format: " + s);
+      }
+
+      // Pad zeros on the right up to a total of 9 digits
+      if (len < 9) {
+        nanosString += "00000000".substring(len - 1);
+      }
+
+      try {
+        nanos = Integer.valueOf(nanosString);
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException("Invalid escape format: " + s);
+      }
     }
 
     return new Timestamp(d.getYear(), d.getMonth(), d.getDate(), t.getHours(),
