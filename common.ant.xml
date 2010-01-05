@@ -241,7 +241,7 @@
       </condition>
       <fail
           message="One or more junit tests failed for target: @{test.name} @{test.args}"
-          if="junit.stop.build" />
+          if="junit.stop.build" status="2" />
     </sequential>
   </macrodef>
 
