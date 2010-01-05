@@ -16,8 +16,10 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
@@ -140,6 +142,38 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
     // + prefix stripped when operand is literal number
     doTest("var x = +42","var x = 42");
   }
+  
+  public void testEscapes() throws Exception {
+    // Use short octal escapes at the end of the string or when the next
+    // character is a non-digit
+    doTestEscapes("\u0000", "'\\0'");
+    doTestEscapes("a\u0000", "'a\\0'");
+    doTestEscapes("\u0000a", "'\\0a'");
+    doTestEscapes("a\u0000a", "'a\\0a'");
+    // Ensure hex escapes are used where octal is not possible due to a
+    // following digit
+    doTestEscapes("\u00006", "'\\x006'");
+    doTestEscapes("\u00006\u0000", "'\\x006\\0'");
+
+    // Single-digit octal escapes or special cases (\b,\t,\n\,f\,\r)
+    // for characters from 0 to 15
+    doTestEscapes("\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007",
+        "'\\0\\1\\2\\3\\4\\5\\6\\7'");
+    doTestEscapes("\u0008\u0009\n\u000b\u000c\r\u000e\u000f",
+        "'\\b\\t\\n\\13\\f\\r\\16\\17'");
+    
+    // Use two-digit octal escapes for characters from 16 to 31
+    doTestEscapes("\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017",
+        "'\\20\\21\\22\\23\\24\\25\\26\\27'");
+    doTestEscapes("\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f",
+        "'\\30\\31\\32\\33\\34\\35\\36\\37'");
+    
+    // Use two-digit hex escapes for characters up to 0xff
+    doTestEscapes("\u007f\u00ab", "'\\x7F\\xAB'");
+    
+    // Use four-digit unicode escapes for characters from 0x100 up
+    doTestEscapes("\u0100\u117f\u2345", "'\\u0100\\u117F\\u2345'");
+  }
 
   private void doTest(String js) throws Exception {
     List<JsStatement> expected = JsParser.parse(SourceOrigin.UNKNOWN,
@@ -157,6 +191,12 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
     List<JsStatement> expected = JsParser.parse(SourceOrigin.UNKNOWN,
         new JsProgram().getScope(), new StringReader(expectedJs));
     ComparingVisitor.exec(expected, actual);
+  }
+  
+  private void doTestEscapes(String value, String expected) throws Exception {
+    String actual =
+      new JsProgram().getStringLiteral(SourceOrigin.UNKNOWN, value).toString();
+    assertEquals(expected, actual);
   }
 
   private List<JsStatement> parse(List<JsStatement> expected, boolean compact)
