@@ -1,0 +1,16 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:gwt='urn:import:com.google.gwt.user.client.ui'>
+
+  <gwt:HTMLPanel>
+    <div style='margin-left:1em; margin-top:1em;'>
+      Select Benchmark: <gwt:ListBox ui:field='listBox'/>
+      <gwt:Button ui:field='button'>Run</gwt:Button>
+      <span style="display:none; color:gray; font-style:oblique" 
+        ui:field='running'>Running...</span>
+    </div>
+    <br/><hr/><br/>
+    <div style='margin-left:1em;'>
+      <gwt:DeckPanel ui:field='deck'/>
+    </div>
+  </gwt:HTMLPanel>
+</ui:UiBinder>
