@@ -13,15 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.google.gwt.i18n.client;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 /**
- * Test {@link NumberFormat} in the {@code en} locale.
+ * GWT JUnit tests must extend GWTTestCase.
  */
 public class NumberFormat_en_Test extends GWTTestCase {
 
@@ -54,37 +52,16 @@ public class NumberFormat_en_Test extends GWTTestCase {
     assertEquals("R$123,456.79", str);
   }
 
+  /**
+   * Add as many tests as you like.
+   */
   public void testBasicFormat() {
     String str = NumberFormat.getFormat("0.0000").format(123.45789179565757f);
     assertEquals("123.4579", str);
-
+    
     // tests for overflow of mantissa bits during formatting
     str = NumberFormat.getFormat("#,##0.000").format(112589990684262.5);
     assertEquals("112,589,990,684,262.500", str);
-  }
-
-  public void testBigDecimal() {
-    BigDecimal decVal = new BigDecimal("1000000000000000000000000");
-    String str = NumberFormat.getFormat("0.000").format(decVal);
-    assertEquals("1000000000000000000000000.000", str);
-
-    decVal = decVal.add(new BigDecimal(".1"));
-    str = NumberFormat.getFormat("#,##0.000").format(decVal);
-    assertEquals("1,000,000,000,000,000,000,000,000.100", str);
-
-    decVal = new BigDecimal(".1499999999999999999999");
-    str = NumberFormat.getFormat(".0").format(decVal);
-    assertEquals(".1", str);
-}
-
-  public void testBigInteger() {
-    BigInteger intVal = new BigInteger("1000000000000000000000000");
-    String str = NumberFormat.getFormat("#,##0").format(intVal);
-    assertEquals("1,000,000,000,000,000,000,000,000", str);
-
-    intVal = intVal.add(BigInteger.ONE);
-    str = NumberFormat.getFormat("#,##0").format(intVal);
-    assertEquals("1,000,000,000,000,000,000,000,001", str);
   }
 
   public void testCurrency() {
@@ -117,7 +94,7 @@ public class NumberFormat_en_Test extends GWTTestCase {
     assertEquals("BRL 1,234.56", str);
     str = formatter.format(-1234.56);
     assertEquals("(BRL 1,234.56)", str);
-
+    
     // Test using a deprecated currency.
     formatter = NumberFormat.getCurrencyFormat("ITL");
     str = formatter.format(1234.556);
@@ -261,6 +238,18 @@ public class NumberFormat_en_Test extends GWTTestCase {
     assertTrue(value == 12345.0);
   }
 
+  public void testGrouping() {
+    String str;
+
+    str = NumberFormat.getFormat("#,###").format(1234567890);
+    assertEquals("1,234,567,890", str);
+    str = NumberFormat.getFormat("#,####").format(1234567890);
+    assertEquals("12,3456,7890", str);
+
+    str = NumberFormat.getFormat("#").format(1234567890);
+    assertEquals("1234567890", str);
+  }
+
   public void testForceLatin() {
     assertFalse(NumberFormat.forcedLatinDigits());
     NumberFormat.setForcedLatinDigits(true);
@@ -274,51 +263,10 @@ public class NumberFormat_en_Test extends GWTTestCase {
     NumberFormat unforced = NumberFormat.getDecimalFormat();
     assertEquals("3.14", unforced.format(3.14));
   }
-
-  public void testGrouping() {
-    String str;
-
-    str = NumberFormat.getFormat("#,###").format(1234567890);
-    assertEquals("1,234,567,890", str);
-    str = NumberFormat.getFormat("#,####").format(1234567890);
-    assertEquals("12,3456,7890", str);
-
-    str = NumberFormat.getFormat("#").format(1234567890);
-    assertEquals("1234567890", str);
-  }
-
-  // See external issue 3140
-  public void testLeadingZeros() {
-    String str;
-
-    str = NumberFormat.getFormat("0,000,000,000.#").format(123456789.489123);
-    assertEquals("0,123,456,789.5", str);
-
-    str = NumberFormat.getFormat("#,###.####").format(0.414014);
-    assertEquals("0.414", str); // why leading 0?
-
-    str = NumberFormat.getFormat("#.####").format(0.414014);
-    assertEquals("0.414", str); // why leading 0?
-
-    str = NumberFormat.getFormat("#.0###").format(0.414014);
-    assertEquals(".414", str);
-
-    str = NumberFormat.getFormat("0.0###").format(0.414014);
-    assertEquals("0.414", str);
-
-    str = NumberFormat.getFormat("0.####").format(0.414014);
-    assertEquals("0.414", str);
-
-    str = NumberFormat.getFormat("0.0000").format(0.414014);
-    assertEquals("0.4140", str);
-
-    str = NumberFormat.getFormat("#.0000").format(0.414014);
-    assertEquals(".4140", str);
-  }
-
+  
   public void testNegative() {
     String str;
-
+    
     // verify default negative pattern
     str = NumberFormat.getFormat("#,##0.0").format(-0.15);
     assertEquals("-0.2", str);
@@ -326,7 +274,7 @@ public class NumberFormat_en_Test extends GWTTestCase {
     assertEquals("-15.3%", str);
     str = NumberFormat.getFormat("X #,##0.0%").format(-0.1534);
     assertEquals("-X 15.3%", str);
-
+    
     // verify we can specify percent/permille suffixes in both parts
     str = NumberFormat.getFormat("#,##0.0%;#,##0.0%-").format(-0.152);
     assertEquals("15.2%-", str);
@@ -340,7 +288,7 @@ public class NumberFormat_en_Test extends GWTTestCase {
 
   public void testParseNotANumber() {
     try {
-      NumberFormat.getDecimalFormat().parse("blue");
+      double d = NumberFormat.getDecimalFormat().parse("blue");
       fail("Expected a NumberFormatException");
     } catch (NumberFormatException e) {
       assertEquals("blue", e.getMessage());
@@ -375,67 +323,6 @@ public class NumberFormat_en_Test extends GWTTestCase {
     assertEquals("a'b123", str);
   }
 
-  public void testRounding() {
-    String str;
-
-    str = NumberFormat.getFormat("#0.##").format(0.555);
-    assertEquals("0.56", str);
-
-    str = NumberFormat.getFormat("#.##").format(30.555);
-    assertEquals("30.56", str);
-
-    str = NumberFormat.getFormat("#.00").format(0.997);
-    assertEquals("1.00", str);
-
-    str = NumberFormat.getFormat("#.00").format(-0.997);
-    assertEquals("-1.00", str);
-
-    str = NumberFormat.getFormat("#.00").format(27.997);
-    assertEquals("28.00", str);
-
-    str = NumberFormat.getFormat("#.00").format(-27.997);
-    assertEquals("-28.00", str);
-
-    str = NumberFormat.getFormat("#0.00000").format(1.23456789E-03);
-    assertEquals("0.00123", str);
-
-    str = NumberFormat.getFormat("#0.0000000").format(1.23456789E-03);
-    assertEquals("0.0012346", str);
-
-    str = NumberFormat.getFormat("#0.0000").format(1.2E-03);
-    assertEquals("0.0012", str);
-
-    str = NumberFormat.getFormat("#0.000").format(1.2E-03);
-    assertEquals("0.001", str);
-
-    str = NumberFormat.getFormat("#0.00").format(1.2E-03);
-    assertEquals("0.00", str);
-
-    str = NumberFormat.getFormat("#0.0").format(1.2E-03);
-    assertEquals("0.0", str);
-
-    str = NumberFormat.getFormat("#0.00").format(11.2E-03);
-    assertEquals("0.01", str);
-
-    str = NumberFormat.getFormat("#0.00").format(111.2E-03);
-    assertEquals("0.11", str);
-
-    str = NumberFormat.getFormat("#0.00").format(1111.2E-03);
-    assertEquals("1.11", str);
-
-    str = NumberFormat.getFormat("#0.00000").format(1.23456789E-05);
-    assertEquals("0.00001", str);
-
-    str = NumberFormat.getFormat("#0.0000000").format(1.23456789E-05);
-    assertEquals("0.0000123", str);
-
-    str = NumberFormat.getFormat("#0.0000000").format(1.23756789E-05);
-    assertEquals("0.0000124", str);
-
-    str = NumberFormat.getFormat("#,##,###,##0.00000000000").format(111.18);
-    assertEquals("111.18000000000", str);
-  }
-
   public void testStandardFormat() {
     String str;
 
@@ -447,19 +334,6 @@ public class NumberFormat_en_Test extends GWTTestCase {
     assertEquals("123,458%", str);
     str = NumberFormat.getScientificFormat().format(1234.579);
     assertEquals("1E3", str);
-  }
-
-  public void testToScaledString() {
-    StringBuilder buf = new StringBuilder();
-    int scale = NumberFormat.toScaledString(buf, .1);
-    String str = buf.toString();
-    assertStartsWith("100", str.substring(str.length() + scale));
-    assertAllZeros(str, str.length() + scale);
-    buf = new StringBuilder();
-    scale = NumberFormat.toScaledString(buf, 12345e38);
-    str = buf.toString();
-    assertStartsWith("12345", str);
-    assertEquals(43, scale + str.length());
   }
 
   public void testZeros() {
@@ -483,17 +357,62 @@ public class NumberFormat_en_Test extends GWTTestCase {
     str = NumberFormat.getFormat("#").format(0);
     assertEquals("0", str);
   }
-
-  private void assertAllZeros(String str, int prefixLen) {
-    if (prefixLen > str.length()) {
-      prefixLen = str.length();
-    }
-    for (int i = 0; i < prefixLen; ++i) {
-      assertEquals('0', str.charAt(i));
-    }
-  }
-
-  private void assertStartsWith(String prefix, String str) {
-    assertTrue(str + " does not start with " + prefix, str.startsWith(prefix));
+  
+  public void testRounding() {
+    String str;
+    
+    str = NumberFormat.getFormat("#0.##").format(0.555);
+    assertEquals("0.56", str);
+    
+    str = NumberFormat.getFormat("#.##").format(30.555);
+    assertEquals("30.56", str);
+    
+    str = NumberFormat.getFormat("#.00").format(0.997);
+    assertEquals("1.00", str);
+    
+    str = NumberFormat.getFormat("#.00").format(-0.997);
+    assertEquals("-1.00", str);
+    
+    str = NumberFormat.getFormat("#.00").format(27.997);
+    assertEquals("28.00", str);
+    
+    str = NumberFormat.getFormat("#.00").format(-27.997);
+    assertEquals("-28.00", str);
+    
+    str = NumberFormat.getFormat("#0.00000").format(1.23456789E-03);
+    assertEquals("0.00123", str);
+    
+    str = NumberFormat.getFormat("#0.0000000").format(1.23456789E-03);
+    assertEquals("0.0012346", str);
+    
+    str = NumberFormat.getFormat("#0.0000").format(1.2E-03);
+    assertEquals("0.0012", str);
+    
+    str = NumberFormat.getFormat("#0.000").format(1.2E-03);
+    assertEquals("0.001", str);
+    
+    str = NumberFormat.getFormat("#0.00").format(1.2E-03);
+    assertEquals("0.00", str);
+    
+    str = NumberFormat.getFormat("#0.0").format(1.2E-03);
+    assertEquals("0.0", str);
+    
+    str = NumberFormat.getFormat("#0.00").format(11.2E-03);
+    assertEquals("0.01", str);
+    
+    str = NumberFormat.getFormat("#0.00").format(111.2E-03);
+    assertEquals("0.11", str);
+    
+    str = NumberFormat.getFormat("#0.00").format(1111.2E-03);
+    assertEquals("1.11", str);
+    
+    str = NumberFormat.getFormat("#0.00000").format(1.23456789E-05);
+    assertEquals("0.00001", str);
+    
+    str = NumberFormat.getFormat("#0.0000000").format(1.23456789E-05);
+    assertEquals("0.0000123", str);
+    
+    str = NumberFormat.getFormat("#0.0000000").format(1.23756789E-05);
+    assertEquals("0.0000124", str);
   }
 }

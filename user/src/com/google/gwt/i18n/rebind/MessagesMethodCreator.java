@@ -83,23 +83,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     public String format(StringGenerator out, String subformat, String argName,
         JType argType) {
       JPrimitiveType argPrimType = argType.isPrimitive();
-      if (argPrimType != null) {
-        if (argPrimType == JPrimitiveType.BOOLEAN
-            || argPrimType == JPrimitiveType.VOID) {
-          return "Illegal argument type for number format";
-        }
-      } else {
-        JClassType classType = argType.isClass();
-        if (classType == null) {
-          return "Unexpected argument type for number format";
-        }
-        TypeOracle oracle = classType.getOracle();
-        JClassType numberType = oracle.findType("java.lang.Number");
-        if (!classType.isAssignableTo(numberType)) {
-          return "Only Number subclasses may be formatted as a number";
-        }
-      }
-      if (argPrimType == JPrimitiveType.BOOLEAN
+      if (argPrimType == null || argPrimType == JPrimitiveType.BOOLEAN
           || argPrimType == JPrimitiveType.VOID) {
         return "Illegal argument type for number format";
       }

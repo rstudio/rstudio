@@ -33,8 +33,6 @@ import com.google.gwt.i18n.client.resolutiontest.Inners.InnerClass.InnerInnerMes
 import com.google.gwt.i18n.client.resolutiontest.Inners.InnerClass.LocalizableInnerInner;
 import com.google.gwt.junit.client.GWTTestCase;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -559,21 +557,6 @@ public class I18NTest extends GWTTestCase {
     // no translation exists in piglatin for nested dollar
     assertEquals("nested dollar", m.nestedDollar());
     assertEquals("estednay underscoray", m.nestedUnderscore());
-  }
-
-  /**
-   * Test that messages works with Number subclasses.
-   */
-  public void testNumber() {
-    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
-    BigInteger intVal = new BigInteger("1000000000000000000");
-    assertEquals("Total is US$1,000,000,000,000,000,000.00",
-        m.withNumberCurrency(intVal));
-    BigDecimal decVal = new BigDecimal("1000000000000000000.01");
-    assertEquals("Total is US$1,000,000,000,000,000,000.01",
-        m.withNumberCurrency(decVal));
-    assertEquals("Distance is 1.0E18", m.withNumberExponent(intVal));
-    assertEquals("Distance is 100.0E6", m.withNumberExponent(1e8f));
   }
 
   public void testShapesFamily() {

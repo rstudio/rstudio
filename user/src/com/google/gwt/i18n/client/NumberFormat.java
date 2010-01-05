@@ -15,10 +15,8 @@
  */
 package com.google.gwt.i18n.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.constants.NumberConstants;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
 
 /**
  * Formats and parses numbers using locale-sensitive patterns.
@@ -351,7 +349,7 @@ public class NumberFormat {
   public static boolean forcedLatinDigits() {
     return defaultNumberConstants != localizedNumberConstants;
   }
-
+  
   /**
    * Provides the standard currency format for the default locale.
    * 
@@ -365,7 +363,7 @@ public class NumberFormat {
     }
     return cachedCurrencyFormat;
   }
-
+  
   /**
    * Provides the standard currency format for the default locale using a
    * specified currency.
@@ -378,7 +376,7 @@ public class NumberFormat {
     return new NumberFormat(defaultNumberConstants.currencyPattern(),
         currencyData, false);
   }
-
+  
   /**
    * Provides the standard currency format for the default locale using a
    * specified currency.
@@ -611,47 +609,6 @@ public class NumberFormat {
   }
 
   /**
-   * Appends a scaled string representation to a buffer, returning the scale
-   * (which is the number of places to the right of the end of the string the
-   * decimal point should be moved -- i.e., 3.5 would be added to the buffer
-   * as "35" and a returned scale of -1).
-   * 
-   * @param buf
-   * @param val
-   * @return scale to apply to the result
-   */
-  // @VisibleForTesting
-  static int toScaledString(StringBuilder buf, double val) {
-    int startLen = buf.length();
-    buf.append(toPrecision(val, 20));
-    int scale = 0;
-
-    // remove exponent if present, adjusting scale
-    int expIdx = buf.indexOf("e", startLen);
-    if (expIdx < 0) {
-      expIdx = buf.indexOf("E", startLen);
-    }
-    if (expIdx >= 0) {
-      int expDigits = expIdx + 1;
-      if (expDigits < buf.length() && buf.charAt(expDigits) == '+') {
-        ++expDigits;
-      }
-      if (expDigits < buf.length()) {
-        scale = Integer.parseInt(buf.substring(expDigits));
-      }
-      buf.delete(expIdx, buf.length());
-    }
-
-    // remove decimal point if present, adjusting scale
-    int dot = buf.indexOf(".", startLen);
-    if (dot >= 0) {
-      buf.deleteCharAt(dot);
-      scale -= buf.length() - dot;
-    }
-    return scale;
-  }
-
-  /**
    * Lookup a currency code.
    * 
    * @param currencyCode ISO4217 currency code
@@ -668,43 +625,26 @@ public class NumberFormat {
     return currencyData;
   }
 
-  /**
-   * Convert a double to a string with {@code digits} precision.  The resulting
-   * string may still be in exponential notation.
-   * 
-   * @param d double value
-   * @param digits number of digits of precision to include
-   * @return non-localized string representation of {@code d}
-   */
-  private static native String toPrecision(double d, int digits) /*-{
-    return d.toPrecision(digits);
+  private static native String toFixed(double d, int digits) /*-{
+    return d.toFixed(digits);
   }-*/;
 
-  /**
-   * The currency code.
-   */
+  // The currency code.
   private final String currencyCode;
 
-  /**
-   * Currency symbol to use.
-   */
+  // Currency setting.
   private final String currencySymbol;
 
-  /**
-   * Forces the decimal separator to always appear in a formatted number.
-   */
+  // Forces the decimal separator to always appear in a formatted number.
   private boolean decimalSeparatorAlwaysShown = false;
 
-  /**
-   * The number of digits between grouping separators in the integer portion of
-   * a number.
-   */
+  // The number of digits between grouping separators in the integer
+  // portion of a number.
   private int groupingSize = 3;
-
+  
   private boolean isCurrencyFormat = false;
-
+  
   private int maximumFractionDigits = 3; // invariant, >= minFractionDigits.
-
   private int maximumIntegerDigits = 40;
   private int minExponentDigits;
   private int minimumFractionDigits = 0;
@@ -729,24 +669,6 @@ public class NumberFormat {
 
   // True to force the use of exponential (i.e. scientific) notation.
   private boolean useExponentialNotation = false;
-
-  /**
-   * Holds the current exponent during one call to
-   * {@link #format(boolean, StringBuilder, int)}.
-   */
-  private transient int exponent;
-
-  /**
-   * Holds the current decimal position during one call to
-   * {@link #format(boolean, StringBuilder, int)}.
-   */
-  private transient int decimalPosition;
-
-  /**
-   * Holds the current digits length during one call to
-   * {@link #format(boolean, StringBuilder, int)}.
-   */
-  private transient int digitsLength;
 
   /**
    * Constructs a format object based on the specified settings.
@@ -797,75 +719,33 @@ public class NumberFormat {
    * @return the formatted number string
    */
   public String format(double number) {
+    StringBuffer result = new StringBuffer();
+
     if (Double.isNaN(number)) {
-      return numberConstants.notANumber();
+      result.append(numberConstants.notANumber());
+      return result.toString();
     }
-    boolean isNegative = ((number < 0.0)
-        || (number == 0.0 && 1 / number < 0.0));
-    if (isNegative) {
-      number = -number;
-    }
-    StringBuilder buf = new StringBuilder();
+
+    boolean isNegative = ((number < 0.0) || (number == 0.0 && 1 / number < 0.0));
+
+    result.append(isNegative ? negativePrefix : positivePrefix);
     if (Double.isInfinite(number)) {
-      buf.append(isNegative ? negativePrefix : positivePrefix);
-      buf.append(numberConstants.infinity());
-      buf.append(isNegative ? negativeSuffix : positiveSuffix);
-      return buf.toString();
-    }
-    number *= multiplier;
-    int scale = toScaledString(buf, number);
-
-    // pre-round value to deal with .15 being represented as .149999... etc
-    // check at 3 more digits than will be required in the output
-    int preRound = buf.length() + scale + maximumFractionDigits + 3;
-    if (preRound > 0 && preRound < buf.length()
-        && buf.charAt(preRound) == '9') {
-      propagateCarry(buf, preRound - 1);
-      scale += buf.length() - preRound;
-      buf.delete(preRound, buf.length());
-    }
-
-    format(isNegative, buf, scale);
-    return buf.toString();
-  }
-
-  /**
-   * This method formats a Number to produce a string.
-   * <p>
-   * Any {@link Number} which is not a {@link BigDecimal}, {@link BigInteger},
-   * or {@link Long} instance is formatted as a {@code double} value.
-   * 
-   * @param number The Number instance to format
-   * @return the formatted number string
-   */
-  public String format(Number number) {
-    if (number instanceof BigDecimal) {
-      BigDecimal bigDec = (BigDecimal) number;
-      boolean isNegative = bigDec.signum() < 0;
-      if (isNegative) {
-        bigDec = bigDec.negate();
-      }
-      bigDec = bigDec.multiply(BigDecimal.valueOf(multiplier));
-      StringBuilder buf = new StringBuilder();
-      buf.append(bigDec.unscaledValue().toString());
-      format(isNegative, buf, -bigDec.scale());
-      return buf.toString();
-    } else if (number instanceof BigInteger) {
-      BigInteger bigInt = (BigInteger) number;
-      boolean isNegative = bigInt.signum() < 0;
-      if (isNegative) {
-        bigInt = bigInt.negate();
-      }
-      bigInt = bigInt.multiply(BigInteger.valueOf(multiplier));
-      StringBuilder buf = new StringBuilder();
-      buf.append(bigInt.toString());
-      format(isNegative, buf, 0);
-      return buf.toString();
-    } else if (number instanceof Long) {
-      return format(number.longValue(), 0);
+      result.append(numberConstants.infinity());
     } else {
-      return format(number.doubleValue());
+      if (isNegative) {
+        number = -number;
+      }
+      number *= multiplier;
+      if (useExponentialNotation) {
+        subformatExponential(number, result);
+      } else {
+        subformatFixed(number, result, minimumIntegerDigits);
+      }
     }
+
+    result.append(isNegative ? negativeSuffix : positiveSuffix);
+
+    return result.toString();
   }
 
   /**
@@ -983,294 +863,56 @@ public class NumberFormat {
     return ret;
   }
 
-  /**
-   * Format a number with its significant digits already represented in string
-   * form.  This is done so both double and BigInteger/Decimal formatting can
-   * share code without requiring all users to pay the code size penalty for
-   * BigDecimal/etc.
-   * <p>
-   * Example values passed in:
-   * <ul>
-   * <li>-13e2
-   * <br>{@code isNegative=true, digits="13", scale=2}
-   * <li>3.14158
-   * <br>{@code isNegative=false, digits="314158", scale=-5}
-   * <li>.0001
-   * <br>{@code isNegative=false, digits="1" ("0001" would be ok), scale=-4}
-   * </ul>
-   *  
-   * @param isNegative true if the value to be formatted is negative
-   * @param digits a StringBuilder containing just the significant digits in
-   *     the value to be formatted, the formatted result will be left here
-   * @param scale the number of places to the right the decimal point should
-   *     be moved in the digit string -- negative means the value contains
-   *     fractional digits
-   */
-  protected void format(boolean isNegative, StringBuilder digits, int scale) {
-    char decimalSeparator;
-    char groupingSeparator;
-    if (isCurrencyFormat) {
-      decimalSeparator = numberConstants.monetarySeparator().charAt(0);
-      groupingSeparator = numberConstants.monetaryGroupingSeparator().charAt(0);
-    } else {
-      decimalSeparator = numberConstants.decimalSeparator().charAt(0);
-      groupingSeparator = numberConstants.groupingSeparator().charAt(0);
-    }
-
-    // Set these transient fields, which will be adjusted/used by the routines
-    // called in this method.
-    exponent = 0;
-    digitsLength = digits.length();
-    decimalPosition = digitsLength + scale;
-
-    boolean useExponent = this.useExponentialNotation;
-    int currentGroupingSize = this.groupingSize;
-    if (decimalPosition > 1024) {
-      // force really large numbers to be in exponential form
-      useExponent = true;
-    }
-
-    if (useExponent) {
-      computeExponent(digits);
-    }
-    processLeadingZeros(digits);
-    roundValue(digits);
-    insertGroupingSeparators(digits, groupingSeparator, currentGroupingSize);
-    adjustFractionDigits(digits);
-    addZeroAndDecimal(digits, decimalSeparator);
-    if (useExponent) {
-      addExponent(digits);
-      // the above call has invalidated digitsLength == digits.length()
-    }
-    char zeroChar = numberConstants.zeroDigit().charAt(0);
-    if (zeroChar != '0') {
-      localizeDigits(digits, zeroChar);
-    }
-
-    // add prefix/suffix
-    digits.insert(0, isNegative ? negativePrefix : positivePrefix);
-    digits.append(isNegative ? negativeSuffix : positiveSuffix);
-  }
-
-  /**
-   * Parses text to produce a numeric value. A {@link NumberFormatException} is
-   * thrown if either the text is empty or if the parse does not consume all
-   * characters of the text.
-   * 
-   * param text the string to be parsed
-   * return a parsed number value, which may be a Double, BigInteger, or
-   *     BigDecimal, or {@code Double(0.0)} if the parse fails.
-   * throws NumberFormatException if the text segment could not be converted
-   *     into a number
-   */
-//  public Number parseBig(String text) throws NumberFormatException {
-//    // TODO(jat): implement
-//    return Double.valueOf(parse(text));
-//  }
-
-  /**
-   * Parses text to produce a numeric value.
-   * 
-   * <p>
-   * The method attempts to parse text starting at the index given by pos. If
-   * parsing succeeds, then the index of <code>pos</code> is updated to the
-   * index after the last character used (parsing does not necessarily use all
-   * characters up to the end of the string), and the parsed number is returned.
-   * The updated <code>pos</code> can be used to indicate the starting point
-   * for the next call to this method. If an error occurs, then the index of
-   * <code>pos</code> is not changed.
-   * </p>
-   * 
-   * param text the string to be parsed
-   * pparam inOutPos position to pass in and get back
-   * return a parsed number value, which may be a Double, BigInteger, or
-   *     BigDecimal, or {@code Double(0.0)} if the parse fails.
-   * throws NumberFormatException if the text segment could not be converted
-   *     into a number
-   */
-//  public Number parseBig(String text, int[] inOutPos)
-//      throws NumberFormatException {
-//    // TODO(jat): implement
-//    return Double.valueOf(parse(text, inOutPos));
-//  }
-
-  /**
-   * Format a possibly scaled long value.
-   * 
-   * @param value value to format
-   * @param scale the number of places to the right the decimal point should
-   *     be moved in the digit string -- negative means the value contains
-   *     fractional digits
-   * @return formatted value
-   */
-  protected String format(long value, int scale) {
-    boolean isNegative = value < 0;
-    if (isNegative) {
-      value = -value;
-    }
-    value *= multiplier;
-    StringBuilder buf = new StringBuilder();
-    buf.append(String.valueOf(value));
-    format(isNegative, buf, scale);
-    return buf.toString();
-  }
-
-  /**
-   * @return the number of digits between grouping separators in the integer
-   *         portion of a number.
-   */
   protected int getGroupingSize() {
     return groupingSize;
   }
 
-  /**
-   * @return the prefix to use for negative values.
-   */
   protected String getNegativePrefix() {
     return negativePrefix;
   }
 
-  /**
-   * @return the suffix to use for negative values.
-   */
   protected String getNegativeSuffix() {
     return negativeSuffix;
   }
 
-  /**
-   * @return the NumberConstants instance for this formatter.
-   */
   protected NumberConstants getNumberConstants() {
     return numberConstants;
   }
 
-  /**
-   * @return the prefix to use for positive values.
-   */
   protected String getPositivePrefix() {
     return positivePrefix;
   }
 
-  /**
-   * @return the suffix to use for positive values.
-   */
   protected String getPositiveSuffix() {
     return positiveSuffix;
   }
 
-  /**
-   * @return true if the decimal separator should always be shown.
-   */
   protected boolean isDecimalSeparatorAlwaysShown() {
     return decimalSeparatorAlwaysShown;
   }
 
   /**
-   * Add exponent suffix.
+   * This method formats the exponent part of a double.
    * 
-   * @param digits
+   * @param exponent exponential value
+   * @param result formatted exponential part will be append to it
    */
-  private void addExponent(StringBuilder digits) {
-    digits.append(numberConstants.exponentialSymbol());
+  private void addExponentPart(int exponent, StringBuffer result) {
+    result.append(numberConstants.exponentialSymbol());
+
     if (exponent < 0) {
       exponent = -exponent;
-      digits.append(numberConstants.minusSign());
+      result.append(numberConstants.minusSign());
     }
+
     String exponentDigits = String.valueOf(exponent);
-    for (int i = exponentDigits.length(); i < minExponentDigits; ++i) {
-      digits.append('0');
+    int len = exponentDigits.length();
+    for (int i = len; i < minExponentDigits; ++i) {
+      result.append(numberConstants.zeroDigit());
     }
-    digits.append(exponentDigits);
-  }
-
-  /**
-   * @param digits
-   * @param decimalSeparator
-   */
-  private void addZeroAndDecimal(StringBuilder digits, char decimalSeparator) {
-    // add zero and decimal point if required
-    if (digitsLength == 0) {
-      digits.insert(0, '0');
-      ++decimalPosition;
-      ++digitsLength;
-    }
-    if (decimalPosition < digitsLength || decimalSeparatorAlwaysShown) {
-      digits.insert(decimalPosition, decimalSeparator);
-      ++digitsLength;
-    }
-  }
-
-  /**
-   * Adjust the fraction digits, adding trailing zeroes if necessary or removing
-   * excess trailing zeroes.
-   * 
-   * @param digits
-   */
-  private void adjustFractionDigits(StringBuilder digits) {
-    // adjust fraction digits as required
-    int requiredDigits = decimalPosition + minimumFractionDigits;
-    if (digitsLength < requiredDigits) {
-      // add trailing zeros
-      while (digitsLength < requiredDigits) {
-        digits.append('0');
-        ++digitsLength;
-      }
-    } else {
-      // remove excess trailing zeros
-      int toRemove = decimalPosition + maximumFractionDigits;
-      if (toRemove > digitsLength) {
-        toRemove = digitsLength;
-      }
-      while (toRemove > requiredDigits
-          && digits.charAt(toRemove - 1) == '0') {
-        --toRemove;
-      }
-      if (toRemove < digitsLength) {
-        digits.delete(toRemove, digitsLength);
-        digitsLength = toRemove;
-      }
-    }
-  }
-
-  /**
-   * Compute the exponent to use and adjust decimal position if we are using
-   * exponential notation.
-   * 
-   * @param digits
-   */
-  private void computeExponent(StringBuilder digits) {
-    // always trim leading zeros
-    int strip = 0;
-    while (strip < digitsLength - 1 && digits.charAt(strip) == '0') {
-      ++strip;
-    }
-    if (strip > 0) {
-      digits.delete(0, strip);
-      digitsLength -= strip;
-      exponent -= strip;
-    }
-
-    // decimal should wind up between minimum & maximumIntegerDigits
-    if (maximumIntegerDigits > minimumIntegerDigits
-        && maximumIntegerDigits > 0) {
-      // in this case, the exponent should be a multiple of
-      // maximumIntegerDigits and 1 <= decimal <= maximumIntegerDigits
-      exponent += decimalPosition - 1;
-      int remainder = exponent % maximumIntegerDigits;
-      if (remainder < 0) {
-        remainder += maximumIntegerDigits;
-      }
-      decimalPosition = remainder + 1;
-      exponent -= remainder;
-    } else {
-      exponent += decimalPosition - minimumIntegerDigits;
-      decimalPosition = minimumIntegerDigits;
-    }
-
-    // special-case 0 to have an exponent of 0
-    if (digitsLength == 1 && digits.charAt(0) == '0') {
-      exponent = 0;
-      decimalPosition = minimumIntegerDigits;
+    int zeroDelta = numberConstants.zeroDigit().charAt(0) - '0';
+    for (int i = 0; i < len; ++i) {
+      result.append((char) (exponentDigits.charAt(i) + zeroDelta));
     }
   }
 
@@ -1291,41 +933,47 @@ public class NumberFormat {
   }
 
   /**
-   * Insert grouping separators if needed.
-   * 
-   * @param digits
-   * @param groupingSeparator
-   * @param g
-   */
-  private void insertGroupingSeparators(StringBuilder digits,
-      char groupingSeparator, int g) {
-    if (g > 0) {
-      for (int i = g; i < decimalPosition; i += g + 1) {
-        digits.insert(decimalPosition - i, groupingSeparator);
-        ++decimalPosition;
-        ++digitsLength;
-      }
-    }
-  }
-
-  /**
-   * Replace locale-independent digits with locale-specific ones.
+   * This does the work of String.valueOf(long), but given a double as input
+   * and avoiding our emulated longs.  Contrasted with String.valueOf(double),
+   * it ensures (a) there will be no trailing .0, and (b) unwinds E-notation.
    *  
-   * @param digits StringBuilder containing formatted number
-   * @param zero locale-specific zero character -- the rest of the digits must
-   *     be consecutive
+   * @param number the integral value to convert
+   * @return the string representing that integer
    */
-  private void localizeDigits(StringBuilder digits, char zero) {
-    // don't use digitsLength since we may have added an exponent
-    int n = digits.length();
-    for (int i = 0; i < n; ++i) {
-      char ch = digits.charAt(i);
-      if (ch >= '0' && ch <= '9') {
-        digits.setCharAt(i, (char) (ch - '0' + zero));
-      }
+  private String makeIntString(double number) {
+    String intPart = String.valueOf(number);
+    if (GWT.isScript()) {
+      return intPart; // JavaScript does the right thing for integral doubles
     }
-  }
+    // ...but bytecode (hosted mode) does not... String.valueOf(double) will 
+    // either end in .0 (non internationalized) which we don't want but is 
+    // easy, or, for large numbers, it will be E-notation, which is annoying.
+    int digitLen = intPart.length();
+    
+    if (intPart.charAt(digitLen - 2) == '.') {
+      return intPart.substring(0, digitLen - 2);
+    } 
 
+    // if we have E notation, (1) the exponent will be positive (else 
+    // intValue is 0, which doesn't need E notation), and (2) there will
+    // be a radix dot (String.valueOf() isn't interationalized)
+    int radix = intPart.indexOf('.');
+    int exp = intPart.indexOf('E');
+    int digits = 0;
+    for (int i = exp + 1; i < intPart.length(); i++) {
+      digits = digits * 10 + (intPart.charAt(i) - '0');
+    }
+    digits++;  // exp of zero is one int digit...
+    StringBuffer newIntPart = new StringBuffer();
+    newIntPart.append(intPart.substring(0, radix));
+    newIntPart.append(intPart.substring(radix + 1, exp));
+    while (newIntPart.length() < digits) {
+      newIntPart.append('0');
+    }
+    newIntPart.setLength(digits);
+    return newIntPart.toString();
+  }
+  
   /**
    * This method parses affix part of pattern.
    * 
@@ -1653,87 +1301,141 @@ public class NumberFormat {
 
     return pos - start;
   }
-
+  
   /**
-   * Remove excess leading zeros or add some if we don't have enough.
+   * This method formats a <code>double</code> in exponential format.
    * 
-   * @param digits
+   * @param number value need to be formated
+   * @param result where the formatted string goes
    */
-  private void processLeadingZeros(StringBuilder digits) {
-    // make sure we have enough trailing zeros
-    if (decimalPosition > digitsLength) {
-      while (digitsLength < decimalPosition) {
-        digits.append('0');
-        ++digitsLength;
-      }
+  private void subformatExponential(double number, StringBuffer result) {
+    if (number == 0.0) {
+      subformatFixed(number, result, minimumIntegerDigits);
+      addExponentPart(0, result);
+      return;
     }
 
-    if (!useExponentialNotation) {
-      // make sure we have the right number of leading zeros
-      if (decimalPosition < minimumIntegerDigits) {
-        // add leading zeros
-        StringBuilder prefix = new StringBuilder();
-        while (decimalPosition < minimumIntegerDigits) {
-          prefix.append('0');
-          ++decimalPosition;
-          ++digitsLength;
-        }
-        digits.insert(0, prefix);
-      } else if (decimalPosition > minimumIntegerDigits) {
-        // trim excess leading zeros
-        int strip = decimalPosition - minimumIntegerDigits;
-        for (int i = 0; i < strip; ++i) {
-          if (digits.charAt(i) != '0') {
-            strip = i;
-            break;
-          }
-        }
-        if (strip > 0) {
-          digits.delete(0, strip);
-          digitsLength -= strip;
-          decimalPosition -= strip;
-        }
-      }
-    }
-  }
+    int exponent = (int) Math.floor(Math.log(number) / Math.log(10));
+    number /= Math.pow(10, exponent);
 
-  /**
-   * Propagate a carry from incrementing the {@code i+1}'th digit.
-   * 
-   * @param digits
-   * @param i digit to start incrementing
-   */
-  private void propagateCarry(StringBuilder digits, int i) {
-    boolean carry = true;
-    while (carry && i >= 0) {
-      char digit = digits.charAt(i);
-      if (digit == '9') {
-        // set this to zero and keep going
-        digits.setCharAt(i--, '0');
+    int minIntDigits = minimumIntegerDigits;
+    if (maximumIntegerDigits > 1 && maximumIntegerDigits > minimumIntegerDigits) {
+      // A repeating range is defined; adjust to it as follows.
+      // If repeat == 3, we have 6,5,4=>3; 3,2,1=>0; 0,-1,-2=>-3;
+      // -3,-4,-5=>-6, etc. This takes into account that the
+      // exponent we have here is off by one from what we expect;
+      // it is for the format 0.MMMMMx10^n.
+      while ((exponent % maximumIntegerDigits) != 0) {
+        number *= 10;
+        exponent--;
+      }
+      minIntDigits = 1;
+    } else {
+      // No repeating range is defined; use minimum integer digits.
+      if (minimumIntegerDigits < 1) {
+        exponent++;
+        number /= 10;
       } else {
-        digits.setCharAt(i, (char) (digit + 1));
-        carry = false;
+        for (int i = 1; i < minimumIntegerDigits; i++) {
+          exponent--;
+          number *= 10;
+        }
       }
     }
-    if (carry) {
-      // ran off the front, prepend a 1
-      digits.insert(0, '1');
-      ++decimalPosition;
-      ++digitsLength;
-    }
+
+    subformatFixed(number, result, minIntDigits);
+    addExponentPart(exponent, result);
   }
 
   /**
-   * Round the value at the requested place, propagating any carry backward.
+   * This method formats a <code>double</code> into a fractional
+   * representation.
    * 
-   * @param digits
+   * @param number value need to be formated
+   * @param result result will be written here
+   * @param minIntDigits minimum integer digits
    */
-  private void roundValue(StringBuilder digits) {
-    // TODO(jat): other rounding modes?    
-    if (digitsLength > decimalPosition + maximumFractionDigits
-        && digits.charAt(decimalPosition + maximumFractionDigits) >= '5') {
-      int i = decimalPosition + maximumFractionDigits - 1;
-      propagateCarry(digits, i);
+  private void subformatFixed(double number, StringBuffer result,
+      int minIntDigits) {
+    double power = Math.pow(10, maximumFractionDigits);
+    // Use 3 extra digits to allow us to do our own rounding since
+    // Java rounds up on .5 whereas some browsers might use 'round to even'
+    // or other rules.
+    
+    // There are cases where more digits would be required to get
+    // guaranteed results, but this at least makes such cases rarer.
+    String fixedString = toFixed(number, maximumFractionDigits + 3);
+
+    double intValue = 0, fracValue = 0;
+    int exponentIndex = fixedString.indexOf('e');
+    if (exponentIndex != -1) {
+      // Large numbers may be returned in exponential notation: such numbers
+      // are integers anyway
+      intValue = Math.floor(number);
+    } else {
+      int decimalIndex = fixedString.indexOf('.');
+      int len = fixedString.length();
+      if (decimalIndex == -1) {
+        decimalIndex = len;
+      }
+      if (decimalIndex > 0) {
+        intValue = Double.parseDouble(fixedString.substring(0, decimalIndex));
+      }
+      if (decimalIndex < len - 1) {
+        fracValue = Double.parseDouble(fixedString.substring(decimalIndex + 1));
+        fracValue = (((int) fracValue) + 500) / 1000;
+        if (fracValue >= power) {
+          fracValue -= power;
+          intValue++;
+        }
+      }
+    }
+
+    boolean fractionPresent = (minimumFractionDigits > 0) || (fracValue > 0);
+
+    String intPart = makeIntString(intValue);
+    String grouping = isCurrencyFormat
+        ? numberConstants.monetaryGroupingSeparator()
+        : numberConstants.groupingSeparator();
+    String decimal = isCurrencyFormat ? numberConstants.monetarySeparator()
+        : numberConstants.decimalSeparator();
+
+    int zeroDelta = numberConstants.zeroDigit().charAt(0) - '0';
+    int digitLen = intPart.length();
+    
+    if (intValue > 0 || minIntDigits > 0) {
+      for (int i = digitLen; i < minIntDigits; i++) {
+        result.append(numberConstants.zeroDigit());
+      }
+
+      for (int i = 0; i < digitLen; i++) {
+        result.append((char) (intPart.charAt(i) + zeroDelta));
+
+        if (digitLen - i > 1 && groupingSize > 0
+            && ((digitLen - i) % groupingSize == 1)) {
+          result.append(grouping);
+        }
+      }
+    } else if (!fractionPresent) {
+      // If there is no fraction present, and we haven't printed any
+      // integer digits, then print a zero.
+      result.append(numberConstants.zeroDigit());
+    }
+
+    // Output the decimal separator if we always do so.
+    if (decimalSeparatorAlwaysShown || fractionPresent) {
+      result.append(decimal);
+    }
+
+    // To make sure it lead zero will be kept.
+    String fracPart = makeIntString(Math.floor(fracValue + power + 0.5d));
+    int fracLen = fracPart.length();
+    while (fracPart.charAt(fracLen - 1) == '0' && fracLen > minimumFractionDigits + 1) {
+      fracLen--;
+    }
+
+    for (int i = 1; i < fracLen; i++) {
+      result.append((char) (fracPart.charAt(i) + zeroDelta));
     }
   }
 }
