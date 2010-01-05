@@ -44,7 +44,7 @@ public class Timestamp extends java.util.Date {
     if (hasNanos) {
       String nanosString = timeComponents[1];
       int len = nanosString.length();
-      assert(len > 0); // len must be > 0 if hasNanos is true
+      assert len > 0; // len must be > 0 if hasNanos is true
       if (len > 9) {
         throw new IllegalArgumentException("Invalid escape format: " + s);
       }
