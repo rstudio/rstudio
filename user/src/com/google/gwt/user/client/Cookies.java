@@ -110,7 +110,7 @@ public class Cookies {
    */
   public static void removeCookie(String name) {
     if (uriEncoding) {
-      uriEncode(name);
+      name = uriEncode(name);
     }
     removeCookieNative(name);
   }
@@ -124,7 +124,7 @@ public class Cookies {
    */
   public static void removeCookie(String name, String path) {
     if (uriEncoding) {
-      uriEncode(name);
+      name = uriEncode(name);
     }
     removeCookieNative(name, path);
   }
@@ -174,10 +174,12 @@ public class Cookies {
   public static void setCookie(String name, String value, Date expires,
       String domain, String path, boolean secure) {
     if (uriEncoding) {
-      uriEncode(name);
-      uriEncode(value);
-    } else if (!isValidCookieName(name) || !isValidCookieValue(value)) {
-      throw new IllegalArgumentException("Illegal cookie format.");
+      name = uriEncode(name);
+      value = uriEncode(value);
+    } else if (!isValidCookieName(name)) {
+      throw new IllegalArgumentException("Illegal cookie format: " + name + " is not a valid cookie name.");
+    } else if (!isValidCookieValue(value)) {
+      throw new IllegalArgumentException("Illegal cookie format: " + value + " is not a valid cookie value.");
     }
     setCookieImpl(name, value, (expires == null) ? 0 : expires.getTime(),
         domain, path, secure);

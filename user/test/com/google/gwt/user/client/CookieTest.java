@@ -151,7 +151,25 @@ public class CookieTest extends GWTTestCase {
     Cookies.removeCookie("test1+test1");
     cookies = Cookies.getCookieNames();
     assertEquals(curCount, cookies.size());
+    
+    // Make sure cookie names are URI encoded
+    Cookies.setUriEncode(true);
+    Cookies.setCookie("test1.,/?:@&=+$#", "value1");
+    assertEquals(curCount + 1, Cookies.getCookieNames().size());
+    Cookies.setUriEncode(false);
+    Cookies.removeCookie("test1.,/?:@&=+$#");
+    assertEquals(curCount + 1, Cookies.getCookieNames().size());
+    Cookies.setUriEncode(true);
+    Cookies.removeCookie("test1.,/?:@&=+$#");
+    assertEquals(curCount, Cookies.getCookieNames().size());
 
+    // Make sure cookie values are URI encoded
+    Cookies.setUriEncode(true);
+    Cookies.setCookie("testencodedvalue", "value1,/?:@&=+$#");
+    Cookies.setUriEncode(false);
+    String encodedValue = Cookies.getCookie("testencodedvalue");
+    assertTrue(encodedValue.compareTo("value1%2C%2F%3F%3A%40%26%3D%2B%24%23") == 0);
+    
     // Make sure unencoded cookies with bogus format are not added
     try {
       Cookies.setCookie("test1=test1", "value1");
