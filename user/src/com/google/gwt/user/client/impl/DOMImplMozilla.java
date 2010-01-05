@@ -44,7 +44,7 @@ class DOMImplMozilla extends DOMImplStandard {
     $wnd.addEventListener(
       'mouseout',
       $entry(function(evt) {
-        var cap = $wnd.__captureElem;
+        var cap = @com.google.gwt.user.client.impl.DOMImplStandard::captureElem; 
         if (cap && !evt.relatedTarget) {
           // Mozilla has the interesting habit of sending a mouseout event
           // with an 'html' element as the target when the mouse is released
