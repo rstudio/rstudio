@@ -1,5 +1,6 @@
 package @clientPackage;
 
+import @sharedPackage.FieldVerifier;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -40,6 +41,7 @@ public class @moduleShortName implements EntryPoint {
     final Button sendButton = new Button("Send");
     final TextBox nameField = new TextBox();
     nameField.setText("GWT User");
+    final Label errorLabel = new Label();
 
     // We can add style names to widgets
     sendButton.addStyleName("sendButton");
@@ -48,6 +50,7 @@ public class @moduleShortName implements EntryPoint {
     // Use RootPanel.get() to get the entire body element
     RootPanel.get("nameFieldContainer").add(nameField);
     RootPanel.get("sendButtonContainer").add(sendButton);
+    RootPanel.get("errorLabelContainer").add(errorLabel);
 
     // Focus the cursor on the name field when the app loads
     nameField.setFocus(true);
@@ -103,8 +106,16 @@ public class @moduleShortName implements EntryPoint {
        * Send the name from the nameField to the server and wait for a response.
        */
       private void sendNameToServer() {
-        sendButton.setEnabled(false);
+        // First, we validate the input.
+        errorLabel.setText("");
         String textToServer = nameField.getText();
+        if (!FieldVerifier.isValidName(textToServer)) {
+          errorLabel.setText("Please enter at least four characters");
+          return;
+        }
+        
+        // Then, we send the input to the server.
+        sendButton.setEnabled(false);
         textToServerLabel.setText(textToServer);
         serverResponseLabel.setText("");
         greetingService.greetServer(textToServer, new AsyncCallback<String>() {

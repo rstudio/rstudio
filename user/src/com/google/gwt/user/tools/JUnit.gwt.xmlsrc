@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>@gwtModuleDtd
+<module>
+  <!-- Inherit our applications main module.                      -->
+  <inherits name='@moduleName'/>
+
+  <!-- Specify the path to any remote services.                   -->
+  <servlet path="/@renameTo/greet" class="@serverPackage.GreetingServiceImpl" />
+
+</module>

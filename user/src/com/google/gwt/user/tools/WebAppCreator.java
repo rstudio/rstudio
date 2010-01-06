@@ -290,8 +290,10 @@ public final class WebAppCreator {
         '.', '/'), true);
     File clientDir = Utility.getDirectory(moduleDir, "client", true);
     File serverDir = Utility.getDirectory(moduleDir, "server", true);
-    File clientTestDir = Utility.getDirectory(outDir, "test/"
-        + modulePackageName.replace('.', '/') + "/client", true);
+    File sharedDir = Utility.getDirectory(moduleDir, "shared", true);
+    File moduleTestDir = Utility.getDirectory(outDir, "test/"
+        + modulePackageName.replace('.', '/'), true);
+    File clientTestDir = Utility.getDirectory(moduleTestDir, "client", true);
 
     // Create a map of replacements
     Map<String, String> replacements = new HashMap<String, String>();
@@ -299,6 +301,7 @@ public final class WebAppCreator {
     replacements.put("@moduleName", moduleName);
     replacements.put("@clientPackage", modulePackageName + ".client");
     replacements.put("@serverPackage", modulePackageName + ".server");
+    replacements.put("@sharedPackage", modulePackageName + ".shared");
     replacements.put("@gwtSdk", installPath);
     replacements.put("@gwtUserPath", gwtUserPath);
     replacements.put("@gwtDevPath", gwtDevPath);
@@ -361,16 +364,20 @@ public final class WebAppCreator {
       files.add(new FileCreator(webInfDir, "web.xml", "web.xml"));
       files.add(new FileCreator(clientDir, moduleShortName + ".java",
           "AppClassTemplate.java"));
-      files.add(new FileCreator(clientDir, "GreetingService" + ".java",
+      files.add(new FileCreator(clientDir, "GreetingService.java",
           "RpcClientTemplate.java"));
-      files.add(new FileCreator(clientDir, "GreetingServiceAsync" + ".java",
+      files.add(new FileCreator(clientDir, "GreetingServiceAsync.java",
           "RpcAsyncClientTemplate.java"));
-      files.add(new FileCreator(serverDir, "GreetingServiceImpl" + ".java",
+      files.add(new FileCreator(serverDir, "GreetingServiceImpl.java",
           "RpcServerTemplate.java"));
+      files.add(new FileCreator(sharedDir, "FieldVerifier.java",
+          "SharedClassTemplate.java"));
       files.add(new FileCreator(outDir, "build.xml", "project.ant.xml"));
       files.add(new FileCreator(outDir, "README.txt", "README.txt"));
       if (junitPath != null) {
         // create the test file.
+        files.add(new FileCreator(moduleTestDir, moduleShortName
+            + "JUnit.gwt.xml", "JUnit.gwt.xml"));
         files.add(new FileCreator(clientTestDir, moduleShortName + "Test"
             + ".java", "JUnitClassTemplate.java"));
       }
