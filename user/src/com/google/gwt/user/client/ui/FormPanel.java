@@ -394,7 +394,9 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     if (createIFrame) {
       assert ((getTarget() == null) || (getTarget().trim().length() == 0)) : "Cannot create target iframe if the form's target is already set.";
 
-      frameName = "FormPanel_" + (++formId);
+      // We use the module name as part of the unique ID to ensure that ids are
+      // unique across modules.
+      frameName = "FormPanel_" + GWT.getModuleName() + "_" + (++formId);
       setTarget(frameName);
 
       sinkEvents(Event.ONLOAD);

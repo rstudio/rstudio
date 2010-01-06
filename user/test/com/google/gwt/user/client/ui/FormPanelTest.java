@@ -20,6 +20,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
+import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
 
@@ -29,6 +31,12 @@ import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
  * @see com.google.gwt.user.server.ui.FormPanelTestServlet
  */
 public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
+  
+  /**
+   * The maximum amount of time to wait for a test to finish.
+   */
+  private static final int TEST_DELAY = 15000;
+  
   public static boolean clicked = false;
 
   @Override
@@ -44,12 +52,13 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     form.setWidget(tb);
     form.setAction("http://www.google.com/search");
 
-    form.addFormHandler(new FormHandler() {
-      public void onSubmit(FormSubmitEvent event) {
-        event.setCancelled(true);
+    form.addSubmitHandler(new SubmitHandler() {
+      public void onSubmit(SubmitEvent event) {
+        event.cancel();
       }
-
-      public void onSubmitComplete(FormSubmitCompleteEvent event) {
+    });
+    form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
+      public void onSubmitComplete(SubmitCompleteEvent event) {
         fail("Form was cancelled and should not have been submitted");
       }
     });
@@ -73,12 +82,9 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
 
     RootPanel.get().add(form);
 
-    delayTestFinish(5000);
-    form.addFormHandler(new FormHandler() {
-      public void onSubmit(FormSubmitEvent event) {
-      }
-
-      public void onSubmitComplete(FormSubmitCompleteEvent event) {
+    delayTestFinish(TEST_DELAY);
+    form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
+      public void onSubmitComplete(SubmitCompleteEvent event) {
         // The server just echoes the contents of the request. The following
         // string should have been present in it.
         assertTrue(event.getResults().indexOf(
@@ -108,13 +114,13 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     ptb.setName("ptb");
 
     CheckBox cb0 = new CheckBox(), cb1 = new CheckBox();
-    cb1.setChecked(true);
+    cb1.setValue(true);
     cb0.setName("cb0");
     cb1.setName("cb1");
 
     RadioButton rb0 = new RadioButton("foo");
     RadioButton rb1 = new RadioButton("foo");
-    rb0.setChecked(true);
+    rb0.setValue(true);
     rb0.setName("rb0");
     rb1.setName("rb1");
 
@@ -142,13 +148,10 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     form.setWidget(panel);
     RootPanel.get().add(form);
 
-    delayTestFinish(5000);
+    delayTestFinish(TEST_DELAY);
 
-    form.addFormHandler(new FormHandler() {
-      public void onSubmit(FormSubmitEvent event) {
-      }
-
-      public void onSubmitComplete(FormSubmitCompleteEvent event) {
+    form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
+      public void onSubmitComplete(SubmitCompleteEvent event) {
         // The server just echoes the query string. This is what it should look
         // like.
         assertTrue(event.getResults().equals(
@@ -162,26 +165,27 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
 
   public void testNamedTargetSubmitEvent() {
     // Create a form and frame in the document we can wrap.
-    String uid = Document.get().createUniqueId();
-    HTML formAndFrame = new HTML(
-        "<form id='"
-            + uid
-            + "' method='post' target='targetFrame' action='"
+    String iframeId = Document.get().createUniqueId();
+    String iframeName = Document.get().createUniqueId();
+    final Element container = Document.get().createDivElement();
+    container.setInnerHTML(
+        "<form method='post' target='" + iframeName + "' action='"
             + GWT.getModuleBaseURL()
             + "formHandler?sendHappyHtml'>"
             + "<input type='submit' id='submitBtn'></input></form>"
-            + "<iframe src='javascript:\'\'' id='targetMe' name='targetFrame'></iframe>");
-    RootPanel.get().add(formAndFrame);
+            + "<iframe src=\"javascript:\'\'\" id='" + iframeId + "' "
+            + "name='" + iframeName + "'></iframe>");
+    Document.get().getBody().appendChild(container);
 
     // Wrap the form and make sure its target frame is intact.
-    FormPanel form = FormPanel.wrap(Document.get().getElementById(uid));
-    assertEquals("targetFrame", form.getTarget());
+    FormPanel form = FormPanel.wrap(container.getFirstChildElement());
+    assertEquals(iframeName, form.getTarget());
 
     // Ensure that no synthesized iframe was created.
     assertNull(form.getSynthesizedIFrame());
 
     // Submit the form using the submit button and make sure the submit event fires.
-    delayTestFinish(5000);
+    delayTestFinish(TEST_DELAY);
     form.addSubmitHandler(new SubmitHandler() {
       public void onSubmit(SubmitEvent event) {
         finishTest();
@@ -218,12 +222,9 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     dlg.setWidget(form);
     dlg.show();
 
-    delayTestFinish(5000);
-    form.addFormHandler(new FormHandler() {
-      public void onSubmit(FormSubmitEvent event) {
-      }
-
-      public void onSubmitComplete(FormSubmitCompleteEvent event) {
+    delayTestFinish(TEST_DELAY);
+    form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
+      public void onSubmitComplete(SubmitCompleteEvent event) {
         // Make sure we get our results back.
         assertTrue(event.getResults().equals("tb=text"));
         finishTest();
@@ -248,7 +249,8 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     RootPanel.get().add(form);
     RootPanel.get().add(frame);
 
-    delayTestFinish(10000);
+    delayTestFinish(TEST_DELAY);
+    form.submit();
     Timer t = new Timer() {
       @Override
       public void run() {
@@ -259,57 +261,57 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     };
 
     // Wait 5 seconds before checking the results.
-    t.schedule(5000);
-    form.submit();
+    t.schedule(TEST_DELAY - 2000);
   }
 
   public void testWrappedForm() {
     // Create a form and frame in the document we can wrap.
-    String uid = Document.get().createUniqueId();
-    HTML formAndFrame = new HTML(
-        "<form id='"
-            + uid
-            + "' method='post' target='targetFrame' action='"
+    final String iframeId = Document.get().createUniqueId();
+    final String iframeName = Document.get().createUniqueId();
+    final Element container = Document.get().createDivElement();
+    container.setInnerHTML(
+        "<form method='post' target='" + iframeName + "' action='"
             + GWT.getModuleBaseURL()
             + "formHandler?sendHappyHtml'>"
             + "<input type='hidden' name='foo' value='bar'></input></form>"
-            + "<iframe src='javascript:\'\'' id='targetMe' name='targetFrame'></iframe>");
-    RootPanel.get().add(formAndFrame);
+            + "<iframe src=\"javascript:\'\'\" id='" + iframeId + "' "
+            + "name='" + iframeName + "'></iframe>");
+    Document.get().getBody().appendChild(container);
 
     // Wrap the form and make sure its target frame is intact.
-    FormPanel form = FormPanel.wrap(Document.get().getElementById(uid));
-    assertEquals("targetFrame", form.getTarget());
+    FormPanel form = FormPanel.wrap(container.getFirstChildElement());
+    assertEquals(iframeName, form.getTarget());
 
     // Ensure that no synthesized iframe was created.
     assertNull(form.getSynthesizedIFrame());
 
     // Submit the form and make sure the target frame comes back with the right
     // stuff (give it 2.5 s to complete).
-    delayTestFinish(5000);
+    delayTestFinish(TEST_DELAY);
+    form.submit();
     new Timer() {
       @Override
       public void run() {
         // Get the targeted frame and make sure it contains the requested
         // 'happyElem'.
-        Frame frame = Frame.wrap(Document.get().getElementById("targetMe"));
+        Frame frame = Frame.wrap(Document.get().getElementById(iframeId));
         assertTrue(isHappyDivPresent(frame.getElement()));
         finishTest();
       }
-    }.schedule(2500);
-    form.submit();
+    }.schedule(TEST_DELAY - 2000);
   }
 
   public void testWrappedFormTargetAssertion() {
-    // Testing a hosted-mode-only assertion.
+    // Testing a dev-mode-only assertion.
     if (!GWT.isScript()) {
       // Create a form element with the target attribute already set.
-      String uid = Document.get().createUniqueId();
-      HTML form = new HTML("<form id='" + uid + "' target='foo'></form>");
-      RootPanel.get().add(form);
+      final Element container = Document.get().createDivElement();
+      container.setInnerHTML("<form target='foo'></form>");
+      Document.get().getBody().appendChild(container);
 
       try {
         // Attempt to wrap it, requesting that an iframe be created.
-        FormPanel.wrap(Document.get().getElementById(uid), true);
+        FormPanel.wrap(container.getFirstChildElement(), true);
         fail("Assertion expected wrapping a form with the target set");
       } catch (Throwable e) {
         // ok.
@@ -319,23 +321,21 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
 
   public void testWrappedFormWithIFrame() {
     // Create a form and frame in the document we can wrap.
-    String uid = Document.get().createUniqueId();
-    HTML formAndFrame = new HTML("<form id='" + uid + "' method='get' "
+    final Element container = Document.get().createDivElement();
+    container.setInnerHTML(
+        "<form method='get' "
         + "encoding='application/x-www-form-urlencoded' action='"
         + GWT.getModuleBaseURL() + "formHandler'>"
         + "<input type='text' name='tb' value='text'></input></form>");
-    RootPanel.get().add(formAndFrame);
+    Document.get().getBody().appendChild(container);
 
     // Wrap the form, asking for an iframe to be created.
-    FormPanel form = FormPanel.wrap(Document.get().getElementById(uid), true);
+    FormPanel form = FormPanel.wrap(container.getFirstChildElement(), true);
 
     // Give the submit 5s to complete.
-    delayTestFinish(5000);
-    form.addFormHandler(new FormHandler() {
-      public void onSubmit(FormSubmitEvent event) {
-      }
-
-      public void onSubmitComplete(FormSubmitCompleteEvent event) {
+    delayTestFinish(TEST_DELAY);
+    form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
+      public void onSubmitComplete(SubmitCompleteEvent event) {
         // Make sure we get our results back.
         assertTrue(event.getResults().equals("tb=text"));
         finishTest();
