@@ -15,38 +15,59 @@
  */
 package com.google.gwt.reference.microbenchmark.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Run by {@link WidgetCreation}, see {@link Maker#name} for details.
  */
-public class TestWidgetBinder extends Composite {
+public class TestEmptyDomViaApi extends Widget {
   public static class Maker extends WidgetCreation.Maker {
     Maker() {
-      super("Text heavy UI with HTMLPanel via UiBinder");
+      super("Empty UI via DOM api calls, no widgets");
     }
+
     public Widget make() {
-      return new TestWidgetBinder();
+      return new TestEmptyDomViaApi();
     }
   }
-  interface Binder extends UiBinder<Widget, TestWidgetBinder> {}
-  @UiField DivElement div1;
-  @UiField DivElement div2;
-  @UiField DivElement div3;
-  @UiField DivElement div4;
 
-  @UiField SpanElement span1;
-  @UiField SpanElement span2;
+  DivElement root;
+  DivElement div1;
+  DivElement div2;
+  DivElement div3;
+  DivElement div4;
+  SpanElement span1;
+  SpanElement span2;
 
-  private static final Binder BINDER = GWT.create(Binder.class);
-  
-  private TestWidgetBinder() {
-    initWidget(BINDER.createAndBindUi(this));
+  private TestEmptyDomViaApi() {
+    Document d = Document.get();
+    root = d.createDivElement();
+    root.appendChild(d.createTextNode("Div root"));
+
+    div1 = d.createDivElement();
+    root.appendChild(div1);
+
+    div2 = d.createDivElement();
+    div1.appendChild(div2);
+
+    span1 = d.createSpanElement();
+    div1.appendChild(span1);
+
+    DivElement anon = d.createDivElement();
+    root.appendChild(anon);
+
+    div3 = d.createDivElement();
+    anon.appendChild(div3);
+
+    div4 = d.createDivElement();
+    div3.appendChild(div4);
+
+    span2 = d.createSpanElement();
+    div3.appendChild(span2);
+
+    setElement(root);
   }
 }

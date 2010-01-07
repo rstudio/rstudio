@@ -30,7 +30,7 @@ public class TestDomBinder extends Widget {
 
   public static class Maker extends WidgetCreation.Maker {
     Maker() {
-      super("Complex UI via UiBinder, no widgets");
+      super("Text heavy UI via UiBinder, no widgets");
     }
     public Widget make() {
       return new TestDomBinder();

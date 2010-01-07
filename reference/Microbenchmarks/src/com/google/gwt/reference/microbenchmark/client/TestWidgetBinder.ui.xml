@@ -1,19 +1,15 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:gwt='urn:import:com.google.gwt.user.client.ui'>
-  <gwt:HTMLPanel>
-    <div>
-      <div ui:field='div1'>
-        <div ui:field='div2'>
-        </div>
-        <span ui:field='span1' />
-      </div>
-      <div>
-        <div ui:field='div3'>
-          <div ui:field='div4'>
-          </div>
-          <span ui:field='span2' />
-        </div>
-      </div>
-    </div>
-  </gwt:HTMLPanel>
+  <gwt:HTMLPanel>Div root start
+    <div ui:field='div1'>Div1
+      <div ui:field='div2'>Div2</div>
+      <span ui:field='span1'>Span1</span>
+    Div1 end</div>
+    <div>Div anon start
+      <div ui:field='div3'>Div3
+        <div ui:field='div4'>Div4</div>
+        <span ui:field='span2'>Span2</span>
+      Div3 end</div>
+    Div anon end</div>
+  Div root end</gwt:HTMLPanel>
 </ui:UiBinder>

@@ -8,13 +8,13 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Run by {@link WidgetCreation}, see {@link Maker#name} for details.
  */
-public class TestCursorDomCrawl extends Widget {
+public class TestEmptyCursorDomCrawl extends Widget {
   public static class Maker extends WidgetCreation.Maker {
     Maker() {
-      super("Text heavy UI via innerHTML, no widgets, get children by idealized crawl");
+      super("Empty UI via innerHTML, no widgets, get children by idealized crawl");
     }
     public Widget make() {
-      return new TestCursorDomCrawl();
+      return new TestEmptyCursorDomCrawl();
     }
   }
 
@@ -26,8 +26,8 @@ public class TestCursorDomCrawl extends Widget {
   SpanElement span1;
   SpanElement span2;
   
-  private TestCursorDomCrawl() {
-    Element root = Util.fromHtml(Util.TEXTY_OUTER_HTML);
+  private TestEmptyCursorDomCrawl() {
+    Element root = Util.fromHtml(Util.EMPTY_OUTER_HTML);
     
     Element cursor = root;
     div1 = (cursor = cursor.getFirstChildElement()).cast();

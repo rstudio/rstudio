@@ -19,7 +19,6 @@ import com.google.gwt.core.client.Duration;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
-import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
@@ -27,6 +26,7 @@ import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -75,9 +75,13 @@ public class WidgetCreation implements Microbenchmark {
         public Widget make() {
           return new HTMLPanel("");
         }
-      }, new EmptyBinder.Maker(), new TestDom.Maker(),
-      new TestCursorDomCrawl.Maker(), new TestRealisticDomCrawl.Maker(),
-      new TestDomBinder.Maker(), new TestFlows.Maker(), new TestWidget.Maker(),
+      }, new EmptyBinder.Maker(), new TestEmptyDomViaApi.Maker(),
+      new TestEmptyDom.Maker(), 
+      new TestEmptyCursorDomCrawl.Maker(),
+      new TestEmptyRealisticDomCrawl.Maker(),new TestDomViaApi.Maker(),
+      new TestDom.Maker(), new TestCursorDomCrawl.Maker(),
+      new TestRealisticDomCrawl.Maker(), new TestDomBinder.Maker(),
+      new TestFlows.Maker(), new TestManualHTMLPanel.Maker(),
       new TestWidgetBinder.Maker()};
 
   final private FlowPanel root;
@@ -112,7 +116,10 @@ public class WidgetCreation implements Microbenchmark {
     for (Maker m : makers) {
       grid.setText(row, 0, "0");
       grid.setText(row, 1, "0");
-      grid.setText(row, 2, m.name);
+      InlineLabel a = new InlineLabel();
+      a.setText(m.name);
+      a.setTitle(Util.outerHtml(m.make().getElement()));
+      grid.setWidget(row, 2, a);
       row++;
     }
 
@@ -170,10 +177,6 @@ public class WidgetCreation implements Microbenchmark {
     }
   }
 
-  private String format(double median) {
-    return NumberFormat.getFormat("0").format(median);
-  }
-
   private int getInstances() {
     try {
       int instances = Integer.parseInt(number.getValue());
@@ -185,7 +188,7 @@ public class WidgetCreation implements Microbenchmark {
 
   private void record(int row, double thisTime) {
     final int columns = grid.getColumnCount();
-    grid.setText(row, columns - 1, format(thisTime));
+    grid.setText(row, columns - 1, Util.format(thisTime));
 
     double max = 0, min = 0, mean = 0;
 
@@ -203,10 +206,10 @@ public class WidgetCreation implements Microbenchmark {
     double range = max - min;
     double halfRange = range / 2;
     double median = min + halfRange;
-    grid.setText(row, 0, format(median));
+    grid.setText(row, 0, Util.format(Util.roundToTens(median)));
 
     mean = mean / (columns - 3);
-    grid.setText(row, 1, format(mean));
+    grid.setText(row, 1, Util.format(Util.roundToTens(mean)));
   }
 
   @SuppressWarnings("deprecation")

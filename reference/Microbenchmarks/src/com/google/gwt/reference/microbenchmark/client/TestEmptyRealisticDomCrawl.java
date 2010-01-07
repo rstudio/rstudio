@@ -8,13 +8,13 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Run by {@link WidgetCreation}, see {@link Maker#name} for details.
  */
-public class TestRealisticDomCrawl extends Widget {
+public class TestEmptyRealisticDomCrawl extends Widget {
   public static class Maker extends WidgetCreation.Maker {
     Maker() {
-      super("Text heavy UI via innerHTML, no widgets, get children by nav from root");
+      super("Empty UI via innerHTML, no widgets, get children by nav from root");
     }
     public Widget make() {
-      return new TestRealisticDomCrawl();
+      return new TestEmptyRealisticDomCrawl();
     }
   }
 
@@ -27,8 +27,8 @@ public class TestRealisticDomCrawl extends Widget {
 
   SpanElement span2;
   
-  private TestRealisticDomCrawl() {
-    Element root = Util.fromHtml(Util.TEXTY_OUTER_HTML);
+  private TestEmptyRealisticDomCrawl() {
+    Element root = Util.fromHtml(Util.EMPTY_OUTER_HTML);
 
     div1 = root.getFirstChildElement().cast();
     assert div1.getId().equals("div1");

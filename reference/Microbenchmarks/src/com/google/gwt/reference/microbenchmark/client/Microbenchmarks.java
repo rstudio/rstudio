@@ -15,6 +15,7 @@
  */
 package com.google.gwt.reference.microbenchmark.client;
 
+import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -45,10 +46,12 @@ public class Microbenchmarks implements EntryPoint {
       new WidgetCreation()
   };
 
+  double elapsedMs = 0;
   @UiField ListBox listBox;
   @UiField DeckPanel deck;
   @UiField Button button;
   @UiField Element running;
+  @UiField Element elapsed;
 
   @UiHandler("listBox")
   public void onChange(@SuppressWarnings("unused") ChangeEvent ignored) {
@@ -63,9 +66,13 @@ public class Microbenchmarks implements EntryPoint {
     button.setEnabled(false);
     DeferredCommand.addCommand(new Command() {
       public void execute() {
+        double start = Duration.currentTimeMillis();
         benchmarks[index].run();
         UIObject.setVisible(running, false);
         button.setEnabled(true);
+        double end = Duration.currentTimeMillis();
+        elapsedMs += end - start;
+        elapsed.setInnerText(Util.format(elapsedMs));
       }
     });
   }

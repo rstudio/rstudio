@@ -17,51 +17,68 @@ package com.google.gwt.reference.microbenchmark.client;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Run by {@link WidgetCreation}, see {@link Maker#name} for details.
  */
-public class TestDom extends Widget {
+public class TestDomViaApi extends Widget {
   public static class Maker extends WidgetCreation.Maker {
     Maker() {
-      super("Text heavy UI via innerHTML, no widgets, get children by id");
+      super("Text heavy UI via DOM api calls, no widgets");
     }
+
     public Widget make() {
-      return new TestDom();
+      return new TestDomViaApi();
     }
   }
 
-  Element root;
+  DivElement root;
   DivElement div1;
   DivElement div2;
   DivElement div3;
-
   DivElement div4;
   SpanElement span1;
-  
   SpanElement span2;
 
-  private TestDom() {
-    root = Util.fromHtml(Util.TEXTY_OUTER_HTML);
-    
-    Document.get().getBody().appendChild(root);
-    div1 = Document.get().getElementById("div1").cast();
-    div2 = Document.get().getElementById("div2").cast();
-    div3 = Document.get().getElementById("div3").cast();
-    div4 = Document.get().getElementById("div4").cast();
-    span1 = Document.get().getElementById("span1").cast();
-    span2 = Document.get().getElementById("span2").cast();
-    
-    Document.get().getBody().removeChild(root);
-    div1.removeAttribute("id");
-    div2.removeAttribute("id");
-    div3.removeAttribute("id");
-    div4.removeAttribute("id");
-    span1.removeAttribute("id");
-    span2.removeAttribute("id");
+  private TestDomViaApi() {
+    Document d = Document.get();
+    root = d.createDivElement();
+    root.appendChild(d.createTextNode("Div root"));
+
+    div1 = d.createDivElement();
+    Util.addText(div1, "Div1");
+    root.appendChild(div1);
+
+    div2 = d.createDivElement();
+    Util.addText(div2, "Div2");
+    div1.appendChild(div2);
+
+    span1 = d.createSpanElement();
+    Util.addText(span1, "Span1");
+    div1.appendChild(span1);
+
+    DivElement anon = d.createDivElement();
+    Util.addText(anon, "Div anon");
+    root.appendChild(anon);
+
+    div3 = d.createDivElement();
+    Util.addText(div3, "Div3");
+    anon.appendChild(div3);
+
+    div4 = d.createDivElement();
+    Util.addText(div4, "Div4");
+    div3.appendChild(div4);
+
+    span2 = d.createSpanElement();
+    Util.addText(span2, "Span2");
+    div3.appendChild(span2);
+
+    Util.addText(div1, " Div1 end");
+    Util.addText(div3, " Div3 end");
+    Util.addText(anon, " Div anon end");
+    Util.addText(root, " Div root end");
 
     setElement(root);
   }

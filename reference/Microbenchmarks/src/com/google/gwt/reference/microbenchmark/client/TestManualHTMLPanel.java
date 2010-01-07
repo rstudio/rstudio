@@ -9,13 +9,13 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Run by {@link WidgetCreation}, see {@link Maker#name} for details.
  */
-public class TestWidget extends Composite {
+public class TestManualHTMLPanel extends Composite {
   public static class Maker extends WidgetCreation.Maker {
     Maker() {
-      super("Complex UI via typical manual HTMLPanel usage");
+      super("Text heavy UI via typical manual HTMLPanel usage");
     }
     public Widget make() {
-      return new TestWidget();
+      return new TestManualHTMLPanel();
     }
   }
   DivElement div1;
@@ -27,8 +27,8 @@ public class TestWidget extends Composite {
   
   SpanElement span2;
   
-  private TestWidget() {
-    HTMLPanel p = new HTMLPanel(TestDom.HTML);
+  private TestManualHTMLPanel() {
+    HTMLPanel p = new HTMLPanel(Util.TEXTY_INNER_HTML);
     initWidget(p);
     
     div1 = p.getElementById("div1").cast();
