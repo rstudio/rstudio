@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -395,6 +396,16 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     }
 
     /**
+     * Get the col element for the column.
+     * 
+     * @param column the column index
+     * @return the col element
+     */
+    public Element getElement(int column) {
+      return ensureColumn(column);
+    }
+
+    /**
      * Gets the style of the specified column.
      * 
      * @param column the column to be queried
@@ -465,20 +476,33 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
       DOM.setElementProperty(ensureColumn(column), "width", width);
     }
 
+    /**
+     * Resize the column group element.
+     * 
+     * @param columns the number of columns
+     */
+    void resizeColumnGroup(int columns) {
+      // The colgroup should always have at least one element.  See
+      // prepareColumnGroup() for more details.
+      columns = Math.max(columns, 1);
+
+      int num = columnGroup.getChildCount();
+      if (num < columns) {
+        for (int i = num; i < columns; i++) {
+          columnGroup.appendChild(Document.get().createColElement());
+        }
+      } else if (num > columns) {
+        for (int i = num; i > columns; i--) {
+          columnGroup.removeChild(columnGroup.getLastChild());
+        }
+      }
+    }
+
     private Element ensureColumn(int col) {
       prepareColumn(col);
       prepareColumnGroup();
-
-      int num = DOM.getChildCount(columnGroup);
-      if (num <= col) {
-        Element colElement = null;
-        for (int i = num; i <= col; i++) {
-          colElement = DOM.createElement("col");
-          DOM.appendChild(columnGroup, colElement);
-        }
-        return colElement;
-      }
-      return DOM.getChild(columnGroup, col);
+      resizeColumnGroup(col + 1);
+      return columnGroup.getChild(col).cast();
     }
 
     /**
@@ -1302,7 +1326,11 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @throws IndexOutOfBoundsException
    */
   protected void prepareColumn(int column) {
-    // By default, do nothing.
+    // Ensure that the indices are not negative.
+    if (column < 0) {
+      throw new IndexOutOfBoundsException(
+          "Cannot access a column with a negative index: " + column);
+    }
   }
 
   /**
@@ -1352,6 +1380,11 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
   }
 
   protected void setColumnFormatter(ColumnFormatter formatter) {
+    // Copy the columnGroup element to the new formatter so we don't create a
+    // second colgroup element.
+    if (columnFormatter != null) {
+      formatter.columnGroup = columnFormatter.columnGroup;
+    }
     columnFormatter = formatter;
     columnFormatter.prepareColumnGroup();
   }

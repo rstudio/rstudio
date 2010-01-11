@@ -198,6 +198,9 @@ public class Grid extends HTMLTable {
       }
     }
     numColumns = columns;
+
+    // Update the size of the colgroup.
+    getColumnFormatter().resizeColumnGroup(columns);
   }
 
   /**
@@ -268,11 +271,7 @@ public class Grid extends HTMLTable {
    */
   @Override
   protected void prepareColumn(int column) {
-    // Ensure that the indices are not negative.
-    if (column < 0) {
-      throw new IndexOutOfBoundsException(
-          "Cannot access a column with a negative index: " + column);
-    }
+    super.prepareColumn(column);
 
     /**
      * Grid does not lazily create cells, so simply ensure that the requested

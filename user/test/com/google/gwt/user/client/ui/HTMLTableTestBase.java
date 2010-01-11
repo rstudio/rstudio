@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
+import com.google.gwt.user.client.ui.HTMLTable.ColumnFormatter;
 import com.google.gwt.user.client.ui.HTMLTable.RowFormatter;
 
 import java.util.Arrays;
@@ -115,6 +116,24 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     }
   }
 
+  public void testColumnFormatter() {
+    HTMLTable table = getTable(4, 4);
+    ColumnFormatter formatter = table.getColumnFormatter();
+    Element colGroup = formatter.columnGroup;
+
+    // getElement.
+    Element col0 = formatter.getElement(0);
+    assertEquals(colGroup.getChild(0), col0);
+    Element col3 = formatter.getElement(3);
+    assertEquals(colGroup.getChild(3), col3);
+    try {
+      formatter.getElement(-1);
+      fail("Expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected.
+    }
+  }
+
   public void testDebugId() {
     HTMLTable table = getTable(4, 3);
     for (int row = 0; row < 4; row++) {
@@ -175,6 +194,17 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     assertEquals(w2, iter5.next());
     assertEquals(w3, iter5.next());
     assertFalse(iter5.hasNext());
+  }
+
+  public void testSetColumnFormatter() {
+    HTMLTable t = getTable(1, 1);
+    Element columnGroup = t.getColumnFormatter().columnGroup;
+    assertNotNull(columnGroup);
+
+    ColumnFormatter formatter = t.new ColumnFormatter();
+    assertNull(formatter.columnGroup);
+    t.setColumnFormatter(formatter);
+    assertEquals(columnGroup, formatter.columnGroup);
   }
 
   public void testSettingCellAttributes() {

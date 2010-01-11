@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.ui.HTMLTable.ColumnFormatter;
 
 /**
  * Tests for {@link Grid}.
@@ -59,7 +60,18 @@ public class GridTest extends HTMLTableTestBase {
     }
   }
 
-  public void testColumnFormatter() {
+  public void testColumnFormatterIndexTooHigh() {
+    HTMLTable table = getTable(4, 4);
+    ColumnFormatter formatter = table.getColumnFormatter();
+    try {
+      formatter.getElement(4);
+      fail("Expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected.
+    }
+  }
+
+  public void testColumnFormatterStyleName() {
     Grid r = new Grid(4, 5);
     Grid.ColumnFormatter columns = r.getColumnFormatter();
     columns.setStyleName(0, "base");
@@ -149,5 +161,20 @@ public class GridTest extends HTMLTableTestBase {
       assertEquals(1, r.getColumnCount());
       assertEquals(3, r.getDOMRowCount());
     }
+  }
+
+  public void testResizeColumnGroup() {
+    Grid grid = new Grid(2, 2);
+    Element colGroup = grid.getColumnFormatter().columnGroup;
+    assertEquals(2, grid.getColumnCount());
+    assertEquals(2, colGroup.getChildCount());
+
+    grid.resizeColumns(5);
+    assertEquals(5, grid.getColumnCount());
+    assertEquals(5, colGroup.getChildCount());
+
+    grid.resizeColumns(1);
+    assertEquals(1, grid.getColumnCount());
+    assertEquals(1, colGroup.getChildCount());
   }
 }
