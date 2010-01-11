@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -26,15 +27,15 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.util.JsniRef;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.TreeSet;
 
 /**
  * A utility class that can look up a {@link JsniRef} in a {@link JProgram}.
  */
 public class JsniRefLookup {
-
   /**
    * A callback used to indicate the reason for a failed JSNI lookup.
    */
@@ -74,7 +75,7 @@ public class JsniRefLookup {
           return program.getNullField();
         }
 
-      } else if (fieldName.equals("class")) {
+      } else if (fieldName.equals(JsniRef.CLASS)) {
         JClassLiteral lit = program.getLiteralClass(type);
         return lit.getField();
 
@@ -97,14 +98,12 @@ public class JsniRefLookup {
       errorReporter.reportError("Unresolvable native reference to field '"
           + fieldName + "' in type '" + className + "'");
       return null;
-
     } else if (type instanceof JPrimitiveType) {
       errorReporter.reportError("May not refer to methods on primitive types");
       return null;
-
     } else {
       // look for a method
-      TreeSet<String> almostMatches = new TreeSet<String>();
+      LinkedHashMap<String, LinkedHashMap<String, HasEnclosingType>> matchesBySig = new LinkedHashMap<String, LinkedHashMap<String, HasEnclosingType>>();
       String methodName = ref.memberName();
       String jsniSig = ref.memberSignature();
       if (type == null) {
@@ -112,37 +111,40 @@ public class JsniRefLookup {
           return program.getNullMethod();
         }
       } else {
-        Queue<JDeclaredType> workList = new LinkedList<JDeclaredType>();
-        workList.add((JDeclaredType) type);
-        while (!workList.isEmpty()) {
-          JDeclaredType cur = workList.poll();
-          for (JMethod method : cur.getMethods()) {
-            if (method.getName().equals(methodName)) {
-              String sig = JProgram.getJsniSig(method);
-              if (sig.equals(jsniSig)) {
-                return method;
-              } else if (sig.startsWith(jsniSig) && jsniSig.endsWith(")")) {
-                return method;
-              } else {
-                almostMatches.add(sig);
-              }
-            }
-          }
-          if (cur.getSuperClass() != null) {
-            workList.add(cur.getSuperClass());
-          }
-          workList.addAll(cur.getImplements());
+        findMostDerivedMembers(matchesBySig, (JDeclaredType) type,
+            ref.memberName(), true);
+        LinkedHashMap<String, HasEnclosingType> matches = matchesBySig.get(jsniSig);
+        if (matches != null && matches.size() == 1) {
+          /*
+           * Backward compatibility: allow accessing bridge methods with full
+           * qualification
+           */
+          return matches.values().iterator().next();
+        }
+
+        removeSyntheticMembers(matchesBySig);
+        matches = matchesBySig.get(jsniSig);
+        if (matches != null && matches.size() == 1) {
+          return matches.values().iterator().next();
         }
       }
 
-      if (almostMatches.isEmpty()) {
+      // Not found; signal an error
+      if (matchesBySig.isEmpty()) {
         errorReporter.reportError("Unresolvable native reference to method '"
             + methodName + "' in type '" + className + "'");
         return null;
       } else {
         StringBuilder suggestList = new StringBuilder();
         String comma = "";
-        for (String almost : almostMatches) {
+        // use a TreeSet to sort the near matches
+        TreeSet<String> almostMatchSigs = new TreeSet<String>();
+        for (String sig : matchesBySig.keySet()) {
+          if (matchesBySig.get(sig).size() == 1) {
+            almostMatchSigs.add(sig);
+          }
+        }
+        for (String almost : almostMatchSigs) {
           suggestList.append(comma + "'" + almost + "'");
           comma = ", ";
         }
@@ -154,4 +156,117 @@ public class JsniRefLookup {
     }
   }
 
+  private static void addMember(
+      LinkedHashMap<String, LinkedHashMap<String, HasEnclosingType>> matchesBySig,
+      HasEnclosingType member, String refSig) {
+    LinkedHashMap<String, HasEnclosingType> matchesByFullSig = matchesBySig.get(refSig);
+    if (matchesByFullSig == null) {
+      matchesByFullSig = new LinkedHashMap<String, HasEnclosingType>();
+      matchesBySig.put(refSig, matchesByFullSig);
+    }
+
+    String fullSig;
+    if (member instanceof JField) {
+      fullSig = ((JField) member).getName();
+    } else {
+      fullSig = JProgram.getJsniSig((JMethod) member);
+    }
+
+    matchesByFullSig.put(fullSig, member);
+  }
+
+  /**
+   * For each member with the given name, find the most derived members for each
+   * JSNI reference that match it. For wildcard JSNI references, there will in
+   * general be more than one match. This method does not ignore synthetic
+   * methods.
+   */
+  private static void findMostDerivedMembers(
+      LinkedHashMap<String, LinkedHashMap<String, HasEnclosingType>> matchesBySig,
+      JDeclaredType targetType, String memberName, boolean addConstructors) {
+    /*
+     * Analyze superclasses and interfaces first. More derived members will thus
+     * be seen later.
+     */
+    if (targetType instanceof JClassType) {
+      JClassType targetClass = (JClassType) targetType;
+      if (targetClass.getSuperClass() != null) {
+        findMostDerivedMembers(matchesBySig, targetClass.getSuperClass(),
+            memberName, false);
+      }
+    }
+    for (JDeclaredType intf : targetType.getImplements()) {
+      findMostDerivedMembers(matchesBySig, intf, memberName, false);
+    }
+
+    // Get the methods on this class/interface.
+    for (JMethod method : targetType.getMethods()) {
+      if (method.getName().equals(memberName)) {
+        if (addConstructors || !method.getName().equals(JsniRef.NEW)) {
+          addMember(matchesBySig, method, getJsniSignature(method, false));
+          addMember(matchesBySig, method, getJsniSignature(method, true));
+        }
+      }
+    }
+
+    // Get the fields on this class/interface.
+    for (JField field : targetType.getFields()) {
+      if (field.getName().equals(memberName)) {
+        addMember(matchesBySig, field, field.getName());
+      }
+    }
+  }
+
+  /**
+   * Return the JSNI signature for a member. Leave off the return type for a
+   * method signature, so as to match what a user would type in as a JsniRef.
+   */
+  private static String getJsniSignature(HasEnclosingType member,
+      boolean wildcardParams) {
+    if (member instanceof JField) {
+      return ((JField) member).getName();
+    }
+    JMethod method = (JMethod) member;
+
+    if (wildcardParams) {
+      return method.getName() + "(" + JsniRef.WILDCARD_PARAM_LIST + ")";
+    } else {
+      return JProgram.getJsniSig(method, false);
+    }
+  }
+
+  private static boolean isNewMethod(HasEnclosingType member) {
+    if (member instanceof JMethod) {
+      JMethod method = (JMethod) member;
+      return method.getName().equals(JsniRef.NEW);
+    }
+
+    assert member instanceof JField;
+    return false;
+  }
+
+  private static boolean isSynthetic(HasEnclosingType member) {
+    if (member instanceof JMethod) {
+      return ((JMethod) member).isSynthetic();
+    }
+
+    assert member instanceof JField;
+    return false;
+  }
+
+  private static void removeSyntheticMembers(
+      LinkedHashMap<String, LinkedHashMap<String, HasEnclosingType>> matchesBySig) {
+    for (LinkedHashMap<String, HasEnclosingType> matchesByFullSig : matchesBySig.values()) {
+      Set<String> toRemove = new LinkedHashSet<String>();
+      for (String fullSig : matchesByFullSig.keySet()) {
+        HasEnclosingType member = matchesByFullSig.get(fullSig);
+        if (isSynthetic(member) && !isNewMethod(member)) {
+          toRemove.add(fullSig);
+        }
+      }
+      for (String fullSig : toRemove) {
+        matchesByFullSig.remove(fullSig);
+      }
+    }
+  }
 }

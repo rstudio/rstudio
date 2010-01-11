@@ -410,6 +410,9 @@ public class JsniChecker {
     }
 
     private boolean paramTypesMatch(MethodBinding method, JsniRef jsniRef) {
+      if (jsniRef.matchesAnyOverload()) {
+        return true;
+      }
       StringBuilder methodSig = new StringBuilder();
       if (method.parameters != null) {
         for (TypeBinding binding : method.parameters) {

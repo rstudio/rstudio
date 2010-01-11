@@ -1374,6 +1374,18 @@ public class TokenStream {
       // Assume the opening '(' has already been read.
       // Read param type signatures until we see a closing ')'.
       //
+      // First check for the special case of * as the parameter list, indicating
+      // a wildcard
+      if (in.peek() == '*') {
+        addToString(in.read());
+        if (in.peek() != ')') {
+          reportSyntaxError("msg.jsni.expected.char", new String[] { ")" });
+        }
+        addToString(in.read());
+        return true;
+      }
+      
+      // Otherwise, loop through reading one param type at a time
       do {
         int c = in.read();
         if (c == ')') {

@@ -403,6 +403,7 @@ public class BuildTypeMap {
           BuildDeclMapVisitor.class, "Synthetic constructor"),
           "new".toCharArray(), type, program.getNonNullType(type), false, true,
           true, false, false);
+      synthetic.setSynthetic();
 
       // new Foo() : Create the instance
       JNewInstance newInstance = new JNewInstance(
@@ -567,6 +568,7 @@ public class BuildTypeMap {
               program.getTypeJavaLangClass(), false, false, false, false, false);
           assert (type.getMethods().get(2) == getClassMethod);
           getClassMethod.freezeParamTypes();
+          getClassMethod.setSynthetic();
         }
 
         if (binding.isNestedType() && !binding.isStatic()) {
@@ -653,6 +655,9 @@ public class BuildTypeMap {
       JMethod newMethod = program.createMethod(info, b.selector, enclosingType,
           returnType, b.isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate(),
           b.isNative());
+      if (b.isSynthetic()) {
+        newMethod.setSynthetic();
+      }
 
       typeMap.put(b, newMethod);
       return newMethod;
@@ -810,6 +815,7 @@ public class BuildTypeMap {
             "$clinit".toCharArray(), newType, program.getTypeVoid(), false,
             true, true, true, false);
         clinit.freezeParamTypes();
+        clinit.setSynthetic();
 
         if (newType instanceof JClassType) {
           JMethod init = program.createMethod(info.makeChild(
@@ -817,6 +823,7 @@ public class BuildTypeMap {
               "$init".toCharArray(), newType, program.getTypeVoid(), false,
               false, true, true, false);
           init.freezeParamTypes();
+          init.setSynthetic();
         }
 
         typeMap.put(binding, newType);

@@ -768,6 +768,7 @@ public class JavaToJavaScriptCompiler {
         "init".toCharArray(), program.getIndexedType("EntryMethodHolder"),
         program.getTypeVoid(), false, true, true, false, false);
     bootStrapMethod.freezeParamTypes();
+    bootStrapMethod.setSynthetic();
 
     JMethodBody body = (JMethodBody) bootStrapMethod.getBody();
     JBlock block = body.getBlock();

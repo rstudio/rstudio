@@ -25,14 +25,28 @@ import java.util.regex.Pattern;
  * A parsed Java reference from within a JSNI method.
  */
 public class JsniRef {
+  /**
+   * Special field name for referring to a class literal.
+   */
+  public static final String CLASS = "class";
+
+  /**
+   * Special method name for a class constructor.
+   */
+  public static final String NEW = "new";
+
+  /**
+   * A parameter list indicating a match to any overload.
+   */
+  public static final String WILDCARD_PARAM_LIST = "*";
 
   /**
    * A regex pattern for a Java reference in JSNI code. Its groups are:
    * <ol>
-   * <li> the class name
-   * <li> the field or method name
-   * <li> the method parameter types, including the surrounding parentheses
-   * <li> the method parameter types, excluding the parentheses
+   * <li>the class name
+   * <li>the field or method name
+   * <li>the method parameter types, including the surrounding parentheses
+   * <li>the method parameter types, excluding the parentheses
    * </ol>
    */
   private static Pattern JsniRefPattern = Pattern.compile("@?([^:]+)::([^(]+)(\\((.*)\\))?");
@@ -54,9 +68,11 @@ public class JsniRef {
     String[] paramTypes = null;
     if (matcher.group(3) != null) {
       paramTypesString = matcher.group(4);
-      paramTypes = computeParamTypes(paramTypesString);
-      if (paramTypes == null) {
-        return null;
+      if (!paramTypesString.equals(WILDCARD_PARAM_LIST)) {
+        paramTypes = computeParamTypes(paramTypesString);
+        if (paramTypes == null) {
+          return null;
+        }
       }
     }
     return new JsniRef(className, memberName, paramTypesString, paramTypes);
@@ -112,8 +128,8 @@ public class JsniRef {
   private final String[] paramTypes;
   private final String paramTypesString;
 
-  protected JsniRef(String className, String memberName, String paramTypesString,
-      String[] paramTypes) {
+  protected JsniRef(String className, String memberName,
+      String paramTypesString, String[] paramTypes) {
     this.className = className;
     this.memberName = memberName;
     this.paramTypesString = paramTypesString;
@@ -142,6 +158,14 @@ public class JsniRef {
     return paramTypesString != null;
   }
 
+  /**
+   * Whether this method reference matches all overloads of the specified class
+   * and method name. Only valid for method references.
+   */
+  public boolean matchesAnyOverload() {
+    return paramTypesString.equals(WILDCARD_PARAM_LIST);
+  }
+
   public String memberName() {
     return memberName;
   }
@@ -156,9 +180,11 @@ public class JsniRef {
 
   /**
    * Return the list of parameter types for the method referred to by this
-   * reference.
+   * reference. Only valid for method references where
+   * {@link #matchesAnyOverload()} is false.
    */
   public String[] paramTypes() {
+    assert !matchesAnyOverload();
     return paramTypes;
   }
 

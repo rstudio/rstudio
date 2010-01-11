@@ -52,6 +52,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
   private boolean isFinal;
   private final boolean isPrivate;
   private final boolean isStatic;
+  private boolean isSynthetic = false;
   private final String name;
   private List<JType> originalParamTypes;
   private JType originalReturnType;
@@ -178,6 +179,10 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     return isStatic;
   }
 
+  public boolean isSynthetic() {
+    return isSynthetic;
+  }
+
   public boolean isTrace() {
     return trace;
   }
@@ -224,6 +229,10 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
         }
       }
     }
+  }
+
+  public void setSynthetic() {
+    isSynthetic = true;
   }
 
   public void setTrace() {

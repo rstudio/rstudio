@@ -19,7 +19,6 @@ import junit.framework.TestCase;
 
 /**
  * Tests the {@link JsniRef} class.
- * 
  */
 public class JsniRefTest extends TestCase {
   public static void testBasics() {
@@ -39,6 +38,7 @@ public class JsniRefTest extends TestCase {
       assertEquals("someMeth()", ref.memberSignature());
       assertTrue(ref.isMethod());
       assertFalse(ref.isField());
+      assertFalse(ref.matchesAnyOverload());
       assertEquals(0, ref.paramTypes().length);
     }
 
@@ -51,6 +51,7 @@ public class JsniRefTest extends TestCase {
       assertEquals("someMeth([[ZBCDFIJLjava/lang/String;S)",
           ref.memberSignature());
       assertTrue(ref.isMethod());
+      assertFalse(ref.matchesAnyOverload());
       assertEquals(9, ref.paramTypes().length);
       assertEquals("[[Z", ref.paramTypes()[0]);
       assertEquals("B", ref.paramTypes()[1]);
@@ -61,6 +62,21 @@ public class JsniRefTest extends TestCase {
       assertEquals("J", ref.paramTypes()[6]);
       assertEquals("Ljava/lang/String;", ref.paramTypes()[7]);
       assertEquals("S", ref.paramTypes()[8]);
+    }
+
+    {
+      // Test with a wildcard parameter list
+      JsniRef ref = JsniRef.parse("@some.package.SomeClass::someMeth(*)");
+      assertEquals("some.package.SomeClass", ref.className());
+      assertEquals("someMeth", ref.memberName());
+      assertTrue(ref.isMethod());
+      assertTrue(ref.matchesAnyOverload());
+    }
+
+    {
+      // test some badly formatted wildcard strings
+      assertNull(JsniRef.parse("@some.package.SomeClass::someMeth(*"));
+      assertNull(JsniRef.parse("@some.package.SomeClass::someMeth(I*)"));
     }
 
     {

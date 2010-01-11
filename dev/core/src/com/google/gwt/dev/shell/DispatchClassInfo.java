@@ -15,19 +15,24 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.google.gwt.dev.util.JsniRef;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map.Entry;
 
 /**
  * Helper class for dispatching methods to Java objects. It takes methods on
  * various Java classes and assigns DISPID's to them.
  */
 public class DispatchClassInfo {
-
   private Class<?> cls;
 
   private final int clsId;
@@ -62,20 +67,97 @@ public class DispatchClassInfo {
     return id.intValue();
   }
 
-  private void addMember(Member member, String sig) {
-    if (member.isSynthetic()) {
-      return;
+  private void addMember(
+      LinkedHashMap<String, LinkedHashMap<String, Member>> members,
+      Member member, String sig) {
+    String fullSig = getJsniSignature(member, false);
+    LinkedHashMap<String, Member> membersWithSig = members.get(sig);
+    if (membersWithSig == null) {
+      membersWithSig = new LinkedHashMap<String, Member>();
+      members.put(sig, membersWithSig);
     }
-    int index = memberById.size();
-    memberById.add(member);
-    memberIdByName.put(sig, index);
+    membersWithSig.put(fullSig, member);
   }
 
-  private String getJsniSignature(Member member) {
+  private void addMemberIfUnique(String name, List<Member> membersForName) {
+    if (membersForName.size() == 1) {
+      memberById.add(membersForName.get(0));
+      memberIdByName.put(name, memberById.size() - 1);
+    }
+  }
+
+  private List<Member> filterOutSyntheticMembers(Collection<Member> members) {
+    List<Member> nonSynth = new ArrayList<Member>();
+    for (Member member : members) {
+      if (!member.isSynthetic()) {
+        nonSynth.add(member);
+      }
+    }
+    return nonSynth;
+  }
+
+  private LinkedHashMap<String, LinkedHashMap<String, Member>> findMostDerivedMembers(
+      Class<?> targetClass, boolean addConstructors) {
+    LinkedHashMap<String, LinkedHashMap<String, Member>> members = new LinkedHashMap<String, LinkedHashMap<String, Member>>();
+    findMostDerivedMembers(members, targetClass, addConstructors);
+    return members;
+  }
+
+  /**
+   * For each available JSNI reference, find the most derived field or method
+   * that matches it. For wildcard references, there will be more than one of
+   * them, one for each signature matched.
+   */
+  private void findMostDerivedMembers(
+      LinkedHashMap<String, LinkedHashMap<String, Member>> members,
+      Class<?> targetClass, boolean addConstructors) {
+    /*
+     * Analyze superclasses and interfaces first. More derived members will thus
+     * be seen later.
+     */
+    Class<?> superclass = targetClass.getSuperclass();
+    if (superclass != null) {
+      findMostDerivedMembers(members, superclass, false);
+    }
+    for (Class<?> intf : targetClass.getInterfaces()) {
+      findMostDerivedMembers(members, intf, false);
+    }
+
+    if (addConstructors) {
+      for (Constructor<?> ctor : targetClass.getDeclaredConstructors()) {
+        ctor.setAccessible(true);
+        addMember(members, ctor, getJsniSignature(ctor, false));
+        addMember(members, ctor, getJsniSignature(ctor, true));
+      }
+    }
+
+    // Get the methods on this class/interface.
+    for (Method method : targetClass.getDeclaredMethods()) {
+      method.setAccessible(true);
+      addMember(members, method, getJsniSignature(method, false));
+      addMember(members, method, getJsniSignature(method, true));
+    }
+
+    // Get the fields on this class/interface.
+    Field[] fields = targetClass.getDeclaredFields();
+    for (Field field : fields) {
+      field.setAccessible(true);
+      addMember(members, field, field.getName());
+    }
+
+    // Add a magic field to access class literals from JSNI
+    addMember(members, new SyntheticClassMember(targetClass), "class");
+  }
+
+  private String getJsniSignature(Member member, boolean wildcardParamList) {
     String name;
     Class<?>[] paramTypes;
 
-    if (member instanceof Method) {
+    if (member instanceof Field) {
+      return member.getName();
+    } else if (member instanceof SyntheticClassMember) {
+      return member.getName();
+    } else if (member instanceof Method) {
       name = member.getName();
       paramTypes = ((Method) member).getParameterTypes();
     } else if (member instanceof Constructor) {
@@ -89,10 +171,14 @@ public class DispatchClassInfo {
     StringBuffer sb = new StringBuffer();
     sb.append(name);
     sb.append("(");
-    for (int i = 0; i < paramTypes.length; ++i) {
-      Class<?> type = paramTypes[i];
-      String typeSig = getTypeSig(type);
-      sb.append(typeSig);
+    if (wildcardParamList) {
+      sb.append(JsniRef.WILDCARD_PARAM_LIST);
+    } else {
+      for (int i = 0; i < paramTypes.length; ++i) {
+        Class<?> type = paramTypes[i];
+        String typeSig = getTypeSig(type);
+        sb.append(typeSig);
+      }
     }
     sb.append(")");
 
@@ -143,57 +229,17 @@ public class DispatchClassInfo {
       memberById = new ArrayList<Member>();
       memberById.add(null); // 0 is reserved; it's magic on Win32
       memberIdByName = new HashMap<String, Integer>();
-      lazyInitTargetMembersUsingReflectionHelper(cls, true);
-    }
-  }
 
-  private void lazyInitTargetMembersUsingReflectionHelper(Class<?> targetClass,
-      boolean addConstructors) {
-    // Start by analyzing the superclass recursively; the concrete class will
-    // clobber on overrides.
-    Class<?> superclass = targetClass.getSuperclass();
-    if (superclass != null) {
-      lazyInitTargetMembersUsingReflectionHelper(superclass, false);
-    }
-    for (Class<?> intf : targetClass.getInterfaces()) {
-      lazyInitTargetMembersUsingReflectionHelper(intf, false);
-    }
+      LinkedHashMap<String, LinkedHashMap<String, Member>> members = findMostDerivedMembers(
+          cls, true);
+      for (Entry<String, LinkedHashMap<String, Member>> entry : members.entrySet()) {
+        String name = entry.getKey();
 
-    if (addConstructors) {
-      for (Constructor<?> ctor : targetClass.getDeclaredConstructors()) {
-        ctor.setAccessible(true);
-        String sig = getJsniSignature(ctor);
-        addMember(ctor, sig);
+        List<Member> membersForName = new ArrayList<Member>(
+            entry.getValue().values());
+        addMemberIfUnique(name, membersForName); // backward compatibility
+        addMemberIfUnique(name, filterOutSyntheticMembers(membersForName));
       }
     }
-
-    /*
-     * TODO(mmendez): How should we handle the case where a user writes JSNI
-     * code to interact with an instance that is typed as a particular
-     * interface? Should a user write JSNI code as follows:
-     * 
-     * x.@com.google.gwt.HasFocus::equals(Ljava/lang/Object;)(y)
-     * 
-     * or
-     * 
-     * x.@java.lang.Object::equals(Ljava/lang/Object;)(y)
-     */
-
-    // Get the methods on this class/interface.
-    for (Method method : targetClass.getDeclaredMethods()) {
-      method.setAccessible(true);
-      String sig = getJsniSignature(method);
-      addMember(method, sig);
-    }
-
-    // Get the fields on this class/interface.
-    Field[] fields = targetClass.getDeclaredFields();
-    for (Field field : fields) {
-      field.setAccessible(true);
-      addMember(field, field.getName());
-    }
-
-    // Add a magic field to access class literals from JSNI
-    addMember(new SyntheticClassMember(targetClass), "class");
   }
 }

@@ -2037,6 +2037,7 @@ public class GenerateJavaAST {
           jdtBridgeMethod.selector, clazz,
           (JType) typeMap.get(jdtBridgeMethod.returnType.erasure()), false,
           false, true, false, false);
+      bridgeMethod.setSynthetic();
       int paramIdx = 0;
       for (TypeBinding jdtParamType : jdtBridgeMethod.parameters) {
         String paramName = "p" + paramIdx++;

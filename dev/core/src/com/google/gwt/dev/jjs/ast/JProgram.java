@@ -125,6 +125,10 @@ public class JProgram extends JNode {
   }
 
   public static String getJsniSig(JMethod method) {
+    return getJsniSig(method, true);
+  }
+
+  public static String getJsniSig(JMethod method, boolean addReturnType) {
     StringBuffer sb = new StringBuffer();
     sb.append(method.getName());
     sb.append("(");
@@ -133,7 +137,9 @@ public class JProgram extends JNode {
       sb.append(type.getJsniSignatureName());
     }
     sb.append(")");
-    sb.append(method.getOriginalReturnType().getJsniSignatureName());
+    if (addReturnType) {
+      sb.append(method.getOriginalReturnType().getJsniSignatureName());
+    }
     return sb.toString();
   }
 
@@ -957,6 +963,7 @@ public class JProgram extends JNode {
       nullMethod = new JMethod(createSourceInfoSynthetic(JProgram.class,
           "Null method"), "nullMethod", null, JNullType.INSTANCE, false, false,
           true, true);
+      nullMethod.setSynthetic();
     }
     return nullMethod;
   }

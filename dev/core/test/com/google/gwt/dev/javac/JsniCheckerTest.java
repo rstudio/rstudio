@@ -589,4 +589,15 @@ public class JsniCheckerTest extends CheckerTestCase {
           "Referencing field 'Extra.Inner.x': type 'long' is not safe to access in JSNI code");
     }
   }
+
+  public void testWildcardRef() {
+    StringBuffer code = new StringBuffer();
+    code.append("class Buggy {\n");
+    code.append("  int m(String x) { return -1; }\n");
+    code.append("  native void jsniMeth() /*-{\n");
+    code.append("    $wnd.alert(this.@Buggy::m(*)(\"hello\")); }-*/;\n");
+    code.append("}\n");
+
+    shouldGenerateNoError(code);
+  }
 }
