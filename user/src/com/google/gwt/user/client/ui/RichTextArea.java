@@ -61,7 +61,7 @@ public class RichTextArea extends FocusWidget implements HasHTML,
    * {@link RichTextArea}, use {@link RichTextArea#setHTML(String)} instead.
    * </p>
    * 
-   * @deprecated use {@link Formatter} instead
+   * @deprecated use {@link RichTextArea.Formatter} instead
    */
   @Deprecated
   public interface BasicFormatter {
@@ -196,7 +196,7 @@ public class RichTextArea extends FocusWidget implements HasHTML,
    * {@link RichTextArea}, use {@link RichTextArea#setHTML(String)} instead.
    * </p>
    * 
-   * @deprecated use {@link Formatter} instead
+   * @deprecated use {@link RichTextArea.Formatter} instead
    */
   @Deprecated
   public interface ExtendedFormatter extends BasicFormatter {
