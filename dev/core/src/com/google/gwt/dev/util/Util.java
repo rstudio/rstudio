@@ -1226,11 +1226,11 @@ public final class Util {
     OutputStreamWriter writer = null;
     BufferedWriter buffered = null;
     try {
+      // No need to check mkdirs result because an IOException will occur anyway
+      file.getParentFile().mkdirs();
       stream = new FileOutputStream(file);
       writer = new OutputStreamWriter(stream, DEFAULT_ENCODING);
       buffered = new BufferedWriter(writer);
-      // No need to check mkdirs result because an IOException will occur anyway
-      file.getParentFile().mkdirs();
       buffered.write(string);
     } catch (IOException e) {
       return false;
