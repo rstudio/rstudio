@@ -27,6 +27,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.signature.SignatureReader;
+import com.google.gwt.dev.javac.MethodArgNamesLookup;
 import com.google.gwt.dev.javac.Resolver;
 import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
@@ -46,7 +47,7 @@ import java.util.Map;
  * {@link ResolveMethodSignature}.
  */
 public class ResolveGenericsTest extends AsmTestCase {
-  
+
   public static class FailErrorTreeLogger extends TreeLogger {
     @Override
     public TreeLogger branch(com.google.gwt.core.ext.TreeLogger.Type type,
@@ -83,21 +84,21 @@ public class ResolveGenericsTest extends AsmTestCase {
       super(type, methodName, annotations, typeParams);
       this.method = method;
     }
-    
+
     public Method getMethod() {
       return method;
     }
   }
 
   public static class ResolverMockTypeOracle extends HookableTypeOracle {
-    
+
     private Map<String, JRealClassType> binaryMapper;
 
     public Map<String, JRealClassType> getBinaryMapper() {
       ensureBinaryMapper();
       return binaryMapper;
     }
-    
+
     @Override
     protected void addNewType(JRealClassType type) {
       super.addNewType(type);
@@ -308,7 +309,7 @@ public class ResolveGenericsTest extends AsmTestCase {
     }
     ResolveMethodSignature methodResolver = new ResolveMethodSignature(resolver,
         failTreeLogger, method, lookup, true, methodData, argTypes, argNames,
-        false, Collections.<String, String[]>emptyMap());
+        false, new MethodArgNamesLookup());
     new SignatureReader(signature).accept(methodResolver);
     methodResolver.finish();
   }
