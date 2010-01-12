@@ -42,8 +42,8 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
   public SourceFileCompilationUnit(Resource sourceFile, ContentId contentId,
       List<CompiledClass> compiledClasses, Set<ContentId> dependencies,
       Collection<? extends JsniMethod> jsniMethods,
-      CategorizedProblem[] problems) {
-    super(compiledClasses, dependencies, jsniMethods, problems);
+      MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
+    super(compiledClasses, dependencies, jsniMethods, methodArgs, problems);
     this.sourceFile = sourceFile;
     this.contentId = contentId;
   }
@@ -58,6 +58,7 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
     return sourceFile.getLastModified();
   }
 
+  @Deprecated
   @Override
   public String getSource() {
     if (cacheToken < 0) {
@@ -78,11 +79,13 @@ class SourceFileCompilationUnit extends CompilationUnitImpl {
     return Shared.getTypeName(sourceFile);
   }
 
+  @Deprecated
   @Override
   public boolean isGenerated() {
     return false;
   }
 
+  @Deprecated
   @Override
   public boolean isSuperSource() {
     return sourceFile.wasRerooted();

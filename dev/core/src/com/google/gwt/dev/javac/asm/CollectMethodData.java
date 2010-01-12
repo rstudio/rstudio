@@ -87,6 +87,10 @@ public class CollectMethodData extends EmptyVisitor {
       argNames[i] = "arg" + i;
       paramAnnots[i] = new ArrayList<CollectAnnotationData>();
     }
+    if (argNames.length == 0) {
+      // save some work later if there aren't any parameters
+      actualArgNames = true;
+    }
   }
 
   /**

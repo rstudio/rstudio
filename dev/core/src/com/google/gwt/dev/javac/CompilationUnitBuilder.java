@@ -63,9 +63,9 @@ public abstract class CompilationUnitBuilder {
     protected CompilationUnit makeUnit(List<CompiledClass> compiledClasses,
         Set<ContentId> dependencies,
         Collection<? extends JsniMethod> jsniMethods,
-        CategorizedProblem[] problems) {
+        MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
       return new GeneratedCompilationUnit(generatedUnit, compiledClasses,
-          dependencies, jsniMethods, problems);
+          dependencies, jsniMethods, methodArgs, problems);
     }
 
     @Override
@@ -148,9 +148,9 @@ public abstract class CompilationUnitBuilder {
     protected CompilationUnit makeUnit(List<CompiledClass> compiledClasses,
         Set<ContentId> dependencies,
         Collection<? extends JsniMethod> jsniMethods,
-        CategorizedProblem[] problems) {
+        MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
       return new SourceFileCompilationUnit(getResource(), contentId,
-          compiledClasses, dependencies, jsniMethods, problems);
+          compiledClasses, dependencies, jsniMethods, methodArgs, problems);
     }
   }
 
@@ -161,8 +161,8 @@ public abstract class CompilationUnitBuilder {
     public GeneratedCompilationUnit(GeneratedUnit generatedUnit,
         List<CompiledClass> compiledClasses, Set<ContentId> dependencies,
         Collection<? extends JsniMethod> jsniMethods,
-        CategorizedProblem[] problems) {
-      super(compiledClasses, dependencies, jsniMethods, problems);
+        MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
+      super(compiledClasses, dependencies, jsniMethods, methodArgs, problems);
       this.generatedUnit = generatedUnit;
     }
 
@@ -176,6 +176,7 @@ public abstract class CompilationUnitBuilder {
       return generatedUnit.creationTime();
     }
 
+    @Deprecated
     @Override
     public String getSource() {
       return generatedUnit.getSource();
@@ -186,11 +187,13 @@ public abstract class CompilationUnitBuilder {
       return generatedUnit.getTypeName();
     }
 
+    @Deprecated
     @Override
     public boolean isGenerated() {
       return true;
     }
 
+    @Deprecated
     @Override
     public boolean isSuperSource() {
       return false;
@@ -234,10 +237,11 @@ public abstract class CompilationUnitBuilder {
   public CompilationUnit build(List<CompiledClass> compiledClasses,
       Set<ContentId> dependencies,
       Collection<? extends JsniMethod> jsniMethods,
-      CategorizedProblem[] problems) {
+      MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
     // Free the source now.
     source = null;
-    return makeUnit(compiledClasses, dependencies, jsniMethods, problems);
+    return makeUnit(compiledClasses, dependencies, jsniMethods, methodArgs,
+        problems);
   }
 
   public abstract ContentId getContentId();
@@ -262,7 +266,8 @@ public abstract class CompilationUnitBuilder {
 
   protected abstract CompilationUnit makeUnit(
       List<CompiledClass> compiledClasses, Set<ContentId> dependencies,
-      Collection<? extends JsniMethod> jsniMethods, CategorizedProblem[] errors);
+      Collection<? extends JsniMethod> jsniMethods,
+      MethodArgNamesLookup methodArgs, CategorizedProblem[] errors);
 
   /**
    * This only matters for {@link ArtificialRescueChecker}.

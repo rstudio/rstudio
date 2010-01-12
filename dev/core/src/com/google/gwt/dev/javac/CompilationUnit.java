@@ -266,6 +266,11 @@ public abstract class CompilationUnit {
   public abstract long getLastModified();
 
   /**
+   * @return a way to lookup method argument names for this compilation unit.
+   */
+  public abstract MethodArgNamesLookup getMethodArgs();
+
+  /**
    * Returns the source code for this unit.
    */
   @Deprecated

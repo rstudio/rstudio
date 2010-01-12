@@ -74,7 +74,7 @@ public class CompilationStateBuilder {
         ArtificialRescueChecker.check(cud, builder.isGenerated());
         BinaryTypeReferenceRestrictionsChecker.check(cud);
 
-        // TODO: Collect parameter names?
+        MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud);
 
         CompilationUnitInvalidator.reportErrors(logger, cud,
             builder.getSource());
@@ -82,7 +82,8 @@ public class CompilationStateBuilder {
         Set<ContentId> dependencies = compiler.computeDependencies(cud,
             jsniDeps);
         CompilationUnit unit = builder.build(compiledClasses, dependencies,
-            jsniMethods.values(), cud.compilationResult().getProblems());
+            jsniMethods.values(), methodArgs,
+            cud.compilationResult().getProblems());
         if (cud.compilationResult().hasErrors()) {
           unit = new ErrorCompilationUnit(unit);
         } else {

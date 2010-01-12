@@ -27,20 +27,15 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.IdentityMaps;
 
-import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
-import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
-import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
-import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 import org.eclipse.jdt.internal.compiler.util.Util;
 
@@ -118,6 +113,38 @@ public class JsniCollector {
     }
   }
 
+  private static class Visitor extends MethodVisitor {
+
+    private final Map<AbstractMethodDeclaration, JsniMethod> jsniMethods;
+    private final JsProgram jsProgram;
+    private final String source;
+
+    public Visitor(String source, JsProgram program,
+        Map<AbstractMethodDeclaration, JsniMethod> jsniMethods) {
+      this.jsProgram = program;
+      this.jsniMethods = jsniMethods;
+      this.source = source;
+    }
+
+    @Override
+    protected boolean interestingMethod(AbstractMethodDeclaration method) {
+      return method.isNative();
+    }
+
+    @Override
+    protected void processMethod(TypeDeclaration typeDecl,
+        AbstractMethodDeclaration method, String enclosingType,
+        String loc) {
+      JsFunction jsFunction = parseJsniFunction(method, source, enclosingType,
+          loc, jsProgram);
+      if (jsFunction != null) {
+        String jsniSignature = getJsniSignature(enclosingType, method);
+        jsniMethods.put(method, new JsniMethodImpl(jsniSignature,
+            jsFunction));
+      }
+    }
+  }
+
   public static final String JSNI_BLOCK_END = "}-*/";
 
   public static final String JSNI_BLOCK_START = "/*-{";
@@ -125,23 +152,8 @@ public class JsniCollector {
   public static Map<AbstractMethodDeclaration, JsniMethod> collectJsniMethods(
       final CompilationUnitDeclaration cud, final String source,
       final JsProgram program) {
-    final Map<AbstractMethodDeclaration, JsniMethod> jsniMethods = new IdentityHashMap<AbstractMethodDeclaration, JsniMethod>();
-    cud.traverse(new ASTVisitor() {
-      @Override
-      public void endVisit(TypeDeclaration type, BlockScope scope) {
-        collectJsniMethods(cud, type, source, program, jsniMethods);
-      }
-
-      @Override
-      public void endVisit(TypeDeclaration type, ClassScope scope) {
-        collectJsniMethods(cud, type, source, program, jsniMethods);
-      }
-
-      @Override
-      public void endVisit(TypeDeclaration type, CompilationUnitScope scope) {
-        collectJsniMethods(cud, type, source, program, jsniMethods);
-      }
-    }, cud.scope);
+    Map<AbstractMethodDeclaration, JsniMethod> jsniMethods = new IdentityHashMap<AbstractMethodDeclaration, JsniMethod>();
+    new Visitor(source, program, jsniMethods).collect(cud);
     return IdentityMaps.normalizeUnmodifiable(jsniMethods);
   }
 
@@ -246,43 +258,6 @@ public class JsniCollector {
     reportJsniProblem(info, method, msg, ProblemSeverities.Warning);
   }
 
-  private static void collectJsniMethods(CompilationUnitDeclaration cud,
-      TypeDeclaration typeDecl, String source, JsProgram jsProgram,
-      Map<AbstractMethodDeclaration, JsniMethod> results) {
-    AbstractMethodDeclaration[] methods = typeDecl.methods;
-    if (methods == null) {
-      return;
-    }
-
-    // Lazy initialize these when a native method is actually hit.
-    String enclosingType = null;
-    String loc = null;
-    boolean lazyInitialized = false;
-
-    for (AbstractMethodDeclaration method : methods) {
-      if (!method.isNative()) {
-        continue;
-      }
-
-      if (!lazyInitialized) {
-        char[] constantPoolName = typeDecl.binding.constantPoolName();
-        if (constantPoolName == null) {
-          // Unreachable local type
-          return;
-        }
-        enclosingType = InternalName.toBinaryName(String.valueOf(constantPoolName));
-        loc = String.valueOf(cud.getFileName());
-        lazyInitialized = true;
-      }
-      JsFunction jsFunction = parseJsniFunction(method, source, enclosingType,
-          loc, jsProgram);
-      if (jsFunction != null) {
-        String jsniSignature = getJsniSignature(enclosingType, method);
-        results.put(method, new JsniMethodImpl(jsniSignature, jsFunction));
-      }
-    }
-  }
-
   /**
    * JS reports the error as a line number, to find the absolute position in the
    * real source stream, we have to walk from the absolute JS start position
@@ -336,25 +311,8 @@ public class JsniCollector {
    */
   private static String getJsniSignature(String enclosingType,
       AbstractMethodDeclaration method) {
-    return '@' + enclosingType + "::" + getMemberSignature(method);
-  }
-
-  /**
-   * Gets a unique name for this method and its signature (this is used to
-   * determine whether one method overrides another).
-   */
-  private static String getMemberSignature(AbstractMethodDeclaration method) {
-    String name = String.valueOf(method.selector);
-    StringBuilder sb = new StringBuilder();
-    sb.append(name);
-    sb.append("(");
-    if (method.arguments != null) {
-      for (Argument param : method.arguments) {
-        sb.append(param.binding.type.signature());
-      }
-    }
-    sb.append(")");
-    return sb.toString();
+    return '@' + enclosingType + "::"
+        + MethodVisitor.getMemberSignature(method);
   }
 
   private static void reportJsniProblem(SourceInfo info,

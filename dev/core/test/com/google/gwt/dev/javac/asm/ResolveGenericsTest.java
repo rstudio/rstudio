@@ -308,7 +308,7 @@ public class ResolveGenericsTest extends AsmTestCase {
     }
     ResolveMethodSignature methodResolver = new ResolveMethodSignature(resolver,
         failTreeLogger, method, lookup, true, methodData, argTypes, argNames,
-        false);
+        false, Collections.<String, String[]>emptyMap());
     new SignatureReader(signature).accept(methodResolver);
     methodResolver.finish();
   }

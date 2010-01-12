@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.signature.SignatureVisitor;
+import com.google.gwt.dev.javac.MethodArgNamesLookup;
 import com.google.gwt.dev.javac.Resolver;
 import com.google.gwt.dev.javac.TypeParameterLookup;
 
@@ -48,6 +49,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
   private final Type[] argTypes;
   private final String[] argNames;
   private final boolean argNamesAreReal;
+  private final MethodArgNamesLookup allMethodArgs;
 
   private JType[] returnType = new JType[1];
   private List<JType[]> params = new ArrayList<JType[]>();
@@ -67,11 +69,13 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
    * @param argTypes
    * @param argNames
    * @param argNamesAreReal
+   * @param allMethodArgs 
    */
   public ResolveMethodSignature(Resolver resolver, TreeLogger logger,
       JAbstractMethod method, TypeParameterLookup typeParamLookup,
       boolean hasReturnType, CollectMethodData methodData, Type[] argTypes,
-      String[] argNames, boolean argNamesAreReal) {
+      String[] argNames, boolean argNamesAreReal,
+      MethodArgNamesLookup allMethodArgs) {
     this.resolver = resolver;
     this.logger = logger;
     this.method = method;
@@ -81,6 +85,7 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
     this.argTypes = argTypes;
     this.argNames = argNames;
     this.argNamesAreReal = argNamesAreReal;
+    this.allMethodArgs = allMethodArgs;
   }
 
   /**
@@ -106,6 +111,16 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
               + methodData.getDesc() + ") and signature ("
               + methodData.getSignature() + ")");
     }
+    String[] names = argNames;
+    boolean namesAreReal = argNamesAreReal;
+    if (!namesAreReal) {
+      // lookup argument names in allMethodArgs
+      String[] lookupArgNames = allMethodArgs.lookup(method, methodData);
+      if (lookupArgNames != null) {
+        names = lookupArgNames;
+        namesAreReal = true;
+      }
+    }
     for (int i = 0; i < argTypes.length; ++i) {
       JType argType = params.get(i)[0];
       if (argType == null) {
@@ -118,8 +133,8 @@ public class ResolveMethodSignature extends EmptySignatureVisitor {
           declaredAnnotations);
 
       // JParameter adds itself to the method
-      new JParameter(method, argType, argNames[i], declaredAnnotations,
-          argNamesAreReal);
+      new JParameter(method, argType, names[i], declaredAnnotations,
+          namesAreReal);
     }
 
     // Handle thrown exceptions

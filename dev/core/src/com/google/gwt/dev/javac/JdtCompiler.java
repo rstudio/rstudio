@@ -85,6 +85,7 @@ public class JdtCompiler {
       CompilationUnit unit = builder.build(compiledClasses,
           compiler.computeDependencies(cud),
           Collections.<JsniMethod> emptyList(),
+          new MethodArgNamesLookup(),
           cud.compilationResult().getProblems());
       if (cud.compilationResult().hasErrors()) {
         unit = new ErrorCompilationUnit(unit);

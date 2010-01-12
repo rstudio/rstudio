@@ -32,38 +32,55 @@ class ErrorCompilationUnit extends CompilationUnit {
     this.unit = unit;
   }
 
+  @Override
   public String getDisplayLocation() {
     return unit.getDisplayLocation();
   }
 
+  @Override
   public List<JsniMethod> getJsniMethods() {
     return unit.getJsniMethods();
   }
 
+  @Override
   public long getLastModified() {
     return unit.getLastModified();
   }
 
+  @Override
+  public MethodArgNamesLookup getMethodArgs() {
+    return unit.getMethodArgs();
+  }
+
+  @Override
+  @Deprecated
   public String getSource() {
     return unit.getSource();
   }
 
+  @Override
   public String getTypeName() {
     return unit.getTypeName();
   }
 
+  @Override
   public boolean isCompiled() {
     return false;
   }
 
+  @Override
   public boolean isError() {
     return true;
   }
 
+  @Override
+  @Deprecated
   public boolean isGenerated() {
     return unit.isGenerated();
   }
 
+  @Override
+  @Deprecated
   public boolean isSuperSource() {
     return unit.isSuperSource();
   }

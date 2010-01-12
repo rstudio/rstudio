@@ -29,35 +29,46 @@ abstract class CompilationUnitImpl extends CompilationUnit {
   private final List<CompiledClass> exposedCompiledClasses;
   private final List<JsniMethod> jsniMethods;
   private final CategorizedProblem[] problems;
+  private final MethodArgNamesLookup methodArgs;
 
   public CompilationUnitImpl(List<CompiledClass> compiledClasses,
       Set<ContentId> dependencies,
       Collection<? extends JsniMethod> jsniMethods,
-      CategorizedProblem[] problems) {
+      MethodArgNamesLookup methodArgs, CategorizedProblem[] problems) {
     this.exposedCompiledClasses = Lists.normalizeUnmodifiable(compiledClasses);
     this.dependencies = dependencies;
     this.jsniMethods = Lists.create(jsniMethods.toArray(new JsniMethod[jsniMethods.size()]));
+    this.methodArgs = methodArgs;
     this.problems = problems;
     for (CompiledClass cc : compiledClasses) {
       cc.initUnit(this);
     }
   }
 
+  @Override
   public List<JsniMethod> getJsniMethods() {
     return jsniMethods;
+  }
+
+  @Override
+  public MethodArgNamesLookup getMethodArgs() {
+    return methodArgs;
   }
 
   /**
    * Returns all contained classes.
    */
+  @Override
   Collection<CompiledClass> getCompiledClasses() {
     return exposedCompiledClasses;
   }
 
+  @Override
   Set<ContentId> getDependencies() {
     return dependencies;
   }
 
+  @Override
   CategorizedProblem[] getProblems() {
     return problems;
   }

@@ -53,7 +53,6 @@ import com.google.gwt.dev.javac.asm.ResolveMethodSignature;
 import com.google.gwt.dev.javac.asm.ResolveTypeSignature;
 import com.google.gwt.dev.javac.asm.CollectAnnotationData.AnnotationData;
 import com.google.gwt.dev.javac.asm.CollectClassData.AnnotationEnum;
-import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Name.InternalName;
@@ -223,6 +222,10 @@ public class TypeOracleMediator {
 
   final TypeOracle typeOracle;
 
+  // map of fully qualified method names to their argument names
+  // transient since it is not retained across calls to addNewUnits
+  private transient MethodArgNamesLookup allMethodArgs;
+
   // map of internal names to class visitors
   // transient since it is not retained across calls to addNewUnits
   private transient Map<String, CollectClassData> classMap;
@@ -309,6 +312,7 @@ public class TypeOracleMediator {
 
     // Perform a shallow pass to establish identity for new and old types.
     classMapType = new HashMap<JRealClassType, CollectClassData>();
+    allMethodArgs = new MethodArgNamesLookup();
     Set<JRealClassType> unresolvedTypes = new HashSet<JRealClassType>();
     for (CompilationUnit unit : units) {
       if (!unit.isCompiled()) {
@@ -324,11 +328,7 @@ public class TypeOracleMediator {
         }
         JRealClassType type = createType(compiledClass, unresolvedTypes);
         if (type != null) {
-          if (unit instanceof SourceFileCompilationUnit) {
-            SourceFileCompilationUnit sourceUnit = (SourceFileCompilationUnit) unit;
-            Resource sourceFile = sourceUnit.getSourceFile();
-            typeOracle.addSourceReference(type, sourceFile);
-          }
+          allMethodArgs.mergeFrom(unit.getMethodArgs());
           binaryMapper.put(internalName, type);
           classMapType.put(type, cv);
         }
@@ -359,6 +359,7 @@ public class TypeOracleMediator {
     typeOracle.finish();
 
     // no longer needed
+    allMethodArgs = null;
     classMap = null;
     classMapType = null;
     PerfLogger.end();
@@ -537,7 +538,6 @@ public class TypeOracleMediator {
     }
     return output;
   }
-
 
   /**
    * Collects data about a class which only needs the bytecode and no TypeOracle
@@ -968,7 +968,7 @@ public class TypeOracleMediator {
       ResolveMethodSignature methodResolver = new ResolveMethodSignature(
           resolver, logger, method, typeParamLookup, hasReturnType, methodData,
           methodData.getArgTypes(), methodData.getArgNames(),
-          methodData.hasActualArgNames());
+          methodData.hasActualArgNames(), allMethodArgs);
       // TraceSignatureVisitor trace = new TraceSignatureVisitor(
       // methodData.getAccess());
       // reader.accept(trace);
@@ -1020,8 +1020,15 @@ public class TypeOracleMediator {
   private boolean resolveParameters(TreeLogger logger, JAbstractMethod method,
       CollectMethodData methodData) {
     Type[] argTypes = methodData.getArgTypes();
-    String[] argNames = methodData.getArgNames();
     boolean argNamesAreReal = methodData.hasActualArgNames();
+    String[] argNames = methodData.getArgNames();
+    if (!argNamesAreReal) {
+      String[] lookupNames = allMethodArgs.lookup(method, methodData);
+      if (lookupNames != null) {
+        argNames = lookupNames;
+        argNamesAreReal = true;
+      }
+    }
     List<CollectAnnotationData>[] paramAnnot = methodData.getArgAnnotations();
     for (int i = 0; i < argTypes.length; ++i) {
       JType argType = resolveType(argTypes[i]);
