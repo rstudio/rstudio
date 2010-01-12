@@ -17,7 +17,6 @@ package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
@@ -67,13 +66,7 @@ class LookupMethodCreator extends AbstractMethodCreator {
   }
 
   void createMethodFor(JMethod targetMethod) {
-    JParameter[] args = targetMethod.getParameters();
-    if (args.length != 1) {
-      throw new IllegalStateException(
-          "ConstantsWithLookup methods must have exactly one argument");
-    }
-    String arg0 = args[0].getName();
-    String template = "{0} target = ({0}) cache.get(" + arg0 + ");";
+    String template = "{0} target = ({0}) cache.get(arg0);";
     String returnTypeName = getReturnTypeName();
     String lookup = MessageFormat.format(template, new Object[] {returnTypeName});
     println(lookup);
@@ -88,7 +81,7 @@ class LookupMethodCreator extends AbstractMethodCreator {
       if (methods[i].getReturnType().getErasedType().equals(erasedType)
           && methods[i] != targetMethod) {
         String methodName = methods[i].getName();
-        String body = "if(" + arg0 + ".equals(" + wrap(methodName) + ")) {";
+        String body = "if(arg0.equals(" + wrap(methodName) + ")) {";
         println(body);
         indent();
         printFound(methodName);
@@ -98,7 +91,7 @@ class LookupMethodCreator extends AbstractMethodCreator {
     }
     String format = "throw new java.util.MissingResourceException(\"Cannot find constant ''\" +"
         + "{0} + \"''; expecting a method name\", \"{1}\", {0});";
-    String result = MessageFormat.format(format, arg0,
+    String result = MessageFormat.format(format, "arg0",
         this.currentCreator.getTarget().getQualifiedSourceName());
     println(result);
   }

@@ -253,8 +253,8 @@ public abstract class AbstractGeneratorClassCreator extends
         getWriter().print(",");
       }
       getWriter().print(
-          params[i].getType().getParameterizedQualifiedSourceName() + " "
-              + params[i].getName());
+          params[i].getType().getParameterizedQualifiedSourceName() + " arg"
+              + (i));
     }
     getWriter().println(") {");
     getWriter().indent();

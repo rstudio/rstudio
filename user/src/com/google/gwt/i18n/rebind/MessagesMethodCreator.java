@@ -338,8 +338,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       generated.append(PluralRule.class.getCanonicalName());
       generated.append(" rule = new " + rule.getClass().getCanonicalName()
           + "();\n");
-      generated.append("switch (rule.select("
-          + params[pluralParamIndex].getName() + ")) {\n");
+      generated.append("switch (rule.select(arg" + pluralParamIndex + ")) {\n");
       PluralForm[] pluralForms = rule.pluralForms();
       resourceList.setPluralForms(key, pluralForms);
       // Skip default plural form (index 0); the fall-through case will handle
@@ -371,8 +370,8 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       if (!seenFlags[i]) {
         Optional optional = params[i].getAnnotation(Optional.class);
         if (optional == null) {
-          throw error(logger, "Required argument " + params[i].getName()
-              + " not present: " + template);
+          throw error(logger, "Required argument " + i + " not present: "
+              + template);
         }
       }
     }
@@ -460,7 +459,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
                 + " beyond range of arguments: " + template);
           }
           seenFlag[argNumber] = true;
-          String arg = params[argNumber].getName();
+          String arg = "arg" + argNumber;
           String format = argChunk.getFormat();
           if (format != null) {
             String subformat = argChunk.getSubFormat();
