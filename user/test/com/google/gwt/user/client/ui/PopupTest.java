@@ -23,6 +23,7 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 
@@ -126,6 +127,21 @@ public class PopupTest extends GWTTestCase {
 
     // Remove a partner
     popup.removeAutoHidePartner(partner0);
+  }
+
+  public void testAutoHideOnHistoryEvent() {
+    PopupPanel popup = createPopupPanel();
+    popup.show();
+    assertTrue(popup.isShowing());
+
+    // When autoHideOnHistoryEvent is disabled, the popup remains visible.
+    History.newItem("popupToken0");
+    assertTrue(popup.isShowing());
+
+    // When autoHideOnHistoryEvent is enabled, the popup is hidden.
+    popup.setAutoHideOnHistoryEventsEnabled(true);
+    History.newItem("popupToken1");
+    assertFalse(popup.isShowing());
   }
 
   /**

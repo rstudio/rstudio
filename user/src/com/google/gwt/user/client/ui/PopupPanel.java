@@ -30,6 +30,8 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.Command;
@@ -37,6 +39,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventPreview;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -68,7 +71,7 @@ import java.util.List;
  * which is commonly used to gray out the widgets behind it. It can be enabled
  * using {@link #setGlassEnabled(boolean)}. It has a default style name of
  * "gwt-PopupPanelGlass", which can be changed using
- * {@link #setGlassStyleName()}.
+ * {@link #setGlassStyleName(String)}.
  * </p>
  * 
  * <p>
@@ -364,6 +367,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   private AnimationType animType = AnimationType.CENTER;
 
   private boolean autoHide, previewAllNativeEvents, modal, showing;
+  private boolean autoHideOnHistoryEvents;
 
   private List<Element> autoHidePartners;
 
@@ -390,6 +394,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   private int leftPosition = -1;
 
   private HandlerRegistration nativePreviewHandlerRegistration;
+  private HandlerRegistration historyHandlerRegistration;
 
   /**
    * The {@link ResizeAnimation} used to open and close the {@link PopupPanel}s.
@@ -419,11 +424,13 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * Creates an empty popup panel, specifying its "auto-hide" property.
    * 
    * @param autoHide <code>true</code> if the popup should be automatically
-   *          hidden when the user clicks outside of it
+   *          hidden when the user clicks outside of it or the history token
+   *          changes.
    */
   public PopupPanel(boolean autoHide) {
     this();
     this.autoHide = autoHide;
+    this.autoHideOnHistoryEvents = autoHide;
   }
 
   /**
@@ -431,7 +438,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * properties.
    * 
    * @param autoHide <code>true</code> if the popup should be automatically
-   *          hidden when the user clicks outside of it
+   *          hidden when the user clicks outside of it or the history token
+   *          changes.
    * @param modal <code>true</code> if keyboard or mouse events that do not
    *          target the PopupPanel or its children should be ignored
    */
@@ -482,7 +490,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
     int left = (Window.getClientWidth() - getOffsetWidth()) >> 1;
     int top = (Window.getClientHeight() - getOffsetHeight()) >> 1;
-    setPopupPosition(Math.max(Window.getScrollLeft() + left, 0), Math.max(Window.getScrollTop() + top, 0));
+    setPopupPosition(Math.max(Window.getScrollLeft() + left, 0), Math.max(
+        Window.getScrollTop() + top, 0));
 
     if (!initiallyShowing) {
       setAnimationEnabled(initiallyAnimated);
@@ -592,8 +601,19 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Returns <code>true</code> if a glass element will be displayed under
-   * the {@link PopupPanel}.
+   * Returns <code>true</code> if the popup should be automatically hidden when
+   * the history token changes, such as when the user presses the browser's back
+   * button.
+   * 
+   * @return true if enabled, false if disabled
+   */
+  public boolean isAutoHideOnHistoryEventsEnabled() {
+    return autoHideOnHistoryEvents;
+  }
+
+  /**
+   * Returns <code>true</code> if a glass element will be displayed under the
+   * {@link PopupPanel}.
    * 
    * @return true if enabled
    */
@@ -710,7 +730,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       autoHidePartners.remove(partner);
     }
   }
-  
+
   /**
    * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
    *             object returned by {@link #addCloseHandler} instead
@@ -735,9 +755,20 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
+   * Enable or disable autoHide on history change events. When enabled, the
+   * popup will be automatically hidden when the history token changes, such as
+   * when the user presses the browser's back button. Disabled by default.
+   * 
+   * @param enabled true to enable, false to disable
+   */
+  public void setAutoHideOnHistoryEventsEnabled(boolean enabled) {
+    this.autoHideOnHistoryEvents = enabled;
+  }
+
+  /**
    * When enabled, the background will be blocked with a semi-transparent pane
-   * the next time it is shown. If the PopupPanel is already visible, the
-   * glass will not be displayed until it is hidden and shown again.
+   * the next time it is shown. If the PopupPanel is already visible, the glass
+   * will not be displayed until it is hidden and shown again.
    * 
    * @param enabled true to enable, false to disable
    */
@@ -1353,9 +1384,18 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
           previewNativeEvent(event);
         }
       });
+      historyHandlerRegistration = History.addValueChangeHandler(new ValueChangeHandler<String>() {
+        public void onValueChange(ValueChangeEvent<String> event) {
+          if (autoHideOnHistoryEvents) {
+            hide();
+          }
+        }
+      });
     } else if (nativePreviewHandlerRegistration != null) {
       nativePreviewHandlerRegistration.removeHandler();
       nativePreviewHandlerRegistration = null;
+      historyHandlerRegistration.removeHandler();
+      historyHandlerRegistration = null;
     }
   }
 }

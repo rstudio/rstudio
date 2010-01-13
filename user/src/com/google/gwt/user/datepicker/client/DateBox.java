@@ -264,11 +264,10 @@ public class DateBox extends Composite implements HasValue<Date> {
    */
   public DateBox(DatePicker picker, Date date, Format format) {
     this.picker = picker;
-    this.popup = new PopupPanel();
+    this.popup = new PopupPanel(true);
     assert format != null : "You may not construct a date box with a null format";
     this.format = format;
 
-    popup.setAutoHideEnabled(true);
     popup.addAutoHidePartner(box.getElement());
     popup.setWidget(picker);
     popup.setStyleName("dateBoxPopup");
