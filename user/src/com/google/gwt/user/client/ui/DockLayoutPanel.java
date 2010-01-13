@@ -378,7 +378,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
   }
 
   private void doLayout() {
-    int left = 0, top = 0, right = 0, bottom = 0;
+    double left = 0, top = 0, right = 0, bottom = 0;
 
     for (Widget child : getChildren()) {
       LayoutData data = (LayoutData) child.getLayoutData();
