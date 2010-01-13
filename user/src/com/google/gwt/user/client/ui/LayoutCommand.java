@@ -56,11 +56,10 @@ public class LayoutCommand implements ScheduledCommand {
   }
 
   public final void execute() {
+    scheduled = false;
     if (canceled) {
       return;
     }
-
-    scheduled = false;
 
     doBeforeLayout();
 
