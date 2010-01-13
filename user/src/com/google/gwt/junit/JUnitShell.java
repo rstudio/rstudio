@@ -1014,7 +1014,19 @@ public class JUnitShell extends GWTShell {
       runStyle = ctor.newInstance(JUnitShell.this);
       return runStyle.initialize(args);
     } catch (ClassNotFoundException e) {
-      caught = e;
+      // special error message for CNFE since it is likely a typo
+      String msg = "Unable to create runStyle \"" + runStyleName + "\"";
+      if (runStyleName.indexOf('.') < 0 && runStyleName.length() > 0
+          && Character.isLowerCase(runStyleName.charAt(0))) {
+        // apparently using a built-in runstyle with an initial lowercase letter
+        msg += " - did you mean \""
+            + Character.toUpperCase(runStyleName.charAt(0))
+            + runStyleName.substring(1) + "\"?";
+      } else {
+        msg += " -- is it spelled correctly?";
+      }
+      getTopLogger().log(TreeLogger.ERROR, msg);
+      return -1;
     } catch (SecurityException e) {
       caught = e;
     } catch (NoSuchMethodException e) {
@@ -1028,8 +1040,9 @@ public class JUnitShell extends GWTShell {
     } catch (InvocationTargetException e) {
       caught = e;
     }
-    throw new RuntimeException("Unable to create runStyle " + runStyleName,
-        caught);
+    getTopLogger().log(TreeLogger.ERROR, "Unable to create runStyle \""
+        + runStyleName + "\"", caught);
+    return -1;
   }
 
   private boolean mustNotExecuteTest(Set<Platform> bannedPlatforms) {
