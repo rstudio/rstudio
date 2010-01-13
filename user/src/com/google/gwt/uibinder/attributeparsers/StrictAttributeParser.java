@@ -27,7 +27,7 @@ import com.google.gwt.uibinder.rebind.MortalLogger;
 class StrictAttributeParser implements AttributeParser {
 
   /**
-   * Package protected for testing
+   * Package protected for testing.
    */
   static class FieldReferenceDelegate implements Delegate {
     private boolean sawReference = false;

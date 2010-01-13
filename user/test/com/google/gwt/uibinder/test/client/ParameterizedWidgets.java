@@ -22,7 +22,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Used by {@link TestParameterizedWidgets}
+ * Used by {@link TestParameterizedWidgets}.
  */
 class ParameterizedWidgets {
   interface Binder extends UiBinder<Widget, ParameterizedWidgets> {

@@ -56,7 +56,7 @@ public class SizeMapRecorder {
   }
 
   /**
-   * Returns the hexadecimal representation of a character
+   * Returns the hexadecimal representation of a character.
    */
   public static StringBuilder charToHex(char c) {
     char hexDigit[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -105,19 +105,15 @@ public class SizeMapRecorder {
       if ((c[i] < '\u0020')) {
         builder.append(c, lastIndex, i - lastIndex);
         if (c[i] == '\u0000') {
-         builder.append("\\0");
-        }
-        else if (c[i] == '\u0009') {
-         builder.append("\\t");
-        }
-        else if (c[i] == '\n') {
-         builder.append("\\n");
-        }
-        else if (c[i] == '\r') {
-         builder.append("\\r");
-        }
-        else {
-            builder.append("(invalid xml character: \\u" + charToHex(c[i]) + ")");
+          builder.append("\\0");
+        } else if (c[i] == '\u0009') {
+          builder.append("\\t");
+        } else if (c[i] == '\n') {
+          builder.append("\\n");
+        } else if (c[i] == '\r') {
+          builder.append("\\r");
+        } else {
+          builder.append("(invalid xml character: \\u" + charToHex(c[i]) + ")");
         }
         lastIndex = i + 1;
       } else if (((c[i] >= '\u007F') && (c[i] <= '\u0084')) ||

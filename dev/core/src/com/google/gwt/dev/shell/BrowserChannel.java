@@ -1473,7 +1473,7 @@ public abstract class BrowserChannel {
   }
 
   /**
-   * The current version of the protocol
+   * The current version of the protocol.
    */
   public static final int PROTOCOL_VERSION_CURRENT = 3;
 

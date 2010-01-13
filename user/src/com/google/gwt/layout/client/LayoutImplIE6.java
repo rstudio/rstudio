@@ -285,7 +285,6 @@ class LayoutImplIE6 extends LayoutImplIE8 {
     ruler.onresize = null;
   }-*/;
 
-
   @SuppressWarnings("unused") // called from JSNI
   private void resizeHandler(Element parent) {
     resizeHandler(parent, false);

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.uibinder.attributeparsers;
 
-
 import com.google.gwt.core.ext.typeinfo.JType;
 
 import junit.framework.TestCase;

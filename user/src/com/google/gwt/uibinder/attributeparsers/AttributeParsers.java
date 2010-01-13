@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Managers access to all implementations of {@link AttributeParser}
+ * Managers access to all implementations of {@link AttributeParser}.
  */
 public class AttributeParsers {
   private static final String VERT_CONSTANT = "com.google.gwt.user.client.ui.HasVerticalAlignment."

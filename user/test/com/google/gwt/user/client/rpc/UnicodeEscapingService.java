@@ -75,13 +75,14 @@ public interface UnicodeEscapingService extends RemoteService {
    * Verifies that the string contains the specified characters.
    * 
    * Used to verify client->server escaping.
-   *
+   * 
    * @param start start code point value included
    * @param end first code point not included
    * @param str string to verify
-   * @throws InvalidCharacterException if the string does not contain the specified characters
+   * @throws UnicodeEscapingService.InvalidCharacterException if the string does
+   *           not contain the specified characters
    * @return true if the verification succeeded
    */
   boolean verifyStringContainingCharacterRange(int start, int end, String str)
-      throws InvalidCharacterException;
+      throws UnicodeEscapingService.InvalidCharacterException;
 }

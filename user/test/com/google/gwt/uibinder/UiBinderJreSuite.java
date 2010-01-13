@@ -41,7 +41,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 /**
- * Suite of UiBinder tests that require the JRE
+ * Suite of UiBinder tests that require the JRE.
  */
 public class UiBinderJreSuite {
   public static Test suite() {

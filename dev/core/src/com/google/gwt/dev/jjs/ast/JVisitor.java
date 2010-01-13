@@ -220,7 +220,7 @@ public class JVisitor {
   }
 
   /**
-   * NOTE: not called from JsniFieldRef
+   * NOTE: not called from JsniFieldRef.
    */
   public void endVisit(JFieldRef x, Context ctx) {
     endVisit((JVariableRef) x, ctx);
@@ -287,7 +287,7 @@ public class JVisitor {
   }
 
   /**
-   * NOTE: not called from JsniMethodRef
+   * NOTE: not called from JsniMethodRef.
    */
   public void endVisit(JMethodCall x, Context ctx) {
     endVisit((JExpression) x, ctx);
@@ -528,7 +528,7 @@ public class JVisitor {
   }
 
   /**
-   * NOTE: not called from JsniFieldRef
+   * NOTE: not called from JsniFieldRef.
    */
   public boolean visit(JFieldRef x, Context ctx) {
     return visit((JVariableRef) x, ctx);
@@ -595,7 +595,7 @@ public class JVisitor {
   }
 
   /**
-   * NOTE: not called from JsniMethodRef
+   * NOTE: not called from JsniMethodRef.
    */
   public boolean visit(JMethodCall x, Context ctx) {
     return visit((JExpression) x, ctx);

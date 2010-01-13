@@ -109,7 +109,6 @@ public class FieldReferenceConverter {
 
   private static final Pattern BRACES = Pattern.compile("[{]([^}]*)[}]");
   private static final Pattern LEGAL_FIRST_CHAR = Pattern.compile("^[$_a-zA-Z].*");
-
   
   /**
    * @return true if the given string holds one or more field references

@@ -132,7 +132,7 @@ public class MakeTopLevelHtmlForPerm {
         + "-index.html\">Permutation " + permutationId);
       if (permutationInfoList.size() > 0) {
         for (String desc : permutationInfoList) {
-          outFile.println("  (" + desc + ")" );
+          outFile.println("  (" + desc + ")");
         }
         outFile.println("</a></li>");
       } else {

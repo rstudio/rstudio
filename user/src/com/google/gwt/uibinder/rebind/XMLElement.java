@@ -148,7 +148,7 @@ public class XMLElement {
   }
 
   /**
-   * Ensure that the receiver has no attributes left
+   * Ensure that the receiver has no attributes left.
    * 
    * @throws UnableToCompleteException if it does
    */
@@ -169,7 +169,7 @@ public class XMLElement {
   }
 
   /**
-   * Require that the receiver's body is empty of text and has no child nodes
+   * Require that the receiver's body is empty of text and has no child nodes.
    * 
    * @throws UnableToCompleteException if it isn't
    */
@@ -185,7 +185,7 @@ public class XMLElement {
   }
 
   /**
-   * Require that the receiver's body is empty of text
+   * Require that the receiver's body is empty of text.
    * 
    * @throws UnableToCompleteException if it isn't
    */
@@ -203,7 +203,7 @@ public class XMLElement {
    * parameter is required to determine how the value is parsed and validated.
    * 
    * @param name the attribute's full name (including prefix)
-   * @param types the type(s) this attribute is expected to provide
+   * @param type the type this attribute is expected to provide
    * @return the attribute's value as a Java expression, or null if it is not set
    * @throws UnableToCompleteException on parse failure
    */
@@ -218,7 +218,7 @@ public class XMLElement {
    * 
    * @param name the attribute's full name (including prefix)
    * @param defaultValue the value to @return if the attribute was unset
-   * @param types the type(s) this attribute is expected to provide
+   * @param type the type this attribute is expected to provide
    * @return the attribute's value as a Java expression, or the given default if
    *         it was unset
    * @throws UnableToCompleteException on parse failure
@@ -301,7 +301,7 @@ public class XMLElement {
   }
 
   /**
-   * Consumes and returns all child elements
+   * Consumes and returns all child elements.
    * 
    * @throws UnableToCompleteException if extra text nodes are found
    */
@@ -475,7 +475,6 @@ public class XMLElement {
    * (or a mix of both).
    * 
    * @return array of String, empty if the attribute was not set.
-   * @throws UnableToCompleteException on unparseable value
    */
   public String[] consumeRawArrayAttribute(String name) {
     String raw = consumeRawAttribute(name, null);

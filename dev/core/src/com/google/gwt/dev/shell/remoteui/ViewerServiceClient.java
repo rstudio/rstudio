@@ -92,14 +92,14 @@ public class ViewerServiceClient {
   /**
    * Add a log entry.
    * 
+   * @param indexOfLogEntryWithinParentLogger The index of this entry within the
+   *          parent logger
    * @param type The severity of the log message.
    * @param msg The message.
    * @param caught An exception associated with the message
    * @param helpInfo A URL or message which directs the user to helpful
    *          information related to the log message
    * @param logHandle The log handle of the parent of this log entry/branch
-   * @param indexOfLogentryWithinParentLogger The index of this entry within the
-   *          parent logger
    */
   public void addLogEntry(int indexOfLogEntryWithinParentLogger, Type type,
       String msg, Throwable caught, HelpInfo helpInfo, int logHandle) {

@@ -4,8 +4,8 @@
         <file-match-pattern match-pattern=".*src.*\.java" include-pattern="true"/>
     </fileset>
     <fileset name="Java source for test cases" enabled="true" check-config-name="GWT Checks for Tests" local="false">
-        <file-match-pattern match-pattern=".*test.*com[/\\]google[/\\].*\.java$" include-pattern="true"/>
-        <file-match-pattern match-pattern=".*test.*test[/\\].*\.java$" include-pattern="true"/>
+        <file-match-pattern match-pattern="core[/\\]test[/\\]com[/\\]google[/\\].*\.java$" include-pattern="true"/>
+        <file-match-pattern match-pattern="core[/\\]test[/\\]test[/\\].*\.java$" include-pattern="true"/>
     </fileset>
     <filter name="NonSrcDirs" enabled="true"/>
 </fileset-config>

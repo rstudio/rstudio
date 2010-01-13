@@ -22,7 +22,7 @@ import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.DialogBox;
 
 /**
- * Parses {@link DialogBox} widgets
+ * Parses {@link DialogBox} widgets.
  */
 public class DialogBoxParser implements ElementParser {
   public void parse(XMLElement elem, String fieldName, JClassType type,

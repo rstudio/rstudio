@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 
-
 /**
  * Tests List, and, by extension AbstractList. Uses inheritance to inherit all
  * of Apache's TestList and TestCollection.

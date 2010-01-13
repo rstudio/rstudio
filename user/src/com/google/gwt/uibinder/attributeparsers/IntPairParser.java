@@ -15,7 +15,6 @@
  */
 package com.google.gwt.uibinder.attributeparsers;
 
-
 /**
  * Parses a pair of integer values.
  */

@@ -246,7 +246,6 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
    * The mask to use for Ctrl -- mapped to Command on Mac.
    */
   private static int ctrlKeyDown;
-  
 
   private static final Color DISCONNECTED_COLOR = Color.decode("0xFFDDDD");
 
