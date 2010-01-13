@@ -24,13 +24,13 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Run by {@link WidgetCreation}, see {@link Maker#name} for details.
  */
-public class TestDom extends Widget {
+public class TestDomInnerHtmlById extends Widget {
   public static class Maker extends WidgetCreation.Maker {
     Maker() {
-      super("Text heavy UI via innerHTML, no widgets, get children by id");
+      super("Text heavy UI via innerHTML, no widgets, getElementById");
     }
     public Widget make() {
-      return new TestDom();
+      return new TestDomInnerHtmlById();
     }
   }
 
@@ -44,7 +44,7 @@ public class TestDom extends Widget {
   
   SpanElement span2;
 
-  private TestDom() {
+  private TestDomInnerHtmlById() {
     root = Util.fromHtml(Util.TEXTY_OUTER_HTML);
     
     Document.get().getBody().appendChild(root);

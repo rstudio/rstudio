@@ -32,7 +32,10 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Compares various widget creation strategies.
@@ -62,27 +65,43 @@ public class WidgetCreation implements Microbenchmark {
   final Grid grid;
 
   final TextBox number;
-  final Maker[] makers = {
-      new Maker("SimplePanel") {
-        public Widget make() {
-          return new SimplePanel();
-        }
-      }, new Maker("FlowPanel") {
-        public Widget make() {
-          return new FlowPanel();
-        }
-      }, new Maker("HTMLPanel") {
-        public Widget make() {
-          return new HTMLPanel("");
-        }
-      }, new EmptyBinder.Maker(), new TestEmptyDomViaApi.Maker(),
-      new TestEmptyDom.Maker(), 
-      new TestEmptyCursorDomCrawl.Maker(),
-      new TestEmptyRealisticDomCrawl.Maker(),new TestDomViaApi.Maker(),
-      new TestDom.Maker(), new TestCursorDomCrawl.Maker(),
-      new TestRealisticDomCrawl.Maker(), new TestDomBinder.Maker(),
-      new TestFlows.Maker(), new TestManualHTMLPanel.Maker(),
-      new TestWidgetBinder.Maker()};
+  final List<Maker> makers;
+  {
+    List<Maker> makeMakers = new ArrayList<Maker>();
+    makeMakers.add(new Maker("SimplePanel") {
+          public Widget make() {
+            return new SimplePanel();
+          }
+        });
+    makeMakers.add(new Maker("FlowPanel") {
+      public Widget make() {
+        return new FlowPanel();
+      }
+    });
+    makeMakers.add(new Maker("HTMLPanel") {
+          public Widget make() {
+            return new HTMLPanel("");
+          }
+        });
+    makeMakers.add(new EmptyBinder.Maker());
+    makeMakers.add(new TestEmptyDomViaApi.Maker());
+    makeMakers.add(new TestEmptyDom.Maker());
+    makeMakers.add(new TestEmptyCursorDomCrawl.Maker());
+    makeMakers.add(new TestEmptyRealisticDomCrawl.Maker()); 
+    makeMakers.add(new TestDomViaApi.Maker());
+    makeMakers.add(new TestDomInnerHtmlById.Maker());
+    if (Util.hasQSA) {
+      makeMakers.add(new TestDomInnerHtmlQuerySelectorAll.Maker());
+    }
+    makeMakers.add(new TestCursorDomCrawl.Maker()); 
+    makeMakers.add(new TestRealisticDomCrawl.Maker());
+    makeMakers.add(new TestDomBinder.Maker()); 
+    makeMakers.add(new TestFlows.Maker());
+    makeMakers.add(new TestManualHTMLPanel.Maker()); 
+    makeMakers.add(new TestWidgetBinder.Maker());
+
+    makers = Collections.unmodifiableList(makeMakers);
+  }
 
   final private FlowPanel root;
 
@@ -108,7 +127,7 @@ public class WidgetCreation implements Microbenchmark {
       }
     });
 
-    grid = new Grid(makers.length + 1, 3);
+    grid = new Grid(makers.size() + 2, 3);
     grid.setText(0, 0, "50%");
     grid.setText(0, 1, "m");
 
@@ -141,20 +160,21 @@ public class WidgetCreation implements Microbenchmark {
   }
 
   public void run() {
-    RootPanel r = RootPanel.get();
+    RootPanel root = RootPanel.get();
 
     Widget[] widgets = new Widget[getInstances()];
 
     grid.resizeColumns(grid.getColumnCount() + 1);
 
     int row = 1;
+    double allTimes = 0;
     for (Maker maker : makers) {
       log(maker.name);
       double start = Duration.currentTimeMillis();
 
       for (int i = 0; i < getInstances(); ++i) {
         widgets[i] = maker.make();
-        r.add(widgets[i]);
+        root.add(widgets[i]);
       }
 
       /*
@@ -167,14 +187,16 @@ public class WidgetCreation implements Microbenchmark {
 
       double thisTime = Duration.currentTimeMillis() - start;
       record(row, thisTime);
+      allTimes += thisTime;
 
       // Clean up to keep the dom a reasonable size.
       
       for (int i = 0; i < getInstances(); ++i) {
-        r.remove(widgets[i]);
+        root.remove(widgets[i]);
       }
       row++;
     }
+    grid.setText(row, grid.getColumnCount() - 1, Util.format(allTimes));
   }
 
   private int getInstances() {

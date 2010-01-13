@@ -51,7 +51,8 @@ public class Microbenchmarks implements EntryPoint {
   @UiField DeckPanel deck;
   @UiField Button button;
   @UiField Element running;
-  @UiField Element elapsed;
+  @UiField Element runs;
+  @UiField Element sum;
 
   @UiHandler("listBox")
   public void onChange(@SuppressWarnings("unused") ChangeEvent ignored) {
@@ -68,11 +69,13 @@ public class Microbenchmarks implements EntryPoint {
       public void execute() {
         double start = Duration.currentTimeMillis();
         benchmarks[index].run();
+        double end = Duration.currentTimeMillis();
         UIObject.setVisible(running, false);
         button.setEnabled(true);
-        double end = Duration.currentTimeMillis();
-        elapsedMs += end - start;
-        elapsed.setInnerText(Util.format(elapsedMs));
+        double run = end - start;
+        runs.setInnerText(runs.getInnerText() + Util.format(run) + " ");
+        elapsedMs += run;
+        sum.setInnerText("(" + Util.format(elapsedMs) + ")");
       }
     });
   }
