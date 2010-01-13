@@ -85,15 +85,6 @@ public class AreaElement extends Element {
    }-*/;
 
   /**
-   * Index that represents the element's position in the tabbing order.
-   * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
-   */
-  public final native int getTabIndex() /*-{
-     return this.tabIndex;
-   }-*/;
-
-  /**
    * Frame to render the resource in.
    * 
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target">W3C HTML Specification</a>
@@ -147,15 +138,6 @@ public class AreaElement extends Element {
    */
   public final native void setShape(String shape) /*-{
      this.shape = shape;
-   }-*/;
-
-  /**
-   * Index that represents the element's position in the tabbing order.
-   * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
-   */
-  public final native void setTabIndex(int tabIndex) /*-{
-     this.tabIndex = tabIndex;
    }-*/;
 
   /**

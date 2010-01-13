@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.Element;
 
 /**
@@ -23,20 +24,20 @@ import com.google.gwt.user.client.Element;
  * that aren't naturally focusable in all browsers, such as DIVs.
  */
 public class FocusImpl {
-  
+
   private static FocusImpl implPanel = GWT.create(FocusImpl.class);
 
   /**
-   * This instance may not be a {@link FocusImplOld}, because that special case
-   * is only needed for things that aren't naturally focusable on some browsers,
-   * such as DIVs. This exact class works for truly focusable widgets on those
-   * browsers.
+   * This instance may not be a {@link FocusImplStandard}, because that special
+   * case is only needed for things that aren't naturally focusable on some
+   * browsers, such as DIVs. This exact class works for truly focusable widgets
+   * on those browsers.
    * 
    * The compiler will optimize out the conditional.
    */
-  private static FocusImpl implWidget = (implPanel instanceof FocusImplOld)
+  private static FocusImpl implWidget = (implPanel instanceof FocusImplStandard)
       ? new FocusImpl() : implPanel;
-  
+
   /**
    * Returns the focus implementation class for creating and manipulating
    * focusable elements that aren't naturally focusable in all browsers, such as
@@ -45,7 +46,7 @@ public class FocusImpl {
   public static FocusImpl getFocusImplForPanel() {
     return implPanel;
   }
-  
+
   /**
    * Returns the focus implementation class for manipulating focusable elements
    * that are naturally focusable in all browsers, such as text boxes.
@@ -53,36 +54,36 @@ public class FocusImpl {
   public static FocusImpl getFocusImplForWidget() {
     return implWidget;
   }
-  
+
   /**
-   * Not externally instantiable or extensible. 
+   * Not externally instantiable or extensible.
    */
   FocusImpl() {
   }
 
-  public native void blur(Element elem) /*-{
+  public void blur(Element elem) {
     elem.blur();
-  }-*/;
+  }
 
-  public native Element createFocusable() /*-{
-    var e = $doc.createElement("DIV");
-    e.tabIndex = 0;
+  public Element createFocusable() {
+    Element e = Document.get().createDivElement().cast();
+    e.setTabIndex(0);
     return e;
-  }-*/;
+  }
 
-  public native void focus(Element elem) /*-{
+  public void focus(Element elem) {
     elem.focus();
-  }-*/;
+  }
 
-  public native int getTabIndex(Element elem) /*-{
-    return elem.tabIndex;
-  }-*/;
+  public int getTabIndex(Element elem) {
+    return elem.getTabIndex();
+  }
 
   public native void setAccessKey(Element elem, char key) /*-{
-    elem.accessKey = key;
+    elem.accessKey = String.fromCharCode(key);
   }-*/;
 
-  public native void setTabIndex(Element elem, int index) /*-{
-    elem.tabIndex = index;
-  }-*/;
+  public void setTabIndex(Element elem, int index) {
+    elem.setTabIndex(index);
+  }
 }

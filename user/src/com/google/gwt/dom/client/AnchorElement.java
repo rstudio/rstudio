@@ -38,20 +38,6 @@ public class AnchorElement extends Element {
   }
 
   /**
-   * Removes keyboard focus from this element.
-   */
-  public final native void blur() /*-{
-    this.blur();
-  }-*/;
-
-  /**
-   * Gives keyboard focus to this element.
-   */
-  public final native void focus() /*-{
-    this.focus();
-  }-*/;
-
-  /**
    * A single character access key to give access to the form control.
    * 
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
@@ -95,15 +81,6 @@ public class AnchorElement extends Element {
   public final native String getRel() /*-{
      return this.rel;
    }-*/;
-
-  /**
-   * Index that represents the element's position in the tabbing order.
-   * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
-   */
-  public final native int getTabIndex() /*-{
-    return this.tabIndex;
-  }-*/;
 
   /**
    * Frame to render the resource in.
@@ -167,15 +144,6 @@ public class AnchorElement extends Element {
   public final native void setRel(String rel) /*-{
      this.rel = rel;
    }-*/;
-
-  /**
-   * Index that represents the element's position in the tabbing order.
-   * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
-   */
-  public final native void setTabIndex(int tabIndex) /*-{
-    this.tabIndex = tabIndex;
-  }-*/;
 
   /**
    * Frame to render the resource in.

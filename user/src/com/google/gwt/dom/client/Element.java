@@ -104,6 +104,13 @@ public class Element extends Node {
   }
 
   /**
+   * Removes keyboard focus from this element.
+   */
+  public final native void blur() /*-{
+    this.blur();
+  }-*/;
+
+  /**
    * Dispatched the given event with this element as its target. The event will
    * go through all phases of the browser's normal event dispatch mechanism.
    * 
@@ -119,6 +126,13 @@ public class Element extends Node {
   public final void dispatchEvent(NativeEvent evt) {
     DOMImpl.impl.dispatchEvent(this, evt);
   }
+
+  /**
+   * Gives keyboard focus to this element.
+   */
+  public final native void focus() /*-{
+    this.focus();
+  }-*/;
 
   /**
    * Gets an element's absolute bottom coordinate in the document's coordinate
@@ -418,6 +432,15 @@ public class Element extends Node {
    }-*/;
 
   /**
+   * The index that represents the element's position in the tabbing order.
+   * 
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
+   */
+  public final native int getTabIndex() /*-{
+    return this.tabIndex;
+  }-*/;
+
+  /**
    * Gets the element's full tag name, including the namespace-prefix if
    * present.
    * 
@@ -678,6 +701,15 @@ public class Element extends Node {
   public final native void setScrollTop(int scrollTop) /*-{
      this.scrollTop = scrollTop;
    }-*/;
+
+  /**
+   * The index that represents the element's position in the tabbing order.
+   * 
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
+   */
+  public final native void setTabIndex(int tabIndex) /*-{
+    this.tabIndex = tabIndex;
+  }-*/;
 
   /**
    * The element's advisory title.

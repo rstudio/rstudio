@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Element;
 
 /**
@@ -23,14 +22,14 @@ import com.google.gwt.user.client.Element;
  * transparent hidden element, since Safari will not keyboard focus on an input
  * element that has zero width and height.
  */
-public class FocusImplSafari extends FocusImplOld {
-  
+public class FocusImplSafari extends FocusImplStandard {
+
   @Override
   public native void blur(Element elem) /*-{
     // Attempts to blur elements from within an event callback will generally
     // be unsuccessful, so we invoke blur() from outside of the callback.
     $wnd.setTimeout(function() {
-      elem.firstChild.blur();
+      elem.blur();
     }, 0);
   }-*/;
 
@@ -39,36 +38,8 @@ public class FocusImplSafari extends FocusImplOld {
     // Attempts to focus elements from within an event callback will generally
     // be unsuccessful, so we invoke focus() from outside of the callback.
     $wnd.setTimeout(function() {
-      elem.firstChild.focus();
+      elem.focus();
     }, 0);
-  }-*/;
-
-  @Override
-  protected native Element createHiddenInput() /*-{
-    var input = $doc.createElement('input');
-    input.type = 'text';
-    input.style.opacity = 0;
-    input.style.zIndex = -1;
-    input.style.height = '1px';
-    input.style.width = '1px';
-    input.style.overflow = 'hidden';
-    input.style.position = 'absolute';
-    return input;
-  }-*/;
-
-  @Override
-  protected native JavaScriptObject createMouseHandler() /*-{
-    return function() {
-      // This function is called directly as an event handler, so 'this' is
-      // set up by the browser to be the div on which the event is fired.
-      var firstChild = this.firstChild;
-
-      // Attempts to focus elements from within an event callback will generally
-      // be unsuccessful, so we invoke focus() from outside of the callback.
-      $wnd.setTimeout(function() {
-        firstChild.focus();
-      }, 0);
-    }
   }-*/;
 
 }

@@ -92,15 +92,6 @@ public class ObjectElement extends Element {
    }-*/;
 
   /**
-   * Index that represents the element's position in the tabbing order.
-   * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
-   */
-  public final native int getTabIndex() /*-{
-     return this.tabIndex;
-   }-*/;
-
-  /**
    * Content type for data downloaded via data attribute.
    * 
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-type-OBJECT">W3C HTML Specification</a>
@@ -150,15 +141,6 @@ public class ObjectElement extends Element {
    */
   public final native void setName(String name) /*-{
      this.name = name;
-   }-*/;
-
-  /**
-   * Index that represents the element's position in the tabbing order.
-   * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
-   */
-  public final native void setTabIndex(int tabIndex) /*-{
-     this.tabIndex = tabIndex;
    }-*/;
 
   /**

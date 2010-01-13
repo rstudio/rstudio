@@ -43,25 +43,11 @@ public class InputElement extends Element {
   }
 
   /**
-   * Removes keyboard focus from this element.
-   */
-  public final native void blur() /*-{
-    this.blur();
-  }-*/;
-
-  /**
    * Simulate a mouse-click. For INPUT elements whose type attribute has one of
    * the following values: "button", "checkbox", "radio", "reset", or "submit".
    */
   public final native void click() /*-{
     this.click();
-  }-*/;
-
-  /**
-   * Gives keyboard focus to this element.
-   */
-  public final native void focus() /*-{
-    this.focus();
   }-*/;
 
   /**
@@ -149,15 +135,6 @@ public class InputElement extends Element {
    */
   public final native String getSrc() /*-{
     return this.src;
-  }-*/;
-
-  /**
-   * Index that represents the element's position in the tabbing order.
-   * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
-   */
-  public final native int getTabIndex() /*-{
-    return this.tabIndex;
   }-*/;
 
   /**
@@ -369,15 +346,6 @@ public class InputElement extends Element {
    */
   public final native void setSrc(String src) /*-{
     this.src = src;
-  }-*/;
-
-  /**
-   * Index that represents the element's position in the tabbing order.
-   * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
-   */
-  public final native void setTabIndex(int tabIndex) /*-{
-    this.tabIndex = tabIndex;
   }-*/;
 
   /**

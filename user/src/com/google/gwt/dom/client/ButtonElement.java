@@ -81,15 +81,6 @@ public class ButtonElement extends Element {
    }-*/;
 
   /**
-   * Index that represents the element's position in the tabbing order.
-   * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
-   */
-  public final native int getTabIndex() /*-{
-     return this.tabIndex;
-   }-*/;
-
-  /**
    * The type of button (all lower case).
    * 
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-type-BUTTON">W3C HTML Specification</a>
@@ -151,15 +142,6 @@ public class ButtonElement extends Element {
    */
   public final native void setName(String name) /*-{
      this.name = name;
-   }-*/;
-
-  /**
-   * Index that represents the element's position in the tabbing order.
-   * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
-   */
-  public final native void setTabIndex(int tabIndex) /*-{
-     this.tabIndex = tabIndex;
    }-*/;
 
   /**

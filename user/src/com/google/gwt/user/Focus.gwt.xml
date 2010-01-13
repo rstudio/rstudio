@@ -20,15 +20,17 @@
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.user.UserAgent"/>
 
-  <!-- old Mozilla needs a different implementation -->
-  <replace-with class="com.google.gwt.user.client.ui.impl.FocusImplOld">
+  <!-- Firefox uses a hidden input to set accesskeys -->
+  <replace-with class="com.google.gwt.user.client.ui.impl.FocusImplStandard">
     <when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
     <any>
       <when-property-is name="user.agent" value="gecko"/>
+      <when-property-is name="user.agent" value="gecko1_8"/>
     </any>
   </replace-with>
 
-  <!--  Safari needs a different hidden input -->
+  <!-- Safari uses a hidden input to set accesskeys and -->
+  <!-- fires focus/blur after a timeout                 -->
   <replace-with class="com.google.gwt.user.client.ui.impl.FocusImplSafari">
     <when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
     <when-property-is name="user.agent" value="safari"/>
