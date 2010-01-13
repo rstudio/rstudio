@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.layout.client.LayoutTest;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Command;
@@ -25,7 +24,7 @@ import com.google.gwt.user.client.DeferredCommand;
 /**
  * Tests for {@link LayoutPanel}. Note that this only tests LayoutPanel-specific
  * behavior, not general layout correctness, which is covered by
- * {@link LayoutTest}.
+ * {@link com.google.gwt.layout.client.LayoutTest}.
  */
 public class LayoutPanelTest extends WidgetTestBase {
 
