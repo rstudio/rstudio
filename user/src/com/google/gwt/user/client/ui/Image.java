@@ -534,6 +534,15 @@ public class Image extends Widget implements SourcesLoadEvents,
   }
 
   /**
+   * Gets the alternate text for the image.
+   * 
+   * @return the alternate text for the image
+   */
+  public String getAltText() {
+    return state.getImageElement(this).getAlt();
+  }
+
+  /**
    * Gets the height of the image. When the image is in the unclipped state, the
    * height of the image is not known until the image has been loaded (i.e. load
    * event has been fired for the image).
@@ -637,6 +646,16 @@ public class Image extends Widget implements SourcesLoadEvents,
   @Deprecated
   public void removeMouseWheelListener(MouseWheelListener listener) {
     ListenerWrapper.WrappedMouseWheelListener.remove(this, listener);
+  }
+
+  /**
+   * Sets the alternate text of the image for user agents that can't render the
+   * image.
+   * 
+   * @param altText the alternate text to set to
+   */
+  public void setAltText(String altText) {
+    state.getImageElement(this).setAlt(altText);
   }
 
   /**

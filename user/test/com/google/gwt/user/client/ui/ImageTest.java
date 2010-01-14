@@ -120,6 +120,17 @@ public class ImageTest extends GWTTestCase {
     return "com.google.gwt.user.UserTest";
   }
 
+  public void testAltText() {
+    final String altText = "this is an image";
+    final Image image = new Image("image.png", 12, 12, 12, 12);
+
+    assertEquals("", image.getAltText());
+    image.setAltText(altText);
+    assertEquals(altText, image.getAltText());
+    image.setAltText("");
+    assertEquals("", image.getAltText());
+  }
+
   /**
    * Tests the transition from the clipped state to the unclipped state.
    */
@@ -433,7 +444,7 @@ public class ImageTest extends GWTTestCase {
 
     RootPanel.get().add(image);
   }
-  
+
   public void testResourceConstructor() {
     Bundle b = GWT.create(Bundle.class);
     Image image = new Image(b.prettyPiccy());
