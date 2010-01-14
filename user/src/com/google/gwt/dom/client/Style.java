@@ -94,6 +94,7 @@ public class Style extends JavaScriptObject {
 
     public abstract String getType();
   }
+
   /**
    * Enum for the border-style property.
    */
@@ -245,6 +246,27 @@ public class Style extends JavaScriptObject {
         return DISPLAY_INLINE_BLOCK;
       }
     };
+  }
+
+  /**
+   * Enum for the float property.
+   */
+  public enum Float implements HasCssName {
+    LEFT {
+      public String getCssName() {
+        return FLOAT_LEFT;
+      }
+    },
+    RIGHT {
+      public String getCssName() {
+        return FLOAT_RIGHT;
+      }
+    },
+    NONE {
+      public String getCssName() {
+        return FLOAT_NONE;
+      }
+    },
   }
 
   /**
@@ -515,6 +537,10 @@ public class Style extends JavaScriptObject {
   private static final String DISPLAY_BLOCK = "block";
   private static final String DISPLAY_NONE = "none";
 
+  private static final String FLOAT_LEFT = "left";
+  private static final String FLOAT_RIGHT = "right";
+  private static final String FLOAT_NONE = "none";
+
   private static final String FONT_STYLE_OBLIQUE = "oblique";
   private static final String FONT_STYLE_ITALIC = "italic";
   private static final String FONT_STYLE_NORMAL = "normal";
@@ -676,9 +702,16 @@ public class Style extends JavaScriptObject {
   /**
    * Clear the font-size css property.
    */
+  public final void clearFloat() {
+    clearProperty(DOMImpl.impl.cssFloatPropertyName());
+  }
+
+  /**
+   * Clear the font-size css property.
+   */
   public final void clearFontSize() {
-     clearProperty(STYLE_FONT_SIZE);
-   }
+    clearProperty(STYLE_FONT_SIZE);
+  }
 
   /**
    * Clears the font-style CSS property.
@@ -754,8 +787,8 @@ public class Style extends JavaScriptObject {
    * Clear the opacity css property.
    */
   public final void clearOpacity() {
-     clearProperty(STYLE_OPACITY);
-   }
+    DOMImpl.impl.cssClearOpacity(this);
+  }
 
   /**
    * Clears the overflow CSS property.
@@ -1172,6 +1205,13 @@ public class Style extends JavaScriptObject {
   }
 
   /**
+   * Set the float css property.
+   */
+  public final void setFloat(Float value) {
+    setProperty(DOMImpl.impl.cssFloatPropertyName(), value.getCssName());
+  }
+
+  /**
    * Set the font-size css property.
    */
   public final void setFontSize(double value, Unit unit) {
@@ -1252,7 +1292,7 @@ public class Style extends JavaScriptObject {
    * Set the opacity css property.
    */
   public final void setOpacity(double value) {
-    setProperty(STYLE_OPACITY, value + "");
+    DOMImpl.impl.cssSetOpacity(this, value);
   }
 
   /**

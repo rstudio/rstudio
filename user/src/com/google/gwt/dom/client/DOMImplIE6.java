@@ -22,6 +22,21 @@ package com.google.gwt.dom.client;
 class DOMImplIE6 extends DOMImplTrident {
 
   @Override
+  public native void cssClearOpacity(Style style) /*-{
+    style.filter = '';
+  }-*/;
+
+  @Override
+  public String cssFloatPropertyName() {
+    return "styleFloat";
+  }
+
+  @Override
+  public native void cssSetOpacity(Style style, double value) /*-{
+    style.filter = 'alpha(opacity=' + (value * 100) + ')';
+  }-*/;
+
+  @Override
   public int getAbsoluteLeft(Element elem) {
     Document doc = elem.getOwnerDocument();
     return (int) Math.floor(getBoundingClientRectLeft(elem)

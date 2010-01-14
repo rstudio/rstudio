@@ -172,4 +172,19 @@ public class TabLayoutPanelTest extends GWTTestCase {
     delayTestFinish(1000);
     p.selectTab(1);
   }
+
+  /**
+   * Tests that tabs actually line up properly (see issue 4447).
+   */
+  public void testTabLayout() {
+    TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
+    RootPanel.get().add(p);
+
+    p.add(new Button("foo"), new Label("foo"));
+    p.add(new Button("bar"), new Label("bar"));
+
+    assertEquals(
+        p.getTabWidget(0).getElement().getOffsetTop(),
+        p.getTabWidget(1).getElement().getOffsetTop());
+  }
 }

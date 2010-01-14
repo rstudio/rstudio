@@ -69,6 +69,18 @@ abstract class DOMImpl {
     return select;
   }
 
+  public native void cssClearOpacity(Style style) /*-{
+    style.opacity = '';
+  }-*/;
+
+  public String cssFloatPropertyName() {
+    return "cssFloat";
+  }
+
+  public native void cssSetOpacity(Style style, double value) /*-{
+    style.opacity = value;
+  }-*/;
+
   public abstract void dispatchEvent(Element target, NativeEvent evt);
 
   public native boolean eventGetAltKey(NativeEvent evt) /*-{
