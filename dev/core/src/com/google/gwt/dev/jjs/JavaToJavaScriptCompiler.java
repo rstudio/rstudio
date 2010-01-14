@@ -333,17 +333,21 @@ public class JavaToJavaScriptCompiler {
       // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
       // note, JsIEBlockTextTransformer now handles restructuring top level
       // blocks, this class now handles non-top level blocks only.
-      SelectionProperty userAgentProperty = null;
+      boolean splitBlocks = false;
       for (PropertyOracle oracle : propertyOracles) {
         try {
-          userAgentProperty = oracle.getSelectionProperty(logger, "user.agent");
+          SelectionProperty userAgentProperty = oracle.getSelectionProperty(
+              logger, "user.agent");
+          if ("ie6".equals(userAgentProperty.getCurrentValue())) {
+            splitBlocks = true;
+            break;
+          }
         } catch (BadPropertyValueException e) {
+          // user agent unknown; play it safe
+          splitBlocks = true;
           break;
         }
       }
-      // if user agent is known or ie6, split overly large blocks
-      boolean splitBlocks = userAgentProperty == null
-          || ("ie6".equals(userAgentProperty.getCurrentValue()));
 
       if (splitBlocks) {
         JsIEBlockSizeVisitor.exec(jsProgram);
