@@ -92,48 +92,6 @@ import java.util.List;
  * <dl>
  * <dt>.gwt-SuggestBox</dt>
  * <dd>the suggest box itself</dd>
- * <dt>.gwt-SuggestBoxPopup</dt>
- * <dd>the suggestion popup</dd>
- * <dt>.gwt-SuggestBoxPopup .item</dt>
- * <dd>an unselected suggestion</dd>
- * <dt>.gwt-SuggestBoxPopup .item-selected</dt>
- * <dd>a selected suggestion</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupTopLeft</dt>
- * <dd>the top left cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupTopLeftInner</dt>
- * <dd>the inner element of the cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupTopCenter</dt>
- * <dd>the top center cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupTopCenterInner</dt>
- * <dd>the inner element of the cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupTopRight</dt>
- * <dd>the top right cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupTopRightInner</dt>
- * <dd>the inner element of the cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleLeft</dt>
- * <dd>the middle left cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleLeftInner</dt>
- * <dd>the inner element of the cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleCenter</dt>
- * <dd>the middle center cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleCenterInner</dt>
- * <dd>the inner element of the cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleRight</dt>
- * <dd>the middle right cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleRightInner</dt>
- * <dd>the inner element of the cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomLeft</dt>
- * <dd>the bottom left cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomLeftInner</dt>
- * <dd>the inner element of the cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomCenter</dt>
- * <dd>the bottom center cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomCenterInner</dt>
- * <dd>the inner element of the cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomRight</dt>
- * <dd>the bottom right cell</dd>
- * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomRightInner</dt>
- * <dd>the inner element of the cell</dd>
  * </dl>
  * 
  * @see SuggestOracle
@@ -145,6 +103,364 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     HasAnimation, SourcesClickEvents, SourcesFocusEvents, SourcesChangeEvents,
     SourcesKeyboardEvents, FiresSuggestionEvents, HasAllKeyHandlers,
     HasValue<String>, HasSelectionHandlers<Suggestion> {
+
+  /**
+   * The callback used when a user selects a {@link Suggestion}.
+   */
+  public static interface SuggestionCallback {
+    void onSuggestionSelected(Suggestion suggestion);
+  }
+
+  /**
+   * Used to display suggestions to the user.
+   */
+  public abstract static class SuggestionDisplay {
+
+    /**
+     * Get the currently selected {@link Suggestion} in the display.
+     * 
+     * @return the current suggestion, or null if none selected
+     */
+    protected abstract Suggestion getCurrentSelection();
+
+    /**
+     * Hide the list of suggestions from view.
+     */
+    protected abstract void hideSuggestions();
+
+    /**
+     * Highlight the suggestion directly below the current selection in the
+     * list.
+     */
+    protected abstract void moveSelectionDown();
+
+    /**
+     * Highlight the suggestion directly above the current selection in the
+     * list.
+     */
+    protected abstract void moveSelectionUp();
+
+    /**
+     * Set the debug id of widgets used in the SuggestionDisplay.
+     * 
+     * @param suggestBoxBaseID the baseID of the {@link SuggestBox}
+     * @see UIObject#onEnsureDebugId(String)
+     */
+    protected void onEnsureDebugId(String suggestBoxBaseID) {
+    }
+
+    /**
+     * Update the list of visible suggestions.
+     * 
+     * @param suggestBox the suggest box where the suggestions originated
+     * @param suggestions the suggestions to show
+     * @param isDisplayStringHTML should the suggestions be displayed as HTML
+     * @param isAutoSelectEnabled if true, the first item should be selected
+     *          automatically
+     * @param callback the callback used when the user makes a suggestion
+     */
+    protected abstract void showSuggestions(SuggestBox suggestBox,
+        Collection<? extends Suggestion> suggestions,
+        boolean isDisplayStringHTML, boolean isAutoSelectEnabled,
+        SuggestionCallback callback);
+
+    /**
+     * This is here for legacy reasons. It is intentionally not visible.
+     * 
+     * @deprecated implemented in DefaultSuggestionDisplay
+     */
+    @Deprecated
+    boolean isAnimationEnabledImpl() {
+      // Implemented in DefaultSuggestionDisplay.
+      return false;
+    }
+
+    /**
+     * This is here for legacy reasons. It is intentionally not visible.
+     * 
+     * @deprecated implemented in DefaultSuggestionDisplay
+     */
+    @Deprecated
+    boolean isSuggestionListShowingImpl() {
+      // Implemented in DefaultSuggestionDisplay.
+      return false;
+    }
+
+    /**
+     * This is here for legacy reasons. It is intentionally not visible.
+     * 
+     * @deprecated implemented in DefaultSuggestionDisplay
+     */
+    @Deprecated
+    void setAnimationEnabledImpl(boolean enable) {
+      // Implemented in DefaultSuggestionDisplay.
+    }
+
+    /**
+     * This is here for legacy reasons. It is intentionally not visible.
+     * 
+     * @deprecated implemented in DefaultSuggestionDisplay
+     */
+    @Deprecated
+    void setPopupStyleNameImpl(String style) {
+      // Implemented in DefaultSuggestionDisplay.
+    }
+  }
+
+  /**
+   * <p>
+   * The default implementation of {@link SuggestionDisplay} displays
+   * suggestions in a {@link PopupPanel} beneath the {@link SuggestBox}.
+   * </p>
+   * 
+   * <h3>CSS Style Rules</h3>
+   * <dl>
+   * <dt>.gwt-SuggestBoxPopup</dt>
+   * <dd>the suggestion popup</dd>
+   * <dt>.gwt-SuggestBoxPopup .item</dt>
+   * <dd>an unselected suggestion</dd>
+   * <dt>.gwt-SuggestBoxPopup .item-selected</dt>
+   * <dd>a selected suggestion</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupTopLeft</dt>
+   * <dd>the top left cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupTopLeftInner</dt>
+   * <dd>the inner element of the cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupTopCenter</dt>
+   * <dd>the top center cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupTopCenterInner</dt>
+   * <dd>the inner element of the cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupTopRight</dt>
+   * <dd>the top right cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupTopRightInner</dt>
+   * <dd>the inner element of the cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleLeft</dt>
+   * <dd>the middle left cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleLeftInner</dt>
+   * <dd>the inner element of the cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleCenter</dt>
+   * <dd>the middle center cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleCenterInner</dt>
+   * <dd>the inner element of the cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleRight</dt>
+   * <dd>the middle right cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleRightInner</dt>
+   * <dd>the inner element of the cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomLeft</dt>
+   * <dd>the bottom left cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomLeftInner</dt>
+   * <dd>the inner element of the cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomCenter</dt>
+   * <dd>the bottom center cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomCenterInner</dt>
+   * <dd>the inner element of the cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomRight</dt>
+   * <dd>the bottom right cell</dd>
+   * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomRightInner</dt>
+   * <dd>the inner element of the cell</dd>
+   * </dl>
+   */
+  public static class DefaultSuggestionDisplay extends SuggestionDisplay
+      implements HasAnimation {
+
+    private final SuggestionMenu suggestionMenu;
+    private final PopupPanel suggestionPopup;
+
+    /**
+     * We need to keep track of the last {@link SuggestBox} because it acts as
+     * an autoHide partner for the {@link PopupPanel}. If we use the same
+     * display for multiple {@link SuggestBox}, we need to switch the autoHide
+     * partner.
+     */
+    private SuggestBox lastSuggestBox = null;
+
+    /**
+     * Construct a new {@link DefaultSuggestionDisplay}.
+     */
+    public DefaultSuggestionDisplay() {
+      suggestionMenu = new SuggestionMenu(true);
+      suggestionPopup = createPopup();
+      suggestionPopup.setWidget(decorateSuggestionList(suggestionMenu));
+    }
+
+    @Override
+    public void hideSuggestions() {
+      suggestionPopup.hide();
+    }
+
+    public boolean isAnimationEnabled() {
+      return suggestionPopup.isAnimationEnabled();
+    }
+
+    /**
+     * Check whether or not the list of suggestions is being shown.
+     * 
+     * @return true if the suggestions are visible, false if not
+     */
+    public boolean isSuggestionListShowing() {
+      return suggestionPopup.isShowing();
+    }
+
+    public void setAnimationEnabled(boolean enable) {
+      suggestionPopup.setAnimationEnabled(enable);
+    }
+
+    /**
+     * Sets the style name of the suggestion popup.
+     * 
+     * @param style the new primary style name
+     * @see UIObject#setStyleName(String)
+     */
+    public void setPopupStyleName(String style) {
+      suggestionPopup.setStyleName(style);
+    }
+
+    /**
+     * Create the PopupPanel that will hold the list of suggestions.
+     * 
+     * @return the popup panel
+     */
+    protected PopupPanel createPopup() {
+      PopupPanel p = new DecoratedPopupPanel(true, false, "suggestPopup");
+      p.setStyleName("gwt-SuggestBoxPopup");
+      p.setPreviewingAllNativeEvents(true);
+      p.setAnimationType(AnimationType.ROLL_DOWN);
+      return p;
+    }
+
+    /**
+     * Wrap the list of suggestions before adding it to the popup. You can
+     * override this method if you want to wrap the suggestion list in a
+     * decorator.
+     * 
+     * @param suggestionList the widget that contains the list of suggestions
+     * @return the suggestList, optionally inside of a wrapper
+     */
+    protected Widget decorateSuggestionList(Widget suggestionList) {
+      return suggestionList;
+    }
+
+    @Override
+    protected Suggestion getCurrentSelection() {
+      if (!isSuggestionListShowing()) {
+        return null;
+      }
+      MenuItem item = suggestionMenu.getSelectedItem();
+      return item == null ? null : ((SuggestionMenuItem) item).getSuggestion();
+    }
+
+    /**
+     * Get the {@link PopupPanel} used to display suggestions.
+     * 
+     * @return the popup panel
+     */
+    protected PopupPanel getPopupPanel() {
+      return suggestionPopup;
+    }
+
+    @Override
+    protected void moveSelectionDown() {
+      // Make sure that the menu is actually showing. These keystrokes
+      // are only relevant when choosing a suggestion.
+      if (isSuggestionListShowing()) {
+        suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() + 1);
+      }
+    }
+
+    @Override
+    protected void moveSelectionUp() {
+      // Make sure that the menu is actually showing. These keystrokes
+      // are only relevant when choosing a suggestion.
+      if (isSuggestionListShowing()) {
+        suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() - 1);
+      }
+    }
+
+    /**
+     * <b>Affected Elements:</b>
+     * <ul>
+     * <li>-popup = The popup that appears with suggestions.</li>
+     * <li>-item# = The suggested item at the specified index.</li>
+     * </ul>
+     * 
+     * @see UIObject#onEnsureDebugId(String)
+     */
+    @Override
+    protected void onEnsureDebugId(String baseID) {
+      suggestionPopup.ensureDebugId(baseID + "-popup");
+      suggestionMenu.setMenuItemDebugIds(baseID);
+    }
+
+    @Override
+    protected void showSuggestions(final SuggestBox suggestBox,
+        Collection<? extends Suggestion> suggestions,
+        boolean isDisplayStringHTML, boolean isAutoSelectEnabled,
+        final SuggestionCallback callback) {
+      // Hide the popup if there are no suggestions to display.
+      if (suggestions == null || suggestions.size() == 0) {
+        hideSuggestions();
+        return;
+      }
+
+      // Hide the popup before we manipulate the menu within it. If we do not
+      // do this, some browsers will redraw the popup as items are removed
+      // and added to the menu.
+      if (suggestionPopup.isAttached()) {
+        suggestionPopup.hide();
+      }
+
+      suggestionMenu.clearItems();
+
+      for (final Suggestion curSuggestion : suggestions) {
+        final SuggestionMenuItem menuItem = new SuggestionMenuItem(
+            curSuggestion, isDisplayStringHTML);
+        menuItem.setCommand(new Command() {
+          public void execute() {
+            callback.onSuggestionSelected(curSuggestion);
+          }
+        });
+
+        suggestionMenu.addItem(menuItem);
+      }
+
+      if (isAutoSelectEnabled) {
+        // Select the first item in the suggestion menu.
+        suggestionMenu.selectItem(0);
+      }
+
+      // Link the popup autoHide to the TextBox.
+      if (lastSuggestBox != suggestBox) {
+        // If the suggest box has changed, free the old one first.
+        if (lastSuggestBox != null) {
+          suggestionPopup.removeAutoHidePartner(lastSuggestBox.getElement());
+        }
+        lastSuggestBox = suggestBox;
+        suggestionPopup.addAutoHidePartner(suggestBox.getElement());
+      }
+
+      // Show the popup under the TextBox.
+      suggestionPopup.showRelativeTo(suggestBox);
+    }
+
+    @Override
+    boolean isAnimationEnabledImpl() {
+      return isAnimationEnabled();
+    }
+
+    @Override
+    boolean isSuggestionListShowingImpl() {
+      return isSuggestionListShowing();
+    }
+
+    @Override
+    void setAnimationEnabledImpl(boolean enable) {
+      setAnimationEnabled(enable);
+    }
+
+    @Override
+    void setPopupStyleNameImpl(String style) {
+      setPopupStyleName(style);
+    }
+  }
 
   /**
    * The SuggestionMenu class is used for the display and selection of
@@ -273,12 +589,18 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   private boolean selectsFirstItem = true;
   private SuggestOracle oracle;
   private String currentText;
-  private final SuggestionMenu suggestionMenu;
-  private final PopupPanel suggestionPopup;
+  private final SuggestionDisplay display;
   private final TextBoxBase box;
   private final Callback callback = new Callback() {
     public void onSuggestionsReady(Request request, Response response) {
-      showSuggestions(response.getSuggestions());
+      display.showSuggestions(SuggestBox.this, response.getSuggestions(),
+          oracle.isDisplayStringHTML(), isAutoSelectEnabled(),
+          suggestionCallback);
+    }
+  };
+  private final SuggestionCallback suggestionCallback = new SuggestionCallback() {
+    public void onSuggestionSelected(Suggestion suggestion) {
+      setNewSelection(suggestion);
     }
   };
 
@@ -310,14 +632,23 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    * @param box the text widget
    */
   public SuggestBox(SuggestOracle oracle, TextBoxBase box) {
-    this.box = box;
-    initWidget(box);
+    this(oracle, box, new DefaultSuggestionDisplay());
+  }
 
-    // suggestionMenu must be created before suggestionPopup, because
-    // suggestionMenu is suggestionPopup's widget
-    suggestionMenu = new SuggestionMenu(true);
-    suggestionPopup = createPopup();
-    suggestionPopup.setAnimationType(AnimationType.ROLL_DOWN);
+  /**
+   * Constructor for {@link SuggestBox}. The text box will be removed from it's
+   * current location and wrapped by the {@link SuggestBox}.
+   * 
+   * @param oracle supplies suggestions based upon the current contents of the
+   *          text widget
+   * @param box the text widget
+   * @param suggestDisplay the class used to display suggestions
+   */
+  public SuggestBox(SuggestOracle oracle, TextBoxBase box,
+      SuggestionDisplay suggestDisplay) {
+    this.box = box;
+    this.display = suggestDisplay;
+    initWidget(box);
 
     addEventsToTextBox();
 
@@ -335,7 +666,8 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    */
   @Deprecated
   public void addChangeListener(final ChangeListener listener) {
-    ListenerWrapper.WrappedLogicalChangeListener.add(box, listener).setSource(this);
+    ListenerWrapper.WrappedLogicalChangeListener.add(box, listener).setSource(
+        this);
   }
 
   /**
@@ -347,8 +679,8 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    */
   @Deprecated
   public void addClickListener(final ClickListener listener) {
-    ListenerWrapper.WrappedClickListener legacy = ListenerWrapper.WrappedClickListener.add(box,
-        listener);
+    ListenerWrapper.WrappedClickListener legacy = ListenerWrapper.WrappedClickListener.add(
+        box, listener);
     legacy.setSource(this);
   }
 
@@ -367,18 +699,19 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    * source Widget for these events will be the SuggestBox.
    * 
    * @param listener the listener interface to add
-   * @deprecated use {@link #getTextBox}().addFocusHandler/addBlurHandler() instead
+   * @deprecated use {@link #getTextBox}().addFocusHandler/addBlurHandler()
+   *             instead
    */
   @Deprecated
   public void addFocusListener(final FocusListener listener) {
-    ListenerWrapper.WrappedFocusListener focus = ListenerWrapper.WrappedFocusListener.add(box,
-        listener);
+    ListenerWrapper.WrappedFocusListener focus = ListenerWrapper.WrappedFocusListener.add(
+        box, listener);
     focus.setSource(this);
   }
 
   /**
-   * @deprecated Use {@link #addKeyDownHandler}, {@link
-   * #addKeyUpHandler} and {@link #addKeyPressHandler} instead
+   * @deprecated Use {@link #addKeyDownHandler}, {@link #addKeyUpHandler} and
+   *             {@link #addKeyPressHandler} instead
    */
   @Deprecated
   public void addKeyboardListener(KeyboardListener listener) {
@@ -419,6 +752,15 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
+   * Get the {@link SuggestionDisplay} used to display suggestions.
+   * 
+   * @return the {@link SuggestionDisplay}
+   */
+  public SuggestionDisplay getSuggestionDisplay() {
+    return display;
+  }
+
+  /**
    * Gets the suggest box's {@link com.google.gwt.user.client.ui.SuggestOracle}.
    * 
    * @return the {@link SuggestOracle}
@@ -449,14 +791,27 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
-   * Hide current suggestions.
+   * Hide current suggestions in the {@link DefaultSuggestionDisplay}. Note that
+   * this method is a no-op unless the {@link DefaultSuggestionDisplay} is used.
+   * 
+   * @deprecated use {@link DefaultSuggestionDisplay#hideSuggestions()} instead
    */
+  @Deprecated
   public void hideSuggestionList() {
-    this.suggestionPopup.hide();
+    display.hideSuggestions();
   }
 
+  /**
+   * Check whether or not the {@link DefaultSuggestionDisplay} has animations
+   * enabled. Note that this method only has a meaningful return value when the
+   * {@link DefaultSuggestionDisplay} is used.
+   * 
+   * @deprecated use {@link DefaultSuggestionDisplay#isAnimationEnabled()}
+   *             instead
+   */
+  @Deprecated
   public boolean isAnimationEnabled() {
-    return suggestionPopup.isAnimationEnabled();
+    return display.isAnimationEnabledImpl();
   }
 
   /**
@@ -470,15 +825,22 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
+   * Check if the {@link DefaultSuggestionDisplay} is showing. Note that this
+   * method only has a meaningful return value when the
+   * {@link DefaultSuggestionDisplay} is used.
+   * 
    * @return true if the list of suggestions is currently showing, false if not
+   * @deprecated use {@link DefaultSuggestionDisplay#isSuggestionListShowing()}
    */
+  @Deprecated
   public boolean isSuggestionListShowing() {
-    return suggestionPopup.isShowing();
+    return display.isSuggestionListShowingImpl();
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link #getTextBox}().addChangeHandler instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by {@link #getTextBox}().addChangeHandler
+   *             instead
    */
   @Deprecated
   public void removeChangeListener(ChangeListener listener) {
@@ -486,8 +848,9 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link #getTextBox}().addClickHandler instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by {@link #getTextBox}().addClickHandler
+   *             instead
    */
   @Deprecated
   public void removeClickListener(ClickListener listener) {
@@ -495,8 +858,8 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method no the object returned by {@link #addSelectionHandler} instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method no the
+   *             object returned by {@link #addSelectionHandler} instead
    */
   @Deprecated
   public void removeEventHandler(SuggestionHandler handler) {
@@ -504,8 +867,9 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link #getTextBox}().addFocusListener instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by {@link #getTextBox}().addFocusListener
+   *             instead
    */
   @Deprecated
   public void removeFocusListener(FocusListener listener) {
@@ -513,8 +877,8 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link #getTextBox}().add*Handler instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on the
+   *             object returned by {@link #getTextBox}().add*Handler instead
    */
   @Deprecated
   public void removeKeyboardListener(KeyboardListener listener) {
@@ -525,8 +889,18 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     box.setAccessKey(key);
   }
 
+  /**
+   * Enable or disable animations in the {@link DefaultSuggestionDisplay}. Note
+   * that this method is a no-op unless the {@link DefaultSuggestionDisplay} is
+   * used.
+   * 
+   * @deprecated use
+   *             {@link DefaultSuggestionDisplay#setAnimationEnabled(boolean)}
+   *             instead
+   */
+  @Deprecated
   public void setAnimationEnabled(boolean enable) {
-    suggestionPopup.setAnimationEnabled(enable);
+    display.setAnimationEnabledImpl(enable);
   }
 
   /**
@@ -555,13 +929,18 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
-   * Sets the style name of the suggestion popup.
+   * Sets the style name of the suggestion popup in the
+   * {@link DefaultSuggestionDisplay}. Note that this method is a no-op unless
+   * the {@link DefaultSuggestionDisplay} is used.
    * 
    * @param style the new primary style name
    * @see UIObject#setStyleName(String)
+   * @deprecated use {@link DefaultSuggestionDisplay#setPopupStyleName(String)}
+   *             instead
    */
+  @Deprecated
   public void setPopupStyleName(String style) {
-    suggestionPopup.setStyleName(style);
+    getSuggestionDisplay().setPopupStyleNameImpl(style);
   }
 
   public void setTabIndex(int index) {
@@ -590,47 +969,10 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     }
   }
 
-  /**
-   * <b>Affected Elements:</b>
-   * <ul>
-   * <li>-popup = The popup that appears with suggestions.</li>
-   * <li>-items-item# = The suggested item at the specified index.</li>
-   * </ul>
-   * 
-   * @see UIObject#onEnsureDebugId(String)
-   */
   @Override
   protected void onEnsureDebugId(String baseID) {
     super.onEnsureDebugId(baseID);
-    suggestionPopup.ensureDebugId(baseID + "-popup");
-    suggestionMenu.setMenuItemDebugIds(baseID);
-  }
-
-  /**
-   * Gets the specified suggestion from the suggestions currently showing.
-   * 
-   * @param index the index at which the suggestion lives
-   * 
-   * @throws IndexOutOfBoundsException if the index is greater then the number
-   *           of suggestions currently showing
-   * 
-   * @return the given suggestion
-   */
-  Suggestion getSuggestion(int index) {
-    if (!isSuggestionListShowing()) {
-      throw new IndexOutOfBoundsException(
-          "No suggestions showing, so cannot show " + index);
-    }
-    return ((SuggestionMenuItem) suggestionMenu.getItems().get(index)).suggestion;
-  }
-
-  /**
-   * Get the number of suggestions that are currently showing.
-   * 
-   * @return the number of suggestions currently showing, 0 if there are none
-   */
-  int getSuggestionCount() {
-    return isSuggestionListShowing() ? suggestionMenu.getNumItems() : 0;
+    display.onEnsureDebugId(baseID);
   }
 
   void showSuggestions(String query) {
@@ -646,25 +988,22 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
         ValueChangeHandler<String> {
 
       public void onKeyDown(KeyDownEvent event) {
-        // Make sure that the menu is actually showing. These keystrokes
-        // are only relevant when choosing a suggestion.
-        if (suggestionPopup.isAttached()) {
-          switch (event.getNativeKeyCode()) {
-            case KeyCodes.KEY_DOWN:
-              suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() + 1);
-              break;
-            case KeyCodes.KEY_UP:
-              suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() - 1);
-              break;
-            case KeyCodes.KEY_ENTER:
-            case KeyCodes.KEY_TAB:
-              if (suggestionMenu.getSelectedItemIndex() < 0) {
-                suggestionPopup.hide();
-              } else {
-                suggestionMenu.doSelectedItemAction();
-              }
-              break;
-          }
+        switch (event.getNativeKeyCode()) {
+          case KeyCodes.KEY_DOWN:
+            display.moveSelectionDown();
+            break;
+          case KeyCodes.KEY_UP:
+            display.moveSelectionUp();
+            break;
+          case KeyCodes.KEY_ENTER:
+          case KeyCodes.KEY_TAB:
+            Suggestion suggestion = display.getCurrentSelection();
+            if (suggestion == null) {
+              display.hideSuggestions();
+            } else {
+              setNewSelection(suggestion);
+            }
+            break;
         }
         delegateEvent(SuggestBox.this, event);
       }
@@ -689,15 +1028,6 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     box.addValueChangeHandler(events);
   }
 
-  private PopupPanel createPopup() {
-    PopupPanel p = new DecoratedPopupPanel(true, false, "suggestPopup");
-    p.setWidget(suggestionMenu);
-    p.setStyleName("gwt-SuggestBoxPopup");
-    p.setPreviewingAllNativeEvents(true);
-    p.addAutoHidePartner(getTextBox().getElement());
-    return p;
-  }
-
   private void fireSuggestionEvent(Suggestion selectedSuggestion) {
     SelectionEvent.fire(this, selectedSuggestion);
   }
@@ -713,11 +1043,16 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     showSuggestions(text);
   }
 
-  private void setNewSelection(SuggestionMenuItem menuItem) {
-    Suggestion curSuggestion = menuItem.getSuggestion();
+  /**
+   * Set the new suggestion in the text box.
+   * 
+   * @param curSuggestion the new suggestion
+   */
+  private void setNewSelection(Suggestion curSuggestion) {
+    assert curSuggestion != null : "suggestion cannot be null";
     currentText = curSuggestion.getReplacementString();
     setText(currentText);
-    suggestionPopup.hide();
+    display.hideSuggestions();
     fireSuggestionEvent(curSuggestion);
   }
 
@@ -728,47 +1063,5 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    */
   private void setOracle(SuggestOracle oracle) {
     this.oracle = oracle;
-  }
-
-  /**
-   * Show the given collection of suggestions.
-   * 
-   * @param suggestions suggestions to show
-   */
-  private void showSuggestions(Collection<? extends Suggestion> suggestions) {
-    if (suggestions.size() > 0) {
-
-      // Hide the popup before we manipulate the menu within it. If we do not
-      // do this, some browsers will redraw the popup as items are removed
-      // and added to the menu.
-      boolean isAnimationEnabled = suggestionPopup.isAnimationEnabled();
-      if (suggestionPopup.isAttached()) {
-        suggestionPopup.hide();
-      }
-
-      suggestionMenu.clearItems();
-
-      for (Suggestion curSuggestion : suggestions) {
-        final SuggestionMenuItem menuItem = new SuggestionMenuItem(
-            curSuggestion, oracle.isDisplayStringHTML());
-        menuItem.setCommand(new Command() {
-          public void execute() {
-            SuggestBox.this.setNewSelection(menuItem);
-          }
-        });
-
-        suggestionMenu.addItem(menuItem);
-      }
-
-      if (selectsFirstItem) {
-        // Select the first item in the suggestion menu.
-        suggestionMenu.selectItem(0);
-      }
-
-      suggestionPopup.showRelativeTo(getTextBox());
-      suggestionPopup.setAnimationEnabled(isAnimationEnabled);
-    } else {
-      suggestionPopup.hide();
-    }
   }
 }

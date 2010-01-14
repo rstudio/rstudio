@@ -17,14 +17,57 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
+import com.google.gwt.user.client.ui.SuggestBox.SuggestionCallback;
+import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Tests for {@link SuggestBoxTest}.
  */
-public class SuggestBoxTest extends GWTTestCase {
+public class SuggestBoxTest extends WidgetTestBase {
+
+  /**
+   * A SuggestionDisplay used for testing.
+   */
+  private static class TestSuggestionDisplay extends DefaultSuggestionDisplay {
+
+    private List<? extends Suggestion> suggestions;
+
+    @Override
+    protected void showSuggestions(SuggestBox suggestBox,
+        Collection<? extends Suggestion> suggestions,
+        boolean isDisplayStringHTML, boolean isAutoSelectEnabled,
+        SuggestionCallback callback) {
+      super.showSuggestions(suggestBox, suggestions, isDisplayStringHTML,
+          isAutoSelectEnabled, callback);
+      this.suggestions = new ArrayList<Suggestion>(suggestions);
+    }
+
+    /**
+     * Get the suggestion at the specified index.
+     * 
+     * @param index the index
+     * @return the {@link Suggestion} at the index
+     */
+    public Suggestion getSuggestion(int index) {
+      return suggestions.get(index);
+    }
+
+    /**
+     * Get the number of suggestions that are currently showing. Used for
+     * testing.
+     * 
+     * @return the number of suggestions currently showing, 0 if there are none
+     */
+    public int getSuggestionCount() {
+      return suggestions.size();
+    }
+  }
 
   @Override
   public String getModuleName() {
@@ -34,6 +77,7 @@ public class SuggestBoxTest extends GWTTestCase {
   /**
    * Test the basic accessors.
    */
+  @SuppressWarnings("deprecation")
   public void testAccessors() {
     SuggestBox box = createSuggestBox();
 
@@ -53,44 +97,48 @@ public class SuggestBoxTest extends GWTTestCase {
     assertTrue(box.isSuggestionListShowing());
   }
 
+  @SuppressWarnings("deprecation")
   public void testShowAndHide() {
     SuggestBox box = createSuggestBox();
-    assertFalse(box.isSuggestionListShowing());
+    TestSuggestionDisplay display = (TestSuggestionDisplay) box.getSuggestionDisplay();
+    assertFalse(display.isSuggestionListShowing());
+
     // should do nothing, box is not attached.
     box.showSuggestionList();
-    assertFalse(box.isSuggestionListShowing());
+    assertFalse(display.isSuggestionListShowing());
 
     // Adds the suggest box to the root panel.
     RootPanel.get().add(box);
-    assertFalse(box.isSuggestionListShowing());
+    assertFalse(display.isSuggestionListShowing());
 
     // Hides the list of suggestions, should be a no-op.
     box.hideSuggestionList();
 
     // Should try to show, but still fail, as there are no default suggestions.
     box.showSuggestionList();
-    assertFalse(box.isSuggestionListShowing());
+    assertFalse(display.isSuggestionListShowing());
 
     // Now, finally, should be true
     box.setText("t");
     box.showSuggestionList();
-    assertTrue(box.isSuggestionListShowing());
+    assertTrue(display.isSuggestionListShowing());
 
     // Hides it for real this time.
     box.hideSuggestionList();
-    assertFalse(box.isSuggestionListShowing());
+    assertFalse(display.isSuggestionListShowing());
   }
 
   public void testDefaults() {
     MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
     oracle.setDefaultSuggestionsFromText(Arrays.asList("A", "B"));
-    SuggestBox box = new SuggestBox(oracle);
+    TestSuggestionDisplay display = new TestSuggestionDisplay();
+    SuggestBox box = new SuggestBox(oracle, new TextBox(), display);
     RootPanel.get().add(box);
     box.showSuggestionList();
-    assertTrue(box.isSuggestionListShowing());
-    assertEquals(2, box.getSuggestionCount());
-    assertEquals("A", box.getSuggestion(0).getReplacementString());
-    assertEquals("B", box.getSuggestion(1).getReplacementString());
+    assertTrue(display.isSuggestionListShowing());
+    assertEquals(2, display.getSuggestionCount());
+    assertEquals("A", display.getSuggestion(0).getReplacementString());
+    assertEquals("B", display.getSuggestion(1).getReplacementString());
   }
 
   public void testShowFirst() {
@@ -104,12 +152,6 @@ public class SuggestBoxTest extends GWTTestCase {
     box.showSuggestionList();
     // Todo(ecc) once event triggering is enabled, submit a return key to the
     // text box and ensure that we see the correct behavior.
-  }
-
-  @Override
-  public void gwtTearDown() throws Exception {
-    super.gwtTearDown();
-    RootPanel.get().clear();
   }
 
   public void testWrapUsingStaticWrapMethod() {
@@ -133,7 +175,7 @@ public class SuggestBoxTest extends GWTTestCase {
 
   protected SuggestBox createSuggestBox() {
     MultiWordSuggestOracle oracle = createOracle();
-    return new SuggestBox(oracle);
+    return new SuggestBox(oracle, new TextBox(), new TestSuggestionDisplay());
   }
 
   private MultiWordSuggestOracle createOracle() {

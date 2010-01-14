@@ -39,6 +39,7 @@ import com.google.gwt.user.client.ui.DecoratedStackPanelTest;
 import com.google.gwt.user.client.ui.DecoratedTabBarTest;
 import com.google.gwt.user.client.ui.DecoratedTabPanelTest;
 import com.google.gwt.user.client.ui.DecoratorPanelTest;
+import com.google.gwt.user.client.ui.DefaultSuggestionDisplayTest;
 import com.google.gwt.user.client.ui.DelegatingKeyboardListenerCollectionTest;
 import com.google.gwt.user.client.ui.DialogBoxTest;
 import com.google.gwt.user.client.ui.DisclosurePanelTest;
@@ -122,6 +123,7 @@ public class UISuite {
     suite.addTestSuite(DecoratedTabBarTest.class);
     suite.addTestSuite(DecoratedTabPanelTest.class);
     suite.addTestSuite(DecoratorPanelTest.class);
+    suite.addTestSuite(DefaultSuggestionDisplayTest.class);
     suite.addTestSuite(DelegatingKeyboardListenerCollectionTest.class);
     suite.addTestSuite(DialogBoxTest.class);
     suite.addTestSuite(DisclosurePanelTest.class);
