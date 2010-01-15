@@ -27,6 +27,12 @@ import java.util.Map;
  * A panel that lays its child widgets out "docked" at its outer edges, and
  * allows its last widget to take up the remaining space in its center.
  * 
+ * <p>
+ * This widget will <em>only</em> work in quirks mode. If your application is in
+ * Standards Mode, use {@link DockLayoutPanel} instead.
+ * </p>
+ * 
+ * @see DockLayoutPanel
  */
 public class DockPanel extends CellPanel implements HasAlignment {
 

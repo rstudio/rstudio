@@ -31,6 +31,11 @@ import java.util.Iterator;
  * associated with them. The tabs can contain arbitrary HTML.
  * 
  * <p>
+ * This widget will <em>only</em> work in quirks mode. If your application is in
+ * Standards Mode, use {@link TabLayoutPanel} instead.
+ * </p>
+ * 
+ * <p>
  * <img class='gallery' src='TabPanel.png'/>
  * </p>
  * 
@@ -53,6 +58,8 @@ import java.util.Iterator;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.TabPanelExample}
  * </p>
+ * 
+ * @see TabLayoutPanel
  */
 
 //Cannot do anything about tab panel implementing TabListener until next release.

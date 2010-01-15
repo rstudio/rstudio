@@ -22,6 +22,12 @@ import com.google.gwt.user.client.Event;
 /**
  * A panel that stacks its children vertically, displaying only one at a time,
  * with a header for each child which the user can click to display.
+ * 
+ * <p>
+ * This widget will <em>only</em> work in quirks mode. If your application is in
+ * Standards Mode, use {@link StackLayoutPanel} instead.
+ * </p>
+ * 
  * <p>
  * <img class='gallery' src='StackPanel.png'/>
  * </p>
@@ -37,6 +43,8 @@ import com.google.gwt.user.client.Event;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.StackPanelExample}
  * </p>
+ * 
+ * @see StackLayoutPanel
  */
 public class StackPanel extends ComplexPanel implements InsertPanel {
   private static final String DEFAULT_STYLENAME = "gwt-StackPanel";

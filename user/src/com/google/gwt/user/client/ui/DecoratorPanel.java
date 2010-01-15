@@ -25,6 +25,11 @@ import com.google.gwt.user.client.Element;
  * used to add rounded corners to a {@link Widget}.
  * </p>
  * <p>
+ * This widget will <em>only</em> work in quirks mode in most cases.
+ * Specifically, setting the height or width of the DecoratorPanel will result
+ * in rendering issues.
+ * </p>
+ * <p>
  * Wrapping a {@link Widget} in a "9-box" allows users to specify images in each
  * of the corners and along the four borders. This method allows the content
  * within the {@link DecoratorPanel} to resize without disrupting the look of

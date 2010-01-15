@@ -362,17 +362,12 @@ public class JUnitShell extends GWTShell {
       registerHandler(new ArgHandlerFlag() {
         @Override
         public String getPurpose() {
-          return "EXPERIMENTAL: Use CSS standards mode (rather than quirks mode) for the hosting page";
+          return "Use CSS standards mode (rather than quirks mode) for the hosting page";
         }
 
         @Override
         public String getTag() {
-          return "-XstandardsMode";
-        }
-
-        @Override
-        public boolean isUndocumented() {
-          return true;
+          return "-standardsMode";
         }
 
         @Override

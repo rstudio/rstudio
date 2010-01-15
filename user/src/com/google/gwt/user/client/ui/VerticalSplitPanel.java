@@ -32,6 +32,11 @@ import com.google.gwt.user.client.Timer;
  * scrollbars when necessary.
  * 
  * <p>
+ * This widget will <em>only</em> work in quirks mode. If your application is in
+ * Standards Mode, use {@link SplitLayoutPanel} instead.
+ * </p>
+ * 
+ * <p>
  * <img class='gallery' src='VerticalSplitPanel.png'/>
  * </p>
  * 
@@ -40,6 +45,8 @@ import com.google.gwt.user.client.Timer;
  * <li>.gwt-VerticalSplitPanel { the panel itself }</li>
  * <li>.gwt-VerticalSplitPanel vsplitter { the splitter }</li>
  * </ul>
+ * 
+ * @see SplitLayoutPanel
  */
 public final class VerticalSplitPanel extends SplitPanel {
   /**

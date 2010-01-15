@@ -23,6 +23,13 @@ import com.google.gwt.user.client.Element;
  * A {@link StackPanel} that wraps each item in a 2x3 grid (six box), which
  * allows users to add rounded corners.
  * </p>
+ * 
+ * <p>
+ * This widget will <em>only</em> work in quirks mode. If your application is in
+ * Standards Mode, use {@link StackLayoutPanel} instead.
+ * </p>
+ * 
+ * <p>
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-DecoratedStackPanel { the panel itself }</li>
@@ -52,6 +59,9 @@ import com.google.gwt.user.client.Element;
  * <li>.gwt-DecoratedStackPanel .stackItemMiddleRightInner { the inner element
  * of the cell}</li>
  * </ul>
+ * </p>
+ * 
+ * @see StackLayoutPanel
  */
 public class DecoratedStackPanel extends StackPanel {
   public static final String DEFAULT_STYLENAME = "gwt-DecoratedStackPanel";
