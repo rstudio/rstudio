@@ -43,7 +43,7 @@ import java.util.TreeSet;
  */
 public class InterfaceGenerator extends ToolBase {
 
-  private static final Comparator<String> CSS_CLASS_COMPARATOR = new Comparator<String>() {
+  private static final Comparator<String> NAME_COMPARATOR = new Comparator<String>() {
     public int compare(String o1, String o2) {
       return o1.compareToIgnoreCase(o2);
     }
@@ -217,9 +217,12 @@ public class InterfaceGenerator extends ToolBase {
     // Create AST
     CssStylesheet sheet = GenerateCssAst.exec(logger, inputFile.toURI().toURL());
 
-    // Sort all class names
-    Set<String> classNames = new TreeSet<String>(CSS_CLASS_COMPARATOR);
-    classNames.addAll(ExtractClassNamesVisitor.exec(sheet));
+    // Sort all names
+    Set<String> names = new TreeSet<String>(NAME_COMPARATOR);
+    names.addAll(ExtractClassNamesVisitor.exec(sheet));
+    DefsCollector defs = new DefsCollector();
+    defs.accept(sheet);
+    names.addAll(defs.getDefs());
 
     // Deduplicate method names
     Set<String> methodNames = new HashSet<String>();
@@ -240,7 +243,7 @@ public class InterfaceGenerator extends ToolBase {
     sw.println("interface " + interfaceName.substring(lastDot + 1)
         + " extends CssResource {");
     sw.indent();
-    for (String className : classNames) {
+    for (String className : names) {
       String methodName = methodName(className);
 
       while (!methodNames.add(methodName)) {
