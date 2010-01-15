@@ -539,49 +539,9 @@
       <gwt:Label>body</gwt:Label>
     </demo:FooDialog>
 
-    <h2>How to use the debugId, addStyleNames, addDependentStyleNames attributes</h2>
-    <p>You can use the <strong>debugId</strong>, <strong>addStyleNames</strong>, and <strong>addDependentStyleNames</strong>
-       attributes on any widget that extends UIObject.
-       <ul>
-         <li><b>debugId</b> will set an <em>id</em> on the element prefixed with <em>gwt-debug</em></li>
-         <li><b>addStyleNames</b> (comma separated) will add all class names to the existing style (space separated)</li>
-         <li><b>addDependentStyleNames</b> (comma separated) will concatenate all class names to the existing style with a "-" as a separator</li>
-       </ul>
-       You can/should use FireBug or a simple view source to see the attributes that were created.
-       <br />
-    </p>
-
-    <b>Template:</b>
-    <pre style="border: 1px dashed #666; padding: 5px 0;">
-  &lt;ui:UiBinder
-    xmlns:ui='urn:ui:com.google.gwt.uibinder'
-    xmlns:gwt='urn:import:com.google.gwt.user.client.ui'&gt;
-
-    &lt;gwt:FlowPanel&gt;
-      &lt;gwt:Label ui:field="lblDebugId" debugId="joe" 
-          addStyleNames="newStyle anotherStyle" 
-          addStyleDependentNames="dependentStyle anotherDependentStyle" 
-          text="a label with debug id" /&gt;
-
-      &lt;!-- A button that only adds a single style name, no comma's needed --&gt;
-      &lt;gwt:Button ui:field="btnGo" debugId="myButton" 
-          addStyleNames="buttonStyle" text="a button with extra attributes" /&gt;
-    &lt;/gwt:FlowPanel>
-
-  &lt;/ui:UiBinder&gt;</pre>
-
-    <b>HTML:</b>
-    <pre style="border: 1px dashed #666; padding: 5px 0;">
-  &lt;div id="gwt-debug-joe" 
-      class="gwt-Label newStyle anotherStyle gwt-Label-dependentStyle 
-        gwt-Label-anotherDependentStyle"&gt;
-    A label with a debug id
-  &lt;/div&gt;
-  &lt;button id="gwt-debug-myButton" class="gwt-Button buttonStyle" tabindex="0" 
-    type="button"&gt;Go&lt;/button&gt;</pre>
-
     <gwt:FlowPanel>
       <gwt:Label ui:field="lblDebugId" debugId="joe" 
+          styleName="styleName"
           addStyleNames="newStyle, anotherStyle {external.style.prettyText}" 
           addStyleDependentNames="dependentStyle anotherDependentStyle, {external.style.prettyText}">
         A label with a debug id
@@ -589,67 +549,7 @@
       <gwt:Button ui:field="btnGo" debugId="myButton" addStyleNames="buttonStyle">Go</gwt:Button>
     </gwt:FlowPanel>
 
-    <h2>How to tie handlers automatically!!</h2>
-    <p>You can add event handlers to template widgets as long as they have
-      valid ui:field attributes. If the template is shared, each widget can
-      register listeners for the events it's interested in. In the example
-      below, we listen to MouseOver events on the status label and clicks
-      on the button.</p>
-
     <demo:HandlerDemo />
-
-    <b>Template:</b>
-    <pre style="border: 1px dashed #666; padding: 5px 0;">
-  &lt;ui:UiBinder
-    xmlns:ui='urn:ui:com.google.gwt.uibinder'
-    xmlns:gwt='urn:import:com.google.gwt.user.client.ui'&gt;
-
-    &lt;gwt:FlowPanel&gt;
-      &lt;gwt:Label ui:field="label" text="Looking for happiness?" /&gt;
-      &lt;gwt:Button ui:field="button" text="Click here to happiness!!" /&gt;
-      &lt;gwt:TextBox ui:field="textbox" /&gt;
-    &lt;/gwt:FlowPanel>
-
-  &lt;/ui:UiBinder&gt;</pre>
-
-  <b>The code:</b>
-  <pre style="border: 1px dashed #666; padding: 5px 0;">
-  public class HandlerDemo extends Composite {
-
-    @UiTemplate("HandlerDemo.ui.xml")
-    interface MyUiBinder extends UiBinder&lt;FlowPanel, HandlerDemo&gt; {}
-    private static final MyUiBinder binder = GWT.create(MyUiBinder.class);
-
-    @UiField Label label;
-
-    // No need of declare button here via @UiField if it is not really used
-    // in the class. Just don't forget to "ui:field" it in the template.
-
-    private int counter;
-
-    public HandlerDemo() {
-      initWidget(binder.createAndBindUi(this));
-    }
-
-    @UiHandler({"label", "button"})
-    protected void doClick(ClickEvent event) {
-      Window.alert("Yes, now I'm happy!");
-      counter = 0;
-      label.setText("Don't mouse over, click me!!!");
-    }
-
-    @UiHandler("button")
-    protected void doMouseOver(MouseOverEvent event) {
-      ++counter;
-      label.setText(counter + ". Don't mouse over, click me!");
-    }
-
-    @UiHandler("textbox")
-    protected void doChangeValue(ValueChangeEvent&lt;String&gt; event) {
-      label.setText("Typing = " + event.getValue());
-    }
-  }</pre>
-
 
   <h2>People write the darndest markup</h2>
   <table border="1" bcolor="yellow" cellpadding="3" ui:field="widgetCrazyTable">

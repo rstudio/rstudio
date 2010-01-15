@@ -66,6 +66,7 @@ public class UiBinderTest extends GWTTestCase {
 
   @Override
   public void gwtTearDown() throws Exception {
+    domUi.root.getParentElement().removeChild(domUi.root);
     RootPanel.get().clear();
     super.gwtTearDown();
   }
@@ -103,12 +104,14 @@ public class UiBinderTest extends GWTTestCase {
     Label l = widgetUi.lblDebugId;
     assertEquals("gwt-debug-joe", l.getElement().getId());
 
+    assertEquals("styleName", l.getStylePrimaryName());
+    
     WidgetBasedUiExternalResources resources = GWT.create(WidgetBasedUiExternalResources.class);
     assertTrue(l.getStyleName().contains("newStyle"));
     assertTrue(l.getStyleName().contains("anotherStyle"));
-    assertTrue(l.getStyleName().contains("dependentStyle"));
-    assertTrue(l.getStyleName().contains("anotherDependentStyle"));
-    assertTrue(l.getStyleName().contains(resources.style().prettyText()));
+    assertTrue(l.getStyleName().contains("styleName-dependentStyle"));
+    assertTrue(l.getStyleName().contains("styleName-anotherDependentStyle"));
+    assertTrue(l.getStyleName().contains("styleName-" + resources.style().prettyText()));
   }
 
   // TODO(rjrjr) The direction stuff in these tests really belongs in

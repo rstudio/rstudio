@@ -148,7 +148,7 @@ public class BeanParser implements ElementParser {
 
     if (!unfilledRequiredParams.isEmpty()) {
       StringBuilder b = new StringBuilder(String.format(
-          "%s missing required arguments:", elem));
+          "%s missing required attribute(s):", elem));
       for (String name : unfilledRequiredParams.keySet()) {
         b.append(" ").append(name);
       }

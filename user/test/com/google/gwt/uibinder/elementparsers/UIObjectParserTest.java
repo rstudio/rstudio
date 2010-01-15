@@ -41,12 +41,14 @@ public class UIObjectParserTest extends TestCase {
   public void testHappy() throws UnableToCompleteException, SAXException,
       IOException {
     StringBuffer b = new StringBuffer();
-    b.append("<g:UIObject debugId='blat' addStyleNames='foo, bar baz'");
+    b.append("<g:UIObject debugId='blat' styleName='primary' "
+        + "addStyleNames='foo, bar baz'");
     b.append("    addStyleDependentNames='able, baker charlie' >");
     b.append("</g:UIObject>");
 
     String[] expected = {
         "fieldName.ensureDebugId(\"blat\");",
+        "fieldName.setStyleName(\"primary\");",
         "fieldName.addStyleName(\"foo\");", "fieldName.addStyleName(\"bar\");",
         "fieldName.addStyleName(\"baz\");",
         "fieldName.addStyleDependentName(\"able\");",
@@ -61,5 +63,37 @@ public class UIObjectParserTest extends TestCase {
     }
     assertFalse(i.hasNext());
     assertNull(tester.logger.died);
+  }
+
+  public void testSetPrimary() throws UnableToCompleteException, SAXException,
+      IOException {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:UIObject stylePrimaryName='primary' >");
+    b.append("</g:UIObject>");
+
+    String[] expected = {"fieldName.setStylePrimaryName(\"primary\");",};
+
+    tester.parse(b.toString());
+
+    Iterator<String> i = tester.writer.statements.iterator();
+    for (String e : expected) {
+      assertEquals(e, i.next());
+    }
+    assertFalse(i.hasNext());
+    assertNull(tester.logger.died);
+  }
+
+  public void testStyleConflict() throws SAXException, IOException {
+    StringBuffer b = new StringBuffer();
+    b.append("<g:UIObject stylePrimaryName='primary' styleName='otherPrimary'>");
+    b.append("</g:UIObject>");
+
+    try {
+      tester.parse(b.toString());
+      fail();
+    } catch (UnableToCompleteException e) {
+      assertTrue("Expect to hear about bad styleName usage",
+          tester.logger.died.contains("\"styleName\" and \"stylePrimaryName\""));
+    }
   }
 }

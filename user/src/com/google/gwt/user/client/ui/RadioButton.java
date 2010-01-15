@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 
@@ -57,6 +58,7 @@ public class RadioButton extends CheckBox {
    * 
    * @param name the group name with which to associate the radio button
    */
+  @UiConstructor
   public RadioButton(String name) {
     super(DOM.createInputRadio(name));
     setStyleName("gwt-RadioButton");
