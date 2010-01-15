@@ -25,6 +25,7 @@ import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.uibinder.test.client.EnumeratedLabel.Suffix;
 import com.google.gwt.user.client.DOM;
@@ -32,6 +33,7 @@ import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -440,14 +442,15 @@ public class UiBinderTest extends GWTTestCase {
   }
 
   public void testImageResourceInImageWidget() {
-    assertEquals(widgetUi.prettyImage.getWidth(),
-        widgetUi.babyWidget.getOffsetWidth());
-    assertEquals(widgetUi.prettyImage.getHeight(),
-        widgetUi.babyWidget.getOffsetHeight());
-    assertEquals(widgetUi.prettyImage.getTop(),
-        widgetUi.babyWidget.getOriginTop());
-    assertEquals(widgetUi.prettyImage.getLeft(),
-        widgetUi.babyWidget.getOriginLeft());
+    ImageResource resource = widgetUi.prettyImage;
+    Image widget = widgetUi.babyWidget;
+    assertEquals(resource.getWidth(), widget.getOffsetWidth());
+    assertEquals(resource.getHeight(), widget.getOffsetHeight());
+    assertEquals(resource.getTop(), widget.getOriginTop());
+    assertEquals(resource.getLeft(), widget.getOriginLeft());
+    
+    assertEquals("expected alt text", widget.getAltText());
+    assertEquals("expected style name", widget.getStyleName());
   }
 
   public void testDataResource() {

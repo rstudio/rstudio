@@ -626,6 +626,10 @@ public class UiBinderWriter {
   /**
    * Instructs the writer to initialize the field with a specific contructor
    * invocaction, instead of the default GWT.create call.
+   * 
+   * @param fieldName the field to intialize
+   * @param type the type of the field
+   * @param arguments to the constructor call
    */
   public void setFieldInitializerAsConstructor(String fieldName,
       JClassType type, String... args) {
@@ -944,6 +948,7 @@ public class UiBinderWriter {
     addWidgetParser("DockLayoutPanel");
     addWidgetParser("StackLayoutPanel");
     addWidgetParser("TabLayoutPanel");
+    addWidgetParser("Image");
   }
 
   /**

@@ -168,6 +168,30 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource IMAGE = new MockJavaResource(
+      "com.google.gwt.user.client.ui.Image") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class Image extends Widget {\n");
+      code.append("  public Image() {} ");
+      code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource IMAGE_RESOURCE = new MockJavaResource(
+      "com.google.gwt.resources.client.ImageResource") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.resources.client;\n");
+      code.append("public class ImageResource  {\n");
+      code.append("  public ImageResource() {} ");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource LABEL = new MockJavaResource(
       "com.google.gwt.user.client.ui.Label") {
     @Override
@@ -328,6 +352,8 @@ public class UiJavaResources {
     rtn.add(DOCK_LAYOUT_PANEL);
     rtn.add(EVENT_HANDLER);
     rtn.add(GWT_EVENT);
+    rtn.add(IMAGE);
+    rtn.add(IMAGE_RESOURCE);
     rtn.add(HANDLER_REGISTRATION);
     rtn.add(HAS_CLICK_HANDLERS);
     rtn.add(HAS_HORIZONTAL_ALIGNMENT);

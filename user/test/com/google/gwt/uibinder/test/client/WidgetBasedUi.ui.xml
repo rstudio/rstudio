@@ -195,7 +195,9 @@
 
       <p>I bet you like babies in your Image widgets.</p>
       <div class='{cursorifficStyle.cursor}'>
-      <gwt:Image ui:field='babyWidget' resource='{prettyImage}'/>
+      <gwt:Image ui:field='babyWidget' resource='{prettyImage}'
+          altText='expected alt text' styleName='expected style name'
+      />
       </div>
 
       <p ui:field='simpleSpriteParagraph' 
