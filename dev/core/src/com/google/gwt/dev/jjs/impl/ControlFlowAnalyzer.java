@@ -790,14 +790,6 @@ public class ControlFlowAnalyzer {
     rescuer.rescue(method);
   }
 
-  /**
-   * Assume <code>type</code> is instantiated, and find out what else will
-   * execute as a result.
-   */
-  public void traverseFromInstantiationOf(JDeclaredType type) {
-    rescuer.rescue(type, true, true);
-  }
-
   public void traverseFromLeftoversFragmentHasLoaded() {
     if (program.entryMethods.size() > 1) {
       traverseFrom(program.getIndexedMethod("AsyncFragmentLoader.browserLoaderLeftoversFragmentHasLoaded"));

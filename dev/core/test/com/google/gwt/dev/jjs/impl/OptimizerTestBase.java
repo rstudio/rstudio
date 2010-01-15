@@ -26,8 +26,6 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.impl.JsniRefLookup.ErrorReporter;
-import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -82,24 +80,9 @@ public abstract class OptimizerTestBase extends TestCase {
   }
 
   /**
-   * Find a method, given a JSNI reference to it.
-   */
-  public static JMethod findMethod(JProgram program, final String methodJsniRef) {
-    JsniRef ref = JsniRef.parse(methodJsniRef);
-    assertNotNull(ref);
-    assertTrue(ref.isMethod());
-    return (JMethod) JsniRefLookup.findJsniRefTarget(ref, program,
-        new ErrorReporter() {
-          public void reportError(String error) {
-            // ignore errors and return null
-          }
-        });
-  }
-
-  /**
    * Finds a type by name. The type name may be short, e.g. <code>"Foo"</code>,
-   * or fully-qualified, e.g. <code>"com.google.example.Foo"</code>. If a short
-   * name is used, it must be unambiguous.
+   * or fully-qualified, e.g. <code>"com.google.example.Foo"</code>. If a
+   * short name is used, it must be unambiguous.
    */
   public static JDeclaredType findType(JProgram program, String typeName) {
     JDeclaredType type = program.getFromTypeMap(typeName);
