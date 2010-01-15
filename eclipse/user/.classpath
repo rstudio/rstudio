@@ -23,7 +23,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/xml-apis.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/w3c/sac/sac-1.3.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/w3c/flute/flute-1.3.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/w3c/flute/flute-1.3-gg1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/cglib/cglib-2.2.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/easymock/easymock.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/easymock/easymockclassextension.jar"/>

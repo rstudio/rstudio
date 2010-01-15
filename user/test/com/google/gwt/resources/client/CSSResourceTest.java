@@ -284,7 +284,10 @@ public class CSSResourceTest extends GWTTestCase {
     assertTrue(text.contains("runtime:PASSED;"));
 
     // Check interestingly-named idents
-    assertTrue(text.contains("\\-some-wacky-extension"));
+    assertTrue(text.contains("-some-wacky-extension"));
+    assertTrue(text.contains("another-extension:-bar"));
+    assertTrue(text.contains("-unescaped-hyphen:-is-better"));
+    assertTrue(text.contains("with_underscore:_is_better"));
     assertTrue(text.contains("ns\\:tag"));
     assertTrue(text.contains("ns\\:tag:pseudo"));
 

@@ -406,6 +406,7 @@ public class CssProperty extends CssNode {
   private ListValue value;
 
   public CssProperty(String name, Value value, boolean important) {
+    assert name.length() > 0 : "name";
     this.name = name;
     setValue(value);
     this.important = important;

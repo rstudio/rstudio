@@ -796,6 +796,13 @@ public class GenerateCssAst {
     assert selector.length() > 0;
 
     StringBuilder toReturn = new StringBuilder();
+
+    if (selector.charAt(0) == '-') {
+      // Allow leading hyphen
+      selector = selector.substring(1);
+      toReturn.append('-');
+    }
+
     if (!isIdentStart(selector.charAt(0))) {
       toReturn.append('\\');
     }
@@ -867,11 +874,12 @@ public class GenerateCssAst {
   }
 
   private static boolean isIdentPart(char c) {
-    return Character.isLetterOrDigit(c) || (c == '\\') || (c == '-');
+    return Character.isLetterOrDigit(c) || (c == '\\') || (c == '-')
+        || (c == '_');
   }
 
   private static boolean isIdentStart(char c) {
-    return Character.isLetter(c) || (c == '\\');
+    return Character.isLetter(c) || (c == '\\') || (c == '_');
   }
 
   /**

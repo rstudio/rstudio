@@ -24,6 +24,12 @@
 .prefixed-selector {
 }
 
+.selector_with_underscores {
+}
+
+.-selector-with-hyphen {
+}
+
 /* This is not a class selector */
 fail {
 }

@@ -36,7 +36,8 @@ public class ExtractClassNamesVisitorTest extends CssTestCase {
 
     Set<String> expected = new TreeSet<String>(Arrays.asList("selector1",
         "selector2", "selector3", "external1", "external2", "external3",
-        "prefixed-selector"));
+        "prefixed-selector", "selector_with_underscores",
+        "-selector-with-hyphen"));
     Set<String> actual = new TreeSet<String>(v.getFoundClasses());
 
     assertEquals(expected, actual);
@@ -50,7 +51,8 @@ public class ExtractClassNamesVisitorTest extends CssTestCase {
     test(TreeLogger.NULL, "extractClassNames", false, v);
 
     Set<String> expected = new TreeSet<String>(Arrays.asList("selector1",
-        "selector2", "selector3", "external1", "external2", "external3"));
+        "selector2", "selector3", "external1", "external2", "external3",
+        "selector_with_underscores", "-selector-with-hyphen"));
     Set<String> actual = new TreeSet<String>(v.getFoundClasses());
 
     assertEquals(expected, actual);

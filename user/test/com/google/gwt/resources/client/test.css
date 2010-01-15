@@ -109,6 +109,8 @@ div[foo="bar"] {
 div {
   \-some-wacky-extension : boo;
   another-extension: \-bar;
+  -unescaped-hyphen: -is-better;
+  with_underscore: _is_better;
 }
 
 div {

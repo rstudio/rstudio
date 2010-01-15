@@ -235,8 +235,11 @@ public class RtlVisitor extends CssModVisitor {
       String[] parts = name.toLowerCase().split("-");
       StringBuffer methodName = new StringBuffer("propertyHandler");
       for (String part : parts) {
-        methodName.append(Character.toUpperCase(part.charAt(0)));
-        methodName.append(part, 1, part.length());
+        if (part.length() > 0) {
+          // A leading hyphen, or something like foo--bar, which is weird
+          methodName.append(Character.toUpperCase(part.charAt(0)));
+          methodName.append(part, 1, part.length());
+        }
       }
 
       try {
