@@ -238,7 +238,7 @@ public class SerializabilityUtil {
   private static Class<?> computeHasCustomFieldSerializer(Class<?> instanceType) {
     assert (instanceType != null);
     String qualifiedTypeName = instanceType.getName();
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    ClassLoader classLoader = SerializabilityUtil.class.getClassLoader();
     String simpleSerializerName = qualifiedTypeName + "_CustomFieldSerializer";
     Class<?> customSerializer = getCustomFieldSerializer(classLoader,
         simpleSerializerName);
