@@ -285,7 +285,6 @@ public class AnchorTest extends GWTTestCase {
     assertEquals("Hieronymous", anchor.getElement().getAttribute("name"));
 
     anchor.setTabIndex(42);
-    System.err.println(anchor.getElement().getPropertyInt("tabIndex"));
     assertEquals(42, anchor.getElement().getPropertyInt("tabIndex"));
   }
 
