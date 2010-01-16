@@ -19,13 +19,14 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Used by {@link TestParameterizedWidgets}.
  */
-class ParameterizedWidgets {
-  interface Binder extends UiBinder<Widget, ParameterizedWidgets> {
+class ParameterizedWidget<T> extends Composite {
+  interface Binder extends UiBinder<Widget, ParameterizedWidget<?>> {
   }
 
   static final Binder binder = GWT.create(Binder.class);
@@ -33,8 +34,8 @@ class ParameterizedWidgets {
   @UiField
   Abstract<?> a;
 
-  ParameterizedWidgets() {
-    binder.createAndBindUi(this);
+  ParameterizedWidget() {
+    initWidget(binder.createAndBindUi(this));
   }
   
   @UiFactory

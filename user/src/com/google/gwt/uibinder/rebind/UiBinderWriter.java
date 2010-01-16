@@ -978,7 +978,7 @@ public class UiBinderWriter {
 
     // createAndBindUi method
     w.write("public %s createAndBindUi(final %s owner) {",
-        uiRootType.getName(), uiOwnerType.getName());
+        uiRootType.getParameterizedQualifiedSourceName(), uiOwnerType.getParameterizedQualifiedSourceName());
     w.indent();
     w.newline();
 
@@ -1009,7 +1009,7 @@ public class UiBinderWriter {
 
   private void writeClassOpen(IndentedWriter w) {
     w.write("public class %s implements UiBinder<%s, %s>, %s {", implClassName,
-        uiRootType.getName(), uiOwnerType.getName(), baseClass.getName());
+        uiRootType.getParameterizedQualifiedSourceName(), uiOwnerType.getParameterizedQualifiedSourceName(), baseClass.getParameterizedQualifiedSourceName());
     w.indent();
   }
 

@@ -19,7 +19,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Used by {@link ParameterizedWidgets}. 
+ * Used by {@link ParameterizedWidget}. 
  * @see TestParameterizedWidgets
  */
 abstract class Abstract<T> extends Widget {

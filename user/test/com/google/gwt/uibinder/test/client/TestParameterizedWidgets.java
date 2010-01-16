@@ -27,7 +27,7 @@ public class TestParameterizedWidgets extends GWTTestCase {
   }
 
   public void testHappy() {
-    ParameterizedWidgets ui = new ParameterizedWidgets();
+    ParameterizedWidget<String> ui = new ParameterizedWidget<String>();
     assertNotNull(ui.a);
   }
 }
