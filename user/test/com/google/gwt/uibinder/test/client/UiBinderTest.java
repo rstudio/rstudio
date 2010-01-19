@@ -453,6 +453,11 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("expected style name", widget.getStyleName());
   }
 
+  public void testIntPair() {
+    assertEquals(100, widgetUi.sideBarWidget.getOffsetWidth());
+    assertEquals(150, widgetUi.sideBarWidget.getOffsetHeight());
+  }
+  
   public void testDataResource() {
     assertNotNull(widgetUi.heartCursorResource.getUrl());
   }

@@ -39,7 +39,7 @@ public class LengthAttributeParser implements AttributeParser {
   private final DoubleAttributeParser doubleParser;
   private final EnumAttributeParser enumParser;
 
-  public LengthAttributeParser(DoubleAttributeParser doubleParser,
+  LengthAttributeParser(DoubleAttributeParser doubleParser,
       EnumAttributeParser enumParser, MortalLogger logger) {
     this.doubleParser = doubleParser;
     this.enumParser = enumParser;

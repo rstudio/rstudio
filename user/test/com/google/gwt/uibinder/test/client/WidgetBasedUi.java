@@ -100,6 +100,7 @@ public class WidgetBasedUi extends Composite {
   @UiField Tree myTree;
   @UiField Element nonStandardElement;
   @UiField DockPanel root;
+  @UiField Widget sideBarWidget;
   @UiField DivElement sideBar;
   @UiField SpanElement spanInMsg;
   @UiField Element tmElement;

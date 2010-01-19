@@ -69,7 +69,7 @@ public class AttributeParsers {
       addAttributeParser(DOUBLE, doubleParser);
       addAttributeParser(Double.class.getCanonicalName(), doubleParser);
       
-      addAttributeParser("int,int", new IntPairParser());
+      addAttributeParser("int,int", new IntPairAttributeParser(intParser, logger));
       
       addAttributeParser(HORIZ_CONSTANT, new HorizontalAlignmentConstantParser(
           converter, types.parse(HORIZ_CONSTANT), logger));

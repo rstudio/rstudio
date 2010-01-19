@@ -18,6 +18,7 @@ package com.google.gwt.uibinder;
 import com.google.gwt.uibinder.attributeparsers.CssNameConverterTest;
 import com.google.gwt.uibinder.attributeparsers.FieldReferenceConverterTest;
 import com.google.gwt.uibinder.attributeparsers.IntAttributeParserTest;
+import com.google.gwt.uibinder.attributeparsers.IntPairAttributeParserTest;
 import com.google.gwt.uibinder.attributeparsers.LengthAttributeParserTest;
 import com.google.gwt.uibinder.attributeparsers.StrictAttributeParserTest;
 import com.google.gwt.uibinder.attributeparsers.StringAttributeParserTest;
@@ -63,6 +64,7 @@ public class UiBinderJreSuite {
     // attributeparsers
     suite.addTestSuite(CssNameConverterTest.class);
     suite.addTestSuite(IntAttributeParserTest.class);
+    suite.addTestSuite(IntPairAttributeParserTest.class);
     suite.addTestSuite(FieldReferenceConverterTest.class);
     suite.addTestSuite(StrictAttributeParserTest.class);
     suite.addTestSuite(StringAttributeParserTest.class);
