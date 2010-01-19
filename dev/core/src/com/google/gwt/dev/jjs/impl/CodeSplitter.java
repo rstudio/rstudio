@@ -453,6 +453,7 @@ public class CodeSplitter {
     ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(jprogram);
     cfa.setDependencyRecorder(dependencyRecorder);
     traverseEntry(jprogram, cfa, 0);
+    traverseClassArray(jprogram, cfa);
 
     dependencyRecorder.endDependencyGraph();
     return cfa;
@@ -576,6 +577,28 @@ public class CodeSplitter {
       }
     }
     return revmap;
+  }
+
+  /**
+   * Any instance method in the magic Array class must be in the initial
+   * download. The methods of that class are copied to a separate object the
+   * first time class Array is touched, and any methods added later won't be
+   * part of the copy.
+   */
+  private static void traverseClassArray(JProgram jprogram,
+      ControlFlowAnalyzer cfa) {
+    JDeclaredType typeArray = jprogram.getFromTypeMap("com.google.gwt.lang.Array");
+    if (typeArray == null) {
+      // It was pruned; nothing to do
+      return;
+    }
+
+    cfa.traverseFromInstantiationOf(typeArray);
+    for (JMethod method : typeArray.getMethods()) {
+      if (!method.isStatic()) {
+        cfa.traverseFrom(method);
+      }
+    }
   }
 
   /**
