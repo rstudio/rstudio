@@ -24,6 +24,7 @@ import com.google.gwt.resources.client.ImageResource;
 public class ImageResourcePrototype implements ImageResource {
 
   private final boolean animated;
+  private final boolean lossy;
   private final String name;
   private final String url;
   private final int left;
@@ -35,7 +36,7 @@ public class ImageResourcePrototype implements ImageResource {
    * Only called by generated code.
    */
   public ImageResourcePrototype(String name, String url, int left, int top,
-      int width, int height, boolean animated) {
+      int width, int height, boolean animated, boolean lossy) {
     this.name = name;
     this.left = left;
     this.top = top;
@@ -43,6 +44,7 @@ public class ImageResourcePrototype implements ImageResource {
     this.width = width;
     this.url = url;
     this.animated = animated;
+    this.lossy = lossy;
   }
 
   /**
@@ -86,5 +88,9 @@ public class ImageResourcePrototype implements ImageResource {
 
   public boolean isAnimated() {
     return animated;
+  }
+
+  public boolean isLossy() {
+    return lossy;
   }
 }

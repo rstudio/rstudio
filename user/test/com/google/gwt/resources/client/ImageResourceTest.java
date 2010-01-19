@@ -23,6 +23,7 @@ import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.resources.client.impl.ImageResourcePrototype;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 
@@ -33,6 +34,13 @@ public class ImageResourceTest extends GWTTestCase {
   static interface Resources extends ClientBundle {
     @Source("animated.gif")
     ImageResource animated();
+
+    /**
+     * This image shouldn't be re-encoded as a PNG or it will dramatically
+     * increase in size, although it's still small enough to be encoded as a
+     * data URL as-is.
+     */
+    ImageResource complexLossy();
 
     @Source("16x16.png")
     ImageResource i16x16();
@@ -83,6 +91,7 @@ public class ImageResourceTest extends GWTTestCase {
     ImageResource a = r.animated();
 
     assertTrue(a.isAnimated());
+    assertFalse(((ImageResourcePrototype) a).isLossy());
     assertEquals(16, a.getWidth());
     assertEquals(16, a.getHeight());
     assertEquals(0, a.getLeft());
@@ -131,12 +140,10 @@ public class ImageResourceTest extends GWTTestCase {
     ImageResource lossy = r.largeLossy();
     ImageResource lossless = r.largeLossless();
 
-    // The large, lossless image should not be bundled
-    if (!i64.getURL().startsWith("data:")) {
-      assertFalse(i64.getURL().equals(lossless.getURL()));
-    }
+    assertFalse(((ImageResourcePrototype) lossless).isLossy());
 
     // Make sure that the large, lossy image isn't bundled with the rest
+    assertTrue(((ImageResourcePrototype) lossy).isLossy());
     assertTrue(!i64.getURL().equals(lossy.getURL()));
 
     assertEquals(16, r.i16x16Vertical().getWidth());

@@ -140,7 +140,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
           + urlExpressions[1] + " : " + urlExpressions[0] + ",");
     }
     sw.println(rect.getLeft() + ", " + rect.getTop() + ", " + rect.getWidth()
-        + ", " + rect.getHeight() + ", " + rect.isAnimated());
+        + ", " + rect.getHeight() + ", " + rect.isAnimated() + ", "
+        + rect.isLossy());
 
     sw.outdent();
     sw.print(")");
@@ -245,8 +246,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
       URL normalContents;
       rect = e.getImageRect();
 
-      if (rect.isAnimated()) {
-        // Can't re-encode animated images, so we emit it as-is
+      if (rect.isAnimated() || rect.isLossy()) {
+        // Can't re-encode animated or lossy images, so we emit it as-is
         normalContents = resource;
       } else {
         normalContents = reencodeToTempFile(logger, rect);

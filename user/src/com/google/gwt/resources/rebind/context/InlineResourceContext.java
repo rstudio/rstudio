@@ -21,6 +21,11 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 
 class InlineResourceContext extends StaticResourceContext {
+  /**
+   * String constants in Java have a maximum limit that we must obey.
+   */
+  public static final int MAX_ENCODED_SIZE = (2 << 15) - 1;
+
   InlineResourceContext(TreeLogger logger, GeneratorContext context,
       JClassType resourceBundleType) {
     super(logger, context, resourceBundleType);
@@ -37,10 +42,19 @@ class InlineResourceContext extends StaticResourceContext {
 
       String base64Contents = toBase64(data);
 
-      return "\"data:" + mimeType + ";base64," + base64Contents + "\"";
-    } else {
-      return super.deploy(suggestedFileName, mimeType, data, true);
+      String encoded = "\"data:" + mimeType + ";base64," + base64Contents
+          + "\"";
+
+      /*
+       * We know that the encoded format will be one byte per character, since
+       * we're using only ASCII characters.
+       */
+      if (encoded.length() < MAX_ENCODED_SIZE) {
+        return encoded;
+      }
     }
+
+    return super.deploy(suggestedFileName, mimeType, data, true);
   }
 
   @Override

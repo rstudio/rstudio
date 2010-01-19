@@ -20,6 +20,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
+import org.w3c.dom.Node;
+
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
@@ -42,6 +44,8 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataFormatImpl;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 
 /**
@@ -294,7 +298,7 @@ class ImageBundleBuilder {
    */
   static class ImageRect implements HasRect {
 
-    private boolean hasBeenPositioned;
+    private boolean hasBeenPositioned, lossy;
     private final int height, width;
     private final BufferedImage[] images;
     private int left, top;
@@ -366,6 +370,14 @@ class ImageBundleBuilder {
 
     public boolean isAnimated() {
       return images.length > 1;
+    }
+
+    public boolean isLossy() {
+      return lossy;
+    }
+
+    public void setLossy(boolean lossy) {
+      this.lossy = lossy;
     }
 
     public void setPosition(int left, int top) {
@@ -669,6 +681,8 @@ class ImageBundleBuilder {
         "Adding image '" + imageName + "'", null);
 
     BufferedImage image = null;
+    // Be safe by default and assume that the incoming image is lossy
+    boolean lossy = true;
     // Load the image
     try {
       /*
@@ -689,6 +703,30 @@ class ImageBundleBuilder {
         } else if (numImages == 1) {
           try {
             image = reader.read(0);
+            IIOMetadata metadata = reader.getImageMetadata(0);
+            if (metadata != null
+                && metadata.isStandardMetadataFormatSupported()) {
+              // http://java.sun.com/j2se/1.5.0/docs/api/javax/imageio/metadata/doc-files/standard_metadata.html
+              Node data = metadata.getAsTree(IIOMetadataFormatImpl.standardMetadataFormatName);
+              metadata : for (int i = 0, j = data.getChildNodes().getLength(); i < j; i++) {
+                Node child = data.getChildNodes().item(i);
+                if (child.getLocalName().equalsIgnoreCase("compression")) {
+                  for (int k = 0, l = child.getChildNodes().getLength(); k < l; k++) {
+                    Node child2 = child.getChildNodes().item(k);
+                    if (child2.getLocalName().equalsIgnoreCase("lossless")) {
+                      Node value = child2.getAttributes().getNamedItem("value");
+                      if (value == null) {
+                        // The default is true, according to the DTD
+                        lossy = false;
+                      } else {
+                        lossy = !Boolean.parseBoolean(value.getNodeValue());
+                      }
+                      break metadata;
+                    }
+                  }
+                }
+              }
+            }
           } catch (Exception e) {
             // Hope we have another reader that can handle the image
             continue readers;
@@ -739,8 +777,11 @@ class ImageBundleBuilder {
     }
 
     ImageRect toReturn = new ImageRect(imageName, image);
+    toReturn.setLossy(lossy);
 
-    if (toReturn.height > IMAGE_MAX_SIZE || toReturn.width > IMAGE_MAX_SIZE) {
+    // Don't composite the image if it's lossy or if it is too big
+    if (lossy || toReturn.height > IMAGE_MAX_SIZE
+        || toReturn.width > IMAGE_MAX_SIZE) {
       throw new UnsuitableForStripException(toReturn);
     }
 
