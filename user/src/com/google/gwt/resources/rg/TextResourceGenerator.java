@@ -33,6 +33,12 @@ import java.net.URL;
  * Provides implementations of TextResource.
  */
 public final class TextResourceGenerator extends AbstractResourceGenerator {
+  /**
+   * Java compiler has a limit of 2^16 bytes for encoding string constants in a
+   * class file. Since the max size of a character is 4 bytes, we'll limit the
+   * number of characters to (2^14 - 1) to fit within one record.
+   */
+  private static final int MAX_STRING_CHUNK = 16383;
 
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context,
@@ -61,7 +67,11 @@ public final class TextResourceGenerator extends AbstractResourceGenerator {
 
     String toWrite = Util.readURLAsString(resource);
 
-    sw.println("return \"" + Generator.escape(toWrite) + "\";");
+    if (toWrite.length() > MAX_STRING_CHUNK) {
+      writeLongString(sw, toWrite);
+    } else {
+      sw.println("return \"" + Generator.escape(toWrite) + "\";");
+    }
     sw.outdent();
     sw.println("}");
 
@@ -75,5 +85,24 @@ public final class TextResourceGenerator extends AbstractResourceGenerator {
     sw.println("}");
 
     return sw.toString();
+  }
+
+  /**
+   * A single constant that is too long will crash the compiler with an out of
+   * memory error. Break up the constant and generate code that appends using a
+   * buffer.
+   */
+  private void writeLongString(SourceWriter sw, String toWrite) {
+    sw.println("StringBuilder builder = new StringBuilder();");
+    int offset = 0;
+    int length = toWrite.length();
+    while (offset < length - 1) {
+      int subLength = Math.min(MAX_STRING_CHUNK, length - offset);
+      sw.print("builder.append(\"");
+      sw.print(Generator.escape(toWrite.substring(offset, offset + subLength)));
+      sw.println("\");");
+      offset += subLength;
+    }
+    sw.println("return builder.toString();");
   }
 }

@@ -46,7 +46,6 @@ public class ResourcesSuite {
     suite.addTestSuite(NestedBundleTest.class);
     suite.addTestSuite(ResourceGeneratorUtilTest.class);
     suite.addTestSuite(TextResourceTest.class);
-
     return suite;
   }
 }

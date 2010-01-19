@@ -24,6 +24,9 @@ import com.google.gwt.junit.client.GWTTestCase;
 public class TextResourceTest extends GWTTestCase {
 
   static interface Resources extends ClientBundleWithLookup {
+    @Source("bigtextresource.txt")
+    TextResource bigTextResource();
+
     @Source("com/google/gwt/resources/client/hello.txt")
     TextResource helloWorldAbsolute();
 
@@ -42,6 +45,17 @@ public class TextResourceTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.resources.Resources";
+  }
+
+  /**
+   * Test fix for problem where large text files caused out of memory errors
+   * when run in hosted mode.
+   */
+  public void testBigTextResource() {
+    final Resources r = GWT.create(Resources.class);
+    String result = r.bigTextResource().getText();
+    int length = result.length();
+    assertEquals(length, 12737792);
   }
 
   public void testExternal() throws ResourceException {
@@ -79,7 +93,7 @@ public class TextResourceTest extends GWTTestCase {
     assertEquals("helloWorldExternal", r.helloWorldExternal().getName());
 
     ResourcePrototype[] resources = r.getResources();
-    assertEquals(4, resources.length);
+    assertEquals(5, resources.length);
   }
 
   public void testOutsideResourceOracle() {
