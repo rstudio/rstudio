@@ -30,7 +30,6 @@ import com.google.gwt.resources.css.ast.CssRule;
 import com.google.gwt.resources.css.ast.CssSelector;
 import com.google.gwt.resources.css.ast.CssSprite;
 import com.google.gwt.resources.css.ast.CssStylesheet;
-import com.google.gwt.resources.css.ast.CssUnknownAtRule;
 import com.google.gwt.resources.css.ast.CssUrl;
 import com.google.gwt.resources.css.ast.HasNodes;
 import com.google.gwt.resources.css.ast.HasProperties;
@@ -237,22 +236,15 @@ public class GenerateCssAst {
      * Reflectively invoke a method named parseRule on this instance.
      */
     public void ignorableAtRule(String atRule) throws CSSException {
-      int idx = atRule.indexOf(" ");
-      if (idx == -1) {
-        // Empty rule like @foo;
-        addNode(new CssUnknownAtRule(atRule));
-        return;
-      }
-      String ruleName = atRule.substring(1, idx);
+      String ruleName = atRule.substring(1, atRule.indexOf(" "));
       String methodName = "parse" + (Character.toUpperCase(ruleName.charAt(0)))
-          + ruleName.substring(1).toLowerCase();
+          + ruleName.substring(1);
       try {
         Method parseMethod = getClass().getDeclaredMethod(methodName,
             String.class);
         parseMethod.invoke(this, atRule);
       } catch (NoSuchMethodException e) {
-        // A rule like @-webkit-keyframe {...} that we can't process
-        addNode(new CssUnknownAtRule(atRule));
+        errors.log(TreeLogger.WARN, "Ignoring @" + ruleName);
       } catch (IllegalAccessException e) {
         errors.log(TreeLogger.ERROR, "Unable to invoke parse method ", e);
       } catch (InvocationTargetException e) {

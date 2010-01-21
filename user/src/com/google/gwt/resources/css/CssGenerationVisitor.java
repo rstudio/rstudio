@@ -29,7 +29,6 @@ import com.google.gwt.resources.css.ast.CssProperty;
 import com.google.gwt.resources.css.ast.CssRule;
 import com.google.gwt.resources.css.ast.CssSelector;
 import com.google.gwt.resources.css.ast.CssSprite;
-import com.google.gwt.resources.css.ast.CssUnknownAtRule;
 import com.google.gwt.resources.css.ast.CssUrl;
 import com.google.gwt.resources.css.ast.CssVisitor;
 
@@ -108,12 +107,6 @@ public class CssGenerationVisitor extends CssVisitor {
       // Don't print empty rule blocks
       closeBrace();
     }
-  }
-
-  @Override
-  public void endVisit(CssUnknownAtRule x, Context ctx) {
-    out.printOpt("/* Unknown at-rule */\n");
-    out.print(x.getRule());
   }
 
   public SortedMap<Integer, List<CssNode>> getSubstitutionPositions() {

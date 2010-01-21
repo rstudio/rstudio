@@ -221,8 +221,3 @@ ns\:tag:pseudo {
 /* The @external parser attempts to be flexible */
 @external externalA, .externalB externalC;
 .externalA .replacement, .externalB, .externalC {border: GREEN;}
-
-/* Check unknown at-rules */
-@dontIgnoreThis;
-@dontIgnoreThis { /* the space between the name and the { is important */ }
-@dontIgnoreThisToo{ some { random : content } }

@@ -25,7 +25,6 @@ import com.google.gwt.resources.css.CssNodeClonerTest;
 import com.google.gwt.resources.css.CssReorderTest;
 import com.google.gwt.resources.css.CssRtlTest;
 import com.google.gwt.resources.css.ExtractClassNamesVisitorTest;
-import com.google.gwt.resources.css.UnknownAtRuleTest;
 import com.google.gwt.resources.ext.ResourceGeneratorUtilTest;
 
 import junit.framework.Test;
@@ -47,7 +46,6 @@ public class ResourcesSuite {
     suite.addTestSuite(NestedBundleTest.class);
     suite.addTestSuite(ResourceGeneratorUtilTest.class);
     suite.addTestSuite(TextResourceTest.class);
-    suite.addTestSuite(UnknownAtRuleTest.class);
     return suite;
   }
 }
