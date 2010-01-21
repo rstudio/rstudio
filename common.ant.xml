@@ -1,6 +1,6 @@
 <project name="common">
   <!-- it's okay for this not to exist, but it gives a place to store
-       "your" property settings, if any, persistently.  For example, you
+       personal property settings, if any, persistently.  For example, you
        might use it to set gwt.junit.testcase.includes to a narrower subset
        of test cases to exercise. -->
   <property file="local.ant.properties" />
