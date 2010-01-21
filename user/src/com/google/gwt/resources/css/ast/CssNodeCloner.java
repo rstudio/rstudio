@@ -246,6 +246,13 @@ public class CssNodeCloner extends CssVisitor {
     addToNodes(newUrl);
     return true;
   }
+  
+  @Override
+  public boolean visit(CssUnknownAtRule x, Context ctx) {
+    CssUnknownAtRule newRule = new CssUnknownAtRule(x.getRule());
+    addToNodes(newRule);
+    return true;
+  }
 
   /**
    * Add a cloned node instance to the output.
