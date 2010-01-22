@@ -480,6 +480,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       // Make sure that CSS styles specified for the default Menu classes
       // do not affect this menu
       setStyleName("");
+      setFocusOnHoverEnabled(false);
     }
 
     public void doSelectedItemAction() {
@@ -487,7 +488,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       // selected, the menu must be showing.
       MenuItem selectedItem = getSelectedItem();
       if (selectedItem != null) {
-        doItemAction(selectedItem, true);
+        doItemAction(selectedItem, true, false);
       }
     }
 

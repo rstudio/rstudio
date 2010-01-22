@@ -191,6 +191,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   private MenuItem selectedItem;
   private MenuBar shownChildMenu;
   private boolean vertical, autoOpen;
+  private boolean focusOnHover = true;
 
   /**
    * Creates an empty horizontal menu bar.
@@ -481,6 +482,16 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   }
 
   /**
+   * Check whether or not this widget will steal keyboard focus when the mouse
+   * hovers over it.
+   * 
+   * @return true if enabled, false if disabled
+   */
+  public boolean isFocusOnHoverEnabled() {
+    return focusOnHover;
+  }
+
+  /**
    * Moves the menu selection down to the next item. If there is no selection,
    * selects the first item. If there are no items at all, does nothing.
    */
@@ -496,7 +507,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
           && !selectedItem.getSubMenu().getItems().isEmpty()
           && (shownChildMenu == null || shownChildMenu.getSelectedItem() == null)) {
         if (shownChildMenu == null) {
-          doItemAction(selectedItem, false);
+          doItemAction(selectedItem, false, true);
         }
         selectedItem.getSubMenu().focus();
       } else if (parentMenu != null) {
@@ -535,7 +546,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         FocusPanel.impl.focus(getElement());
         // Fire an item's command when the user clicks on it.
         if (item != null) {
-          doItemAction(item, true);
+          doItemAction(item, true, true);
         }
         break;
       }
@@ -597,7 +608,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
             break;
           case KeyCodes.KEY_ENTER:
             if (!selectFirstItemIfNoneSelected()) {
-              doItemAction(selectedItem, true);
+              doItemAction(selectedItem, true, true);
               eatEvent(event);
             }
             break;
@@ -623,7 +634,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     // When the menu popup closes, remember that no item is
     // currently showing a popup menu.
-    onHide();
+    onHide(autoClosed);
     CloseEvent.fire(MenuBar.this, sender);
     shownChildMenu = null;
     popup = null;
@@ -720,6 +731,18 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   }
 
   /**
+   * Enable or disable auto focus when the mouse hovers over the MenuBar. This
+   * allows the MenuBar to respond to keyboard events without the user having to
+   * click on it, but it will steal focus from other elements on the page.
+   * Enabled by default.
+   * 
+   * @param enabled true to enable, false to disable
+   */
+  public void setFocusOnHoverEnabled(boolean enabled) {
+    focusOnHover = enabled;
+  }
+
+  /**
    * Returns a list containing the <code>MenuItem</code> objects in the menu
    * bar. If there are no items in the menu bar, then an empty <code>List</code>
    * object will be returned.
@@ -787,7 +810,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * <code>true</code> if the item's command should be fired, <code>false</code>
    * otherwise.
    */
-  void doItemAction(final MenuItem item, boolean fireCommand) {
+  void doItemAction(final MenuItem item, boolean fireCommand, boolean focus) {
     // Ensure that the item is selected.
     selectItem(item);
 
@@ -803,7 +826,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
         // hide any open submenus of this item
         if (shownChildMenu != null) {
-          shownChildMenu.onHide();
+          shownChildMenu.onHide(focus);
           popup.hide();
           shownChildMenu = null;
           selectItem(null);
@@ -814,19 +837,19 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
           openPopup(item);
         } else if (item.getSubMenu() != shownChildMenu) {
           // close the other submenu and open this one
-          shownChildMenu.onHide();
+          shownChildMenu.onHide(focus);
           popup.hide();
           openPopup(item);
         } else if (fireCommand && !autoOpen) {
           // close this submenu
-          shownChildMenu.onHide();
+          shownChildMenu.onHide(focus);
           popup.hide();
           shownChildMenu = null;
           selectItem(item);
         }
       } else if (autoOpen && shownChildMenu != null) {
         // close submenu
-        shownChildMenu.onHide();
+        shownChildMenu.onHide(focus);
         popup.hide();
         shownChildMenu = null;
       }
@@ -844,7 +867,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     // Style the item selected when the mouse enters.
     selectItem(item);
-    if (focus) {
+    if (focus && focusOnHover) {
       focus();
     }
 
@@ -853,7 +876,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     // when the mouse enters.
     if (item != null) {
       if ((shownChildMenu != null) || (parentMenu != null) || autoOpen) {
-        doItemAction(item, false);
+        doItemAction(item, false, focusOnHover);
       }
     }
   }
@@ -933,6 +956,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   private void close() {
     if (parentMenu != null) {
       parentMenu.popup.hide();
+      parentMenu.focus();
     }
   }
 
@@ -1007,7 +1031,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
           && !selectedItem.getSubMenu().getItems().isEmpty()
           && (shownChildMenu == null || shownChildMenu.getSelectedItem() == null)) {
         if (shownChildMenu == null) {
-          doItemAction(selectedItem, false);
+          doItemAction(selectedItem, false, true);
         }
         selectedItem.getSubMenu().focus();
       } else if (parentMenu != null) {
@@ -1040,11 +1064,13 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * This method is called when a menu bar is hidden, so that it can hide any
    * child popups that are currently being shown.
    */
-  private void onHide() {
+  private void onHide(boolean focus) {
     if (shownChildMenu != null) {
-      shownChildMenu.onHide();
+      shownChildMenu.onHide(focus);
       popup.hide();
-      focus();
+      if (focus) {
+        focus();
+      }
     }
   }
 
@@ -1199,7 +1225,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     selectItem(itemToBeSelected);
     if (shownChildMenu != null) {
-      doItemAction(itemToBeSelected, false);
+      doItemAction(itemToBeSelected, false, true);
     }
   }
 
@@ -1224,7 +1250,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     selectItem(itemToBeSelected);
     if (shownChildMenu != null) {
-      doItemAction(itemToBeSelected, false);
+      doItemAction(itemToBeSelected, false, true);
     }
   }
 
