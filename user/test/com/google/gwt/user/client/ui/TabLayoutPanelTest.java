@@ -176,6 +176,37 @@ public class TabLayoutPanelTest extends GWTTestCase {
   }
 
   /**
+   * Test that {@link TabLayoutPanel} calls widget.setVisible(true/false) on
+   * each widget, when it is shown/hidden.
+   */
+  public void testSetWidgetVisible() {
+    TabLayoutPanel p = new TabLayoutPanel(1, Unit.EM);
+    Label[] labels = new Label[3];
+    for (int i = 0; i < labels.length; i++) {
+      labels[i] = new Label("content" + i);
+      p.add(labels[i]);
+    }
+
+    // Initially, the first widget should be visible.
+    assertTrue(labels[0].isVisible());
+    assertFalse(labels[1].isVisible());
+    assertFalse(labels[2].isVisible());
+
+    // Show widget at index 1, make sure it becomes visible, and the one at
+    // index 0 is hidden.
+    p.selectTab(1);
+    assertFalse(labels[0].isVisible());
+    assertTrue(labels[1].isVisible());
+    assertFalse(labels[2].isVisible());
+
+    // Show widget at index 0, make sure it changed back to the initial state.
+    p.selectTab(0);
+    assertTrue(labels[0].isVisible());
+    assertFalse(labels[1].isVisible());
+    assertFalse(labels[2].isVisible());
+  }
+
+  /**
    * Tests that tabs actually line up properly (see issue 4447).
    */
   @DoNotRunWith(Platform.HtmlUnit)

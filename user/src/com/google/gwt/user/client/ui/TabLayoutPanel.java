@@ -18,8 +18,8 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
@@ -381,13 +381,17 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
     // Update the tabs being selected and unselected.
     if (selectedIndex != -1) {
-      Element container = panel.getWidgetContainerElement(children.get(selectedIndex));
-      container.getStyle().setVisibility(Visibility.HIDDEN);
+      Widget child = children.get(selectedIndex);
+      Element container = panel.getWidgetContainerElement(child);
+      container.getStyle().setDisplay(Display.NONE);
+      child.setVisible(false);
       tabs.get(selectedIndex).setSelected(false);
     }
 
-    Element container = panel.getWidgetContainerElement(children.get(index));
-    container.getStyle().clearVisibility();
+    Widget child = children.get(index);
+    Element container = panel.getWidgetContainerElement(child);
+    container.getStyle().clearDisplay();
+    child.setVisible(true);
     tabs.get(index).setSelected(true);
     selectedIndex = index;
 
@@ -472,7 +476,8 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
   private void layoutChild(Widget child) {
     panel.setWidgetLeftRight(child, 0, Unit.PX, 0, Unit.PX);
     panel.setWidgetTopBottom(child, barHeight, barUnit, 0, Unit.PX);
-    panel.getWidgetContainerElement(child).getStyle().setVisibility(
-        Visibility.HIDDEN);
+    panel.getWidgetContainerElement(child).getStyle().setDisplay(
+        Display.NONE);
+    child.setVisible(false);
   }
 }
