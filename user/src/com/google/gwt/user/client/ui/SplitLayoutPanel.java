@@ -53,7 +53,7 @@ import com.google.gwt.user.client.Event;
  */
 public class SplitLayoutPanel extends DockLayoutPanel {
 
-  private class HSplitter extends Splitter {
+  class HSplitter extends Splitter {
     public HSplitter(Widget target, boolean reverse) {
       super(target, reverse);
       getElement().getStyle().setPropertyPx("width", SPLITTER_SIZE);
@@ -81,7 +81,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     }
   }
 
-  private abstract class Splitter extends Widget {
+  abstract class Splitter extends Widget {
     protected final Widget target;
 
     private int offset;
@@ -176,7 +176,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     }
   }
 
-  private class VSplitter extends Splitter {
+  class VSplitter extends Splitter {
     public VSplitter(Widget target, boolean reverse) {
       super(target, reverse);
       getElement().getStyle().setPropertyPx("height", SPLITTER_SIZE);
@@ -215,7 +215,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
   public void insert(Widget child, Direction direction, double size, Widget before) {
     super.insert(child, direction, size, before);
     if (direction != Direction.CENTER) {
-      insertSplitter(before);
+      insertSplitter(child, before);
     }
   }
 
@@ -227,7 +227,8 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       // Remove the associated splitter, if any.
       int idx = getWidgetIndex(child);
       if (idx < getWidgetCount() - 1) {
-        remove(idx + 1);
+        // Call super.remove(), or we'll end up recursing.
+        super.remove(getWidget(idx + 1));
       }
       return true;
     }
@@ -264,30 +265,28 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     return null;
   }
 
-  private void insertSplitter(Widget before) {
+  private void insertSplitter(Widget widget, Widget before) {
     assert getChildren().size() > 0 : "Can't add a splitter before any children";
-    assert getCenter() == null : "Can't add a splitter after the CENTER widget";
 
-    Widget lastChild = getChildren().get(getChildren().size() - 1);
-    LayoutData lastChildLayout = (LayoutData) lastChild.getLayoutData();
+    LayoutData layout = (LayoutData) widget.getLayoutData();
     Splitter splitter = null;
-    switch (lastChildLayout.direction) {
+    switch (layout.direction) {
       case WEST:
-        splitter = new HSplitter(lastChild, false);
+        splitter = new HSplitter(widget, false);
         break;
       case EAST:
-        splitter = new HSplitter(lastChild, true);
+        splitter = new HSplitter(widget, true);
         break;
       case NORTH:
-        splitter = new VSplitter(lastChild, false);
+        splitter = new VSplitter(widget, false);
         break;
       case SOUTH:
-        splitter = new VSplitter(lastChild, true);
+        splitter = new VSplitter(widget, true);
         break;
       default:
         assert false : "Unexpected direction";
     }
 
-    super.insert(splitter, lastChildLayout.direction, SPLITTER_SIZE, before);
+    super.insert(splitter, layout.direction, SPLITTER_SIZE, before);
   }
 }

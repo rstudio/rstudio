@@ -59,7 +59,6 @@ import com.google.gwt.user.client.ui.HorizontalPanelTest;
 import com.google.gwt.user.client.ui.HorizontalSplitPanelTest;
 import com.google.gwt.user.client.ui.HyperlinkTest;
 import com.google.gwt.user.client.ui.ImageTest;
-import com.google.gwt.user.client.ui.LayoutPanelTest;
 import com.google.gwt.user.client.ui.LazyPanelTest;
 import com.google.gwt.user.client.ui.LinearPanelTest;
 import com.google.gwt.user.client.ui.ListBoxTest;
@@ -147,7 +146,6 @@ public class UISuite {
     suite.addTestSuite(HyperlinkTest.class);
     suite.addTestSuite(ImageBundleGeneratorTest.class);
     suite.addTestSuite(ImageTest.class);
-    suite.addTestSuite(LayoutPanelTest.class);
     suite.addTestSuite(LazyPanelTest.class);
     suite.addTestSuite(LinearPanelTest.class);
     suite.addTestSuite(ListBoxTest.class);

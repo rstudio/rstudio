@@ -150,7 +150,17 @@ public class StackLayoutPanel extends Composite implements HasWidgets,
 
   public void clear() {
     layoutPanel.clear();
+    layoutData.clear();
     visibleWidget = null;
+  }
+
+  /**
+   * Gets the currently-selected widget.
+   * 
+   * @return the selected widget, or <code>null</code> if none exist
+   */
+  public Widget getVisibleWidget() {
+    return visibleWidget;
   }
 
   public Iterator<Widget> iterator() {
@@ -185,14 +195,29 @@ public class StackLayoutPanel extends Composite implements HasWidgets,
   }
 
   public boolean remove(Widget child) {
-    if (child.getParent() != this) {
+    if (child.getParent() != layoutPanel) {
       return false;
     }
 
-    LayoutData data = (LayoutData) child.getLayoutData();
-    layoutPanel.remove(data.header);
-    layoutPanel.remove(child);
-    return true;
+    // Find the layoutData associated with this widget and remove it.
+    for (int i = 0; i < layoutData.size(); ++i) {
+      LayoutData data = layoutData.get(i);
+      if (data.widget == child) {
+        layoutPanel.remove(data.header);
+        layoutPanel.remove(child);
+        layoutData.remove(i);
+
+        if (visibleWidget == child) {
+          visibleWidget = null;
+          if (layoutData.size() > 0) {
+            showWidget(layoutData.get(0).widget);
+          }
+        }
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -211,6 +236,11 @@ public class StackLayoutPanel extends Composite implements HasWidgets,
   }
 
   private void animate(int duration) {
+    // Don't try to animate zero widgets.
+    if (layoutData.size() == 0) {
+      return;
+    }
+
     double top = 0, bottom = 0;
     int i = 0, visibleIndex = -1;
     for (; i < layoutData.size(); ++i) {

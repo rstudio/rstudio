@@ -45,7 +45,7 @@
   <!--
     Run LayoutTest in CSS standards mode
   -->
-  <property name="gwt.junit.testcase.standards.includes" value="**/LayoutTest.class" />
+  <property name="gwt.junit.testcase.standards.includes" value="**/*Layout*Test.class" />
   <property name="gwt.junit.testcase.standards.excludes" value="" />
 
   <!--

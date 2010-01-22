@@ -30,6 +30,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.layout.client.Layout.Alignment;
 import com.google.gwt.layout.client.Layout.Layer;
@@ -42,6 +44,7 @@ import com.google.gwt.user.client.Window;
  * it reliably until we have a way to switch on "standards" mode in
  * GWTTestCases.
  */
+@DoNotRunWith(Platform.HtmlUnit)
 public class LayoutTest extends GWTTestCase {
 
   private static interface LayerInitializer {

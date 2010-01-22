@@ -20,6 +20,8 @@ import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Iterator;
@@ -31,7 +33,7 @@ public class TabLayoutPanelTest extends GWTTestCase {
 
   static class Adder implements HasWidgetsTester.WidgetAdder {
     public void addChild(HasWidgets container, Widget child) {
-      ((TabPanel) container).add(child, "foo");
+      ((TabLayoutPanel) container).add(child, "foo");
     }
   }
 
@@ -54,7 +56,7 @@ public class TabLayoutPanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(new TabPanel(), new Adder(), true);
+    HasWidgetsTester.testAll(new TabLayoutPanel(1, Unit.EM), new Adder(), true);
   }
 
   public void testInsertMultipleTimes() {
@@ -176,6 +178,7 @@ public class TabLayoutPanelTest extends GWTTestCase {
   /**
    * Tests that tabs actually line up properly (see issue 4447).
    */
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testTabLayout() {
     TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
     RootPanel.get().add(p);
