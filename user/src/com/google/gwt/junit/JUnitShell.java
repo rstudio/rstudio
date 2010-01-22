@@ -56,6 +56,8 @@ import junit.framework.TestResult;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -135,6 +137,27 @@ public class JUnitShell extends GWTShell {
         @Override
         public String[] getDefaultArgs() {
           return new String[] {this.getTag(), "auto"};
+        }
+      });
+
+      // Disable -bindAddress, fail if it is given
+      // TODO(jat): support -bindAddress in JUnitShell, which will probably
+      // require changes to the RunStyle API.
+      registerHandler(new ArgHandlerBindAddress(options) {
+        @Override
+        public String[] getDefaultArgs() {
+          return null;
+        }
+
+        @Override
+        public boolean isUndocumented() {
+          return true;
+        }
+
+        @Override
+        public boolean setString(String value) {
+          System.err.println("-bindAddress is not supported for JUnitShell");
+          return false;
         }
       });
 
@@ -623,6 +646,17 @@ public class JUnitShell extends GWTShell {
       if (!argProcessor.processArgs(args)) {
         throw new JUnitFatalLaunchException("Error processing shell arguments");
       }
+      // Always bind to the wildcard address and substitute the host address in
+      // URLs.  Note that connectAddress isn't actually used here, as we
+      // override it from the runsStyle in getModuleUrl, but we set it to match
+      // what will actually be used anyway to avoid confusion.
+      unitTestShell.options.setBindAddress("0.0.0.0");
+      try {
+        unitTestShell.options.setConnectAddress(
+            InetAddress.getLocalHost().getHostAddress());
+      } catch (UnknownHostException e) {
+        throw new JUnitFatalLaunchException("Unable to resolve my address");
+      }
       if (!unitTestShell.startUp()) {
         throw new JUnitFatalLaunchException("Shell failed to start");
       }
@@ -763,6 +797,7 @@ public class JUnitShell extends GWTShell {
   }
 
   public String getModuleUrl(String moduleName) {
+    // TODO(jat): consider using DevModeBase.processUrl instead
     String localhost = runStyle.getLocalHostName();
     String url = "http://" + localhost + ":" + getPort() + "/" + moduleName
         + (standardsMode ? "/junit-standards.html" : "/junit.html");
