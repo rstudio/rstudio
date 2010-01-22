@@ -17,7 +17,6 @@ package com.google.gwt.core.ext;
 
 import java.io.File;
 import java.net.BindException;
-import java.net.InetAddress;
 
 /**
  * Defines the service provider interface for launching servlet containers that
@@ -81,7 +80,7 @@ public abstract class ServletContainerLauncher {
    * If not called, the SCL should listen on all addresses.
    * 
    * @param bindAddress host name or IP address, suitable for use with
-   *     {@link InetAddress#getByName(String)}
+   *     {@link java.net.InetAddress#getByName(String)}
    */
   public void setBindAddress(String bindAddress) {
     /*

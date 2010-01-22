@@ -487,11 +487,6 @@ public class JettyLauncher extends ServletContainerLauncher {
     return "Jetty";
   }
 
-  @Override
-  public void setBindAddress(String bindAddress) {
-    this.bindAddress = bindAddress;
-  }
-
   /*
    * TODO: This is a hack to pass the base log level to the SCL. We'll have to
    * figure out a better way to do this for SCLs in general. Please do not
@@ -501,6 +496,11 @@ public class JettyLauncher extends ServletContainerLauncher {
     synchronized (privateInstanceLock) {
       this.baseLogLevel = baseLogLevel;
     }
+  }
+
+  @Override
+  public void setBindAddress(String bindAddress) {
+    this.bindAddress = bindAddress;
   }
 
   @Override
