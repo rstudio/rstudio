@@ -480,14 +480,16 @@ public class JettyLauncher extends ServletContainerLauncher {
   // default value used if setBaseLogLevel isn't called
   private TreeLogger.Type baseLogLevel = TreeLogger.INFO;
 
-  @Override
-  public String getIconPath() {
-    return null;
-  }
+  private String bindAddress = null;
 
   @Override
   public String getName() {
     return "Jetty";
+  }
+
+  @Override
+  public void setBindAddress(String bindAddress) {
+    this.bindAddress = bindAddress;
   }
 
   /*
@@ -495,7 +497,7 @@ public class JettyLauncher extends ServletContainerLauncher {
    * figure out a better way to do this for SCLs in general. Please do not
    * depend on this method, as it is subject to change.
    */
-  public void setBaseLogLevel(TreeLogger.Type baseLogLevel) {
+  public void setBaseRequestLogLevel(TreeLogger.Type baseLogLevel) {
     synchronized (privateInstanceLock) {
       this.baseLogLevel = baseLogLevel;
     }
@@ -516,6 +518,9 @@ public class JettyLauncher extends ServletContainerLauncher {
     System.setProperty("org.mortbay.xml.XmlParser.Validating", "false");
 
     AbstractConnector connector = getConnector();
+    if (bindAddress != null) {
+      connector.setHost(bindAddress.toString());
+    }
     connector.setPort(port);
 
     // Don't share ports with an existing process.

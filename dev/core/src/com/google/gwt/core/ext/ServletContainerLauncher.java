@@ -17,17 +17,37 @@ package com.google.gwt.core.ext;
 
 import java.io.File;
 import java.net.BindException;
+import java.net.InetAddress;
 
 /**
  * Defines the service provider interface for launching servlet containers that
  * can be used by the GWT development mode.
+ * <p>
+ * Subclasses should be careful about calling any methods defined on this class
+ * or else they risk failing when used with a version of GWT that did not have
+ * those methods.
  */
 public abstract class ServletContainerLauncher {
+  /*
+   * NOTE: Any new methods must have default implementations, and any users of
+   * this class must be prepared to handle LinkageErrors when calling new
+   * methods.
+   */
+
+  /**
+   * @return byte array containing an icon (fitting into 24x24) to
+   *     use for the server, or null if only the name should be used
+   */
+  public byte[] getIconBytes() {
+    return null;
+  }
 
   /**
    * @return a path to a 24-pixel high image file (relative to the classpath) to
    *     be used for this servlet container, or null if none.
+   * @deprecated see {@link #getIconBytes} instead.
    */
+  @Deprecated
   public String getIconPath() {
     return null;
   }
@@ -40,6 +60,36 @@ public abstract class ServletContainerLauncher {
     return "Web Server";
   }
 
+  /**
+   * Process any supplied arguments.
+   * <p>
+   * Will be called before {@link #start(TreeLogger, int, File)}, if at all.
+   * 
+   * @param logger logger to use for warnings/errors
+   * @param arguments single string containing the arguments for this SCL, the
+   *     format to be defined by the SCL
+   * @return true if the arguments were processed successfully
+   */
+  public boolean processArguments(TreeLogger logger, String arguments) {
+    return false;
+  }
+
+  /**
+   * Set the bind address for the web server socket.
+   * <p>
+   * Will be called before {@link #start(TreeLogger, int, File)}, if at all.
+   * If not called, the SCL should listen on all addresses.
+   * 
+   * @param bindAddress host name or IP address, suitable for use with
+   *     {@link InetAddress#getByName(String)}
+   */
+  public void setBindAddress(String bindAddress) {
+    /*
+     * By default, we do nothing, which means that old SCL implementations
+     * will bind to all addresses.
+     */
+  }
+  
   /**
    * Start an embedded HTTP servlet container.
    * 

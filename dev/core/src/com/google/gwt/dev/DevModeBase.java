@@ -47,8 +47,10 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -106,6 +108,63 @@ abstract class DevModeBase implements DoneCallback {
   }
 
   /**
+   * Handles the -bindAddress command line flag.
+   */
+  protected static class ArgHandlerBindAddress extends ArgHandlerString {
+
+    private static final String BIND_ADDRESS_TAG = "-bindAddress";
+    private static final String DEFAULT_BIND_ADDRESS = "127.0.0.1";
+
+    private final OptionBindAddress options;
+
+    public ArgHandlerBindAddress(OptionBindAddress options) {
+      this.options = options;
+    }
+
+    @Override
+    public String[] getDefaultArgs() {
+      return new String[] {BIND_ADDRESS_TAG, DEFAULT_BIND_ADDRESS};
+    }
+
+    @Override
+    public String getPurpose() {
+      return "Specifies the bind address for the code server and web server "
+          + "(defaults to " + DEFAULT_BIND_ADDRESS + ")";
+    }
+
+    @Override
+    public String getTag() {
+      return BIND_ADDRESS_TAG;
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[] {"host-name-or-address"};
+    }
+
+    @Override
+    public boolean setString(String value) {
+      try {
+        InetAddress address = InetAddress.getByName(value);
+        options.setBindAddress(value);
+        if (address.isAnyLocalAddress()) {
+          // replace a wildcard address with our machine's local address
+          // this isn't fully accurate, as there is no guarantee we will get
+          // the right one on a multihomed host
+          options.setConnectAddress(
+              InetAddress.getLocalHost().getHostAddress());
+        } else {
+          options.setConnectAddress(value);
+        }
+        return true;
+      } catch (UnknownHostException e) {
+        System.err.println("-bindAddress host \"" + value + "\" unknown");
+        return false;
+      }
+    }
+  }
+
+  /**
    * Handles the -blacklist command line argument.
    */
   protected static class ArgHandlerBlacklist extends ArgHandlerString {
@@ -131,7 +190,7 @@ abstract class DevModeBase implements DoneCallback {
   }
 
   /**
-   * Handles the -portHosted command line flag.
+   * Handles the -codeServerPort command line flag.
    */
   protected static class ArgHandlerCodeServerPort extends ArgHandlerString {
 
@@ -374,7 +433,8 @@ abstract class DevModeBase implements DoneCallback {
 
   protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir,
       OptionLogLevel, OptionGenDir, OptionNoServer, OptionPort,
-      OptionCodeServerPort, OptionStartupURLs, OptionRemoteUI {
+      OptionCodeServerPort, OptionStartupURLs, OptionRemoteUI,
+      OptionBindAddress {
 
     /**
      * The base shell work directory.
@@ -392,10 +452,12 @@ abstract class DevModeBase implements DoneCallback {
   protected static class HostedModeBaseOptionsImpl extends
       PrecompileOptionsImpl implements HostedModeBaseOptions {
 
+    private String bindAddress;
+    private int codeServerPort;
+    private String connectAddress;
     private boolean isNoServer;
     private File logDir;
     private int port;
-    private int portHosted;
     private String remoteUIClientId;
     private String remoteUIHost;
     private int remoteUIHostPort;
@@ -409,12 +471,20 @@ abstract class DevModeBase implements DoneCallback {
       return logDir != null;
     }
 
+    public String getBindAddress() {
+      return bindAddress;
+    }
+
     public String getClientId() {
       return remoteUIClientId;
     }
 
     public int getCodeServerPort() {
-      return portHosted;
+      return codeServerPort;
+    }
+
+    public String getConnectAddress() {
+      return connectAddress;
     }
 
     public File getLogDir() {
@@ -452,12 +522,20 @@ abstract class DevModeBase implements DoneCallback {
       return isNoServer;
     }
 
+    public void setBindAddress(String bindAddress) {
+      this.bindAddress = bindAddress;
+    }
+
     public void setClientId(String clientId) {
       this.remoteUIClientId = clientId;
     }
 
     public void setCodeServerPort(int port) {
-      portHosted = port;
+      codeServerPort = port;
+    }
+
+    public void setConnectAddress(String connectAddress) {
+      this.connectAddress = connectAddress;
     }
 
     public void setLogFile(String filename) {
@@ -483,6 +561,16 @@ abstract class DevModeBase implements DoneCallback {
     public boolean useRemoteUI() {
       return remoteUIHost != null;
     }
+  }
+
+  protected interface OptionBindAddress {
+    String getBindAddress();
+    
+    String getConnectAddress();
+
+    void setBindAddress(String bindAddress);
+
+    void setConnectAddress(String connectAddress);
   }
 
   protected interface OptionCodeServerPort {
@@ -564,6 +652,7 @@ abstract class DevModeBase implements DoneCallback {
       registerHandler(new ArgHandlerLogDir(options));
       registerHandler(new ArgHandlerLogLevel(options));
       registerHandler(new ArgHandlerGenDir(options));
+      registerHandler(new ArgHandlerBindAddress(options));
       registerHandler(new ArgHandlerCodeServerPort(options));
       registerHandler(new ArgHandlerRemoteUI(options));
     }
@@ -617,7 +706,11 @@ abstract class DevModeBase implements DoneCallback {
     return buf.toString();
   }
 
+  protected String bindAddress;
+
   protected int codeServerPort;
+
+  protected String connectAddress;
 
   protected BrowserListener listener;
 
@@ -766,6 +859,9 @@ abstract class DevModeBase implements DoneCallback {
    * @return true if startup was successful
    */
   protected boolean doStartup() {
+    bindAddress = options.getBindAddress();
+    connectAddress = options.getConnectAddress();
+
     // Create the main app window.
     ui.initialize(options.getLogLevel());
     topLogger = ui.getTopLogger();
@@ -799,8 +895,8 @@ abstract class DevModeBase implements DoneCallback {
   protected void ensureCodeServerListener() {
     if (listener == null) {
       codeServerPort = options.getCodeServerPort();
-      listener = new BrowserListener(getTopLogger(), codeServerPort,
-          new OophmSessionHandler(getTopLogger(), browserHost));
+      listener = new BrowserListener(getTopLogger(), bindAddress,
+          codeServerPort, new OophmSessionHandler(getTopLogger(), browserHost));
       listener.start();
       try {
         // save the port we actually used if it was auto
@@ -812,7 +908,7 @@ abstract class DevModeBase implements DoneCallback {
   }
 
   protected String getHost() {
-    return "localhost";
+    return connectAddress;
   }
 
   /**
@@ -881,7 +977,8 @@ abstract class DevModeBase implements DoneCallback {
       String path = parsedUrl.getPath();
       String query = parsedUrl.getQuery();
       String hash = parsedUrl.getRef();
-      String hostedParam = BrowserListener.getDevModeURLParams(listener.getEndpointIdentifier());
+      String hostedParam = BrowserListener.getDevModeURLParams(connectAddress,
+          listener.getSocketPort());
       if (query == null) {
         query = hostedParam;
       } else {

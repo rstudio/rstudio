@@ -81,19 +81,30 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"servletContainerLauncher"};
+      return new String[] {"servletContainerLauncher[:args]"};
     }
 
     @Override
-    public boolean setString(String sclClassName) {
+    public boolean setString(String arg) {
       // Supercedes -noserver.
       options.setNoServer(false);
+      String sclClassName;
+      String sclArgs;
+      int idx = arg.indexOf(':');
+      if (idx >= 0) {
+        sclArgs = arg.substring(idx + 1);
+        sclClassName = arg.substring(0, idx);
+      } else {
+        sclArgs = null;
+        sclClassName = arg;
+      }
       Throwable t;
       try {
         Class<?> clazz = Class.forName(sclClassName, true,
             Thread.currentThread().getContextClassLoader());
         Class<? extends ServletContainerLauncher> sclClass = clazz.asSubclass(ServletContainerLauncher.class);
         options.setServletContainerLauncher(sclClass.newInstance());
+        options.setServletContainerLauncherArgs(sclArgs);
         return true;
       } catch (ClassCastException e) {
         t = e;
@@ -167,7 +178,11 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   interface HostedModeOptions extends HostedModeBaseOptions, CompilerOptions {
     ServletContainerLauncher getServletContainerLauncher();
 
+    String getServletContainerLauncherArgs();
+
     void setServletContainerLauncher(ServletContainerLauncher scl);
+
+    void setServletContainerLauncherArgs(String args);
   }
 
   /**
@@ -179,6 +194,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     private int localWorkers;
     private File outDir;
     private ServletContainerLauncher scl;
+    private String sclArgs;
     private File warDir;
 
     public File getExtraDir() {
@@ -196,6 +212,10 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     public ServletContainerLauncher getServletContainerLauncher() {
       return scl;
+    }
+
+    public String getServletContainerLauncherArgs() {
+      return sclArgs;
     }
 
     @Override
@@ -222,6 +242,10 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     public void setServletContainerLauncher(ServletContainerLauncher scl) {
       this.scl = scl;
+    }
+
+    public void setServletContainerLauncherArgs(String args) {
+      sclArgs = args;
     }
 
     public void setWarDir(File warDir) {
@@ -359,44 +383,51 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
   @Override
   protected int doStartUpServer() {
+    boolean clearCallback = true;
     try {
       ui.setCallback(RestartServerEvent.getType(), this);
-      // TODO(jat): find a safe way to get an icon for the servlet container
-      TreeLogger serverLogger = ui.getWebServerLogger(getWebServerName(), null);
-      serverLogger.log(TreeLogger.TRACE, "Starting HTTP on port " + getPort(),
-          null);
 
       ServletContainerLauncher scl = options.getServletContainerLauncher();
+
+      TreeLogger serverLogger = ui.getWebServerLogger(getWebServerName(), 
+          scl.getIconBytes());
+
+      String sclArgs = options.getServletContainerLauncherArgs();
+      if (sclArgs != null) {
+        if (!scl.processArguments(serverLogger, sclArgs)) {
+          return -1;
+        }
+      }
+
       /*
        * TODO: This is a hack to pass the base log level to the SCL. We'll have
        * to figure out a better way to do this for SCLs in general.
        */
       if (scl instanceof JettyLauncher) {
-        ((JettyLauncher) scl).setBaseLogLevel(getBaseLogLevelForUI());
+        JettyLauncher jetty = (JettyLauncher) scl;
+        jetty.setBaseRequestLogLevel(getBaseLogLevelForUI());
       }
+      scl.setBindAddress(bindAddress);
 
+      serverLogger.log(TreeLogger.TRACE, "Starting HTTP on port " + getPort(),
+          null);
       server = scl.start(serverLogger, getPort(), options.getWarDir());
       assert (server != null);
+      clearCallback = false;
       return server.getPort();
     } catch (BindException e) {
-      System.err.println("Port "
-          + getPort()
+      System.err.println("Port " + bindAddress + ':' + getPort()
           + " is already is use; you probably still have another session active");
     } catch (Exception e) {
       System.err.println("Unable to start embedded HTTP server");
       e.printStackTrace();
+    } finally {
+      if (clearCallback) {
+        // Clear the callback if we failed to start the server
+        ui.setCallback(RestartServerEvent.getType(), null);
+      }
     }
-    // Clear the callback if we failed to start the server
-    ui.setCallback(RestartServerEvent.getType(), null);
     return -1;
-  }
-
-  @Override
-  protected String getHost() {
-    if (server != null) {
-      return server.getHost();
-    }
-    return super.getHost();
   }
 
   protected String getWebServerName() {

@@ -26,38 +26,23 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 
 /**
  * Listens for connections from OOPHM clients.
  */
 public class BrowserListener {
 
-  /**
-   * Get the endpoint identifier (in form host:port) for this listener.
-   * 
-   * @param browserChannelPort
-   * @throws RuntimeException if the local host's address cannot be determined
-   * @return a string of the form host:port
-   */
-  public static String computeEndpointIdentifier(int browserChannelPort) {
-    try {
-      return InetAddress.getLocalHost().getHostAddress() + ":"
-          + browserChannelPort;
-    } catch (UnknownHostException e) {
-      throw new RuntimeException("Unable to determine my ip", e);
-    }
-  }
 
   /**
    * Get a query parameter to be added to the URL that specifies the address
    * of this listener.
    * 
-   * @param endpointIdentifier
+   * @param address address of host to use for connections
+   * @param port TCP port number to use for connection
    * @return a query parameter
    */
-  public static String getDevModeURLParams(String endpointIdentifier) {
-    return "gwt.codesvr=" + endpointIdentifier;
+  public static String getDevModeURLParams(String address, int port) {
+    return "gwt.codesvr=" + address + ":" + port;
   }
 
   private ServerSocket listenSocket;
@@ -73,12 +58,13 @@ public class BrowserListener {
    * @param port 
    * @param handler 
    */
-  public BrowserListener(final TreeLogger logger, int port,
-      final SessionHandler handler) {
+  public BrowserListener(final TreeLogger logger, String bindAddress,
+      int port, final SessionHandler handler) {
     try {
       listenSocket = new ServerSocket();
       listenSocket.setReuseAddress(true);
-      listenSocket.bind(new InetSocketAddress(port));
+      InetAddress address = InetAddress.getByName(bindAddress);
+      listenSocket.bind(new InetSocketAddress(address, port));
 
       logger.log(TreeLogger.TRACE, "Started code server on port "
           + listenSocket.getLocalPort(), null);
@@ -123,20 +109,6 @@ public class BrowserListener {
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Communications error", e);
     }
-  }
-
-  /**
-   * @return the endpoint identifier of the listener, of the form host:port
-   *         (where host may be an IP address as well).
-   * 
-   * @throws UnableToCompleteException if the listener is not running
-   */
-  public String getEndpointIdentifier() throws UnableToCompleteException {
-    if (listenSocket == null) {
-      // If we failed to initialize our socket, just bail here.
-      throw new UnableToCompleteException();
-    }
-    return computeEndpointIdentifier(listenSocket.getLocalPort());
   }
 
   /**
