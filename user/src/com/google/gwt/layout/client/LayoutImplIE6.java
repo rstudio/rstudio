@@ -144,7 +144,7 @@ class LayoutImplIE6 extends LayoutImplIE8 {
     }
 
     DivElement container = Document.get().createDivElement();
-    container.insertBefore(child, before);
+    container.appendChild(child);
 
     container.getStyle().setPosition(Position.ABSOLUTE);
     container.getStyle().setOverflow(Overflow.HIDDEN);

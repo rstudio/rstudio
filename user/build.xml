@@ -43,12 +43,6 @@
   <property name="gwt.junit.testcase.noserver.excludes" value="" />
 
   <!--
-    Run LayoutTest in CSS standards mode
-  -->
-  <property name="gwt.junit.testcase.standards.includes" value="**/*Layout*Test.class" />
-  <property name="gwt.junit.testcase.standards.excludes" value="" />
-
-  <!--
     Whether I18NSuite should test e.g. Foo$InnerMsgs_fr.properties (if the
     value is "dollar") or Foo_Inner_fr.properties (for "bar")
    -->
@@ -164,7 +158,7 @@
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.name="test.web.remote"
-        test.args="${test.web.remote.args} -out www -prod -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
+        test.args="${test.web.remote.args} -out www -prod -standardsMode -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
         test.out="${junit.out}/web-remote"
         test.cases="test.web.remote.tests" >
       <extraclasspaths>
@@ -184,7 +178,7 @@
       includes="${gwt.junit.testcase.dev.includes}"
       excludes="${gwt.junit.testcase.dev.excludes}" />
     <gwt.junit test.name="test.dev.remote"
-        test.args="${test.dev.remote.args} -out www -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module"
+        test.args="${test.dev.remote.args} -out www -standardsMode -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module"
         test.out="${junit.out}/dev-remote" test.cases="test.dev.remote.tests" >
       <extraclasspaths>
         <path refid="test.extraclasspath" />
@@ -203,7 +197,7 @@
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
       <gwt.junit test.name="test.emma.remote"
-          test.args="${test.emma.remote.args} -out www -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module"
+          test.args="${test.emma.remote.args} -out www -standardsMode -runStyle RemoteWeb:${gwt.hosts.dev.remote} -batch module"
           test.out="${junit.out}/emma-remote"
           test.cases="test.emma.remote.tests" >
       <extraclasspaths>
@@ -224,7 +218,7 @@
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
     <gwt.junit test.name="test.emma.selenium"
-        test.args='${test.emma.selenium.args} -out www -runStyle "Selenium:${gwt.hosts.dev.selenium}" -batch module'
+        test.args='${test.emma.selenium.args} -out www -standardsMode -runStyle "Selenium:${gwt.hosts.dev.selenium}" -batch module'
         test.out="${junit.out}/emma-selenium"
         test.cases="test.emma.selenium.tests" >
       <extraclasspaths>
@@ -245,7 +239,7 @@
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.name="test.draft.remote"
-        test.args="${test.draft.remote.args} -draftCompile -prod -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
+        test.args="${test.draft.remote.args} -draftCompile -prod -standardsMode -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
         test.out="${junit.out}/draft-remote"
         test.cases="test.draft.remote.tests" >
       <extraclasspaths>
@@ -264,7 +258,7 @@
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.name="test.nometa.remote"
-        test.args="${test.nometa.remote.args} -XdisableClassMetadata -prod -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
+        test.args="${test.nometa.remote.args} -XdisableClassMetadata -prod -standardsMode -out www -runStyle RemoteWeb:${gwt.hosts.web.remote} -batch module"
         test.out="${junit.out}/nometa-remote"
         test.cases="test.nometa.remote.tests" >
       <extraclasspaths>
@@ -288,7 +282,7 @@
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.name="test.web.selenium"
-        test.args='${test.web.selenium.args} -prod -out www -runStyle "Selenium:${gwt.hosts.web.selenium}" -batch module'
+        test.args='${test.web.selenium.args} -prod -out www -standardsMode -runStyle "Selenium:${gwt.hosts.web.selenium}" -batch module'
         test.out="${junit.out}/web-selenium"
         test.cases="test.web.selenium.tests" >
       <extraclasspaths>
@@ -308,7 +302,7 @@
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
     <gwt.junit test.name="test.dev.selenium"
-        test.args='${test.dev.selenium.args} -out www -runStyle "Selenium:${gwt.hosts.dev.selenium}" -batch module'
+        test.args='${test.dev.selenium.args} -out www -standardsMode -runStyle "Selenium:${gwt.hosts.dev.selenium}" -batch module'
         test.out="${junit.out}/dev-selenium"
         test.cases="test.dev.selenium.tests" >
       <extraclasspaths>
@@ -328,7 +322,7 @@
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.name="test.nometa.selenium"
-        test.args='${test.nometa.selenium.args} -XdisableClassMetadata -prod -out www -runStyle "Selenium:${gwt.hosts.web.selenium}" -batch module'
+        test.args='${test.nometa.selenium.args} -XdisableClassMetadata -prod -standardsMode -out www -runStyle "Selenium:${gwt.hosts.web.selenium}" -batch module'
         test.out="${junit.out}/nometa-selenium"
         test.cases="test.nometa.selenium.tests" >
       <extraclasspaths>
@@ -348,7 +342,7 @@
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.name="test.draft.selenium"
-        test.args='${test.draft.selenium.args} -draftCompile -prod -out www -runStyle "Selenium:${gwt.hosts.web.selenium}" -batch module'
+        test.args='${test.draft.selenium.args} -draftCompile -prod -out www -standardsMode -runStyle "Selenium:${gwt.hosts.web.selenium}" -batch module'
         test.out="${junit.out}/draft-selenium"
         test.cases="test.draft.selenium.tests" >
       <extraclasspaths>
@@ -364,7 +358,8 @@
       <fileset id="test.emma.htmlunit.tests" dir="${javac.junit.out}"
           includes="${gwt.junit.testcase.dev.includes}"
           excludes="${gwt.junit.testcase.dev.excludes}" />
-      <gwt.junit test.name="test.emma.htmlunit" test.args="${test.args}"
+      <gwt.junit test.name="test.emma.htmlunit"
+          test.args="${test.args} -standardsMode "
           test.out="${junit.out}/emma-htmlunit"
           test.cases="test.emma.htmlunit.tests" >
       <extraclasspaths>
@@ -381,7 +376,8 @@
     <fileset id="test.dev.htmlunit.tests" dir="${javac.junit.out}"
         includes="${gwt.junit.testcase.dev.includes}"
         excludes="${gwt.junit.testcase.dev.excludes}" />
-    <gwt.junit test.name="test.dev.htmlunit" test.args="${test.args}"
+    <gwt.junit test.name="test.dev.htmlunit"
+        test.args="${test.args} -standardsMode "
         test.out="${junit.out}/dev-htmlunit"
         test.cases="test.dev.htmlunit.tests" >
       <extraclasspaths>
@@ -406,24 +402,8 @@
         includes="${gwt.junit.testcase.noserver.includes}"
         excludes="${gwt.junit.testcase.noserver.excludes}" />
     <gwt.junit test.name="test.noserver"
-        test.args="${test.args} -prod -noserver"
+        test.args="${test.args} -prod -standardsMode -noserver"
         test.out="${junit.out}/noserver" test.cases="test.noserver.tests">
-      <extraclasspaths>
-        <path refid="test.extraclasspath" />
-      </extraclasspaths>
-    </gwt.junit>
-  </target>
-
-  <target name="test.standards"
-      depends="compile, compile.tests"
-      description="Run standards mode tests for this project."
-      unless="test.standards.disable">
-    <fileset id="test.standards.tests" dir="${javac.junit.out}"
-        includes="${gwt.junit.testcase.standards.includes}"
-        excludes="${gwt.junit.testcase.standards.excludes}" />
-    <gwt.junit test.name="test.standards"
-        test.args="${test.args} -prod -standardsMode"
-        test.out="${junit.out}/standards" test.cases="test.standards.tests">
       <extraclasspaths>
         <path refid="test.extraclasspath" />
       </extraclasspaths>
@@ -438,7 +418,7 @@
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.name="test.web.htmlunit"
-        test.args="${test.args} -out www -prod"
+        test.args="${test.args} -out www -prod -standardsMode"
         test.out="${junit.out}/web-htmlunit"
         test.cases="test.web.htmlunit.tests">
       <extraclasspaths>
@@ -455,7 +435,7 @@
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.name="test.nometa.htmlunit"
-        test.args="${test.args} -XdisableClassMetadata -out www -prod"
+        test.args="${test.args} -XdisableClassMetadata -out www -prod -standardsMode"
         test.out="${junit.out}/nometa-htmlunit"
         test.cases="test.nometa.htmlunit.tests" >
       <extraclasspaths>
@@ -472,7 +452,7 @@
         includes="${gwt.junit.testcase.web.includes}"
         excludes="${gwt.junit.testcase.web.excludes}" />
     <gwt.junit test.name="test.draft.htmlunit"
-        test.args="${test.args} -draftCompile -out www -prod"
+        test.args="${test.args} -draftCompile -out www -prod -standardsMode"
         test.out="${junit.out}/draft-htmlunit"
         test.cases="test.draft.htmlunit.tests" >
       <extraclasspaths>
@@ -516,8 +496,6 @@
       <!-- <antcall target="test.web.htmlunit"/> -->
       <!-- <antcall target="test.draft.htmlunit"/> -->
       <!-- <antcall target="test.nometa.htmlunit"/> -->
-      <!-- TODO(rice) : Enable standards mode tests when they are stable. -->
-      <!-- <antcall target="test.standards"/> -->
     </parallel>
     </limit>
   </target>

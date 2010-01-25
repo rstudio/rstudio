@@ -16,6 +16,7 @@
 package com.google.gwt.user;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.layout.client.LayoutTest;
 import com.google.gwt.user.client.AsyncProxyTest;
 import com.google.gwt.user.client.CommandExecutorTest;
 import com.google.gwt.user.client.CookieTest;
@@ -72,9 +73,12 @@ import com.google.gwt.user.client.ui.RootPanelTest;
 import com.google.gwt.user.client.ui.ScrollPanelTest;
 import com.google.gwt.user.client.ui.SimpleCheckBoxTest;
 import com.google.gwt.user.client.ui.SimpleRadioButtonTest;
+import com.google.gwt.user.client.ui.SplitLayoutPanelTest;
+import com.google.gwt.user.client.ui.StackLayoutPanelTest;
 import com.google.gwt.user.client.ui.StackPanelTest;
 import com.google.gwt.user.client.ui.SuggestBoxTest;
 import com.google.gwt.user.client.ui.TabBarTest;
+import com.google.gwt.user.client.ui.TabLayoutPanelTest;
 import com.google.gwt.user.client.ui.TabPanelTest;
 import com.google.gwt.user.client.ui.TextAreaTest;
 import com.google.gwt.user.client.ui.TreeItemTest;
@@ -146,6 +150,7 @@ public class UISuite {
     suite.addTestSuite(HyperlinkTest.class);
     suite.addTestSuite(ImageBundleGeneratorTest.class);
     suite.addTestSuite(ImageTest.class);
+    suite.addTestSuite(LayoutTest.class);
     suite.addTestSuite(LazyPanelTest.class);
     suite.addTestSuite(LinearPanelTest.class);
     suite.addTestSuite(ListBoxTest.class);
@@ -158,9 +163,12 @@ public class UISuite {
     suite.addTestSuite(ScrollPanelTest.class);
     suite.addTestSuite(SimpleCheckBoxTest.class);
     suite.addTestSuite(SimpleRadioButtonTest.class);
+    suite.addTestSuite(SplitLayoutPanelTest.class);
+    suite.addTestSuite(StackLayoutPanelTest.class);
     suite.addTestSuite(StackPanelTest.class);
     suite.addTestSuite(SuggestBoxTest.class);
     suite.addTestSuite(TabBarTest.class);
+    suite.addTestSuite(TabLayoutPanelTest.class);
     suite.addTestSuite(TabPanelTest.class);
     suite.addTestSuite(TextAreaTest.class);
     suite.addTestSuite(TreeTest.class);
