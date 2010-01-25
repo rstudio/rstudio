@@ -100,23 +100,21 @@
     </outofdate>
   </target>
 
-  <target name="wiki-lang">
+  <target name="emul-ezt">
     <outofdate>
       <sourcefiles>
-        <fileset file="./src/RefJreHeader.wiki" />
         <fileset dir="${gwt.root}/user/super/com/google/gwt/emul">
           <include name="**/*.java" />
         </fileset>
       </sourcefiles>
       <targetfiles>
-        <pathelement path="${project.build}/wiki/RefJreEmulation.wiki" />
+        <pathelement path="${project.build}/emul-ezt/fragment.html" />
       </targetfiles>
       <sequential>
+        <echo>Building JRE emulation EZT</echo>
         <java classpathref="DOC_PATH" classname="com.google.doctool.JreDocTool" fork="yes" failonerror="true">
           <arg value="-out" />
-          <arg value="${project.build}/wiki/RefJreEmulation.wiki" />
-          <arg value="-header" />
-          <arg value="./src/RefJreHeader.wiki" />
+          <arg value="${project.build}/emul-ezt/fragment.html" />
           <arg value="-classpath" />
           <arg pathref="USER_CLASS_PATH" />
           <arg value="-sourcepath" />
@@ -128,5 +126,5 @@
     </outofdate>
   </target>
 
-  <target name="build" depends="javadoc, wiki-lang" />
+  <target name="build" depends="javadoc, emul-ezt" />
 </project>

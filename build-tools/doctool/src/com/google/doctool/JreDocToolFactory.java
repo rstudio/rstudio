@@ -25,6 +25,8 @@ public class JreDocToolFactory {
 
   private String classpath;
 
+  private String outputFile;
+
   private String packages;
 
   private String sourcepath;
@@ -32,6 +34,11 @@ public class JreDocToolFactory {
   public JreDocTool create(PrintStream err) {
     if (this.classpath == null) {
       err.println("You must specify the -classpath");
+      return null;
+    }
+
+    if (this.outputFile == null) {
+      err.println("You must specify the output file (-out)");
       return null;
     }
 
@@ -45,11 +52,15 @@ public class JreDocToolFactory {
       return null;
     }
 
-    return new JreDocTool(classpath, packages, sourcepath);
+    return new JreDocTool(classpath, outputFile, packages, sourcepath);
   }
 
   public void setClasspath(String classpath) {
     this.classpath = classpath;
+  }
+
+  public void setOutputFile(String outputFile) {
+    this.outputFile = outputFile;
   }
 
   public void setPackages(String packages) {

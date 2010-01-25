@@ -39,6 +39,9 @@ public class JreDocTool {
       } else if (null != (arg = tryParseArg(args, i, "-classpath"))) {
         i++;
         factory.setClasspath(arg);
+      } else if (null != (arg = tryParseArg(args, i, "-out"))) {
+        i++;
+        factory.setOutputFile(arg);
       } else if (null != (arg = tryParseArg(args, i, "-packages"))) {
         i++;
         factory.setPackages(arg);
@@ -69,6 +72,8 @@ public class JreDocTool {
     s += "  -sourcepath\n";
     s += "    The path to find Java source for this doc set.\n";
     s += "    E.g. /gwt/src/trunk/user/super/com/google/gwt/emul\n";
+    s += "  -out\n";
+    s += "    The path and filename of the output file\n";
     s += "  -packages\n";
     s += "    A semicolon-separated list of fully-qualified package names.\n";
     s += "    E.g. java.lang;java.lang.annotation;java.util;java.io;java.sql\n";
@@ -112,12 +117,16 @@ public class JreDocTool {
 
   private String classpath;
 
+  private String outputFile;
+
   private String packages;
 
   private String sourcepath;
 
-  JreDocTool(String classpath, String packages, String sourcepath) {
+  JreDocTool(String classpath, String outputFile, String packages,
+      String sourcepath) {
     this.classpath = classpath;
+    this.outputFile = outputFile;
     this.packages = packages;
     this.sourcepath = sourcepath;
   }
@@ -140,6 +149,9 @@ public class JreDocTool {
 
     args.add("-sourcepath");
     args.add(this.sourcepath);
+
+    args.add(EztDoclet.OPT_EZTFILE);
+    args.add(this.outputFile);
 
     args.addAll(Arrays.asList(this.packages.split(";")));
 
