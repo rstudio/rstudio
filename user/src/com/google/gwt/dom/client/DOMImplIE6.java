@@ -27,11 +27,6 @@ class DOMImplIE6 extends DOMImplTrident {
   }-*/;
 
   @Override
-  public String cssFloatPropertyName() {
-    return "styleFloat";
-  }
-
-  @Override
   public native void cssSetOpacity(Style style, double value) /*-{
     style.filter = 'alpha(opacity=' + (value * 100) + ')';
   }-*/;

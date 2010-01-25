@@ -129,6 +129,11 @@ abstract class DOMImplTrident extends DOMImpl {
   }-*/;
 
   @Override
+  public String cssFloatPropertyName() {
+    return "styleFloat";
+  }
+
+  @Override
   public native void dispatchEvent(Element target, NativeEvent evt) /*-{
     target.fireEvent("on" + evt.type, evt);
   }-*/;
