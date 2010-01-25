@@ -624,12 +624,12 @@ public class UiBinderWriter {
   }
 
   /**
-   * Instructs the writer to initialize the field with a specific contructor
-   * invocaction, instead of the default GWT.create call.
+   * Instructs the writer to initialize the field with a specific constructor
+   * invocation, instead of the default GWT.create call.
    * 
-   * @param fieldName the field to intialize
+   * @param fieldName the field to initialize
    * @param type the type of the field
-   * @param arguments to the constructor call
+   * @param args arguments to the constructor call
    */
   public void setFieldInitializerAsConstructor(String fieldName,
       JClassType type, String... args) {
