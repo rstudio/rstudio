@@ -271,7 +271,12 @@ public class RpcServlet extends AbstractRemoteServiceServlet {
       if (header == null) {
         return null;
       }
-      return new URL(header).getPath();
+      String path = new URL(header).getPath();
+      String contextPath = getThreadLocalRequest().getContextPath();
+      if (!path.startsWith(contextPath)) {
+        return null;
+      }
+      return path.substring(contextPath.length());
     } catch (MalformedURLException e) {
       return null;
     }
