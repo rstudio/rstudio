@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.server.rpc.impl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.GwtTransient;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 
@@ -238,7 +239,15 @@ public class SerializabilityUtil {
   private static Class<?> computeHasCustomFieldSerializer(Class<?> instanceType) {
     assert (instanceType != null);
     String qualifiedTypeName = instanceType.getName();
-    ClassLoader classLoader = SerializabilityUtil.class.getClassLoader();
+    /*
+     * This class is called from client code running in hosted mode as well as
+     * server code running in the servlet container.  In hosted mode, we want to
+     * load classes through the CompilingClassLoader$MultiParentClassLoader, not
+     * the system classloader.
+     */
+    ClassLoader classLoader = GWT.isClient()
+        ? SerializabilityUtil.class.getClassLoader()
+        : Thread.currentThread().getContextClassLoader();
     String simpleSerializerName = qualifiedTypeName + "_CustomFieldSerializer";
     Class<?> customSerializer = getCustomFieldSerializer(classLoader,
         simpleSerializerName);
