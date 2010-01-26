@@ -1080,3 +1080,61 @@ td.datePickerMonth {
   cursor: pointer;
   padding: 0px 4px;
 }
+
+.gwt-StackLayoutPanel {
+  border-bottom: 1px solid #bbbbbb;
+}
+.gwt-StackLayoutPanel .gwt-StackLayoutPanelHeader {
+  cursor: pointer;
+  cursor: hand;
+  border: 1px solid #bbbbbb;
+  border-bottom: 0px;
+  background: #d3def6 url(images/hborder.png) repeat-x 0px -989px;
+
+  font-weight: bold;
+  font-size: 1.3em;
+  padding: 3px;
+  text-align: center;
+}
+.gwt-StackLayoutPanel .gwt-StackLayoutPanelContent {
+  border: 1px solid #bbbbbb;
+  border-bottom: 0px;
+  background: white;
+  padding: 2px 5px 10px 2px;
+}
+
+.gwt-TabLayoutPanel {
+}
+.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabs {
+}
+.gwt-TabLayoutPanel .gwt-TabLayoutPanelContent {
+  border-color: #bcbcbc;
+  border-style: solid;
+  border-width: 3px 2px 2px;
+  overflow: hidden;
+  padding: 6px;
+}
+.gwt-TabLayoutPanel .gwt-TabLayoutPanelTab {
+  margin-left: 6px;
+  padding: 3px 6px 3px 6px;
+  cursor: pointer;
+  cursor: hand;
+  color: black;
+  font-weight: bold;
+  text-align: center;
+  background: #e3e3e3;
+}
+.gwt-TabLayoutPanel .gwt-TabLayoutPanelTab-selected {
+  cursor: default;
+  background: #bcbcbc;
+} 
+
+.gwt-SplitLayoutPanel-HDragger {
+  background: white url(images/splitPanelThumb.png) center center no-repeat;
+  cursor: col-resize;
+}
+
+.gwt-SplitLayoutPanel-VDragger {
+  background: white url(images/splitPanelThumb.png) center center no-repeat;
+  cursor: row-resize;
+}

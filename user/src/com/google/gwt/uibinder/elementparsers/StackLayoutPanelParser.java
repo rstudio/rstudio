@@ -76,9 +76,7 @@ public class StackLayoutPanelParser implements ElementParser {
             writer, fieldName);
         String size = children.header.consumeRequiredDoubleAttribute("size");
         String html = children.header.consumeInnerHtml(htmlInt);
-        writer.addStatement("%s.add(%s, " 
-            + "new com.google.gwt.user.client.ui.HTML(\"%s\"), " 
-            + "%s);", fieldName,
+        writer.addStatement("%s.add(%s, \"%s\", true, %s);", fieldName,
             childFieldName, html, size);
       } else if (children.customHeader != null) {
         XMLElement headerElement =

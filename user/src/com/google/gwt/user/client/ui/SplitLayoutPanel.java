@@ -98,7 +98,6 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       setElement(Document.get().createDivElement());
       sinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONMOUSEMOVE
           | Event.ONDBLCLICK);
-      getElement().getStyle().setBackgroundColor("white");
     }
 
     @Override

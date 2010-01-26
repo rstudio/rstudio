@@ -55,6 +55,10 @@ a:link, a:visited, a:hover, a:active {
 }
 
 /* Splitters */
+.gwt-SplitLayoutPanel-HDragger, .gwt-SplitLayoutPanel-VDragger {
+  background-color: white;
+}
+
 .gwt-SplitLayoutPanel-HDragger {
   cursor: col-resize;
 }

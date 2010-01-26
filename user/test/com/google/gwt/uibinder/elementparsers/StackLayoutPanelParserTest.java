@@ -72,8 +72,7 @@ public class StackLayoutPanelParserTest extends TestCase {
     b.append("</g:StackLayoutPanel>");
 
     String[] expected = {
-        "fieldName.add(<g:Label id='able'>, "
-            + "new com.google.gwt.user.client.ui.HTML(\"Re<b>mark</b>able\"), 3);",
+        "fieldName.add(<g:Label id='able'>, \"Re<b>mark</b>able\", true, 3);",
         "fieldName.add(<g:Label id='baker'>, " + "<g:Label id='custom'>, 3);",};
 
     FieldWriter w = tester.parse(b.toString());

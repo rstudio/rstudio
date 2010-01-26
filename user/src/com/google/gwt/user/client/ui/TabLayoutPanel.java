@@ -52,6 +52,8 @@ import java.util.Iterator;
  * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTab <dd> an individual tab 
  * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelTabInner <dd> an element nested in
  * each tab (useful for styling)
+ * <dt>.gwt-TabLayoutPanel .gwt-TabLayoutPanelContent<dd> applied to all child
+ * content widgets
  * </dl>
  * 
  * <p>
@@ -92,6 +94,10 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     ProvidesResize, IndexedPanel, HasBeforeSelectionHandlers<Integer>,
     HasSelectionHandlers<Integer> {
 
+  private static final String CONTENT_STYLE = "gwt-TabLayoutPanelContent";
+  private static final String TAB_STYLE = "gwt-TabLayoutPanelTab";
+  private static final String TAB_INNER_STYLE = "gwt-TabLayoutPanelTabInner";
+
   private static final int BIG_ENOUGH_TO_NOT_WRAP = 16384;
 
   private static class Tab extends SimplePanel {
@@ -102,8 +108,8 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       getElement().appendChild(inner = Document.get().createDivElement());
 
       setWidget(child);
-      setStyleName("gwt-TabLayoutPanelTab");
-      inner.setClassName("gwt-TabLayoutPanelTabInner");
+      setStyleName(TAB_STYLE);
+      inner.setClassName(TAB_INNER_STYLE);
 
       // TODO: float:left may not be enough. If there are tabs of differing
       // heights, the shorter ones will top-align, rather than bottom-align,
@@ -114,10 +120,6 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
     public HandlerRegistration addClickHandler(ClickHandler handler) {
       return addDomHandler(handler, ClickEvent.getType());
-    }
-
-    public Widget asWidget() {
-      return this;
     }
 
     public void setSelected(boolean selected) {
@@ -331,8 +333,10 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
       return false;
     }
 
+    Widget child = children.get(index);
     tabBar.remove(index);
-    panel.remove(children.get(index));
+    panel.remove(child);
+    child.removeStyleName(CONTENT_STYLE);
 
     children.remove(index);
     tabs.remove(index);
@@ -458,7 +462,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     children.insert(child, beforeIndex);
     tabs.add(beforeIndex, tab);
 
-    tabBar.insert(tab.asWidget(), beforeIndex);
+    tabBar.insert(tab, beforeIndex);
     tab.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         selectTab(child);
@@ -478,6 +482,7 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
     panel.setWidgetTopBottom(child, barHeight, barUnit, 0, Unit.PX);
     panel.getWidgetContainerElement(child).getStyle().setDisplay(
         Display.NONE);
+    child.addStyleName(CONTENT_STYLE);
     child.setVisible(false);
   }
 }
