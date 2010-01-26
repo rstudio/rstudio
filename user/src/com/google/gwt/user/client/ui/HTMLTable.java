@@ -76,7 +76,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * @return the cell's element.
      */
     public Element getElement() {
-      return getCellFormatter().getElement(cellIndex, rowIndex);
+      return getCellFormatter().getElement(rowIndex, cellIndex);
     }
 
     /**

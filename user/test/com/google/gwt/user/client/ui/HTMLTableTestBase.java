@@ -15,8 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.ui.HTMLTable.Cell;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.client.ui.HTMLTable.ColumnFormatter;
 import com.google.gwt.user.client.ui.HTMLTable.RowFormatter;
@@ -74,6 +76,22 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
       return;
     }
     fail("should have throw an index out of bounds");
+  }
+
+  /**
+   * Tests for {@link HTMLTable.Cell}.
+   */
+  public void testCell() {
+    HTMLTable table = getTable(1, 4);
+    table.setText(0, 3, "test");
+    Cell cell = table.new Cell(0, 3);
+
+    assertEquals(0, cell.getRowIndex());
+    assertEquals(3, cell.getCellIndex());
+
+    TableCellElement elem = cell.getElement().cast();
+    assertEquals(3, elem.getCellIndex());
+    assertEquals("test", elem.getInnerText());
   }
 
   public void testClearWidgetsAndHtml() {
