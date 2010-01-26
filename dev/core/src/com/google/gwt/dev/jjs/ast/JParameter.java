@@ -38,7 +38,7 @@ public class JParameter extends JVariable implements HasEnclosingMethod {
   private final JMethod enclosingMethod;
   private final boolean isThis;
 
-  JParameter(SourceInfo info, String name, JType type, boolean isFinal,
+  public JParameter(SourceInfo info, String name, JType type, boolean isFinal,
       boolean isThis, JMethod enclosingMethod) {
     super(info, name, type, isFinal);
     this.enclosingMethod = enclosingMethod;

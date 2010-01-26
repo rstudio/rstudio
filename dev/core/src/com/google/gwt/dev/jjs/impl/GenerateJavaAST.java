@@ -2027,9 +2027,8 @@ public class GenerateJavaAST {
      */
     private void createBridgeMethod(JClassType clazz,
         SyntheticMethodBinding jdtBridgeMethod, JMethod implmeth) {
-      SourceInfo info = program.createSourceInfoSynthetic(
+      SourceInfo info = implmeth.getSourceInfo().makeChild(
           GenerateJavaAST.class, "bridge method");
-
       // create the method itself
       JMethod bridgeMethod = program.createMethod(info,
           jdtBridgeMethod.selector, clazz,
@@ -2037,28 +2036,25 @@ public class GenerateJavaAST {
           false, true, false, false);
       bridgeMethod.setSynthetic();
       int paramIdx = 0;
+      List<JParameter> implParams = implmeth.getParams();
       for (TypeBinding jdtParamType : jdtBridgeMethod.parameters) {
-        String paramName = "p" + paramIdx++;
+        JParameter param = implParams.get(paramIdx++);
         JType paramType = (JType) typeMap.get(jdtParamType.erasure());
-        program.createParameter(program.createSourceInfoSynthetic(
-            GenerateJavaAST.class, "part of a bridge method"),
-            paramName.toCharArray(), paramType, true, false, bridgeMethod);
+        JParameter newParam = new JParameter(param.getSourceInfo().makeChild(
+            GenerateJavaAST.class, "bridge method"), param.getName(),
+            paramType, true, false, bridgeMethod);
+        bridgeMethod.addParam(newParam);
       }
       bridgeMethod.freezeParamTypes();
 
       // create a call
-      JMethodCall call = new JMethodCall(program.createSourceInfoSynthetic(
-          GenerateJavaAST.class, "call to inherited method"),
-          program.getExprThisRef(program.createSourceInfoSynthetic(
-              GenerateJavaAST.class, "part of a bridge method"), clazz),
-          implmeth);
+      JMethodCall call = new JMethodCall(info, program.getExprThisRef(info,
+          clazz), implmeth);
 
       for (int i = 0; i < bridgeMethod.getParams().size(); i++) {
         JParameter param = bridgeMethod.getParams().get(i);
-        JParameterRef paramRef = new JParameterRef(
-            program.createSourceInfoSynthetic(GenerateJavaAST.class,
-                "part of a bridge method"), param);
-        call.addArg(maybeCast(implmeth.getParams().get(i).getType(), paramRef));
+        JParameterRef paramRef = new JParameterRef(info, param);
+        call.addArg(maybeCast(implParams.get(i).getType(), paramRef));
       }
 
       // wrap it in a return if necessary
@@ -2066,8 +2062,7 @@ public class GenerateJavaAST {
       if (bridgeMethod.getType() == program.getTypeVoid()) {
         callOrReturn = call.makeStatement();
       } else {
-        callOrReturn = new JReturnStatement(program.createSourceInfoSynthetic(
-            GenerateJavaAST.class, "part of a bridge method"), call);
+        callOrReturn = new JReturnStatement(info, call);
       }
 
       // create a body that is just that call
