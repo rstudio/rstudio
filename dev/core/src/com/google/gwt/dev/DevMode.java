@@ -383,6 +383,14 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
   @Override
   protected int doStartUpServer() {
+    // Create the war directory if it doesn't exist
+    File warDir = options.getWarDir();
+    if (!warDir.exists() && !warDir.mkdirs()) {
+      getTopLogger().log(TreeLogger.ERROR, "Unable to create war directory "
+          + warDir);
+      return -1;
+    }
+
     boolean clearCallback = true;
     try {
       ui.setCallback(RestartServerEvent.getType(), this);
@@ -438,6 +446,10 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   protected void inferStartupUrls() {
     // Look for launchable files directly under war
     File warDir = options.getWarDir();
+    if (!warDir.exists()) {
+      // if the war directory doesn't exist, there are no startup files there
+      return;
+    }
     for (File htmlFile : warDir.listFiles(new FilenameFilter() {
       public boolean accept(File dir, String name) {
         return STARTUP_FILE_PATTERN.matcher(name).matches();

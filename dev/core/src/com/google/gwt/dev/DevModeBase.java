@@ -1040,13 +1040,21 @@ abstract class DevModeBase implements DoneCallback {
       getTopLogger().log(TreeLogger.TRACE,
           "Started web server on port " + resultPort);
     }
-    
+
     if (options.getStartupURLs().isEmpty()) {
+      // if no URLs were supplied, try and find plausible ones
       inferStartupUrls();
     }
 
-    setStartupUrls(topLogger);
-    
+    if (options.getStartupURLs().isEmpty()) {
+      // TODO(jat): we could walk public resources to find plausible URLs
+      // after the module(s) are loaded
+      getTopLogger().log(TreeLogger.WARN, "No startup URLs supplied or found "
+          + "-- supply them on the command line");
+    }
+
+    setStartupUrls(getTopLogger());
+
     if (!doSlowStartup()) {
       return false;
     }
