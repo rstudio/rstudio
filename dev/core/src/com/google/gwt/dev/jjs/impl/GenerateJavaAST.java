@@ -224,6 +224,8 @@ public class GenerateJavaAST {
    * have to optimize out those dead blocks early and never try to translate
    * them to our AST.
    */
+  // Reflective invocation causes unused warnings.
+  @SuppressWarnings("unused")
   private static class JavaASTGenerationVisitor {
     private static InternalCompilerException translateException(JNode node,
         Throwable e) {
@@ -1143,7 +1145,6 @@ public class GenerateJavaAST {
       return call;
     }
 
-    @SuppressWarnings("unused")
     JExpression processExpression(NullLiteral x) {
       return program.getLiteralNull();
     }
@@ -1550,7 +1551,6 @@ public class GenerateJavaAST {
       return stmt;
     }
 
-    @SuppressWarnings("unused")
     JStatement processStatement(EmptyStatement x) {
       return null;
     }
@@ -1806,7 +1806,6 @@ public class GenerateJavaAST {
           finallyBlock);
     }
 
-    @SuppressWarnings("unused")
     JStatement processStatement(TypeDeclaration x) {
       // do nothing -- the local class is treated at the program level
       return null;
@@ -1846,7 +1845,6 @@ public class GenerateJavaAST {
       return jstatements;
     }
 
-    @SuppressWarnings("unused")
     JMethodCall processSuperConstructorCall(ExplicitConstructorCall x) {
       SourceInfo info = makeSourceInfo(x);
       JMethod ctor = (JMethod) typeMap.get(x.binding);
