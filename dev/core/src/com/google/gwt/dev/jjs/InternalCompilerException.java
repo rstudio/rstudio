@@ -30,11 +30,15 @@ public class InternalCompilerException extends RuntimeException {
    */
   public static final class NodeInfo {
 
+    static void preload() {
+      // Initialize this class on static invocation.
+    }
+
     private final String className;
     private final String description;
     private final SourceInfo sourceInfo;
 
-    private NodeInfo(String className, String description, SourceInfo sourceInfo) {
+    NodeInfo(String className, String description, SourceInfo sourceInfo) {
       this.className = className;
       this.description = description;
       this.sourceInfo = sourceInfo;
@@ -73,7 +77,9 @@ public class InternalCompilerException extends RuntimeException {
    * memory or out of stack conditions.
    */
   public static void preload() {
-    // Nothing to do, JVM will initialize this class on static invocation.
+    // Initialize this class on static invocation.
+    NodeInfo.preload();
+    pendingICE.set(pendingICE.get());
   }
 
   private final List<NodeInfo> nodeTrace = new ArrayList<NodeInfo>();

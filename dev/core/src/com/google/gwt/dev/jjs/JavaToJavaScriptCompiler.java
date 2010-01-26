@@ -213,6 +213,7 @@ public class JavaToJavaScriptCompiler {
   public static PermutationResult compilePermutation(TreeLogger logger,
       UnifiedAst unifiedAst, Permutation permutation)
       throws UnableToCompleteException {
+    InternalCompilerException.preload();
     PropertyOracle[] propertyOracles = permutation.getPropertyOracles();
     int permutationId = permutation.getId();
     Map<String, String> rebindAnswers = permutation.getRebindAnswers();
