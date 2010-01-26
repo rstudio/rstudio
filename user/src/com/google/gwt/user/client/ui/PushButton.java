@@ -22,7 +22,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
  * A normal push button with custom styling.
  * 
  * <p>
- * <img class='gallery' src='PushButton.png'/>
+ * <img class='gallery' src='doc-files/PushButton.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3>

@@ -29,7 +29,7 @@ import com.google.gwt.user.client.Event;
  * </p>
  * 
  * <p>
- * <img class='gallery' src='StackPanel.png'/>
+ * <img class='gallery' src='doc-files/StackPanel.png'/>
  * </p>
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>

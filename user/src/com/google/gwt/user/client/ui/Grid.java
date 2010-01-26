@@ -23,7 +23,7 @@ import com.google.gwt.user.client.Element;
  * {@link com.google.gwt.user.client.ui.Widget} within its cells. It must be
  * resized explicitly to the desired number of rows and columns.
  * <p>
- * <img class='gallery' src='Table.png'/>
+ * <img class='gallery' src='doc-files/Table.png'/>
  * </p>
  * <p>
  * <h3>Example</h3>

@@ -47,7 +47,7 @@ import java.util.Iterator;
  * <dd> dependent style set when panel is closed
  * </dl>
  * <p>
- * <img class='gallery' src='DisclosurePanel.png'/>
+ * <img class='gallery' src='doc-files/DisclosurePanel.png'/>
  * </p>
  * 
  * <p>

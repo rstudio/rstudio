@@ -31,7 +31,7 @@ import com.google.gwt.user.client.Event;
  * effect of another in the group being clicked.
  * 
  * <p>
- * <img class='gallery' src='RadioButton.png'/>
+ * <img class='gallery' src='doc-files/RadioButton.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3> 

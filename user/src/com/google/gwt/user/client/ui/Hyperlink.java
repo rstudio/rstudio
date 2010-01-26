@@ -44,7 +44,7 @@ import com.google.gwt.user.client.ui.impl.HyperlinkImpl;
  * </p>
  * 
  * <p>
- * <img class='gallery' src='Hyperlink.png'/>
+ * <img class='gallery' src='doc-files/Hyperlink.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3>

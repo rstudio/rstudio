@@ -36,7 +36,7 @@ import java.util.NoSuchElementException;
  * {@link com.google.gwt.user.client.ui.Grid} and
  * {@link com.google.gwt.user.client.ui.FlexTable}.
  * <p>
- * <img class='gallery' src='Table.png'/>
+ * <img class='gallery' src='doc-files/Table.png'/>
  * </p>
  */
 @SuppressWarnings("deprecation")

@@ -29,7 +29,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * as a drop-down list.
  * 
  * <p>
- * <img class='gallery' src='ListBox.png'/>
+ * <img class='gallery' src='doc-files/ListBox.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3>

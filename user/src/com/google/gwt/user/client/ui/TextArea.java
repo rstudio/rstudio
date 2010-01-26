@@ -25,7 +25,7 @@ import com.google.gwt.i18n.client.BidiUtils;
  * A text box that allows multiple lines of text to be entered.
  * 
  * <p>
- * <img class='gallery' src='TextArea.png'/>
+ * <img class='gallery' src='doc-files/TextArea.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3>

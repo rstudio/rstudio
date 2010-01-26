@@ -23,7 +23,7 @@ import com.google.gwt.user.client.DOM;
  * behavior.
  * 
  * <p>
- * <img class='gallery' src='FlowPanel.png'/>
+ * <img class='gallery' src='doc-files/FlowPanel.png'/>
  * </p>
  */
 public class FlowPanel extends ComplexPanel implements InsertPanel {

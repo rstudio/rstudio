@@ -35,7 +35,7 @@ import com.google.gwt.user.client.EventListener;
  * {@link com.google.gwt.user.client.ui.RadioButton}.
  * 
  * <p>
- * <img class='gallery' src='CheckBox.png'/>
+ * <img class='gallery' src='doc-files/CheckBox.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3>

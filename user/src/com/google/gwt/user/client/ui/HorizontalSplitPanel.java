@@ -37,7 +37,7 @@ import com.google.gwt.user.client.Timer;
  * </p>
  * 
  * <p>
- * <img class='gallery' src='HorizontalSplitPanel.png'/>
+ * <img class='gallery' src='doc-files/HorizontalSplitPanel.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3>

@@ -24,7 +24,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
  * A standard push-button widget.
  * 
  * <p>
- * <img class='gallery' src='Button.png'/>
+ * <img class='gallery' src='doc-files/Button.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3>

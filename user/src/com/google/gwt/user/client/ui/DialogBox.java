@@ -44,7 +44,7 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
  * {@link #setHeight(String)} will set the width and height of the dialog box
  * itself, even if a widget has not been added as yet.
  * <p>
- * <img class='gallery' src='DialogBox.png'/>
+ * <img class='gallery' src='doc-files/DialogBox.png'/>
  * </p>
  * <h3>CSS Style Rules</h3>
  * 

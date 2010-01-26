@@ -43,7 +43,7 @@ import java.util.List;
  * open a cascaded menu bar.
  * 
  * <p>
- * <img class='gallery' src='MenuBar.png'/>
+ * <img class='gallery' src='doc-files/MenuBar.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3>

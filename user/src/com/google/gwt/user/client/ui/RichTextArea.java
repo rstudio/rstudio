@@ -33,7 +33,7 @@ import com.google.gwt.user.client.ui.impl.RichTextAreaImpl;
  * functionality will return <code>null</code> for the latter.
  * 
  * <p>
- * <img class='gallery' src='RichTextArea.png'/>
+ * <img class='gallery' src='doc-files/RichTextArea.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3> 

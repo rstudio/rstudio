@@ -22,7 +22,7 @@ import com.google.gwt.user.client.Element;
  * A panel that lays all of its widgets out in a single horizontal column.
  * 
  * <p>
- * <img class='gallery' src='HorizontalPanel.png'/>
+ * <img class='gallery' src='doc-files/HorizontalPanel.png'/>
  * </p>
  */
 public class HorizontalPanel extends CellPanel implements HasAlignment,

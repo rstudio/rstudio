@@ -23,7 +23,7 @@ import com.google.gwt.dom.client.InputElement;
  * A text box that visually masks its input to prevent eavesdropping.
  * 
  * <p>
- * <img class='gallery' src='PasswordTextBox.png'/>
+ * <img class='gallery' src='doc-files/PasswordTextBox.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3>

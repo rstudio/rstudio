@@ -36,7 +36,7 @@ import java.util.Iterator;
  * </p>
  * 
  * <p>
- * <img class='gallery' src='TabPanel.png'/>
+ * <img class='gallery' src='doc-files/TabPanel.png'/>
  * </p>
  * 
  * <p>

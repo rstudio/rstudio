@@ -85,7 +85,7 @@ import java.util.List;
  * </p>
  * 
  * <p>
- * <img class='gallery' src='SuggestBox.png'/>
+ * <img class='gallery' src='doc-files/SuggestBox.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3>

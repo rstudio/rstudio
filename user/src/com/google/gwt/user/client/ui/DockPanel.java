@@ -32,6 +32,10 @@ import java.util.Map;
  * Standards Mode, use {@link DockLayoutPanel} instead.
  * </p>
  * 
+ * <p>
+ * <img class='gallery' src='doc-files/DockPanel.png'/>
+ * </p>
+ * 
  * @see DockLayoutPanel
  */
 public class DockPanel extends CellPanel implements HasAlignment {

@@ -23,7 +23,7 @@ import com.google.gwt.user.client.Element;
  * each row can contain a different number of cells) and individual cells can be
  * set to span multiple rows or columns.
  * <p>
- * <img class='gallery' src='Table.png'/>
+ * <img class='gallery' src='doc-files/Table.png'/>
  * </p>
  * <p>
  * <h3>Example</h3>

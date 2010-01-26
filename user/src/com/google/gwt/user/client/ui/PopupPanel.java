@@ -63,7 +63,7 @@ import java.util.List;
  * widget.
  * </p>
  * <p>
- * <img class='gallery' src='PopupPanel.png'/>
+ * <img class='gallery' src='doc-files/PopupPanel.png'/>
  * </p>
  * 
  * <p>

@@ -39,7 +39,7 @@ import com.google.gwt.user.client.Event;
  * A horizontal bar of folder-style tabs, most commonly used as part of a
  * {@link com.google.gwt.user.client.ui.TabPanel}.
  * <p>
- * <img class='gallery' src='TabBar.png'/>
+ * <img class='gallery' src='doc-files/TabBar.png'/>
  * </p>
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>

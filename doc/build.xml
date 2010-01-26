@@ -83,6 +83,10 @@
           <arg value="1.5" />
           <arg value="-windowtitle" />
           <arg value="Google Web Toolkit Javadoc" />
+          <arg value="-doctitle" />
+          <arg value="Google Web Toolkit API Reference" />
+          <arg value="-header" />
+          <arg value="GWT ${gwt.version}" />
           <arg value="-encoding"/>
           <arg value="UTF-8"/>
           <arg value="-d" />

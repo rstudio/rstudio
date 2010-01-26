@@ -71,7 +71,7 @@ import java.util.Map;
  * {@link com.google.gwt.user.client.ui.TreeItem TreeItems} that the user can
  * open, close, and select.
  * <p>
- * <img class='gallery' src='Tree.png'/>
+ * <img class='gallery' src='doc-files/Tree.png'/>
  * </p>
  * <h3>CSS Style Rules</h3>
  * <dl>

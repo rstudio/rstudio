@@ -25,7 +25,7 @@ import com.google.gwt.i18n.client.HasDirection;
  * A standard single-line text box.
  * 
  * <p>
- * <img class='gallery' src='TextBox.png'/>
+ * <img class='gallery' src='doc-files/TextBox.png'/>
  * </p>
  * 
  * <h3>CSS Style Rules</h3>
