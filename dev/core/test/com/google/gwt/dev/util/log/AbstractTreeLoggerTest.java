@@ -28,40 +28,6 @@ import java.io.StringWriter;
 public class AbstractTreeLoggerTest extends TestCase {
 
   /**
-   * We handle out-of-memory conditions specially in the logger to provide more
-   * useful log output. It does some slightly weird stuff like turning a regular
-   * log() into a branch(), so this test makes sure that doesn't break anything.
-   */
-  public void testOutOfMemoryLoggerCommitOrderForLog() {
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw, true);
-    PrintWriterTreeLogger logger = new PrintWriterTreeLogger(pw);
-    logger.setMaxDetail(TreeLogger.WARN);
-
-    final String tstDbgStr = "TEST-DEBUG-STRING";
-    final String tstErrStr = "TEST-ERROR-STRING";
-
-    // Emit something that's low-priority and wouldn't show up normally unless
-    // it had a higher-priority child log event.
-    TreeLogger branch = logger.branch(TreeLogger.DEBUG, tstDbgStr, null);
-    assertEquals(-1, sw.toString().indexOf(tstDbgStr));
-
-    // Emit something that's low-priority but that also has a OOM.
-    branch.log(TreeLogger.ERROR, tstErrStr, new OutOfMemoryError());
-
-    // Make sure both are now there, in the right order.
-    int posTstDbgStr = sw.toString().indexOf(tstDbgStr);
-    int posTstErrStr = sw.toString().indexOf(tstErrStr);
-    int posOutOfMemory = sw.toString().indexOf(
-        AbstractTreeLogger.OUT_OF_MEMORY_MSG);
-    assertTrue(posTstDbgStr != -1);
-    assertTrue(posTstErrStr != -1);
-    assertTrue(posOutOfMemory != -1);
-    assertTrue(posTstDbgStr < posTstErrStr);
-    assertTrue(posTstErrStr < posOutOfMemory);
-  }
-
-  /**
    * Low-priority branch points don't actually show low-priority messages unless
    * they (later) get a child that is loggable.
    */
@@ -89,7 +55,6 @@ public class AbstractTreeLoggerTest extends TestCase {
     assertTrue(posTstErrStr != -1);
     assertTrue(posTstDbgStr < posTstErrStr);
   }
-
 
   /**
    * Low-priority branch points don't actually show low-priority messages unless
@@ -127,5 +92,39 @@ public class AbstractTreeLoggerTest extends TestCase {
     assertTrue(posTstErrStr != -1);
     assertTrue(posTstDbg1Str < posTstDbg2Str);
     assertTrue(posTstDbg2Str < posTstErrStr);
+  }
+
+  /**
+   * We handle out-of-memory conditions specially in the logger to provide more
+   * useful log output. It does some slightly weird stuff like turning a regular
+   * log() into a branch(), so this test makes sure that doesn't break anything.
+   */
+  public void testOutOfMemoryLoggerCommitOrderForLog() {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw, true);
+    PrintWriterTreeLogger logger = new PrintWriterTreeLogger(pw);
+    logger.setMaxDetail(TreeLogger.WARN);
+
+    final String tstDbgStr = "TEST-DEBUG-STRING";
+    final String tstErrStr = "TEST-ERROR-STRING";
+
+    // Emit something that's low-priority and wouldn't show up normally unless
+    // it had a higher-priority child log event.
+    TreeLogger branch = logger.branch(TreeLogger.DEBUG, tstDbgStr, null);
+    assertEquals(-1, sw.toString().indexOf(tstDbgStr));
+
+    // Emit something that's low-priority but that also has a OOM.
+    branch.log(TreeLogger.ERROR, tstErrStr, new OutOfMemoryError());
+
+    // Make sure both are now there, in the right order.
+    int posTstDbgStr = sw.toString().indexOf(tstDbgStr);
+    int posTstErrStr = sw.toString().indexOf(tstErrStr);
+    int posOutOfMemory = sw.toString().indexOf(
+        AbstractTreeLogger.OUT_OF_MEMORY_MSG);
+    assertTrue(posTstDbgStr != -1);
+    assertTrue(posTstErrStr != -1);
+    assertTrue(posOutOfMemory != -1);
+    assertTrue(posTstDbgStr < posTstErrStr);
+    assertTrue(posTstErrStr < posOutOfMemory);
   }
 }
