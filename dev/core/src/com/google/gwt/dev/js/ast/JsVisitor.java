@@ -451,9 +451,9 @@ public class JsVisitor {
 
   private <T extends JsVisitable<T>> InternalCompilerException translateException(
       T node, Throwable e) {
-    if (e instanceof OutOfMemoryError) {
-      // Always rethrow OOMs (might have no memory to load ICE class anyway).
-      throw (OutOfMemoryError) e;
+    if (e instanceof VirtualMachineError) {
+      // Always rethrow VM errors (an attempt to wrap may fail).
+      throw (VirtualMachineError) e;
     }
     InternalCompilerException ice;
     if (e instanceof InternalCompilerException) {

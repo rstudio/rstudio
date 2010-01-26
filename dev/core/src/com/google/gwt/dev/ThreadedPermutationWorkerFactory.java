@@ -52,7 +52,11 @@ public class ThreadedPermutationWorkerFactory extends PermutationWorkerFactory {
       } catch (OutOfMemoryError e) {
         logger.log(TreeLogger.ERROR,
             "OutOfMemoryError: Increase heap size or lower "
-                + MAX_THREADS_PROPERTY);
+                + MAX_THREADS_PROPERTY, e);
+        throw new UnableToCompleteException();
+      } catch (StackOverflowError e) {
+        logger.log(TreeLogger.ERROR, "StackOverflowError: Increase stack size",
+            e);
         throw new UnableToCompleteException();
       }
     }

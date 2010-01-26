@@ -127,4 +127,38 @@ public class AbstractTreeLoggerTest extends TestCase {
     assertTrue(posTstDbgStr < posTstErrStr);
     assertTrue(posTstErrStr < posOutOfMemory);
   }
+
+  /**
+   * We handle stack overflow conditions specially in the logger to provide more
+   * useful log output. It does some slightly weird stuff like turning a regular
+   * log() into a branch(), so this test makes sure that doesn't break anything.
+   */
+  public void testStackOverflowLoggerCommitOrderForLog() {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw, true);
+    PrintWriterTreeLogger logger = new PrintWriterTreeLogger(pw);
+    logger.setMaxDetail(TreeLogger.WARN);
+
+    final String tstDbgStr = "TEST-DEBUG-STRING";
+    final String tstErrStr = "TEST-ERROR-STRING";
+
+    // Emit something that's low-priority and wouldn't show up normally unless
+    // it had a higher-priority child log event.
+    TreeLogger branch = logger.branch(TreeLogger.DEBUG, tstDbgStr, null);
+    assertEquals(-1, sw.toString().indexOf(tstDbgStr));
+
+    // Emit something that's low-priority but that also has a OOM.
+    branch.log(TreeLogger.ERROR, tstErrStr, new StackOverflowError());
+
+    // Make sure both are now there, in the right order.
+    int posTstDbgStr = sw.toString().indexOf(tstDbgStr);
+    int posTstErrStr = sw.toString().indexOf(tstErrStr);
+    int posOutOfMemory = sw.toString().indexOf(
+        AbstractTreeLogger.STACK_OVERFLOW_MSG);
+    assertTrue(posTstDbgStr != -1);
+    assertTrue(posTstErrStr != -1);
+    assertTrue(posOutOfMemory != -1);
+    assertTrue(posTstDbgStr < posTstErrStr);
+    assertTrue(posTstErrStr < posOutOfMemory);
+  }
 }

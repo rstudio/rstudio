@@ -614,8 +614,8 @@ public class BuildTypeMap {
 
         typeDecls.add(typeDeclaration);
         return true;
-      } catch (OutOfMemoryError e) {
-        // Always rethrow OOMs (might have no memory to load ICE class anyway).
+      } catch (VirtualMachineError e) {
+        // Always rethrow VM errors (an attempt to wrap may fail).
         throw e;
       } catch (InternalCompilerException ice) {
         ice.addNode(type);
@@ -684,9 +684,9 @@ public class BuildTypeMap {
 
     private InternalCompilerException translateException(
         AbstractMethodDeclaration amd, Throwable e) {
-      if (e instanceof OutOfMemoryError) {
-        // Always rethrow OOMs (might have no memory to load ICE class anyway).
-        throw (OutOfMemoryError) e;
+      if (e instanceof VirtualMachineError) {
+        // Always rethrow VM errors (an attempt to wrap may fail).
+        throw (VirtualMachineError) e;
       }
       InternalCompilerException ice;
       if (e instanceof InternalCompilerException) {
@@ -701,9 +701,9 @@ public class BuildTypeMap {
 
     private InternalCompilerException translateException(Statement stmt,
         Throwable e) {
-      if (e instanceof OutOfMemoryError) {
-        // Always rethrow OOMs (might have no memory to load ICE class anyway).
-        throw (OutOfMemoryError) e;
+      if (e instanceof VirtualMachineError) {
+        // Always rethrow VM errors (an attempt to wrap may fail).
+        throw (VirtualMachineError) e;
       }
       InternalCompilerException ice;
       if (e instanceof InternalCompilerException) {
@@ -835,9 +835,9 @@ public class BuildTypeMap {
 
     private InternalCompilerException translateException(
         TypeDeclaration typeDecl, Throwable e) {
-      if (e instanceof OutOfMemoryError) {
-        // Always rethrow OOMs (might have no memory to load ICE class anyway).
-        throw (OutOfMemoryError) e;
+      if (e instanceof VirtualMachineError) {
+        // Always rethrow VM errors (an attempt to wrap may fail).
+        throw (VirtualMachineError) e;
       }
       InternalCompilerException ice;
       if (e instanceof InternalCompilerException) {

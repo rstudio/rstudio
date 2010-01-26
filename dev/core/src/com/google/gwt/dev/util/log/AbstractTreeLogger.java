@@ -45,6 +45,10 @@ public abstract class AbstractTreeLogger extends TreeLogger {
   static final String OUT_OF_MEMORY_MSG = "Out of memory; to increase the "
       + "amount of memory, use the -Xmx flag at startup (java -Xmx128M ...)";
 
+  // This message is package-protected so that the unit test can access it.
+  static final String STACK_OVERFLOW_MSG = "Stack overflow; to increase the "
+      + "stack size, use the -Xss flag at startup (java -Xss1M ...)";
+
   public static String getStackTraceAsString(Throwable e) {
     // Show the exception info for anything other than "UnableToComplete".
     if (e == null || e instanceof UnableToCompleteException) {
@@ -143,14 +147,15 @@ public abstract class AbstractTreeLogger extends TreeLogger {
         helpInfo);
 
     // This logic is intertwined with log(). If a log message is associated
-    // with an out-of-memory condition, then we turn it into a branch,
+    // with a special error condition, then we turn it into a branch,
     // so this method can be called directly from log(). It is of course
     // also possible for someone to call branch() directly. In either case, we
     // (1) turn the original message into an ERROR and
     // (2) drop an extra log message that explains how to recover
-    if (causedByOutOfMemory(caught)) {
+    String specialErrorMessage = causedBySpecialError(caught);
+    if (specialErrorMessage != null) {
       type = TreeLogger.ERROR;
-      childLogger.log(type, OUT_OF_MEMORY_MSG, null);
+      childLogger.log(type, specialErrorMessage, null);
     }
 
     // Decide whether we want to log the branch message eagerly or lazily.
@@ -195,9 +200,9 @@ public abstract class AbstractTreeLogger extends TreeLogger {
       msg = "(Null log message)";
     }
 
-    // If this log message is caused by being out of memory, we
+    // If this log message is caused by out of memory or stack overflow, we
     // provide a little extra help by creating a child log message.
-    if (causedByOutOfMemory(caught)) {
+    if (causedBySpecialError(caught) != null) {
       branch(TreeLogger.ERROR, msg, caught);
       return;
     }
@@ -310,22 +315,24 @@ public abstract class AbstractTreeLogger extends TreeLogger {
       TreeLogger.Type type, String msg, Throwable caught, HelpInfo helpInfo);
 
   /**
-   * Scans <code>t</code> and its causes for {@link OutOfMemoryError}.
+   * Scans <code>t</code> and its causes for {@link OutOfMemoryError} or
+   * {@link StackOverflowError}.
    * 
    * @param t a possibly null {@link Throwable}
-   * @return true if {@link OutOfMemoryError} appears anywhere in the cause list
-   *         or if <code>t</code> is an {@link OutOfMemoryError}.
+   * @return true if {@link OutOfMemoryError} or {@link StackOverflowError}
+   *         appears anywhere in the cause list or if <code>t</code> is an
+   *         {@link OutOfMemoryError} or {@link StackOverflowError.
    */
-  private boolean causedByOutOfMemory(Throwable t) {
-
+  private String causedBySpecialError(Throwable t) {
     while (t != null) {
       if (t instanceof OutOfMemoryError) {
-        return true;
+        return OUT_OF_MEMORY_MSG;
+      } else if (t instanceof StackOverflowError) {
+        return STACK_OVERFLOW_MSG;
       }
       t = t.getCause();
     }
-
-    return false;
+    return null;
   }
 
   private String getLoggerId() {
