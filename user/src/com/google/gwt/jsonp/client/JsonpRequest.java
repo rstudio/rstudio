@@ -32,32 +32,47 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 public class JsonpRequest<T> {
 
   /**
-   * Each request will be assigned a new id.
+   * A global JS variable that holds the next index to use.
    */
-  private static int callbackCounter = 0;
+  @SuppressWarnings("unused") // accessed from JSNI
+  private static final String CALLBACKS_COUNTER_NAME = "__gwt_jsonp_counter__";
 
   /**
-   * __gwt_jsonp__ is a global object that contains callbacks of pending requests.
+   * A global JS object that contains callbacks of pending requests.
    */
   private static final String CALLBACKS_NAME = "__gwt_jsonp__";
-  private static final JavaScriptObject CALLBACKS = createCallbacksObject(CALLBACKS_NAME);
+  private static final JavaScriptObject CALLBACKS = getOrCreateCallbacksObject();
   
   /**
-   * Creates a global object to store callbacks of pending requests.
-   *
-   * @param name The name of the global object.
-   * @return The created object.
+   * @return the next ID to use, incrementing the global counter.
    */
-  private static native JavaScriptObject createCallbacksObject(String name) /*-{
-    return $wnd[name] = new Object();
+  private static native int getAndIncrementCallbackCounter() /*-{
+    var name = @com.google.gwt.jsonp.client.JsonpRequest::CALLBACKS_NAME;
+    var ctr = @com.google.gwt.jsonp.client.JsonpRequest::CALLBACKS_COUNTER_NAME;
+    return $wnd[name][ctr]++;
   }-*/;
   
   private static Node getHeadElement() {
     return Document.get().getElementsByTagName("head").getItem(0);
   }
   
+  /**
+   * @return a global object to store callbacks of pending requests, creating
+   * it if it doesn't exist.
+   */
+  private static native JavaScriptObject getOrCreateCallbacksObject() /*-{
+    var name = @com.google.gwt.jsonp.client.JsonpRequest::CALLBACKS_NAME;
+    if (!$wnd[name]) {
+      $wnd[name] = new Object();
+      $wnd[name]
+          [@com.google.gwt.jsonp.client.JsonpRequest::CALLBACKS_COUNTER_NAME]
+          = 0;
+    }
+    return $wnd[name];
+  }-*/;
+
   private static String nextCallbackId() {
-    return "I" + (callbackCounter++);
+    return "I" + getAndIncrementCallbackCounter();
   }
 
   private final String callbackId;
@@ -118,6 +133,16 @@ public class JsonpRequest<T> {
 
   public int getTimeout() {
     return timeout;
+  }
+
+  @Override
+  public String toString() {
+    return "JsonpRequest(id=" + callbackId + ")";
+  }
+
+  // @VisibleForTesting
+  String getCallbackId() {
+    return callbackId;
   }
 
   /**

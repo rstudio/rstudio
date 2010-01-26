@@ -16,23 +16,16 @@
 package com.google.gwt.jsonp.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
  * Tests for {@link JsonpRequest}.
  */
 public class JsonpRequestTest extends GWTTestCase {
-
-  /**
-   * The maximum amount of time to wait for a response in milliseconds.
-   */
-  private static final int RESPONSE_DELAY = 2500;
-
-  /**
-   * The current Id of the async callback.
-   */
-  protected static int currentId;
 
   /**
    * Checks that an error is received.
@@ -42,19 +35,19 @@ public class JsonpRequestTest extends GWTTestCase {
     private int id;
 
     public AssertFailureCallback(String expectedMessage) {
-      id = ++currentId;
+      id = currentTestId;
       this.expectedMessage = expectedMessage;
     }
 
     public void onFailure(Throwable throwable) {
-      if (id == currentId) {
+      if (id == currentTestId) {
         assertEquals(expectedMessage, throwable.getMessage());
         finishTest();
       }
     }
 
     public void onSuccess(T value) {
-      if (id == currentId) {
+      if (id == currentTestId) {
         fail();
       }
     }
@@ -64,24 +57,34 @@ public class JsonpRequestTest extends GWTTestCase {
    * Checks that the received value is as expected.
    */
   private class AssertSuccessCallback<T> implements AsyncCallback<T> {
-    private T expectedValue;
-    private int id;
+    private final T expectedValue;
+    private final int id;
+    private final Counter counter;
 
     private AssertSuccessCallback(T expectedValue) {
-      this.id = ++currentId;
+      this(expectedValue, null);
+    }
+
+    private AssertSuccessCallback(T expectedValue, Counter counter) {
+      this.id = currentTestId;
+      this.counter = counter;
       this.expectedValue = expectedValue;
     }
 
     public void onFailure(Throwable throwable) {
-      if (id == currentId) {
+      if (id == currentTestId) {
         fail();
       }
     }
 
     public void onSuccess(T value) {
-      if (id == currentId) {
+      if (id == currentTestId) {
         assertEquals(expectedValue, value);
-        finishTest();
+        if (counter != null) {
+          counter.count();
+        } else {
+          finishTest();
+        }
       }
     }
   }
@@ -100,8 +103,49 @@ public class JsonpRequestTest extends GWTTestCase {
     }
   }
 
+  /**
+   * A class that counts results and calls finishTest when the right number
+   * have been received.
+   */
+  private class Counter {
+  
+    private int count;
+
+    public Counter(int count) {
+      this.count = count;
+    }
+  
+    public void count() {
+      if (--count < 0) {
+        fail("Too many results");
+      }
+      if (count == 0) {
+        finishTest();
+      }
+    }
+  }
+
+  /**
+   * The maximum amount of time to wait for a response in milliseconds.
+   */
+  private static final int RESPONSE_DELAY = 2500;
+
+  /**
+   * The ID of the current test.
+   */
+  protected static int currentTestId;
+
   private static String echo(String value) {
     return GWT.getModuleBaseURL() + "echo?action=SUCCESS&value=" + value;
+  }
+
+  private static String echoDelayed(String value) {
+    return echoDelayed(value, 500);
+  }
+
+  private static String echoDelayed(String value, long delayMs) {
+    return GWT.getModuleBaseURL() + "echo?action=SUCCESS&delay=" + delayMs
+       + "&value=" + value;
   }
 
   private static String echoFailure(String error) {
@@ -131,6 +175,31 @@ public class JsonpRequestTest extends GWTTestCase {
         Boolean.TRUE));
   }
 
+
+  @DoNotRunWith(Platform.HtmlUnit)
+  // Fails in devmode with HtmlUnit, JS "null" exception
+  public void testCancel() {
+    delayTestFinish(2000);
+    // setup a server request that will delay for 500ms
+    JsonpRequest<String> req = jsonp.requestString(echoDelayed("A", 500),
+        new AssertFailureCallback<String>("A"));
+    // cancel it before it comes back
+    req.cancel();
+    // wait 1s to make sure we don't get a callback
+    new Timer() {
+      @Override
+      public void run() {
+        finishTest();
+      }      
+    }.schedule(1000);
+  }
+
+  public void testDelay() {
+    delayTestFinish(RESPONSE_DELAY);
+    JsonpRequest<String> req = jsonp.requestString(echoDelayed("'A'"),
+        new AssertSuccessCallback<String>("A"));
+  }
+
   public void testDouble() {
     delayTestFinish(RESPONSE_DELAY);
     jsonp.requestDouble(echo("123.456"), new AssertSuccessCallback<Double>(
@@ -142,6 +211,20 @@ public class JsonpRequestTest extends GWTTestCase {
     jsonp.setFailureCallbackParam("failureCallback");
     jsonp.requestString(echoFailure("ERROR"),
         new AssertFailureCallback<String>("ERROR"));
+  }
+
+  @DoNotRunWith(Platform.HtmlUnit)
+  // Hangs indefinitely in devmode with HtmlUnit
+  public void testIds() {
+    delayTestFinish(RESPONSE_DELAY);
+    JsonpRequest<String> reqA = jsonp.requestString(echo("'A'"),
+        new AssertSuccessCallback<String>("A"));
+    JsonpRequest<String> reqB = jsonp.requestString(echo("'B'"),
+        new AssertSuccessCallback<String>("B"));
+    // WARNING: knows the current structure of IDs
+    int idA = Integer.parseInt(reqA.getCallbackId().substring(1));
+    int idB = Integer.parseInt(reqB.getCallbackId().substring(1));
+    assertEquals("Unexpected ID sequence", idA + 1, idB);
   }
 
   public void testInteger() {
@@ -180,6 +263,19 @@ public class JsonpRequestTest extends GWTTestCase {
     jsonp.requestString(echo("null"), new AssertSuccessCallback<String>(null));
   }
 
+  @DoNotRunWith(Platform.HtmlUnit)
+  // Hangs indefinitely in devmode with HtmlUnit
+  public void testOverlapped() {
+    delayTestFinish(RESPONSE_DELAY);
+    Counter counter = new Counter(3);
+    JsonpRequest<String> reqA = jsonp.requestString(echoDelayed("'A'", 750),
+        new AssertSuccessCallback<String>("A", counter));
+    JsonpRequest<String> reqB = jsonp.requestString(echoDelayed("'B'", 500),
+        new AssertSuccessCallback<String>("B", counter));
+    JsonpRequest<String> reqC = jsonp.requestString(echo("'C'"),
+        new AssertSuccessCallback<String>("C", counter));
+  }
+
   public void testString() {
     delayTestFinish(RESPONSE_DELAY);
     jsonp.requestString(echo("'Hello'"), new AssertSuccessCallback<String>(
@@ -201,5 +297,10 @@ public class JsonpRequestTest extends GWTTestCase {
   protected void gwtSetUp() throws Exception {
     jsonp = new JsonpRequestBuilder();
     jsonp.setTimeout(RESPONSE_DELAY + 500);
+  }
+  
+  @Override
+  protected void gwtTearDown() throws Exception {
+    ++currentTestId;
   }
 }

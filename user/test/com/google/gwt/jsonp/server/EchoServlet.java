@@ -17,7 +17,6 @@ package com.google.gwt.jsonp.server;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -47,9 +46,11 @@ public class EchoServlet extends HttpServlet {
 
   @Override
   protected void service(HttpServletRequest req, HttpServletResponse res)
-      throws ServletException, IOException {
+      throws IOException {
+    res.setContentType("application/javascript");
     switch (Action.valueOf(req.getParameter("action"))) {
       case SUCCESS: {
+        handleDelay(req);
         String callback = req.getParameter("callback");
         String value = req.getParameter("value");
         if (value == null) {
@@ -61,6 +62,7 @@ public class EchoServlet extends HttpServlet {
       }
 
       case FAILURE: {
+        handleDelay(req);
         String failureCallback = req.getParameter("failureCallback");
         String error = req.getParameter("error");
         if (failureCallback != null) {
@@ -78,6 +80,23 @@ public class EchoServlet extends HttpServlet {
 
       case TIMEOUT:
         // Don't respond anything so that a timeout happens.
+    }
+  }
+
+  /**
+   * Handle a delay query parameter if present.
+   * 
+   * @param req
+   */
+  private void handleDelay(HttpServletRequest req) {
+    String delayVal = req.getParameter("delay");
+    if (delayVal != null) {
+      int delayMs = Integer.parseInt(delayVal);
+      try {
+        Thread.sleep(delayMs);
+      } catch (InterruptedException e) {
+        log("Interrupted sleep, continuing");
+      }
     }
   }
 }
