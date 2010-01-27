@@ -216,6 +216,12 @@ abstract class DOMImplTrident extends DOMImpl {
   }
 
   @Override
+  public native boolean hasAttribute(Element elem, String name) /*-{
+    var node = elem.getAttributeNode(name);
+    return !!(node && node.specified);
+  }-*/;
+
+  @Override
   public native boolean isOrHasChild(Node parent, Node child) /*-{
     // Element.contains() doesn't work with non-Element nodes on IE, so we have
     // to deal explicitly with non-Element nodes here.

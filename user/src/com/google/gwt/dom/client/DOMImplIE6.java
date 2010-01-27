@@ -53,11 +53,6 @@ class DOMImplIE6 extends DOMImplTrident {
     return super.getScrollLeft(elem);
   }
 
-  public native boolean hasAttribute(Element elem, String name) /*-{
-    var node = elem.getAttributeNode(name);
-    return !!(node && node.specified);
-  }-*/;
-
   /*
    * The src may not be set yet because of funky logic in setImgSrc(). See
    * setImgSrc().
