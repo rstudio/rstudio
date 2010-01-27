@@ -960,6 +960,11 @@ public class JUnitShell extends GWTShell {
     return shouldAutoGenerateResources;
   }
 
+  @Override
+  protected void warnAboutNoStartupUrls() {
+    // do nothing -- JUnitShell isn't expected to have startup URLs
+  }
+
   void compileForWebMode(String moduleName, String... userAgents)
       throws UnableToCompleteException {
     // Never fresh during JUnit.

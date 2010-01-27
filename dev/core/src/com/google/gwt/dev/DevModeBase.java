@@ -1049,8 +1049,7 @@ abstract class DevModeBase implements DoneCallback {
     if (options.getStartupURLs().isEmpty()) {
       // TODO(jat): we could walk public resources to find plausible URLs
       // after the module(s) are loaded
-      getTopLogger().log(TreeLogger.WARN, "No startup URLs supplied or found "
-          + "-- supply them on the command line");
+      warnAboutNoStartupUrls();
     }
 
     setStartupUrls(getTopLogger());
@@ -1061,6 +1060,12 @@ abstract class DevModeBase implements DoneCallback {
 
     return true;
   }
+
+  /**
+   * Log a warning explaining that no startup URLs were specified and no
+   * plausible startup URLs were found.
+   */
+  protected abstract void warnAboutNoStartupUrls();
 
   private ArtifactAcceptor createArtifactAcceptor(TreeLogger logger,
       final ModuleDef module) throws UnableToCompleteException {

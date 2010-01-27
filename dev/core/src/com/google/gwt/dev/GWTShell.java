@@ -231,4 +231,11 @@ public class GWTShell extends DevModeBase {
   protected boolean shouldAutoGenerateResources() {
     return true;
   }
+
+  @Override
+  protected void warnAboutNoStartupUrls() {
+    getTopLogger().log(TreeLogger.WARN,
+        "No startup URLs were supplied -- add them to the end of the GWTShell"
+        + " command line");
+  }
 }

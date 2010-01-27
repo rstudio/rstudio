@@ -486,6 +486,13 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     }
   }
 
+  @Override
+  protected void warnAboutNoStartupUrls() {
+    getTopLogger().log(TreeLogger.WARN,
+        "No startup URLs supplied and no plausible ones found -- use "
+        + "-startupUrl");
+  }
+
   private void validateServletTags(TreeLogger logger,
       ServletValidator servletValidator, ModuleDef module, File webXml) {
     TreeLogger servletLogger = logger.branch(TreeLogger.DEBUG,
