@@ -36,50 +36,40 @@ inline int snprintf(char* buf, size_t buflen, const char* fmt, ...) {
 
 std::string dumpJsVal(JSContext* ctx, jsval v) {
   char buf[70];
-  if (v == JSVAL_VOID) {
+  if (JSVAL_IS_VOID(v)) {
     strncpy(buf, "undef", sizeof(buf));
-  } else if (v == JSVAL_NULL) {
+  } else if (JSVAL_IS_NULL(v)) {
     strncpy(buf, "null", sizeof(buf));
-  } else {
-    switch (JSVAL_TAG(v)) {
-      case JSVAL_OBJECT:
-      {
-        JSObject* obj = JSVAL_TO_OBJECT(v);
-        if (JavaObject::isJavaObject(ctx, obj)) {
-          int oid = JavaObject::getObjectId(ctx, obj);
-          snprintf(buf, sizeof(buf), "JavaObj(%d)", oid);
-        } else {
-          JSClass* jsClass = JS_GET_CLASS(ctx, obj);
-          const char* name = jsClass->name ? jsClass->name : "<null>";
-          snprintf(buf, sizeof(buf), "Object(%.20s @ %p)", name, obj);
-        }
-        break;
-      }
-      case JSVAL_INT:
-        snprintf(buf, sizeof(buf), "int(%d)", JSVAL_TO_INT(v));
-        break;
-      case JSVAL_DOUBLE:
-        snprintf(buf, sizeof(buf), "double(%lf)", *JSVAL_TO_DOUBLE(v));
-        break;
-      case JSVAL_STRING:
-      {
-        JSString* str = JSVAL_TO_STRING(v);
-        size_t len = JS_GetStringLength(str);
-        const char* continued = "";
-        if (len > 20) {
-          len = 20;
-          continued = "...";
-        }
-        // TODO: trashes Unicode
-        snprintf(buf, sizeof(buf), "string(%.*s%s)", static_cast<int>(len),
-            JS_GetStringBytes(str), continued);
-        break;
-      }
-      case JSVAL_BOOLEAN:
-        snprintf(buf, sizeof(buf), "bool(%s)", JSVAL_TO_BOOLEAN(v) ? "true"
-            : " false");
-        break;
+  } else if (JSVAL_IS_OBJECT(v)) {
+    JSObject* obj = JSVAL_TO_OBJECT(v);
+    if (JavaObject::isJavaObject(ctx, obj)) {
+      int oid = JavaObject::getObjectId(ctx, obj);
+      snprintf(buf, sizeof(buf), "JavaObj(%d)", oid);
+    } else {
+      JSClass* jsClass = JS_GET_CLASS(ctx, obj);
+      const char* name = jsClass->name ? jsClass->name : "<null>";
+      snprintf(buf, sizeof(buf), "Object(%.20s @ %p)", name, obj);
     }
+  } else if (JSVAL_IS_INT(v)) {
+    snprintf(buf, sizeof(buf), "int(%d)", JSVAL_TO_INT(v));
+  } else if (JSVAL_IS_DOUBLE(v)) {
+    snprintf(buf, sizeof(buf), "double(%lf)", *JSVAL_TO_DOUBLE(v));
+  } else if (JSVAL_IS_STRING(v)) {
+    JSString* str = JSVAL_TO_STRING(v);
+    size_t len = JS_GetStringLength(str);
+    const char* continued = "";
+    if (len > 20) {
+      len = 20;
+      continued = "...";
+    }
+    // TODO: trashes Unicode
+    snprintf(buf, sizeof(buf), "string(%.*s%s)", static_cast<int>(len),
+        JS_GetStringBytes(str), continued);
+  } else if (JSVAL_IS_BOOLEAN(v)) {
+    snprintf(buf, sizeof(buf), "bool(%s)", JSVAL_TO_BOOLEAN(v) ? "true"
+        : " false");
+  } else {
+    snprintf(buf, sizeof(buf), "unknown(%08x)", v);
   }
   buf[sizeof(buf) - 1] = 0;
   return std::string(buf);

@@ -49,7 +49,7 @@ endif
 export FLAG32BIT
 
 ifeq ($(BROWSER),)
-$(warning Defaulting to FF3 build [set with BROWSER=ff2, ff3, ff3+, or ff35])
+$(warning Defaulting to FF3 build [set with BROWSER=ff2, ff3, ff3+, ff35, or ff36])
 BROWSER=ff3
 endif
 
@@ -72,7 +72,12 @@ ifeq ($(BROWSER),ff35)
 BROWSER_VERSION   = 1.9.1
 CFLAGS += -DBROWSER_FF3
 else
-$(error Unrecognized BROWSER of $(BROWSER) - options are ff2, ff3, ff3+, ff35)
+ifeq ($(BROWSER),ff36)
+BROWSER_VERSION   = 1.9.2
+CFLAGS += -DBROWSER_FF3
+else
+$(error Unrecognized BROWSER of $(BROWSER) - options are ff2, ff3, ff3+, ff35, ff36)
+endif
 endif
 endif
 endif
@@ -122,7 +127,7 @@ DLLFLAGS += \
 
 INC += -I$(GECKO_PLAT_INC) -I$(GECKO_SDK)/include -I$(dir $(FF_HEADER))
 
-VERSION ?= 0.9.$(shell ./getversion).$(shell date +%Y%m%d%H%M%S)
+VERSION ?= 1.0.$(shell ./getversion).$(shell date +%Y%m%d%H%M%S)
 
 .PHONY: all xpi lib common browser clean depend install install-platform find-ff-libs
 
@@ -150,6 +155,7 @@ linuxplatforms:
 	$(MAKE) lib BROWSER=ff3 ARCH=x86
 	$(MAKE) lib BROWSER=ff3+ ARCH=x86
 	$(MAKE) lib BROWSER=ff35 ARCH=x86
+	$(MAKE) lib BROWSER=ff36 ARCH=x86
 	$(MAKE) lib BROWSER=ff3 ARCH=x86_64
 	$(MAKE) lib BROWSER=ff3+ ARCH=x86_64
 	$(MAKE) lib BROWSER=ff35 ARCH=x86_64
@@ -157,6 +163,7 @@ linuxplatforms:
 macplatforms:
 	$(MAKE) lib BROWSER=ff3
 	$(MAKE) lib BROWSER=ff35
+	$(MAKE) lib BROWSER=ff36
 
 SRCS =	\
 		ExternalWrapper.cpp \
@@ -213,6 +220,7 @@ else
 	@$(MAKE) $@ BROWSER=ff3
 	@$(MAKE) $@ BROWSER=ff3+
 	@$(MAKE) $@ BROWSER=ff35
+	@$(MAKE) $@ BROWSER=ff36
 endif
 
 DEPEND = g++ -MM -MT'$$(OBJ_OUTDIR)/$(patsubst %.cpp,%.o,$(src))' \

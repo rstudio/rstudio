@@ -59,6 +59,10 @@ function getLibFileName() {
       return "ff35";
     }
 
+    if (firefoxVersion == "3.6") {
+      return "ff36";
+    }
+
     throw "Unexpected Firefox version: " + firefoxVersion;
   }
 
