@@ -29,6 +29,7 @@
       <h1>Google Web Toolkit Release Notes</h1>
       <ul>
         <li><a href="#Release_Notes_Current">@GWT_VERSION@</a></li>
+        <li><a href="#Release_Notes_2_0_0">2.0.0</a></li>        
         <li><a href="#Release_Notes_2_0_0_rc2">2.0.0-rc2</a></li>
         <li><a href="#Release_Notes_2_0_0_rc1">2.0.0-rc1</a></li>
         <li><a href="#Release_Notes_1_7_1">1.7.1</a></li>
@@ -55,6 +56,44 @@
       <hr/>
       <a name="Release_Notes_Current"></a>
       <h2>Release Notes for @GWT_VERSION@</h2>
+      <p>
+      This release contains fixes for bugs found in the 2.0.0 release.
+      </p>
+      <h3>Potentially breaking changes and fixes</h3>
+      <ul>
+        <li>
+        Fixed a bug in how code generators collect method arguments from generated source, which impacted the Messages interfaces generated for UiBinder template files.
+        In GWT 2.0, such argument names were incorrectly changed to ARGn. Most GWT applications will be unaffected, but external systems relying on these names will need to be updated.
+        </li>
+        <li>The development mode server will, by default, only bind to localhost which will break cross-machine debugging.  You can get the old behavior by specifying 
+        <code>-bindAddress 0.0.0.0</code>.  Please see issue (#<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4322">4322</a>) for more details.</li>
+        <li>The CurrencyList/CurrencyData APIs are now public - if you were relying upon these classes in their non-public location, you should only need to update your 
+        imports.</li>
+      </ul>
+      
+      <h3>Noteworthy Fixed Issues</h3>
+      <ul>
+        <li>UiBinder Image class with resource attribute, removes styles on that image (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4415">#4415</a>)</li>
+      	<li>Widgets lose focus if its placed on FocusPanel (Opera, Safari) (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1471">#1471</a>)</li>
+      	<li>Standard.css missing new layout styles (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4429">#4429</a>)</li>
+      	<li>Remove method in SplitLayoutPanel is broken (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4217">#4217</a>)</li>
+        <li>Splitter constructor hard codes the background color of the splitter to white (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4335">#4335</a>)</li>
+        <li>Image should provide method to set alternative text (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4335">#4335</a>)</li>
+        <li>CssResource cannot parse unescaped '-', '_' in class selectors and unknown at-rules (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=3946">#3946</a>)</li>
+        <li>Focusable implementation breaks ScrollPanels in Safari (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1313">#1313</a>)</li>
+        <li>RequestBuilder restricted to GET and POST (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=3388">#3388</a>)</li>
+        <li>HTMLTable.Cell.getElement() calls getCellFormatter().getElement() with row and column swapped RequestBuilder restricted to GET and POST (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=3757">#3757</a>)</li>
+        <li>MenuBar steals focus when hovered (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=3884">#3884</a>)</li>
+        <li>TabLayoutPanel tabs don't line up properly on IE (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4447">#4447</a>)</li>
+      </ul>
+      <p>
+        See the GWT issue tracker for
+        <a href="http://code.google.com/p/google-web-toolkit/issues/list?can=1&q=status:Fixed,FixedNotReleased%20milestone:2_0_1&num=1000">
+        the complete list of bug fixes and enhancements</a> in this release.
+      </p>		      
+      <hr/>
+      <a name="Release_Notes_2_0_0"></a>
+      <h2>Release Notes for 2.0.0</h2>
       <p>
         This release includes some minor bug fixes found in the release candidate.  See the release notes
         for <a href="#Release_Notes_2_0_0_rc1">2.0.0-rc1</a> and <a href="#Release_Notes_2_0_0_rc2">2.0.0-rc2</a>
