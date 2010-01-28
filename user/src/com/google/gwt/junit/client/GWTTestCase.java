@@ -266,10 +266,14 @@ public abstract class GWTTestCase extends TestCase {
    * Get the synthetic module name, which includes the synthetic extension
    * defined by the {@link Strategy}.
    * 
-   * @return the synthetic module name
+   * @return the synthetic module name or null if this is not really a GWT test
    */
   public final String getSyntheticModuleName() {
-    return getModuleName() + "." + getStrategy().getSyntheticModuleExtension();
+    String moduleName = getModuleName();
+    if (moduleName == null) {
+      return null;
+    }
+    return moduleName + "." + getStrategy().getSyntheticModuleExtension();
   }
 
   /**
@@ -437,5 +441,4 @@ public abstract class GWTTestCase extends TestCase {
   protected final void tearDown() throws Exception {
     // implemented in the translatable version of this class
   }
-
 }

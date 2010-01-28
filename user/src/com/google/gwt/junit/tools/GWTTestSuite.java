@@ -72,7 +72,7 @@ public class GWTTestSuite extends TestSuite {
     if (test instanceof TestSuite) {
       TestSuite suite = (TestSuite) test;
       if (suite.countTestCases() == 0) {
-        return nonGWTTestSuite;
+        return getNonGWTTestSuite();
       } else {
         return getModuleSuiteFor(suite.testAt(0));
       }
@@ -94,6 +94,10 @@ public class GWTTestSuite extends TestSuite {
       }
     }
 
+    return getNonGWTTestSuite();
+  }
+
+  private TestSuite getNonGWTTestSuite() {
     if (nonGWTTestSuite == null) {
       nonGWTTestSuite = new TestSuite("Non-GWT");
       super.addTest(nonGWTTestSuite);
