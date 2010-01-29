@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <project name="@moduleShortName" default="build" basedir=".">
+  <!-- Arguments to gwtc and devmode targets -->
+  <property name="gwt.args" value="" />
+
   <!-- Configure path to GWT SDK -->
   <property name="gwt.sdk" location="@gwtSdk" />
 
@@ -39,6 +42,7 @@
       <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
       <jvmarg value="-Xmx256M"/>
       <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+      <arg line="${gwt.args}"/>
       <arg value="@moduleName"/>
     </java>
   </target>
@@ -53,6 +57,7 @@
       <arg value="-startupUrl"/>
       <arg value="@startupUrl"/>
       <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+      <arg line="${gwt.args}"/>
       <arg value="@moduleName"/>
     </java>
   </target>@antEclipseRule

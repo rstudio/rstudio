@@ -66,11 +66,14 @@
         In GWT 2.0, such argument names were incorrectly changed to ARGn. Most GWT applications will be unaffected, but external systems relying on these names will need to be updated.
         </li>
         <li>The development mode server will, by default, only bind to localhost which will break cross-machine debugging.  You can get the old behavior by specifying 
-        <code>-bindAddress 0.0.0.0</code>.  Please see issue (#<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4322">4322</a>) for more details.</li>
+        <code>-bindAddress 0.0.0.0</code>.  Please see issue (#<a
+        href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4322">4322</a>)
+        for more details.  For webAppCreator-generated ant files, you can pass
+        this with <tt>ant -Dgwt.args="-bindAddress 0.0.0.0" devmode</tt>.</li>
         <li>The CurrencyList/CurrencyData APIs are now public - if you were relying upon these classes in their non-public location, you should only need to update your 
         imports.</li>
       </ul>
-      
+
       <h3>Noteworthy Fixed Issues</h3>
       <ul>
         <li>UiBinder Image class with resource attribute, removes styles on that image (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4415">#4415</a>)</li>
@@ -85,6 +88,9 @@
         <li>HTMLTable.Cell.getElement() calls getCellFormatter().getElement() with row and column swapped RequestBuilder restricted to GET and POST (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=3757">#3757</a>)</li>
         <li>MenuBar steals focus when hovered (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=3884">#3884</a>)</li>
         <li>TabLayoutPanel tabs don't line up properly on IE (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4447">#4447</a>)</li>
+        <li>webAppCreator produces ant build files which support the gwt.args
+        property for passing additional flags to the gwtc and devmode rules,
+        such as <tt>ant -Dgwt.args="-style PRETTY" gwtc</tt>.</li>
       </ul>
       <p>
         See the GWT issue tracker for
