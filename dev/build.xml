@@ -28,7 +28,8 @@
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
       </classpath>
     </gwt.javac>
-    <gwt.javac srcdir="${gwt.root}/user/src" destdir="${javac.junit.out}">
+    <gwt.javac srcdir="${gwt.root}/user/src" destdir="${javac.junit.out}"
+      excludes="**/super/**">
       <classpath>
         <pathelement location="${javac.out}" />
         <pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" />

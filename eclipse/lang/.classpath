@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="dev/super/com/google/gwt/dev/jjs/intrinsic"/>
+	<classpathentry kind="src" path="user/src/com/google/gwt/regexp/super"/>
 	<classpathentry kind="src" path="user/super/com/google/gwt/user/translatable"/>
 	<classpathentry kind="src" path="user/super/com/google/gwt/benchmarks/translatable"/>
 	<classpathentry kind="src" path="user/super/com/google/gwt/emul"/>

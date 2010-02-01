@@ -13,6 +13,7 @@
       <fileset dir="${gwt.user.bin}">
         <exclude name="**/rebind/**" />
         <exclude name="**/tools/**" />
+        <exclude name="**/super/**" />
         <exclude name="com/google/gwt/json/**" />
         <exclude name="com/google/gwt/junit/*" />
         <exclude name="com/google/gwt/junit/client/GWTTestCase.*" />

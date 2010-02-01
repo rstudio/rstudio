@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="core/src"/>
+	<classpathentry excluding="**/super/**" kind="src" path="core/src"/>
 	<classpathentry kind="src" path="core/test_i18n_dollar"/>
 	<classpathentry kind="src" path="core/test_i18n_bar"/>
 	<classpathentry kind="src" path="core/javadoc"/>

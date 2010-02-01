@@ -67,7 +67,7 @@
   <target name="compile" description="Compile all class files"
       unless="compile.complete">
     <mkdir dir="${javac.out}" />
-    <gwt.javac>
+    <gwt.javac excludes="**/super/**">
       <classpath>
         <pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" />
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
