@@ -188,10 +188,10 @@ $(INSTALLER_XPI): $(FF_TYPELIB) $(EXTENSION_OUTDIR) generate-install $(shell fin
 	(cd $(EXTENSION_OUTDIR) && zip -r -D -9 $(DIR)/$(INSTALLER_XPI) * -x '*/.svn/*' -x 'META-INF/*')
 
 $(FF_TYPELIB): IOOPHM.idl
-	$(XPIDL) $(XPIDL_FLAGS) -m typelib -e $@ $<
+	[ ! -x $(XPIDL) -o \( -e $(FF_TYPELIB) -a ! -w $(FF_TYPELIB) \) ] || $(XPIDL) $(XPIDL_FLAGS) -m typelib -e $@ $<
 
 $(FF_HEADER): IOOPHM.idl $(OBJ_OUTDIR)
-	$(XPIDL) $(XPIDL_FLAGS) -m header -e $@ $<
+	[ ! -x $(XPIDL) -o \( -e $(FF_HEADER) -a ! -w $(FF_HEADER) \) ] || $(XPIDL) $(XPIDL_FLAGS) -m header -e $@ $<
 
 $(FF_DLL): $(FF_OBJS) $(COMMON)
 	$(CXX) -m$(FLAG32BIT) -o $@ $(FF_OBJS) $(COMMON) $(DLLFLAGS) 
