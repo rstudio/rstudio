@@ -200,9 +200,11 @@
                expecting the src entry (core/test) to be earlier than the bin entry
                (${javac.junit.out}). -->
           <pathelement location="${gwt.root}/${project.tail}/core/test" />
-          <pathelement location="${javac.junit.out}" />
-          <!-- javac.emma.out is empty unless emma is enabled. -->
+          <!-- Emma compiled classes must appear before non-emma compiled
+               classes to generate code coverage stats.  javac.emma.out is
+               empty unless emma is enabled. -->
           <pathelement location="${javac.emma.out}" />
+          <pathelement location="${javac.junit.out}" />
           <path refid="project.classpath.class" />
           <pathelement location="${emma.lib}" />
           <pathelement location="${gwt.dev.staging.jar}" />
