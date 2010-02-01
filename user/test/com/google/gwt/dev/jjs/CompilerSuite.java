@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs;
 
+import com.google.gwt.core.client.impl.StackTraceLineNumbersTest;
 import com.google.gwt.dev.jjs.scriptonly.ScriptOnlyTest;
 import com.google.gwt.dev.jjs.test.AnnotationsTest;
 import com.google.gwt.dev.jjs.test.AutoboxTest;
@@ -93,6 +94,7 @@ public class CompilerSuite {
     suite.addTestSuite(RunAsyncTest.class);
     suite.addTestSuite(ScriptOnlyTest.class);
     suite.addTestSuite(SingleJsoImplTest.class);
+    suite.addTestSuite(StackTraceLineNumbersTest.class);
     suite.addTestSuite(TypeHierarchyTest.class);
     suite.addTestSuite(UnstableGeneratorTest.class);
     suite.addTestSuite(VarargsTest.class);

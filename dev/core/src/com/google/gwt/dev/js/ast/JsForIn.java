@@ -71,7 +71,7 @@ public class JsForIn extends JsStatement {
   public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     if (v.visit(this, ctx)) {
       if (iterExpr != null) {
-        iterExpr = v.accept(iterExpr);
+        iterExpr = v.acceptLvalue(iterExpr);
       }
       objExpr = v.accept(objExpr);
       body = v.accept(body);

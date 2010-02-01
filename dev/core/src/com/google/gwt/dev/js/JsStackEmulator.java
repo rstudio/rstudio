@@ -38,6 +38,7 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
+import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -56,8 +57,10 @@ import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Maps;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Emulates the JS stack in order to provide useful stack traces on browers that
@@ -66,8 +69,6 @@ import java.util.Map;
  * @see com.google.gwt.core.client.impl.StackTraceCreator
  */
 public class JsStackEmulator {
-
-  private static final String PROPERTY_NAME = "compiler.emulatedStack";
 
   /**
    * Resets the global stack depth to the local stack index and top stack frame
@@ -593,6 +594,14 @@ public class JsStackEmulator {
     private String lastFile;
     private int lastLine;
 
+    /**
+     * Nodes in this set are used in a context that expects a reference, not
+     * just an arbitrary expression. For example, <code>delete</code> takes a
+     * reference. These are tracked because it wouldn't be safe to rewrite
+     * <code>delete foo.bar</code> to <code>delete (line='123',foo).bar</code>.
+     */
+    private final Set<JsNode<?>> nodesInRefContext = new HashSet<JsNode<?>>();
+
     public LocationVisitor(JsFunction function) {
       super(function);
       resetPosition();
@@ -612,6 +621,12 @@ public class JsStackEmulator {
 
     @Override
     public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+      nodesInRefContext.remove(x.getQualifier());
+      record(x, ctx);
+    }
+
+    @Override
+    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
       record(x, ctx);
     }
 
@@ -622,16 +637,13 @@ public class JsStackEmulator {
 
     @Override
     public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
-      if (x.getOperator().isModifying()) {
-        record(x, ctx);
-      }
+      record(x, ctx);
     }
 
     @Override
     public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
-      if (x.getOperator().isModifying()) {
-        record(x, ctx);
-      }
+      record(x, ctx);
+      nodesInRefContext.remove(x.getArg());
     }
 
     /**
@@ -663,12 +675,16 @@ public class JsStackEmulator {
     }
 
     @Override
-    public boolean visit(JsNameRef x, JsContext<JsExpression> ctx) {
-      if (ctx.isLvalue()) {
-        if (x.getQualifier() != null) {
-          accept(x.getQualifier());
-        }
-        return false;
+    public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
+      nodesInRefContext.add(x.getQualifier());
+      return true;
+    }
+
+    @Override
+    public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+      if (x.getOperator() == JsUnaryOperator.DELETE
+          || x.getOperator() == JsUnaryOperator.TYPEOF) {
+        nodesInRefContext.add(x.getArg());
       }
       return true;
     }
@@ -705,6 +721,9 @@ public class JsStackEmulator {
     private void record(JsExpression x, JsContext<JsExpression> ctx) {
       if (ctx.isLvalue()) {
         // Assignments to comma expressions aren't legal
+        return;
+      } else if (nodesInRefContext.contains(x)) {
+        // Don't modify references into non-references
         return;
       } else if (x.getSourceInfo().getStartLine() == lastLine
           && (!recordFileNames || x.getSourceInfo().getFileName().equals(
@@ -750,13 +769,13 @@ public class JsStackEmulator {
    * with references to our locally-defined, obfuscatable names.
    */
   private class ReplaceUnobfuscatableNames extends JsModVisitor {
+    private final JsName rootLineNumbers = program.getRootScope().findExistingUnobfuscatableName(
+        "$location");
     // See JsRootScope for the definition of these names
     private final JsName rootStack = program.getRootScope().findExistingUnobfuscatableName(
         "$stack");
     private final JsName rootStackDepth = program.getRootScope().findExistingUnobfuscatableName(
         "$stackDepth");
-    private final JsName rootLineNumbers = program.getRootScope().findExistingUnobfuscatableName(
-        "$location");
 
     @Override
     public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
@@ -779,6 +798,8 @@ public class JsStackEmulator {
       ctx.replaceMe(newRef);
     }
   }
+
+  private static final String PROPERTY_NAME = "compiler.emulatedStack";
 
   public static void exec(JsProgram program, PropertyOracle[] propertyOracles) {
     SelectionProperty property;
