@@ -15,18 +15,15 @@
  */
 package com.google.gwt.junit;
 
-import com.google.gwt.junit.client.ForcePureJavaTest;
 import com.google.gwt.junit.client.ModuleOneTest;
 import com.google.gwt.junit.client.ModuleOneTest2;
 import com.google.gwt.junit.client.ModuleTwoTest;
-import com.google.gwt.junit.client.NullModuleNameTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 /**
  * Tests that a normal test suite will run even if modules are out of order.
- * Also checks that tests are run in pure Java mode (non-GWT).
  */
 public class NonGwtTestSuite {
 
@@ -34,11 +31,9 @@ public class NonGwtTestSuite {
     // This is intentionally not a GWTTestSuite.
     TestSuite suite = new TestSuite();
 
-    suite.addTestSuite(ForcePureJavaTest.class);
     suite.addTestSuite(ModuleOneTest.class);
     suite.addTestSuite(ModuleTwoTest.class);
     suite.addTestSuite(ModuleOneTest2.class);
-    suite.addTestSuite(NullModuleNameTest.class);
 
     return suite;
   }

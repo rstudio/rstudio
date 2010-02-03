@@ -15,8 +15,6 @@
  */
 package com.google.gwt.junit.client;
 
-import com.google.gwt.core.client.GWT;
-
 /**
  * Another test in the first module.
  */
@@ -26,7 +24,7 @@ public class ModuleOneTest2 extends GWTTestCase {
     return "com.google.gwt.junit.JUnitTest";
   }
 
-  public void testIsClient() {
-    assertTrue(GWT.isClient());
+  public void testTrue() {
+    assertTrue(true);
   }
 }

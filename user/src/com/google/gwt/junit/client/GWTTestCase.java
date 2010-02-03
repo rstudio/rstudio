@@ -164,15 +164,6 @@ public abstract class GWTTestCase extends TestCase {
   protected TestResult testResult = null;
 
   /**
-   * Whether this test case should be always run in pure Java mode (non-GWT).
-   * Setting this to <code>true</code> has the same effect as returning
-   * <code>null</code> in {@link #getModuleName}.
-   *
-   * @see #isPureJava
-   */
-  private boolean forcePureJava;
-
-  /**
    * The {@link Strategy} used by this test.
    */
   private Strategy strategy;
@@ -255,10 +246,7 @@ public abstract class GWTTestCase extends TestCase {
    * be included.
    * 
    * @return the fully qualified name of a module, or <code>null</code> to run
-   *         as a pure Java (non-GWT) test case (same effect as passing
-   *         <code>true</code> to {@link #setForcePureJava})
-   *
-   * @see #isPureJava
+   *         as a non-GWT test case
    */
   public abstract String getModuleName();
 
@@ -278,27 +266,14 @@ public abstract class GWTTestCase extends TestCase {
    * Get the synthetic module name, which includes the synthetic extension
    * defined by the {@link Strategy}.
    * 
-   * @return the synthetic module name, or <code>null</code> if this test case
-   *         is run in pure Java mode (non-GWT)
-   *
-   * @see #isPureJava
+   * @return the synthetic module name or null if this is not really a GWT test
    */
   public final String getSyntheticModuleName() {
-    if (isPureJava()) {
+    String moduleName = getModuleName();
+    if (moduleName == null) {
       return null;
-    } else {
-      return getModuleName() + "." + getStrategy().getSyntheticModuleExtension();
     }
-  }
-
-  /**
-   * Returns whether this test case should be run in pure Java mode (non-GWT).
-   * Returns <code>true</code> if and only if {@link #getModuleName} returns
-   * <code>null</code>, or {@link #setForcePureJava} was last invoked with
-   * <code>true</code>.
-   */
-  public boolean isPureJava() {
-    return forcePureJava || (getModuleName() == null);
+    return moduleName + "." + getStrategy().getSyntheticModuleExtension();
   }
 
   /**
@@ -309,22 +284,6 @@ public abstract class GWTTestCase extends TestCase {
   public final void run(TestResult result) {
     testResult = result;
     super.run(result);
-  }
-
-  /**
-   * Specifies whether this test case should be always run in pure Java mode
-   * (non-GWT). Passing <code>true</code> has the same effect as returning
-   * <code>null</code> in {@link #getModuleName}. The setting is
-   * <code>false</code> by default.
-   *
-   * @param forcePureJava <code>true</code> to always run this test case in pure
-   *        Java mode (non-GWT); <code>false</code> to run this test case in GWT
-   *        mode if {@link #getModuleName} does not return <code>null</code>
-   *
-   * @see #isPureJava
-   */
-  public void setForcePureJava(boolean forcePureJava) {
-    this.forcePureJava = forcePureJava;
   }
 
   @Override
@@ -419,9 +378,7 @@ public abstract class GWTTestCase extends TestCase {
    * A replacement for JUnit's {@link #setUp()} method. This method runs once
    * per test method in your subclass, just before your each test method runs
    * and can be used to perform initialization. Override this method instead of
-   * {@link #setUp()}. This method is run even in pure Java mode (non-GWT).
-   *
-   * @see #setForcePureJava
+   * {@link #setUp()}.
    */
   protected void gwtSetUp() throws Exception {
   }
@@ -430,9 +387,7 @@ public abstract class GWTTestCase extends TestCase {
    * A replacement for JUnit's {@link #tearDown()} method. This method runs once
    * per test method in your subclass, just after your each test method runs and
    * can be used to perform cleanup. Override this method instead of
-   * {@link #tearDown()}. This method is run even in pure Java mode (non-GWT).
-   *
-   * @see #setForcePureJava
+   * {@link #tearDown()}.
    */
   protected void gwtTearDown() throws Exception {
   }
@@ -450,10 +405,12 @@ public abstract class GWTTestCase extends TestCase {
               + "\" has none.  Perhaps you used TestSuite.addTest() instead of addTestClass()?");
     }
 
-    if (isPureJava()) {
-      super.runTest();
-    } else {
+    String moduleName = getModuleName();
+    if (moduleName != null) {
       JUnitShell.runTest(this, testResult);
+    } else {
+      // Run as a non-GWT test
+      super.runTest();
     }
   }
 
@@ -464,9 +421,7 @@ public abstract class GWTTestCase extends TestCase {
    */
   @Override
   protected final void setUp() throws Exception {
-    if (isPureJava()) {
-      gwtSetUp();
-    }
+    // implemented in the translatable version of this class
   }
 
   /**
@@ -484,8 +439,6 @@ public abstract class GWTTestCase extends TestCase {
    */
   @Override
   protected final void tearDown() throws Exception {
-    if (isPureJava()) {
-      gwtTearDown();
-    }
+    // implemented in the translatable version of this class
   }
 }

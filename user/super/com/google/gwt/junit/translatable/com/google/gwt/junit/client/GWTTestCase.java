@@ -199,21 +199,12 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   public abstract String getModuleName();
-  
-  public boolean isPureJava() {
-    return false;
-  }
 
   @Override
   public void runBare() throws Throwable {
     setUp();
     runTest();
     // No tearDown call here; we do it from reportResults.
-  }
-
-  public void setForcePureJava(boolean forcePureJava) {
-    // Ignore completely. The test is being run in GWT mode,
-    // hence assumed not to be pure Java.
   }
 
   // CHECKSTYLE_OFF
