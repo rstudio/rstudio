@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.uibinder.client.UiBinderUtilTest;
 import com.google.gwt.uibinder.test.client.TestParameterizedWidgets;
 import com.google.gwt.uibinder.test.client.UiBinderTest;
 
@@ -30,6 +31,7 @@ public class UiBinderGwtSuite {
         "Test suite for UiBinder GWTTestCases");
 
     suite.addTestSuite(UiBinderTest.class);
+    suite.addTestSuite(UiBinderUtilTest.class);
     suite.addTestSuite(TestParameterizedWidgets.class);
 
     return suite;
