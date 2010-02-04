@@ -1035,7 +1035,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
 
   private void refreshSuggestions() {
     // Get the raw text.
-    String text = box.getText();
+    String text = getText();
     if (text.equals(currentText)) {
       return;
     } else {

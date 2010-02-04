@@ -97,6 +97,36 @@ public class SuggestBoxTest extends WidgetTestBase {
     assertTrue(box.isSuggestionListShowing());
   }
 
+  public void testGettextShouldBeCalledWhenOverrided() {
+
+    // Verify that the query matches the overridden getText.
+    SuggestOracle oracle = new SuggestOracle() {
+      @Override
+      public void requestSuggestions(Request request, Callback callback) {
+        if ("override".equals(request.getQuery())) {
+          finishTest();
+        } else {
+          fail("Expected query: override");
+        }
+      }
+    };
+
+    // Create a customized SuggestBox which overrides getText.
+    SuggestBox box = new SuggestBox(oracle) {
+      @Override
+      public String getText() {
+        return "override";
+      }
+    };
+
+    // Attach the box.
+    RootPanel.get().add(box);
+
+    // showSuggestionList should call the overridden method.
+    delayTestFinish(1000);
+    box.showSuggestionList();
+  }
+
   @SuppressWarnings("deprecation")
   public void testShowAndHide() {
     SuggestBox box = createSuggestBox();
