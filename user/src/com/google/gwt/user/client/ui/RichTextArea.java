@@ -635,6 +635,16 @@ public class RichTextArea extends FocusWidget implements HasHTML,
   }
 
   @Override
+  public boolean isEnabled() {
+    return impl.isEnabled();
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    impl.setEnabled(enabled);
+  }
+
+  @Override
   public void setFocus(boolean focused) {
     // There are different problems on each browser when you try to focus an
     // unattached rich text iframe, so just cut it off early.

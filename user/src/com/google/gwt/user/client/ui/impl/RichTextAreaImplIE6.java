@@ -115,6 +115,18 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
   }-*/;
 
   @Override
+  protected native boolean isEnabledImpl() /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+    return elem.contentWindow.document.body.contentEditable.toLowerCase() == 'true'; 
+  }-*/;
+
+  @Override
+  protected native void setEnabledImpl(boolean enabled) /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+    elem.contentWindow.document.body.contentEditable = enabled;
+  }-*/;
+
+  @Override
   protected native void setTextImpl(String text) /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     elem.contentWindow.document.body.innerText = text;

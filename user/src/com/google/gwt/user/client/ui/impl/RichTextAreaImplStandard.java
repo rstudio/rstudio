@@ -38,8 +38,9 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
       "cannot be used until the RichTextArea is attached and focused.";
 
   /**
-   * Holds a cached copy of any user setHTML/setText actions until the real
-   * text area is fully initialized.  Becomes <code>null</code> after init.
+   * Holds a cached copy of any user setHTML/setText/setEnabled actions until
+   * the real text area is fully initialized.  Becomes <code>null</code> after
+   * init.
    */
   private Element beforeInitPlaceholder = DOM.createDiv();
 
@@ -123,6 +124,12 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     return queryCommandState("Bold");
   }
 
+  @Override
+  public boolean isEnabled() {
+    return beforeInitPlaceholder == null ? isEnabledImpl()
+        : !beforeInitPlaceholder.getPropertyBoolean("disabled");
+  }
+
   public boolean isItalic() {
     return queryCommandState("Italic");
   }
@@ -169,6 +176,15 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
 
   public void setBackColor(String color) {
     execCommand("BackColor", color);
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    if (beforeInitPlaceholder == null) {
+      setEnabledImpl(enabled);
+    } else {
+      beforeInitPlaceholder.setPropertyBoolean("disabled", !enabled);
+    }
   }
 
   @Override
@@ -265,12 +281,14 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     // Unhook all custom event handlers when the element is detached.
     unhookEvents();
 
-    // Recreate the placeholder element and store the iframe's contents in it.
-    // This is necessary because some browsers will wipe the iframe's contents
-    // when it is removed from the DOM.
+    // Recreate the placeholder element and store the iframe's contents and the
+    // enabled status in it. This is necessary because some browsers will wipe
+    // the iframe's contents when it is removed from the DOM.
     String html = getHTML();
+    boolean enabled = isEnabled();
     beforeInitPlaceholder = DOM.createDiv();
     DOM.setInnerHTML(beforeInitPlaceholder, html);
+    setEnabled(enabled);
   }
 
   protected native String getHTMLImpl() /*-{
@@ -324,6 +342,11 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     wnd.addEventListener('blur', elem.__gwt_blurHandler, true);
   }-*/;
 
+  protected native boolean isEnabledImpl() /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+    return elem.contentWindow.document.designMode.toUpperCase() == 'ON';
+  }-*/;
+
   @Override
   protected void onElementInitialized() {
     // Issue 1897: This method is called after a timeout, during which time the
@@ -337,11 +360,17 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     // When the iframe is ready, ensure cached content is set.
     if (beforeInitPlaceholder != null) {
       setHTMLImpl(DOM.getInnerHTML(beforeInitPlaceholder));
+      setEnabledImpl(isEnabled());
       beforeInitPlaceholder = null;
     }
     
     super.onElementInitialized();
   }
+
+  protected native void setEnabledImpl(boolean enabled) /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+    elem.contentWindow.document.designMode = enabled ? 'On' : 'Off';
+  }-*/;
 
   protected native void setHTMLImpl(String html) /*-{
     this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerHTML = html;

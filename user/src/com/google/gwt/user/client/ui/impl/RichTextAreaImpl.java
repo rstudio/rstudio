@@ -54,6 +54,14 @@ public class RichTextAreaImpl {
     onElementInitialized();
   }
 
+  public boolean isEnabled() {
+    return !elem.getPropertyBoolean("disabled");
+  }
+
+  public void setEnabled(boolean enabled) {
+    elem.setPropertyBoolean("disabled", !enabled);
+  }
+
   public native void setFocus(boolean focused) /*-{
     if (focused) {
       this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.focus();

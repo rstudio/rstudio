@@ -161,6 +161,45 @@ public class RichTextAreaTest extends GWTTestCase {
   }
 
   /**
+   * Test that a delayed call to setEnable is reflected.
+   */
+  @DoNotRunWith(Platform.HtmlUnit)
+  public void testSetEnabledAfterInit() {
+    final RichTextArea richTextArea = new RichTextArea();
+    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
+    richTextArea.addInitializeHandler(new InitializeHandler() {
+      public void onInitialize(InitializeEvent event) {
+        richTextArea.setEnabled(false);
+        assertEquals(false, richTextArea.isEnabled());
+        richTextArea.setEnabled(true);
+        assertEquals(true, richTextArea.isEnabled());
+        finishTest();
+      }
+    });
+    RootPanel.get().add(richTextArea);
+  }
+
+  /**
+   * Test that a call to setEnable is reflected immediately, and after the area
+   * loads.
+   */
+  @DoNotRunWith(Platform.HtmlUnit)
+  public void testSetEnabledBeforeInit() {
+    final RichTextArea richTextArea = new RichTextArea();
+    richTextArea.setEnabled(false);
+    assertEquals(false, richTextArea.isEnabled());
+    delayTestFinish(RICH_TEXT_ASYNC_DELAY);
+    richTextArea.addInitializeHandler(new InitializeHandler() {
+      public void onInitialize(InitializeEvent event) {
+        assertEquals(false, richTextArea.isEnabled());
+        finishTest();
+      }
+    });
+    RootPanel.get().add(richTextArea);
+    assertEquals(false, richTextArea.isEnabled());
+  }
+
+  /**
    * Test that a delayed set of HTML is reflected. Some platforms have timing
    * subtleties that need to be tested.
    */
