@@ -21,6 +21,7 @@ import com.google.gwt.user.client.AsyncProxyTest;
 import com.google.gwt.user.client.CommandExecutorTest;
 import com.google.gwt.user.client.CookieTest;
 import com.google.gwt.user.client.EventTest;
+import com.google.gwt.user.client.HistoryDisabledTest;
 import com.google.gwt.user.client.WindowTest;
 import com.google.gwt.user.client.ui.AbsolutePanelTest;
 import com.google.gwt.user.client.ui.AnchorTest;
@@ -144,6 +145,7 @@ public class UISuite {
     suite.addTestSuite(GridTest.class);
     suite.addTestSuite(HiddenTest.class);
     suite.addTestSuite(HistoryTest.class);
+    suite.addTestSuite(HistoryDisabledTest.class);
     suite.addTestSuite(HorizontalPanelTest.class);
     suite.addTestSuite(HorizontalSplitPanelTest.class);
     suite.addTestSuite(HTMLPanelTest.class);

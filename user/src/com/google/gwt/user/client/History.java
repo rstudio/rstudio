@@ -81,7 +81,9 @@ public class History {
    */
   @Deprecated
   public static void addHistoryListener(HistoryListener listener) {
-    BaseListenerWrapper.WrapHistory.add(listener);
+    if (impl != null) {
+      BaseListenerWrapper.WrapHistory.add(listener);
+    }
   }
 
   /**
@@ -93,7 +95,7 @@ public class History {
    */
   public static HandlerRegistration addValueChangeHandler(
       ValueChangeHandler<String> handler) {
-    return impl.addValueChangeHandler(handler);
+    return impl != null ? impl.addValueChangeHandler(handler) : null;
   }
 
   /**
@@ -114,8 +116,10 @@ public class History {
    * history handlers of the initial application state.
    */
   public static void fireCurrentHistoryState() {
-    String token = getToken();
-    impl.fireHistoryChangedImpl(token);
+    if (impl != null) {
+      String token = getToken();
+      impl.fireHistoryChangedImpl(token);
+    }
   }
 
   /**
@@ -183,7 +187,9 @@ public class History {
    */
   @Deprecated
   public static void onHistoryChanged(String historyToken) {
-    impl.fireHistoryChangedImpl(historyToken);
+    if (impl != null) {
+      impl.fireHistoryChangedImpl(historyToken);
+    }
   }
 
   /**
@@ -193,6 +199,8 @@ public class History {
    */
   @Deprecated
   public static void removeHistoryListener(HistoryListener listener) {
-    BaseListenerWrapper.WrapHistory.remove(impl.getHandlers(), listener);
+    if (impl != null) {
+      BaseListenerWrapper.WrapHistory.remove(impl.getHandlers(), listener);
+    }
   }
 }
