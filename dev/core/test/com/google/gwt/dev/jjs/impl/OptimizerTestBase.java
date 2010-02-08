@@ -22,10 +22,13 @@ import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.jjs.JavaAstConstructor;
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -62,6 +65,25 @@ public abstract class OptimizerTestBase extends TestCase {
     JDeclaredType type = findType(program, typeName);
     JField field = findField(type, fieldName);
     return field;
+  }
+
+  /**
+   * Find a local variable declared within a JMethod.
+   */
+  public static JLocal findLocal(JMethod method, final String localName) {
+    class LocalVisitor extends JVisitor {
+      JLocal found;
+
+      @Override
+      public void endVisit(JLocal x, Context ctx) {
+        if (x.getName().equals(localName)) {
+          found = x;
+        }
+      }
+    }
+    LocalVisitor v = new LocalVisitor();
+    v.accept(method);
+    return v.found;
   }
 
   public static JMethod findMainMethod(JProgram program) {

@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.SourceInfo;
  * Java field definition.
  */
 public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
-
   /**
    * Determines whether the variable is final, volatile, or neither.
    */
@@ -46,8 +45,8 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
   private final boolean isStatic;
   private boolean isVolatile;
 
-  JField(SourceInfo info, String name, JDeclaredType enclosingType,
-      JType type, boolean isStatic, Disposition disposition) {
+  JField(SourceInfo info, String name, JDeclaredType enclosingType, JType type,
+      boolean isStatic, Disposition disposition) {
     super(info, name, type, disposition.isFinal());
     this.enclosingType = enclosingType;
     this.isStatic = isStatic;
@@ -101,6 +100,7 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
+      annotations = visitor.acceptImmutable(annotations);
       // Do not visit declStmt, it gets visited within its own code block.
     }
     visitor.endVisit(this, ctx);

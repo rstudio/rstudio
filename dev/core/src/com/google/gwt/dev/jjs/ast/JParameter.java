@@ -64,6 +64,7 @@ public class JParameter extends JVariable implements HasEnclosingMethod {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
+      annotations = visitor.acceptImmutable(annotations);
     }
     visitor.endVisit(this, ctx);
   }

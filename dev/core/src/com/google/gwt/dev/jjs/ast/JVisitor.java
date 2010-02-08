@@ -131,6 +131,14 @@ public class JVisitor {
     endVisit((JNode) x, ctx);
   }
 
+  public void endVisit(JAnnotation x, Context ctx) {
+    endVisit((JNode) x, ctx);
+  }
+
+  public void endVisit(JAnnotation.Property x, Context ctx) {
+    endVisit((JNode) x, ctx);
+  }
+
   public void endVisit(JArrayRef x, Context ctx) {
     endVisit((JExpression) x, ctx);
   }
@@ -439,6 +447,14 @@ public class JVisitor {
     return visit((JNode) x, ctx);
   }
 
+  public boolean visit(JAnnotation x, Context ctx) {
+    return visit((JNode) x, ctx);
+  }
+
+  public boolean visit(JAnnotation.Property x, Context ctx) {
+    return visit((JNode) x, ctx);
+  }
+
   public boolean visit(JArrayRef x, Context ctx) {
     return visit((JExpression) x, ctx);
   }
@@ -669,11 +685,11 @@ public class JVisitor {
     /* NOTE: Skip JFieldRef */
     return visit((JVariableRef) x, ctx);
   }
-  
+
   public boolean visit(JsniMethodBody x, Context ctx) {
     return visit((JAbstractMethodBody) x, ctx);
   }
-  
+
   public boolean visit(JsniMethodRef x, Context ctx) {
     /* NOTE: Skip JMethodRef */
     return visit((JExpression) x, ctx);
@@ -690,7 +706,7 @@ public class JVisitor {
   public boolean visit(JsonPropInit x, Context ctx) {
     return visit((JNode) x, ctx);
   }
-  
+
   public boolean visit(JStatement x, Context ctx) {
     return visit((JNode) x, ctx);
   }

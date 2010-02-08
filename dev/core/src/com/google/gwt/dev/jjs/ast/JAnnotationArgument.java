@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,24 +15,12 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
-import com.google.gwt.dev.jjs.SourceInfo;
-
 /**
- * Base class for any Java literal expression.
+ * A tag interface for JNodes that are legal values for annotation properties.
  */
-public abstract class JValueLiteral extends JLiteral implements
-    JAnnotationArgument {
-
-  public JValueLiteral(SourceInfo sourceInfo) {
-    super(sourceInfo);
-  }
-
-  public JNode annotationNode() {
-    return this;
-  }
-
-  public abstract Object getValueObj();
-
-  abstract JValueLiteral cloneFrom(JValueLiteral value);
-
+public interface JAnnotationArgument {
+  /**
+   * A convenience method to avoid explicit casts.
+   */
+  JNode annotationNode();
 }

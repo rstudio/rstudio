@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.HasType;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
+import com.google.gwt.dev.jjs.ast.JAnnotation;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JAssertStatement;
@@ -155,6 +156,34 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JAbsentArrayDimension x, Context ctx) {
     // nothing to print, parent prints []
+    return false;
+  }
+
+  @Override
+  public boolean visit(JAnnotation x, Context ctx) {
+    print('@');
+    print(x.getType().getName());
+    lparen();
+    visitCollectionWithCommas(x.getProperties().iterator());
+    rparen();
+    return false;
+  }
+
+  @Override
+  public boolean visit(JAnnotation.Property x, Context ctx) {
+    print(x.getName());
+    print('=');
+    switch (x.getValues().size()) {
+      case 1:
+        accept(x.getSingleValue().annotationNode());
+        break;
+      case 0:
+      default:
+        print('{');
+        visitCollectionWithCommas(x.getValuesAsNodes().iterator());
+        print('}');
+        break;
+    }
     return false;
   }
 

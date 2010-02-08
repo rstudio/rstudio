@@ -58,6 +58,7 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
+      annotations = visitor.acceptImmutable(annotations);
       fields = visitor.acceptWithInsertRemoveImmutable(fields);
       methods = visitor.acceptWithInsertRemoveImmutable(methods);
     }

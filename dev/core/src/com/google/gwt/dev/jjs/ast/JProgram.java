@@ -83,6 +83,12 @@ public class JProgram extends JNode {
           "com.google.gwt.lang.EntryMethodHolder",
           "com.google.gwt.core.client.prefetch.RunAsyncCode",}));
 
+  /**
+   * Only annotations defined in the following packages or sub-packages thereof
+   * will be recorded in the Java AST.
+   */
+  public static final Set<String> RECORDED_ANNOTATION_PACKAGES = new LinkedHashSet<String>();
+
   static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
 
   private static final Comparator<JArrayType> ARRAYTYPE_COMPARATOR = new ArrayTypeComparator();
@@ -274,6 +280,8 @@ public class JProgram extends JNode {
    */
   private final ArrayList<HashMap<JType, JArrayType>> dimensions = new ArrayList<HashMap<JType, JArrayType>>();
 
+  private final Map<String, JExternalType> externalTypes = new HashMap<String, JExternalType>();
+
   private final Map<String, JField> indexedFields = new HashMap<String, JField>();
 
   private final Map<String, JMethod> indexedMethods = new HashMap<String, JMethod>();
@@ -446,6 +454,21 @@ public class JProgram extends JNode {
     String sname = String.valueOf(name);
     JEnumField x = new JEnumField(info, sname, ordinal, enclosingType, type);
     enclosingType.addField(x);
+    return x;
+  }
+
+  public JExternalType createExternalType(SourceInfo info, char[][] name) {
+    JExternalType x;
+    String sname = dotify(name);
+    x = externalTypes.get(sname);
+    if (x != null) {
+      return x;
+    }
+
+    x = new JExternalType(info, sname);
+    if (INDEX_TYPES_SET.contains(sname)) {
+      indexedTypes.put(x.getShortName(), x);
+    }
     return x;
   }
 

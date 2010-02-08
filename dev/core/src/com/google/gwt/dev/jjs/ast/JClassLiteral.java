@@ -26,7 +26,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
  * ClassLiteralHolder. That field contains the class object allocation
  * initializer.
  */
-public class JClassLiteral extends JLiteral {
+public class JClassLiteral extends JLiteral implements JAnnotationArgument {
   /**
    * Create an expression that will evaluate, at run time, to the class literal.
    * Cannot be called after optimizations begin.
@@ -116,7 +116,7 @@ public class JClassLiteral extends JLiteral {
       JClassLiteral componentLiteral = program.getLiteralClass(arrayType.getElementType());
       call.addArg(componentLiteral);
     } else {
-      assert (type instanceof JInterfaceType || type instanceof JPrimitiveType);
+      assert (type instanceof JExternalType || type instanceof JInterfaceType || type instanceof JPrimitiveType);
     }
     assert call.getArgs().size() == method.getParams().size() : "Argument / param mismatch "
         + call.toString() + " versus " + method.toString();
@@ -161,6 +161,10 @@ public class JClassLiteral extends JLiteral {
     super(sourceInfo);
     refType = type;
     this.field = field;
+  }
+
+  public JNode annotationNode() {
+    return this;
   }
 
   /**

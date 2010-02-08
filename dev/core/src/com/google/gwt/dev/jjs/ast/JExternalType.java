@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,32 +18,32 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.SourceInfo;
 
 /**
- * Java local variable definition.
+ * Represents a type outside of the client type system, usually a binary-only
+ * annotation reference.
  */
-public class JLocal extends JVariable implements HasEnclosingMethod {
+public class JExternalType extends JDeclaredType {
 
-  private final JMethodBody enclosingMethodBody;
-
-  JLocal(SourceInfo info, String name, JType type, boolean isFinal,
-      JMethodBody enclosingMethodBody) {
-    super(info, name, type, isFinal);
-    this.enclosingMethodBody = enclosingMethodBody;
+  JExternalType(SourceInfo info, String name) {
+    super(info, name);
   }
 
-  public JMethod getEnclosingMethod() {
-    return enclosingMethodBody.method;
+  @Override
+  public String getClassLiteralFactoryMethod() {
+    return "Class.createForInterface";
   }
 
-  public void setInitializer(JDeclarationStatement declStmt) {
-    this.declStmt = declStmt;
+  public boolean isAbstract() {
+    return true;
+  }
+
+  public boolean isFinal() {
+    return false;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       annotations = visitor.acceptImmutable(annotations);
-      // Do not visit declStmt, it gets visited within its own code block.
     }
     visitor.endVisit(this, ctx);
   }
-
 }

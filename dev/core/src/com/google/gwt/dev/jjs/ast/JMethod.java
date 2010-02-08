@@ -30,8 +30,9 @@ import java.util.Set;
 /**
  * A Java method implementation.
  */
-public final class JMethod extends JNode implements HasEnclosingType, HasName,
-    HasType, CanBeAbstract, CanBeSetFinal, CanBeNative, CanBeStatic {
+public final class JMethod extends JNode implements HasAnnotations,
+    HasEnclosingType, HasName, HasType, CanBeAbstract, CanBeSetFinal,
+    CanBeNative, CanBeStatic {
 
   private static final String TRACE_METHOD_WILDCARD = "*";
 
@@ -47,6 +48,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
    */
   private transient JAbstractMethodBody body = null;
 
+  private List<JAnnotation> annotations = Lists.create();
   private final JDeclaredType enclosingType;
   private final boolean isAbstract;
   private boolean isFinal;
@@ -85,6 +87,10 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     this.isPrivate = isPrivate;
   }
 
+  public void addAnnotation(JAnnotation annotation) {
+    annotations = Lists.add(annotations, annotation);
+  }
+
   /**
    * Add a method that this method overrides.
    */
@@ -106,12 +112,20 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     params = Lists.add(params, x);
   }
 
+  public JAnnotation findAnnotation(String className) {
+    return JAnnotation.findAnnotation(this, className);
+  }
+
   public void freezeParamTypes() {
     List<JType> paramTypes = new ArrayList<JType>();
     for (JParameter param : params) {
       paramTypes.add(param.getType());
     }
     setOriginalTypes(returnType, paramTypes);
+  }
+
+  public List<JAnnotation> getAnnotations() {
+    return Lists.normalizeUnmodifiable(annotations);
   }
 
   public JAbstractMethodBody getBody() {
@@ -253,6 +267,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
       }
     }
     if (visitor.visit(this, ctx)) {
+      annotations = visitor.acceptImmutable(annotations);
       params = visitor.acceptImmutable(params);
       if (body != null) {
         body = (JAbstractMethodBody) visitor.accept(body);
