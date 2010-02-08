@@ -15,7 +15,6 @@
  */
 package com.google.gwt.http;
 
-import com.google.gwt.http.client.HTTPRequestTest;
 import com.google.gwt.http.client.RequestBuilderTest;
 import com.google.gwt.http.client.RequestTest;
 import com.google.gwt.http.client.ResponseTest;
@@ -34,7 +33,6 @@ public class HTTPSuite {
     GWTTestSuite suite = new GWTTestSuite(
         "Test for suite for the com.google.gwt.http module");
 
-    suite.addTestSuite(HTTPRequestTest.class);
     suite.addTestSuite(URLTest.class);
     suite.addTestSuite(RequestBuilderTest.class);
     suite.addTestSuite(RequestTest.class);
