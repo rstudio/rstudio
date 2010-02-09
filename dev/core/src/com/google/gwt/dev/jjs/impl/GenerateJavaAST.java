@@ -1783,7 +1783,7 @@ public class GenerateJavaAST {
     JStatement processStatement(SwitchStatement x) {
       SourceInfo info = makeSourceInfo(x);
       JExpression expression = dispProcessExpression(x.expression);
-      if (expression.getType() instanceof JClassType) {
+      if (isEnumType(expression.getType())) {
         // Must be an enum; synthesize a call to ordinal().
         expression = new JMethodCall(info, expression,
             program.getIndexedMethod("Enum.ordinal"));
@@ -2400,6 +2400,24 @@ public class GenerateJavaAST {
           throw new InternalCompilerException(
               "Could not determine the desired box type");
       }
+    }
+
+    /**
+     * Check whether the specified type is definitely for an enum class.
+     * 
+     * @param type The type being tested
+     * @return whether it is certainly an enum
+     */
+    private boolean isEnumType(JType type) {
+      if (type instanceof JClassType) {
+        return ((JClassType) type).isEnumOrSubclass() != null;
+      }
+
+      if (type instanceof JNonNullType) {
+        return isEnumType(((JNonNullType) type).getUnderlyingType());
+      }
+
+      return false;
     }
 
     private SourceInfo makeSourceInfo(Statement x) {

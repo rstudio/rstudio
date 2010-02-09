@@ -67,6 +67,25 @@ public class CompilerTest extends GWTTestCase {
     int handleEvent(E be);
   }
 
+  /**
+   * Used in {@link #testSwitchOnEnumTypedThis()}.
+   */
+  private static  enum ChangeDirection {
+    NEGATIVE, POSITIVE;
+
+    public String getText() {
+      switch (this) {
+        case POSITIVE:
+          return "POSITIVE";
+        case NEGATIVE:
+          return "NEGATIVE";
+        default:
+          throw new IllegalArgumentException("Unhandled change direction: "
+              + this);
+      }
+    }
+  }
+
   private static class ConcreteSub extends AbstractSuper {
     public static String foo() {
       if (FALSE) {
@@ -1065,7 +1084,12 @@ public class CompilerTest extends GWTTestCase {
   public void testSubclassStaticInnerAndClinitOrdering() {
     new CheckSubclassStaticInnerAndClinitOrdering();
   }
-
+  
+  public void testSwitchOnEnumTypedThis() {
+    assertEquals("POSITIVE", ChangeDirection.POSITIVE.getText());
+    assertEquals("NEGATIVE", ChangeDirection.NEGATIVE.getText());
+  }
+  
   public void testSwitchStatement() {
     switch (0) {
       case 0:
