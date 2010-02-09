@@ -36,6 +36,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.layout.client.Layout.Alignment;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.WindowTest;
 
 /**
  * Tests for the {@link Layout} class.
@@ -421,6 +422,9 @@ public class LayoutTest extends GWTTestCase {
 
   @Override
   protected void gwtSetUp() throws Exception {
+    // ensure enough sizes for this test
+    WindowTest.ResizeHelper.resizeTo(800, 600);
+
     Window.enableScrolling(false);
 
     Document doc = Document.get();
@@ -445,6 +449,7 @@ public class LayoutTest extends GWTTestCase {
     Window.enableScrolling(true);
     Document.get().getBody().removeChild(parent);
     layout.onDetach();
+    WindowTest.ResizeHelper.restoreSize();
   }
 
   private void assertLeftRightTopBottomUnitsMakeSense(Element elem) {

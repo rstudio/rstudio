@@ -671,6 +671,37 @@ public class Window {
   }-*/;
 
   /**
+   * Moves a window's left and top edge to a specified number of pixels relative
+   * to its current coordinates.
+   * <p>
+   * NOTE: In Chrome, this method only works with windows created by
+   * Window.open().
+   * </p>
+   *
+   * @param dx A positive or a negative number that specifies how many pixels
+   *          to move the left edge by
+   * @param dy A positive or a negative number that specifies how many
+   *          pixels to move the top edge by
+   */
+  public static native void moveBy(int dx, int dy) /*-{
+    $wnd.moveBy(dx, dy);
+  }-*/;
+
+  /**
+   * Moves a window's left and top edge to the specified coordinates.
+   * <p>
+   * NOTE: In Chrome, this method only works with windows created by
+   * Window.open().
+   * </p>
+   *
+   * @param x The left coordinate
+   * @param y The top coordinate
+   */
+  public static native void moveTo(int x, int y) /*-{
+    $wnd.moveTo(x, y);
+  }-*/;
+
+  /**
    * Opens a new browser window. The "name" and "features" arguments are
    * specified <a href=
    * 'http://developer.mozilla.org/en/docs/DOM:window.open'>here</a>.
@@ -733,6 +764,39 @@ public class Window {
   public static void removeWindowScrollListener(WindowScrollListener listener) {
     BaseListenerWrapper.WrapWindowScroll.remove(handlers, listener);
   }
+
+  /**
+   * Resizes the window by the specified width and height. This method moves the
+   * bottom right corner of the window by the specified number of pixels
+   * defined. The top left corner will not be moved (it stays in its original
+   * coordinates).
+   * <p>
+   * NOTE: In Chrome, this method only works with windows created by
+   * Window.open().
+   * </p>
+   *
+   * @param width A positive or a negative number that specifies how many pixels
+   *          to resize the width by
+   * @param height A positive or a negative number that specifies how many
+   *          pixels to resize the height by
+   */
+  public static native void resizeBy(int width, int height) /*-{
+    $wnd.resizeBy(width, height);
+  }-*/;
+
+  /**
+   * Resizes the window to the specified width and height.
+   * <p>
+   * NOTE: In Chrome, this method only works with windows created by
+   * Window.open().
+   * </p>
+   *
+   * @param width The width of the window, in pixels
+   * @param height The height of the window, in pixels
+   */
+  public static native void resizeTo(int width, int height) /*-{
+    $wnd.resizeTo(width, height);
+  }-*/;
 
   /**
    * Scroll the window to the specified position.
