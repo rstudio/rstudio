@@ -30,7 +30,13 @@
 		</any>
   </replace-with>
 
-	<!-- Safari has yet another slightly different implementation. -->
+	<!-- Opera has yet another slightly different implementation. -->
+	<replace-with class="com.google.gwt.user.client.impl.HistoryImplTimer">
+		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
+		<when-property-is name="user.agent" value="opera"/>
+	</replace-with>
+
+	<!-- Safari is almost like Opera, but again slightly different. -->
 	<replace-with class="com.google.gwt.user.client.impl.HistoryImplSafari">
 		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
 		<when-property-is name="user.agent" value="safari"/>
