@@ -87,7 +87,8 @@ public class JProgram extends JNode {
    * Only annotations defined in the following packages or sub-packages thereof
    * will be recorded in the Java AST.
    */
-  public static final Set<String> RECORDED_ANNOTATION_PACKAGES = new LinkedHashSet<String>();
+  public static final Set<String> RECORDED_ANNOTATION_PACKAGES = new LinkedHashSet<String>(
+      Arrays.asList("com.google.gwt.core.client.impl"));
 
   static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
 

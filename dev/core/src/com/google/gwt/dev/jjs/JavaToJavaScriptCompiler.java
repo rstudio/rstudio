@@ -486,7 +486,7 @@ public class JavaToJavaScriptCompiler {
       maybeDumpAST(jprogram);
 
       // (3) Perform Java AST normalizations.
-
+      ArtificialRescueRecorder.exec(jprogram);
       FixAssignmentToUnbox.exec(jprogram);
 
       /*

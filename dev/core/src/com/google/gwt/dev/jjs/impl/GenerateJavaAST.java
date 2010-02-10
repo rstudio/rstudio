@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.core.client.impl.ArtificialRescue;
 import com.google.gwt.dev.javac.JsniCollector;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
@@ -101,7 +100,6 @@ import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.collect.Lists;
 
@@ -141,7 +139,6 @@ import org.eclipse.jdt.internal.compiler.ast.Initializer;
 import org.eclipse.jdt.internal.compiler.ast.InstanceOfExpression;
 import org.eclipse.jdt.internal.compiler.ast.LabeledStatement;
 import org.eclipse.jdt.internal.compiler.ast.LocalDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.compiler.ast.MessageSend;
 import org.eclipse.jdt.internal.compiler.ast.NullLiteral;
 import org.eclipse.jdt.internal.compiler.ast.OR_OR_Expression;
@@ -152,10 +149,8 @@ import org.eclipse.jdt.internal.compiler.ast.QualifiedNameReference;
 import org.eclipse.jdt.internal.compiler.ast.QualifiedSuperReference;
 import org.eclipse.jdt.internal.compiler.ast.QualifiedThisReference;
 import org.eclipse.jdt.internal.compiler.ast.ReturnStatement;
-import org.eclipse.jdt.internal.compiler.ast.SingleMemberAnnotation;
 import org.eclipse.jdt.internal.compiler.ast.SingleNameReference;
 import org.eclipse.jdt.internal.compiler.ast.Statement;
-import org.eclipse.jdt.internal.compiler.ast.StringLiteral;
 import org.eclipse.jdt.internal.compiler.ast.SuperReference;
 import org.eclipse.jdt.internal.compiler.ast.SwitchStatement;
 import org.eclipse.jdt.internal.compiler.ast.SynchronizedStatement;
@@ -490,8 +485,6 @@ public class GenerateJavaAST {
         if (currentClass instanceof JEnumType) {
           processEnumType((JEnumType) currentClass);
         }
-
-        processArtificialRescues(x);
 
         currentClassScope = null;
         currentClass = null;
@@ -2558,128 +2551,6 @@ public class GenerateJavaAST {
 
       throw new InternalCompilerException("Unable to process value "
           + value.getClass().getName());
-    }
-
-    private void processArtificialRescue(Annotation rescue) {
-      assert rescue != null;
-
-      JReferenceType classType = null;
-      String[] fields = Empty.STRINGS;
-      boolean instantiable = false;
-      String[] methods = Empty.STRINGS;
-      String typeName = null;
-
-      for (MemberValuePair pair : rescue.memberValuePairs()) {
-        String name = String.valueOf(pair.name);
-        Expression value = pair.value;
-
-        if ("className".equals(name)) {
-          typeName = value.constant.stringValue();
-
-          // Invalid references should be caught in ArtificialRescueChecker
-          classType = (JReferenceType) program.getTypeFromJsniRef(typeName);
-
-        } else if ("fields".equals(name)) {
-          if (value instanceof StringLiteral) {
-            fields = new String[] {value.constant.stringValue()};
-          } else if (value instanceof ArrayInitializer) {
-            ArrayInitializer init = (ArrayInitializer) value;
-            fields = new String[init.expressions == null ? 0
-                : init.expressions.length];
-            for (int i = 0, j = fields.length; i < j; i++) {
-              fields[i] = init.expressions[i].constant.stringValue();
-            }
-          }
-
-        } else if ("instantiable".equals(name)) {
-          instantiable = value.constant.booleanValue();
-
-        } else if ("methods".equals(name)) {
-          if (value instanceof StringLiteral) {
-            methods = new String[] {value.constant.stringValue()};
-          } else if (value instanceof ArrayInitializer) {
-            ArrayInitializer init = (ArrayInitializer) value;
-            methods = new String[init.expressions == null ? 0
-                : init.expressions.length];
-            for (int i = 0, j = methods.length; i < j; i++) {
-              methods[i] = init.expressions[i].constant.stringValue();
-            }
-          }
-        } else {
-          throw new InternalCompilerException(
-              "Unknown Rescue annotation member " + name);
-        }
-      }
-
-      assert classType != null : "classType " + typeName;
-      assert fields != null : "fields";
-      assert methods != null : "methods";
-
-      if (instantiable) {
-        currentClass.addArtificialRescue(classType);
-
-        // Make sure that a class literal for the type has been allocated
-        program.getLiteralClass(classType);
-      }
-
-      if (classType instanceof JDeclaredType) {
-        List<String> toRescue = new ArrayList<String>();
-        Collections.addAll(toRescue, fields);
-        Collections.addAll(toRescue, methods);
-
-        for (String name : toRescue) {
-          JsniRef ref = JsniRef.parse("@" + classType.getName() + "::" + name);
-          final String[] errors = {null};
-          HasEnclosingType node = JsniRefLookup.findJsniRefTarget(ref, program,
-              new JsniRefLookup.ErrorReporter() {
-                public void reportError(String error) {
-                  errors[0] = error;
-                }
-              });
-          if (errors[0] != null) {
-            // Should have been caught by ArtificialRescueChecker
-            throw new InternalCompilerException(
-                "Unable to artificially rescue " + name + ": " + errors[0]);
-          }
-
-          currentClass.addArtificialRescue((JNode) node);
-          if (node instanceof JField) {
-            JField field = (JField) node;
-            if (!field.isFinal()) {
-              field.setVolatile();
-            }
-          }
-        }
-      }
-    }
-
-    private void processArtificialRescues(TypeDeclaration x) {
-      if (x.annotations == null) {
-        return;
-      }
-
-      for (Annotation a : x.annotations) {
-        if (!ArtificialRescue.class.getName().equals(
-            CharOperation.toString(((ReferenceBinding) a.resolvedType).compoundName))) {
-          continue;
-        }
-
-        Expression value = ((SingleMemberAnnotation) a).memberValue;
-        assert value != null;
-        if (value instanceof ArrayInitializer) {
-          for (Expression e : ((ArrayInitializer) value).expressions) {
-            processArtificialRescue((Annotation) e);
-          }
-        } else if (value instanceof Annotation) {
-          processArtificialRescue((Annotation) value);
-        } else {
-          throw new InternalCompilerException(
-              "Unable to process annotation with value of type "
-                  + value.getClass().getName());
-        }
-
-        return;
-      }
     }
 
     /**

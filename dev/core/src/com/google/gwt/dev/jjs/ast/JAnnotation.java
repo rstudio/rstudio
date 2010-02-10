@@ -220,9 +220,7 @@ public class JAnnotation extends JNode implements JAnnotationArgument {
         new Class<?>[] {clazz}, new AnnotationInvocationHandler<T>(clazz,
             annotation));
 
-    @SuppressWarnings("unchecked")
-    T toReturn = (T) o;
-    return toReturn;
+    return clazz.cast(o);
   }
 
   /**
