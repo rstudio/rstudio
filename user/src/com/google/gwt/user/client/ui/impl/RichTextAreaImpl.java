@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
+import com.google.gwt.event.logical.shared.HasInitializeHandlers;
 import com.google.gwt.event.logical.shared.InitializeEvent;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -32,7 +33,7 @@ import com.google.gwt.user.client.ui.RichTextArea;
 public class RichTextAreaImpl {
 
   protected Element elem;
-  protected RichTextArea richTextWidget;
+  protected HasInitializeHandlers owner;
 
   public RichTextAreaImpl() {
     elem = createElement();
@@ -74,12 +75,21 @@ public class RichTextAreaImpl {
     DOM.setElementProperty(elem, "value", html);
   }
 
+  public void setOwner(HasInitializeHandlers owner) {
+    this.owner = owner;
+  }
+
   public void setText(String text) {
     DOM.setElementProperty(elem, "value", text);
   }
 
+  /**
+   * @deprecated as of GWT 2.1, use {@link #setOwner(HasInitializeHandlers)}
+   *             instead
+   */
+  @Deprecated
   public void setWidget(RichTextArea richTextWidget) {
-    this.richTextWidget = richTextWidget;
+    setOwner(richTextWidget);
   }
 
   public void uninitElement() {
@@ -96,8 +106,8 @@ public class RichTextAreaImpl {
 
   protected void onElementInitialized() {
     hookEvents();
-    if (richTextWidget != null) {
-      InitializeEvent.fire(richTextWidget);
+    if (owner != null) {
+      InitializeEvent.fire(owner);
     }
   }
 }

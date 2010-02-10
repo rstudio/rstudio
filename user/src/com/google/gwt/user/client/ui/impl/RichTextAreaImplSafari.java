@@ -39,7 +39,9 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
 
     elem.__gwt_handler = function(evt) {
       if (elem.__listener) {
-        elem.__listener.@com.google.gwt.user.client.ui.Widget::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+        if (@com.google.gwt.user.client.impl.DOMImpl::isMyListener(Ljava/lang/Object;)(elem.__listener)) {
+          elem.__listener.@com.google.gwt.user.client.EventListener::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+        }
       }
     };
 

@@ -306,7 +306,9 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
 
     elem.__gwt_handler = $entry(function(evt) {
       if (elem.__listener) {
-        elem.__listener.@com.google.gwt.user.client.ui.Widget::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+        if (@com.google.gwt.user.client.impl.DOMImpl::isMyListener(Ljava/lang/Object;)(elem.__listener)) {
+          elem.__listener.@com.google.gwt.user.client.EventListener::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+        }
       }
     });
 

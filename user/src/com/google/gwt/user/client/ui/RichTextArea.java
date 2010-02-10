@@ -579,7 +579,7 @@ public class RichTextArea extends FocusWidget implements HasHTML,
   public RichTextArea() {
     setElement(impl.getElement());
     setStyleName("gwt-RichTextArea");
-    impl.setWidget(this);
+    impl.setOwner(this);
   }
 
   public HandlerRegistration addInitializeHandler(InitializeHandler handler) {
