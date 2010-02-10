@@ -1,2 +1,2 @@
-gwt-dev-linux.jar and gwt-user.jar were extracted from http://google-web-toolkit.googlecode.com/files/gwt-linux-1.6.4.tar.bz2
+gwt-dev.jar and gwt-user.jar were extracted from http://google-web-toolkit.googlecode.com/files/gwt-2.0.1.zip
 run ./createApiCheckerReferenceJars.sh
