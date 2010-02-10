@@ -19,6 +19,10 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
@@ -46,6 +50,8 @@ import java.util.NoSuchElementException;
  * <dt>.gwt-StackLayoutPanel <dd> the panel itself 
  * <dt>.gwt-StackLayoutPanel .gwt-StackLayoutPanelHeader <dd> applied to each
  * header widget
+ * <dt>.gwt-StackLayoutPanel .gwt-StackLayoutPanelHeader-hovering <dd> applied to each
+ * header widget on mouse hover
  * <dt>.gwt-StackLayoutPanel .gwt-StackLayoutPanelContent <dd> applied to each
  * child widget
  * </dl>
@@ -99,6 +105,14 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
     public HandlerRegistration addClickHandler(ClickHandler handler) {
       return this.addDomHandler(handler, ClickEvent.getType());
     }
+
+    public HandlerRegistration addMouseOutHandler(MouseOutHandler handler) {
+      return this.addDomHandler(handler, MouseOutEvent.getType());
+    }
+
+    public HandlerRegistration addMouseOverHandler(MouseOverHandler handler) {
+      return this.addDomHandler(handler, MouseOverEvent.getType());
+    }
   }
 
   private static class LayoutData {
@@ -116,6 +130,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
   private static final String WIDGET_STYLE = "gwt-StackLayoutPanel";
   private static final String CONTENT_STYLE = "gwt-StackLayoutPanelContent";
   private static final String HEADER_STYLE = "gwt-StackLayoutPanelHeader";
+  private static final String HEADER_STYLE_HOVERING = "gwt-StackLayoutPanelHeader-hovering";
 
   private static final int ANIMATION_TIME = 250;
 
@@ -468,7 +483,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
     assert (index >= 0) && (index < getWidgetCount()) : "Index out of bounds";
   }
 
-  private void insert(final Widget child, Header header, double headerSize,
+  private void insert(final Widget child, final Header header, double headerSize,
       int beforeIndex) {
     assert (beforeIndex >= 0) && (beforeIndex <= getWidgetCount()) : "beforeIndex out of bounds";
 
@@ -498,6 +513,18 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
     header.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         showWidget(child);
+      }
+    });
+
+    header.addMouseOutHandler(new MouseOutHandler() {
+      public void onMouseOut(MouseOutEvent event) {
+        header.removeStyleName(HEADER_STYLE_HOVERING);
+      }
+    });
+
+    header.addMouseOverHandler(new MouseOverHandler() {
+      public void onMouseOver(MouseOverEvent event) {
+        header.addStyleName(HEADER_STYLE_HOVERING);
       }
     });
 

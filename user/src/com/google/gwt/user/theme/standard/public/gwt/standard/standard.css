@@ -1094,6 +1094,9 @@ td.datePickerMonth {
   border-bottom: 0px;
   background: #d3def6 url(images/hborder.png) repeat-x 0px -989px;
 }
+.gwt-StackLayoutPanel .gwt-StackLayoutPanelHeader-hovering {
+  background: #d3def6 url(images/hborder.png) repeat-x 0px -1464px;
+}
 .gwt-StackLayoutPanel .gwt-StackLayoutPanelContent {
   border: 1px solid #bbbbbb;
   border-bottom: 0px;
