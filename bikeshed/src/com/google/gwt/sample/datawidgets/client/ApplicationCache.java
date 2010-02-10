@@ -27,6 +27,8 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -40,19 +42,24 @@ public class ApplicationCache implements DataSource<StockQuote> {
   private static final int UPDATE_DELAY = 5000;
 
   /**
+   * The list models used in this application.
+   */
+  private List<AsyncListModel<StockQuote>> asyncListModels = new ArrayList<AsyncListModel<StockQuote>>();
+
+  /**
    * The {@link StockService} used to retrieve data.
    */
   private final StockServiceAsync dataService = GWT.create(StockService.class);
 
   /**
+   * User supplied notes, indexed by ticker symbol.
+   */
+  private HashMap<String,String> notesByTicker = new HashMap<String,String>();
+
+  /**
    * The current query string.
    */
   private String query;
-
-  /**
-   * The list models used in this application.
-   */
-  private List<AsyncListModel<StockQuote>> asyncListModels = new ArrayList<AsyncListModel<StockQuote>>();
 
   /**
    * The timer used to update the stock quotes.
@@ -63,6 +70,11 @@ public class ApplicationCache implements DataSource<StockQuote> {
       update();
     }
   };
+
+  /**
+   * A set of user-marked 'favorite' ticker symbols.
+   */
+  private HashSet<String> favoritesByTicker = new HashSet<String>();
 
   /**
    * Subscribe a list model to this cache.
@@ -86,6 +98,34 @@ public class ApplicationCache implements DataSource<StockQuote> {
 
   public void requestData(AsyncListModel<StockQuote> listModel) {
     sendRequest(listModel.getRanges());
+  }
+  
+  /**
+   * Set or unset a ticker symbol as a 'favorite.'
+   *  
+   * @param ticker the ticker symbol
+   * @param favorite if true, make the stock a favorite
+   */
+  public void setFavorite(String ticker, boolean favorite) {
+    if (favorite) {
+      favoritesByTicker.add(ticker);
+    } else {
+      favoritesByTicker.remove(ticker);
+    }
+  }
+
+  /**
+   * Set or unset a note on a ticker symbol.
+   * 
+   * @param ticker the ticker symbol
+   * @param note a note to associate with the stock, or null
+   */
+  public void setNotes(String ticker, String note) {
+    if (note == null || note.length() == 0) {
+      notesByTicker.remove(ticker);
+    } else {
+      notesByTicker.put(ticker, note);
+    }
   }
 
   /**
@@ -112,21 +152,40 @@ public class ApplicationCache implements DataSource<StockQuote> {
     }
     dataService.getStockQuotes(query, ranges,
         new AsyncCallback<StockResponse>() {
-          public void onFailure(Throwable caught) {
-            Window.alert("ERROR: " + caught.getMessage());
-            updateTimer.schedule(UPDATE_DELAY);
-          }
+      public void onFailure(Throwable caught) {
+        Window.alert("ERROR: " + caught.getMessage());
+        updateTimer.schedule(UPDATE_DELAY);
+      }
 
-          public void onSuccess(StockResponse result) {
-            for (AsyncListModel<StockQuote> listModel : asyncListModels) {
-              listModel.updateDataSize(result.getNumRows(), true);
-              for (StockQuoteList list : result.getLists()) {
-                listModel.updateViewData(list.getStartIndex(), list.size(),
-                    list);
-              }
-            }
-            updateTimer.schedule(UPDATE_DELAY);
+      public void onSuccess(StockResponse result) {
+        setTransientData(result);
+
+        for (AsyncListModel<StockQuote> listModel : asyncListModels) {
+          listModel.updateDataSize(result.getNumRows(), true);
+          for (StockQuoteList list : result.getLists()) {
+            listModel.updateViewData(list.getStartIndex(), list.size(),
+                list);
           }
-        });
+        }
+        updateTimer.schedule(UPDATE_DELAY);
+      }
+    });
+  }
+
+  private void setTransientData(StockResponse result) {
+    for (StockQuoteList list : result.getLists()) {
+      for (StockQuote quote : list) {
+        String ticker = quote.getTicker();
+        
+        // Set notes
+        String notes = notesByTicker.get(ticker);
+        if (notes != null) {
+          quote.setNotes(notes);
+        }
+        
+        // Set 'favorite' status
+        quote.setFavorite(favoritesByTicker.contains(ticker));
+      }
+    }
   }
 }

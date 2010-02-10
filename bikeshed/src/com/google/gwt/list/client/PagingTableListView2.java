@@ -1,12 +1,12 @@
 package com.google.gwt.list.client;
 
-import com.google.gwt.cells.client.Cell;
+import com.google.gwt.cells.client.ButtonCell;
 import com.google.gwt.cells.client.Mutator;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
@@ -25,37 +25,6 @@ import java.util.List;
 
 public class PagingTableListView2<T> extends Widget {
 
-  public abstract static class Column<T, C> {
-    private final Cell<C> cell;
-    private Mutator<T, C> mutator;
-
-    public Column(Cell<C> cell) {
-      this.cell = cell;
-    }
-
-    public void onBrowserEvent(Element elem, final T object, NativeEvent event) {
-      cell.onBrowserEvent(elem, getValue(object), event, new Mutator<C, C>() {
-        public void mutate(C unused, C after) {
-          mutator.mutate(object, after);
-        }
-      });
-    }
-
-    public void render(T object, StringBuilder sb) {
-      cell.render(getValue(object), sb);
-    }
-
-    public void setMutator(Mutator<T, C> mutator) {
-      this.mutator = mutator;
-    }
-
-    protected abstract C getValue(T object);
-
-    protected Cell<C> getCell() {
-      return cell;
-    }
-  }
-
   private int pageSize;
   private int numPages;
   private ListRegistration listReg;
@@ -63,6 +32,9 @@ public class PagingTableListView2<T> extends Widget {
   private int totalSize;
   private List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
   private ArrayList<T> data = new ArrayList<T>();
+  private ButtonCell prevButton = new ButtonCell();
+  private ButtonCell nextButton = new ButtonCell();
+  private String pageText = "Page 1 of ??";
 
   public PagingTableListView2(ListModel<T> listModel, final int pageSize) {
     this.pageSize = pageSize;
@@ -107,15 +79,32 @@ public class PagingTableListView2<T> extends Widget {
         Element elem = Element.as(node);
 
         // TODO: We need is() implementations in all Element subclasses.
-        if ("td".equalsIgnoreCase(elem.getTagName())) {
+        String tagName = elem.getTagName();
+        if ("td".equalsIgnoreCase(tagName)) {
           TableCellElement td = TableCellElement.as(elem);
           TableRowElement tr = TableRowElement.as(td.getParentElement());
 
           // TODO: row/col assertions.
           int row = tr.getRowIndex(), col = td.getCellIndex();
-          T value = data.get(row);
-          Column<T, ?> column = columns.get(col);
-          column.onBrowserEvent(elem, value, event);
+          if (row < pageSize) {
+            T value = data.get(row);
+            Column<T, ?> column = columns.get(col);
+            column.onBrowserEvent(elem, value, event);
+          } else if (row == pageSize) {
+            if (col == 0) {
+              prevButton.onBrowserEvent(elem, null, event, new Mutator<String,String>() {
+                public void mutate(String object, String after) {
+                  previousPage();
+                }
+              });
+            } else if (col == 2) {
+              nextButton.onBrowserEvent(elem, null, event, new Mutator<String,String>() {
+                public void mutate(String object, String after) {
+                  nextPage();
+                }
+              });
+            }
+          }
           break;
         }
       }
@@ -129,12 +118,12 @@ public class PagingTableListView2<T> extends Widget {
     int numCols = columns.size();
     int pageStart = curPage * pageSize;
 
+    NodeList<TableRowElement> rows = table.getRows();
     for (int r = start; r < start + length; ++r) {
-      TableRowElement row = table.getRows().getItem(r - pageStart);
+      TableRowElement row = rows.getItem(r - pageStart);
       T q = values.get(r - start);
 
       data.set(r - pageStart, q);
-
       for (int c = 0; c < numCols; ++c) {
         TableCellElement cell = row.getCells().getItem(c);
         StringBuilder sb = new StringBuilder();
@@ -157,6 +146,14 @@ public class PagingTableListView2<T> extends Widget {
    */
   public int getPage() {
     return curPage;
+  }
+  
+  public void nextPage() {
+    setPage(curPage + 1);
+  }
+  
+  public void previousPage() {
+    setPage(curPage - 1);
   }
 
   /**
@@ -214,29 +211,57 @@ public class PagingTableListView2<T> extends Widget {
    * @param page the current page
    */
   private void updatePageText(int page) {
-//    if (table.getRowCount() > 0) {
-//      int row = table.getRowCount() - 1;
-//      table.setText(row, 1, "Page " + (page + 1) + " of " + numPages);
-//    }
+    TableElement table = getElement().cast();
+    NodeList<TableRowElement> rows = table.getRows();
+    String text = "Page " + (page + 1) + " of " + numPages;
+    rows.getItem(rows.getLength() - 1).getCells().getItem(1).setInnerText(text);
   }
 
   private void createRows() {
     TableElement table = getElement().cast();
     int numCols = columns.size();
-
+    
+    // TODO - only delete as needed
+    NodeList<TableRowElement> rows = table.getRows();
+    int numRows = table.getRows().getLength();
+    while (numRows-- > 0) {
+      table.deleteRow(0);
+    }
+    
     for (int r = 0; r < pageSize; ++r) {
-      TableRowElement row = table.insertRow(r);
+      TableRowElement row = table.insertRow(0);
+      row.setClassName("pagingTableListView " + ((r & 0x1) == 0 ? "evenRow" : "oddRow"));
 
       // TODO: use cloneNode() to make this even faster.
       for (int c = 0; c < numCols; ++c) {
         row.insertCell(c);
       }
     }
+    
+    // Add the final row containing paging buttons
+    TableRowElement pageRow = table.insertRow(pageSize);
+    pageRow.insertCell(0);
+    pageRow.insertCell(1);
+    pageRow.insertCell(2);
+    
+    StringBuilder sb;
+    
+    sb = new StringBuilder();
+    prevButton.render("Previous", sb);
+    pageRow.getCells().getItem(0).setInnerHTML(sb.toString());
+    
+    pageRow.getCells().getItem(1).setAttribute("colspan", "" + (numCols - 2));
+    pageRow.getCells().getItem(1).setAttribute("align", "center");
+    
+    sb = new StringBuilder();
+    nextButton.render("Next", sb);
+    pageRow.getCells().getItem(2).setInnerHTML(sb.toString());
+    pageRow.getCells().getItem(2).setAttribute("align", "right");
 
+    // Make room for the data cache
     data.ensureCapacity(pageSize);
     while (data.size() < pageSize) {
       data.add(null);
     }
-    // TODO: shrink as well.
   }
 }

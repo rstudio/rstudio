@@ -22,10 +22,18 @@ import java.io.Serializable;
  */
 public class StockQuote implements Serializable {
 
-  private String ticker;
+  private transient boolean favorite;
   private String name;
-  private int price;
   private transient String notes;
+  private int price;
+  private String ticker;
+
+  public StockQuote(StockQuote toCopy) {
+    ticker = toCopy.ticker;
+    name = toCopy.name;
+    price = toCopy.price;
+    setNotes(toCopy.getNotes());
+  }
 
   /**
    * Construct a new {@link StockQuote}.
@@ -39,18 +47,11 @@ public class StockQuote implements Serializable {
     this.name = name;
     this.price = price;
   }
-
+  
   /**
    * Used for RPC.
    */
   StockQuote() {
-  }
-  
-  public StockQuote(StockQuote toCopy) {
-    ticker = toCopy.ticker;
-    name = toCopy.name;
-    price = toCopy.price;
-    setNotes(toCopy.getNotes());
   }
 
   public String getDisplayPrice() {
@@ -72,23 +73,33 @@ public class StockQuote implements Serializable {
     return name;
   }
 
+  public String getNotes() {
+    return notes;
+  }
+
   public int getPrice() {
     return price;
   }
-
+  
   public String getTicker() {
     return ticker;
   }
-  
-  public String toString() {
-    return "StockQuote[ticker=" + getTicker() + ", price=" + getDisplayPrice() + "]";
+
+  public boolean isFavorite() {
+    return favorite;
+  }
+
+  public void setFavorite(boolean favorite) {
+    this.favorite = favorite;
   }
 
   public void setNotes(String notes) {
     this.notes = notes;
   }
 
-  public String getNotes() {
-    return notes;
+  @Override
+  public String toString() {
+    return "StockQuote [ticker=" + ticker + ", name=\"" + name + "\", price="
+        + price + ", notes=\"" + notes + "\", favorite=" + favorite + "]";
   }
 }

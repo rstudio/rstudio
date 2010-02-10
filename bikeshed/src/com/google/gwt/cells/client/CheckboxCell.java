@@ -16,28 +16,30 @@
 package com.google.gwt.cells.client;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 
-public class ButtonCell extends Cell<String> {
+public class CheckboxCell extends Cell<Boolean> {
 
   @Override
-  public void render(String data, StringBuilder sb) {
-    sb.append("<button>");
-    if (data != null) {
-      sb.append(data);
+  public void render(Boolean data, StringBuilder sb) {
+    sb.append("<input type=\"checkbox\"");
+    if (data == Boolean.TRUE) {
+      sb.append(" checked");
     }
-    sb.append("</button>");
+    sb.append("/>");
   }
 
   @Override
-  public void onBrowserEvent(Element parent, String value, NativeEvent event,
-      Mutator<String, String> mutator) {
+  public void onBrowserEvent(Element parent, Boolean value, NativeEvent event,
+      Mutator<Boolean, Boolean> mutator) {
     if (mutator == null) {
       return;
     }
 
-    if ("mouseup".equals(event.getType())) {
-      mutator.mutate(value, null);
+    if ("change".equals(event.getType())) {
+      InputElement input = parent.getFirstChild().cast();
+      mutator.mutate(value, input.isChecked());
     }
   }
 }

@@ -15,17 +15,17 @@
  */
 package com.google.gwt.sample.datawidgets.client;
 
+import com.google.gwt.cells.client.CheckboxCell;
 import com.google.gwt.cells.client.Mutator;
 import com.google.gwt.cells.client.TextCell;
 import com.google.gwt.cells.client.TextInputCell;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.list.client.Column;
 import com.google.gwt.list.client.PagingTableListView2;
-import com.google.gwt.list.client.PagingTableListView2.Column;
 import com.google.gwt.list.shared.AsyncListModel;
 import com.google.gwt.sample.datawidgets.shared.StockQuote;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -42,6 +42,14 @@ public class DataBackedWidgets implements EntryPoint {
   private ApplicationCache appCache = new ApplicationCache();
   private AsyncListModel<StockQuote> listModel1 = new AsyncListModel<StockQuote>(
       appCache);
+
+  Column<StockQuote, Boolean> favoriteColumn = new Column<StockQuote, Boolean>(
+      new CheckboxCell()) {
+    @Override
+    protected Boolean getValue(StockQuote object) {
+      return object.isFavorite();
+    }
+  };
 
   Column<StockQuote, String> tickerColumn = new Column<StockQuote, String>(
       new TextCell()) {
@@ -93,14 +101,21 @@ public class DataBackedWidgets implements EntryPoint {
 
     // Create the results table.
     resultsTable0 = new PagingTableListView2<StockQuote>(listModel1, 10);
+    resultsTable0.addColumn(favoriteColumn);
     resultsTable0.addColumn(tickerColumn);
     resultsTable0.addColumn(nameColumn);
     resultsTable0.addColumn(priceColumn);
     resultsTable0.addColumn(notesColumn);
+    
+    favoriteColumn.setMutator(new Mutator<StockQuote, Boolean>() {
+      public void mutate(StockQuote object, Boolean after) {
+        appCache.setFavorite(object.getTicker(), after);
+      }
+    });
 
     notesColumn.setMutator(new Mutator<StockQuote, String>() {
       public void mutate(StockQuote object, String after) {
-        Window.alert("mutating " + object.getTicker() + " (" + after + ")");
+        appCache.setNotes(object.getTicker(), after);
       }
     });
 
