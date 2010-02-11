@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.shared.UmbrellaException;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,7 +24,7 @@ import java.util.Set;
  * An exception that is thrown when the panel fails to attach or detach its
  * children.
  */
-public class AttachDetachException extends RuntimeException {
+public class AttachDetachException extends UmbrellaException {
 
   /**
    * The singleton command used to attach widgets.
@@ -87,29 +89,11 @@ public class AttachDetachException extends RuntimeException {
   }
 
   /**
-   * The causes of the exception.
-   */
-  private Set<Throwable> causes;
-
-  /**
    * Construct a new {@link AttachDetachException}.
    * 
    * @param causes the causes of the exception
    */
   public AttachDetachException(Set<Throwable> causes) {
-    super(
-        "One or more exceptions caught, see full set in AttachDetachException#getCauses",
-        causes.size() == 0 ? null : causes.toArray(new Throwable[0])[0]);
-    this.causes = causes;
-  }
-
-  /**
-   * Get the set of exceptions that cause {@link Panel#doAttachChildren()} or
-   * {@link Panel#doDetachChildren()} to fail.
-   * 
-   * @return the set of causes
-   */
-  public Set<Throwable> getCauses() {
-    return causes;
+    super(causes);
   }
 }

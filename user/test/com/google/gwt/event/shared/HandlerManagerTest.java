@@ -21,6 +21,8 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 
+import java.util.Set;
+
 /**
  * Handler manager test.
  */
@@ -306,5 +308,48 @@ public class HandlerManagerTest extends HandlerTestBase {
     manager.fireEvent(new MouseDownEvent() {
     });
     assertFired(handler0, handler1, handler2);
+  }
+
+  static class ThrowingHandler implements MouseDownHandler {
+    private final RuntimeException e;
+
+    public ThrowingHandler(RuntimeException e) {
+      this.e = e;
+    }
+
+    public void onMouseDown(MouseDownEvent event) {
+      throw e;
+    }    
+  }
+
+  public void testHandlersThrow() {
+    RuntimeException exception1 = new RuntimeException("first exception");
+    RuntimeException exception2 = new RuntimeException("second exception");
+
+    final HandlerManager manager = new HandlerManager("bogus source");
+
+    manager.addHandler(MouseDownEvent.getType(), mouse1);
+    manager.addHandler(MouseDownEvent.getType(), new ThrowingHandler(exception1));
+    manager.addHandler(MouseDownEvent.getType(), mouse2);
+    manager.addHandler(MouseDownEvent.getType(), new ThrowingHandler(exception2));
+    manager.addHandler(MouseDownEvent.getType(), mouse3);
+
+    MouseDownEvent event = new MouseDownEvent() {
+    };
+
+    try {
+      manager.fireEvent(event);
+      fail("Manager should have thrown");
+    } catch (UmbrellaException e) {
+      Set<Throwable> causes = e.getCauses();
+      assertEquals("Exception should wrap the two thrown exceptions", 2, causes.size());
+      assertTrue("First exception should be under the umbrella", causes.contains(exception1));
+      assertTrue("Second exception should be under the umbrella", causes.contains(exception2));
+    }
+
+    // Exception should not have prevented all three mouse handlers from getting
+    // the event.
+    assertFired(mouse1, mouse2, mouse3);
+    assertFalse("Event should be dead", event.isLive());
   }
 }

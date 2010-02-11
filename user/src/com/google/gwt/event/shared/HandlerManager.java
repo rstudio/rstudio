@@ -19,8 +19,10 @@ import com.google.gwt.event.shared.GwtEvent.Type;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Manager responsible for adding handlers to event sources and firing those
@@ -54,16 +56,38 @@ public class HandlerManager {
         boolean isReverseOrder) {
       Type<H> type = event.getAssociatedType();
       int count = getHandlerCount(type);
+      Set<Throwable> causes = null;
+
       if (isReverseOrder) {
         for (int i = count - 1; i >= 0; i--) {
           H handler = this.<H> getHandler(type, i);
-          event.dispatch(handler);
+          try {
+            event.dispatch(handler);
+          } catch (Throwable e) {
+            if (causes == null) {
+              // create lazily to avoid excess creation in general case
+              causes = new HashSet<Throwable>();
+            }
+            causes.add(e);
+          }
         }
       } else {
         for (int i = 0; i < count; i++) {
           H handler = this.<H> getHandler(type, i);
-          event.dispatch(handler);
+          try {
+            event.dispatch(handler);
+          } catch (Throwable e) {
+            if (causes == null) {
+              // create lazily to avoid excess creation in general case
+              causes = new HashSet<Throwable>();
+            }
+            causes.add(e);
+          }
         }
+      }
+
+      if (causes != null) {
+        throw new UmbrellaException(causes);
       }
     }
 
@@ -162,6 +186,11 @@ public class HandlerManager {
    * Note, any subclass should be very careful about overriding this method, as
    * adds/removes of handlers will not be safe except within this
    * implementation.
+   *
+   * Any exceptions thrown by handlers will be bundled into a
+   * {@link UmbrellaException} and then re-thrown after all handlers have
+   * completed. An exception thrown by a handler will not prevent other handlers
+   * from executing.
    * 
    * @param event the event
    */
@@ -175,6 +204,7 @@ public class HandlerManager {
     try {
       firingDepth++;
 
+      // May throw an UmbrellaException.
       registry.fireEvent(event, isReverseOrder);
 
     } finally {
@@ -182,13 +212,14 @@ public class HandlerManager {
       if (firingDepth == 0) {
         handleQueuedAddsAndRemoves();
       }
-    }
-    if (oldSource == null) {
-      // This was my event, so I should kill it now that I'm done.
-      event.kill();
-    } else {
-      // Restoring the source for the next handler to use.
-      event.setSource(oldSource);
+
+      if (oldSource == null) {
+        // This was my event, so I should kill it now that I'm done.
+        event.kill();
+      } else {
+        // Restoring the source for the next handler to use.
+        event.setSource(oldSource);
+      }
     }
   }
 
