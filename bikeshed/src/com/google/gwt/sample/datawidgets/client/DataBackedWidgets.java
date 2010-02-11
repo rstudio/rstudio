@@ -15,15 +15,17 @@
  */
 package com.google.gwt.sample.datawidgets.client;
 
+import com.google.gwt.cells.client.ButtonCell;
 import com.google.gwt.cells.client.CheckboxCell;
 import com.google.gwt.cells.client.CurrencyCell;
 import com.google.gwt.cells.client.Mutator;
 import com.google.gwt.cells.client.TextCell;
-import com.google.gwt.cells.client.TextInputCell;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.list.client.Column;
 import com.google.gwt.list.client.PagingTableListView;
 import com.google.gwt.list.shared.AsyncListModel;
@@ -33,33 +35,33 @@ import com.google.gwt.sample.datawidgets.shared.StockQuote;
 import com.google.gwt.sample.datawidgets.shared.StockQuoteList;
 import com.google.gwt.sample.datawidgets.shared.StockRequest;
 import com.google.gwt.sample.datawidgets.shared.StockResponse;
+import com.google.gwt.sample.datawidgets.shared.Transaction;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
-
-import java.util.HashMap;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class DataBackedWidgets implements EntryPoint {
-  
+
   /**
    * The delay between updates in milliseconds.
    */
   private static final int UPDATE_DELAY = 5000;
-  
+
   /**
    * The {@link StockService} used to retrieve data.
    */
   private final StockServiceAsync dataService = GWT.create(StockService.class);
 
   private final Label errorLabel = new Label();
-  
+
   private Column<StockQuote, Boolean> favoriteColumn = new Column<StockQuote, Boolean>(
       new CheckboxCell()) {
     @Override
@@ -67,7 +69,7 @@ public class DataBackedWidgets implements EntryPoint {
       return object.isFavorite();
     }
   };
-  
+
   private Column<StockQuote, String> nameColumn = new Column<StockQuote, String>(
       new TextCell()) {
     @Override
@@ -81,6 +83,22 @@ public class DataBackedWidgets implements EntryPoint {
     @Override
     protected Integer getValue(StockQuote object) {
       return object.getPrice();
+    }
+  };
+
+  private Column<StockQuote, String> buyColumn = new Column<StockQuote, String>(
+      new ButtonCell()) {
+    @Override
+    protected String getValue(StockQuote object) {
+      return "Buy";
+    }
+  };
+
+  private Column<StockQuote, String> sellColumn = new Column<StockQuote, String>(
+      new ButtonCell()) {
+    @Override
+    protected String getValue(StockQuote object) {
+      return "Sell";
     }
   };
 
@@ -104,11 +122,6 @@ public class DataBackedWidgets implements EntryPoint {
 
   private AsyncListModel<StockQuote> favoritesListModel;
 
-  /**
-   * User supplied notes, indexed by ticker symbol.
-   */
-  private HashMap<String,String> notesByTicker = new HashMap<String,String>();
-
   private PagingTableListView<StockQuote> resultsTable;
 
   private AsyncListModel<StockQuote> searchListModel;
@@ -126,6 +139,11 @@ public class DataBackedWidgets implements EntryPoint {
   private PagingTableListView<StockQuote> favoritesTable;
 
   /**
+   * The popup used to purchase stock.
+   */
+  private BuySellPopup buySellPopup = new BuySellPopup();
+
+  /**
    * This is the entry point method.
    */
   public void onModuleLoad() {
@@ -139,19 +157,21 @@ public class DataBackedWidgets implements EntryPoint {
     // Focus the cursor on the name field when the app loads
     queryField.setFocus(true);
     queryField.selectAll();
-    
+
     // Create the list models
-    searchListModel = new AsyncListModel<StockQuote>(new DataSource<StockQuote>() {
-      public void requestData(AsyncListModel<StockQuote> listModel) {
-        update();
-      }
-    });
-    
-    favoritesListModel = new AsyncListModel<StockQuote>(new DataSource<StockQuote>() {
-      public void requestData(AsyncListModel<StockQuote> listModel) {
-        update();
-      }
-    });
+    searchListModel = new AsyncListModel<StockQuote>(
+        new DataSource<StockQuote>() {
+          public void requestData(AsyncListModel<StockQuote> listModel) {
+            update();
+          }
+        });
+
+    favoritesListModel = new AsyncListModel<StockQuote>(
+        new DataSource<StockQuote>() {
+          public void requestData(AsyncListModel<StockQuote> listModel) {
+            update();
+          }
+        });
 
     // Create the results table.
     resultsTable = new PagingTableListView<StockQuote>(searchListModel, 10);
@@ -159,15 +179,49 @@ public class DataBackedWidgets implements EntryPoint {
     resultsTable.addColumn(tickerColumn);
     resultsTable.addColumn(nameColumn);
     resultsTable.addColumn(priceColumn);
-    
+    resultsTable.addColumn(buyColumn);
+
     favoritesTable = new PagingTableListView<StockQuote>(favoritesListModel, 10);
     favoritesTable.addColumn(tickerColumn);
     favoritesTable.addColumn(priceColumn);
     favoritesTable.addColumn(sharesColumn);
-    
+    favoritesTable.addColumn(buyColumn);
+    favoritesTable.addColumn(sellColumn);
+
     favoriteColumn.setMutator(new Mutator<StockQuote, Boolean>() {
       public void mutate(StockQuote object, Boolean after) {
         setFavorite(object.getTicker(), after);
+      }
+    });
+
+    buyColumn.setMutator(new Mutator<StockQuote, String>() {
+      public void mutate(StockQuote object, String after) {
+        buySellPopup.setStockQuote(object, true);
+        buySellPopup.center();
+      }
+    });
+
+    sellColumn.setMutator(new Mutator<StockQuote, String>() {
+      public void mutate(StockQuote object, String after) {
+        buySellPopup.setStockQuote(object, false);
+        buySellPopup.center();
+      }
+    });
+
+    buySellPopup.addCloseHandler(new CloseHandler<PopupPanel>() {
+      public void onClose(CloseEvent<PopupPanel> event) {
+        Transaction t = buySellPopup.getTransaction();
+        if (t != null) {
+          dataService.transact(t, new AsyncCallback<Transaction>() {
+            public void onFailure(Throwable caught) {
+              Window.alert("Error: " + caught.getMessage());
+            }
+
+            public void onSuccess(Transaction result) {
+              update();
+            }
+          });
+        }
       }
     });
 
@@ -184,10 +238,10 @@ public class DataBackedWidgets implements EntryPoint {
 
     update();
   }
-  
+
   /**
    * Set or unset a ticker symbol as a 'favorite.'
-   *  
+   * 
    * @param ticker the ticker symbol
    * @param favorite if true, make the stock a favorite
    */
@@ -214,22 +268,24 @@ public class DataBackedWidgets implements EntryPoint {
       });
     }
   }
-  
+
   /**
    * Request data from the server using the last query string.
    */
   private void update() {
     updateTimer.cancel();
-    
+
     Range[] searchRanges = searchListModel.getRanges();
     Range[] favoritesRanges = favoritesListModel.getRanges();
-    
-    if (searchRanges == null || searchRanges.length == 0 || favoritesRanges == null || favoritesRanges.length == 0) {
+
+    if (searchRanges == null || searchRanges.length == 0
+        || favoritesRanges == null || favoritesRanges.length == 0) {
       return;
     }
-    
+
     String searchQuery = queryField.getText();
-    StockRequest request = new StockRequest(searchQuery, searchRanges[0], favoritesRanges[0]);
+    StockRequest request = new StockRequest(searchQuery, searchRanges[0],
+        favoritesRanges[0]);
     dataService.getStockQuotes(request, new AsyncCallback<StockResponse>() {
       public void onFailure(Throwable caught) {
         Window.alert("ERROR: " + caught.getMessage());
@@ -238,15 +294,17 @@ public class DataBackedWidgets implements EntryPoint {
 
       public void onSuccess(StockResponse result) {
         StockQuoteList searchResults = result.getSearchResults();
-        
+
         searchListModel.updateDataSize(result.getNumSearchResults(), true);
-        searchListModel.updateViewData(searchResults.getStartIndex(), searchResults.size(), searchResults);        
+        searchListModel.updateViewData(searchResults.getStartIndex(),
+            searchResults.size(), searchResults);
 
         StockQuoteList favorites = result.getFavorites();
-        
+
         favoritesListModel.updateDataSize(result.getNumFavorites(), true);
-        favoritesListModel.updateViewData(favorites.getStartIndex(), favorites.size(), favorites);
-       
+        favoritesListModel.updateViewData(favorites.getStartIndex(),
+            favorites.size(), favorites);
+
         updateTimer.schedule(UPDATE_DELAY);
       }
     });

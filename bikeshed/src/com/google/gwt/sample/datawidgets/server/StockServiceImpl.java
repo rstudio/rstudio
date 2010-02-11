@@ -21,6 +21,7 @@ import com.google.gwt.sample.datawidgets.shared.StockQuote;
 import com.google.gwt.sample.datawidgets.shared.StockQuoteList;
 import com.google.gwt.sample.datawidgets.shared.StockRequest;
 import com.google.gwt.sample.datawidgets.shared.StockResponse;
+import com.google.gwt.sample.datawidgets.shared.Transaction;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import java.io.IOException;
@@ -51,7 +52,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
   private class Result {
     int numRows;
     StockQuoteList quotes;
-    
+
     public Result(StockQuoteList quotes, int numRows) {
       this.quotes = quotes;
       this.numRows = numRows;
@@ -79,32 +80,58 @@ public class StockServiceImpl extends RemoteServiceServlet implements
 
   private String favoritesQuery = IMPOSSIBLE_TICKER_SYMBOL;
 
-  private HashMap<String,Integer> sharesOwnedBySymbol = new HashMap<String,Integer>();
+  private HashMap<String, Integer> sharesOwnedBySymbol = new HashMap<String, Integer>();
 
   public void addFavorite(String ticker) {
     favorites.add(ticker);
     generateFavoritesQuery();
   }
-  
+
   public StockResponse getStockQuotes(StockRequest request)
       throws IllegalArgumentException {
-    
+
     String query = request.getSearchQuery();
     if (query == null | query.length() == 0) {
       query = ".*";
     }
     Range searchRange = request.getSearchRange();
     Range favoritesRange = request.getFavoritesRange();
-    
+
     Result searchResults = query(query, searchRange);
     Result favorites = query(favoritesQuery, favoritesRange);
-    
-    return new StockResponse(searchResults.quotes, favorites.quotes, searchResults.numRows, favorites.numRows);
+
+    return new StockResponse(searchResults.quotes, favorites.quotes,
+        searchResults.numRows, favorites.numRows);
   }
-  
+
   public void removeFavorite(String ticker) {
     favorites.remove(ticker);
     generateFavoritesQuery();
+  }
+
+  public Transaction transact(Transaction transaction)
+      throws IllegalArgumentException {
+    // TODO: Check that the stock exists.
+    String ticker = transaction.getTicker();
+    Integer current = sharesOwnedBySymbol.get(ticker);
+    if (current == null) {
+      current = 0;
+    }
+
+    int quantity = transaction.getQuantity();
+    if (transaction.isBuy()) {
+      current += quantity;
+      // TODO: Verify player has enough funds.
+      addFavorite(ticker);
+    } else {
+      if (quantity > current) {
+        throw new IllegalArgumentException(
+            "You cannot sell more stock than you own");
+      }
+      current -= quantity;
+    }
+    sharesOwnedBySymbol.put(ticker, current);
+    return new Transaction(true, ticker, quantity);
   }
 
   private void generateFavoritesQuery() {
@@ -153,14 +180,14 @@ public class StockServiceImpl extends RemoteServiceServlet implements
   private Result query(String query, Range range) {
     // Get all symbols for the query.
     List<String> symbols = getTickers(query);
-    
+
     if (symbols.size() == 0) {
       return new Result(new StockQuoteList(0), 0);
     }
 
     int start = range.getStart();
     int end = Math.min(start + range.getLength(), symbols.size());
-    
+
     // Get the symbols that are in range.
     Set<String> symbolsInRange = new HashSet<String>();
     if (end > start) {
@@ -256,4 +283,3 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     return new Result(toRet, symbols.size());
   }
 }
-

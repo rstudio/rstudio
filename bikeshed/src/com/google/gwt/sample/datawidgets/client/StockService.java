@@ -17,6 +17,7 @@ package com.google.gwt.sample.datawidgets.client;
 
 import com.google.gwt.sample.datawidgets.shared.StockRequest;
 import com.google.gwt.sample.datawidgets.shared.StockResponse;
+import com.google.gwt.sample.datawidgets.shared.Transaction;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
@@ -25,10 +26,13 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
  */
 @RemoteServiceRelativePath("stock")
 public interface StockService extends RemoteService {
-  
+
   StockResponse getStockQuotes(StockRequest request)
       throws IllegalArgumentException;
 
   void addFavorite(String ticker);
+
   void removeFavorite(String ticker);
+
+  Transaction transact(Transaction transaction) throws IllegalArgumentException;
 }
