@@ -22,18 +22,12 @@ import java.io.Serializable;
  */
 public class StockQuote implements Serializable {
 
-  private transient boolean favorite;
+  private boolean favorite;
   private String name;
   private transient String notes;
   private int price;
   private String ticker;
-
-  public StockQuote(StockQuote toCopy) {
-    ticker = toCopy.ticker;
-    name = toCopy.name;
-    price = toCopy.price;
-    setNotes(toCopy.getNotes());
-  }
+  private int sharesOwned;
 
   /**
    * Construct a new {@link StockQuote}.
@@ -41,13 +35,21 @@ public class StockQuote implements Serializable {
    * @param ticker the ticket symbol
    * @param name the company name
    * @param price the price in pennies
+   * @param sharesOwned the number of shares owned by the player
+   * @param favorite true if the stock is in the player's favorites
    */
-  public StockQuote(String ticker, String name, int price) {
+  public StockQuote(String ticker, String name, int price, int sharesOwned, boolean favorite) {
     this.ticker = ticker;
     this.name = name;
     this.price = price;
+    this.sharesOwned = sharesOwned;
+    this.favorite = favorite;
   }
   
+  public int getSharesOwned() {
+    return sharesOwned;
+  }
+
   /**
    * Used for RPC.
    */
@@ -87,10 +89,6 @@ public class StockQuote implements Serializable {
 
   public boolean isFavorite() {
     return favorite;
-  }
-
-  public void setFavorite(boolean favorite) {
-    this.favorite = favorite;
   }
 
   public void setNotes(String notes) {

@@ -20,15 +20,15 @@ import com.google.gwt.sample.datawidgets.shared.StockResponse;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
-import java.util.List;
-
 /**
  * The client side stub for the RPC service.
  */
 @RemoteServiceRelativePath("stock")
 public interface StockService extends RemoteService {
   
-  List<StockResponse> getStockQuotes(List<StockRequest> requests)
+  StockResponse getStockQuotes(StockRequest request)
       throws IllegalArgumentException;
-  
+
+  void addFavorite(String ticker);
+  void removeFavorite(String ticker);
 }

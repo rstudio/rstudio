@@ -21,23 +21,30 @@ import java.io.Serializable;
 
 public class StockRequest implements Serializable {
   
-  String query;
-  Range range;
+  String searchQuery;
+  Range searchRange;
+  Range favoritesRange;
   
   // Used by RPC
   public StockRequest() {
   }
-  
-  public StockRequest(String query, Range range) {
-    this.query = query;
-    this.range = range;
+
+  public StockRequest(String searchQuery, Range searchRange,
+      Range favoritesRange) {
+    this.searchQuery = searchQuery;
+    this.searchRange = searchRange;
+    this.favoritesRange = favoritesRange;
   }
-  
-  public String getQuery() {
-    return query;
+
+  public String getSearchQuery() {
+    return searchQuery;
   }
-  
-  public Range getRange() {
-    return range;
+
+  public Range getSearchRange() {
+    return searchRange;
+  }
+
+  public Range getFavoritesRange() {
+    return favoritesRange;
   }
 }

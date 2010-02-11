@@ -21,47 +21,39 @@ import java.io.Serializable;
  * A response to a request for stock data.
  */
 public class StockResponse implements Serializable {
-  
-  protected StockQuoteList stocks;
-  
-  public static class Search extends StockResponse {
-    private int numRows;
-    
-    Search() {
-    }
-    
-    public Search(StockQuoteList stocks, int numRows) {
-      super(stocks);
-      this.numRows = numRows;
-    }
-    
-    public int getNumRows() {
-      return numRows;
-    }
-  }
-  
-  public static class Favorites extends StockResponse {
-    
-    Favorites() {
-    }
-    
-    public Favorites(StockQuoteList stocks) {
-      super(stocks);
-    }
-  }
+
+  private StockQuoteList searchResults;
+  private StockQuoteList favorites;
+  private int numSearchResults;
+  private int numFavorites;
 
   /**
    * Used for RPC.
    */
   StockResponse() {
   }
-  
-  public StockResponse(StockQuoteList stocks) {
-    this.stocks = stocks;
+
+  public StockResponse(StockQuoteList searchResults, StockQuoteList favorites,
+      int numSearchResults, int numFavorites) {
+    this.searchResults = searchResults;
+    this.favorites = favorites;
+    this.numSearchResults = numSearchResults;
+    this.numFavorites = numFavorites;
   }
-  
-  public StockQuoteList getStocks() {
-    return stocks;
+
+  public StockQuoteList getSearchResults() {
+    return searchResults;
+  }
+
+  public StockQuoteList getFavorites() {
+    return favorites;
+  }
+
+  public int getNumSearchResults() {
+    return numSearchResults;
+  }
+
+  public int getNumFavorites() {
+    return numFavorites;
   }
 }
-

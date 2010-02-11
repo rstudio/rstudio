@@ -46,22 +46,21 @@ import java.util.regex.PatternSyntaxException;
 public class StockServiceImpl extends RemoteServiceServlet implements
     StockService {
 
-  static class MyStockQuote extends StockQuote implements
-      Comparable<MyStockQuote> {
+  private static final String IMPOSSIBLE_TICKER_SYMBOL = "XXXXXXXXXX";
 
-    public MyStockQuote(String ticker, String name, int price) {
-      super(ticker, name, price);
-    }
-
-    public int compareTo(MyStockQuote o) {
-      return getTicker().compareTo(o.getTicker());
+  private class Result {
+    int numRows;
+    StockQuoteList quotes;
+    
+    public Result(StockQuoteList quotes, int numRows) {
+      this.quotes = quotes;
+      this.numRows = numRows;
     }
   }
 
   static HashMap<String, String> companyNamesBySymbol = new HashMap<String, String>();
 
-  // TODO(rice) - use a smarter data structure
-  static TreeSet<MyStockQuote> quotes = new TreeSet<MyStockQuote>();
+  static TreeSet<String> stockTickers = new TreeSet<String>();
 
   private static final int MAX_RESULTS_TO_RETURN = 10000;
 
@@ -70,32 +69,61 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     for (int i = 0; i < num - 1; i += 2) {
       String symbol = NasdaqStocks.SYMBOLS[i];
       String companyName = NasdaqStocks.SYMBOLS[i + 1];
-      MyStockQuote stock = new MyStockQuote(symbol, companyName, 0);
-      quotes.add(stock);
+      stockTickers.add(symbol);
 
       companyNamesBySymbol.put(symbol, companyName);
     }
   }
+
+  private TreeSet<String> favorites = new TreeSet<String>();
+
+  private String favoritesQuery = IMPOSSIBLE_TICKER_SYMBOL;
+
+  private HashMap<String,Integer> sharesOwnedBySymbol = new HashMap<String,Integer>();
+
+  public void addFavorite(String ticker) {
+    favorites.add(ticker);
+    generateFavoritesQuery();
+  }
   
-  public List<StockResponse> getStockQuotes(List<StockRequest> requests) {
-    List<StockResponse> responses = new ArrayList<StockResponse>();
-    for (StockRequest request : requests) {
-      responses.add(getStockQuotes(request));
-    }
+  public StockResponse getStockQuotes(StockRequest request)
+      throws IllegalArgumentException {
     
-    // TODO (rice) add favorites response
-    return responses;
+    String query = request.getSearchQuery();
+    if (query == null | query.length() == 0) {
+      query = ".*";
+    }
+    Range searchRange = request.getSearchRange();
+    Range favoritesRange = request.getFavoritesRange();
+    
+    Result searchResults = query(query, searchRange);
+    Result favorites = query(favoritesQuery, favoritesRange);
+    
+    return new StockResponse(searchResults.quotes, favorites.quotes, searchResults.numRows, favorites.numRows);
+  }
+  
+  public void removeFavorite(String ticker) {
+    favorites.remove(ticker);
+    generateFavoritesQuery();
   }
 
-  public List<String> getSymbols(String query) {
-    List<String> symbols = new ArrayList<String>();
+  private void generateFavoritesQuery() {
+    StringBuilder sb = new StringBuilder(IMPOSSIBLE_TICKER_SYMBOL);
+    for (String ticker : favorites) {
+      sb.append('|');
+      sb.append(ticker);
+    }
+    favoritesQuery = sb.toString();
+  }
+
+  private List<String> getTickers(String query) {
+    List<String> tickers = new ArrayList<String>();
     if (query.length() > 0) {
       query = query.toUpperCase();
       int count = 0;
-      for (MyStockQuote stock : quotes) {
-        String symbol = stock.getTicker();
-        if (match(symbol, query)) {
-          symbols.add(symbol);
+      for (String ticker : stockTickers) {
+        if (match(ticker, query)) {
+          tickers.add(ticker);
           count++;
           if (count > MAX_RESULTS_TO_RETURN) {
             break;
@@ -103,19 +131,31 @@ public class StockServiceImpl extends RemoteServiceServlet implements
         }
       }
     }
-    return symbols;
+    return tickers;
   }
 
-  private StockResponse getStockQuotes(StockRequest request)
-      throws IllegalArgumentException {
-    String query = request.getQuery();
-    Range range = request.getRange();
+  private boolean match(String symbol, String query) {
+    if (symbol.startsWith(query)) {
+      return true;
+    }
 
+    try {
+      if (symbol.matches(query)) {
+        return true;
+      }
+    } catch (PatternSyntaxException e) {
+      // ignore
+    }
+
+    return false;
+  }
+
+  private Result query(String query, Range range) {
     // Get all symbols for the query.
-    List<String> symbols = getSymbols(query);
+    List<String> symbols = getTickers(query);
     
     if (symbols.size() == 0) {
-      return new StockResponse.Search(new StockQuoteList(0), 0);
+      return new Result(new StockQuoteList(0), 0);
     }
 
     int start = range.getStart();
@@ -141,7 +181,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
 
     if (first) {
       // No symbols
-      return new StockResponse.Search(new StockQuoteList(0), 0);
+      return new Result(new StockQuoteList(0), 0);
     }
 
     // Send the request.
@@ -190,8 +230,11 @@ public class StockServiceImpl extends RemoteServiceServlet implements
         int iprice = 0;
         try {
           iprice = (int) (Double.parseDouble(price) * 100);
-          priceMap.put(symbol, new StockQuote(symbol,
-              companyNamesBySymbol.get(symbol), iprice));
+          String name = companyNamesBySymbol.get(symbol);
+          Integer sharesOwned = sharesOwnedBySymbol.get(symbol);
+          boolean favorite = favorites.contains(symbol);
+          priceMap.put(symbol, new StockQuote(symbol, name, iprice,
+              sharesOwned == null ? 0 : sharesOwned.intValue(), favorite));
         } catch (NumberFormatException e) {
           System.out.println("Bad price " + price + " for symbol " + symbol);
         }
@@ -204,29 +247,13 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       String symbol = symbols.get(i);
       StockQuote quote = priceMap.get(symbol);
       if (quote == null) {
-        quote = new StockQuote(symbol, "<NO SUCH TICKER SYMBOL>", 0);
         System.out.println("Bad symbol " + symbol);
+      } else {
+        toRet.add(quote);
       }
-      toRet.add(quote);
     }
 
-    return new StockResponse.Search(toRet, symbols.size());
-  }
-
-  private boolean match(String symbol, String query) {
-    if (symbol.startsWith(query)) {
-      return true;
-    }
-
-    try {
-      if (symbol.matches(query)) {
-        return true;
-      }
-    } catch (PatternSyntaxException e) {
-      // ignore
-    }
-
-    return false;
+    return new Result(toRet, symbols.size());
   }
 }
 

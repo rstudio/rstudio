@@ -19,12 +19,13 @@ import com.google.gwt.sample.datawidgets.shared.StockRequest;
 import com.google.gwt.sample.datawidgets.shared.StockResponse;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import java.util.List;
-
 /**
  * The async counterpart of <code>DataService</code>.
  */
 public interface StockServiceAsync {
-  void getStockQuotes(List<StockRequest> requests,
-      AsyncCallback<List<StockResponse>> callback);
+  void getStockQuotes(StockRequest request, AsyncCallback<StockResponse> callback);
+
+  void addFavorite(String ticker, AsyncCallback<Void> callback);
+
+  void removeFavorite(String ticker, AsyncCallback<Void> callback);
 }
