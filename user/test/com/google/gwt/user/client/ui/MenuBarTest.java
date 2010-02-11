@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,9 +15,11 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 
@@ -26,7 +28,16 @@ import java.util.List;
 /**
  * Tests the DockPanel widget.
  */
-public class MenuBarTest extends GWTTestCase {
+public class MenuBarTest extends WidgetTestBase {
+
+  /**
+   * A blank command.
+   */
+  private static final Command BLANK_COMMAND = new Command() {
+    public void execute() {
+    }
+  };
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.DebugTest";
@@ -40,16 +51,10 @@ public class MenuBarTest extends GWTTestCase {
     // Create a menu bar
     MenuBar bar = new MenuBar(true);
 
-    // Create a blank command
-    Command blankCommand = new Command() {
-      public void execute() {
-      }
-    };
-
     // Add an item, default to text
-    MenuItem item0 = bar.addItem("<b>test</b>", blankCommand);
+    MenuItem item0 = bar.addItem("<b>test</b>", BLANK_COMMAND);
     assertEquals("<b>test</b>", item0.getText());
-    assertEquals(blankCommand, item0.getCommand());
+    assertEquals(BLANK_COMMAND, item0.getCommand());
     assertEquals(bar, item0.getParentMenu());
 
     // Add a separator
@@ -57,9 +62,9 @@ public class MenuBarTest extends GWTTestCase {
     assertEquals(bar, separator0.getParentMenu());
 
     // Add another item, force to html
-    MenuItem item1 = bar.addItem("<b>test1</b>", true, blankCommand);
+    MenuItem item1 = bar.addItem("<b>test1</b>", true, BLANK_COMMAND);
     assertEquals("test1", item1.getText());
-    assertEquals(blankCommand, item1.getCommand());
+    assertEquals(BLANK_COMMAND, item1.getCommand());
     assertEquals(bar, item1.getParentMenu());
 
     // Get all items
@@ -78,11 +83,11 @@ public class MenuBarTest extends GWTTestCase {
     assertNull(separator0.getParentMenu());
 
     // Add a bunch of items and clear them all
-    MenuItem item2 = bar.addItem("test2", true, blankCommand);
+    MenuItem item2 = bar.addItem("test2", true, BLANK_COMMAND);
     MenuItemSeparator separator1 = bar.addSeparator();
-    MenuItem item3 = bar.addItem("test3", true, blankCommand);
+    MenuItem item3 = bar.addItem("test3", true, BLANK_COMMAND);
     MenuItemSeparator separator2 = bar.addSeparator();
-    MenuItem item4 = bar.addItem("test4", true, blankCommand);
+    MenuItem item4 = bar.addItem("test4", true, BLANK_COMMAND);
     MenuItemSeparator separator3 = bar.addSeparator();
     bar.clearItems();
     assertEquals(0, bar.getItems().size());
@@ -94,6 +99,83 @@ public class MenuBarTest extends GWTTestCase {
     assertNull(separator3.getParentMenu());
   }
 
+  public void testAutoHideChildMenuPopup() {
+    // Create a menu bar with children.
+    MenuBar l0 = new MenuBar();
+    l0.setAutoOpen(true);
+    MenuBar l1 = new MenuBar();
+    l1.setAutoOpen(true);
+    MenuBar l2 = new MenuBar();
+    l2.setAutoOpen(true);
+    MenuItem item2 = l2.addItem("l2", BLANK_COMMAND);
+    MenuItem item1 = l1.addItem("l1", l2);
+    MenuItem item0 = l0.addItem("l0", l1);
+    RootPanel.get().add(l0);
+
+    // Open l2.
+    l0.itemOver(item0, true);
+    l1.itemOver(item1, true);
+    l2.itemOver(item2, true);
+    assertTrue(l0.getPopup().isShowing());
+    assertEquals(item0, l0.getSelectedItem());
+    assertTrue(l1.getPopup().isShowing());
+    assertEquals(item1, l1.getSelectedItem());
+
+    // Auto-hide the child popup.
+    l1.getPopup().hide(true);
+    assertNull(l0.getPopup());
+    assertNull(l0.getSelectedItem());
+    assertNull(l1.getPopup());
+  }
+
+  public void testBlur() {
+    // Create a menu bar with children.
+    final MenuBar menu = new MenuBar();
+    MenuItem item0 = menu.addItem("item0", BLANK_COMMAND);
+    RootPanel.get().add(menu);
+
+    // Select the item.
+    menu.focus();
+    menu.selectItem(item0);
+    assertEquals(item0, menu.getSelectedItem());
+
+    // Blur the menu bar.
+    NativeEvent event = Document.get().createBlurEvent();
+    menu.getElement().dispatchEvent(event);
+    assertNull(menu.getSelectedItem());
+  }
+
+  public void testEscapeKey() {
+    // Create a menu bar with children.
+    MenuBar l0 = new MenuBar();
+    l0.setAutoOpen(true);
+    MenuBar l1 = new MenuBar();
+    l1.setAutoOpen(true);
+    MenuBar l2 = new MenuBar();
+    l2.setAutoOpen(true);
+    MenuItem item2 = l2.addItem("l2", BLANK_COMMAND);
+    MenuItem item1 = l1.addItem("l1", l2);
+    MenuItem item0 = l0.addItem("l0", l1);
+    RootPanel.get().add(l0);
+
+    // Open l2.
+    l0.itemOver(item0, true);
+    l1.itemOver(item1, true);
+    l2.itemOver(item2, true);
+    assertTrue(l0.getPopup().isShowing());
+    assertEquals(item0, l0.getSelectedItem());
+    assertTrue(l1.getPopup().isShowing());
+    assertEquals(item1, l1.getSelectedItem());
+
+    // Escape from the menu.
+    NativeEvent event = Document.get().createKeyDownEvent(false, false, false,
+        false, KeyCodes.KEY_ESCAPE, KeyCodes.KEY_ESCAPE);
+    l1.getElement().dispatchEvent(event);
+    assertNull(l0.getPopup());
+    assertNull(l0.getSelectedItem());
+    assertNull(l1.getPopup());
+  }
+
   /**
    * Test inserting {@link MenuItem}s and {@link MenuItemSeparator}s into the
    * menu.
@@ -102,23 +184,17 @@ public class MenuBarTest extends GWTTestCase {
     // Create a menu bar
     MenuBar bar = new MenuBar(true);
 
-    // Create a blank command
-    Command blankCommand = new Command() {
-      public void execute() {
-      }
-    };
-
     // Insert first item
-    MenuItem item0 = bar.insertItem(new MenuItem("test", blankCommand), 0);
+    MenuItem item0 = bar.insertItem(new MenuItem("test", BLANK_COMMAND), 0);
     assertEquals(bar.getItemIndex(item0), 0);
 
     // Insert item at 0
-    MenuItem item1 = bar.insertItem(new MenuItem("test", blankCommand), 0);
+    MenuItem item1 = bar.insertItem(new MenuItem("test", BLANK_COMMAND), 0);
     assertEquals(bar.getItemIndex(item1), 0);
     assertEquals(bar.getItemIndex(item0), 1);
 
     // Insert item at end
-    MenuItem item2 = bar.insertItem(new MenuItem("test", blankCommand), 2);
+    MenuItem item2 = bar.insertItem(new MenuItem("test", BLANK_COMMAND), 2);
     assertEquals(bar.getItemIndex(item1), 0);
     assertEquals(bar.getItemIndex(item0), 1);
     assertEquals(bar.getItemIndex(item2), 2);
@@ -156,20 +232,14 @@ public class MenuBarTest extends GWTTestCase {
     // Create a menu bar
     MenuBar bar = new MenuBar(true);
 
-    // Create a blank command
-    Command blankCommand = new Command() {
-      public void execute() {
-      }
-    };
-
     // Add some items to the menu
     for (int i = 0; i < 3; i++) {
-      bar.addItem("item", blankCommand);
+      bar.addItem("item", BLANK_COMMAND);
     }
 
     // Add an item at a negative index
     try {
-      bar.insertItem(new MenuItem("test", blankCommand), -1);
+      bar.insertItem(new MenuItem("test", BLANK_COMMAND), -1);
       fail("Expected IndexOutOfBoundsException");
     } catch (IndexOutOfBoundsException e) {
       // Expected exception
@@ -177,7 +247,7 @@ public class MenuBarTest extends GWTTestCase {
 
     // Add an item at a high index
     try {
-      bar.insertItem(new MenuItem("test", blankCommand), 4);
+      bar.insertItem(new MenuItem("test", BLANK_COMMAND), 4);
       fail("Expected IndexOutOfBoundsException");
     } catch (IndexOutOfBoundsException e) {
       // Expected exception
@@ -185,15 +255,10 @@ public class MenuBarTest extends GWTTestCase {
   }
 
   public void testSelectItem() {
-    Command emptyCommand = new Command() {
-      public void execute() {
-      }
-    };
-
     MenuBar bar = new MenuBar(false);
-    MenuItem item1 = new MenuItem("item1", emptyCommand);
-    MenuItem item2 = new MenuItem("item2", emptyCommand);
-    MenuItem item3 = new MenuItem("item3", emptyCommand);
+    MenuItem item1 = new MenuItem("item1", BLANK_COMMAND);
+    MenuItem item2 = new MenuItem("item2", BLANK_COMMAND);
+    MenuItem item3 = new MenuItem("item3", BLANK_COMMAND);
     bar.addItem(item1);
     bar.addItem(item2);
     bar.addItem(item3);
@@ -209,23 +274,18 @@ public class MenuBarTest extends GWTTestCase {
 
   @DoNotRunWith({Platform.HtmlUnit})
   public void testDebugId() {
-    Command emptyCommand = new Command() {
-      public void execute() {
-      }
-    };
-
     // Create a sub menu
     MenuBar subMenu = new MenuBar(true);
-    subMenu.addItem("sub0", emptyCommand);
-    subMenu.addItem("sub1", emptyCommand);
-    subMenu.addItem("sub2", emptyCommand);
+    subMenu.addItem("sub0", BLANK_COMMAND);
+    subMenu.addItem("sub1", BLANK_COMMAND);
+    subMenu.addItem("sub2", BLANK_COMMAND);
 
     // Create a menu bar
     MenuBar bar = new MenuBar(false);
     bar.setAnimationEnabled(false);
     bar.setAutoOpen(true);
-    bar.addItem("top0", emptyCommand);
-    bar.addItem("top1", emptyCommand);
+    bar.addItem("top0", BLANK_COMMAND);
+    bar.addItem("top1", BLANK_COMMAND);
     MenuItem top2 = bar.addItem("top2", subMenu);
     RootPanel.get().add(bar);
 
@@ -258,16 +318,10 @@ public class MenuBarTest extends GWTTestCase {
     // Create a menu bar
     MenuBar bar = new MenuBar(true);
 
-    // Create a blank command
-    Command blankCommand = new Command() {
-      public void execute() {
-      }
-    };
-
     // Add some items
-    MenuItem item1 = bar.addItem("item1", blankCommand);
-    MenuItem item2 = bar.addItem("item2", blankCommand);
-    MenuItem item3 = bar.addItem("item3", blankCommand);
+    MenuItem item1 = bar.addItem("item1", BLANK_COMMAND);
+    MenuItem item2 = bar.addItem("item2", BLANK_COMMAND);
+    MenuItem item3 = bar.addItem("item3", BLANK_COMMAND);
 
     // Test setting the selected item
     assertNull(bar.getSelectedItem());
@@ -287,5 +341,36 @@ public class MenuBarTest extends GWTTestCase {
     // Test clearing all items
     bar.clearItems();
     assertNull(bar.getSelectedItem());
+  }
+
+  public void testTabKey() {
+    // Create a menu bar with children.
+    MenuBar l0 = new MenuBar();
+    l0.setAutoOpen(true);
+    MenuBar l1 = new MenuBar();
+    l1.setAutoOpen(true);
+    MenuBar l2 = new MenuBar();
+    l2.setAutoOpen(true);
+    MenuItem item2 = l2.addItem("l2", BLANK_COMMAND);
+    MenuItem item1 = l1.addItem("l1", l2);
+    MenuItem item0 = l0.addItem("l0", l1);
+    RootPanel.get().add(l0);
+
+    // Open l2.
+    l0.itemOver(item0, true);
+    l1.itemOver(item1, true);
+    l2.itemOver(item2, true);
+    assertTrue(l0.getPopup().isShowing());
+    assertEquals(item0, l0.getSelectedItem());
+    assertTrue(l1.getPopup().isShowing());
+    assertEquals(item1, l1.getSelectedItem());
+
+    // Tab away from the menu.
+    NativeEvent event = Document.get().createKeyDownEvent(false, false, false,
+        false, KeyCodes.KEY_TAB, KeyCodes.KEY_TAB);
+    l1.getElement().dispatchEvent(event);
+    assertNull(l0.getPopup());
+    assertNull(l0.getSelectedItem());
+    assertNull(l1.getPopup());
   }
 }

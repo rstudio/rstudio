@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -534,7 +536,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     } else if ((parentMenu != null) && parentMenu.vertical) {
       parentMenu.selectPrevItem();
     } else {
-      close();
+      close(true);
     }
   }
 
@@ -598,14 +600,12 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
             eatEvent(event);
             break;
           case KeyCodes.KEY_ESCAPE:
-            closeAllParents();
-            // Ensure the popup is closed even if it has not been enetered
-            // with the mouse or key navigation
-            if (parentMenu == null && popup != null) {
-              popup.hide();
-            }
+            closeAllParentsAndChildren();
             eatEvent(event);
             break;
+          case KeyCodes.KEY_TAB:
+            closeAllParentsAndChildren();
+            break;  
           case KeyCodes.KEY_ENTER:
             if (!selectFirstItemIfNoneSelected()) {
               doItemAction(selectedItem, true, true);
@@ -793,10 +793,24 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * Closes all parent menu popups.
    */
   void closeAllParents() {
-    MenuBar curMenu = this;
-    while (curMenu.parentMenu != null) {
-      curMenu.close();
-      curMenu = curMenu.parentMenu;
+    if (parentMenu != null) {
+      // The parent menu will recursively call closeAllParents.
+      close(false);
+    } else {
+      // If this is the top most menu, deselect the current item.
+      selectItem(null);
+    }
+  }
+
+  /**
+   * Closes all parent and child menu popups.
+   */
+  void closeAllParentsAndChildren() {
+    closeAllParents();
+    // Ensure the popup is closed even if it has not been enetered
+    // with the mouse or key navigation
+    if (parentMenu == null && popup != null) {
+      popup.hide();
     }
   }
 
@@ -854,6 +868,13 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         shownChildMenu = null;
       }
     }
+  }
+
+  /**
+   * Visible for testing.
+   */
+  PopupPanel getPopup() {
+    return popup;
   }
 
   void itemOver(MenuItem item, boolean focus) {
@@ -952,11 +973,15 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   /**
    * Closes this menu (if it is a popup).
+   * 
+   * @param focus true to move focus to the parent
    */
-  private void close() {
+  private void close(boolean focus) {
     if (parentMenu != null) {
-      parentMenu.popup.hide();
-      parentMenu.focus();
+      parentMenu.popup.hide(!focus);
+      if (focus) {
+        parentMenu.focus();
+      }
     }
   }
 
@@ -1017,6 +1042,15 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     // Hide focus outline in IE 6/7
     DOM.setElementAttribute(getElement(), "hideFocus", "true");
+
+    // Deselect items when blurring without a child menu.
+    addDomHandler(new BlurHandler() {
+      public void onBlur(BlurEvent event) {
+        if (shownChildMenu == null) {
+          selectItem(null);
+        }
+      }
+    }, BlurEvent.getType());
   }
 
   private void moveToNextItem() {
@@ -1055,7 +1089,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       if ((parentMenu != null) && (!parentMenu.vertical)) {
         parentMenu.selectPrevItem();
       } else {
-        close();
+        close(true);
       }
     }
   }
