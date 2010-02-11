@@ -16,6 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -791,11 +793,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
       return null;
     }
 
-    Element tr = DOM.getParent(td);
-    Element body = DOM.getParent(tr);
-    int row = DOM.getChildIndex(body, tr);
-    int column = DOM.getChildIndex(tr, td);
-
+    int row = TableRowElement.as(td.getParentElement()).getSectionRowIndex();
+    int column = TableCellElement.as(td).getCellIndex();
     return new Cell(row, column);
   }
 
