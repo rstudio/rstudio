@@ -30,6 +30,7 @@
       <p style="margin-top: 5px; margin-left: 5px; font-weight: bold; font-size: 115%;">for all versions</b>
       <ul>
         <li><a href="#Release_Notes_Current">@GWT_VERSION@</a></li>
+        <li><a href="#Release_Notes_2_0_1">2.0.1</a></li>
         <li><a href="#Release_Notes_2_0_0">2.0.0</a></li>        
         <li><a href="#Release_Notes_2_0_0_rc2">2.0.0-rc2</a></li>
         <li><a href="#Release_Notes_2_0_0_rc1">2.0.0-rc1</a></li>
@@ -58,6 +59,18 @@
       <a name="Release_Notes_Current"></a>
       <h2>Release Notes for @GWT_VERSION@</h2>
       <p>
+      This 2.0.2 release contains a couple of fixes that were not included in the 2.0.1 release.
+      </p>
+      <h3>Noteworthy Fixed Issues</h3>
+      <ul>
+        <li>Standard.css missing new layout styles (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4429">#4429</a>)</li>
+        <li>Using a PopupPanel in Internet Explorer without a history IFrame throws a NullPointerException (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4584">#4584</a>)</li>
+      </ul>
+      
+      <hr/>
+      <a name="Release_Notes_2_0_1"></a>
+      <h2>Release Notes for 2.0.1</h2>
+      <p>
       This 2.0.1 release contains fixes for bugs found in the 2.0.0 release.
       </p>
       <h3>Potentially breaking changes and fixes</h3>
@@ -79,7 +92,6 @@
       <ul>
         <li>UiBinder Image class with resource attribute, removes styles on that image (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4415">#4415</a>)</li>
       	<li>Widgets lose focus if its placed on FocusPanel (Opera, Safari) (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1471">#1471</a>)</li>
-      	<li>Standard.css missing new layout styles (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4429">#4429</a>)</li>
       	<li>Remove method in SplitLayoutPanel is broken (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4217">#4217</a>)</li>
         <li>Splitter constructor hard codes the background color of the splitter to white (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4335">#4335</a>)</li>
         <li>Image should provide method to set alternative text (<a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=4335">#4335</a>)</li>
