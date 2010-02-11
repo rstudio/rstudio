@@ -19,6 +19,7 @@ import com.google.gwt.list.shared.Range;
 import com.google.gwt.sample.datawidgets.client.StockService;
 import com.google.gwt.sample.datawidgets.shared.StockQuote;
 import com.google.gwt.sample.datawidgets.shared.StockQuoteList;
+import com.google.gwt.sample.datawidgets.shared.StockRequest;
 import com.google.gwt.sample.datawidgets.shared.StockResponse;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
@@ -57,10 +58,10 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     }
   }
 
+  static HashMap<String, String> companyNamesBySymbol = new HashMap<String, String>();
+
   // TODO(rice) - use a smarter data structure
   static TreeSet<MyStockQuote> quotes = new TreeSet<MyStockQuote>();
-
-  static HashMap<String, String> companyNamesBySymbol = new HashMap<String, String>();
 
   private static final int MAX_RESULTS_TO_RETURN = 10000;
 
@@ -75,27 +76,55 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       companyNamesBySymbol.put(symbol, companyName);
     }
   }
+  
+  public List<StockResponse> getStockQuotes(List<StockRequest> requests) {
+    List<StockResponse> responses = new ArrayList<StockResponse>();
+    for (StockRequest request : requests) {
+      responses.add(getStockQuotes(request));
+    }
+    
+    // TODO (rice) add favorites response
+    return responses;
+  }
 
-  public StockResponse getStockQuotes(String query, Range[] ranges)
+  public List<String> getSymbols(String query) {
+    List<String> symbols = new ArrayList<String>();
+    if (query.length() > 0) {
+      query = query.toUpperCase();
+      int count = 0;
+      for (MyStockQuote stock : quotes) {
+        String symbol = stock.getTicker();
+        if (match(symbol, query)) {
+          symbols.add(symbol);
+          count++;
+          if (count > MAX_RESULTS_TO_RETURN) {
+            break;
+          }
+        }
+      }
+    }
+    return symbols;
+  }
+
+  private StockResponse getStockQuotes(StockRequest request)
       throws IllegalArgumentException {
+    String query = request.getQuery();
+    Range range = request.getRange();
 
     // Get all symbols for the query.
     List<String> symbols = getSymbols(query);
-    List<StockQuoteList> results = new ArrayList<StockQuoteList>();
+    
     if (symbols.size() == 0) {
-      return new StockResponse(0, results);
+      return new StockResponse.Search(new StockQuoteList(0), 0);
     }
 
+    int start = range.getStart();
+    int end = Math.min(start + range.getLength(), symbols.size());
+    
     // Get the symbols that are in range.
     Set<String> symbolsInRange = new HashSet<String>();
-    for (Range range : ranges) {
-      int start = range.getStart();
-      int end = start + range.getLength();
-      start = Math.max(start, 0);
-      end = Math.min(end, symbols.size());
-      if (end > start) {
-        symbolsInRange.addAll(symbols.subList(start, end));
-      }
+    if (end > start) {
+      symbolsInRange.addAll(symbols.subList(start, end));
     }
 
     // Build the URL string.
@@ -112,7 +141,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
 
     if (first) {
       // No symbols
-      return new StockResponse(0, results);
+      return new StockResponse.Search(new StockQuoteList(0), 0);
     }
 
     // Send the request.
@@ -169,45 +198,19 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       }
     }
 
-    // Convert the price map to a list of StockQuoteList.
-    List<StockQuoteList> toRet = new ArrayList<StockQuoteList>();
-    for (Range range : ranges) {
-      int start = range.getStart();
-      int end = Math.min(start + range.getLength(), symbols.size());
-      StockQuoteList curList = new StockQuoteList(start);
-      toRet.add(curList);
-      for (int i = start; i < end; i++) {
-        String symbol = symbols.get(i);
-        StockQuote quote = priceMap.get(symbol);
-//        System.out.println("i = " + i + ", add symbol " + symbol + " to range " + start + ", " + end);
-        if (quote == null) {
-          quote = new StockQuote(symbol, "<NO SUCH TICKER SYMBOL>", 0);
-          System.out.println("Bad symbol " + symbol);
-        }
-        curList.add(quote);
+    // Convert the price map to a StockQuoteList.
+    StockQuoteList toRet = new StockQuoteList(start);
+    for (int i = start; i < end; i++) {
+      String symbol = symbols.get(i);
+      StockQuote quote = priceMap.get(symbol);
+      if (quote == null) {
+        quote = new StockQuote(symbol, "<NO SUCH TICKER SYMBOL>", 0);
+        System.out.println("Bad symbol " + symbol);
       }
+      toRet.add(quote);
     }
 
-    return new StockResponse(symbols.size(), toRet);
-  }
-
-  public List<String> getSymbols(String query) {
-    List<String> symbols = new ArrayList<String>();
-    if (query.length() > 0) {
-      query = query.toUpperCase();
-      int count = 0;
-      for (MyStockQuote stock : quotes) {
-        String symbol = stock.getTicker();
-        if (match(symbol, query)) {
-          symbols.add(symbol);
-          count++;
-          if (count > MAX_RESULTS_TO_RETURN) {
-            break;
-          }
-        }
-      }
-    }
-    return symbols;
+    return new StockResponse.Search(toRet, symbols.size());
   }
 
   private boolean match(String symbol, String query) {

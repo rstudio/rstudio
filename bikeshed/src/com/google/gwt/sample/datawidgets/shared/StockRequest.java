@@ -13,8 +13,31 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.cells.client;
+package com.google.gwt.sample.datawidgets.shared;
 
-public interface Mutator<T, C> {
-  void mutate(T object, C after);
+import com.google.gwt.list.shared.Range;
+
+import java.io.Serializable;
+
+public class StockRequest implements Serializable {
+  
+  String query;
+  Range range;
+  
+  // Used by RPC
+  public StockRequest() {
+  }
+  
+  public StockRequest(String query, Range range) {
+    this.query = query;
+    this.range = range;
+  }
+  
+  public String getQuery() {
+    return query;
+  }
+  
+  public Range getRange() {
+    return range;
+  }
 }

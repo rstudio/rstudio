@@ -15,14 +15,16 @@
  */
 package com.google.gwt.sample.datawidgets.client;
 
-import com.google.gwt.list.shared.Range;
+import com.google.gwt.sample.datawidgets.shared.StockRequest;
 import com.google.gwt.sample.datawidgets.shared.StockResponse;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+
+import java.util.List;
 
 /**
  * The async counterpart of <code>DataService</code>.
  */
 public interface StockServiceAsync {
-  void getStockQuotes(String query, Range[] ranges,
-      AsyncCallback<StockResponse> callback);
+  void getStockQuotes(List<StockRequest> requests,
+      AsyncCallback<List<StockResponse>> callback);
 }

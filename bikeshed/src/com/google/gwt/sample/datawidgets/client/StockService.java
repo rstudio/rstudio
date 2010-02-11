@@ -15,16 +15,20 @@
  */
 package com.google.gwt.sample.datawidgets.client;
 
-import com.google.gwt.list.shared.Range;
+import com.google.gwt.sample.datawidgets.shared.StockRequest;
 import com.google.gwt.sample.datawidgets.shared.StockResponse;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
+
+import java.util.List;
 
 /**
  * The client side stub for the RPC service.
  */
 @RemoteServiceRelativePath("stock")
 public interface StockService extends RemoteService {
-  StockResponse getStockQuotes(String query, Range[] ranges)
+  
+  List<StockResponse> getStockQuotes(List<StockRequest> requests)
       throws IllegalArgumentException;
+  
 }

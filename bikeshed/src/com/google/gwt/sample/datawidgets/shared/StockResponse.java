@@ -16,19 +16,38 @@
 package com.google.gwt.sample.datawidgets.shared;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * A response to a request for stock data.
  */
 public class StockResponse implements Serializable {
-
-  private int numRows;
-  private List<StockQuoteList> lists;
-
-  public StockResponse(int numRows, List<StockQuoteList> lists) {
-    this.numRows = numRows;
-    this.lists = lists;
+  
+  protected StockQuoteList stocks;
+  
+  public static class Search extends StockResponse {
+    private int numRows;
+    
+    Search() {
+    }
+    
+    public Search(StockQuoteList stocks, int numRows) {
+      super(stocks);
+      this.numRows = numRows;
+    }
+    
+    public int getNumRows() {
+      return numRows;
+    }
+  }
+  
+  public static class Favorites extends StockResponse {
+    
+    Favorites() {
+    }
+    
+    public Favorites(StockQuoteList stocks) {
+      super(stocks);
+    }
   }
 
   /**
@@ -36,21 +55,13 @@ public class StockResponse implements Serializable {
    */
   StockResponse() {
   }
-
-  /**
-   * Get the data for specific ranges.
-   * 
-   * @return the data
-   */
-  public List<StockQuoteList> getLists() {
-    return lists;
+  
+  public StockResponse(StockQuoteList stocks) {
+    this.stocks = stocks;
   }
-
-  /**
-   * @return the total number of rows available
-   */
-  public int getNumRows() {
-    return numRows;
+  
+  public StockQuoteList getStocks() {
+    return stocks;
   }
 }
 
