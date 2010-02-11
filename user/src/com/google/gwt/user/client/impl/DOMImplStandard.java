@@ -71,12 +71,13 @@ abstract class DOMImplStandard extends DOMImpl {
   public native Element getChild(Element elem, int index) /*-{
     var count = 0, child = elem.firstChild;
     while (child) {
+      var next = child.nextSibling;
       if (child.nodeType == 1) {
         if (index == count)
           return child;
         ++count;
       }
-      child = child.nextSibling;
+      child = next;
     }
 
     return null;

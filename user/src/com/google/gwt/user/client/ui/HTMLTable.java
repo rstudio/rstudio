@@ -16,16 +16,12 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.TableCellElement;
-import com.google.gwt.dom.client.TableElement;
-import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.impl.ElementMapperImpl;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
@@ -79,7 +75,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * 
      * @return the cell's element.
      */
-    public com.google.gwt.user.client.Element getElement() {
+    public Element getElement() {
       return getCellFormatter().getElement(rowIndex, cellIndex);
     }
 
@@ -106,7 +102,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      */
     public void addStyleName(int row, int column, String styleName) {
       prepareCell(row, column);
-      Element td = getRawElement(row, column);
+      Element td = getCellElement(bodyElem, row, column);
       UIObject.setStyleName(td, styleName, true);
     }
 
@@ -118,9 +114,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * @return the column's TD element
      * @throws IndexOutOfBoundsException
      */
-    public com.google.gwt.user.client.Element getElement(int row, int column) {
+    public Element getElement(int row, int column) {
       checkCellBounds(row, column);
-      return getRawElement(row, column).cast();
+      return getCellElement(bodyElem, row, column);
     }
 
     /**
@@ -172,7 +168,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      */
     public void removeStyleName(int row, int column, String styleName) {
       checkCellBounds(row, column);
-      Element td = getRawElement(row, column);
+      Element td = getCellElement(bodyElem, row, column);
       UIObject.setStyleName(td, styleName, false);
     }
 
@@ -204,8 +200,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      */
     public void setHeight(int row, int column, String height) {
       prepareCell(row, column);
-      Element elem = getRawElement(row, column);
-      elem.setPropertyString("height", height);
+      Element elem = getCellElement(bodyElem, row, column);
+      DOM.setElementProperty(elem, "height", height);
     }
 
     /**
@@ -220,8 +216,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     public void setHorizontalAlignment(int row, int column,
         HorizontalAlignmentConstant align) {
       prepareCell(row, column);
-      Element elem = getRawElement(row, column);
-      elem.setPropertyString("align", align.getTextAlignString());
+      Element elem = getCellElement(bodyElem, row, column);
+      DOM.setElementProperty(elem, "align", align.getTextAlignString());
     }
 
     /**
@@ -235,7 +231,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      */
     public void setStyleName(int row, int column, String styleName) {
       prepareCell(row, column);
-      UIObject.setStyleName(getRawElement(row, column), styleName);
+      UIObject.setStyleName(getCellElement(bodyElem, row, column), styleName);
     }
 
     /**
@@ -248,8 +244,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * @throws IndexOutOfBoundsException
      */
     public void setStylePrimaryName(int row, int column, String styleName) {
-      prepareCell(row, column);
-      UIObject.setStylePrimaryName(getRawElement(row, column),
+      UIObject.setStylePrimaryName(getCellElement(bodyElem, row, column),
           styleName);
     }
 
@@ -265,7 +260,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     public void setVerticalAlignment(int row, int column,
         VerticalAlignmentConstant align) {
       prepareCell(row, column);
-      getRawElement(row, column).getStyle().setProperty(
+      DOM.setStyleAttribute(getCellElement(bodyElem, row, column),
           "verticalAlign", align.getVerticalAlignString());
     }
 
@@ -295,7 +290,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     public void setWidth(int row, int column, String width) {
       // Give the subclass a chance to prepare the cell.
       prepareCell(row, column);
-      getRawElement(row, column).setPropertyString("width", width);
+      DOM.setElementProperty(getCellElement(bodyElem, row, column), "width",
+          width);
     }
 
     /**
@@ -309,7 +305,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     public void setWordWrap(int row, int column, boolean wrap) {
       prepareCell(row, column);
       String wrapValue = wrap ? "" : "nowrap";
-      getElement(row, column).getStyle().setProperty("whiteSpace", wrapValue);
+      DOM.setStyleAttribute(getElement(row, column), "whiteSpace", wrapValue);
     }
 
     /**
@@ -321,9 +317,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * @return the cell's element
      * @throws IndexOutOfBoundsException
      */
-    protected com.google.gwt.user.client.Element ensureElement(int row, int column) {
+    protected Element ensureElement(int row, int column) {
       prepareCell(row, column);
-      return getRawElement(row, column).cast();
+      return getCellElement(bodyElem, row, column);
     }
 
     /**
@@ -336,7 +332,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * @throws IndexOutOfBoundsException
      */
     protected String getAttr(int row, int column, String attr) {
-      return getElement(row, column).getAttribute(attr);
+      Element elem = getElement(row, column);
+      return DOM.getElementAttribute(elem, attr);
     }
 
     /**
@@ -349,7 +346,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * @throws IndexOutOfBoundsException
      */
     protected void setAttr(int row, int column, String attrName, String value) {
-      ensureElement(row, column).setAttribute(attrName, value);
+      Element elem = ensureElement(row, column);
+      DOM.setElementAttribute(elem, attrName, value);
     }
 
     /**
@@ -373,8 +371,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * @param column the column of the cell to be retrieved
      * @return the cell's TD element
      */
-    private TableCellElement getRawElement(int row, int column) {
-      return TableCellElement.as(getCellElement(bodyElem, row, column));
+    private Element getRawElement(int row, int column) {
+      return getCellElement(bodyElem, row, column);
     }
   }
 
@@ -383,7 +381,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * by the support cross-browser HTML support for column formatting.
    */
   public class ColumnFormatter {
-    protected com.google.gwt.user.client.Element columnGroup;
+    protected Element columnGroup;
 
     /**
      * Adds a style to the specified column.
@@ -403,8 +401,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * @param column the column index
      * @return the col element
      */
-    public com.google.gwt.user.client.Element getElement(int column) {
-      return ensureColumn(column).cast();
+    public Element getElement(int column) {
+      return ensureColumn(column);
     }
 
     /**
@@ -475,7 +473,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * @throws IndexOutOfBoundsException
      */
     public void setWidth(int column, String width) {
-      ensureColumn(column).setPropertyString("width", width);
+      DOM.setElementProperty(ensureColumn(column), "width", width);
     }
 
     /**
@@ -515,9 +513,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      */
     private void prepareColumnGroup() {
       if (columnGroup == null) {
-        columnGroup = Document.get().createColGroupElement().cast();
-        tableElem.insertFirst(columnGroup);
-        columnGroup.appendChild(Document.get().createColElement());
+        columnGroup = DOM.createElement("colgroup");
+        DOM.insertChild(tableElem, columnGroup, 0);
+        DOM.appendChild(columnGroup, DOM.createElement("col"));
       }
     }
   }
@@ -546,7 +544,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * @return the row's TR element
      * @throws IndexOutOfBoundsException
      */
-    public com.google.gwt.user.client.Element getElement(int row) {
+    public Element getElement(int row) {
       checkRowBounds(row);
       return getRow(bodyElem, row);
     }
@@ -632,7 +630,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * @throws IndexOutOfBoundsException
      */
     public void setVerticalAlign(int row, VerticalAlignmentConstant align) {
-      ensureElement(row).getStyle().setProperty("verticalAlign",
+      DOM.setStyleAttribute(ensureElement(row), "verticalAlign",
           align.getVerticalAlignString());
     }
 
@@ -656,12 +654,12 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * @return the row's TR element
      * @throws IndexOutOfBoundsException
      */
-    protected com.google.gwt.user.client.Element ensureElement(int row) {
+    protected Element ensureElement(int row) {
       prepareRow(row);
       return getRow(bodyElem, row);
     }
 
-    protected native com.google.gwt.user.client.Element getRow(Element elem, int row) /*-{
+    protected native Element getRow(Element elem, int row)/*-{
       return elem.rows[row];
     }-*/;
 
@@ -675,14 +673,14 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      */
     protected void setAttr(int row, String attrName, String value) {
       Element elem = ensureElement(row);
-      elem.setAttribute(attrName, value);
+      DOM.setElementAttribute(elem, attrName, value);
     }
   }
 
   /**
    * Table's body.
    */
-  private final TableSectionElement bodyElem;
+  private final Element bodyElem;
 
   /**
    * Current cell formatter.
@@ -702,7 +700,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
   /**
    * Table element.
    */
-  private final TableElement tableElem;
+  private final Element tableElem;
 
   private ElementMapperImpl<Widget> widgetMap = new ElementMapperImpl<Widget>();
 
@@ -710,10 +708,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * Create a new empty HTML Table.
    */
   public HTMLTable() {
-    Document doc = Document.get();
-    tableElem = doc.createTableElement();
-    bodyElem = doc.createTBodyElement();
-    tableElem.appendChild(bodyElem);
+    tableElem = DOM.createTable();
+    bodyElem = DOM.createTBody();
+    DOM.appendChild(tableElem, bodyElem);
     setElement(tableElem);
   }
 
@@ -789,14 +786,15 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @return The appropriate cell, or null
    */
   public Cell getCellForEvent(ClickEvent event) {
-    TableCellElement td = getEventTargetCell(event.getNativeEvent());
+    Element td = getEventTargetCell(Event.as(event.getNativeEvent()));
     if (td == null) {
       return null;
     }
 
-    TableRowElement tr = TableRowElement.as(td.getParentElement());
-    int row = tr.getSectionRowIndex();
-    int column = td.getCellIndex();
+    Element tr = DOM.getParent(td);
+    Element body = DOM.getParent(tr);
+    int row = DOM.getChildIndex(body, tr);
+    int column = DOM.getChildIndex(tr, td);
 
     return new Cell(row, column);
   }
@@ -817,7 +815,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @return the cell padding, in pixels
    */
   public int getCellPadding() {
-    return tableElem.getCellPadding();
+    return DOM.getElementPropertyInt(tableElem, "cellPadding");
   }
 
   /**
@@ -826,7 +824,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @return the cell spacing, in pixels
    */
   public int getCellSpacing() {
-    return tableElem.getCellSpacing();
+    return DOM.getElementPropertyInt(tableElem, "cellSpacing");
   }
 
   /**
@@ -847,7 +845,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @throws IndexOutOfBoundsException
    */
   public String getHTML(int row, int column) {
-    return cellFormatter.getElement(row, column).getInnerHTML();
+    return DOM.getInnerHTML(cellFormatter.getElement(row, column));
   }
 
   /**
@@ -877,7 +875,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
   public String getText(int row, int column) {
     checkCellBounds(row, column);
     Element e = cellFormatter.getElement(row, column);
-    return e.getInnerText();
+    return DOM.getInnerText(e);
   }
 
   /**
@@ -979,7 +977,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     } finally {
       // Physical detach.
       Element elem = widget.getElement();
-      elem.removeFromParent();
+      DOM.removeChild(DOM.getParent(elem), elem);
   
       // Logical detach.
       widgetMap.removeByElement(elem);
@@ -1007,7 +1005,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @param width the width of the border, in pixels
    */
   public void setBorderWidth(int width) {
-    tableElem.setBorder(width);
+    DOM.setElementProperty(tableElem, "border", "" + width);
   }
 
   /**
@@ -1016,7 +1014,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @param padding the cell padding, in pixels
    */
   public void setCellPadding(int padding) {
-    tableElem.setCellPadding(padding);
+    DOM.setElementPropertyInt(tableElem, "cellPadding", padding);
   }
 
   /**
@@ -1025,7 +1023,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @param spacing the cell spacing, in pixels
    */
   public void setCellSpacing(int spacing) {
-    tableElem.setCellSpacing(spacing);
+    DOM.setElementPropertyInt(tableElem, "cellSpacing", spacing);
   }
 
   /**
@@ -1038,9 +1036,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    */
   public void setHTML(int row, int column, String html) {
     prepareCell(row, column);
-    TableCellElement td = cleanCell(row, column, html == null);
+    Element td = cleanCell(row, column, html == null);
     if (html != null) {
-      td.setInnerHTML(html);
+      DOM.setInnerHTML(td, html);
     }
   }
 
@@ -1054,9 +1052,10 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    */
   public void setText(int row, int column, String text) {
     prepareCell(row, column);
-    TableCellElement td = cleanCell(row, column, text == null);
+    Element td;
+    td = cleanCell(row, column, text == null);
     if (text != null) {
-      td.setInnerText(text);
+      DOM.setInnerText(td, text);
     }
   }
 
@@ -1083,13 +1082,13 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
       widget.removeFromParent();
 
       // Removes any existing widget.
-      TableCellElement td = cleanCell(row, column, true);
+      Element td = cleanCell(row, column, true);
 
       // Logical attach.
       widgetMap.put(widget);
 
       // Physical attach.
-      td.appendChild(widget.getElement());
+      DOM.appendChild(td, widget.getElement());
 
       adopt(widget);
     }
@@ -1135,8 +1134,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * 
    * @return the newly created TD
    */
-  protected com.google.gwt.user.client.Element createCell() {
-    return Document.get().createTDElement().cast();
+  protected Element createCell() {
+    return DOM.createTD();
   }
 
   /**
@@ -1144,8 +1143,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * 
    * @return the TBODY element
    */
-  protected com.google.gwt.user.client.Element getBodyElement() {
-    return bodyElem.cast();
+  protected Element getBodyElement() {
+    return bodyElem;
   }
 
   /**
@@ -1189,17 +1188,17 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @return the TD associated with the event, or <code>null</code> if none is
    *         found.
    */
-  protected com.google.gwt.user.client.Element getEventTargetCell(Event event) {
-    Element td = Element.as(event.getEventTarget());
-    for (; td != null; td = td.getParentElement()) {
+  protected Element getEventTargetCell(Event event) {
+    Element td = DOM.eventGetTarget(event);
+    for (; td != null; td = DOM.getParent(td)) {
       // If it's a TD, it might be the one we're looking for.
-      if (td.getTagName().equalsIgnoreCase("td")) {
+      if (DOM.getElementProperty(td, "tagName").equalsIgnoreCase("td")) {
         // Make sure it's directly a part of this table before returning
         // it.
-        Element tr = td.getParentElement();
-        Element body = tr.getParentElement();
+        Element tr = DOM.getParent(td);
+        Element body = DOM.getParent(tr);
         if (body == bodyElem) {
-          return td.cast();
+          return td;
         }
       }
       // If we run into this table's body, we're out of options.
@@ -1208,10 +1207,6 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
       }
     }
     return null;
-  }
-  
-  protected final TableCellElement getEventTargetCell(NativeEvent event) {
-    return getEventTargetCell(Event.as(event)).cast();
   }
 
   /**
@@ -1224,11 +1219,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
   protected void insertCell(int row, int column) {
     Element tr = rowFormatter.getRow(bodyElem, row);
     Element td = createCell();
-    if (column < tr.getChildCount()) {
-      tr.insertBefore(td, tr.getChild(column));
-    } else {
-      tr.appendChild(td);
-    }
+    DOM.insertChild(tr, td, column);
   }
 
   /**
@@ -1243,11 +1234,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     Element tr = rowFormatter.getRow(bodyElem, row);
     for (int i = column; i < column + count; i++) {
       Element td = createCell();
-      if (i < tr.getChildCount()) {
-        tr.insertBefore(td, tr.getChild(i));
-      } else {
-        tr.appendChild(td);
-      }
+      DOM.insertChild(tr, td, i);
     }
   }
 
@@ -1263,12 +1250,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     if (beforeRow != getRowCount()) {
       checkRowBounds(beforeRow);
     }
-    Element tr = Document.get().createTRElement();
-    if (beforeRow < bodyElem.getChildCount()) {
-      bodyElem.insertBefore(tr, bodyElem.getChild(beforeRow));
-    } else {
-      bodyElem.appendChild(tr);
-    }
+    Element tr = DOM.createTR();
+    DOM.insertChild(bodyElem, tr, beforeRow);
     return beforeRow;
   }
 
@@ -1282,7 +1265,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @return returns whether a widget was cleared
    */
   protected boolean internalClearCell(Element td, boolean clearInnerHTML) {
-    Element maybeChild = td.getFirstChildElement();
+    Element maybeChild = DOM.getFirstChild(td);
     Widget widget = null;
     if (maybeChild != null) {
       widget = widgetMap.get(maybeChild);
@@ -1294,7 +1277,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     } else {
       // Otherwise, simply clear whatever text and/or HTML may be there.
       if (clearInnerHTML) {
-        td.setInnerHTML("");
+        DOM.setInnerHTML(td, "");
       }
       return false;
     }
@@ -1369,7 +1352,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
   protected void removeCell(int row, int column) {
     checkCellBounds(row, column);
     Element td = cleanCell(row, column, false);
-    td.removeFromParent();
+    Element tr = rowFormatter.getRow(bodyElem, row);
+    DOM.removeChild(tr, td);
   }
 
   /**
@@ -1383,7 +1367,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     for (int column = 0; column < columnCount; ++column) {
       cleanCell(row, column, false);
     }
-    rowFormatter.getRow(bodyElem, row).removeFromParent();
+    DOM.removeChild(bodyElem, rowFormatter.getRow(bodyElem, row));
   }
 
   /**
@@ -1423,9 +1407,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @param clearInnerHTML should the cell's inner html be cleared?
    * @return element that has been cleaned
    */
-  private TableCellElement cleanCell(int row, int column, boolean clearInnerHTML) {
+  private Element cleanCell(int row, int column, boolean clearInnerHTML) {
     // Clear whatever is in the cell.
-    TableCellElement td = getCellFormatter().getRawElement(row, column);
+    Element td = getCellFormatter().getRawElement(row, column);
     internalClearCell(td, clearInnerHTML);
     return td;
   }
@@ -1439,7 +1423,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    */
   private Widget getWidgetImpl(int row, int column) {
     Element e = cellFormatter.getRawElement(row, column);
-    Element child = e.getFirstChildElement();
+    Element child = DOM.getFirstChild(e);
     if (child == null) {
       return null;
     } else {
