@@ -168,6 +168,18 @@ class DOMImplSafari extends DOMImplStandard {
     return top;
   }-*/;
 
+  /*
+   * textContent is used over innerText for two reasons:
+   * 1 - It is consistent with DOMImplMozilla. textContent
+   *     does not convert <br>'s to new lines in WebKit.
+   * 2 - textContent is faster on retreival because WebKit
+   *     does not recalculate styles as it does for innerText.
+   */ 
+  @Override
+  public native String getInnerText(Element node) /*-{
+    return node.textContent;
+  }-*/;
+
   @Override
   public int getScrollLeft(Document doc) {
     // Safari always applies document scrolling to the body element, even in
@@ -215,9 +227,9 @@ class DOMImplSafari extends DOMImplStandard {
    * elements, because their descendent elements are only one level deep.
    */
   @Override
-  public native void selectClear(SelectElement select) /*-{
-    select.innerText = '';
-  }-*/;
+  public void selectClear(SelectElement select) {
+    select.setInnerText("");
+  }
 
   @Override
   public native int selectGetLength(SelectElement select) /*-{
@@ -234,6 +246,14 @@ class DOMImplSafari extends DOMImplStandard {
     select.removeChild(select.children[index]);
   }-*/;
 
+  /*
+   * See getInnerText for why textContent is used instead of innerText.
+   */
+  @Override
+  public native void setInnerText(Element elem, String text) /*-{
+    elem.textContent = text || '';
+  }-*/;
+  
   @Override
   public void setScrollLeft(Document doc, int left) {
     // Safari always applies document scrolling to the body element, even in
