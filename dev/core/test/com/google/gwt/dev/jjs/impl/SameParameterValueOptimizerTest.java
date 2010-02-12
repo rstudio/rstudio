@@ -52,6 +52,21 @@ public class SameParameterValueOptimizerTest extends OptimizerTestBase {
         "  int j = 1;", "}");
   }
 
+  public void testJsniReferenceSaveMethod() throws Exception {
+    addSnippetClassDecl(
+        "public static native void someStaticMethod() /*-{" +
+        "  var foo = @test.EntryPoint::foo(Ljava/lang/String;)" +
+        "}-*/");
+    
+    assertOptimize(
+        "foo", 
+        "static void foo(String s) { String p = s; }",
+        "foo(\"\"); foo(\"\");").into(
+        "public static void foo(String s){",
+        "  String p = s;", 
+        "}");
+  }
+
   private OptimizationResult assertOptimize(String methodName,
       String methodDecl, String codeSnippet) throws UnableToCompleteException {
     addSnippetClassDecl(methodDecl);

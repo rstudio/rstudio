@@ -29,6 +29,8 @@ import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -99,6 +101,13 @@ public class SameParameterValueOptimizer {
     public void endVisit(JPrefixOperation x, Context ctx) {
       if (x.getArg() instanceof JParameterRef) {
         parameterValues.put(((JParameterRef) x.getArg()).getParameter(), null);
+      }
+    }
+
+    @Override
+    public void endVisit(JsniMethodBody x, Context ctx) {
+      for (JsniMethodRef methodRef : x.getJsniMethodRefs()) {
+        rescuedMethods.add(methodRef.getTarget());
       }
     }
 
