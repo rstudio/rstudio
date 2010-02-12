@@ -18,6 +18,9 @@ package com.google.gwt.sample.datawidgets.client;
 import com.google.gwt.cells.client.Cell;
 import com.google.gwt.sample.datawidgets.shared.StockQuote;
 
+/**
+ * A cell that represents a {@link StockQuote}.
+ */
 public class StockQuoteCell extends Cell<StockQuote> {
 
   @Override

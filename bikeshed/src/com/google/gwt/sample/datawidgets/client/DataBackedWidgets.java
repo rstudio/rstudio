@@ -26,6 +26,7 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.list.client.Column;
 import com.google.gwt.list.client.PagingTableListView;
 import com.google.gwt.list.shared.AsyncListModel;
@@ -40,6 +41,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -103,6 +105,7 @@ public class DataBackedWidgets implements EntryPoint {
   };
 
   private final TextBox queryField = new TextBox();
+  private final Label cashLabel = new Label();
 
   private Column<StockQuote, String> tickerColumn = new Column<StockQuote, String>(
       new TextCell()) {
@@ -225,6 +228,12 @@ public class DataBackedWidgets implements EntryPoint {
       }
     });
 
+    // Add components to the page.
+    HorizontalPanel hPanel = new HorizontalPanel();
+    hPanel.add(new HTML("<b>Available cash:</b>"));
+    hPanel.add(cashLabel);
+    RootPanel.get().add(hPanel);
+
     RootPanel.get().add(resultsTable);
     RootPanel.get().add(new HTML("<hr>"));
     RootPanel.get().add(favoritesTable);
@@ -240,7 +249,7 @@ public class DataBackedWidgets implements EntryPoint {
   }
 
   /**
-   * Set or unset a ticker symbol as a 'favorite.'
+   * Set or unset a ticker symbol as a 'favorite'.
    * 
    * @param ticker the ticker symbol
    * @param favorite if true, make the stock a favorite
@@ -270,6 +279,33 @@ public class DataBackedWidgets implements EntryPoint {
   }
 
   /**
+   * Process the {@link StockResponse} from the server.
+   * 
+   * @param response the stock response
+   */
+  private void processStockResponse(StockResponse response) {
+    // Update the search list.
+    StockQuoteList searchResults = response.getSearchResults();
+    searchListModel.updateDataSize(response.getNumSearchResults(), true);
+    searchListModel.updateViewData(searchResults.getStartIndex(),
+        searchResults.size(), searchResults);
+
+    // Update the favorites list.
+    StockQuoteList favorites = response.getFavorites();
+    favoritesListModel.updateDataSize(response.getNumFavorites(), true);
+    favoritesListModel.updateViewData(favorites.getStartIndex(),
+        favorites.size(), favorites);
+
+    // Update available cash.
+    double cash = response.getCash() / 100.0;
+    cashLabel.setText(NumberFormat.getCurrencyFormat("USD").format(cash));
+    buySellPopup.setAvailableCash(cash);
+
+    // Restart the update timer.
+    updateTimer.schedule(UPDATE_DELAY);
+  }
+
+  /**
    * Request data from the server using the last query string.
    */
   private void update() {
@@ -288,24 +324,18 @@ public class DataBackedWidgets implements EntryPoint {
         favoritesRanges[0]);
     dataService.getStockQuotes(request, new AsyncCallback<StockResponse>() {
       public void onFailure(Throwable caught) {
-        Window.alert("ERROR: " + caught.getMessage());
-        updateTimer.schedule(UPDATE_DELAY);
+        String message = caught.getMessage();
+        if (message.contains("Not logged in")) {
+          // Force the user to login.
+          Window.Location.reload();
+        } else {
+          Window.alert("ERROR: " + caught.getMessage());
+          updateTimer.schedule(UPDATE_DELAY);
+        }
       }
 
       public void onSuccess(StockResponse result) {
-        StockQuoteList searchResults = result.getSearchResults();
-
-        searchListModel.updateDataSize(result.getNumSearchResults(), true);
-        searchListModel.updateViewData(searchResults.getStartIndex(),
-            searchResults.size(), searchResults);
-
-        StockQuoteList favorites = result.getFavorites();
-
-        favoritesListModel.updateDataSize(result.getNumFavorites(), true);
-        favoritesListModel.updateViewData(favorites.getStartIndex(),
-            favorites.size(), favorites);
-
-        updateTimer.schedule(UPDATE_DELAY);
+        processStockResponse(result);
       }
     });
   }

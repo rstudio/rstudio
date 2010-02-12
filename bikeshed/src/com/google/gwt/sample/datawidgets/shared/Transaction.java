@@ -40,16 +40,16 @@ public class Transaction implements Serializable {
   Transaction() {
   }
 
-  public boolean isBuy() {
-    return isBuy;
+  public int getQuantity() {
+    return quantity;
   }
 
   public String getTicker() {
     return ticker;
   }
 
-  public int getQuantity() {
-    return quantity;
+  public boolean isBuy() {
+    return isBuy;
   }
 
   @Override

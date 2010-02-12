@@ -18,16 +18,10 @@ package com.google.gwt.cells.client;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
+/**
+ * A {@link Cell} used to render a button.
+ */
 public class ButtonCell extends Cell<String> {
-
-  @Override
-  public void render(String data, StringBuilder sb) {
-    sb.append("<button>");
-    if (data != null) {
-      sb.append(data);
-    }
-    sb.append("</button>");
-  }
 
   @Override
   public void onBrowserEvent(Element parent, String value, NativeEvent event,
@@ -39,5 +33,14 @@ public class ButtonCell extends Cell<String> {
     if ("mouseup".equals(event.getType())) {
       mutator.mutate(value, null);
     }
+  }
+
+  @Override
+  public void render(String data, StringBuilder sb) {
+    sb.append("<button>");
+    if (data != null) {
+      sb.append(data);
+    }
+    sb.append("</button>");
   }
 }

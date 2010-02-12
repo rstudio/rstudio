@@ -29,7 +29,7 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
   /**
    * The range of interest for a single handler.
    */
-  static class DefaultRange implements Range, Serializable {
+  public static class DefaultRange implements Range, Serializable {
     private int start;
     private int length;
 

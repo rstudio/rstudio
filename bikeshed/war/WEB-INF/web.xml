@@ -4,21 +4,31 @@
     "http://java.sun.com/dtd/web-app_2_3.dtd">
 
 <web-app>
-  
+
   <!-- Servlets -->
   <servlet>
     <servlet-name>stockServlet</servlet-name>
     <servlet-class>com.google.gwt.sample.datawidgets.server.StockServiceImpl</servlet-class>
   </servlet>
-  
+
   <servlet-mapping>
     <servlet-name>stockServlet</servlet-name>
     <url-pattern>/databackedwidgets/stock</url-pattern>
   </servlet-mapping>
-  
+
   <!-- Default page to serve -->
   <welcome-file-list>
     <welcome-file>DataBackedWidgets.html</welcome-file>
   </welcome-file-list>
+
+  <!-- Require login. -->
+  <security-constraint>
+    <web-resource-collection>
+      <url-pattern>/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>*</role-name>
+    </auth-constraint>
+  </security-constraint>
 
 </web-app>

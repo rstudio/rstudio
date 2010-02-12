@@ -28,32 +28,42 @@ public class StockResponse implements Serializable {
   private int numFavorites;
 
   /**
+   * The amount of available cash in pennies.
+   */
+  private int cash;
+
+  /**
    * Used for RPC.
    */
   StockResponse() {
   }
 
   public StockResponse(StockQuoteList searchResults, StockQuoteList favorites,
-      int numSearchResults, int numFavorites) {
+      int numSearchResults, int numFavorites, int cash) {
     this.searchResults = searchResults;
     this.favorites = favorites;
     this.numSearchResults = numSearchResults;
     this.numFavorites = numFavorites;
+    this.cash = cash;
   }
 
-  public StockQuoteList getSearchResults() {
-    return searchResults;
+  public int getCash() {
+    return cash;
   }
 
   public StockQuoteList getFavorites() {
     return favorites;
   }
 
+  public int getNumFavorites() {
+    return numFavorites;
+  }
+
   public int getNumSearchResults() {
     return numSearchResults;
   }
 
-  public int getNumFavorites() {
-    return numFavorites;
+  public StockQuoteList getSearchResults() {
+    return searchResults;
   }
 }

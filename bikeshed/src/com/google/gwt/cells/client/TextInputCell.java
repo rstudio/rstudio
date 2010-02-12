@@ -19,16 +19,10 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 
+/**
+ * A {@link Cell} used to render a text input.
+ */
 public class TextInputCell extends Cell<String> {
-
-  @Override
-  public void render(String data, StringBuilder sb) {
-    sb.append("<input type='text'");
-    if (data != null) {
-      sb.append(" value='" + data + "'");
-    }
-    sb.append("></input>");
-  }
 
   @Override
   public void onBrowserEvent(Element parent, String value, NativeEvent event,
@@ -41,5 +35,14 @@ public class TextInputCell extends Cell<String> {
       InputElement input = parent.getFirstChild().cast();
       mutator.mutate(value, input.getValue());
     }
+  }
+
+  @Override
+  public void render(String data, StringBuilder sb) {
+    sb.append("<input type='text'");
+    if (data != null) {
+      sb.append(" value='" + data + "'");
+    }
+    sb.append("></input>");
   }
 }

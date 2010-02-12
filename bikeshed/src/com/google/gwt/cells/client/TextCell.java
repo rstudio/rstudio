@@ -15,6 +15,9 @@
  */
 package com.google.gwt.cells.client;
 
+/**
+ * A {@link Cell} used to render text.
+ */
 public class TextCell extends Cell<String> {
 
   @Override

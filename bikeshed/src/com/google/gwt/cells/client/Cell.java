@@ -18,6 +18,11 @@ package com.google.gwt.cells.client;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
+/**
+ * A light weight representation of a renderable object.
+ * 
+ * @param <C> the type that this Cell represents
+ */
 public abstract class Cell<C> {
 
   /**

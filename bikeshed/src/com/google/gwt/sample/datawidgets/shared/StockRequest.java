@@ -19,15 +19,14 @@ import com.google.gwt.list.shared.Range;
 
 import java.io.Serializable;
 
+/**
+ * A request for new stock data.
+ */
 public class StockRequest implements Serializable {
-  
+
   String searchQuery;
   Range searchRange;
   Range favoritesRange;
-  
-  // Used by RPC
-  public StockRequest() {
-  }
 
   public StockRequest(String searchQuery, Range searchRange,
       Range favoritesRange) {
@@ -36,15 +35,21 @@ public class StockRequest implements Serializable {
     this.favoritesRange = favoritesRange;
   }
 
+  /**
+   * Used by RPC.
+   */
+  StockRequest() {
+  }
+
+  public Range getFavoritesRange() {
+    return favoritesRange;
+  }
+
   public String getSearchQuery() {
     return searchQuery;
   }
 
   public Range getSearchRange() {
     return searchRange;
-  }
-
-  public Range getFavoritesRange() {
-    return favoritesRange;
   }
 }

@@ -15,6 +15,12 @@
  */
 package com.google.gwt.cells.client;
 
+/**
+ * A mutator can be added to a Cell to mutate data.
+ * 
+ * @param <T> the data type that will be modified
+ * @param <C> the data type of the cell
+ */
 public interface Mutator<T, C> {
   void mutate(T object, C after);
 }

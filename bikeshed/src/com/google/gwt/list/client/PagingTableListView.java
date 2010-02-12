@@ -38,12 +38,17 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A list view that supports paging and columns.
+ * 
+ * @param <T> the data type of each row.
+ */
 public class PagingTableListView<T> extends Widget {
 
+  protected int curPage;
   private int pageSize;
   private int numPages;
   private ListRegistration listReg;
-  protected int curPage;
   private int totalSize;
   private List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
   private ArrayList<T> data = new ArrayList<T>();
@@ -84,6 +89,19 @@ public class PagingTableListView<T> extends Widget {
     setPage(curPage); // TODO: better way to refresh?
   }
 
+  /**
+   * Get the current page.
+   * 
+   * @return the current page
+   */
+  public int getPage() {
+    return curPage;
+  }
+
+  public void nextPage() {
+    setPage(curPage + 1);
+  }
+
   @Override
   public void onBrowserEvent(Event event) {
     EventTarget target = event.getEventTarget();
@@ -106,17 +124,19 @@ public class PagingTableListView<T> extends Widget {
             column.onBrowserEvent(elem, value, event);
           } else if (row == pageSize) {
             if (col == 0) {
-              prevButton.onBrowserEvent(elem, null, event, new Mutator<String,String>() {
-                public void mutate(String object, String after) {
-                  previousPage();
-                }
-              });
+              prevButton.onBrowserEvent(elem, null, event,
+                  new Mutator<String, String>() {
+                    public void mutate(String object, String after) {
+                      previousPage();
+                    }
+                  });
             } else if (col == 2) {
-              nextButton.onBrowserEvent(elem, null, event, new Mutator<String,String>() {
-                public void mutate(String object, String after) {
-                  nextPage();
-                }
-              });
+              nextButton.onBrowserEvent(elem, null, event,
+                  new Mutator<String, String>() {
+                    public void mutate(String object, String after) {
+                      nextPage();
+                    }
+                  });
             }
           }
           break;
@@ -125,6 +145,45 @@ public class PagingTableListView<T> extends Widget {
 
       node = node.getParentNode();
     }
+  }
+
+  public void previousPage() {
+    setPage(curPage - 1);
+  }
+
+  /**
+   * Set the current visible page.
+   * 
+   * @param page the page index
+   */
+  public void setPage(int page) {
+    int newPage = Math.min(page, numPages - 1);
+    newPage = Math.max(0, newPage);
+
+    // Update the text showing the page number.
+    updatePageText(newPage);
+
+    // Early exit if we are already on the right page.
+    if (curPage != newPage) {
+      curPage = newPage;
+      listReg.setRangeOfInterest(curPage * pageSize, pageSize);
+    }
+
+    updateRowVisibility();
+  }
+
+  /**
+   * Set the number of rows per page.
+   * 
+   * @param pageSize the page size
+   */
+  public void setPageSize(int pageSize) {
+    if (this.pageSize == pageSize) {
+      return;
+    }
+    this.pageSize = pageSize;
+    curPage = -1;
+    setPage(curPage);
   }
 
   protected void render(int start, int length, List<T> values) {
@@ -153,70 +212,52 @@ public class PagingTableListView<T> extends Widget {
     }
   }
 
-  /**
-   * Get the current page.
-   * 
-   * @return the current page
-   */
-  public int getPage() {
-    return curPage;
-  }
-  
-  public void nextPage() {
-    setPage(curPage + 1);
-  }
-  
-  public void previousPage() {
-    setPage(curPage - 1);
-  }
+  private void createRows() {
+    TableElement table = getElement().cast();
+    int numCols = columns.size();
 
-  /**
-   * Set the current visible page.
-   * 
-   * @param page the page index
-   */
-  public void setPage(int page) {
-    int newPage = Math.min(page, numPages - 1);
-    newPage = Math.max(0, newPage);
-
-    // Update the text showing the page number.
-    updatePageText(newPage);
-
-    // Early exit if we are already on the right page.
-    if (curPage != newPage) {
-      curPage = newPage;
-      listReg.setRangeOfInterest(curPage * pageSize, pageSize);
+    // TODO - only delete as needed
+    int numRows = table.getRows().getLength();
+    while (numRows-- > 0) {
+      table.deleteRow(0);
     }
 
-    updateRowVisibility();
-  }
-
-  private void updateRowVisibility() {
-    int visible = Math.min(pageSize, totalSize - curPage * pageSize);
-
-    TableElement table = getElement().cast();
     for (int r = 0; r < pageSize; ++r) {
-      Style rowStyle = table.getRows().getItem(r).getStyle();
-      if (r < visible) {
-        rowStyle.clearDisplay();
-      } else {
-        rowStyle.setDisplay(Display.NONE);
+      TableRowElement row = table.insertRow(0);
+      row.setClassName("pagingTableListView "
+          + ((r & 0x1) == 0 ? "evenRow" : "oddRow"));
+
+      // TODO: use cloneNode() to make this even faster.
+      for (int c = 0; c < numCols; ++c) {
+        row.insertCell(c);
       }
     }
-  }
 
-  /**
-   * Set the number of rows per page.
-   * 
-   * @param pageSize the page size
-   */
-  public void setPageSize(int pageSize) {
-    if (this.pageSize == pageSize) {
-      return;
+    // Add the final row containing paging buttons
+    TableRowElement pageRow = table.insertRow(pageSize);
+    pageRow.insertCell(0);
+    pageRow.insertCell(1);
+    pageRow.insertCell(2);
+
+    StringBuilder sb;
+
+    sb = new StringBuilder();
+    prevButton.render("Previous", sb);
+    pageRow.getCells().getItem(0).setInnerHTML(sb.toString());
+
+    pageRow.getCells().getItem(1).setAttribute("colspan", "" + (numCols - 2));
+    pageRow.getCells().getItem(1).setAttribute("align", "center");
+
+    sb = new StringBuilder();
+    nextButton.render("Next", sb);
+    pageRow.getCells().getItem(2).setInnerHTML(sb.toString());
+    pageRow.getCells().getItem(2).setAttribute("align", "right");
+
+    // Make room for the data cache
+    data.ensureCapacity(pageSize);
+    while (data.size() < pageSize) {
+      data.add(null);
     }
-    this.pageSize = pageSize;
-    curPage = -1;
-    setPage(curPage);
   }
 
   /**
@@ -231,50 +272,17 @@ public class PagingTableListView<T> extends Widget {
     rows.getItem(rows.getLength() - 1).getCells().getItem(1).setInnerText(text);
   }
 
-  private void createRows() {
+  private void updateRowVisibility() {
+    int visible = Math.min(pageSize, totalSize - curPage * pageSize);
+
     TableElement table = getElement().cast();
-    int numCols = columns.size();
-    
-    // TODO - only delete as needed
-    int numRows = table.getRows().getLength();
-    while (numRows-- > 0) {
-      table.deleteRow(0);
-    }
-    
     for (int r = 0; r < pageSize; ++r) {
-      TableRowElement row = table.insertRow(0);
-      row.setClassName("pagingTableListView " + ((r & 0x1) == 0 ? "evenRow" : "oddRow"));
-
-      // TODO: use cloneNode() to make this even faster.
-      for (int c = 0; c < numCols; ++c) {
-        row.insertCell(c);
+      Style rowStyle = table.getRows().getItem(r).getStyle();
+      if (r < visible) {
+        rowStyle.clearDisplay();
+      } else {
+        rowStyle.setDisplay(Display.NONE);
       }
-    }
-    
-    // Add the final row containing paging buttons
-    TableRowElement pageRow = table.insertRow(pageSize);
-    pageRow.insertCell(0);
-    pageRow.insertCell(1);
-    pageRow.insertCell(2);
-    
-    StringBuilder sb;
-    
-    sb = new StringBuilder();
-    prevButton.render("Previous", sb);
-    pageRow.getCells().getItem(0).setInnerHTML(sb.toString());
-    
-    pageRow.getCells().getItem(1).setAttribute("colspan", "" + (numCols - 2));
-    pageRow.getCells().getItem(1).setAttribute("align", "center");
-    
-    sb = new StringBuilder();
-    nextButton.render("Next", sb);
-    pageRow.getCells().getItem(2).setInnerHTML(sb.toString());
-    pageRow.getCells().getItem(2).setAttribute("align", "right");
-
-    // Make room for the data cache
-    data.ensureCapacity(pageSize);
-    while (data.size() < pageSize) {
-      data.add(null);
     }
   }
 }

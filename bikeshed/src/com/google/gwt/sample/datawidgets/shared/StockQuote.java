@@ -38,16 +38,13 @@ public class StockQuote implements Serializable {
    * @param sharesOwned the number of shares owned by the player
    * @param favorite true if the stock is in the player's favorites
    */
-  public StockQuote(String ticker, String name, int price, int sharesOwned, boolean favorite) {
+  public StockQuote(String ticker, String name, int price, int sharesOwned,
+      boolean favorite) {
     this.ticker = ticker;
     this.name = name;
     this.price = price;
     this.sharesOwned = sharesOwned;
     this.favorite = favorite;
-  }
-  
-  public int getSharesOwned() {
-    return sharesOwned;
   }
 
   /**
@@ -59,7 +56,7 @@ public class StockQuote implements Serializable {
   public String getDisplayPrice() {
     int dollars = getPrice() / 100;
     int cents = getPrice() % 100;
-    
+
     StringBuilder sb = new StringBuilder();
     sb.append("$ ");
     sb.append(dollars);
@@ -82,7 +79,11 @@ public class StockQuote implements Serializable {
   public int getPrice() {
     return price;
   }
-  
+
+  public int getSharesOwned() {
+    return sharesOwned;
+  }
+
   public String getTicker() {
     return ticker;
   }

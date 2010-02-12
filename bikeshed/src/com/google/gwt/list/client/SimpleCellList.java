@@ -30,6 +30,11 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A single column list of cells.
+ * 
+ * @param <T> the data type of list items
+ */
 public class SimpleCellList<T> extends Widget {
 
   private final Cell<T> cell;
@@ -81,14 +86,19 @@ public class SimpleCellList<T> extends Widget {
   @Override
   public void onBrowserEvent(Event event) {
     Element target = event.getEventTarget().cast();
-    String __idx = "";
-    while ((target != null) && ((__idx = target.getAttribute("__idx")).length() == 0)) {
+    String idxString = "";
+    while ((target != null)
+        && ((idxString = target.getAttribute("__idx")).length() == 0)) {
       target = target.getParentElement();
     }
-    if (__idx.length() > 0) {
-      int idx = Integer.parseInt(__idx);
+    if (idxString.length() > 0) {
+      int idx = Integer.parseInt(idxString);
       cell.onBrowserEvent(target, data.get(idx), event, mutator);
     }
+  }
+
+  public void setMutator(Mutator<T, T> mutator) {
+    this.mutator = mutator;
   }
 
   private void gc(int size) {
@@ -131,9 +141,5 @@ public class SimpleCellList<T> extends Widget {
         parent.appendChild(tmpElem.getChild(0));
       }
     }
-  }
-
-  public void setMutator(Mutator<T, T> mutator) {
-    this.mutator = mutator;
   }
 }

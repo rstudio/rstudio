@@ -15,7 +15,11 @@
  */
 package com.google.gwt.sample.datawidgets.server;
 
+import com.google.appengine.api.users.User;
+import com.google.appengine.api.users.UserService;
+import com.google.appengine.api.users.UserServiceFactory;
 import com.google.gwt.list.shared.Range;
+import com.google.gwt.list.shared.AbstractListModel.DefaultRange;
 import com.google.gwt.sample.datawidgets.client.StockService;
 import com.google.gwt.sample.datawidgets.shared.StockQuote;
 import com.google.gwt.sample.datawidgets.shared.StockQuoteList;
@@ -47,8 +51,9 @@ import java.util.regex.PatternSyntaxException;
 public class StockServiceImpl extends RemoteServiceServlet implements
     StockService {
 
-  private static final String IMPOSSIBLE_TICKER_SYMBOL = "XXXXXXXXXX";
-
+  /**
+   * The result of a query to the remote service that provides stock quotes.
+   */
   private class Result {
     int numRows;
     StockQuoteList quotes;
@@ -76,15 +81,13 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     }
   }
 
-  private TreeSet<String> favorites = new TreeSet<String>();
-
-  private String favoritesQuery = IMPOSSIBLE_TICKER_SYMBOL;
-
-  private HashMap<String, Integer> sharesOwnedBySymbol = new HashMap<String, Integer>();
+  /**
+   * A mapping of usernames to {@link PlayerStatus}.
+   */
+  private Map<String, PlayerStatus> players = new HashMap<String, PlayerStatus>();
 
   public void addFavorite(String ticker) {
-    favorites.add(ticker);
-    generateFavoritesQuery();
+    ensurePlayer().addFavorite(ticker);
   }
 
   public StockResponse getStockQuotes(StockRequest request)
@@ -97,50 +100,59 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     Range searchRange = request.getSearchRange();
     Range favoritesRange = request.getFavoritesRange();
 
+    PlayerStatus player = ensurePlayer();
     Result searchResults = query(query, searchRange);
-    Result favorites = query(favoritesQuery, favoritesRange);
+    Result favorites = query(player.getFavoritesQuery(), favoritesRange);
 
     return new StockResponse(searchResults.quotes, favorites.quotes,
-        searchResults.numRows, favorites.numRows);
+        searchResults.numRows, favorites.numRows, player.getCash());
   }
 
   public void removeFavorite(String ticker) {
-    favorites.remove(ticker);
-    generateFavoritesQuery();
+    ensurePlayer().removeFavorite(ticker);
   }
 
   public Transaction transact(Transaction transaction)
       throws IllegalArgumentException {
-    // TODO: Check that the stock exists.
+    // Get the current stock price.
     String ticker = transaction.getTicker();
-    Integer current = sharesOwnedBySymbol.get(ticker);
-    if (current == null) {
-      current = 0;
+    if (ticker == null || ticker.length() < 0) {
+      throw new IllegalArgumentException("Stock could not be found");
     }
+    Result result = query(ticker, new DefaultRange(0, 1));
+    if (result.numRows != 1 || result.quotes.size() != 1) {
+      throw new IllegalArgumentException("Could not resolve stock ticker");
+    }
+    StockQuote quote = result.quotes.get(0);
 
+    // Perform the transaction with the user.
     int quantity = transaction.getQuantity();
     if (transaction.isBuy()) {
-      current += quantity;
-      // TODO: Verify player has enough funds.
-      addFavorite(ticker);
+      ensurePlayer().buy(ticker, quantity, quote.getPrice());
     } else {
-      if (quantity > current) {
-        throw new IllegalArgumentException(
-            "You cannot sell more stock than you own");
-      }
-      current -= quantity;
+      ensurePlayer().sell(ticker, quantity, quote.getPrice());
     }
-    sharesOwnedBySymbol.put(ticker, current);
+
+    // 
     return new Transaction(true, ticker, quantity);
   }
 
-  private void generateFavoritesQuery() {
-    StringBuilder sb = new StringBuilder(IMPOSSIBLE_TICKER_SYMBOL);
-    for (String ticker : favorites) {
-      sb.append('|');
-      sb.append(ticker);
+  /**
+   * Ensure that a {@link PlayerStatus} for the current player exists and return
+   * it.
+   * 
+   * @return the {@link PlayerStatus} for the current player
+   */
+  private PlayerStatus ensurePlayer() {
+    UserService userService = UserServiceFactory.getUserService();
+    User user = userService.getCurrentUser();
+    String userId = user.getUserId();
+    PlayerStatus player = players.get(userId);
+    if (player == null) {
+      player = new PlayerStatus();
+      players.put(userId, player);
     }
-    favoritesQuery = sb.toString();
+    return player;
   }
 
   private List<String> getTickers(String query) {
@@ -177,8 +189,16 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     return false;
   }
 
+  /**
+   * Query the remote service to retrieve current stock prices.
+   * 
+   * @param query the query string
+   * @param range the range of results requested
+   * @return the stock quotes
+   */
   private Result query(String query, Range range) {
     // Get all symbols for the query.
+    PlayerStatus player = ensurePlayer();
     List<String> symbols = getTickers(query);
 
     if (symbols.size() == 0) {
@@ -258,8 +278,8 @@ public class StockServiceImpl extends RemoteServiceServlet implements
         try {
           iprice = (int) (Double.parseDouble(price) * 100);
           String name = companyNamesBySymbol.get(symbol);
-          Integer sharesOwned = sharesOwnedBySymbol.get(symbol);
-          boolean favorite = favorites.contains(symbol);
+          Integer sharesOwned = player.getSharesOwned(symbol);
+          boolean favorite = player.isFavorite(symbol);
           priceMap.put(symbol, new StockQuote(symbol, name, iprice,
               sharesOwned == null ? 0 : sharesOwned.intValue(), favorite));
         } catch (NumberFormatException e) {

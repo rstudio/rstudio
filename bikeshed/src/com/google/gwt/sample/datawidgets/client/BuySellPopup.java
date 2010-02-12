@@ -17,6 +17,9 @@ package com.google.gwt.sample.datawidgets.client;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.sample.datawidgets.shared.StockQuote;
 import com.google.gwt.sample.datawidgets.shared.Transaction;
 import com.google.gwt.user.client.Command;
@@ -69,6 +72,22 @@ public class BuySellPopup extends DialogBox {
     layout.setHTML(2, 0, "<b>Price:</b>");
     layout.setHTML(3, 0, "<b>Quantity:</b>");
     layout.setWidget(3, 1, quantityBox);
+    layout.setHTML(4, 0, "<b>Total:</b>");
+    layout.setHTML(5, 0, "<b>Available:</b>");
+
+    // Update total price when the quantity changes.
+    quantityBox.addKeyUpHandler(new KeyUpHandler() {
+      public void onKeyUp(KeyUpEvent event) {
+        try {
+          int quantity = Integer.parseInt(quantityBox.getText());
+          double totalPrice = quantity * quote.getPrice() / 100.0;
+          layout.setText(4, 1, NumberFormat.getCurrencyFormat("USD").format(
+              totalPrice));
+        } catch (NumberFormatException e) {
+          layout.setText(4, 1, "Invalid quantity");
+        }
+      }
+    });
 
     // Buy Button.
     opButton = new Button("", new ClickHandler() {
@@ -82,7 +101,7 @@ public class BuySellPopup extends DialogBox {
         }
       }
     });
-    layout.setWidget(4, 0, opButton);
+    layout.setWidget(6, 0, opButton);
 
     // Cancel Button.
     Button cancelButton = new Button("Cancel", new ClickHandler() {
@@ -90,7 +109,7 @@ public class BuySellPopup extends DialogBox {
         hide();
       }
     });
-    layout.setWidget(4, 1, cancelButton);
+    layout.setWidget(6, 1, cancelButton);
   }
 
   /**
@@ -103,6 +122,16 @@ public class BuySellPopup extends DialogBox {
   }
 
   /**
+   * Set the available cash.
+   * 
+   * @param cash the available cash
+   */
+  public void setAvailableCash(double cash) {
+    // TODO: Bind the available cash field.
+    layout.setText(5, 1, NumberFormat.getCurrencyFormat("USD").format(cash));
+  }
+
+  /**
    * Set the current {@link StockQuote}.
    * 
    * @param quote the stock quote to buy
@@ -112,9 +141,10 @@ public class BuySellPopup extends DialogBox {
     this.quote = quote;
     String op = isBuying ? "Buy" : "Sell";
     setText(op + " " + quote.getTicker() + " (" + quote.getName() + ")");
-    layout.setHTML(0, 1, quote.getTicker());
-    layout.setHTML(1, 1, quote.getName());
-    layout.setHTML(2, 1, quote.getDisplayPrice());
+    layout.setText(0, 1, quote.getTicker());
+    layout.setText(1, 1, quote.getName());
+    layout.setText(2, 1, quote.getDisplayPrice());
+    layout.setText(4, 1, NumberFormat.getCurrencyFormat("USD").format(0.0));
     quantityBox.setText("0");
     opButton.setText(op);
     this.isBuying = isBuying;

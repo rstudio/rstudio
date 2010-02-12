@@ -19,16 +19,10 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 
+/**
+ * A {@link Cell} used to render a checkbox.
+ */
 public class CheckboxCell extends Cell<Boolean> {
-
-  @Override
-  public void render(Boolean data, StringBuilder sb) {
-    sb.append("<input type=\"checkbox\"");
-    if (data == Boolean.TRUE) {
-      sb.append(" checked");
-    }
-    sb.append("/>");
-  }
 
   @Override
   public void onBrowserEvent(Element parent, Boolean value, NativeEvent event,
@@ -41,5 +35,14 @@ public class CheckboxCell extends Cell<Boolean> {
       InputElement input = parent.getFirstChild().cast();
       mutator.mutate(value, input.isChecked());
     }
+  }
+
+  @Override
+  public void render(Boolean data, StringBuilder sb) {
+    sb.append("<input type=\"checkbox\"");
+    if (data == Boolean.TRUE) {
+      sb.append(" checked");
+    }
+    sb.append("/>");
   }
 }

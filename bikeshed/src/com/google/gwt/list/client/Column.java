@@ -20,6 +20,12 @@ import com.google.gwt.cells.client.Mutator;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
+/**
+ * A representation of a column in a table.
+ * 
+ * @param <T> the row type
+ * @param <C> the column type
+ */
 public abstract class Column<T, C> {
   private final Cell<C> cell;
   private Mutator<T, C> mutator;
@@ -44,9 +50,10 @@ public abstract class Column<T, C> {
     this.mutator = mutator;
   }
 
-  protected abstract C getValue(T object);
-
   protected Cell<C> getCell() {
     return cell;
   }
+
+  protected abstract C getValue(T object);
+
 }

@@ -15,13 +15,16 @@
  */
 package com.google.gwt.cells.client;
 
+/**
+ * A {@link Cell} used to render currency.
+ */
 public class CurrencyCell extends Cell<Integer> {
 
   @Override
   public void render(Integer price, StringBuilder sb) {
     int dollars = price / 100;
     int cents = price % 100;
-    
+
     sb.append("$ ");
     sb.append(dollars);
     sb.append('.');
