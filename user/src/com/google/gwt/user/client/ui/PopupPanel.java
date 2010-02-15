@@ -1391,11 +1391,15 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
           }
         }
       });
-    } else if (nativePreviewHandlerRegistration != null) {
-      nativePreviewHandlerRegistration.removeHandler();
-      nativePreviewHandlerRegistration = null;
-      historyHandlerRegistration.removeHandler();
-      historyHandlerRegistration = null;
+    } else {
+      if (nativePreviewHandlerRegistration != null) {
+        nativePreviewHandlerRegistration.removeHandler();
+        nativePreviewHandlerRegistration = null;
+      }
+      if (historyHandlerRegistration != null) {
+        historyHandlerRegistration.removeHandler();
+        historyHandlerRegistration = null;
+      }
     }
   }
 }
