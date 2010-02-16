@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
@@ -23,6 +24,7 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsExprStmt;
 
 import java.util.HashSet;
 import java.util.ListIterator;
@@ -38,17 +40,33 @@ import java.util.Stack;
  */
 public class EvalFunctionsAtTopScope extends JsModVisitor {
 
-  public static void exec(JsProgram jsProgram) {
-    EvalFunctionsAtTopScope fev = new EvalFunctionsAtTopScope();
+
+  public static void exec(JsProgram jsProgram, JavaToJavaScriptMap map) {
+    EvalFunctionsAtTopScope fev = new EvalFunctionsAtTopScope(map);
     fev.accept(jsProgram);
   }
 
+  private JsStatement currentStatement;
+  
   private final Set<JsFunction> dontMove = new HashSet<JsFunction>();
 
   private final Stack<ListIterator<JsStatement>> itrStack = new Stack<ListIterator<JsStatement>>();
 
+  private JavaToJavaScriptMap java2jsMap;
+  
   private final Stack<JsBlock> scopeStack = new Stack<JsBlock>();
-
+  
+  
+  
+  public EvalFunctionsAtTopScope(JavaToJavaScriptMap java2jsMap) {
+    this.java2jsMap = java2jsMap;
+  }
+  
+  @Override
+  public void endVisit(JsExprStmt x, JsContext<JsStatement> ctx) {
+    currentStatement = null;     
+  }
+  
   @Override
   public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
     scopeStack.pop();
@@ -91,11 +109,22 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
   }
 
   @Override
+  public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
+    currentStatement = x;
+    return true;
+  }
+
+  @Override
   public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+    JsFunction func = JsStaticEval.isFunctionDecl(currentStatement);
+    
     /*
      * We do this during visit() to preserve first-to-last evaluation order.
+     * We check if this function is a vtable declaration and don't 
+     * move functions used in other expressions or are in vtable assignments.
      */
-    if (x.getName() != null && !dontMove.contains(x)) {
+    if (x.getName() != null && !dontMove.contains(x) && 
+        !isVtableDeclaration(currentStatement)) {
       /*
        * Reinsert this function into the statement immediately before the
        * current statement. The current statement will have already been
@@ -116,6 +145,7 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
     return true;
   }
 
+
   @Override
   public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
     scopeStack.push(x.getGlobalBlock());
@@ -126,5 +156,9 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
   public boolean visit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
     scopeStack.push(x.getGlobalBlock());
     return true;
+  }
+  
+  private boolean isVtableDeclaration(JsStatement currentStatement) {
+    return java2jsMap.vtableInitToMethod(currentStatement) != null;
   }
 }

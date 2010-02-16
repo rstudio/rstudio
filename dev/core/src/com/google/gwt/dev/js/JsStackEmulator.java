@@ -70,6 +70,8 @@ import java.util.Set;
  */
 public class JsStackEmulator {
 
+  private static final String PROPERTY_NAME = "compiler.stackMode";
+
   /**
    * Resets the global stack depth to the local stack index and top stack frame
    * after calls to Exceptions.caught. This is created by
@@ -799,9 +801,21 @@ public class JsStackEmulator {
     }
   }
 
-  private static final String PROPERTY_NAME = "compiler.emulatedStack";
-
+  /**
+   * Corresponds to property compiler.stackMode in EmulateJsStack.gwt.xml
+   * module.
+   */
+  public enum StackMode {
+    STRIP, NATIVE, EMULATED;
+  }
+  
   public static void exec(JsProgram program, PropertyOracle[] propertyOracles) {
+    if (getStackMode(propertyOracles) == StackMode.EMULATED) {
+      (new JsStackEmulator(program, propertyOracles)).execImpl();
+    }
+  }
+
+  public static StackMode getStackMode(PropertyOracle[] propertyOracles) {
     SelectionProperty property;
     try {
       property = propertyOracles[0].getSelectionProperty(TreeLogger.NULL,
@@ -814,9 +828,21 @@ public class JsStackEmulator {
 
     String value = property.getCurrentValue();
     assert value != null : property.getName() + " did not have a value";
-    if (Boolean.valueOf(value)) {
-      (new JsStackEmulator(program, propertyOracles)).execImpl();
+    StackMode stackMode = StackMode.valueOf(value.toUpperCase());
+    // Check for multiply defined properties
+    if (propertyOracles.length > 1) {
+      for (int i = 1; i < propertyOracles.length; ++i) {
+        try {
+          property = propertyOracles[i].getSelectionProperty(TreeLogger.NULL,
+              PROPERTY_NAME);
+        } catch (BadPropertyValueException e) {
+          // OK! 
+        }
+        assert value.equals(property.getCurrentValue()) : 
+            "compiler.stackMode property has multiple values.";
+      }
     }
+    return stackMode;
   }
 
   private JsFunction caughtFunction;

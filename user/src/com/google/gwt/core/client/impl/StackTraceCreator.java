@@ -341,6 +341,26 @@ public class StackTraceCreator {
   }
 
   /**
+   * When compiler.stackMode = strip, we stub out the collector.
+   */
+  static class CollectorNull extends Collector {
+    @Override
+    public  JsArrayString collect() {
+      return JsArrayString.createArray().cast();
+    }
+
+    @Override
+    public void createStackTrace(JavaScriptException e) {
+      e.setStackTrace(new StackTraceElement[0]);
+    }
+
+    @Override
+    public void fillInStackTrace(Throwable t) {
+      t.setStackTrace(new StackTraceElement[0]);
+    }
+  }
+  
+  /**
    * Create a stack trace based on a JavaScriptException. This method should
    * only be called in web mode.
    */

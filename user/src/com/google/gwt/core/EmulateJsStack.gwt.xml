@@ -34,4 +34,11 @@
     <when-type-is class="com.google.gwt.core.client.impl.StackTraceCreator.Collector" />
     <when-property-is name="compiler.emulatedStack" value="true" />
   </replace-with>
+  
+  <!-- if set to 'strip', stack information can be removed or corrupted -->
+  <define-property name="compiler.stackMode" values="strip,native,emulated" />
+  <set-property name="compiler.stackMode" value="native" />
+  <set-property name="compiler.stackMode" value="emulated" >
+    <when-property-is name="compiler.emulatedStack" value="true" />
+  </set-property>  
 </module>

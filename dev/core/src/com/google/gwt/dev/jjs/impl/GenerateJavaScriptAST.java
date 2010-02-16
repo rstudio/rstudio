@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
@@ -87,6 +88,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
+import com.google.gwt.dev.js.JsStackEmulator;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -133,6 +135,7 @@ import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
+import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Maps;
 
 import java.util.ArrayList;
@@ -337,14 +340,21 @@ public class GenerateJavaScriptAST {
       }
 
       // my global name
-      JsName globalName;
+      JsName globalName = null;
       assert x.getEnclosingType() != null;
       String mangleName = mangleNameForGlobal(x);
-      globalName = topScope.declareName(mangleName, name);
-      x.getSourceInfo().addCorrelation(program.getCorrelator().by(globalName));
-      names.put(x, globalName);
-      recordSymbol(x, globalName);
 
+      /*
+       * Only allocate a name for a function if it is native, not polymorphic,
+       * or stack-stripping is disabled.
+       */
+      if (!stripStack || !polymorphicNames.containsKey(x) || x.isNative()) {
+        globalName = topScope.declareName(mangleName, name);
+        x.getSourceInfo().addCorrelation(
+            program.getCorrelator().by(globalName));
+        names.put(x, globalName);
+        recordSymbol(x, globalName);
+      }
       JsFunction jsFunction;
       if (x.isNative()) {
         // set the global name of the JSNI peer
@@ -355,7 +365,19 @@ public class GenerateJavaScriptAST {
         // create a new peer JsFunction
         SourceInfo sourceInfo = x.getSourceInfo().makeChild(
             CreateNamesAndScopesVisitor.class, "Translated JS function");
+        /*
+         * It would be more correct here to check for an inline assignment,
+         * such as var foo = function blah() {} and introduce a separate scope
+         * for the function's name according to EcmaScript-262, but this would
+         * mess up stack traces by allowing two inner scope function names to
+         * onfuscate to the same identifier, making function names no longer
+         * a 1:1 mapping to obfuscated symbols. Leaving them in global scope
+         * causes no harm. 
+         */
         jsFunction = new JsFunction(sourceInfo, topScope, globalName, true);
+        if (polymorphicNames.containsKey(x)) {
+          polymorphicJsFunctions.add(jsFunction);
+        }
       }
       methodBodyMap.put(x.getBody(), jsFunction);
       jsFunction.getSourceInfo().addCorrelation(
@@ -632,7 +654,8 @@ public class GenerateJavaScriptAST {
       // declare all methods into the global scope
       for (int i = 0; i < jsFuncs.size(); ++i) {
         JsFunction func = jsFuncs.get(i);
-        if (func != null) {
+        // don't add polymorphic JsFuncs, inline decl into vtable assignment
+        if (func != null && !polymorphicJsFunctions.contains(func)) {
           globalStmts.add(func.makeStmt());
         }
       }
@@ -1558,14 +1581,14 @@ public class GenerateJavaScriptAST {
       // Add it first, so that script-tag chunking in IFrameLinker works
       globalStatements.add(0, nullFunc.makeStmt());
     }
-
+    
     private void generateSeedFuncAndPrototype(JClassType x,
         List<JsStatement> globalStmts) {
       SourceInfo sourceInfo = x.getSourceInfo().makeChild(
           GenerateJavaScriptVisitor.class, "Seed and function prototype");
       if (x != program.getTypeJavaLangString()) {
         JsName seedFuncName = names.get(x);
-
+        
         // seed function
         // function com_example_foo_Foo() { }
         JsFunction seedFunc = new JsFunction(sourceInfo, topScope,
@@ -1705,7 +1728,11 @@ public class GenerateJavaScriptAST {
         if (!method.isStatic() && !method.isAbstract()) {
           JsNameRef lhs = polymorphicNames.get(method).makeRef(sourceInfo);
           lhs.setQualifier(globalTemp.makeRef(sourceInfo));
-          JsNameRef rhs = names.get(method).makeRef(sourceInfo);
+          /*
+           * Inline JsFunction rather than reference, e.g.
+           * _.vtableName = function functionName() { ... }
+           */
+          JsExpression rhs = methodBodyMap.get(method.getBody());
           JsExpression asg = createAssignment(lhs, rhs);
           JsExprStmt asgStat = new JsExprStmt(x.getSourceInfo(), asg);
           globalStmts.add(asgStat);
@@ -1889,9 +1916,10 @@ public class GenerateJavaScriptAST {
   }
 
   public static JavaToJavaScriptMap exec(JProgram program, JsProgram jsProgram,
-      JsOutputOption output, Map<StandardSymbolData, JsName> symbolTable) {
+      JsOutputOption output, Map<StandardSymbolData, JsName> symbolTable,
+      PropertyOracle[] propertyOracles) {
     GenerateJavaScriptAST generateJavaScriptAST = new GenerateJavaScriptAST(
-        program, jsProgram, output, symbolTable);
+        program, jsProgram, output, symbolTable, propertyOracles);
     return generateJavaScriptAST.execImpl();
   }
 
@@ -1932,9 +1960,9 @@ public class GenerateJavaScriptAST {
   private final JsScope objectScope;
   private final JsOutputOption output;
   private final Map<JMethod, JsName> polymorphicNames = new IdentityHashMap<JMethod, JsName>();
-
+  private final Set<JsFunction> polymorphicJsFunctions = new IdentityHashSet<JsFunction>();
   private final JProgram program;
-
+  
   /**
    * All of the fields and polymorphic methods in String.
    * 
@@ -1952,6 +1980,12 @@ public class GenerateJavaScriptAST {
   private final Set<JDeclaredType> specialObfuscatedTypes = new HashSet<JDeclaredType>();
 
   /**
+   * If true, polymorphic functions are made anonymous vtable declarations and
+   * not assigned topScope identifiers.
+   */
+  private boolean stripStack;
+  
+  /**
    * Maps JsNames to machine-usable identifiers.
    */
   private final Map<StandardSymbolData, JsName> symbolTable;
@@ -1968,7 +2002,8 @@ public class GenerateJavaScriptAST {
   private final Map<JsStatement, JMethod> vtableInitForMethodMap = new HashMap<JsStatement, JMethod>();
 
   private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram,
-      JsOutputOption output, Map<StandardSymbolData, JsName> symbolTable) {
+      JsOutputOption output, Map<StandardSymbolData, JsName> symbolTable,
+      PropertyOracle[] propertyOracles) {
     this.program = program;
     typeOracle = program.typeOracle;
     this.jsProgram = jsProgram;
@@ -1978,6 +2013,8 @@ public class GenerateJavaScriptAST {
     this.output = output;
     this.symbolTable = symbolTable;
 
+    this.stripStack = JsStackEmulator.getStackMode(propertyOracles) == 
+        JsStackEmulator.StackMode.STRIP;
     /*
      * Because we modify String's prototype, all fields and polymorphic methods
      * on String's super types need special handling.

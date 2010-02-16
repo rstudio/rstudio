@@ -92,6 +92,7 @@ import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
+import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
 import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsNormalizer;
@@ -106,6 +107,7 @@ import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.SizeBreakdown;
+import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.AbstractTextOutput;
@@ -261,7 +263,7 @@ public class JavaToJavaScriptCompiler {
       // (7) Generate a JavaScript code DOM from the Java type declarations
       jprogram.typeOracle.recomputeAfterOptimizations();
       JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(jprogram, jsProgram,
-          options.getOutput(), symbolTable);
+          options.getOutput(), symbolTable, propertyOracles);
 
       // (8) Normalize the JS AST.
       // Fix invalid constructs created during JS AST gen.
@@ -269,7 +271,7 @@ public class JavaToJavaScriptCompiler {
       // Resolve all unresolved JsNameRefs.
       JsSymbolResolver.exec(jsProgram);
       // Move all function definitions to a top-level scope, to reduce weirdness
-      EvalFunctionsAtTopScope.exec(jsProgram);
+      EvalFunctionsAtTopScope.exec(jsProgram, map);
 
       // (9) Optimize the JS AST.
       if (options.isAggressivelyOptimize()) {
@@ -315,6 +317,18 @@ public class JavaToJavaScriptCompiler {
         case OBFUSCATED:
           obfuscateMap = JsStringInterner.exec(jprogram, jsProgram);
           JsObfuscateNamer.exec(jsProgram);
+          if (JsStackEmulator.getStackMode(propertyOracles) ==
+              JsStackEmulator.StackMode.STRIP) {
+            boolean changed = false;
+            for (int i = 0; i < jsProgram.getFragmentCount(); i++) {
+              JsBlock fragment = jsProgram.getFragmentBlock(i);
+              changed = JsDuplicateFunctionRemover.exec(jsProgram, fragment)
+                        || changed;
+            }
+            if (changed) {
+              JsUnusedFunctionRemover.exec(jsProgram);
+            }
+          }
           break;
         case PRETTY:
           // We don't intern strings in pretty mode to improve readability
@@ -781,7 +795,7 @@ public class JavaToJavaScriptCompiler {
     // Also remember $entry, which we'll handle specially in GenerateJsAst
     JMethod registerEntry = program.getIndexedMethod("Impl.registerEntry");
     program.addEntryMethod(registerEntry);
-
+    
     for (String mainClassName : mainClassNames) {
       block.addStmt(makeStatsCalls(program, mainClassName));
       JDeclaredType mainType = program.getFromTypeMap(mainClassName);
