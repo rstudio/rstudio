@@ -377,6 +377,26 @@ public class PopupTest extends GWTTestCase {
     popup.hide();
   }
 
+  public void testSetVisibleWithGlass() {
+    PopupPanel popup = createPopupPanel();
+    popup.setGlassEnabled(true);
+    popup.show();
+
+    Element glass = popup.getGlassElement();
+    assertTrue(popup.isVisible());
+    assertFalse("hidden".equalsIgnoreCase(glass.getStyle().getVisibility()));
+
+    popup.setVisible(false);
+    assertFalse(popup.isVisible());
+    assertTrue("hidden".equalsIgnoreCase(glass.getStyle().getVisibility()));
+
+    popup.setVisible(true);
+    assertTrue(popup.isVisible());
+    assertFalse("hidden".equalsIgnoreCase(glass.getStyle().getVisibility()));
+
+    popup.hide();
+  }
+
   /**
    * Test the showing a popup while it is hiding will not result in an illegal
    * state.

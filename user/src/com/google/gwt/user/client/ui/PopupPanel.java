@@ -925,6 +925,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     impl.setVisible(getElement(), visible);
     if (glass != null) {
       impl.setVisible(glass, visible);
+      glass.getStyle().setProperty("visibility", visible ? "visible" : "hidden");
     }
   }
 
