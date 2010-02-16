@@ -43,9 +43,9 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
    */
   int eventsToSink;
   private boolean attached;
+  private HandlerManager handlerManager;
   private Object layoutData;
   private Widget parent;
-  private HandlerManager handlerManager;
 
   public void fireEvent(GwtEvent<?> event) {
     if (handlerManager != null) {
@@ -196,6 +196,16 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   protected final <H extends EventHandler> HandlerRegistration addHandler(
       final H handler, GwtEvent.Type<H> type) {
     return ensureHandlers().addHandler(type, handler);
+  }
+
+  /**
+   * Creates the {@link HandlerManager} used by this Widget. You can overwrite
+   * this method to create a custom {@link HandlerManager}.
+   * 
+   * @return the {@link HandlerManager} you want to use
+   */
+  protected HandlerManager createHandlerManager() {
+    return new HandlerManager(this);
   }
 
   /**
@@ -359,7 +369,7 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
    * @return the handler manager
    * */
   HandlerManager ensureHandlers() {
-    return handlerManager == null ? handlerManager = new HandlerManager(this)
+    return handlerManager == null ? handlerManager = createHandlerManager()
         : handlerManager;
   }
 
