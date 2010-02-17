@@ -302,10 +302,12 @@ class PreCompileStrategy extends CompileStrategy {
       for (String moduleName : GWTTestCase.getAllTestModuleNames()) {
         TestModuleInfo moduleInfo = GWTTestCase.getTestsForModule(moduleName);
         String syntheticModuleName = moduleInfo.getSyntheticModuleName();
-        ModuleDef moduleDef = maybeCompileModuleImpl(
-            moduleInfo.getModuleName(), syntheticModuleName,
-            moduleInfo.getStrategy(), batchingStrategy, treeLogger);
-        preCompiledModuleDefs.put(syntheticModuleName, moduleDef);
+        if (syntheticModuleName != null) {
+          ModuleDef moduleDef = maybeCompileModuleImpl(
+              moduleInfo.getModuleName(), syntheticModuleName,
+              moduleInfo.getStrategy(), batchingStrategy, treeLogger);
+          preCompiledModuleDefs.put(syntheticModuleName, moduleDef);
+        }
       }
     }
   }
