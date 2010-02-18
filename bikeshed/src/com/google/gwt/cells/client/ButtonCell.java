@@ -25,13 +25,13 @@ public class ButtonCell extends Cell<String> {
 
   @Override
   public void onBrowserEvent(Element parent, String value, NativeEvent event,
-      Mutator<String, String> mutator) {
-    if (mutator == null) {
+      ValueUpdater<String> valueUpdater) {
+    if (valueUpdater == null) {
       return;
     }
 
     if ("mouseup".equals(event.getType())) {
-      mutator.mutate(value, null);
+      valueUpdater.update(value);
     }
   }
 

@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.datawidgets.client;
+package com.google.gwt.sample.stocks.client;
 
 import com.google.gwt.cells.client.Cell;
-import com.google.gwt.sample.datawidgets.shared.StockQuote;
+import com.google.gwt.sample.stocks.shared.StockQuote;
 
 /**
  * A cell that represents a {@link StockQuote}.

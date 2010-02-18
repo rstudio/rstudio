@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.datawidgets.shared;
+package com.google.gwt.sample.stocks.shared;
+
+import com.google.gwt.i18n.client.NumberFormat;
 
 import java.io.Serializable;
 
@@ -22,22 +24,34 @@ import java.io.Serializable;
  */
 public class Transaction implements Serializable {
 
+  private int actualPrice; // in pennies
+  
   /**
    * True if a buy transaction, false if a sell transaction.
    */
   private boolean isBuy;
 
-  private String ticker;
   private int quantity;
+  private String ticker;
 
   public Transaction(boolean isBuy, String ticker, int quantity) {
+    this(isBuy, ticker, quantity, -1);
+  }
+
+  public Transaction(boolean isBuy, String ticker, int quantity,
+      int actualPrice) {
     super();
     this.isBuy = isBuy;
     this.ticker = ticker;
     this.quantity = quantity;
+    this.actualPrice = actualPrice;
+  }
+  
+  Transaction() {
   }
 
-  Transaction() {
+  public int getActualPrice() {
+    return actualPrice;
   }
 
   public int getQuantity() {
@@ -55,6 +69,11 @@ public class Transaction implements Serializable {
   @Override
   public String toString() {
     String op = isBuy ? "Bought" : "Sold";
-    return op + " " + quantity + " shares of " + ticker;
+    if (actualPrice == -1) {
+      return op + " " + quantity + " shares of " + ticker;
+    } else {
+      return op + " " + quantity + " shares of " + ticker + " at " +
+          NumberFormat.getCurrencyFormat("USD").format(actualPrice / 100.0);
+    }
   }
 }

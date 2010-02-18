@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.datawidgets.shared;
+package com.google.gwt.sample.stocks.shared;
 
 import java.io.Serializable;
 

@@ -13,14 +13,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.cells.client;
+package com.google.gwt.sample.stocks.shared;
+
+import java.util.ArrayList;
 
 /**
- * A mutator can be added to a Cell to mutate data.
- * 
- * @param <T> the data type that will be modified
- * @param <C> the data type of the cell
+ * A list of {@link StockQuote} that knows its start index in the global list of
+ * results.
  */
-public interface Mutator<T, C> {
-  void mutate(T object, C after);
+public class StockQuoteList extends ArrayList<StockQuote> {
+
+  private int start;
+
+  public StockQuoteList(int start) {
+    this.start = start;
+  }
+
+  /**
+   * Used by RPC.
+   */
+  StockQuoteList() {
+  }
+
+  public int getStartIndex() {
+    return start;
+  }
 }
+

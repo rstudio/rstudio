@@ -29,10 +29,10 @@ public abstract class Cell<C> {
    * @param parent
    * @param value
    * @param event
-   * @param mutator
+   * @param valueUpdater a {@link ValueUpdater}, or null
    */
   public void onBrowserEvent(Element parent, C value, NativeEvent event,
-      Mutator<C, C> mutator) {
+      ValueUpdater<C> valueUpdater) {
   }
 
   // TODO: render needs a way of assuming text by default, but allowing HTML.

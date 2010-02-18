@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.datawidgets.client;
+package com.google.gwt.sample.stocks.client;
 
-import com.google.gwt.sample.datawidgets.shared.StockRequest;
-import com.google.gwt.sample.datawidgets.shared.StockResponse;
-import com.google.gwt.sample.datawidgets.shared.Transaction;
+import com.google.gwt.sample.stocks.shared.StockRequest;
+import com.google.gwt.sample.stocks.shared.StockResponse;
+import com.google.gwt.sample.stocks.shared.Transaction;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**

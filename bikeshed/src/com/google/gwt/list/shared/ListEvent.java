@@ -43,8 +43,8 @@ public class ListEvent<T> extends GwtEvent<ListHandler<T>> {
     return TYPE;
   }
 
-  private final int start;
   private final int length;
+  private final int start;
   private final List<T> values;
 
   /**
@@ -54,7 +54,7 @@ public class ListEvent<T> extends GwtEvent<ListHandler<T>> {
    * @param length the length of the data
    * @param values the new values
    */
-  protected ListEvent(int start, int length, List<T> values) {
+  public ListEvent(int start, int length, List<T> values) {
     this.start = start;
     this.length = length;
     this.values = values;

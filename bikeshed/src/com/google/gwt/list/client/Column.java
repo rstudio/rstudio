@@ -16,7 +16,8 @@
 package com.google.gwt.list.client;
 
 import com.google.gwt.cells.client.Cell;
-import com.google.gwt.cells.client.Mutator;
+import com.google.gwt.cells.client.ValueUpdater;
+import com.google.gwt.cells.client.FieldUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
@@ -28,16 +29,17 @@ import com.google.gwt.dom.client.NativeEvent;
  */
 public abstract class Column<T, C> {
   private final Cell<C> cell;
-  private Mutator<T, C> mutator;
+  private FieldUpdater<T, C> fieldUpdater;
 
   public Column(Cell<C> cell) {
     this.cell = cell;
   }
 
   public void onBrowserEvent(Element elem, final T object, NativeEvent event) {
-    cell.onBrowserEvent(elem, getValue(object), event, new Mutator<C, C>() {
-      public void mutate(C unused, C after) {
-        mutator.mutate(object, after);
+    cell.onBrowserEvent(elem, getValue(object), event,
+        fieldUpdater == null ? null : new ValueUpdater<C>() {
+      public void update(C value) {
+        fieldUpdater.update(object, value);
       }
     });
   }
@@ -46,8 +48,8 @@ public abstract class Column<T, C> {
     cell.render(getValue(object), sb);
   }
 
-  public void setMutator(Mutator<T, C> mutator) {
-    this.mutator = mutator;
+  public void setFieldUpdater(FieldUpdater<T, C> fieldUpdater) {
+    this.fieldUpdater = fieldUpdater;
   }
 
   protected Cell<C> getCell() {
@@ -55,5 +57,4 @@ public abstract class Column<T, C> {
   }
 
   protected abstract C getValue(T object);
-
 }

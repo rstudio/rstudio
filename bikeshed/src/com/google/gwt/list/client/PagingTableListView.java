@@ -16,7 +16,7 @@
 package com.google.gwt.list.client;
 
 import com.google.gwt.cells.client.ButtonCell;
-import com.google.gwt.cells.client.Mutator;
+import com.google.gwt.cells.client.ValueUpdater;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
@@ -125,15 +125,15 @@ public class PagingTableListView<T> extends Widget {
           } else if (row == pageSize) {
             if (col == 0) {
               prevButton.onBrowserEvent(elem, null, event,
-                  new Mutator<String, String>() {
-                    public void mutate(String object, String after) {
+                  new ValueUpdater<String>() {
+                    public void update(String value) {
                       previousPage();
                     }
                   });
             } else if (col == 2) {
               nextButton.onBrowserEvent(elem, null, event,
-                  new Mutator<String, String>() {
-                    public void mutate(String object, String after) {
+                  new ValueUpdater<String>() {
+                    public void update(String value) {
                       nextPage();
                     }
                   });

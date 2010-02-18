@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.datawidgets.server;
+package com.google.gwt.sample.stocks.server;
 
 /**
  * The list of all Nasdaq stocks (note: this is a snapshot plus
@@ -1063,7 +1063,6 @@ public class NasdaqStocks {
       "GBCI", "Glacier Bancorp, Inc.",
       "GBNK", "Guaranty Bancorp",
       "GCBC", "Greene County Bancorp, Inc.",
-      "GCFB", "Granite City Food & Brewery Ltd.",
       "GCOM", "Globecomm Systems Inc.",
       "GENC", "Gencor Industries Inc.",
       "GENE", "Genetic Technologies Ltd",

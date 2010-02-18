@@ -13,19 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.datawidgets.server;
+package com.google.gwt.sample.stocks.server;
 
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
 import com.google.gwt.list.shared.Range;
 import com.google.gwt.list.shared.AbstractListModel.DefaultRange;
-import com.google.gwt.sample.datawidgets.client.StockService;
-import com.google.gwt.sample.datawidgets.shared.StockQuote;
-import com.google.gwt.sample.datawidgets.shared.StockQuoteList;
-import com.google.gwt.sample.datawidgets.shared.StockRequest;
-import com.google.gwt.sample.datawidgets.shared.StockResponse;
-import com.google.gwt.sample.datawidgets.shared.Transaction;
+import com.google.gwt.sample.stocks.client.StockService;
+import com.google.gwt.sample.stocks.shared.StockQuote;
+import com.google.gwt.sample.stocks.shared.StockQuoteList;
+import com.google.gwt.sample.stocks.shared.StockRequest;
+import com.google.gwt.sample.stocks.shared.StockResponse;
+import com.google.gwt.sample.stocks.shared.Transaction;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import java.io.IOException;
@@ -127,14 +127,14 @@ public class StockServiceImpl extends RemoteServiceServlet implements
 
     // Perform the transaction with the user.
     int quantity = transaction.getQuantity();
+    int price = quote.getPrice();
     if (transaction.isBuy()) {
-      ensurePlayer().buy(ticker, quantity, quote.getPrice());
+      ensurePlayer().buy(ticker, quantity, price);
     } else {
-      ensurePlayer().sell(ticker, quantity, quote.getPrice());
+      ensurePlayer().sell(ticker, quantity, price);
     }
 
-    // 
-    return new Transaction(true, ticker, quantity);
+    return new Transaction(true, ticker, quantity, price);
   }
 
   /**

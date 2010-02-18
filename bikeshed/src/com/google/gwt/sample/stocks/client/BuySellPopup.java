@@ -13,15 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.datawidgets.client;
+package com.google.gwt.sample.stocks.client;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.sample.datawidgets.shared.StockQuote;
-import com.google.gwt.sample.datawidgets.shared.Transaction;
+import com.google.gwt.sample.stocks.shared.StockQuote;
+import com.google.gwt.sample.stocks.shared.Transaction;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
@@ -126,9 +126,9 @@ public class BuySellPopup extends DialogBox {
    * 
    * @param cash the available cash
    */
-  public void setAvailableCash(double cash) {
+  public void setAvailableCash(int cash) {
     // TODO: Bind the available cash field.
-    layout.setText(5, 1, NumberFormat.getCurrencyFormat("USD").format(cash));
+    layout.setText(5, 1, NumberFormat.getCurrencyFormat("USD").format(cash / 100.0));
   }
 
   /**

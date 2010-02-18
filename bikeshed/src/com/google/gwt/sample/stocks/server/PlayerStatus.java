@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.datawidgets.server;
+package com.google.gwt.sample.stocks.server;
 
 import java.util.HashMap;
 import java.util.TreeSet;

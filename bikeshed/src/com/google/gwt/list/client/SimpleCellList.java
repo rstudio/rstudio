@@ -16,7 +16,7 @@
 package com.google.gwt.list.client;
 
 import com.google.gwt.cells.client.Cell;
-import com.google.gwt.cells.client.Mutator;
+import com.google.gwt.cells.client.ValueUpdater;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.list.shared.ListEvent;
@@ -41,7 +41,7 @@ public class SimpleCellList<T> extends Widget {
   private final ArrayList<T> data = new ArrayList<T>();
   private final Element tmpElem;
   private ListRegistration reg;
-  private Mutator<T, T> mutator;
+  private ValueUpdater<T> valueUpdater;
 
   public SimpleCellList(ListModel<T> model, Cell<T> cell) {
     this.cell = cell;
@@ -93,12 +93,12 @@ public class SimpleCellList<T> extends Widget {
     }
     if (idxString.length() > 0) {
       int idx = Integer.parseInt(idxString);
-      cell.onBrowserEvent(target, data.get(idx), event, mutator);
+      cell.onBrowserEvent(target, data.get(idx), event, valueUpdater);
     }
   }
 
-  public void setMutator(Mutator<T, T> mutator) {
-    this.mutator = mutator;
+  public void setValueUpdater(ValueUpdater<T> valueUpdater) {
+    this.valueUpdater = valueUpdater;
   }
 
   private void gc(int size) {

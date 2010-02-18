@@ -26,14 +26,14 @@ public class CheckboxCell extends Cell<Boolean> {
 
   @Override
   public void onBrowserEvent(Element parent, Boolean value, NativeEvent event,
-      Mutator<Boolean, Boolean> mutator) {
-    if (mutator == null) {
+      ValueUpdater<Boolean> valueUpdater) {
+    if (valueUpdater == null) {
       return;
     }
 
     if ("change".equals(event.getType())) {
       InputElement input = parent.getFirstChild().cast();
-      mutator.mutate(value, input.isChecked());
+      valueUpdater.update(input.isChecked());
     }
   }
 

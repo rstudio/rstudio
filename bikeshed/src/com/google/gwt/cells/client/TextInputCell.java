@@ -26,14 +26,14 @@ public class TextInputCell extends Cell<String> {
 
   @Override
   public void onBrowserEvent(Element parent, String value, NativeEvent event,
-      Mutator<String, String> mutator) {
-    if (mutator == null) {
+      ValueUpdater<String> valueUpdater) {
+    if (valueUpdater == null) {
       return;
     }
 
     if ("change".equals(event.getType())) {
       InputElement input = parent.getFirstChild().cast();
-      mutator.mutate(value, input.getValue());
+      valueUpdater.update(input.getValue());
     }
   }
 

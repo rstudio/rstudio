@@ -39,8 +39,8 @@ public class SizeChangeEvent extends GwtEvent<ListHandler<?>> {
     return TYPE;
   }
 
-  private final int size;
   private final boolean exact;
+  private final int size;
 
   /**
    * Creates a {@link SizeChangeEvent}.
@@ -48,7 +48,7 @@ public class SizeChangeEvent extends GwtEvent<ListHandler<?>> {
    * @param size the total size of the list
    * @param exact true if this is an exact size
    */
-  protected SizeChangeEvent(int size, boolean exact) {
+  public SizeChangeEvent(int size, boolean exact) {
     this.size = size;
     this.exact = exact;
   }
