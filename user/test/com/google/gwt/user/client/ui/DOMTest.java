@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -181,8 +181,8 @@ public class DOMTest extends GWTTestCase {
     assertTrue(DOM.getElementPropertyInt(outer, "scrollLeft") > 0);
 
     Document doc = Document.get();
-    assertEquals(doc.getBodyOffsetLeft(), DOM.getAbsoluteTop(outer));
-    assertEquals(doc.getBodyOffsetTop(), DOM.getAbsoluteLeft(outer));
+    assertEquals(doc.getBodyOffsetLeft(), DOM.getAbsoluteLeft(outer));
+    assertEquals(doc.getBodyOffsetTop(), DOM.getAbsoluteTop(outer));
   }
 
   /**

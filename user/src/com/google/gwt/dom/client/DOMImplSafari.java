@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,61 +15,28 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 /**
  * Safari implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
  */
 class DOMImplSafari extends DOMImplStandard {
 
-  /**
-   * The type property on a button element is read-only in safari, so we need to 
-   * set it using setAttribute.
-   */
-  @Override
-  public native ButtonElement createButtonElement(Document doc, String type) /*-{
-    var e = doc.createElement("BUTTON");
-    e.setAttribute('type', type);
-    return e;
-  }-*/;
-
-  @Override
-  public native NativeEvent createKeyEvent(Document doc, String type, boolean canBubble,
-      boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
-      boolean metaKey, int keyCode, int charCode) /*-{
-    // The spec calls for KeyEvents/initKeyEvent(), but that doesn't exist on WebKit.
-    var evt = doc.createEvent('HTMLEvents');
-    evt.initEvent(type, canBubble, cancelable);
-    evt.ctrlKey = ctrlKey;
-    evt.altKey = altKey;
-    evt.shiftKey = shiftKey;
-    evt.metaKey = metaKey;
-    evt.keyCode = keyCode;
-    evt.charCode = charCode;
-
-    return evt;
-  }-*/;
-
-  /**
-   * Safari 2 does not support {@link ScriptElement#setText(String)}.
-   */
-  @Override
-  public ScriptElement createScriptElement(Document doc, String source) {
-    ScriptElement elem = (ScriptElement) createElement(doc, "script");
-    elem.setInnerText(source);
-    return elem;
+  private static class ClientRect extends JavaScriptObject {
+    @SuppressWarnings("unused")
+    protected ClientRect() {
+    }
+    
+    public final native int getLeft() /*-{
+      return this.left;
+    }-*/;
+    
+    public final native int getTop() /*-{
+      return this.top;
+    }-*/;
   }
 
-  @Override
-  public native EventTarget eventGetCurrentTarget(NativeEvent event) /*-{
-    return event.currentTarget || $wnd;
-  }-*/;
-
-  @Override
-  public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
-    return Math.round(-evt.wheelDelta / 40) || 0;
-  }-*/;
-
-  @Override
-  public native int getAbsoluteLeft(Element elem) /*-{
+  private static native int getAbsoluteLeftUsingOffsets(Element elem) /*-{
     // Unattached elements and elements (or their ancestors) with style
     // 'display: none' have no offsetLeft.
     if (elem.offsetLeft == null) {
@@ -122,8 +89,7 @@ class DOMImplSafari extends DOMImplStandard {
     return left;
   }-*/;
 
-  @Override
-  public native int getAbsoluteTop(Element elem) /*-{
+  private static native int getAbsoluteTopUsingOffsets(Element elem) /*-{
     // Unattached elements and elements (or their ancestors) with style
     // 'display: none' have no offsetTop.
     if (elem.offsetTop == null) {
@@ -167,6 +133,74 @@ class DOMImplSafari extends DOMImplStandard {
     }
     return top;
   }-*/;
+
+  private static native ClientRect getBoundingClientRect(Element element) /*-{
+    return element.getBoundingClientRect && element.getBoundingClientRect();
+  }-*/;
+
+  /**
+   * The type property on a button element is read-only in safari, so we need to 
+   * set it using setAttribute.
+   */
+  @Override
+  public native ButtonElement createButtonElement(Document doc, String type) /*-{
+    var e = doc.createElement("BUTTON");
+    e.setAttribute('type', type);
+    return e;
+  }-*/;
+
+  @Override
+  public native NativeEvent createKeyEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int keyCode, int charCode) /*-{
+    // The spec calls for KeyEvents/initKeyEvent(), but that doesn't exist on WebKit.
+    var evt = doc.createEvent('HTMLEvents');
+    evt.initEvent(type, canBubble, cancelable);
+    evt.ctrlKey = ctrlKey;
+    evt.altKey = altKey;
+    evt.shiftKey = shiftKey;
+    evt.metaKey = metaKey;
+    evt.keyCode = keyCode;
+    evt.charCode = charCode;
+
+    return evt;
+  }-*/;
+
+  /**
+   * Safari 2 does not support {@link ScriptElement#setText(String)}.
+   */
+  @Override
+  public ScriptElement createScriptElement(Document doc, String source) {
+    ScriptElement elem = (ScriptElement) createElement(doc, "script");
+    elem.setInnerText(source);
+    return elem;
+  }
+
+  @Override
+  public native EventTarget eventGetCurrentTarget(NativeEvent event) /*-{
+    return event.currentTarget || $wnd;
+  }-*/;
+
+  @Override
+  public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
+    return Math.round(-evt.wheelDelta / 40) || 0;
+  }-*/;
+
+  @Override
+  public int getAbsoluteLeft(Element elem) {
+    ClientRect rect = getBoundingClientRect(elem);
+    return rect != null
+        ? rect.getLeft() + elem.getOwnerDocument().getBody().getScrollLeft()
+        : getAbsoluteLeftUsingOffsets(elem);
+  }
+
+  @Override
+  public int getAbsoluteTop(Element elem) {
+    ClientRect rect = getBoundingClientRect(elem);
+    return rect != null
+        ? rect.getTop() + elem.getOwnerDocument().getBody().getScrollTop()
+        : getAbsoluteTopUsingOffsets(elem);
+  }
 
   /*
    * textContent is used over innerText for two reasons:
