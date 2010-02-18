@@ -78,7 +78,8 @@ public class JsDuplicateFunctionRemover {
     @Override
     public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
       JsName orig = duplicateMap.get(x.getName());
-      if (orig != null && x.getName().getEnclosing() == program.getScope()) {
+      if (orig != null && x.getName() != null && 
+          x.getName().getEnclosing() == program.getScope()) {
         ctx.replaceMe(orig.makeRef(x.getSourceInfo()));
       }
     }
