@@ -105,10 +105,10 @@ public class AsyncFragmentLoaderTest extends TestCase {
 
   private static class MockProgressEvent {
     public final String eventGroup;
-    public final Integer fragment;
+    public final int fragment;
     public final String type;
 
-    public MockProgressEvent(String eventGroup, String type, Integer fragment) {
+    public MockProgressEvent(String eventGroup, String type, int fragment) {
       this.eventGroup = eventGroup;
       this.type = type;
       this.fragment = fragment;
@@ -118,7 +118,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
   private static class MockProgressLogger implements Logger {
     private Queue<MockProgressEvent> events = new LinkedList<MockProgressEvent>();
 
-    public void assertEvent(String eventGroup, String type, Integer fragment) {
+    public void assertEvent(String eventGroup, String type, int fragment) {
       MockProgressEvent event = events.remove();
       assertEquals(eventGroup, event.eventGroup);
       assertEquals(type, event.type);
@@ -131,7 +131,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     }
 
     public void logEventProgress(String eventGroup, String type,
-        Integer fragment, Integer size) {
+        int fragment, int size) {
       events.add(new MockProgressEvent(eventGroup, type, fragment));
     }
   }

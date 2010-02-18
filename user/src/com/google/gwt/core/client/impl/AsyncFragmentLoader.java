@@ -20,9 +20,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -85,8 +83,8 @@ public class AsyncFragmentLoader {
      * so that they can be optional. A value of <code>null</code> for either one
      * means that they are not specified.
      */
-    void logEventProgress(String eventGroup, String type, Integer fragment,
-        Integer size);
+    void logEventProgress(String eventGroup, String type, int fragment,
+        int size);
   }
 
   /**
@@ -198,7 +196,11 @@ public class AsyncFragmentLoader {
       requestedExclusives.clear();
 
       // add handlers for pending downloads
-      handlersToRun.addAll(pendingDownloadErrorHandlers.values());
+      for (LoadErrorHandler handler : pendingDownloadErrorHandlers) {
+        if (handler != null) {
+          handlersToRun.add(handler);
+        }
+      }
       pendingDownloadErrorHandlers.clear();
 
       fragmentLoading = -1;
@@ -237,14 +239,14 @@ public class AsyncFragmentLoader {
     }-*/;
 
     public void logEventProgress(String eventGroup, String type,
-        Integer fragment, Integer size) {
+        int fragment, int size) {
       @SuppressWarnings("unused")
       boolean toss = isStatsAvailable()
           && stats(createStatsEvent(eventGroup, type, fragment, size));
     }
 
     private native JavaScriptObject createStatsEvent(String eventGroup,
-        String type, Integer fragment, Integer size) /*-{
+        String type, int fragment, int size) /*-{
       var evt = {
        moduleName: @com.google.gwt.core.client.GWT::getModuleName()(), 
         sessionId: $sessionId,
@@ -253,11 +255,11 @@ public class AsyncFragmentLoader {
         millis: (new Date()).getTime(),
         type: type
       };
-      if (fragment != null) {
-        evt.fragment = fragment.@java.lang.Integer::intValue()();
+      if (fragment >= 0) {
+        evt.fragment = fragment;
       }
-      if (size != null) {
-        evt.size = size.@java.lang.Integer::intValue()();
+      if (size >= 0) {
+        evt.size = size;
       }
       return evt;
     }-*/;
@@ -337,10 +339,8 @@ public class AsyncFragmentLoader {
   /**
    * Externally provided handlers for all outstanding and queued download
    * requests.
-   * 
-   * TODO(spoon) make it a lightweight integer map
    */
-  private Map<Integer, LoadErrorHandler> pendingDownloadErrorHandlers = new HashMap<Integer, LoadErrorHandler>();
+  private ArrayList<LoadErrorHandler> pendingDownloadErrorHandlers = new ArrayList<LoadErrorHandler>();
 
   /**
    * Whether prefetching is currently enabled.
@@ -382,7 +382,9 @@ public class AsyncFragmentLoader {
    */
   public void fragmentHasLoaded(int fragment) {
     logFragmentLoaded(fragment);
-    pendingDownloadErrorHandlers.remove(fragment);
+    if (fragment < pendingDownloadErrorHandlers.size()) {
+      pendingDownloadErrorHandlers.set(fragment, null);
+    }
 
     if (isInitial(fragment)) {
       assert (fragment == remainingInitialFragments.peek());
@@ -408,7 +410,8 @@ public class AsyncFragmentLoader {
    * @param splitPoint the split point whose code needs to be loaded
    */
   public void inject(int splitPoint, LoadErrorHandler loadErrorHandler) {
-    pendingDownloadErrorHandlers.put(splitPoint, loadErrorHandler);
+    setCapacity(pendingDownloadErrorHandlers, splitPoint + 1);
+    pendingDownloadErrorHandlers.set(splitPoint, loadErrorHandler);
     if (!isInitial(splitPoint)) {
       requestedExclusives.add(splitPoint);
     }
@@ -427,7 +430,7 @@ public class AsyncFragmentLoader {
    * Log an event with the {@Logger} this instance was provided.
    */
   public void logEventProgress(String eventGroup, String type) {
-    logEventProgress(eventGroup, type, null, null);
+    logEventProgress(eventGroup, type, -1, -1);
   }
 
   /**
@@ -468,7 +471,10 @@ public class AsyncFragmentLoader {
   private void clearRequestsAlreadyLoaded() {
     while (requestedExclusives.size() > 0
         && isLoaded[requestedExclusives.peek()]) {
-      pendingDownloadErrorHandlers.remove(requestedExclusives.remove());
+      int offset = requestedExclusives.remove();
+      if (offset < pendingDownloadErrorHandlers.size()) {
+        pendingDownloadErrorHandlers.set(offset, null);
+      }
     }
 
     if (prefetchQueue != null) {
@@ -505,6 +511,19 @@ public class AsyncFragmentLoader {
     }
   }
 
+  /**
+   * Return if the the ArrayList is empty.
+   * @param list the list to check if empty
+   */
+  private boolean isEmpty(ArrayList<?> list) {
+    for (int i = 0; i < list.size(); i++) {
+      if (list.get(i) != null) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private boolean isInitial(int splitPoint) {
     if (splitPoint == leftoversFragment()) {
       return true;
@@ -522,7 +541,7 @@ public class AsyncFragmentLoader {
   }
 
   private void logDownloadStart(int fragment) {
-    logEventProgress(downloadGroup(fragment), LwmLabels.BEGIN, fragment, null);
+    logEventProgress(downloadGroup(fragment), LwmLabels.BEGIN, fragment, -1);
   }
 
   /**
@@ -537,7 +556,18 @@ public class AsyncFragmentLoader {
 
   private void logFragmentLoaded(int fragment) {
     String logGroup = downloadGroup(fragment);
-    logEventProgress(logGroup, LwmLabels.END, fragment, null);
+    logEventProgress(logGroup, LwmLabels.END, fragment, -1);
+  }
+
+  /**
+   * Set capacity ArrayList list.
+   * @param list the list to add capacity to.
+   * @param size the new size to increase the capacity to.
+   */
+  private void setCapacity(ArrayList<?> list, int size) {
+    while (list.size() < size) {
+      list.add(null);
+    }
   }
 
   private void startLoadingFragment(int fragment) {
@@ -560,7 +590,7 @@ public class AsyncFragmentLoader {
     initializeRemainingInitialFragments();
     clearRequestsAlreadyLoaded();
 
-    if (pendingDownloadErrorHandlers.isEmpty() && !anyPrefetchesRequested()) {
+    if (isEmpty(pendingDownloadErrorHandlers) && !anyPrefetchesRequested()) {
       /*
        * Don't load anything if there aren't any requests outstanding.
        */
