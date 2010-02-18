@@ -60,6 +60,12 @@ if (ua.indexOf("chrome") != -1) {
   Object.prototype.hasOwnProperty = function(prop) {
     return prop != "__gwt_ObjectId" && hop.call(this, prop);
   };
+  // do the same in our parent as well -- see issue 4486
+  // NOTE: this will have to be changed when we support non-iframe-based DevMode 
+  var hop2 = parent.Object.prototype.hasOwnProperty;
+  parent.Object.prototype.hasOwnProperty = function(prop) {
+    return prop != "__gwt_ObjectId" && hop2.call(this, prop);
+  };
 }
 
 // wrapper to call JS methods, which we need both to be able to supply a
