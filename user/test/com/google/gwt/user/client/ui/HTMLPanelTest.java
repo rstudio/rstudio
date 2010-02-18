@@ -48,6 +48,22 @@ public class HTMLPanelTest extends GWTTestCase {
   }
 
   /**
+   * Tests {@link HTMLPanel#add(Widget, Element)}.
+   */
+  public void testAddToElement() {
+    Label labelA = new Label("A"), labelB = new Label("B");
+    HTMLPanel p = new HTMLPanel("<div class=\"a\"></div><div class=\"b\"></div>");
+    Element first = p.getElement().getFirstChildElement();
+    Element second = first.getNextSiblingElement();
+    
+    p.add(labelA, first);
+    p.add(labelB, second);
+    // Ensure that both Label's have the correct parent.
+    assertEquals("a", labelA.getElement().getParentElement().getClassName());
+    assertEquals("b", labelB.getElement().getParentElement().getClassName());
+  }
+
+  /**
    * This is meant to catch an issue created by a faulty optimization. To
    * optimize add() when the HTMLPanel is unattached, we would originally
    * move its element to a hidden div so that getElementById() would work.
@@ -122,11 +138,33 @@ public class HTMLPanelTest extends GWTTestCase {
   /**
    * Ensures that addAndReplaceChild() puts the widget in exactly the right place in the DOM.
    */
-  public void testAddAndReplaceElementForElement() {
+  @SuppressWarnings("deprecation")
+  public void testAddAndReplaceElementForUserElement() {
     HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
 
     RootPanel.get().add(hp);
     com.google.gwt.user.client.Element placeholder = hp.getElementById("placeholder");
+
+    Button button = new Button("my button");
+    hp.addAndReplaceElement(button, placeholder);
+
+    assertEquals("parent", button.getElement().getParentElement().getId());
+
+    Node prev = button.getElement().getPreviousSibling();
+    assertEquals("foo", prev.getNodeValue());
+
+    Node next = button.getElement().getNextSibling();
+    assertEquals("bar", next.getNodeValue());
+  }
+
+  /**
+   * Ensures that addAndReplaceChild() puts the widget in exactly the right place in the DOM.
+   */
+  public void testAddAndReplaceElementForElement() {
+    HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
+
+    RootPanel.get().add(hp);
+    Element placeholder = hp.getElementById("placeholder");
 
     Button button = new Button("my button");
     hp.addAndReplaceElement(button, placeholder);

@@ -17,8 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 import java.util.NoSuchElementException;
 
@@ -38,7 +37,7 @@ public class HTMLPanel extends ComplexPanel {
    * @return a new unique identifier
    */
   public static String createUniqueId() {
-    return DOM.createUniqueId();
+    return Document.get().createUniqueId();
   }
 
   /**
@@ -104,7 +103,18 @@ public class HTMLPanel extends ComplexPanel {
       throw new NoSuchElementException(id);
     }
 
-    super.add(widget, elem);
+    add(widget, elem);
+  }
+
+  /**
+   * Adds a child widget to the panel, contained within an HTML element.
+   * 
+   * @param widget the widget to be added
+   * @param elem the element within which it will be contained
+   */
+  public void add(Widget widget, Element elem) {
+    com.google.gwt.user.client.Element clientElem = elem.cast();
+    super.add(widget, clientElem);
   }
 
   /**
@@ -113,7 +123,22 @@ public class HTMLPanel extends ComplexPanel {
    * @param widget the widget to be added
    * @param toReplace the element to be replaced by the widget
    */
-  public void addAndReplaceElement(Widget widget, Element toReplace) {
+  @SuppressWarnings("deprecation")
+  public final void addAndReplaceElement(Widget widget, Element toReplace) {
+    com.google.gwt.user.client.Element clientElem = toReplace.cast();
+    addAndReplaceElement(widget, clientElem);
+  }
+  
+  /**
+   * Adds a child widget to the panel, replacing the HTML element.
+   * 
+   * @param widget the widget to be added
+   * @param toReplace the element to be replaced by the widget
+   * @deprecated use {@link #addAndReplaceElement(Widget, Element)}
+   */
+  @Deprecated
+  public void addAndReplaceElement(Widget widget,
+      com.google.gwt.user.client.Element toReplace) {
     // Logic pulled from super.add(), replacing the element rather than adding.
     widget.removeFromParent();
     getChildren().add(widget);
@@ -148,8 +173,9 @@ public class HTMLPanel extends ComplexPanel {
    * @param id the id of the element to be found
    * @return the element with the given id, or <code>null</code> if none is found
    */
-  public Element getElementById(String id) {
-    return isAttached() ? DOM.getElementById(id) : attachToDomAndGetElement(id);
+  public com.google.gwt.user.client.Element getElementById(String id) {
+    Element elem = isAttached() ? Document.get().getElementById(id) : attachToDomAndGetElement(id);
+    return elem.cast();
   }
 
   /**
@@ -164,27 +190,27 @@ public class HTMLPanel extends ComplexPanel {
   private Element attachToDomAndGetElement(String id) {
     // If the hidden DIV has not been created, create it.
     if (hiddenDiv == null) {
-      hiddenDiv = DOM.createDiv();
+      hiddenDiv = Document.get().createDivElement();
       UIObject.setVisible(hiddenDiv, false);
       RootPanel.getBodyElement().appendChild(hiddenDiv);
     }
 
     // Hang on to the panel's original parent and sibling elements so that it
     // can be replaced.
-    Element origParent = DOM.getParent(getElement());
-    Element origSibling = DOM.getNextSibling(getElement());
+    Element origParent = getElement().getParentElement();
+    Element origSibling = getElement().getNextSiblingElement();
 
     // Attach the panel's element to the hidden div.
-    DOM.appendChild(hiddenDiv, getElement());
+    hiddenDiv.appendChild(getElement());
 
     // Now that we're attached to the DOM, we can use getElementById.
-    Element child = DOM.getElementById(id);
+    Element child = Document.get().getElementById(id);
 
     // Put the panel's element back where it was.
     if (origParent != null) {
-      DOM.insertBefore(origParent, getElement(), origSibling);
+      origParent.insertBefore(getElement(), origSibling);
     } else {
-      DOM.removeChild(hiddenDiv, getElement());
+      hiddenDiv.removeChild(getElement());
     }
 
     return child;
