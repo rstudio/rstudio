@@ -6,6 +6,7 @@
 <web-app>
 
   <!-- Servlets -->
+  <!--
   <servlet>
     <servlet-name>stockServlet</servlet-name>
     <servlet-class>com.google.gwt.sample.stocks.server.StockServiceImpl</servlet-class>
@@ -15,10 +16,10 @@
     <servlet-name>stockServlet</servlet-name>
     <url-pattern>/stocks/stock</url-pattern>
   </servlet-mapping>
+  -->
 
   <!-- Default page to serve -->
   <welcome-file-list>
-    <welcome-file>Stocks.html</welcome-file>
     <welcome-file>Tree.html</welcome-file>
   </welcome-file-list>
 

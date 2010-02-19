@@ -15,7 +15,7 @@
   <!-- Other module inherits                                      -->
 
   <!-- Specify the app entry point class.                         -->
-  <entry-point class='com.google.gwt.sample.tree.client.Tree'/>
+  <entry-point class='com.google.gwt.sample.tree.client.TreeEntryPoint'/>
 
   <!-- Specify the paths for translatable code                    -->
   <source path='client'/>
