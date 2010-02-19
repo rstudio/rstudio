@@ -323,8 +323,8 @@ public class AsyncProxyGenerator extends Generator {
     }
 
     // Must be able to GWT.create()
-    if (!concreteType.isStatic()) {
-      logger.log(TreeLogger.ERROR, "Expecting concrete type"
+    if (concreteType.isMemberType() && !concreteType.isStatic()) {
+      logger.log(TreeLogger.ERROR, "Expecting concrete type "
           + concreteType.getQualifiedSourceName() + " to be static.");
       throw new UnableToCompleteException();
     }
