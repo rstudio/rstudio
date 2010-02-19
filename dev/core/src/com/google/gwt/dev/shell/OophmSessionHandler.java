@@ -17,8 +17,8 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.ModuleHandle;
-import com.google.gwt.dev.shell.BrowserChannel.SessionHandler;
 import com.google.gwt.dev.shell.BrowserChannel.Value;
+import com.google.gwt.dev.shell.BrowserChannelServer.SessionHandlerServer;
 import com.google.gwt.dev.shell.JsValue.DispatchMethod;
 import com.google.gwt.dev.shell.JsValue.DispatchObject;
 import com.google.gwt.dev.util.PerfLogger;
@@ -31,7 +31,7 @@ import java.util.Map;
 /**
  * 
  */
-public class OophmSessionHandler extends SessionHandler {
+public class OophmSessionHandler extends SessionHandlerServer {
 
   private BrowserWidgetHost host;
 
@@ -53,23 +53,21 @@ public class OophmSessionHandler extends SessionHandler {
   }
 
   @Override
-  public void freeValue(BrowserChannel channel, int[] ids) {
-    BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
-    ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
+  public void freeValue(BrowserChannelServer channel, int[] ids) {
+    ServerObjectsTable localObjects = channel.getJavaObjectsExposedInBrowser();
     for (int id : ids) {
       localObjects.free(id);
     }
   }
 
   @Override
-  public ExceptionOrReturnValue getProperty(BrowserChannel channel, int refId,
+  public ExceptionOrReturnValue getProperty(BrowserChannelServer channel, int refId,
       int dispId) {
-    BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
-    ModuleSpace moduleSpace = moduleMap.get(serverChannel);
-    ModuleHandle moduleHandle = moduleHandleMap.get(serverChannel);
+    ModuleSpace moduleSpace = moduleMap.get(channel);
+    ModuleHandle moduleHandle = moduleHandleMap.get(channel);
     assert moduleSpace != null && moduleHandle != null;
     TreeLogger logger = moduleHandle.getLogger();
-    ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
+    ServerObjectsTable localObjects = channel.getJavaObjectsExposedInBrowser();
     try {
       JsValueOOPHM obj = new JsValueOOPHM();
       DispatchObject dispObj;
@@ -81,14 +79,14 @@ public class OophmSessionHandler extends SessionHandler {
               + ccl.getClassInfoByDispId(dispId).getMember(dispId) + "]) on "
               + obj.toString(), null);
       JsValueOOPHM jsval = (JsValueOOPHM) dispObj.getField(dispId);
-      Value retVal = serverChannel.convertFromJsValue(localObjects, jsval);
+      Value retVal = channel.convertFromJsValue(localObjects, jsval);
       branch.log(TreeLogger.SPAM, "result is " + retVal, null);
       return new ExceptionOrReturnValue(false, retVal);
     } catch (Throwable t) {
       JsValueOOPHM jsval = new JsValueOOPHM();
       JsValueGlue.set(jsval, moduleSpace.getIsolatedClassLoader(),
           t.getClass(), t);
-      Value retVal = serverChannel.convertFromJsValue(localObjects, jsval);
+      Value retVal = channel.convertFromJsValue(localObjects, jsval);
       return new ExceptionOrReturnValue(true, retVal);
     }
   }
@@ -97,12 +95,11 @@ public class OophmSessionHandler extends SessionHandler {
    * Invoke a method on a server object in from client code.
    */
   @Override
-  public ExceptionOrReturnValue invoke(BrowserChannel channel, Value thisVal,
+  public ExceptionOrReturnValue invoke(BrowserChannelServer channel, Value thisVal,
       int methodDispatchId, Value[] args) {
-    BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
-    ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
-    ModuleSpace moduleSpace = moduleMap.get(serverChannel);
-    ModuleHandle moduleHandle = moduleHandleMap.get(serverChannel);
+    ServerObjectsTable localObjects = channel.getJavaObjectsExposedInBrowser();
+    ModuleSpace moduleSpace = moduleMap.get(channel);
+    ModuleHandle moduleHandle = moduleHandleMap.get(channel);
     assert moduleSpace != null && moduleHandle != null;
     TreeLogger logger = moduleHandle.getLogger();
     CompilingClassLoader cl = moduleSpace.getIsolatedClassLoader();
@@ -113,7 +110,7 @@ public class OophmSessionHandler extends SessionHandler {
     }
 
     JsValueOOPHM jsThis = new JsValueOOPHM();
-    serverChannel.convertToJsValue(cl, localObjects, thisVal, jsThis);
+    channel.convertToJsValue(cl, localObjects, thisVal, jsThis);
 
     TreeLogger branch = TreeLogger.NULL;
     if (logger.isLoggable(TreeLogger.SPAM)) {
@@ -136,7 +133,7 @@ public class OophmSessionHandler extends SessionHandler {
     JsValueOOPHM[] jsArgs = new JsValueOOPHM[args.length];
     for (int i = 0; i < args.length; ++i) {
       jsArgs[i] = new JsValueOOPHM();
-      serverChannel.convertToJsValue(cl, localObjects, args[i], jsArgs[i]);
+      channel.convertToJsValue(cl, localObjects, args[i], jsArgs[i]);
       branch.log(TreeLogger.SPAM, " arg " + i + " = " + jsArgs[i].toString(),
           null);
     }
@@ -160,27 +157,26 @@ public class OophmSessionHandler extends SessionHandler {
       JsValueGlue.set(jsRetVal, moduleSpace.getIsolatedClassLoader(),
           t.getClass(), t);
     }
-    Value retVal = serverChannel.convertFromJsValue(localObjects, jsRetVal);
+    Value retVal = channel.convertFromJsValue(localObjects, jsRetVal);
     return new ExceptionOrReturnValue(exception, retVal);
   }
 
   @Override
-  public synchronized TreeLogger loadModule(BrowserChannel channel,
+  public synchronized TreeLogger loadModule(BrowserChannelServer channel,
       String moduleName, String userAgent, String url, String tabKey,
       String sessionKey, byte[] userAgentIcon) {
     PerfLogger.start("OophmSessionHandler.loadModule " + moduleName);
-    BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
     ModuleHandle moduleHandle = host.createModuleLogger(moduleName, userAgent,
-        url, tabKey, sessionKey, serverChannel, userAgentIcon);
+        url, tabKey, sessionKey, channel, userAgentIcon);
     TreeLogger logger = moduleHandle.getLogger();
-    moduleHandleMap.put(serverChannel, moduleHandle);
+    moduleHandleMap.put(channel, moduleHandle);
     ModuleSpace moduleSpace = null;
     try {
       // Attach a new ModuleSpace to make it programmable.
       ModuleSpaceHost msh = host.createModuleSpaceHost(moduleHandle,
           moduleName);
-      moduleSpace = new ModuleSpaceOOPHM(msh, moduleName, serverChannel);
-      moduleMap.put(serverChannel, moduleSpace);
+      moduleSpace = new ModuleSpaceOOPHM(msh, moduleName, channel);
+      moduleMap.put(channel, moduleSpace);
       PerfLogger.start("ModuleSpace.onLoad");
       moduleSpace.onLoad(logger);
       moduleHandle.getLogger().log(TreeLogger.INFO,
@@ -197,8 +193,8 @@ public class OophmSessionHandler extends SessionHandler {
         moduleSpace.dispose();        
       }
       moduleHandle.unload();
-      moduleMap.remove(serverChannel);
-      moduleHandleMap.remove(serverChannel);
+      moduleMap.remove(channel);
+      moduleHandleMap.remove(channel);
       return null;
     } finally {
       PerfLogger.end();
@@ -208,14 +204,13 @@ public class OophmSessionHandler extends SessionHandler {
   }
 
   @Override
-  public ExceptionOrReturnValue setProperty(BrowserChannel channel, int refId,
+  public ExceptionOrReturnValue setProperty(BrowserChannelServer channel, int refId,
       int dispId, Value newValue) {
-    BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
-    ModuleSpace moduleSpace = moduleMap.get(serverChannel);
-    ModuleHandle moduleHandle = moduleHandleMap.get(serverChannel);
+    ModuleSpace moduleSpace = moduleMap.get(channel);
+    ModuleHandle moduleHandle = moduleHandleMap.get(channel);
     assert moduleSpace != null && moduleHandle != null;
     TreeLogger logger = moduleHandle.getLogger();
-    ServerObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
+    ServerObjectsTable localObjects = channel.getJavaObjectsExposedInBrowser();
     try {
       JsValueOOPHM obj = new JsValueOOPHM();
       DispatchObject dispObj;
@@ -225,7 +220,7 @@ public class OophmSessionHandler extends SessionHandler {
       logger.log(TreeLogger.SPAM, "Client special invoke of setProperty(id="
           + dispId + ", newValue=" + newValue + ") on " + obj.toString(), null);
       JsValueOOPHM jsval = new JsValueOOPHM();
-      serverChannel.convertToJsValue(moduleSpace.getIsolatedClassLoader(),
+      channel.convertToJsValue(moduleSpace.getIsolatedClassLoader(),
           localObjects, newValue, jsval);
       dispObj.setField(dispId, jsval);
       return new ExceptionOrReturnValue(false, newValue);
@@ -233,16 +228,15 @@ public class OophmSessionHandler extends SessionHandler {
       JsValueOOPHM jsval = new JsValueOOPHM();
       JsValueGlue.set(jsval, moduleSpace.getIsolatedClassLoader(),
           t.getClass(), t);
-      Value retVal = serverChannel.convertFromJsValue(localObjects, jsval);
+      Value retVal = channel.convertFromJsValue(localObjects, jsval);
       return new ExceptionOrReturnValue(true, retVal);
     }
   }
 
   @Override
-  public void unloadModule(BrowserChannel channel, String moduleName) {
-    BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
-    ModuleHandle moduleHandle = moduleHandleMap.get(serverChannel);
-    ModuleSpace moduleSpace = moduleMap.get(serverChannel);
+  public void unloadModule(BrowserChannelServer channel, String moduleName) {
+    ModuleHandle moduleHandle = moduleHandleMap.get(channel);
+    ModuleSpace moduleSpace = moduleMap.get(channel);
     if (moduleSpace == null || moduleHandle == null) {
       topLogger.log(TreeLogger.ERROR, "Unload request without a module loaded",
           null);
@@ -254,7 +248,7 @@ public class OophmSessionHandler extends SessionHandler {
             + ")", null);
     moduleSpace.dispose();
     moduleHandle.unload();
-    moduleMap.remove(serverChannel);
-    moduleHandleMap.remove(serverChannel);
+    moduleMap.remove(channel);
+    moduleHandleMap.remove(channel);
   }
 }

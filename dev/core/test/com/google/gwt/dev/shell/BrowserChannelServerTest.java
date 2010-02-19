@@ -24,9 +24,9 @@ import com.google.gwt.dev.shell.BrowserChannel.ProtocolVersionMessage;
 import com.google.gwt.dev.shell.BrowserChannel.QuitMessage;
 import com.google.gwt.dev.shell.BrowserChannel.RequestIconMessage;
 import com.google.gwt.dev.shell.BrowserChannel.ReturnMessage;
-import com.google.gwt.dev.shell.BrowserChannel.SessionHandler;
 import com.google.gwt.dev.shell.BrowserChannel.UserAgentIconMessage;
 import com.google.gwt.dev.shell.BrowserChannel.Value;
+import com.google.gwt.dev.shell.BrowserChannelServer.SessionHandlerServer;
 
 import junit.framework.TestCase;
 
@@ -52,7 +52,7 @@ public class BrowserChannelServerTest extends TestCase {
 
     public TestBrowserChannelServer(TreeLogger logger,
         InputStream inputStream, OutputStream outputStream,
-        SessionHandler handler) throws IOException {
+        SessionHandlerServer handler) {
       super(logger, inputStream, outputStream, handler, true);
     }
 
@@ -101,7 +101,7 @@ public class BrowserChannelServerTest extends TestCase {
    * A SessionHandler which keeps track of parameters from the LoadModule
    * message, but mocks out everything else.
    */
-  private static class TestSessionHandler extends SessionHandler {
+  private static class TestSessionHandler extends SessionHandlerServer {
 
     private String loadedModule;
     private String userAgent;
@@ -112,7 +112,7 @@ public class BrowserChannelServerTest extends TestCase {
     private String moduleName;
 
     @Override
-    public void freeValue(BrowserChannel channel, int[] ids) {
+    public void freeValue(BrowserChannelServer channel, int[] ids) {
     }
 
     public String getLoadedModule() {
@@ -124,7 +124,7 @@ public class BrowserChannelServerTest extends TestCase {
     }
 
     @Override
-    public ExceptionOrReturnValue getProperty(BrowserChannel channel,
+    public ExceptionOrReturnValue getProperty(BrowserChannelServer channel,
         int refId, int dispId) {
       return new ExceptionOrReturnValue(false, new Value());
     }
@@ -150,13 +150,13 @@ public class BrowserChannelServerTest extends TestCase {
     }
 
     @Override
-    public ExceptionOrReturnValue invoke(BrowserChannel channel, Value thisObj,
+    public ExceptionOrReturnValue invoke(BrowserChannelServer channel, Value thisObj,
         int dispId, Value[] args) {
       return new ExceptionOrReturnValue(false, new Value());
     }
 
     @Override
-    public TreeLogger loadModule(BrowserChannel channel, String moduleName,
+    public TreeLogger loadModule(BrowserChannelServer channel, String moduleName,
         String userAgent, String url, String tabKey, String sessionKey,
         byte[] userAgentIcon) {
       loadedModule = moduleName;
@@ -170,13 +170,13 @@ public class BrowserChannelServerTest extends TestCase {
     }
 
     @Override
-    public ExceptionOrReturnValue setProperty(BrowserChannel channel,
+    public ExceptionOrReturnValue setProperty(BrowserChannelServer channel,
         int refId, int dispId, Value newValue) {
       return new ExceptionOrReturnValue(false, new Value());
     }
 
     @Override
-    public void unloadModule(BrowserChannel channel, String moduleName) {
+    public void unloadModule(BrowserChannelServer channel, String moduleName) {
       loadedModule = null;
     }   
   }

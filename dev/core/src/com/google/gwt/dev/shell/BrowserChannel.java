@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.ExceptionOrReturnValue;
 import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.SpecialDispatchId;
 import com.google.gwt.dev.shell.BrowserChannel.Value.ValueType;
@@ -198,7 +197,7 @@ public abstract class BrowserChannel {
   /**
    * Hook interface for responding to messages.
    */
-  public abstract static class SessionHandler {
+  public abstract static class SessionHandler<T extends BrowserChannel> {
 
     /**
      * Wrapper to return both a return value/exception and a flag as to whether
@@ -244,37 +243,7 @@ public abstract class BrowserChannel {
       }
     }
 
-    public abstract void freeValue(BrowserChannel channel, int[] ids);
-
-    public abstract ExceptionOrReturnValue getProperty(BrowserChannel channel,
-        int refId, int dispId);
-
-    public abstract ExceptionOrReturnValue invoke(BrowserChannel channel,
-        Value thisObj, int dispId, Value[] args);
-
-    /**
-     * Load a new instance of a module.
-     *
-     * @param channel
-     * @param moduleName
-     * @param userAgent
-     * @param url top-level URL of the main page, null if using an old plugin
-     * @param tabKey opaque key of the tab, may be empty if the plugin can't
-     *     distinguish tabs or null if using an old plugin
-     * @param sessionKey opaque key for this session, null if using an old plugin
-     * @param userAgentIcon byte array containing an icon (which fits within
-     *     24x24) representing the user agent or null if unavailable
-     * @return a TreeLogger to use for the module's logs, or null if the module
-     *     load failed
-     */
-    public abstract TreeLogger loadModule(BrowserChannel channel,
-        String moduleName, String userAgent, String url, String tabKey,
-        String sessionKey, byte[] userAgentIcon);
-
-    public abstract ExceptionOrReturnValue setProperty(BrowserChannel channel,
-        int refId, int dispId, Value newValue);
-
-    public abstract void unloadModule(BrowserChannel channel, String moduleName);
+    public abstract void freeValue(T channel, int[] ids);
   }
 
   /**
@@ -1639,101 +1608,6 @@ public abstract class BrowserChannel {
         + socket.getPort();
   }
 
-  public Value invoke(String methodName, Value vthis, Value[] vargs,
-      SessionHandler handler) throws IOException, BrowserChannelException {
-    new InvokeOnClientMessage(this, methodName, vthis, vargs).send();
-    final ReturnMessage msg = reactToMessagesWhileWaitingForReturn(handler);
-    return msg.returnValue;
-  }
-
-  /**
-   * React to messages from the other side, where no return value is expected.
-   * 
-   * @param handler
-   * @throws RemoteDeathError
-   */
-  public void reactToMessages(SessionHandler handler) {
-    do {
-      try {
-        getStreamToOtherSide().flush();
-        MessageType messageType = Message.readMessageType(
-            getStreamFromOtherSide());
-        switch (messageType) {
-          case FREE_VALUE:
-            final FreeMessage freeMsg = FreeMessage.receive(this);
-            handler.freeValue(this, freeMsg.getIds());
-            break;
-          case INVOKE:
-            InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
-            ExceptionOrReturnValue result = handler.invoke(this, imsg.getThis(),
-                imsg.getMethodDispatchId(), imsg.getArgs());
-            sendFreedValues();
-            ReturnMessage.send(this, result);
-            break;
-          case INVOKE_SPECIAL:
-            handleInvokeSpecial(handler);
-            break;
-          case QUIT:
-            return;
-          default:
-            throw new RemoteDeathError(new BrowserChannelException(
-                "Invalid message type " + messageType));
-        }
-      } catch (IOException e) {
-        throw new RemoteDeathError(e);
-      } catch (BrowserChannelException e) {
-        throw new RemoteDeathError(e);
-      }
-    } while (true);
-  }
-
-  /**
-   * React to messages from the other side, where a return value is expected.
-   * 
-   * @param handler
-   * @throws BrowserChannelException 
-   * @throws RemoteDeathError
-   */
-  public ReturnMessage reactToMessagesWhileWaitingForReturn(
-      SessionHandler handler) throws BrowserChannelException, RemoteDeathError {
-    do {
-      try {
-        getStreamToOtherSide().flush();
-        MessageType messageType = Message.readMessageType(
-            getStreamFromOtherSide());
-        switch (messageType) {
-          case FREE_VALUE:
-            final FreeMessage freeMsg = FreeMessage.receive(this);
-            handler.freeValue(this, freeMsg.getIds());
-            break;
-          case RETURN:
-            return ReturnMessage.receive(this);
-          case INVOKE:
-            InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
-            ExceptionOrReturnValue result = handler.invoke(this, imsg.getThis(),
-                imsg.getMethodDispatchId(), imsg.getArgs());
-            sendFreedValues();
-            ReturnMessage.send(this, result);
-            break;
-          case INVOKE_SPECIAL:
-            handleInvokeSpecial(handler);
-            break;
-          case QUIT:
-            // if we got an unexpected QUIT here, the remote plugin probably
-            // realized it was dying and had time to close the socket properly.
-            throw new RemoteDeathError(null);
-          default:
-            throw new BrowserChannelException("Invalid message type "
-                + messageType + " received waiting for return.");
-        }
-      } catch (IOException e) {
-        throw new RemoteDeathError(e);
-      } catch (BrowserChannelException e) {
-        throw new RemoteDeathError(e);
-      }
-    } while (true);
-  }
-
   protected DataInputStream getStreamFromOtherSide() {
     return streamFromOtherSide;
   }
@@ -1797,6 +1671,19 @@ public abstract class BrowserChannel {
     return value;
   }
 
+  protected void sendFreedValues() throws IOException {
+    Set<Integer> freed = objectRefFactory.getRefIdsForCleanup();
+    int n = freed.size();
+    if (n > 0) {
+      int[] ids = new int[n];
+      int i = 0;
+      for (Integer id : freed) {
+        ids[i++] = id;
+      }
+      FreeMessage.send(this, ids);
+    }
+  }
+
   protected void writeValue(DataOutputStream stream, Value value)
       throws IOException {
     if (value.isNull()) {
@@ -1825,41 +1712,6 @@ public abstract class BrowserChannel {
       writeTaggedString(stream, value.getString());
     } else {
       assert false;
-    }
-  }
-
-  private void handleInvokeSpecial(SessionHandler handler) throws IOException,
-      BrowserChannelException {
-    final InvokeSpecialMessage ismsg = InvokeSpecialMessage.receive(this);
-    Value[] args = ismsg.getArgs();
-    ExceptionOrReturnValue retExc = null;
-    switch (ismsg.getDispatchId()) {
-      case GetProperty:
-        assert args.length == 2;
-        retExc = handler.getProperty(this, args[0].getInt(), args[1].getInt());
-        break;
-      case SetProperty:
-        assert args.length == 3;
-        retExc = handler.setProperty(this, args[0].getInt(), args[1].getInt(),
-            args[2]);
-        break;
-      default:
-        throw new HostedModeException("Unexpected InvokeSpecial method "
-            + ismsg.getDispatchId());
-    }
-    ReturnMessage.send(this, retExc);
-  }
-
-  private void sendFreedValues() throws IOException {
-    Set<Integer> freed = objectRefFactory.getRefIdsForCleanup();
-    int n = freed.size();
-    if (n > 0) {
-      int[] ids = new int[n];
-      int i = 0;
-      for (Integer id : freed) {
-        ids[i++] = id;
-      }
-      FreeMessage.send(this, ids);
     }
   }
 }

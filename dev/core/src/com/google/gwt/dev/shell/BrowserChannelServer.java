@@ -17,6 +17,7 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
+import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.ExceptionOrReturnValue;
 import com.google.gwt.dev.shell.JsValue.DispatchObject;
 
 import java.io.IOException;
@@ -34,6 +35,41 @@ import java.util.Set;
  */
 public class BrowserChannelServer extends BrowserChannel
     implements Runnable {
+  
+  /**
+   * Hook interface for responding to messages from the client.
+   */
+  public abstract static class SessionHandlerServer extends SessionHandler<BrowserChannelServer> {
+    public abstract ExceptionOrReturnValue getProperty(BrowserChannelServer channel,
+        int refId, int dispId);
+
+    public abstract ExceptionOrReturnValue invoke(BrowserChannelServer channel,
+        Value thisObj, int dispId, Value[] args);
+
+    /**
+     * Load a new instance of a module.
+     *
+     * @param channel
+     * @param moduleName
+     * @param userAgent
+     * @param url top-level URL of the main page, null if using an old plugin
+     * @param tabKey opaque key of the tab, may be empty if the plugin can't
+     *     distinguish tabs or null if using an old plugin
+     * @param sessionKey opaque key for this session, null if using an old plugin
+     * @param userAgentIcon byte array containing an icon (which fits within
+     *     24x24) representing the user agent or null if unavailable
+     * @return a TreeLogger to use for the module's logs, or null if the module
+     *     load failed
+     */
+    public abstract TreeLogger loadModule(BrowserChannelServer channel,
+        String moduleName, String userAgent, String url, String tabKey,
+        String sessionKey, byte[] userAgentIcon);
+
+    public abstract ExceptionOrReturnValue setProperty(BrowserChannelServer channel,
+        int refId, int dispId, Value newValue);
+
+    public abstract void unloadModule(BrowserChannelServer channel, String moduleName);
+  }
 
   private static class ServerObjectRefFactory implements ObjectRefFactory {
 
@@ -71,7 +107,7 @@ public class BrowserChannelServer extends BrowserChannel
   
   private static final Object cacheLock = new Object();
 
-  private final SessionHandler handler;
+  private final SessionHandlerServer handler;
 
   private final boolean ignoreRemoteDeath;
 
@@ -95,7 +131,7 @@ public class BrowserChannelServer extends BrowserChannel
    * @throws IOException
    */
   public BrowserChannelServer(TreeLogger initialLogger, Socket socket,
-      SessionHandler handler, boolean ignoreRemoteDeath) throws IOException {
+      SessionHandlerServer handler, boolean ignoreRemoteDeath) throws IOException {
     super(socket, new ServerObjectRefFactory());
     this.handler = handler;
     this.ignoreRemoteDeath = ignoreRemoteDeath;
@@ -104,7 +140,7 @@ public class BrowserChannelServer extends BrowserChannel
 
   // @VisibleForTesting
   BrowserChannelServer(TreeLogger initialLogger, InputStream inputStream,
-      OutputStream outputStream, SessionHandler handler,
+      OutputStream outputStream, SessionHandlerServer handler,
       boolean ignoreRemoteDeath) {
     super(inputStream, outputStream, new ServerObjectRefFactory());
     this.handler = handler;
@@ -139,6 +175,12 @@ public class BrowserChannelServer extends BrowserChannel
    */
   public int getProtocolVersion() {
     return protocolVersion;
+  }
+
+  public ReturnMessage invoke(String methodName, Value vthis, Value[] vargs,
+      SessionHandlerServer handler) throws IOException, BrowserChannelException {
+    new InvokeOnClientMessage(this, methodName, vthis, vargs).send();
+    return reactToMessagesWhileWaitingForReturn(handler);
   }
 
   /**
@@ -215,6 +257,94 @@ public class BrowserChannelServer extends BrowserChannel
     } catch (IOException e) {
       throw new RemoteDeathError(e);
     }
+  }
+
+  /**
+   * React to messages from the other side, where no return value is expected.
+   * 
+   * @param handler
+   * @throws RemoteDeathError
+   */
+  public void reactToMessages(SessionHandlerServer handler) {
+    do {
+      try {
+        getStreamToOtherSide().flush();
+        MessageType messageType = Message.readMessageType(
+            getStreamFromOtherSide());
+        switch (messageType) {
+          case FREE_VALUE:
+            final FreeMessage freeMsg = FreeMessage.receive(this);
+            handler.freeValue(this, freeMsg.getIds());
+            break;
+          case INVOKE:
+            InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
+            ExceptionOrReturnValue result = handler.invoke(this, imsg.getThis(),
+                imsg.getMethodDispatchId(), imsg.getArgs());
+            sendFreedValues();
+            ReturnMessage.send(this, result);
+            break;
+          case INVOKE_SPECIAL:
+            handleInvokeSpecial(handler);
+            break;
+          case QUIT:
+            return;
+          default:
+            throw new RemoteDeathError(new BrowserChannelException(
+                "Invalid message type " + messageType));
+        }
+      } catch (IOException e) {
+        throw new RemoteDeathError(e);
+      } catch (BrowserChannelException e) {
+        throw new RemoteDeathError(e);
+      }
+    } while (true);
+  }
+
+  /**
+   * React to messages from the other side, where a return value is expected.
+   * 
+   * @param handler
+   * @throws BrowserChannelException 
+   * @throws RemoteDeathError
+   */
+  public ReturnMessage reactToMessagesWhileWaitingForReturn(
+      SessionHandlerServer handler) throws BrowserChannelException, RemoteDeathError {
+    do {
+      try {
+        getStreamToOtherSide().flush();
+        MessageType messageType = Message.readMessageType(
+            getStreamFromOtherSide());
+        switch (messageType) {
+          case FREE_VALUE:
+            final FreeMessage freeMsg = FreeMessage.receive(this);
+            handler.freeValue(this, freeMsg.getIds());
+            break;
+          case RETURN:
+            return ReturnMessage.receive(this);
+          case INVOKE:
+            InvokeOnServerMessage imsg = InvokeOnServerMessage.receive(this);
+            ExceptionOrReturnValue result = handler.invoke(this, imsg.getThis(),
+                imsg.getMethodDispatchId(), imsg.getArgs());
+            sendFreedValues();
+            ReturnMessage.send(this, result);
+            break;
+          case INVOKE_SPECIAL:
+            handleInvokeSpecial(handler);
+            break;
+          case QUIT:
+            // if we got an unexpected QUIT here, the remote plugin probably
+            // realized it was dying and had time to close the socket properly.
+            throw new RemoteDeathError(null);
+          default:
+            throw new BrowserChannelException("Invalid message type "
+                + messageType + " received waiting for return.");
+        }
+      } catch (IOException e) {
+        throw new RemoteDeathError(e);
+      } catch (BrowserChannelException e) {
+        throw new RemoteDeathError(e);
+      }
+    } while (true);
   }
 
   public void run() {
@@ -514,6 +644,28 @@ public class BrowserChannelServer extends BrowserChannel
     // TODO(jat): implement support for additional transports
     throw new UnsupportedOperationException(
         "No alternate transports supported");
+  }
+
+  private void handleInvokeSpecial(SessionHandlerServer handler) throws IOException,
+      BrowserChannelException {
+    final InvokeSpecialMessage ismsg = InvokeSpecialMessage.receive(this);
+    Value[] args = ismsg.getArgs();
+    ExceptionOrReturnValue retExc = null;
+    switch (ismsg.getDispatchId()) {
+      case GetProperty:
+        assert args.length == 2;
+        retExc = handler.getProperty(this, args[0].getInt(), args[1].getInt());
+        break;
+      case SetProperty:
+        assert args.length == 3;
+        retExc = handler.setProperty(this, args[0].getInt(), args[1].getInt(),
+            args[2]);
+        break;
+      default:
+        throw new HostedModeException("Unexpected InvokeSpecial method "
+            + ismsg.getDispatchId());
+    }
+    ReturnMessage.send(this, retExc);
   }
 
   private void init(TreeLogger initialLogger) {

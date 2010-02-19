@@ -45,17 +45,17 @@ public class JavaObject extends ScriptableObject implements Function {
   }
 
   static ExceptionOrReturnValue getReturnFromJavaMethod(Context cx,
-      HtmlUnitSessionHandler sessionHandler, BrowserChannel channel,
+      HtmlUnitSessionHandler sessionHandler, BrowserChannelClient channel,
       int dispatchId, Value thisValue, Value valueArgs[]) {
 
-    synchronized (sessionHandler.getHtmlPage()) {
+    synchronized (sessionHandler.getSynchronizationObject()) {
       try {
         new InvokeOnServerMessage(channel, dispatchId, thisValue, valueArgs).send();
       } catch (IOException e) {
         return DEFAULT_VALUE;
       }
       try {
-        ReturnMessage returnMessage = ((BrowserChannelClient) channel).reactToMessagesWhileWaitingForReturn(sessionHandler);
+        ReturnMessage returnMessage = channel.reactToMessagesWhileWaitingForReturn(sessionHandler);
         return new ExceptionOrReturnValue(returnMessage.isException(),
             returnMessage.getReturnValue());
       } catch (IOException e) {

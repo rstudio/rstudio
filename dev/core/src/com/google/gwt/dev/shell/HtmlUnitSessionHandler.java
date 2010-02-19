@@ -18,9 +18,9 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.BrowserChannel.JavaObjectRef;
 import com.google.gwt.dev.shell.BrowserChannel.JsObjectRef;
-import com.google.gwt.dev.shell.BrowserChannel.SessionHandler;
 import com.google.gwt.dev.shell.BrowserChannel.Value;
 import com.google.gwt.dev.shell.BrowserChannel.Value.ValueType;
+import com.google.gwt.dev.shell.BrowserChannelClient.SessionHandlerClient;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import com.gargoylesoftware.htmlunit.ScriptResult;
@@ -37,16 +37,13 @@ import net.sourceforge.htmlunit.corejs.javascript.ScriptableObject;
 import net.sourceforge.htmlunit.corejs.javascript.Undefined;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
- * Handle session tasks for HtmlUnit. TODO (amitmanjhi): refactor
- * SessionHandler.
+ * Handle session tasks for HtmlUnit.
  */
-public class HtmlUnitSessionHandler extends SessionHandler {
+public class HtmlUnitSessionHandler extends SessionHandlerClient {
 
   private class ToStringMethod extends ScriptableObject implements Function {
 
@@ -93,16 +90,13 @@ public class HtmlUnitSessionHandler extends SessionHandler {
    * The htmlPage is also used to synchronize calls to Java code.
    */
   private HtmlPage htmlPage;
-  private Set<Integer> javaObjectsToFree;
-
   private JavaScriptEngine jsEngine;
-
   private IdentityHashMap<Scriptable, Integer> jsObjectToRef;
-  private final PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
-
-  private int nextRefId = 1;
+  private int nextRefId;
   private Map<Integer, Scriptable> refToJsObject;
   private SessionData sessionData;
+
+  private final PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
 
   private final ToStringMethod toStringMethod = new ToStringMethod();
 
@@ -117,7 +111,6 @@ public class HtmlUnitSessionHandler extends SessionHandler {
         + htmlPage);
 
     jsObjectToRef = new IdentityHashMap<Scriptable, Integer>();
-    javaObjectsToFree = new HashSet<Integer>();
     nextRefId = 1;
     refToJsObject = new HashMap<Integer, Scriptable>();
 
@@ -126,17 +119,13 @@ public class HtmlUnitSessionHandler extends SessionHandler {
   }
 
   @Override
-  public void freeValue(BrowserChannel channel, int[] ids) {
+  public void freeValue(BrowserChannelClient channel, int[] ids) {
     for (int id : ids) {
       Scriptable scriptable = refToJsObject.remove(id);
       if (scriptable != null) {
         jsObjectToRef.remove(scriptable);
       }
     }
-  }
-
-  public HtmlPage getHtmlPage() {
-    return htmlPage;
   }
 
   public JavaObject getOrCreateJavaObject(int refId, Context context) {
@@ -148,30 +137,22 @@ public class HtmlUnitSessionHandler extends SessionHandler {
     return javaObject;
   }
 
-  @Override
-  public ExceptionOrReturnValue getProperty(BrowserChannel channel, int refId,
-      int dispId) {
-    throw new UnsupportedOperationException(
-        "getProperty should not be called on the client-side");
+  public HtmlPage getSynchronizationObject() {
+    return htmlPage;
   }
 
   public Object getToStringTearOff(Context jsContext) {
     return toStringMethod;
   }
 
+  @Override
   public String getUserAgent() {
     return "HtmlUnit-"
         + jsEngine.getWebClient().getBrowserVersion().getUserAgent();
   }
 
   @Override
-  public ExceptionOrReturnValue invoke(BrowserChannel channel, Value thisObj,
-      int dispId, Value[] args) {
-    throw new UnsupportedOperationException(
-        "should not be called on the client side");
-  }
-
-  public ExceptionOrReturnValue invoke(BrowserChannel channel, Value thisObj,
+  public ExceptionOrReturnValue invoke(BrowserChannelClient channel, Value thisObj,
       String methodName, Value[] args) {
     logger.log(TreeLogger.DEBUG, "INVOKE: thisObj: " + thisObj
         + ", methodName: " + methodName + ", args: " + args);
@@ -236,24 +217,11 @@ public class HtmlUnitSessionHandler extends SessionHandler {
         result));
   }
 
-  @SuppressWarnings("unused")
-  public ExceptionOrReturnValue invokeSpecial(BrowserChannel channel,
-      SpecialDispatchId specialDispatchId, Value[] args) {
-    throw new UnsupportedOperationException(
-        "InvokeSpecial must not be called on the client side");
-  }
-
-  public void loadJsni(BrowserChannel channel, String jsniString) {
+  @Override
+  public void loadJsni(BrowserChannelClient channel, String jsniString) {
     logger.log(TreeLogger.SPAM, "LOAD_JSNI: " + jsniString);
     ScriptResult scriptResult = htmlPage.executeJavaScript(jsniString);
     logger.log(TreeLogger.INFO, "LOAD_JSNI: scriptResult=" + scriptResult);
-  }
-
-  @Override
-  public TreeLogger loadModule(BrowserChannel channel, String moduleName,
-      String userAgent, String url, String tabKey, String sessionKey,
-      byte[] userAgentIcon) {
-    throw new UnsupportedOperationException("loadModule must not be called");
   }
 
   public Value makeValueFromJsval(Context jsContext, Object value) {
@@ -291,36 +259,8 @@ public class HtmlUnitSessionHandler extends SessionHandler {
     return new Value(value);
   }
 
-  // TODO: check synchronization and multi-threading
-  public void sendFreeValues(BrowserChannel channel) {
-    int size = javaObjectsToFree.size();
-    if (size == 0) {
-      return;
-    }
-    int ids[] = new int[size];
-    int index = 0;
-    for (int id : javaObjectsToFree) {
-      ids[index++] = id;
-    }
-    if (ServerMethods.freeJava(channel, this, ids)) {
-      javaObjectsToFree.clear();
-    }
-  }
-
-  @Override
-  public ExceptionOrReturnValue setProperty(BrowserChannel channel, int refId,
-      int dispId, Value newValue) {
-    throw new UnsupportedOperationException(
-        "setProperty should not be called on the client-side");
-  }
-
   public void setSessionData(SessionData sessionData) {
     this.sessionData = sessionData;
-  }
-
-  @Override
-  public void unloadModule(BrowserChannel channel, String moduleName) {
-    throw new UnsupportedOperationException("unloadModule must not be called");
   }
 
   /*
@@ -370,5 +310,4 @@ public class HtmlUnitSessionHandler extends SessionHandler {
     }
     return currentUrl;
   }
-
 }

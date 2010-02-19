@@ -25,9 +25,25 @@ import java.util.Set;
 
 /**
  * Implementation of the BrowserChannel for the client side.
- * 
  */
 public class BrowserChannelClient extends BrowserChannel {
+
+  /**
+   * Hook interface for responding to messages from the server.
+   */
+  public abstract static class SessionHandlerClient extends
+      SessionHandler<BrowserChannelClient> {
+
+    public abstract Object getSynchronizationObject();
+
+    public abstract String getUserAgent();
+
+    public abstract ExceptionOrReturnValue invoke(BrowserChannelClient channel,
+        Value thisObj, String methodName, Value[] args);
+
+    public abstract void loadJsni(BrowserChannelClient channel,
+        String jsniString);
+  }
 
   private static class ClientObjectRefFactory implements ObjectRefFactory {
 
@@ -55,7 +71,7 @@ public class BrowserChannelClient extends BrowserChannel {
     }
   }
 
-  private final HtmlUnitSessionHandler htmlUnitSessionHandler;
+  private final SessionHandlerClient handler;
   private final PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
   private final String moduleName;
   private final String tabKey;
@@ -67,7 +83,7 @@ public class BrowserChannelClient extends BrowserChannel {
 
   public BrowserChannelClient(String addressParts[], String url,
       String sessionKey, String moduleName, String versionString,
-      HtmlUnitSessionHandler htmlUnitSessionHandler) throws IOException {
+      SessionHandlerClient sessionHandlerClient) throws IOException {
     super(new Socket(addressParts[0], Integer.parseInt(addressParts[1])),
         new ClientObjectRefFactory());
     connected = true;
@@ -79,7 +95,7 @@ public class BrowserChannelClient extends BrowserChannel {
     logger.setMaxDetail(TreeLogger.WARN);
     logger.log(TreeLogger.SPAM, "BrowserChannelClient, versionString: "
         + versionString);
-    this.htmlUnitSessionHandler = htmlUnitSessionHandler;
+    this.handler = sessionHandlerClient;
   }
 
   public boolean disconnectFromHost() throws IOException {
@@ -97,7 +113,7 @@ public class BrowserChannelClient extends BrowserChannel {
 
   /**
    * @return the negotiated protocol version -- only valid after {@link #init}
-   * has returned.
+   *         has returned.
    */
   public int getProtocolVersion() {
     return protocolVersion;
@@ -117,12 +133,12 @@ public class BrowserChannelClient extends BrowserChannel {
       return false;
     }
     logger.log(TreeLogger.DEBUG, "sending " + MessageType.LOAD_MODULE
-        + " message, userAgent: " + htmlUnitSessionHandler.getUserAgent());
+        + " message, userAgent: " + handler.getUserAgent());
     ReturnMessage returnMessage = null;
-    synchronized (htmlUnitSessionHandler.getHtmlPage()) {
+    synchronized (handler.getSynchronizationObject()) {
       new LoadModuleMessage(this, url, tabKey, sessionKey, moduleName,
-          htmlUnitSessionHandler.getUserAgent()).send();
-      returnMessage = reactToMessages(htmlUnitSessionHandler, true);
+          handler.getUserAgent()).send();
+      returnMessage = reactToMessages(handler, true);
     }
     logger.log(TreeLogger.DEBUG, "loaded module, returnValue: "
         + returnMessage.getReturnValue() + ", isException: "
@@ -131,8 +147,7 @@ public class BrowserChannelClient extends BrowserChannel {
   }
 
   public ReturnMessage reactToMessagesWhileWaitingForReturn(
-      HtmlUnitSessionHandler handler) throws IOException,
-      BrowserChannelException {
+      SessionHandlerClient handler) throws IOException, BrowserChannelException {
     ReturnMessage returnMessage = reactToMessages(handler, true);
     return returnMessage;
   }
@@ -167,9 +182,8 @@ public class BrowserChannelClient extends BrowserChannel {
     return true;
   }
 
-  private ReturnMessage reactToMessages(
-      HtmlUnitSessionHandler htmlUnitSessionHandler, boolean expectReturn)
-      throws IOException, BrowserChannelException {
+  private ReturnMessage reactToMessages(SessionHandlerClient handler,
+      boolean expectReturn) throws IOException, BrowserChannelException {
     while (true) {
       ExceptionOrReturnValue returnValue;
       MessageType type = Message.readMessageType(getStreamFromOtherSide());
@@ -179,21 +193,8 @@ public class BrowserChannelClient extends BrowserChannel {
         switch (type) {
           case INVOKE:
             InvokeOnClientMessage invokeMessage = InvokeOnClientMessage.receive(this);
-            returnValue = htmlUnitSessionHandler.invoke(this,
-                invokeMessage.getThis(), invokeMessage.getMethodName(),
-                invokeMessage.getArgs());
-            htmlUnitSessionHandler.sendFreeValues(this);
-            new ReturnMessage(this, returnValue.isException(),
-                returnValue.getReturnValue()).send();           
-            break;
-          case INVOKE_SPECIAL:
-            InvokeSpecialMessage invokeSpecialMessage = InvokeSpecialMessage.receive(this);
-            logger.log(TreeLogger.DEBUG, type + " message " + ", thisRef: "
-                + invokeSpecialMessage.getArgs());
-            returnValue = htmlUnitSessionHandler.invokeSpecial(this,
-                invokeSpecialMessage.getDispatchId(),
-                invokeSpecialMessage.getArgs());
-            htmlUnitSessionHandler.sendFreeValues(this);
+            returnValue = handler.invoke(this, invokeMessage.getThis(),
+                invokeMessage.getMethodName(), invokeMessage.getArgs());
             new ReturnMessage(this, returnValue.isException(),
                 returnValue.getReturnValue()).send();
             break;
@@ -201,18 +202,18 @@ public class BrowserChannelClient extends BrowserChannel {
             FreeMessage freeMessage = FreeMessage.receive(this);
             logger.log(TreeLogger.DEBUG, type + " message "
                 + freeMessage.getIds());
-            htmlUnitSessionHandler.freeValue(this, freeMessage.getIds());
+            handler.freeValue(this, freeMessage.getIds());
             // no response
             break;
           case LOAD_JSNI:
             LoadJsniMessage loadJsniMessage = LoadJsniMessage.receive(this);
             String jsniString = loadJsniMessage.getJsni();
-            htmlUnitSessionHandler.loadJsni(this, jsniString);
+            handler.loadJsni(this, jsniString);
             // no response
             break;
           case REQUEST_ICON:
             RequestIconMessage.receive(this);
-            // no need for icon here 
+            // no need for icon here
             UserAgentIconMessage.send(this, null);
             break;
           case RETURN:

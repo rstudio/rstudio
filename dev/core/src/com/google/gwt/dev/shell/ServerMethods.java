@@ -20,6 +20,7 @@ import com.google.gwt.dev.shell.BrowserChannel.InvokeSpecialMessage;
 import com.google.gwt.dev.shell.BrowserChannel.ReturnMessage;
 import com.google.gwt.dev.shell.BrowserChannel.Value;
 import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.SpecialDispatchId;
+import com.google.gwt.dev.shell.BrowserChannelClient.SessionHandlerClient;
 
 import java.io.IOException;
 
@@ -34,9 +35,9 @@ public class ServerMethods {
    * @param ids ID of object to free
    * @return false if an error occurred
    */
-  static boolean freeJava(BrowserChannel channel,
-      HtmlUnitSessionHandler handler, int ids[]) {
-    if (!((BrowserChannelClient) channel).isConnected()) {
+  static boolean freeJava(BrowserChannelClient channel,
+      SessionHandlerClient handler, int ids[]) {
+    if (!channel.isConnected()) {
       // ignoring freeJava after disconnect.
       return true;
     }
@@ -55,9 +56,9 @@ public class ServerMethods {
    * @param dispatchId dispatch ID of field
    * @return the value of the property, undef if none (or on error)
    */
-  static Value getProperty(BrowserChannel channel,
-      HtmlUnitSessionHandler handler, int objectRef, int dispatchId) {
-    if (!((BrowserChannelClient) channel).isConnected()) {
+  static Value getProperty(BrowserChannelClient channel,
+      SessionHandlerClient handler, int objectRef, int dispatchId) {
+    if (!channel.isConnected()) {
       // ignoring getProperty() after disconnect
       return new Value();
     }
@@ -67,11 +68,10 @@ public class ServerMethods {
     args[1] = new Value();
     args[1].setInt(dispatchId);
 
-    synchronized (handler.getHtmlPage()) {
+    synchronized (handler.getSynchronizationObject()) {
       try {
         new InvokeSpecialMessage(channel, SpecialDispatchId.GetProperty, args).send();
-        // TODO: refactor in order to remove cast.
-        ReturnMessage returnMessage = ((BrowserChannelClient) channel).reactToMessagesWhileWaitingForReturn(handler);
+        ReturnMessage returnMessage = channel.reactToMessagesWhileWaitingForReturn(handler);
         if (!returnMessage.isException()) {
           return returnMessage.getReturnValue();
         }
@@ -90,8 +90,8 @@ public class ServerMethods {
    * @param value value to store in the property
    * @return false if an error occurred
    */
-  static boolean setProperty(BrowserChannel channel,
-      HtmlUnitSessionHandler handler, int objectRef, int dispatchId, Value value) {
+  static boolean setProperty(BrowserChannelClient channel,
+      SessionHandlerClient handler, int objectRef, int dispatchId, Value value) {
     Value args[] = new Value[3];
     for (int i = 0; i < args.length; i++) {
       args[i] = new Value();
@@ -99,10 +99,10 @@ public class ServerMethods {
     args[0].setInt(objectRef);
     args[1].setInt(dispatchId);
     args[2] = value;
-    synchronized (handler.getHtmlPage()) {
+    synchronized (handler.getSynchronizationObject()) {
       try {
         new InvokeSpecialMessage(channel, SpecialDispatchId.SetProperty, args).send();
-        ReturnMessage returnMessage = ((BrowserChannelClient) channel).reactToMessagesWhileWaitingForReturn(handler);
+        ReturnMessage returnMessage = channel.reactToMessagesWhileWaitingForReturn(handler);
         if (!returnMessage.isException()) {
           return true;
         }

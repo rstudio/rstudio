@@ -17,7 +17,7 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.shell.BrowserChannel.SessionHandler;
+import com.google.gwt.dev.shell.BrowserChannelServer.SessionHandlerServer;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -31,7 +31,6 @@ import java.net.SocketException;
  * Listens for connections from OOPHM clients.
  */
 public class BrowserListener {
-
 
   /**
    * Get a query parameter to be added to the URL that specifies the address
@@ -59,7 +58,7 @@ public class BrowserListener {
    * @param handler 
    */
   public BrowserListener(final TreeLogger logger, String bindAddress,
-      int port, final SessionHandler handler) {
+      int port, final SessionHandlerServer handler) {
     try {
       listenSocket = new ServerSocket();
       listenSocket.setReuseAddress(true);
