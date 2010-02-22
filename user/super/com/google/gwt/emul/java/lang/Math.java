@@ -58,10 +58,9 @@ public final class Math {
     return Math.atan2(y,x);
   }-*/;
 
-  /* NYI: Java 1.5 includes this, but JS doesn't give us the ingredients.: Java 1.5 includes this, but JS doesn't give us the ingredients.
   public static double cbrt (double x) {
-    return 0;
-  }; */
+    return Math.pow(x, 1.0 / 3.0);
+  }
 
   public static native double ceil(double x) /*-{
     return Math.ceil(x);
@@ -128,13 +127,13 @@ public final class Math {
     return Math.log(x);
   }-*/;
 
-  public static double log10(double x) {
-    return Math.log(x) / Math.log(10);
-  }
+  public static native double log10(double x) /*-{
+    return Math.log(x) * Math.LOG10E;
+  }-*/;
 
   public static double log1p(double x) {
     return Math.log(x + 1.0d);
-  };
+  }
 
   public static double max(double x, double y) {
     return x > y ? x : y;
@@ -199,7 +198,7 @@ public final class Math {
     } else {
       return round(d);
     }
-  };
+  }
 
   public static long round(double x) {
     return (long) round0(x);

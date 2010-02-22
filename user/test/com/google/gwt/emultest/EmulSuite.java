@@ -23,6 +23,7 @@ import com.google.gwt.emultest.java.lang.DoubleTest;
 import com.google.gwt.emultest.java.lang.FloatTest;
 import com.google.gwt.emultest.java.lang.IntegerTest;
 import com.google.gwt.emultest.java.lang.LongTest;
+import com.google.gwt.emultest.java.lang.MathTest;
 import com.google.gwt.emultest.java.lang.ObjectTest;
 import com.google.gwt.emultest.java.lang.ShortTest;
 import com.google.gwt.emultest.java.lang.StringBufferDefaultImplTest;
@@ -53,7 +54,7 @@ import com.google.gwt.junit.tools.GWTTestSuite;
 import junit.framework.Test;
 
 /**
- * TODO: document me.
+ * Test JRE emulations.
  */
 public class EmulSuite {
 
@@ -62,6 +63,7 @@ public class EmulSuite {
     GWTTestSuite suite = new GWTTestSuite("Tests for com.google.gwt.emul.java");
 
     // $JUnit-BEGIN$
+    // java.lang
     suite.addTestSuite(BooleanTest.class);
     suite.addTestSuite(ByteTest.class);
     suite.addTestSuite(CharacterTest.class);
@@ -69,6 +71,7 @@ public class EmulSuite {
     suite.addTestSuite(DoubleTest.class);
     suite.addTestSuite(FloatTest.class);
     suite.addTestSuite(LongTest.class);
+    suite.addTestSuite(MathTest.class);
     suite.addTestSuite(IntegerTest.class);
     suite.addTestSuite(ObjectTest.class);
     suite.addTestSuite(ShortTest.class);
@@ -77,6 +80,7 @@ public class EmulSuite {
     suite.addTestSuite(StringTest.class);
     suite.addTestSuite(SystemTest.class);
 
+    // java.util
     suite.addTestSuite(ApacheMapTest.class);
     suite.addTestSuite(ArrayListTest.class);
     suite.addTestSuite(ArraysTest.class);
@@ -102,5 +106,4 @@ public class EmulSuite {
 
     return suite;
   }
-
 }
