@@ -13,14 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.tree.shared;
+package com.google.gwt.sample.tree.client;
 
 /**
- * A model describing a node in a Tree of uniformly typed nodes.
- * 
- * @param <T> the data type contained in all nodes of the tree.
+ * A model of a tree.
  */
-public abstract class SimpleTreeNodeModel<T> extends TreeNodeModel<T> {
+public interface TreeModel {
 
-  public abstract SimpleTreeNodeModel<T> createChildModel(T value);
+  /**
+   * Create a {@link TreeNodeFactory} that will provide the children of the
+   * given value.
+   * 
+   * @param value the parent value
+   * @return the {@link TreeNodeFactory}
+   */
+  TreeNodeFactory<?> createTreeNodeFactory(Object value);
 }

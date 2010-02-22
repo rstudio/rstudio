@@ -15,64 +15,16 @@
  */
 package com.google.gwt.sample.tree.client;
 
-import com.google.gwt.cells.client.TextCell;
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.list.shared.AsyncListModel;
-import com.google.gwt.list.shared.ListModel;
-import com.google.gwt.list.shared.AsyncListModel.DataSource;
-import com.google.gwt.sample.tree.shared.SimpleTreeNodeModel;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.Tree;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A demo of the asynchronous Tree model.
  */
 public class TreeEntryPoint implements EntryPoint {
 
-  static class StringTreeNodeModel extends SimpleTreeNodeModel<String> {
-    private static final int FANOUT = 5;
-    private String nodeData;
-
-    StringTreeNodeModel(final String nodeData) {
-      super();
-      this.nodeData = nodeData;
-    }
-
-    @Override
-    public StringTreeNodeModel createChildModel(String nodeData) {
-      if (Math.random() < 0.2) {
-        return null;
-      } else {
-        return new StringTreeNodeModel(nodeData);
-      }
-    }
-
-    @Override
-    protected ListModel<String> createListModel() {
-      return new AsyncListModel<String>(new DataSource<String>() {
-        public void requestData(AsyncListModel<String> listModel) {
-          listModel.updateDataSize(FANOUT, true);
-          List<String> values = new ArrayList<String>();
-          for (int i = 0; i < FANOUT; i++) {
-            values.add(nodeData + "." + i);
-          }
-          listModel.updateViewData(0, FANOUT, values);
-        }
-      });
-    }
-  }
-    
   public void onModuleLoad() {
-    Tree tree = new Tree();
-
-    StringTreeNodeModel model = new StringTreeNodeModel("Node 0");
-    SimpleTreeNodeView<String> rootView = new SimpleTreeNodeView<String>("",
-        model, new TextCell());
-    tree.addItem(rootView.getTreeItem());
-
+    TreeView tree = new TreeView(new MyTreeModel(), -1);
     RootPanel.get().add(tree);
   }
 }
