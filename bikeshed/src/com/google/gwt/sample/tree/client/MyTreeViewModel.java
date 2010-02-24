@@ -15,8 +15,10 @@
  */
 package com.google.gwt.sample.tree.client;
 
+import com.google.gwt.cells.client.ButtonCell;
 import com.google.gwt.cells.client.Cell;
 import com.google.gwt.cells.client.TextCell;
+import com.google.gwt.cells.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.list.shared.AsyncListModel;
 import com.google.gwt.list.shared.ListModel;
@@ -29,7 +31,7 @@ import java.util.List;
 /**
  * A demo TreeModel.
  */
-public class MyTreeModel implements TreeModel {
+public class MyTreeViewModel implements TreeViewModel {
 
   private static class IntegerListModel extends AsyncListModel<Integer> {
     public IntegerListModel(final int length) {
@@ -48,7 +50,8 @@ public class MyTreeModel implements TreeModel {
     public StringListModel(final String value) {
       super(new DataSource<String>() {
         public void requestData(final AsyncListModel<String> listModel) {
-          String prefix = value.endsWith("...") ? value.substring(0, value.length() - 3) : value;
+          String prefix = value.endsWith("...") ? value.substring(0,
+              value.length() - 3) : value;
           dataService.getNext(prefix, new AsyncCallback<List<String>>() {
             public void onFailure(Throwable caught) {
               Window.alert("Error: " + caught);
@@ -81,11 +84,11 @@ public class MyTreeModel implements TreeModel {
    */
   private static final Cell<String> STRING_CELL = new TextCell();
 
-  public TreeNodeFactory<?> createTreeNodeFactory(Object value) {
+  public <T> NodeInfo<?> getNodeInfo(T value, TreeNodeView<T> treeNodeView) {
     if (value instanceof String) {
-      return createTreeNodeFactoryHelper((String) value);
+      return getNodeInfoHelper((String) value);
     } else if (value instanceof Integer) {
-      return createTreeNodeFactoryHelper((Integer) value);
+      return getNodeInfoHelper((Integer) value);
     }
 
     // Unhandled type.
@@ -94,17 +97,27 @@ public class MyTreeModel implements TreeModel {
   }
 
   @SuppressWarnings("unused")
-  private TreeNodeFactory<?> createTreeNodeFactoryHelper(final Integer value) {
+  private NodeInfo<?> getNodeInfoHelper(final Integer value) {
     return null;
   }
 
-  private TreeNodeFactory<?> createTreeNodeFactoryHelper(final String value) {
+  private NodeInfo<?> getNodeInfoHelper(final String value) {
     if (value.endsWith("...")) {
       ListModel<String> listModel = new StringListModel(value.toString());
-      return new DefaultTreeNodeFactory<String>(listModel, STRING_CELL, this);
+      return new DefaultNodeInfo<String>(listModel, new ButtonCell(),
+          new ValueUpdater<String>() {
+            public void update(String value) {
+              Window.alert("Clicked: " + value);
+            }
+          });
     } else {
       ListModel<Integer> listModel = new IntegerListModel(value.length());
-      return new DefaultTreeNodeFactory<Integer>(listModel, INTEGER_CELL, this);
+      return new DefaultNodeInfo<Integer>(listModel, INTEGER_CELL,
+          new ValueUpdater<Integer>() {
+            public void update(Integer value) {
+              Window.alert("Integer = " + value);
+            }
+          });
     }
   }
 }

@@ -24,7 +24,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 public class TreeEntryPoint implements EntryPoint {
 
   public void onModuleLoad() {
-    TreeView tree = new TreeView(new MyTreeModel(), "...");
+    TreeView tree = new TreeView(new MyTreeViewModel(), "...");
     RootPanel.get().add(tree);
   }
 }

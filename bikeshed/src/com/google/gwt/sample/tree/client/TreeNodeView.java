@@ -27,13 +27,19 @@ import com.google.gwt.list.shared.ListHandler;
 import com.google.gwt.list.shared.ListModel;
 import com.google.gwt.list.shared.ListRegistration;
 import com.google.gwt.list.shared.SizeChangeEvent;
+import com.google.gwt.sample.tree.client.TreeViewModel.NodeInfo;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.TreeItem;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A view of a tree node.
+ * 
+ * @param <T> the type that this {@link TreeNodeView} contains
  */
-public class TreeNodeView extends Composite {
+public class TreeNodeView<T> extends Composite {
 
   /**
    * A {@link TreeItem} that fires value change events when the state changes.
@@ -78,31 +84,121 @@ public class TreeNodeView extends Composite {
   private ExtraTreeItem treeItem;
 
   /**
+   * This node's value.
+   */
+  private T value;
+
+  /**
+   * The parent {@link TreeNodeView}.
+   */
+  private TreeNodeView<?> parent;
+
+  /**
+   * The containing {@link TreeView}.
+   */
+  private TreeView tree;
+
+  /**
+   * The children of this {@link TreeNodeView}.
+   */
+  private List<TreeNodeView<?>> children;
+
+  /**
+   * The info about the child nodes.
+   */
+  private NodeInfo<?> nodeInfo;
+
+  /**
+   * The info about this node.
+   */
+  private NodeInfo<T> parentNodeInfo;
+
+  /**
    * Construct a {@link TreeNodeView}.
    * 
+   * @param value the value of this node
+   * @param tree the parent {@link TreeView}
    * @param treeItem this nodes view
-   * @param factory the factory used to generate child nodes
    */
-  public TreeNodeView(ExtraTreeItem treeItem, final TreeNodeFactory<?> factory) {
+  TreeNodeView(T value, final TreeView tree, final TreeNodeView<?> parent,
+      ExtraTreeItem treeItem, NodeInfo<T> parentNodeInfo) {
+    this.value = value;
+    this.tree = tree;
+    this.parent = parent;
     this.treeItem = treeItem;
+    this.parentNodeInfo = parentNodeInfo;
+  }
 
+  /**
+   * Get the child at the specified index.
+   * 
+   * @return the child node
+   */
+  public TreeNodeView<?> getChild(int index) {
+    if ((index < 0) || (index >= getChildCount())) {
+      return null;
+    }
+    return children.get(index);
+  }
+
+  /**
+   * Get the number of children under this node.
+   * 
+   * @return the child count
+   */
+  public int getChildCount() {
+    return children == null ? 0 : children.size();
+  }
+
+  /**
+   * Get the parent {@link TreeNodeView}.
+   */
+  public TreeNodeView<?> getParentTreeNodeView() {
+    return parent;
+  }
+
+  /**
+   * Get the value contained in this node.
+   * 
+   * @return the value of the node
+   */
+  public T getValue() {
+    return value;
+  }
+
+  NodeInfo<?> getNodeInfo() {
+    return nodeInfo;
+  }
+
+  NodeInfo<T> getParentNodeInfo() {
+    return parentNodeInfo;
+  }
+
+  TreeItem getTreeItem() {
+    return treeItem;
+  }
+
+  /**
+   * Initialize the node info.
+   * 
+   * @param nodeInfo the {@link NodeInfo} that provides information about the
+   *          child values
+   */
+  void initNodeInfo(final NodeInfo<?> nodeInfo) {
     // Force a + icon if this node might have children.
-    if (factory != null) {
+    if (nodeInfo != null) {
+      this.nodeInfo = nodeInfo;
       treeItem.addItem("loading...");
       treeItem.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
         public void onValueChange(ValueChangeEvent<Boolean> event) {
           if (event.getValue()) {
-            onOpen(factory);
+            onOpen(tree, nodeInfo);
           } else {
             onClose();
           }
         }
       });
     }
-  }
-
-  TreeItem getTreeItem() {
-    return treeItem;
   }
 
   /**
@@ -118,25 +214,29 @@ public class TreeNodeView extends Composite {
   /**
    * Setup the node when it is opened.
    * 
-   * @param factory the factory used to generate child nodes
+   * @param tree the parent {@link TreeView}
+   * @param nodeInfo the {@link NodeInfo} that provides information about the
+   *          child values
    * @param <C> the child data type of the node.
    */
-  private <C> void onOpen(final TreeNodeFactory<C> factory) {
-    ListModel<C> listModel = factory.getListModel();
+  private <C> void onOpen(final TreeView tree, final NodeInfo<C> nodeInfo) {
+    ListModel<C> listModel = nodeInfo.getListModel();
     listReg = listModel.addListHandler(new ListHandler<C>() {
       public void onDataChanged(ListEvent<C> event) {
         // TODO - handle event start and length
         treeItem.removeItems();
 
         // Add child tree items.
-        Cell<C> cell = factory.getCell();
-        for (C value : event.getValues()) {
+        Cell<C> theCell = nodeInfo.getCell();
+        children = new ArrayList<TreeNodeView<?>>();
+        for (C childValue : event.getValues()) {
           // TODO(jlabanca): Use one StringBuilder.
           StringBuilder sb = new StringBuilder();
-          cell.render(value, sb);
+          theCell.render(childValue, sb);
           ExtraTreeItem child = new ExtraTreeItem(sb.toString());
           treeItem.addItem(child);
-          new TreeNodeView(child, factory.createChildFactory(value));
+          children.add(tree.createChildView(childValue, TreeNodeView.this,
+              child, nodeInfo));
         }
       }
 
