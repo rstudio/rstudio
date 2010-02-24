@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
@@ -246,6 +247,18 @@ public class TestSetValidator {
     }
 
     return reference.equals(list);
+  }
+
+  public static boolean isValid(List<MarkerTypeEmpty> list) {
+    return list != null && list.size() == 0;
+  }
+
+  public static boolean isValid(Map<MarkerTypeEmpty, MarkerTypeEmpty> map) {
+    return map != null && map.size() == 0;
+  }
+
+  public static boolean isValid(Set<MarkerTypeEmpty> set) {
+    return set != null && set.size() == 0;
   }
 
   public static boolean isValid(HashMap<?, ?> expected, HashMap<?, ?> map) {

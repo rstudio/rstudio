@@ -17,6 +17,7 @@ package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
@@ -34,6 +35,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -44,6 +47,18 @@ import java.util.Vector;
 public interface CollectionsTestServiceAsync {
   void echo(ArrayList<MarkerTypeArrayList> value,
       AsyncCallback<ArrayList<MarkerTypeArrayList>> callback);
+
+  // For Collections.emptyList()
+  void echo(List<MarkerTypeEmpty> value,
+      AsyncCallback<List<MarkerTypeEmpty>> callback);
+
+  // For Collections.emptyMap()
+  void echo(Map<MarkerTypeEmpty, MarkerTypeEmpty> value,
+      AsyncCallback<Map<MarkerTypeEmpty, MarkerTypeEmpty>> callback);
+
+  // For Collections.emptySet()
+  void echo(Set<MarkerTypeEmpty> value,
+      AsyncCallback<Set<MarkerTypeEmpty>> callback);
 
   void echo(boolean[] value, AsyncCallback<boolean[]> callback);
 

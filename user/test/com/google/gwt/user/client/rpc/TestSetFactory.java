@@ -27,6 +27,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -97,6 +99,16 @@ public class TestSetFactory {
     }
 
     MarkerTypeArraysAsList() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various empty collections.
+   */
+  public static final class MarkerTypeEmpty extends MarkerBase {
+    MarkerTypeEmpty() {
       super(null);
     }
   }
@@ -392,6 +404,18 @@ public class TestSetFactory {
     return new Double[] {
         new Double(Double.MAX_VALUE), new Double(Double.MIN_VALUE),
         new Double(Double.MAX_VALUE), new Double(Double.MIN_VALUE)};
+  }
+
+  public static List<MarkerTypeEmpty> createEmptyList() {
+    return java.util.Collections.emptyList();
+  }
+
+  public static Map<MarkerTypeEmpty, MarkerTypeEmpty> createEmptyMap() {
+    return java.util.Collections.emptyMap();
+  }
+
+  public static Set<MarkerTypeEmpty> createEmptySet() {
+    return java.util.Collections.emptySet();
   }
 
   public static Enum<?>[] createEnumArray() {

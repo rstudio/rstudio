@@ -15,12 +15,101 @@
  */
 package java.util;
 
+import java.io.Serializable;
+
 /**
  * Utility methods that operate on collections. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Collections.html">[Sun
  * docs]</a>
  */
 public class Collections {
+  
+  private static final class EmptyList extends AbstractList implements
+      RandomAccess, Serializable {
+    @Override
+    public boolean contains(Object object) {
+      return false;
+    }
+
+    @Override
+    public Object get(int location) {
+      throw new IndexOutOfBoundsException();
+    }
+
+    @Override
+    public int size() {
+      return 0;
+    }
+  }
+  
+  private static final class EmptySet extends AbstractSet implements
+      Serializable {
+    @Override
+    public boolean contains(Object object) {
+      return false;
+    }
+
+    @Override
+    public Iterator iterator() {
+      return new Iterator() {
+        public boolean hasNext() {
+          return false;
+        }
+
+        public Object next() {
+          throw new NoSuchElementException();
+        }
+
+        public void remove() {
+          throw new UnsupportedOperationException();
+        }
+      };
+    }
+
+    @Override
+    public int size() {
+      return 0;
+    }
+}
+
+  private static final class EmptyMap extends AbstractMap implements
+      Serializable {
+    @Override
+    public boolean containsKey(Object key) {
+      return false;
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+      return false;
+    }
+
+    @Override
+    public Set entrySet() {
+      return EMPTY_SET;
+    }
+
+    @Override
+    public Object get(Object key) {
+      return null;
+    }
+
+    @Override
+    public Set keySet() {
+      return EMPTY_SET;
+    }
+
+    @Override
+    public int size() {
+      return 0;
+    }
+
+    @Override
+    public Collection values() {
+      return EMPTY_LIST;
+    }
+  }
+
   /*
    * TODO: make the unmodifiable collections serializable.
    */
@@ -510,13 +599,13 @@ public class Collections {
   }
 
   @SuppressWarnings("unchecked")
-  public static final List EMPTY_LIST = unmodifiableList(new ArrayList());
+  public static final List EMPTY_LIST = new EmptyList();
 
   @SuppressWarnings("unchecked")
-  public static final Map EMPTY_MAP = unmodifiableMap(new HashMap());
+  public static final Map EMPTY_MAP = new EmptyMap();
 
   @SuppressWarnings("unchecked")
-  public static final Set EMPTY_SET = unmodifiableSet(new HashSet());
+  public static final Set EMPTY_SET = new EmptySet();
 
   private static Comparator<Comparable<Object>> reverseComparator = new Comparator<Comparable<Object>>() {
     public int compare(Comparable<Object> o1, Comparable<Object> o2) {

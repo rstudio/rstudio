@@ -18,6 +18,7 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
@@ -34,6 +35,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -189,6 +192,57 @@ public class CollectionsTest extends RpcTestBase {
         finishTest();
       }
     });
+  }
+
+  public void testEmptyList() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echo(TestSetFactory.createEmptyList(),
+        new AsyncCallback<List<MarkerTypeEmpty>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(List<MarkerTypeEmpty> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValid(result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testEmptyMap() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echo(TestSetFactory.createEmptyMap(),
+        new AsyncCallback<Map<MarkerTypeEmpty, MarkerTypeEmpty>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(Map<MarkerTypeEmpty, MarkerTypeEmpty> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValid(result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testEmptySet() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echo(TestSetFactory.createEmptySet(),
+        new AsyncCallback<Set<MarkerTypeEmpty>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(Set<MarkerTypeEmpty> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValid(result));
+            finishTest();
+          }
+        });
   }
 
   public void testEnumArray() {

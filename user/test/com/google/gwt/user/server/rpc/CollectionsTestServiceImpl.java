@@ -20,6 +20,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory;
 import com.google.gwt.user.client.rpc.TestSetValidator;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
@@ -38,6 +39,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -267,6 +270,15 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  public List<MarkerTypeEmpty> echo(List<MarkerTypeEmpty> list)
+      throws CollectionsTestServiceException {
+    if (!TestSetValidator.isValid(list)) {
+      throw new CollectionsTestServiceException();
+    }
+
+    return list;
+  }
+
   public long[] echo(long[] actual) throws CollectionsTestServiceException {
     long[] expected = TestSetFactory.createPrimitiveLongArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -285,6 +297,25 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     }
 
     return actual;
+  }
+
+  public Map<MarkerTypeEmpty, MarkerTypeEmpty> echo(
+      Map<MarkerTypeEmpty, MarkerTypeEmpty> map)
+      throws CollectionsTestServiceException {
+    if (!TestSetValidator.isValid(map)) {
+      throw new CollectionsTestServiceException();
+    }
+
+    return map;
+  }
+
+  public Set<MarkerTypeEmpty> echo(Set<MarkerTypeEmpty> set)
+      throws CollectionsTestServiceException {
+    if (!TestSetValidator.isValid(set)) {
+      throw new CollectionsTestServiceException();
+    }
+
+    return set;
   }
 
   public short[] echo(short[] actual) throws CollectionsTestServiceException {

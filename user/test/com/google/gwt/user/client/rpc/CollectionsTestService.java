@@ -17,6 +17,7 @@ package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
@@ -34,6 +35,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -57,6 +60,18 @@ public interface CollectionsTestService extends RemoteService {
 
   ArrayList<MarkerTypeArrayList> echo(ArrayList<MarkerTypeArrayList> value)
       throws CollectionsTestServiceException;
+
+  // For Collections.emptyList()
+  List<MarkerTypeEmpty> echo(List<MarkerTypeEmpty> value)
+  throws CollectionsTestServiceException;
+
+  // For Collections.emptyMap()
+  Map<MarkerTypeEmpty, MarkerTypeEmpty> echo(Map<MarkerTypeEmpty,
+      MarkerTypeEmpty> value) throws CollectionsTestServiceException;
+
+  // For Collections.emptySet()
+  Set<MarkerTypeEmpty> echo(Set<MarkerTypeEmpty> value)
+  throws CollectionsTestServiceException;
 
   boolean[] echo(boolean[] value) throws CollectionsTestServiceException;
 
