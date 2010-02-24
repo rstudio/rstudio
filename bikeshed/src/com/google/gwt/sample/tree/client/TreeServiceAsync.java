@@ -15,16 +15,14 @@
  */
 package com.google.gwt.sample.tree.client;
 
-import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+
+import java.util.List;
 
 /**
- * A demo of the asynchronous Tree model.
+ * The async counterpart of <code>TreeService</code>.
  */
-public class TreeEntryPoint implements EntryPoint {
-
-  public void onModuleLoad() {
-    TreeView tree = new TreeView(new MyTreeModel(), "...");
-    RootPanel.get().add(tree);
-  }
+public interface TreeServiceAsync {
+  
+  void getNext(String prefix, AsyncCallback<List<String>> callback);
 }

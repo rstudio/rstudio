@@ -13,18 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.tree.client;
+package com.google.gwt.sample.tree.server;
 
-import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.sample.tree.client.TreeService;
+import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+
+import java.util.List;
 
 /**
- * A demo of the asynchronous Tree model.
+ * The server side implementation of the RPC service.
  */
-public class TreeEntryPoint implements EntryPoint {
+@SuppressWarnings("serial")
+public class TreeServiceImpl extends RemoteServiceServlet implements
+    TreeService {
 
-  public void onModuleLoad() {
-    TreeView tree = new TreeView(new MyTreeModel(), "...");
-    RootPanel.get().add(tree);
+  public List<String> getNext(String prefix) {
+    return Dictionary.getNext(prefix);
   }
 }

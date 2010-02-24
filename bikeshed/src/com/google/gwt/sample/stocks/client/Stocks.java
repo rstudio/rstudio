@@ -316,7 +316,7 @@ public class Stocks implements EntryPoint {
   }
 
   private String getFormattedPrice(int price) {
-    return NumberFormat.getCurrencyFormat("USD").format((double) price / 100.0);
+    return NumberFormat.getCurrencyFormat("USD").format(price / 100.0);
   }
   
   /**

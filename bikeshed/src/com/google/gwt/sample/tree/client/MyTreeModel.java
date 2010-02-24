@@ -17,19 +17,54 @@ package com.google.gwt.sample.tree.client;
 
 import com.google.gwt.cells.client.Cell;
 import com.google.gwt.cells.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.list.shared.AsyncListModel;
 import com.google.gwt.list.shared.ListModel;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A factory for generating {@link AbstractTreeNodeFactory} based on the value
- * type.
+ * A demo TreeModel.
  */
 public class MyTreeModel implements TreeModel {
 
-  private static final int FANOUT = 5;
+  private static class IntegerListModel extends AsyncListModel<Integer> {
+    public IntegerListModel(final int length) {
+      super(new DataSource<Integer>() {
+        public void requestData(AsyncListModel<Integer> listModel) {
+          listModel.updateDataSize(1, true);
+          List<Integer> values = new ArrayList<Integer>(1);
+          values.add(length);
+          listModel.updateViewData(0, 1, values);
+        }
+      });
+    }
+  }
+
+  private static class StringListModel extends AsyncListModel<String> {
+    public StringListModel(final String value) {
+      super(new DataSource<String>() {
+        public void requestData(final AsyncListModel<String> listModel) {
+          String prefix = value.endsWith("...") ? value.substring(0, value.length() - 3) : value;
+          dataService.getNext(prefix, new AsyncCallback<List<String>>() {
+            public void onFailure(Throwable caught) {
+              Window.alert("Error: " + caught);
+            }
+
+            public void onSuccess(List<String> result) {
+              listModel.updateDataSize(result.size(), true);
+              listModel.updateViewData(0, result.size(), result);
+            }
+          });
+        }
+      });
+    }
+  }
+
+  private static final TreeServiceAsync dataService = GWT.create(TreeService.class);
 
   /**
    * The cell used to render integers.
@@ -46,44 +81,6 @@ public class MyTreeModel implements TreeModel {
    */
   private static final Cell<String> STRING_CELL = new TextCell();
 
-  /**
-   * A list of strings.
-   */
-  private static class StringListModel extends AsyncListModel<String> {
-
-    public StringListModel(final String value, final String delim) {
-      super(new DataSource<String>() {
-        public void requestData(AsyncListModel<String> listModel) {
-          listModel.updateDataSize(FANOUT, true);
-          List<String> values = new ArrayList<String>();
-          for (int i = 0; i < FANOUT; i++) {
-            values.add(value + delim + i);
-          }
-          listModel.updateViewData(0, FANOUT, values);
-        }
-      });
-    }
-  }
-
-  /**
-   * A list of integers.
-   */
-  private static class IntegerListModel extends AsyncListModel<Integer> {
-
-    public IntegerListModel() {
-      super(new DataSource<Integer>() {
-        public void requestData(AsyncListModel<Integer> listModel) {
-          listModel.updateDataSize(FANOUT, true);
-          List<Integer> values = new ArrayList<Integer>();
-          for (int i = 0; i < FANOUT; i++) {
-            values.add(i);
-          }
-          listModel.updateViewData(0, FANOUT, values);
-        }
-      });
-    }
-  }
-
   public TreeNodeFactory<?> createTreeNodeFactory(Object value) {
     if (value instanceof String) {
       return createTreeNodeFactoryHelper((String) value);
@@ -96,17 +93,17 @@ public class MyTreeModel implements TreeModel {
     throw new IllegalArgumentException("Unsupported object type: " + type);
   }
 
+  @SuppressWarnings("unused")
   private TreeNodeFactory<?> createTreeNodeFactoryHelper(final Integer value) {
-    ListModel<String> listModel = new StringListModel(value.toString(), ".");
-    return new DefaultTreeNodeFactory<String>(listModel, STRING_CELL, this);
+    return null;
   }
 
   private TreeNodeFactory<?> createTreeNodeFactoryHelper(final String value) {
-    if (value.endsWith("2")) {
-      ListModel<String> listModel = new StringListModel(value.toString(), "-");
+    if (value.endsWith("...")) {
+      ListModel<String> listModel = new StringListModel(value.toString());
       return new DefaultTreeNodeFactory<String>(listModel, STRING_CELL, this);
     } else {
-      ListModel<Integer> listModel = new IntegerListModel();
+      ListModel<Integer> listModel = new IntegerListModel(value.length());
       return new DefaultTreeNodeFactory<Integer>(listModel, INTEGER_CELL, this);
     }
   }

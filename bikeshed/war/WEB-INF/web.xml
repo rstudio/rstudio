@@ -6,17 +6,25 @@
 <web-app>
 
   <!-- Servlets -->
-  <!--
   <servlet>
     <servlet-name>stockServlet</servlet-name>
     <servlet-class>com.google.gwt.sample.stocks.server.StockServiceImpl</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>treeServlet</servlet-name>
+    <servlet-class>com.google.gwt.sample.tree.server.TreeServiceImpl</servlet-class>
   </servlet>
 
   <servlet-mapping>
     <servlet-name>stockServlet</servlet-name>
     <url-pattern>/stocks/stock</url-pattern>
   </servlet-mapping>
-  -->
+
+  <servlet-mapping>
+    <servlet-name>treeServlet</servlet-name>
+    <url-pattern>/tree/tree</url-pattern>
+  </servlet-mapping>
 
   <!-- Default page to serve -->
   <welcome-file-list>
