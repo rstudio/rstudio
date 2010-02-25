@@ -15,8 +15,11 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 /**
- * TODO: document me.
+ * Test sending value types via RPC.
  */
 public interface ValueTypesTestService extends RemoteService {
   byte echo(byte value);
@@ -32,6 +35,10 @@ public interface ValueTypesTestService extends RemoteService {
   long echo(long value);
 
   short echo(short value);
+
+  BigDecimal echo(BigDecimal value);
+
+  BigInteger echo(BigInteger value);
 
   boolean echo_FALSE(boolean value);
 

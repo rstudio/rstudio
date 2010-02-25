@@ -17,25 +17,60 @@ package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 /**
- * TODO: document me.
+ * Test transfer of value types over RPC.
  */
 public class ValueTypesTest extends RpcTestBase {
 
   private ValueTypesTestServiceAsync primitiveTypeTestService;
 
+  public void testBigDecimal_base() {
+    assertEcho(new BigDecimal("42"));
+  }
+
+  public void testBigDecimal_exponential() {
+    assertEcho(new BigDecimal("0.00000000000000000001"));
+  }
+
+  public void testBigDecimal_negative() {
+    assertEcho(new BigDecimal("-42"));
+  }
+
+  public void testBigDecimal_zero() {
+    assertEcho(new BigDecimal("0.0"));
+  }
+
+  public void testBigInteger_base() {
+    assertEcho(new BigInteger("42"));
+  }
+
+  public void testBigInteger_exponential() {
+    assertEcho(new BigInteger("100000000000000000000"));
+  }
+
+  public void testBigInteger_negative() {
+    assertEcho(new BigInteger("-42"));
+  }
+
+  public void testBigInteger_zero() {
+    assertEcho(new BigInteger("0"));
+  }
+
   public void testBoolean_FALSE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_FALSE(false, new AsyncCallback() {
+    service.echo_FALSE(false, new AsyncCallback<Boolean>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Boolean result) {
         assertNotNull("Was null", result);
-        assertFalse("Should have been false", ((Boolean) result).booleanValue());
+        assertFalse("Should have been false", result.booleanValue());
         finishTest();
       }
     });
@@ -44,15 +79,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testBoolean_TRUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_TRUE(true, new AsyncCallback() {
+    service.echo_TRUE(true, new AsyncCallback<Boolean>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Boolean result) {
         assertNotNull(result);
-        assertTrue(((Boolean) result).booleanValue());
+        assertTrue(result.booleanValue());
         finishTest();
       }
     });
@@ -61,15 +96,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testByte() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo((byte) (Byte.MAX_VALUE / (byte) 2), new AsyncCallback() {
+    service.echo((byte) (Byte.MAX_VALUE / (byte) 2), new AsyncCallback<Byte>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Byte result) {
         assertNotNull(result);
-        assertEquals(Byte.MAX_VALUE / 2, ((Byte) result).byteValue());
+        assertEquals(Byte.MAX_VALUE / 2, result.byteValue());
         finishTest();
       }
     });
@@ -78,15 +113,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testByte_MAX_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MAX_VALUE(Byte.MAX_VALUE, new AsyncCallback() {
+    service.echo_MAX_VALUE(Byte.MAX_VALUE, new AsyncCallback<Byte>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Byte result) {
         assertNotNull(result);
-        assertEquals(Byte.MAX_VALUE, ((Byte) result).byteValue());
+        assertEquals(Byte.MAX_VALUE, result.byteValue());
         finishTest();
       }
     });
@@ -95,15 +130,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testByte_MIN_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MIN_VALUE(Byte.MIN_VALUE, new AsyncCallback() {
+    service.echo_MIN_VALUE(Byte.MIN_VALUE, new AsyncCallback<Byte>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Byte result) {
         assertNotNull(result);
-        assertEquals(Byte.MIN_VALUE, ((Byte) result).byteValue());
+        assertEquals(Byte.MIN_VALUE, result.byteValue());
         finishTest();
       }
     });
@@ -112,16 +147,16 @@ public class ValueTypesTest extends RpcTestBase {
   public void testChar() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo((char) (Character.MAX_VALUE / (char) 2), new AsyncCallback() {
+    final char value = (char) (Character.MAX_VALUE / (char) 2);
+    service.echo(value, new AsyncCallback<Character>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Character result) {
         assertNotNull(result);
-        assertEquals((char) (Character.MAX_VALUE / (char) 2),
-            ((Character) result).charValue());
+        assertEquals(value, result.charValue());
         finishTest();
       }
     });
@@ -130,15 +165,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testChar_MAX_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MAX_VALUE(Character.MAX_VALUE, new AsyncCallback() {
+    service.echo_MAX_VALUE(Character.MAX_VALUE, new AsyncCallback<Character>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Character result) {
         assertNotNull(result);
-        assertEquals(Character.MAX_VALUE, ((Character) result).charValue());
+        assertEquals(Character.MAX_VALUE, result.charValue());
         finishTest();
       }
     });
@@ -147,15 +182,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testChar_MIN_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MIN_VALUE(Character.MIN_VALUE, new AsyncCallback() {
+    service.echo_MIN_VALUE(Character.MIN_VALUE, new AsyncCallback<Character>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Character result) {
         assertNotNull(result);
-        assertEquals(Character.MIN_VALUE, ((Character) result).charValue());
+        assertEquals(Character.MIN_VALUE, result.charValue());
         finishTest();
       }
     });
@@ -164,15 +199,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testDouble() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo(Double.MAX_VALUE / 2, new AsyncCallback() {
+    service.echo(Double.MAX_VALUE / 2, new AsyncCallback<Double>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Double result) {
         assertNotNull(result);
-        assertEquals(Double.MAX_VALUE / 2, ((Double) result).doubleValue(), 0.0);
+        assertEquals(Double.MAX_VALUE / 2, result.doubleValue(), 0.0);
         finishTest();
       }
     });
@@ -181,15 +216,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testDouble_MAX_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MAX_VALUE(Double.MAX_VALUE, new AsyncCallback() {
+    service.echo_MAX_VALUE(Double.MAX_VALUE, new AsyncCallback<Double>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Double result) {
         assertNotNull(result);
-        assertEquals(Double.MAX_VALUE, ((Double) result).doubleValue(), 0.0);
+        assertEquals(Double.MAX_VALUE, result.doubleValue(), 0.0);
         finishTest();
       }
     });
@@ -198,15 +233,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testDouble_MIN_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MIN_VALUE(Double.MIN_VALUE, new AsyncCallback() {
+    service.echo_MIN_VALUE(Double.MIN_VALUE, new AsyncCallback<Double>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Double result) {
         assertNotNull(result);
-        assertEquals(Double.MIN_VALUE, ((Double) result).doubleValue(), 0.0);
+        assertEquals(Double.MIN_VALUE, result.doubleValue(), 0.0);
         finishTest();
       }
     });
@@ -218,15 +253,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testDouble_NaN() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo(Double.NaN, new AsyncCallback() {
+    service.echo(Double.NaN, new AsyncCallback<Double>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Double result) {
         assertNotNull(result);
-        assertTrue(Double.isNaN(((Double) result).doubleValue()));
+        assertTrue(Double.isNaN(result.doubleValue()));
         finishTest();
       }
     });
@@ -238,15 +273,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testDouble_NegInfinity() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo(Double.NEGATIVE_INFINITY, new AsyncCallback() {
+    service.echo(Double.NEGATIVE_INFINITY, new AsyncCallback<Double>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Double result) {
         assertNotNull(result);
-        double doubleValue = ((Double) result).doubleValue();
+        double doubleValue = result.doubleValue();
         assertTrue(Double.isInfinite(doubleValue) && doubleValue < 0);
         finishTest();
       }
@@ -259,15 +294,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testDouble_PosInfinity() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo(Double.POSITIVE_INFINITY, new AsyncCallback() {
+    service.echo(Double.POSITIVE_INFINITY, new AsyncCallback<Double>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Double result) {
         assertNotNull(result);
-        double doubleValue = ((Double) result).doubleValue();
+        double doubleValue = result.doubleValue();
         assertTrue(Double.isInfinite(doubleValue) && doubleValue > 0);
         finishTest();
       }
@@ -277,15 +312,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testFloat() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo(Float.MAX_VALUE / 2, new AsyncCallback() {
+    service.echo(Float.MAX_VALUE / 2, new AsyncCallback<Float>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Float result) {
         assertNotNull(result);
-        assertEquals(Float.MAX_VALUE / 2, ((Float) result).floatValue(), 0.0);
+        assertEquals(Float.MAX_VALUE / 2, result.floatValue(), 0.0);
         finishTest();
       }
     });
@@ -294,15 +329,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testFloat_MAX_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MAX_VALUE(Float.MAX_VALUE, new AsyncCallback() {
+    service.echo_MAX_VALUE(Float.MAX_VALUE, new AsyncCallback<Float>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Float result) {
         assertNotNull(result);
-        assertEquals(Float.MAX_VALUE, ((Float) result).floatValue(), 0.0);
+        assertEquals(Float.MAX_VALUE, result.floatValue(), 0.0);
         finishTest();
       }
     });
@@ -311,15 +346,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testFloat_MIN_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MIN_VALUE(Float.MIN_VALUE, new AsyncCallback() {
+    service.echo_MIN_VALUE(Float.MIN_VALUE, new AsyncCallback<Float>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Float result) {
         assertNotNull(result);
-        assertEquals(Float.MIN_VALUE, ((Float) result).floatValue(), 0.0);
+        assertEquals(Float.MIN_VALUE, result.floatValue(), 0.0);
         finishTest();
       }
     });
@@ -331,15 +366,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testFloat_NaN() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo(Float.NaN, new AsyncCallback() {
+    service.echo(Float.NaN, new AsyncCallback<Float>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Float result) {
         assertNotNull(result);
-        assertTrue(Float.isNaN(((Float) result).floatValue()));
+        assertTrue(Float.isNaN(result.floatValue()));
         finishTest();
       }
     });
@@ -351,15 +386,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testFloat_NegInfinity() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo(Float.NEGATIVE_INFINITY, new AsyncCallback() {
+    service.echo(Float.NEGATIVE_INFINITY, new AsyncCallback<Float>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Float result) {
         assertNotNull(result);
-        float floatValue = ((Float) result).floatValue();
+        float floatValue = result.floatValue();
         assertTrue(Float.isInfinite(floatValue) && floatValue < 0);
         finishTest();
       }
@@ -372,15 +407,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testFloat_PosInfinity() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo(Float.POSITIVE_INFINITY, new AsyncCallback() {
+    service.echo(Float.POSITIVE_INFINITY, new AsyncCallback<Float>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Float result) {
         assertNotNull(result);
-        float floatValue = ((Float) result).floatValue();
+        float floatValue = result.floatValue();
         assertTrue(Float.isInfinite(floatValue) && floatValue > 0);
         finishTest();
       }
@@ -390,15 +425,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testInteger() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo(Integer.MAX_VALUE / 2, new AsyncCallback() {
+    service.echo(Integer.MAX_VALUE / 2, new AsyncCallback<Integer>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Integer result) {
         assertNotNull(result);
-        assertEquals(Integer.MAX_VALUE / 2, ((Integer) result).intValue());
+        assertEquals(Integer.MAX_VALUE / 2, result.intValue());
         finishTest();
       }
     });
@@ -407,15 +442,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testInteger_MAX_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MAX_VALUE(Integer.MAX_VALUE, new AsyncCallback() {
+    service.echo_MAX_VALUE(Integer.MAX_VALUE, new AsyncCallback<Integer>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Integer result) {
         assertNotNull(result);
-        assertEquals(Integer.MAX_VALUE, ((Integer) result).intValue());
+        assertEquals(Integer.MAX_VALUE, result.intValue());
         finishTest();
       }
     });
@@ -424,15 +459,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testInteger_MIN_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MIN_VALUE(Integer.MIN_VALUE, new AsyncCallback() {
+    service.echo_MIN_VALUE(Integer.MIN_VALUE, new AsyncCallback<Integer>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Integer result) {
         assertNotNull(result);
-        assertEquals(Integer.MIN_VALUE, ((Integer) result).intValue());
+        assertEquals(Integer.MIN_VALUE, result.intValue());
         finishTest();
       }
     });
@@ -441,16 +476,16 @@ public class ValueTypesTest extends RpcTestBase {
   public void testLong() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo(Long.MAX_VALUE / 2, new AsyncCallback() {
+    service.echo(Long.MAX_VALUE / 2, new AsyncCallback<Long>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Long result) {
         assertNotNull(result);
         long expected = Long.MAX_VALUE / 2;
-        assertEquals(expected, ((Long) result).longValue());
+        assertEquals(expected, result.longValue());
         finishTest();
       }
     });
@@ -459,15 +494,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testLong_MAX_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MAX_VALUE(Long.MAX_VALUE, new AsyncCallback() {
+    service.echo_MAX_VALUE(Long.MAX_VALUE, new AsyncCallback<Long>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Long result) {
         assertNotNull(result);
-        assertEquals(Long.MAX_VALUE, ((Long) result).longValue());
+        assertEquals(Long.MAX_VALUE, result.longValue());
         finishTest();
       }
     });
@@ -476,15 +511,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testLong_MIN_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MIN_VALUE(Long.MIN_VALUE, new AsyncCallback() {
+    service.echo_MIN_VALUE(Long.MIN_VALUE, new AsyncCallback<Long>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Long result) {
         assertNotNull(result);
-        assertEquals(Long.MIN_VALUE, ((Long) result).longValue());
+        assertEquals(Long.MIN_VALUE, result.longValue());
         finishTest();
       }
     });
@@ -493,15 +528,16 @@ public class ValueTypesTest extends RpcTestBase {
   public void testShort() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo((short) (Short.MAX_VALUE / (short) 2), new AsyncCallback() {
+    final short value = (short) (Short.MAX_VALUE / 2);
+    service.echo(value , new AsyncCallback<Short>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Short result) {
         assertNotNull(result);
-        assertEquals(Short.MAX_VALUE / 2, ((Short) result).shortValue());
+        assertEquals(value, result.shortValue());
         finishTest();
       }
     });
@@ -510,15 +546,15 @@ public class ValueTypesTest extends RpcTestBase {
   public void testShort_MAX_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MAX_VALUE(Short.MAX_VALUE, new AsyncCallback() {
+    service.echo_MAX_VALUE(Short.MAX_VALUE, new AsyncCallback<Short>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Short result) {
         assertNotNull(result);
-        assertEquals(Short.MAX_VALUE, ((Short) result).shortValue());
+        assertEquals(Short.MAX_VALUE, result.shortValue());
         finishTest();
       }
     });
@@ -527,15 +563,45 @@ public class ValueTypesTest extends RpcTestBase {
   public void testShort_MIN_VALUE() {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
-    service.echo_MIN_VALUE(Short.MIN_VALUE, new AsyncCallback() {
+    service.echo_MIN_VALUE(Short.MIN_VALUE, new AsyncCallback<Short>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Short result) {
         assertNotNull(result);
-        assertEquals(Short.MIN_VALUE, ((Short) result).shortValue());
+        assertEquals(Short.MIN_VALUE, result.shortValue());
+        finishTest();
+      }
+    });
+  }
+
+  private void assertEcho(final BigDecimal value) {
+    ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echo(value, new AsyncCallback<BigDecimal>() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(BigDecimal result) {
+        assertEquals(value, result);
+        finishTest();
+      }
+    });
+  }
+
+  private void assertEcho(final BigInteger value) {
+    ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echo(value, new AsyncCallback<BigInteger>() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(BigInteger result) {
+        assertEquals(value, result);
         finishTest();
       }
     });

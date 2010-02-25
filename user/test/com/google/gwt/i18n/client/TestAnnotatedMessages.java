@@ -88,4 +88,10 @@ public interface TestAnnotatedMessages extends Messages {
   @PluralText({"one", "A {0}"})
   String twoParamPlural(String name, @PluralCount
   int count);
+  
+  @DefaultMessage("Total is {0,number,currency}")
+  String withNumberCurrency(Number value);
+  
+  @DefaultMessage("Distance is {0,number,##0.0##E0}")
+  String withNumberExponent(Number value);
 }

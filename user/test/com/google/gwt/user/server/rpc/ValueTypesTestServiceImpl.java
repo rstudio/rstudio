@@ -17,6 +17,9 @@ package com.google.gwt.user.server.rpc;
 
 import com.google.gwt.user.client.rpc.ValueTypesTestService;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 /**
  * Server-side code for ValueTypesTest. Mostly just echoes back the values
  * received from the client, but some methods verify the value received to make
@@ -51,6 +54,14 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
   }
 
   public short echo(short value) {
+    return value;
+  }
+
+  public BigDecimal echo(BigDecimal value) {
+    return value;
+  }
+
+  public BigInteger echo(BigInteger value) {
     return value;
   }
 

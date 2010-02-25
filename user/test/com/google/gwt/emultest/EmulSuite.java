@@ -30,6 +30,26 @@ import com.google.gwt.emultest.java.lang.StringBufferDefaultImplTest;
 import com.google.gwt.emultest.java.lang.StringBufferTest;
 import com.google.gwt.emultest.java.lang.StringTest;
 import com.google.gwt.emultest.java.lang.SystemTest;
+import com.google.gwt.emultest.java.math.BigDecimalArithmeticTest;
+import com.google.gwt.emultest.java.math.BigDecimalCompareTest;
+import com.google.gwt.emultest.java.math.BigDecimalConstructorsTest;
+import com.google.gwt.emultest.java.math.BigDecimalConvertTest;
+import com.google.gwt.emultest.java.math.BigDecimalScaleOperationsTest;
+import com.google.gwt.emultest.java.math.BigIntegerAddTest;
+import com.google.gwt.emultest.java.math.BigIntegerAndTest;
+import com.google.gwt.emultest.java.math.BigIntegerCompareTest;
+import com.google.gwt.emultest.java.math.BigIntegerConstructorsTest;
+import com.google.gwt.emultest.java.math.BigIntegerConvertTest;
+import com.google.gwt.emultest.java.math.BigIntegerDivideTest;
+import com.google.gwt.emultest.java.math.BigIntegerHashCodeTest;
+import com.google.gwt.emultest.java.math.BigIntegerModPowTest;
+import com.google.gwt.emultest.java.math.BigIntegerMultiplyTest;
+import com.google.gwt.emultest.java.math.BigIntegerNotTest;
+import com.google.gwt.emultest.java.math.BigIntegerOperateBitsTest;
+import com.google.gwt.emultest.java.math.BigIntegerOrTest;
+import com.google.gwt.emultest.java.math.BigIntegerSubtractTest;
+import com.google.gwt.emultest.java.math.BigIntegerToStringTest;
+import com.google.gwt.emultest.java.math.BigIntegerXorTest;
 import com.google.gwt.emultest.java.sql.SqlDateTest;
 import com.google.gwt.emultest.java.sql.SqlTimeTest;
 import com.google.gwt.emultest.java.sql.SqlTimestampTest;
@@ -79,6 +99,28 @@ public class EmulSuite {
     suite.addTestSuite(StringBufferDefaultImplTest.class);
     suite.addTestSuite(StringTest.class);
     suite.addTestSuite(SystemTest.class);
+
+    // java.math
+    suite.addTestSuite(BigDecimalArithmeticTest.class);
+    suite.addTestSuite(BigDecimalCompareTest.class);
+    suite.addTestSuite(BigDecimalConstructorsTest.class);
+    suite.addTestSuite(BigDecimalConvertTest.class);
+    suite.addTestSuite(BigDecimalScaleOperationsTest.class);
+    suite.addTestSuite(BigIntegerAddTest.class);
+    suite.addTestSuite(BigIntegerAndTest.class);
+    suite.addTestSuite(BigIntegerCompareTest.class);
+    suite.addTestSuite(BigIntegerConstructorsTest.class);
+    suite.addTestSuite(BigIntegerConvertTest.class);
+    suite.addTestSuite(BigIntegerDivideTest.class);
+    suite.addTestSuite(BigIntegerHashCodeTest.class);
+    suite.addTestSuite(BigIntegerModPowTest.class);
+    suite.addTestSuite(BigIntegerMultiplyTest.class);
+    suite.addTestSuite(BigIntegerNotTest.class);
+    suite.addTestSuite(BigIntegerOperateBitsTest.class);
+    suite.addTestSuite(BigIntegerOrTest.class);
+    suite.addTestSuite(BigIntegerSubtractTest.class);
+    suite.addTestSuite(BigIntegerToStringTest.class);
+    suite.addTestSuite(BigIntegerXorTest.class);
 
     // java.util
     suite.addTestSuite(ApacheMapTest.class);
