@@ -142,7 +142,8 @@ public abstract class DOMImplTrident extends DOMImpl {
     @com.google.gwt.user.client.impl.DOMImplTrident::dispatchDblClickEvent = $entry(function() {
       var newEvent = $doc.createEventObject();
       // Synthesize a click event if one hasn't already been synthesized.
-      if ($wnd.event.returnValue == null) {
+      // Issue 4027: fireEvent is undefined on disabled input elements.
+      if ($wnd.event.returnValue == null && $wnd.event.srcElement.fireEvent) {
         $wnd.event.srcElement.fireEvent('onclick', newEvent);
       }
       if (this.__eventBits & 2) {
