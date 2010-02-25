@@ -88,8 +88,8 @@
           <include name="apache/commons/commons-io-1.4.jar" />
           <include name="apache/commons/commons-lang-2.4.jar" />
           <include name="cssparser/cssparser-0.9.5.jar" />
-          <include name="htmlunit/htmlunit-r5070.jar" />
-          <include name="htmlunit/htmlunit-core-js-r5070.jar" />
+	  <include name="htmlunit/htmlunit-r5424/htmlunit-r5424.jar" />
+	  <include name="htmlunit/htmlunit-r5424/htmlunit-core-js-r5424.jar" />
           <include name="nekohtml/nekohtml-1.9.13.jar" />
           <include name="xalan/xalan-2.7.1.jar" />
           <include name="xerces/xerces-2_9_1/serializer.jar" />
@@ -144,8 +144,8 @@
           <zipfileset src="${gwt.tools.lib}/apache/commons/commons-io-1.4.jar" />
           <zipfileset src="${gwt.tools.lib}/apache/commons/commons-lang-2.4.jar" />
           <zipfileset src="${gwt.tools.lib}/cssparser/cssparser-0.9.5.jar" />
-          <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-r5070.jar" />
-          <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-core-js-r5070.jar" />
+	  <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-r5424/htmlunit-r5424.jar" />
+	  <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-r5424/htmlunit-core-js-r5424.jar" />
           <zipfileset src="${gwt.tools.lib}/nekohtml/nekohtml-1.9.13.jar" />
           <zipfileset src="${gwt.tools.lib}/xalan/xalan-2.7.1.jar" />
           <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/serializer.jar" />

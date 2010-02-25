@@ -92,7 +92,6 @@ public class RequestBuilderTest extends RequestTestBase {
    * <li>url == "www.freebsd.org" - violates same source
    * </ul>
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testRequestBuilderStringString() throws RequestException {
     try {
       new RequestBuilder((RequestBuilder.Method) null, null);
@@ -183,7 +182,7 @@ public class RequestBuilderTest extends RequestTestBase {
     testSend(builder, SERVLET_GET_RESPONSE);
   }
 
-  @DoNotRunWith({Platform.HtmlUnit})
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testSend_HEAD() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.HEAD,
         getTestBaseURL());
@@ -198,7 +197,6 @@ public class RequestBuilderTest extends RequestTestBase {
     testSend(builder, SERVLET_POST_RESPONSE);
   }
 
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testSend_PUT() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.PUT,
         getTestBaseURL());
@@ -219,7 +217,7 @@ public class RequestBuilderTest extends RequestTestBase {
     testSendRequest(builder, null, SERVLET_GET_RESPONSE);
   }
 
-  @DoNotRunWith({Platform.HtmlUnit})
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testSendRequest_HEAD() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.HEAD,
         getTestBaseURL());
@@ -233,7 +231,6 @@ public class RequestBuilderTest extends RequestTestBase {
     testSendRequest(builder, "method=test+request", SERVLET_POST_RESPONSE);
   }
 
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testSendRequest_PUT() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.PUT,
         getTestBaseURL());

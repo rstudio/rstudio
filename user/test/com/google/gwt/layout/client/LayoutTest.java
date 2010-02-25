@@ -41,7 +41,7 @@ import com.google.gwt.user.client.WindowTest;
 /**
  * Tests for the {@link Layout} class.
  */
-@DoNotRunWith(Platform.HtmlUnit)
+@DoNotRunWith(Platform.HtmlUnitBug)
 public class LayoutTest extends GWTTestCase {
 
   /**

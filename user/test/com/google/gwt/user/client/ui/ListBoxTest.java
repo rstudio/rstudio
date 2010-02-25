@@ -40,7 +40,11 @@ public class ListBoxTest extends GWTTestCase {
     assertEquals(0, lb.getItemCount());
   }
 
-  @DoNotRunWith(Platform.HtmlUnit)
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testDebugId() {
     ListBox list = new ListBox();
     list.addItem("option0", "value0");

@@ -369,7 +369,7 @@ public class GWTTestCaseTest extends GWTTestCase {
   /*
    * Just setting the htmlunit mode.
    */
-  @DoNotRunWith(Platform.HtmlUnit)
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testSetRetry() {
     htmlunitMode = false;
   }

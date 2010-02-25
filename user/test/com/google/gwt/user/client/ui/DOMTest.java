@@ -119,6 +119,8 @@ public class DOMTest extends GWTTestCase {
   /**
    * Tests {@link DOM#getAbsoluteLeft(Element)} and
    * {@link DOM#getAbsoluteTop(Element)}.
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
   @DoNotRunWith(Platform.HtmlUnit)
   public void testGetAbsolutePosition() {
@@ -288,12 +290,7 @@ public class DOMTest extends GWTTestCase {
   /**
    * Tests that {@link DOM#setInnerText(Element, String)} works consistently
    * across browsers.
-   * 
-   * TODO(amitmanjhi): Remove DoNotRunWith after updating to HtmlUnit-2.7.
    */
-  // TODO (amitmanjhi): Remove annotation after updating HtmlUnit. kprobst says
-  // the issue has been fixed in htmlUnit trunk
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testSetInnerText() {
     Element tableElem = DOM.createTable();
 

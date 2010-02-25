@@ -175,9 +175,12 @@ public class JsonpRequestTest extends GWTTestCase {
         Boolean.TRUE));
   }
 
-
+  /**
+   * Fails in devmode with HtmlUnit, JS "null" exception
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
   @DoNotRunWith(Platform.HtmlUnit)
-  // Fails in devmode with HtmlUnit, JS "null" exception
   public void testCancel() {
     delayTestFinish(2000);
     // setup a server request that will delay for 500ms
@@ -200,6 +203,11 @@ public class JsonpRequestTest extends GWTTestCase {
         new AssertSuccessCallback<String>("A"));
   }
 
+  /**
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testDouble() {
     delayTestFinish(RESPONSE_DELAY);
     jsonp.requestDouble(echo("123.456"), new AssertSuccessCallback<Double>(
@@ -213,8 +221,12 @@ public class JsonpRequestTest extends GWTTestCase {
         new AssertFailureCallback<String>("ERROR"));
   }
 
+  /**
+   * Hangs indefinitely in devmode with HtmlUnit
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
   @DoNotRunWith(Platform.HtmlUnit)
-  // Hangs indefinitely in devmode with HtmlUnit
   public void testIds() {
     delayTestFinish(RESPONSE_DELAY);
     JsonpRequest<String> reqA = jsonp.requestString(echo("'A'"),
@@ -263,8 +275,11 @@ public class JsonpRequestTest extends GWTTestCase {
     jsonp.requestString(echo("null"), new AssertSuccessCallback<String>(null));
   }
 
-  @DoNotRunWith(Platform.HtmlUnit)
-  // Hangs indefinitely in devmode with HtmlUnit
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testOverlapped() {
     delayTestFinish(RESPONSE_DELAY);
     Counter counter = new Counter(3);

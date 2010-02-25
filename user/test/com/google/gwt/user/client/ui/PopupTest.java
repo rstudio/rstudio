@@ -30,7 +30,7 @@ import com.google.gwt.user.client.Window;
 /**
  * Tests for {@link PopupPanel}.
  */
-@DoNotRunWith(Platform.HtmlUnit)
+@DoNotRunWith({Platform.HtmlUnit})
 public class PopupTest extends GWTTestCase {
 
   /**
@@ -147,8 +147,10 @@ public class PopupTest extends GWTTestCase {
   /**
    * Tests that a large PopupPanel is not positioned off the top or left edges
    * of the browser window, making part of the panel unreachable.
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith(Platform.HtmlUnit)
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testCenterLargePopup() {
     PopupPanel popup = new PopupPanel();
     popup.setHeight("4096px");
@@ -165,7 +167,10 @@ public class PopupTest extends GWTTestCase {
    * into conflicts with the animations. The {@link MenuBar} exhibits this
    * behavior because, when we detach a {@link MenuBar} from the page, it closes
    * all of its sub menus, each located in a different {@link PopupPanel}.
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testDependantPopupPanel() {
     // Create the dependent popup
     final PopupPanel dependantPopup = createPopupPanel();
@@ -304,7 +309,11 @@ public class PopupTest extends GWTTestCase {
     }
   }
 
-  @DoNotRunWith(Platform.HtmlUnit)
+  /**
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testPopup() {
     // Get rid of window margins so we can test absolute position.
     Window.setMargin("0px");

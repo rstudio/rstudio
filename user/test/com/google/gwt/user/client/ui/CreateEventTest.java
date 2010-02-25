@@ -239,7 +239,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createBlurEvent().
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTriggerBlurEvent() {
     NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(
         "blur") {
@@ -273,7 +272,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createClickEvent().
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTriggerClickEvent() {
     BubbleAssertingEventListener listener = new BubbleAssertingEventListener(
         "click") {
@@ -313,7 +311,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createDblClickEvent().
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTriggerDblClickEvent() {
     BubbleAssertingEventListener listener = new BubbleAssertingEventListener(
         "dblclick") {
@@ -343,8 +340,10 @@ public class CreateEventTest extends GWTTestCase {
 
   /**
    * Tests createErrorEvent().
+   * Failed in all modes due to HtmlUnit bug:
+   * https://sourceforge.net/tracker/?func=detail&aid=2888342&group_id=47038&atid=448266
    */
-  @DoNotRunWith({Platform.HtmlUnit})
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testTriggerErrorEvent() {
     ImgEventListener listener = new ImgEventListener("error");
     Event.setEventListener(parent, listener);
@@ -358,7 +357,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createFocusEvent().
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTriggerFocusEvent() {
     NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(
         "focus") {
@@ -378,7 +376,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createKeyDownEvent().
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTriggerKeyDownEvent() {
     KeyEventListener listener = new KeyEventListener("keydown");
     Event.setEventListener(parent, listener);
@@ -394,7 +391,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createKeyPressEvent().
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTriggerKeyPressEvent() {
     KeyEventListener listener = new KeyEventListener("keypress");
     Event.setEventListener(parent, listener);
@@ -410,7 +406,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createKeyUpEvent().
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTriggerKeyUpEvent() {
     KeyEventListener listener = new KeyEventListener("keyup");
     Event.setEventListener(parent, listener);
@@ -439,7 +434,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createMouseDownEvent().
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTriggerMouseDownEvent() {
     MouseEventListener listener = new MouseEventListener("mousedown");
     Event.setEventListener(parent, listener);
@@ -456,7 +450,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createMouseMoveEvent().
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTriggerMouseMoveEvent() {
     MouseEventListener listener = new MouseEventListener("mousemove");
     Event.setEventListener(parent, listener);
@@ -473,7 +466,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createMouseOutEvent().
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTriggerMouseOutEvent() {
     MouseEventListener listener = new MouseEventListener("mouseout") {
       public void onBrowserEvent(Event event) {
@@ -499,7 +491,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createMouseOverEvent().
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTriggerMouseOverEvent() {
     MouseEventListener listener = new MouseEventListener("mouseover") {
       public void onBrowserEvent(Event event) {
@@ -524,7 +515,6 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Tests createMouseUpEvent().
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTriggerMouseUpEvent() {
     MouseEventListener listener = new MouseEventListener("mouseup");
     Event.setEventListener(parent, listener);

@@ -22,7 +22,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 /**
  * Tests for {@link PopupPanel} when history is disabled.
  */
-@DoNotRunWith(Platform.HtmlUnit)
+@DoNotRunWith(Platform.HtmlUnitBug)
 public class PopupHistoryDisabledTest extends GWTTestCase {
 
   @Override

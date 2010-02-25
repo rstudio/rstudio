@@ -37,8 +37,12 @@ public class AbsolutePanelTest extends PanelTestBase<AbsolutePanel> {
     absolutePanel.add(label, 10, 10);
     absolutePanel.add(label, 10, 10);
   }
-  
-  @DoNotRunWith(Platform.HtmlUnit)
+
+  /**
+   * Failed in all modes due to HtmlUnit bug:
+   * https://sourceforge.net/tracker/?func=detail&aid=2892289&group_id=47038&atid=448266
+   */
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testPositioning() {
     // Make an absolute panel with a label at (3, 7).
     AbsolutePanel abs = new AbsolutePanel();

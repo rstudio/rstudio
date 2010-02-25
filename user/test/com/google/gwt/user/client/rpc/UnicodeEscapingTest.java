@@ -129,7 +129,10 @@ public class UnicodeEscapingTest extends GWTTestCase {
    * equivalent in that case.
    * 
    * @throws InvalidCharacterException
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testClientToServerBMPHigh() throws InvalidCharacterException {
     delayTestFinish(TEST_FINISH_DELAY_MS);
     clientToServerVerifyRange(Character.MAX_SURROGATE + 1,
@@ -151,7 +154,10 @@ public class UnicodeEscapingTest extends GWTTestCase {
    * equivalent in that case.
    * 
    * @throws InvalidCharacterException
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testClientToServerBMPLow() throws InvalidCharacterException {
     delayTestFinish(TEST_FINISH_DELAY_MS);
     clientToServerVerifyRange(Character.MIN_CODE_POINT,
@@ -168,7 +174,10 @@ public class UnicodeEscapingTest extends GWTTestCase {
    * equivalent in that case.
    * 
    * @throws InvalidCharacterException
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testClientToServerNonBMP() throws InvalidCharacterException {
     delayTestFinish(TEST_FINISH_DELAY_MS);
     clientToServerVerifyRange(Character.MIN_SUPPLEMENTARY_CODE_POINT,
@@ -185,7 +194,10 @@ public class UnicodeEscapingTest extends GWTTestCase {
    * issue, particularly with combining marks, though they should be logically
    * equivalent in that case.  Surrogate characters are also not tested here,
    * see {@link #disabled_testServerToClientBMPSurrogates()}.
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testServerToClientBMP() {
     delayTestFinish(TEST_FINISH_DELAY_MS);
     serverToClientVerify(Character.MIN_CODE_POINT,
@@ -202,7 +214,7 @@ public class UnicodeEscapingTest extends GWTTestCase {
    * 
    * Note that this does not test all possible combinations.
    */
-  @DoNotRunWith(Platform.HtmlUnit)
+  @DoNotRunWith(Platform.HtmlUnitBug)
   // TODO(jat): decide if we really want to specify this behavior since some
   // browsers and OOPHM plugins have issues with it -- disabled for now
   public void disabled_testServerToClientBMPSurrogates() {

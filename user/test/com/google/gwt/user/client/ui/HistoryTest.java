@@ -94,7 +94,10 @@ public class HistoryTest extends GWTTestCase {
   /*
    * Tests against issue #879: Ensure that empty history tokens do not add
    * additional characters after the '#' symbol in the URL.
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testEmptyHistoryTokens() {
     delayTestFinish(5000);
 
@@ -122,7 +125,10 @@ public class HistoryTest extends GWTTestCase {
 
   /**
    * Verify that no events are issued via newItem if there were not reqeuested.
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testNoEvents() {
     delayTestFinish(5000);
     addHistoryListenerImpl(new HistoryListener() {
@@ -264,7 +270,10 @@ public class HistoryTest extends GWTTestCase {
    * Test against issue #2500. IE6 has a bug that causes it to not report any
    * part of the current fragment after a '?' when read from location.hash; make
    * sure that on affected browsers, we're not relying on this.
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testTokenWithQuestionmark() {
     delayTestFinish(5000);
     final String token = "foo?bar";
@@ -284,8 +293,10 @@ public class HistoryTest extends GWTTestCase {
   /**
    * Test that using an empty history token works properly. There have been
    * problems (see issue 2905) with this in the past on Safari.
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith({Platform.HtmlUnit})
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testEmptyHistoryToken() {
     final ArrayList<Object> counter = new ArrayList<Object>();
 

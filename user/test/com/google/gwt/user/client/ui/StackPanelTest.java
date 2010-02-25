@@ -56,7 +56,7 @@ public class StackPanelTest extends PanelTestBase<StackPanel> {
     HasWidgetsTester.testAll(createStackPanel(), new Adder(), true);
   }
 
-  @DoNotRunWith(Platform.HtmlUnit)
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testDebugId() {
     final StackPanel p = createStackPanel();
     Label a = new Label("a");

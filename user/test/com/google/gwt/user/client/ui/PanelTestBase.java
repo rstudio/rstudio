@@ -15,6 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
+
 /**
  * Base tests for classes that extend {@link Panel}
  * 
@@ -29,6 +32,11 @@ public abstract class PanelTestBase<T extends Panel> extends WidgetTestBase {
         new HasWidgetsTester.DefaultWidgetAdder(), supportsMultipleWidgets());
   }
 
+  /**
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testOnAttach() {
     // Used to call onDetach when not attached.
     Widget someWidget = new TextBox();
@@ -42,6 +50,11 @@ public abstract class PanelTestBase<T extends Panel> extends WidgetTestBase {
     RootPanel.get().setParent(null);
   }
 
+  /**
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testRemoveWithError() {
     // Create a widget that will throw an exception onUnload.
     BadWidget badWidget = new BadWidget();

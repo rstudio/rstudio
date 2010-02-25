@@ -19,6 +19,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.HasDirection;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 
@@ -52,6 +54,11 @@ public class AnchorTest extends GWTTestCase {
     return "com.google.gwt.user.UserTest";
   }
 
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testProperties() {
     Anchor anchor = new Anchor("foo", TEST_URL0);
     assertEquals("foo", anchor.getText());
@@ -96,6 +103,11 @@ public class AnchorTest extends GWTTestCase {
     }
   }
 
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testNoAttributes() {
     Anchor anchor = new Anchor();
 
@@ -113,6 +125,11 @@ public class AnchorTest extends GWTTestCase {
     }
   }
 
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testScriptAnchor() {
     Anchor anchor = new Anchor("Foo");
 
@@ -129,6 +146,11 @@ public class AnchorTest extends GWTTestCase {
     }
   }
 
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testScriptAnchorWithHTML() {
     Anchor anchor = new Anchor("<span>Foo</span>", true);
 
@@ -145,6 +167,11 @@ public class AnchorTest extends GWTTestCase {
     }
   }
 
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testEvents() {
     Anchor anchor = new Anchor("Trigger obscure JavaScript things");
 
@@ -166,6 +193,11 @@ public class AnchorTest extends GWTTestCase {
     assertEquals(anchor, handler.getLastSender());
   }
 
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testLink() {
     Anchor anchor = new Anchor("Click me!", "http://nowhere.org/");
 

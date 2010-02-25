@@ -189,8 +189,10 @@ public class WindowTest extends GWTTestCase {
   /**
    * Tests the ability of the Window to get the client size correctly with and
    * without visible scroll bars.
+   * Failed in all modes due to HtmlUnit bug:
+   * https://sourceforge.net/tracker/?func=detail&aid=2944261&group_id=47038&atid=448266
    */
-  @DoNotRunWith({Platform.HtmlUnit})
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testGetClientSize() {
 
     // NOTE: We must clear the DOM here so that previous tests do not pollute
@@ -348,7 +350,7 @@ public class WindowTest extends GWTTestCase {
   /**
    * Tests the ability of resize the Window and catch resize events.
    */
-  @DoNotRunWith({Platform.HtmlUnit})
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testResizing() {
     clearBodyContent();
 
@@ -389,8 +391,10 @@ public class WindowTest extends GWTTestCase {
 
   /**
    * Tests the ability of scroll the Window and catch scroll events.
+   * Failed in all modes due to HtmlUnit bug:
+   * https://sourceforge.net/tracker/?func=detail&aid=2897457&group_id=47038&atid=448266
    */
-  @DoNotRunWith({Platform.HtmlUnit})
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testScrolling() {
     // Force scroll bars to appear
     Window.enableScrolling(true);

@@ -15,8 +15,6 @@
  */
 package com.google.gwt.emultest.java.lang;
 
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -364,7 +362,6 @@ public class StringTest extends GWTTestCase {
     assertEquals("ABABAB", testStr.replace('\u1111', 'A'));
   }
 
-  @DoNotRunWith(Platform.HtmlUnit)
   public void testReplaceAll() {
     String regex = hideFromCompiler("*[").replaceAll(
         "([/\\\\\\.\\*\\+\\?\\|\\(\\)\\[\\]\\{\\}])", "\\\\$1");
@@ -389,7 +386,6 @@ public class StringTest extends GWTTestCase {
     assertEquals("$$x$", x5.replaceAll("(x)", "\\$\\$$1\\$"));
   }
 
-  @DoNotRunWith(Platform.HtmlUnit)
   public void testReplaceString() {
     assertEquals("foobar", hideFromCompiler("bazbar").replace("baz", "foo"));
     assertEquals("$0bar", hideFromCompiler("foobar").replace("foo", "$0"));

@@ -84,8 +84,11 @@ public class SchedulerImplTest extends GWTTestCase {
     return "com.google.gwt.core.Core";
   }
 
-  @DoNotRunWith(Platform.HtmlUnit)
-  // TODO(amitmanjhi) This tickles a devmode HtmlUnit deadlock
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testDeferredCommands() {
     final SchedulerImpl impl = new SchedulerImpl();
 
@@ -154,7 +157,11 @@ public class SchedulerImplTest extends GWTTestCase {
     });
   }
 
-  @DoNotRunWith(Platform.HtmlUnit)
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testFixedDelayCommands() {
     final SchedulerImpl impl = new SchedulerImpl();
     final int[] values = {0, 4};
@@ -177,7 +184,6 @@ public class SchedulerImplTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
   }
 
-  @DoNotRunWith(Platform.HtmlUnit)
   public void testFixedPeriodCommands() {
     final SchedulerImpl impl = new SchedulerImpl();
     final int[] values = {0, 4};
@@ -200,7 +206,6 @@ public class SchedulerImplTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
   }
 
-  @DoNotRunWith(Platform.HtmlUnit)
   public void testIncrementalCommands() {
     final SchedulerImpl impl = new SchedulerImpl();
 

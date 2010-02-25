@@ -19,6 +19,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler;
@@ -29,7 +31,10 @@ import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
  * Tests the FormPanel.
  * 
  * @see com.google.gwt.user.server.ui.FormPanelTestServlet
+ * Failed intermittently due to threading issues with HtmlUnit.
+ * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
  */
+@DoNotRunWith({Platform.HtmlUnit})
 public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
   
   /**
@@ -44,6 +49,11 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     return "com.google.gwt.user.FormPanelTest";
   }
 
+  /**
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testCancelSubmit() {
     TextBox tb = new TextBox();
     tb.setName("q");
@@ -68,7 +78,10 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
 
   /**
    * Tests uploading a file using post & multipart encoding.
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testFileUpload() {
     final FormPanel form = new FormPanel();
     form.setMethod(FormPanel.METHOD_POST);
@@ -98,7 +111,10 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
   /**
    * Tests submitting using url-encoded get, with all form widgets (other than
    * FileUpload, which requires post/multipart.
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testMethodGet() {
     final FormPanel form = new FormPanel();
     form.setMethod(FormPanel.METHOD_GET);
@@ -163,6 +179,11 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     form.submit();
   }
 
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testNamedTargetSubmitEvent() {
     // Create a form and frame in the document we can wrap.
     String iframeId = Document.get().createUniqueId();
@@ -195,6 +216,11 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     Document.get().getElementById("submitBtn").<InputElement>cast().click();
   }
 
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testReset() {
     FormPanel form = new FormPanel();
     RootPanel.get().add(form);
@@ -207,6 +233,11 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     RootPanel.get().remove(form);
   }
 
+  /**
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testSubmitAndHideDialog() {
     final FormPanel form = new FormPanel();
     form.setMethod(FormPanel.METHOD_GET);
@@ -240,7 +271,10 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
 
   /**
    * Tests submitting an alternate frame.
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testSubmitFrame() {
     final NamedFrame frame = new NamedFrame("myFrame");
     FormPanel form = new FormPanel(frame);
@@ -319,6 +353,11 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     }
   }
 
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testWrappedFormWithIFrame() {
     // Create a form and frame in the document we can wrap.
     final Element container = Document.get().createDivElement();

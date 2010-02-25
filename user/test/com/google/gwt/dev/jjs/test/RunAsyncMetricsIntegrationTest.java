@@ -18,8 +18,6 @@ package com.google.gwt.dev.jjs.test;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.RunAsyncCallback;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -121,7 +119,6 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
     lwmObserver.uninstall();
   }
 
-  @DoNotRunWith(Platform.HtmlUnit)
   public void testMetricsSignalled() {
     if (!GWT.isScript()) {
       // There are no runAsync lightweight metrics in hosted mode

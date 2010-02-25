@@ -25,7 +25,10 @@ import java.util.Iterator;
 
 /**
  * Tests the Tree widget.
+ * Failed intermittently due to threading issues with HtmlUnit.
+ * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
  */
+@DoNotRunWith({Platform.HtmlUnit})
 public class TreeTest extends GWTTestCase {
 
   static class Adder implements HasWidgetsTester.WidgetAdder {
@@ -39,7 +42,6 @@ public class TreeTest extends GWTTestCase {
     return "com.google.gwt.user.DebugTest";
   }
 
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(new Tree(), new Adder(), true);
   }

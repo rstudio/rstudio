@@ -522,13 +522,17 @@ public class RegExpTest extends GWTTestCase {
     checkReplace("Abc", "\\x", "\\xbc");
   }
 
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testReplace_dollarReplacement() {
     regExp = RegExp.compile("A+");
     checkReplace("the A stops here", "$$", "the $ stops here");
     checkReplace("the A stops here", "$$$$", "the $$ stops here");
   }
 
+  /**
+   * Failed in all modes due to HtmlUnit bug:
+   * https://sourceforge.net/tracker/?func=detail&aid=2949446&group_id=47038&atid=448266
+   */
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testReplace_doubleDigitGroupReplacement() {
     regExp = RegExp.compile("(1)(2)(3)(4)(5)(6)(7)(8)(9)(a)(b)(c)");
     checkReplace("it's 123456789abc.", "[$11]", "it's [b].");
@@ -564,7 +568,6 @@ public class RegExpTest extends GWTTestCase {
     checkReplace("AAA AAA", "x", "x x");
   }
 
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testReplace_groupAmpersandReplacement() {
     regExp = RegExp.compile("A(B+)A");
     checkReplace("he likes ABBBA", "'$&'", "he likes 'ABBBA'");
@@ -595,7 +598,6 @@ public class RegExpTest extends GWTTestCase {
     checkReplace("none here", "x", "none here");
   }
   
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testReplace_unsupportedReplacement() {
     regExp = RegExp.compile("foo");
     checkReplaceThrows("", "$`", true);

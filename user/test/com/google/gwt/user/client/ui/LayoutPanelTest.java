@@ -16,8 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Command;
@@ -28,7 +26,6 @@ import com.google.gwt.user.client.DeferredCommand;
  * behavior, not general layout correctness, which is covered by
  * {@link com.google.gwt.layout.client.LayoutTest}.
  */
-@DoNotRunWith(Platform.HtmlUnit)
 public class LayoutPanelTest extends WidgetTestBase {
 
   /**

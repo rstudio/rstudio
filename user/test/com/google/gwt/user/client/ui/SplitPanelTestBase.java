@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.DOM;
 
 /**
@@ -38,6 +40,7 @@ public abstract class SplitPanelTestBase<T extends SplitPanel> extends
   }
 
   @Override
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(createPanel(),
         new HasWidgetsTester.DefaultWidgetAdder(), false);
@@ -46,6 +49,7 @@ public abstract class SplitPanelTestBase<T extends SplitPanel> extends
   /**
    * Tests creation, widget assignment, null assignment.
    */
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testSplitPanelCreate() {
     final T panel = createPanel();
     final Widget widgetA = createMockWidget();

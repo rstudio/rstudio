@@ -35,7 +35,10 @@ public class DialogBoxTest extends PopupTest {
 
   /**
    * Test the accessors.
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
+  @DoNotRunWith({Platform.HtmlUnit})
   @Override
   public void testAccessors() {
     super.testAccessors();
@@ -72,7 +75,12 @@ public class DialogBoxTest extends PopupTest {
     assertEquals("text", dialogBox.getText());
     assertTrue(dialogBox.getHTML().equalsIgnoreCase("<b>text</b>"));
   }
-  
+
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testSimpleCloseButtonOnModalDialog() {
     final DialogBox dialogBox = new DialogBox(false, true);
     Button button = new Button();
@@ -87,6 +95,10 @@ public class DialogBoxTest extends PopupTest {
     assertFalse(dialogBox.isShowing());
   }
 
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
   @DoNotRunWith({Platform.HtmlUnit})
   public void testDebugId() {
     DialogBox dBox = new DialogBox();
@@ -113,7 +125,12 @@ public class DialogBoxTest extends PopupTest {
     });
   }
 
+  /*
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
   @Override
+  @DoNotRunWith(Platform.HtmlUnit)
   public void testDependantPopupPanel() {
     // Create the dependent popup
     final PopupPanel dependantPopup = createPopupPanel();

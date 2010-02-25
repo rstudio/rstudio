@@ -85,7 +85,7 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
    * 
    * TODO(jlabanca): Enable this test when issue 863 is fixed
    */
-  @DoNotRunWith({Platform.HtmlUnit})
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void disabledTestApplyToClippedImage() {
     final Image image = new Image("counting-backwards.png", 12, 13, 8, 8);
 

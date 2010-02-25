@@ -16,15 +16,11 @@
 package com.google.gwt.core.client;
 
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * This is a black-box test of the Scheduler API.
  */
-@DoNotRunWith(Platform.HtmlUnit)
-// TODO(amitmanjhi) This tickles a devmode HtmlUnit deadlock
 public class SchedulerTest extends GWTTestCase {
 
   private static final int TEST_DELAY = 500000;

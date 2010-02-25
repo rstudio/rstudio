@@ -18,6 +18,8 @@ package com.google.gwt.user.client;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -31,6 +33,11 @@ public class HistoryDisabledTest extends GWTTestCase {
     return "com.google.gwt.user.HistoryDisabledTest";
   }
 
+  /**
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   @SuppressWarnings("deprecation")
   public void testAddHistoryListener() {
     HistoryListener listener = new HistoryListener() {
@@ -41,6 +48,11 @@ public class HistoryDisabledTest extends GWTTestCase {
     History.removeHistoryListener(listener);
   }
 
+  /**
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testAddValueChangeHandler() {
     HandlerRegistration reg = History.addValueChangeHandler(new ValueChangeHandler<String>() {
       public void onValueChange(ValueChangeEvent<String> event) {
@@ -49,6 +61,11 @@ public class HistoryDisabledTest extends GWTTestCase {
     assertNull(reg);
   }
 
+  /**
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testFireCurrentHistoryState() {
     HandlerRegistration reg = History.addValueChangeHandler(new ValueChangeHandler<String>() {
       public void onValueChange(ValueChangeEvent<String> event) {
@@ -59,6 +76,11 @@ public class HistoryDisabledTest extends GWTTestCase {
     History.fireCurrentHistoryState();
   }
 
+  /**
+   * Failed intermittently due to threading issues with HtmlUnit.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   */
+  @DoNotRunWith({Platform.HtmlUnit})
   @SuppressWarnings("deprecation")
   public void testOnHistoryChanged() {
     HandlerRegistration reg = History.addValueChangeHandler(new ValueChangeHandler<String>() {

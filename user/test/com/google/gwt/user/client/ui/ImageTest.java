@@ -33,7 +33,7 @@ import com.google.gwt.user.client.Timer;
  * Tests for the Image widget. Images in both clipped mode and unclipped mode
  * are tested, along with the transitions between the two modes.
  */
-@DoNotRunWith({Platform.HtmlUnit})
+@DoNotRunWith({Platform.HtmlUnitBug})
 public class ImageTest extends GWTTestCase {
   interface Bundle extends ClientBundle {
     ImageResource prettyPiccy();

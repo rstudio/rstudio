@@ -209,7 +209,7 @@ public class TabLayoutPanelTest extends GWTTestCase {
   /**
    * Tests that tabs actually line up properly (see issue 4447).
    */
-  @DoNotRunWith(Platform.HtmlUnit)
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testTabLayout() {
     TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
     RootPanel.get().add(p);

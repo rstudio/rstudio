@@ -48,7 +48,6 @@ public abstract class TextBoxBaseTestBase extends GWTTestCase {
    * Tests that {@link TextArea#setCursorPos(int)} updates the cursor position
    * correctly.
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testMovingCursor() {
     TextBoxBase area = createTextBoxBase();
     RootPanel.get().add(area);
@@ -99,7 +98,10 @@ public abstract class TextBoxBaseTestBase extends GWTTestCase {
     }
   }
   
-  @DoNotRunWith({Platform.HtmlUnit})
+  /**
+   * Failed in all modes due to HtmlUnit bug:
+   */
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testValueChangeEvent() {
     TextBoxBase tb = createTextBoxBase();
     // To work cross-platform, the tb must be added to the root panel.
