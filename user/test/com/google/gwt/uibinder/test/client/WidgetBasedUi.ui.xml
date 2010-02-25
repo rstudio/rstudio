@@ -596,6 +596,11 @@
        <gwt:Button ui:field='ok'>Okay</gwt:Button>
      </gwt:HTMLPanel>
    </gwt:DialogBox>
+   
+   <gwt:ListBox ui:field='fooListBox'>
+     <gwt:item>bar</gwt:item>
+     <gwt:item value='bar2'>bar 2</gwt:item>
+   </gwt:ListBox>
 
    </gwt:HTMLPanel>
   </gwt:Dock>

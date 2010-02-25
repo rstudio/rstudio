@@ -949,6 +949,7 @@ public class UiBinderWriter {
     addWidgetParser("StackLayoutPanel");
     addWidgetParser("TabLayoutPanel");
     addWidgetParser("Image");
+    addWidgetParser("ListBox");
   }
 
   /**

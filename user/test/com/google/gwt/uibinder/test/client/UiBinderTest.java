@@ -294,6 +294,14 @@ public class UiBinderTest extends GWTTestCase {
   public void testFieldInPlaceholderedElement() {
     assertEquals("named portions", widgetUi.spanInMsg.getInnerText());
   }
+  
+  public void testListBox() {
+    assertEquals(2, widgetUi.fooListBox.getItemCount());
+    assertEquals("bar", widgetUi.fooListBox.getItemText(0));
+    assertEquals("bar", widgetUi.fooListBox.getValue(0));
+    assertEquals("bar 2", widgetUi.fooListBox.getItemText(1));
+    assertEquals("bar2", widgetUi.fooListBox.getValue(1));
+  }
 
   public void testMenuAttributes() {
     assertEquals(widgetUi.dropdownMenuBar.getStyleName(),

@@ -221,6 +221,17 @@ public class UiJavaResources {
       return code;
     }
   };
+  public static final MockJavaResource LIST_BOX = new MockJavaResource(
+    "com.google.gwt.user.client.ui.ListBox") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("public class ListBox extends Widget {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
   public static final MockJavaResource MOUSE_OVER_EVENT = new MockJavaResource(
       "com.google.gwt.event.dom.client.MouseOverEvent") {
     @Override
@@ -360,6 +371,7 @@ public class UiJavaResources {
     rtn.add(HAS_VERTICAL_ALIGNMENT);
     rtn.add(LABEL);
     rtn.add(LAYOUT_PANEL);
+    rtn.add(LIST_BOX);
     rtn.add(MOUSE_OVER_EVENT);
     rtn.add(MOUSE_OVER_HANDLER);
     rtn.add(SPLIT_LAYOUT_PANEL);

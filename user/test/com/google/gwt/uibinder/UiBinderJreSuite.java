@@ -27,6 +27,7 @@ import com.google.gwt.uibinder.elementparsers.DockLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.ImageParserTest;
 import com.google.gwt.uibinder.elementparsers.IsEmptyParserTest;
 import com.google.gwt.uibinder.elementparsers.LayoutPanelParserTest;
+import com.google.gwt.uibinder.elementparsers.ListBoxParserTest;
 import com.google.gwt.uibinder.elementparsers.StackLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.TabLayoutPanelParserTest;
 import com.google.gwt.uibinder.elementparsers.UIObjectParserTest;
@@ -76,6 +77,7 @@ public class UiBinderJreSuite {
     suite.addTestSuite(ImageParserTest.class);
     suite.addTestSuite(IsEmptyParserTest.class);
     suite.addTestSuite(LayoutPanelParserTest.class);
+    suite.addTestSuite(ListBoxParserTest.class);
     suite.addTestSuite(StackLayoutPanelParserTest.class);
     suite.addTestSuite(TabLayoutPanelParserTest.class);
     suite.addTestSuite(UIObjectParserTest.class);

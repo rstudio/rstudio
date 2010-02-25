@@ -41,6 +41,29 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.ListBoxExample}
  * </p>
+ * 
+ * <h3>Use in UiBinder Templates</h3>
+ * <p>
+ * The items of a ListBox element are laid out in &lt;g:item> elements.
+ * Each item contains text that will be added to the list of available
+ * items that will be shown, either in the drop down or list. (Note that
+ * the tags of the item elements are not capitalized. This is meant to
+ * signal that the item is not a runtime object, and so cannot have a
+ * <code>ui:field</code> attribute.) It is also possible to explicitly
+ * specify item's value using value attribute as shown below.
+ * <p>
+ * For example:
+ * 
+ * <pre>
+ * &lt;g:ListBox>
+ *  &lt;g:item>
+ *    first
+ *  &lt;/g:item>
+ *  &lt;g:item value='2'>
+ *    second
+ *  &lt;/g:item>
+ * &lt;/g:ListBox>
+ * </pre>
  */
 @SuppressWarnings("deprecation")
 public class ListBox extends FocusWidget implements SourcesChangeEvents,

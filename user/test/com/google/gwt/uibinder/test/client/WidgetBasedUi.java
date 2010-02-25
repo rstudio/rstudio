@@ -39,6 +39,7 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasHTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PushButton;
@@ -154,6 +155,7 @@ public class WidgetBasedUi extends Composite {
   @UiField ToggleButton toggle;
   @UiField HTML styleLess;
   @UiField FooDialog fooDialog;
+  @UiField ListBox fooListBox;
 
   public WidgetBasedUi() {
     external.style().ensureInjected();
