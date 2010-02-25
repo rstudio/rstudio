@@ -15,27 +15,62 @@
  */
 package com.google.gwt.sample.tree.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.sample.tree.client.TreeNodeView.ExtraTreeItem;
-import com.google.gwt.sample.tree.client.TreeViewModel.NodeInfo;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Tree;
-import com.google.gwt.user.client.ui.TreeItem;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 
 /**
  * A view of a tree.
  */
-public class TreeView extends Composite {
+public class TreeView extends Widget {
+
+  private static final Resources DEFAULT_RESOURCES = GWT.create(Resources.class);
+
+  /**
+   * A ClientBundle that provides images for this widget.
+   */
+  public interface Resources extends ClientBundle {
+
+    /**
+     * An image indicating a closed branch.
+     */
+    ImageResource treeClosed();
+
+    /**
+     * An image indicating an open branch.
+     */
+    ImageResource treeOpen();
+  }
+
+  /**
+   * The HTML used to generate the closed image.
+   */
+  private String closedImageHtml;
 
   /**
    * The {@link TreeViewModel} that backs the tree.
    */
   private TreeViewModel model;
+
+  /**
+   * The HTML used to generate the open image.
+   */
+  private String openImageHtml;
+
+  /**
+   * The Resources used by this tree.
+   */
+  private Resources resources;
 
   /**
    * The hidden root node in the tree.
@@ -51,56 +86,72 @@ public class TreeView extends Composite {
    */
   public <T> TreeView(TreeViewModel viewModel, T rootValue) {
     this.model = viewModel;
+    this.resources = DEFAULT_RESOURCES;
+    setElement(Document.get().createDivElement());
+    getElement().getStyle().setPosition(Position.RELATIVE);
+    setStyleName("gwt-TreeView");
 
-    // Initialize the widget.
-    Tree tree = new Tree() {
-      @Override
-      public void onBrowserEvent(Event event) {
-        super.onBrowserEvent(event);
-
-        switch (event.getTypeInt()) {
-          case Event.ONMOUSEUP: {
-            if ((DOM.eventGetCurrentTarget(event) == getElement())
-                && (event.getButton() == Event.BUTTON_LEFT)) {
-              elementClicked(DOM.eventGetTarget(event), event);
-            }
-            break;
-          }
-        }
-      }
-    };
-    initWidget(tree);
-    sinkEvents(Event.ONMOUSEUP);
-
-    // Add the root item.
-    ExtraTreeItem rootItem = new ExtraTreeItem("Dummy UI Root");
-    tree.addItem(rootItem);
+    // Add event handlers.
+    sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN | Event.ONMOUSEUP);
 
     // Associate a view with the item.
-    rootNode = createChildView(rootValue, null, rootItem, null);
+    rootNode = new TreeNodeView<T>(this, null, null, getElement(), rootValue);
+    rootNode.initChildContainer(getElement());
+    rootNode.setState(true);
   }
 
   public TreeViewModel getTreeViewModel() {
     return model;
   }
 
+  @Override
+  public void onBrowserEvent(Event event) {
+    super.onBrowserEvent(event);
+
+    int eventType = DOM.eventGetType(event);
+    switch (eventType) {
+      case Event.ONMOUSEUP:
+        Element currentTarget = event.getCurrentEventTarget().cast();
+        if (currentTarget == getElement()) {
+          Element target = event.getEventTarget().cast();
+          elementClicked(target, event);
+        }
+        break;
+    }
+  }
+
   /**
-   * Create a child view for this tree.
-   * 
-   * @param <C> the data type of the child
-   * @param childValue the value of the child
-   * @param parentTreeNodeView the parent {@link TreeNodeView}
-   * @param childItem the DOM view of the child
-   * @return a {@link TreeNodeView} for the child
+   * @return the HTML to render the closed image.
    */
-  <C> TreeNodeView<C> createChildView(C childValue,
-      TreeNodeView<?> parentTreeNodeView, ExtraTreeItem childItem,
-      NodeInfo<C> parentNodeInfo) {
-    TreeNodeView<C> childView = new TreeNodeView<C>(childValue, this,
-        parentTreeNodeView, childItem, parentNodeInfo);
-    NodeInfo<?> nodeInfo = model.getNodeInfo(childValue, childView);
-    childView.initNodeInfo(nodeInfo);
-    return childView;
+  String getClosedImageHtml() {
+    if (closedImageHtml == null) {
+      AbstractImagePrototype proto = AbstractImagePrototype.create(resources.treeClosed());
+      closedImageHtml = proto.getHTML().replace("style='",
+          "style='position:absolute;left:0px;top:0px;");
+    }
+    return closedImageHtml;
+  }
+
+  /**
+   * Get the width required for the images.
+   * 
+   * @return the maximum width required for images.
+   */
+  int getImageWidth() {
+    return Math.max(resources.treeClosed().getWidth(),
+        resources.treeOpen().getWidth());
+  }
+
+  /**
+   * @return the HTML to render the open image.
+   */
+  String getOpenImageHtml() {
+    if (openImageHtml == null) {
+      AbstractImagePrototype proto = AbstractImagePrototype.create(resources.treeOpen());
+      openImageHtml = proto.getHTML().replace("style='",
+          "style='position:absolute;left:0px;top:0px;");
+    }
+    return openImageHtml;
   }
 
   /**
@@ -112,7 +163,7 @@ public class TreeView extends Composite {
       return;
     }
 
-    collectElementChain(chain, hRoot, DOM.getParent(hElem));
+    collectElementChain(chain, hRoot, hElem.getParentElement());
     chain.add(hElem);
   }
 
@@ -122,9 +173,11 @@ public class TreeView extends Composite {
 
     TreeNodeView<?> nodeView = findItemByChain(chain, 0, rootNode);
     if (nodeView != null && nodeView != rootNode) {
-      TreeItem item = nodeView.getTreeItem();
-      if (DOM.isOrHasChild(item.getElement(), hElem)) {
-        fireEvent(nodeView, event);
+      if (nodeView.getImageElement().isOrHasChild(hElem)) {
+        nodeView.setState(!nodeView.getState(), true);
+        return true;
+      } else if (nodeView.getCellParent().isOrHasChild(hElem)) {
+        nodeView.fireEventToCell(event);
         return true;
       }
     }
@@ -141,7 +194,7 @@ public class TreeView extends Composite {
     Element hCurElem = chain.get(idx);
     for (int i = 0, n = parent.getChildCount(); i < n; ++i) {
       TreeNodeView<?> child = parent.getChild(i);
-      if (child.getTreeItem().getElement() == hCurElem) {
+      if (child.getElement() == hCurElem) {
         TreeNodeView<?> retItem = findItemByChain(chain, idx + 1, child);
         if (retItem == null) {
           return child;
@@ -151,10 +204,5 @@ public class TreeView extends Composite {
     }
 
     return findItemByChain(chain, idx + 1, parent);
-  }
-
-  private <T> void fireEvent(TreeNodeView<T> nodeView, NativeEvent event) {
-    nodeView.getParentNodeInfo().onBrowserEvent(
-        nodeView.getTreeItem().getElement(), nodeView.getValue(), event);
   }
 }

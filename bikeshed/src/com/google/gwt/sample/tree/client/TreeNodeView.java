@@ -16,12 +16,9 @@
 package com.google.gwt.sample.tree.client;
 
 import com.google.gwt.cells.client.Cell;
-import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.list.shared.ListEvent;
 import com.google.gwt.list.shared.ListHandler;
 import com.google.gwt.list.shared.ListModel;
@@ -29,7 +26,6 @@ import com.google.gwt.list.shared.ListRegistration;
 import com.google.gwt.list.shared.SizeChangeEvent;
 import com.google.gwt.sample.tree.client.TreeViewModel.NodeInfo;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.TreeItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,61 +38,9 @@ import java.util.List;
 public class TreeNodeView<T> extends Composite {
 
   /**
-   * A {@link TreeItem} that fires value change events when the state changes.
+   * The element used in place of an image when a node has no children.
    */
-  public static class ExtraTreeItem extends TreeItem implements
-      HasValueChangeHandlers<Boolean> {
-
-    private HandlerManager handlerManager = new HandlerManager(this);
-
-    public ExtraTreeItem(String value) {
-      super(value);
-    }
-
-    public HandlerRegistration addValueChangeHandler(
-        ValueChangeHandler<Boolean> handler) {
-      return handlerManager.addHandler(ValueChangeEvent.getType(), handler);
-    }
-
-    public void fireEvent(GwtEvent<?> event) {
-      handlerManager.fireEvent(event);
-    }
-
-    @Override
-    public void setState(boolean open, boolean fireEvents) {
-      super.setState(open, fireEvents);
-      if (open) {
-        ValueChangeEvent.fire(this, true);
-      } else {
-        ValueChangeEvent.fire(this, false);
-      }
-    }
-  }
-
-  /**
-   * The list registration for the list of children.
-   */
-  private ListRegistration listReg;
-
-  /**
-   * The TreeItem that displays this node.
-   */
-  private ExtraTreeItem treeItem;
-
-  /**
-   * This node's value.
-   */
-  private T value;
-
-  /**
-   * The parent {@link TreeNodeView}.
-   */
-  private TreeNodeView<?> parent;
-
-  /**
-   * The containing {@link TreeView}.
-   */
-  private TreeView tree;
+  private static final String LEAF_IMAGE = "<div style='position:absolute;display:none;'></div>";
 
   /**
    * The children of this {@link TreeNodeView}.
@@ -104,9 +48,34 @@ public class TreeNodeView<T> extends Composite {
   private List<TreeNodeView<?>> children;
 
   /**
-   * The info about the child nodes.
+   * A reference to the element that contains the children.
+   */
+  private Element childContainer;
+
+  /**
+   * The list registration for the list of children.
+   */
+  private ListRegistration listReg;
+
+  /**
+   * The info about children of this node.
    */
   private NodeInfo<?> nodeInfo;
+
+  /**
+   * Indicates whether or not we've loaded the node info.
+   */
+  private boolean nodeInfoLoaded;
+
+  /**
+   * Indicates whether or not this node is open.
+   */
+  private boolean open;
+
+  /**
+   * The parent {@link TreeNodeView}.
+   */
+  private TreeNodeView<?> parent;
 
   /**
    * The info about this node.
@@ -114,19 +83,32 @@ public class TreeNodeView<T> extends Composite {
   private NodeInfo<T> parentNodeInfo;
 
   /**
+   * The containing {@link TreeView}.
+   */
+  private TreeView tree;
+
+  /**
+   * This node's value.
+   */
+  private T value;
+
+  /**
    * Construct a {@link TreeNodeView}.
    * 
-   * @param value the value of this node
    * @param tree the parent {@link TreeView}
-   * @param treeItem this nodes view
+   * @param parent the parent {@link TreeNodeView}
+   * @param parentNodeInfo the {@link NodeInfo} of the parent
+   * @param elem the outer element of this {@link TreeNodeView}.
+   * @param value the value of this node
    */
-  TreeNodeView(T value, final TreeView tree, final TreeNodeView<?> parent,
-      ExtraTreeItem treeItem, NodeInfo<T> parentNodeInfo) {
+  TreeNodeView(final TreeView tree, final TreeNodeView<?> parent,
+      NodeInfo<T> parentNodeInfo, Element elem, T value) {
     this.value = value;
     this.tree = tree;
     this.parent = parent;
-    this.treeItem = treeItem;
+    // We pass in parentNodeInfo so we know that it is type T.
     this.parentNodeInfo = parentNodeInfo;
+    setElement(elem);
   }
 
   /**
@@ -158,6 +140,15 @@ public class TreeNodeView<T> extends Composite {
   }
 
   /**
+   * Check whether or not this {@link TreeNodeView} is open.
+   * 
+   * @return true if open, false if closed
+   */
+  public boolean getState() {
+    return open;
+  }
+
+  /**
    * Get the value contained in this node.
    * 
    * @return the value of the node
@@ -166,90 +157,180 @@ public class TreeNodeView<T> extends Composite {
     return value;
   }
 
-  NodeInfo<?> getNodeInfo() {
-    return nodeInfo;
+  /**
+   * Sets whether this item's children are displayed.
+   * 
+   * @param open whether the item is open
+   */
+  public void setState(boolean open) {
+    setState(open, true);
+  }
+
+  /**
+   * Sets whether this item's children are displayed.
+   * 
+   * @param open whether the item is open
+   * @param fireEvents <code>true</code> to allow open/close events to be
+   */
+  public void setState(boolean open, boolean fireEvents) {
+    // TODO(jlabanca) - allow people to add open/close handlers.
+
+    // Early out.
+    if (this.open == open) {
+      return;
+    }
+
+    this.open = open;
+    if (open) {
+      if (!nodeInfoLoaded) {
+        nodeInfo = tree.getTreeViewModel().getNodeInfo(value, this);
+        nodeInfoLoaded = true;
+      }
+      if (nodeInfo != null) {
+        onOpen(nodeInfo);
+      }
+    } else {
+      // Unregister the list handler.
+      if (listReg != null) {
+        listReg.removeHandler();
+        listReg = null;
+      }
+
+      // Remove the children.
+      childContainer.setInnerHTML("");
+      children.clear();
+    }
+
+    // Update the image.
+    updateImage();
+  }
+
+  /**
+   * Fire an event to the {@link Cell}.
+   * 
+   * @param event the native event
+   */
+  void fireEventToCell(NativeEvent event) {
+    parentNodeInfo.onBrowserEvent(getCellParent(), value, event);
+  }
+
+  /**
+   * @return the element that contains the rendered cell
+   */
+  Element getCellParent() {
+    return getElement().getChild(1).cast();
+  }
+
+  /**
+   * @return the image element
+   */
+  Element getImageElement() {
+    return getElement().getFirstChildElement();
   }
 
   NodeInfo<T> getParentNodeInfo() {
     return parentNodeInfo;
   }
 
-  TreeItem getTreeItem() {
-    return treeItem;
-  }
-
   /**
-   * Initialize the node info.
+   * Set the {@link Element} that will contain the children. Used by
+   * {@link TreeView}.
    * 
-   * @param nodeInfo the {@link NodeInfo} that provides information about the
-   *          child values
+   * @param elem the child container element
    */
-  void initNodeInfo(final NodeInfo<?> nodeInfo) {
-    // Force a + icon if this node might have children.
-    if (nodeInfo != null) {
-      this.nodeInfo = nodeInfo;
-      treeItem.addItem("loading...");
-      treeItem.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
-        public void onValueChange(ValueChangeEvent<Boolean> event) {
-          if (event.getValue()) {
-            onOpen(tree, nodeInfo);
-          } else {
-            onClose();
-          }
-        }
-      });
-    }
-  }
-
-  /**
-   * Cleanup when the node is closed.
-   */
-  private void onClose() {
-    if (listReg != null) {
-      listReg.removeHandler();
-      listReg = null;
-    }
+  void initChildContainer(Element elem) {
+    assert this.childContainer == null : "childContainer already initialized.";
+    this.childContainer = elem;
   }
 
   /**
    * Setup the node when it is opened.
    * 
-   * @param tree the parent {@link TreeView}
    * @param nodeInfo the {@link NodeInfo} that provides information about the
    *          child values
    * @param <C> the child data type of the node.
    */
-  private <C> void onOpen(final TreeView tree, final NodeInfo<C> nodeInfo) {
+  private <C> void onOpen(final NodeInfo<C> nodeInfo) {
+    // Get the node info.
     ListModel<C> listModel = nodeInfo.getListModel();
     listReg = listModel.addListHandler(new ListHandler<C>() {
       public void onDataChanged(ListEvent<C> event) {
         // TODO - handle event start and length
-        treeItem.removeItems();
 
-        // Add child tree items.
+        // Construct the child contents.
+        TreeViewModel model = tree.getTreeViewModel();
+        int imageWidth = tree.getImageWidth();
         Cell<C> theCell = nodeInfo.getCell();
+        StringBuilder sb = new StringBuilder();
         children = new ArrayList<TreeNodeView<?>>();
         for (C childValue : event.getValues()) {
-          // TODO(jlabanca): Use one StringBuilder.
-          StringBuilder sb = new StringBuilder();
+          sb.append("<div style=\"position:relative;padding-left:");
+          sb.append(imageWidth);
+          sb.append("px;\">");
+          if (model.isLeaf(childValue)) {
+            sb.append(LEAF_IMAGE);
+          } else {
+            sb.append(tree.getClosedImageHtml());
+          }
+          sb.append("<div>");
           theCell.render(childValue, sb);
-          ExtraTreeItem child = new ExtraTreeItem(sb.toString());
-          treeItem.addItem(child);
-          children.add(tree.createChildView(childValue, TreeNodeView.this,
-              child, nodeInfo));
+          sb.append("</div>");
+          sb.append("</div>");
+        }
+
+        // Replace contents of the child container.
+        if (childContainer == null) {
+          Element elem = getElement();
+          initChildContainer(Document.get().createDivElement());
+          elem.appendChild(childContainer);
+        }
+        childContainer.setInnerHTML(sb.toString());
+
+        // Create the child TreeNodeViews from the new elements.
+        children = new ArrayList<TreeNodeView<?>>();
+        Element childElem = childContainer.getFirstChildElement();
+        for (C childValue : event.getValues()) {
+          TreeNodeView<C> child = new TreeNodeView<C>(tree, TreeNodeView.this,
+              nodeInfo, childElem, childValue);
+          children.add(child);
+          childElem = childElem.getNextSiblingElement();
         }
       }
 
       public void onSizeChanged(SizeChangeEvent event) {
-        // TODO (jlabanca): Handle case when item is over.
+        if (children == null) {
+          return;
+        }
+
+        // Shrink the list based on the new size.
         int size = event.getSize();
-        treeItem.removeItems();
-        if (size > 0) {
-          // Add a placeholder to force a + icon.
-          treeItem.addItem("loading...");
+        int currentSize = children.size();
+        for (int i = currentSize - 1; i >= size; i--) {
+          childContainer.getLastChild().removeFromParent();
+          children.remove(i);
         }
       }
     });
     listReg.setRangeOfInterest(0, 100);
+  }
+
+  /**
+   * Update the image based on the current state.
+   */
+  private void updateImage() {
+    // Early out if this is a root node.
+    if (getParentTreeNodeView() == null) {
+      return;
+    }
+
+    // Replace the image element with a new one.
+    String html = open ? tree.getOpenImageHtml() : tree.getClosedImageHtml();
+    if (nodeInfoLoaded && nodeInfo == null) {
+      html = LEAF_IMAGE;
+    }
+    Element tmp = Document.get().createDivElement();
+    tmp.setInnerHTML(html);
+    Element imageElem = tmp.getFirstChildElement();
+    getElement().replaceChild(imageElem, getImageElement());
   }
 }

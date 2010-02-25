@@ -87,8 +87,6 @@ public class MyTreeViewModel implements TreeViewModel {
   public <T> NodeInfo<?> getNodeInfo(T value, TreeNodeView<T> treeNodeView) {
     if (value instanceof String) {
       return getNodeInfoHelper((String) value);
-    } else if (value instanceof Integer) {
-      return getNodeInfoHelper((Integer) value);
     }
 
     // Unhandled type.
@@ -96,9 +94,8 @@ public class MyTreeViewModel implements TreeViewModel {
     throw new IllegalArgumentException("Unsupported object type: " + type);
   }
 
-  @SuppressWarnings("unused")
-  private NodeInfo<?> getNodeInfoHelper(final Integer value) {
-    return null;
+  public boolean isLeaf(Object value) {
+    return value instanceof Integer;
   }
 
   private NodeInfo<?> getNodeInfoHelper(final String value) {

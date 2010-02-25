@@ -109,4 +109,13 @@ public interface TreeViewModel {
    * @return the {@link NodeInfo}
    */
   <T> NodeInfo<?> getNodeInfo(T value, TreeNodeView<T> treeNodeView);
+
+  /**
+   * Check if the value is known to be a leaf node.
+   * 
+   * @param value the value at the node
+   * @return true if the node is known to be a leaf node, false if not
+   */
+
+  boolean isLeaf(Object value);
 }
