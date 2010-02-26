@@ -29,8 +29,8 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/easymock/easymockclassextension.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/objectweb/asm-3.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
-	<classpathentry kind="lib" path="/home/flin/src/flin-gwthead/google3/third_party/java/gwt/tools/source/svn/lib/htmlunit/htmlunit-r5424d/htmlunit-core-js-r5424.jar"/>
-	<classpathentry kind="lib" path="/home/flin/src/flin-gwthead/google3/third_party/java/gwt/tools/source/svn/lib/htmlunit/htmlunit-r5424d/htmlunit-r5424.jar"/>
+	<classpathentry kind="lib" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5424d/htmlunit-core-js-r5424.jar"/>
+	<classpathentry kind="lib" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5424d/htmlunit-r5424.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5424/htmlunit-r5424.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5424/htmlunit-r5424-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5424/htmlunit-core-js-r5424.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5424/htmlunit-core-js-r5424-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
