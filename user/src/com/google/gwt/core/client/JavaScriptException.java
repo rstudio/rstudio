@@ -84,7 +84,7 @@ public final class JavaScriptException extends RuntimeException {
   private static native String getProperties0(JavaScriptObject e) /*-{
     var result = "";
     try {
-      for (prop in e) {
+      for (var prop in e) {
         if (prop != "name" && prop != "message" && prop != "toString") {
           try {
             result += "\n " + prop + ": " + e[prop];
