@@ -168,8 +168,6 @@ public class StockSample implements EntryPoint {
   
   private AsyncListModel<StockQuote> searchListModel;
   
-  private ListListModel<String> tickersListModel = new ListListModel<String>();
-  
   private Map<String, ListListModel<Transaction>> transactionListListModelsByTicker =
     new HashMap<String, ListListModel<Transaction>>();
 
@@ -180,8 +178,6 @@ public class StockSample implements EntryPoint {
   private PagingTableListView<Transaction> transactionTable;
   
   private TreeView transactionTree;
-
-  private List<String> transactionTreeTickers = tickersListModel.getList();
 
   /**
    * The timer used to update the stock quotes.
@@ -248,8 +244,9 @@ public class StockSample implements EntryPoint {
     transactionTable.addColumn(Columns.subtotalColumn);
     
     // Create the transactions tree.
-    transactionTree = new TreeView(new TransactionTreeViewModel(tickersListModel,
+    transactionTree = new TreeView(new TransactionTreeViewModel(favoritesListModel,
         transactionListListModelsByTicker), null);
+    transactionTree.setAnimationEnabled(true);
 
     Columns.favoriteColumn.setFieldUpdater(new FieldUpdater<StockQuote, Boolean>() {
       public void update(StockQuote object, Boolean value) {
@@ -293,25 +290,7 @@ public class StockSample implements EntryPoint {
              */
             private void recordTransaction(Transaction result) {
               transactions.add(0, result);
-              
-              // Add ticker in alphebetical order
               String ticker = result.getTicker();
-              int index = 0;
-              for (String s : transactionTreeTickers) {
-                int compare = s.compareTo(ticker);
-                if (compare == 0) {
-                  // Already have the ticker
-                  index = -1;
-                  break;
-                } else if (compare > 0) {
-                  break;
-                }
-                
-                index++;
-              }
-              if (index != -1) {
-                transactionTreeTickers.add(index, ticker);
-              }
               
               // Update the next level of the transaction tree
               // for the given ticker

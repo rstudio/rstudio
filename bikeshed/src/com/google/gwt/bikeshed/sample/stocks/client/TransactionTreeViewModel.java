@@ -32,36 +32,43 @@ import java.util.Map;
 class TransactionTreeViewModel implements TreeViewModel {
   
   static class TransactionCell extends Cell<Transaction> {
-
     @Override
     public void render(Transaction value, StringBuilder sb) {
       sb.append(value.toString());
     }
   }
   
-  private static final Cell<String> TEXT_CELL = new TextCell();
+  private static final Cell<StockQuote> STOCK_QUOTE_CELL = new Cell<StockQuote>() {
+    @Override
+    public void render(StockQuote value, StringBuilder sb) {
+      sb.append(value.getTicker() + " - " + value.getDisplayPrice());
+    }
+  };
   
   private static final Cell<Transaction> TRANSACTION_CELL =
     new TransactionCell();
   
-  private ListListModel<String> tickersListModel;
+  private ListModel<StockQuote> stockQuoteListModel;
   private Map<String, ListListModel<Transaction>> transactionListListModelsByTicker;
 
-  public TransactionTreeViewModel(ListListModel<String> tickersListModel,
+  public TransactionTreeViewModel(ListModel<StockQuote> stockQuoteListModel,
       Map<String, ListListModel<Transaction>> transactionListListModelsByTicker) {
-    this.tickersListModel = tickersListModel;
+    this.stockQuoteListModel = stockQuoteListModel;
     this.transactionListListModelsByTicker = transactionListListModelsByTicker;
   }
 
   public <T> NodeInfo<?> getNodeInfo(T value, TreeNodeView<T> treeNodeView) {
     if (value == null) {
-      return new TreeViewModel.DefaultNodeInfo<String>(tickersListModel,
-          TEXT_CELL);
-    } else if (value instanceof String) {
+      return new TreeViewModel.DefaultNodeInfo<StockQuote>(stockQuoteListModel,
+          STOCK_QUOTE_CELL) {
+        @Override
+        public Object getKey(StockQuote value) {
+          return value.getTicker();
+        }
+      };
+    } else if (value instanceof StockQuote) {
       return new TreeViewModel.DefaultNodeInfo<Transaction>(
-          transactionListListModelsByTicker.get(value), TRANSACTION_CELL);
-    } else if (value instanceof Transaction) {
-      return null;
+          transactionListListModelsByTicker.get(((StockQuote) value).getTicker()), TRANSACTION_CELL);
     }
     
     throw new IllegalArgumentException(value.toString());

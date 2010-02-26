@@ -112,6 +112,10 @@ public class BuySellPopup extends DialogBox {
     layout.setWidget(6, 1, cancelButton);
   }
 
+  public StockQuote getStockQuote() {
+    return quote;
+  }
+
   /**
    * Get the last transaction.
    * 

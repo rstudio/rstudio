@@ -31,7 +31,9 @@ import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.user.client.ui.Composite;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A view of a tree node.
@@ -44,6 +46,8 @@ public class TreeNodeView<T> extends Composite {
    * The element used in place of an image when a node has no children.
    */
   private static final String LEAF_IMAGE = "<div style='position:absolute;display:none;'></div>";
+
+  private boolean animate;
 
   /**
    * The children of this {@link TreeNodeView}.
@@ -183,6 +187,7 @@ public class TreeNodeView<T> extends Composite {
       return;
     }
 
+    this.animate = true;
     this.open = open;
     if (open) {
       if (!nodeInfoLoaded) {
@@ -201,6 +206,12 @@ public class TreeNodeView<T> extends Composite {
 
     // Update the image.
     updateImage();
+  }
+
+  boolean consumeAnimate() {
+    boolean hasAnimate = animate;
+    animate = false;
+    return hasAnimate;
   }
 
   /**
@@ -282,6 +293,10 @@ public class TreeNodeView<T> extends Composite {
     return childContainer;
   }
 
+  private Object getValueKey() {
+    return parentNodeInfo.getKey(getValue());
+  }
+
   /**
    * Check if this is a root node at the top of the tree.
    * 
@@ -292,7 +307,7 @@ public class TreeNodeView<T> extends Composite {
   }
 
   /**
-   * Setup the node when it is opened.
+   * Set up the node when it is opened.
    * 
    * @param nodeInfo the {@link NodeInfo} that provides information about the
    *          child values
@@ -309,6 +324,18 @@ public class TreeNodeView<T> extends Composite {
       public void onDataChanged(ListEvent<C> event) {
         // TODO - handle event start and length
 
+        // Construct a map of former child views based on their value keys.
+        Map<Object, TreeNodeView<?>> map = new HashMap<Object, TreeNodeView<?>>();
+        if (children != null) {
+          for (TreeNodeView<?> child : children) {
+            // Ignore child nodes that are closed
+            if (child.getState()) {
+              Object key = child.getValueKey();
+              map.put(key, child);
+            }
+          }
+        }
+
         // Hide the child container so we can animate it.
         ensureAnimationFrame().getStyle().setDisplay(Display.NONE);
 
@@ -317,12 +344,21 @@ public class TreeNodeView<T> extends Composite {
         int imageWidth = tree.getImageWidth();
         Cell<C> theCell = nodeInfo.getCell();
         StringBuilder sb = new StringBuilder();
-        children = new ArrayList<TreeNodeView<?>>();
+
         for (C childValue : event.getValues()) {
+          // Remove any child elements that correspond to prior children
+          // so the call to setInnerHtml will not destroy them
+          TreeNodeView<?> savedView = map.get(nodeInfo.getKey(childValue));
+          if (savedView != null) {
+            savedView.getElement().removeFromParent();
+          }
+
           sb.append("<div style=\"position:relative;padding-left:");
           sb.append(imageWidth);
           sb.append("px;\">");
-          if (model.isLeaf(childValue)) {
+          if (savedView != null) {
+            sb.append(tree.getOpenImageHtml());
+          } else if (model.isLeaf(childValue)) {
             sb.append(LEAF_IMAGE);
           } else {
             sb.append(tree.getClosedImageHtml());
@@ -338,8 +374,21 @@ public class TreeNodeView<T> extends Composite {
         children = new ArrayList<TreeNodeView<?>>();
         Element childElem = childContainer.getFirstChildElement();
         for (C childValue : event.getValues()) {
-          TreeNodeView<C> child = new TreeNodeView<C>(tree, TreeNodeView.this,
-              nodeInfo, childElem, childValue);
+          TreeNodeView<C> child = new TreeNodeView<C>(tree, TreeNodeView.this, nodeInfo, childElem, childValue);
+          TreeNodeView<?> savedChild = map.get(nodeInfo.getKey(childValue));
+          // Copy the saved child's state into the new child
+          if (savedChild != null) {
+            child.children = savedChild.children;
+            child.childContainer = savedChild.childContainer;
+            child.listReg = savedChild.listReg;
+            child.nodeInfo = savedChild.nodeInfo;
+            child.nodeInfoLoaded = savedChild.nodeInfoLoaded;
+            child.open = savedChild.open;
+
+            // Copy the animation frame element to the new child
+            child.getElement().appendChild(savedChild.childContainer.getParentElement());
+          }
+
           children.add(child);
           childElem = childElem.getNextSiblingElement();
         }
@@ -349,17 +398,6 @@ public class TreeNodeView<T> extends Composite {
       }
 
       public void onSizeChanged(SizeChangeEvent event) {
-        if (children == null) {
-          return;
-        }
-
-        // Shrink the list based on the new size.
-        int size = event.getSize();
-        int currentSize = children.size();
-        for (int i = currentSize - 1; i >= size; i--) {
-          childContainer.getLastChild().removeFromParent();
-          children.remove(i);
-        }
       }
     });
     listReg.setRangeOfInterest(0, 100);

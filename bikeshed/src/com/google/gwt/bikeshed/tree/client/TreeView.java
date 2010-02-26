@@ -444,7 +444,7 @@ public class TreeView extends Widget implements HasAnimation {
    * @param node the node to animate
    */
   void maybeAnimateTreeNode(TreeNodeView<?> node) {
-    animation.animate(node, isAnimationEnabled);
+    animation.animate(node, node.consumeAnimate() && isAnimationEnabled);
   }
 
   /**

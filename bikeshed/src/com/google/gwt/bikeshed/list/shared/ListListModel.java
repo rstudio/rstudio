@@ -31,8 +31,6 @@ import java.util.ListIterator;
  */
 public class ListListModel<T> extends AbstractListModel<T> {
 
-  public int insertIndex;
-
   /**
    * A wrapper around a list that updates the model on any change.
    */
@@ -77,7 +75,6 @@ public class ListListModel<T> extends AbstractListModel<T> {
 
     public void add(int index, T element) {
       list.add(index, element);
-      // insert(index);
       flush();
     }
 

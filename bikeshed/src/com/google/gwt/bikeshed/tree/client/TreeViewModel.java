@@ -38,6 +38,16 @@ public interface TreeViewModel {
     Cell<C> getCell();
 
     /**
+     * Return a key that may be used to identify values that should
+     * be treated as the same in UI views.
+     *
+     * @param value a value of type C.
+     * @return an Object that implements appropriate hashCode() and equals()
+     * methods.
+     */
+    Object getKey(C value);
+
+    /**
      * Get the {@link ListModel} used to retrieve child node values.
      * 
      * @return the list model
@@ -89,6 +99,10 @@ public interface TreeViewModel {
 
     public Cell<C> getCell() {
       return cell;
+    }
+
+    public Object getKey(C value) {
+      return value;
     }
 
     public ListModel<C> getListModel() {
