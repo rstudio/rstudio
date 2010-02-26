@@ -19,6 +19,9 @@ import com.google.gwt.cells.client.Cell;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.list.shared.ListEvent;
 import com.google.gwt.list.shared.ListHandler;
 import com.google.gwt.list.shared.ListModel;
@@ -186,19 +189,14 @@ public class TreeNodeView<T> extends Composite {
         nodeInfo = tree.getTreeViewModel().getNodeInfo(value, this);
         nodeInfoLoaded = true;
       }
+
+      // If we don't have any nodeInfo, we must be a leaf node.
       if (nodeInfo != null) {
         onOpen(nodeInfo);
       }
     } else {
-      // Unregister the list handler.
-      if (listReg != null) {
-        listReg.removeHandler();
-        listReg = null;
-      }
-
-      // Remove the children.
-      childContainer.setInnerHTML("");
-      children.clear();
+      cleanup();
+      tree.maybeAnimateTreeNode(this);
     }
 
     // Update the image.
@@ -222,6 +220,13 @@ public class TreeNodeView<T> extends Composite {
   }
 
   /**
+   * @return the element that contains the children
+   */
+  Element getChildContainer() {
+    return childContainer;
+  }
+
+  /**
    * @return the image element
    */
   Element getImageElement() {
@@ -233,14 +238,57 @@ public class TreeNodeView<T> extends Composite {
   }
 
   /**
-   * Set the {@link Element} that will contain the children. Used by
-   * {@link TreeView}.
-   * 
-   * @param elem the child container element
+   * Cleanup this node and all its children. This node can still be used.
    */
-  void initChildContainer(Element elem) {
-    assert this.childContainer == null : "childContainer already initialized.";
-    this.childContainer = elem;
+  private void cleanup() {
+    // Unregister the list handler.
+    if (listReg != null) {
+      listReg.removeHandler();
+      listReg = null;
+    }
+
+    // Recursively kill chidren.
+    if (children != null) {
+      for (TreeNodeView<?> child : children) {
+        child.cleanup();
+      }
+      children = null;
+    }
+  }
+
+  /**
+   * Ensure that the animation frame exists and return it.
+   * 
+   * @return the animation frame
+   */
+  private Element ensureAnimationFrame() {
+    return ensureChildContainer().getParentElement();
+  }
+
+  /**
+   * Ensure that the child container exists and return it.
+   * 
+   * @return the child container
+   */
+  private Element ensureChildContainer() {
+    if (childContainer == null) {
+      // If this is a root node or the element does not exist, create it.
+      Element animFrame = getElement().appendChild(
+          Document.get().createDivElement());
+      animFrame.getStyle().setPosition(Position.RELATIVE);
+      animFrame.getStyle().setOverflow(Overflow.HIDDEN);
+      childContainer = animFrame.appendChild(Document.get().createDivElement());
+    }
+    return childContainer;
+  }
+
+  /**
+   * Check if this is a root node at the top of the tree.
+   * 
+   * @return true if a root node, false if not
+   */
+  private boolean isRootNode() {
+    return getParentTreeNodeView() == null;
   }
 
   /**
@@ -251,11 +299,18 @@ public class TreeNodeView<T> extends Composite {
    * @param <C> the child data type of the node.
    */
   private <C> void onOpen(final NodeInfo<C> nodeInfo) {
+    // Add a loading message.
+    ensureChildContainer().setInnerHTML(tree.getLoadingHtml());
+    ensureAnimationFrame().getStyle().setProperty("display", "");
+
     // Get the node info.
     ListModel<C> listModel = nodeInfo.getListModel();
     listReg = listModel.addListHandler(new ListHandler<C>() {
       public void onDataChanged(ListEvent<C> event) {
         // TODO - handle event start and length
+
+        // Hide the child container so we can animate it.
+        ensureAnimationFrame().getStyle().setDisplay(Display.NONE);
 
         // Construct the child contents.
         TreeViewModel model = tree.getTreeViewModel();
@@ -277,13 +332,6 @@ public class TreeNodeView<T> extends Composite {
           sb.append("</div>");
           sb.append("</div>");
         }
-
-        // Replace contents of the child container.
-        if (childContainer == null) {
-          Element elem = getElement();
-          initChildContainer(Document.get().createDivElement());
-          elem.appendChild(childContainer);
-        }
         childContainer.setInnerHTML(sb.toString());
 
         // Create the child TreeNodeViews from the new elements.
@@ -295,6 +343,9 @@ public class TreeNodeView<T> extends Composite {
           children.add(child);
           childElem = childElem.getNextSiblingElement();
         }
+
+        // Animate the child container open.
+        tree.maybeAnimateTreeNode(TreeNodeView.this);
       }
 
       public void onSizeChanged(SizeChangeEvent event) {
@@ -319,7 +370,7 @@ public class TreeNodeView<T> extends Composite {
    */
   private void updateImage() {
     // Early out if this is a root node.
-    if (getParentTreeNodeView() == null) {
+    if (isRootNode()) {
       return;
     }
 

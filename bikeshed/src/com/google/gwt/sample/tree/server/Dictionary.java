@@ -341,15 +341,15 @@ public class Dictionary {
       "amplitudes", "amply", "ampoules", "amps", "ampule", "ampules", "ampuls",
       "amputate", "amputated", "amputating", "amputation", "amputations",
       "amputee", "amputees", "amuck", "amulet", "amulets", "amuse", "amused",
-      "amusement", "amusements", "amuses", "amusing", "amusingly"
-  };
-  
+      "amusement", "amusements", "amuses", "amusing", "amusingly", "bad",
+      "beard", "before"};
+
   public static List<String> getNext(String prefix) {
     String[] s = new String[26];
     boolean[] b = new boolean[26];
-    
+
     List<String> toRet = new ArrayList<String>();
-    
+
     // slowwww..
     for (String word : words) {
       if (word.equals(prefix)) {
@@ -364,7 +364,7 @@ public class Dictionary {
         }
       }
     }
-    
+
     for (int i = 0; i < 26; i++) {
       if (s[i] != null) {
         toRet.add(s[i]);

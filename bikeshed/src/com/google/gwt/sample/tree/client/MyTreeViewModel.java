@@ -17,11 +17,11 @@ package com.google.gwt.sample.tree.client;
 
 import com.google.gwt.cells.client.ButtonCell;
 import com.google.gwt.cells.client.Cell;
-import com.google.gwt.cells.client.TextCell;
 import com.google.gwt.cells.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.list.shared.AsyncListModel;
 import com.google.gwt.list.shared.ListModel;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -54,12 +54,24 @@ public class MyTreeViewModel implements TreeViewModel {
               value.length() - 3) : value;
           dataService.getNext(prefix, new AsyncCallback<List<String>>() {
             public void onFailure(Throwable caught) {
-              Window.alert("Error: " + caught);
+              String message = caught.getMessage();
+              if (message.contains("Not logged in")) {
+                // Force the user to login.
+                Window.Location.reload();
+              } else {
+                Window.alert("ERROR: " + caught.getMessage());
+              }
             }
 
-            public void onSuccess(List<String> result) {
-              listModel.updateDataSize(result.size(), true);
-              listModel.updateViewData(0, result.size(), result);
+            public void onSuccess(final List<String> result) {
+              // Use a timer to simulate network delay.
+              new Timer() {
+                @Override
+                public void run() {
+                  listModel.updateDataSize(result.size(), true);
+                  listModel.updateViewData(0, result.size(), result);
+                }
+              }.schedule(500);
             }
           });
         }
@@ -78,11 +90,6 @@ public class MyTreeViewModel implements TreeViewModel {
       sb.append(value);
     }
   };
-
-  /**
-   * The cell used to render strings.
-   */
-  private static final Cell<String> STRING_CELL = new TextCell();
 
   public <T> NodeInfo<?> getNodeInfo(T value, TreeNodeView<T> treeNodeView) {
     if (value instanceof String) {

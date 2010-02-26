@@ -25,6 +25,7 @@ public class TreeEntryPoint implements EntryPoint {
 
   public void onModuleLoad() {
     TreeView tree = new TreeView(new MyTreeViewModel(), "...");
+    tree.setAnimationEnabled(true);
     RootPanel.get().add(tree);
   }
 }
