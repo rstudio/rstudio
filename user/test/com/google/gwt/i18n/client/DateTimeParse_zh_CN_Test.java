@@ -34,7 +34,7 @@ public class DateTimeParse_zh_CN_Test extends GWTTestCase {
     Date date = new Date();
 
     {
-      String time_15_26_28 = "\u4e0b\u534803\u65f626\u520628\u79d2 GMT-07:00";
+      String time_15_26_28 = "GMT-07:00 \u4e0b\u534803\u65f626\u520628\u79d2";
       DateTimeFormat.getFullTimeFormat().parse(time_15_26_28, 0, date);
 
       /*

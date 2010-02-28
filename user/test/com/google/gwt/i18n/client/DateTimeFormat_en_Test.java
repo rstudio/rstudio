@@ -189,7 +189,7 @@ public class DateTimeFormat_en_Test extends GWTTestCase {
     date.setTime(Date.UTC(2006 - 1900, 7, 4, 20, 49, 24));
     String fullTimeFormat = DateTimeFormat.getFullTimeFormat().format(date,
         usPacific);
-    assertEquals("1:49:24 PM America/Los_Angeles", fullTimeFormat);
+    assertEquals("1:49:24 PM Pacific Daylight Time", fullTimeFormat);
 
     String longTimeFormat = DateTimeFormat.getLongTimeFormat().format(date,
         usPacific);
