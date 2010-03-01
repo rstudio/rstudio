@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
-import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
@@ -180,10 +179,6 @@ public class JVisitor {
   }
 
   public void endVisit(JClassLiteral x, Context ctx) {
-    endVisit((JLiteral) x, ctx);
-  }
-
-  public void endVisit(JClassSeed x, Context ctx) {
     endVisit((JLiteral) x, ctx);
   }
 
@@ -496,10 +491,6 @@ public class JVisitor {
   }
 
   public boolean visit(JClassLiteral x, Context ctx) {
-    return visit((JLiteral) x, ctx);
-  }
-
-  public boolean visit(JClassSeed x, Context ctx) {
     return visit((JLiteral) x, ctx);
   }
 

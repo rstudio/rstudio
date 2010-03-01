@@ -81,7 +81,6 @@ import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
-import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -616,11 +615,6 @@ public class GenerateJavaScriptAST {
     public void endVisit(JClassLiteral x, Context ctx) {
       JsName classLit = names.get(x.getField());
       push(classLit.makeRef(x.getSourceInfo()));
-    }
-
-    @Override
-    public void endVisit(JClassSeed x, Context ctx) {
-      push(names.get(x.getRefType()).makeRef(x.getSourceInfo()));
     }
 
     @SuppressWarnings("unchecked")

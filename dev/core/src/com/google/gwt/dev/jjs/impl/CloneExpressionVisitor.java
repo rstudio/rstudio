@@ -46,7 +46,6 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -138,13 +137,6 @@ public class CloneExpressionVisitor extends JVisitor {
   @Override
   public boolean visit(JClassLiteral x, Context ctx) {
     expression = x;
-    return false;
-  }
-
-  @Override
-  public boolean visit(JClassSeed x, Context ctx) {
-    expression = new JClassSeed(x.getSourceInfo(), x.getRefType(),
-        program.getTypeJavaLangObject());
     return false;
   }
 

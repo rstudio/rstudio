@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.ast.JField.Disposition;
-import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.jjs.impl.CodeSplitter;
@@ -915,15 +914,6 @@ public class JProgram extends JNode {
       }
     }
     return classLiteral;
-  }
-
-  /**
-   * TODO: unreferenced; remove this and JClassSeed?
-   */
-  public JClassSeed getLiteralClassSeed(JClassType type) {
-    // could be interned
-    return new JClassSeed(createSourceInfoSynthetic(JProgram.class,
-        "class seed"), type, getTypeJavaLangObject());
   }
 
   public JDoubleLiteral getLiteralDouble(double d) {
