@@ -474,6 +474,10 @@ public class TabLayoutPanel extends ResizeComposite implements HasWidgets,
 
     if (selectedIndex == -1) {
       selectTab(0);
+    } else if (selectedIndex >= beforeIndex) {
+      // If we inserted before the currently selected tab, its index has just
+      // increased.
+      selectedIndex++;
     }
   }
 

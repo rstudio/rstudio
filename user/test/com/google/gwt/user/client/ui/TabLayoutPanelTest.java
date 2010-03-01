@@ -59,6 +59,14 @@ public class TabLayoutPanelTest extends GWTTestCase {
     HasWidgetsTester.testAll(new TabLayoutPanel(1, Unit.EM), new Adder(), true);
   }
 
+  public void testInsertBeforeSelected() {
+    TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
+    p.add(new Label("foo"), "foo");
+    p.selectTab(0);
+    p.insert(new Label("bar"), "bar", 0);
+    assertEquals(1, p.getSelectedIndex());
+  }
+
   public void testInsertMultipleTimes() {
     TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
 
