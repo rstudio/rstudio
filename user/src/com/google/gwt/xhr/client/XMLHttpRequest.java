@@ -82,14 +82,22 @@ public class XMLHttpRequest extends JavaScriptObject {
    */
   public static native XMLHttpRequest create() /*-{
     if ($wnd.XMLHttpRequest) {
-      return new XMLHttpRequest();
-    } else {
       try {
-        return new ActiveXObject('MSXML2.XMLHTTP.3.0');
-      } catch (e) {
-        return new ActiveXObject("Microsoft.XMLHTTP");
+        return new $wnd.XMLHttpRequest;
+      } catch(e) {
+        // Some third-party libraries define it but not as a function.
+        // See Issue 3608.
+        // Fall through to alternatives.
       }
     }
+
+    try {
+      // some IE6 installations can use this
+      return new ActiveXObject('MSXML2.XMLHTTP.3.0');
+    } catch (e) {
+      // other IE6 installations need this
+      return new ActiveXObject("Microsoft.XMLHTTP"); 
+    }    
   }-*/;
 
   protected XMLHttpRequest() {
