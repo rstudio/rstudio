@@ -387,8 +387,14 @@ public class TypeTightener {
         return;
       }
 
-      JReferenceType toType = (JReferenceType) x.getCastType();
-      JReferenceType fromType = (JReferenceType) argType;
+      JReferenceType toType = getSingleConcreteType(x.getCastType());
+      if (toType == null) {
+        toType = (JReferenceType) x.getCastType();
+      }
+      JReferenceType fromType = getSingleConcreteType(argType); 
+      if (fromType == null) {
+        fromType = (JReferenceType) argType;
+      }
 
       boolean triviallyTrue = false;
       boolean triviallyFalse = false;
@@ -465,8 +471,14 @@ public class TypeTightener {
         return;
       }
 
-      JReferenceType toType = x.getTestType();
-      JReferenceType fromType = (JReferenceType) argType;
+      JReferenceType toType = getSingleConcreteType(x.getTestType());
+      if (toType == null) {
+        toType = x.getTestType();
+      }
+      JReferenceType fromType = getSingleConcreteType(argType); 
+      if (fromType == null) {
+        fromType = (JReferenceType) argType;
+      }
 
       boolean triviallyTrue = false;
       boolean triviallyFalse = false;
