@@ -39,6 +39,7 @@ import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.js.ast.JsVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
@@ -151,14 +152,13 @@ final class JsHoister {
 
     @Override
     public void endVisit(JsNew x, JsContext<JsExpression> ctx) {
-      JsNew toReturn = new JsNew(x.getSourceInfo());
-
-      List<JsExpression> arguments = toReturn.getArguments();
       int size = x.getArguments().size();
+      List<JsExpression> arguments = new ArrayList<JsExpression>(size);
       while (size-- > 0) {
         arguments.add(0, stack.pop());
       }
-      toReturn.setConstructorExpression(stack.pop());
+      JsNew toReturn = new JsNew(x.getSourceInfo(), stack.pop());
+      toReturn.getArguments().addAll(arguments);
       stack.push(toReturn);
     }
 

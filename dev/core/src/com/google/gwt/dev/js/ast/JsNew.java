@@ -29,8 +29,9 @@ public final class JsNew extends JsExpression implements HasArguments {
 
   private JsExpression ctorExpr;
 
-  public JsNew(SourceInfo sourceInfo) {
+  public JsNew(SourceInfo sourceInfo, JsExpression ctorExpr) {
     super(sourceInfo);
+    this.ctorExpr = ctorExpr;
   }
 
   public List<JsExpression> getArguments() {
@@ -56,10 +57,6 @@ public final class JsNew extends JsExpression implements HasArguments {
   @Override
   public boolean isDefinitelyNull() {
     return false;
-  }
-
-  public void setConstructorExpression(JsExpression ctorExpr) {
-    this.ctorExpr = ctorExpr;
   }
 
   public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {

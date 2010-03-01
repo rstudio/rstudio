@@ -807,14 +807,12 @@ public class JsParser {
   }
 
   private JsNew mapNew(Node newNode) throws JsParserException {
-
-    JsNew newExpr = new JsNew(makeSourceInfo(newNode));
-
     // Map the constructor expression, which is often just the name of
     // some lambda.
     //
     Node fromCtorExpr = newNode.getFirstChild();
-    newExpr.setConstructorExpression(mapExpression(fromCtorExpr));
+    JsNew newExpr = new JsNew(makeSourceInfo(newNode),
+        mapExpression(fromCtorExpr));
 
     // Iterate over and map the arguments.
     //

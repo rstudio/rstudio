@@ -1102,9 +1102,8 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JNewInstance x, Context ctx) {
-      JsNew newOp = new JsNew(x.getSourceInfo());
       JsNameRef nameRef = names.get(x.getClassType()).makeRef(x.getSourceInfo());
-      newOp.setConstructorExpression(nameRef);
+      JsNew newOp = new JsNew(x.getSourceInfo(), nameRef);
       push(newOp);
     }
 
@@ -1600,10 +1599,9 @@ public class GenerateJavaScriptAST {
         lhs.setQualifier(seedFuncName.makeRef(sourceInfo));
         JsExpression rhs;
         if (x.getSuperClass() != null) {
-          JsNew newExpr = new JsNew(sourceInfo);
           JsNameRef superPrototypeRef = names.get(x.getSuperClass()).makeRef(
               sourceInfo);
-          newExpr.setConstructorExpression(superPrototypeRef);
+          JsNew newExpr = new JsNew(sourceInfo, superPrototypeRef);
           rhs = newExpr;
         } else {
           rhs = new JsObjectLiteral(sourceInfo);
