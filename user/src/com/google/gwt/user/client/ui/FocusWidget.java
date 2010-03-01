@@ -272,7 +272,8 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     // any calls made to FocusWidget.setTabIndex(int) by user code, because
     // FocusWidget.setTabIndex(int) cannot be called until setElement(elem)
     // has been called.
-    setTabIndex(0);
+    if (-1 == getTabIndex()) {
+      setTabIndex(0);
+    }
   }
-
 }
