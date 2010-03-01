@@ -15,9 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.Document;
-
 /**
  * Testing TextBox.
  */
@@ -35,7 +32,7 @@ public class TextBoxTest extends TextBoxBaseTestBase {
     // As our setText does not honor max length, no way to text it in the wild
     // here.
   }
-
+ 
   public void testMinLength() {
     TextBox b = createTextBoxBase();
     b.setVisibleLength(5);
@@ -46,15 +43,5 @@ public class TextBoxTest extends TextBoxBaseTestBase {
 
     // Now check visible length.
     assertEquals(5, b.getVisibleLength());
-  }
-
-  public void testNoNukeTabIndex() {
-    Document doc = Document.get();
-    DivElement div = doc.createDivElement();
-    div.setInnerHTML("<input type='text' id='tb' tabindex='1'></input>");
-    doc.getBody().appendChild(div);
-
-    TextBox tb = TextBox.wrap(doc.getElementById("tb"));
-    assertEquals(1, tb.getTabIndex());
   }
 }
