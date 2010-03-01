@@ -534,7 +534,7 @@ public class JProgram extends JNode {
     JMethod x = new JMethod(info, sname, enclosingType, returnType, isAbstract,
         isStatic, isFinal, isPrivate);
     if (isNative) {
-      x.setBody(new JsniMethodBody(this, info));
+      x.setBody(new JsniMethodBody(info));
     } else if (!isAbstract) {
       x.setBody(new JMethodBody(info));
     }

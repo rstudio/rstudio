@@ -18,7 +18,6 @@ package com.google.gwt.dev.jjs.ast.js;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
@@ -44,7 +43,7 @@ public class JsniMethodBody extends JAbstractMethodBody {
 
   private Set<String> stringLiterals = Collections.emptySet();
 
-  public JsniMethodBody(JProgram program, SourceInfo info) {
+  public JsniMethodBody(SourceInfo info) {
     super(info);
   }
 
