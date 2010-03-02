@@ -375,6 +375,7 @@ public class RequestBuilderTest extends RequestTestBase {
    * <li>Timeout is less than the server's response time
    * </ul>
    */
+  @DoNotRunWith({Platform.HtmlUnit})
   public void testSetTimeout_timeout() throws RequestException {
     delayTestFinishForRequest();
 
