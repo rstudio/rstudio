@@ -666,6 +666,14 @@ public class BigDecimalConstructorsTest extends EmulTestBase {
   }
 
   /**
+   * Test second failing example in gwt-java-math issue 4.
+   */
+  public void testConstrStringWithLeadingZeros() {
+    BigDecimal value = new BigDecimal("-000.1");
+    assertEquals("bad precision", 1, value.precision());
+  }
+
+  /**
    * new BigDecimal(String value); value does not contain exponent.
    */
   public void testConstrStringWithoutExpNeg() {

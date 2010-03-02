@@ -1513,6 +1513,32 @@ public class BigDecimalArithmeticTest extends EmulTestBase {
   }
 
   /**
+   * Test gwt-java-math issues 4 and 5.
+   */
+  public void testRoundMathContextCEILING() {
+    BigDecimal val = BigDecimal.valueOf(1.5);
+    BigDecimal result = val.round(new MathContext(1, RoundingMode.CEILING));
+    assertEquals("2", result.toString());
+    assertEquals(0, result.scale());
+    assertEquals(1, result.precision());
+    
+    // 1 digit left of dp, 14 scale + 1
+    val = BigDecimal.valueOf(5.43445663479765);
+    val.setScale(val.scale() + 1, RoundingMode.CEILING).round(new
+        MathContext(1, RoundingMode.CEILING));
+
+     // 1 digit left of dp, 13 scale + 2
+    val = BigDecimal.valueOf(5.4344566347976);
+    val.setScale(val.scale() + 2, RoundingMode.CEILING).round(new
+        MathContext(1, RoundingMode.CEILING));
+    
+    // 2 digits left of dp, 13 scale + 2
+    BigDecimal test = BigDecimal.valueOf(12.4344566347976);
+    test.setScale(test.scale() + 1, RoundingMode.CEILING).round(new
+        MathContext(1, RoundingMode.CEILING));
+  }
+
+  /**
    * round(BigDecimal, MathContext)
    */
   public void testRoundMathContextHALF_DOWN() {
