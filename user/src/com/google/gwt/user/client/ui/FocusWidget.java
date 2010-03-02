@@ -264,15 +264,17 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   }
 
   @Override
-  protected void setElement(com.google.gwt.user.client.Element elem) {
-    super.setElement(elem);
+  protected void onAttach() {
+    super.onAttach();
 
     // Accessibility: setting tab index to be 0 by default, ensuring element
-    // appears in tab sequence. Note that this call will not interfere with
-    // any calls made to FocusWidget.setTabIndex(int) by user code, because
-    // FocusWidget.setTabIndex(int) cannot be called until setElement(elem)
-    // has been called.
-    setTabIndex(0);
+    // appears in tab sequence. We must ensure that the element doesn't already
+    // have a tabIndex set. This is not a problem for normal widgets, but when
+    // a widget is used to wrap an existing static element, it can already have
+    // a tabIndex.
+    int tabIndex = getTabIndex();
+    if (-1 == tabIndex) {
+      setTabIndex(0);
+    }
   }
-
 }
