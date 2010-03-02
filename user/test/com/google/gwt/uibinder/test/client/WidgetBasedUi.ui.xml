@@ -13,25 +13,25 @@
   limitations under the License.
 -->
 
-<!DOCTYPE ui:UiBinder 
+<!DOCTYPE ui:UiBinder
   SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent"
   [
     <!ENTITY % MyEntities SYSTEM "MyEntities.ent">
     %MyEntities;
   ]
 >
-<!-- 
-  This scary DOCTYPE section is not required. It's here to demonstrate two 
+<!--
+  This scary DOCTYPE section is not required. It's here to demonstrate two
   things.
-  
+
   First, this bit:
-  
+
     SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent"
- 
-  allows you to use familiar HTML entities like &nbsp; and &bull;, 
-  which are not part of XML. (The file is also available as 
+
+  allows you to use familiar HTML entities like &nbsp; and &bull;,
+  which are not part of XML. (The file is also available as
   https://dl-ssl.google.com/gwt/DTD/xhtml.ent.)
-  
+
   Next, the bit in square brackets is even more optional. It shows how
   to add your own entities, in this case pulling in additional
   definitions for &point-left; and &point-right; from local file
@@ -39,16 +39,16 @@
 
   You don't have to be so verbose to include a local file! For
   example, you might instead grab your own copy of xhtml.ent
-  and add your custom entity definitions to it, and use this 
+  and add your custom entity definitions to it, and use this
   for your DOCTYPE:
-  
+
   <!DOCTYPE ui:UiBinder SYSTEM "my-xhtml.ent">
 -->
 
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:gwt='urn:import:com.google.gwt.user.client.ui'
   xmlns:demo='urn:import:com.google.gwt.uibinder.test.client'
-  
+
   xmlns:legacyValuesForBeans='urn:with:com.google.gwt.uibinder.test.client.WidgetBasedUi.FakeBundle2'
   xmlns:legacyValuesForHtml='urn:with:com.google.gwt.uibinder.test.client.WidgetBasedUi.FakeBundle3'
 
@@ -61,7 +61,7 @@
 
 <ui:with field='external' type='com.google.gwt.uibinder.test.client.WidgetBasedUiExternalResources'>
   (This text is ignored, but it's a handy place to document a resource.)
-  
+
   external is used to test receiving a resource from the owner via
   @UiField(provided = true), particularly useful for dependency
   injection via Gin and the like
@@ -72,20 +72,20 @@
   for a resource to provide arbitrary objects to arbitrary attributes (look for FooLabel)
 </ui:with>
 
-<!-- 
+<!--
   Tests creating a CssResource from an external file.
  -->
-<ui:style field='myStyle' src='WidgetBasedUi.css Menu.css' 
+<ui:style field='myStyle' src='WidgetBasedUi.css Menu.css'
     type='com.google.gwt.uibinder.test.client.WidgetBasedUi.Style'>
-    .menuBar { 
+    .menuBar {
       font-family: sans-serif;
     }
 </ui:style>
- 
+
 <ui:style field='myOtherStyle' type='com.google.gwt.uibinder.test.client.WidgetBasedUi.Style'>
-  /* because we extend WidgetBasedUi.Style and it's tagged @Shared, we can refine the menubar 
+  /* because we extend WidgetBasedUi.Style and it's tagged @Shared, we can refine the menubar
      style defined in other files */
-  
+
   .menuBar.psychedelic {
     background-color: Yellow;
   }
@@ -98,7 +98,7 @@
 
 <ui:style field='myTotallyPrivateStyle'>
   /* An inline style tied to no public type */
-  
+
   .super-private-color {
     background-color: Gold;
   }
@@ -113,14 +113,14 @@
 <ui:data field='heartCursorResource' src='heart.cur'/>
 
 <ui:style field='mySpritelyStyle'>
-  @sprite .simpleSprite { 
-    gwt-image: "prettyImage"; 
+  @sprite .simpleSprite {
+    gwt-image: "prettyImage";
   }
 
-  @sprite .tilingSprite { 
-    gwt-image: "prettyTilingImage"; 
+  @sprite .tilingSprite {
+    gwt-image: "prettyTilingImage";
   }
-  
+
   .garish {
     color: Purple;
     font-weight: bold;
@@ -129,7 +129,7 @@
    }
 
    .garish.tilingSprite {
-      font-size: 1.5em; 
+      font-size: 1.5em;
     }
 </ui:style>
 <ui:image field='prettyImage' />
@@ -174,9 +174,9 @@
       adopters should recognize themselves as such, and be prepared to have the
       api rug yanked out from under them.</ui:msg></p>
       <p ui:field="main">
-        &point-right;&nbsp;<span ui:field="messageInMain"><ui:msg>This is the main area. 
-        It's an <b>HTMLPanel</b>, which allows you to mix 
-          &point-right; &bull; XHTML &bull; &point-left; and regular GWT widgets, more or less with 
+        &point-right;&nbsp;<span ui:field="messageInMain"><ui:msg>This is the main area.
+        It's an <b>HTMLPanel</b>, which allows you to mix
+          &point-right; &bull; XHTML &bull; &point-left; and regular GWT widgets, more or less with
           impunity. Take the following button for example.</ui:msg></span>&nbsp;&point-left;
       </p>
       <gwt:Button ui:field='myButton'>
@@ -200,7 +200,7 @@
       />
       </div>
 
-      <p ui:field='simpleSpriteParagraph' 
+      <p ui:field='simpleSpriteParagraph'
           class='{mySpritelyStyle.simpleSprite} {mySpritelyStyle.garish}
             {cursorifficStyle.cursor}' >
         And sprites too
@@ -210,7 +210,7 @@
           {cursorifficStyle.cursor}'>
         Well how do you like  <br/>
         tiled sprited images...of babies!! <br/>
-        Well of course you do. Who wouldn't? 
+        Well of course you do. Who wouldn't?
       </p>
 
       <p>
@@ -248,7 +248,7 @@
             <div id="pop-can-has-submenu">
               <ui:msg description="Last 7 Day Period">Pop</ui:msg>
             </div>
-            <gwt:MenuBar vertical="true" ui:field="dropdownMenuBar" 
+            <gwt:MenuBar vertical="true" ui:field="dropdownMenuBar"
               styleName="{myStyle.menuBar}">
               <gwt:MenuItem ui:field='menuItemCustomDateRange'>
                 <ui:msg description="Custom date range">
@@ -271,7 +271,7 @@
         <gwt:Tree ui:field='myTree' width="100px" />
 
       <p>...TextBoxes...</p>
-      
+
       <gwt:TextBox maxLength="21">21 chars only, please</gwt:TextBox>
 
       <p>...or perhaps a handful of RadioButtons:</p>
@@ -285,11 +285,11 @@
         text="Charlie (this one is a subclass of RadioButton)">
         <ui:attribute name="text" description="radio button name"/>
       </demo:PointlessRadioButtonSubclass>
-      
-	<gwt:HorizontalPanel horizontalAlignment="ALIGN_LEFT">
-	  <gwt:Cell><gwt:HTMLPanel>
+
+        <gwt:HorizontalPanel horizontalAlignment="ALIGN_LEFT">
+          <gwt:Cell><gwt:HTMLPanel>
       <p> ... a StackPanel ... </p>
-      
+
       <gwt:StackPanel stylePrimaryName="myStyle" width="280px" ui:field='myStackPanel'>
         <gwt:Label text="Stack One Text"  gwt:StackPanel-text="Stack One"
             ui:field='myStackPanelItem'>
@@ -303,10 +303,10 @@
         <gwt:Label text="Stack Three Text"  gwt:StackPanel-text="Stack Three" />
       </gwt:StackPanel>
       </gwt:HTMLPanel></gwt:Cell>
-      
+
       <gwt:cell><gwt:HTMLPanel>
         <p> ... a TabPanel </p>
-      
+
         <gwt:TabPanel>
           <gwt:Tab text='Able'><gwt:Label>Able Widget</gwt:Label></gwt:Tab>
           <gwt:Tab><gwt:TabHTML><b>B</b>aker</gwt:TabHTML>
@@ -314,12 +314,12 @@
           </gwt:Tab>
         </gwt:TabPanel>
       </gwt:HTMLPanel></gwt:cell>
-      
+
       </gwt:HorizontalPanel>
-      
-      
+
+
       <p> ... a DisclosurePanel with a text header ... </p>
-      
+
       <gwt:DisclosurePanel ui:field='myDisclosurePanel' animationEnabled='true'>
         <gwt:header>
           <ui:msg description="Label for Disclosure One">I just have a text header</ui:msg>
@@ -331,9 +331,9 @@
           </gwt:Label>
 
       </gwt:DisclosurePanel>
-      
+
       <p> ... a DisclosurePanel with a widget header ... </p>
-      
+
       <gwt:DisclosurePanel animationEnabled='true'>
         <gwt:customHeader>
           <gwt:Label>
@@ -391,9 +391,9 @@
       <gwt:DisclosurePanel>
         <gwt:header><ui:msg>"I just have a text header"</ui:msg></gwt:header>
       </gwt:DisclosurePanel>
-      
+
       <p> ... a DisclosurePanel with custom images ... </p>
-      
+
       <gwt:DisclosurePanel open='false' animationEnabled='true'>
         <gwt:header openImage='{down}' closedImage='{right}'>
           <ui:msg description="Content for Disclosure Two Text">Custom images header</ui:msg>
@@ -404,7 +404,7 @@
           </gwt:Label>
 
       </gwt:DisclosurePanel>
-      
+
       <h2>Stylish</h2>
       <p>
        Templates work with ClientBundle. For example,
@@ -422,7 +422,7 @@
         This one is has a private style, defined out in WidgetBaseUi.css and used only by this ui.xml file.
       </p>
       <p ui:field='reallyPrivateStyleParagraph' class='{myOtherStyle.privateColor}'>
-        And this style is defined right here inside the ui.xml file. 
+        And this style is defined right here inside the ui.xml file.
         <span ui:field='totallyPrivateStyleSpan' class='{myTotallyPrivateStyle.super-private-color}'>
           (This one too, but even more so.)
         </span>
@@ -487,8 +487,8 @@
       <p><ui:msg>Of course you'll want to be able to do this kind of thing
       with widgets <demo:MyDatePicker/> as well, whether they <gwt:Label>HasText<ui:ph name="tm">*TM*</ui:ph></gwt:Label>
       or <gwt:HTML>HasHTML<ui:ph name="TM2"><sup ui:field="tmElementJr"
-        class="{external.style.tmText}">TM</sup></ui:ph></gwt:HTML></ui:msg></p> 
-        
+        class="{external.style.tmText}">TM</sup></ui:ph></gwt:HTML></ui:msg></p>
+
       <p><ui:msg>
         You can mix both widgets and named dom fields within a
         <gwt:HTML ui:field='mixedMessageWidget'>single translatable message</gwt:HTML>, another source
@@ -509,12 +509,12 @@
         text="Sometimes people do things they don't need to do. Don't punish them."/></p>
 
       <demo:FooLabel ui:field='theFoo' pojo="{values.pojo}"/>
-      
+
       <demo:FooLabel ui:field='primitiveIntoObject' objectInteger='{values.anInt}'/>
       <demo:FooLabel ui:field='objectIntoPrimitive' rawInt='{values.anIntegerObject}' />
       <demo:FooLabel ui:field='allObject'  objectInteger='{values.anIntegerObject}' />
       <demo:FooLabel ui:field='allPrimitive' rawInt='{values.anInt}' />
-      
+
       <demo:FooLabel ui:field='mismatchPrimitiveIntoObject' objectInteger='{values.aDouble}'/>
       <demo:FooLabel ui:field='allMismatchPrimitive' rawInt='{values.aDouble}' />
 
@@ -522,7 +522,7 @@
       <demo:FooLabel ui:field='objectBooleanIntoPrimitive' rawBoolean='{values.aBooleanObject}' />
       <demo:FooLabel ui:field='allObjectBoolean'  objectBoolean='{values.aBooleanObject}' />
       <demo:FooLabel ui:field='allPrimitiveBoolean' rawBoolean='{values.aBoolean}' />
-      
+
       <demo:EnumeratedLabel ui:field='enumLabel' suffix='tail'>This label uses an enum for its</demo:EnumeratedLabel>
 
       <gwt:PushButton ui:field='pushButton' enabled='true'>
@@ -534,7 +534,7 @@
         <gwt:downDisabledFace image='{prettyImage}'/>
       </gwt:PushButton>
 
-	<gwt:ToggleButton ui:field='toggle'>Hi mom</gwt:ToggleButton>
+      <gwt:ToggleButton ui:field='toggle'>Hi mom</gwt:ToggleButton>
 
     <demo:FooDialog ui:field='fooDialog'>
       <gwt:caption>Custom dialog am I</gwt:caption>
@@ -542,9 +542,9 @@
     </demo:FooDialog>
 
     <gwt:FlowPanel>
-      <gwt:Label ui:field="lblDebugId" debugId="joe" 
+      <gwt:Label ui:field="lblDebugId" debugId="joe"
           styleName="styleName"
-          addStyleNames="newStyle, anotherStyle {external.style.prettyText}" 
+          addStyleNames="newStyle, anotherStyle {external.style.prettyText}"
           addStyleDependentNames="dependentStyle anotherDependentStyle, {external.style.prettyText}">
         A label with a debug id
       </gwt:Label>
@@ -552,6 +552,7 @@
     </gwt:FlowPanel>
 
     <demo:HandlerDemo />
+    <demo:I18nMessageTest />
 
   <h2>People write the darndest markup</h2>
   <table border="1" bcolor="yellow" cellpadding="3" ui:field="widgetCrazyTable">
@@ -587,7 +588,7 @@
     <tr><td>Even HTMLPanel gets in on the game</td></tr>
     <tr><td>Lately, anyway.</td></tr>
   </gwt:HTMLPanel>
-  
+
    <gwt:DialogBox autoHide="true" modal="true">
      <gwt:caption>Hello, I <b>caption</b> you.</gwt:caption>
      <gwt:HTMLPanel>
@@ -596,7 +597,7 @@
        <gwt:Button ui:field='ok'>Okay</gwt:Button>
      </gwt:HTMLPanel>
    </gwt:DialogBox>
-   
+
    <gwt:ListBox ui:field='fooListBox'>
      <gwt:item>bar</gwt:item>
      <gwt:item value='bar2'>bar 2</gwt:item>

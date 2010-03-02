@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -40,7 +40,7 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
    * {@link com.google.gwt.user.client.ui.UIObject} (or really, any object that
    * responds to <code>getElement()</code>). Uses an instance of
    * {@link HtmlMessageInterpreter} to process message elements.
-   * 
+   *
    * @param uiExpression An expression that can be evaluated at runtime to find
    *          an object whose getElement() method can be called to get an
    *          ancestor of all Elements generated from the interpreted HTML.
@@ -50,7 +50,7 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
     String ancestorExpression = uiExpression + ".getElement()";
     return new HtmlInterpreter(writer, ancestorExpression,
         new HtmlMessageInterpreter(writer, ancestorExpression));
-  } 
+  }
 
   private final UiBinderWriter writer;
   private final InterpreterPipe<String> pipe;
@@ -58,7 +58,7 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
   /**
    * Rather than using this constructor, you probably want to use the
    * {@link #newInterpreterForUiObject} factory method.
-   * 
+   *
    * @param ancestorExpression An expression that can be evaluated at runtime to
    *          find an Element that will be an ancestor of all Elements generated
    *          from the interpreted HTML.
@@ -74,6 +74,7 @@ public class HtmlInterpreter implements XMLElement.Interpreter<String> {
     pipe.add(new FieldInterpreter(writer, ancestorExpression));
     pipe.add(new ComputedAttributeInterpreter(writer));
     pipe.add(new AttributeMessageInterpreter(writer));
+    pipe.add(new UiTextInterpreter(writer.getLogger()));
     pipe.add(messageInterpreter);
   }
 
