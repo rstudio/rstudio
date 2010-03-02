@@ -25,14 +25,12 @@ import com.google.gwt.user.client.Element;
  */
 public class FocusImplStandard extends FocusImpl {
 
-  /*
-   * Use isolated method calls to create all of the handlers to avoid creating
-   * memory leaks via handler-closures-element.
+  /**
+   * Single focusHandler shared by all focusable.
    */
-  JavaScriptObject focusHandler = createFocusHandler();
+  static JavaScriptObject focusHandler;
 
-  @Override
-  public native Element createFocusable() /*-{
+  private static native Element createFocusable0(JavaScriptObject focusHandler) /*-{
     // Divs are focusable in all browsers, but only IE supports the accessKey
     // property on divs. We use the infamous 'hidden input' trick to add an
     // accessKey to the focusable div. Note that the input is only used to
@@ -44,31 +42,38 @@ public class FocusImplStandard extends FocusImpl {
     var input = $doc.createElement('input');
     input.type = 'text';
     input.tabIndex = -1;
-    input.style.opacity = 0;
-    input.style.height = '1px';
-    input.style.width = '1px';
-    input.style.zIndex = -1;
-    input.style.overflow = 'hidden';
-    input.style.position = 'absolute';
+    var style = input.style;
+    style.opacity = 0;
+    style.height = '1px';
+    style.width = '1px';
+    style.zIndex = -1;
+    style.overflow = 'hidden';
+    style.position = 'absolute';
 
     // Note that we're using isolated lambda methods as the event listeners
     // to avoid creating a memory leaks. (Lambdas here would create cycles
     // involving the div and input).  This also allows us to share a single
     // set of handlers among every focusable item.
-    input.addEventListener(
-      'focus',
-      this.@com.google.gwt.user.client.ui.impl.FocusImplStandard::focusHandler,
-      false);
+    input.addEventListener('focus', focusHandler, false);
 
     div.appendChild(input);
     return div;
   }-*/;
 
   @Override
+  public Element createFocusable() {
+    return createFocusable0(ensureFocusHandler());
+  }
+
+  @Override
   public native void setAccessKey(Element elem, char key) /*-{
     elem.firstChild.accessKey = String.fromCharCode(key);
   }-*/;
 
+  /**
+   * Use an isolated method call to create the handler to avoid creating memory
+   * leaks via handler-closures-element.
+   */
   private native JavaScriptObject createFocusHandler() /*-{
     return function(evt) {
       // This function is called directly as an event handler, so 'this' is
@@ -83,4 +88,8 @@ public class FocusImplStandard extends FocusImpl {
       } 
     };
   }-*/;
+
+  private JavaScriptObject ensureFocusHandler() {
+    return focusHandler != null ? focusHandler : (focusHandler = createFocusHandler());
+  }
 }
