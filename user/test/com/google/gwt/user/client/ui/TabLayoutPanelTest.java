@@ -23,6 +23,8 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 
 import java.util.Iterator;
 
@@ -57,6 +59,39 @@ public class TabLayoutPanelTest extends GWTTestCase {
 
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(new TabLayoutPanel(1, Unit.EM), new Adder(), true);
+  }
+
+  /**
+   * Ensures that hidden children are layed out properly when their tabs are
+   * selected. This has been a problem on IE6 (see issue 4596).
+   */
+  @DoNotRunWith({Platform.HtmlUnitBug})
+  public void testHiddenChildLayout() {
+    final TabLayoutPanel p = new TabLayoutPanel(32, Unit.PX);
+    p.setSize("128px", "128px");
+    RootPanel.get().add(p);
+
+    final Label foo = new Label("foo");
+    final Label bar = new Label("bar");
+    p.add(foo, new Label("foo"));
+    p.add(bar, new Label("bar"));
+
+    delayTestFinish(2000);
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        assertEquals(128, foo.getOffsetWidth());
+        assertEquals(128 - 32, foo.getOffsetHeight());
+
+        p.selectTab(1);
+        DeferredCommand.addCommand(new Command() {
+          public void execute() {
+            assertEquals(128, bar.getOffsetWidth());
+            assertEquals(128 - 32, bar.getOffsetHeight());
+            finishTest();
+          }
+        });
+      }
+    });
   }
 
   public void testInsertBeforeSelected() {

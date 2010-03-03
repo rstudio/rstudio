@@ -333,6 +333,22 @@ public class LayoutPanel extends ComplexPanel implements AnimatedLayout,
     animate(0);
   }
 
+  /**
+   * Shows or hides the given widget and its layer. This method explicitly
+   * calls {@link UIObject#setVisible(boolean)} on the child widget and ensures
+   * that its associated layer is shown/hidden.
+   * 
+   * @param child
+   * @param visible
+   */
+  public void setWidgetVisible(Widget child, boolean visible) {
+    assertIsChild(child);
+    Element container = getWidgetContainerElement(child);
+    setVisible(container, visible);
+    child.setVisible(visible);
+    animate(0);
+  }
+
   @Override
   protected void onLoad() {
     layout.onAttach();
