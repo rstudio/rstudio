@@ -184,7 +184,7 @@ public class CssGenerationVisitor extends CssVisitor {
 
   @Override
   public boolean visit(CssNoFlip x, Context ctx) {
-    out.printOpt("/*@noflip { */)");
+    out.printOpt("/*@noflip { */");
     out.newlineOpt();
     return true;
   }
