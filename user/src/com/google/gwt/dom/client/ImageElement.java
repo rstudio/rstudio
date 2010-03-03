@@ -112,7 +112,16 @@ public class ImageElement extends Element {
    }-*/;
 
   /**
+   * <p>
    * URI designating the source of this image.
+   * </p>
+   * <p>
+   * If you {@link #cloneNode(boolean)} an {@link ImageElement}, or an element
+   * that contains an {@link ImageElement}, then you must call
+   * {@link #setSrc(String)} on the cloned element to ensure it is loaded
+   * properly in IE6. Failure to do so may cause performance problems, or your
+   * image may not load due to an IE6 specific workaround.
+   * </p>
    * 
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-src-IMG">W3C HTML Specification</a>
    */

@@ -31,8 +31,6 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
 
   private static String moduleBaseUrlProtocol =
       GWT.getHostPageBaseURL().startsWith("https") ?  "https://" : "http://";
-
-  private static boolean isIE6 = isIE6();
   
   private static native void injectGlobalHandler() /*-{
     $wnd.__gwt_transparentImgHandler = function (elem) {
@@ -40,28 +38,10 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
       @com.google.gwt.user.client.DOM::setImgSrc(Lcom/google/gwt/user/client/Element;Ljava/lang/String;)(elem, @com.google.gwt.core.client.GWT::getModuleBaseURL()() + "clear.cache.gif");
     };
   }-*/;
-  
-  // Stolen and modified from UserAgent.gwt.xml.
-  // TODO(jgw): Get rid of this method, and switch to using soft permutations
-  // once they land in trunk.
+
   private static native boolean isIE6() /*-{
-     function makeVersion(result) {
-       return (parseInt(result[1]) * 1000) + parseInt(result[2]);
-     }
-
-     var ua = navigator.userAgent.toLowerCase();
-     if (ua.indexOf("msie") != -1) {
-       var result = /msie ([0-9]+)\.([0-9]+)/.exec(ua);
-       if (result && result.length == 3) {
-         var v = makeVersion(result);
-         if (v < 7000) {
-           return true;
-         }
-       }
-     }
-
-     return false;
-   }-*/;
+    return @com.google.gwt.dom.client.DOMImplIE6::isIE6()();
+  }-*/;
 
   public ClippedImageImplIE6() {
     injectGlobalHandler();
@@ -70,7 +50,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
   @Override
   public void adjust(Element clipper, String url, int left, int top, int width,
       int height) {
-    if (!isIE6) {
+    if (!isIE6()) {
       super.adjust(clipper, url, left, top, width, height);
       return;
     }
@@ -97,7 +77,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
   @Override
   public Element createStructure(String url, int left, int top, int width,
       int height) {
-    if (!isIE6) {
+    if (!isIE6()) {
       return super.createStructure(url, left, top, width, height);
     }
     
@@ -111,7 +91,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
 
   @Override
   public String getHTML(String url, int left, int top, int width, int height) {
-    if (!isIE6) {
+    if (!isIE6()) {
       return super.getHTML(url, left, top, width, height);
     }
     
@@ -146,7 +126,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
 
   @Override
   public Element getImgElement(Image image) {
-    if (!isIE6) {
+    if (!isIE6()) {
       return super.getImgElement(image);
     }
     return image.getElement().getFirstChildElement();

@@ -13,4 +13,5 @@
 <!-- limitations under the License.                                         -->
 <module>
   <inherits name="com.google.gwt.dom.DOM"/>
+  <public path="public-test"/>
 </module>

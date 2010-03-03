@@ -33,27 +33,29 @@ class ImageSrcIE6 {
    * loading, it will be removed from this map.
    */
   private static JavaScriptObject srcImgMap;
-  
+
   static {
     executeBackgroundImageCacheCommand();
   }
-  
+
   /**
-   * Returns the src of the image, or the pending src if the image is pending. 
+   * Returns the src of the image, or the pending src if the image is pending.
    */
   public static native String getImgSrc(Element img) /*-{
     return img.__pendingSrc || img.src;
   }-*/;
 
   /**
-   * Sets the src of the image, queuing up with other requests for the same
-   * URL if necessary.
+   * Sets the src of the image, queuing up with other requests for the same URL
+   * if necessary. If the element is a clone, it may think it is in a pending
+   * state but will not be updated properly when the image loads, so we need to
+   * add it to the queue.
    */
   public static void setImgSrc(Element img, String src) {
-    // Early out for no-op prop set.
-    if (getImgSrc(img).equals(src)) {
-      return;
-    }
+    // We can't early out yet because the img may be a clone that needs to be
+    // cleaned up and added to the list of children.
+    boolean isSameSource = getImgSrc(img).equals(src);
+
     // Lazy init the map
     if (srcImgMap == null) {
       srcImgMap = JavaScriptObject.createObject();
@@ -63,13 +65,26 @@ class ImageSrcIE6 {
     if (oldSrc != null) {
       // The element is pending; there must be a top node for this src.
       Element top = getTop(srcImgMap, oldSrc);
-      assert (top != null);
-      if (top.equals(img)) {
+      if (top == null) {
+        // This is a clone, so clean it up.
+        cleanupExpandos(img);
+      } else if (top.equals(img)) {
+        if (isSameSource) {
+          // Early out as this is the top element, and therefore not a clone.
+          return;
+        }
+
         // It's a pending parent.
         removeTop(srcImgMap, top);
-      } else {
+      } else if (removeChild(top, img, isSameSource)) {
         // It's a pending child.
-        removeChild(top, img);
+        if (isSameSource) {
+          // Early out as this is a known child, and therefore not a clone.
+          return;
+        }
+      } else {
+        // The child wasn't found, so this is a clone.
+        cleanupExpandos(img);
       }
     }
 
@@ -95,10 +110,11 @@ class ImageSrcIE6 {
   /**
    * Sets an image as the pending parent for the specified URL.
    */
-  private static native void addTop(JavaScriptObject srcImgMap, Element img, String src) /*-{
+  private static native void addTop(JavaScriptObject srcImgMap, Element img,
+      String src) /*-{
     // No outstanding requests; load the image.
     img.src = src;
-    
+
     // If the image was in cache, the load may have just happened synchronously.
     if (img.complete) {
       // We're done
@@ -109,9 +125,9 @@ class ImageSrcIE6 {
     img.__kids = [];
     img.__pendingSrc = src;
     srcImgMap[src] = img;
-    
+
     var _onload = img.onload, _onerror = img.onerror, _onabort = img.onabort;
-    
+
     // Same cleanup code matter what state we end up in.
     function finish(_originalHandler) {
       // Grab a copy of the kids.
@@ -142,7 +158,7 @@ class ImageSrcIE6 {
     img.onabort = function() {
       finish(_onabort);
     }
-    
+
     img.__cleanup = function() {
       img.onload = _onload;
       img.onerror = _onerror;
@@ -150,6 +166,15 @@ class ImageSrcIE6 {
       img.__cleanup = img.__pendingSrc = img.__kids = null;
       delete srcImgMap[src];
     }
+  }-*/;
+
+  /**
+   * Cleanup an img element that was created using cloneNode.
+   * 
+   * @param img the img element
+   */
+  private static native void cleanupExpandos(Element img) /*-{
+    img.__cleanup = img.__pendingSrc = img.__kids = null;
   }-*/;
 
   private static native void executeBackgroundImageCacheCommand() /*-{
@@ -180,17 +205,29 @@ class ImageSrcIE6 {
   }-*/;
 
   /**
-   * Removes a child image from its pending parent.
+   * Removes a child image from its pending parent. If checkOnly is true, the
+   * method will only check that the child is a child of the parent.
+   * 
+   * @param parent the top element that is loading the source
+   * @param child the child to remove
+   * @param checkOnly if true, only verify that the child is a child of parent
+   * @return true if the child is found, false if not
    */
-  private static native void removeChild(Element parent, Element child) /*-{
+  private static native boolean removeChild(Element parent, Element child,
+      boolean checkOnly) /*-{
     var kids = parent.__kids;
     for (var i = 0, c = kids.length; i < c; ++i) {
       if (kids[i] === child) {
-        kids.splice(i, 1);
-        child.__pendingSrc = null;
-        return;
+        if (!checkOnly) {
+          kids.splice(i, 1);
+          child.__pendingSrc = null;
+        }
+        return true;
       } 
     }
+
+    // If the child isn't in any kids lists, it must be a clone.
+    return false;
   }-*/;
 
   /**

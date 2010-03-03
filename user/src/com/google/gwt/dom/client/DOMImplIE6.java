@@ -21,6 +21,47 @@ package com.google.gwt.dom.client;
  */
 class DOMImplIE6 extends DOMImplTrident {
 
+  private static boolean isIE6;
+  private static boolean isIE6Detected;
+
+  /**
+   * Check if the browser is IE6 or IE7.
+   * 
+   * @return <code>true</code> if the browser is IE6, <code>false</code> if IE7
+   *         or any other browser
+   * @deprecated this method may be removed at any time
+   */
+  @Deprecated
+  static boolean isIE6() {
+    if (!isIE6Detected) {
+      isIE6 = isIE6Impl();
+      isIE6Detected = true;
+    }
+    return isIE6;
+  }
+
+  // Stolen and modified from UsernmAgent.gwt.xml.
+  // TODO(jgw): Get rid of this method, and switch to using soft permutations
+  // once they land in trunk.
+  private static native boolean isIE6Impl() /*-{
+    function makeVersion(result) {
+      return (parseInt(result[1]) * 1000) + parseInt(result[2]);
+    }
+
+    var ua = navigator.userAgent.toLowerCase();
+    if (ua.indexOf("msie") != -1) {
+      var result = /msie ([0-9]+)\.([0-9]+)/.exec(ua);
+      if (result && result.length == 3) {
+        var v = makeVersion(result);
+        if (v < 7000) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }-*/;
+
   @Override
   public native void cssClearOpacity(Style style) /*-{
     style.filter = '';
@@ -59,7 +100,11 @@ class DOMImplIE6 extends DOMImplTrident {
    */
   @Override
   public String imgGetSrc(Element img) {
-    return ImageSrcIE6.getImgSrc(img);
+    if (isIE6()) {
+      return ImageSrcIE6.getImgSrc(img);
+    } else {
+      return super.imgGetSrc(img);
+    }
   }
 
   /**
@@ -71,7 +116,11 @@ class DOMImplIE6 extends DOMImplTrident {
    */
   @Override
   public void imgSetSrc(Element img, String src) {
-    ImageSrcIE6.setImgSrc(img, src);
+    if (isIE6()) {
+      ImageSrcIE6.setImgSrc(img, src);
+    } else {
+      super.imgSetSrc(img, src);
+    }
   }
 
   @Override
