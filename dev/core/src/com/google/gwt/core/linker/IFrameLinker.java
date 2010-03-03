@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.impl.HostedModeLinker;
@@ -42,6 +43,7 @@ import java.util.SortedSet;
  * a separate iframe.
  */
 @LinkerOrder(Order.PRIMARY)
+@Shardable
 public class IFrameLinker extends SelectionScriptLinker {
   /**
    * This string is inserted between script chunks. It is made default access
@@ -111,8 +113,12 @@ public class IFrameLinker extends SelectionScriptLinker {
 
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
-      ArtifactSet artifacts) throws UnableToCompleteException {
-    ArtifactSet toReturn = super.link(logger, context, artifacts);
+      ArtifactSet artifacts, boolean onePerm) throws UnableToCompleteException {
+    ArtifactSet toReturn = super.link(logger, context, artifacts, onePerm);
+
+    if (onePerm) {
+      return toReturn;
+    }
 
     try {
       // Add hosted mode iframe contents
@@ -153,7 +159,7 @@ public class IFrameLinker extends SelectionScriptLinker {
     return toReturn;
   }
 
-  /**
+  /*
    * This implementation divides the code of the initial fragment into multiple
    * script tags. These chunked script tags loads faster on Firefox even when
    * the data is cached. Additionally, having the script tags separated means
@@ -221,8 +227,7 @@ public class IFrameLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String getSelectionScriptTemplate(TreeLogger logger,
-      LinkerContext context) {
+  protected String getSelectionScriptTemplate(TreeLogger logger, LinkerContext context) {
     return "com/google/gwt/core/linker/IFrameTemplate.js";
   }
 

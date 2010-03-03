@@ -58,6 +58,9 @@
 		<when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
 	</generate-with>
   
+    <define-linker name="rpcLog" class="com.google.gwt.user.linker.rpc.RpcLogLinker" />
+    <add-linker name="rpcLog" />
+
     <define-linker name="rpcPolicyManifest" class="com.google.gwt.user.linker.rpc.RpcPolicyManifestLinker" />
     <add-linker name="rpcPolicyManifest" /> 
 </module>

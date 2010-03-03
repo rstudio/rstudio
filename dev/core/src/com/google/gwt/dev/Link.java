@@ -17,8 +17,12 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.SelectionProperty;
+import com.google.gwt.core.ext.linker.impl.BinaryOnlyArtifactWrapper;
+import com.google.gwt.core.ext.linker.impl.JarEntryEmittedArtifact;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationResult;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
@@ -42,13 +46,19 @@ import com.google.gwt.dev.util.arg.OptionExtraDir;
 import com.google.gwt.dev.util.arg.OptionOutDir;
 import com.google.gwt.dev.util.arg.OptionWarDir;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.zip.ZipEntry;
 
 /**
  * Performs the last phase of compilation, merging the compilation outputs.
@@ -135,14 +145,14 @@ public class Link {
   }
 
   public static void legacyLink(TreeLogger logger, ModuleDef module,
-      ArtifactSet generatedArtifacts,
+      ArtifactSet generatedArtifacts, Permutation[] permutations,
       List<FileBackedObject<PermutationResult>> resultFiles, File outDir,
       JJSOptions precompileOptions) throws UnableToCompleteException,
       IOException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, precompileOptions);
-    ArtifactSet artifacts = doLink(logger, linkerContext, generatedArtifacts,
-        resultFiles);
+    ArtifactSet artifacts = doSimulatedShardingLink(logger, module,
+        linkerContext, generatedArtifacts, permutations, resultFiles);
     OutputFileSet outFileSet = new OutputFileSetOnDirectory(outDir,
         module.getName() + "/");
     OutputFileSet extraFileSet = new OutputFileSetOnDirectory(outDir,
@@ -151,17 +161,83 @@ public class Link {
   }
 
   public static void link(TreeLogger logger, ModuleDef module,
-      ArtifactSet generatedArtifacts,
+      ArtifactSet generatedArtifacts, Permutation[] permutations,
       List<FileBackedObject<PermutationResult>> resultFiles, File outDir,
       File extrasDir, JJSOptions precompileOptions)
       throws UnableToCompleteException, IOException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, precompileOptions);
-    ArtifactSet artifacts = doLink(logger, linkerContext, generatedArtifacts,
-        resultFiles);
+    ArtifactSet artifacts = doSimulatedShardingLink(logger, module,
+        linkerContext, generatedArtifacts, permutations, resultFiles);
     doProduceOutput(logger, artifacts, linkerContext, chooseOutputFileSet(
         outDir, module.getName() + "/"), chooseOutputFileSet(extrasDir,
         module.getName() + "/"));
+  }
+
+  /**
+   * This link operation is performed on a CompilePerms shard for one
+   * permutation. It sees the generated artifacts for one permutation compile,
+   * and it runs the per-permutation part of each shardable linker.
+   */
+  @SuppressWarnings("unchecked")
+  public static void linkOnePermutationToJar(TreeLogger logger,
+      ModuleDef module, ArtifactSet generatedArtifacts,
+      PermutationResult permResult, File jarFile,
+      PrecompileOptions precompileOptions) throws UnableToCompleteException {
+    try {
+      JarOutputStream jar = new JarOutputStream(new FileOutputStream(jarFile));
+
+      StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
+          module, precompileOptions);
+
+      StandardCompilationResult compilation = new StandardCompilationResult(
+          permResult);
+      addSelectionPermutations(compilation, permResult.getPermutation(),
+          linkerContext);
+      ArtifactSet permArtifacts = new ArtifactSet(generatedArtifacts);
+      permArtifacts.addAll(permResult.getArtifacts());
+      permArtifacts.add(compilation);
+
+      ArtifactSet linkedArtifacts = linkerContext.invokeLinkForOnePermutation(
+          logger, compilation, permArtifacts);
+
+      // Write the data of emitted artifacts
+      for (EmittedArtifact art : linkedArtifacts.find(EmittedArtifact.class)) {
+        String jarEntryPath;
+        if (art.isPrivate()) {
+          String pathWithLinkerName = linkerContext.getExtraPathForLinker(
+              art.getLinker(), art.getPartialPath());
+          if (pathWithLinkerName.startsWith("/")) {
+            // This happens if the linker has no extra path
+            pathWithLinkerName = pathWithLinkerName.substring(1);
+          }
+          jarEntryPath = "aux/" + pathWithLinkerName;
+        } else {
+          jarEntryPath = "target/" + art.getPartialPath();
+        }
+        jar.putNextEntry(new ZipEntry(jarEntryPath));
+        art.writeTo(logger, jar);
+        jar.closeEntry();
+      }
+
+      // Serialize artifacts marked as Transferable
+      int numSerializedArtifacts = 0;
+      // The raw type Artifact is to work around a Java compiler bug:
+      // http://bugs.sun.com/view_bug.do?bug_id=6548436
+      for (Artifact art : linkedArtifacts) {
+        if (art.isTransferableFromShards() && !(art instanceof EmittedArtifact)) {
+          String jarEntryPath = "arts/" + numSerializedArtifacts++;
+          jar.putNextEntry(new ZipEntry(jarEntryPath));
+          Util.writeObjectToStream(jar, art);
+          jar.closeEntry();
+        }
+      }
+
+      jar.close();
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Error linking", e);
+      throw new UnableToCompleteException();
+    }
   }
 
   public static void main(String[] args) {
@@ -189,6 +265,32 @@ public class Link {
   }
 
   /**
+   * In a parallel build, artifact sets are thinned down in transit between
+   * compilation and linking. All emitted artifacts are changed to binary
+   * emitted artifacts, and all other artifacts are dropped except @Transferable
+   * ones. This method simulates the thinning that happens in a parallel build.
+   */
+  @SuppressWarnings("unchecked")
+  public static ArtifactSet simulateTransferThinning(ArtifactSet artifacts,
+      StandardLinkerContext context) {
+    ArtifactSet thinnedArtifacts = new ArtifactSet();
+    // The raw type Artifact is to work around a compiler bug:
+    // http://bugs.sun.com/view_bug.do?bug_id=6548436
+    for (Artifact artifact : artifacts) {
+      if (artifact instanceof EmittedArtifact) {
+        EmittedArtifact emittedArtifact = (EmittedArtifact) artifact;
+        String path = getFullArtifactPath(emittedArtifact, context);
+        thinnedArtifacts.add(new BinaryOnlyArtifactWrapper(path,
+            emittedArtifact));
+      } else if (artifact.isTransferableFromShards()) {
+        thinnedArtifacts.add(artifact);
+      }
+    }
+
+    return thinnedArtifacts;
+  }
+
+  /**
    * Add to a compilation result all of the selection permutations from its
    * associated permutation.
    */
@@ -202,22 +304,11 @@ public class Link {
   }
 
   /**
-   * Choose an output file set for the given <code>dirOrJar</code> based on
-   * its name, whether it's null, and whether it already exists as a directory.
+   * Choose an output file set for the given <code>dirOrJar</code> based on its
+   * name, whether it's null, and whether it already exists as a directory.
    */
   private static OutputFileSet chooseOutputFileSet(File dirOrJar,
       String pathPrefix) throws IOException {
-    return chooseOutputFileSet(dirOrJar, pathPrefix, pathPrefix);
-  }
-
-  /**
-   * A version of {@link #chooseOutputFileSet(File, String)} that allows
-   * choosing a separate path prefix depending on whether the output is a
-   * directory or a jar file.
-   */
-  private static OutputFileSet chooseOutputFileSet(File dirOrJar,
-      String jarPathPrefix, String dirPathPrefix) throws IOException {
-
     if (dirOrJar == null) {
       return new NullOutputFileSet();
     }
@@ -225,10 +316,10 @@ public class Link {
     String name = dirOrJar.getName();
     if (!dirOrJar.isDirectory()
         && (name.endsWith(".war") || name.endsWith(".jar") || name.endsWith(".zip"))) {
-      return new OutputFileSetOnJar(dirOrJar, jarPathPrefix);
+      return new OutputFileSetOnJar(dirOrJar, pathPrefix);
     } else {
-      Util.recursiveDelete(new File(dirOrJar, dirPathPrefix), true);
-      return new OutputFileSetOnDirectory(dirOrJar, dirPathPrefix);
+      Util.recursiveDelete(new File(dirOrJar, pathPrefix), true);
+      return new OutputFileSetOnDirectory(dirOrJar, pathPrefix);
     }
   }
 
@@ -260,18 +351,6 @@ public class Link {
     return unboundProperties;
   }
 
-  private static ArtifactSet doLink(TreeLogger logger,
-      StandardLinkerContext linkerContext, ArtifactSet generatedArtifacts,
-      List<FileBackedObject<PermutationResult>> resultFiles)
-      throws UnableToCompleteException {
-    linkerContext.addOrReplaceArtifacts(generatedArtifacts);
-    for (FileBackedObject<PermutationResult> resultFile : resultFiles) {
-      PermutationResult result = resultFile.newInstance(logger);
-      finishPermutation(logger, result.getPermutation(), result, linkerContext);
-    }
-    return linkerContext.invokeLink(logger);
-  }
-
   /**
    * Emit final output.
    */
@@ -288,13 +367,70 @@ public class Link {
   }
 
   /**
-   * Add a compilation to a linker context.
+   * This link operation simulates sharded linking even though all generating
+   * and linking is happening on the same computer. It can tolerate
+   * non-shardable linkers.
    */
-  private static void finishPermutation(TreeLogger logger, Permutation perm,
-      PermutationResult permResult, StandardLinkerContext linkerContext) {
-    StandardCompilationResult compilation = linkerContext.getCompilation(permResult);
+  private static ArtifactSet doSimulatedShardingLink(TreeLogger logger,
+      ModuleDef module, StandardLinkerContext linkerContext,
+      ArtifactSet generatedArtifacts, Permutation[] perms,
+      List<FileBackedObject<PermutationResult>> resultFiles)
+      throws UnableToCompleteException {
+    ArtifactSet combinedArtifacts = new ArtifactSet();
+    for (int i = 0; i < perms.length; ++i) {
+      ArtifactSet newArtifacts = finishPermutation(logger, perms[i],
+          resultFiles.get(i), linkerContext, generatedArtifacts);
+      combinedArtifacts.addAll(newArtifacts);
+    }
+
+    combinedArtifacts.addAll(linkerContext.getArtifactsForPublicResources(
+        logger, module));
+
+    ArtifactSet legacyLinkedArtifacts = linkerContext.invokeLegacyLinkers(
+        logger, combinedArtifacts);
+
+    ArtifactSet thinnedArtifacts = simulateTransferThinning(
+        legacyLinkedArtifacts, linkerContext);
+
+    return linkerContext.invokeFinalLink(logger, thinnedArtifacts);
+  }
+
+  /**
+   * Add a compilation to a linker context. Also runs the shardable part of all
+   * linkers that support sharding.
+   * 
+   * @return the new artifacts generated by the shardable part of this link
+   *         operation
+   */
+  private static ArtifactSet finishPermutation(TreeLogger logger,
+      Permutation perm, FileBackedObject<PermutationResult> resultFile,
+      StandardLinkerContext linkerContext, ArtifactSet generatedArtifacts)
+      throws UnableToCompleteException {
+    PermutationResult permResult = resultFile.newInstance(logger);
+    StandardCompilationResult compilation = new StandardCompilationResult(
+        permResult);
     addSelectionPermutations(compilation, perm, linkerContext);
     logScriptSize(logger, perm.getId(), compilation);
+
+    ArtifactSet permArtifacts = new ArtifactSet(generatedArtifacts);
+    permArtifacts.addAll(permResult.getArtifacts());
+    permArtifacts.add(compilation);
+    permArtifacts.freeze();
+    return linkerContext.invokeLinkForOnePermutation(logger, compilation,
+        permArtifacts);
+  }
+
+  private static String getFullArtifactPath(EmittedArtifact emittedArtifact,
+      StandardLinkerContext context) {
+    String path = emittedArtifact.getPartialPath();
+    if (emittedArtifact.isPrivate()) {
+      path = context.getExtraPathForLinker(emittedArtifact.getLinker(), path);
+      if (path.startsWith("/")) {
+        // This happens if the linker has no extra path
+        path = path.substring(1);
+      }
+    }
+    return path;
   }
 
   /**
@@ -321,6 +457,54 @@ public class Link {
         + javaScript[0].length() + " and total script size of " + totalSize);
   }
 
+  private static ArtifactSet scanCompilePermResults(TreeLogger logger,
+      List<File> resultFiles) throws IOException, UnableToCompleteException {
+    final ArtifactSet artifacts = new ArtifactSet();
+
+    for (File resultFile : resultFiles) {
+      JarFile jarFile = new JarFile(resultFile);
+      Enumeration<JarEntry> entries = jarFile.entries();
+      while (entries.hasMoreElements()) {
+        JarEntry entry = entries.nextElement();
+        if (entry.isDirectory()) {
+          continue;
+        }
+
+        String path;
+        Artifact<?> artForEntry;
+
+        if (entry.getName().startsWith("target/")) {
+          path = entry.getName().substring("target/".length());
+          artForEntry = new JarEntryEmittedArtifact(path, resultFile, entry);
+        } else if (entry.getName().startsWith("aux/")) {
+          path = entry.getName().substring("aux/".length());
+          JarEntryEmittedArtifact jarArtifact = new JarEntryEmittedArtifact(
+              path, resultFile, entry);
+          jarArtifact.setPrivate(true);
+          artForEntry = jarArtifact;
+        } else if (entry.getName().startsWith("arts/")) {
+          try {
+            artForEntry = Util.readStreamAsObject(new BufferedInputStream(
+                jarFile.getInputStream(entry)), Artifact.class);
+            assert artForEntry.isTransferableFromShards();
+          } catch (ClassNotFoundException e) {
+            logger.log(TreeLogger.ERROR,
+                "Failed trying to deserialize an artifact", e);
+            throw new UnableToCompleteException();
+          }
+        } else {
+          continue;
+        }
+
+        artifacts.add(artForEntry);
+      }
+
+      jarFile.close();
+    }
+
+    return artifacts;
+  }
+
   private final LinkOptionsImpl options;
 
   public Link(LinkOptions options) {
@@ -328,44 +512,10 @@ public class Link {
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
-    for (String moduleName : options.getModuleNames()) {
+    loop_modules : for (String moduleName : options.getModuleNames()) {
       ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
 
-      OutputFileSet outFileSet;
-      OutputFileSet extraFileSet;
-      try {
-        if (options.getOutDir() == null) {
-          outFileSet = chooseOutputFileSet(options.getWarDir(),
-              module.getName() + "/");
-          extraFileSet = chooseOutputFileSet(options.getExtraDir(),
-              module.getName() + "/");
-        } else {
-          outFileSet = chooseOutputFileSet(options.getOutDir(),
-              module.getName() + "/");
-          if (options.getExtraDir() != null) {
-            extraFileSet = chooseOutputFileSet(options.getExtraDir(),
-                module.getName() + "-aux/", "");
-          } else if (outFileSet instanceof OutputFileSetOnDirectory) {
-            // Automatically emit extras into the output directory, if it's in
-            // fact a directory
-            extraFileSet = chooseOutputFileSet(options.getOutDir(),
-                module.getName() + "-aux/");
-          } else {
-            extraFileSet = new NullOutputFileSet();
-          }
-        }
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR,
-            "Unexpected exception while producing output", e);
-        throw new UnableToCompleteException();
-      }
-
-      List<Permutation> permsList = new ArrayList<Permutation>();
-      ArtifactSet generatedArtifacts = new ArtifactSet();
-      JJSOptions precompileOptions = null;
-
       File compilerWorkDir = options.getCompilerWorkDir(moduleName);
-      List<Integer> permutationIds = new ArrayList<Integer>();
       PrecompilationResult precompileResults;
       try {
         precompileResults = Util.readFileAsObject(new File(compilerWorkDir,
@@ -384,53 +534,88 @@ public class Link {
         /**
          * Precompiling happened on the shards.
          */
-        precompileOptions = (JJSOptions) precompileResults;
-        int numPermutations = module.getProperties().numPermutations();
-        for (int i = 0; i < numPermutations; ++i) {
-          permutationIds.add(i);
+        if (!doLinkFinal(logger, compilerWorkDir, module,
+            (JJSOptions) precompileResults)) {
+          return false;
         }
+        continue loop_modules;
       } else {
         /**
          * Precompiling happened on the start node.
          */
-        Precompilation precompilation = (Precompilation) precompileResults;
-        permsList.addAll(Arrays.asList(precompilation.getPermutations()));
-        generatedArtifacts.addAll(precompilation.getGeneratedArtifacts());
-        precompileOptions = precompilation.getUnifiedAst().getOptions();
-
-        for (Permutation perm : precompilation.getPermutations()) {
-          permutationIds.add(perm.getId());
+        Precompilation precomp = (Precompilation) precompileResults;
+        Permutation[] perms = precomp.getPermutations();
+        List<FileBackedObject<PermutationResult>> resultFiles = CompilePerms.makeResultFiles(
+            compilerWorkDir, perms);
+        
+        // Check that all files are present
+        for (FileBackedObject<PermutationResult> file : resultFiles) {
+          if (!file.getFile().exists()) {
+            logger.log(TreeLogger.ERROR, "File not found '"
+                + file.getFile().getAbsolutePath()
+                + "'; please compile all permutations");
+            return false;
+          }
         }
-      }
 
-      List<FileBackedObject<PermutationResult>> resultFiles = new ArrayList<FileBackedObject<PermutationResult>>(
-          permutationIds.size());
-      for (int id : permutationIds) {
-        File f = CompilePerms.makePermFilename(compilerWorkDir, id);
-        if (!f.exists()) {
-          logger.log(TreeLogger.ERROR, "File not found '" + f.getAbsolutePath()
-              + "'; please compile all permutations");
-          return false;
+        TreeLogger branch = logger.branch(TreeLogger.INFO, "Linking module "
+            + module.getName());
+
+        try {
+          link(branch, module, precomp.getGeneratedArtifacts(), perms,
+              resultFiles, options.getWarDir(), options.getExtraDir(),
+              precomp.getUnifiedAst().getOptions());
+        } catch (IOException e) {
+          logger.log(TreeLogger.ERROR,
+              "Unexpected exception while producing output", e);
+          throw new UnableToCompleteException();
         }
-        resultFiles.add(new FileBackedObject<PermutationResult>(
-            PermutationResult.class, f));
-      }
-
-      TreeLogger branch = logger.branch(TreeLogger.INFO, "Linking module "
-          + module.getName());
-      StandardLinkerContext linkerContext = new StandardLinkerContext(branch,
-          module, precompileOptions);
-
-      ArtifactSet artifacts = doLink(branch, linkerContext, generatedArtifacts,
-          resultFiles);
-      try {
-        doProduceOutput(branch, artifacts, linkerContext, outFileSet,
-            extraFileSet);
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR,
-            "Unexpected exception while producing output", e);
       }
     }
+    return true;
+  }
+
+  /**
+   * Do a final link, assuming the precompiles were done on the CompilePerms
+   * shards.
+   */
+  private boolean doLinkFinal(TreeLogger logger, File compilerWorkDir,
+      ModuleDef module, JJSOptions precompileOptions)
+      throws UnableToCompleteException {
+    int numPermutations = module.getProperties().numPermutations();
+    List<File> resultFiles = new ArrayList<File>(numPermutations);
+    for (int i = 0; i < numPermutations; ++i) {
+      File f = CompilePerms.makePermFilename(compilerWorkDir, i);
+      if (!f.exists()) {
+        logger.log(TreeLogger.ERROR, "File not found '" + f.getAbsolutePath()
+            + "'; please compile all permutations");
+        return false;
+      }
+      resultFiles.add(f);
+    }
+
+    TreeLogger branch = logger.branch(TreeLogger.INFO, "Linking module "
+        + module.getName());
+    StandardLinkerContext linkerContext = new StandardLinkerContext(branch,
+        module, precompileOptions);
+
+    try {
+      OutputFileSet outFileSet = chooseOutputFileSet(options.getWarDir(),
+          module.getName() + "/");
+      OutputFileSet extraFileSet = chooseOutputFileSet(options.getExtraDir(),
+          module.getName() + "/");
+
+      ArtifactSet artifacts = scanCompilePermResults(logger, resultFiles);
+      artifacts.addAll(linkerContext.getArtifactsForPublicResources(logger,
+          module));
+      artifacts = linkerContext.invokeFinalLink(logger, artifacts);
+      doProduceOutput(logger, artifacts, linkerContext, outFileSet,
+          extraFileSet);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Exception during final linking", e);
+      throw new UnableToCompleteException();
+    }
+
     return true;
   }
 }

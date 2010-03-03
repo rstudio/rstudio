@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.IOException;
@@ -27,6 +28,7 @@ import java.io.IOException;
  * This is a partial implementation of the Linker interface to support hosted
  * mode.
  */
+@Shardable
 public final class HostedModeLinker extends SelectionScriptLinker {
 
   public static String getHostedHtml() throws IOException {
@@ -74,8 +76,7 @@ public final class HostedModeLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String getSelectionScriptTemplate(TreeLogger logger,
-      LinkerContext context) throws UnableToCompleteException {
+  protected String getSelectionScriptTemplate(TreeLogger logger, LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/HostedModeTemplate.js";
   }
 

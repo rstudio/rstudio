@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.linker.SymbolMapsLinker;
 
 import java.io.ByteArrayOutputStream;
@@ -28,6 +29,7 @@ import java.io.ByteArrayOutputStream;
  * Emits the symbol maps into the application output directory so that the
  * JUnitHostImpl servlet can read them.
  */
+@Shardable
 public class JUnitSymbolMapsLinker extends SymbolMapsLinker {
   @Override
   protected void doEmitSymbolMap(TreeLogger logger, ArtifactSet artifacts,

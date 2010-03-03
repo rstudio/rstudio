@@ -22,14 +22,34 @@ import com.google.gwt.core.ext.linker.AbstractLinker;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.Shardable;
+import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
+import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.util.Util;
+import com.google.gwt.user.rebind.rpc.ProxyCreator;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Emit a file contating a map of RPC proxy classes to the partial path of the
+ * Emit a file containing a map of RPC proxy classes to the partial path of the
  * RPC policy file.
  */
 @LinkerOrder(Order.PRE)
+@Shardable
 public class RpcPolicyManifestLinker extends AbstractLinker {
+  private static final String MANIFEST_TXT = "manifest.txt";
+
+  /**
+   * The main body of the manifest. It is built up as per-permutation manifests
+   * are looped over.
+   */
+  private StringBuilder manifestBody = new StringBuilder();
 
   @Override
   public String getDescription() {
@@ -38,26 +58,79 @@ public class RpcPolicyManifestLinker extends AbstractLinker {
 
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
-      ArtifactSet artifacts) throws UnableToCompleteException {
-    artifacts = new ArtifactSet(artifacts);
+      ArtifactSet artifacts, boolean onePermutation)
+      throws UnableToCompleteException {
+    if (onePermutation) {
+      return artifacts;
+    } else {
+      for (EmittedArtifact art : artifacts.find(EmittedArtifact.class)) {
+        if (art.getPartialPath().startsWith(ProxyCreator.MANIFEST_ARTIFACT_DIR)) {
+          readOneManifest(logger, art.getContents(logger));
+        }
+      }
 
-    StringBuilder contents = new StringBuilder();
-    contents.append("# Module ").append(context.getModuleName()).append("\n");
-    contents.append("# RPC service class, partial path of RPC policy file\n");
+      ArtifactSet toReturn = new ArtifactSet(artifacts);
+      SyntheticArtifact manifestArt = emitString(logger,
+          generateManifest(context), MANIFEST_TXT);
+      manifestArt.setPrivate(true);
+      toReturn.add(manifestArt);
+      return toReturn;
+    }
+  }
 
-    // Loop over all policy file artifacts
-    for (RpcPolicyFileArtifact artifact : artifacts.find(RpcPolicyFileArtifact.class)) {
-      // com.foo.Service, 12345.rpc.txt
-      contents.append(artifact.getProxyClass()).append(", ").append(
-          artifact.getEmittedArtifact().getPartialPath()).append("\n");
+  /**
+   * Compute a manifest for all RPC policy files seen so far.
+   */
+  private String generateManifest(LinkerContext context) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("# Module " + context.getModuleName() + "\n");
+    sb.append("# RPC service class, partial path of RPC policy file\n");
+    sb.append(manifestBody.toString());
+    return sb.toString();
+  }
+
+  /**
+   * Read one manifest and close the input stream.
+   */
+  private void readOneManifest(TreeLogger logger, InputStream manifestStream)
+      throws UnableToCompleteException {
+    Map<String, String> entries = new HashMap<String, String>();
+    try {
+      BufferedReader reader = new BufferedReader(new InputStreamReader(
+          manifestStream, Util.DEFAULT_ENCODING));
+      String line;
+      while ((line = reader.readLine()) != null) {
+        int idx = line.indexOf(':');
+        if (idx < 0) {
+          throw new InternalCompilerException(
+              "invalid selection information line: " + line);
+        }
+        String propName = line.substring(0, idx).trim();
+        String propValue = line.substring(idx + 1).trim();
+        entries.put(propName, propValue);
+      }
+      reader.close();
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unexpected IOException", e);
+      throw new UnableToCompleteException();
     }
 
-    // The name of the linker is prepended as a directory prefix
-    EmittedArtifact manifest = emitString(logger, contents.toString(),
-        "manifest.txt");
-    manifest.setPrivate(true);
-    artifacts.add(manifest);
+    String serviceClass = entries.get("serviceClass");
+    if (serviceClass == null) {
+      logger.log(TreeLogger.ERROR,
+          "Internal error: manifest file does not include a serviceClass");
+      throw new UnableToCompleteException();
+    }
+    String path = entries.get("path");
+    if (path == null) {
+      logger.log(TreeLogger.ERROR,
+          "Internal error: manifest file does not include a path");
+      throw new UnableToCompleteException();
+    }
 
-    return artifacts;
+    manifestBody.append(serviceClass);
+    manifestBody.append(", ");
+    manifestBody.append(path);
+    manifestBody.append("\n");
   }
 }

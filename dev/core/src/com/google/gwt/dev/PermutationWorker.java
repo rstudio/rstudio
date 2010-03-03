@@ -38,8 +38,8 @@ interface PermutationWorker {
    * @throws UnableToCompleteException if the compile fails for any reason
    */
   void compile(TreeLogger logger, Permutation permutation,
-      FileBackedObject<PermutationResult> resultFile)
-      throws TransientWorkerException, UnableToCompleteException;
+      FileBackedObject<PermutationResult> resultFile) throws TransientWorkerException,
+      UnableToCompleteException;
 
   /**
    * Returns a human-readable description of the worker instance. This may be

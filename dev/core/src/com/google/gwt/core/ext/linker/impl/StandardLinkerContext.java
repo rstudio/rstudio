@@ -32,7 +32,6 @@ import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.cfg.Script;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JJSOptions;
-import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsParser;
@@ -52,7 +51,6 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.OutputFileSet;
-import com.google.gwt.dev.util.Util;
 
 import java.io.File;
 import java.io.IOException;
@@ -111,21 +109,20 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     }
   };
 
-  private final ArtifactSet artifacts = new ArtifactSet();
-
   private final SortedSet<ConfigurationProperty> configurationProperties;
-  private final JJSOptions jjsOptions;
-  private final Map<Class<? extends Linker>, String> linkerShortNames = new HashMap<Class<? extends Linker>, String>();
 
+  private final JJSOptions jjsOptions;
+
+  private final List<Class<? extends Linker>> linkerClasses;
+  private Linker[] linkers;
+  private final Map<Class<? extends Linker>, String> linkerShortNames = new HashMap<Class<? extends Linker>, String>();
   private final String moduleFunctionName;
   private final long moduleLastModified;
   private final String moduleName;
 
   private final Map<String, StandardSelectionProperty> propertiesByName = new HashMap<String, StandardSelectionProperty>();
-  private final Map<String, StandardCompilationResult> resultsByStrongName = new HashMap<String, StandardCompilationResult>();
-  private final SortedSet<SelectionProperty> selectionProperties;
 
-  private final Linker[] linkers;
+  private final SortedSet<SelectionProperty> selectionProperties;
 
   public StandardLinkerContext(TreeLogger logger, ModuleDef module,
       JJSOptions jjsOptions) throws UnableToCompleteException {
@@ -138,24 +135,26 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     this.moduleLastModified = module.lastModified();
 
     // Sort the linkers into the order they should actually run.
-    List<Class<? extends Linker>> sortedLinkers = new ArrayList<Class<? extends Linker>>();
+    linkerClasses = new ArrayList<Class<? extends Linker>>();
 
     // Get all the pre-linkers first.
     for (Class<? extends Linker> linkerClass : module.getActiveLinkers()) {
       Order order = linkerClass.getAnnotation(LinkerOrder.class).value();
       assert (order != null);
       if (order == Order.PRE) {
-        sortedLinkers.add(linkerClass);
+        linkerClasses.add(linkerClass);
       }
     }
 
     // Get the primary linker.
     Class<? extends Linker> primary = module.getActivePrimaryLinker();
     if (primary == null) {
-      logger.log(logger.ERROR, "Primary linker is null.  Does your module " +
-          "inherit from com.google.gwt.core.Core or com.google.gwt.user.User?");
+      logger.log(
+          TreeLogger.ERROR,
+          "Primary linker is null.  Does your module "
+              + "inherit from com.google.gwt.core.Core or com.google.gwt.user.User?");
     } else {
-      sortedLinkers.add(module.getActivePrimaryLinker());
+      linkerClasses.add(module.getActivePrimaryLinker());
     }
 
     // Get all the post-linkers IN REVERSE ORDER.
@@ -169,22 +168,10 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
         }
       }
       Collections.reverse(postLinkerClasses);
-      sortedLinkers.addAll(postLinkerClasses);
+      linkerClasses.addAll(postLinkerClasses);
     }
 
-    linkers = new Linker[sortedLinkers.size()];
-    int i = 0;
-    for (Class<? extends Linker> linkerClass : sortedLinkers) {
-      try {
-        linkers[i++] = linkerClass.newInstance();
-      } catch (InstantiationException e) {
-        logger.log(TreeLogger.ERROR, "Unable to create Linker", e);
-        throw new UnableToCompleteException();
-      } catch (IllegalAccessException e) {
-        logger.log(TreeLogger.ERROR, "Unable to create Linker", e);
-        throw new UnableToCompleteException();
-      }
-    }
+    resetLinkers(logger);
 
     for (Map.Entry<String, Class<? extends Linker>> entry : module.getLinkers().entrySet()) {
       linkerShortNames.put(entry.getValue(), entry.getKey());
@@ -225,10 +212,33 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       selectionProperties = Collections.unmodifiableSortedSet(mutableSelectionProperties);
       configurationProperties = Collections.unmodifiableSortedSet(mutableConfigurationProperties);
     }
+  }
 
-    /*
-     * Add static resources in the specified module as artifacts.
-     */
+  public boolean allLinkersAreShardable() {
+    return findUnshardableLinkers().isEmpty();
+  }
+
+  /**
+   * Find all linkers that are not updated to support running generators on
+   * compilations shards.
+   */
+  public List<Linker> findUnshardableLinkers() {
+    List<Linker> problemLinkers = new ArrayList<Linker>();
+
+    for (Linker linker : linkers) {
+      if (!linker.isShardable()) {
+        problemLinkers.add(linker);
+      }
+    }
+    return problemLinkers;
+  }
+
+  /**
+   * Convert all static resources in the specified module to artifacts.
+   */
+  public ArtifactSet getArtifactsForPublicResources(TreeLogger logger,
+      ModuleDef module) {
+    ArtifactSet artifacts = new ArtifactSet();
     for (String path : module.getAllPublicFiles()) {
       String partialPath = path.replace(File.separatorChar, '/');
       PublicResource resource = new StandardPublicResource(partialPath,
@@ -237,43 +247,23 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       logger.log(TreeLogger.SPAM, "Added public resource " + resource, null);
     }
 
-    recordStaticReferences(logger, module);
-  }
-
-  /**
-   * Adds or replaces Artifacts in the ArtifactSet that will be passed into the
-   * Linkers invoked.
-   */
-  public void addOrReplaceArtifacts(ArtifactSet artifacts) {
-    this.artifacts.removeAll(artifacts);
-    this.artifacts.addAll(artifacts);
-  }
-
-  /**
-   * Returns the ArtifactSet that will passed into the invoke Linkers.
-   */
-  public ArtifactSet getArtifacts() {
-    return artifacts;
-  }
-
-  /**
-   * Gets or creates a CompilationResult for the given JavaScript program.
-   */
-  public StandardCompilationResult getCompilation(
-      PermutationResult permutationResult) {
-    byte[][] js = permutationResult.getJs();
-    String strongName = Util.computeStrongName(js);
-    StandardCompilationResult result = resultsByStrongName.get(strongName);
-    if (result == null) {
-      result = new StandardCompilationResult(strongName, js,
-          permutationResult.getSerializedSymbolMap(),
-          permutationResult.getStatementRanges(),
-          permutationResult.getPermutation().getId());
-      resultsByStrongName.put(result.getStrongName(), result);
-      artifacts.add(result);
+    {
+      int index = 0;
+      for (Script script : module.getScripts()) {
+        String url = script.getSrc();
+        artifacts.add(new StandardScriptReference(url, index++));
+        logger.log(TreeLogger.SPAM, "Added script " + url, null);
+      }
     }
-    artifacts.addAll(permutationResult.getArtifacts());
-    return result;
+
+    {
+      int index = 0;
+      for (String style : module.getStyles()) {
+        artifacts.add(new StandardStylesheetReference(style, index++));
+        logger.log(TreeLogger.SPAM, "Added style " + style, null);
+      }
+    }
+    return artifacts;
   }
 
   public SortedSet<ConfigurationProperty> getConfigurationProperties() {
@@ -283,6 +273,19 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   @Override
   public String getDescription() {
     return "Root Linker";
+  }
+
+  /**
+   * Return the full path for an artifact produced by <code>linkertype</code>
+   * that has the specified partial path. The full path will be the linker's
+   * short name, as defined in the module file, followed by the given partial
+   * path.
+   */
+  public String getExtraPathForLinker(Class<? extends Linker> linkerType,
+      String partialPath) {
+    assert linkerShortNames.containsKey(linkerType) : linkerType.getName()
+        + " unknown";
+    return linkerShortNames.get(linkerType) + '/' + partialPath;
   }
 
   public String getModuleFunctionName() {
@@ -305,24 +308,72 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     return propertiesByName.get(name);
   }
 
-  /**
-   * Run the linker stack.
-   */
-  public ArtifactSet invokeLink(TreeLogger logger)
+  public ArtifactSet invokeFinalLink(TreeLogger logger, ArtifactSet artifacts)
       throws UnableToCompleteException {
+    for (Linker linker : linkers) {
+      if (linker.isShardable()) {
+        TreeLogger linkerLogger = logger.branch(TreeLogger.TRACE,
+            "Invoking Linker " + linker.getDescription(), null);
+        artifacts = linker.link(linkerLogger, this, artifacts, false);
+      }
+    }
+    return artifacts;
+  }
+
+  /**
+   * Run linkers that have not been updated for the shardable API.
+   */
+  public ArtifactSet invokeLegacyLinkers(TreeLogger logger,
+      ArtifactSet artifacts) throws UnableToCompleteException {
     ArtifactSet workingArtifacts = new ArtifactSet(artifacts);
 
     for (Linker linker : linkers) {
-      TreeLogger linkerLogger = logger.branch(TreeLogger.TRACE,
-          "Invoking Linker " + linker.getDescription(), null);
-      workingArtifacts.freeze();
-      try {
-        workingArtifacts = linker.link(linkerLogger, this, workingArtifacts);
-      } catch (Throwable e) {
-        linkerLogger.log(TreeLogger.ERROR, "Failed to link", e);
-        throw new UnableToCompleteException();
+      if (!linker.isShardable()) {
+        TreeLogger linkerLogger = logger.branch(TreeLogger.TRACE,
+            "Invoking Linker " + linker.getDescription(), null);
+        workingArtifacts.freeze();
+        try {
+          workingArtifacts = linker.link(linkerLogger, this, workingArtifacts);
+        } catch (Throwable e) {
+          linkerLogger.log(TreeLogger.ERROR, "Failed to link", e);
+          throw new UnableToCompleteException();
+        }
       }
     }
+    return workingArtifacts;
+  }
+
+  /**
+   * Invoke the shardable linkers on one permutation result. Those linkers run
+   * with the precompile artifacts as input.
+   */
+  public ArtifactSet invokeLinkForOnePermutation(TreeLogger logger,
+      StandardCompilationResult permResult, ArtifactSet permArtifacts)
+      throws UnableToCompleteException {
+    ArtifactSet workingArtifacts = new ArtifactSet(permArtifacts);
+    workingArtifacts.add(permResult);
+
+    for (Linker linker : linkers) {
+      if (linker.isShardable()) {
+        TreeLogger linkerLogger = logger.branch(TreeLogger.TRACE,
+            "Invoking Linker " + linker.getDescription(), null);
+        try {
+          workingArtifacts.freeze();
+          workingArtifacts = linker.link(logger, this, workingArtifacts, true);
+        } catch (Throwable e) {
+          linkerLogger.log(TreeLogger.ERROR, "Failed to link", e);
+          throw new UnableToCompleteException();
+        }
+      }
+    }
+
+    /*
+     * Reset linkers so that they don't accidentally carry any state across
+     * permutations
+     */
+    resetLinkers(logger);
+
+    workingArtifacts.freeze();
     return workingArtifacts;
   }
 
@@ -350,7 +401,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
 
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
-      ArtifactSet artifacts) throws UnableToCompleteException {
+      ArtifactSet artifacts) {
     throw new UnsupportedOperationException();
   }
 
@@ -455,35 +506,20 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   }
 
   /**
-   * Creates a linker-specific subdirectory in the module's auxiliary output
-   * directory.
+   * (Re)instantiate all linkers.
    */
-  private String getExtraPathForLinker(Class<? extends Linker> linkerType,
-      String partialPath) {
-    assert linkerShortNames.containsKey(linkerType) : linkerType.getName()
-        + " unknown";
-    return linkerShortNames.get(linkerType) + '/' + partialPath;
-  }
-
-  /**
-   * Record script references and CSS references that are listed in the module
-   * file.
-   */
-  private void recordStaticReferences(TreeLogger logger, ModuleDef module) {
-    {
-      int index = 0;
-      for (Script script : module.getScripts()) {
-        String url = script.getSrc();
-        artifacts.add(new StandardScriptReference(url, index++));
-        logger.log(TreeLogger.SPAM, "Added script " + url, null);
-      }
-    }
-
-    {
-      int index = 0;
-      for (String style : module.getStyles()) {
-        artifacts.add(new StandardStylesheetReference(style, index++));
-        logger.log(TreeLogger.SPAM, "Added style " + style, null);
+  private void resetLinkers(TreeLogger logger) throws UnableToCompleteException {
+    linkers = new Linker[linkerClasses.size()];
+    int i = 0;
+    for (Class<? extends Linker> linkerClass : linkerClasses) {
+      try {
+        linkers[i++] = linkerClass.newInstance();
+      } catch (InstantiationException e) {
+        logger.log(TreeLogger.ERROR, "Unable to create Linker", e);
+        throw new UnableToCompleteException();
+      } catch (IllegalAccessException e) {
+        logger.log(TreeLogger.ERROR, "Unable to create Linker", e);
+        throw new UnableToCompleteException();
       }
     }
   }

@@ -19,7 +19,10 @@ import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.SymbolData;
+import com.google.gwt.dev.Permutation;
+import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.util.DiskCache;
+import com.google.gwt.dev.util.Util;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -71,8 +74,6 @@ public class StandardCompilationResult extends CompilationResult {
   private static final DiskCache diskCache = new DiskCache();
 
   private final long jsToken[];
-  
-  private final int permutationId;
 
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
@@ -83,17 +84,18 @@ public class StandardCompilationResult extends CompilationResult {
 
   private final long symbolToken;
 
-  public StandardCompilationResult(String strongName, byte[][] js,
-      byte[] serializedSymbolMap, StatementRanges[] statementRanges, int permutationId) {
-    super(StandardLinkerContext.class);
-    this.strongName = strongName;
+  public StandardCompilationResult(PermutationResult permutationResult) {
+    super(StandardLinkerContext.class, permutationResult.getPermutation());
+    byte[][] js = permutationResult.getJs();
+    strongName = Util.computeStrongName(js);
+    byte[] serializedSymbolMap = permutationResult.getSerializedSymbolMap();
+    statementRanges = permutationResult.getStatementRanges();
+    Permutation permutation = permutationResult.getPermutation();
     jsToken = new long[js.length];
     for (int i = 0; i < jsToken.length; ++i) {
       jsToken[i] = diskCache.writeByteArray(js[i]);
     }
     symbolToken = diskCache.writeByteArray(serializedSymbolMap);
-    this.statementRanges = statementRanges;
-    this.permutationId = permutationId;
   }
 
   /**
@@ -116,11 +118,6 @@ public class StandardCompilationResult extends CompilationResult {
     return js;
   }
 
-  @Override
-  public int getPermutationId() {
-    return permutationId;
-  }
-  
   @Override
   public SortedSet<SortedMap<SelectionProperty, String>> getPropertyMap() {
     return Collections.unmodifiableSortedSet(propertyValues);

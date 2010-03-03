@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 
 import junit.framework.TestCase;
@@ -33,15 +34,10 @@ import java.util.Arrays;
  */
 public class ModuleDefTest extends TestCase {
 
+  @Shardable
   static class FakeLinker extends Linker {
     @Override
     public String getDescription() {
-      return null;
-    }
-
-    @Override
-    public ArtifactSet link(TreeLogger logger, LinkerContext context,
-        ArtifactSet artifacts) throws UnableToCompleteException {
       return null;
     }
 
@@ -53,26 +49,32 @@ public class ModuleDefTest extends TestCase {
   }
 
   @LinkerOrder(Order.POST)
+  @Shardable
   static class FakeLinkerPost extends FakeLinker {
   }
 
   @LinkerOrder(Order.POST)
+  @Shardable
   static class FakeLinkerPost2 extends FakeLinker {
   }
 
   @LinkerOrder(Order.PRE)
+  @Shardable
   static class FakeLinkerPre extends FakeLinker {
   }
 
   @LinkerOrder(Order.PRE)
+  @Shardable
   static class FakeLinkerPre2 extends FakeLinker {
   }
 
   @LinkerOrder(Order.PRIMARY)
+  @Shardable
   static class FakeLinkerPrimary extends FakeLinker {
   }
 
   @LinkerOrder(Order.PRIMARY)
+  @Shardable
   static class FakeLinkerPrimary2 extends FakeLinker {
   }
 

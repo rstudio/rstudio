@@ -69,8 +69,8 @@ public class GWTCompiler {
   /**
    * Simple implementation of {@link LegacyCompilerOptions}.
    */
-  public static class GWTCompilerOptionsImpl extends PrecompileOptionsImpl implements
-      LegacyCompilerOptions {
+  public static class GWTCompilerOptionsImpl extends PrecompileOptionsImpl
+      implements LegacyCompilerOptions {
 
     private int localWorkers;
     private File outDir;
@@ -120,8 +120,8 @@ public class GWTCompiler {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           FutureTask<UpdateResult> updater = null;
           if (!options.isUpdateCheckDisabled()) {
-            updater = CheckForUpdates.checkForUpdatesInBackgroundThread(
-                logger, CheckForUpdates.ONE_DAY);
+            updater = CheckForUpdates.checkForUpdatesInBackgroundThread(logger,
+                CheckForUpdates.ONE_DAY);
           }
           boolean success = new GWTCompiler(options).run(logger);
           if (success) {
@@ -207,7 +207,7 @@ public class GWTCompiler {
 
           Link.legacyLink(logger.branch(TreeLogger.TRACE, "Linking into "
               + options.getOutDir().getPath()), module, generatedArtifacts,
-              resultFiles, options.getOutDir(), precompileOptions);
+              allPerms, resultFiles, options.getOutDir(), precompileOptions);
 
           long compileDone = System.currentTimeMillis();
           long delta = compileDone - compileStart;

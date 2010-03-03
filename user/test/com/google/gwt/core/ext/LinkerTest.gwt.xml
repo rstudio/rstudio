@@ -12,8 +12,7 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- This is an abstract module.  Specific linker tests should inherit -->
-<!-- from this module and specify a linker.  -->
+<!-- Module for linker tests -->
 
 <module>
 	<inherits name='com.google.gwt.junit.JUnit' />

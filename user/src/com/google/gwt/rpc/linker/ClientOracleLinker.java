@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.linker.AbstractLinker;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
@@ -37,6 +38,7 @@ import java.util.Map;
  * Exports data required by server components for directly-evalable RPC.
  */
 @LinkerOrder(Order.PRE)
+@Shardable
 public class ClientOracleLinker extends AbstractLinker {
 
   private static final String SUFFIX = ".gwt.rpc";
@@ -48,42 +50,44 @@ public class ClientOracleLinker extends AbstractLinker {
 
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
-      ArtifactSet artifacts) throws UnableToCompleteException {
-    artifacts = new ArtifactSet(artifacts);
+      ArtifactSet artifacts, boolean onePermutation)
+      throws UnableToCompleteException {
+    if (onePermutation) {
+      artifacts = new ArtifactSet(artifacts);
 
-    Map<String, List<String>> allSerializableFields = new HashMap<String, List<String>>();
+      Map<String, List<String>> allSerializableFields = new HashMap<String, List<String>>();
 
-    for (RpcDataArtifact data : artifacts.find(RpcDataArtifact.class)) {
-      allSerializableFields.putAll(data.getOperableFields());
+      for (RpcDataArtifact data : artifacts.find(RpcDataArtifact.class)) {
+        allSerializableFields.putAll(data.getOperableFields());
+      }
+
+      for (CompilationResult result : artifacts.find(CompilationResult.class)) {
+        Builder builder = new Builder();
+
+        for (Map.Entry<String, List<String>> entry : allSerializableFields.entrySet()) {
+          builder.setSerializableFields(entry.getKey(), entry.getValue());
+        }
+
+        for (SymbolData symbolData : result.getSymbolMap()) {
+          builder.add(symbolData.getSymbolName(), symbolData.getJsniIdent(),
+              symbolData.getClassName(), symbolData.getMemberName(),
+              symbolData.getTypeId());
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+          builder.getOracle().store(out);
+        } catch (IOException e) {
+          // Should generally not happen
+          logger.log(TreeLogger.ERROR, "Unable to store deRPC data", e);
+          throw new UnableToCompleteException();
+        }
+
+        SyntheticArtifact a = emitBytes(logger, out.toByteArray(),
+            result.getStrongName() + SUFFIX);
+        artifacts.add(a);
+      }
     }
-
-    for (CompilationResult result : artifacts.find(CompilationResult.class)) {
-      Builder builder = new Builder();
-
-      for (Map.Entry<String, List<String>> entry : allSerializableFields.entrySet()) {
-        builder.setSerializableFields(entry.getKey(), entry.getValue());
-      }
-
-      for (SymbolData symbolData : result.getSymbolMap()) {
-        builder.add(symbolData.getSymbolName(), symbolData.getJsniIdent(),
-            symbolData.getClassName(), symbolData.getMemberName(),
-            symbolData.getTypeId());
-      }
-
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      try {
-        builder.getOracle().store(out);
-      } catch (IOException e) {
-        // Should generally not happen
-        logger.log(TreeLogger.ERROR, "Unable to store deRPC data", e);
-        throw new UnableToCompleteException();
-      }
-
-      SyntheticArtifact a = emitBytes(logger, out.toByteArray(),
-          result.getStrongName() + SUFFIX);
-      artifacts.add(a);
-    }
-
     return artifacts;
   }
 

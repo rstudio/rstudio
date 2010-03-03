@@ -16,23 +16,34 @@
 package com.google.gwt.core.ext;
 
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.Shardable;
 
 /**
  * Defines a linker for the GWT compiler. Each Linker must be annotated with a
  * {@link com.google.gwt.core.ext.linker.LinkerOrder} annotation to determine
  * the relative ordering of the Linkers. Exact order of Linker execution will be
  * determined by the order of <code>add-linker</code> tags in the module
- * configuration.
+ * configuration. Each Linker should also be annotated with {@link Shardable};
+ * non-shardable linkers are deprecated and will eventually not be supported.
  * 
  * <p>
  * A new instance of a linker is created each time a module is compiled or
  * during hosted mode when a module first loads (or is refreshed). During a
- * compile, {@link #link(TreeLogger, LinkerContext, ArtifactSet)} will be called
- * exactly once, and the artifact set will contain any and all generated
- * artifacts. . In hosted mode,
- * {@link #link(TreeLogger, LinkerContext, ArtifactSet)} is called initially,
- * but with no generated artifacts. If any artifacts are subsequently generated
- * during the course of running hosted mode,
+ * compile, {@link #link(TreeLogger, LinkerContext, ArtifactSet)} is called
+ * exactly once on each non-shardable linker, and the artifact set will contain
+ * any and all generated artifacts. For shardable linkers,
+ * {@link #link(TreeLogger, LinkerContext, ArtifactSet, boolean)} is called once
+ * for each compiled permutation and once after all compiles are finished. The
+ * precise artifacts supplied differ with each call and are described in the
+ * method's documentation.
+ * 
+ * <p>
+ * When hosted mode starts for a module, it calls
+ * {@link #link(TreeLogger, LinkerContext, ArtifactSet)} for non-shardable
+ * linkers and {@link #link(TreeLogger, LinkerContext, ArtifactSet, boolean)}
+ * for shardable ones, passing <code>false</code> as the
+ * <code>onePermutation</code> argument. If any artifacts are subsequently
+ * generated during the course of running hosted mode,
  * {@link #relink(TreeLogger, LinkerContext, ArtifactSet)} will be called with
  * the new artifacts.
  * </p>
@@ -44,7 +55,17 @@ public abstract class Linker {
   public abstract String getDescription();
 
   /**
-   * Invoke the Linker.
+   * Check whether this class has the {@link Shardable} annotation.
+   */
+  public final boolean isShardable() {
+    return getClass().isAnnotationPresent(Shardable.class);
+  }
+
+  /**
+   * This method is invoked for linkers not annotated with {@link Shardable}. It
+   * sees all artifacts across the whole compile and can modify them
+   * arbitrarily. This method is only called if the linker is not annotated with
+   * {@link Shardable}.
    * 
    * @param logger the TreeLogger to record to
    * @param context provides access to the Linker's environment
@@ -53,8 +74,44 @@ public abstract class Linker {
    * @throws UnableToCompleteException if compilation violates assumptions made
    *           by the Linker or for errors encountered by the Linker
    */
-  public abstract ArtifactSet link(TreeLogger logger, LinkerContext context,
-      ArtifactSet artifacts) throws UnableToCompleteException;
+  public ArtifactSet link(TreeLogger logger, LinkerContext context,
+      ArtifactSet artifacts) throws UnableToCompleteException {
+    assert !isShardable();
+    return artifacts;
+  }
+
+  /**
+   * <p>
+   * This method is invoked for linkers annotated with {@link Shardable}. It is
+   * called at two points during compilation: after the compile of each
+   * permutation, and after all compilation has finished. The
+   * <code>onePermutation</code> is <code>true</code> for a per-permutation call
+   * and <code>false</code> for a global final-link call.
+   * 
+   * <p>
+   * For one-permutation calls, this method is passed all artifacts generated
+   * for just the one permutation. For the global call at the end of
+   * compilation, this method sees artifacts for the whole compilation, but with
+   * two modifications intended to support builds on computer clusters:
+   * <ol>
+   * <li>All EmittedArtifacts have been converted to BinaryEmittedArtifacts
+   * <li>All artifacts not marked as
+   * {@link com.google.gwt.core.ext.linker.Transferable} have been discarded.
+   * </ol>
+   * 
+   * @param logger the TreeLogger to record to
+   * @param context provides access to the Linker's environment
+   * @param artifacts an unmodifiable view of the artifacts to link
+   * @return the artifacts that should be propagated through the linker chain
+   * @throws UnableToCompleteException if compilation violates assumptions made
+   *           by the Linker or for errors encountered by the Linker
+   */
+  public ArtifactSet link(TreeLogger logger, LinkerContext context,
+      ArtifactSet artifacts, boolean onePermutation)
+      throws UnableToCompleteException {
+    assert isShardable();
+    return artifacts;
+  }
 
   /**
    * Re-invoke the Linker with newly generated artifacts. Linkers that need to

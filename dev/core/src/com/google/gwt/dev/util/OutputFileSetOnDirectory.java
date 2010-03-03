@@ -43,12 +43,13 @@ public class OutputFileSetOnDirectory extends OutputFileSet {
   }
 
   @Override
-  public OutputStream openForWrite(String path, final long lastModifiedTime)
-      throws IOException {
-    final File file = makeFileForPath(path);
+  protected OutputStream createNewOutputStream(String path,
+      final long lastModifiedTime) throws IOException {
+    final File file = pathToFile(path);
     if (file.exists() && file.lastModified() >= lastModifiedTime) {
       return new NullOutputStream();
     }
+
     mkdirs(file.getParentFile());
     return new FileOutputStream(file) {
       @Override
@@ -57,14 +58,6 @@ public class OutputFileSetOnDirectory extends OutputFileSet {
         file.setLastModified(lastModifiedTime);
       }
     };
-  }
-
-  private File makeFileForPath(String path) {
-    File file = dir;
-    for (String part : (prefix + path).split("/")) {
-      file = new File(file, part);
-    }
-    return file;
   }
 
   /**
@@ -84,5 +77,13 @@ public class OutputFileSetOnDirectory extends OutputFileSet {
       mkdirs(dir.getParentFile());
       dir.mkdir();
     }
+  }
+
+  private File pathToFile(String path) {
+    File file = dir;
+    for (String part : (prefix + path).split("/")) {
+      file = new File(file, part);
+    }
+    return file;
   }
 }

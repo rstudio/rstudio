@@ -16,10 +16,12 @@
 package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.linker.StylesheetReference;
+import com.google.gwt.core.ext.linker.Transferable;
 
 /**
  * The standard implementation of {@link StylesheetReference}.
  */
+@Transferable
 public class StandardStylesheetReference extends StylesheetReference {
 
   public StandardStylesheetReference(String src, int index) {

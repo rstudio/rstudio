@@ -206,7 +206,7 @@ public class JavaToJavaScriptCompiler {
    * 
    * @param logger the logger to use
    * @param unifiedAst the result of a
-   *          {@link #precompile(TreeLogger, WebModeCompilerFrontEnd, String[], JJSOptions, boolean)}
+   *          {@link #precompile(TreeLogger, ModuleDef, RebindPermutationOracle, String[], String[], JJSOptions, boolean)}
    * @param permutation the permutation to compile
    * @return the output JavaScript
    * @throws UnableToCompleteException if an error other than
@@ -219,7 +219,8 @@ public class JavaToJavaScriptCompiler {
     PropertyOracle[] propertyOracles = permutation.getPropertyOracles();
     int permutationId = permutation.getId();
     Map<String, String> rebindAnswers = permutation.getRebindAnswers();
-    logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId + "...");
+    logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId
+        + "...");
     long permStart = System.currentTimeMillis();
     try {
       if (JProgram.isTracingEnabled()) {
@@ -660,7 +661,7 @@ public class JavaToJavaScriptCompiler {
       // remove same parameters value
       didChange = SameParameterValueOptimizer.exec(jprogram) || didChange;
     }
-    
+
     // prove that any types that have been culled from the main tree are
     // unreferenced due to type tightening?
 

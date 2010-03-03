@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.SelectionProperty;
+import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 
@@ -40,6 +41,7 @@ import java.util.SortedMap;
  * {@link CompilationResult#getStrongName()}.
  */
 @LinkerOrder(Order.POST)
+@Shardable
 public class SymbolMapsLinker extends AbstractLinker {
 
   /**
@@ -80,23 +82,33 @@ public class SymbolMapsLinker extends AbstractLinker {
     return "Export CompilationResult symbol maps";
   }
 
+  /**
+   * Included to support legacy non-shardable subclasses.
+   */
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
       ArtifactSet artifacts) throws UnableToCompleteException {
+    return link(logger, context, artifacts, true);
+  }
 
-    artifacts = new ArtifactSet(artifacts);
+  @Override
+  public ArtifactSet link(TreeLogger logger, LinkerContext context,
+      ArtifactSet artifacts, boolean onePermutation)
+      throws UnableToCompleteException {
+    if (onePermutation) {
+      artifacts = new ArtifactSet(artifacts);
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    for (CompilationResult result : artifacts.find(CompilationResult.class)) {
-      PrintWriter pw = new PrintWriter(out);
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      for (CompilationResult result : artifacts.find(CompilationResult.class)) {
+        PrintWriter pw = new PrintWriter(out);
 
-      doWriteSymbolMap(logger, result, pw);
-      pw.close();
+        doWriteSymbolMap(logger, result, pw);
+        pw.close();
 
-      doEmitSymbolMap(logger, artifacts, result, out);
-      out.reset();
+        doEmitSymbolMap(logger, artifacts, result, out);
+        out.reset();
+      }
     }
-
     return artifacts;
   }
 

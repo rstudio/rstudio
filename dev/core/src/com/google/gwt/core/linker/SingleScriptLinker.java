@@ -18,10 +18,12 @@ package com.google.gwt.core.linker;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
@@ -36,6 +38,7 @@ import java.util.Set;
  * result.
  */
 @LinkerOrder(Order.PRIMARY)
+@Shardable
 public class SingleScriptLinker extends SelectionScriptLinker {
   @Override
   public String getDescription() {
@@ -44,16 +47,20 @@ public class SingleScriptLinker extends SelectionScriptLinker {
 
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
-      ArtifactSet artifacts) throws UnableToCompleteException {
-    ArtifactSet toReturn = new ArtifactSet(artifacts);
-
-    toReturn.add(emitSelectionScript(logger, context, artifacts));
-
-    return toReturn;
+      ArtifactSet artifacts, boolean onePermutation)
+      throws UnableToCompleteException {
+    if (onePermutation) {
+      processSelectionInformation(artifacts);
+      ArtifactSet toReturn = new ArtifactSet(artifacts);
+      toReturn.add(emitSelectionScript(logger, context, artifacts));
+      return toReturn;
+    } else {
+      return artifacts;
+    }
   }
 
   @Override
-  protected Collection<EmittedArtifact> doEmitCompilation(TreeLogger logger,
+  protected Collection<Artifact<?>> doEmitCompilation(TreeLogger logger,
       LinkerContext context, CompilationResult result)
       throws UnableToCompleteException {
     if (result.getJavaScript().length != 1) {
@@ -71,7 +78,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
       throws UnableToCompleteException {
 
     DefaultTextOutput out = new DefaultTextOutput(true);
-
+    
     // Emit the selection script.
     String bootstrap = generateSelectionScript(logger, context, artifacts);
     bootstrap = context.optimizeJavaScript(logger, bootstrap);
@@ -95,9 +102,8 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     // Find the single CompilationResult
     Set<CompilationResult> results = artifacts.find(CompilationResult.class);
     if (results.size() != 1) {
-      logger.log(TreeLogger.ERROR,
-          "The module must have exactly one distinct"
-              + " permutation when using the " + getDescription() + " Linker.",
+      logger.log(TreeLogger.ERROR, "The module must have exactly one distinct"
+          + " permutation when using the " + getDescription() + " Linker.",
           null);
       throw new UnableToCompleteException();
     }
@@ -158,8 +164,8 @@ public class SingleScriptLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String getSelectionScriptTemplate(TreeLogger logger,
-      LinkerContext context) throws UnableToCompleteException {
+  protected String getSelectionScriptTemplate(TreeLogger logger, LinkerContext context)
+      throws UnableToCompleteException {
     return "com/google/gwt/core/linker/SingleScriptTemplate.js";
   }
 }

@@ -15,9 +15,11 @@
  */
 package com.google.gwt.dev;
 
+import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
@@ -47,6 +49,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerCompileReport;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableGeneratingOnShards;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableRunAsync;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
@@ -54,8 +57,8 @@ import com.google.gwt.dev.util.arg.ArgHandlerDumpSignatures;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
-import com.google.gwt.dev.util.arg.ArgHandlerShardPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
+import com.google.gwt.dev.util.arg.ArgHandlerShardPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerSoycDetailed;
 import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
@@ -97,7 +100,8 @@ public class Precompile {
       registerHandler(new ArgHandlerGenDir(options));
       registerHandler(new ArgHandlerScriptStyle(options));
       registerHandler(new ArgHandlerEnableAssertions(options));
-      registerHandler(new ArgHandlerShardPrecompile(options));
+      registerHandler(new ArgHandlerShardPrecompile());
+      registerHandler(new ArgHandlerDisableGeneratingOnShards(options));
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
       registerHandler(new ArgHandlerDisableClassMetadata(options));
       registerHandler(new ArgHandlerDisableCastChecking(options));
@@ -122,7 +126,7 @@ public class Precompile {
       PrecompileOptions, Serializable {
     private boolean disableUpdateCheck;
     private File dumpFile;
-    private boolean enableGeneratingOnShards;
+    private boolean enableGeneratingOnShards = true;
     private File genDir;
     private final JJSOptionsImpl jjsOptions = new JJSOptionsImpl();
     private int maxPermsPerPrecompile;
@@ -581,8 +585,23 @@ public class Precompile {
 
       ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
 
-      boolean generateOnShards = options.isEnabledGeneratingOnShards();
-      if (options.isValidateOnly()) {
+      StandardLinkerContext linkerContext = new StandardLinkerContext(
+          TreeLogger.NULL, module, options);
+
+      boolean generateOnShards = true;
+
+      if (!options.isEnabledGeneratingOnShards()) {
+        logger.log(TreeLogger.INFO, "Precompiling on the start node");
+        generateOnShards = false;
+      } else if (!linkerContext.allLinkersAreShardable()) {
+        TreeLogger legacyLinkersLogger = logger.branch(TreeLogger.INFO,
+            "Precompiling on the start node, because some linkers are not updated");
+        for (Linker linker : linkerContext.findUnshardableLinkers()) {
+          legacyLinkersLogger.log(TreeLogger.INFO, "Linker"
+              + linker.getClass().getCanonicalName() + " is not updated");
+        }
+        generateOnShards = false;
+      } else if (options.isValidateOnly()) {
         // Don't bother running on shards for just a validation run
         generateOnShards = false;
       } else if (options.getDumpSignatureFile() != null) {

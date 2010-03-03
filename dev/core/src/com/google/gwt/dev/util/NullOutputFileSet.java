@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.util;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 /**
@@ -24,15 +23,15 @@ import java.io.OutputStream;
 public class NullOutputFileSet extends OutputFileSet {
   static class NullOutputStream extends OutputStream {
     @Override
-    public void write(byte[] b) throws IOException {
+    public void write(byte[] b) {
     }
 
     @Override
-    public void write(byte[] b, int i, int j) throws IOException {
+    public void write(byte[] b, int i, int j) {
     }
 
     @Override
-    public void write(int b) throws IOException {
+    public void write(int b) {
     }
   }
 
@@ -45,7 +44,8 @@ public class NullOutputFileSet extends OutputFileSet {
   }
 
   @Override
-  public OutputStream openForWrite(String path, long lastModifiedTime) {
+  protected OutputStream createNewOutputStream(String path,
+      long lastModifiedTime) {
     return new NullOutputStream();
   }
 }

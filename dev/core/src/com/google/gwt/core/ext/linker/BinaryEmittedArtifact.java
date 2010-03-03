@@ -13,20 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.server.runasync;
+package com.google.gwt.core.ext.linker;
 
-import com.google.gwt.core.ext.linker.Shardable;
-import com.google.gwt.core.linker.IFrameLinker;
+import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 
 /**
- * Load modules from a custom servlet in order to test download failure
- * behavior.
+ * <p>
+ * A thinned down version of some {@link EmittedArtifact}. Only its essentials,
+ * including name and contents, are available.
+ * </p>
+ * 
+ * <p>
+ * This class should only be extended within the GWT implementation.
+ * </p>
  */
-@Shardable
-public class RunAsyncFailureIFrameLinker extends IFrameLinker {
-
-  @Override
-  protected String getFragmentSubdir() {
-    return "runAsyncFailure/" + FRAGMENT_SUBDIR;
+public abstract class BinaryEmittedArtifact extends EmittedArtifact {
+  protected BinaryEmittedArtifact(String partialPath) {
+    super(StandardLinkerContext.class, partialPath);
   }
 }

@@ -300,11 +300,6 @@ public class CompilePerms {
         return false;
       }
 
-      /*
-       * TODO(spoon) Check that all requested permutations have a permutation
-       * available before starting. probably needs two branches.
-       */
-
       if (precompileResults instanceof PrecompileOptions) {
         PrecompileOptions precompilationOptions = (PrecompileOptions) precompileResults;
         if (!precompileAndCompile(logger, moduleName, compilerWorkDir,
@@ -374,10 +369,9 @@ public class CompilePerms {
 
       PermutationResult permResult = compile(logger, subPerms[0],
           precompilation.getUnifiedAst());
-      FileBackedObject<PermutationResult> resultFile = new FileBackedObject<PermutationResult>(
-          PermutationResult.class, makePermFilename(compilerWorkDir, permId));
-      permResult.addArtifacts(precompilation.getGeneratedArtifacts());
-      resultFile.set(logger, permResult);
+      Link.linkOnePermutationToJar(logger, module,
+          precompilation.getGeneratedArtifacts(), permResult, makePermFilename(
+              compilerWorkDir, permId), precompilationOptions);
     }
 
     logger.log(TreeLogger.INFO, "Compile of permutations succeeded");

@@ -16,10 +16,12 @@
 package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.linker.ScriptReference;
+import com.google.gwt.core.ext.linker.Transferable;
 
 /**
  * The standard implementation of {@link ScriptReference}.
  */
+@Transferable
 public class StandardScriptReference extends ScriptReference {
 
   public StandardScriptReference(String src, int index) {

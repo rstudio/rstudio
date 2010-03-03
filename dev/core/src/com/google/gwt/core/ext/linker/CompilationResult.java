@@ -16,6 +16,7 @@
 package com.google.gwt.core.ext.linker;
 
 import com.google.gwt.core.ext.Linker;
+import com.google.gwt.dev.Permutation;
 
 import java.util.Map;
 import java.util.SortedMap;
@@ -26,8 +27,12 @@ import java.util.SortedSet;
  * result in identical JavaScript.
  */
 public abstract class CompilationResult extends Artifact<CompilationResult> {
-  protected CompilationResult(Class<? extends Linker> linkerType) {
+  private final Permutation permutation;
+
+  protected CompilationResult(Class<? extends Linker> linkerType,
+      Permutation permutation) {
     super(linkerType);
+    this.permutation = permutation;
   }
 
   /**
@@ -35,17 +40,27 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
    * the code that should be run when the application starts up. The remaining
    * elements are loaded via
    * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback)
-   * GWT.runAsync}. See {@link com.google.gwt.core.client.impl.AsyncFragmentLoader
+   * GWT.runAsync}. See
+   * {@link com.google.gwt.core.client.impl.AsyncFragmentLoader
    * AsyncFragmentLoader} for details on the necessary linker support for
    * runAsync.
    */
   public abstract String[] getJavaScript();
 
   /**
+   * Return the permutation that compiled to this result.
+   */
+  public Permutation getPermutation() {
+    return permutation;
+  }
+
+  /**
    * Returns the permutation ID.
    */
-  public abstract int getPermutationId();
-  
+  public int getPermutationId() {
+    return getPermutation().getId();
+  }
+
   /**
    * Provides values for {@link SelectionProperty} instances that are not
    * explicitly set during the compilation phase. This method will return

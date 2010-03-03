@@ -18,17 +18,29 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * No effect. Only present for backwards compatibility.
+ * An undocumented option to disable running generators on CompilePerms shards.
+ * This is present as a safety valve, in case something is new with the newer
+ * staging. Note that the old staging is used, regardless of this option's
+ * setting, if any linker is seen that has been updated. Thus, this option is
+ * useful only when all linkers have been updated but nonetheless there is a
+ * problem.
  */
-public class ArgHandlerShardPrecompile extends ArgHandlerFlag {
+public class ArgHandlerDisableGeneratingOnShards extends ArgHandlerFlag {
+  private OptionEnableGeneratingOnShards options;
+
+  public ArgHandlerDisableGeneratingOnShards(
+      OptionEnableGeneratingOnShards options) {
+    this.options = options;
+  }
+
   @Override
   public String getPurpose() {
-    return "No effect.  Only present for backwards compatibility.";
+    return "Disables running generators on CompilePerms shards, even when it would be a likely speedup";
   }
 
   @Override
   public String getTag() {
-    return "-XshardPrecompile";
+    return "-XdisableGeneratingOnShards";
   }
 
   @Override
@@ -38,6 +50,7 @@ public class ArgHandlerShardPrecompile extends ArgHandlerFlag {
 
   @Override
   public boolean setFlag() {
+    options.setEnabledGeneratingOnShards(false);
     return true;
   }
 }

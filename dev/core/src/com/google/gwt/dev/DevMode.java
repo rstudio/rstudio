@@ -26,6 +26,8 @@ import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.ui.RestartServerCallback;
 import com.google.gwt.dev.ui.RestartServerEvent;
 import com.google.gwt.dev.util.InstalledHelpInfo;
+import com.google.gwt.dev.util.NullOutputFileSet;
+import com.google.gwt.dev.util.OutputFileSet;
 import com.google.gwt.dev.util.OutputFileSetOnDirectory;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
@@ -386,8 +388,8 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     // Create the war directory if it doesn't exist
     File warDir = options.getWarDir();
     if (!warDir.exists() && !warDir.mkdirs()) {
-      getTopLogger().log(TreeLogger.ERROR, "Unable to create war directory "
-          + warDir);
+      getTopLogger().log(TreeLogger.ERROR,
+          "Unable to create war directory " + warDir);
       return -1;
     }
 
@@ -397,7 +399,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
       ServletContainerLauncher scl = options.getServletContainerLauncher();
 
-      TreeLogger serverLogger = ui.getWebServerLogger(getWebServerName(), 
+      TreeLogger serverLogger = ui.getWebServerLogger(getWebServerName(),
           scl.getIconBytes());
 
       String sclArgs = options.getServletContainerLauncherArgs();
@@ -424,7 +426,10 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       clearCallback = false;
       return server.getPort();
     } catch (BindException e) {
-      System.err.println("Port " + bindAddress + ':' + getPort()
+      System.err.println("Port "
+          + bindAddress
+          + ':'
+          + getPort()
           + " is already is use; you probably still have another session active");
     } catch (Exception e) {
       System.err.println("Unable to start embedded HTTP server");
@@ -473,24 +478,35 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   protected synchronized void produceOutput(TreeLogger logger,
       StandardLinkerContext linkerStack, ArtifactSet artifacts,
       ModuleDef module, boolean isRelink) throws UnableToCompleteException {
+    TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG, "Linking module '"
+        + module.getName() + "'");
+
     OutputFileSetOnDirectory outFileSet = new OutputFileSetOnDirectory(
         options.getWarDir(), module.getName() + "/");
-    linkerStack.produceOutput(logger, artifacts, false, outFileSet);
-    outFileSet.close();
-
+    OutputFileSet extraFileSet = new NullOutputFileSet();
     if (options.getExtraDir() != null) {
-      OutputFileSetOnDirectory extraFileSet = new OutputFileSetOnDirectory(
-          options.getExtraDir(), module.getName() + "/");
-      linkerStack.produceOutput(logger, artifacts, true, extraFileSet);
+      extraFileSet = new OutputFileSetOnDirectory(options.getExtraDir(),
+          module.getName() + "/");
+    }
+
+    linkerStack.produceOutput(linkLogger, artifacts, false, outFileSet);
+    linkerStack.produceOutput(linkLogger, artifacts, true, extraFileSet);
+
+    outFileSet.close();
+    try {
       extraFileSet.close();
+    } catch (IOException e) {
+      linkLogger.log(TreeLogger.ERROR, "Error emiting extra files", e);
+      throw new UnableToCompleteException();
     }
   }
 
   @Override
   protected void warnAboutNoStartupUrls() {
-    getTopLogger().log(TreeLogger.WARN,
+    getTopLogger().log(
+        TreeLogger.WARN,
         "No startup URLs supplied and no plausible ones found -- use "
-        + "-startupUrl");
+            + "-startupUrl");
   }
 
   private void validateServletTags(TreeLogger logger,

@@ -18,12 +18,14 @@ package com.google.gwt.core.linker;
 import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
+import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.SelectionProperty;
-import com.google.gwt.core.ext.linker.SyntheticArtifact;
+import com.google.gwt.core.ext.linker.Shardable;
+import com.google.gwt.core.ext.linker.Transferable;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.soyc.SoycDashboard;
 import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
@@ -32,15 +34,72 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.TreeMap;
 
 /**
- * Generates the top-level report files for a compile report.
+ * Converts SOYC report files into emitted private artifacts.
  */
 @LinkerOrder(Order.POST)
+@Shardable
 public class SoycReportLinker extends Linker {
+  /**
+   * An artifact giving a one-line description of a permutation ID in terms of
+   * its deferred bindings.
+   */
+  @Transferable
+  private static class PermDescriptionArtifact extends
+      Artifact<PermDescriptionArtifact> {
+
+    private List<String> permDesc;
+    private int permId;
+
+    public PermDescriptionArtifact(int permId, List<String> permDesc) {
+      super(SoycReportLinker.class);
+      this.permId = permId;
+      this.permDesc = permDesc;
+    }
+
+    public List<String> getPermDesc() {
+      return permDesc;
+    }
+
+    public int getPermId() {
+      return permId;
+    }
+
+    @Override
+    public int hashCode() {
+      return permId;
+    }
+
+    @Override
+    protected int compareToComparableArtifact(PermDescriptionArtifact o) {
+      int cmp;
+      cmp = permId - o.getPermId();
+      if (cmp != 0) {
+        return cmp;
+      }
+
+      cmp = permDesc.size() - o.getPermDesc().size();
+      if (cmp != 0) {
+        return cmp;
+      }
+
+      for (int i = 0; i < permDesc.size(); i++) {
+        cmp = permDesc.get(i).compareTo(o.getPermDesc().get(i));
+        if (cmp != 0) {
+          return cmp;
+        }
+      }
+
+      return 0;
+    }
+
+    @Override
+    protected Class<PermDescriptionArtifact> getComparableArtifactType() {
+      return PermDescriptionArtifact.class;
+    }
+  }
 
   @Override
   public String getDescription() {
@@ -49,51 +108,70 @@ public class SoycReportLinker extends Linker {
 
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
-      ArtifactSet artifacts) throws UnableToCompleteException {
-    if (!includesReports(artifacts)) {
+      ArtifactSet artifacts, boolean onePermutation) {
+    if (!anyReportFilesPresent(artifacts)) {
+      // No report was generated
       return artifacts;
     }
 
-    ArtifactSet results = new ArtifactSet(artifacts);
+    if (onePermutation) {
+      return emitPermutationDescriptions(logger, context, artifacts);
+    } else {
+      return buildTopLevelFiles(logger, context, artifacts);
+    }
+  }
 
-    // Run the final step of the dashboard to generate top-level files.
+  private boolean anyReportFilesPresent(ArtifactSet artifacts) {
+    String prefix = "soycReport/"
+        + ArtifactsOutputDirectory.COMPILE_REPORT_DIRECTORY + "/";
+    for (EmittedArtifact art : artifacts.find(EmittedArtifact.class)) {
+      if (art.getPartialPath().startsWith(prefix)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private ArtifactSet buildTopLevelFiles(TreeLogger logger,
+      LinkerContext context, ArtifactSet artifacts) {
+    artifacts = new ArtifactSet(artifacts);
+
     ArtifactsOutputDirectory out = new ArtifactsOutputDirectory();
     try {
       new SoycDashboard(out).generateCrossPermutationFiles(extractPermutationDescriptions(artifacts));
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR,
           "Error while generating a Story of Your Compile", e);
+      e.printStackTrace();
     }
-    results.addAll(out.getArtifacts());
 
-    return results;
+    artifacts.addAll(out.getArtifacts());
+    return artifacts;
+  }
+
+  private ArtifactSet emitPermutationDescriptions(TreeLogger logger,
+      LinkerContext context, ArtifactSet artifacts) {
+    artifacts = new ArtifactSet(artifacts);
+
+    for (CompilationResult res : artifacts.find(CompilationResult.class)) {
+      int permId = res.getPermutationId();
+      List<String> permDesc = new ArrayList<String>();
+      for (Map<SelectionProperty, String> propertyMap : res.getPropertyMap()) {
+        permDesc.add(SymbolMapsLinker.propertyMapToString(propertyMap));
+      }
+
+      artifacts.add(new PermDescriptionArtifact(permId, permDesc));
+    }
+
+    return artifacts;
   }
 
   private Map<String, List<String>> extractPermutationDescriptions(
       ArtifactSet artifacts) {
-    Map<String, List<String>> permutationDescriptions = new TreeMap<String, List<String>>();
-
-    for (CompilationResult res : artifacts.find(CompilationResult.class)) {
-      String permId = Integer.toString(res.getPermutationId());
-      List<String> permDescList = new ArrayList<String>();
-      SortedSet<SortedMap<SelectionProperty, String>> allPropertiesMap = res.getPropertyMap();
-      for (SortedMap<SelectionProperty, String> propertyMap : allPropertiesMap) {
-         String permDesc = SymbolMapsLinker.propertyMapToString(propertyMap);
-         permDescList.add(permDesc);
-      }
-      permutationDescriptions.put(permId, permDescList);
+    Map<String, List<String>> permDescriptions = new TreeMap<String, List<String>>();
+    for (PermDescriptionArtifact art : artifacts.find(PermDescriptionArtifact.class)) {
+      permDescriptions.put(Integer.toString(art.getPermId()), art.getPermDesc());
     }
-
-    return permutationDescriptions;
-  }
-
-  private boolean includesReports(ArtifactSet artifacts) {
-    for (SyntheticArtifact art : artifacts.find(SyntheticArtifact.class)) {
-      if (art.getPartialPath().startsWith(
-          ArtifactsOutputDirectory.COMPILE_REPORT_DIRECTORY + "/")) {
-        return true;
-      }
-    }
-    return false;
+    return permDescriptions;
   }
 }

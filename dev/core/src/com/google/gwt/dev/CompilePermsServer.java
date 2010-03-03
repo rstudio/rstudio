@@ -296,8 +296,8 @@ public class CompilePermsServer {
 
     Throwable caught = null;
     try {
-      logger.log(TreeLogger.DEBUG, "Compiling");
-      PermutationResult result = CompilePerms.compile(logger, p, ast);
+      PermutationResult result = CompilePerms.compile(logger.branch(
+          TreeLogger.DEBUG, "Compiling"), p, ast);
       resultFile.set(logger, result);
       logger.log(TreeLogger.DEBUG, "Successfully compiled permutation");
     } catch (UnableToCompleteException e) {

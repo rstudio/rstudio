@@ -49,6 +49,7 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -1220,7 +1221,7 @@ public final class Util {
     }
     objectStream.flush();
   }
-
+  
   public static boolean writeStringAsFile(File file, String string) {
     FileOutputStream stream = null;
     OutputStreamWriter writer = null;
@@ -1263,6 +1264,12 @@ public final class Util {
       Utility.close(writer);
       Utility.close(stream);
     }
+  }
+
+  public static void writeStringToStream(OutputStream stream, String string) throws IOException {
+      Writer writer = new OutputStreamWriter(stream, DEFAULT_ENCODING);
+      writer.write(string);
+      writer.close();
   }
   
   /**

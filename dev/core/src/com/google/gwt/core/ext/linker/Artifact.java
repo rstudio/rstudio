@@ -30,8 +30,8 @@ import java.io.Serializable;
  */
 public abstract class Artifact<C extends Artifact<C>> implements
     Comparable<Artifact<?>>, Serializable {
-  private final String linkerName;
   private transient Class<? extends Linker> linker;
+  private final String linkerName;
 
   /**
    * Constructor.
@@ -90,6 +90,14 @@ public abstract class Artifact<C extends Artifact<C>> implements
    */
   @Override
   public abstract int hashCode();
+
+  /**
+   * Returns whether the {@link Transferable} annotation is present on this
+   * class. See {@link Transferable} for the implications.
+   */
+  public final boolean isTransferableFromShards() {
+    return getClass().isAnnotationPresent(Transferable.class);
+  }
 
   @Override
   public String toString() {

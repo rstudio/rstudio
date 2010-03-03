@@ -37,7 +37,6 @@ import com.google.gwt.user.rebind.rpc.ProblemReport.Priority;
 import com.google.gwt.user.rebind.rpc.TypeParameterExposureComputer.TypeParameterFlowInfo;
 import com.google.gwt.user.rebind.rpc.TypePaths.TypePath;
 
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
@@ -60,13 +59,13 @@ import java.util.Map.Entry;
 
 /**
  * Builds a {@link SerializableTypeOracle} for a given set of root types.
- *
+ * 
  * <p>
  * There are two goals for this builder. First, discover the set of serializable
  * types that can be serialized if you serialize one of the root types. Second,
  * to make sure that all root types can actually be serialized by GWT.
  * </p>
- *
+ * 
  * <p>
  * To find the serializable types, it includes the root types, and then it
  * iteratively traverses the type hierarchy and the fields of any type already
@@ -75,7 +74,7 @@ import java.util.Map.Entry;
  * parameterized type, these exposure values are used to determine how to treat
  * the arguments.
  * </p>
- *
+ * 
  * <p>
  * A type qualifies for serialization if it or one of its subtypes is
  * automatically or manually serializable. Automatic serialization is selected
@@ -86,19 +85,19 @@ import java.util.Map.Entry;
  * qualifies for both manual and automatic serialization, manual serialization
  * is preferred.
  * </p>
- *
+ * 
  * <p>
  * Some types may be marked as "enhanced," either automatically by the presence
  * of a JDO <code>@PersistenceCapable</code> or JPA <code>@Entity</code> tag on
  * the class definition, or manually by extending the 'rpc.enhancedClasses'
  * configuration property in the GWT module XML file. For example, to manually
  * mark the class com.google.myapp.MyPersistentClass as enhanced, use:
- *
+ * 
  * <pre>
  * <extend-configuration-property name='rpc.enhancedClasses'
  *     value='com.google.myapp.MyPersistentClass'/>
  * </pre>
- *
+ * 
  * <p>
  * Enhanced classes are checked for the presence of additional serializable
  * fields on the server that were not defined in client code as seen by the GWT
@@ -116,12 +115,6 @@ import java.util.Map.Entry;
 public class SerializableTypeOracleBuilder {
 
   class TypeInfoComputed {
-    /**
-     * All instantiable types found when this type was quaried, including the
-     * type itself.
-     */
-    private Set<JClassType> instantiableTypes = new HashSet<JClassType>();
-
     /**
      * <code>true</code> if the type is assignable to {@link IsSerializable} or
      * {@link java.io.Serializable Serializable}.
@@ -150,6 +143,12 @@ public class SerializableTypeOracleBuilder {
      * one.
      */
     private boolean instantiableSubtypes;
+
+    /**
+     * All instantiable types found when this type was quaried, including the
+     * type itself.
+     */
+    private Set<JClassType> instantiableTypes = new HashSet<JClassType>();
 
     /**
      * Custom field serializer or <code>null</code> if there isn't one.
@@ -198,9 +197,9 @@ public class SerializableTypeOracleBuilder {
     /**
      * Returns the internal set of instantiable types for this TIC.
      * Modifications to this set are immediately recorded into the TIC as well.
-     * TODO(spoon) maybe pass the TIC around instead of the set?
-     *  then there could be addInstantiableType(JClassType) instead of
-     *  speccing this to be mutable.
+     * TODO(spoon) maybe pass the TIC around instead of the set? then there
+     * could be addInstantiableType(JClassType) instead of speccing this to be
+     * mutable.
      */
     public Set<JClassType> getInstantiableTypes() {
       return instantiableTypes;
@@ -352,8 +351,8 @@ public class SerializableTypeOracleBuilder {
       JDO_PERSISTENCE_CAPABLE_ANNOTATION = Class.forName(
           "javax.jdo.annotations.PersistenceCapable").asSubclass(
           Annotation.class);
-      JDO_PERSISTENCE_CAPABLE_DETACHABLE_METHOD =
-          JDO_PERSISTENCE_CAPABLE_ANNOTATION.getDeclaredMethod("detachable", (Class[]) null);
+      JDO_PERSISTENCE_CAPABLE_DETACHABLE_METHOD = JDO_PERSISTENCE_CAPABLE_ANNOTATION.getDeclaredMethod(
+          "detachable", (Class[]) null);
     } catch (ClassNotFoundException e) {
       // Ignore, JDO_PERSISTENCE_CAPABLE_ANNOTATION will be null
     } catch (NoSuchMethodException e) {
@@ -378,8 +377,8 @@ public class SerializableTypeOracleBuilder {
 
       if (!type.isDefaultInstantiable() && !isManuallySerializable(type)) {
         // Warn and return false.
-        problems.add(type, type.getParameterizedQualifiedSourceName() +
-            " is not default instantiable (it must have a zero-argument "
+        problems.add(type, type.getParameterizedQualifiedSourceName()
+            + " is not default instantiable (it must have a zero-argument "
             + "constructor or no constructors at all) and has no custom "
             + "serializer.", Priority.DEFAULT);
         return false;
@@ -396,13 +395,14 @@ public class SerializableTypeOracleBuilder {
 
   /**
    * Finds the custom field serializer for a given type.
-   *
+   * 
    * @param typeOracle
    * @param type
    * @return the custom field serializer for a type or <code>null</code> if
    *         there is not one
    */
-  public static JClassType findCustomFieldSerializer(TypeOracle typeOracle, JType type) {
+  public static JClassType findCustomFieldSerializer(TypeOracle typeOracle,
+      JType type) {
     JClassType classOrInterface = type.isClassOrInterface();
     if (classOrInterface == null) {
       return null;
@@ -532,7 +532,7 @@ public class SerializableTypeOracleBuilder {
    * this class should be serialized.
    */
   static boolean shouldConsiderFieldsForSerialization(JClassType type,
-       TypeFilter filter, ProblemReport problems) {
+      TypeFilter filter, ProblemReport problems) {
     if (!isAllowedByFilter(filter, type, problems)) {
       return false;
     }
@@ -564,18 +564,18 @@ public class SerializableTypeOracleBuilder {
       if (!isAccessibleToSerializer(type)) {
         // Class is not visible to a serializer class in the same package
         problems.add(type, type.getParameterizedQualifiedSourceName()
-                + " is not accessible from a class in its same package; it "
-                + "will be excluded from the set of serializable types",
+            + " is not accessible from a class in its same package; it "
+            + "will be excluded from the set of serializable types",
             Priority.DEFAULT);
         return false;
       }
 
       if (type.isMemberType() && !type.isStatic()) {
         // Non-static member types cannot be serialized
-        problems.add(type,
-            type.getParameterizedQualifiedSourceName() + " is nested but " +
-            "not static; it will be excluded from the set of serializable " +
-            "types", Priority.DEFAULT);
+        problems.add(type, type.getParameterizedQualifiedSourceName()
+            + " is nested but "
+            + "not static; it will be excluded from the set of serializable "
+            + "types", Priority.DEFAULT);
         return false;
       }
     }
@@ -674,11 +674,10 @@ public class SerializableTypeOracleBuilder {
   }
 
   private static boolean isAllowedByFilter(TypeFilter filter,
-        JClassType classType, ProblemReport problems) {
+      JClassType classType, ProblemReport problems) {
     if (!filter.isAllowed(classType)) {
-      problems.add(classType,
-          classType.getParameterizedQualifiedSourceName()
-             + " is excluded by type filter ", Priority.AUXILIARY);
+      problems.add(classType, classType.getParameterizedQualifiedSourceName()
+          + " is excluded by type filter ", Priority.AUXILIARY);
       return false;
     }
 
@@ -716,10 +715,10 @@ public class SerializableTypeOracleBuilder {
    * Cache of the {@link JClassType} for {@link Collection}.
    */
   private final JGenericType collectionClass;
-  
+
   private Set<String> enhancedClasses = null;
 
-  private OutputStream logOutputStream;
+  private PrintWriter logOutputWriter;
 
   /**
    * Cache of the {@link JClassType} for {@link Map}.
@@ -757,11 +756,11 @@ public class SerializableTypeOracleBuilder {
 
   /**
    * Constructs a builder.
-   *
+   * 
    * @param logger
    * @param propertyOracle
    * @param typeOracle
-   *
+   * 
    * @throws UnableToCompleteException if we fail to find one of our special
    *           types
    */
@@ -802,12 +801,12 @@ public class SerializableTypeOracleBuilder {
 
   /**
    * Builds a {@link SerializableTypeOracle} for a given set of root types.
-   *
+   * 
    * @param logger
-   *
+   * 
    * @return a {@link SerializableTypeOracle} for the specified set of root
    *         types
-   *
+   * 
    * @throws UnableToCompleteException if there was not at least one
    *           instantiable type assignable to each of the specified root types
    */
@@ -892,11 +891,11 @@ public class SerializableTypeOracleBuilder {
   }
 
   /**
-   * Set the {@link OutputStream} which will receive a detailed log of the types
+   * Set the {@link PrintWriter} which will receive a detailed log of the types
    * which were examined in order to determine serializability.
    */
-  public void setLogOutputStream(OutputStream logOutputStream) {
-    this.logOutputStream = logOutputStream;
+  public void setLogOutputWriter(PrintWriter logOutputWriter) {
+    this.logOutputWriter = logOutputWriter;
   }
 
   public void setTypeFilter(TypeFilter typeFilter) {
@@ -965,7 +964,8 @@ public class SerializableTypeOracleBuilder {
     if (isWildcard != null) {
       boolean success = true;
       for (JClassType bound : isWildcard.getUpperBounds()) {
-        success &= computeTypeInstantiability(localLogger, bound, path, problems).hasInstantiableSubtypes();
+        success &= computeTypeInstantiability(localLogger, bound, path,
+            problems).hasInstantiableSubtypes();
       }
       tic = getTypeInfoComputed(classType, path, true);
       tic.setInstantiableSubtypes(success);
@@ -975,8 +975,8 @@ public class SerializableTypeOracleBuilder {
 
     JArrayType isArray = classType.isArray();
     if (isArray != null) {
-      TypeInfoComputed arrayTic = checkArrayInstantiable(localLogger, isArray, path,
-          problems);
+      TypeInfoComputed arrayTic = checkArrayInstantiable(localLogger, isArray,
+          path, problems);
       assert getTypeInfoComputed(classType, path, false) != null;
       return arrayTic;
     }
@@ -984,12 +984,12 @@ public class SerializableTypeOracleBuilder {
     if (classType == typeOracle.getJavaLangObject()) {
       /*
        * Report an error if the type is or erases to Object since this violates
-       * our restrictions on RPC.  Should be fatal, but I worry users may have
+       * our restrictions on RPC. Should be fatal, but I worry users may have
        * Object-using code they can't readily get out of the class hierarchy.
        */
       problems.add(classType,
-          "In order to produce smaller client-side code, 'Object' is not " +
-          "allowed; please use a more specific type", Priority.DEFAULT);
+          "In order to produce smaller client-side code, 'Object' is not "
+              + "allowed; please use a more specific type", Priority.DEFAULT);
       tic = getTypeInfoComputed(classType, path, true);
       tic.setInstantiable(false);
       return tic;
@@ -1025,18 +1025,17 @@ public class SerializableTypeOracleBuilder {
   /**
    * Returns <code>true</code> if the fields of the type should be considered
    * for serialization.
-   *
+   * 
    * Default access to allow for testing.
    */
   boolean shouldConsiderFieldsForSerialization(JClassType type,
       ProblemReport problems) {
-    return shouldConsiderFieldsForSerialization(type, typeFilter,
-        problems);
+    return shouldConsiderFieldsForSerialization(type, typeFilter, problems);
   }
 
   /**
    * Consider any subtype of java.lang.Object which qualifies for serialization.
-   *
+   * 
    * @param logger
    */
   private void checkAllSubtypesOfObject(TreeLogger logger, TypePath parent,
@@ -1064,8 +1063,8 @@ public class SerializableTypeOracleBuilder {
     }
   }
 
-  private TypeInfoComputed checkArrayInstantiable(TreeLogger logger, JArrayType array,
-      TypePath path, ProblemReport problems) {
+  private TypeInfoComputed checkArrayInstantiable(TreeLogger logger,
+      JArrayType array, TypePath path, ProblemReport problems) {
 
     JType leafType = array.getLeafType();
     JWildcardType leafWild = leafType.isWildcard();
@@ -1080,7 +1079,7 @@ public class SerializableTypeOracleBuilder {
     if (isLeafTypeParameter != null
         && !typeParametersInRootTypes.contains(isLeafTypeParameter)) {
       // Don't deal with non root type parameters, but make a TIC entry to
-      // save time if it recurs.  We assume they're indirectly instantiable.
+      // save time if it recurs. We assume they're indirectly instantiable.
       TypeInfoComputed tic = getTypeInfoComputed(array, path, true);
       tic.setInstantiableSubtypes(true);
       tic.setInstantiable(false);
@@ -1089,7 +1088,7 @@ public class SerializableTypeOracleBuilder {
 
     if (!isAllowedByFilter(array, problems)) {
       // Don't deal with filtered out types either, but make a TIC entry to
-      // save time if it recurs.  We assume they're not instantiable.
+      // save time if it recurs. We assume they're not instantiable.
       TypeInfoComputed tic = getTypeInfoComputed(array, path, true);
       tic.setInstantiable(false);
       return tic;
@@ -1183,8 +1182,8 @@ public class SerializableTypeOracleBuilder {
               "Object was reached from a manually serializable type", null),
               path, problems);
         } else {
-          allSucceeded &= computeTypeInstantiability(fieldLogger, fieldType, path,
-              problems).hasInstantiableSubtypes();
+          allSucceeded &= computeTypeInstantiability(fieldLogger, fieldType,
+              path, problems).hasInstantiableSubtypes();
         }
       }
     }
@@ -1333,13 +1332,13 @@ public class SerializableTypeOracleBuilder {
    * it is applied to be serializable. As a side effect, populates
    * {@link #typeToTypeInfoComputed} in the same way as
    * {@link #checkTypeInstantiable(TreeLogger, JType, boolean)}.
-   *
+   * 
    * @param logger
    * @param baseType - The generic type the parameter is on
    * @param paramIndex - The index of the parameter in the generic type
    * @param typeArg - An upper bound on the actual argument being applied to the
    *          generic type
-   *
+   * 
    * @return Whether the a parameterized type can be serializable if
    *         <code>baseType</code> is the base type and the
    *         <code>paramIndex</code>th type argument is a subtype of
@@ -1366,13 +1365,12 @@ public class SerializableTypeOracleBuilder {
               paramIndex);
           if (otherFlowInfo.getExposure() >= 0
               && otherFlowInfo.isTransitivelyAffectedBy(flowInfoForArrayParam)) {
-            problems.add(baseType,
-                "Cannot serialize type '"
-                    + baseType.getParameterizedQualifiedSourceName()
-                    + "' when given an argument of type '"
-                    + typeArg.getParameterizedQualifiedSourceName()
-                    + "' because it appears to require serializing arrays "
-                    + "of unbounded dimension", Priority.DEFAULT);
+            problems.add(baseType, "Cannot serialize type '"
+                + baseType.getParameterizedQualifiedSourceName()
+                + "' when given an argument of type '"
+                + typeArg.getParameterizedQualifiedSourceName()
+                + "' because it appears to require serializing arrays "
+                + "of unbounded dimension", Priority.DEFAULT);
             return false;
           }
         }
@@ -1403,7 +1401,8 @@ public class SerializableTypeOracleBuilder {
 
       default: {
         assert (exposure >= TypeParameterExposureComputer.EXPOSURE_MIN_BOUNDED_ARRAY);
-        problems.add(getArrayType(typeOracle, exposure, typeArg),
+        problems.add(
+            getArrayType(typeOracle, exposure, typeArg),
             "Checking type argument "
                 + paramIndex
                 + " of type '"
@@ -1475,9 +1474,9 @@ public class SerializableTypeOracleBuilder {
         JClassType subtype = candidates.get(i);
         String worstMessage = problems.getWorstMessageForType(subtype);
         if (worstMessage == null) {
-          possibilities[i] = "   subtype " + 
-            subtype.getParameterizedQualifiedSourceName() +
-            " is not instantiable";
+          possibilities[i] = "   subtype "
+              + subtype.getParameterizedQualifiedSourceName()
+              + " is not instantiable";
         } else {
           // message with have the form "FQCN some-problem-description"
           possibilities[i] = "   subtype " + worstMessage;
@@ -1500,8 +1499,7 @@ public class SerializableTypeOracleBuilder {
     return tic;
   }
 
-  private boolean isAllowedByFilter(JClassType classType,
-      ProblemReport problems) {
+  private boolean isAllowedByFilter(JClassType classType, ProblemReport problems) {
     return isAllowedByFilter(typeFilter, classType, problems);
   }
 
@@ -1531,12 +1529,10 @@ public class SerializableTypeOracleBuilder {
   }
 
   private void logReachableTypes(TreeLogger logger) {
-    PrintWriter printWriter = null;
-    if (logOutputStream != null) {
+    if (logOutputWriter != null) {
       // Route the TreeLogger output to an output stream.
-      printWriter = new PrintWriter(logOutputStream);
       PrintWriterTreeLogger printWriterTreeLogger = new PrintWriterTreeLogger(
-          printWriter);
+          logOutputWriter);
       printWriterTreeLogger.setMaxDetail(TreeLogger.ALL);
       logger = printWriterTreeLogger;
     }
@@ -1571,8 +1567,8 @@ public class SerializableTypeOracleBuilder {
       logger.log(TreeLogger.DEBUG, "");
     }
 
-    if (printWriter != null) {
-      printWriter.flush();
+    if (logOutputWriter != null) {
+      logOutputWriter.flush();
     }
   }
 
@@ -1596,8 +1592,8 @@ public class SerializableTypeOracleBuilder {
     boolean success = canBeInstantiated(type, problems)
         && shouldConsiderFieldsForSerialization(type, problems);
     if (success) {
-      logger.log(TreeLogger.DEBUG,
-          type.getParameterizedQualifiedSourceName() + " might be instantiable");
+      logger.log(TreeLogger.DEBUG, type.getParameterizedQualifiedSourceName()
+          + " might be instantiable");
     }
     return success;
   }
@@ -1610,7 +1606,7 @@ public class SerializableTypeOracleBuilder {
   /**
    * Remove serializable types that were visited due to speculative paths but
    * are not really needed for serialization.
-   *
+   * 
    * NOTE: This is currently much more limited than it should be. For example, a
    * path sensitive prune could remove instantiable types also.
    */

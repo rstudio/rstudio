@@ -38,6 +38,7 @@ import com.google.gwt.rpc.client.impl.TypeOverrides;
 import com.google.gwt.rpc.linker.RpcDataArtifact;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
+import com.google.gwt.user.linker.rpc.RpcLogArtifact;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.rpc.CustomFieldSerializerValidator;
@@ -296,7 +297,7 @@ public class RpcProxyCreator extends ProxyCreator {
 
     ctx.commitArtifact(logger, data);
 
-    return "unused";
+    return RpcLogArtifact.UNSPECIFIED_STRONGNAME;
   }
 
   private StringBuilder writeArtificialRescues(TypeOracle typeOracle,

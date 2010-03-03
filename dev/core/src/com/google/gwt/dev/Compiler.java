@@ -218,12 +218,13 @@ public class Compiler {
 
           String logMessage = "Linking into " + absPath;
           if (options.getExtraDir() != null) {
-              File absExtrasPath = new File(options.getExtraDir(), module.getName());
-              absExtrasPath = absExtrasPath.getAbsoluteFile();
-              logMessage += "; Writing extras to " + absExtrasPath;
+            File absExtrasPath = new File(options.getExtraDir(),
+                module.getName());
+            absExtrasPath = absExtrasPath.getAbsoluteFile();
+            logMessage += "; Writing extras to " + absExtrasPath;
           }
-          Link.link(logger.branch(TreeLogger.TRACE, logMessage),
-              module, generatedArtifacts, resultFiles, options.getWarDir(),
+          Link.link(logger.branch(TreeLogger.TRACE, logMessage), module,
+              generatedArtifacts, allPerms, resultFiles, options.getWarDir(),
               options.getExtraDir(), precompileOptions);
 
           long compileDone = System.currentTimeMillis();

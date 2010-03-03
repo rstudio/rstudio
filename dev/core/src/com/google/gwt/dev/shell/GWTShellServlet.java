@@ -17,6 +17,7 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.impl.HostedModeLinker;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.cfg.ModuleDef;
@@ -552,12 +553,13 @@ public class GWTShellServlet extends HttpServlet {
       throws UnableToCompleteException {
     logger.log(TreeLogger.TRACE,
         "Generating a script selection script for module " + moduleName);
-
-    StandardLinkerContext context = new StandardLinkerContext(logger,
-        getModuleDef(logger, moduleName), new JJSOptionsImpl());
+    ModuleDef module = getModuleDef(logger, moduleName);
+    StandardLinkerContext context = new StandardLinkerContext(logger, module,
+        new JJSOptionsImpl());
+    ArtifactSet artifacts = context.getArtifactsForPublicResources(logger,
+        module);
     HostedModeLinker linker = new HostedModeLinker();
-    return linker.generateSelectionScript(logger, context,
-        context.getArtifacts());
+    return linker.generateSelectionScript(logger, context, artifacts);
   }
 
   /**

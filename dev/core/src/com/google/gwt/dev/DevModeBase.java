@@ -151,8 +151,7 @@ abstract class DevModeBase implements DoneCallback {
           // replace a wildcard address with our machine's local address
           // this isn't fully accurate, as there is no guarantee we will get
           // the right one on a multihomed host
-          options.setConnectAddress(
-              InetAddress.getLocalHost().getHostAddress());
+          options.setConnectAddress(InetAddress.getLocalHost().getHostAddress());
         } else {
           options.setConnectAddress(value);
         }
@@ -565,7 +564,7 @@ abstract class DevModeBase implements DoneCallback {
 
   protected interface OptionBindAddress {
     String getBindAddress();
-    
+
     String getConnectAddress();
 
     void setBindAddress(String bindAddress);
@@ -744,8 +743,8 @@ abstract class DevModeBase implements DoneCallback {
    * Gets the base log level recommended by the UI for INFO-level messages. This
    * method can only be called once {@link #createUI()} has been called. Please
    * do not depend on this method, as it is subject to change.
-   *
-   * @return the log level to use for INFO-level messages 
+   * 
+   * @return the log level to use for INFO-level messages
    */
   public TreeLogger.Type getBaseLogLevelForUI() {
     if (baseLogLevelForUI == null) {
@@ -784,7 +783,7 @@ abstract class DevModeBase implements DoneCallback {
 
       // The web server is running now, so launch browsers for startup urls.
       ui.moduleLoadComplete(success);
-      
+
       blockUntilDone.acquire();
     } catch (Exception e) {
       e.printStackTrace();
@@ -837,9 +836,9 @@ abstract class DevModeBase implements DoneCallback {
   protected abstract void doShutDownServer();
 
   /**
-   * Perform any slower startup tasks, such as loading modules.  This is
-   * separate from {@link #doStartup()} so that the UI can be updated as
-   * soon as possible and the web server can be started earlier.
+   * Perform any slower startup tasks, such as loading modules. This is separate
+   * from {@link #doStartup()} so that the UI can be updated as soon as possible
+   * and the web server can be started earlier.
    * 
    * @return false if startup failed
    */
@@ -944,7 +943,10 @@ abstract class DevModeBase implements DoneCallback {
     // Create a new active linker stack for the fresh link.
     StandardLinkerContext linkerStack = new StandardLinkerContext(linkLogger,
         module, options);
-    ArtifactSet artifacts = linkerStack.invokeLink(linkLogger);
+    ArtifactSet artifacts = linkerStack.getArtifactsForPublicResources(logger,
+        module);
+    artifacts = linkerStack.invokeLegacyLinkers(linkLogger, artifacts);
+    artifacts = linkerStack.invokeFinalLink(linkLogger, artifacts);
     produceOutput(linkLogger, linkerStack, artifacts, module, false);
     return linkerStack;
   }

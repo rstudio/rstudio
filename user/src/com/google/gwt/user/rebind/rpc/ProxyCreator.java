@@ -48,7 +48,7 @@ import com.google.gwt.user.client.rpc.impl.FailedRequest;
 import com.google.gwt.user.client.rpc.impl.FailingRequestBuilder;
 import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
-import com.google.gwt.user.linker.rpc.RpcPolicyFileArtifact;
+import com.google.gwt.user.linker.rpc.RpcLogArtifact;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
@@ -59,7 +59,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,6 +74,11 @@ import java.util.Set;
  * as well as the necessary type and field serializers.
  */
 public class ProxyCreator {
+  /**
+   * The directory within which RPC manifests are placed for individual
+   * permutations.
+   */
+  public static final String MANIFEST_ARTIFACT_DIR = "rpcPolicyManifest/manifests";
 
   private static final Map<JPrimitiveType, ResponseReader> JPRIMITIVETYPE_TO_RESPONSEREADER = new HashMap<JPrimitiveType, ResponseReader>();
 
@@ -263,19 +270,17 @@ public class ProxyCreator {
       throw new UnableToCompleteException();
     }
 
-    // Create a resource file to receive all of the serialization information
-    // computed by STOB and mark it as private so it does not end up in the
-    // output.
-    OutputStream pathInfo = context.tryCreateResource(logger,
-        serviceIntf.getQualifiedSourceName() + ".rpc.log");
-    PrintWriter writer = null;
+    // Decide what types to send in each direction.
+    // Log the decisions to a string that will be written later in this method
     SerializableTypeOracle typesSentFromBrowser;
     SerializableTypeOracle typesSentToBrowser;
-    try {
-      writer = new PrintWriter(pathInfo);
+    String rpcLog;
+    {
+      StringWriter stringWriter = new StringWriter();
+      PrintWriter writer = new PrintWriter(stringWriter);
 
-      typesSentFromBrowserBuilder.setLogOutputStream(pathInfo);
-      typesSentToBrowserBuilder.setLogOutputStream(pathInfo);
+      typesSentFromBrowserBuilder.setLogOutputWriter(writer);
+      typesSentToBrowserBuilder.setLogOutputWriter(writer);
 
       writer.write("====================================\n");
       writer.write("Types potentially sent from browser:\n");
@@ -289,13 +294,8 @@ public class ProxyCreator {
       writer.flush();
       typesSentToBrowser = typesSentToBrowserBuilder.build(logger);
 
-      if (pathInfo != null) {
-        context.commitResource(logger, pathInfo).setPrivate(true);
-      }
-    } finally {
-      if (writer != null) {
-        writer.close();
-      }
+      writer.close();
+      rpcLog = stringWriter.toString();
     }
 
     generateTypeHandlers(logger, context, typesSentFromBrowser,
@@ -320,6 +320,12 @@ public class ProxyCreator {
     }
 
     srcWriter.commit(logger);
+
+    // Create an artifact explaining STOB's decisions. It will be emitted by
+    // RpcLogLinker
+    context.commitArtifact(logger, new RpcLogArtifact(
+        serviceIntf.getQualifiedSourceName(), serializationPolicyStrongName,
+        rpcLog));
 
     return getProxyQualifiedName();
   }
@@ -620,7 +626,7 @@ public class ProxyCreator {
   protected Class<? extends SerializationStreamWriter> getStreamWriterClass() {
     return ClientSerializationStreamWriter.class;
   }
-  
+
   protected String writeSerializationPolicyFile(TreeLogger logger,
       GeneratorContext ctx, SerializableTypeOracle serializationSto,
       SerializableTypeOracle deserializationSto)
@@ -663,8 +669,7 @@ public class ProxyCreator {
          * containing the keyword '@ClientFields', the class name, and a list of
          * all potentially serializable client-visible fields.
          */
-        if ((type instanceof JClassType)
-            && ((JClassType) type).isEnhanced()) {
+        if ((type instanceof JClassType) && ((JClassType) type).isEnhanced()) {
           JField[] fields = ((JClassType) type).getFields();
           JField[] rpcFields = new JField[fields.length];
           int numRpcFields = 0;
@@ -703,8 +708,7 @@ public class ProxyCreator {
          * Record which proxy class created the resource. A manifest will be
          * emitted by the RpcPolicyManifestLinker.
          */
-        ctx.commitArtifact(logger, new RpcPolicyFileArtifact(
-            serviceIntf.getQualifiedSourceName(), resource));
+        emitPolicyFileArtifact(logger, ctx, resource.getPartialPath());
       } else {
         logger.log(TreeLogger.TRACE,
             "SerializationPolicy file for RemoteService '"
@@ -713,6 +717,38 @@ public class ProxyCreator {
       }
 
       return serializationPolicyName;
+    } catch (UnsupportedEncodingException e) {
+      logger.log(TreeLogger.ERROR,
+          SerializationPolicyLoader.SERIALIZATION_POLICY_FILE_ENCODING
+              + " is not supported", e);
+      throw new UnableToCompleteException();
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, null, e);
+      throw new UnableToCompleteException();
+    }
+  }
+
+  private void emitPolicyFileArtifact(TreeLogger logger,
+      GeneratorContext context, String partialPath)
+      throws UnableToCompleteException {
+    try {
+      String qualifiedSourceName = serviceIntf.getQualifiedSourceName();
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      Writer writer;
+      writer = new OutputStreamWriter(baos,
+          SerializationPolicyLoader.SERIALIZATION_POLICY_FILE_ENCODING);
+      writer.write("serviceClass: " + qualifiedSourceName + "\n");
+      writer.write("path: " + partialPath + "\n");
+      writer.close();
+
+      byte[] manifestBytes = baos.toByteArray();
+      String md5 = Util.computeStrongName(manifestBytes);
+      OutputStream os = context.tryCreateResource(logger, MANIFEST_ARTIFACT_DIR
+          + "/" + md5 + ".txt");
+      os.write(manifestBytes);
+
+      GeneratedResource resource = context.commitResource(logger, os);
+      resource.setPrivate(true);
     } catch (UnsupportedEncodingException e) {
       logger.log(TreeLogger.ERROR,
           SerializationPolicyLoader.SERIALIZATION_POLICY_FILE_ENCODING

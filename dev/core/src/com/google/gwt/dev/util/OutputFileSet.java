@@ -17,15 +17,22 @@ package com.google.gwt.dev.util;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * An abstract set of files that a linker links into.
  */
 public abstract class OutputFileSet {
   private final String pathDescription;
+  private final Set<String> pathsSeen = new HashSet<String>();
 
   protected OutputFileSet(String pathDescription) {
     this.pathDescription = pathDescription;
+  }
+
+  public boolean alreadyContains(String path) {
+    return pathsSeen.contains(path);
   }
 
   public abstract void close() throws IOException;
@@ -39,6 +46,17 @@ public abstract class OutputFileSet {
     return pathDescription;
   }
 
-  public abstract OutputStream openForWrite(String path, long lastModifiedTime)
-      throws IOException;
+  public final OutputStream openForWrite(String path) throws IOException {
+    int lastModifiedTime = -1;
+    return openForWrite(path, lastModifiedTime);
+  }
+
+  public OutputStream openForWrite(String path, long lastModifiedTime)
+      throws IOException {
+    pathsSeen.add(path);
+    return createNewOutputStream(path, lastModifiedTime);
+  }
+
+  protected abstract OutputStream createNewOutputStream(String path,
+      long lastModifiedTime) throws IOException;
 }

@@ -18,9 +18,10 @@ package com.google.gwt.core.linker;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.CompilationResult;
-import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
@@ -32,6 +33,7 @@ import java.util.Collection;
  * Generates a cross-site compatible bootstrap sequence.
  */
 @LinkerOrder(Order.PRIMARY)
+@Shardable
 public class XSLinker extends SelectionScriptLinker {
   @Override
   public String getDescription() {
@@ -39,7 +41,7 @@ public class XSLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected Collection<EmittedArtifact> doEmitCompilation(TreeLogger logger,
+  protected Collection<Artifact<?>> doEmitCompilation(TreeLogger logger,
       LinkerContext context, CompilationResult result)
       throws UnableToCompleteException {
     if (result.getJavaScript().length != 1) {
@@ -112,8 +114,8 @@ public class XSLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String getSelectionScriptTemplate(TreeLogger logger,
-      LinkerContext context) throws UnableToCompleteException {
+  protected String getSelectionScriptTemplate(TreeLogger logger, LinkerContext context)
+      throws UnableToCompleteException {
     return "com/google/gwt/core/linker/XSTemplate.js";
   }
 

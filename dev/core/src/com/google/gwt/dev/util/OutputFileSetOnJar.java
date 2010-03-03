@@ -81,7 +81,7 @@ public class OutputFileSetOnJar extends OutputFileSet {
   }
 
   @Override
-  public OutputStream openForWrite(String path, long lastModifiedTime)
+  public OutputStream createNewOutputStream(String path, long lastModifiedTime)
       throws IOException {
     mkzipDirs(getParentPath(pathPrefix + path));
 

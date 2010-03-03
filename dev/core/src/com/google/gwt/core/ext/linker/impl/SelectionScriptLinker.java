@@ -19,13 +19,18 @@ import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.AbstractLinker;
+import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.ScriptReference;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.StylesheetReference;
+import com.google.gwt.dev.cfg.BindingProperty;
+import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.collect.HashSet;
+import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
@@ -34,10 +39,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * A base class for Linkers that use an external script to boostrap the GWT
@@ -66,7 +72,6 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * @param src the test url
    * @return <code>true</code> if the URL is relative, <code>false</code> if not
    */
-  @SuppressWarnings("unused")
   protected static boolean isRelativeURL(String src) {
     // A straight absolute url for the same domain, server, and protocol.
     if (src.startsWith("/")) {
@@ -97,22 +102,50 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     }
   }
 
-  private final Map<CompilationResult, String> compilationStrongNames = new IdentityHashMap<CompilationResult, String>();
+  /**
+   * This maps each compilation strong name to the property settings for that
+   * compilation. A single compilation can have multiple property settings if
+   * the compiles for those settings yielded the exact same compiled output.
+   */
+  private final SortedMap<String, List<Map<String, String>>> propMapsByStrongName = new TreeMap<String, List<Map<String, String>>>();
 
+  /**
+   * This method is left in place for existing subclasses of
+   * SelectionScriptLinker that have not been upgraded for the sharding API.
+   */
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
       ArtifactSet artifacts) throws UnableToCompleteException {
-    ArtifactSet toReturn = new ArtifactSet(artifacts);
-
-    for (CompilationResult compilation : toReturn.find(CompilationResult.class)) {
-      toReturn.addAll(doEmitCompilation(logger, context, compilation));
-    }
-
-    toReturn.add(emitSelectionScript(logger, context, artifacts));
+    ArtifactSet toReturn = link(logger, context, artifacts, true);
+    toReturn = link(logger, context, artifacts, false);
     return toReturn;
   }
 
-  protected Collection<EmittedArtifact> doEmitCompilation(TreeLogger logger,
+  @Override
+  public ArtifactSet link(TreeLogger logger, LinkerContext context,
+      ArtifactSet artifacts, boolean onePermutation)
+      throws UnableToCompleteException {
+    if (onePermutation) {
+      ArtifactSet toReturn = new ArtifactSet(artifacts);
+
+      /*
+       * Support having multiple compilation results because this method is also
+       * called from the legacy link method.
+       */
+      for (CompilationResult compilation : toReturn.find(CompilationResult.class)) {
+        toReturn.addAll(doEmitCompilation(logger, context, compilation));
+      }
+      return toReturn;
+    } else {
+      processSelectionInformation(artifacts);
+
+      ArtifactSet toReturn = new ArtifactSet(artifacts);
+      toReturn.add(emitSelectionScript(logger, context, artifacts));
+      return toReturn;
+    }
+  }
+
+  protected Collection<Artifact<?>> doEmitCompilation(TreeLogger logger,
       LinkerContext context, CompilationResult result)
       throws UnableToCompleteException {
     String[] js = result.getJavaScript();
@@ -122,7 +155,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       bytes[i] = Util.getBytes(js[i]);
     }
 
-    Collection<EmittedArtifact> toReturn = new ArrayList<EmittedArtifact>();
+    Collection<Artifact<?>> toReturn = new ArrayList<Artifact<?>>();
     toReturn.add(emitBytes(logger, bytes[0], result.getStrongName()
         + getCompilationExtension(logger, context)));
     for (int i = 1; i < js.length; i++) {
@@ -130,7 +163,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
           + result.getStrongName() + File.separator + i + FRAGMENT_EXTENSION));
     }
 
-    compilationStrongNames.put(result, result.getStrongName());
+    toReturn.addAll(emitSelectionInformation(result.getPermutation().getId(),
+        result.getStrongName(), result.getPermutation().getPropertyOracles()));
 
     return toReturn;
   }
@@ -217,15 +251,17 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     }
   }
 
+  /**
+   * Generate a selection script. The selection information should previously
+   * have been scanned using {@link #processSelectionInformation(ArtifactSet)}.
+   */
   protected String generateSelectionScript(TreeLogger logger,
       LinkerContext context, ArtifactSet artifacts)
       throws UnableToCompleteException {
-
     StringBuffer selectionScript;
     try {
       selectionScript = new StringBuffer(
-          Utility.getFileFromClassPath(getSelectionScriptTemplate(logger,
-              context)));
+          Utility.getFileFromClassPath(getSelectionScriptTemplate(logger, context)));
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to read selection script template",
           e);
@@ -268,31 +304,30 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     }
 
     // Possibly add permutations
-    SortedSet<CompilationResult> compilations = artifacts.find(CompilationResult.class);
     startPos = selectionScript.indexOf("// __PERMUTATIONS_END__");
     if (startPos != -1) {
       StringBuffer text = new StringBuffer();
-      if (compilations.size() == 0) {
+      if (propMapsByStrongName.size() == 0) {
         // Hosted mode link.
-        text.append("alert(\"GWT module '"
-            + context.getModuleName()
+        text.append("alert(\"GWT module '" + context.getModuleName()
             + "' may need to be (re)compiled\");");
         text.append("return;");
 
-      } else if (compilations.size() == 1) {
+      } else if (propMapsByStrongName.size() == 1) {
         // Just one distinct compilation; no need to evaluate properties
-        Iterator<CompilationResult> iter = compilations.iterator();
-        CompilationResult result = iter.next();
-        text.append("strongName = '" + compilationStrongNames.get(result)
-            + "';");
+        text.append("strongName = '"
+            + propMapsByStrongName.keySet().iterator().next() + "';");
       } else {
-        for (CompilationResult r : compilations) {
-          for (Map<SelectionProperty, String> propertyMap : r.getPropertyMap()) {
+        Set<String> propertiesUsed = new HashSet<String>();
+        for (String strongName : propMapsByStrongName.keySet()) {
+          for (Map<String, String> propertyMap : propMapsByStrongName.get(strongName)) {
             // unflatten([v1, v2, v3], 'strongName');
             text.append("unflattenKeylistIntoAnswers([");
             boolean needsComma = false;
             for (SelectionProperty p : context.getProperties()) {
-              if (!propertyMap.containsKey(p)) {
+              if (p.tryGetValue() != null) {
+                continue;
+              } else if (p.isDerived()) {
                 continue;
               }
 
@@ -301,10 +336,10 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
               } else {
                 needsComma = true;
               }
-              text.append("'" + propertyMap.get(p) + "'");
+              text.append("'" + propertyMap.get(p.getName()) + "'");
+              propertiesUsed.add(p.getName());
             }
-            text.append("], '").append(compilationStrongNames.get(r)).append(
-                "');\n");
+            text.append("], '").append(strongName).append("');\n");
           }
         }
 
@@ -312,9 +347,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
         text.append("strongName = answers[");
         boolean needsIndexMarkers = false;
         for (SelectionProperty p : context.getProperties()) {
-          if (p.tryGetValue() != null) {
-            continue;
-          } else if (p.isDerived()) {
+          if (!propertiesUsed.contains(p.getName())) {
             continue;
           }
           if (needsIndexMarkers) {
@@ -364,16 +397,6 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       LinkerContext context) throws UnableToCompleteException;
 
   /**
-   * Get the partial path on which a CompilationResult has been emitted.
-   * 
-   * @return the partial path, or <code>null</code> if the CompilationResult has
-   *         not been emitted.
-   */
-  protected String getCompilationStrongName(CompilationResult result) {
-    return compilationStrongNames.get(result);
-  }
-
-  /**
    * Compute the beginning of a JavaScript file that will hold the main module
    * implementation.
    */
@@ -398,6 +421,49 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   protected abstract String getModuleSuffix(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
 
-  protected abstract String getSelectionScriptTemplate(TreeLogger logger,
-      LinkerContext context) throws UnableToCompleteException;
+  protected abstract String getSelectionScriptTemplate(TreeLogger logger, LinkerContext context)
+      throws UnableToCompleteException;
+
+  /**
+   * Find all instances of {@link SelectionInformation} and add them to the
+   * internal map of selection information.
+   */
+  protected void processSelectionInformation(ArtifactSet artifacts) {
+    for (SelectionInformation selInfo : artifacts.find(SelectionInformation.class)) {
+      processSelectionInformation(selInfo);
+    }
+  }
+
+  private List<Artifact<?>> emitSelectionInformation(int id, String strongName,
+      StaticPropertyOracle[] staticPropertyOracles) {
+    List<Artifact<?>> emitted = new ArrayList<Artifact<?>>();
+
+    for (int propOracleId = 0; propOracleId < staticPropertyOracles.length; propOracleId++) {
+      StaticPropertyOracle propOracle = staticPropertyOracles[propOracleId];
+      TreeMap<String, String> propMap = new TreeMap<String, String>();
+
+      BindingProperty[] orderedProps = propOracle.getOrderedProps();
+      String[] orderedPropValues = propOracle.getOrderedPropValues();
+      for (int i = 0; i < orderedProps.length; i++) {
+        propMap.put(orderedProps[i].getName(), orderedPropValues[i]);
+      }
+      emitted.add(new SelectionInformation(strongName, propMap));
+    }
+
+    return emitted;
+  }
+
+  private Map<String, String> processSelectionInformation(
+      SelectionInformation selInfo) {
+    TreeMap<String, String> entries = selInfo.getPropMap();
+    String strongName = selInfo.getStrongName();
+    if (!propMapsByStrongName.containsKey(strongName)) {
+      propMapsByStrongName.put(strongName,
+          Lists.<Map<String, String>> create(entries));
+    } else {
+      propMapsByStrongName.put(strongName, Lists.add(
+          propMapsByStrongName.get(strongName), entries));
+    }
+    return entries;
+  }
 }
