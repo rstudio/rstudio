@@ -260,6 +260,39 @@ public class JUnitShell extends GWTShell {
         }
       });
 
+      registerHandler(new ArgHandlerInt() {
+        @Override
+        public String[] getDefaultArgs() {
+          return new String[] {getTag(), "1"};
+        }
+
+        @Override
+        public String getPurpose() {
+          return "Set the test begin timeout (time for clients to contact "
+              + "server), in minutes";
+        }
+
+        @Override
+        public String getTag() {
+          return "-testBeginTimeout";
+        }
+
+        @Override
+        public String[] getTagArgs() {
+          return new String[] {"minutes"};
+        }
+
+        @Override
+        public boolean isUndocumented() {
+          return false;
+        }
+
+        @Override
+        public void setInt(int minutes) {
+          baseTestBeginTimeoutMillis = minutes * 60 * 1000;
+        }
+      });
+
       registerHandler(new ArgHandlerString() {
         @Override
         public String getPurpose() {
@@ -460,13 +493,6 @@ public class JUnitShell extends GWTShell {
       });
     }
   }
-
-  /**
-   * The amount of time to wait for all clients to have contacted the server and
-   * begin running the test. "Contacted" does not necessarily mean "the test has
-   * begun," e.g. for linker errors stopping the test initialization.
-   */
-  static final int TEST_BEGIN_TIMEOUT_MILLIS = 60 * 1000;
 
   /**
    * This is a system property that, when set, emulates command line arguments.
@@ -674,6 +700,13 @@ public class JUnitShell extends GWTShell {
    * argument.
    */
   private long baseTestMethodTimeoutMillis;
+
+  /**
+   * The amount of time to wait for all clients to have contacted the server and
+   * begin running the test. "Contacted" does not necessarily mean "the test has
+   * begun," e.g. for linker errors stopping the test initialization.
+   */
+  private long baseTestBeginTimeoutMillis;
 
   /**
    * Determines how to batch up tests for execution.
@@ -925,7 +958,7 @@ public class JUnitShell extends GWTShell {
       double elapsed = (currentTimeMillis - testBeginTime) / 1000.0;
       throw new TimeoutException(
           "The browser did not contact the server within "
-              + TEST_BEGIN_TIMEOUT_MILLIS + "ms.\n"
+              + baseTestBeginTimeoutMillis + "ms.\n"
               + messageQueue.getUnretrievedClients(currentTestInfo)
               + "\n Actual time elapsed: " + elapsed + " seconds.\n");
     }
@@ -1220,7 +1253,7 @@ public class JUnitShell extends GWTShell {
       // Set a timeout period to automatically fail if the servlet hasn't been
       // contacted; something probably went wrong (the module failed to load?)
       testBeginTime = System.currentTimeMillis();
-      testBeginTimeout = testBeginTime + TEST_BEGIN_TIMEOUT_MILLIS;
+      testBeginTimeout = testBeginTime + baseTestBeginTimeoutMillis;
       testMethodTimeout = 0; // wait until test execution begins
       while (notDone()) {
         messageQueue.waitForResults(1000);
