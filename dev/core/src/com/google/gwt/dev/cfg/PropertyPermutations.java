@@ -40,12 +40,13 @@ public class PropertyPermutations implements Iterable<String[]> {
    * Returns the list of all permutations. This method must return results in a
    * consistently sorted order over multiple invocations.
    */
-  private static List<String[]> allPermutationsOf(Properties properties) {
+  private static List<String[]> allPermutationsOf(Properties properties,
+      Set<String> activeLinkerNames) {
     BindingProperty[] bindingProperties = getOrderedPropertiesOf(properties);
 
     List<String[]> permutations = new ArrayList<String[]>();
     if (bindingProperties.length > 0) {
-      permute(bindingProperties, null, 0, permutations);
+      permute(bindingProperties, activeLinkerNames, null, 0, permutations);
     } else {
       permutations.add(new String[0]);
     }
@@ -93,8 +94,9 @@ public class PropertyPermutations implements Iterable<String[]> {
         new BindingProperty[evaluationOrder.size()]);
   }
 
-  private static void permute(BindingProperty[] properties, String[] soFar,
-      int whichProp, List<String[]> permutations) {
+  private static void permute(BindingProperty[] properties,
+      Set<String> activeLinkerNames, String[] soFar, int whichProp,
+      List<String[]> permutations) {
     int lastProp = properties.length - 1;
 
     BindingProperty prop = properties[whichProp];
@@ -111,7 +113,8 @@ public class PropertyPermutations implements Iterable<String[]> {
 
       for (Condition cond : prop.getConditionalValues().keySet()) {
         try {
-          if (cond.isTrue(TreeLogger.NULL, propertyOracle, null, null)) {
+          if (cond.isTrue(TreeLogger.NULL, new DeferredBindingQuery(
+              propertyOracle, activeLinkerNames))) {
             winner = cond;
           }
         } catch (UnableToCompleteException e) {
@@ -134,7 +137,8 @@ public class PropertyPermutations implements Iterable<String[]> {
       nextStep[whichProp] = knownValue;
 
       if (whichProp < lastProp) {
-        permute(properties, nextStep, whichProp + 1, permutations);
+        permute(properties, activeLinkerNames, nextStep, whichProp + 1,
+            permutations);
       } else {
         // Finished this permutation.
         permutations.add(nextStep);
@@ -145,15 +149,10 @@ public class PropertyPermutations implements Iterable<String[]> {
   private final Properties properties;
   private final List<String[]> values;
 
-  public PropertyPermutations(Properties properties) {
+  public PropertyPermutations(Properties properties,
+      Set<String> activeLinkerNames) {
     this.properties = properties;
-    this.values = allPermutationsOf(properties);
-  }
-
-  public PropertyPermutations(Properties properties, int firstPerm, int numPerms) {
-    this.properties = properties;
-    values = allPermutationsOf(properties).subList(firstPerm,
-        firstPerm + numPerms);
+    this.values = allPermutationsOf(properties, activeLinkerNames);
   }
 
   public PropertyPermutations(PropertyPermutations allPermutations,

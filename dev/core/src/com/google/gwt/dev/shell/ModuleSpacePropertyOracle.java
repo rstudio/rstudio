@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.Condition;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
+import com.google.gwt.dev.cfg.DeferredBindingQuery;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 
@@ -32,6 +33,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -41,6 +43,8 @@ import java.util.TreeSet;
  */
 public class ModuleSpacePropertyOracle implements PropertyOracle {
 
+  private final Set<String> activeLinkerNames;
+
   private final Map<String, String> prevAnswers = new HashMap<String, String>();
 
   private final Properties props;
@@ -49,12 +53,11 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
 
   /**
    * Create a property oracle that computes its properties from a module.
-   * 
-   * @param props
-   * @param space
    */
-  public ModuleSpacePropertyOracle(Properties props, ModuleSpace space) {
+  public ModuleSpacePropertyOracle(Properties props,
+      Set<String> activeLinkerNames, ModuleSpace space) {
     this.space = space;
+    this.activeLinkerNames = activeLinkerNames;
     this.props = props;
   }
 
@@ -132,8 +135,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       for (String v : cprop.getDefinedValues()) {
         possibleValues.add(v);
       }
-      return new DefaultSelectionProperty(value, fallback, name,
-          possibleValues);
+      return new DefaultSelectionProperty(value, fallback, name, possibleValues);
     } else {
       throw new BadPropertyValueException(propertyName);
     }
@@ -145,7 +147,8 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     Condition winner = null;
     for (Condition cond : prop.getConditionalValues().keySet()) {
       try {
-        if (cond.isTrue(logger, this, null, null)) {
+        if (cond.isTrue(logger, new DeferredBindingQuery(this,
+            activeLinkerNames))) {
           winner = cond;
         }
       } catch (UnableToCompleteException e) {

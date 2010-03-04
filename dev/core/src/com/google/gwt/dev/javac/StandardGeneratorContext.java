@@ -378,6 +378,10 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
   }
 
+  public Set<String> getActiveLinkerNames() {
+    return module.getActiveLinkerNames();
+  }
+
   public final PropertyOracle getPropertyOracle() {
     return propOracle;
   }

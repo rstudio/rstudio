@@ -15,9 +15,7 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
 /**
  * A deferred binding condition to determine whether the type being rebound is
@@ -35,9 +33,8 @@ public class ConditionWhenTypeIs extends Condition {
     return "<when-type-is class='" + exactTypeName + "'/>";
   }
 
-  protected boolean doEval(TreeLogger logger, PropertyOracle propertyOracle,
-      TypeOracle typeOracle, String testType) {
-    return exactTypeName.equals(testType);
+  protected boolean doEval(TreeLogger logger, DeferredBindingQuery query) {
+    return exactTypeName.equals(query.getTestType());
   }
 
   protected String getEvalAfterMessage(String testType, boolean result) {

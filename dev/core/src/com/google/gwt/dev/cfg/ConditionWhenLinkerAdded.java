@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,41 +13,42 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
-
-import java.util.Iterator;
 
 /**
- * A compound condition that is satisfied if any of its children are satisfied.
+ * A condition that is true when the active linkers include the one specified.
  */
-public class ConditionAny extends CompoundCondition {
+public class ConditionWhenLinkerAdded extends Condition {
+  private final String linkerName;
 
-  public ConditionAny() {
+  public ConditionWhenLinkerAdded(String linkerName) {
+    this.linkerName = linkerName;
   }
 
-  protected boolean doEval(TreeLogger logger, DeferredBindingQuery query)
-      throws UnableToCompleteException {
-    for (Iterator<Condition> iter = getConditions().iterator(); iter.hasNext();) {
-      Condition condition = iter.next();
-      if (condition.isTrue(logger, query)) {
-        return true;
-      }
-    }
-    return false;
+  @Override
+  public String toString() {
+    return "<when-linkers-include name='" + linkerName + "'/>";
   }
 
+  @Override
+  protected boolean doEval(TreeLogger logger, DeferredBindingQuery query) {
+    return query.getLinkerNames().contains(linkerName);
+  }
+
+  @Override
   protected String getEvalAfterMessage(String testType, boolean result) {
     if (result) {
-      return "Yes: One or more subconditions was true";
+      return "Yes, the requested linker is active";
     } else {
-      return "No: All subconditions were false";
+      return "No, the requested linker is not active";
     }
   }
 
+  @Override
   protected String getEvalBeforeMessage(String testType) {
-    return "Checking if any subcondition is true (<any>)";
+    return toString();
   }
 }

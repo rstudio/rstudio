@@ -77,6 +77,8 @@ public class ModuleDef implements PublicOracle {
 
   private String activePrimaryLinker;
 
+  private final DefaultFilters defaultFilters;
+
   private final List<String> entryPointTypeNames = new ArrayList<String>();
 
   private final Set<File> gwtXmlFiles = new HashSet<File>();
@@ -110,9 +112,7 @@ public class ModuleDef implements PublicOracle {
   private final Map<String, String> servletClassNamesByPath = new HashMap<String, String>();
 
   private PathPrefixSet sourcePrefixSet = new PathPrefixSet();
-
   private final Styles styles = new Styles();
-  private final DefaultFilters defaultFilters;
 
   public ModuleDef(String name) {
     this.name = name;
@@ -133,10 +133,13 @@ public class ModuleDef implements PublicOracle {
 
     LinkerOrder order = clazz.getAnnotation(LinkerOrder.class);
     if (order.value() == Order.PRIMARY) {
+      if (activePrimaryLinker != null) {
+        activeLinkers.remove(activePrimaryLinker);
+      }
       activePrimaryLinker = name;
-    } else {
-      activeLinkers.add(name);
     }
+
+    activeLinkers.add(name);
   }
 
   public synchronized void addPublicPackage(String publicPackage,
@@ -247,6 +250,10 @@ public class ModuleDef implements PublicOracle {
       }
     }
     return null;
+  }
+
+  public Set<String> getActiveLinkerNames() {
+    return new LinkedHashSet<String>(activeLinkers);
   }
 
   public Set<Class<? extends Linker>> getActiveLinkers() {
@@ -489,5 +496,4 @@ public class ModuleDef implements PublicOracle {
       throw new UnableToCompleteException();
     }
   }
-
 }

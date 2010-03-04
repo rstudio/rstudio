@@ -15,10 +15,8 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.collect.Sets;
 
 import java.io.Serializable;
@@ -36,28 +34,32 @@ public abstract class Condition implements Serializable {
     return Sets.create();
   }
 
-  public final boolean isTrue(TreeLogger logger, PropertyOracle propertyOracle,
-      TypeOracle typeOracle, String testType) throws UnableToCompleteException {
+  /**
+   * Test the condition with the given parameters. If <code>testType</code> is
+   * <code>null</code>, then this condition isn't being used to remap a type,
+   * and <code>typeOracle</code> can also be <code>null</code>.
+   */
+  public final boolean isTrue(TreeLogger logger, DeferredBindingQuery query)
+      throws UnableToCompleteException {
 
     boolean logDebug = logger.isLoggable(TreeLogger.DEBUG);
 
     if (logDebug) {
-      String startMsg = getEvalBeforeMessage(testType);
+      String startMsg = getEvalBeforeMessage(query.getTestType());
       logger = logger.branch(TreeLogger.DEBUG, startMsg, null);
     }
 
-    boolean result = doEval(logger, propertyOracle, typeOracle, testType);
+    boolean result = doEval(logger, query);
 
     if (logDebug) {
-      String afterMsg = getEvalAfterMessage(testType, result);
+      String afterMsg = getEvalAfterMessage(query.getTestType(), result);
       logger.log(TreeLogger.DEBUG, afterMsg, null);
     }
 
     return result;
   }
 
-  protected abstract boolean doEval(TreeLogger logger,
-      PropertyOracle propertyOracle, TypeOracle typeOracle, String testType)
+  protected abstract boolean doEval(TreeLogger logger, DeferredBindingQuery query)
       throws UnableToCompleteException;
 
   protected abstract String getEvalAfterMessage(String testType, boolean result);

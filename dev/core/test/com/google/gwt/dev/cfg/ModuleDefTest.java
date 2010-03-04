@@ -42,8 +42,14 @@ public class ModuleDefTest extends TestCase {
     }
 
     @Override
+    public ArtifactSet link(TreeLogger logger, LinkerContext context,
+        ArtifactSet artifacts, boolean onePermutation) {
+      return null;
+    }
+
+    @Override
     public ArtifactSet relink(TreeLogger logger, LinkerContext context,
-        ArtifactSet newArtifacts) throws UnableToCompleteException {
+        ArtifactSet newArtifacts) {
       return null;
     }
   }
@@ -95,7 +101,7 @@ public class ModuleDefTest extends TestCase {
 
     Class<?>[] expectedClasses = {
         FakeLinkerPre2.class, FakeLinkerPre.class, FakeLinkerPost.class,
-        FakeLinkerPost2.class};
+        FakeLinkerPost2.class, FakeLinkerPrimary.class};
     assertEquals(FakeLinkerPrimary.class, def.getActivePrimaryLinker());
     // Test iteration order
     assertEquals(Arrays.asList(expectedClasses),
@@ -118,7 +124,8 @@ public class ModuleDefTest extends TestCase {
     // Intentional duplication
     def.addLinker("post");
 
-    Class<?>[] expectedClasses = {FakeLinkerPre2.class, FakeLinkerPost2.class};
+    Class<?>[] expectedClasses = {
+        FakeLinkerPre2.class, FakeLinkerPost2.class, FakeLinkerPrimary2.class};
     assertEquals(FakeLinkerPrimary2.class, def.getActivePrimaryLinker());
     // Test iteration order
     assertEquals(Arrays.asList(expectedClasses),
@@ -153,5 +160,26 @@ public class ModuleDefTest extends TestCase {
     } catch (UnableToCompleteException e) {
       // OK
     }
+  }
+
+  public void testTwoPrimaries() throws UnableToCompleteException {
+    ModuleDef def = new ModuleDef("fake");
+
+    def.defineLinker(TreeLogger.NULL, "pre", FakeLinkerPre.class);
+    def.defineLinker(TreeLogger.NULL, "post", FakeLinkerPost.class);
+    def.defineLinker(TreeLogger.NULL, "primary", FakeLinkerPrimary.class);
+    def.defineLinker(TreeLogger.NULL, "primary2", FakeLinkerPrimary2.class);
+
+    def.addLinker("pre");
+    def.addLinker("post");
+    def.addLinker("primary");
+    def.addLinker("primary2");
+
+    Class<?>[] expectedClasses = {
+        FakeLinkerPre.class, FakeLinkerPost.class, FakeLinkerPrimary2.class};
+    assertEquals(FakeLinkerPrimary2.class, def.getActivePrimaryLinker());
+    // Test iteration order
+    assertEquals(Arrays.asList(expectedClasses),
+        new ArrayList<Class<? extends Linker>>(def.getActiveLinkers()));
   }
 }

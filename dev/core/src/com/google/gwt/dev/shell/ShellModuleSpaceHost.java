@@ -88,7 +88,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     // Establish an environment for JavaScript property providers to run.
     //
     ModuleSpacePropertyOracle propOracle = new ModuleSpacePropertyOracle(
-        module.getProperties(), readySpace);
+        module.getProperties(), module.getActiveLinkerNames(), readySpace);
 
     // Set up the rebind oracle for the module.
     // It has to wait until now because we need to inject javascript.

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -42,8 +41,10 @@ public class ConditionWhenTypeAssignableTo extends Condition {
     return "<when-assignable class='" + assignableToTypeName + "'/>";
   }
 
-  protected boolean doEval(TreeLogger logger, PropertyOracle propertyOracle,
-      TypeOracle typeOracle, String testType) throws UnableToCompleteException {
+  protected boolean doEval(TreeLogger logger, DeferredBindingQuery query)
+      throws UnableToCompleteException {
+    TypeOracle typeOracle = query.getTypeOracle();
+    String testType = query.getTestType();
     JClassType fromType = typeOracle.findType(testType);
     if (fromType == null) {
       Util.logMissingTypeErrorWithHints(logger, testType);

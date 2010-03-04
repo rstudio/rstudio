@@ -33,8 +33,9 @@ public abstract class Rule {
   public boolean isApplicable(TreeLogger logger,
       StandardGeneratorContext context, String typeName)
       throws UnableToCompleteException {
-    return rootCondition.isTrue(logger, context.getPropertyOracle(),
-        context.getTypeOracle(), typeName);
+    return rootCondition.isTrue(logger, new DeferredBindingQuery(
+        context.getPropertyOracle(), context.getActiveLinkerNames(),
+        context.getTypeOracle(), typeName));
   }
 
   public abstract String realize(TreeLogger logger,

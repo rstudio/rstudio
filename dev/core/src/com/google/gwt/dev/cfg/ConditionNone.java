@@ -15,10 +15,8 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
 import java.util.Iterator;
 
@@ -31,11 +29,11 @@ public class ConditionNone extends CompoundCondition {
   public ConditionNone() {
   }
 
-  protected boolean doEval(TreeLogger logger, PropertyOracle propertyOracle,
-      TypeOracle typeOracle, String testType) throws UnableToCompleteException {
+  protected boolean doEval(TreeLogger logger, DeferredBindingQuery query)
+      throws UnableToCompleteException {
     for (Iterator<Condition> iter = getConditions().iterator(); iter.hasNext();) {
       Condition condition = iter.next();
-      if (condition.isTrue(logger, propertyOracle, typeOracle, testType)) {
+      if (condition.isTrue(logger, query)) {
         return false;
       }
     }

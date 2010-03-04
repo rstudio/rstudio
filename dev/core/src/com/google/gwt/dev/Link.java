@@ -30,6 +30,7 @@ import com.google.gwt.dev.Precompile.PrecompileOptions;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.cfg.PropertyPermutations;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.PermutationResult;
@@ -547,7 +548,7 @@ public class Link {
         Permutation[] perms = precomp.getPermutations();
         List<FileBackedObject<PermutationResult>> resultFiles = CompilePerms.makeResultFiles(
             compilerWorkDir, perms);
-        
+
         // Check that all files are present
         for (FileBackedObject<PermutationResult> file : resultFiles) {
           if (!file.getFile().exists()) {
@@ -582,7 +583,8 @@ public class Link {
   private boolean doLinkFinal(TreeLogger logger, File compilerWorkDir,
       ModuleDef module, JJSOptions precompileOptions)
       throws UnableToCompleteException {
-    int numPermutations = module.getProperties().numPermutations();
+    int numPermutations = new PropertyPermutations(module.getProperties(),
+        module.getActiveLinkerNames()).size();
     List<File> resultFiles = new ArrayList<File>(numPermutations);
     for (int i = 0; i < numPermutations; ++i) {
       File f = CompilePerms.makePermFilename(compilerWorkDir, i);

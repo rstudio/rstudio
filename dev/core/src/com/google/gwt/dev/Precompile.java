@@ -425,7 +425,7 @@ public class Precompile {
       JJSOptions jjsOptions, ModuleDef module, File genDir,
       File generatorResourcesDir, File dumpSignatureFile) {
     PropertyPermutations allPermutations = new PropertyPermutations(
-        module.getProperties());
+        module.getProperties(), module.getActiveLinkerNames());
     return precompile(logger, jjsOptions, module, 0, allPermutations, genDir,
         generatorResourcesDir, dumpSignatureFile);
   }
@@ -466,8 +466,8 @@ public class Precompile {
       ArtifactSet generatorArtifacts = new ArtifactSet();
       DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
           module, compilationState, generatorArtifacts,
-          new PropertyPermutations(module.getProperties()), genDir,
-          generatorResourcesDir);
+          new PropertyPermutations(module.getProperties(),
+              module.getActiveLinkerNames()), genDir, generatorResourcesDir);
       // Allow GC later.
       compilationState = null;
       if (dumpSignatureFile != null) {
@@ -624,7 +624,8 @@ public class Precompile {
         TreeLogger branch = logger.branch(TreeLogger.INFO,
             "Precompiling (minimal) module " + module.getName());
         Util.writeObjectAsFile(logger, precompilationFile, options);
-        int numPermutations = module.getProperties().numPermutations();
+        int numPermutations = new PropertyPermutations(module.getProperties(),
+            module.getActiveLinkerNames()).size();
         Util.writeStringAsFile(logger, new File(compilerWorkDir,
             PERM_COUNT_FILENAME), String.valueOf(numPermutations));
         branch.log(TreeLogger.INFO,

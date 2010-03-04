@@ -74,15 +74,6 @@ public class Properties implements Iterable<Property> {
     return map.values().iterator();
   }
 
-  /**
-   * Count the total number of permutations that this property set supports.
-   * This method can be expensive because it always recalculates the answer
-   * based on the current set of properties and values.
-   */
-  public int numPermutations() {
-    return new PropertyPermutations(this).size();
-  }
-
   private <T extends Property> T create(String name, boolean flag,
       boolean useFlagArgument, Class<T> clazz) {
     if (clazz == null) {

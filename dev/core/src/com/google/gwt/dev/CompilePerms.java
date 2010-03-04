@@ -333,7 +333,7 @@ public class CompilePerms {
 
     ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
     PropertyPermutations allPermutations = new PropertyPermutations(
-        module.getProperties());
+        module.getProperties(), module.getActiveLinkerNames());
     int[] perms = options.getPermsToCompile();
     if (perms == null) {
       perms = new int[allPermutations.size()];

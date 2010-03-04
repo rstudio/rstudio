@@ -880,6 +880,8 @@ public class ModuleDefSchema extends Schema {
    * A limited number of conditional predicates based only on properties.
    */
   private class PropertyConditionSchema extends Schema {
+    protected final String __when_linker_added_1_name = null;
+
     protected final String __when_property_is_1_name = null;
 
     protected final String __when_property_is_2_value = null;
@@ -906,6 +908,14 @@ public class ModuleDefSchema extends Schema {
       CompoundCondition cond = new ConditionNone();
       parentCondition.getConditions().add(cond);
       return subSchema(cond);
+    }
+
+    protected Schema __when_linker_added_begin(LinkerName linkerName) {
+      Condition cond = new ConditionWhenLinkerAdded(linkerName.name);
+      parentCondition.getConditions().add(cond);
+
+      // No children allowed.
+      return null;
     }
 
     /*
@@ -1049,8 +1059,8 @@ public class ModuleDefSchema extends Schema {
   }
 
   /**
-   * Returns <code>true</code> if the string equals "true" or "yes" using a
-   * case insensitive comparison.
+   * Returns <code>true</code> if the string equals "true" or "yes" using a case
+   * insensitive comparison.
    */
   private static boolean toPrimitiveBoolean(String s) {
     return "yes".equalsIgnoreCase(s) || "true".equalsIgnoreCase(s);

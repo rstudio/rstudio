@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.collect.Sets;
 
 import java.util.Set;
@@ -50,8 +49,9 @@ public class ConditionWhenPropertyIs extends Condition {
     return "<when-property-is name='" + propName + "' value='" + value + "'/>";
   }
 
-  protected boolean doEval(TreeLogger logger, PropertyOracle propertyOracle,
-      TypeOracle typeOracle, String testType) throws UnableToCompleteException {
+  protected boolean doEval(TreeLogger logger, DeferredBindingQuery query)
+      throws UnableToCompleteException {
+    PropertyOracle propertyOracle = query.getPropertyOracle();
     String testValue;
     try {
       try {

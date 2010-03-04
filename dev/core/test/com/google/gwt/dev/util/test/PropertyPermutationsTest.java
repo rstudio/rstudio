@@ -25,6 +25,7 @@ import com.google.gwt.dev.cfg.PropertyPermutations;
 import junit.framework.TestCase;
 
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Tests the PropertyPermutations code.
@@ -56,7 +57,7 @@ public class PropertyPermutationsTest extends TestCase {
     }
 
     try {
-      new PropertyPermutations(props);
+      new PropertyPermutations(props, md.getActiveLinkerNames());
       fail();
     } catch (IllegalStateException e) {
       // OK
@@ -75,7 +76,8 @@ public class PropertyPermutationsTest extends TestCase {
 
     // Permutations and their values are in stable alphabetical order.
     //
-    PropertyPermutations perms = new PropertyPermutations(md.getProperties());
+    PropertyPermutations perms = new PropertyPermutations(md.getProperties(),
+        md.getActiveLinkerNames());
     String[] perm;
     Iterator<String[]> iter = perms.iterator();
 
@@ -107,7 +109,8 @@ public class PropertyPermutationsTest extends TestCase {
 
     // String[]s and their values are in stable alphabetical order.
     //
-    PropertyPermutations perms = new PropertyPermutations(md.getProperties());
+    PropertyPermutations perms = new PropertyPermutations(md.getProperties(),
+        md.getActiveLinkerNames());
     String[] perm;
     Iterator<String[]> iter = perms.iterator();
 
@@ -171,7 +174,7 @@ public class PropertyPermutationsTest extends TestCase {
       prop.setAllowedValues(cond, "true", "false");
     }
 
-    validateTwoDimensionPerm(props);
+    validateTwoDimensionPerm(props, md.getActiveLinkerNames());
   }
 
   public void testTwoDimensionPermWithExtension() {
@@ -198,7 +201,7 @@ public class PropertyPermutationsTest extends TestCase {
       prop.addDefinedValue(cond, "true");
     }
 
-    validateTwoDimensionPerm(props);
+    validateTwoDimensionPerm(props, md.getActiveLinkerNames());
   }
 
   public void testTwoDimensionPermWithRestriction() {
@@ -227,11 +230,13 @@ public class PropertyPermutationsTest extends TestCase {
       prop.setAllowedValues(cond, "false");
     }
 
-    validateTwoDimensionPerm(props);
+    validateTwoDimensionPerm(props, md.getActiveLinkerNames());
   }
 
-  private void validateTwoDimensionPerm(Properties props) {
-    PropertyPermutations perms = new PropertyPermutations(props);
+  private void validateTwoDimensionPerm(Properties props,
+      Set<String> activeLinkerNames) {
+    PropertyPermutations perms = new PropertyPermutations(props,
+        activeLinkerNames);
 
     assertEquals(6, perms.size());
 
