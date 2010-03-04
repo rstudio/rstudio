@@ -7,6 +7,11 @@
 
   <!-- Servlets -->
   <servlet>
+    <servlet-name>expensesData</servlet-name>
+    <servlet-class>com.google.gwt.sample.expenses.server.ExpensesDataServlet</servlet-class>
+  </servlet>
+
+  <servlet>
     <servlet-name>stockServlet</servlet-name>
     <servlet-class>com.google.gwt.bikeshed.sample.stocks.server.StockServiceImpl</servlet-class>
   </servlet>
@@ -15,6 +20,11 @@
     <servlet-name>treeServlet</servlet-name>
     <servlet-class>com.google.gwt.bikeshed.sample.tree.server.TreeServiceImpl</servlet-class>
   </servlet>
+
+  <servlet-mapping>
+    <servlet-name>expensesData</servlet-name>
+    <url-pattern>/expenses/data</url-pattern>
+  </servlet-mapping>
 
   <servlet-mapping>
     <servlet-name>stockServlet</servlet-name>
@@ -26,19 +36,9 @@
     <url-pattern>/tree/tree</url-pattern>
   </servlet-mapping>
 
-  <!-- Default page to serve -->
+  <!-- Default page to serve --> 
   <welcome-file-list>
     <welcome-file>Tree.html</welcome-file>
   </welcome-file-list>
-
-  <!-- Require login. -->
-  <security-constraint>
-    <web-resource-collection>
-      <url-pattern>/*</url-pattern>
-    </web-resource-collection>
-    <auth-constraint>
-      <role-name>*</role-name>
-    </auth-constraint>
-  </security-constraint>
 
 </web-app>

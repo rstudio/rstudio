@@ -15,9 +15,6 @@
  */
 package com.google.gwt.bikeshed.sample.stocks.server;
 
-import com.google.appengine.api.users.User;
-import com.google.appengine.api.users.UserService;
-import com.google.appengine.api.users.UserServiceFactory;
 import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.bikeshed.list.shared.AbstractListModel.DefaultRange;
 import com.google.gwt.bikeshed.sample.stocks.client.StockService;
@@ -144,9 +141,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
    * @return the {@link PlayerStatus} for the current player
    */
   private PlayerStatus ensurePlayer() {
-    UserService userService = UserServiceFactory.getUserService();
-    User user = userService.getCurrentUser();
-    String userId = user.getUserId();
+    String userId = "I Am the User";
     PlayerStatus player = players.get(userId);
     if (player == null) {
       player = new PlayerStatus();
