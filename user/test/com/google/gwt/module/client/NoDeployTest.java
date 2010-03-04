@@ -42,7 +42,7 @@ public class NoDeployTest extends GWTTestCase {
   /**
    * The maximum amount of time to wait for an RPC response in milliseconds. 
    */
-  private static final int RESPONSE_DELAY = 1500; 
+  private static final int RESPONSE_DELAY = 5000; 
 
   @Override
   public String getModuleName() {
