@@ -29,9 +29,7 @@ class DOMImplIE6 extends DOMImplTrident {
    * 
    * @return <code>true</code> if the browser is IE6, <code>false</code> if IE7
    *         or any other browser
-   * @deprecated this method may be removed at any time
    */
-  @Deprecated
   static boolean isIE6() {
     if (!isIE6Detected) {
       isIE6 = isIE6Impl();
