@@ -113,6 +113,24 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     assertEquals(4, date.getDay());
   }
 
+  /**
+   * Issue 4633: Test that an empty integer value throws an 
+   * {@link IllegalArgumentException}, but does not throw an
+   * {@link IndexOutOfBoundsException}.
+   */
+  public void testEmptyIntegerValue() {
+    char[] parts = new char[] {'M', 'd', 'y', 'h', 'H', 'm', 's', 'S', 'k'};
+    for (int i = 0; i < parts.length; i++) {
+      DateTimeFormat format = DateTimeFormat.getFormat("M/" + parts[i]);
+      try {
+        format.parse("1/");
+        fail("Expected IllegalArgumentException");
+      } catch (IllegalArgumentException e) {
+        // Expected.
+      }
+    }
+  }
+
   public void testEnglishDate() {
     Date date = new Date();
 

@@ -1444,6 +1444,9 @@ public class DateTimeFormat {
   private int parseInt(String text, int[] pos) {
     int ret = 0;
     int ind = pos[0];
+    if (ind >= text.length()) {
+      return -1;
+    }
     char ch = text.charAt(ind);
     while (ch >= '0' && ch <= '9') {
       ret = ret * 10 + (ch - '0');
@@ -1746,6 +1749,9 @@ public class DateTimeFormat {
         cal.setDayOfMonth(value);
         return true;
       case 'S': // fractional seconds
+        if (value < 0) {
+          return false;
+        }
         return subParseFractionalSeconds(value, start, pos[0], cal);
       case 'h': // hour (1..12)
         if (value == 12) {
@@ -1754,15 +1760,27 @@ public class DateTimeFormat {
         // fall through
       case 'K': // hour (0..11)
       case 'H': // hour (0..23)
+        if (value < 0) {
+          return false;
+        }
         cal.setHours(value);
         return true;
       case 'k': // hour (1..24)
+        if (value < 0) {
+          return false;
+        }
         cal.setHours(value);
         return true;
       case 'm': // minute
+        if (value < 0) {
+          return false;
+        }
         cal.setMinutes(value);
         return true;
       case 's': // second
+        if (value < 0) {
+          return false;
+        }
         cal.setSeconds(value);
         return true;
 
@@ -1980,14 +1998,14 @@ public class DateTimeFormat {
    * Method subParseYear parse year field. Year field is special because 1, two
    * digit year need to be resolved. 2, we allow year to take a sign. 3, year
    * field participate in abut processing. In my testing, negative year does not
-   * seem working due to JDK (or redpill implementation) limitation. It is not a
+   * seem working due to JDK (or GWT implementation) limitation. It is not a
    * big deal so we don't worry about it. But keep the logic here so that we
    * might want to replace DateRecord with our a calendar class.
    * 
    * @param text the time text to be parsed
    * @param pos parse position
-   * @param start where this field star
-   * @param value integer value of yea
+   * @param start where this field starts
+   * @param value integer value of year
    * @param part the pattern part for this field
    * @param cal DateRecord object that will hold parsed value
    * 
@@ -1997,6 +2015,9 @@ public class DateTimeFormat {
       PatternPart part, DateRecord cal) {
     char ch = ' ';
     if (value < 0) {
+      if (pos[0] >= text.length()) {
+        return false;
+      }
       ch = text.charAt(pos[0]);
       // Check if it is a sign.
       if (ch != '+' && ch != '-') {
