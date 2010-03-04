@@ -15,8 +15,10 @@
  */
 package com.google.gwt.bikeshed.sample.tree.client;
 
-import com.google.gwt.bikeshed.tree.client.TreeView;
+import com.google.gwt.bikeshed.tree.client.SideBySideTreeView;
+import com.google.gwt.bikeshed.tree.client.StandardTreeView;
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
 
 /**
@@ -25,8 +27,13 @@ import com.google.gwt.user.client.ui.RootPanel;
 public class TreeSample implements EntryPoint {
 
   public void onModuleLoad() {
-    TreeView tree = new TreeView(new MyTreeViewModel(), "...");
+    StandardTreeView tree = new StandardTreeView(new MyTreeViewModel(), "...");
     tree.setAnimationEnabled(true);
     RootPanel.get().add(tree);
+
+    RootPanel.get().add(new HTML("<hr>"));
+    
+    SideBySideTreeView sstree = new SideBySideTreeView(new MyTreeViewModel(), "...");
+    RootPanel.get().add(sstree);
   }
 }

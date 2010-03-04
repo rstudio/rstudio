@@ -119,10 +119,10 @@ public interface TreeViewModel {
    * {@link Cell} to retrieve the children of the specified value.
    * 
    * @param value the value in the parent node
-   * @param treeNodeView the {@link TreeNodeView} that contains the value
+   * @param treeNode the {@link TreeNode} that contains the value
    * @return the {@link NodeInfo}
    */
-  <T> NodeInfo<?> getNodeInfo(T value, TreeNodeView<T> treeNodeView);
+  <T> NodeInfo<?> getNodeInfo(T value, TreeNode<T> treeNode);
 
   /**
    * Check if the value is known to be a leaf node.

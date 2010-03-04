@@ -31,7 +31,8 @@ import com.google.gwt.bikeshed.sample.stocks.shared.StockQuoteList;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockRequest;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockResponse;
 import com.google.gwt.bikeshed.sample.stocks.shared.Transaction;
-import com.google.gwt.bikeshed.tree.client.TreeView;
+import com.google.gwt.bikeshed.tree.client.SideBySideTreeView;
+import com.google.gwt.bikeshed.tree.client.StandardTreeView;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -177,8 +178,9 @@ public class StockSample implements EntryPoint {
   
   private PagingTableListView<Transaction> transactionTable;
   
-  private TreeView transactionTree;
+  private StandardTreeView transactionTree1;
 
+  private SideBySideTreeView transactionTree2;
   /**
    * The timer used to update the stock quotes.
    */
@@ -244,9 +246,13 @@ public class StockSample implements EntryPoint {
     transactionTable.addColumn(Columns.subtotalColumn);
     
     // Create the transactions tree.
-    transactionTree = new TreeView(new TransactionTreeViewModel(favoritesListModel,
+    transactionTree1 = new StandardTreeView(new TransactionTreeViewModel(favoritesListModel,
         transactionListListModelsByTicker), null);
-    transactionTree.setAnimationEnabled(true);
+    transactionTree1.setAnimationEnabled(true);
+    
+    // Create the transactions tree.
+    transactionTree2 = new SideBySideTreeView(new TransactionTreeViewModel(favoritesListModel,
+        transactionListListModelsByTicker), null);
 
     Columns.favoriteColumn.setFieldUpdater(new FieldUpdater<StockQuote, Boolean>() {
       public void update(StockQuote object, Boolean value) {
@@ -319,7 +325,9 @@ public class StockSample implements EntryPoint {
     RootPanel.get().add(new HTML("<hr>"));
     RootPanel.get().add(transactionTable);
     RootPanel.get().add(new HTML("<hr>"));
-    RootPanel.get().add(transactionTree);
+    RootPanel.get().add(transactionTree1);
+    RootPanel.get().add(new HTML("<hr>"));
+    RootPanel.get().add(transactionTree2);
 
     // Add a handler to send the name to the server
     queryField.addKeyUpHandler(new KeyUpHandler() {

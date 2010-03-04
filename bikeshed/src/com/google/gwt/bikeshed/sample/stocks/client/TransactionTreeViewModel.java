@@ -16,10 +16,11 @@
 package com.google.gwt.bikeshed.sample.stocks.client;
 
 import com.google.gwt.bikeshed.cells.client.Cell;
-import com.google.gwt.bikeshed.cells.client.TextCell;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
+import com.google.gwt.bikeshed.list.shared.ListModel;
+import com.google.gwt.bikeshed.sample.stocks.shared.StockQuote;
 import com.google.gwt.bikeshed.sample.stocks.shared.Transaction;
-import com.google.gwt.bikeshed.tree.client.TreeNodeView;
+import com.google.gwt.bikeshed.tree.client.TreeNode;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel;
 
 import java.util.Map;
@@ -57,7 +58,8 @@ class TransactionTreeViewModel implements TreeViewModel {
     this.transactionListListModelsByTicker = transactionListListModelsByTicker;
   }
 
-  public <T> NodeInfo<?> getNodeInfo(T value, TreeNodeView<T> treeNodeView) {
+  @SuppressWarnings("unused")
+  public <T> NodeInfo<?> getNodeInfo(T value, TreeNode<T> treeNode) {
     if (value == null) {
       return new TreeViewModel.DefaultNodeInfo<StockQuote>(stockQuoteListModel,
           STOCK_QUOTE_CELL) {
@@ -67,8 +69,14 @@ class TransactionTreeViewModel implements TreeViewModel {
         }
       };
     } else if (value instanceof StockQuote) {
-      return new TreeViewModel.DefaultNodeInfo<Transaction>(
-          transactionListListModelsByTicker.get(((StockQuote) value).getTicker()), TRANSACTION_CELL);
+      String ticker = ((StockQuote) value).getTicker();
+      ListListModel<Transaction> listModel = transactionListListModelsByTicker.get(ticker);
+      if (listModel == null) {
+        listModel = new ListListModel<Transaction>();
+        transactionListListModelsByTicker.put(ticker, listModel);
+      }
+      return new TreeViewModel.DefaultNodeInfo<Transaction>(listModel,
+          TRANSACTION_CELL);
     }
     
     throw new IllegalArgumentException(value.toString());

@@ -20,7 +20,7 @@ import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.ValueUpdater;
 import com.google.gwt.bikeshed.list.shared.AsyncListModel;
 import com.google.gwt.bikeshed.list.shared.ListModel;
-import com.google.gwt.bikeshed.tree.client.TreeNodeView;
+import com.google.gwt.bikeshed.tree.client.TreeNode;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
@@ -93,7 +93,7 @@ public class MyTreeViewModel implements TreeViewModel {
     }
   };
 
-  public <T> NodeInfo<?> getNodeInfo(T value, TreeNodeView<T> treeNodeView) {
+  public <T> NodeInfo<?> getNodeInfo(T value, TreeNode<T> treeNode) {
     if (value instanceof String) {
       return getNodeInfoHelper((String) value);
     }

@@ -1,5 +1,24 @@
 /** Add css rules here for your application. */
 
+div.gwt-SideBySideTreeColumn {
+  width: 100px;
+  height: 200px;
+  overflow-y: scroll;
+  overflow-x: auto;
+  position: relative;
+}
+
+div.gwt-SideBySideTreeView {
+  border: 2px solid black;
+}
+
+div.gwt-SideBySideTree-selectedItem {
+  background-color: rgb(56, 117, 215);
+}
+
+div.gwt-SideBySideTree-unselectedItem {
+  background-color: rgb(255, 255, 255);
+}
 
 /** Example rules used by the template application (remove for your app) */
 h1 {
