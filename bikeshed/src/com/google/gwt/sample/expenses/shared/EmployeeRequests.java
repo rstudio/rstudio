@@ -27,6 +27,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * "Generated" from static methods of {@link com.google.gwt.sample.expenses.domain.Employee}
+ */
 public class EmployeeRequests {
 
   private final ValueStore values;

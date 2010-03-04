@@ -46,7 +46,7 @@ public class Report implements Entity {
   // @javax.persistence.ManyToOne(targetEntity =
   // com.google.io.expenses.server.domain.Employee.class)
   // @javax.persistence.JoinColumn
-  private Employee approved_supervisor;
+  private Employee approvedSupervisor;
 
   // @javax.persistence.OneToMany(cascade = javax.persistence.CascadeType.ALL,
   // mappedBy = "report")
@@ -69,8 +69,8 @@ public class Report implements Entity {
   /**
    * @return the approved_supervisor
    */
-  public Employee getApproved_supervisor() {
-    return approved_supervisor;
+  public Employee getApprovedSupervisor() {
+    return approvedSupervisor;
   }
 
   /**
@@ -118,8 +118,8 @@ public class Report implements Entity {
   /**
    * @param approvedSupervisor the approved_supervisor to set
    */
-  public void setApproved_supervisor(Employee approvedSupervisor) {
-    approved_supervisor = approvedSupervisor;
+  public void setApprovedSupervisor(Employee approvedSupervisor) {
+    this.approvedSupervisor = approvedSupervisor;
   }
 
   /**

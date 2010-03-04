@@ -18,6 +18,9 @@ package com.google.gwt.sample.expenses.domain;
 import java.util.List;
 
 // @javax.persistence.Entity
+/**
+ * The Employee domain object.
+ */
 public class Employee implements Entity {
   public static List<Employee> findAllEmployees() {
     return Storage.INSTANCE.findAllEmployees();

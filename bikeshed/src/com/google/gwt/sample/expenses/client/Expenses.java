@@ -1,3 +1,18 @@
+/*
+ * Copyright 2010 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -48,26 +63,26 @@ public class Expenses implements EntryPoint {
             "/expenses/data");
         builder.setCallback(new RequestCallback() {
 
+          public void onError(Request request, Throwable exception) {
+            shell.error.setInnerText(SERVER_ERROR);
+          }
+
           public void onResponseReceived(Request request, Response response) {
             if (200 == response.getStatusCode()) {
               String text = response.getText();
               JsArray<ValuesImpl<Employee>> valueArray = ValuesImpl.arrayFromJson(text);
               shell.setValueList(valueArray);
             } else {
-              shell.error.setInnerText(SERVER_ERROR + " (" + response.getStatusText()
-                  + ")");
+              shell.error.setInnerText(SERVER_ERROR + " ("
+                  + response.getStatusText() + ")");
             }
           }
-
-          public void onError(Request request, Throwable exception) {
-            shell.error.setInnerText(SERVER_ERROR);
-          }
         });
-        
+
         try {
           builder.send();
         } catch (RequestException e) {
-          shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +")");
+          shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() + ")");
         }
       }
     };
@@ -94,10 +109,8 @@ public class Expenses implements EntryPoint {
       }
     };
 
-    requestFactory.employeeRequest().findAllEmployees() //
-    .forProperty(Employee.DISPLAY_NAME) //
-    .forProperty(Employee.USER_NAME) //
-    .to(employees).fire();
+    requestFactory.employeeRequest().findAllEmployees().forProperty(
+        Employee.DISPLAY_NAME).forProperty(Employee.USER_NAME).to(employees).fire();
 
     // TODO(rjrjr) now get details
     final TextBox nameHolder = new TextBox();

@@ -21,6 +21,8 @@ import java.util.List;
  * Alternative to ListHandler that stays away from complexities of event
  * handling, better parallel to {@link HasValue} being a passive receiver of
  * data changes.
+ * 
+ * @param <V> value type
  */
 public interface HasValueList<V> {
   void editValueList(boolean replace, int index, List<V> newValues);

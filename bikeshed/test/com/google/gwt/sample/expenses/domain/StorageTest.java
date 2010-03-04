@@ -66,18 +66,18 @@ public class StorageTest extends TestCase {
     });
   }
 
+  private void doTestEdit(Entity v1) {
+    Entity delta = Storage.edit(v1);
+    Entity v2 = store.persist(delta);
+    assertEquals(Integer.valueOf(v1.getVersion() + 1), v2.getVersion());
+    assertSame(v2, store.get(Storage.edit(v2)));
+  }
+
   private Entity doTestNew(Entity e) {
     Entity v1 = store.persist(e);
     assertEquals(Integer.valueOf(0), v1.getVersion());
     assertNotNull(v1.getId());
     assertSame(v1, store.get(Storage.edit(v1)));
     return v1;
-  }
-
-  private void doTestEdit(Entity v1) {
-    Entity delta = Storage.edit(v1);
-    Entity v2 = store.persist(delta);
-    assertEquals(Integer.valueOf(v1.getVersion() + 1), v2.getVersion());
-    assertSame(v2, store.get(Storage.edit(v2)));
   }
 }

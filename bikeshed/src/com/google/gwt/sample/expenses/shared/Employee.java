@@ -16,27 +16,30 @@
 package com.google.gwt.sample.expenses.shared;
 
 import com.google.gwt.requestfactory.shared.Entity;
-import com.google.gwt.requestfactory.shared.ServerType;
 import com.google.gwt.requestfactory.shared.Slot;
 import com.google.gwt.valuestore.shared.Property;
 
-@ServerType(com.google.gwt.sample.expenses.domain.Employee.class)
+/**
+ * The employee proxy object, would be auto-generated.
+ *
+ */
 public class Employee implements Entity<Employee> {
+  
+   public static final Property<Employee, String> DISPLAY_NAME = new Property<Employee, String>(
+      Employee.class, String.class, "DISPLAY_NAME");
+  public static final Property<Employee, Employee> SUPERVISOR = new Property<Employee, Employee>(
+      Employee.class, Employee.class, "SUPERVISOR");
+
+  public static final Property<Employee, String> USER_NAME = new Property<Employee, String>(
+      Employee.class, String.class, "USER_NAME");
   
   private final String id;
   private final Integer version;
-  
+
   Employee(String id, Integer version) {
     this.id = id;
     this.version = version;
   }
-
-  public static final Property<Employee, String> USER_NAME = new Property<Employee, String>(
-      Employee.class, String.class, "USER_NAME");
-  public static final Property<Employee, String> DISPLAY_NAME = new Property<Employee, String>(
-      Employee.class, String.class, "DISPLAY_NAME");
-  public static final Property<Employee, Employee> SUPERVISOR = new Property<Employee, Employee>(
-      Employee.class, Employee.class, "SUPERVISOR");
   
   public String getId() {
     return id;

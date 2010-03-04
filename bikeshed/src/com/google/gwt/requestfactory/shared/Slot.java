@@ -17,6 +17,12 @@ package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.valuestore.shared.Property;
 
+/**
+ * A pointer to a property value of an Entity.
+ *
+ * @param <E> Entity
+ * @param <V> Value
+ */
 public class Slot<E extends Entity<E>, V> {
   private final E entity;
   private final Property<E, V> property;
@@ -28,12 +34,27 @@ public class Slot<E extends Entity<E>, V> {
     this.property = property;
   }
 
-  E getEntity() {
-    return entity;
-  }
-
-  Property<E, V> getProperty() {
-    return property;
+  // cast is okay b/c of class comparison
+  @SuppressWarnings("unchecked")
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    Slot<E, V> other = (Slot<E, V>) obj;
+    if (!entity.getId().equals(other.entity.getId())) {
+      return false;
+    }
+    if (!property.equals(other.property)) {
+      return false;
+    }
+    return true;
   }
 
   @Override
@@ -45,23 +66,11 @@ public class Slot<E extends Entity<E>, V> {
     return result;
   }
 
-  // cast is okay b/c of class comparison
-  @SuppressWarnings("unchecked")
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
-    Slot<E, V> other = (Slot<E, V>) obj;
-    if (!entity.getId().equals(other.entity.getId())) {
-      return false;
-    }
-    if (!property.equals(other.property)) {
-      return false;
-    }
-    return true;
+  E getEntity() {
+    return entity;
+  }
+
+  Property<E, V> getProperty() {
+    return property;
   }
 }

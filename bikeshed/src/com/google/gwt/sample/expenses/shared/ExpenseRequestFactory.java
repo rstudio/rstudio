@@ -36,7 +36,6 @@ public class ExpenseRequestFactory {
 
     public void addValidation() {
       // TODO Auto-generated method stub
-      
     }
 
     public DeltaValueStore edit() {
@@ -46,30 +45,28 @@ public class ExpenseRequestFactory {
     public <T, V> void subscribe(HasValue<V> watcher, T propertyOwner,
         Property<T, V> property) {
       // TODO Auto-generated method stub
-      
     }
 
     public <T, V> void subscribe(HasValueList<Values<T>> watcher,
         T propertyOwner, Set<Property<T, ?>> properties) {
-      // TODO Auto-generated method stub
-      
+      // TODO Auto-generated method stub      
     }
     
   };
 
-  public ValueStore getValueStore() {
-    return values;
-  }
-  
-  public DeltaValueStore newDeltaStore() {
-    return values.edit();
-  }
-  
   public EmployeeRequests employeeRequest() {
     return new EmployeeRequests(values);
   }
   
   public EmployeeRequests employeeRequest(DeltaValueStore deltas) {
     return new EmployeeRequests(deltas);
+  }
+  
+  public ValueStore getValueStore() {
+    return values;
+  }
+  
+  public DeltaValueStore newDeltaStore() {
+    return values.edit();
   }
 }

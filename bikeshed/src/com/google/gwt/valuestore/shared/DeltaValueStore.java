@@ -18,11 +18,16 @@ package com.google.gwt.valuestore.shared;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Set of changes to a ValueStore.
+ */
 public interface DeltaValueStore extends ValueStore {
-  <T, V> void setValue(T type, Property<T, V> property, V value);
-
   <T, V> void editList(T entity, Property<T, List<V>> property,
       boolean replace, int index, Collection<V> newValues);
+
+  boolean isChanged();
+
+  <T, V> void setValue(T type, Property<T, V> property, V value);
 
   /**
    * Returns true if all validations have passed. May notify subscribers that
@@ -30,6 +35,4 @@ public interface DeltaValueStore extends ValueStore {
    * errors.
    */
   boolean validate();
-
-  boolean isChanged();
 }

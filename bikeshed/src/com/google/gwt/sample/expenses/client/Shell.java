@@ -38,6 +38,9 @@ import com.google.gwt.valuestore.shared.Values;
 
 import java.util.List;
 
+/**
+ * UI shell for expenses sample app.
+ */
 public class Shell extends Composite implements HasValueList<Values<Employee>> {
 
   interface ShellUiBinder extends UiBinder<Widget, Shell> {
@@ -73,35 +76,6 @@ public class Shell extends Composite implements HasValueList<Values<Employee>> {
     this.refresh = refresh;
   }
 
-  public void setValueList(List<Values<Employee>> newValues) {
-    throw new UnsupportedOperationException();
-  }
-
-  public void setValueListSize(int size, boolean exact) {
-    throw new UnsupportedOperationException();
-  }
-
-  @UiHandler("refreshButton")
-  void onRefreshClick(@SuppressWarnings("unused") ClickEvent event) {
-    if (refresh != null) {
-      refresh.execute();
-    }
-  }
-
-  /**
-   * @param r
-   * @param tableRows
-   * @param valueRow
-   */
-  private void reuseRow(int r, NodeList<TableRowElement> tableRows,
-      Values<Employee> valueRow) {
-    TableRowElement tableRow = tableRows.getItem(r);
-    NodeList<TableCellElement> tableCells = tableRow.getCells();
-
-    tableCells.getItem(0).setInnerText(valueRow.get(Employee.USER_NAME));
-    tableCells.getItem(0).setInnerText(valueRow.get(Employee.DISPLAY_NAME));
-  }
-
   /**
    * @param valueArray
    */
@@ -130,5 +104,34 @@ public class Shell extends Composite implements HasValueList<Values<Employee>> {
     while (r < tableRows.getLength()) {
       table.removeChild(tableRows.getItem(r));
     }
+  }
+
+  public void setValueList(List<Values<Employee>> newValues) {
+    throw new UnsupportedOperationException();
+  }
+
+  public void setValueListSize(int size, boolean exact) {
+    throw new UnsupportedOperationException();
+  }
+
+  @UiHandler("refreshButton")
+  void onRefreshClick(@SuppressWarnings("unused") ClickEvent event) {
+    if (refresh != null) {
+      refresh.execute();
+    }
+  }
+
+  /**
+   * @param r
+   * @param tableRows
+   * @param valueRow
+   */
+  private void reuseRow(int r, NodeList<TableRowElement> tableRows,
+      Values<Employee> valueRow) {
+    TableRowElement tableRow = tableRows.getItem(r);
+    NodeList<TableCellElement> tableCells = tableRow.getCells();
+
+    tableCells.getItem(0).setInnerText(valueRow.get(Employee.USER_NAME));
+    tableCells.getItem(0).setInnerText(valueRow.get(Employee.DISPLAY_NAME));
   }
 }

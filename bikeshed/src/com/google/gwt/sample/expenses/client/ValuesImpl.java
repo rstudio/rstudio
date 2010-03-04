@@ -21,7 +21,8 @@ import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
 
 /**
- * JSO implementation of {@link Values}
+ * JSO implementation of {@link Values}.
+ * @param <T> value type
  */
 public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
 
@@ -33,6 +34,9 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
     return eval(json);
   }-*/;
 
+  protected ValuesImpl() {
+  }
+
   public native <V, P extends Property<T, V>> V get(P property) /*-{
     return this[property.@com.google.gwt.valuestore.shared.Property::getName()()];
   }-*/;
@@ -40,12 +44,8 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
   public native T getPropertyHolder() /*-{
     return this.propertyHolder;
   }-*/;
-
+  
   public native void setPropertyHolder(T propertyHolder) /*-{
     this.propertyHolder = propertyHolder;
   }-*/;
-  
-  protected ValuesImpl() {
-    
-  }
 }

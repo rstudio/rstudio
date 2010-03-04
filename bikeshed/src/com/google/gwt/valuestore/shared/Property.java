@@ -15,7 +15,12 @@
  */
 package com.google.gwt.valuestore.shared;
 
-
+/**
+ * Represents a property of a type managed by {@link ValueStore}.
+ * 
+ * @param <T>
+ * @param <V>
+ */
 public class Property<T, V> {
   private final Class<T> propertyHolderType;
   private final Class<V> valueType;
@@ -35,16 +40,16 @@ public class Property<T, V> {
   }
 
   /**
-   * @return the valueClass
-   */
-  public Class<V> getValueType() {
-    return valueType;
-  }
-  
-  /**
    * @return the name
    */
   public String getName() {
     return name;
+  }
+  
+  /**
+   * @return the valueClass
+   */
+  public Class<V> getValueType() {
+    return valueType;
   }
 }

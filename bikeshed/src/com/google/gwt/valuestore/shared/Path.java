@@ -17,6 +17,12 @@ package com.google.gwt.valuestore.shared;
 
 import java.util.List;
 
+/**
+ * A path of entity properties.
+ *
+ * @param <T>
+ * @param <V>
+ */
 public class Path<T, V> {
   List<Property<?,?>> getProperties() {
     return null;

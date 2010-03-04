@@ -17,6 +17,11 @@ package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.valuestore.shared.Property;
 
+/**
+ * Client side proxy object for server side entity.
+ *
+ * @param <E>
+ */
 public interface Entity<E extends Entity<E>> {
   Object getId();
   Comparable<?> getVersion();

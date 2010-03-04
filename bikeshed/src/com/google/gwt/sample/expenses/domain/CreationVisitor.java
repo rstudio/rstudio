@@ -17,9 +17,10 @@ package com.google.gwt.sample.expenses.domain;
 
 /**
  * Creates a new entity of the type of the receiver.
+ *
+ * @param <E> The type of entity to create.
  */
-@SuppressWarnings("unchecked")
-// We guarantee same type at runtime
+//We guarantee same type at runtime
 public class CreationVisitor<E extends Entity> implements EntityVisitor<E> {
   private final long id;
   private final int version;

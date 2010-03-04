@@ -1,0 +1,19 @@
+<project name="user" default="build" basedir=".">
+  <property name="gwt.root" location=".." />
+  <property name="project.tail" value="bikeshed" />
+  <property name="test.args" value="" />
+
+  <import file="${gwt.root}/common.ant.xml" />
+
+  <target name="checkstyle" description="Static analysis of source">
+    <gwt.checkstyle>
+      <fileset dir="src" />
+    </gwt.checkstyle>
+    <gwt.checkstyle.tests>
+      <fileset dir="test">
+        <include name="com/google/**/*.java" />
+        <include name="test/**" />
+      </fileset>
+    </gwt.checkstyle.tests>
+  </target>
+</project>

@@ -53,14 +53,14 @@ public class NullFieldFillerTest extends TestCase {
 
       public Void visit(Report report) {
         Report full = new Report(1L, 2);
-        full.setApproved_supervisor(tester.employee);
+        full.setApprovedSupervisor(tester.employee);
         full.setPurpose("purpose");
         full.setReporter(tester.employee);
         full.setStatus(Status.Paid);
         
         doFillAndVerify(report, full);
         
-        assertSame(tester.employee, report.getApproved_supervisor());
+        assertSame(tester.employee, report.getApprovedSupervisor());
         assertEquals("purpose", report.getPurpose());
         assertSame(tester.employee, report.getReporter());
         assertEquals(Status.Paid, report.getStatus());

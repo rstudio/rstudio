@@ -15,12 +15,13 @@
  */
 package com.google.gwt.valuestore.shared;
 
-
 /**
- * Provides access to the values of an entity.
+ * Provides access to the values of an object managed by the {@link ValueStore}.
+ * 
+ * @param <T> value type.
  */
 public interface Values<T> {
   T getPropertyHolder();
-  
+
   <V, P extends Property<T, V>> V get(P property);
 }

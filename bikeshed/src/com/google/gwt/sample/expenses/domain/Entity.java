@@ -19,12 +19,12 @@ package com.google.gwt.sample.expenses.domain;
  * Pale imitation on the stuff JPA entities get baked into them.
  */
 interface Entity {
-  Long getId();
-
-  Integer getVersion();
-
   /**
    * Double dispatch mechanism to ease imitation of framework mechanisms.
    */
   <T> T accept(EntityVisitor<T> visitor);
+
+  Long getId();
+
+  Integer getVersion();
 }

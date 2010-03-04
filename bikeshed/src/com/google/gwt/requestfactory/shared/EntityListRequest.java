@@ -19,10 +19,16 @@ import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
 
+/**
+ * Implemented by RequestObjects for service methods that return list
+ * properties.
+ * 
+ * @param <E>
+ */
 public interface EntityListRequest<E> {
-  EntityListRequest<E> forProperty(Property<E, ?> property);
-  
-  EntityListRequest<E> to(HasValueList<Values<E>> watcher);
-
   void fire();
+
+  EntityListRequest<E> forProperty(Property<E, ?> property);
+
+  EntityListRequest<E> to(HasValueList<Values<E>> watcher);
 }

@@ -20,6 +20,10 @@ import com.google.gwt.user.client.ui.HasValueList;
 
 import java.util.Set;
 
+/**
+ * A store of property values. Allows interested parties to subscribe to changes
+ * to particular sets of values.
+ */
 public interface ValueStore {
 
   /**
