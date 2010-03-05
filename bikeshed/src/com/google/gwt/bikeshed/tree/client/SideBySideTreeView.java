@@ -27,27 +27,33 @@ import com.google.gwt.user.client.Event;
  * A view of a tree.
  */
 public class SideBySideTreeView extends TreeView {
-  
-  protected static final int COLUMN_HEIGHT = 200;
 
-  protected static final int COLUMN_WIDTH = 100;
+  protected int columnHeight = 200;
+
+  protected int columnWidth = 100;
 
   /**
    * Construct a new {@link TreeView}.
-   * 
+   *
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
+   * @param columnWidth
+   * @param columnHeight
    */
-  public <T> SideBySideTreeView(TreeViewModel viewModel, T rootValue) {
+  public <T> SideBySideTreeView(TreeViewModel viewModel, T rootValue,
+      int columnWidth, int columnHeight) {
     super(viewModel);
-    
+
+    this.columnWidth = columnWidth;
+    this.columnHeight = columnHeight;
+
     Element rootElement = Document.get().createDivElement();
-    rootElement.setClassName("gwt-SideBySideTreeView");
+    rootElement.setClassName("gwt-sstree");
     Style style = rootElement.getStyle();
     style.setPosition(Position.RELATIVE);
-    style.setWidth(COLUMN_WIDTH, Unit.PX);
-    style.setHeight(COLUMN_HEIGHT, Unit.PX);
+    style.setWidth(columnWidth, Unit.PX);
+    style.setHeight(columnHeight, Unit.PX);
     setElement(rootElement);
 
     // Add event handlers.
@@ -55,7 +61,7 @@ public class SideBySideTreeView extends TreeView {
 
     // Associate a view with the item.
     TreeNodeView<T> root = new SideBySideTreeNodeView<T>(this, null, null,
-        rootElement, rootValue, 0, "gwt-sstree");
+        rootElement, rootValue, 0, "gwt-sstree", columnWidth, columnHeight);
     setRootNode(root);
     root.setState(true);
   }
@@ -86,7 +92,7 @@ public class SideBySideTreeView extends TreeView {
             id = id.substring(11);
             String[] path = id.split("-");
 
-            TreeNodeView<?> nodeView = rootNode;
+            TreeNodeView<?> nodeView = getRootNode();
             for (String s : path) {
               nodeView = nodeView.getChildTreeNodeView(Integer.parseInt(s));
             }

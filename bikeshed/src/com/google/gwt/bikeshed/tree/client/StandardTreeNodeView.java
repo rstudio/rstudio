@@ -26,14 +26,14 @@ import java.util.List;
 
 /**
  * A view of a tree node.
- * 
+ *
  * @param <T> the type that this {@link TreeNodeView} contains
  */
 public class StandardTreeNodeView<T> extends TreeNodeView<T> {
 
   /**
    * Construct a {@link TreeNodeView}.
-   * 
+   *
    * @param tree the parent {@link TreeView}
    * @param parent the parent {@link TreeNodeView}
    * @param parentNodeInfo the {@link NodeInfo} of the parent
@@ -46,26 +46,26 @@ public class StandardTreeNodeView<T> extends TreeNodeView<T> {
     super(tree, parent, parentNodeInfo, value);
     setElement(elem);
   }
-  
+
   @Override
   protected void postClose() {
-    tree.maybeAnimateTreeNode(this);
+    getTree().maybeAnimateTreeNode(this);
   }
 
   @Override
   protected <C> TreeNodeView<C> createTreeNodeView(NodeInfo<C> nodeInfo,
       Element childElem, C childValue, int idx) {
-    return new StandardTreeNodeView<C>(tree, this, nodeInfo, childElem,
+    return new StandardTreeNodeView<C>(getTree(), this, nodeInfo, childElem,
         childValue);
   }
 
   @Override
-  protected <C> void emitHtml(StringBuilder sb, NodeInfo<C> nodeInfo,
-      List<C> childValues, List<TreeNodeView<?>> savedViews) {
+  protected <C> void emitHtml(StringBuilder sb, List<C> childValues,
+      List<TreeNodeView<?>> savedViews, Cell<C> cell) {
+    TreeView tree = getTree();
     TreeViewModel model = tree.getTreeViewModel();
     int imageWidth = tree.getImageWidth();
-    Cell<C> theCell = nodeInfo.getCell();
-    
+
     int idx = 0;
     for (C childValue : childValues) {
       sb.append("<div style=\"position:relative;padding-left:");
@@ -79,28 +79,28 @@ public class StandardTreeNodeView<T> extends TreeNodeView<T> {
         sb.append(tree.getClosedImageHtml(0));
       }
       sb.append("<div>");
-      theCell.render(childValue, sb);
-      sb.append("</div>");
-      sb.append("</div>");
+      cell.render(childValue, sb);
+      sb.append("</div></div>");
     }
   }
 
   /**
    * Ensure that the child container exists and return it.
-   * 
+   *
    * @return the child container
    */
   @Override
   protected Element ensureChildContainer() {
-    if (childContainer == null) {
+    if (getChildContainer() == null) {
       // If this is a root node or the element does not exist, create it.
       Element animFrame = getElement().appendChild(
           Document.get().createDivElement());
       animFrame.getStyle().setPosition(Position.RELATIVE);
       animFrame.getStyle().setOverflow(Overflow.HIDDEN);
-      childContainer = animFrame.appendChild(Document.get().createDivElement());
+      animFrame.setId("animFrame");
+      setChildContainer(animFrame.appendChild(Document.get().createDivElement()));
     }
-    return childContainer;
+    return getChildContainer();
   }
 
   /**
@@ -110,7 +110,7 @@ public class StandardTreeNodeView<T> extends TreeNodeView<T> {
   protected Element getCellParent() {
     return getElement().getChild(1).cast();
   }
-  
+
   /**
    * @return the image element
    */

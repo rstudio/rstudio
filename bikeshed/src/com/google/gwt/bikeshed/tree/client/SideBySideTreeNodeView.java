@@ -15,8 +15,6 @@
  */
 package com.google.gwt.bikeshed.tree.client;
 
-import static com.google.gwt.bikeshed.tree.client.SideBySideTreeView.COLUMN_WIDTH;
-
 import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel.NodeInfo;
 import com.google.gwt.dom.client.Document;
@@ -29,10 +27,14 @@ import java.util.List;
 
 /**
  * A tree view that displays each level in a side-by-side manner.
- * 
+ *
  * @param <T> the type that this {@link TreeNodeView} contains
  */
 public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
+
+  private int columnHeight;
+
+  private int columnWidth;
 
   private final int imageLeft;
 
@@ -42,7 +44,7 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
 
   /**
    * Construct a {@link TreeNodeView}.
-   * 
+   *
    * @param tree the parent {@link TreeView}
    * @param parent the parent {@link TreeNodeView}
    * @param parentNodeInfo the {@link NodeInfo} of the parent
@@ -50,33 +52,38 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
    * @param value the value of this node
    */
   SideBySideTreeNodeView(final TreeView tree, final SideBySideTreeNodeView<?> parent,
-      NodeInfo<T> parentNodeInfo, Element elem, T value, int level, String path) {
+      NodeInfo<T> parentNodeInfo, Element elem, T value, int level, String path,
+      int columnWidth, int columnHeight) {
     super(tree, parent, parentNodeInfo, value);
-    this.imageLeft = 85 - tree.getImageWidth();
+    this.imageLeft = columnWidth - 16 - tree.getImageWidth();
     this.level = level;
     this.path = path;
-    
+    this.columnWidth = columnWidth;
+    this.columnHeight = columnHeight;
+
     setElement(elem);
   }
 
   @Override
   protected <C> TreeNodeView<C> createTreeNodeView(NodeInfo<C> nodeInfo,
       Element childElem, C childValue, int idx) {
-    return new SideBySideTreeNodeView<C>(tree,
-        SideBySideTreeNodeView.this, nodeInfo, childElem, childValue,
-        level + 1, path + "-" + idx);
+    return new SideBySideTreeNodeView<C>(getTree(), this, nodeInfo, childElem,
+        childValue, level + 1, path + "-" + idx, columnWidth, columnHeight);
   }
-  
+
   @Override
-  protected <C> void emitHtml(StringBuilder sb, NodeInfo<C> nodeInfo,
-      List<C> childValues, List<TreeNodeView<?>> savedViews) {
+  protected <C> void emitHtml(StringBuilder sb, List<C> childValues,
+      List<TreeNodeView<?>> savedViews, Cell<C> cell) {
+    TreeView tree = getTree();
     TreeViewModel model = tree.getTreeViewModel();
     int imageWidth = tree.getImageWidth();
-    Cell<C> theCell = nodeInfo.getCell();
 
     int idx = 0;
     for (C childValue : childValues) {
-      sb.append("<div id=\"" + path + "-" + idx + "\" style=\"position:relative;padding-right:");
+      sb.append("<div id=\"" + path + "-" + idx +
+          "\" class=\"gwt-sstree-unselectedItem gwt-sstree-" +
+          ((idx % 2) == 0 ? "even" : "odd") + "Row\"" +
+          " style=\"position:relative;padding-right:");
       sb.append(imageWidth);
       sb.append("px;\">");
       if (savedViews.get(idx) != null) {
@@ -87,31 +94,32 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
         sb.append(tree.getClosedImageHtml(imageLeft));
       }
       sb.append("<div class=\"gwt-sstree-cell\">");
-      theCell.render(childValue, sb);
+      cell.render(childValue, sb);
       sb.append("</div></div>");
-      
+
       idx++;
     }
   }
 
   /**
    * Ensure that the child container exists and return it.
-   * 
+   *
    * @return the child container
    */
   @Override
   protected Element ensureChildContainer() {
-    if (childContainer == null) {
+    if (getChildContainer() == null) {
       // Create the container within the top-level widget element.
       Element container = createContainer(level);
       container.setInnerHTML("");
       Element animFrame = container.appendChild(
           Document.get().createDivElement());
       animFrame.getStyle().setPosition(Position.RELATIVE);
-      childContainer = animFrame.appendChild(Document.get().createDivElement());
+      animFrame.setId("animFrame");
+      setChildContainer(animFrame.appendChild(Document.get().createDivElement()));
     }
 
-    return childContainer;
+    return getChildContainer();
   }
 
   /**
@@ -121,7 +129,12 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
   protected Element getCellParent() {
     return getElement().getChild(1).cast();
   }
-  
+
+  @Override
+  protected Element getContainer() {
+    return getTree().getElement().getChild(level).cast();
+  }
+
   /**
    * @return the image element
    */
@@ -134,7 +147,7 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
   protected int getImageLeft() {
     return imageLeft;
   }
-  
+
   @Override
   protected void postClose() {
     destroyContainer(level);
@@ -151,12 +164,14 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
 
         TreeNodeView<?> sibling = parentNode.getChildTreeNodeView(i);
         if (sibling == this) {
-          container.setClassName("gwt-SideBySideTree-selectedItem");
+          container.setClassName("gwt-sstree-selectedItem");
         } else {
           if (sibling.getState()) {
             sibling.setState(false);
-            container.setClassName("gwt-SideBySideTree-unselectedItem");
           }
+
+          container.setClassName("gwt-sstree-unselectedItem " +
+              (((i % 2) == 0) ? "gwt-sstree-evenRow" : "gwt-sstree-oddRow"));
         }
       }
     }
@@ -167,22 +182,24 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
    */
   private Element createContainer(int level) {
     // Resize the root element
-    Element rootElement = tree.getElement();
-    rootElement.getStyle().setWidth((level + 1) * COLUMN_WIDTH, Unit.PX);
-    
+    Element rootElement = getTree().getElement();
+    rootElement.getStyle().setWidth((level + 1) * columnWidth, Unit.PX);
+
     // Create children of the root container as needed.
     int childCount = rootElement.getChildCount();
     while (childCount <= level) {
       Element div = rootElement.appendChild(Document.get().createDivElement());
-      div.setClassName("gwt-SideBySideTreeColumn");
+      div.setClassName("gwt-sstree-column");
       Style style = div.getStyle();
       style.setPosition(Position.ABSOLUTE);
       style.setTop(0, Unit.PX);
-      style.setLeft(level * COLUMN_WIDTH, Unit.PX);
-      
+      style.setLeft(level * columnWidth, Unit.PX);
+      style.setWidth(columnWidth, Unit.PX);
+      style.setHeight(columnHeight, Unit.PX);
+
       childCount++;
     }
-    
+
     return rootElement.getChild(level).cast();
   }
 
@@ -192,16 +209,16 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
    */
   private void destroyContainer(int level) {
     // Resize the root element
-    Element rootElement = tree.getElement();
-    rootElement.getStyle().setWidth((level + 1) * COLUMN_WIDTH, Unit.PX);
-    
+    Element rootElement = getTree().getElement();
+    rootElement.getStyle().setWidth((level + 1) * columnWidth, Unit.PX);
+
     // Create children of the root container as needed.
     int childCount = rootElement.getChildCount();
     while (childCount > level) {
       rootElement.removeChild(rootElement.getLastChild());
       childCount--;
     }
-    
-    childContainer = null;
+
+    setChildContainer(null);
   }
 }

@@ -44,7 +44,7 @@ public abstract class TreeView extends Widget {
 
     /**
      * Animate a {@link TreeNodeView} into its new state.
-     * 
+     *
      * @param node the {@link TreeNodeView} to animate
      * @param isAnimationEnabled true to animate
      */
@@ -54,12 +54,12 @@ public abstract class TreeView extends Widget {
     public int getDuration() {
       return duration;
     }
-    
+
     public void setDuration(int duration) {
       this.duration = duration;
     }
   }
-  
+
   /**
    * A ClientBundle that provides images for this widget.
    */
@@ -77,22 +77,17 @@ public abstract class TreeView extends Widget {
   }
 
   private static final Resources DEFAULT_RESOURCES = GWT.create(Resources.class);
- 
+
   /**
    * The animation.
    */
-  protected TreeNodeViewAnimation animation;
-  
-  /**
-   * The hidden root node in the tree.
-   */
-  protected TreeNodeView<?> rootNode;
+  private TreeNodeViewAnimation animation;
 
   /**
    * The HTML used to generate the closed image.
    */
   private String closedImageHtml;
-  
+
   /**
    * Indicates whether or not animations are enabled.
    */
@@ -113,10 +108,15 @@ public abstract class TreeView extends Widget {
    * The HTML used to generate the open image.
    */
   private String openImageHtml;
- 
+
+  /**
+   * The hidden root node in the tree.
+   */
+  private TreeNodeView<?> rootNode;
+
   /**
    * Construct a new {@link TreeView}.
-   * 
+   *
    * @param viewModel the {@link TreeViewModel} that backs the tree
    */
   public TreeView(TreeViewModel viewModel) {
@@ -126,14 +126,14 @@ public abstract class TreeView extends Widget {
   /**
    * Get the animation used to open and close nodes in this tree if animations
    * are enabled.
-   * 
+   *
    * @return the animation
    * @see #isAnimationEnabled()
    */
-  public Animation getAnimation() {
+  public TreeNodeViewAnimation getAnimation() {
     return animation;
   }
-  
+
   public TreeViewModel getTreeViewModel() {
     return model;
   }
@@ -141,11 +141,11 @@ public abstract class TreeView extends Widget {
   public boolean isAnimationEnabled() {
     return isAnimationEnabled;
   }
-  
+
   /**
    * Set the animation used to open and close nodes in this tree. You must call
    * {@link #setAnimationEnabled(boolean)} to enable or disable animation.
-   * 
+   *
    * @param animation a {@link TreeNodeViewAnimation}.
    * @see #setAnimationEnabled(boolean)
    */
@@ -153,7 +153,7 @@ public abstract class TreeView extends Widget {
     assert animation != null : "animation cannot be null";
     this.animation = animation;
   }
-  
+
   public void setAnimationEnabled(boolean enable) {
     this.isAnimationEnabled = enable;
     if (!enable && animation != null) {
@@ -177,7 +177,7 @@ public abstract class TreeView extends Widget {
 
   /**
    * Get the width required for the images.
-   * 
+   *
    * @return the maximum width required for images.
    */
   protected int getImageWidth() {
@@ -188,13 +188,13 @@ public abstract class TreeView extends Widget {
   /**
    * Get the HTML string that is displayed while nodes wait for their children
    * to load.
-   * 
+   *
    * @return the loading HTML string
    */
   protected String getLoadingHtml() {
     return loadingHtml;
   }
-  
+
   /**
    * @return the HTML to render the open image.
    */
@@ -210,9 +210,13 @@ public abstract class TreeView extends Widget {
     return openImageHtml;
   }
 
+  protected TreeNodeView<?> getRootNode() {
+    return rootNode;
+  }
+
   /**
    * Animate the current state of a {@link TreeNodeView} in this tree.
-   * 
+   *
    * @param node the node to animate
    */
   protected void maybeAnimateTreeNode(TreeNodeView<?> node) {
@@ -224,18 +228,14 @@ public abstract class TreeView extends Widget {
   /**
    * Set the HTML string that will be displayed when a node is waiting for its
    * child nodes to load.
-   * 
+   *
    * @param loadingHtml the HTML string
    */
   protected void setLoadingHtml(String loadingHtml) {
     this.loadingHtml = loadingHtml;
   }
 
-  TreeNodeView<?> getRootNode() {
-    return rootNode;
-  }
-
-  void setRootNode(TreeNodeView<?> rootNode) {
+  protected void setRootNode(TreeNodeView<?> rootNode) {
     this.rootNode = rootNode;
   }
 }

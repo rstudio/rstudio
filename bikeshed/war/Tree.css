@@ -1,23 +1,25 @@
 /** Add css rules here for your application. */
 
-div.gwt-SideBySideTreeColumn {
-  width: 100px;
-  height: 200px;
+div.gwt-sstree-column {
   overflow-y: scroll;
   overflow-x: auto;
   position: relative;
 }
 
-div.gwt-SideBySideTreeView {
+div.gwt-sstree {
   border: 2px solid black;
 }
 
-div.gwt-SideBySideTree-selectedItem {
+div.gwt-sstree-selectedItem {
   background-color: rgb(56, 117, 215);
 }
 
-div.gwt-SideBySideTree-unselectedItem {
+div.gwt-sstree-evenRow {
   background-color: rgb(255, 255, 255);
+}
+
+div.gwt-sstree-oddRow {
+    background-color: rgb(220, 220, 220);
 }
 
 /** Example rules used by the template application (remove for your app) */

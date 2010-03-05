@@ -252,7 +252,7 @@ public class StockSample implements EntryPoint {
     
     // Create the transactions tree.
     transactionTree2 = new SideBySideTreeView(new TransactionTreeViewModel(favoritesListModel,
-        transactionListListModelsByTicker), null);
+        transactionListListModelsByTicker), null, 200, 200);
 
     Columns.favoriteColumn.setFieldUpdater(new FieldUpdater<StockQuote, Boolean>() {
       public void update(StockQuote object, Boolean value) {

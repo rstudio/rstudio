@@ -51,7 +51,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
   /**
    * The result of a query to the remote service that provides stock quotes.
    */
-  private class Result {
+  private static class Result {
     int numRows;
     StockQuoteList quotes;
 
@@ -91,7 +91,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       throws IllegalArgumentException {
 
     String query = request.getSearchQuery();
-    if (query == null | query.length() == 0) {
+    if (query == null || query.length() == 0) {
       query = ".*";
     }
     Range searchRange = request.getSearchRange();

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.bikeshed.tree.client;
 
+import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.list.shared.ListEvent;
 import com.google.gwt.bikeshed.list.shared.ListHandler;
 import com.google.gwt.bikeshed.list.shared.ListModel;
@@ -35,7 +36,7 @@ import java.util.Map;
 
 /**
  * A view of a tree node.
- * 
+ *
  * @param <T> the type that this {@link TreeNodeView} contains
  */
 public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
@@ -43,55 +44,58 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
   /**
    * The element used in place of an image when a node has no children.
    */
-  protected static final String LEAF_IMAGE = "<div style='position:absolute;display:none;'></div>";
-  
-  protected boolean animate;
+  public static final String LEAF_IMAGE = "<div style='position:absolute;display:none;'></div>";
 
   /**
    * A reference to the element that contains the children.
    */
-  protected Element childContainer;
+  private Element childContainer;
 
   /**
-   * The children of this {@link TreeNodeView}.
+   * True during the time a node should be animated.
    */
-  protected List<TreeNodeView<?>> children;
-  
+  private boolean animate;
+
+  /**
+   * A reference to the element that contains the children.
+   */
+  private List<TreeNodeView<?>> children;
+
   /**
    * The list registration for the list of children.
    */
-  protected ListRegistration listReg;
-  
+  private ListRegistration listReg;
+
   /**
    * The info about children of this node.
    */
-  protected NodeInfo<?> nodeInfo;
+  private NodeInfo<?> nodeInfo;
 
   /**
    * Indicates whether or not we've loaded the node info.
    */
-  protected boolean nodeInfoLoaded;
+  private boolean nodeInfoLoaded;
 
   /**
    * Indicates whether or not this node is open.
    */
-  protected boolean open;
-
-  /**
-   * The containing {@link TreeView}.
-   */
-  protected TreeView tree;
+  private boolean open;
 
   /**
    * The parent {@link SideBySideTreeNodeView}.
    */
-  private TreeNodeView<?> parentNode;
-  
+  private final TreeNodeView<?> parentNode;
+
+  /**
+   * The parent {@link SideBySideTreeNodeView}.
+   */
+  private final NodeInfo<T> parentNodeInfo;
+
   /**
    * The info about this node.
    */
-  private NodeInfo<T> parentNodeInfo;
-  
+  private final TreeView tree;
+
   /**
    * This node's value.
    */
@@ -103,7 +107,7 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
     this.parentNodeInfo = parentNodeInfo;
     this.value = value;
   }
-  
+
   public int getChildCount() {
     return children == null ? 0 : children.size();
   }
@@ -126,7 +130,7 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
 
   /**
    * Check whether or not this {@link TreeNodeView} is open.
-   * 
+   *
    * @return true if open, false if closed
    */
   public boolean getState() {
@@ -135,7 +139,7 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
 
   /**
    * Get the value contained in this node.
-   * 
+   *
    * @return the value of the node
    */
   public T getValue() {
@@ -144,16 +148,16 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
 
   /**
    * Check if this is a root node at the top of the tree.
-   * 
+   *
    * @return true if a root node, false if not
    */
   public boolean isRootNode() {
     return getParentNode() == null;
   }
-  
+
   /**
    * Sets whether this item's children are displayed.
-   * 
+   *
    * @param open whether the item is open
    */
   public void setState(boolean open) {
@@ -162,7 +166,7 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
 
   /**
    * Sets whether this item's children are displayed.
-   * 
+   *
    * @param open whether the item is open
    * @param fireEvents <code>true</code> to allow open/close events to be
    */
@@ -173,7 +177,7 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
     if (this.open == open) {
       return;
     }
-    
+
     this.animate = true;
     this.open = open;
     if (open) {
@@ -181,12 +185,12 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
         nodeInfo = tree.getTreeViewModel().getNodeInfo(getValue(), this);
         nodeInfoLoaded = true;
       }
-      
+
       preOpen();
       // If we don't have any nodeInfo, we must be a leaf node.
       if (nodeInfo != null) {
         onOpen(nodeInfo);
-      } 
+      }
     } else {
       cleanup();
       postClose();
@@ -195,7 +199,7 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
     // Update the image.
     updateImage();
   }
-  
+
   /**
    * Unregister the list handler and destroy all child nodes.
    */
@@ -205,7 +209,7 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
       listReg.removeHandler();
       listReg = null;
     }
-  
+
     // Recursively kill children.
     if (children != null) {
       for (TreeNodeView<?> child : children) {
@@ -214,22 +218,44 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
       children = null;
     }
   }
-  
+
   protected boolean consumeAnimate() {
     boolean hasAnimate = animate;
     animate = false;
     return hasAnimate;
   }
-  
+
+  /**
+   * Returns an instance of TreeNodeView of the same subclass as the
+   * calling object.
+   *
+   * @param <C> the data type of the node's children.
+   * @param nodeInfo a NodeInfo object describing the child nodes.
+   * @param childElem the DOM element used to parent the new TreeNodeView.
+   * @param childValue the child's value.
+   * @param idx the index of the child within its parent node.
+   * @return a TreeNodeView of suitable type.
+   */
   protected abstract <C> TreeNodeView<C> createTreeNodeView(NodeInfo<C> nodeInfo,
       Element childElem, C childValue, int idx);
 
-  protected abstract <C> void emitHtml(StringBuilder sb, NodeInfo<C> nodeInfo,
-      List<C> childValues, List<TreeNodeView<?>> savedViews);
+  /**
+   * Write the HTML for a list of child values into the given StringBuilder.
+   *
+   * @param <C> the data type of the child nodes.
+   * @param sb a StringBuilder to write to.
+   * @param childValues a List of child node values.
+   * @param savedViews a List of TreeNodeView instances corresponding to
+   *   the child values; a non-null value indicates a TreeNodeView previously
+   *   associated with a given child value.
+   * @param cell the Cell to use for rendering each child value.
+   */
+  protected abstract <C> void emitHtml(StringBuilder sb, List<C> childValues,
+      List<TreeNodeView<?>> savedViews, Cell<C> cell);
 
   /**
    * Ensure that the animation frame exists and return it.
-   * 
+   *
    * @return the animation frame
    */
   protected Element ensureAnimationFrame() {
@@ -238,14 +264,14 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
 
   /**
    * Ensure that the child container exists and return it.
-   * 
+   *
    * @return the child container
    */
   protected abstract Element ensureChildContainer();
 
   /**
    * Fire an event to the {@link com.google.gwt.bikeshed.cells.client.Cell}.
-   * 
+   *
    * @param event the native event
    */
   protected void fireEventToCell(NativeEvent event) {
@@ -256,7 +282,7 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
       Window.alert("parentNodeInfo == null");
     }
   }
-  
+
   /**
    * Returns the element that parents the cell contents of this node.
    */
@@ -268,7 +294,15 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
   protected Element getChildContainer() {
     return childContainer;
   }
-  
+
+  /**
+   * Returns the element that contains this node.
+   * The default implementation returns the value of getElement().
+   */
+  protected Element getContainer() {
+    return getElement();
+  }
+
   /**
    * Returns the element corresponding to the open/close image.
    */
@@ -281,7 +315,7 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
   protected int getImageLeft() {
     return 0;
   }
-  
+
   /**
    * Returns the nodeInfo for this node's parent.
    */
@@ -296,11 +330,11 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
   protected Object getValueKey() {
     return getParentNodeInfo().getKey(getValue());
   }
-  
+
   /**
    * Set up the node when it is opened.  Delegates to createMap(), emitHtml(),
    * and createTreeNodeView() for subclass-specific functionality.
-   * 
+   *
    * @param nodeInfo the {@link NodeInfo} that provides information about the
    *          child values
    * @param <C> the child data type of the node.
@@ -309,11 +343,11 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
     // Add a loading message.
     ensureChildContainer().setInnerHTML(tree.getLoadingHtml());
     ensureAnimationFrame().getStyle().setProperty("display", "");
-    
+
     // Get the node info.
     ListModel<C> listModel = nodeInfo.getListModel();
     listReg = listModel.addListHandler(new ListHandler<C>() {
-      public void onDataChanged(ListEvent<C> event) {    
+      public void onDataChanged(ListEvent<C> event) {
         // TODO - handle event start and length
 
         // Construct a map of former child views based on their value keys.
@@ -327,7 +361,7 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
             }
           }
         }
-        
+
         // Hide the child container so we can animate it.
         if (tree.isAnimationEnabled()) {
           ensureAnimationFrame().getStyle().setDisplay(Display.NONE);
@@ -339,14 +373,14 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
           // so the call to setInnerHtml will not destroy them
           TreeNodeView<?> savedView = map.get(nodeInfo.getKey(childValue));
           if (savedView != null) {
-            savedView.getElement().removeFromParent();
+            savedView.getContainer().getFirstChild().removeFromParent();
           }
           savedViews.add(savedView);
         }
 
         // Construct the child contents.
         StringBuilder sb = new StringBuilder();
-        emitHtml(sb, nodeInfo, event.getValues(), savedViews);
+        emitHtml(sb, event.getValues(), savedViews, nodeInfo.getCell());
         childContainer.setInnerHTML(sb.toString());
 
         // Create the child TreeNodeViews from the new elements.
@@ -367,12 +401,13 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
             child.open = savedChild.getState();
 
             // Copy the child container element to the new child
-            child.getElement().appendChild(savedChild.childContainer.getParentElement());
+            // TODO(rice) clean up this expression
+            child.getContainer().appendChild(savedChild.childContainer.getParentElement());
           }
 
           children.add(child);
           childElem = childElem.getNextSiblingElement();
-          
+
           idx++;
         }
 
@@ -400,6 +435,10 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
   protected void preOpen() {
   }
 
+  protected void setChildContainer(Element childContainer) {
+    this.childContainer = childContainer;
+  }
+
   /**
    * Update the image based on the current state.
    */
@@ -419,5 +458,9 @@ public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
     tmp.setInnerHTML(html);
     Element imageElem = tmp.getFirstChildElement();
     getElement().replaceChild(imageElem, getImageElement());
+  }
+
+  TreeView getTree() {
+    return tree;
   }
 }

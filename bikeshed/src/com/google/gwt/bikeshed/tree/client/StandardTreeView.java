@@ -39,7 +39,7 @@ public class StandardTreeView extends TreeView implements HasAnimation {
 
     /**
      * Create a new {@link RevealAnimation}.
-     * 
+     *
      * @return the new animation
      */
     public static RevealAnimation create() {
@@ -72,7 +72,7 @@ public class StandardTreeView extends TreeView implements HasAnimation {
 
     /**
      * Animate a {@link TreeNodeView} into its new state.
-     * 
+     *
      * @param node the {@link TreeNodeView} to animate
      * @param isAnimationEnabled true to animate
      */
@@ -151,7 +151,7 @@ public class StandardTreeView extends TreeView implements HasAnimation {
   public static class SlideAnimation extends RevealAnimation {
     /**
      * Create a new {@link RevealAnimation}.
-     * 
+     *
      * @return the new animation
      */
     public static SlideAnimation create() {
@@ -198,7 +198,7 @@ public class StandardTreeView extends TreeView implements HasAnimation {
 
   /**
    * Construct a new {@link TreeView}.
-   * 
+   *
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
@@ -209,8 +209,8 @@ public class StandardTreeView extends TreeView implements HasAnimation {
     setStyleName("gwt-TreeView");
 
     // We use one animation for the entire tree.
-    animation = SlideAnimation.create();
-    
+    setAnimation(SlideAnimation.create());
+
     // Add event handlers.
     sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN | Event.ONMOUSEUP);
 
@@ -230,7 +230,7 @@ public class StandardTreeView extends TreeView implements HasAnimation {
         Element currentTarget = event.getCurrentEventTarget().cast();
         if (currentTarget == getElement()) {
           Element target = event.getEventTarget().cast();
-          elementClicked(target, event, rootNode);
+          elementClicked(target, event, getRootNode());
         }
         break;
     }
@@ -268,13 +268,13 @@ public class StandardTreeView extends TreeView implements HasAnimation {
 
     return false;
   }
-  
+
   private TreeNodeView<?> findItemByChain(ArrayList<Element> chain, int idx,
       TreeNodeView<?> parent) {
     if (idx == chain.size()) {
       return parent;
     }
-  
+
     Element hCurElem = chain.get(idx);
     for (int i = 0, n = parent.getChildCount(); i < n; ++i) {
       TreeNodeView<?> child = parent.getChildTreeNodeView(i);
@@ -286,7 +286,7 @@ public class StandardTreeView extends TreeView implements HasAnimation {
         return retItem;
       }
     }
-  
+
     return findItemByChain(chain, idx + 1, parent);
   }
 }
