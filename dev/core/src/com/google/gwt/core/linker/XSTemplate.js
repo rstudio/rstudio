@@ -104,6 +104,10 @@ function __MODULE_FUNC__() {
     ,markerId = "__gwt_marker___MODULE_NAME__"
     ,markerScript;
 
+    if (base = metaProps['baseUrl']) {
+      return;
+    }
+
     $doc.write('<script id="' + markerId + '"></script>');
     markerScript = $doc.getElementById(markerId);
 
@@ -173,7 +177,13 @@ function __MODULE_FUNC__() {
       var meta = metas[i], name = meta.getAttribute('name'), content;
 
       if (name) {
-        if (name == 'gwt:property') {
+        name = name.replace('__MODULE_NAME__::', '');
+        if (name.indexOf('::') >= 0) {
+          // It's for a different module
+          continue;
+        }
+
+    	if (name == 'gwt:property') {
           content = meta.getAttribute('content');
           if (content) {
             var value, eq = content.indexOf('=');
@@ -287,8 +297,8 @@ function __MODULE_FUNC__() {
   }
 
   // do it early for compile/browse rebasing
-  computeScriptBase();
   processMetas();
+  computeScriptBase();
 
   // --------------- WINDOW ONLOAD HOOK ---------------
 
