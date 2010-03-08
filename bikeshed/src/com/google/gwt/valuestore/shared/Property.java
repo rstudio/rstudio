@@ -18,14 +18,14 @@ package com.google.gwt.valuestore.shared;
 /**
  * Represents a property of a type managed by {@link ValueStore}.
  * 
- * @param <T>
- * @param <V>
+ * @param <T> type of the property holder
+ * @param <V> type of the property
  */
 public class Property<T, V> {
   private final Class<T> propertyHolderType;
   private final Class<V> valueType;
   private final String name;
-  
+
   public Property(Class<T> propertyHolderType, Class<V> valueType, String name) {
     this.propertyHolderType = propertyHolderType;
     this.valueType = valueType;
@@ -45,7 +45,7 @@ public class Property<T, V> {
   public String getName() {
     return name;
   }
-  
+
   /**
    * @return the valueClass
    */

@@ -13,22 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared;
-
-import java.util.List;
+package com.google.gwt.sample.expenses.shared;
 
 /**
- * A path of entity properties. 
- *
- * @param <T> The type of the property owner at the head of the path.
- * @param <V> The value type of the last property in the path.
+ * Represents the MethodName.
  */
-public class Path<T, V> {
-  List<Property<?,?>> getProperties() {
-    return null;
-  }
-  
-  Property<?,V> getLastProperty() {
-    return null;
-  }
+public enum MethodName {
+  FIND_ALL_EMPLOYEES,
+  FIND_EMPLOYEE,
 }

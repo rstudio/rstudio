@@ -48,7 +48,6 @@
     <g:center>
       <g:HTMLPanel width='100%' height='100%'>
         <h1>Employees</h1>
-        <g:Button ui:field='refreshButton'>Refresh</g:Button>
         <table ui:field='table' class='{style.reports}' width='100%'>
           <col width='0%'></col>
           <col width='100%'></col>

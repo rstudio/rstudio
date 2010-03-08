@@ -25,17 +25,6 @@ import java.util.Map;
  * frameworks do. For goodness sake don't imitate this for production code.
  */
 class Storage {
-
-  static final Storage INSTANCE;
-  static {
-    INSTANCE = new Storage();
-    fill(INSTANCE);
-  }
-
-  public static <E extends Entity> E edit(E v1) {
-    return v1.accept(new CreationVisitor<E>(v1));
-  }
-  
   /**
    * @param storage to fill with demo entities
    */
@@ -57,13 +46,38 @@ class Storage {
     e2.setDisplayName("George H. Indigo");
     e2.setSupervisor(e);
     storage.persist(e2);
-  }
+}
 
   private final Map<Long, Entity> soup = new HashMap<Long, Entity>();
   private final Map<String, Long> employeeUserNameIndex = new HashMap<String, Long>();
   private long serial = 0;
 
-  public synchronized <E extends Entity> E persist(final E delta) {
+  static final Storage INSTANCE;
+  static {
+    INSTANCE = new Storage();
+    fill(INSTANCE);
+  }
+
+  public static <E extends Entity> E edit(E v1) {
+    return v1.accept(new CreationVisitor<E>(v1));
+  }
+  
+  @SuppressWarnings("unchecked") 
+  // We make runtime checks that return type matches in type
+  synchronized <E extends Entity> E get(final E entity) {
+    Entity previous = soup.get(entity.getId());
+    if (null == previous) {
+      throw new IllegalArgumentException(String.format(
+          "In %s, unknown id %d", entity, entity.getId()));
+    }
+    if (!previous.getClass().equals(entity.getClass())) {
+      throw new IllegalArgumentException(String.format(
+          "Type mismatch, fetched %s for %s", entity, previous));
+    }
+    return (E) previous;
+  }
+
+  synchronized public <E extends Entity> E persist(final E delta) {
     E next = null;
     E previous = null;
 
@@ -97,7 +111,7 @@ class Storage {
   synchronized List<Employee> findAllEmployees() {
     List<Employee> rtn = new ArrayList<Employee>();
     for (Map.Entry<String, Long> entry : employeeUserNameIndex.entrySet()) {
-      rtn.add((Employee) get(entry.getValue()));
+      rtn.add((Employee)get(entry.getValue()));
     }
     return rtn;
   }
@@ -107,22 +121,7 @@ class Storage {
     return (Employee) get(id);
   }
 
-  @SuppressWarnings("unchecked")
-  // We make runtime checks that return type matches in type
-  synchronized <E extends Entity> E get(final E entity) {
-    Entity previous = soup.get(entity.getId());
-    if (null == previous) {
-      throw new IllegalArgumentException(String.format("In %s, unknown id %d",
-          entity, entity.getId()));
-    }
-    if (!previous.getClass().equals(entity.getClass())) {
-      throw new IllegalArgumentException(String.format(
-          "Type mismatch, fetched %s for %s", entity, previous));
-    }
-    return (E) previous;
-  }
-
-  private synchronized Entity get(Long id) {
+  synchronized private Entity get(Long id) {
     return soup.get(id);
   }
 
@@ -133,8 +132,7 @@ class Storage {
       }
 
       public Void visit(Employee employee) {
-        if (null == employee.getUserName())
-          return null;
+        if (null == employee.getUserName()) return null;
         if (previous != null) {
           Employee prevEmployee = (Employee) previous;
           if (!prevEmployee.getUserName().equals(next)) {

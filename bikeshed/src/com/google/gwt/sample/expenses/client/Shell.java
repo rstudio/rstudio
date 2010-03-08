@@ -16,20 +16,16 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.sample.expenses.shared.Employee;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.user.client.ui.ListBox;
@@ -54,8 +50,6 @@ public class Shell extends Composite implements HasValueList<Values<Employee>> {
   @UiField
   TableRowElement header;
   @UiField
-  Button refreshButton;
-  @UiField
   ListBox users;
 
   private Command refresh;
@@ -69,21 +63,11 @@ public class Shell extends Composite implements HasValueList<Values<Employee>> {
     throw new UnsupportedOperationException();
   }
 
-  /**
-   * @param refresh the refresh to set
-   */
-  public void setRefresh(Command refresh) {
-    this.refresh = refresh;
-  }
-
-  /**
-   * @param valueArray
-   */
-  public void setValueList(JsArray<ValuesImpl<Employee>> newValues) {
+  public void setValueList(List<Values<Employee>> newValues) {
     int r = 1; // skip header
     NodeList<TableRowElement> tableRows = table.getRows();
-    for (int i = 0; i < newValues.length(); i++) {
-      ValuesImpl<Employee> valueRow = newValues.get(i);
+    for (int i = 0; i < newValues.size(); i++) {
+      Values<Employee> valueRow = newValues.get(i);
       if (r < tableRows.getLength()) {
         reuseRow(r, tableRows, valueRow);
       } else {
@@ -106,19 +90,8 @@ public class Shell extends Composite implements HasValueList<Values<Employee>> {
     }
   }
 
-  public void setValueList(List<Values<Employee>> newValues) {
-    throw new UnsupportedOperationException();
-  }
-
   public void setValueListSize(int size, boolean exact) {
     throw new UnsupportedOperationException();
-  }
-
-  @UiHandler("refreshButton")
-  void onRefreshClick(@SuppressWarnings("unused") ClickEvent event) {
-    if (refresh != null) {
-      refresh.execute();
-    }
   }
 
   /**

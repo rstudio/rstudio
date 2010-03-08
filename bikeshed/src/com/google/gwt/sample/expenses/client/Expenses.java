@@ -17,17 +17,10 @@ package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
 import com.google.gwt.sample.expenses.shared.Employee;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -57,37 +50,6 @@ public class Expenses implements EntryPoint {
 
     final Shell shell = new Shell();
     root.add(shell);
-    Command refresh = new Command() {
-      public void execute() {
-        RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-            "/expenses/data");
-        builder.setCallback(new RequestCallback() {
-
-          public void onError(Request request, Throwable exception) {
-            shell.error.setInnerText(SERVER_ERROR);
-          }
-
-          public void onResponseReceived(Request request, Response response) {
-            if (200 == response.getStatusCode()) {
-              String text = response.getText();
-              JsArray<ValuesImpl<Employee>> valueArray = ValuesImpl.arrayFromJson(text);
-              shell.setValueList(valueArray);
-            } else {
-              shell.error.setInnerText(SERVER_ERROR + " ("
-                  + response.getStatusText() + ")");
-            }
-          }
-        });
-
-        try {
-          builder.send();
-        } catch (RequestException e) {
-          shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() + ")");
-        }
-      }
-    };
-    refresh.execute();
-    shell.setRefresh(refresh);
 
     final HasValueList<Values<Employee>> employees = new HasValueList<Values<Employee>>() {
 
@@ -110,7 +72,7 @@ public class Expenses implements EntryPoint {
     };
 
     requestFactory.employeeRequest().findAllEmployees().forProperty(
-        Employee.DISPLAY_NAME).forProperty(Employee.USER_NAME).to(employees).fire();
+        Employee.DISPLAY_NAME).forProperty(Employee.USER_NAME).to(shell).fire();
 
     // TODO(rjrjr) now get details
     final TextBox nameHolder = new TextBox();
