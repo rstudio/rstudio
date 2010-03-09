@@ -184,7 +184,7 @@ public class JsonpRequestTest extends GWTTestCase {
   public void testCancel() {
     delayTestFinish(2000);
     // setup a server request that will delay for 500ms
-    JsonpRequest<String> req = jsonp.requestString(echoDelayed("A", 500),
+    JsonpRequest<String> req = jsonp.requestString(echoDelayed("'A'", 500),
         new AssertFailureCallback<String>("A"));
     // cancel it before it comes back
     req.cancel();
