@@ -34,10 +34,10 @@ public class Employee implements Entity {
 
   private final Integer version;
 
-  @javax.validation.constraints.Size(min = 2, max = 30)
+//  @javax.validation.constraints.Size(min = 2, max = 30)
   private String userName;
 
-  @javax.validation.constraints.Size(min = 2, max = 30)
+//  @javax.validation.constraints.Size(min = 2, max = 30)
   private String displayName;
   
   // @javax.persistence.ManyToOne(targetEntity =

@@ -20,10 +20,10 @@ package com.google.gwt.sample.expenses.domain;
  */
 // @javax.persistence.Entity
 public class Currency implements Entity {
-  @javax.validation.constraints.Size(min = 3, max = 3)
+//  @javax.validation.constraints.Size(min = 3, max = 3)
   private String code;
 
-  @javax.validation.constraints.Size(min = 2, max = 30)
+//  @javax.validation.constraints.Size(min = 2, max = 30)
   private String name;
 
   private final Long id;

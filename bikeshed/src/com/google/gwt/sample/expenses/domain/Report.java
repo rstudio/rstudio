@@ -25,22 +25,22 @@ public class Report implements Entity {
   private final Long id;
 
   private final Integer version;
-  @javax.validation.constraints.NotNull
-  @javax.validation.constraints.Past
+//  @javax.validation.constraints.NotNull
+//  @javax.validation.constraints.Past
   // @javax.persistence.Temporal(javax.persistence.TemporalType.TIMESTAMP)
   private java.util.Date created = new Date();
 
-  @javax.validation.constraints.NotNull
+//  @javax.validation.constraints.NotNull
   // @javax.persistence.Enumerated
   private Status status;
 
-  @javax.validation.constraints.NotNull
+//  @javax.validation.constraints.NotNull
   // @javax.persistence.ManyToOne(targetEntity =
   // com.google.io.expenses.server.domain.Employee.class)
   // @javax.persistence.JoinColumn
   private Employee reporter;
 
-  @javax.validation.constraints.Size(min = 3, max = 100)
+//  @javax.validation.constraints.Size(min = 3, max = 100)
   private String purpose;
 
   // @javax.persistence.ManyToOne(targetEntity =

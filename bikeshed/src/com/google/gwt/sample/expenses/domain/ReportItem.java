@@ -24,26 +24,26 @@ public class ReportItem implements Entity {
 
   private Integer version;
 
-  @javax.validation.constraints.NotNull
+//  @javax.validation.constraints.NotNull
   // @javax.persistence.ManyToOne(targetEntity = Report.class)
   // @javax.persistence.JoinColumn
   private Report report;
 
-  @javax.validation.constraints.NotNull
-  @javax.validation.constraints.Past
+//  @javax.validation.constraints.NotNull
+//  @javax.validation.constraints.Past
   // @javax.persistence.Temporal(javax.persistence.TemporalType.TIMESTAMP)
   private java.util.Date incurred;
 
-  @javax.validation.constraints.Size(min = 3, max = 100)
+//  @javax.validation.constraints.Size(min = 3, max = 100)
   private String purpose;
 
-  @javax.validation.constraints.NotNull
+//  @javax.validation.constraints.NotNull
   // @javax.persistence.ManyToOne(targetEntity = Currency.class)
   // @javax.persistence.JoinColumn
   private Currency currency;
 
-  @javax.validation.constraints.NotNull
-  @javax.validation.constraints.Min(0L)
+//  @javax.validation.constraints.NotNull
+//  @javax.validation.constraints.Min(0L)
   private Float amount;
 
   public ReportItem() {
