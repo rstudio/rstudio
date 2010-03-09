@@ -44,6 +44,7 @@ public abstract class JUnaryOperation extends JExpression {
     return arg.getType();
   }
 
+  @Override
   public boolean hasSideEffects() {
     return getOp().isModifying() || arg.hasSideEffects();
   }

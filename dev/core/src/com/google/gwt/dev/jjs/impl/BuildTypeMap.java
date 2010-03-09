@@ -182,6 +182,7 @@ public class BuildTypeMap {
 
         // user args
         mapParameters(newMethod, ctorDecl);
+        addThrownExceptions(ctorDecl.binding, newMethod);
         // original params are now frozen
 
         info.addCorrelation(program.getCorrelator().by(newMethod));
@@ -310,6 +311,14 @@ public class BuildTypeMap {
       return process(typeDeclaration);
     }
 
+    private void addThrownExceptions(MethodBinding methodBinding, 
+        JMethod method) {
+      for (ReferenceBinding thrownBinding : methodBinding.thrownExceptions) {
+        JClassType type = (JClassType) typeMap.get(thrownBinding.erasure());
+        method.addThrownException(type);
+      }
+    }
+
     private JField createEnumField(SourceInfo info, FieldBinding binding,
         JReferenceType enclosingType) {
       JType type = (JType) typeMap.get(binding.type);
@@ -404,6 +413,8 @@ public class BuildTypeMap {
           "new".toCharArray(), type, program.getNonNullType(type), false, true,
           true, false, false);
       synthetic.setSynthetic();
+
+      synthetic.addThrownExceptions(constructor.getThrownExceptions());
 
       // new Foo() : Create the instance
       JNewInstance newInstance = new JNewInstance(
@@ -655,6 +666,7 @@ public class BuildTypeMap {
       JMethod newMethod = program.createMethod(info, b.selector, enclosingType,
           returnType, b.isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate(),
           b.isNative());
+      addThrownExceptions(b, newMethod);
       if (b.isSynthetic()) {
         newMethod.setSynthetic();
       }

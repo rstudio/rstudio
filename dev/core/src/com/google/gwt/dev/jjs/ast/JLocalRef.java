@@ -36,6 +36,7 @@ public class JLocalRef extends JVariableRef {
     return local;
   }
 
+  @Override
   public boolean hasSideEffects() {
     return false;
   }

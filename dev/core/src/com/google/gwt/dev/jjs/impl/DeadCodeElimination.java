@@ -286,11 +286,15 @@ public class DeadCodeElimination {
 
         // If false, replace do with do's body
         if (!booleanLiteral.getValue()) {
-          // Unless it contains break/continue statements
-          FindBreakContinueStatementsVisitor visitor = new FindBreakContinueStatementsVisitor();
-          visitor.accept(x.getBody());
-          if (!visitor.hasBreakContinueStatements()) {
-            ctx.replaceMe(x.getBody());
+          if (Simplifier.isEmpty(x.getBody())) {
+            ctx.removeMe();
+          } else {
+            // Unless it contains break/continue statements
+            FindBreakContinueStatementsVisitor visitor = new FindBreakContinueStatementsVisitor();
+            visitor.accept(x.getBody());
+            if (!visitor.hasBreakContinueStatements()) {
+              ctx.replaceMe(x.getBody());
+            }
           }
         }
       }

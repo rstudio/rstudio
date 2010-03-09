@@ -31,6 +31,7 @@ public class JNullLiteral extends JValueLiteral {
   }
 
   @Override
+  protected
   JValueLiteral cloneFrom(JValueLiteral value) {
     throw new UnsupportedOperationException();
   }

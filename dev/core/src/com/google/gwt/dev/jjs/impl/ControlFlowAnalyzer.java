@@ -709,6 +709,7 @@ public class ControlFlowAnalyzer {
   private Map<JMethod, List<JMethod>> methodsThatOverrideMe;
 
   private final JProgram program;
+
   private Set<JReferenceType> referencedTypes = new HashSet<JReferenceType>();
   private final RescueVisitor rescuer = new RescueVisitor();
   private JMethod stringValueOfChar = null;

@@ -43,6 +43,7 @@ public class JCastOperation extends JExpression {
     return castType;
   }
 
+  @Override
   public boolean hasSideEffects() {
     // Any live cast operations might throw a ClassCastException
     //

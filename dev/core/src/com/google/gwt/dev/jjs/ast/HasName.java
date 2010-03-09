@@ -15,9 +15,26 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 /**
  * Interface implemented by named entities.
  */
 public interface HasName {
   String getName();
+  
+  /**
+   * Collection of utilities to deal with HasName objects.
+   */
+  public static final class Util {
+    public static <T extends HasName> void sortByName(List<T> list) {
+      Collections.sort(list, new Comparator<T>() {
+        public int compare(T o1, T o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      });
+    }
+  }
 }

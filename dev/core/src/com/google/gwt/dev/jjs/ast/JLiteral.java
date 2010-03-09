@@ -26,6 +26,7 @@ public abstract class JLiteral extends JExpression {
     super(sourceInfo);
   }
 
+  @Override
   public boolean hasSideEffects() {
     return false;
   }

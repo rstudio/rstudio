@@ -17,6 +17,7 @@ package com.google.gwt.dev.util.collect;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -176,6 +177,26 @@ public class Lists {
     return Collections.emptyList();
   }
 
+  public static <T> List<T> create(Collection<T> collection) {
+    switch (collection.size()) {
+      case 0 :
+        return create();
+      default:
+        return new ArrayList<T>(collection);
+    }
+  }
+
+  public static <T> List<T> create(List<T> list) {
+    switch (list.size()) {
+      case 0:
+        return create();
+      case 1:
+        return create(list.get(0));
+      default:
+        return new ArrayList<T>(list);
+    }
+  }
+
   public static <T> List<T> create(T item) {
     return Collections.singletonList(item);
   }
@@ -209,7 +230,7 @@ public class Lists {
     }
   }
 
-  @SuppressWarnings("unchecked")
+ @SuppressWarnings("unchecked")
   public static <T> List<T> normalizeUnmodifiable(List<T> list) {
     if (list.size() < 2) {
       return normalize(list);

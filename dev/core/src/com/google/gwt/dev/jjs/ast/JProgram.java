@@ -405,6 +405,11 @@ public class JProgram extends JNode {
   public JClassType createClass(SourceInfo info, char[][] name,
       boolean isAbstract, boolean isFinal) {
     String sname = dotify(name);
+    return createClass(info, sname, isAbstract, isFinal);
+  }
+
+  public JClassType createClass(SourceInfo info, String sname,
+      boolean isAbstract, boolean isFinal) {
     JClassType x = new JClassType(info, sname, isAbstract, isFinal);
 
     allTypes.add(x);
@@ -526,12 +531,18 @@ public class JProgram extends JNode {
   public JMethod createMethod(SourceInfo info, char[] name,
       JDeclaredType enclosingType, JType returnType, boolean isAbstract,
       boolean isStatic, boolean isFinal, boolean isPrivate, boolean isNative) {
-    String sname = String.valueOf(name);
-    assert (sname != null);
+    return createMethod(info, String.valueOf(name), enclosingType, returnType,
+        isAbstract, isStatic, isFinal, isPrivate, isNative);
+  }
+
+  public JMethod createMethod(SourceInfo info, String name,
+      JDeclaredType enclosingType, JType returnType, boolean isAbstract,
+      boolean isStatic, boolean isFinal, boolean isPrivate, boolean isNative) {
+    assert (name != null);
     assert (enclosingType != null);
     assert (returnType != null);
     assert (!isAbstract || !isNative);
-    JMethod x = new JMethod(info, sname, enclosingType, returnType, isAbstract,
+    JMethod x = new JMethod(info, name, enclosingType, returnType, isAbstract,
         isStatic, isFinal, isPrivate);
     if (isNative) {
       x.setBody(new JsniMethodBody(info));
@@ -540,7 +551,7 @@ public class JProgram extends JNode {
     }
 
     if (!isPrivate && indexedTypes.containsValue(enclosingType)) {
-      indexedMethods.put(enclosingType.getShortName() + '.' + sname, x);
+      indexedMethods.put(enclosingType.getShortName() + '.' + name, x);
     }
 
     enclosingType.addMethod(x);

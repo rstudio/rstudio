@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+   Copyright 2008 Google Inc.
+   
+   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+   use this file except in compliance with the License. You may obtain a copy of
+   the License at
+   
+   http://www.apache.org/licenses/LICENSE-2.0
+   
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+   License for the specific language governing permissions and limitations under
+   the License.
+-->
+</head>
+<body bgcolor="white">
+
+<p>
+Abstract framework for flow-based optimizations.
+</p>
+
+This package defines abstractions and solvers for finding fixed point of 
+lattice-based flow functions over arbitrary graphs. It also composes analyses
+with transformation as described in "Composing Dataflow Analyses and 
+Transformations" paper. This paper is highly recommended to read before
+diving into framework, since we borrow lots of terminology and algorithms from 
+there.
+
+The framework can be used for both inter- and intra- procedural analyses such 
+as:
+<ul>
+<li>constant propagation</li>
+<li>copy propagation</li>
+<li>unreachable code elimination</li>
+<li>liveness analysis</li>
+<li>null analysis</li>
+<li>side effects analysis</li>
+<li>possible exceptions</li>
+</ul>
+
+and many others.
+
+If you are new to the framework, consider starting in the following order: 
+{@link Graph}, {@link Analysis}, {@link AnalysisFollowedByTransformation}, 
+{@link CombinedIntegratedAnalysis}, {@link AnalysisSolver}.
+
+
+<h2>References</h2>
+
+<ul>
+<li>Flemming Nielson, Hanne Riis Nielson, Chris Hankin. Principles of Program 
+Analysis</li>
+<li>Steven Muchnick. Advanced Compiler Design and Implementation.</li>
+<li>Sorin Lerner, David Grove, Craig Chamber. Composing Dataflow Analyses and 
+Transformations.</li>
+</ul>
+
+</body>
+</html>

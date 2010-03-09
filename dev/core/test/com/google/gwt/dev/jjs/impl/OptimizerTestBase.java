@@ -42,6 +42,8 @@ import java.util.TreeSet;
  */
 public abstract class OptimizerTestBase extends TestCase {
 
+  public static final String MAIN_METHOD_NAME = "onModuleLoad";
+
   /**
    * Finds a field with a type.
    */
@@ -87,7 +89,7 @@ public abstract class OptimizerTestBase extends TestCase {
   }
 
   public static JMethod findMainMethod(JProgram program) {
-    return findMethod(program, "onModuleLoad");
+    return findMethod(program, MAIN_METHOD_NAME);
   }
 
   public static JMethod findMethod(JDeclaredType type, String methodName) {
@@ -205,10 +207,29 @@ public abstract class OptimizerTestBase extends TestCase {
         return code;
       }
     });
+    addBuiltinClasses(sourceOracle);
     CompilationState state = CompilationStateBuilder.buildFrom(logger,
         sourceOracle.getResources());
     JProgram program = JavaAstConstructor.construct(logger, state,
-        "test.EntryPoint");
+        "test.EntryPoint", "com.google.gwt.lang.Exceptions");
     return program;
   }
+
+  protected void addBuiltinClasses(MockResourceOracle sourceOracle) {
+    sourceOracle.addOrReplace(new MockJavaResource("java.lang.RuntimeException") {
+      @Override
+      protected CharSequence getContent() {
+        return "package java.lang;" +
+          "public class RuntimeException extends Exception { }";
+      }
+    });
+
+    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.Exceptions") {
+      @Override
+      protected CharSequence getContent() {
+        return "package com.google.gwt.lang;" +
+          "public class Exceptions { static boolean throwAssertionError() { throw new RuntimeException(); } }";
+      }
+    });
+}
 }

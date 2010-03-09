@@ -38,6 +38,7 @@ public class JThisRef extends JExpression {
     return type;
   }
 
+  @Override
   public boolean hasSideEffects() {
     return false;
   }

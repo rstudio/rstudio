@@ -53,6 +53,7 @@ public class JArrayRef extends JExpression {
         : arrayType.getElementType();
   }
 
+  @Override
   public boolean hasSideEffects() {
     // TODO: make the last test better when we have null tracking.
     return instance.hasSideEffects() || indexExpr.hasSideEffects()

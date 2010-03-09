@@ -156,6 +156,7 @@ public class MakeCallsStatic {
           CreateStaticImplsVisitor.class, "Devirtualized function"), newName,
           enclosingType, returnType, false, true, true, x.isPrivate());
       newMethod.setSynthetic();
+      newMethod.addThrownExceptions(x.getThrownExceptions());
 
       // Setup parameters; map from the old params to the new params
       JParameter thisParam = JParameter.create(sourceInfo.makeChild(

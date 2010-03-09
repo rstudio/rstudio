@@ -68,6 +68,7 @@ public final class JMethod extends JNode implements HasAnnotations,
 
   private List<JParameter> params = Collections.emptyList();
   private JType returnType;
+  private List<JClassType> thrownExceptions = Collections.emptyList();
   private boolean trace = false;
   private boolean traceFirst = true;
 
@@ -110,6 +111,14 @@ public final class JMethod extends JNode implements HasAnnotations,
    */
   public void addParam(JParameter x) {
     params = Lists.add(params, x);
+  }
+  
+  public void addThrownException(JClassType exceptionType) {
+    thrownExceptions = Lists.add(thrownExceptions, exceptionType);
+  }
+
+  public void addThrownExceptions(List<JClassType> exceptionTypes) {
+    thrownExceptions = Lists.addAll(thrownExceptions, exceptionTypes);
   }
 
   public JAnnotation findAnnotation(String className) {
@@ -163,6 +172,10 @@ public final class JMethod extends JNode implements HasAnnotations,
    */
   public List<JParameter> getParams() {
     return params;
+  }
+
+  public List<JClassType> getThrownExceptions() {
+    return thrownExceptions;
   }
 
   public JType getType() {

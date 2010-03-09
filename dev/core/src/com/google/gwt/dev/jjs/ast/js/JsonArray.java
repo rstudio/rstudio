@@ -43,6 +43,7 @@ public class JsonArray extends JExpression {
     return jsoType;
   }
 
+  @Override
   public boolean hasSideEffects() {
     for (int i = 0, c = exprs.size(); i < c; ++i) {
       if (exprs.get(i).hasSideEffects()) {

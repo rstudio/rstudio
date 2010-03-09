@@ -339,6 +339,16 @@ public class JTypeOracle implements Serializable {
     return true;
   }
 
+  public boolean canTriviallyCast(JType type, JType qType) {
+    if (type instanceof JPrimitiveType && 
+        qType instanceof JPrimitiveType) {
+      return type == qType;
+    } else if (type instanceof JReferenceType && 
+        qType instanceof JReferenceType) {
+      return canTriviallyCast((JReferenceType) type, (JReferenceType) qType); 
+    }
+    return false;
+  }
   public boolean canTriviallyCast(JReferenceType type, JReferenceType qType) {
     if (type.canBeNull() && !qType.canBeNull()) {
       // Cannot reliably cast nullable to non-nullable

@@ -90,6 +90,7 @@ import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
+import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
@@ -622,6 +623,12 @@ public class JavaToJavaScriptCompiler {
       }
       maybeDumpAST(jprogram);
     } while (optimizeLoop(jprogram, options.isAggressivelyOptimize()));
+
+    if (options.isAggressivelyOptimize()) {
+      // Just run it once, because it is very time consuming
+      DataflowOptimizer.exec(jprogram);
+    }
+
     PerfLogger.end();
   }
 
@@ -631,6 +638,7 @@ public class JavaToJavaScriptCompiler {
 
     // Recompute clinits each time, they can become empty.
     jprogram.typeOracle.recomputeAfterOptimizations();
+    // jprogram.methodOracle = MethodOracleBuilder.buildMethodOracle(jprogram);
     boolean didChange = false;
 
     // Remove unreferenced types, fields, methods, [params, locals]
@@ -657,7 +665,7 @@ public class JavaToJavaScriptCompiler {
     if (isAggressivelyOptimize) {
       // inlining
       didChange = MethodInliner.exec(jprogram) || didChange;
-
+      
       // remove same parameters value
       didChange = SameParameterValueOptimizer.exec(jprogram) || didChange;
     }

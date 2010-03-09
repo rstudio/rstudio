@@ -50,10 +50,10 @@ public class JIfStatement extends JStatement {
     if (visitor.visit(this, ctx)) {
       ifExpr = visitor.accept(ifExpr);
       if (thenStmt != null) {
-        thenStmt = visitor.accept(thenStmt);
+        thenStmt = visitor.accept(thenStmt, true);
       }
       if (elseStmt != null) {
-        elseStmt = visitor.accept(elseStmt);
+        elseStmt = visitor.accept(elseStmt, true);
       }
     }
     visitor.endVisit(this, ctx);

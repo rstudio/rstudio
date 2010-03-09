@@ -308,6 +308,9 @@ public class Simplifier {
   }
 
   private JStatement ensureBlock(JStatement stmt) {
+    if (stmt == null) {
+      return null;
+    }
     if (!(stmt instanceof JBlock)) {
       JBlock block = new JBlock(stmt.getSourceInfo());
       block.addStmt(stmt);

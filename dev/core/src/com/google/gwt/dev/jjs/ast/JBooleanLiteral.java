@@ -26,7 +26,7 @@ public class JBooleanLiteral extends JValueLiteral {
   public static final JBooleanLiteral FALSE = new JBooleanLiteral(
       SourceOrigin.UNKNOWN, false);
 
-  private static final JBooleanLiteral TRUE = new JBooleanLiteral(
+  public static final JBooleanLiteral TRUE = new JBooleanLiteral(
       SourceOrigin.UNKNOWN, true);
 
   public static JBooleanLiteral get(boolean value) {

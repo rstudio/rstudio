@@ -144,6 +144,7 @@ public class JsoDevirtualizer {
           oldParam.getType(), true, false, newMethod);
     }
     newMethod.freezeParamTypes();
+    newMethod.addThrownExceptions(objectMethod.getThrownExceptions());
 
     // Build from bottom up.
     JMethodCall condition = new JMethodCall(sourceInfo, null,

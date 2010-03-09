@@ -68,7 +68,6 @@ import java.util.Stack;
  * </p>
  */
 public abstract class CompoundAssignmentNormalizer {
-
   /**
    * Breaks apart certain complex assignments.
    */
@@ -373,7 +372,8 @@ public abstract class CompoundAssignmentNormalizer {
    */
   private final boolean reuseTemps;
 
-  protected CompoundAssignmentNormalizer(JProgram program, boolean reuseTemps) {
+  protected CompoundAssignmentNormalizer(JProgram program, 
+      boolean reuseTemps) {
     this.program = program;
     this.reuseTemps = reuseTemps;
     cloner = new CloneExpressionVisitor(program);

@@ -36,6 +36,7 @@ public class JParameterRef extends JVariableRef {
     return param;
   }
 
+  @Override
   public boolean hasSideEffects() {
     return false;
   }

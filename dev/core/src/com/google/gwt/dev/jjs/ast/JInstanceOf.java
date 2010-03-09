@@ -44,6 +44,7 @@ public class JInstanceOf extends JExpression {
     return JPrimitiveType.BOOLEAN;
   }
 
+  @Override
   public boolean hasSideEffects() {
     return false;
   }

@@ -33,6 +33,6 @@ public abstract class JValueLiteral extends JLiteral implements
 
   public abstract Object getValueObj();
 
-  abstract JValueLiteral cloneFrom(JValueLiteral value);
+  protected abstract JValueLiteral cloneFrom(JValueLiteral value);
 
 }

@@ -44,6 +44,7 @@ import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
 /**
  * See the Java Programming Language, 4th Edition, p. 750, Table 2. I just
@@ -58,7 +59,7 @@ class JavaPrecedenceVisitor extends JVisitor {
     JavaPrecedenceVisitor visitor = new JavaPrecedenceVisitor();
     visitor.accept(expression);
     if (visitor.answer < 0) {
-      throw new InternalCompilerException("Precedence must be >= 0!");
+      throw new InternalCompilerException("Precedence must be >= 0 (" + expression + ") " + expression.getClass());
     }
     return visitor.answer;
   }
@@ -168,6 +169,12 @@ class JavaPrecedenceVisitor extends JVisitor {
   public boolean visit(JGwtCreate x, Context ctx) {
     // It's a method call.
     answer = 0;
+    return false;
+  }
+
+  @Override
+  public boolean visit(JMultiExpression x, Context ctx) {
+    answer = 14;
     return false;
   }
 

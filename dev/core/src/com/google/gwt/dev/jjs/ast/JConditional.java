@@ -52,6 +52,7 @@ public class JConditional extends JExpression {
     return type;
   }
 
+  @Override
   public boolean hasSideEffects() {
     return ifTest.hasSideEffects() || thenExpr.hasSideEffects()
         || elseExpr.hasSideEffects();

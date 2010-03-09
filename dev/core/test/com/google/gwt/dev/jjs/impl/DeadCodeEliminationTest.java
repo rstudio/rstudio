@@ -122,6 +122,14 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     optimize("void", "if (b) {i = 1;}").intoString(
         "EntryPoint.b && (EntryPoint.i = 1);");
   }
+  
+  public void testDoOptimization() throws Exception {
+    optimize("void", "do {} while (b);").intoString("do { } while (EntryPoint.b);");
+    optimize("void", "do {} while (true);").intoString("do { } while (true);");
+    optimize("void", "do {} while (false);").intoString("");
+    optimize("void", "do { i++; } while (false);").intoString("++EntryPoint.i;");
+    optimize("void", "do { break; } while (false);").intoString("do { break; } while (false);");
+  }
 
   private Result optimize(final String returnType, final String codeSnippet)
       throws UnableToCompleteException {

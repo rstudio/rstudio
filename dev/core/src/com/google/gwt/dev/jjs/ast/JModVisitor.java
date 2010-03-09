@@ -182,28 +182,38 @@ public class JModVisitor extends JVisitor {
   }
 
   private static class NodeContext implements Context {
+    boolean canRemove;
     boolean didChange;
     JNode node;
     boolean replaced;
 
+    public NodeContext(boolean canRemove) {
+      this.canRemove = canRemove;
+    }
+    
     public boolean canInsert() {
       return false;
     }
 
     public boolean canRemove() {
-      return false;
+      return this.canRemove;
     }
 
     public void insertAfter(JNode node) {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("Can't insert after " + node);
     }
 
     public void insertBefore(JNode node) {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("Can't insert before " + node);
     }
 
     public void removeMe() {
-      throw new UnsupportedOperationException();
+      if (!canRemove) {
+        throw new UnsupportedOperationException("Can't remove " + node);
+      }
+      
+      this.node = null;
+      didChange = true;
     }
 
     public void replaceMe(JNode node) {
@@ -228,11 +238,17 @@ public class JModVisitor extends JVisitor {
 
   protected boolean didChange = false;
 
+  @Override
   public JNode accept(JNode node) {
-    NodeContext ctx = new NodeContext();
+    return accept(node, false);
+  }
+  
+  @Override
+  public JNode accept(JNode node, boolean allowRemove) {
+    NodeContext ctx = new NodeContext(allowRemove);
     try {
       ctx.node = node;
-      node.traverse(this, ctx);
+      traverse(node, ctx);
       didChange |= ctx.didChange;
       return ctx.node;
     } catch (Throwable e) {
@@ -240,12 +256,14 @@ public class JModVisitor extends JVisitor {
     }
   }
 
+  @Override
   @SuppressWarnings("unchecked")
   public <T extends JNode> void accept(List<T> list) {
-    NodeContext ctx = new NodeContext();
+    NodeContext ctx = new NodeContext(false);
     try {
       for (int i = 0, c = list.size(); i < c; ++i) {
-        (ctx.node = list.get(i)).traverse(this, ctx);
+        ctx.node = list.get(i);
+        traverse(ctx.node, ctx);
         if (ctx.replaced) {
           list.set(i, (T) ctx.node);
           ctx.replaced = false;
@@ -260,10 +278,11 @@ public class JModVisitor extends JVisitor {
   @SuppressWarnings("unchecked")
   @Override
   public <T extends JNode> List<T> acceptImmutable(List<T> list) {
-    NodeContext ctx = new NodeContext();
+    NodeContext ctx = new NodeContext(false);
     try {
       for (int i = 0, c = list.size(); i < c; ++i) {
-        (ctx.node = list.get(i)).traverse(this, ctx);
+        ctx.node = list.get(i);
+        traverse(ctx.node, ctx);
         if (ctx.replaced) {
           list = Lists.set(list, i, (T) ctx.node);
           ctx.replaced = false;
@@ -276,16 +295,22 @@ public class JModVisitor extends JVisitor {
     }
   }
 
+  @Override
   public <T extends JNode> void acceptWithInsertRemove(List<T> list) {
     new ListContext<T>(list).traverse();
   }
 
+  @Override
   public <T extends JNode> List<T> acceptWithInsertRemoveImmutable(List<T> list) {
     return new ListContextImmutable<T>(list).traverse();
   }
 
+  @Override
   public boolean didChange() {
     return didChange;
   }
 
+  protected void traverse(JNode node, Context context) {
+    node.traverse(this, context);
+  }
 }

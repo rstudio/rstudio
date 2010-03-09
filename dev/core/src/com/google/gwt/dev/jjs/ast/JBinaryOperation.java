@@ -58,6 +58,7 @@ public class JBinaryOperation extends JExpression {
     }
   }
 
+  @Override
   public boolean hasSideEffects() {
     return op.isAssignment() || getLhs().hasSideEffects()
         || getRhs().hasSideEffects();

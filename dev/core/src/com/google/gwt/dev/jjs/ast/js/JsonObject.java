@@ -67,6 +67,7 @@ public class JsonObject extends JExpression {
     return jsoType;
   }
 
+  @Override
   public boolean hasSideEffects() {
     for (JsonPropInit propInit : propInits) {
       if (propInit.labelExpr.hasSideEffects()

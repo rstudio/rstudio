@@ -94,10 +94,7 @@ public class CatchBlockNormalizer {
             catchInfo, exVar));
         JDeclarationStatement declaration = new JDeclarationStatement(
             catchInfo, arg, new JLocalRef(catchInfo, exVar));
-        if (!block.getStatements().isEmpty()) {
-          // Only bother adding the assignment if the block is non-empty
-          block.addStmt(0, declaration);
-        }
+        block.addStmt(0, declaration);
         // nest the previous as an else for me
         cur = new JIfStatement(catchInfo, ifTest, block, cur);
       }

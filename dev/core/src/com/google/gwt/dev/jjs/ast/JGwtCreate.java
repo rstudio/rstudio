@@ -110,6 +110,7 @@ public class JGwtCreate extends JExpression {
     return type;
   }
 
+  @Override
   public boolean hasSideEffects() {
     for (JExpression expr : instantiationExpressions) {
       if (expr.hasSideEffects()) {
