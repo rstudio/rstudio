@@ -44,6 +44,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
@@ -216,23 +217,29 @@ public class StockSample implements EntryPoint, Updater {
     HorizontalPanel cashPanel = new HorizontalPanel();
     cashPanel.add(new HTML("<b>Available cash:</b>"));
     cashPanel.add(cashLabel);
-    
     HorizontalPanel netWorthPanel = new HorizontalPanel();
     netWorthPanel.add(new HTML("<b>Net worth:</b>"));
     netWorthPanel.add(netWorthLabel);
+    VerticalPanel moneyPanel = new VerticalPanel();
+    moneyPanel.add(cashPanel);
+    moneyPanel.add(netWorthPanel);
     
-    DockLayoutPanel footerPanel = new DockLayoutPanel(Unit.PCT);
-    footerPanel.addWest(cashPanel, 50.0);
-    footerPanel.add(netWorthPanel);
+    DockLayoutPanel westPanel = new DockLayoutPanel(Unit.PCT);
+    westPanel.addNorth(moneyPanel, 25.0);
+    westPanel.add(new HTML("<table>" +
+        "<tr><td>Dan Rice</td><td>$10000</td></tr>" +
+        "<tr><td>Joel Webber</td><td>$10000</td></tr>" +
+        "<tr><td>John Labanca</td><td>$10000</td></tr>" +
+        "</table>"));
     
     DockLayoutPanel layoutPanel = new DockLayoutPanel(Unit.EM);
     layoutPanel.addNorth(headerWidget, 4.0);
-    layoutPanel.addSouth(footerPanel, 2.0);
+    layoutPanel.addWest(westPanel, 15.0);
     layoutPanel.addNorth(transactionTree, 18.0);
     
     DockLayoutPanel innerLayoutPanel = new DockLayoutPanel(Unit.PCT);
     this.queryWidget = new StockQueryWidget(searchListModel, this);
-    innerLayoutPanel.addWest(queryWidget, 50.0);
+    innerLayoutPanel.addWest(queryWidget, 60.0);
     
     DockLayoutPanel favoritesLayoutPanel = new DockLayoutPanel(Unit.EM);
     favoritesLayoutPanel.addNorth(new Label("Portfolio / Favorites"), 2.0);

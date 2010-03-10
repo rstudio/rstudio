@@ -17,6 +17,7 @@ package com.google.gwt.bikeshed.sample.stocks.server;
 
 import java.util.HashMap;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 /**
  * Game state for a single player.
@@ -42,6 +43,11 @@ public class PlayerStatus {
    * This players favorite stocks.
    */
   private TreeSet<String> favorites = new TreeSet<String>();
+  
+  /**
+   * A precompiled version of the favorites query.
+   */
+  private Pattern favoritesPattern;
 
   /**
    * The query used to retrieve favorites.
@@ -100,6 +106,15 @@ public class PlayerStatus {
    */
   public int getCash() {
     return cash;
+  }
+
+  /**
+   * Get this players favorite pattern.
+   * 
+   * @return the pattern
+   */
+  public Pattern getFavoritesPattern() {
+    return favoritesPattern;
   }
 
   /**
@@ -175,5 +190,6 @@ public class PlayerStatus {
       sb.append(ticker);
     }
     favoritesQuery = sb.toString();
+    favoritesPattern = Pattern.compile(favoritesQuery);
   }
 }

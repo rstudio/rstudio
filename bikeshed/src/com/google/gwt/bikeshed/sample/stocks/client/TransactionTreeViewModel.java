@@ -24,7 +24,6 @@ import com.google.gwt.bikeshed.sample.stocks.shared.StockQuote;
 import com.google.gwt.bikeshed.sample.stocks.shared.Transaction;
 import com.google.gwt.bikeshed.tree.client.TreeNode;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel;
-import com.google.gwt.bikeshed.tree.client.TreeViewModel.DefaultNodeInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -85,9 +84,8 @@ class TransactionTreeViewModel implements TreeViewModel {
     this.stockQuoteListModel = stockQuoteListModel;
     List<String> topLevelList = topLevelListListModel.getList();
     topLevelList.add("Favorites");
-    topLevelList.add("Internet");
-    topLevelList.add("Energy");
-    topLevelList.add("Networking");
+    topLevelList.add("Dow Jones Industrials");
+    topLevelList.add("S&P 500");
     this.transactionListListModelsByTicker = transactionListListModelsByTicker;
   }
 
