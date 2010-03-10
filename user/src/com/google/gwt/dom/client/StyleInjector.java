@@ -17,8 +17,6 @@ package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -85,14 +83,29 @@ public class StyleInjector {
    */
   public static class StyleInjectorImplIE extends StyleInjectorImpl {
 
-    /*
-     * TODO(bobv) : Talk to scottb about being able to read this out of the
-     * module xml file as a configuration-property to handle cases where
-     * multiple GWT modules are living in the same page.
+    /**
+     * The maximum number of style tags that can be handled by IE.
      */
     private static final int MAX_STYLE_SHEETS = 30;
-    private static final JsArray<StyleElement> STYLE_ELEMENTS = JavaScriptObject.createArray().cast();
-    private static final JsArrayInteger STYLE_ELEMENT_LENGTHS = JavaScriptObject.createArray().cast();
+    
+    /**
+     * A cache of the lengths of the current style sheets.  A value of 0
+     * indicates that the length has not yet been retrieved.
+     */
+    private static int[] styleSheetLengths = new int[MAX_STYLE_SHEETS];
+
+    private static native int getDocumentStyleCount() /*-{
+      return $doc.styleSheets.length;
+    }-*/;
+
+    private static native StyleElement getDocumentStyleSheet(int index) /*-{
+      return $doc.styleSheets[index];
+    }-*/;
+
+    private static native int getDocumentStyleSheetLength(int index) /*-{
+      return $doc.styleSheets[index].cssText.length;
+    }-*/;
+
 
     public native void appendContents(StyleElement style, String contents) /*-{
       style.cssText += contents;
@@ -100,89 +113,81 @@ public class StyleInjector {
 
     @Override
     public StyleElement injectStyleSheet(String contents) {
-      int idx = STYLE_ELEMENTS.length();
-      if (getDocumentStyleCount() < MAX_STYLE_SHEETS) {
+      int numStyles = getDocumentStyleCount(); 
+      if (numStyles < MAX_STYLE_SHEETS) {
         // Just create a new style element and add it to the list
-        StyleElement style = createElement();
-        setContents(style, contents);
-        STYLE_ELEMENTS.set(idx, style);
-        STYLE_ELEMENT_LENGTHS.set(idx, contents.length());
-        return style;
+        return createNewStyleSheet(contents);
       } else {
         /*
          * Find shortest style element to minimize re-parse time in the general
          * case.
+         * 
+         * We cache the lengths of the style sheets in order to avoid expensive
+         * calls to retrieve their actual contents. Note that if another module
+         * or script makes changes to the style sheets that we are unaware of,
+         * the worst that will happen is that we will choose a style sheet to
+         * append to that is not actually of minimum size.
          */
         int shortestLen = Integer.MAX_VALUE;
         int shortestIdx = -1;
-        for (int i = 0; i < idx; i++) {
-          if (STYLE_ELEMENT_LENGTHS.get(i) < shortestLen) {
-            shortestLen = STYLE_ELEMENT_LENGTHS.get(i);
+        for (int i = 0; i < numStyles; i++) {
+          int len = styleSheetLengths[i];
+          if (len == 0) {
+            // Cache the length
+            len = styleSheetLengths[i] = getDocumentStyleSheetLength(i);
+          }
+          if (len <= shortestLen) {
+            shortestLen = len;
             shortestIdx = i;
           }
         }
-
-        /**
-         * This assertion can fail if the max number of style elements exist
-         * before this module can inject any style elements, so STYLE_ELEMENTS
-         * will be empty. However, the fix would degrade performance for the
-         * general case. TODO(jlabanca): Can we handle this scenario
-         * efficiently?
-         */
-        assert shortestIdx != -1;
-
-        StyleElement style = STYLE_ELEMENTS.get(shortestIdx);
-        STYLE_ELEMENT_LENGTHS.set(shortestIdx, shortestLen + contents.length());
-        appendContents(style, contents);
-        return style;
+        styleSheetLengths[shortestIdx] += contents.length();
+        return appendToStyleSheet(shortestIdx, contents, true); 
       }
     }
 
     @Override
     public StyleElement injectStyleSheetAtEnd(String contents) {
-      if (STYLE_ELEMENTS.length() == 0) {
-        return injectStyleSheet(contents);
+      int documentStyleCount = getDocumentStyleCount();
+      if (documentStyleCount == 0) {
+        return createNewStyleSheet(contents);
       }
-
-      int idx = STYLE_ELEMENTS.length() - 1;
-      StyleElement style = STYLE_ELEMENTS.get(idx);
-      STYLE_ELEMENT_LENGTHS.set(idx, STYLE_ELEMENT_LENGTHS.get(idx)
-          + contents.length());
-      appendContents(style, contents);
-
-      return style;
+    
+      return appendToStyleSheet(documentStyleCount - 1, contents, true);
     }
 
     @Override
     public StyleElement injectStyleSheetAtStart(String contents) {
-      if (STYLE_ELEMENTS.length() == 0) {
-        return injectStyleSheet(contents);
+      if (getDocumentStyleCount() == 0) {
+        return createNewStyleSheet(contents);
       }
-
-      StyleElement style = STYLE_ELEMENTS.get(0);
-      STYLE_ELEMENT_LENGTHS.set(0, STYLE_ELEMENT_LENGTHS.get(0)
-          + contents.length());
-      prependContents(style, contents);
-
-      return style;
+    
+      return appendToStyleSheet(0, contents, false); // prepend
     }
 
     public native void prependContents(StyleElement style, String contents) /*-{
       style.cssText = contents + style.cssText;
     }-*/;
 
-    @Override
-    public native void setContents(StyleElement style, String contents) /*-{
-      style.cssText = contents;
-    }-*/;
+    private StyleElement appendToStyleSheet(int idx, String contents, boolean append) {
+      StyleElement style = getDocumentStyleSheet(idx);
+      if (append) {
+        appendContents(style, contents);
+      } else {
+        prependContents(style, contents);
+      }
+      return style;
+    }
 
     private native StyleElement createElement() /*-{
       return $doc.createStyleSheet();
     }-*/;
 
-    private native int getDocumentStyleCount() /*-{
-      return $doc.styleSheets.length;
-    }-*/;
+    private StyleElement createNewStyleSheet(String contents) {
+      StyleElement style = createElement();
+      style.setCssText(contents);
+      return style;
+    }
   }
 
   private static final JsArrayString toInject = JavaScriptObject.createArray().cast();

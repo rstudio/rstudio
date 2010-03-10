@@ -40,6 +40,13 @@ public class StyleElement extends Element {
   }
 
   /**
+   * The CSS text.
+   */
+  public final native String getCssText() /*-{
+    return this.cssText;
+  }-*/;
+
+  /**
    * Enables/disables the style sheet.
    * @deprecated use {@link #isDisabled()} instead
    */
@@ -71,6 +78,13 @@ public class StyleElement extends Element {
   public final native boolean isDisabled() /*-{
      return !!this.disabled;
    }-*/;
+
+  /**
+   * Sets the CSS text.
+   */
+  public final native void setCssText(String cssText) /*-{
+    this.cssText = cssText;
+  }-*/;
 
   /**
    * Enables/disables the style sheet.
