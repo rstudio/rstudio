@@ -2496,7 +2496,6 @@ public class GenerateJavaAST {
       return variable;
     }
 
-    @SuppressWarnings("unchecked")
     private void processAnnotationProperties(SourceInfo sourceInfo,
         JAnnotation annotation, ElementValuePair[] elementValuePairs) {
       if (elementValuePairs == null) {

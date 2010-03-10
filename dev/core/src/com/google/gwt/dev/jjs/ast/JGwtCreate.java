@@ -64,7 +64,6 @@ public class JGwtCreate extends JExpression {
 
   private final ArrayList<JExpression> instantiationExpressions;
   private final List<JClassType> resultTypes;
-
   private final JReferenceType sourceType;
 
   /*

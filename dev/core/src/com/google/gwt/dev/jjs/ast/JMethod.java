@@ -43,12 +43,12 @@ public final class JMethod extends JNode implements HasAnnotations,
     System.out.println(code);
   }
 
+  private List<JAnnotation> annotations = Lists.create();
+
   /**
    * Special serialization treatment.
    */
   private transient JAbstractMethodBody body = null;
-
-  private List<JAnnotation> annotations = Lists.create();
   private final JDeclaredType enclosingType;
   private final boolean isAbstract;
   private boolean isFinal;

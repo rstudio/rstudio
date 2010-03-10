@@ -142,25 +142,6 @@ public class Pruner {
     }
 
     @Override
-    public void endVisit(JNameOf x, Context ctx) {
-      HasName node = x.getNode();
-      boolean pruned;
-      if (node instanceof JField) {
-        pruned = isPruned((JField) node);
-      } else if (node instanceof JMethod) {
-        pruned = isPruned((JMethod) node);
-      } else if (node instanceof JReferenceType) {
-        pruned = !program.typeOracle.isInstantiatedType((JReferenceType) node);
-      } else {
-        throw new InternalCompilerException("Unhandled JNameOf node: " + node);
-      }
-
-      if (pruned) {
-        ctx.replaceMe(program.getLiteralNull());
-      }
-    }
-
-    @Override
     public void endVisit(JMethod x, Context ctx) {
       JType type = x.getType();
       if (type instanceof JReferenceType) {
@@ -223,6 +204,25 @@ public class Pruner {
         }
 
         ctx.replaceMe(newCall);
+      }
+    }
+
+    @Override
+    public void endVisit(JNameOf x, Context ctx) {
+      HasName node = x.getNode();
+      boolean pruned;
+      if (node instanceof JField) {
+        pruned = isPruned((JField) node);
+      } else if (node instanceof JMethod) {
+        pruned = isPruned((JMethod) node);
+      } else if (node instanceof JReferenceType) {
+        pruned = !program.typeOracle.isInstantiatedType((JReferenceType) node);
+      } else {
+        throw new InternalCompilerException("Unhandled JNameOf node: " + node);
+      }
+
+      if (pruned) {
+        ctx.replaceMe(program.getLiteralNull());
       }
     }
 

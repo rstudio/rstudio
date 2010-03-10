@@ -369,8 +369,8 @@ public class TypeTightener {
   public class TightenTypesVisitor extends JModVisitor {
 
     /**
-     * <code>true</code> if this visitor has changed the AST apart from calls
-     * to Context.
+     * <code>true</code> if this visitor has changed the AST apart from calls to
+     * Context.
      */
     private boolean myDidChange = false;
 
@@ -391,7 +391,7 @@ public class TypeTightener {
       if (toType == null) {
         toType = (JReferenceType) x.getCastType();
       }
-      JReferenceType fromType = getSingleConcreteType(argType); 
+      JReferenceType fromType = getSingleConcreteType(argType);
       if (fromType == null) {
         fromType = (JReferenceType) argType;
       }
@@ -475,7 +475,7 @@ public class TypeTightener {
       if (toType == null) {
         toType = x.getTestType();
       }
-      JReferenceType fromType = getSingleConcreteType(argType); 
+      JReferenceType fromType = getSingleConcreteType(argType);
       if (fromType == null) {
         fromType = (JReferenceType) argType;
       }

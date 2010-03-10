@@ -84,8 +84,8 @@ public class DeadCodeElimination {
    * operations in favor of pure side effects.
    * 
    * TODO(spoon): move more simplifications into methods like
-   * {@link #cast(JExpression, SourceInfo, JType, JExpression) simplifyCast},
-   * so that more simplifications can be made on a single pass through a tree.
+   * {@link #cast(JExpression, SourceInfo, JType, JExpression) simplifyCast}, so
+   * that more simplifications can be made on a single pass through a tree.
    */
   public class DeadCodeVisitor extends JModVisitor {
 
@@ -94,8 +94,8 @@ public class DeadCodeElimination {
     /**
      * Expressions whose result does not matter. A parent node should add any
      * children whose result does not matter to this set during the parent's
-     * <code>visit()</code> method. It should then remove those children
-     * during its own <code>endVisit()</code>.
+     * <code>visit()</code> method. It should then remove those children during
+     * its own <code>endVisit()</code>.
      * 
      * TODO: there's a latent bug here: some immutable nodes (such as literals)
      * can be multiply referenced in the AST. In theory, one reference to that
@@ -1346,23 +1346,23 @@ public class DeadCodeElimination {
     }
 
     /**
-     * Simplify <code>exp == bool</code>, where <code>bool</code> is a
-     * boolean literal.
+     * Simplify <code>exp == bool</code>, where <code>bool</code> is a boolean
+     * literal.
      */
     private void simplifyBooleanEq(JExpression exp, boolean bool, Context ctx) {
       if (bool) {
         ctx.replaceMe(exp);
       } else {
-        ctx.replaceMe(new JPrefixOperation(exp.getSourceInfo(), JUnaryOperator.NOT,
-            exp));
+        ctx.replaceMe(new JPrefixOperation(exp.getSourceInfo(),
+            JUnaryOperator.NOT, exp));
       }
     }
 
     /**
      * Simplify <code>lhs == rhs</code>, where <code>lhs</code> and
      * <code>rhs</code> are known to be boolean. If <code>negate</code> is
-     * <code>true</code>, then treat it as <code>lhs != rhs</code> instead
-     * of <code>lhs == rhs</code>. Assumes that the case where both sides are
+     * <code>true</code>, then treat it as <code>lhs != rhs</code> instead of
+     * <code>lhs == rhs</code>. Assumes that the case where both sides are
      * literals has already been checked.
      */
     private void simplifyBooleanEq(JExpression lhs, JExpression rhs,
@@ -1394,8 +1394,8 @@ public class DeadCodeElimination {
     }
 
     /**
-     * Simplify <code>lhs == rhs</code>. If <code>negate</code> is true,
-     * then it's actually static evaluation of <code>lhs != rhs</code>.
+     * Simplify <code>lhs == rhs</code>. If <code>negate</code> is true, then
+     * it's actually static evaluation of <code>lhs != rhs</code>.
      */
     private void simplifyEq(JExpression lhs, JExpression rhs, Context ctx,
         boolean negated) {
@@ -1459,8 +1459,7 @@ public class DeadCodeElimination {
       if (original != null) {
         return original;
       }
-      return new JPrefixOperation(exp.getSourceInfo(), JUnaryOperator.NEG,
-          exp);
+      return new JPrefixOperation(exp.getSourceInfo(), JUnaryOperator.NEG, exp);
     }
 
     private boolean simplifySub(JExpression lhs, JExpression rhs, Context ctx,
@@ -1478,8 +1477,8 @@ public class DeadCodeElimination {
 
     private void simplifyXor(JExpression lhs, JBooleanLiteral rhs, Context ctx) {
       if (rhs.getValue()) {
-        ctx.replaceMe(new JPrefixOperation(lhs.getSourceInfo(), JUnaryOperator.NOT,
-            lhs));
+        ctx.replaceMe(new JPrefixOperation(lhs.getSourceInfo(),
+            JUnaryOperator.NOT, lhs));
       } else {
         ctx.replaceMe(lhs);
       }
@@ -1587,6 +1586,7 @@ public class DeadCodeElimination {
       if (method.getName().endsWith("hashCode")) {
         // This cannot be computed at compile time because our implementation
         // differs from the JRE.
+        // TODO: actually, I think it DOES match now, so we can remove this?
         return;
       }
 
@@ -1683,9 +1683,9 @@ public class DeadCodeElimination {
 
         if (caseStatement.getExpr() != null) {
           // Create an if statement equivalent to the single-case switch.
-          JBinaryOperation compareOperation = new JBinaryOperation(x.getSourceInfo(),
-              program.getTypePrimitiveBoolean(), JBinaryOperator.EQ,
-              x.getExpr(), caseStatement.getExpr());
+          JBinaryOperation compareOperation = new JBinaryOperation(
+              x.getSourceInfo(), program.getTypePrimitiveBoolean(),
+              JBinaryOperator.EQ, x.getExpr(), caseStatement.getExpr());
           JBlock block = new JBlock(x.getSourceInfo());
           block.addStmt(statement);
           JIfStatement ifStatement = new JIfStatement(x.getSourceInfo(),

@@ -176,7 +176,6 @@ public class CastNormalizer {
         JTypeOracle typeOracle = program.typeOracle;
         JType rhsType = x.getRhs().getType();
         assert (rhsType instanceof JReferenceType);
-        JReferenceType refRhsType = (JReferenceType) rhsType;
 
         for (JArrayType arrayType : instantiatedArrayTypes) {
           if (typeOracle.canTheoreticallyCast(arrayType, lhsArrayType)) {
