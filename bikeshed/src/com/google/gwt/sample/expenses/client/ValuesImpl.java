@@ -68,11 +68,11 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
     this.propertyHolder = propertyHolder;
   }-*/;
 
-  private native int getInt(String name) /*-{
+  private native double getDouble(String name) /*-{
     return this[name];
   }-*/;
 
-  private native double getDouble(String name) /*-{
+  private native int getInt(String name) /*-{
     return this[name];
   }-*/;
 
