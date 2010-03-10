@@ -63,6 +63,9 @@ final class NullFieldFiller implements EntityVisitor<Void> {
     if (sparse.getApprovedSupervisor() == null) {
       sparse.setApprovedSupervisor(report.getApprovedSupervisor());
     }
+    if (sparse.getCreated() == null) {
+      sparse.setCreated(report.getCreated());
+    }
     if (sparse.getPurpose() == null) {
       sparse.setPurpose(report.getPurpose());
     }

@@ -57,6 +57,10 @@ public class Slot<E extends Entity<E>, V> {
     return true;
   }
 
+  public E getEntity() {
+    return entity;
+  }
+
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -64,10 +68,6 @@ public class Slot<E extends Entity<E>, V> {
     result = prime * result + entity.getId().hashCode();
     result = prime * result + property.hashCode();
     return result;
-  }
-
-  E getEntity() {
-    return entity;
   }
 
   Property<E, V> getProperty() {

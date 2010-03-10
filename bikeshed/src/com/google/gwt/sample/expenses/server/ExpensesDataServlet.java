@@ -16,6 +16,7 @@
 package com.google.gwt.sample.expenses.server;
 
 import com.google.gwt.sample.expenses.domain.Employee;
+import com.google.gwt.sample.expenses.domain.Report;
 import com.google.gwt.sample.expenses.shared.MethodName;
 
 import org.json.JSONArray;
@@ -30,7 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 
+ *
  */
 public class ExpensesDataServlet extends HttpServlet {
 
@@ -44,24 +45,72 @@ public class ExpensesDataServlet extends HttpServlet {
     PrintWriter writer = response.getWriter();
     switch (methodName) {
       case FIND_ALL_EMPLOYEES:
-        JSONArray jsonArray = new JSONArray();
-        for (Employee e : Employee.findAllEmployees()) {
-          try {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("USER_NAME", e.getUserName());
-            jsonObject.put("DISPLAY_NAME", e.getDisplayName());
-            jsonArray.put(jsonObject);
-          } catch (JSONException ex) {
-            System.err.println("Unable to create a JSON object " + ex);
-          }
-        }
-        writer.print(jsonArray.toString());
+        findAllEmployees(writer);
         break;
       case FIND_EMPLOYEE:
         // TODO
         break;
+      case FIND_REPORTS_BY_EMPLOYEE:
+        findReportsByEmployee(request, writer);
+        break;
     }
     writer.flush();
+  }
+
+  private void findAllEmployees(PrintWriter writer) {
+    JSONArray jsonArray = new JSONArray();
+    for (Employee e : Employee.findAllEmployees()) {
+      try {
+        // TODO should only be getting requested properties
+        // TODO clearly there should be centralized code for these conversions
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(
+            com.google.gwt.sample.expenses.shared.Employee.ID.getName(),
+            Long.toString(e.getId()));
+        jsonObject.put(
+            com.google.gwt.sample.expenses.shared.Employee.VERSION.getName(),
+            e.getVersion().intValue());
+        jsonObject.put(
+            com.google.gwt.sample.expenses.shared.Employee.USER_NAME.getName(),
+            e.getUserName());
+        jsonObject.put(
+            com.google.gwt.sample.expenses.shared.Employee.DISPLAY_NAME.getName(),
+            e.getDisplayName());
+        jsonArray.put(jsonObject);
+      } catch (JSONException ex) {
+        System.err.println("Unable to create a JSON object " + ex);
+      }
+    }
+    writer.print(jsonArray.toString());
+  }
+
+  private void findReportsByEmployee(HttpServletRequest request,
+      PrintWriter writer) {
+    JSONArray jsonArray = new JSONArray();
+    Long id = Long.valueOf(request.getParameter("id"));
+    for (Report r : Report.findReportsByEmployee(id)) {
+      try {
+        // TODO should only be getting requested properties
+        // TODO clearly there should be centralized code for these conversions
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put(
+            com.google.gwt.sample.expenses.shared.Employee.ID.getName(),
+            Long.toString(r.getId()));
+        jsonObject.put(
+            com.google.gwt.sample.expenses.shared.Report.VERSION.getName(),
+            r.getVersion().intValue());
+        jsonObject.put(
+            com.google.gwt.sample.expenses.shared.Report.CREATED.getName(),
+            Double.valueOf(r.getCreated().getTime()));
+        jsonObject.put(
+            com.google.gwt.sample.expenses.shared.Report.PURPOSE.getName(),
+            r.getPurpose());
+        jsonArray.put(jsonObject);
+      } catch (JSONException ex) {
+        System.err.println("Unable to create a JSON object " + ex);
+      }
+    }
+    writer.print(jsonArray.toString());
   }
 
   /**

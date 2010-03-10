@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.expenses.domain;
 
+import java.util.Date;
+
 /**
  * Models a line item in an expense report.
  */
@@ -32,7 +34,7 @@ public class ReportItem implements Entity {
 //  @javax.validation.constraints.NotNull
 //  @javax.validation.constraints.Past
   // @javax.persistence.Temporal(javax.persistence.TemporalType.TIMESTAMP)
-  private java.util.Date incurred;
+  private Date incurred;
 
 //  @javax.validation.constraints.Size(min = 3, max = 100)
   private String purpose;
@@ -84,7 +86,7 @@ public class ReportItem implements Entity {
   /**
    * @return the incurred
    */
-  public java.util.Date getIncurred() {
+  public Date getIncurred() {
     return incurred;
   }
 

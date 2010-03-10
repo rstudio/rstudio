@@ -22,22 +22,25 @@ import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.sample.expenses.shared.Employee;
+import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.sample.expenses.shared.Report;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
 
+import java.util.Date;
 import java.util.List;
 
 /**
- * UI shell for expenses sample app.
+ * UI shell for expenses sample app. A horrible clump of stuff that should be
+ * refactored into proper MVP pieces.
  */
-public class Shell extends Composite implements HasValueList<Values<Employee>> {
+public class Shell extends Composite implements HasValueList<Values<Report>> {
 
   interface ShellUiBinder extends UiBinder<Widget, Shell> {
   }
@@ -52,33 +55,36 @@ public class Shell extends Composite implements HasValueList<Values<Employee>> {
   @UiField
   ListBox users;
 
-  private Command refresh;
-
   public Shell() {
     initWidget(uiBinder.createAndBindUi(this));
   }
 
   public void editValueList(boolean replace, int index,
-      List<Values<Employee>> newValues) {
+      List<Values<Report>> newValues) {
     throw new UnsupportedOperationException();
   }
 
-  public void setValueList(List<Values<Employee>> newValues) {
+  public void setValueList(List<Values<Report>> newValues) {
     int r = 1; // skip header
     NodeList<TableRowElement> tableRows = table.getRows();
     for (int i = 0; i < newValues.size(); i++) {
-      Values<Employee> valueRow = newValues.get(i);
+      Values<Report> valueRow = newValues.get(i);
+
       if (r < tableRows.getLength()) {
         reuseRow(r, tableRows, valueRow);
       } else {
         TableRowElement tableRow = Document.get().createTRElement();
 
         TableCellElement tableCell = Document.get().createTDElement();
-        tableCell.setInnerText(valueRow.get(Employee.USER_NAME));
+        tableCell.setInnerText(renderDate(valueRow, Report.CREATED));
         tableRow.appendChild(tableCell);
 
         tableCell = Document.get().createTDElement();
-        tableCell.setInnerText(valueRow.get(Employee.DISPLAY_NAME));
+        /* status goes here */
+        tableRow.appendChild(tableCell);
+
+        tableCell = Document.get().createTDElement();
+        tableCell.setInnerText(valueRow.get(Report.PURPOSE));
         tableRow.appendChild(tableCell);
 
         table.appendChild(tableRow);
@@ -94,17 +100,21 @@ public class Shell extends Composite implements HasValueList<Values<Employee>> {
     throw new UnsupportedOperationException();
   }
 
+  private <T> String renderDate(Values<T> values, Property<T, Date> property) {
+    return DateTimeFormat.getShortDateTimeFormat().format(values.get(property));
+  }
+
   /**
    * @param r
    * @param tableRows
    * @param valueRow
    */
   private void reuseRow(int r, NodeList<TableRowElement> tableRows,
-      Values<Employee> valueRow) {
+      Values<Report> valueRow) {
     TableRowElement tableRow = tableRows.getItem(r);
     NodeList<TableCellElement> tableCells = tableRow.getCells();
 
-    tableCells.getItem(0).setInnerText(valueRow.get(Employee.USER_NAME));
-    tableCells.getItem(0).setInnerText(valueRow.get(Employee.DISPLAY_NAME));
+    // tableCells.getItem(0).setInnerText(valueRow.get(Report.CREATED).toString());
+    tableCells.getItem(2).setInnerText(valueRow.get(Report.PURPOSE));
   }
 }

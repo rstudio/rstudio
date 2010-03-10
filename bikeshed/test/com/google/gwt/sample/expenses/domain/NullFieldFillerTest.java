@@ -57,6 +57,7 @@ public class NullFieldFillerTest extends TestCase {
         full.setPurpose("purpose");
         full.setReporter(tester.employee);
         full.setStatus(Status.Paid);
+        full.setCreated(new Date(1234567890));
         
         doFillAndVerify(report, full);
         
@@ -64,6 +65,7 @@ public class NullFieldFillerTest extends TestCase {
         assertEquals("purpose", report.getPurpose());
         assertSame(tester.employee, report.getReporter());
         assertEquals(Status.Paid, report.getStatus());
+        assertEquals(new Date(1234567890), report.getCreated());
 
         return null;
       }

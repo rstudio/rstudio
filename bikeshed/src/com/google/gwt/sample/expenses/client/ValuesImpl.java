@@ -15,13 +15,17 @@
  */
 package com.google.gwt.sample.expenses.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
 
+import java.util.Date;
+
 /**
  * JSO implementation of {@link Values}.
+ * 
  * @param <T> value type
  */
 public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
@@ -37,15 +41,47 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
   protected ValuesImpl() {
   }
 
-  public native <V, P extends Property<T, V>> V get(P property) /*-{
-    return this[property.@com.google.gwt.valuestore.shared.Property::getName()()];
-  }-*/;
+  @SuppressWarnings("unchecked")
+  public <V, P extends Property<T, V>> V get(P property) {
+
+    if (Integer.class.equals(property.getValueType())) {
+      return (V) Integer.valueOf(getInt(property.getName()));
+    }
+    if (Date.class.equals(property.getValueType())) {
+      double millis = getDouble(property.getName());
+      if (GWT.isScript()) {
+        return (V) initDate(new Date(), millis);
+      } else {
+        // In dev mode, we're using real JRE dates
+        return (V) new Date((long) millis);
+      }
+    }
+
+    return nativeGet(property);
+  }
 
   public native T getPropertyHolder() /*-{
     return this.propertyHolder;
   }-*/;
-  
+
   public native void setPropertyHolder(T propertyHolder) /*-{
     this.propertyHolder = propertyHolder;
+  }-*/;
+
+  private native int getInt(String name) /*-{
+    return this[name];
+  }-*/;
+
+  private native double getDouble(String name) /*-{
+    return this[name];
+  }-*/;
+
+  private native Date initDate(Date date, double millis) /*-{
+    date.@java.util.Date::init(D)(millis);
+    return date;
+  }-*/;
+
+  private native <V, P extends Property<T, V>> V nativeGet(P property) /*-{
+    return this[property.@com.google.gwt.valuestore.shared.Property::getName()()];
   }-*/;
 }

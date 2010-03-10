@@ -19,30 +19,30 @@ import com.google.gwt.requestfactory.shared.Entity;
 import com.google.gwt.requestfactory.shared.Slot;
 import com.google.gwt.valuestore.shared.Property;
 
+import java.util.Date;
+
 /**
- * "Generated" proxy of {@link com.google.gwt.sample.expenses.domain.Employee
- * domain.Employee}.
+ * "Generated" proxy of {@link com.google.gwt.sample.expenses.domain.Report
+ * domain.Report}.
  */
-public class Employee implements Entity<Employee> {
+public class Report implements Entity<Report> {
 
-  public static final Property<Employee, String> ID = new Property<Employee, String>(
-      Employee.class, String.class, "ID");
+  public static final Property<Report, String> ID = new Property<Report, String>(
+      Report.class, String.class, "ID");
 
-  public static final Property<Employee, String> DISPLAY_NAME = new Property<Employee, String>(
-      Employee.class, String.class, "DISPLAY_NAME");
-  public static final Property<Employee, Employee> SUPERVISOR = new Property<Employee, Employee>(
-      Employee.class, Employee.class, "SUPERVISOR");
+  public static final Property<Report, Integer> VERSION = new Property<Report, Integer>(
+      Report.class, Integer.class, "VERSION");
 
-  public static final Property<Employee, String> USER_NAME = new Property<Employee, String>(
-      Employee.class, String.class, "USER_NAME");
-
-  public static final Property<Employee, Integer> VERSION = new Property<Employee, Integer>(
-      Employee.class, Integer.class, "VERSION");
+  public static final Property<Report, Date> CREATED = new Property<Report, Date>(
+      Report.class, Date.class, "CREATED");
+  
+  public static final Property<Report, String> PURPOSE = new Property<Report, String>(
+      Report.class, String.class, "PURPOSE");
 
   private final String id;
   private final Integer version;
 
-  Employee(String id, Integer version) {
+  Report(String id, Integer version) {
     this.id = id;
     this.version = version;
   }
@@ -55,7 +55,7 @@ public class Employee implements Entity<Employee> {
     return version;
   }
 
-  public <V> Slot<Employee, V> slot(Property<Employee, V> property) {
-    return new Slot<Employee, V>(this, property);
+  public <V> Slot<Report, V> slot(Property<Report, V> property) {
+    return new Slot<Report, V>(this, property);
   }
 }

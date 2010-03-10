@@ -47,13 +47,14 @@
 
     <g:center>
       <g:HTMLPanel width='100%' height='100%'>
-        <h1>Employees</h1>
+        <h1>Expenses</h1>
         <table ui:field='table' class='{style.reports}' width='100%'>
-          <col width='0%'></col>
+          <col width='0%' span='2'></col>
           <col width='100%'></col>
           <tr ui:field='header'>
-            <th>UID</th>
-            <th align='left'>Pretty Name</th>
+            <th>Created</th>
+            <th>Status&nbsp;(tbd)</th>
+            <th align='left'>Purpose</th>
           </tr>
         </table>
       </g:HTMLPanel>

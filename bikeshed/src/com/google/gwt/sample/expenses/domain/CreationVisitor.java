@@ -20,8 +20,7 @@ package com.google.gwt.sample.expenses.domain;
  *
  * @param <E> The type of entity to create.
  */
-//We guarantee same type at runtime
-public class CreationVisitor<E extends Entity> implements EntityVisitor<E> {
+class CreationVisitor<E extends Entity> implements EntityVisitor<E> {
   private final long id;
   private final int version;
 
@@ -43,18 +42,22 @@ public class CreationVisitor<E extends Entity> implements EntityVisitor<E> {
     this.version = version;
   }
 
+  @SuppressWarnings("unchecked")
   public E visit(Currency currency) {
     return (E) new Currency(id, version);
   }
 
+  @SuppressWarnings("unchecked")
   public E visit(Employee employee) {
     return (E) new Employee(id, version);
   }
 
+  @SuppressWarnings("unchecked")
   public E visit(Report report) {
     return (E) new Report(id, version);
   }
 
+  @SuppressWarnings("unchecked")
   public E visit(ReportItem reportItem) {
     return (E) new ReportItem(id, version);
   }

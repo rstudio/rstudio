@@ -69,4 +69,12 @@ public class ExpenseRequestFactory {
   public DeltaValueStore newDeltaStore() {
     return values.edit();
   }
+  
+  public ReportRequests reportRequest() {
+    return new ReportRequests(values);
+  }
+  
+  public ReportRequests reportRequest(DeltaValueStore deltas) {
+    return new ReportRequests(deltas);
+  }
 }

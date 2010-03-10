@@ -16,9 +16,13 @@
 package com.google.gwt.sample.expenses.domain;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Pretend pool of domain objects, trying to act more or less like persistence
@@ -31,64 +35,168 @@ class Storage {
     fill(INSTANCE);
   }
 
-  public static <E extends Entity> E edit(E v1) {
-    return v1.accept(new CreationVisitor<E>(v1));
-  }
-
   /**
    * @param storage to fill with demo entities
    */
   static void fill(Storage storage) {
-    Employee e = new Employee();
-    e.setUserName("abc");
-    e.setDisplayName("Able B. Charlie");
-    e.setSupervisor(e);
-    storage.persist(e);
+    Employee abc = new Employee();
+    abc.setUserName("abc");
+    abc.setDisplayName("Able B. Charlie");
+    abc = storage.persist(abc);
+    abc.setSupervisor(abc);
+    abc = storage.persist(abc);
 
-    Employee e2 = new Employee();
-    e2.setUserName("def");
-    e2.setDisplayName("Delta E. Foxtrot");
-    e2.setSupervisor(e);
-    storage.persist(e2);
+    Employee def = new Employee();
+    def.setUserName("def");
+    def.setDisplayName("Delta E. Foxtrot");
+    def.setSupervisor(abc);
+    def = storage.persist(def);
 
-    e2 = new Employee();
-    e2.setUserName("ghi");
-    e2.setDisplayName("George H. Indigo");
-    e2.setSupervisor(e);
-    storage.persist(e2);
+    Employee ghi = new Employee();
+    ghi.setUserName("ghi");
+    ghi.setDisplayName("George H. Indigo");
+    ghi.setSupervisor(abc);
+    ghi = storage.persist(ghi);
+
+    Report abc1 = new Report();
+    abc1.setReporter(abc);
+    abc1.setCreated(new Date());
+    abc1.setPurpose("Spending lots of money");
+    abc1 = storage.persist(abc1);
+
+    Report abc2 = new Report();
+    abc2.setReporter(abc);
+    abc2.setCreated(new Date());
+    abc2.setPurpose("Team building diamond cutting offsite");
+    abc2 = storage.persist(abc2);
+
+    Report abc3 = new Report();
+    abc3.setReporter(abc);
+    abc3.setCreated(new Date());
+    abc3.setPurpose("Visit to Istanbul");
+    storage.persist(abc3);
+
+    Report def1 = new Report();
+    def1.setReporter(def);
+    def1.setCreated(new Date());
+    def1.setPurpose("Money laundering");
+    def1 = storage.persist(def1);
+
+    Report def2 = new Report();
+    def2.setReporter(def);
+    def2.setCreated(new Date());
+    def2.setPurpose("Donut day");
+    storage.persist(def2);
+
+    Report ghi1 = new Report();
+    ghi1.setReporter(ghi);
+    ghi1.setCreated(new Date());
+    ghi1.setPurpose("ISDN modem for telecommuting");
+    storage.persist(ghi1);
+
+    Report ghi2 = new Report();
+    ghi2.setReporter(ghi);
+    ghi2.setCreated(new Date());
+    ghi2.setPurpose("Sushi offsite");
+    ghi2 = storage.persist(ghi2);
+
+    Report ghi3 = new Report();
+    ghi3.setReporter(ghi);
+    ghi3.setCreated(new Date());
+    ghi3.setPurpose("Baseball card research");
+    ghi3 = storage.persist(ghi3);
+
+    Report ghi4 = new Report();
+    ghi4.setReporter(ghi);
+    ghi4.setCreated(new Date());
+    ghi4.setPurpose("Potato chip cooking offsite");
+    ghi4 = storage.persist(ghi4);
+  }
+
+  /**
+   * Useful for making a surgical update to an entity, e.g. in response to a web
+   * update.
+   * <p>
+   * Given an entity, returns an empty copy: all fields are null except id and
+   * version. When this copy is later persisted, only non-null fields will be
+   * changed.
+   */
+  static <E extends Entity> E startSparseEdit(E v1) {
+    return v1.accept(new CreationVisitor<E>(v1));
   }
 
   private final Map<Long, Entity> soup = new HashMap<Long, Entity>();
   private final Map<String, Long> employeeUserNameIndex = new HashMap<String, Long>();
+  private final Map<Long, Set<Long>> reportsByEmployeeIndex = new HashMap<Long, Set<Long>>();
 
+  private Map<Long, Entity> freshForCurrentGet;
+  private int getDepth = 0;
   private long serial = 0;
 
   synchronized List<Employee> findAllEmployees() {
     List<Employee> rtn = new ArrayList<Employee>();
     for (Map.Entry<String, Long> entry : employeeUserNameIndex.entrySet()) {
-      rtn.add((Employee) get(entry.getValue()));
+      rtn.add(get((Employee) rawGet(entry.getValue())));
     }
     return rtn;
   }
 
   synchronized Employee findEmployeeByUserName(String userName) {
     Long id = employeeUserNameIndex.get(userName);
-    return (Employee) get(id);
+    return get((Employee) rawGet(id));
   }
 
+  synchronized List<Report> findReportsByEmployee(long id) {
+    Set<Long> reportIds = reportsByEmployeeIndex.get(id);
+    if (reportIds == null) {
+      return Collections.emptyList();
+    }
+    List<Report> reports = new ArrayList<Report>(reportIds.size());
+    for (Long reportId : reportIds) {
+      reports.add(get((Report) rawGet(reportId)));
+    }
+    return reports;
+  }
+
+  /**
+   * @return An up to date copy of the given entity, safe for editing.
+   */
   @SuppressWarnings("unchecked")
   // We make runtime checks that return type matches in type
   synchronized <E extends Entity> E get(final E entity) {
-    Entity previous = soup.get(entity.getId());
-    if (null == previous) {
-      throw new IllegalArgumentException(String.format("In %s, unknown id %d",
-          entity, entity.getId()));
+    if (getDepth == 0) {
+      freshForCurrentGet = new HashMap<Long, Entity>();
     }
-    if (!previous.getClass().equals(entity.getClass())) {
-      throw new IllegalArgumentException(String.format(
-          "Type mismatch, fetched %s for %s", entity, previous));
+    getDepth++;
+    try {
+      if (entity == null) {
+        return null;
+      }
+      Entity previous = rawGet(entity.getId());
+      if (null == previous) {
+        throw new IllegalArgumentException(String.format(
+            "In %s, unknown id %d", entity, entity.getId()));
+      }
+      if (!previous.getClass().equals(entity.getClass())) {
+        throw new IllegalArgumentException(String.format(
+            "Type mismatch, fetched %s for %s", entity, previous));
+      }
+
+      Entity rtn = freshForCurrentGet.get(previous.getId());
+      if (rtn == null) {
+        // Make a defensive copy
+        rtn = copy(previous);
+        freshForCurrentGet.put(previous.getId(), rtn);
+        // Make sure it has fresh copies of related entities
+        rtn.accept(new RelationshipRefreshingVisitor(this));
+      }
+      return (E) rtn;
+    } finally {
+      getDepth--;
+      if (getDepth == 0) {
+        freshForCurrentGet = null;
+      }
     }
-    return (E) previous;
   }
 
   synchronized <E extends Entity> E persist(final E delta) {
@@ -106,7 +214,7 @@ class Storage {
             previous.getVersion(), delta.getVersion()));
       }
 
-      next = previous.accept(new CreationVisitor<E>(++serial,
+      next = previous.accept(new CreationVisitor<E>(previous.getId(),
           previous.getVersion() + 1));
 
       NullFieldFiller filler = new NullFieldFiller(next);
@@ -117,12 +225,24 @@ class Storage {
       previous.accept(filler);
     }
 
+    next.accept(new RelationshipValidationVisitor());
+
     updateIndices(previous, next);
     soup.put(next.getId(), next);
-    return next;
+    return get(next);
   }
 
-  private synchronized Entity get(Long id) {
+  /**
+   * @param original Entity to copy
+   * @return copy of original
+   */
+  private Entity copy(Entity original) {
+    Entity copy = original.accept(new CreationVisitor<Entity>(original));
+    original.accept(new NullFieldFiller(copy));
+    return copy;
+  }
+
+  private synchronized Entity rawGet(Long id) {
     return soup.get(id);
   }
 
@@ -146,6 +266,17 @@ class Storage {
       }
 
       public Void visit(Report report) {
+        Employee reporter = report.getReporter();
+        if (reporter == null) {
+          return null;
+        }
+        Long employeeId = reporter.getId();
+        Set<Long> reportIds = reportsByEmployeeIndex.get(employeeId);
+        if (reportIds == null) {
+          reportIds = new LinkedHashSet<Long>();
+          reportsByEmployeeIndex.put(employeeId, reportIds);
+        }
+        reportIds.add(report.getId());
         return null;
       }
 

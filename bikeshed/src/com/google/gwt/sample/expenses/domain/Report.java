@@ -16,19 +16,24 @@
 package com.google.gwt.sample.expenses.domain;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Models an expense report.
  */
 // @javax.persistence.Entity
 public class Report implements Entity {
-  private final Long id;
+  public static List<Report> findReportsByEmployee(long id) {
+    return Storage.INSTANCE.findReportsByEmployee(id);
+  }
 
+  private final Long id;
   private final Integer version;
+
 //  @javax.validation.constraints.NotNull
 //  @javax.validation.constraints.Past
   // @javax.persistence.Temporal(javax.persistence.TemporalType.TIMESTAMP)
-  private java.util.Date created = new Date();
+  private java.util.Date created;
 
 //  @javax.validation.constraints.NotNull
   // @javax.persistence.Enumerated
@@ -43,14 +48,14 @@ public class Report implements Entity {
 //  @javax.validation.constraints.Size(min = 3, max = 100)
   private String purpose;
 
+  // @javax.persistence.OneToMany(cascade = javax.persistence.CascadeType.ALL,
+  // mappedBy = "report")
+  // private Set<ReportItem> items = new HashSet<ReportItem>();
+
   // @javax.persistence.ManyToOne(targetEntity =
   // com.google.io.expenses.server.domain.Employee.class)
   // @javax.persistence.JoinColumn
   private Employee approvedSupervisor;
-
-  // @javax.persistence.OneToMany(cascade = javax.persistence.CascadeType.ALL,
-  // mappedBy = "report")
-  // private Set<ReportItem> items = new HashSet<ReportItem>();
 
   public Report() {
     id = null;
@@ -121,6 +126,10 @@ public class Report implements Entity {
   public void setApprovedSupervisor(Employee approvedSupervisor) {
     this.approvedSupervisor = approvedSupervisor;
   }
+  
+  public void setCreated(Date date) {
+    this.created = date;
+  }
 
   /**
    * @param purpose the purpose to set
@@ -135,7 +144,7 @@ public class Report implements Entity {
   public void setReporter(Employee reporter) {
     this.reporter = reporter;
   }
-
+  
   /**
    * @param status the status to set
    */

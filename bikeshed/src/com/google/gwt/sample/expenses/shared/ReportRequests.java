@@ -22,6 +22,7 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
+import com.google.gwt.requestfactory.shared.Slot;
 import com.google.gwt.sample.expenses.client.ValuesImpl;
 import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.valuestore.shared.Property;
@@ -29,28 +30,35 @@ import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.Values;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * "Generated" from static methods of
- * {@link com.google.gwt.sample.expenses.domain.Employee}.
+ * {@link com.google.gwt.sample.expenses.domain.Employee}
  */
-public class EmployeeRequests {
+public class ReportRequests {
 
-  public EmployeeRequests(ValueStore values) {
+  public ReportRequests(ValueStore values) {
   }
 
-  public EntityListRequest<Employee> findAllEmployees() {
-    return new EntityListRequest<Employee>() {
-      private HasValueList<Values<Employee>> watcher;
+  public EntityListRequest<Report> findReportsByEmployee(
+      final Slot<Employee, String> id) {
+
+    return new EntityListRequest<Report>() {
+      Set<Property<Report, ?>> properties = new HashSet<Property<Report, ?>>();
+      private HasValueList<Values<Report>> watcher;
 
       public void fire() {
 
-        // TODO: need someway to track that this request has been issued so that
+        // TODO: need some way to track that this request has been issued so that
         // we don't issue another request that arrives while we are waiting for
         // the response.
         RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-            "/expenses/data?methodName=" + MethodName.FIND_ALL_EMPLOYEES.name());
+            "/expenses/data?methodName="
+                + MethodName.FIND_REPORTS_BY_EMPLOYEE.name() + "&id="
+                + id.getEntity().getId());
         builder.setCallback(new RequestCallback() {
 
           public void onError(Request request, Throwable exception) {
@@ -60,13 +68,15 @@ public class EmployeeRequests {
           public void onResponseReceived(Request request, Response response) {
             if (200 == response.getStatusCode()) {
               String text = response.getText();
-              JsArray<ValuesImpl<Employee>> valueArray = ValuesImpl.arrayFromJson(text);
-              List<Values<Employee>> valueList = new ArrayList<Values<Employee>>(
+              JsArray<ValuesImpl<Report>> valueArray = ValuesImpl.arrayFromJson(text);
+              List<Values<Report>> valueList = new ArrayList<Values<Report>>(
                   valueArray.length());
               for (int i = 0; i < valueArray.length(); i++) {
-                ValuesImpl<Employee> values = valueArray.get(i);
-                values.setPropertyHolder(new Employee(values.get(Employee.ID),
-                    values.get(Employee.VERSION)));
+                ValuesImpl<Report> values = valueArray.get(i);
+                String id2 = values.get(Report.ID);
+                Integer version = values.get(Report.VERSION);
+                values.setPropertyHolder(new Report(id2,
+                    version));
                 valueList.add(values);
               }
               watcher.setValueList(valueList);
@@ -87,13 +97,12 @@ public class EmployeeRequests {
         // values.subscribe(watcher, future, properties);
       }
 
-      public EntityListRequest<Employee> forProperty(
-          Property<Employee, ?> property) {
+      public EntityListRequest<Report> forProperty(Property<Report, ?> property) {
+        properties.add(property);
         return this;
       }
 
-      public EntityListRequest<Employee> to(
-          HasValueList<Values<Employee>> watcher) {
+      public EntityListRequest<Report> to(HasValueList<Values<Report>> watcher) {
         this.watcher = watcher;
         return this;
       }
