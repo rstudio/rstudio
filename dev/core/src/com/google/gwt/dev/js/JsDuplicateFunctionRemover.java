@@ -19,14 +19,20 @@ import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsNameOf;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.dev.util.collect.IdentityHashSet;
 
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 
 /**
  * Replace references to functions which have post-obfuscation duplicate bodies
@@ -37,8 +43,43 @@ public class JsDuplicateFunctionRemover {
 
   private class DuplicateFunctionBodyRecorder extends JsVisitor {
 
-    Map<String, JsName> uniqueBodies = new HashMap<String, JsName>();
-    Map<JsName, JsName> duplicateOriginalMap = new HashMap<JsName, JsName>();
+    private final Set<JsName> dontReplace = new IdentityHashSet<JsName>();
+
+    private final Map<JsName, JsName> duplicateOriginalMap = new IdentityHashMap<JsName, JsName>();
+
+    private final Stack<JsNameRef> invocationQualifiers = new Stack<JsNameRef>();
+
+    private final Map<String, JsName> uniqueBodies = new HashMap<String, JsName>();
+
+    public DuplicateFunctionBodyRecorder() {
+      // Add sentinel to stop Stack.peek() from throwing exception.
+      invocationQualifiers.add(null);
+    }
+
+    @Override
+    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+      if (x.getQualifier() instanceof JsNameRef) {
+        invocationQualifiers.pop();
+      }
+    }
+
+    @Override
+    public void endVisit(JsNameOf x, JsContext<JsExpression> ctx) {
+      dontReplace.add(x.getName());
+    }
+
+    @Override
+    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+      if (x != invocationQualifiers.peek()) {
+        if (x.getName() != null) {
+          dontReplace.add(x.getName());
+        }
+      }
+    }
+
+    public Set<JsName> getBlacklist() {
+      return dontReplace;
+    }
 
     public Map<JsName, JsName> getDuplicateMap() {
       return duplicateOriginalMap;
@@ -47,13 +88,9 @@ public class JsDuplicateFunctionRemover {
     @Override
     public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
       /*
-       * At this point, unpruned zero-arg functions with empty 
-       * bodies are Js constructor seed functions. 
-       * If constructors are ever inlined into seed functions, revisit this.
        * Don't process anonymous functions.
        */
-      if (x.getName() != null && x.getParameters().size() > 0 || 
-          x.getBody().getStatements().size() > 0) {
+      if (x.getName() != null) {
         String fnSource = x.toSource();
         String body = fnSource.substring(fnSource.indexOf("("));
         JsName original = uniqueBodies.get(body);
@@ -63,33 +100,51 @@ public class JsDuplicateFunctionRemover {
           uniqueBodies.put(body, x.getName());
         }
       }
-      return false;
+      return true;
+    }
+
+    @Override
+    public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
+      if (x.getQualifier() instanceof JsNameRef) {
+        invocationQualifiers.push((JsNameRef) x.getQualifier());
+      }
+      return true;
     }
   }
 
   private class ReplaceDuplicateInvocationNameRefs extends JsModVisitor {
-    private Map<JsName, JsName> duplicateMap;
 
-    public ReplaceDuplicateInvocationNameRefs(
-        Map<JsName, JsName> duplicateMap) {
+    private final Set<JsName> blacklist;
+
+    private final Map<JsName, JsName> duplicateMap;
+
+    public ReplaceDuplicateInvocationNameRefs(Map<JsName, JsName> duplicateMap,
+        Set<JsName> blacklist) {
       this.duplicateMap = duplicateMap;
+      this.blacklist = blacklist;
     }
 
     @Override
     public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
       JsName orig = duplicateMap.get(x.getName());
-      if (orig != null && x.getName() != null && 
-          x.getName().getEnclosing() == program.getScope()) {
+      if (orig != null && x.getName() != null
+          && x.getName().getEnclosing() == program.getScope()
+          && !blacklist.contains(x.getName()) && !blacklist.contains(orig)) {
         ctx.replaceMe(orig.makeRef(x.getSourceInfo()));
       }
     }
+  }
+
+  // Needed for OptimizerTestBase
+  public static boolean exec(JsProgram program) {
+    return new JsDuplicateFunctionRemover(program).execImpl(program.getFragmentBlock(0));
   }
 
   public static boolean exec(JsProgram program, JsBlock fragment) {
     return new JsDuplicateFunctionRemover(program).execImpl(fragment);
   }
 
-  private JsProgram program;
+  private final JsProgram program;
 
   public JsDuplicateFunctionRemover(JsProgram program) {
     this.program = program;
@@ -98,8 +153,8 @@ public class JsDuplicateFunctionRemover {
   private boolean execImpl(JsBlock fragment) {
     DuplicateFunctionBodyRecorder dfbr = new DuplicateFunctionBodyRecorder();
     dfbr.accept(fragment);
-    ReplaceDuplicateInvocationNameRefs rdup
-        = new ReplaceDuplicateInvocationNameRefs(dfbr.getDuplicateMap());
+    ReplaceDuplicateInvocationNameRefs rdup = new ReplaceDuplicateInvocationNameRefs(
+        dfbr.getDuplicateMap(), dfbr.getBlacklist());
     rdup.accept(fragment);
     return rdup.didChange();
   }
