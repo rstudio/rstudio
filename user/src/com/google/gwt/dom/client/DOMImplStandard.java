@@ -107,8 +107,28 @@ abstract class DOMImplStandard extends DOMImpl {
     return evt.toString();
   }-*/;
 
+  /*
+   * textContent is used over innerText for two reasons:
+   * 1 - It is consistent across browsers. textContent
+   *     does not convert <br>'s to new lines.
+   * 2 - textContent is faster on retreival because WebKit
+   *     does not recalculate styles as it does for innerText.
+   */ 
+  @Override
+  public native String getInnerText(Element elem) /*-{
+    return elem.textContent;
+  }-*/;
+
   @Override
   public native boolean isOrHasChild(Node parent, Node child) /*-{
     return parent.contains(child);
+  }-*/;
+
+  /*
+   * See getInnerText for why textContent is used instead of innerText.
+   */
+  @Override
+  public native void setInnerText(Element elem, String text) /*-{
+    elem.textContent = text || '';
   }-*/;
 }
