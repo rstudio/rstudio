@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,14 +23,13 @@ import com.google.gwt.core.client.JavaScriptObject;
 class DOMImplSafari extends DOMImplStandard {
 
   private static class ClientRect extends JavaScriptObject {
-    @SuppressWarnings("unused")
     protected ClientRect() {
     }
-    
+
     public final native int getLeft() /*-{
       return this.left;
     }-*/;
-    
+
     public final native int getTop() /*-{
       return this.top;
     }-*/;
@@ -139,7 +138,7 @@ class DOMImplSafari extends DOMImplStandard {
   }-*/;
 
   /**
-   * The type property on a button element is read-only in safari, so we need to 
+   * The type property on a button element is read-only in safari, so we need to
    * set it using setAttribute.
    */
   @Override
@@ -150,19 +149,31 @@ class DOMImplSafari extends DOMImplStandard {
   }-*/;
 
   @Override
-  public native NativeEvent createKeyEvent(Document doc, String type, boolean canBubble,
-      boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
-      boolean metaKey, int keyCode, int charCode) /*-{
-    // The spec calls for KeyEvents/initKeyEvent(), but that doesn't exist on WebKit.
-    var evt = doc.createEvent('HTMLEvents');
-    evt.initEvent(type, canBubble, cancelable);
-    evt.ctrlKey = ctrlKey;
-    evt.altKey = altKey;
-    evt.shiftKey = shiftKey;
-    evt.metaKey = metaKey;
+  public native NativeEvent createKeyCodeEvent(Document doc, String type,
+      boolean ctrlKey, boolean altKey, boolean shiftKey, boolean metaKey,
+      int keyCode) /*-{
+    var evt = this.@com.google.gwt.dom.client.DOMImplSafari::createKeyEvent(Lcom/google/gwt/dom/client/Document;Ljava/lang/String;ZZZZZZ)(doc, type, true, true, ctrlKey, altKey, shiftKey, metaKey)
+    evt.keyCode = keyCode;
+    return evt;
+  }-*/;
+
+  @Override
+  @Deprecated
+  public native NativeEvent createKeyEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode, int charCode) /*-{
+    var evt = this.@com.google.gwt.dom.client.DOMImplSafari::createKeyEvent(Lcom/google/gwt/dom/client/Document;Ljava/lang/String;ZZZZZZ)(doc, type, canBubble, cancelable, ctrlKey, altKey, shiftKey, metaKey)
     evt.keyCode = keyCode;
     evt.charCode = charCode;
+    return evt;
+  }-*/;
 
+  @Override
+  public native NativeEvent createKeyPressEvent(Document doc,
+      boolean ctrlKey, boolean altKey, boolean shiftKey, boolean metaKey,
+      int charCode) /*-{
+    var evt = this.@com.google.gwt.dom.client.DOMImplSafari::createKeyEvent(Lcom/google/gwt/dom/client/Document;Ljava/lang/String;ZZZZZZ)(doc, 'keypress', true, true, ctrlKey, altKey, shiftKey, metaKey)
+    evt.charCode = charCode;
     return evt;
   }-*/;
 
@@ -189,26 +200,28 @@ class DOMImplSafari extends DOMImplStandard {
   @Override
   public int getAbsoluteLeft(Element elem) {
     ClientRect rect = getBoundingClientRect(elem);
-    return rect != null
-        ? rect.getLeft() + elem.getOwnerDocument().getBody().getScrollLeft()
+    return rect != null ? rect.getLeft()
+        + elem.getOwnerDocument().getBody().getScrollLeft()
         : getAbsoluteLeftUsingOffsets(elem);
   }
 
   @Override
   public int getAbsoluteTop(Element elem) {
     ClientRect rect = getBoundingClientRect(elem);
-    return rect != null
-        ? rect.getTop() + elem.getOwnerDocument().getBody().getScrollTop()
+    return rect != null ? rect.getTop()
+        + elem.getOwnerDocument().getBody().getScrollTop()
         : getAbsoluteTopUsingOffsets(elem);
   }
 
-  /*
+  /**
    * textContent is used over innerText for two reasons:
-   * 1 - It is consistent with DOMImplMozilla. textContent
-   *     does not convert <br>'s to new lines in WebKit.
-   * 2 - textContent is faster on retreival because WebKit
-   *     does not recalculate styles as it does for innerText.
-   */ 
+   * 
+   * 1 - It is consistent with DOMImplMozilla. textContent does not convert
+   * <code>&lt;br&gtp;</code>'s to new lines in WebKit.
+   * 
+   * 2 - textContent is faster on retreival because WebKit does not recalculate
+   * styles as it does for innerText.
+   */
   @Override
   public native String getInnerText(Element node) /*-{
     return node.textContent;
@@ -224,7 +237,8 @@ class DOMImplSafari extends DOMImplStandard {
   @Override
   public int getScrollLeft(Element elem) {
     if (isRTL(elem)) {
-      return super.getScrollLeft(elem) - (elem.getScrollWidth() - elem.getClientWidth());
+      return super.getScrollLeft(elem)
+          - (elem.getScrollWidth() - elem.getClientWidth());
     }
     return super.getScrollLeft(elem);
   }
@@ -287,7 +301,7 @@ class DOMImplSafari extends DOMImplStandard {
   public native void setInnerText(Element elem, String text) /*-{
     elem.textContent = text || '';
   }-*/;
-  
+
   @Override
   public void setScrollLeft(Document doc, int left) {
     // Safari always applies document scrolling to the body element, even in
@@ -309,6 +323,22 @@ class DOMImplSafari extends DOMImplStandard {
     // strict mode.
     doc.getBody().setScrollTop(top);
   }
+
+  @SuppressWarnings("unused")
+  private native NativeEvent createKeyEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey) /*-{
+    // WebKit's KeyboardEvent cannot set or even initialize charCode, keyCode, etc.
+    // And UIEvent's charCode and keyCode are read-only.
+    // So we "fake" an event using a raw Event and expandos
+    var evt = doc.createEvent('Event');
+    evt.initEvent(type, canBubble, cancelable);
+    evt.ctrlKey = ctrlKey;
+    evt.altKey = altKey;
+    evt.shiftKey = shiftKey;
+    evt.metaKey = metaKey;
+    return evt;
+  }-*/;
 
   private native boolean isRTL(Element elem) /*-{
     return elem.ownerDocument.defaultView.getComputedStyle(elem, '').direction == 'rtl';

@@ -21,6 +21,40 @@ package com.google.gwt.dom.client;
 class DOMImplOpera extends DOMImplStandard {
 
   @Override
+  public native NativeEvent createKeyCodeEvent(Document doc, String type,
+      boolean ctrlKey, boolean altKey, boolean shiftKey, boolean metaKey,
+      int keyCode) /*-{
+    var evt = this.@com.google.gwt.dom.client.DOMImplOpera::createKeyEvent(Lcom/google/gwt/dom/client/Document;Ljava/lang/String;ZZZZZZ)(doc, type, true, true, ctrlKey, altKey, shiftKey, metaKey);
+    evt.keyCode = keyCode;
+    return evt;
+  }-*/;
+
+  @Override
+  @Deprecated
+  public native NativeEvent createKeyEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode, int charCode) /*-{
+    var evt = this.@com.google.gwt.dom.client.DOMImplOpera::createKeyEvent(Lcom/google/gwt/dom/client/Document;Ljava/lang/String;ZZZZZZ)(doc, type, canBubble, cancelable, ctrlKey, altKey, shiftKey, metaKey);
+    evt.keyCode = keyCode;
+    evt.which = charCode;
+    return evt;
+  }-*/;
+
+  @Override
+  public native NativeEvent createKeyPressEvent(Document doc,
+      boolean ctrlKey, boolean altKey, boolean shiftKey, boolean metaKey,
+      int charCode) /*-{
+    var evt = this.@com.google.gwt.dom.client.DOMImplOpera::createKeyEvent(Lcom/google/gwt/dom/client/Document;Ljava/lang/String;ZZZZZZ)(doc, 'keypress', true, true, ctrlKey, altKey, shiftKey, metaKey);
+    evt.which = charCode;
+    return evt;
+  }-*/;
+
+  @Override
+  public native int eventGetCharCode(NativeEvent evt) /*-{
+    return evt.which || 0;
+  }-*/;
+
+  @Override
   public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
     return evt.detail * 4 || 0;
   }-*/;
@@ -72,5 +106,20 @@ class DOMImplOpera extends DOMImplStandard {
   @Override
   public native void scrollIntoView(Element elem) /*-{
     elem.scrollIntoView();
+  }-*/;
+
+  @SuppressWarnings("unused")
+  private native NativeEvent createKeyEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey) /*-{
+    // Opera fires KeyEvent instances but does not allow creating them.
+    // The best approximation is UIEvent here.
+    var evt = doc.createEvent('UIEvent');
+    evt.initUIEvent(type, canBubble, cancelable, null, 0);
+    evt.ctrlKey = ctrlKey;
+    evt.altKey = altKey;
+    evt.shiftKey = shiftKey;
+    evt.metaKey = metaKey;
+    return evt;
   }-*/;
 }

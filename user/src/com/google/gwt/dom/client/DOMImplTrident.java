@@ -69,11 +69,9 @@ abstract class DOMImplTrident extends DOMImpl {
   }-*/;
 
   @Override
-  public native NativeEvent createKeyEvent(Document doc, String type,
-      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
-      boolean shiftKey, boolean metaKey, int keyCode, int charCode) /*-{
-    // NOTE: IE doesn't support changing bubbling and canceling behavior (this
-    // is documented publicly in Document.createKeyEvent()).
+  public native NativeEvent createKeyCodeEvent(Document doc, String type,
+      boolean ctrlKey, boolean altKey, boolean shiftKey, boolean metaKey,
+      int keyCode) /*-{
     var evt = doc.createEventObject();
     evt.type = type;
     evt.ctrlKey = ctrlKey;
@@ -81,10 +79,29 @@ abstract class DOMImplTrident extends DOMImpl {
     evt.shiftKey = shiftKey;
     evt.metaKey = metaKey;
     evt.keyCode = keyCode;
-    evt.charCode = charCode;
-
     return evt;
   }-*/;
+
+  @Override
+  @Deprecated
+  public native NativeEvent createKeyEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode, int charCode) /*-{
+    // NOTE: IE doesn't support changing bubbling and canceling behavior (this
+    // is documented publicly in Document.createKeyEvent()).
+    var evt = this.@com.google.gwt.dom.client.DOMImplTrident::createKeyCodeEvent(Lcom/google/gwt/dom/client/Document;Ljava/lang/String;ZZZZI)(doc, type, ctrlKey, altKey, shiftKey, metaKey, charCode);
+    evt.charCode = charCode;
+    return evt;
+  }-*/;
+
+  @Override
+  public NativeEvent createKeyPressEvent(Document doc, boolean ctrlKey,
+      boolean altKey, boolean shiftKey, boolean metaKey, int charCode) {
+    // NOTE: in IE, keyCode is used in both keydown/keyup and keypress, so we
+    // delegate to createKeyCodeEvent instead of duplicating code.
+    return createKeyCodeEvent(doc, "keypress", ctrlKey, altKey, shiftKey,
+        metaKey, charCode);
+  }
 
   @Override
   public native NativeEvent createMouseEvent(Document doc, String type,
@@ -136,6 +153,11 @@ abstract class DOMImplTrident extends DOMImpl {
   @Override
   public native void dispatchEvent(Element target, NativeEvent evt) /*-{
     target.fireEvent("on" + evt.type, evt);
+  }-*/;
+
+  @Override
+  public native int eventGetCharCode(NativeEvent evt) /*-{
+    return evt.keyCode || 0;
   }-*/;
 
   @Override

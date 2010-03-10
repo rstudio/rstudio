@@ -35,8 +35,8 @@ abstract class DOMImpl {
     return doc.createElement(tag);
   }-*/;
 
-  public abstract NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
-      boolean cancelable);
+  public abstract NativeEvent createHtmlEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable);
 
   public native InputElement createInputElement(Document doc, String type) /*-{
     var e = doc.createElement("INPUT");
@@ -46,9 +46,18 @@ abstract class DOMImpl {
 
   public abstract InputElement createInputRadioElement(Document doc, String name);
 
+  public abstract NativeEvent createKeyCodeEvent(Document document,
+      String type, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int keyCode);
+
+  @Deprecated
   public abstract NativeEvent createKeyEvent(Document doc, String type,
       boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int keyCode, int charCode);
+
+  public abstract NativeEvent createKeyPressEvent(Document document,
+      boolean ctrlKey, boolean altKey, boolean shiftKey, boolean metaKey,
+      int charCode);
 
   public abstract NativeEvent createMouseEvent(Document doc, String type,
       boolean canBubble, boolean cancelable, int detail, int screenX,
@@ -91,6 +100,8 @@ abstract class DOMImpl {
     return evt.button || 0;
   }-*/;
 
+  public abstract int eventGetCharCode(NativeEvent evt);
+
   public native int eventGetClientX(NativeEvent evt) /*-{
     return evt.clientX || 0;
   }-*/;
@@ -108,10 +119,7 @@ abstract class DOMImpl {
   }-*/;
 
   public final native int eventGetKeyCode(NativeEvent evt) /*-{
-    // 'which' gives the right key value, except when it doesn't -- in which
-    // case, keyCode gives the right value on all browsers.
-    // If all else fails, return an error code
-    return evt.which || evt.keyCode || 0;
+    return evt.keyCode || 0;
   }-*/;
 
   public native boolean eventGetMetaKey(NativeEvent evt) /*-{

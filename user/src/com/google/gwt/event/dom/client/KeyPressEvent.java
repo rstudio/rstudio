@@ -15,8 +15,6 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.dom.client.NativeEvent; 
-
 /**
  * Represents a native key press event.
  */
@@ -57,7 +55,16 @@ public class KeyPressEvent extends KeyEvent<KeyPressHandler> {
    * @return the char code
    */
   public char getCharCode() {
-    return getCharCode(getNativeEvent());
+    return (char) getUnicodeCharCode();
+  }
+
+  /**
+   * Gets the Unicode char code (code point) for this event.
+   * 
+   * @return the Unicode char code
+   */
+  public int getUnicodeCharCode() {
+    return getNativeEvent().getCharCode();
   }
 
   @Override
@@ -69,9 +76,4 @@ public class KeyPressEvent extends KeyEvent<KeyPressHandler> {
   protected void dispatch(KeyPressHandler handler) {
     handler.onKeyPress(this);
   }
-
-  private native char getCharCode(NativeEvent e)/*-{
-    return e.charCode || e.keyCode;
-  }-*/;
-
 }

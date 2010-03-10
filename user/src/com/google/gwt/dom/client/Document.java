@@ -436,6 +436,46 @@ public class Document extends Node {
   }
 
   /**
+   * Creates a key-code event ('keydown' or 'keyup').
+   * 
+   * <p>
+   * While this method may be used to create events directly, it is generally
+   * preferable to use existing helper methods such as
+   * {@link #createKeyDownEvent(boolean, boolean, boolean, boolean, int)} or
+   * {@link #createKeyUpEvent(boolean, boolean, boolean, boolean, int)}.
+   * </p>
+   * 
+   * @param type the type of event (e.g., "keydown", "keypress", etc)
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param keyCode the key-code to be set on the event
+   * @return the event object
+   */
+  public final NativeEvent createKeyCodeEvent(String type, boolean ctrlKey,
+      boolean altKey, boolean shiftKey, boolean metaKey, int keyCode) {
+    return DOMImpl.impl.createKeyCodeEvent(this, type, ctrlKey, altKey,
+        shiftKey, metaKey, keyCode);
+  }
+
+  /**
+   * Creates a 'keydown' event.
+   * 
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param keyCode the key-code to be set on the event
+   * @return the event object
+   */
+  public final NativeEvent createKeyDownEvent(boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode) {
+    return createKeyCodeEvent("keydown", ctrlKey, altKey, shiftKey, metaKey,
+        keyCode);
+  }
+
+  /**
    * Creates a 'keydown' event.
    * 
    * @param ctrlKey <code>true</code> if the ctrl key is depressed
@@ -445,7 +485,11 @@ public class Document extends Node {
    * @param keyCode the key-code to be set on the event
    * @param charCode the char-code to be set on the event
    * @return the event object
+   * 
+   * @deprecated as of GWT2.1 (keydown events don't have a charCode), use
+   *             {@link #createKeyDownEvent(boolean, boolean, boolean, boolean, int)}
    */
+  @Deprecated
   public final NativeEvent createKeyDownEvent(boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int keyCode, int charCode) {
     return createKeyEvent("keydown", true, true, ctrlKey, altKey, shiftKey,
@@ -468,7 +512,7 @@ public class Document extends Node {
    * based upon its type).
    * </p>
    * 
-   * @param type the type of event (e.g., "focus", "load", etc)
+   * @param type the type of event (e.g., "keydown", "keypress", etc)
    * @param canBubble <code>true</code> if the event should bubble
    * @param cancelable <code>true</code> if the event should be cancelable
    * @param ctrlKey <code>true</code> if the ctrl key is depressed
@@ -478,7 +522,13 @@ public class Document extends Node {
    * @param keyCode the key-code to be set on the event
    * @param charCode the char-code to be set on the event
    * @return the event object
+   * 
+   * @deprecated use
+   *             {@link #createKeyCodeEvent(String, boolean, boolean, boolean, boolean, int)}
+   *             or
+   *             {@link #createKeyPressEvent(boolean, boolean, boolean, boolean, int)}
    */
+  @Deprecated
   public final NativeEvent createKeyEvent(String type, boolean canBubble,
       boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
       boolean metaKey, int keyCode, int charCode) {
@@ -493,10 +543,30 @@ public class Document extends Node {
    * @param altKey <code>true</code> if the alt key is depressed
    * @param shiftKey <code>true</code> if the shift key is depressed
    * @param metaKey <code>true</code> if the meta key is depressed
-   * @param keyCode the key-code to be set on the event
    * @param charCode the char-code to be set on the event
    * @return the event object
    */
+  public final NativeEvent createKeyPressEvent(boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int charCode) {
+    return DOMImpl.impl.createKeyPressEvent(this, ctrlKey, altKey, shiftKey,
+        metaKey, charCode);
+  }
+
+  /**
+   * Creates a 'keypress' event.
+   * 
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param keyCode the key-code to be set on the event
+   * @param charCode the char-code to be set on the event
+   * @return the event object
+   * 
+   * @deprecated as of GWT 2.1 (keypress events don't have a keyCode), use
+   *             {@link #createKeyPressEvent(boolean, boolean, boolean, boolean, int)}
+   */
+  @Deprecated
   public final NativeEvent createKeyPressEvent(boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int keyCode, int charCode) {
     return createKeyEvent("keypress", true, true, ctrlKey, altKey, shiftKey,
@@ -511,9 +581,29 @@ public class Document extends Node {
    * @param shiftKey <code>true</code> if the shift key is depressed
    * @param metaKey <code>true</code> if the meta key is depressed
    * @param keyCode the key-code to be set on the event
-   * @param charCode the char-code to be set on the event
    * @return the event object
    */
+  public final NativeEvent createKeyUpEvent(boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode) {
+    return createKeyCodeEvent("keyup", ctrlKey, altKey, shiftKey, metaKey,
+        keyCode);
+  }
+
+  /**
+   * Creates a 'keyup' event.
+   * 
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param keyCode the key-code to be set on the event
+   * @param charCode the char-code to be set on the event
+   * @return the event object
+   * 
+   * @deprecated as of GWT 2.1 (keyup events don't have a charCode), use
+   *             {@link #createKeyUpEvent(boolean, boolean, boolean, boolean, int)}
+   */
+  @Deprecated
   public final NativeEvent createKeyUpEvent(boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int keyCode, int charCode) {
     return createKeyEvent("keyup", true, true, ctrlKey, altKey, shiftKey,

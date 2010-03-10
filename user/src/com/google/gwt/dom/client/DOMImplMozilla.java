@@ -32,6 +32,30 @@ class DOMImplMozilla extends DOMImplStandard {
   }-*/;
 
   @Override
+  public NativeEvent createKeyCodeEvent(Document doc, String type,
+      boolean ctrlKey, boolean altKey, boolean shiftKey, boolean metaKey,
+      int keyCode) {
+    return createKeyEventImpl(doc, type, true, true, ctrlKey, altKey, shiftKey,
+        metaKey, keyCode, 0);
+  }
+
+  @Override
+  @Deprecated
+  public NativeEvent createKeyEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode, int charCode) {
+    return createKeyEventImpl(doc, type, canBubble, cancelable, ctrlKey,
+        altKey, shiftKey, metaKey, keyCode, charCode);
+  }
+
+  @Override
+  public NativeEvent createKeyPressEvent(Document doc, boolean ctrlKey,
+      boolean altKey, boolean shiftKey, boolean metaKey, int charCode) {
+    return createKeyEventImpl(doc, "keypress", true, true, ctrlKey, altKey,
+        shiftKey, metaKey, 0, charCode);
+  }
+
+  @Override
   public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
     return evt.detail || 0;
   }-*/;
@@ -134,6 +158,15 @@ class DOMImplMozilla extends DOMImplStandard {
     outer = tempDiv.innerHTML;
     temp.innerHTML = "";
     return outer;
+  }-*/;
+
+  private native NativeEvent createKeyEventImpl(Document doc, String type,
+      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode, int charCode) /*-{
+    var evt = doc.createEvent('KeyEvents');
+    evt.initKeyEvent(type, canBubble, cancelable, null, ctrlKey, altKey,
+      shiftKey, metaKey, keyCode, charCode);
+    return evt;
   }-*/;
 
   private native int getAbsoluteLeftImpl(Element viewport, Element elem) /*-{

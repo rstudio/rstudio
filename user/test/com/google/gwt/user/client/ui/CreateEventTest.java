@@ -21,6 +21,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -35,15 +36,35 @@ public class CreateEventTest extends GWTTestCase {
   /**
    * Listener for use with key[down up press].
    */
-  private class KeyEventListener extends BubbleAssertingEventListener {
-    public KeyEventListener(String eventType) {
-      super(eventType);
+  private class KeyCodeEventListener extends BubbleAssertingEventListener {
+
+    public KeyCodeEventListener(String eventType) {
+      super(eventType, true);
     }
 
+    @Override
     public void onBrowserEvent(Event event) {
       super.onBrowserEvent(event);
-      assertAllShiftKeysOn(event);
       assertEquals(KEY_CODE, event.getKeyCode());
+      // shouldn't throw:
+      event.getCharCode();
+    }
+  }
+
+  /**
+   * Listener for use with key[down up press].
+   */
+  private class KeyPressEventListener extends BubbleAssertingEventListener {
+    public KeyPressEventListener() {
+      super("keypress", true);
+    }
+
+    @Override
+    public void onBrowserEvent(Event event) {
+      super.onBrowserEvent(event);
+      assertEquals(KEY_CODE, event.getCharCode());
+      // shouldn't throw:
+      event.getKeyCode();
     }
   }
 
@@ -52,13 +73,13 @@ public class CreateEventTest extends GWTTestCase {
    */
   private class MouseEventListener extends BubbleAssertingEventListener {
     public MouseEventListener(String eventType) {
-      super(eventType);
+      super(eventType, true);
     }
 
+    @Override
     public void onBrowserEvent(Event event) {
       super.onBrowserEvent(event);
       assertMouseCoordinates(event);
-      assertAllShiftKeysOn(event);
       assertEquals(Event.BUTTON_LEFT, event.getButton());
     }
   }
@@ -68,15 +89,32 @@ public class CreateEventTest extends GWTTestCase {
    * parent.
    */
   private class BubbleAssertingEventListener implements EventListener {
-    public boolean parentReceived, childReceived;
+    private boolean parentReceived, childReceived;
     private final String eventType;
+    private boolean supportsShiftKeys;
+    private boolean expectedCtrl = true;
+    private boolean expectedAlt = true;
+    private boolean expectedShift = true;
+    private boolean expectedMeta = true;
 
-    public BubbleAssertingEventListener(String eventType) {
+    public BubbleAssertingEventListener(String eventType, boolean supportsShiftKeys) {
       this.eventType = eventType;
+      this.supportsShiftKeys = supportsShiftKeys;
+    }
+
+    public void assertReceived() {
+      assertTrue("Expected child to receive event", childReceived);
+      assertTrue("Expected parent to receive event", parentReceived);
+      childReceived = false;
+      parentReceived = false;
     }
 
     public void onBrowserEvent(Event event) {
       assertEquals(eventType, event.getType());
+      if (supportsShiftKeys) {
+        assertAllShiftKeys(event, expectedCtrl, expectedAlt, expectedShift,
+            expectedMeta);
+      }
 
       EventTarget target = event.getCurrentEventTarget();
       if (Element.is(target)) {
@@ -96,6 +134,17 @@ public class CreateEventTest extends GWTTestCase {
           parentReceived = true;
         }
       }
+    }
+
+    /**
+     * Set the expected shift keys that should be on during the next event.
+     */
+    public void setExpectedShiftKeys(boolean expectedCtrl, boolean expectedAlt,
+        boolean expectedShift, boolean expectedMeta) {
+      this.expectedCtrl = expectedCtrl;
+      this.expectedAlt = expectedAlt;
+      this.expectedShift = expectedShift;
+      this.expectedMeta = expectedMeta;
     }
   }
 
@@ -174,6 +223,14 @@ public class CreateEventTest extends GWTTestCase {
     }
   }
 
+  /**
+   * Interface to create a new event for testing.
+   */
+  private static interface EventCreator {
+    NativeEvent createEvent(boolean ctrlKey, boolean altKey, boolean shiftKey,
+        boolean metaKey);
+  }
+
   private static final int MOUSE_DETAIL = 1;
   private static final int CLIENT_X = 2;
   private static final int CLIENT_Y = 3;
@@ -242,6 +299,7 @@ public class CreateEventTest extends GWTTestCase {
   public void testTriggerBlurEvent() {
     NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(
         "blur") {
+      @Override
       public void onBrowserEvent(Event event) {
         super.onBrowserEvent(event);
         assertEquals("blur", event.getType());
@@ -260,7 +318,7 @@ public class CreateEventTest extends GWTTestCase {
    */
   public void testTriggerChangeEvent() {
     BubbleAssertingEventListener listener = new BubbleAssertingEventListener(
-        "change");
+        "change", false);
     Event.setEventListener(parent, listener);
     Event.setEventListener(child, listener);
 
@@ -274,11 +332,11 @@ public class CreateEventTest extends GWTTestCase {
    */
   public void testTriggerClickEvent() {
     BubbleAssertingEventListener listener = new BubbleAssertingEventListener(
-        "click") {
+        "click", true) {
+      @Override
       public void onBrowserEvent(Event event) {
         super.onBrowserEvent(event);
         assertMouseCoordinates(event);
-        assertAllShiftKeysOn(event);
       }
     };
     Event.setEventListener(parent, listener);
@@ -293,27 +351,26 @@ public class CreateEventTest extends GWTTestCase {
 
   /**
    * Tests createContextMenuEvent().
-   * TODO: Re-enable this test when we no longer support Firefox2 and earlier
-   * (which doesn't appear to dispatch contextmenu events properly).
    */
-//  public void testTriggerContextMenuEvent() {
-//    BubbleAssertingEventListener listener = new BubbleAssertingEventListener(
-//        "contextmenu");
-//    Event.setEventListener(parent, listener);
-//    Event.setEventListener(child, listener);
-//
-//    child.dispatchEvent(Document.get().createContextMenuEvent());
-//
-//    assertTrue("Expected child to receive event", listener.childReceived);
-//    assertTrue("Expected parent to receive event", listener.parentReceived);
-//  }
+  public void testTriggerContextMenuEvent() {
+    BubbleAssertingEventListener listener = new BubbleAssertingEventListener(
+        "contextmenu", false);
+    Event.setEventListener(parent, listener);
+    Event.setEventListener(child, listener);
+
+    child.dispatchEvent(Document.get().createContextMenuEvent());
+
+    assertTrue("Expected child to receive event", listener.childReceived);
+    assertTrue("Expected parent to receive event", listener.parentReceived);
+  }
 
   /**
    * Tests createDblClickEvent().
    */
   public void testTriggerDblClickEvent() {
     BubbleAssertingEventListener listener = new BubbleAssertingEventListener(
-        "dblclick") {
+        "dblclick", true) {
+      @Override
       public void onBrowserEvent(Event event) {
         if (event.getTypeInt() == Event.ONCLICK) {
           // Some browsers (IE, I'm looking at you) synthesize an extra click
@@ -325,7 +382,6 @@ public class CreateEventTest extends GWTTestCase {
 
         super.onBrowserEvent(event);
         assertMouseCoordinates(event);
-        assertAllShiftKeysOn(event);
       }
     };
     Event.setEventListener(parent, listener);
@@ -340,6 +396,7 @@ public class CreateEventTest extends GWTTestCase {
 
   /**
    * Tests createErrorEvent().
+   * 
    * Failed in all modes due to HtmlUnit bug:
    * https://sourceforge.net/tracker/?func=detail&aid=2888342&group_id=47038&atid=448266
    */
@@ -360,6 +417,7 @@ public class CreateEventTest extends GWTTestCase {
   public void testTriggerFocusEvent() {
     NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(
         "focus") {
+      @Override
       public void onBrowserEvent(Event event) {
         super.onBrowserEvent(event);
         assertEquals("focus", event.getType());
@@ -377,45 +435,45 @@ public class CreateEventTest extends GWTTestCase {
    * Tests createKeyDownEvent().
    */
   public void testTriggerKeyDownEvent() {
-    KeyEventListener listener = new KeyEventListener("keydown");
-    Event.setEventListener(parent, listener);
-    Event.setEventListener(child, listener);
-
-    child.dispatchEvent(Document.get().createKeyDownEvent(true, true, true,
-        true, KEY_CODE, KEY_CODE));
-
-    assertTrue("Expected child to receive event", listener.childReceived);
-    assertTrue("Expected parent to receive event", listener.parentReceived);
+    KeyCodeEventListener listener = new KeyCodeEventListener("keydown");
+    EventCreator creator = new EventCreator() {
+      public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
+          boolean shiftKey, boolean metaKey) {
+        return Document.get().createKeyDownEvent(ctrlKey, altKey, shiftKey,
+            metaKey, KEY_CODE);
+      }
+    };
+    testTriggerEventWithShiftKeys(listener, creator);
   }
 
   /**
    * Tests createKeyPressEvent().
    */
   public void testTriggerKeyPressEvent() {
-    KeyEventListener listener = new KeyEventListener("keypress");
-    Event.setEventListener(parent, listener);
-    Event.setEventListener(child, listener);
-
-    child.dispatchEvent(Document.get().createKeyPressEvent(true, true, true,
-        true, KEY_CODE, KEY_CODE));
-
-    assertTrue("Expected child to receive event", listener.childReceived);
-    assertTrue("Expected parent to receive event", listener.parentReceived);
+    KeyPressEventListener listener = new KeyPressEventListener();
+    EventCreator creator = new EventCreator() {
+      public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
+          boolean shiftKey, boolean metaKey) {
+        return Document.get().createKeyPressEvent(ctrlKey, altKey, shiftKey,
+            metaKey, KEY_CODE);
+      }
+    };
+    testTriggerEventWithShiftKeys(listener, creator);
   }
 
   /**
    * Tests createKeyUpEvent().
    */
   public void testTriggerKeyUpEvent() {
-    KeyEventListener listener = new KeyEventListener("keyup");
-    Event.setEventListener(parent, listener);
-    Event.setEventListener(child, listener);
-
-    child.dispatchEvent(Document.get().createKeyUpEvent(true, true, true, true,
-        KEY_CODE, KEY_CODE));
-
-    assertTrue("Expected child to receive event", listener.childReceived);
-    assertTrue("Expected parent to receive event", listener.parentReceived);
+    KeyCodeEventListener listener = new KeyCodeEventListener("keyup");
+    EventCreator creator = new EventCreator() {
+      public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
+          boolean shiftKey, boolean metaKey) {
+        return Document.get().createKeyUpEvent(ctrlKey, altKey, shiftKey,
+            metaKey, KEY_CODE);
+      }
+    };
+    testTriggerEventWithShiftKeys(listener, creator);
   }
 
   /**
@@ -436,15 +494,15 @@ public class CreateEventTest extends GWTTestCase {
    */
   public void testTriggerMouseDownEvent() {
     MouseEventListener listener = new MouseEventListener("mousedown");
-    Event.setEventListener(parent, listener);
-    Event.setEventListener(child, listener);
-
-    child.dispatchEvent(Document.get().createMouseDownEvent(MOUSE_DETAIL,
-        SCREEN_X, SCREEN_Y, CLIENT_X, CLIENT_Y, true, true, true, true,
-        Event.BUTTON_LEFT));
-
-    assertTrue("Expected child to receive event", listener.childReceived);
-    assertTrue("Expected parent to receive event", listener.parentReceived);
+    EventCreator creator = new EventCreator() {
+      public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
+          boolean shiftKey, boolean metaKey) {
+        return Document.get().createMouseDownEvent(MOUSE_DETAIL, SCREEN_X,
+            SCREEN_Y, CLIENT_X, CLIENT_Y, ctrlKey, altKey, shiftKey, metaKey,
+            Event.BUTTON_LEFT);
+      }
+    };
+    testTriggerEventWithShiftKeys(listener, creator);
   }
 
   /**
@@ -452,15 +510,15 @@ public class CreateEventTest extends GWTTestCase {
    */
   public void testTriggerMouseMoveEvent() {
     MouseEventListener listener = new MouseEventListener("mousemove");
-    Event.setEventListener(parent, listener);
-    Event.setEventListener(child, listener);
-
-    child.dispatchEvent(Document.get().createMouseMoveEvent(MOUSE_DETAIL,
-        SCREEN_X, SCREEN_Y, CLIENT_X, CLIENT_Y, true, true, true, true,
-        Event.BUTTON_LEFT));
-
-    assertTrue("Expected child to receive event", listener.childReceived);
-    assertTrue("Expected parent to receive event", listener.parentReceived);
+    EventCreator creator = new EventCreator() {
+      public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
+          boolean shiftKey, boolean metaKey) {
+        return Document.get().createMouseMoveEvent(MOUSE_DETAIL, SCREEN_X,
+            SCREEN_Y, CLIENT_X, CLIENT_Y, ctrlKey, altKey, shiftKey, metaKey,
+            Event.BUTTON_LEFT);
+      }
+    };
+    testTriggerEventWithShiftKeys(listener, creator);
   }
 
   /**
@@ -468,24 +526,22 @@ public class CreateEventTest extends GWTTestCase {
    */
   public void testTriggerMouseOutEvent() {
     MouseEventListener listener = new MouseEventListener("mouseout") {
+      @Override
       public void onBrowserEvent(Event event) {
         super.onBrowserEvent(event);
-
-// TODO: Re-enable this assertion when we no longer support Firefox2 and earlier.
-// Old Firefoxen throw away the relatedTarget parameter of initMouseEvent().
-//        Element relatedTarget = event.getRelatedTarget();
-//        assertEquals("Expected relatedElement to be img", img, relatedTarget);
+        Element relatedTarget = event.getRelatedEventTarget().cast();
+        assertEquals("Expected relatedElement to be img", img, relatedTarget);
       }
     };
-    Event.setEventListener(parent, listener);
-    Event.setEventListener(child, listener);
-
-    child.dispatchEvent(Document.get().createMouseOutEvent(MOUSE_DETAIL,
-        SCREEN_X, SCREEN_Y, CLIENT_X, CLIENT_Y, true, true, true, true,
-        Event.BUTTON_LEFT, img));
-
-    assertTrue("Expected child to receive event", listener.childReceived);
-    assertTrue("Expected parent to receive event", listener.parentReceived);
+    EventCreator creator = new EventCreator() {
+      public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
+          boolean shiftKey, boolean metaKey) {
+        return Document.get().createMouseOutEvent(MOUSE_DETAIL, SCREEN_X,
+            SCREEN_Y, CLIENT_X, CLIENT_Y, ctrlKey, altKey, shiftKey, metaKey,
+            Event.BUTTON_LEFT, img);
+      }
+    };
+    testTriggerEventWithShiftKeys(listener, creator);
   }
 
   /**
@@ -493,23 +549,22 @@ public class CreateEventTest extends GWTTestCase {
    */
   public void testTriggerMouseOverEvent() {
     MouseEventListener listener = new MouseEventListener("mouseover") {
+      @Override
       public void onBrowserEvent(Event event) {
         super.onBrowserEvent(event);
-
-// TODO: Re-enable this assertion when we no longer support Firefox2 and earlier.
-// Old Firefoxen throw away the relatedTarget parameter of initMouseEvent().
-//        Element relatedTarget = event.getRelatedTarget();
-//        assertEquals("Expected relatedElement to be img", img, relatedTarget);
+        Element relatedTarget = event.getRelatedEventTarget().cast();
+        assertEquals("Expected relatedElement to be img", img, relatedTarget);
       }
     };
-    Event.setEventListener(parent, listener);
-    Event.setEventListener(child, listener);
-
-    child.dispatchEvent(Document.get().createMouseOverEvent(MOUSE_DETAIL, SCREEN_X, SCREEN_Y,
-        CLIENT_X, CLIENT_Y, true, true, true, true, Event.BUTTON_LEFT, img));
-
-    assertTrue("Expected child to receive event", listener.childReceived);
-    assertTrue("Expected parent to receive event", listener.parentReceived);
+    EventCreator creator = new EventCreator() {
+      public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
+          boolean shiftKey, boolean metaKey) {
+        return Document.get().createMouseOverEvent(MOUSE_DETAIL, SCREEN_X,
+            SCREEN_Y, CLIENT_X, CLIENT_Y, ctrlKey, altKey, shiftKey, metaKey,
+            Event.BUTTON_LEFT, img);
+      }
+    };
+    testTriggerEventWithShiftKeys(listener, creator);
   }
 
   /**
@@ -517,37 +572,33 @@ public class CreateEventTest extends GWTTestCase {
    */
   public void testTriggerMouseUpEvent() {
     MouseEventListener listener = new MouseEventListener("mouseup");
+    EventCreator creator = new EventCreator() {
+      public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
+          boolean shiftKey, boolean metaKey) {
+        return Document.get().createMouseUpEvent(MOUSE_DETAIL, SCREEN_X,
+            SCREEN_Y, CLIENT_X, CLIENT_Y, ctrlKey, altKey, shiftKey, metaKey,
+            Event.BUTTON_LEFT);
+      }
+    };
+    testTriggerEventWithShiftKeys(listener, creator);
+  }
+
+  public void testTriggerScrollEvent() {
+    NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(
+        "scroll") {
+      @Override
+      public void onBrowserEvent(Event event) {
+        super.onBrowserEvent(event);
+        assertEquals("scroll", event.getType());
+      }
+    };
     Event.setEventListener(parent, listener);
     Event.setEventListener(child, listener);
 
-    child.dispatchEvent(Document.get().createMouseUpEvent(MOUSE_DETAIL,
-        SCREEN_X, SCREEN_Y, CLIENT_X, CLIENT_Y, true, true, true, true,
-        Event.BUTTON_LEFT));
+    child.dispatchEvent(Document.get().createScrollEvent());
 
     assertTrue("Expected child to receive event", listener.childReceived);
-    assertTrue("Expected parent to receive event", listener.parentReceived);
   }
-
-  /**
-   * Tests createScrollEvent().
-   * TODO: Re-enable this test when we no longer support Firefox2 and earlier
-   * (which doesn't appear to dispatch contextmenu events properly).
-   */
-//  public void testTriggerScrollEvent() {
-//    NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(
-//        "scroll") {
-//      public void onBrowserEvent(Event event) {
-//        super.onBrowserEvent(event);
-//        assertEquals("scroll", event.getType());
-//      }
-//    };
-//    Event.setEventListener(parent, listener);
-//    Event.setEventListener(child, listener);
-//
-//    child.dispatchEvent(Document.get().createScrollEvent());
-//
-//    assertTrue("Expected child to receive event", listener.childReceived);
-//  }
 
   @Override
   protected void gwtSetUp() throws Exception {
@@ -564,11 +615,21 @@ public class CreateEventTest extends GWTTestCase {
     Event.sinkEvents(img, ALL_EVENTS);
   }
 
-  private void assertAllShiftKeysOn(Event event) {
-    assertEquals("Expecting ctrl on", true, event.getCtrlKey());
-    assertEquals("Expecting alt on", true, event.getAltKey());
-    assertEquals("Expecting shift on", true, event.getShiftKey());
-    assertEquals("Expecting meta on", true, event.getMetaKey());
+  /**
+   * Assert that all shift keys are in the expected state.
+   * 
+   * @param event the event that was triggered
+   */
+  private void assertAllShiftKeys(Event event, boolean expectedCtrl,
+      boolean expectedAlt, boolean expectedShift, boolean expectedMeta) {
+    assertEquals("Expecting ctrl = " + expectedCtrl, expectedCtrl,
+        event.getCtrlKey());
+    assertEquals("Expecting alt = " + expectedAlt, expectedAlt,
+        event.getAltKey());
+    assertEquals("Expecting shift = " + expectedShift, expectedShift,
+        event.getShiftKey());
+    assertEquals("Expecting meta = " + expectedMeta, expectedMeta,
+        event.getMetaKey());
   }
 
   private void assertMouseCoordinates(Event event) {
@@ -576,5 +637,35 @@ public class CreateEventTest extends GWTTestCase {
     assertEquals("clientY", CLIENT_Y, event.getClientY());
     assertEquals("screenX", SCREEN_X, event.getScreenX());
     assertEquals("screenY", SCREEN_Y, event.getScreenY());
+  }
+
+  /**
+   * Test an event that supports shift keys by testing each shift key
+   * individually.
+   */
+  private void testTriggerEventWithShiftKeys(
+      BubbleAssertingEventListener listener, EventCreator creator) {
+    Event.setEventListener(parent, listener);
+    Event.setEventListener(child, listener);
+
+    listener.setExpectedShiftKeys(true, true, true, true);
+    child.dispatchEvent(creator.createEvent(true, true, true, true));
+    listener.assertReceived();
+
+    listener.setExpectedShiftKeys(true, false, false, false);
+    child.dispatchEvent(creator.createEvent(true, false, false, false));
+    listener.assertReceived();
+
+    listener.setExpectedShiftKeys(false, true, false, false);
+    child.dispatchEvent(creator.createEvent(false, true, false, false));
+    listener.assertReceived();
+
+    listener.setExpectedShiftKeys(false, false, true, false);
+    child.dispatchEvent(creator.createEvent(false, false, true, false));
+    listener.assertReceived();
+
+    listener.setExpectedShiftKeys(false, false, false, true);
+    child.dispatchEvent(creator.createEvent(false, false, false, true));
+    listener.assertReceived();
   }
 }

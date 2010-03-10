@@ -23,8 +23,8 @@ package com.google.gwt.dom.client;
 abstract class DOMImplStandard extends DOMImpl {
 
   @Override
-  public native NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
-      boolean cancelable) /*-{
+  public native NativeEvent createHtmlEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable) /*-{
     var evt = doc.createEvent('HTMLEvents');
     evt.initEvent(type, canBubble, cancelable);
 
@@ -40,22 +40,10 @@ abstract class DOMImplStandard extends DOMImpl {
   }-*/;
 
   @Override
-  public native NativeEvent createKeyEvent(Document doc, String type, boolean canBubble,
-      boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
-      boolean metaKey, int keyCode, int charCode) /*-{
-    // The spec calls for KeyEvents/initKeyEvent(), but that doesn't exist on WebKit.
-    var evt = doc.createEvent('KeyEvents');
-    evt.initKeyEvent(type, canBubble, cancelable, null, ctrlKey, altKey,
-      shiftKey, metaKey, keyCode, charCode);
-
-    return evt;
-  }-*/;
-
-  @Override
-  public native NativeEvent createMouseEvent(Document doc, String type, boolean canBubble,
-      boolean cancelable, int detail, int screenX, int screenY, int clientX,
-      int clientY, boolean ctrlKey, boolean altKey, boolean shiftKey,
-      boolean metaKey, int button, Element relatedTarget) /*-{
+  public native NativeEvent createMouseEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, int detail, int screenX,
+      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int button, Element relatedTarget) /*-{
     // Because Event.getButton() returns bitfield values [1, 4, 2] for [left,
     // middle, right], we need to translate them to the standard [0, 1, 2]
     // button constants.
@@ -74,7 +62,8 @@ abstract class DOMImplStandard extends DOMImpl {
 
     return evt;
   }-*/;
- 
+
+  @Override
   public native void dispatchEvent(Element target, NativeEvent evt) /*-{
     target.dispatchEvent(evt);
   }-*/;
@@ -91,6 +80,11 @@ abstract class DOMImplStandard extends DOMImpl {
       return 2;
     }
     return 1;
+  }-*/;
+
+  @Override
+  public native int eventGetCharCode(NativeEvent evt) /*-{
+    return evt.charCode || 0;
   }-*/;
 
   @Override
