@@ -16,6 +16,7 @@
 package com.google.gwt.bikeshed.sample.stocks.client;
 
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
+import com.google.gwt.bikeshed.list.client.TextHeader;
 import com.google.gwt.bikeshed.list.shared.ListModel;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockQuote;
 import com.google.gwt.dom.client.Style.Unit;
@@ -40,9 +41,9 @@ public class StockQueryWidget extends Composite {
     // Create the results table.
     resultsTable = new PagingTableListView<StockQuote>(searchListModel, 10);
     resultsTable.addColumn(Columns.favoriteColumn);
-    resultsTable.addColumn(Columns.tickerColumn);
-    resultsTable.addColumn(Columns.nameColumn);
-    resultsTable.addColumn(Columns.priceColumn);
+    resultsTable.addColumn(Columns.tickerColumn, new TextHeader("ticker"));
+    resultsTable.addColumn(Columns.nameColumn, new TextHeader("name"));
+    resultsTable.addColumn(Columns.priceColumn, new TextHeader("price"));
     resultsTable.addColumn(Columns.buyColumn);
    
     // Focus the cursor on the name field when the app loads

@@ -17,6 +17,7 @@ package com.google.gwt.bikeshed.sample.stocks.client;
 
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
+import com.google.gwt.bikeshed.list.client.TextHeader;
 import com.google.gwt.bikeshed.list.shared.AsyncListModel;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.bikeshed.list.shared.Range;
@@ -135,10 +136,10 @@ public class StockSample implements EntryPoint, Updater {
 
     // Create the favorites table.
     favoritesTable = new PagingTableListView<StockQuote>(favoritesListModel, 10);
-    favoritesTable.addColumn(Columns.tickerColumn);
-    favoritesTable.addColumn(Columns.priceColumn);
-    favoritesTable.addColumn(Columns.sharesColumn);
-    favoritesTable.addColumn(Columns.dollarsColumn);
+    favoritesTable.addColumn(Columns.tickerColumn, new TextHeader("ticker"));
+    favoritesTable.addColumn(Columns.priceColumn, new TextHeader("price"));
+    favoritesTable.addColumn(Columns.sharesColumn, new TextHeader("shares"));
+    favoritesTable.addColumn(Columns.dollarsColumn, new TextHeader("value"));
     favoritesTable.addColumn(Columns.buyColumn);
     favoritesTable.addColumn(Columns.sellColumn);
     

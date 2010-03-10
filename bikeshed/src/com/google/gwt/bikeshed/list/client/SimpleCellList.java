@@ -24,6 +24,7 @@ import com.google.gwt.bikeshed.list.shared.ListRegistration;
 import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -113,19 +114,25 @@ public class SimpleCellList<T> extends Widget {
     Element parent = getElement();
     int childCount = parent.getChildCount();
 
-    // Update existing cells with new values.
-    int i, existing = Math.min(len, childCount);
-    for (i = start; i < existing; ++i) {
-      Element elem = parent.getChild(i).cast();
-      cell.setValue(elem, values.get(i));
+    // Create innerHTML for the new items.
+    int end = start + len;
+    StringBuilder html = new StringBuilder();
+
+    // Empty items to fill any gaps.
+    int totalToAdd = 0;
+    for (int i = childCount; i < start; ++i) {
+      html.append("<div __idx='" + i + "'>");
+      cell.render(null, html);
+      html.append("</div>");
+      ++totalToAdd;
     }
 
-    // Create new cells if necessary.
-    StringBuilder html = new StringBuilder();
-    for (; i < len; ++i) {
+    // Items rendered from data.
+    for (int i = start; i < end; ++i) {
       html.append("<div __idx='" + i + "'>");
-      cell.render(values.get(i), html);
+      cell.render(values.get(i - start), html);
       html.append("</div>");
+      ++totalToAdd;
     }
 
     if (childCount == 0) {
@@ -136,9 +143,27 @@ public class SimpleCellList<T> extends Widget {
       // in a temporary element, then move the cells back to the main element.
       tmpElem.setInnerHTML(html.toString());
 
+      // Clear out old cells that overlap the new cells.
+      if (start < childCount) {
+        int toRemove = Math.min(end, childCount) - start;
+        for (int i = 0; i < toRemove; ++i) {
+          parent.removeChild(parent.getChild(start));
+        }
+        childCount = parent.getChildCount();
+      }
+
       // Move the new cells over from the temp element.
-      for (i = 0; i < len - childCount; ++i) {
-        parent.appendChild(tmpElem.getChild(0));
+      if (start >= childCount) {
+        // Just append to the end.
+        for (int i = 0; i < totalToAdd; ++i) {
+          parent.appendChild(tmpElem.getChild(0));
+        }
+      } else {
+        // Insert them in the middle somewhere.
+        Node before = parent.getChild(start);
+        for (int i = 0; i < totalToAdd; ++i) {
+          parent.insertBefore(tmpElem.getChild(0), before);
+        }
       }
     }
   }

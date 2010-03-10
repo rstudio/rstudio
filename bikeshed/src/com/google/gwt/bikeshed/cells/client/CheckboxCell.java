@@ -40,7 +40,7 @@ public class CheckboxCell extends Cell<Boolean> {
   @Override
   public void render(Boolean data, StringBuilder sb) {
     sb.append("<input type=\"checkbox\"");
-    if (data == true) {
+    if ((data != null) && (data == true)) {
       sb.append(" checked");
     }
     sb.append("/>");

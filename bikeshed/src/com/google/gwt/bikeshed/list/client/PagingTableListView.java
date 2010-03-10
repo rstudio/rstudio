@@ -15,8 +15,6 @@
  */
 package com.google.gwt.bikeshed.list.client;
 
-import com.google.gwt.bikeshed.cells.client.ButtonCell;
-import com.google.gwt.bikeshed.cells.client.ValueUpdater;
 import com.google.gwt.bikeshed.list.shared.ListEvent;
 import com.google.gwt.bikeshed.list.shared.ListHandler;
 import com.google.gwt.bikeshed.list.shared.ListModel;
@@ -31,6 +29,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
@@ -52,16 +51,27 @@ public class PagingTableListView<T> extends Widget {
   private int totalSize;
   private List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
   private ArrayList<T> data = new ArrayList<T>();
-  private ButtonCell prevButton = new ButtonCell();
-  private ButtonCell nextButton = new ButtonCell();
+
+  private List<Header<?>> headers = new ArrayList<Header<?>>();
+  private List<Header<?>> footers = new ArrayList<Header<?>>();
+
+  private TableElement table;
+  private TableSectionElement thead;
+  private TableSectionElement tfoot;
+  private TableSectionElement tbody;
 
   public PagingTableListView(ListModel<T> listModel, final int pageSize) {
     this.pageSize = pageSize;
-    setElement(Document.get().createTableElement());
+    setElement(table = Document.get().createTableElement());
+    thead = table.createTHead();
+    table.appendChild(tbody = Document.get().createTBodyElement());
+    tfoot = table.createTFoot();
     createRows();
 
-    // TODO: total hack.
-    sinkEvents(Event.MOUSEEVENTS | Event.KEYEVENTS);
+    // TODO: Total hack. It would almost definitely be preferable to sink only
+    // those events actually needed by cells.
+    sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.KEYEVENTS
+        | Event.ONCHANGE);
 
     // Attach to the list model.
     listReg = listModel.addListHandler(new ListHandler<T>() {
@@ -82,8 +92,19 @@ public class PagingTableListView<T> extends Widget {
     listReg.setRangeOfInterest(0, pageSize);
   }
 
-  // TODO: remove(Column)
   public void addColumn(Column<T, ?> col) {
+    addColumn(col, null, null);
+  }
+
+  public void addColumn(Column<T, ?> col, Header<?> header) {
+    addColumn(col, header, null);
+  }
+
+  // TODO: remove(Column)
+  public void addColumn(Column<T, ?> col, Header<?> header, Header<?> footer) {
+    headers.add(header);
+    footers.add(footer);
+    createHeadersAndFooters();  // TODO: defer header recreation
     columns.add(col);
     createRows();
     setPage(curPage); // TODO: better way to refresh?
@@ -106,44 +127,29 @@ public class PagingTableListView<T> extends Widget {
   public void onBrowserEvent(Event event) {
     EventTarget target = event.getEventTarget();
     Node node = Node.as(target);
-    while (node != null) {
-      if (Element.is(node)) {
-        Element elem = Element.as(node);
+    TableCellElement cell = findNearestParentCell(node);
+    if (cell == null) {
+      return;
+    }
 
-        // TODO: We need is() implementations in all Element subclasses.
-        String tagName = elem.getTagName();
-        if ("td".equalsIgnoreCase(tagName)) {
-          TableCellElement td = TableCellElement.as(elem);
-          TableRowElement tr = TableRowElement.as(td.getParentElement());
-
-          // TODO: row/col assertions.
-          int row = tr.getRowIndex(), col = td.getCellIndex();
-          if (row < pageSize) {
-            T value = data.get(row);
-            Column<T, ?> column = columns.get(col);
-            column.onBrowserEvent(elem, value, event);
-          } else if (row == pageSize) {
-            if (col == 0) {
-              prevButton.onBrowserEvent(elem, null, event,
-                  new ValueUpdater<String>() {
-                    public void update(String value) {
-                      previousPage();
-                    }
-                  });
-            } else if (col == 2) {
-              nextButton.onBrowserEvent(elem, null, event,
-                  new ValueUpdater<String>() {
-                    public void update(String value) {
-                      nextPage();
-                    }
-                  });
-            }
-          }
-          break;
-        }
+    TableRowElement tr = TableRowElement.as(cell.getParentElement());
+    TableSectionElement section = TableSectionElement.as(tr.getParentElement());
+    int col = cell.getCellIndex();
+    if (section == thead) {
+      Header<?> header = headers.get(col);
+      if (header != null) {
+        header.onBrowserEvent(cell, event);
       }
-
-      node = node.getParentNode();
+    } else if (section == tfoot) {
+      Header<?> footer = footers.get(col);
+      if (footer != null) {
+        footer.onBrowserEvent(cell, event);
+      }
+    } else if (section == tbody) {
+      int row = tr.getSectionRowIndex();
+      T value = data.get(row);
+      Column<T, ?> column = columns.get(col);
+      column.onBrowserEvent(cell, value, event);
     }
   }
 
@@ -187,11 +193,10 @@ public class PagingTableListView<T> extends Widget {
   }
 
   protected void render(int start, int length, List<T> values) {
-    TableElement table = getElement().cast();
     int numCols = columns.size();
     int pageStart = curPage * pageSize;
 
-    NodeList<TableRowElement> rows = table.getRows();
+    NodeList<TableRowElement> rows = tbody.getRows();
     for (int r = start; r < start + length; ++r) {
       TableRowElement row = rows.getItem(r - pageStart);
       T q = values.get(r - start);
@@ -203,55 +208,53 @@ public class PagingTableListView<T> extends Widget {
         columns.get(c).render(q, sb);
         cell.setInnerHTML(sb.toString());
 
-        // TODO: really total hack!
+        // TODO: Really total hack! There's gotta be a better way...
         Element child = cell.getFirstChildElement();
         if (child != null) {
-          Event.sinkEvents(child, Event.ONCHANGE | Event.ONFOCUS | Event.ONBLUR);
+          Event.sinkEvents(child, Event.ONFOCUS | Event.ONBLUR);
         }
       }
     }
   }
 
+  private void createHeaders(List<Header<?>> headers, TableSectionElement section) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<tr>");
+    for (Header<?> header : headers) {
+      sb.append("<th>");
+      if (header != null) {
+        header.render(sb);
+      }
+      sb.append("</th>");
+    }
+    sb.append("</tr>");
+
+    section.setInnerHTML(sb.toString());
+  }
+
+  private void createHeadersAndFooters() {
+    createHeaders(headers, thead);
+    createHeaders(footers, tfoot);
+  }
+
   private void createRows() {
-    TableElement table = getElement().cast();
     int numCols = columns.size();
 
     // TODO - only delete as needed
-    int numRows = table.getRows().getLength();
+    int numRows = tbody.getRows().getLength();
     while (numRows-- > 0) {
-      table.deleteRow(0);
+      tbody.deleteRow(0);
     }
 
     for (int r = 0; r < pageSize; ++r) {
-      TableRowElement row = table.insertRow(0);
-      row.setClassName("pagingTableListView "
-          + ((r & 0x1) == 0 ? "evenRow" : "oddRow"));
+      TableRowElement row = tbody.insertRow(0);
+      row.setClassName("pagingTableListView " + ((r & 0x1) == 0 ? "evenRow" : "oddRow"));
 
       // TODO: use cloneNode() to make this even faster.
       for (int c = 0; c < numCols; ++c) {
         row.insertCell(c);
       }
     }
-
-    // Add the final row containing paging buttons
-    TableRowElement pageRow = table.insertRow(pageSize);
-    pageRow.insertCell(0);
-    pageRow.insertCell(1);
-    pageRow.insertCell(2);
-
-    StringBuilder sb;
-
-    sb = new StringBuilder();
-    prevButton.render("Previous", sb);
-    pageRow.getCells().getItem(0).setInnerHTML(sb.toString());
-
-    pageRow.getCells().getItem(1).setAttribute("colspan", "" + (numCols - 2));
-    pageRow.getCells().getItem(1).setAttribute("align", "center");
-
-    sb = new StringBuilder();
-    nextButton.render("Next", sb);
-    pageRow.getCells().getItem(2).setInnerHTML(sb.toString());
-    pageRow.getCells().getItem(2).setAttribute("align", "right");
 
     // Make room for the data cache
     data.ensureCapacity(pageSize);
@@ -260,24 +263,37 @@ public class PagingTableListView<T> extends Widget {
     }
   }
 
+  private TableCellElement findNearestParentCell(Node node) {
+    while ((node != null) && (node != table)) {
+      if (Element.is(node)) {
+        Element elem = Element.as(node);
+
+        // TODO: We need is() implementations in all Element subclasses.
+        // This would allow us to use TableCellElement.is() -- much cleaner.
+        String tagName = elem.getTagName();
+        if ("td".equalsIgnoreCase(tagName) || "th".equalsIgnoreCase(tagName)) {
+          return elem.cast();
+        }
+      }
+      node = node.getParentNode();
+    }
+    return null;
+  }
+
   /**
    * Update the text that shows the current page.
    * 
    * @param page the current page
    */
   private void updatePageText(int page) {
-    TableElement table = getElement().cast();
-    NodeList<TableRowElement> rows = table.getRows();
-    String text = "Page " + (page + 1) + " of " + numPages;
-    rows.getItem(rows.getLength() - 1).getCells().getItem(1).setInnerText(text);
+    // TODO: Update external paging widget.
   }
 
   private void updateRowVisibility() {
     int visible = Math.min(pageSize, totalSize - curPage * pageSize);
 
-    TableElement table = getElement().cast();
     for (int r = 0; r < pageSize; ++r) {
-      Style rowStyle = table.getRows().getItem(r).getStyle();
+      Style rowStyle = tbody.getRows().getItem(r).getStyle();
       if (r < visible) {
         rowStyle.clearDisplay();
       } else {
