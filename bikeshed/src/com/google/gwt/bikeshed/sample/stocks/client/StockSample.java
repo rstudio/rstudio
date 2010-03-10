@@ -15,40 +15,36 @@
  */
 package com.google.gwt.bikeshed.sample.stocks.client;
 
-import com.google.gwt.bikeshed.cells.client.ButtonCell;
-import com.google.gwt.bikeshed.cells.client.CheckboxCell;
-import com.google.gwt.bikeshed.cells.client.CurrencyCell;
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
-import com.google.gwt.bikeshed.cells.client.TextCell;
-import com.google.gwt.bikeshed.list.client.Column;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
 import com.google.gwt.bikeshed.list.shared.AsyncListModel;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.bikeshed.list.shared.AsyncListModel.DataSource;
+import com.google.gwt.bikeshed.sample.stocks.client.TransactionTreeViewModel.SectorListModel;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockQuote;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockQuoteList;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockRequest;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockResponse;
 import com.google.gwt.bikeshed.sample.stocks.shared.Transaction;
 import com.google.gwt.bikeshed.tree.client.SideBySideTreeView;
-import com.google.gwt.bikeshed.tree.client.StandardTreeView;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
 import java.util.List;
@@ -57,91 +53,14 @@ import java.util.Map;
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
-public class StockSample implements EntryPoint {
+public class StockSample implements EntryPoint, Updater {
 
-  static class Columns {
-
-    private static Column<StockQuote, String> buyColumn = new Column<StockQuote, String>(
-        new ButtonCell()) {
-      @Override
-      protected String getValue(StockQuote object) {
-        return "Buy";
-      }
-    };
-    
-    private static Column<StockQuote, Boolean> favoriteColumn =
-      new Column<StockQuote, Boolean>(new CheckboxCell()) {
-      @Override
-      protected Boolean getValue(StockQuote object) {
-        return object.isFavorite();
-      }
-    };
-
-    private static Column<StockQuote, String> nameColumn =
-      new Column<StockQuote, String>(new TextCell()) {
-      @Override
-      protected String getValue(StockQuote object) {
-        return object.getName();
-      }
-    };
-
-    private static Column<StockQuote, Integer> priceColumn =
-      new Column<StockQuote, Integer>(new CurrencyCell()) {
-      @Override
-      protected Integer getValue(StockQuote object) {
-        return object.getPrice();
-      }
-    };
-
-    private static Column<StockQuote, String> sellColumn =
-      new Column<StockQuote, String>(new ButtonCell()) {
-      @Override
-      protected String getValue(StockQuote object) {
-        return "Sell";
-      }
-    };
-
-    private static Column<StockQuote, String> sharesColumn =
-      new Column<StockQuote, String>(new TextCell()) {
-      @Override
-      protected String getValue(StockQuote object) {
-        return "" + object.getSharesOwned();
-      }
-    };
-
-    private static Column<Transaction, String> subtotalColumn =
-      new Column<Transaction, String>(new TextCell()) {
-      @Override
-      protected String getValue(Transaction object) {
-        int price = object.getActualPrice() * object.getQuantity();
-        return (object.isBuy() ? " (" : " ") + getFormattedPrice(price) + 
-            (object.isBuy() ? ")" : "");
-      }
-    };
-    
-    private static Column<StockQuote, String> tickerColumn =
-      new Column<StockQuote, String>(new TextCell()) {
-      @Override
-      protected String getValue(StockQuote object) {
-        return object.getTicker();
-      }
-    };
-    
-    private static Column<Transaction, String> transactionColumn =
-      new Column<Transaction, String>(new TextCell()) {
-      @Override
-      protected String getValue(Transaction object) {
-        return object.toString();
-      }
-    };
-  }
-  
   /**
    * The delay between updates in milliseconds.
    */
   private static final int UPDATE_DELAY = 5000;
   
-  private static String getFormattedPrice(int price) {
+  static String getFormattedPrice(int price) {
     return NumberFormat.getCurrencyFormat("USD").format(price / 100.0);
   }
 
@@ -157,30 +76,27 @@ public class StockSample implements EntryPoint {
    */
   private final StockServiceAsync dataService = GWT.create(StockService.class);
 
-  private final Label errorLabel = new Label();
-
   private AsyncListModel<StockQuote> favoritesListModel;
   
   private PagingTableListView<StockQuote> favoritesTable;
 
-  private final TextBox queryField = new TextBox();
-
-  private PagingTableListView<StockQuote> resultsTable;
+  private final Label netWorthLabel = new Label();
   
+  private StockQueryWidget queryWidget;
+
   private AsyncListModel<StockQuote> searchListModel;
   
   private Map<String, ListListModel<Transaction>> transactionListListModelsByTicker =
     new HashMap<String, ListListModel<Transaction>>();
-
+  
   private ListListModel<Transaction> transactionListModel;
   
   private List<Transaction> transactions;
-  
-  private PagingTableListView<Transaction> transactionTable;
-  
-  private StandardTreeView transactionTree1;
 
-  private SideBySideTreeView transactionTree2;
+  private PagingTableListView<Transaction> transactionTable;
+
+  private SideBySideTreeView transactionTree;
+
   /**
    * The timer used to update the stock quotes.
    */
@@ -191,20 +107,12 @@ public class StockSample implements EntryPoint {
     }
   };
 
+  private TransactionTreeViewModel treeModel;
+
   /**
    * This is the entry point method.
    */
   public void onModuleLoad() {
-    queryField.setText("G");
-
-    // Add the nameField and sendButton to the RootPanel
-    // Use RootPanel.get() to get the entire body element
-    RootPanel.get("queryFieldContainer").add(queryField);
-    RootPanel.get("errorLabelContainer").add(errorLabel);
-
-    // Focus the cursor on the name field when the app loads
-    queryField.setFocus(true);
-    queryField.selectAll();
 
     // Create the list models
     searchListModel = new AsyncListModel<StockQuote>(
@@ -224,19 +132,12 @@ public class StockSample implements EntryPoint {
     transactionListModel = new ListListModel<Transaction>();
     transactions = transactionListModel.getList();
 
-    // Create the results table.
-    resultsTable = new PagingTableListView<StockQuote>(searchListModel, 10);
-    resultsTable.addColumn(Columns.favoriteColumn);
-    resultsTable.addColumn(Columns.tickerColumn);
-    resultsTable.addColumn(Columns.nameColumn);
-    resultsTable.addColumn(Columns.priceColumn);
-    resultsTable.addColumn(Columns.buyColumn);
-
     // Create the favorites table.
     favoritesTable = new PagingTableListView<StockQuote>(favoritesListModel, 10);
     favoritesTable.addColumn(Columns.tickerColumn);
     favoritesTable.addColumn(Columns.priceColumn);
     favoritesTable.addColumn(Columns.sharesColumn);
+    favoritesTable.addColumn(Columns.dollarsColumn);
     favoritesTable.addColumn(Columns.buyColumn);
     favoritesTable.addColumn(Columns.sellColumn);
     
@@ -245,14 +146,9 @@ public class StockSample implements EntryPoint {
     transactionTable.addColumn(Columns.transactionColumn);
     transactionTable.addColumn(Columns.subtotalColumn);
     
-    // Create the transactions tree.
-    transactionTree1 = new StandardTreeView(new TransactionTreeViewModel(favoritesListModel,
-        transactionListListModelsByTicker), null);
-    transactionTree1.setAnimationEnabled(true);
-    
-    // Create the transactions tree.
-    transactionTree2 = new SideBySideTreeView(new TransactionTreeViewModel(favoritesListModel,
-        transactionListListModelsByTicker), null, 200, 200);
+    treeModel = new TransactionTreeViewModel(this,
+        favoritesListModel, transactionListListModelsByTicker);
+    transactionTree = new SideBySideTreeView(treeModel, null, 200, 200);
 
     Columns.favoriteColumn.setFieldUpdater(new FieldUpdater<StockQuote, Boolean>() {
       public void update(StockQuote object, Boolean value) {
@@ -309,32 +205,42 @@ public class StockSample implements EntryPoint {
               t.getList().add(result);
             }
           });
-        }
+       }
       }
     });
 
     // Add components to the page.
-    HorizontalPanel hPanel = new HorizontalPanel();
-    hPanel.add(new HTML("<b>Available cash:</b>"));
-    hPanel.add(cashLabel);
-    RootPanel.get().add(hPanel);
+    
+    Widget headerWidget = new HTML("<b>Stock Game</b>");
+    
+    HorizontalPanel cashPanel = new HorizontalPanel();
+    cashPanel.add(new HTML("<b>Available cash:</b>"));
+    cashPanel.add(cashLabel);
+    
+    HorizontalPanel netWorthPanel = new HorizontalPanel();
+    netWorthPanel.add(new HTML("<b>Net worth:</b>"));
+    netWorthPanel.add(netWorthLabel);
+    
+    DockLayoutPanel footerPanel = new DockLayoutPanel(Unit.PCT);
+    footerPanel.addWest(cashPanel, 50.0);
+    footerPanel.add(netWorthPanel);
+    
+    DockLayoutPanel layoutPanel = new DockLayoutPanel(Unit.EM);
+    layoutPanel.addNorth(headerWidget, 4.0);
+    layoutPanel.addSouth(footerPanel, 2.0);
+    layoutPanel.addNorth(transactionTree, 18.0);
+    
+    DockLayoutPanel innerLayoutPanel = new DockLayoutPanel(Unit.PCT);
+    this.queryWidget = new StockQueryWidget(searchListModel, this);
+    innerLayoutPanel.addWest(queryWidget, 50.0);
+    
+    DockLayoutPanel favoritesLayoutPanel = new DockLayoutPanel(Unit.EM);
+    favoritesLayoutPanel.addNorth(new Label("Portfolio / Favorites"), 2.0);
+    favoritesLayoutPanel.add(new ScrollPanel(favoritesTable));
+    innerLayoutPanel.add(favoritesLayoutPanel);
+    layoutPanel.add(innerLayoutPanel);
 
-    RootPanel.get().add(resultsTable);
-    RootPanel.get().add(new HTML("<hr>"));
-    RootPanel.get().add(favoritesTable);
-    RootPanel.get().add(new HTML("<hr>"));
-    RootPanel.get().add(transactionTable);
-    RootPanel.get().add(new HTML("<hr>"));
-    RootPanel.get().add(transactionTree1);
-    RootPanel.get().add(new HTML("<hr>"));
-    RootPanel.get().add(transactionTree2);
-
-    // Add a handler to send the name to the server
-    queryField.addKeyUpHandler(new KeyUpHandler() {
-      public void onKeyUp(KeyUpEvent event) {
-        update();
-      }
-    });
+    RootLayoutPanel.get().add(layoutPanel);
 
     update();
   }
@@ -347,28 +253,74 @@ public class StockSample implements EntryPoint {
    */
   public void setFavorite(String ticker, boolean favorite) {
     if (favorite) {
-      dataService.addFavorite(ticker, new AsyncCallback<Void>() {
+      dataService.addFavorite(ticker, favoritesListModel.getRanges()[0],
+          new AsyncCallback<StockResponse>() {
         public void onFailure(Throwable caught) {
           Window.alert("Error adding favorite");
         }
 
-        public void onSuccess(Void result) {
-          // do nothing
+        public void onSuccess(StockResponse response) {
+          updateFavorites(response);
         }
       });
     } else {
-      dataService.removeFavorite(ticker, new AsyncCallback<Void>() {
+      dataService.removeFavorite(ticker, favoritesListModel.getRanges()[0],
+          new AsyncCallback<StockResponse>() {
         public void onFailure(Throwable caught) {
           Window.alert("Error removing favorite");
         }
 
-        public void onSuccess(Void result) {
-          // do nothing
+        public void onSuccess(StockResponse response) {
+          updateFavorites(response);
         }
       });
     }
   }
   
+  /**
+   * Request data from the server using the last query string.
+   */
+  public void update() {
+    if (queryWidget == null) {
+      return;
+    }
+    
+    updateTimer.cancel();
+  
+    Range[] searchRanges = searchListModel.getRanges();
+    Range[] favoritesRanges = favoritesListModel.getRanges();
+    SectorListModel sectorListModel = treeModel.getSectorListModel();
+    Range[] sectorRanges = sectorListModel == null ? null : sectorListModel.getRanges();
+  
+    if (searchRanges == null || searchRanges.length == 0
+        || favoritesRanges == null || favoritesRanges.length == 0) {
+      return;
+    }
+  
+    String searchQuery = queryWidget.getSearchQuery();
+    StockRequest request = new StockRequest(searchQuery,
+        sectorListModel != null ? sectorListModel.getSector() : null,
+        searchRanges[0],
+        favoritesRanges[0],
+        sectorRanges != null && sectorRanges.length > 0 ? sectorRanges[0] : null);
+    dataService.getStockQuotes(request, new AsyncCallback<StockResponse>() {
+      public void onFailure(Throwable caught) {
+        String message = caught.getMessage();
+        if (message.contains("Not logged in")) {
+          // Force the user to login.
+          Window.Location.reload();
+        } else {
+          Window.alert("ERROR: " + caught.getMessage());
+          updateTimer.schedule(UPDATE_DELAY);
+        }
+      }
+  
+      public void onSuccess(StockResponse result) {
+        processStockResponse(result);
+      }
+    });
+  }
+
   /**
    * Process the {@link StockResponse} from the server.
    *
@@ -382,52 +334,36 @@ public class StockSample implements EntryPoint {
         searchResults.size(), searchResults);
 
     // Update the favorites list.
-    StockQuoteList favorites = response.getFavorites();
-    favoritesListModel.updateDataSize(response.getNumFavorites(), true);
-    favoritesListModel.updateViewData(favorites.getStartIndex(),
-        favorites.size(), favorites);
+    updateFavorites(response);
+    updateSector(response);
 
     // Update available cash.
     int cash = response.getCash();
+    int netWorth = response.getNetWorth();
     cashLabel.setText(getFormattedPrice(cash));
+    netWorthLabel.setText(getFormattedPrice(netWorth));
     buySellPopup.setAvailableCash(cash);
 
     // Restart the update timer.
     updateTimer.schedule(UPDATE_DELAY);
   }
 
-  /**
-   * Request data from the server using the last query string.
-   */
-  private void update() {
-    updateTimer.cancel();
+  private void updateFavorites(StockResponse response) {
+    // Update the favorites list.
+    StockQuoteList favorites = response.getFavorites();
+    favoritesListModel.updateDataSize(response.getNumFavorites(), true);
+    favoritesListModel.updateViewData(favorites.getStartIndex(),
+        favorites.size(), favorites);
+  }
 
-    Range[] searchRanges = searchListModel.getRanges();
-    Range[] favoritesRanges = favoritesListModel.getRanges();
-
-    if (searchRanges == null || searchRanges.length == 0
-        || favoritesRanges == null || favoritesRanges.length == 0) {
-      return;
+  private void updateSector(StockResponse response) {
+    // Update the sector list.
+    StockQuoteList sectorList = response.getSector();
+    if (sectorList != null) {
+      SectorListModel sectorListModel = treeModel.getSectorListModel(); 
+      sectorListModel.updateDataSize(response.getNumSector(), true);
+      sectorListModel.updateViewData(sectorList.getStartIndex(),
+          sectorList.size(), sectorList);
     }
-
-    String searchQuery = queryField.getText();
-    StockRequest request = new StockRequest(searchQuery, searchRanges[0],
-        favoritesRanges[0]);
-    dataService.getStockQuotes(request, new AsyncCallback<StockResponse>() {
-      public void onFailure(Throwable caught) {
-        String message = caught.getMessage();
-        if (message.contains("Not logged in")) {
-          // Force the user to login.
-          Window.Location.reload();
-        } else {
-          Window.alert("ERROR: " + caught.getMessage());
-          updateTimer.schedule(UPDATE_DELAY);
-        }
-      }
-
-      public void onSuccess(StockResponse result) {
-        processStockResponse(result);
-      }
-    });
   }
 }

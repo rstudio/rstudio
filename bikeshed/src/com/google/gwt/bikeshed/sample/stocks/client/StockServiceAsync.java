@@ -15,6 +15,7 @@
  */
 package com.google.gwt.bikeshed.sample.stocks.client;
 
+import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockRequest;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockResponse;
 import com.google.gwt.bikeshed.sample.stocks.shared.Transaction;
@@ -27,9 +28,9 @@ public interface StockServiceAsync {
   void getStockQuotes(StockRequest request,
       AsyncCallback<StockResponse> callback);
 
-  void addFavorite(String ticker, AsyncCallback<Void> callback);
+  void addFavorite(String ticker, Range favoritesRange, AsyncCallback<StockResponse> callback);
 
-  void removeFavorite(String ticker, AsyncCallback<Void> callback);
+  void removeFavorite(String ticker, Range favoritesRange, AsyncCallback<StockResponse> callback);
 
   void transact(Transaction transaction, AsyncCallback<Transaction> callback);
 }

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.bikeshed.sample.stocks.client;
 
+import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockRequest;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockResponse;
 import com.google.gwt.bikeshed.sample.stocks.shared.Transaction;
@@ -30,9 +31,9 @@ public interface StockService extends RemoteService {
   StockResponse getStockQuotes(StockRequest request)
       throws IllegalArgumentException;
 
-  void addFavorite(String ticker);
+  StockResponse addFavorite(String ticker, Range favoritesRange);
 
-  void removeFavorite(String ticker);
+  StockResponse removeFavorite(String ticker, Range favoritesRange);
 
   Transaction transact(Transaction transaction) throws IllegalArgumentException;
 }

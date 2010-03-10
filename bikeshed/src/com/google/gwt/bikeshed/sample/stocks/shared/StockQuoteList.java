@@ -38,5 +38,16 @@ public class StockQuoteList extends ArrayList<StockQuote> {
   public int getStartIndex() {
     return start;
   }
+  
+  /**
+   * Returns the sum of stock prices times shares owned, in pennies.
+   */
+  public int getValue() {
+    int value = 0;
+    for (StockQuote q : this) {
+      value += q.getPrice() * q.getSharesOwned();
+    }
+    return value;
+  }
 }
 

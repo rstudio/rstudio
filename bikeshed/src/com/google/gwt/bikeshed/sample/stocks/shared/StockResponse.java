@@ -22,29 +22,32 @@ import java.io.Serializable;
  */
 public class StockResponse implements Serializable {
 
-  private StockQuoteList searchResults;
-  private StockQuoteList favorites;
-  private int numSearchResults;
-  private int numFavorites;
-
   /**
    * The amount of available cash in pennies.
    */
   private int cash;
+  private StockQuoteList favorites;
+  private int numFavorites;
+  private int numSearchResults;
+  private int numSector;
+  private StockQuoteList searchResults;
+  private StockQuoteList sector;
+
+  public StockResponse(StockQuoteList searchResults, StockQuoteList favorites,
+      StockQuoteList sector, int numSearchResults, int numFavorites, int numSector, int cash) {
+    this.searchResults = searchResults;
+    this.favorites = favorites;
+    this.sector = sector;
+    this.numSearchResults = numSearchResults;
+    this.numFavorites = numFavorites;
+    this.numSector = numSector;
+    this.cash = cash;
+  }
 
   /**
    * Used for RPC.
    */
   StockResponse() {
-  }
-
-  public StockResponse(StockQuoteList searchResults, StockQuoteList favorites,
-      int numSearchResults, int numFavorites, int cash) {
-    this.searchResults = searchResults;
-    this.favorites = favorites;
-    this.numSearchResults = numSearchResults;
-    this.numFavorites = numFavorites;
-    this.cash = cash;
   }
 
   public int getCash() {
@@ -53,6 +56,13 @@ public class StockResponse implements Serializable {
 
   public StockQuoteList getFavorites() {
     return favorites;
+  }
+  
+  /**
+   * The sum of cash available and portfolio value. 
+   */
+  public int getNetWorth() {
+    return cash + favorites.getValue();
   }
 
   public int getNumFavorites() {
@@ -63,7 +73,15 @@ public class StockResponse implements Serializable {
     return numSearchResults;
   }
 
+  public int getNumSector() {
+    return numSector;
+  }
+
   public StockQuoteList getSearchResults() {
     return searchResults;
+  }
+
+  public StockQuoteList getSector() {
+    return sector;
   }
 }

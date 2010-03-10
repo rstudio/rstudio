@@ -67,6 +67,9 @@ public class StockServiceImpl extends RemoteServiceServlet implements
 
   private static final int MAX_RESULTS_TO_RETURN = 10000;
 
+  private static final HashMap<String,String> sectorQueries =
+    new HashMap<String,String>();
+
   static {
     int num = NasdaqStocks.SYMBOLS.length;
     for (int i = 0; i < num - 1; i += 2) {
@@ -78,13 +81,31 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     }
   }
 
+  static {
+    sectorQueries.put("INTERNET", "GOOG|YHOO|MSFT");
+    sectorQueries.put("ENERGY", "GASS|GLRP");
+    sectorQueries.put("NETWORKING", "GLBC|CSCO");
+  }
+  
   /**
    * A mapping of usernames to {@link PlayerStatus}.
    */
   private Map<String, PlayerStatus> players = new HashMap<String, PlayerStatus>();
-
-  public void addFavorite(String ticker) {
-    ensurePlayer().addFavorite(ticker);
+  
+  public StockResponse addFavorite(String ticker, Range favoritesRange) {
+    PlayerStatus player = ensurePlayer();
+    player.addFavorite(ticker);
+    Result favorites = query(player.getFavoritesQuery(), favoritesRange);
+    return new StockResponse(null, favorites.quotes, null,
+        0, favorites.numRows, 0, player.getCash());
+  }
+  
+  public Result getSectorQuotes(String sector, Range sectorRange) {
+    String sectorQuery = sectorQueries.get(sector.toUpperCase());
+    if (sectorQuery == null) {
+      return null;
+    }
+    return query(sectorQuery, sectorRange);
   }
 
   public StockResponse getStockQuotes(StockRequest request)
@@ -96,17 +117,28 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     }
     Range searchRange = request.getSearchRange();
     Range favoritesRange = request.getFavoritesRange();
-
+    Range sectorRange = request.getSectorRange();
+    
     PlayerStatus player = ensurePlayer();
     Result searchResults = query(query, searchRange);
     Result favorites = query(player.getFavoritesQuery(), favoritesRange);
+    Result sector = sectorRange != null ? getSectorQuotes(request.getSector(), sectorRange) : null;
 
-    return new StockResponse(searchResults.quotes, favorites.quotes,
-        searchResults.numRows, favorites.numRows, player.getCash());
+    return new StockResponse(searchResults.quotes,
+        favorites.quotes,
+        sector != null ? sector.quotes : null,
+        searchResults.numRows,
+        favorites.numRows,
+        sector != null ? sector.numRows : 0,
+        player.getCash());
   }
 
-  public void removeFavorite(String ticker) {
-    ensurePlayer().removeFavorite(ticker);
+  public StockResponse removeFavorite(String ticker, Range favoritesRange) {
+    PlayerStatus player = ensurePlayer();
+    player.removeFavorite(ticker);
+    Result favorites = query(player.getFavoritesQuery(), favoritesRange);
+    return new StockResponse(null, favorites.quotes, null,
+        0, favorites.numRows, 0, player.getCash());
   }
 
   public Transaction transact(Transaction transaction)

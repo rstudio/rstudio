@@ -24,15 +24,18 @@ import java.io.Serializable;
  */
 public class StockRequest implements Serializable {
 
+  Range favoritesRange;
   String searchQuery;
   Range searchRange;
-  Range favoritesRange;
-
-  public StockRequest(String searchQuery, Range searchRange,
-      Range favoritesRange) {
+  String sector;
+  Range sectorRange;
+  public StockRequest(String searchQuery, String sector, Range searchRange,
+      Range favoritesRange, Range sectorRange) {
     this.searchQuery = searchQuery;
+    this.sector = sector;
     this.searchRange = searchRange;
     this.favoritesRange = favoritesRange;
+    this.sectorRange = sectorRange;
   }
 
   /**
@@ -51,5 +54,13 @@ public class StockRequest implements Serializable {
 
   public Range getSearchRange() {
     return searchRange;
+  }
+
+  public String getSector() {
+    return sector;
+  }
+
+  public Range getSectorRange() {
+    return sectorRange;
   }
 }

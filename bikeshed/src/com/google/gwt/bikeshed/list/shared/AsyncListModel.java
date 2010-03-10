@@ -30,6 +30,7 @@ public class AsyncListModel<T> extends AbstractListModel<T> {
    * @param <T> the data type
    */
   public static interface DataSource<T> {
+
     /**
      * Request that the data source pushes new data to the client. The data
      * source should call {@link #updateViewData} and/or {@link #updateDataSize}

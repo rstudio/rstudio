@@ -27,7 +27,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.UIObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,7 +39,7 @@ import java.util.Map;
  *
  * @param <T> the type that this {@link TreeNodeView} contains
  */
-public abstract class TreeNodeView<T> extends Composite implements TreeNode<T> {
+public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
 
   /**
    * The element used in place of an image when a node has no children.
