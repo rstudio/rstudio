@@ -181,6 +181,9 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
    *           exception (the exception will be the one thrown by the service)
    */
   public String processCall(String payload) throws SerializationException {
+    // First, check for possible XSRF situation
+    checkPermutationStrongName();
+
     try {
       RPCRequest rpcRequest = RPC.decodeRequest(payload, this.getClass(), this);
       onAfterRequestDeserialized(rpcRequest);
@@ -229,6 +232,24 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
     // Write the response.
     //
     writeResponse(request, response, responsePayload);
+  }
+
+  /**
+   * This method is called by {@link #processCall(String)} and will throw a
+   * SecurityException if {@link #getPermutationStrongName()} returns
+   * <code>null</code>. This method can be overridden to be a no-op if there are
+   * clients that are not expected to provide the
+   * {@value com.google.gwt.user.client.rpc.RpcRequestBuilder#STRONG_NAME_HEADER}
+   * header.
+   * 
+   * @throws SecurityException if {@link #getPermutationStrongName()} returns
+   *           <code>null</code>
+   */
+  protected void checkPermutationStrongName() throws SecurityException {
+    if (getPermutationStrongName() == null) {
+      throw new SecurityException(
+          "Blocked request without GWT permutation header (XSRF attack?)");
+    }
   }
 
   /**
