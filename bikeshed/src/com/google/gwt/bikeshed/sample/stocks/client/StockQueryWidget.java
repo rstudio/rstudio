@@ -82,7 +82,6 @@ public class StockQueryWidget extends Composite {
     output = output.replaceAll("^[\\| ]+", "");
     output = output.replaceAll("[\\| ]+$", "");
     output = output.replaceAll("[ ]+", "|");
-    System.out.println("Replaced \"" + input + "\" with \"" + output + "\"");
     return output;
   }
 }

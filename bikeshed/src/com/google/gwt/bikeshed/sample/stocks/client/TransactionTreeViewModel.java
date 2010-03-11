@@ -15,8 +15,10 @@
  */
 package com.google.gwt.bikeshed.sample.stocks.client;
 
+import com.google.gwt.bikeshed.cells.client.ButtonCell;
 import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.TextCell;
+import com.google.gwt.bikeshed.cells.client.ValueUpdater;
 import com.google.gwt.bikeshed.list.shared.AsyncListModel;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.bikeshed.list.shared.ListModel;
@@ -92,7 +94,7 @@ class TransactionTreeViewModel implements TreeViewModel {
   }
   
   @SuppressWarnings("unused")
-  public <T> NodeInfo<?> getNodeInfo(T value, TreeNode<T> treeNode) {
+  public <T> NodeInfo<?> getNodeInfo(T value, final TreeNode<T> treeNode) {
     if (value == null) {
       return new TreeViewModel.DefaultNodeInfo<String>(topLevelListListModel,
           new TextCell());
@@ -104,6 +106,31 @@ class TransactionTreeViewModel implements TreeViewModel {
           return value.getTicker();
         }
       };
+    } else if ("History".equals(value)) {
+      String ticker = ((StockQuote) treeNode.getParentNode().getValue()).getTicker();
+      ListListModel<Transaction> listModel = transactionListListModelsByTicker.get(ticker);
+      if (listModel == null) {
+        listModel = new ListListModel<Transaction>();
+        transactionListListModelsByTicker.put(ticker, listModel);
+      }
+      return new TreeViewModel.DefaultNodeInfo<Transaction>(listModel,
+          TRANSACTION_CELL);
+    } else if ("Actions".equals(value)) {
+      ListListModel<String> listModel = new ListListModel<String>();
+      List<String> list = listModel.getList();
+      list.add("Buy");
+      list.add("Sell");
+      return new TreeViewModel.DefaultNodeInfo<String>(listModel, new ButtonCell(),
+          new ValueUpdater<String>() {
+            public void update(String value) {
+              StockQuote stockQuote = (StockQuote) treeNode.getParentNode().getValue();
+              if ("Buy".equals(value)) {
+                updater.buy(stockQuote);
+              } else {
+                updater.sell(stockQuote);
+              }
+            }
+          });
     } else if (value instanceof String) {
       SectorListModel listModel = new SectorListModel(updater, (String) value);
       sectorListModels.put((String) value, listModel);
@@ -114,14 +141,11 @@ class TransactionTreeViewModel implements TreeViewModel {
         }
       };
     } else if (value instanceof StockQuote) {
-      String ticker = ((StockQuote) value).getTicker();
-      ListListModel<Transaction> listModel = transactionListListModelsByTicker.get(ticker);
-      if (listModel == null) {
-        listModel = new ListListModel<Transaction>();
-        transactionListListModelsByTicker.put(ticker, listModel);
-      }
-      return new TreeViewModel.DefaultNodeInfo<Transaction>(listModel,
-          TRANSACTION_CELL);
+      ListListModel<String> listModel = new ListListModel<String>();
+      List<String> list = listModel.getList();
+      list.add("Actions");
+      list.add("History");
+      return new TreeViewModel.DefaultNodeInfo<String>(listModel, new TextCell());
     }
 
     throw new IllegalArgumentException(value.toString());
@@ -132,6 +156,7 @@ class TransactionTreeViewModel implements TreeViewModel {
   }
 
   public boolean isLeaf(Object value) {
-    return value instanceof Transaction;
+    return value instanceof Transaction ||
+      "Buy".equals(value) || "Sell".equals(value);
   }
 }

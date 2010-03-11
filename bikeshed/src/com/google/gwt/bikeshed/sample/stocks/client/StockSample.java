@@ -97,6 +97,11 @@ public class StockSample implements EntryPoint, Updater {
     }
   };
 
+  public void buy(StockQuote stockQuote) {
+    buySellPopup.setStockQuote(stockQuote, true);
+    buySellPopup.center();
+  }
+
   /**
    * This is the entry point method.
    */
@@ -134,16 +139,14 @@ public class StockSample implements EntryPoint, Updater {
     });
 
     Columns.buyColumn.setFieldUpdater(new FieldUpdater<StockQuote, String>() {
-      public void update(StockQuote object, String value) {
-        buySellPopup.setStockQuote(object, true);
-        buySellPopup.center();
+      public void update(StockQuote quote, String value) {
+        buy(quote);
       }
     });
 
     Columns.sellColumn.setFieldUpdater(new FieldUpdater<StockQuote, String>() {
-      public void update(StockQuote object, String value) {
-        buySellPopup.setStockQuote(object, false);
-        buySellPopup.center();
+      public void update(StockQuote quote, String value) {
+        sell(quote);
       }
     });
 
@@ -184,6 +187,11 @@ public class StockSample implements EntryPoint, Updater {
 
     // Restart the update timer.
     updateTimer.schedule(UPDATE_DELAY);
+  }
+
+  public void sell(StockQuote stockQuote) {
+    buySellPopup.setStockQuote(stockQuote, false);
+    buySellPopup.center();
   }
 
   /**

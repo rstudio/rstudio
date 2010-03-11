@@ -15,16 +15,21 @@
  */
 package com.google.gwt.bikeshed.sample.stocks.client;
 
+import com.google.gwt.bikeshed.sample.stocks.shared.StockQuote;
+
 /**
  * Bridge between StockSample and StockQueryWidget.
  */
 public interface Updater {
-  
+
+  void buy(StockQuote stock);
+
+  void sell(StockQuote stock);
+
   /**
    * Update the widget.
    * 
    * TODO - refactor this
    */
   void update();
-
 }

@@ -35,7 +35,22 @@ import com.google.gwt.user.client.ui.TextBox;
  */
 public class BuySellPopup extends DialogBox {
 
-  private StockQuote quote;
+
+  private static final int TICKER = 0;
+  private static final int NAME = 1;
+  private static final int PRICE = 2;
+  private static final int MAX_QUANTITY = 3;
+  private static final int QUANTITY = 4;
+  private static final int TOTAL = 5;
+  private static final int AVAILABLE = 6;
+  private static final int BUTTONS = 7;
+
+  private int cash;
+
+  /**
+   * True if we are buying, false if hiding.
+   */
+  private boolean isBuying;
 
   /**
    * The table used for layout.
@@ -43,19 +58,16 @@ public class BuySellPopup extends DialogBox {
   private FlexTable layout = new FlexTable();
 
   /**
-   * The box used to change the quantity.
-   */
-  private TextBox quantityBox = new TextBox();
-
-  /**
    * The button used to buy or sell.
    */
   private Button opButton;
 
   /**
-   * True if we are buying, false if hiding.
+   * The box used to change the quantity.
    */
-  private boolean isBuying;
+  private TextBox quantityBox = new TextBox();
+
+  private StockQuote quote;
 
   /**
    * The last transaction.
@@ -67,24 +79,26 @@ public class BuySellPopup extends DialogBox {
     setGlassEnabled(true);
     setWidget(layout);
 
-    layout.setHTML(0, 0, "<b>Ticker:</b>");
-    layout.setHTML(1, 0, "<b>Name:</b>");
-    layout.setHTML(2, 0, "<b>Price:</b>");
-    layout.setHTML(3, 0, "<b>Quantity:</b>");
-    layout.setWidget(3, 1, quantityBox);
-    layout.setHTML(4, 0, "<b>Total:</b>");
-    layout.setHTML(5, 0, "<b>Available:</b>");
+    layout.setHTML(TICKER, 0, "<b>Ticker:</b>");
+    layout.setHTML(NAME, 0, "<b>Name:</b>");
+    layout.setHTML(PRICE, 0, "<b>Price:</b>");
+    layout.setHTML(MAX_QUANTITY, 0, "<b>Max Quantity:</b>");
+    layout.setHTML(QUANTITY, 0, "<b>Quantity:</b>");
+    layout.setWidget(QUANTITY, 1, quantityBox);
+    layout.setHTML(TOTAL, 0, "<b>Total:</b>");
+    layout.setHTML(AVAILABLE, 0, "<b>Available:</b>");
 
     // Update total price when the quantity changes.
     quantityBox.addKeyUpHandler(new KeyUpHandler() {
       public void onKeyUp(KeyUpEvent event) {
         try {
-          int quantity = Integer.parseInt(quantityBox.getText());
+          String text = quantityBox.getText();
+          int quantity = text.length() == 0 ? 0 : Integer.parseInt(text);
           double totalPrice = quantity * quote.getPrice() / 100.0;
-          layout.setText(4, 1, NumberFormat.getCurrencyFormat("USD").format(
+          layout.setText(TOTAL, 1, NumberFormat.getCurrencyFormat("USD").format(
               totalPrice));
         } catch (NumberFormatException e) {
-          layout.setText(4, 1, "Invalid quantity");
+          layout.setText(TOTAL, 1, "Invalid quantity");
         }
       }
     });
@@ -101,7 +115,7 @@ public class BuySellPopup extends DialogBox {
         }
       }
     });
-    layout.setWidget(6, 0, opButton);
+    layout.setWidget(BUTTONS, 0, opButton);
 
     // Cancel Button.
     Button cancelButton = new Button("Cancel", new ClickHandler() {
@@ -109,7 +123,7 @@ public class BuySellPopup extends DialogBox {
         hide();
       }
     });
-    layout.setWidget(6, 1, cancelButton);
+    layout.setWidget(BUTTONS, 1, cancelButton);
   }
 
   public StockQuote getStockQuote() {
@@ -119,7 +133,7 @@ public class BuySellPopup extends DialogBox {
   /**
    * Get the last transaction.
    * 
-   * @return the last transaction, or null if cancelled
+   * @return the last transaction, or null if canceled
    */
   public Transaction getTransaction() {
     return transaction;
@@ -132,7 +146,8 @@ public class BuySellPopup extends DialogBox {
    */
   public void setAvailableCash(int cash) {
     // TODO: Bind the available cash field.
-    layout.setText(5, 1, NumberFormat.getCurrencyFormat("USD").format(cash / 100.0));
+    this.cash = cash;
+    layout.setText(AVAILABLE, 1, NumberFormat.getCurrencyFormat("USD").format(cash / 100.0));
   }
 
   /**
@@ -145,10 +160,15 @@ public class BuySellPopup extends DialogBox {
     this.quote = quote;
     String op = isBuying ? "Buy" : "Sell";
     setText(op + " " + quote.getTicker() + " (" + quote.getName() + ")");
-    layout.setText(0, 1, quote.getTicker());
-    layout.setText(1, 1, quote.getName());
-    layout.setText(2, 1, quote.getDisplayPrice());
-    layout.setText(4, 1, NumberFormat.getCurrencyFormat("USD").format(0.0));
+    layout.setText(TICKER, 1, quote.getTicker());
+    layout.setText(NAME, 1, quote.getName());
+    layout.setText(PRICE, 1, quote.getDisplayPrice());
+    if (isBuying) {
+      layout.setText(MAX_QUANTITY, 1, "" + (int) Math.floor(cash / quote.getPrice()));
+    } else {
+      layout.setText(MAX_QUANTITY, 1, "" + quote.getSharesOwned());
+    }
+    layout.setText(TOTAL, 1, NumberFormat.getCurrencyFormat("USD").format(0.0));
     quantityBox.setText("0");
     opButton.setText(op);
     this.isBuying = isBuying;
