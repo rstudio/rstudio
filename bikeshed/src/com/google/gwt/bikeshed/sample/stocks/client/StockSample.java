@@ -16,8 +16,6 @@
 package com.google.gwt.bikeshed.sample.stocks.client;
 
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
-import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.client.TextHeader;
 import com.google.gwt.bikeshed.list.shared.AsyncListModel;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.bikeshed.list.shared.Range;
@@ -32,21 +30,18 @@ import com.google.gwt.bikeshed.tree.client.SideBySideTreeView;
 import com.google.gwt.bikeshed.tree.client.TreeNode;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiFactory;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
@@ -67,38 +62,30 @@ public class StockSample implements EntryPoint, Updater {
     return NumberFormat.getCurrencyFormat("USD").format(price / 100.0);
   }
 
+  private final StockServiceAsync dataService = GWT.create(StockService.class);
+
+  private Map<String, ListListModel<Transaction>> transactionListListModelsByTicker =
+    new HashMap<String, ListListModel<Transaction>>();
+  private List<Transaction> transactions;
+
+  private AsyncListModel<StockQuote> favoritesListModel;
+  private AsyncListModel<StockQuote> searchListModel;
+  private ListListModel<Transaction> transactionListModel;
+  private TransactionTreeViewModel treeModel;
+
+  interface Binder extends UiBinder<Widget, StockSample> { }
+  private static final Binder binder = GWT.create(Binder.class);
+
+  @UiField Label cashLabel;
+  @UiField Label netWorthLabel;
+  @UiField FavoritesWidget favoritesWidget;
+  @UiField StockQueryWidget queryWidget;
+  @UiField SideBySideTreeView transactionTree;
+
   /**
    * The popup used to purchase stock.
    */
   private BuySellPopup buySellPopup = new BuySellPopup();
-
-  private final Label cashLabel = new Label();
-
-  /**
-   * The {@link StockService} used to retrieve data.
-   */
-  private final StockServiceAsync dataService = GWT.create(StockService.class);
-
-  private AsyncListModel<StockQuote> favoritesListModel;
-
-  private PagingTableListView<StockQuote> favoritesTable;
-
-  private final Label netWorthLabel = new Label();
-
-  private StockQueryWidget queryWidget;
-
-  private AsyncListModel<StockQuote> searchListModel;
-
-  private Map<String, ListListModel<Transaction>> transactionListListModelsByTicker =
-    new HashMap<String, ListListModel<Transaction>>();
-
-  private ListListModel<Transaction> transactionListModel;
-
-  private List<Transaction> transactions;
-
-  private SideBySideTreeView transactionTree;
-
-  private TransactionTreeViewModel treeModel;
 
   /**
    * The timer used to update the stock quotes.
@@ -114,8 +101,8 @@ public class StockSample implements EntryPoint, Updater {
    * This is the entry point method.
    */
   public void onModuleLoad() {
-
-    // Create the list models
+    // Create the various models. Do this before binding the UI, because some
+    // of the UiFactories need the models to instantiate their widgets.
     searchListModel = new AsyncListModel<StockQuote>(
         new DataSource<StockQuote>() {
           public void requestData(AsyncListModel<StockQuote> listModel) {
@@ -130,24 +117,16 @@ public class StockSample implements EntryPoint, Updater {
           }
         });
 
+    treeModel = new TransactionTreeViewModel(this,
+        favoritesListModel, transactionListListModelsByTicker);
+
     transactionListModel = new ListListModel<Transaction>();
     transactions = transactionListModel.getList();
 
-    // Create the favorites table.
-    favoritesTable = new PagingTableListView<StockQuote>(favoritesListModel, 10);
-    favoritesTable.addColumn(Columns.tickerColumn, new TextHeader("ticker"));
-    favoritesTable.addColumn(Columns.priceColumn, new TextHeader("price"));
-    favoritesTable.addColumn(Columns.changeColumn, new TextHeader("change"));
-    favoritesTable.addColumn(Columns.sharesColumn, new TextHeader("shares"));
-    favoritesTable.addColumn(Columns.dollarsColumn, new TextHeader("value"));
-    favoritesTable.addColumn(Columns.profitLossColumn, new TextHeader("profit"));
-    favoritesTable.addColumn(Columns.buyColumn);
-    favoritesTable.addColumn(Columns.sellColumn);
+    // Now create the UI.
+    RootLayoutPanel.get().add(binder.createAndBindUi(this));
 
-    treeModel = new TransactionTreeViewModel(this,
-        favoritesListModel, transactionListListModelsByTicker);
-    transactionTree = new SideBySideTreeView(treeModel, null, 200, 200);
-
+    // Hook up handlers to columns and the buy/sell popup.
     Columns.favoriteColumn.setFieldUpdater(new FieldUpdater<StockQuote, Boolean>() {
       public void update(StockQuote object, Boolean value) {
         setFavorite(object.getTicker(), value);
@@ -172,81 +151,46 @@ public class StockSample implements EntryPoint, Updater {
       public void onClose(CloseEvent<PopupPanel> event) {
         Transaction t = buySellPopup.getTransaction();
         if (t != null) {
-          dataService.transact(t, new AsyncCallback<Transaction>() {
-            public void onFailure(Throwable caught) {
-              Window.alert("Error: " + caught.getMessage());
-            }
-
-            public void onSuccess(Transaction result) {
-              recordTransaction(result);
-              update();
-            }
-
-            /**
-             * Update transactions (list of all transactions),
-             * transactionTickers (set of all tickers involved in
-             * transactions), and transactionsByTicker (map from
-             * ticker to lists of transactions for that ticker).
-             */
-            private void recordTransaction(Transaction result) {
-              transactions.add(0, result);
-              String ticker = result.getTicker();
-
-              // Update the next level of the transaction tree
-              // for the given ticker
-              ListListModel<Transaction> t =
-                transactionListListModelsByTicker.get(ticker);
-              if (t == null) {
-                t = new ListListModel<Transaction>();
-                transactionListListModelsByTicker.put(ticker, t);
-              }
-              t.getList().add(result);
-            }
-          });
-       }
+          transact(t);
+        }
       }
     });
 
-    // Add components to the page.
-
-    Widget headerWidget = new HTML("<b>Stock Game</b>");
-
-    HorizontalPanel cashPanel = new HorizontalPanel();
-    cashPanel.add(new HTML("<b>Available cash:</b>"));
-    cashPanel.add(cashLabel);
-    HorizontalPanel netWorthPanel = new HorizontalPanel();
-    netWorthPanel.add(new HTML("<b>Net worth:</b>"));
-    netWorthPanel.add(netWorthLabel);
-    VerticalPanel moneyPanel = new VerticalPanel();
-    moneyPanel.add(cashPanel);
-    moneyPanel.add(netWorthPanel);
-
-    DockLayoutPanel westPanel = new DockLayoutPanel(Unit.PCT);
-    westPanel.addNorth(moneyPanel, 25.0);
-    westPanel.add(new HTML("<table>" +
-        "<tr><td>Dan Rice</td><td>$10000</td></tr>" +
-        "<tr><td>Joel Webber</td><td>$10000</td></tr>" +
-        "<tr><td>John Labanca</td><td>$10000</td></tr>" +
-        "</table>"));
-
-    DockLayoutPanel layoutPanel = new DockLayoutPanel(Unit.EM);
-    layoutPanel.addNorth(headerWidget, 4.0);
-    layoutPanel.addWest(westPanel, 15.0);
-    layoutPanel.addNorth(transactionTree, 18.0);
-
-    DockLayoutPanel innerLayoutPanel = new DockLayoutPanel(Unit.PCT);
-    this.queryWidget = new StockQueryWidget(searchListModel, this);
-    innerLayoutPanel.addWest(queryWidget, 60.0);
-
-    DockLayoutPanel favoritesLayoutPanel = new DockLayoutPanel(Unit.EM);
-    favoritesLayoutPanel.addNorth(new Label("Portfolio / Favorites"), 2.0);
-    favoritesLayoutPanel.add(new ScrollPanel(favoritesTable));
-    innerLayoutPanel.add(favoritesLayoutPanel);
-    layoutPanel.add(innerLayoutPanel);
-
-    RootLayoutPanel.get().add(layoutPanel);
-
     update();
+  }
+
+  public void transact(Transaction t) {
+    dataService.transact(t, new AsyncCallback<Transaction>() {
+      public void onFailure(Throwable caught) {
+        Window.alert("Error: " + caught.getMessage());
+      }
+
+      public void onSuccess(Transaction result) {
+        recordTransaction(result);
+        update();
+      }
+
+      /**
+       * Update transactions (list of all transactions),
+       * transactionTickers (set of all tickers involved in
+       * transactions), and transactionsByTicker (map from
+       * ticker to lists of transactions for that ticker).
+       */
+      private void recordTransaction(Transaction result) {
+        transactions.add(0, result);
+        String ticker = result.getTicker();
+        
+        // Update the next level of the transaction tree
+        // for the given ticker
+        ListListModel<Transaction> t =
+          transactionListListModelsByTicker.get(ticker);
+        if (t == null) {
+          t = new ListListModel<Transaction>();
+          transactionListListModelsByTicker.put(ticker, t);
+        }
+        t.getList().add(result);
+      }
+    });
   }
 
   /**
@@ -345,7 +289,7 @@ public class StockSample implements EntryPoint, Updater {
    *
    * @param response the stock response
    */
-  private void processStockResponse(StockResponse response) {
+  public void processStockResponse(StockResponse response) {
     // Update the search list.
     StockQuoteList searchResults = response.getSearchResults();
     searchListModel.updateDataSize(response.getNumSearchResults(), true);
@@ -367,7 +311,7 @@ public class StockSample implements EntryPoint, Updater {
     updateTimer.schedule(UPDATE_DELAY);
   }
 
-  private void updateFavorites(StockResponse response) {
+  public void updateFavorites(StockResponse response) {
     // Update the favorites list.
     StockQuoteList favorites = response.getFavorites();
     favoritesListModel.updateDataSize(response.getNumFavorites(), true);
@@ -375,7 +319,7 @@ public class StockSample implements EntryPoint, Updater {
         favorites.size(), favorites);
   }
 
-  private void updateSector(StockResponse response) {
+  public void updateSector(StockResponse response) {
     // Update the sector list.
     StockQuoteList sectorList = response.getSector();
     if (sectorList != null) {
@@ -384,5 +328,20 @@ public class StockSample implements EntryPoint, Updater {
       sectorListModel.updateViewData(sectorList.getStartIndex(),
           sectorList.size(), sectorList);
     }
+  }
+
+  @UiFactory
+  FavoritesWidget createFavoritesWidget() {
+    return new FavoritesWidget(favoritesListModel);
+  }
+
+  @UiFactory
+  StockQueryWidget createQueryWidget() {
+    return new StockQueryWidget(searchListModel, this);
+  }
+
+  @UiFactory
+  SideBySideTreeView createTransactionTree() {
+    return new SideBySideTreeView(treeModel, null, 200, 200);
   }
 }

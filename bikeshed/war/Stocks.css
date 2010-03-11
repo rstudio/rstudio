@@ -1,4 +1,16 @@
-/** Add css rules here for your application. */
+body {
+  background: url(bg.png) repeat-x;
+  background-color: rgb(216, 220, 224);
+  color: black;
+  margin: 8px;
+  margin-top: 3px;
+}
+
+body, table {
+  font-family: Helvetica Neue Light, Helvetica, Arial, sans-serif; */
+  font-weight: light;
+  font-size: small;
+}
 
 div.gwt-sstree-column {
   overflow-y: scroll;
@@ -7,7 +19,6 @@ div.gwt-sstree-column {
 }
 
 div.gwt-sstree {
-  border: 2px solid black;
 }
 
 div.gwt-sstree-selectedItem {
@@ -52,4 +63,20 @@ h1 {
 /** Set ids using widget.getElement().setId("idOfElement") */
 #closeButton {
   margin: 15px 6px 6px;
+}
+
+.gwt-DialogBox {
+  border: 8px solid white;
+  border-right: 11px solid white;
+  border-bottom: 11px solid white;
+  -webkit-border-image: url(blueborder.png) 8 11 11 8 round round;
+  -gecko-border-image: url(blueborder.png) 8 11 11 8 round round;
+}
+
+.gwt-DialogBox .Caption {
+  font-weight: light;
+  font-size: 12pt;
+  text-align: center;
+  margin-bottom: 0.5em;
+  border-bottom: 1px solid #ccc;
 }
