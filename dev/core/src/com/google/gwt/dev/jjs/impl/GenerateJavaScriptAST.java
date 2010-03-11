@@ -374,9 +374,9 @@ public class GenerateJavaScriptAST {
          * causes no harm. 
          */
         jsFunction = new JsFunction(sourceInfo, topScope, globalName, true);
-        if (polymorphicNames.containsKey(x)) {
-          polymorphicJsFunctions.add(jsFunction);
-        }
+      }
+      if (polymorphicNames.containsKey(x)) {
+        polymorphicJsFunctions.add(jsFunction);
       }
       methodBodyMap.put(x.getBody(), jsFunction);
       jsFunction.getSourceInfo().addCorrelation(
