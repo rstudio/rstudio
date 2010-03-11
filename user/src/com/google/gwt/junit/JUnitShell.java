@@ -1116,9 +1116,23 @@ public class JUnitShell extends GWTShell {
   private boolean mustNotExecuteTest(Set<Platform> bannedPlatforms) {
     // TODO (amitmanjhi): Remove this hard-coding. A RunStyle somehow needs to
     // specify how it interacts with the platforms.
-    return runStyle instanceof RunStyleHtmlUnit
-        && (bannedPlatforms.contains(Platform.HtmlUnitBug) 
-            || bannedPlatforms.contains(Platform.HtmlUnit));
+    if (runStyle instanceof RunStyleHtmlUnit
+        && (bannedPlatforms.contains(Platform.HtmlUnitBug) || bannedPlatforms.contains(Platform.HtmlUnit))) {
+      return true;
+    }
+
+    if (developmentMode) {
+      if (bannedPlatforms.contains(Platform.Devel)) {
+        return true;
+      }
+    } else {
+      // Prod mode
+      if (bannedPlatforms.contains(Platform.Prod)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private boolean mustRetry(int numTries) {

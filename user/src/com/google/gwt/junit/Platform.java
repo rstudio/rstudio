@@ -22,6 +22,8 @@ package com.google.gwt.junit;
  * between HtmlUnit and non-HtmlUnit platforms.
  */
 public enum Platform {
+  Devel,
   HtmlUnitBug,
-  HtmlUnit
+  HtmlUnit,
+  Prod,
 }

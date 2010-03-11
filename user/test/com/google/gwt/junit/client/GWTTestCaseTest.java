@@ -24,6 +24,7 @@ import static com.google.gwt.junit.client.GWTTestCaseTest.SetUpTearDownState.INI
 import static com.google.gwt.junit.client.GWTTestCaseTest.SetUpTearDownState.IS_SETUP;
 import static com.google.gwt.junit.client.GWTTestCaseTest.SetUpTearDownState.IS_TORNDOWN;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.Timer;
@@ -366,12 +367,28 @@ public class GWTTestCaseTest extends GWTTestCase {
     fail("Unexpected exception during assertTrue(String, boolean) testing");
   }
 
-  /*
+  /**
    * Just setting the htmlunit mode.
    */
   @DoNotRunWith(Platform.HtmlUnitBug)
   public void testSetRetry() {
     htmlunitMode = false;
+  }
+
+  /**
+   * Test skipping a test for dev mode.
+   */
+  @DoNotRunWith(Platform.Devel)
+  public void testPlatformDevel() {
+    assertTrue("Should not run in devel mode", GWT.isScript());
+  }
+
+  /**
+   * Test skipping a test for prod mode.
+   */
+  @DoNotRunWith(Platform.Prod)
+  public void testPlatformProd() {
+    assertTrue("Should not run in prod mode", !GWT.isScript());
   }
 
   /*
