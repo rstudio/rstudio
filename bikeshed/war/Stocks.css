@@ -80,3 +80,11 @@ h1 {
   margin-bottom: 0.5em;
   border-bottom: 1px solid #ccc;
 }
+
+.gwt-SplitLayoutPanel-HDragger {
+  background: transparent url(hsplitter-grip.png) center center no-repeat;
+}
+
+.gwt-SplitLayoutPanel-VDragger {
+  background: transparent url(vsplitter-grip.png) center center no-repeat;
+}

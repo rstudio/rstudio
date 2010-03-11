@@ -13,7 +13,9 @@
     </g:north>
 
     <g:center>
-      <l:PagingTableListView ui:field='listView' styleName='{common.table}'/>
+      <g:ScrollPanel>
+        <l:PagingTableListView ui:field='listView' styleName='{common.table}'/>
+      </g:ScrollPanel>
     </g:center>
   </g:DockLayoutPanel>
 </ui:UiBinder>

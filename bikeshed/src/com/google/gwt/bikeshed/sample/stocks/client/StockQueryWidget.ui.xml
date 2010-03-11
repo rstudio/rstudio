@@ -9,11 +9,16 @@
 
   <g:DockLayoutPanel unit='EM'>
     <g:north size='2'>
-      <g:HTMLPanel><span class='{common.header-left}'>Enter query:</span> <g:TextBox ui:field='queryField'/></g:HTMLPanel>
+      <g:HTMLPanel>
+        <span class='{common.header-left}'>Enter query:</span>
+        <g:TextBox ui:field='queryField'/>
+      </g:HTMLPanel>
     </g:north>
 
     <g:center>
-      <l:PagingTableListView ui:field='listView' styleName='{common.table}'/>
+      <g:ScrollPanel>
+        <l:PagingTableListView ui:field='listView' styleName='{common.table}'/>
+      </g:ScrollPanel>
     </g:center>
   </g:DockLayoutPanel>
 </ui:UiBinder>
