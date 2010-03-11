@@ -143,6 +143,39 @@ public class DateTest extends GWTTestCase {
     }
   }
 
+  /**
+   * Tests that if daylight savings time occurs tomorrow, the current date isn't
+   * affected.
+   */
+  public void testClockForwardNextDay() {
+    int[] monthDayHour = new int[3];
+    if (!findClockForwardTime(2009, monthDayHour)) {
+      return;
+    }
+
+    int month = monthDayHour[0];
+    int day = monthDayHour[1] - 1; // Day before.
+    int hour = monthDayHour[2];
+    Date d = new Date(2009 - 1900, month, day, hour, 0, 0);
+    assertEquals(day, d.getDate());
+    assertEquals(hour, d.getHours());
+
+    // Change the minutes, which triggers fixDaylightSavings.
+    d.setMinutes(10);
+    assertEquals(day, d.getDate());
+    assertEquals(hour, d.getHours());
+
+    // Change the seconds, which triggers fixDaylightSavings.
+    d.setSeconds(10);
+    assertEquals(day, d.getDate());
+    assertEquals(hour, d.getHours());
+
+    // Change the minutes by more than an hour.
+    d.setMinutes(80);
+    assertEquals(day, d.getDate());
+    assertEquals(hour + 1, d.getHours());
+  }
+
   /** Testing for public java.lang.Object java.util.Date.clone(). */
   public void testClone() {
 

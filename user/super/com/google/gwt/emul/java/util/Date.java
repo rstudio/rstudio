@@ -229,7 +229,8 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
 
   public native void setMinutes(int minutes) /*-{
     this.@java.util.Date::checkJsDate()();
-    var hours = this.@java.util.Date::jsdate.getHours() + minutes / 60;
+    // Truncate (minutes / 60) to int.
+    var hours = this.@java.util.Date::jsdate.getHours() + ~~(minutes / 60);
     this.@java.util.Date::jsdate.setMinutes(minutes);
     this.@java.util.Date::fixDaylightSavings(I)(hours);
   }-*/;
@@ -243,7 +244,8 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
 
   public native void setSeconds(int seconds) /*-{
     this.@java.util.Date::checkJsDate()();
-    var hours = this.@java.util.Date::jsdate.getHours() + seconds / (60 * 60);
+    // Truncate (seconds / (60 * 60)) to int.
+    var hours = this.@java.util.Date::jsdate.getHours() + ~~(seconds / (60 * 60));
     this.@java.util.Date::jsdate.setSeconds(seconds);
     this.@java.util.Date::fixDaylightSavings(I)(hours);
   }-*/;
@@ -348,7 +350,9 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
       d.setDate(d.getDate() + 1);
       var loff = d.getTimezoneOffset();
       var timeDiff = noff - loff;
-      
+      var timeDiffHours = ~~(timeDiff / 60);
+      var timeDiffMinutes = timeDiff % 60;
+
       // If the time zone offset is changing, advance the hours and
       // minutes from the initially requested time by the change amount
       if (timeDiff > 0) {
@@ -358,12 +362,12 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
         var badHours = this.@java.util.Date::jsdate.getHours();
         var minute = this.@java.util.Date::jsdate.getMinutes();
         var second = this.@java.util.Date::jsdate.getSeconds();
-        if (badHours + timeDiff / 60 >= 24) {
+        if (badHours + timeDiffHours >= 24) {
           day++;
         }
         var newTime = new Date(year, month, day,
-            hours + timeDiff / 60,
-            minute + timeDiff % 60, second);
+            hours + timeDiffHours,
+            minute + timeDiffMinutes, second);
         this.@java.util.Date::jsdate.setTime(newTime.getTime());
       }
     }
