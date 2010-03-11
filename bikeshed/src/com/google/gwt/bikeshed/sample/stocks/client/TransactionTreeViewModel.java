@@ -25,6 +25,7 @@ import com.google.gwt.bikeshed.sample.stocks.shared.Transaction;
 import com.google.gwt.bikeshed.tree.client.TreeNode;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,11 +35,11 @@ import java.util.Map;
  * level containing Transactions.
  */
 class TransactionTreeViewModel implements TreeViewModel {
-  
+
   class SectorListModel extends AsyncListModel<StockQuote> {
-    
+
     String sector;
-    
+
     public SectorListModel(final Updater updater, String sector) {
       super(new DataSource<StockQuote>() {
         public void requestData(AsyncListModel<StockQuote> listModel) {
@@ -52,28 +53,29 @@ class TransactionTreeViewModel implements TreeViewModel {
       return sector;
     }
   }
-  
+
   static class TransactionCell extends Cell<Transaction> {
     @Override
     public void render(Transaction value, StringBuilder sb) {
       sb.append(value.toString());
     }
   }
-  
+
   private static final Cell<StockQuote> STOCK_QUOTE_CELL = new Cell<StockQuote>() {
     @Override
     public void render(StockQuote value, StringBuilder sb) {
       sb.append(value.getTicker() + " - " + value.getDisplayPrice());
     }
   };
-  
+
   private static final Cell<Transaction> TRANSACTION_CELL =
     new TransactionCell();
-  
-  private SectorListModel sectorListModel;
+
+  private Map<String, SectorListModel> sectorListModels = new HashMap<String, SectorListModel>();
   private ListModel<StockQuote> stockQuoteListModel;
   private ListListModel<String> topLevelListListModel =
     new ListListModel<String>();
+
   private Map<String, ListListModel<Transaction>> transactionListListModelsByTicker;
 
   private Updater updater;
@@ -88,7 +90,7 @@ class TransactionTreeViewModel implements TreeViewModel {
     topLevelList.add("S&P 500");
     this.transactionListListModelsByTicker = transactionListListModelsByTicker;
   }
-
+  
   @SuppressWarnings("unused")
   public <T> NodeInfo<?> getNodeInfo(T value, TreeNode<T> treeNode) {
     if (value == null) {
@@ -103,8 +105,9 @@ class TransactionTreeViewModel implements TreeViewModel {
         }
       };
     } else if (value instanceof String) {
-      sectorListModel = new SectorListModel(updater, (String) value);
-      return new TreeViewModel.DefaultNodeInfo<StockQuote>(sectorListModel, STOCK_QUOTE_CELL) {
+      SectorListModel listModel = new SectorListModel(updater, (String) value);
+      sectorListModels.put((String) value, listModel);
+      return new TreeViewModel.DefaultNodeInfo<StockQuote>(listModel, STOCK_QUOTE_CELL) {
         @Override
         public Object getKey(StockQuote value) {
           return value.getTicker();
@@ -120,12 +123,12 @@ class TransactionTreeViewModel implements TreeViewModel {
       return new TreeViewModel.DefaultNodeInfo<Transaction>(listModel,
           TRANSACTION_CELL);
     }
-    
+
     throw new IllegalArgumentException(value.toString());
   }
 
-  public SectorListModel getSectorListModel() {
-    return sectorListModel;
+  public SectorListModel getSectorListModel(String value) {
+    return sectorListModels.get(value);
   }
 
   public boolean isLeaf(Object value) {

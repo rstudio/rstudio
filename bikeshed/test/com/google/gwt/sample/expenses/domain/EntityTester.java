@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.domain;
 
-
 class EntityTester {
   Currency currency;
   Employee employee;

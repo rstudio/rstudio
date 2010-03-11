@@ -230,7 +230,7 @@ public class StandardTreeView extends TreeView implements HasAnimation {
         Element currentTarget = event.getCurrentEventTarget().cast();
         if (currentTarget == getElement()) {
           Element target = event.getEventTarget().cast();
-          elementClicked(target, event, getRootNode());
+          elementClicked(target, event, getRootTreeNodeView());
         }
         break;
     }

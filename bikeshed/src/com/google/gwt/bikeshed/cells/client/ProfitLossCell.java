@@ -16,21 +16,27 @@
 package com.google.gwt.bikeshed.cells.client;
 
 /**
- * A {@link Cell} used to render currency.
+ * A {@link Cell} used to render currency.  Positive values are shown in green
+ * with a "+" sign and negative values are shown in red with a "-" sign.
  */
-public class CurrencyCell extends Cell<Integer> {
+public class ProfitLossCell extends Cell<Integer> {
 
   @Override
-  public void render(Integer price, StringBuilder sb) {
-    boolean negative = price < 0;
+  public void render(Integer priceDelta, StringBuilder sb) {
+    boolean negative = priceDelta < 0;
     if (negative) {
-      price = -price;
+      priceDelta = -priceDelta;
     }
-    int dollars = price / 100;
-    int cents = price % 100;
+    int dollars = priceDelta / 100;
+    int cents = priceDelta % 100;
 
-    if (negative) {
-      sb.append("-");
+    sb.append("<span style=\"color:");
+    if (priceDelta == 0) {
+      sb.append("green\">  ");
+    } else if (negative) {
+      sb.append("red\">-");
+    } else {
+      sb.append("green\">+");
     }
     sb.append("$");
     sb.append(dollars);
@@ -39,5 +45,6 @@ public class CurrencyCell extends Cell<Integer> {
       sb.append('0');
     }
     sb.append(cents);
+    sb.append("</span>");
   }
 }

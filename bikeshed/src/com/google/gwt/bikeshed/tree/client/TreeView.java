@@ -133,6 +133,10 @@ public abstract class TreeView extends Widget {
   public TreeNodeViewAnimation getAnimation() {
     return animation;
   }
+  
+  public TreeNode<?> getRootNode() {
+    return rootNode;
+  }
 
   public TreeViewModel getTreeViewModel() {
     return model;
@@ -210,7 +214,7 @@ public abstract class TreeView extends Widget {
     return openImageHtml;
   }
 
-  protected TreeNodeView<?> getRootNode() {
+  protected TreeNodeView<?> getRootTreeNodeView() {
     return rootNode;
   }
 

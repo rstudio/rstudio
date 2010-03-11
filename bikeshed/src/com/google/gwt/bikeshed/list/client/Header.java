@@ -20,25 +20,22 @@ import com.google.gwt.bikeshed.cells.client.ValueUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
+/**
+ * A table column header.
+ * 
+ * @param <H> the {#link Cell} type
+ */
 public class Header<H> {
   private final Cell<H> cell;
   private ValueUpdater<H> updater;
   private H value;
 
-  public H getValue() {
-    return value;
-  }
-
-  public void setValue(H value) {
-    this.value = value;
-  }
-
   public Header(Cell<H> cell) {
     this.cell = cell;
   }
 
-  public void setUpdater(ValueUpdater<H> updater) {
-    this.updater = updater;
+  public H getValue() {
+    return value;
   }
 
   public void onBrowserEvent(Element elem, NativeEvent event) {
@@ -47,5 +44,13 @@ public class Header<H> {
 
   public void render(StringBuilder sb) {
     cell.render(value, sb);
+  }
+
+  public void setUpdater(ValueUpdater<H> updater) {
+    this.updater = updater;
+  }
+
+  public void setValue(H value) {
+    this.value = value;
   }
 }

@@ -253,8 +253,9 @@ class Storage {
       }
 
       public Void visit(Employee employee) {
-        if (null == employee.getUserName())
+        if (null == employee.getUserName()) {
           return null;
+        }
         if (previous != null) {
           Employee prevEmployee = (Employee) previous;
           if (!prevEmployee.getUserName().equals(next)) {

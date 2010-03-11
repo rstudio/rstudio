@@ -58,6 +58,11 @@ public class PlayerStatus {
    * The number of shares owned for each symbol.
    */
   private HashMap<String, Integer> sharesOwnedBySymbol = new HashMap<String, Integer>();
+  
+  /**
+   * The total amount paid for each symbol.
+   */
+  private HashMap<String, Double> averagePriceBySymbol = new HashMap<String, Double>();
 
   public PlayerStatus() {
     generateFavoritesQuery();
@@ -91,12 +96,35 @@ public class PlayerStatus {
 
     // Update the number of shares owned.
     int current = getSharesOwned(ticker);
-    cash -= totalPrice;
+    double averagePrice = getAveragePrice(ticker);
+    double totalPaid = averagePrice * current + totalPrice;
+    
+    // Update case and shares owned
     current += quantity;
+    cash -= totalPrice;
     sharesOwnedBySymbol.put(ticker, current);
-
+    
+    // Update average price
+    averagePrice = totalPaid / current;
+    averagePriceBySymbol.put(ticker, averagePrice);
+    
     // Add this stock to the favorites list.
     addFavorite(ticker);
+  }
+
+  /**
+   * Returns the total cost of the currently owned shared, using an average cost
+   * basis method.
+   *
+   * @param ticker the stock ticker
+   */
+  public int getAverageCostBasis(String ticker) {
+    return (int) (Math.round(getAveragePrice(ticker) * getSharesOwned(ticker)));
+  }
+
+  public double getAveragePrice(String ticker) {
+    Double current = averagePriceBySymbol.get(ticker);
+    return current == null ? 0.0 : current;
   }
 
   /**
@@ -136,7 +164,7 @@ public class PlayerStatus {
     Integer current = sharesOwnedBySymbol.get(ticker);
     return current == null ? 0 : current;
   }
-
+  
   /**
    * Check if the stock ticker is in the favorites list.
    * 
@@ -175,9 +203,16 @@ public class PlayerStatus {
     }
 
     // Perform the transaction.
-    cash += quantity * price;
+    int totalPrice = price * quantity;
+    cash += totalPrice;
     current -= quantity;
     sharesOwnedBySymbol.put(ticker, current);
+    
+    if (current == 0) {
+      sharesOwnedBySymbol.remove(ticker);
+      averagePriceBySymbol.remove(ticker);
+      removeFavorite(ticker);
+    }
   }
 
   /**

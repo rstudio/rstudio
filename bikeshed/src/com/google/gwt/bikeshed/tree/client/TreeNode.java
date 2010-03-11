@@ -29,4 +29,6 @@ public interface TreeNode<T> {
   TreeNode<?> getParentNode();
   
   T getValue();
+  
+  boolean isOpen();
 }

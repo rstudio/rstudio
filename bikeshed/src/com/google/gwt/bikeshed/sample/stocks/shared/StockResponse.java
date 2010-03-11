@@ -32,11 +32,13 @@ public class StockResponse implements Serializable {
   private int numSector;
   private StockQuoteList searchResults;
   private StockQuoteList sector;
+  private String sectorName;
 
   public StockResponse(StockQuoteList searchResults, StockQuoteList favorites,
-      StockQuoteList sector, int numSearchResults, int numFavorites, int numSector, int cash) {
+      String sectorName, StockQuoteList sector, int numSearchResults, int numFavorites, int numSector, int cash) {
     this.searchResults = searchResults;
     this.favorites = favorites;
+    this.sectorName = sectorName;
     this.sector = sector;
     this.numSearchResults = numSearchResults;
     this.numFavorites = numFavorites;
@@ -83,5 +85,9 @@ public class StockResponse implements Serializable {
 
   public StockQuoteList getSector() {
     return sector;
+  }
+  
+  public String getSectorName() {
+    return sectorName;
   }
 }

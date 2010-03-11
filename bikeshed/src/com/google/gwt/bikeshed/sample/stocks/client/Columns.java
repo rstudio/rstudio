@@ -18,6 +18,7 @@ package com.google.gwt.bikeshed.sample.stocks.client;
 import com.google.gwt.bikeshed.cells.client.ButtonCell;
 import com.google.gwt.bikeshed.cells.client.CheckboxCell;
 import com.google.gwt.bikeshed.cells.client.CurrencyCell;
+import com.google.gwt.bikeshed.cells.client.ProfitLossCell;
 import com.google.gwt.bikeshed.cells.client.TextCell;
 import com.google.gwt.bikeshed.list.client.Column;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockQuote;
@@ -33,6 +34,14 @@ public class Columns {
     @Override
     protected String getValue(StockQuote object) {
       return "Buy";
+    }
+  };
+
+  static Column<StockQuote, String> changeColumn =
+    new Column<StockQuote, String>(new ChangeCell()) {
+    @Override
+    protected String getValue(StockQuote object) {
+      return object.getChange();
     }
   };
 
@@ -65,6 +74,14 @@ public class Columns {
     @Override
     protected Integer getValue(StockQuote object) {
       return object.getPrice();
+    }
+  };
+
+  static Column<StockQuote, Integer> profitLossColumn =
+    new Column<StockQuote, Integer>(new ProfitLossCell()) {
+    @Override
+    protected Integer getValue(StockQuote object) {
+      return object.getValue() - object.getTotalPaid();
     }
   };
 

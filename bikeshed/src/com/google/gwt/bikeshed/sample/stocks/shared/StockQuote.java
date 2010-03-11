@@ -26,8 +26,10 @@ public class StockQuote implements Serializable {
   private String name;
   private transient String notes;
   private int price;
+  private String change;
   private String ticker;
   private int sharesOwned;
+  private int totalPaid; // Total amount paid for all share, int pennies
 
   /**
    * Construct a new {@link StockQuote}.
@@ -38,19 +40,25 @@ public class StockQuote implements Serializable {
    * @param sharesOwned the number of shares owned by the player
    * @param favorite true if the stock is in the player's favorites
    */
-  public StockQuote(String ticker, String name, int price, int sharesOwned,
-      boolean favorite) {
+  public StockQuote(String ticker, String name, int price, String change, int sharesOwned,
+      boolean favorite, int totalPaid) {
     this.ticker = ticker;
     this.name = name;
     this.price = price;
+    this.change = change;
     this.sharesOwned = sharesOwned;
     this.favorite = favorite;
+    this.totalPaid = totalPaid;
   }
 
   /**
    * Used for RPC.
    */
   StockQuote() {
+  }
+  
+  public String getChange() {
+    return change;
   }
 
   public String getDisplayPrice() {
@@ -87,6 +95,14 @@ public class StockQuote implements Serializable {
   public String getTicker() {
     return ticker;
   }
+  
+  public int getTotalPaid() {
+    return totalPaid;
+  }
+  
+  public int getValue() {
+    return price * sharesOwned;
+  }
 
   public boolean isFavorite() {
     return favorite;
@@ -99,6 +115,7 @@ public class StockQuote implements Serializable {
   @Override
   public String toString() {
     return "StockQuote [ticker=" + ticker + ", name=\"" + name + "\", price="
-        + price + ", notes=\"" + notes + "\", favorite=" + favorite + "]";
+        + price + ", notes=\"" + notes + "\", favorite=" + favorite
+        + ", totalPaid=" + totalPaid + "]";
   }
 }

@@ -13,17 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.bikeshed.list.client;
+package com.google.gwt.bikeshed.sample.stocks.client;
 
-import com.google.gwt.bikeshed.cells.client.TextCell;
+import com.google.gwt.bikeshed.cells.client.Cell;
 
 /**
- * A Header containing String data rendered by a TextCell.
+ * A cell that represents a {@link StockQuote}.
  */
-public class TextHeader extends Header<String> {
+public class ChangeCell extends Cell<String> {
 
-  public TextHeader(String text) {
-    super(new TextCell());
-    setValue(text);
+  @Override
+  public void render(String value, StringBuilder sb) {
+    sb.append("<span style=\"color:");
+    if (value.charAt(0) == '-') {
+      sb.append("red\">");
+    } else {
+      sb.append("green\">");
+    }
+    sb.append(value);
+    sb.append("</span>");
   }
 }

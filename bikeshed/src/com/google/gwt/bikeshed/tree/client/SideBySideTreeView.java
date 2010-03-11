@@ -92,7 +92,7 @@ public class SideBySideTreeView extends TreeView {
             id = id.substring(11);
             String[] path = id.split("-");
 
-            TreeNodeView<?> nodeView = getRootNode();
+            TreeNodeView<?> nodeView = getRootTreeNodeView();
             for (String s : path) {
               nodeView = nodeView.getChildTreeNodeView(Integer.parseInt(s));
             }

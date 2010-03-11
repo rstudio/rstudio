@@ -147,6 +147,13 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
   }
 
   /**
+   * Returns true if the node is open.
+   */
+  public boolean isOpen() {
+    return open;
+  }
+  
+  /**
    * Check if this is a root node at the top of the tree.
    *
    * @return true if a root node, false if not

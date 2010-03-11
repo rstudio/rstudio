@@ -87,7 +87,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       companyNamesBySymbol.put(symbol, companyName);
     }
   }
-  
+
   static {
     sectorQueries.put("DOW JONES INDUSTRIALS",
         "AA|AXP|BA|BAC|CAT|CSCO|CVX|DD|DIS|GE|HD|HPQ|IBM|INTC|JNJ|JPM|KFT|KO|" +
@@ -103,7 +103,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
         "CTL|CTSH|CTXS|CVH|CVS|CVX|D|DD|DE|DELL|DF|DFS|DGX|DHI|DHR|DIS|DNB|" +
         "DNR|DO|DOV|DOW|DPS|DRI|DTE|DTV|DUK|DV|DVA|DVN|EBAY|ECL|ED|EFX|EIX|" +
         "EK|EL|EMC|EMN|EMR|EOG|EP|EQR|EQT|ERTS|ESRX|ETFC|ETN|ETR|EXC|EXPD|" +
-        "EXPE|F|FAST|FCX|FDO|FDX|FE|FHN|FII|FIS|FISV|FITB|FLIR|FLR|FLS|FMC|" + 
+        "EXPE|F|FAST|FCX|FDO|FDX|FE|FHN|FII|FIS|FISV|FITB|FLIR|FLR|FLS|FMC|" +
         "FO|FPL|FRX|FSLR|FTI|FTR|GAS|GCI|GD|GE|GENZ|GILD|GIS|GLW|GME|GNW|" +
         "GOOG|GPC|GPS|GR|GS|GT|GWW|HAL|HAR|HAS|HBAN|HCBK|HCN|HCP|HD|HES|HIG|" +
         "HNZ|HOG|HON|HOT|HPQ|HRB|HRL|HRS|HSP|HST|HSY|HUM|IBM|ICE|IFF|IGT|" +
@@ -111,7 +111,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
         "JNS|JPM|JWN|K|KEY|KFT|KG|KIM|KLAC|KMB|KO|KR|KSS|L|LEG|LEN|LH|LIFE|" +
         "LLL|LLTC|LLY|LM|LMT|LNC|LO|LOW|LSI|LTD|LUK|LUV|LXK|M|MA|MAR|MAS|MAT|" +
         "MCD|MCHP|MCK|MCO|MDP|MDT|MEE|MET|MFE|MHP|MHS|MI|MIL|MJN|MKC|MMC|MMM|" +
-        "MO|MOLX|MON|MOT|MRK|MRO|MS|MSFT|MTB|MU|MUR|MWV|MWW|MXB|MYL|NBL|NBR|" + 
+        "MO|MOLX|MON|MOT|MRK|MRO|MS|MSFT|MTB|MU|MUR|MWV|MWW|MXB|MYL|NBL|NBR|" +
         "NDAQ|NEM|NI|NKE|NOC|NOV|NOVL|NSC|NSM|NTAP|NTRS|NU|NUE|NVDA|NVLS|NWL|" +
         "NWSA|NYT|NYX|ODP|OI|OMC|ORCL|ORLY|OXY|PAYX|PBCT|PBG|PBI|PCAR|PCG|" +
         "PCL|PCP|PCS|PDCO|PEG|PEP|PFE|PFG|PG|PGN|PGR|PH|PHM|PKI|PLD|PLL|PM|" +
@@ -124,7 +124,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
         "VNO|VRSN|VTR|VZ|WAG|WAT|WDC|WEC|WFC|WFMI|WFR|WHR|WIN|WLP|WM|WMB|WMT|" +
         "WPI|WPO|WU|WY|WYN|WYNN|X|XEL|XL|XLNX|XOM|XRAY|XRX|XTO|YHOO|YUM|ZION|" +
         "ZMH");
-    
+
     // Precompile each regex
     for (Map.Entry<String,String> entry : sectorQueries.entrySet()) {
       sectorPatterns.put(entry.getKey(), compile(entry.getValue()));
@@ -142,24 +142,26 @@ public class StockServiceImpl extends RemoteServiceServlet implements
   /**
    * A mapping of usernames to {@link PlayerStatus}.
    */
-  private Map<String, PlayerStatus> players = new HashMap<String, PlayerStatus>();
-  
+  private Map<String, PlayerStatus> players =
+    new HashMap<String, PlayerStatus>();
+
   public StockResponse addFavorite(String ticker, Range favoritesRange) {
     PlayerStatus player = ensurePlayer();
     player.addFavorite(ticker);
-    Result favorites = query(player.getFavoritesQuery(), player.getFavoritesPattern(), favoritesRange);
-    return new StockResponse(null, favorites.quotes, null,
+    Result favorites = query(player.getFavoritesQuery(),
+        player.getFavoritesPattern(), favoritesRange, false);
+    return new StockResponse(null, favorites.quotes, null, null,
         0, favorites.numRows, 0, player.getCash());
   }
 
   public Result getSectorQuotes(String sector, Range sectorRange) {
     sector = sector.toUpperCase();
     String sectorQuery = sectorQueries.get(sector);
-    Pattern sectorPattern = sectorPatterns.get(sector);
     if (sectorQuery == null) {
       return null;
     }
-    return query(sectorQuery, sectorPattern, sectorRange);
+    Pattern sectorPattern = sectorPatterns.get(sector);
+    return query(sectorQuery, sectorPattern, sectorRange, false);
   }
 
   public StockResponse getStockQuotes(StockRequest request)
@@ -172,26 +174,30 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     Range searchRange = request.getSearchRange();
     Range favoritesRange = request.getFavoritesRange();
     Range sectorRange = request.getSectorRange();
-    
+
     PlayerStatus player = ensurePlayer();
-    Result searchResults = query(query, compile(query), searchRange);
-    Result favorites = query(player.getFavoritesQuery(), player.getFavoritesPattern(), favoritesRange);
-    Result sector = sectorRange != null ? getSectorQuotes(request.getSector(), sectorRange) : null;
+    Result searchResults = query(query, compile(query), searchRange, true);
+    Result favorites = query(player.getFavoritesQuery(),
+        player.getFavoritesPattern(), favoritesRange, false);
+    String sectorName = request.getSector();
+    Result sector = sectorRange != null ?
+        getSectorQuotes(sectorName, sectorRange) : null;
 
     return new StockResponse(searchResults.quotes,
         favorites.quotes,
+        sector != null ? sectorName : null,
         sector != null ? sector.quotes : null,
         searchResults.numRows,
         favorites.numRows,
         sector != null ? sector.numRows : 0,
         player.getCash());
   }
-  
+
   public StockResponse removeFavorite(String ticker, Range favoritesRange) {
     PlayerStatus player = ensurePlayer();
     player.removeFavorite(ticker);
-    Result favorites = query(player.getFavoritesQuery(), player.getFavoritesPattern(), favoritesRange);
-    return new StockResponse(null, favorites.quotes, null,
+    Result favorites = query(player.getFavoritesQuery(), player.getFavoritesPattern(), favoritesRange, false);
+    return new StockResponse(null, favorites.quotes, null, null,
         0, favorites.numRows, 0, player.getCash());
   }
 
@@ -199,16 +205,24 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       throws IllegalArgumentException {
     // Get the current stock price.
     String ticker = transaction.getTicker();
-    Pattern tickerPattern = compile(ticker);
     if (ticker == null || ticker.length() < 0) {
       throw new IllegalArgumentException("Stock could not be found");
     }
-    Result result = query(ticker, tickerPattern, new DefaultRange(0, 1));
+
+    String tickerRegex = ticker;
+    if (!ticker.startsWith("^")) {
+      tickerRegex = "^" + tickerRegex;
+    }
+    if (!ticker.endsWith("$")) {
+      tickerRegex = tickerRegex + "$";
+    }
+    Pattern tickerPattern = compile(ticker);
+    Result result = query(tickerRegex, tickerPattern, new DefaultRange(0, 1), false);
     if (result.numRows != 1 || result.quotes.size() != 1) {
       throw new IllegalArgumentException("Could not resolve stock ticker");
     }
     StockQuote quote = result.quotes.get(0);
-  
+
     // Perform the transaction with the user.
     int quantity = transaction.getQuantity();
     int price = quote.getPrice();
@@ -217,14 +231,14 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     } else {
       ensurePlayer().sell(ticker, quantity, price);
     }
-  
-    return new Transaction(true, ticker, quantity, price);
+
+    return new Transaction(transaction.isBuy(), ticker, quantity, price);
   }
 
   /**
    * Ensure that a {@link PlayerStatus} for the current player exists and return
    * it.
-   * 
+   *
    * @return the {@link PlayerStatus} for the current player
    */
   private PlayerStatus ensurePlayer() {
@@ -237,11 +251,11 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     return player;
   }
 
-  private List<String> getTickers(String query, Pattern pattern) {
+  private List<String> getTickers(String query, Pattern pattern, boolean matchNames) {
     Set<String> tickers = new TreeSet<String>();
     if (query.length() > 0) {
       query = query.toUpperCase();
-      
+
       int count = 0;
       for (String ticker : stockTickers) {
         if (ticker.startsWith(query) || (pattern != null && match(ticker, pattern))) {
@@ -252,8 +266,8 @@ public class StockServiceImpl extends RemoteServiceServlet implements
           }
         }
       }
-      
-      if (pattern != null) {
+
+      if (matchNames && pattern != null) {
         for (Map.Entry<String,String> entry : companyNamesBySymbol.entrySet()) {
           if (match(entry.getValue(), pattern)) {
             tickers.add(entry.getKey());
@@ -265,7 +279,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
         }
       }
     }
-      
+
     return new ArrayList<String>(tickers);
   }
 
@@ -276,15 +290,16 @@ public class StockServiceImpl extends RemoteServiceServlet implements
 
   /**
    * Query the remote service to retrieve current stock prices.
-   * 
+   *
    * @param query the query string
    * @param range the range of results requested
    * @return the stock quotes
    */
-  private Result query(String query, Pattern queryPattern, Range range) {
+  private Result query(String query, Pattern queryPattern, Range range,
+      boolean matchNames) {
     // Get all symbols for the query.
     PlayerStatus player = ensurePlayer();
-    List<String> symbols = getTickers(query, queryPattern);
+    List<String> symbols = getTickers(query, queryPattern, matchNames);
 
     if (symbols.size() == 0) {
       return new Result(new StockQuoteList(0), 0);
@@ -344,6 +359,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
 
       String symbol = null;
       String price = null;
+      String change = null;
 
       Matcher dataMatcher = DATA_PATTERN.matcher(group);
       while (dataMatcher.find()) {
@@ -353,6 +369,8 @@ public class StockServiceImpl extends RemoteServiceServlet implements
           symbol = data;
         } else if (tag.equals("l_cur")) {
           price = data;
+        } else if (tag.equals("c")) {
+          change = data;
         }
       }
 
@@ -363,8 +381,10 @@ public class StockServiceImpl extends RemoteServiceServlet implements
           String name = companyNamesBySymbol.get(symbol);
           Integer sharesOwned = player.getSharesOwned(symbol);
           boolean favorite = player.isFavorite(symbol);
-          priceMap.put(symbol, new StockQuote(symbol, name, iprice,
-              sharesOwned == null ? 0 : sharesOwned.intValue(), favorite));
+          int totalPaid = player.getAverageCostBasis(symbol);
+          priceMap.put(symbol, new StockQuote(symbol, name, iprice, change,
+              sharesOwned == null ? 0 : sharesOwned.intValue(), favorite,
+                  totalPaid));
         } catch (NumberFormatException e) {
           System.out.println("Bad price " + price + " for symbol " + symbol);
         }
