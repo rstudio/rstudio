@@ -24,7 +24,6 @@ public class StockQuote implements Serializable {
 
   private boolean favorite;
   private String name;
-  private transient String notes;
   private int price;
   private String change;
   private String ticker;
@@ -80,10 +79,6 @@ public class StockQuote implements Serializable {
     return name;
   }
 
-  public String getNotes() {
-    return notes;
-  }
-
   public int getPrice() {
     return price;
   }
@@ -108,14 +103,10 @@ public class StockQuote implements Serializable {
     return favorite;
   }
 
-  public void setNotes(String notes) {
-    this.notes = notes;
-  }
-
   @Override
   public String toString() {
     return "StockQuote [ticker=" + ticker + ", name=\"" + name + "\", price="
-        + price + ", notes=\"" + notes + "\", favorite=" + favorite
+        + price + ", favorite=" + favorite
         + ", totalPaid=" + totalPaid + "]";
   }
 }

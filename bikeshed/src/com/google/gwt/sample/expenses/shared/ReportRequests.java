@@ -36,7 +36,7 @@ import java.util.Set;
 
 /**
  * "Generated" from static methods of
- * {@link com.google.gwt.sample.expenses.domain.Employee}
+ * {@link com.google.gwt.sample.expenses.domain.Employee}.
  */
 public class ReportRequests {
 

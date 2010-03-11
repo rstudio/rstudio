@@ -25,6 +25,28 @@ import java.util.List;
 public class StorageTest extends TestCase {
   Storage store = new Storage();
 
+  public void testFreshRelationships() {
+    Storage s = new Storage();
+    Storage.fill(s);
+  
+    Employee abc = s.findEmployeeByUserName("abc");
+    List<Report> reports = s.findReportsByEmployee(abc.getId());
+    for (Report report : reports) {
+      assertEquals(abc.getVersion(), report.getReporter().getVersion());
+    }
+    
+    abc.setDisplayName("Herbert");
+    s.persist(abc);
+    List<Report> fresherReports = s.findReportsByEmployee(abc.getId());
+    assertEquals(reports.size(), fresherReports.size());
+    Integer expectedVersion = abc.getVersion() + 1;
+    for (Report report : fresherReports) {
+      assertEquals(abc.getId(), report.getReporter().getId());
+      assertEquals(expectedVersion, report.getReporter().getVersion());
+      assertEquals("Herbert", report.getReporter().getDisplayName());
+    }
+  }
+
   public void testReportsByEmployeeIndex() {
     Storage s = new Storage();
     Storage.fill(s);
@@ -44,28 +66,6 @@ public class StorageTest extends TestCase {
     assertEquals(report.getVersion(), latestReport.getVersion());
   }
   
-  public void testFreshRelationships() {
-    Storage s = new Storage();
-    Storage.fill(s);
-
-    Employee abc = s.findEmployeeByUserName("abc");
-    List<Report> reports = s.findReportsByEmployee(abc.getId());
-    for (Report report : reports) {
-      assertEquals(abc.getVersion(), report.getReporter().getVersion());
-    }
-    
-    abc.setDisplayName("Herbert");
-    s.persist(abc);
-    List<Report> fresherReports = s.findReportsByEmployee(abc.getId());
-    assertEquals(reports.size(), fresherReports.size());
-    Integer expectedVersion = abc.getVersion() + 1;
-    for (Report report : fresherReports) {
-      assertEquals(abc.getId(), report.getReporter().getId());
-      assertEquals(expectedVersion, report.getReporter().getVersion());
-      assertEquals("Herbert", report.getReporter().getDisplayName());
-    }
-  }
-
   public void testUserNameIndex() {
     Storage s = new Storage();
     Storage.fill(s);
@@ -120,6 +120,14 @@ public class StorageTest extends TestCase {
     assertEquals(v2.getVersion(), anotherV2.getVersion());
   }
   
+  private Entity doTestNew(Entity e) {
+    Entity v1 = store.persist(e);
+    assertEquals(Integer.valueOf(0), v1.getVersion());
+    assertNotNull(v1.getId());
+    assertNotSame(v1, store.get(Storage.startSparseEdit(v1)));
+    return v1;
+  }
+
   private Entity doTestSparseEdit(Entity v1) {
     Entity delta = Storage.startSparseEdit(v1);
     Entity v2 = store.persist(delta);
@@ -130,13 +138,5 @@ public class StorageTest extends TestCase {
     assertEquals(v1.getId(), anotherV2.getId());
     assertEquals(v2.getVersion(), anotherV2.getVersion());
     return anotherV2;
-  }
-
-  private Entity doTestNew(Entity e) {
-    Entity v1 = store.persist(e);
-    assertEquals(Integer.valueOf(0), v1.getVersion());
-    assertNotNull(v1.getId());
-    assertNotSame(v1, store.get(Storage.startSparseEdit(v1)));
-    return v1;
   }
 }

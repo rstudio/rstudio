@@ -16,7 +16,9 @@
 package com.google.gwt.bikeshed.sample.stocks.server;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.TreeSet;
 
 /**
  * A list of NYSE and NASDAQ stocks (note: this is a snapshot plus some
@@ -25,6 +27,11 @@ import java.util.List;
 public class Stocks {
 
   public static final List<String> SYMBOLS = new ArrayList<String>();
+
+  public static final HashMap<String, String> companyNamesBySymbol =
+    new HashMap<String, String>();
+  
+  public static final TreeSet<String> stockTickers = new TreeSet<String>();
 
   static {
     s("A", "Agilent Technologies Inc.");
@@ -6130,8 +6137,15 @@ public class Stocks {
     s("ZUMZ", "Zumiez Inc.");
     s("ZZ", "Sealy Corporation");
     s("ZZC", "SEALY CORPORATION");
-  };
-  
+    
+    int num = SYMBOLS.size();
+    for (int i = 0; i < num - 1; i += 2) {
+      String symbol = SYMBOLS.get(i);
+      String companyName = SYMBOLS.get(i + 1);
+      stockTickers.add(symbol);
+      companyNamesBySymbol.put(symbol, companyName);
+    }
+  }
   private static void s(String symbol, String name) {
     SYMBOLS.add(symbol);
     SYMBOLS.add(name);

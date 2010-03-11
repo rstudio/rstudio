@@ -5,7 +5,7 @@
   border-right: 12px solid white;
   border-bottom: 14px solid white;
   -webkit-border-image: url(border.png) 8 12 14 8 round round;
-  -gecko-border-image: url(border.png) 8 12 14 8 round round;
+  -moz-border-image: url(border.png) 8 12 14 8 round round;
 }
 
 .header {

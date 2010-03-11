@@ -15,6 +15,9 @@
  */
 package com.google.gwt.bikeshed.cells.client;
 
+/**
+ * Call that displays overflow using an ellipsis.
+ */
 public class EllipsisCell extends Cell<String> {
 
   @Override

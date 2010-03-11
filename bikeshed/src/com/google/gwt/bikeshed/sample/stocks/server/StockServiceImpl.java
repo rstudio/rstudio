@@ -25,17 +25,11 @@ import com.google.gwt.bikeshed.sample.stocks.shared.StockResponse;
 import com.google.gwt.bikeshed.sample.stocks.shared.Transaction;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,6 +42,30 @@ import java.util.regex.PatternSyntaxException;
 public class StockServiceImpl extends RemoteServiceServlet implements
     StockService {
 
+  static class Quote {
+    String change;
+    long createdTime;
+    int price;
+    
+    public Quote(int price, String change) {
+      this.price = price;
+      this.change = change;
+      this.createdTime = System.currentTimeMillis();
+    }
+
+    public String getChange() {
+      return change;
+    }
+
+    public long getCreatedTime() {
+      return createdTime;
+    }
+
+    public int getPrice() {
+      return price;
+    }
+  }
+  
   /**
    * The result of a query to the remote service that provides stock quotes.
    */
@@ -61,32 +79,15 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     }
   }
 
-  static HashMap<String, String> companyNamesBySymbol = new HashMap<String, String>();
-
-  static TreeSet<String> stockTickers = new TreeSet<String>();
-
-  private static final Pattern DATA_PATTERN = Pattern.compile("\"([^\"]*)\"\\s*:\\s*\"([^\"]*)\"");
-
   private static final int MAX_RESULTS_TO_RETURN = 10000;
 
-  private static final Pattern QUOTE_PATTERN = Pattern.compile("\\{[^\\}]*\\}");
+  private static final Map<String, Quote> QUOTES = new HashMap<String, Quote>();
 
   private static final HashMap<String,Pattern> sectorPatterns =
     new HashMap<String,Pattern>();
 
   private static final HashMap<String,String> sectorQueries =
     new HashMap<String,String>();
-  
-  static {
-    int num = Stocks.SYMBOLS.size();
-    for (int i = 0; i < num - 1; i += 2) {
-      String symbol = Stocks.SYMBOLS.get(i);
-      String companyName = Stocks.SYMBOLS.get(i + 1);
-      stockTickers.add(symbol);
-
-      companyNamesBySymbol.put(symbol, companyName);
-    }
-  }
 
   static {
     sectorQueries.put("DOW JONES INDUSTRIALS",
@@ -148,8 +149,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
   public StockResponse addFavorite(String ticker, Range favoritesRange) {
     PlayerStatus player = ensurePlayer();
     player.addFavorite(ticker);
-    Result favorites = query(player.getFavoritesQuery(),
-        player.getFavoritesPattern(), favoritesRange, false);
+    Result favorites = queryFavorites(favoritesRange);
     return new StockResponse(null, favorites.quotes, null, null,
         0, favorites.numRows, 0, player.getCash());
   }
@@ -161,7 +161,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       return null;
     }
     Pattern sectorPattern = sectorPatterns.get(sector);
-    return query(sectorQuery, sectorPattern, sectorRange, false);
+    return queryTickerRegex(sectorPattern, sectorRange);
   }
 
   public StockResponse getStockQuotes(StockRequest request)
@@ -176,9 +176,8 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     Range sectorRange = request.getSectorRange();
 
     PlayerStatus player = ensurePlayer();
-    Result searchResults = query(query, compile(query), searchRange, true);
-    Result favorites = query(player.getFavoritesQuery(),
-        player.getFavoritesPattern(), favoritesRange, false);
+    Result searchResults = getSearchQuotes(query, searchRange);
+    Result favorites = queryFavorites(favoritesRange);
     String sectorName = request.getSector();
     Result sector = sectorRange != null ?
         getSectorQuotes(sectorName, sectorRange) : null;
@@ -192,11 +191,11 @@ public class StockServiceImpl extends RemoteServiceServlet implements
         sector != null ? sector.numRows : 0,
         player.getCash());
   }
-
+  
   public StockResponse removeFavorite(String ticker, Range favoritesRange) {
     PlayerStatus player = ensurePlayer();
     player.removeFavorite(ticker);
-    Result favorites = query(player.getFavoritesQuery(), player.getFavoritesPattern(), favoritesRange, false);
+    Result favorites = queryFavorites(favoritesRange);
     return new StockResponse(null, favorites.quotes, null, null,
         0, favorites.numRows, 0, player.getCash());
   }
@@ -209,15 +208,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       throw new IllegalArgumentException("Stock could not be found");
     }
 
-    String tickerRegex = ticker;
-    if (!ticker.startsWith("^")) {
-      tickerRegex = "^" + tickerRegex;
-    }
-    if (!ticker.endsWith("$")) {
-      tickerRegex = tickerRegex + "$";
-    }
-    Pattern tickerPattern = compile(ticker);
-    Result result = query(tickerRegex, tickerPattern, new DefaultRange(0, 1), false);
+    Result result = queryExactTicker(ticker);
     if (result.numRows != 1 || result.quotes.size() != 1) {
       throw new IllegalArgumentException("Could not resolve stock ticker");
     }
@@ -251,158 +242,185 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     return player;
   }
 
-  private List<String> getTickers(String query, Pattern pattern, boolean matchNames) {
-    Set<String> tickers = new TreeSet<String>();
-    if (query.length() > 0) {
-      query = query.toUpperCase();
-
-      int count = 0;
-      for (String ticker : stockTickers) {
-        if (ticker.startsWith(query) || (pattern != null && match(ticker, pattern))) {
-          tickers.add(ticker);
-          count++;
-          if (count > MAX_RESULTS_TO_RETURN) {
-            break;
-          }
-        }
+  private Result getQuotes(SortedSet<String> symbols, Range range) {
+    int start = range.getStart();
+    int end = Math.min(start + range.getLength(), symbols.size());
+  
+    if (end <= start) {
+      return new Result(new StockQuoteList(0), 0);
+    }
+  
+    // Get the symbols that are in range.
+    SortedSet<String> symbolsInRange = new TreeSet<String>();
+    int idx = 0;
+    for (String symbol : symbols) {
+      if (idx >= start && idx < end) {
+        symbolsInRange.add(symbol);
       }
-
-      if (matchNames && pattern != null) {
-        for (Map.Entry<String,String> entry : companyNamesBySymbol.entrySet()) {
-          if (match(entry.getValue(), pattern)) {
-            tickers.add(entry.getKey());
-            count++;
-            if (count > MAX_RESULTS_TO_RETURN) {
-              break;
-            }
-          }
-        }
+      idx++;
+    }
+    
+    // If we already have a price that is less than 5 seconds old,
+    // don't re-request the data from the server
+    
+    SortedSet<String> symbolsToQuery = new TreeSet<String>();
+    long now = System.currentTimeMillis();
+    for (String symbol : symbolsInRange) {
+      Quote quote = QUOTES.get(symbol);
+      if (quote == null || now - quote.getCreatedTime() >= 5000) {
+        symbolsToQuery.add(symbol);
+        // System.out.println("retrieving new value of " + symbol);
+      } else {
+        // System.out.println("Using cached value of " + symbol + " (" + (now - quote.getCreatedTime()) + "ms old)");
       }
     }
-
-    return new ArrayList<String>(tickers);
+  
+    if (symbolsToQuery.size() > 0) {
+      GoogleFinance.queryServer(symbolsToQuery, QUOTES);
+    }
+    
+    // Create and return a StockQuoteList containing the quotes
+    StockQuoteList toRet = new StockQuoteList(start);
+    for (String symbol : symbolsInRange) {
+      Quote quote = QUOTES.get(symbol);
+        
+      if (quote == null) {
+        System.out.println("Bad symbol " + symbol);
+      } else {
+        String name = Stocks.companyNamesBySymbol.get(symbol);
+        PlayerStatus player = ensurePlayer();
+        Integer sharesOwned = player.getSharesOwned(symbol);
+        boolean favorite = player.isFavorite(symbol);
+        int totalPaid = player.getAverageCostBasis(symbol);
+        
+        toRet.add(new StockQuote(symbol, name, quote.getPrice(),
+            quote.getChange(), sharesOwned == null ? 0 : sharesOwned.intValue(),
+                favorite, totalPaid));
+      }
+    }
+  
+    return new Result(toRet, symbols.size());
   }
 
+  // If a query is alpha-only ([A-Za-z]+), return stocks for which:
+  //   1a) a prefix of the ticker symbol matches the query
+  //   2) any substring of the stock name matches the query
+  //
+  // If a query is non-alpha, consider it as a regex and return stocks for
+  // which:
+  //   1b) any portion of the stock symbol matches the regex
+  //   2) any portion of the stock name matches the regex
+  private Result getSearchQuotes(String query, Range searchRange) {
+    SortedSet<String> symbols = new TreeSet<String>();
+    
+    boolean queryIsAlpha = true;
+    for (int i = 0; i < query.length(); i++) {
+      char c = query.charAt(i);
+      if ((c < 'a' || c > 'z') && (c < 'A' || c > 'Z')) {
+        queryIsAlpha = false;
+        break;
+      }  
+    }
+
+    // Canonicalize case
+    query = query.toUpperCase(Locale.US);
+    
+    // (1a)
+    if (queryIsAlpha) {
+      getTickersByPrefix(query, symbols);
+    }
+    
+    // Use Unicode case-insensitive matching, allow matching of a substring
+    Pattern pattern = compile("(?iu).*(" + query + ").*");
+    if (pattern != null) {
+      // (1b)
+      if (!queryIsAlpha) {
+        getTickersBySymbolRegex(pattern, symbols);
+      }
+      
+      // (2)
+      getTickersByNameRegex(pattern, symbols);
+    }
+
+    return getQuotes(symbols, searchRange);
+  }
+
+  // Assume pattern is upper case
+  private void getTickersByNameRegex(Pattern pattern, Set<String> tickers) {
+    if (pattern == null) {
+      return;
+    }
+    
+    for (Map.Entry<String,String> entry : Stocks.companyNamesBySymbol.entrySet()) {
+      if (tickers.size() >= MAX_RESULTS_TO_RETURN) {
+        return;
+      }
+      
+      if (match(entry.getValue(), pattern)) {
+        tickers.add(entry.getKey());
+      }
+    }
+  }
+  
+  // Assume prefix is upper case
+  private void getTickersByPrefix(String prefix, Set<String> tickers) {
+    if (prefix == null || prefix.length() == 0) {
+      return;
+    }
+    
+    for (String ticker : Stocks.stockTickers) {
+      if (tickers.size() >= MAX_RESULTS_TO_RETURN) {
+        break;
+      }
+      
+      if (ticker.startsWith(prefix)) {
+        tickers.add(ticker);
+      }
+    }
+  }
+
+  // Assume pattern is upper case
+  private void getTickersBySymbolRegex(Pattern pattern, Set<String> tickers) {
+    if (pattern == null) {
+      return;
+    }
+    
+    for (String ticker : Stocks.stockTickers) {
+      if (tickers.size() >= MAX_RESULTS_TO_RETURN) {
+        return;
+      }
+      if (match(ticker, pattern)) {
+        tickers.add(ticker);
+      }
+    }
+  }
+  
   private boolean match(String symbol, Pattern pattern) {
     Matcher m = pattern.matcher(symbol);
     return m.matches();
   }
 
-  /**
-   * Query the remote service to retrieve current stock prices.
-   *
-   * @param query the query string
-   * @param range the range of results requested
-   * @return the stock quotes
-   */
-  private Result query(String query, Pattern queryPattern, Range range,
-      boolean matchNames) {
-    // Get all symbols for the query.
+  private Result queryExactTicker(String ticker) {
+    SortedSet<String> symbols = new TreeSet<String>();
+    symbols.add(ticker);
+    return getQuotes(symbols, new DefaultRange(0, 1));
+  }
+
+  private Result queryFavorites(Range favoritesRange) {
     PlayerStatus player = ensurePlayer();
-    List<String> symbols = getTickers(query, queryPattern, matchNames);
+    SortedSet<String> symbols = new TreeSet<String>();
 
-    if (symbols.size() == 0) {
-      return new Result(new StockQuoteList(0), 0);
+    Pattern favoritesPattern = player.getFavoritesPattern();
+    if (favoritesPattern != null) {
+      getTickersBySymbolRegex(favoritesPattern, symbols);
     }
+    
+    return getQuotes(symbols, favoritesRange);
+  }
 
-    int start = range.getStart();
-    int end = Math.min(start + range.getLength(), symbols.size());
-
-    // Get the symbols that are in range.
-    Set<String> symbolsInRange = new HashSet<String>();
-    if (end > start) {
-      symbolsInRange.addAll(symbols.subList(start, end));
-    }
-
-    // Build the URL string.
-    StringBuilder sb = new StringBuilder(
-        "http://www.google.com/finance/info?client=ig&q=");
-    boolean first = true;
-    for (String symbol : symbolsInRange) {
-      if (!first) {
-        sb.append(',');
-      }
-      sb.append(symbol);
-      first = false;
-    }
-
-    if (first) {
-      // No symbols
-      return new Result(new StockQuoteList(0), 0);
-    }
-
-    // Send the request.
-    String content = "";
-    try {
-      String urlString = sb.toString();
-      URL url = new URL(urlString);
-      InputStream urlInputStream = url.openStream();
-      Scanner contentScanner = new Scanner(urlInputStream, "UTF-8");
-      if (contentScanner.hasNextLine()) {
-        // See
-        // http://weblogs.java.net/blog/pat/archive/2004/10/stupid_scanner_1.html
-        content = contentScanner.useDelimiter("\\A").next();
-      }
-
-      // System.out.println(content);
-    } catch (MalformedURLException mue) {
-      System.err.println(mue);
-    } catch (IOException ioe) {
-      System.err.println(ioe);
-    }
-
-    // Parse response.
-    Map<String, StockQuote> priceMap = new HashMap<String, StockQuote>();
-    Matcher matcher = QUOTE_PATTERN.matcher(content);
-    while (matcher.find()) {
-      String group = matcher.group();
-
-      String symbol = null;
-      String price = null;
-      String change = null;
-
-      Matcher dataMatcher = DATA_PATTERN.matcher(group);
-      while (dataMatcher.find()) {
-        String tag = dataMatcher.group(1);
-        String data = dataMatcher.group(2);
-        if (tag.equals("t")) {
-          symbol = data;
-        } else if (tag.equals("l_cur")) {
-          price = data;
-        } else if (tag.equals("c")) {
-          change = data;
-        }
-      }
-
-      if (symbol != null && price != null) {
-        int iprice = 0;
-        try {
-          iprice = (int) (Double.parseDouble(price) * 100);
-          String name = companyNamesBySymbol.get(symbol);
-          Integer sharesOwned = player.getSharesOwned(symbol);
-          boolean favorite = player.isFavorite(symbol);
-          int totalPaid = player.getAverageCostBasis(symbol);
-          priceMap.put(symbol, new StockQuote(symbol, name, iprice, change,
-              sharesOwned == null ? 0 : sharesOwned.intValue(), favorite,
-                  totalPaid));
-        } catch (NumberFormatException e) {
-          System.out.println("Bad price " + price + " for symbol " + symbol);
-        }
-      }
-    }
-
-    // Convert the price map to a StockQuoteList.
-    StockQuoteList toRet = new StockQuoteList(start);
-    for (int i = start; i < end; i++) {
-      String symbol = symbols.get(i);
-      StockQuote quote = priceMap.get(symbol);
-      if (quote == null) {
-        System.out.println("Bad symbol " + symbol);
-      } else {
-        toRet.add(quote);
-      }
-    }
-
-    return new Result(toRet, symbols.size());
+  private Result queryTickerRegex(Pattern pattern, Range range) {
+    SortedSet<String> symbols = new TreeSet<String>();
+    getTickersBySymbolRegex(pattern, symbols);
+    return getQuotes(symbols, range);
   }
 }

@@ -18,7 +18,6 @@ package com.google.gwt.bikeshed.sample.stocks.client;
 import com.google.gwt.bikeshed.cells.client.ButtonCell;
 import com.google.gwt.bikeshed.cells.client.CheckboxCell;
 import com.google.gwt.bikeshed.cells.client.CurrencyCell;
-import com.google.gwt.bikeshed.cells.client.EllipsisCell;
 import com.google.gwt.bikeshed.cells.client.ProfitLossCell;
 import com.google.gwt.bikeshed.cells.client.TextCell;
 import com.google.gwt.bikeshed.list.client.Column;
@@ -62,8 +61,11 @@ public class Columns {
     }
   };
 
+  // TODO - use an ellipsis cell  
+  static HighlightingTextCell nameCell = new HighlightingTextCell();
+
   static Column<StockQuote, String> nameColumn =
-    new Column<StockQuote, String>(new EllipsisCell()) {
+    new Column<StockQuote, String>(nameCell) {
     @Override
     protected String getValue(StockQuote object) {
       return object.getName();

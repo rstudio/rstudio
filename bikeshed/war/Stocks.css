@@ -30,7 +30,7 @@ div.gwt-sstree-evenRow {
 }
 
 div.gwt-sstree-oddRow {
-    background-color: rgb(220, 220, 220);
+  background-color: rgb(220, 220, 220);
 }
 
 /** Example rules used by the template application (remove for your app) */
@@ -70,7 +70,7 @@ h1 {
   border-right: 11px solid white;
   border-bottom: 11px solid white;
   -webkit-border-image: url(blueborder.png) 8 11 11 8 round round;
-  -gecko-border-image: url(blueborder.png) 8 11 11 8 round round;
+  -moz-border-image: url(blueborder.png) 8 11 11 8 round round;
 }
 
 .gwt-DialogBox .Caption {

@@ -17,9 +17,10 @@ package com.google.gwt.sample.expenses.domain;
 
 /**
  * Used by {@link Storage#persist(Entity)} to ensure relationships are valid
- * (can't point to an Entity with no id);
+ * (can't point to an Entity with no id).
  */
 public class RelationshipValidationVisitor implements EntityVisitor<Void> {
+
   public Void visit(Currency currency) {
     return null;
   }
@@ -50,5 +51,4 @@ public class RelationshipValidationVisitor implements EntityVisitor<Void> {
           to));
     }
   }
-
 }

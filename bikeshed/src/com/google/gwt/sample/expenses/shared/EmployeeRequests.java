@@ -32,8 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * "Generated" from static methods of
- * {@link com.google.gwt.sample.expenses.domain.Employee}.
+ * "Generated" from static methods of {@link com.google.gwt.sample.expenses.domain.Employee}.
  */
 public class EmployeeRequests {
 

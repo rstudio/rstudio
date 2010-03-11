@@ -26,6 +26,9 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
+/**
+ * Widget for favorite stocks.
+ */
 public class FavoritesWidget extends Composite {
 
   interface Binder extends UiBinder<Widget, FavoritesWidget> { }

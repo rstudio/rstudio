@@ -29,6 +29,7 @@ public class StockRequest implements Serializable {
   Range searchRange;
   String sector;
   Range sectorRange;
+
   public StockRequest(String searchQuery, String sector, Range searchRange,
       Range favoritesRange, Range sectorRange) {
     this.searchQuery = searchQuery;

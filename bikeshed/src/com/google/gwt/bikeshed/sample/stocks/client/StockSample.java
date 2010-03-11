@@ -53,6 +53,10 @@ import java.util.Map;
  */
 public class StockSample implements EntryPoint, Updater {
 
+  interface Binder extends UiBinder<Widget, StockSample> { }
+
+  private static final Binder binder = GWT.create(Binder.class);
+
   /**
    * The delay between updates in milliseconds.
    */
@@ -61,24 +65,10 @@ public class StockSample implements EntryPoint, Updater {
   static String getFormattedPrice(int price) {
     return NumberFormat.getCurrencyFormat("USD").format(price / 100.0);
   }
-
-  private final StockServiceAsync dataService = GWT.create(StockService.class);
-
-  private Map<String, ListListModel<Transaction>> transactionListListModelsByTicker =
-    new HashMap<String, ListListModel<Transaction>>();
-  private List<Transaction> transactions;
-
-  private AsyncListModel<StockQuote> favoritesListModel;
-  private AsyncListModel<StockQuote> searchListModel;
-  private ListListModel<Transaction> transactionListModel;
-  private TransactionTreeViewModel treeModel;
-
-  interface Binder extends UiBinder<Widget, StockSample> { }
-  private static final Binder binder = GWT.create(Binder.class);
-
   @UiField Label cashLabel;
-  @UiField Label netWorthLabel;
+
   @UiField FavoritesWidget favoritesWidget;
+  @UiField Label netWorthLabel;
   @UiField StockQueryWidget queryWidget;
   @UiField SideBySideTreeView transactionTree;
 
@@ -86,6 +76,16 @@ public class StockSample implements EntryPoint, Updater {
    * The popup used to purchase stock.
    */
   private BuySellPopup buySellPopup = new BuySellPopup();
+  private final StockServiceAsync dataService = GWT.create(StockService.class);
+
+  private AsyncListModel<StockQuote> favoritesListModel;
+  private AsyncListModel<StockQuote> searchListModel;
+  private Map<String, ListListModel<Transaction>> transactionListListModelsByTicker =
+    new HashMap<String, ListListModel<Transaction>>();
+  private ListListModel<Transaction> transactionListModel;
+  private List<Transaction> transactions;
+
+  private TransactionTreeViewModel treeModel;
 
   /**
    * The timer used to update the stock quotes.
@@ -159,6 +159,65 @@ public class StockSample implements EntryPoint, Updater {
     update();
   }
 
+  /**
+   * Process the {@link StockResponse} from the server.
+   *
+   * @param response the stock response
+   */
+  public void processStockResponse(StockResponse response) {
+    // Update the search list.
+    StockQuoteList searchResults = response.getSearchResults();
+    searchListModel.updateDataSize(response.getNumSearchResults(), true);
+    searchListModel.updateViewData(searchResults.getStartIndex(),
+        searchResults.size(), searchResults);
+
+    // Update the favorites list.
+    updateFavorites(response);
+    updateSector(response);
+
+    // Update available cash.
+    int cash = response.getCash();
+    int netWorth = response.getNetWorth();
+    cashLabel.setText(getFormattedPrice(cash));
+    netWorthLabel.setText(getFormattedPrice(netWorth));
+    buySellPopup.setAvailableCash(cash);
+
+    // Restart the update timer.
+    updateTimer.schedule(UPDATE_DELAY);
+  }
+
+  /**
+   * Set or unset a ticker symbol as a 'favorite'.
+   *
+   * @param ticker the ticker symbol
+   * @param favorite if true, make the stock a favorite
+   */
+  public void setFavorite(String ticker, boolean favorite) {
+    if (favorite) {
+      dataService.addFavorite(ticker, favoritesListModel.getRanges()[0],
+          new AsyncCallback<StockResponse>() {
+        public void onFailure(Throwable caught) {
+          Window.alert("Error adding favorite");
+        }
+
+        public void onSuccess(StockResponse response) {
+          updateFavorites(response);
+        }
+      });
+    } else {
+      dataService.removeFavorite(ticker, favoritesListModel.getRanges()[0],
+          new AsyncCallback<StockResponse>() {
+        public void onFailure(Throwable caught) {
+          Window.alert("Error removing favorite");
+        }
+
+        public void onSuccess(StockResponse response) {
+          updateFavorites(response);
+        }
+      });
+    }
+  }
+  
   public void transact(Transaction t) {
     dataService.transact(t, new AsyncCallback<Transaction>() {
       public void onFailure(Throwable caught) {
@@ -194,38 +253,6 @@ public class StockSample implements EntryPoint, Updater {
   }
 
   /**
-   * Set or unset a ticker symbol as a 'favorite'.
-   *
-   * @param ticker the ticker symbol
-   * @param favorite if true, make the stock a favorite
-   */
-  public void setFavorite(String ticker, boolean favorite) {
-    if (favorite) {
-      dataService.addFavorite(ticker, favoritesListModel.getRanges()[0],
-          new AsyncCallback<StockResponse>() {
-        public void onFailure(Throwable caught) {
-          Window.alert("Error adding favorite");
-        }
-
-        public void onSuccess(StockResponse response) {
-          updateFavorites(response);
-        }
-      });
-    } else {
-      dataService.removeFavorite(ticker, favoritesListModel.getRanges()[0],
-          new AsyncCallback<StockResponse>() {
-        public void onFailure(Throwable caught) {
-          Window.alert("Error removing favorite");
-        }
-
-        public void onSuccess(StockResponse response) {
-          updateFavorites(response);
-        }
-      });
-    }
-  }
-  
-  /**
    * Request data from the server using the last query string.
    */
   public void update() {
@@ -248,6 +275,7 @@ public class StockSample implements EntryPoint, Updater {
     }
 
     String searchQuery = queryWidget.getSearchQuery();
+    
     StockRequest request = new StockRequest(searchQuery,
         sectorListModel != null ? sectorListModel.getSector() : null,
         searchRanges[0],
@@ -271,46 +299,6 @@ public class StockSample implements EntryPoint, Updater {
     });
   }
 
-  // Hack - walk the transaction tree to find the current viewed sector
-  private String getSectorName() {
-    int children = transactionTree.getRootNode().getChildCount();
-    for (int i = 0; i < children; i++) {
-      TreeNode<?> childNode = transactionTree.getRootNode().getChildNode(i);
-      if (childNode.isOpen()) {
-        return (String) childNode.getValue();
-      }
-    }
-    
-    return null;
-  }
-
-  /**
-   * Process the {@link StockResponse} from the server.
-   *
-   * @param response the stock response
-   */
-  public void processStockResponse(StockResponse response) {
-    // Update the search list.
-    StockQuoteList searchResults = response.getSearchResults();
-    searchListModel.updateDataSize(response.getNumSearchResults(), true);
-    searchListModel.updateViewData(searchResults.getStartIndex(),
-        searchResults.size(), searchResults);
-
-    // Update the favorites list.
-    updateFavorites(response);
-    updateSector(response);
-
-    // Update available cash.
-    int cash = response.getCash();
-    int netWorth = response.getNetWorth();
-    cashLabel.setText(getFormattedPrice(cash));
-    netWorthLabel.setText(getFormattedPrice(netWorth));
-    buySellPopup.setAvailableCash(cash);
-
-    // Restart the update timer.
-    updateTimer.schedule(UPDATE_DELAY);
-  }
-
   public void updateFavorites(StockResponse response) {
     // Update the favorites list.
     StockQuoteList favorites = response.getFavorites();
@@ -324,9 +312,11 @@ public class StockSample implements EntryPoint, Updater {
     StockQuoteList sectorList = response.getSector();
     if (sectorList != null) {
       SectorListModel sectorListModel = treeModel.getSectorListModel(getSectorName());
-      sectorListModel.updateDataSize(response.getNumSector(), true);
-      sectorListModel.updateViewData(sectorList.getStartIndex(),
-          sectorList.size(), sectorList);
+      if (sectorListModel != null) {
+        sectorListModel.updateDataSize(response.getNumSector(), true);
+        sectorListModel.updateViewData(sectorList.getStartIndex(),
+            sectorList.size(), sectorList);
+      }
     }
   }
 
@@ -343,5 +333,18 @@ public class StockSample implements EntryPoint, Updater {
   @UiFactory
   SideBySideTreeView createTransactionTree() {
     return new SideBySideTreeView(treeModel, null, 200, 200);
+  }
+
+  // Hack - walk the transaction tree to find the current viewed sector
+  private String getSectorName() {
+    int children = transactionTree.getRootNode().getChildCount();
+    for (int i = 0; i < children; i++) {
+      TreeNode<?> childNode = transactionTree.getRootNode().getChildNode(i);
+      if (childNode.isOpen()) {
+        return (String) childNode.getValue();
+      }
+    }
+    
+    return null;
   }
 }
