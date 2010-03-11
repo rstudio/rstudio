@@ -430,46 +430,6 @@ public class I18NTest extends GWTTestCase {
     assertTrue(s.contains("a"));
     assertTrue(s.contains("b"));
     assertFalse(s.contains("c"));
-    String nonExistentKey = "nonExistentKey";
-    try {
-      d.get(nonExistentKey);
-      fail("should have thrown a MissingResourceException");
-    } catch (MissingResourceException ex) {
-      assertTrue(ex.getMessage(), ex.getMessage().indexOf(
-          "accessed keys: " + nonExistentKey + ",d,formattedMessage") != -1);
-    }
-
-    /*
-     * verify that accessedKeys maintains at least the last 30 entries in the
-     * correct order. Steps involved: (i) create expectedKeys array, (ii) access
-     * the dictionary, (iii) confirm that accessedKeys is maintained correctly.
-     */
-    // expectedKeys: nonExistentKey, 9 a's, 9 b's, 9 d's, 2 formattedMessage's
-    StringBuffer expectedKeys = new StringBuffer();
-    expectedKeys.append(nonExistentKey);
-    for (String key : new String[] {"a", "b", "d"}) {
-      for (int i = 0; i < 9; i++) {
-        expectedKeys.append(",");
-        expectedKeys.append(key);
-      }
-    }
-    expectedKeys.append(",formattedMessage,formattedMessage");
-    // access 360 keys. last 30 should match expectedKeys
-    for (int i = 0; i < 10; i++) {
-      for (String key : new String[] {"formattedMessage", "d", "b", "a"}) {
-        for (int j = 0; j < 9; j++) {
-          d.get(key);
-        }
-      }
-    }
-    try {
-      d.get(nonExistentKey);
-      fail("should have thrown a MissingResourceException");
-    } catch (MissingResourceException ex) {
-      assertTrue(ex.getMessage(), ex.getMessage().indexOf(
-          "accessed keys: " + expectedKeys.toString()) != -1);
-    }
-
     Collection<String> s2 = d.values();
     assertTrue(s2.contains("A"));
     assertTrue(s2.contains("B"));

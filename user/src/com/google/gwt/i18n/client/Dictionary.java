@@ -102,7 +102,6 @@ public final class Dictionary {
         null, name);
   }
 
-  private JavaScriptObject accessedKeys;
   private JavaScriptObject dict;
 
   private String label;
@@ -124,12 +123,7 @@ public final class Dictionary {
           "Cannot find JavaScript object with the name '" + name + "'", name,
           null);
     }
-    createAccessedKeysArray();
   }
-
-  private native void createAccessedKeysArray() /*-{
-    this.@com.google.gwt.i18n.client.Dictionary::accessedKeys = new Array();
-  }-*/;
 
   /**
    * Get the value associated with the given Dictionary key.
@@ -147,12 +141,6 @@ public final class Dictionary {
     key = String(key);
     var map = this.@com.google.gwt.i18n.client.Dictionary::dict;
     var value = map[key];
-    var keys = this.@com.google.gwt.i18n.client.Dictionary::accessedKeys;
-    keys.unshift(key);
-    // only keep the last 30 elements. Shrink it when array exceeds 60
-    if (keys.length > 60) {
-      keys.splice(30);
-    }
     if (value == null || !map.hasOwnProperty(key)) {
       this.@com.google.gwt.i18n.client.Dictionary::resourceError(Ljava/lang/String;)(key);
     }
@@ -192,7 +180,6 @@ public final class Dictionary {
     if (s.size() < MAX_KEYS_TO_SHOW) {
       error += "\n keys found: " + s;
     }
-    error += "\n accessed keys: " + accessedKeys;
     throw new MissingResourceException(error, this.toString(), key);
   }
 
