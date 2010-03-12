@@ -21,6 +21,10 @@ import com.google.gwt.sample.expenses.shared.Employee;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
 import com.google.gwt.sample.expenses.shared.Report;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.valuestore.shared.Values;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -46,6 +50,17 @@ public class Expenses implements EntryPoint {
     final EmployeeList employees = new EmployeeList(shell.users);
 
     root.add(shell);
+    
+    shell.setListener(new Shell.Listener() {
+      public void setFirstPurpose(String purpose) {
+        ValuesImpl<Report> reportValues = (ValuesImpl<Report> )shell.getValues().get(0);
+        reportValues.setString(Report.PURPOSE, purpose);
+        List<Values<Report>> deltaValueStore = new ArrayList<Values<Report>>();
+        deltaValueStore.add(reportValues);
+        
+        requestFactory.syncRequest(deltaValueStore).fire();
+      }
+    });
 
     employees.setListener(new EmployeeList.Listener() {
       public void onEmployeeSelected(Employee e) {

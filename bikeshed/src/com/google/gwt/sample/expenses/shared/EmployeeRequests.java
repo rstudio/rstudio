@@ -60,6 +60,8 @@ public class EmployeeRequests {
             if (200 == response.getStatusCode()) {
               String text = response.getText();
               JsArray<ValuesImpl<Employee>> valueArray = ValuesImpl.arrayFromJson(text);
+              // Handy for FireBug snooping
+//              Document.get().getBody().setPropertyJSO("foo", valueArray);
               List<Values<Employee>> valueList = new ArrayList<Values<Employee>>(
                   valueArray.length());
               for (int i = 0; i < valueArray.length(); i++) {
@@ -85,7 +87,7 @@ public class EmployeeRequests {
 
         // values.subscribe(watcher, future, properties);
       }
-
+      
       public EntityListRequest<Employee> forProperty(
           Property<Employee, ?> property) {
         return this;

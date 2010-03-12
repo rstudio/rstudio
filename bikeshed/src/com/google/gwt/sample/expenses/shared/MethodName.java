@@ -19,5 +19,5 @@ package com.google.gwt.sample.expenses.shared;
  * Represents the MethodName.
  */
 public enum MethodName {
-  FIND_ALL_EMPLOYEES, FIND_EMPLOYEE, FIND_REPORTS_BY_EMPLOYEE,
+  FIND_ALL_EMPLOYEES, FIND_EMPLOYEE, FIND_REPORTS_BY_EMPLOYEE, SYNC,
 }

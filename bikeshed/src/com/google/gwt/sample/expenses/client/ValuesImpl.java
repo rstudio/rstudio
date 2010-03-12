@@ -60,6 +60,10 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
     return nativeGet(property);
   }
 
+  public native void setString(Property<T, String> property, String value) /*-{
+    this[property.@com.google.gwt.valuestore.shared.Property::getName()()] = value;
+  }-*/;
+
   public native T getPropertyHolder() /*-{
     return this.propertyHolder;
   }-*/;
@@ -83,5 +87,18 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
 
   private native <V, P extends Property<T, V>> V nativeGet(P property) /*-{
     return this[property.@com.google.gwt.valuestore.shared.Property::getName()()];
+  }-*/;
+
+  /**
+   * @return
+   */
+  public native String toJson() /*-{
+    var output = "";
+    for (property in this) { 
+      if (property != 'propertyHolder') {
+        output += '"' + property + '": ' + '"' + this[property] + '"' + '; ';
+      }
+    }
+    return output;
   }-*/;
 }

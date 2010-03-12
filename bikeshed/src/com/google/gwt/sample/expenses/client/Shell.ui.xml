@@ -1,31 +1,29 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder 
-  xmlns:ui='urn:ui:com.google.gwt.uibinder'
-  xmlns:g='urn:import:com.google.gwt.user.client.ui' 
-  xmlns:e='urn:import:com.google.gwt.sample.expenses.client'>
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui' xmlns:e='urn:import:com.google.gwt.sample.expenses.client'>
 
   <ui:style>
     .disabled {
-      color: gray;
-     }
-  	 
+     color: gray;
+    }
+    
     table.reports td {
-      border-width: 1px;
-      padding: 1px;
-      border-style: solid;
-      background-color: white;
+     border-width: 1px;
+     padding: 1px;
+     border-style: solid;
+     background-color: white;
     }
     
     .error {
-      position: absolute;
-      width: 100%;
-      text-align: center;
-      background-color: red;
+     position: absolute;
+     width: 100%;
+     text-align: center;
+     background-color: red;
     }
     
     .users {
-      position: absolute;
-      right: 0;
+     position: absolute;
+     right: 0;
     }
   </ui:style>
 
@@ -57,6 +55,12 @@
             <th align='left'>Purpose</th>
           </tr>
         </table>
+
+        <div>
+          Edit purpose of first report:
+          <g:TextBox ui:field='purpose' enabled='false'/>
+          <g:Button ui:field='save' enabled='false'>Save</g:Button>
+        </div>
       </g:HTMLPanel>
     </g:center>
   </g:DockLayoutPanel>

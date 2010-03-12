@@ -22,13 +22,18 @@ import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.sample.expenses.shared.Report;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
@@ -41,9 +46,14 @@ import java.util.List;
  * refactored into proper MVP pieces.
  */
 public class Shell extends Composite implements HasValueList<Values<Report>> {
-
-  interface ShellUiBinder extends UiBinder<Widget, Shell> {
+  interface Listener {
+    void setFirstPurpose(String purpose);
   }
+  
+  interface ShellUiBinder extends UiBinder<Widget, Shell> {
+  } 
+
+  private Listener listener;
 
   private static ShellUiBinder uiBinder = GWT.create(ShellUiBinder.class);
   @UiField
@@ -54,6 +64,11 @@ public class Shell extends Composite implements HasValueList<Values<Report>> {
   TableRowElement header;
   @UiField
   ListBox users;
+  @UiField
+  TextBox purpose;
+  @UiField
+  Button save;
+  private List<Values<Report>> values;
 
   public Shell() {
     initWidget(uiBinder.createAndBindUi(this));
@@ -64,12 +79,38 @@ public class Shell extends Composite implements HasValueList<Values<Report>> {
     throw new UnsupportedOperationException();
   }
 
+  public List<Values<Report>> getValues() {
+    return values;
+  }
+  
+  @UiHandler("purpose") 
+  public void onPurposeChange(ValueChangeEvent<String> e) {
+    listener.setFirstPurpose(e.getValue());
+  }
+  
+  @UiHandler("save") 
+  public void onSaveClick(ClickEvent e) {
+    listener.setFirstPurpose(purpose.getValue());
+  }
+  
+  public void setListener(Listener listener) {
+    this.listener = listener;
+  }
+  
   public void setValueList(List<Values<Report>> newValues) {
+    this.values = newValues;
     int r = 1; // skip header
     NodeList<TableRowElement> tableRows = table.getRows();
+    purpose.setText("");
+    boolean enabled = newValues.size() > 0;
+    purpose.setEnabled(enabled);
+    save.setEnabled(enabled);
     for (int i = 0; i < newValues.size(); i++) {
       Values<Report> valueRow = newValues.get(i);
 
+      if (i == 0) {
+        purpose.setText(valueRow.get(Report.PURPOSE));
+      }
       if (r < tableRows.getLength()) {
         reuseRow(r, tableRows, valueRow);
       } else {
@@ -101,7 +142,7 @@ public class Shell extends Composite implements HasValueList<Values<Report>> {
   }
 
   private <T> String renderDate(Values<T> values, Property<T, Date> property) {
-    return DateTimeFormat.getShortDateTimeFormat().format(values.get(property));
+    return DateTimeFormat.getShortDateFormat().format(values.get(property));
   }
 
   /**
