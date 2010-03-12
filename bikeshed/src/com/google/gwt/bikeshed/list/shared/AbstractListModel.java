@@ -151,6 +151,10 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
   protected void updateViewData(int start, int length, List<T> values) {
     int end = start + length;
     for (DefaultListRegistration reg : registrations) {
+      // Inform the views if there is no data
+      if (values.size() == 0) {
+        reg.getHandler().onSizeChanged(new SizeChangeEvent(0, true));
+      }
       int curStart = reg.getStart();
       int curLength = reg.getLength();
       int curEnd = curStart + curLength;

@@ -9,7 +9,7 @@
 
   <g:DockLayoutPanel unit='EM'>
     <g:north size='2'>
-      <g:Label styleName='{common.header}'>Everyone Else</g:Label>
+      <g:Label styleName='{common.header}'>Player Status</g:Label>
     </g:north>
 
     <g:center>

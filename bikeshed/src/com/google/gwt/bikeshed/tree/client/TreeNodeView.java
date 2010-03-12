@@ -425,6 +425,10 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
       }
 
       public void onSizeChanged(SizeChangeEvent event) {
+        if (event.getSize() == 0 && event.isExact()) {
+          // Close the node
+          setState(false, false);
+        }
       }
     });
     listReg.setRangeOfInterest(0, 100);

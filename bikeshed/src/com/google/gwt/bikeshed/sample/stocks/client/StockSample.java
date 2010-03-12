@@ -187,12 +187,7 @@ public class StockSample implements EntryPoint, Updater {
     // Update the favorites list.
     updateFavorites(response);
     updateSector(response);
-
-    // Update the player scores.
-    List<PlayerInfo> playerScores = response.getPlayers();
-    int numPlayers = playerScores.size();
-    playerScoresListModel.updateDataSize(numPlayers, true);
-    playerScoresListModel.updateViewData(0, numPlayers, playerScores);
+    updatePlayerScores(response);
 
     // Update available cash.
     int cash = response.getCash();
@@ -226,6 +221,7 @@ public class StockSample implements EntryPoint, Updater {
 
             public void onSuccess(StockResponse response) {
               updateFavorites(response);
+              updatePlayerScores(response);
             }
           });
     } else {
@@ -237,6 +233,7 @@ public class StockSample implements EntryPoint, Updater {
 
             public void onSuccess(StockResponse response) {
               updateFavorites(response);
+              updatePlayerScores(response);
             }
           });
     }
@@ -317,27 +314,6 @@ public class StockSample implements EntryPoint, Updater {
     });
   }
 
-  public void updateFavorites(StockResponse response) {
-    // Update the favorites list.
-    StockQuoteList favorites = response.getFavorites();
-    favoritesListModel.updateDataSize(response.getNumFavorites(), true);
-    favoritesListModel.updateViewData(favorites.getStartIndex(),
-        favorites.size(), favorites);
-  }
-
-  public void updateSector(StockResponse response) {
-    // Update the sector list.
-    StockQuoteList sectorList = response.getSector();
-    if (sectorList != null) {
-      SectorListModel sectorListModel = treeModel.getSectorListModel(getSectorName());
-      if (sectorListModel != null) {
-        sectorListModel.updateDataSize(response.getNumSector(), true);
-        sectorListModel.updateViewData(sectorList.getStartIndex(),
-            sectorList.size(), sectorList);
-      }
-    }
-  }
-
   @UiFactory
   FavoritesWidget createFavoritesWidget() {
     return new FavoritesWidget(favoritesListModel);
@@ -392,5 +368,34 @@ public class StockSample implements EntryPoint, Updater {
     }
     Window.alert(displayMessage);
     return true;
+  }
+
+  private void updateFavorites(StockResponse response) {
+    // Update the favorites list.
+    StockQuoteList favorites = response.getFavorites();
+    favoritesListModel.updateDataSize(response.getNumFavorites(), true);
+    favoritesListModel.updateViewData(favorites.getStartIndex(),
+        favorites.size(), favorites);
+  }
+
+  private void updatePlayerScores(StockResponse response) {
+    // Update the player scores.
+    List<PlayerInfo> playerScores = response.getPlayers();
+    int numPlayers = playerScores.size();
+    playerScoresListModel.updateDataSize(numPlayers, true);
+    playerScoresListModel.updateViewData(0, numPlayers, playerScores);
+  }
+
+  private void updateSector(StockResponse response) {
+    // Update the sector list.
+    StockQuoteList sectorList = response.getSector();
+    if (sectorList != null) {
+      SectorListModel sectorListModel = treeModel.getSectorListModel(getSectorName());
+      if (sectorListModel != null) {
+        sectorListModel.updateDataSize(response.getNumSector(), true);
+        sectorListModel.updateViewData(sectorList.getStartIndex(),
+            sectorList.size(), sectorList);
+      }
+    }
   }
 }

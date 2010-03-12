@@ -128,7 +128,9 @@ public interface TreeViewModel {
    * Check if the value is known to be a leaf node.
    * 
    * @param value the value at the node
-   * @return true if the node is known to be a leaf node, false if not
+   * @param treeNode the {@link TreeNode} that contains the value
+   *
+   * @return true if the node is known to be a leaf node, false otherwise
    */
-  boolean isLeaf(Object value);
+  boolean isLeaf(Object value, TreeNode<?> treeNode);
 }

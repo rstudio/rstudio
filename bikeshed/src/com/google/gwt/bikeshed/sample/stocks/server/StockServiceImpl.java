@@ -147,7 +147,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       return null;
     }
   }
-
+  
   /**
    * A mapping of usernames to {@link PlayerStatus}.
    */
@@ -158,6 +158,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     PlayerStatus player = ensurePlayer();
     player.addFavorite(ticker);
     Result favorites = queryFavorites(favoritesRange);
+    player.addStatus(player.getDisplayName() + " added " + ticker + " to favorites");
     return createStockResponse(player, null, favorites, null, null);
   }
 
@@ -197,6 +198,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     PlayerStatus player = ensurePlayer();
     player.removeFavorite(ticker);
     Result favorites = queryFavorites(favoritesRange);
+    player.addStatus(player.getDisplayName() + " removed " + ticker + " from favorites");
     return createStockResponse(player, null, favorites, null, null);
   }
 
@@ -217,10 +219,16 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     // Perform the transaction with the user.
     int quantity = transaction.getQuantity();
     int price = quote.getPrice();
+    
+    PlayerStatus player = ensurePlayer();
     if (transaction.isBuy()) {
-      ensurePlayer().buy(ticker, quantity, price);
+      player.buy(ticker, quantity, price);
+      player.addStatus(player.getDisplayName() + " bought " + quantity +
+          " share" + ((quantity == 1) ? "" : "s") + " of " + ticker);
     } else {
-      ensurePlayer().sell(ticker, quantity, price);
+      player.sell(ticker, quantity, price);
+      player.addStatus(player.getDisplayName() + " sold " + quantity +
+          " share" + ((quantity == 1) ? "" : "s") + " of " + ticker);
     }
 
     return new Transaction(transaction.isBuy(), ticker, quantity, price);
@@ -253,11 +261,11 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     player.setStockValue(favorites.quotes.getValue());
 
     // Create a stock response.
-    List<PlayerInfo> playerScores = new ArrayList<PlayerInfo>();
+    List<PlayerInfo> playerInfo = new ArrayList<PlayerInfo>();
     for (PlayerStatus curPlayer : players.values()) {
-      playerScores.add(curPlayer.copy());
+      playerInfo.add(curPlayer.copy());
     }
-    Collections.sort(playerScores, new Comparator<PlayerInfo>() {
+    Collections.sort(playerInfo, new Comparator<PlayerInfo>() {
       public int compare(PlayerInfo o1, PlayerInfo o2) {
         // Reverse sort so top player is first.
         return o2.getNetWorth() - o1.getNetWorth();
@@ -266,7 +274,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     StockResponse response = new StockResponse(player.copy(),
         searchResults.quotes, favorites.quotes, sectorName != null ? sectorName
             : null, sectorResults.quotes, searchResults.numRows,
-        favorites.numRows, sectorResults.numRows, playerScores);
+        favorites.numRows, sectorResults.numRows, playerInfo);
 
     return response;
   }

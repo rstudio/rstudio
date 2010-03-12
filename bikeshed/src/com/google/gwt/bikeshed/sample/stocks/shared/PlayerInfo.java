@@ -16,11 +16,15 @@
 package com.google.gwt.bikeshed.sample.stocks.shared;
 
 import java.io.Serializable;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Information about a single player.
  */
 public class PlayerInfo implements Serializable {
+  
+  private static final int MAX_STATUS = 5;
 
   /**
    * The initial amount of cash that the player starts with, in cents.
@@ -37,6 +41,8 @@ public class PlayerInfo implements Serializable {
    */
   private String name;
 
+  private LinkedList<String> status;
+  
   /**
    * The net worth of the player in cents.
    */
@@ -51,11 +57,22 @@ public class PlayerInfo implements Serializable {
    */
   PlayerInfo() {
   }
+  
+  public void addStatus(String message) {
+    if (status == null) {
+      status = new LinkedList<String>();
+    }
+    status.add(message);
+    if (status.size() > MAX_STATUS) {
+      status.removeFirst();
+    }
+  }
 
   public PlayerInfo copy() {
     PlayerInfo copy = new PlayerInfo(name);
     copy.setCash(cash);
     copy.setStockValue(stockValue);
+    copy.setStatus(status);
     return copy;
   }
 
@@ -100,6 +117,10 @@ public class PlayerInfo implements Serializable {
     return cash + stockValue;
   }
 
+  public List<String> getStatus() {
+    return status;
+  }
+  
   /**
    * Get the value of this player's stock.
    * 
@@ -125,5 +146,9 @@ public class PlayerInfo implements Serializable {
    */
   protected void setStockValue(int value) {
     this.stockValue = value;
+  }
+
+  private void setStatus(List<String> status) {
+    this.status = status == null ? null : new LinkedList<String>(status);
   }
 }

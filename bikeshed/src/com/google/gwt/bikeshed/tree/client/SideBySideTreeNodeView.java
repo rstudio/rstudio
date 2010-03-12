@@ -88,7 +88,7 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
       sb.append("px;\">");
       if (savedViews.get(idx) != null) {
         sb.append(tree.getOpenImageHtml(imageLeft));
-      } else if (model.isLeaf(childValue)) {
+      } else if (model.isLeaf(childValue, this)) {
         sb.append(LEAF_IMAGE);
       } else {
         sb.append(tree.getClosedImageHtml(imageLeft));

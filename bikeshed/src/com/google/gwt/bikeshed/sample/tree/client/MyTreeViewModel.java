@@ -103,7 +103,7 @@ public class MyTreeViewModel implements TreeViewModel {
     throw new IllegalArgumentException("Unsupported object type: " + type);
   }
 
-  public boolean isLeaf(Object value) {
+  public boolean isLeaf(Object value, TreeNode<?> parentNode) {
     return value instanceof Integer;
   }
 

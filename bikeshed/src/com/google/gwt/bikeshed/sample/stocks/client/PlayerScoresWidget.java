@@ -26,6 +26,8 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
+
 /**
  * Widget to display player scores.
  */
@@ -49,6 +51,14 @@ public class PlayerScoresWidget extends Composite {
       sb.append(StockSample.getFormattedPrice(value.getNetWorth()));
       sb.append("<br><b>Cash: </b>");
       sb.append(StockSample.getFormattedPrice(value.getCash()));
+      
+      List<String> status = value.getStatus();
+      if (status != null) {
+        for (String s : status) {
+          sb.append("<br>");
+          sb.append(s);
+        }
+      }
       sb.append("</div>");
     }
   }

@@ -34,12 +34,12 @@ public class StockResponse implements Serializable {
   private StockQuoteList sector;
   private String sectorName;
   private PlayerInfo player;
-  private List<PlayerInfo> players;
+  private List<PlayerInfo> playerInfo;
 
   public StockResponse(PlayerInfo player, StockQuoteList searchResults,
       StockQuoteList favorites, String sectorName, StockQuoteList sector,
       int numSearchResults, int numFavorites, int numSector,
-      List<PlayerInfo> players) {
+      List<PlayerInfo> playerInfo) {
     this.player = player;
     this.searchResults = searchResults;
     this.favorites = favorites;
@@ -48,7 +48,7 @@ public class StockResponse implements Serializable {
     this.numSearchResults = numSearchResults;
     this.numFavorites = numFavorites;
     this.numSector = numSector;
-    this.players = players;
+    this.playerInfo = playerInfo;
   }
 
   /**
@@ -90,7 +90,7 @@ public class StockResponse implements Serializable {
    * @return the ordered list of all players
    */
   public List<PlayerInfo> getPlayers() {
-    return players;
+    return playerInfo;
   }
 
   public StockQuoteList getSearchResults() {

@@ -93,7 +93,6 @@ class TransactionTreeViewModel implements TreeViewModel {
     this.transactionListListModelsByTicker = transactionListListModelsByTicker;
   }
   
-  @SuppressWarnings("unused")
   public <T> NodeInfo<?> getNodeInfo(T value, final TreeNode<T> treeNode) {
     if (value == null) {
       return new TreeViewModel.DefaultNodeInfo<String>(topLevelListListModel,
@@ -155,8 +154,12 @@ class TransactionTreeViewModel implements TreeViewModel {
     return sectorListModels.get(value);
   }
 
-  public boolean isLeaf(Object value) {
-    return value instanceof Transaction ||
-      "Buy".equals(value) || "Sell".equals(value);
+  public boolean isLeaf(Object value, final TreeNode<?> parentNode) {
+    if (value instanceof Transaction ||
+      "Buy".equals(value) || "Sell".equals(value)) {
+      return true;
+    }
+    
+    return false;
   }
 }
