@@ -60,6 +60,13 @@ h1 {
   color: red;
 }
 
+.playerScoreBox {
+  border: 1px solid #777;
+  padding:3px;
+  background: #eee;
+  margin-bottom: 5px;
+}
+
 /** Set ids using widget.getElement().setId("idOfElement") */
 #closeButton {
   margin: 15px 6px 6px;

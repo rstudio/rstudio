@@ -15,6 +15,8 @@
  */
 package com.google.gwt.bikeshed.sample.stocks.server;
 
+import com.google.gwt.bikeshed.sample.stocks.shared.PlayerInfo;
+
 import java.util.HashMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
@@ -22,12 +24,7 @@ import java.util.regex.Pattern;
 /**
  * Game state for a single player.
  */
-public class PlayerStatus {
-
-  /**
-   * The initial amount of cash that the player starts with, in cents.
-   */
-  private static final int INITIAL_CASH = 10000 * 100;
+public class PlayerStatus extends PlayerInfo {
 
   /**
    * An impossible stock ticker.
@@ -35,15 +32,10 @@ public class PlayerStatus {
   private static final String IMPOSSIBLE_TICKER_SYMBOL = "XXXXXXXXXX";
 
   /**
-   * The amount of cash that the player has.
-   */
-  private int cash = INITIAL_CASH;
-
-  /**
    * This players favorite stocks.
    */
   private TreeSet<String> favorites = new TreeSet<String>();
-  
+
   /**
    * A precompiled version of the favorites query.
    */
@@ -58,13 +50,14 @@ public class PlayerStatus {
    * The number of shares owned for each symbol.
    */
   private HashMap<String, Integer> sharesOwnedBySymbol = new HashMap<String, Integer>();
-  
+
   /**
    * The total amount paid for each symbol.
    */
   private HashMap<String, Double> averagePriceBySymbol = new HashMap<String, Double>();
 
-  public PlayerStatus() {
+  public PlayerStatus(String name) {
+    super(name);
     generateFavoritesQuery();
   }
 
@@ -89,6 +82,7 @@ public class PlayerStatus {
   public void buy(String ticker, int quantity, int price)
       throws IllegalArgumentException {
     // Verify that the player can afford the stock.
+    int cash = getCash();
     int totalPrice = price * quantity;
     if (cash < totalPrice) {
       throw new IllegalArgumentException("You cannot afford that much stock");
@@ -98,16 +92,16 @@ public class PlayerStatus {
     int current = getSharesOwned(ticker);
     double averagePrice = getAveragePrice(ticker);
     double totalPaid = averagePrice * current + totalPrice;
-    
+
     // Update case and shares owned
     current += quantity;
-    cash -= totalPrice;
+    setCash(cash - totalPrice);
     sharesOwnedBySymbol.put(ticker, current);
-    
+
     // Update average price
     averagePrice = totalPaid / current;
     averagePriceBySymbol.put(ticker, averagePrice);
-    
+
     // Add this stock to the favorites list.
     addFavorite(ticker);
   }
@@ -115,7 +109,7 @@ public class PlayerStatus {
   /**
    * Returns the total cost of the currently owned shared, using an average cost
    * basis method.
-   *
+   * 
    * @param ticker the stock ticker
    */
   public int getAverageCostBasis(String ticker) {
@@ -125,15 +119,6 @@ public class PlayerStatus {
   public double getAveragePrice(String ticker) {
     Double current = averagePriceBySymbol.get(ticker);
     return current == null ? 0.0 : current;
-  }
-
-  /**
-   * Get the player's current cash amount.
-   * 
-   * @return the cash amount
-   */
-  public int getCash() {
-    return cash;
   }
 
   /**
@@ -164,7 +149,7 @@ public class PlayerStatus {
     Integer current = sharesOwnedBySymbol.get(ticker);
     return current == null ? 0 : current;
   }
-  
+
   /**
    * Check if the stock ticker is in the favorites list.
    * 
@@ -204,15 +189,21 @@ public class PlayerStatus {
 
     // Perform the transaction.
     int totalPrice = price * quantity;
-    cash += totalPrice;
+    setCash(getCash() + totalPrice);
+
     current -= quantity;
     sharesOwnedBySymbol.put(ticker, current);
-    
+
     if (current == 0) {
       sharesOwnedBySymbol.remove(ticker);
       averagePriceBySymbol.remove(ticker);
       removeFavorite(ticker);
     }
+  }
+
+  @Override
+  public void setStockValue(int value) {
+    super.setStockValue(value);
   }
 
   /**

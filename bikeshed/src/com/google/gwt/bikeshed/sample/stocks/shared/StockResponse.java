@@ -16,6 +16,7 @@
 package com.google.gwt.bikeshed.sample.stocks.shared;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * A response to a request for stock data.
@@ -25,7 +26,6 @@ public class StockResponse implements Serializable {
   /**
    * The amount of available cash in pennies.
    */
-  private int cash;
   private StockQuoteList favorites;
   private int numFavorites;
   private int numSearchResults;
@@ -33,9 +33,14 @@ public class StockResponse implements Serializable {
   private StockQuoteList searchResults;
   private StockQuoteList sector;
   private String sectorName;
+  private PlayerInfo player;
+  private List<PlayerInfo> players;
 
-  public StockResponse(StockQuoteList searchResults, StockQuoteList favorites,
-      String sectorName, StockQuoteList sector, int numSearchResults, int numFavorites, int numSector, int cash) {
+  public StockResponse(PlayerInfo player, StockQuoteList searchResults,
+      StockQuoteList favorites, String sectorName, StockQuoteList sector,
+      int numSearchResults, int numFavorites, int numSector,
+      List<PlayerInfo> players) {
+    this.player = player;
     this.searchResults = searchResults;
     this.favorites = favorites;
     this.sectorName = sectorName;
@@ -43,7 +48,7 @@ public class StockResponse implements Serializable {
     this.numSearchResults = numSearchResults;
     this.numFavorites = numFavorites;
     this.numSector = numSector;
-    this.cash = cash;
+    this.players = players;
   }
 
   /**
@@ -53,18 +58,18 @@ public class StockResponse implements Serializable {
   }
 
   public int getCash() {
-    return cash;
+    return player.getCash();
   }
 
   public StockQuoteList getFavorites() {
     return favorites;
   }
-  
+
   /**
-   * The sum of cash available and portfolio value. 
+   * The sum of cash available and portfolio value.
    */
   public int getNetWorth() {
-    return cash + favorites.getValue();
+    return player.getNetWorth();
   }
 
   public int getNumFavorites() {
@@ -79,6 +84,15 @@ public class StockResponse implements Serializable {
     return numSector;
   }
 
+  /**
+   * Get the list of all players and their scores.
+   * 
+   * @return the ordered list of all players
+   */
+  public List<PlayerInfo> getPlayers() {
+    return players;
+  }
+
   public StockQuoteList getSearchResults() {
     return searchResults;
   }
@@ -86,7 +100,7 @@ public class StockResponse implements Serializable {
   public StockQuoteList getSector() {
     return sector;
   }
-  
+
   public String getSectorName() {
     return sectorName;
   }

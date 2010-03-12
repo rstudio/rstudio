@@ -45,3 +45,7 @@
 .table tfoot th {
   border-width: 0px;
 }
+
+.padded {
+  padding: 5px;
+}

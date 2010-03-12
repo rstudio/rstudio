@@ -25,16 +25,7 @@
         </g:north>
 
         <g:center>
-          <g:ScrollPanel styleName='{common.bg}'>
-            <g:HTMLPanel>
-              <div class='{common.header}'>Everyone Else</div>
-              <table>
-                <tr><td>Dan Rice</td><td>$10000</td></tr>
-                <tr><td>Joel Webber</td><td>$10000</td></tr>
-                <tr><td>John Labanca</td><td>$10000</td></tr>
-              </table>
-            </g:HTMLPanel>
-          </g:ScrollPanel>
+          <s:PlayerScoresWidget styleName='{common.bg}' ui:field='playerScoresWidget'/>
         </g:center>
       </g:DockLayoutPanel>
     </g:west>

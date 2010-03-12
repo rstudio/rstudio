@@ -41,4 +41,14 @@
     <welcome-file>Tree.html</welcome-file>
   </welcome-file-list>
 
+  <!-- Require login. -->
+  <security-constraint>
+    <web-resource-collection>
+      <url-pattern>/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>*</role-name>
+    </auth-constraint>
+  </security-constraint>
+
 </web-app>

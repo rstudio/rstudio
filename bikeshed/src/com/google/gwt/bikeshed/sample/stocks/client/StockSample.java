@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,6 +21,7 @@ import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.bikeshed.list.shared.AsyncListModel.DataSource;
 import com.google.gwt.bikeshed.sample.stocks.client.TransactionTreeViewModel.SectorListModel;
+import com.google.gwt.bikeshed.sample.stocks.shared.PlayerInfo;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockQuote;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockQuoteList;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockRequest;
@@ -69,6 +70,7 @@ public class StockSample implements EntryPoint, Updater {
 
   @UiField FavoritesWidget favoritesWidget;
   @UiField Label netWorthLabel;
+  @UiField PlayerScoresWidget playerScoresWidget;
   @UiField StockQueryWidget queryWidget;
   @UiField SideBySideTreeView transactionTree;
 
@@ -79,6 +81,7 @@ public class StockSample implements EntryPoint, Updater {
   private final StockServiceAsync dataService = GWT.create(StockService.class);
 
   private AsyncListModel<StockQuote> favoritesListModel;
+  private AsyncListModel<PlayerInfo> playerScoresListModel;
   private AsyncListModel<StockQuote> searchListModel;
   private Map<String, ListListModel<Transaction>> transactionListListModelsByTicker =
     new HashMap<String, ListListModel<Transaction>>();
@@ -122,8 +125,15 @@ public class StockSample implements EntryPoint, Updater {
           }
         });
 
-    treeModel = new TransactionTreeViewModel(this,
-        favoritesListModel, transactionListListModelsByTicker);
+    playerScoresListModel = new AsyncListModel<PlayerInfo>(
+        new DataSource<PlayerInfo>() {
+          public void requestData(AsyncListModel<PlayerInfo> listModel) {
+            // Player cannot request data from this view.
+          }
+        });
+
+    treeModel = new TransactionTreeViewModel(this, favoritesListModel,
+        transactionListListModelsByTicker);
 
     transactionListModel = new ListListModel<Transaction>();
     transactions = transactionListModel.getList();
@@ -164,7 +174,7 @@ public class StockSample implements EntryPoint, Updater {
 
   /**
    * Process the {@link StockResponse} from the server.
-   *
+   * 
    * @param response the stock response
    */
   public void processStockResponse(StockResponse response) {
@@ -177,6 +187,12 @@ public class StockSample implements EntryPoint, Updater {
     // Update the favorites list.
     updateFavorites(response);
     updateSector(response);
+
+    // Update the player scores.
+    List<PlayerInfo> playerScores = response.getPlayers();
+    int numPlayers = playerScores.size();
+    playerScoresListModel.updateDataSize(numPlayers, true);
+    playerScoresListModel.updateViewData(0, numPlayers, playerScores);
 
     // Update available cash.
     int cash = response.getCash();
@@ -196,7 +212,7 @@ public class StockSample implements EntryPoint, Updater {
 
   /**
    * Set or unset a ticker symbol as a 'favorite'.
-   *
+   * 
    * @param ticker the ticker symbol
    * @param favorite if true, make the stock a favorite
    */
@@ -204,28 +220,28 @@ public class StockSample implements EntryPoint, Updater {
     if (favorite) {
       dataService.addFavorite(ticker, favoritesListModel.getRanges()[0],
           new AsyncCallback<StockResponse>() {
-        public void onFailure(Throwable caught) {
-          Window.alert("Error adding favorite");
-        }
+            public void onFailure(Throwable caught) {
+              handleRpcError(caught, "Error adding favorite");
+            }
 
-        public void onSuccess(StockResponse response) {
-          updateFavorites(response);
-        }
-      });
+            public void onSuccess(StockResponse response) {
+              updateFavorites(response);
+            }
+          });
     } else {
       dataService.removeFavorite(ticker, favoritesListModel.getRanges()[0],
           new AsyncCallback<StockResponse>() {
-        public void onFailure(Throwable caught) {
-          Window.alert("Error removing favorite");
-        }
+            public void onFailure(Throwable caught) {
+              handleRpcError(caught, "Error removing favorite");
+            }
 
-        public void onSuccess(StockResponse response) {
-          updateFavorites(response);
-        }
-      });
+            public void onSuccess(StockResponse response) {
+              updateFavorites(response);
+            }
+          });
     }
   }
-  
+
   public void transact(Transaction t) {
     dataService.transact(t, new AsyncCallback<Transaction>() {
       public void onFailure(Throwable caught) {
@@ -238,19 +254,17 @@ public class StockSample implements EntryPoint, Updater {
       }
 
       /**
-       * Update transactions (list of all transactions),
-       * transactionTickers (set of all tickers involved in
-       * transactions), and transactionsByTicker (map from
-       * ticker to lists of transactions for that ticker).
+       * Update transactions (list of all transactions), transactionTickers (set
+       * of all tickers involved in transactions), and transactionsByTicker (map
+       * from ticker to lists of transactions for that ticker).
        */
       private void recordTransaction(Transaction result) {
         transactions.add(0, result);
         String ticker = result.getTicker();
-        
+
         // Update the next level of the transaction tree
         // for the given ticker
-        ListListModel<Transaction> t =
-          transactionListListModelsByTicker.get(ticker);
+        ListListModel<Transaction> t = transactionListListModelsByTicker.get(ticker);
         if (t == null) {
           t = new ListListModel<Transaction>();
           transactionListListModelsByTicker.put(ticker, t);
@@ -272,10 +286,12 @@ public class StockSample implements EntryPoint, Updater {
 
     Range[] searchRanges = searchListModel.getRanges();
     Range[] favoritesRanges = favoritesListModel.getRanges();
-    
+
     String sectorName = getSectorName();
-    SectorListModel sectorListModel = sectorName != null ? treeModel.getSectorListModel(sectorName) : null;
-    Range[] sectorRanges = sectorListModel == null ? null : sectorListModel.getRanges();
+    SectorListModel sectorListModel = sectorName != null
+        ? treeModel.getSectorListModel(sectorName) : null;
+    Range[] sectorRanges = sectorListModel == null ? null
+        : sectorListModel.getRanges();
 
     if (searchRanges == null || searchRanges.length == 0
         || favoritesRanges == null || favoritesRanges.length == 0) {
@@ -283,20 +299,14 @@ public class StockSample implements EntryPoint, Updater {
     }
 
     String searchQuery = queryWidget.getSearchQuery();
-    
+
     StockRequest request = new StockRequest(searchQuery,
         sectorListModel != null ? sectorListModel.getSector() : null,
-        searchRanges[0],
-        favoritesRanges[0],
-        sectorRanges != null && sectorRanges.length > 0 ? sectorRanges[0] : null);
+        searchRanges[0], favoritesRanges[0], sectorRanges != null
+            && sectorRanges.length > 0 ? sectorRanges[0] : null);
     dataService.getStockQuotes(request, new AsyncCallback<StockResponse>() {
       public void onFailure(Throwable caught) {
-        String message = caught.getMessage();
-        if (message.contains("Not logged in")) {
-          // Force the user to login.
-          Window.Location.reload();
-        } else {
-          Window.alert("ERROR: " + caught.getMessage());
+        if (handleRpcError(caught, null)) {
           updateTimer.schedule(UPDATE_DELAY);
         }
       }
@@ -334,6 +344,11 @@ public class StockSample implements EntryPoint, Updater {
   }
 
   @UiFactory
+  PlayerScoresWidget createPlayerScoresWidget() {
+    return new PlayerScoresWidget(playerScoresListModel);
+  }
+
+  @UiFactory
   StockQueryWidget createQueryWidget() {
     return new StockQueryWidget(searchListModel, this);
   }
@@ -352,7 +367,30 @@ public class StockSample implements EntryPoint, Updater {
         return (String) childNode.getValue();
       }
     }
-    
+
     return null;
+  }
+
+  /**
+   * Display a message to the user when an RPC call fails.
+   * 
+   * @param caught the exception
+   * @param displayMessage the message to display to the user, or null to
+   *          display a default message
+   * @return true if recoverable, false if not
+   */
+  private boolean handleRpcError(Throwable caught, String displayMessage) {
+    String message = caught.getMessage();
+    if (message.contains("Not logged in")) {
+      // Force the user to login.
+      Window.Location.reload();
+      return false;
+    }
+
+    if (displayMessage == null) {
+      displayMessage = "ERROR: " + caught.getMessage();
+    }
+    Window.alert(displayMessage);
+    return true;
   }
 }
