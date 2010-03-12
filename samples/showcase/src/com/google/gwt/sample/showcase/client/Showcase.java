@@ -79,6 +79,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -214,7 +215,8 @@ public class Showcase implements EntryPoint {
         TreeItem item = event.getSelectedItem();
         ContentWidget content = itemWidgets.get(item);
         if (content != null && !content.equals(app.getContent())) {
-          History.newItem(getContentWidgetToken(content));
+          String historyToken = ((Hyperlink) item.getWidget()).getTargetHistoryToken();
+          History.newItem(historyToken);
         }
       }
     });
@@ -229,7 +231,7 @@ public class Showcase implements EntryPoint {
       app.getMainMenu().ensureSelectedItemVisible();
       displayContentWidget(itemWidgets.get(firstItem));
     }
-    
+
     // Always prefetch
     Prefetcher.start();
   }
@@ -243,6 +245,7 @@ public class Showcase implements EntryPoint {
     if (content != null) {
       app.setContent(content);
       app.setContentTitle(content.getTabBar());
+      Window.setTitle("Showcase of Features: " + content.getName());
     }
   }
 
@@ -398,12 +401,13 @@ public class Showcase implements EntryPoint {
   private void setupMainMenuOption(TreeItem parent, ContentWidget content,
       ImageResource image) {
     // Create the TreeItem
-    TreeItem option = parent.addItem(AbstractImagePrototype.create(image).getHTML()
-        + " " + content.getName());
+    Hyperlink hl = new Hyperlink(AbstractImagePrototype.create(image).getHTML()
+        + " " + content.getName(), true, "!" + getContentWidgetToken(content));
+    TreeItem option = parent.addItem(hl);
 
     // Map the item to its history token and content widget
     itemWidgets.put(option, content);
-    itemTokens.put(getContentWidgetToken(content), option);
+    itemTokens.put(hl.getTargetHistoryToken(), option);
   }
 
   /**

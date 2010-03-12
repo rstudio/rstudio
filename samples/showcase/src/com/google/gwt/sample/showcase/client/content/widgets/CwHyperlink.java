@@ -133,7 +133,7 @@ public class CwHyperlink extends ContentWidget {
     className = className.substring(className.lastIndexOf('.') + 1);
 
     // Convert to a hyper link
-    Hyperlink link = new Hyperlink(name, className);
+    Hyperlink link = new Hyperlink(name, "!" + className);
     link.ensureDebugId("cwHyperlink-" + className);
     return link;
   }
