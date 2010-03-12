@@ -65,4 +65,9 @@ class DeleteNodeTransformation implements Transformation<CfgTransformer, Cfg> {
     CfgNode<?> newNode = new CfgNopNode(node.getParent(), node.getJNode());
     return CfgUtil.createSingleNodeReplacementGraph(graph, node, newNode);
   }
+
+  @Override
+  public String toString() {
+    return "DeleteNodeTransformation(node=" + node + ")";
+  }
 }

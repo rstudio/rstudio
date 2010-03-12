@@ -181,6 +181,121 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
             );
   }
 
+  public void testComplexCode3() throws Exception {
+    addSnippetClassDecl("static final int SPLIT_LOOKING_FOR_COMMA = 0;");
+    addSnippetClassDecl("static final int SPLIT_IN_STRING = 1;");
+    addSnippetClassDecl("static final int SPLIT_IN_ESCAPE = 2;");
+    addSnippetClassDecl("static String getCsvString() { return null; }");
+
+    addSnippetClassDecl(
+        "static class JsArrayString {" + 
+        "  static JsArrayString createArray() { return null; }" +
+        "  JsArrayString cast() { return this; }" +
+        "  void push(String s) { }" +
+        "}");
+
+    addSnippetClassDecl(
+        "static class StringBuilder {" + 
+        "  void append(char c) { }" +
+        "}");
+
+    optimize("JsArrayString", 
+       "int state;",
+       "String csvString = getCsvString();",
+       "JsArrayString results = JsArrayString.createArray().cast();",
+       "int index = 0;",
+       "StringBuilder field = new StringBuilder();",
+       "state = SPLIT_LOOKING_FOR_COMMA;",
+       "while (index < csvString.length()) {",
+       "  char nextCharacter = csvString.charAt(index);",
+       "  switch (state) {",
+       "    case SPLIT_LOOKING_FOR_COMMA:",
+       "      switch (nextCharacter) {",
+       "        case ',':",
+       "          results.push(field.toString());",
+       "          field = new StringBuilder();",
+       "          break;",
+       "        case '\"':",
+       "          state = SPLIT_IN_STRING;",
+       "          break;",
+       "        default:",
+       "          field.append(nextCharacter);",
+       "      }",
+       "      break;",
+       "    case SPLIT_IN_STRING:",
+       "      switch (nextCharacter) {",
+       "        case '\"':",
+       "          state = SPLIT_LOOKING_FOR_COMMA;",
+       "          break;",
+       "        case '\\\\':",
+       "          state = SPLIT_IN_ESCAPE;",
+       "          field.append(nextCharacter);",
+       "          break;",
+       "        default:",
+       "          field.append(nextCharacter);",
+       "      }",
+       "      break;",
+       "    case SPLIT_IN_ESCAPE:",
+       "      state = SPLIT_IN_STRING;",
+       "      field.append(nextCharacter);",
+       "      break;",
+       "    default:",
+       "      field.append(nextCharacter);",
+       "  }",
+       "  index++;",
+       "}",
+       "results.push(field.toString());",
+       "return results;"
+   ).into(
+       "int state;",
+       "String csvString = getCsvString();",
+       "JsArrayString results = JsArrayString.createArray().cast();",
+       "int index = 0;",
+       "StringBuilder field = new StringBuilder();",
+       "state = SPLIT_LOOKING_FOR_COMMA;",
+       "while (index < csvString.length()) {",
+       "  char nextCharacter = csvString.charAt(index);",
+       "  switch (state) {",
+       "    case SPLIT_LOOKING_FOR_COMMA:",
+       "      switch (nextCharacter) {",
+       "        case ',':",
+       "          results.push(field.toString());",
+       "          field = new StringBuilder();",
+       "          break;",
+       "        case '\"':",
+       "          state = SPLIT_IN_STRING;",
+       "          break;",
+       "        default:",
+       "          field.append(nextCharacter);",
+       "      }",
+       "      break;",
+       "    case SPLIT_IN_STRING:",
+       "      switch (nextCharacter) {",
+       "        case '\"':",
+       "          state = SPLIT_LOOKING_FOR_COMMA;",
+       "          break;",
+       "        case '\\\\':",
+       "          state = SPLIT_IN_ESCAPE;",
+       "          field.append('\\\\');",
+       "          break;",
+       "        default:",
+       "          field.append(nextCharacter);",
+       "      }",
+       "      break;",
+       "    case SPLIT_IN_ESCAPE:",
+       "      state = SPLIT_IN_STRING;",
+       "      field.append(nextCharacter);",
+       "      break;",
+       "    default:",
+       "      field.append(nextCharacter);",
+       "  }",
+       "  ++index;",
+       "}",
+       "results.push(field.toString());",
+       "return results;"
+       );
+  }
+  
 /*  public void testInlineField1() throws Exception {
     optimize("int",
         "int i = staticFooInstance.i;",

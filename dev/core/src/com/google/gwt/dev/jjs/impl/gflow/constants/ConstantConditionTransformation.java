@@ -111,4 +111,10 @@ final class ConstantConditionTransformation implements
 
     return newSubgraph;
   }
+
+  @Override
+  public String toString() {
+    return "ConstantConditionTransformation(node=" + node + 
+        ", conditionValue=" + conditionValue + ")";
+  }
 }

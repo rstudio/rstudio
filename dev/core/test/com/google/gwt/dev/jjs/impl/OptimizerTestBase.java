@@ -231,5 +231,16 @@ public abstract class OptimizerTestBase extends TestCase {
           "public class Exceptions { static boolean throwAssertionError() { throw new RuntimeException(); } }";
       }
     });
-}
+
+    sourceOracle.addOrReplace(new MockJavaResource("java.lang.String") {
+      @Override
+      protected CharSequence getContent() {
+        return "package java.lang;" +
+          "public class String {" +
+          "  public int length() { return 0; }" +
+          "  public char charAt(int pos) { return 0; }" +
+          "}";
+      }
+    });
+  }
 }

@@ -52,4 +52,10 @@ final class FoldConstantsTransformation implements
     CfgNode<?> newNode = new CfgNopNode(node.getParent(), node.getJNode());
     return CfgUtil.createSingleNodeReplacementGraph(graph, node, newNode);
   }
+
+  @Override
+  public String toString() {
+    return "FoldConstantsTransformation(node=" + node + 
+        ", assumptions=" + assumption + ")";
+  }
 }

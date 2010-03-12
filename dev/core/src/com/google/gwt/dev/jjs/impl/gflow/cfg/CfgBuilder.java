@@ -610,12 +610,16 @@ public class CfgBuilder {
       accept(x.getExpr());
       
       JSwitchStatement oldSwitchStatement = switchStatement;
+      // We don't want to mess with other case exits here
+      List<Exit> oldCaseElseExits = removeExits(Exit.Reason.CASE_ELSE);
+      List<Exit> oldCaseThenExits = removeExits(Exit.Reason.CASE_THEN);
+      List<Exit> oldBreakExits = removeExits(Exit.Reason.BREAK);
       switchStatement = x;
       
       int defaultPos = -1;
       
       List<Exit> breakExits = new ArrayList<Exit>();
-      
+
       for (JStatement s : x.getBody().getStatements()) {
         if (s instanceof JCaseStatement) {
           if (((JCaseStatement) s).getExpr() != null) {
@@ -660,6 +664,9 @@ public class CfgBuilder {
       }
 
       switchStatement = oldSwitchStatement;
+      addExits(oldCaseElseExits);
+      addExits(oldCaseThenExits);
+      addExits(oldBreakExits);
       popNode();
       return false;
     }

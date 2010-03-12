@@ -83,8 +83,8 @@ public class AnalysisSolver<N, E, T, G extends Graph<N, E, T>,
       if (debug) {
         System.err.println("Applying transformation: " + transformation);
         System.err.println("Replacing");
-        System.err.println(graph);
-        System.err.println("With");
+        System.err.println(node);
+        System.err.println("With graph:");
         System.err.println(newSubgraph);
       }
 
@@ -271,6 +271,12 @@ public class AnalysisSolver<N, E, T, G extends Graph<N, E, T>,
    */
   private void iterate(G graph,
       final IntegratedAnalysis<N, E, T, G, A> integratedAnalysis) {
+    if (debug) {
+      System.err.println("-----------------------------------------");
+      System.err.println("Iterate started on:");
+      System.err.println(graph);
+      System.err.println("-----------------------------------------");
+    }
     final IntegratedFlowFunctionAdapter adapter = 
       new IntegratedFlowFunctionAdapter(integratedAnalysis);
 
