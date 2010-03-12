@@ -365,10 +365,10 @@ public class ControlFlowAnalyzer {
     }
 
     @Override
-    public boolean visit(JNewInstance newInstance, Context ctx) {
+    public boolean visit(JNewInstance x, Context ctx) {
       // rescue and instantiate the target class!
-      rescue(newInstance.getClassType(), true, true);
-      return true;
+      rescue(x.getClassType(), true, true);
+      return super.visit(x, ctx);
     }
 
     @Override

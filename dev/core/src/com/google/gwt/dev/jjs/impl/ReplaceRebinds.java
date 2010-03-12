@@ -46,6 +46,7 @@ public class ReplaceRebinds {
 
   private class RebindVisitor extends JModVisitor {
 
+    private JDeclaredType currentClass;
     private final JMethod nameOfMethod;
     private final JMethod rebindCreateMethod;
 
@@ -65,6 +66,12 @@ public class ReplaceRebinds {
       }
     }
 
+    @Override
+    public boolean visit(JMethod x, Context ctx) {
+      currentClass = x.getEnclosingType();
+      return true;
+    }
+
     private void replaceGwtCreate(JMethodCall x, Context ctx) {
       assert (x.getArgs().size() == 1);
       JExpression arg = x.getArgs().get(0);
@@ -73,7 +80,7 @@ public class ReplaceRebinds {
       JReferenceType sourceType = (JReferenceType) classLiteral.getRefType();
       List<JClassType> allRebindResults = getAllPossibleRebindResults(sourceType);
       JGwtCreate gwtCreate = new JGwtCreate(x.getSourceInfo(), sourceType,
-          allRebindResults, program.getTypeJavaLangObject());
+          allRebindResults, program.getTypeJavaLangObject(), currentClass);
       if (allRebindResults.size() == 1) {
         // Just replace with the instantiation expression.
         ctx.replaceMe(gwtCreate.getInstantiationExpressions().get(0));

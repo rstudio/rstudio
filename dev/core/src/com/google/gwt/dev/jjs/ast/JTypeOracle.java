@@ -126,9 +126,18 @@ public class JTypeOracle implements Serializable {
       return false;
     }
 
+    @Override
+    public boolean visit(JNewInstance x, Context ctx) {
+      if (x.hasSideEffects()) {
+        hasLiveCode = true;
+      }
+      return false;
+    }
+
     private boolean mightBeDeadCode(JExpression expr) {
       // Must have a visit method for every subtype that answers yes!
-      return expr instanceof JMultiExpression || expr instanceof JMethodCall;
+      return expr instanceof JMultiExpression || expr instanceof JMethodCall
+          || expr instanceof JNewInstance;
     }
 
     private boolean mightBeDeadCode(JStatement stmt) {

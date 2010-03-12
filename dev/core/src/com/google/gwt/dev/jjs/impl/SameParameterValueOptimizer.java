@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -109,6 +110,12 @@ public class SameParameterValueOptimizer {
       for (JsniMethodRef methodRef : x.getJsniMethodRefs()) {
         rescuedMethods.add(methodRef.getTarget());
       }
+    }
+
+    @Override
+    public boolean visit(JConstructor x, Context ctx) {
+      // Cannot be overridden or staticified.
+      return true;
     }
 
     @Override

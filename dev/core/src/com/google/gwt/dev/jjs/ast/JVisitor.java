@@ -198,6 +198,10 @@ public class JVisitor {
     endVisit((JExpression) x, ctx);
   }
 
+  public void endVisit(JConstructor x, Context ctx) {
+    endVisit((JMethod) x, ctx);
+  }
+
   public void endVisit(JContinueStatement x, Context ctx) {
     endVisit((JStatement) x, ctx);
   }
@@ -317,7 +321,7 @@ public class JVisitor {
   }
 
   public void endVisit(JNewInstance x, Context ctx) {
-    endVisit((JExpression) x, ctx);
+    endVisit((JMethodCall) x, ctx);
   }
 
   public void endVisit(JNode x, Context ctx) {
@@ -510,6 +514,10 @@ public class JVisitor {
     return visit((JExpression) x, ctx);
   }
 
+  public boolean visit(JConstructor x, Context ctx) {
+    return visit((JMethod) x, ctx);
+  }
+
   public boolean visit(JContinueStatement x, Context ctx) {
     return visit((JNode) x, ctx);
   }
@@ -629,7 +637,7 @@ public class JVisitor {
   }
 
   public boolean visit(JNewInstance x, Context ctx) {
-    return visit((JExpression) x, ctx);
+    return visit((JMethodCall) x, ctx);
   }
 
   public boolean visit(JNode x, Context ctx) {

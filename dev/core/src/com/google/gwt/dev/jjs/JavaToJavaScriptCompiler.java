@@ -82,6 +82,7 @@ import com.google.gwt.dev.jjs.impl.MethodInliner;
 import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
+import com.google.gwt.dev.jjs.impl.RemoveEmptySuperCalls;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
@@ -245,6 +246,8 @@ public class JavaToJavaScriptCompiler {
       } else {
         optimize(options, jprogram);
       }
+
+      RemoveEmptySuperCalls.exec(jprogram);
 
       // (5) "Normalize" the high-level Java tree into a lower-level tree more
       // suited for JavaScript code generation. Don't go reordering these
@@ -737,8 +740,8 @@ public class JavaToJavaScriptCompiler {
   }
 
   private static JMethodCall createReboundModuleLoad(TreeLogger logger,
-      JDeclaredType reboundEntryType, String originalMainClassName)
-      throws UnableToCompleteException {
+      JDeclaredType reboundEntryType, String originalMainClassName,
+      JDeclaredType enclosingType) throws UnableToCompleteException {
     if (!(reboundEntryType instanceof JClassType)) {
       logger.log(TreeLogger.ERROR, "Module entry point class '"
           + originalMainClassName + "' must be a class", null);
@@ -772,7 +775,7 @@ public class JavaToJavaScriptCompiler {
     JExpression qualifier = null;
     if (!entryMethod.isStatic()) {
       qualifier = JGwtCreate.createInstantiationExpression(sourceInfo,
-          entryClass);
+          entryClass, enclosingType);
 
       if (qualifier == null) {
         logger.log(
@@ -838,7 +841,7 @@ public class JavaToJavaScriptCompiler {
         }
 
         JMethodCall onModuleLoadCall = createReboundModuleLoad(logger,
-            resultType, mainClassName);
+            resultType, mainClassName, bootStrapMethod.getEnclosingType());
         resultTypes.add((JClassType) resultType);
         entryCalls.add(onModuleLoadCall);
       }

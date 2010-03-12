@@ -28,16 +28,16 @@ import java.util.List;
 public class JGwtCreate extends JExpression {
 
   public static JExpression createInstantiationExpression(SourceInfo info,
-      JClassType classType) {
+      JClassType classType, JDeclaredType enclosingType) {
     /*
      * Find the appropriate (noArg) constructor. In our AST, constructors are
      * instance methods that should be qualified with a new expression.
      */
-    JMethod noArgCtor = null;
+    JConstructor noArgCtor = null;
     for (JMethod ctor : classType.getMethods()) {
-      if (ctor.getName().equals(classType.getShortName())) {
+      if (ctor instanceof JConstructor) {
         if (ctor.getParams().size() == 0) {
-          noArgCtor = ctor;
+          noArgCtor = (JConstructor) ctor;
           break;
         }
       }
@@ -46,16 +46,15 @@ public class JGwtCreate extends JExpression {
       return null;
     }
     // Call it, using a new expression as a qualifier
-    JNewInstance newInstance = new JNewInstance(info,
-        (JNonNullType) noArgCtor.getType());
-    return new JMethodCall(info, newInstance, noArgCtor);
+    return new JNewInstance(info, noArgCtor, enclosingType);
   }
 
   private static ArrayList<JExpression> createInstantiationExpressions(
-      SourceInfo info, List<JClassType> classTypes) {
+      SourceInfo info, List<JClassType> classTypes, JDeclaredType enclosingType) {
     ArrayList<JExpression> exprs = new ArrayList<JExpression>();
     for (JClassType classType : classTypes) {
-      JExpression expr = createInstantiationExpression(info, classType);
+      JExpression expr = createInstantiationExpression(info, classType,
+          enclosingType);
       assert expr != null;
       exprs.add(expr);
     }
@@ -75,9 +74,9 @@ public class JGwtCreate extends JExpression {
    * Public constructor used during AST creation.
    */
   public JGwtCreate(SourceInfo info, JReferenceType sourceType,
-      List<JClassType> resultTypes, JType type) {
+      List<JClassType> resultTypes, JType type, JDeclaredType enclosingType) {
     this(info, sourceType, resultTypes, type, createInstantiationExpressions(
-        info, resultTypes));
+        info, resultTypes, enclosingType));
   }
 
   /**

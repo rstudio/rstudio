@@ -38,6 +38,7 @@ import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -620,39 +621,27 @@ public class GenerateJavaAST {
     }
 
     /**
-     * Weird: we used to have JConstructor (and JConstructorCall) in our AST,
-     * but we got rid of them completely and instead model them as instance
-     * methods whose qualifier is a naked no-argument new operation.
-     * 
-     * There are several reasons we do it this way:
-     * 
-     * 1) When spitting our AST back to Java code (for verification purposes),
-     * we found it was impossible to correctly emulate nested classes as
-     * non-nested classes using traditional constructor syntax. It boiled down
-     * to the fact that you really HAVE to assign your synthetic arguments to
-     * your synthetic fields BEFORE calling your superclass constructor (because
-     * it might call you back polymorphically). And trying to do that in
-     * straight Java is a semantic error, a super call must be the first
-     * statement of your constructor.
-     * 
-     * 2) It's a lot more like how we'll be generating JavaScript eventually.
-     * 
-     * 3) It's a lot easier to optimize; the same optimizations work on our
-     * synthetic fields as work on any user fields. In fact, once we're past AST
-     * generation, we throw away all information about what's synthetic.
+     * This is slightly different from the normal Java language. Specifically,
+     * we explicitly handle synthetic fields that are part of nested/local
+     * classes. It boils down to the fact that we really HAVE to assign
+     * synthetic arguments to synthetic fields BEFORE calling the superclass
+     * constructor (because it might call you back polymorphically). In straight
+     * Java that glue code is a semantic error, because a this/super call must
+     * be the first statement of your constructor. On the upside, optimizations
+     * work the same on our synthetic fields as with any user fields.
      * 
      * The order of emulation is: - assign all synthetic fields from synthetic
      * args - call our super constructor emulation method - call our instance
-     * initializer emulation method - run user code - return this
+     * initializer emulation method - run user code
      */
     void processConstructor(ConstructorDeclaration x) {
-      JMethod ctor = (JMethod) typeMap.get(x.binding);
+      JConstructor ctor = (JConstructor) typeMap.get(x.binding);
       try {
         processHasAnnotations(ctor, x.annotations);
         SourceInfo info = ctor.getSourceInfo();
 
         currentMethod = ctor;
-        currentMethodBody = (JMethodBody) ctor.getBody();
+        currentMethodBody = ctor.getBody();
         currentMethodScope = x.scope;
 
         JMethodCall superOrThisCall = null;
@@ -672,14 +661,8 @@ public class GenerateJavaAST {
         boolean hasExplicitThis = (ctorCall != null)
             && !ctorCall.isSuperAccess();
 
-        JClassType enclosingType = (JClassType) ctor.getEnclosingType();
-
-        // Call clinit; $clinit is always in position 0.
-        JMethod clinitMethod = enclosingType.getMethods().get(0);
-        JMethodCall clinitCall = new JMethodCall(info, null, clinitMethod);
-        JMethodBody body = (JMethodBody) ctor.getBody();
-        JBlock block = body.getBlock();
-        block.addStmt(clinitCall.makeStatement());
+        JClassType enclosingType = ctor.getEnclosingType();
+        JBlock block = currentMethodBody.getBlock();
 
         /*
          * All synthetic fields must be assigned, unless we have an explicit
@@ -730,6 +713,7 @@ public class GenerateJavaAST {
 
         // optional this or super constructor call
         if (superOrThisCall != null) {
+          superOrThisCall.setStaticDispatchOnly();
           block.addStmt(superOrThisCall.makeStatement());
         }
 
@@ -751,9 +735,6 @@ public class GenerateJavaAST {
 
         currentMethodScope = null;
         currentMethod = null;
-
-        // synthesize a return statement to emulate returning the new object
-        block.addStmt(new JReturnStatement(info, thisRef));
       } catch (Throwable e) {
         throw translateException(ctor, e);
       }
@@ -771,7 +752,7 @@ public class GenerateJavaAST {
       }
       JClassType newType = (JClassType) typeMap.get(typeBinding);
       MethodBinding b = x.binding;
-      JMethod ctor = (JMethod) typeMap.get(b);
+      JConstructor ctor = (JConstructor) typeMap.get(b);
       JMethodCall call;
       JClassType javaLangString = program.getTypeJavaLangString();
       if (newType == javaLangString) {
@@ -803,9 +784,7 @@ public class GenerateJavaAST {
         }
         call = new JMethodCall(makeSourceInfo(x), null, targetMethod);
       } else {
-        JNewInstance newInstance = new JNewInstance(info,
-            (JNonNullType) ctor.getType());
-        call = new JMethodCall(info, newInstance, ctor);
+        call = new JNewInstance(info, ctor, currentClass);
       }
 
       // Enums: hidden arguments for the name and id.
@@ -1226,10 +1205,8 @@ public class GenerateJavaAST {
 
       SourceInfo info = makeSourceInfo(x);
       MethodBinding b = x.binding;
-      JMethod ctor = (JMethod) typeMap.get(b);
-      JNewInstance newInstance = new JNewInstance(info,
-          (JNonNullType) ctor.getType());
-      JMethodCall call = new JMethodCall(info, newInstance, ctor);
+      JConstructor ctor = (JConstructor) typeMap.get(b);
+      JNewInstance newInstance = new JNewInstance(info, ctor, currentClass);
       JExpression qualifier = dispProcessExpression(x.enclosingInstance);
       List<JExpression> qualList = new ArrayList<JExpression>();
       qualList.add(qualifier);
@@ -1246,7 +1223,7 @@ public class GenerateJavaAST {
       }
 
       // Plain old regular arguments
-      addCallArgs(x.arguments, call, b);
+      addCallArgs(x.arguments, newInstance, b);
 
       // Synthetic args for inner classes
       ReferenceBinding targetBinding = b.declaringClass;
@@ -1257,7 +1234,7 @@ public class GenerateJavaAST {
           for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
             SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
             JClassType syntheticThisType = (JClassType) typeMap.get(arg.type);
-            call.addArg(createThisRef(syntheticThisType, qualList));
+            newInstance.addArg(createThisRef(syntheticThisType, qualList));
           }
         }
         // Synthetic locals for local classes
@@ -1265,13 +1242,13 @@ public class GenerateJavaAST {
           for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
             SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
             JVariable variable = (JVariable) typeMap.get(arg.actualOuterLocalVariable);
-            call.addArg(createVariableRef(info, variable,
+            newInstance.addArg(createVariableRef(info, variable,
                 arg.actualOuterLocalVariable));
           }
         }
       }
 
-      return call;
+      return newInstance;
     }
 
     JExpression processExpression(QualifiedNameReference x) {
@@ -1759,18 +1736,7 @@ public class GenerateJavaAST {
 
     JStatement processStatement(ReturnStatement x) {
       SourceInfo info = makeSourceInfo(x);
-      if (currentMethodScope.referenceContext instanceof ConstructorDeclaration) {
-        /*
-         * Special: constructors are implemented as instance methods that return
-         * their this object, so any embedded return statements have to be fixed
-         * up.
-         */
-        JClassType enclosingType = (JClassType) currentMethod.getEnclosingType();
-        assert (x.expression == null);
-        return new JReturnStatement(info, createThisRef(info, enclosingType));
-      } else {
-        return new JReturnStatement(info, dispProcessExpression(x.expression));
-      }
+      return new JReturnStatement(info, dispProcessExpression(x.expression));
     }
 
     JStatement processStatement(SwitchStatement x) {
@@ -3004,6 +2970,11 @@ public class GenerateJavaAST {
     public boolean visit(JClassType x, Context ctx) {
       currentClass = x;
       return true;
+    }
+
+    @Override
+    public boolean visit(JMethodBody x, Context ctx) {
+      return false;
     }
   }
 

@@ -324,37 +324,30 @@ public class WebModePayloadSink extends CommandSink {
           x.getSerializerClass(), "instantiate",
           SerializationStreamReader.class);
 
-      // x = $Foo(new Foo),
+      // x = new Foo,
       // x = instantiate(reader),
       push(currentBackRef);
       eq();
       if (instantiateIdent == null) {
         // No instantiate method, we'll have to invoke the constructor
 
-        instantiateIdent = clientOracle.getSeedName(x.getTargetClass());
-        assert instantiateIdent != null : "instantiateIdent";
-
-        // $Foo()
+        // new Foo()
         String constructorMethodName;
         if (x.getTargetClass().getEnclosingClass() == null) {
-          constructorMethodName = "$" + x.getTargetClass().getSimpleName();
+          constructorMethodName = x.getTargetClass().getSimpleName();
         } else {
           String name = x.getTargetClass().getName();
-          constructorMethodName = "$"
-              + name.substring(name.lastIndexOf('.') + 1);
+          constructorMethodName = name.substring(name.lastIndexOf('.') + 1);
         }
 
         String constructorIdent = clientOracle.getMethodId(x.getTargetClass(),
-            constructorMethodName, x.getTargetClass());
+            constructorMethodName);
         assert constructorIdent != null : "constructorIdent "
             + constructorMethodName;
 
-        // constructor(new Seed),
-        push(constructorIdent);
-        lparen();
+        // new constructor,
         _new();
-        push(instantiateIdent);
-        rparen();
+        push(constructorIdent);
         comma();
       } else {
         // instantiate(reader),

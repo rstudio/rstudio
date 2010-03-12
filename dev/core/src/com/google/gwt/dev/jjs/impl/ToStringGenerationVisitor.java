@@ -37,6 +37,7 @@ import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
@@ -430,7 +431,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     printStaticFlag(x);
     printType(x);
     space();
-    printUniqueName(x);
+    printName(x);
     return false;
   }
 
@@ -445,7 +446,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       printTypeName(x.getField().getEnclosingType());
     }
     print('.');
-    printUniqueName(x.getField());
+    printName(x.getField());
     return false;
   }
 
@@ -610,6 +611,29 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   @Override
+  public boolean visit(JConstructor x, Context ctx) {
+    // Modifiers
+    if (x.isPrivate()) {
+      print(CHARS_PRIVATE);
+    } else {
+      print(CHARS_PUBLIC);
+    }
+    printName(x);
+
+    // Parameters
+    printParameterList(x);
+
+    if (x.isAbstract() || !shouldPrintMethodBody()) {
+      semi();
+      newlineOpt();
+    } else {
+      accept(x.getBody());
+    }
+
+    return false;
+  }
+
+  @Override
   public boolean visit(JMethod x, Context ctx) {
     printMethodHeader(x);
 
@@ -633,17 +657,26 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   public boolean visit(JMethodCall x, Context ctx) {
     JExpression instance = x.getInstance();
     JMethod target = x.getTarget();
-    if (instance != null) {
+    if (instance == null) {
+      // Static call.
+      printTypeName(target.getEnclosingType());
+      print('.');
+      printName(target);
+    } else if (x.isStaticDispatchOnly()) {
+      // super() or this() call.
+      JReferenceType thisType = (JReferenceType) x.getInstance().getType();
+      thisType = thisType.getUnderlyingType();
+      if (thisType == target.getEnclosingType()) {
+        print(CHARS_THIS);
+      } else {
+        print(CHARS_SUPER);
+      }
+    } else {
+      // Instance call.
       parenPush(x, instance);
       accept(instance);
       parenPop(x, instance);
-    } else {
-      printTypeName(target.getEnclosingType());
-    }
-    print('.');
-    if (target.isStatic()) {
-      printUniqueName(target);
-    } else {
+      print('.');
       printName(target);
     }
     lparen();
@@ -691,8 +724,10 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JNewInstance x, Context ctx) {
     print(CHARS_NEW);
-    printType(x);
+    JConstructor target = x.getTarget();
+    printName(target);
     lparen();
+    visitCollectionWithCommas(x.getArgs().iterator());
     rparen();
     return false;
   }
@@ -1050,11 +1085,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     printFinalFlag(x);
     printType(x);
     space();
-    if (x.isStatic()) {
-      printUniqueName(x);
-    } else {
-      printName(x);
-    }
+    printName(x);
 
     // Parameters
     printParameterList(x);
@@ -1128,9 +1159,4 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       accept(iter.next());
     }
   }
-
-  private void printUniqueName(HasName x) {
-    print(x.getName());
-  }
-
 }

@@ -595,7 +595,7 @@ public class CodeSplitter {
 
     cfa.traverseFromInstantiationOf(typeArray);
     for (JMethod method : typeArray.getMethods()) {
-      if (!method.isStatic()) {
+      if (method.needsVtable()) {
         cfa.traverseFrom(method);
       }
     }
@@ -948,7 +948,7 @@ public class CodeSplitter {
          * must be in the same one.
          */
         for (JMethod method : type.getMethods()) {
-          if (!method.isStatic() && methodsInJavaScript.contains(method)) {
+          if (method.needsVtable() && methodsInJavaScript.contains(method)) {
             int methodFrag = getOrZero(fragmentMap.methods, method);
             if (methodFrag != typeFrag) {
               fragmentMap.types.put(type, 0);

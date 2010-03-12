@@ -242,7 +242,9 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JNewInstance x, Context ctx) {
-    expression = new JNewInstance(x.getSourceInfo(), x.getType());
+    JNewInstance newInstance = new JNewInstance(x);
+    newInstance.addArgs(cloneExpressions(x.getArgs()));
+    expression = newInstance;
     return false;
   }
 

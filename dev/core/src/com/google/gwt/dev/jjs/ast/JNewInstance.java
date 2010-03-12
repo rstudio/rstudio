@@ -18,36 +18,71 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.SourceInfo;
 
 /**
- * A new instance expression. This differs from a standard Java new operation in
- * that no constructor is implied. Rather, a new operation creates an
- * uninitialized Object which is passed as an argument to a constructor method.
+ * A new instance expression.
  */
-public class JNewInstance extends JExpression {
+public class JNewInstance extends JMethodCall {
 
-  private final JNonNullType type;
+  /**
+   * The enclosing type of this new operation, used to compute clinit.
+   */
+  private JDeclaredType enclosingType;
 
-  public JNewInstance(SourceInfo info, JNonNullType type) {
-    super(info);
-    assert type.getUnderlyingType() instanceof JClassType;
-    this.type = type;
+  /**
+   * Initialize a new instance operation equivalent to another one. The new
+   * object has no arguments on initialization. This forces the caller to
+   * potentially deal with cloning objects if needed.
+   */
+  public JNewInstance(JNewInstance other) {
+    super(other, null);
+    this.enclosingType = other.enclosingType;
+  }
+
+  public JNewInstance(SourceInfo info, JConstructor ctor,
+      JDeclaredType enclosingType) {
+    super(info, null, ctor);
+    this.enclosingType = enclosingType;
+    setStaticDispatchOnly();
   }
 
   public JClassType getClassType() {
-    return (JClassType) type.getUnderlyingType();
+    return getTarget().getEnclosingType();
   }
 
+  public JDeclaredType getEnclosingType() {
+    return enclosingType;
+  }
+
+  @Override
+  public JConstructor getTarget() {
+    return (JConstructor) super.getTarget();
+  }
+
+  @Override
   public JNonNullType getType() {
-    return type;
+    return getTarget().getNewType();
+  }
+
+  public boolean hasClinit() {
+    return getEnclosingType().checkClinitTo(getTarget().getEnclosingType());
   }
 
   @Override
   public boolean hasSideEffects() {
-    // The actual new operation itself has no side effects (see class comment).
-    return false;
+    if (hasClinit()) {
+      return true;
+    }
+    for (JExpression arg : getArgs()) {
+      if (arg.hasSideEffects()) {
+        return true;
+      }
+    }
+    return !getTarget().isEmpty();
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
+      visitChildren(visitor);
     }
     visitor.endVisit(this, ctx);
   }

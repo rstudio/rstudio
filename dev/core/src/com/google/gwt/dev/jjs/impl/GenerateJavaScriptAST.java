@@ -38,6 +38,7 @@ import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -315,7 +316,7 @@ public class GenerateJavaScriptAST {
     public boolean visit(JMethod x, Context ctx) {
       // my polymorphic name
       String name = x.getName();
-      if (!x.isStatic()) {
+      if (x.needsVtable()) {
         if (polymorphicNames.get(x) == null) {
           String mangleName = mangleNameForPoly(x);
           JsName polyName;
@@ -1052,11 +1053,8 @@ public class GenerateJavaScriptAST {
           /*
            * Dispatch statically (odd case). This happens when a call that must
            * be static is targeting an instance method that could not be
-           * transformed into a static. For example, making a super call into a
-           * native method currently causes this, because we cannot currently
-           * staticify native methods.
-           * 
-           * Have to use a "call" construct.
+           * transformed into a static. Super/this constructor calls work this
+           * way. Have to use a "call" construct.
            */
           JsName callName = objectScope.declareName("call");
           callName.setObfuscatable(false);
@@ -1102,8 +1100,9 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JNewInstance x, Context ctx) {
-      JsNameRef nameRef = names.get(x.getClassType()).makeRef(x.getSourceInfo());
+      JsNameRef nameRef = names.get(x.getTarget()).makeRef(x.getSourceInfo());
       JsNew newOp = new JsNew(x.getSourceInfo(), nameRef);
+      popList(newOp.getArguments(), x.getArgs().size()); // args
       push(newOp);
     }
 
@@ -1593,20 +1592,31 @@ public class GenerateJavaScriptAST {
         globalStmts.add(seedFuncStmt);
         typeForStatMap.put(seedFuncStmt, x);
 
-        // setup prototype, assign to temp
-        // _ = com_example_foo_Foo.prototype = new com_example_foo_FooSuper();
-        JsNameRef lhs = prototype.makeRef(sourceInfo);
-        lhs.setQualifier(seedFuncName.makeRef(sourceInfo));
-        JsExpression rhs;
+        // Setup prototype chain.
+        // _ = Foo__V.prototype = FooSeed.prototype = new FooSuper();
+        JsNameRef seedProtoRef = prototype.makeRef(sourceInfo);
+        seedProtoRef.setQualifier(seedFuncName.makeRef(sourceInfo));
+        JsExpression protoObj;
         if (x.getSuperClass() != null) {
           JsNameRef superPrototypeRef = names.get(x.getSuperClass()).makeRef(
               sourceInfo);
           JsNew newExpr = new JsNew(sourceInfo, superPrototypeRef);
-          rhs = newExpr;
+          protoObj = newExpr;
         } else {
-          rhs = new JsObjectLiteral(sourceInfo);
+          protoObj = new JsObjectLiteral(sourceInfo);
         }
-        JsExpression protoAsg = createAssignment(lhs, rhs);
+        JsExpression protoAsg = createAssignment(seedProtoRef, protoObj);
+
+        // Chain assign the same prototype to every live constructor.
+        for (JMethod method : x.getMethods()) {
+          if (method instanceof JConstructor) {
+            JsNameRef protoRef = prototype.makeRef(sourceInfo);
+            protoRef.setQualifier(names.get(method).makeRef(sourceInfo));
+            protoAsg = createAssignment(protoRef, protoAsg);
+          }
+        }
+
+        // Finally, assign to the temp var for setup code.
         JsExpression tmpAsg = createAssignment(globalTemp.makeRef(sourceInfo),
             protoAsg);
         JsExprStmt tmpAsgStmt = tmpAsg.makeStmt();
@@ -1717,7 +1727,7 @@ public class GenerateJavaScriptAST {
       for (JMethod method : x.getMethods()) {
         SourceInfo sourceInfo = method.getSourceInfo().makeChild(
             GenerateJavaScriptVisitor.class, "vtable assignment");
-        if (!method.isStatic() && !method.isAbstract()) {
+        if (method.needsVtable() && !method.isAbstract()) {
           JsNameRef lhs = polymorphicNames.get(method).makeRef(sourceInfo);
           lhs.setQualifier(globalTemp.makeRef(sourceInfo));
           /*
@@ -1769,7 +1779,7 @@ public class GenerateJavaScriptAST {
       if (!crossClassTargets.contains(x)) {
         return null;
       }
-      if (!x.isStatic() || program.isStaticImpl(x)) {
+      if (x.canBePolymorphic() || program.isStaticImpl(x)) {
         return null;
       }
       JDeclaredType enclosingType = x.getEnclosingType();
@@ -1863,6 +1873,12 @@ public class GenerateJavaScriptAST {
       if (sourceType.checkClinitTo(targetType)) {
         crossClassTargets.add(x.getTarget());
       }
+    }
+
+    @Override
+    public void endVisit(JProgram x, Context ctx) {
+      // Entry methods can be called externally, so they must run clinit. 
+      crossClassTargets.addAll(x.getAllEntryMethods());
     }
 
     @Override

@@ -193,11 +193,8 @@ public class ExpressionAnalyzer extends JVisitor {
 
   @Override
   public void endVisit(JNewInstance x, Context ctx) {
-    /*
-     * Due to implementation details, a new instance operation has no other
-     * possible side-effects.
-     */
     createsObject = true;
+    endVisit((JMethodCall) x, ctx);
   }
 
   @Override

@@ -37,6 +37,7 @@ import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
@@ -126,6 +127,7 @@ public class TypeTightener {
       boolean isStatic = method.isStatic();
       boolean isStaticImpl = program.isStaticImpl(method);
       if (isStatic && !isStaticImpl && instance != null) {
+        // TODO: move to DeadCodeElimination.
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
         if (!instance.hasSideEffects()) {
@@ -142,6 +144,11 @@ public class TypeTightener {
         // bind null instance calls to the null method for static impls
         ctx.replaceMe(Pruner.transformToNullMethodCall(x, program));
       }
+    }
+
+    @Override
+    public void endVisit(JNewInstance x, Context ctx) {
+      // Do not visit.
     }
   }
 
@@ -272,7 +279,7 @@ public class TypeTightener {
     public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
 
-      if (!x.isStatic()) {
+      if (x.canBePolymorphic()) {
         /*
          * Add an assignment to each parameter from that same parameter in every
          * method this method overrides.
@@ -656,7 +663,7 @@ public class TypeTightener {
      * return <code>null</code> no matter what.
      */
     private JMethod getSingleConcreteMethod(JMethod method) {
-      if (method.isStatic()) {
+      if (!method.canBePolymorphic()) {
         return null;
       }
       if (getSingleConcreteType(method.getEnclosingType()) != null) {

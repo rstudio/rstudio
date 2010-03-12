@@ -20,6 +20,7 @@ import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -27,9 +28,7 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
-import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
-import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
@@ -166,26 +165,23 @@ public class BuildTypeMap {
       try {
         MethodBinding b = ctorDecl.binding;
         JClassType enclosingType = (JClassType) typeMap.get(scope.enclosingSourceType());
-        String name = enclosingType.getShortName();
         SourceInfo info = makeSourceInfo(ctorDecl, enclosingType);
-        JMethod newMethod = program.createMethod(info, name.toCharArray(),
-            enclosingType, program.getNonNullType(enclosingType), false, false,
-            true, b.isPrivate(), false);
+        JConstructor newCtor = program.createConstructor(info, enclosingType);
 
         // Enums have hidden arguments for name and value
         if (enclosingType.isEnumOrSubclass() != null) {
           program.createParameter(info, "enum$name".toCharArray(),
-              program.getTypeJavaLangString(), true, false, newMethod);
+              program.getTypeJavaLangString(), true, false, newCtor);
           program.createParameter(info, "enum$ordinal".toCharArray(),
-              program.getTypePrimitiveInt(), true, false, newMethod);
+              program.getTypePrimitiveInt(), true, false, newCtor);
         }
 
         // user args
-        mapParameters(newMethod, ctorDecl);
-        addThrownExceptions(ctorDecl.binding, newMethod);
+        mapParameters(newCtor, ctorDecl);
+        addThrownExceptions(ctorDecl.binding, newCtor);
         // original params are now frozen
 
-        info.addCorrelation(program.getCorrelator().by(newMethod));
+        info.addCorrelation(program.getCorrelator().by(newCtor));
 
         int syntheticParamCount = 0;
         ReferenceBinding declaringClass = b.declaringClass;
@@ -200,7 +196,7 @@ public class BuildTypeMap {
               if (alreadyNamedVariables.contains(argName)) {
                 argName += "_" + i;
               }
-              createParameter(arg, argName, newMethod);
+              createParameter(arg, argName, newCtor);
               ++syntheticParamCount;
               alreadyNamedVariables.add(argName);
             }
@@ -213,14 +209,14 @@ public class BuildTypeMap {
               if (alreadyNamedVariables.contains(argName)) {
                 argName += "_" + i;
               }
-              createParameter(arg, argName, newMethod);
+              createParameter(arg, argName, newCtor);
               ++syntheticParamCount;
               alreadyNamedVariables.add(argName);
             }
           }
         }
 
-        typeMap.put(b, newMethod);
+        typeMap.put(b, newCtor);
 
         // Now let's implicitly create a static function called 'new' that will
         // allow construction from JSNI methods
@@ -228,7 +224,7 @@ public class BuildTypeMap {
           ReferenceBinding enclosingBinding = ctorDecl.binding.declaringClass.enclosingType();
           JReferenceType outerType = enclosingBinding == null ? null
               : (JReferenceType) typeMap.get(enclosingBinding);
-          createSyntheticConstructor(newMethod,
+          createSyntheticConstructor(newCtor,
               ctorDecl.binding.declaringClass.isStatic(), outerType);
         }
 
@@ -403,9 +399,9 @@ public class BuildTypeMap {
      *          constructed. This may be <code>null</code> if the class is a
      *          top-level type.
      */
-    private JMethod createSyntheticConstructor(JMethod constructor,
+    private JMethod createSyntheticConstructor(JConstructor constructor,
         boolean staticClass, JReferenceType enclosingType) {
-      JClassType type = (JClassType) constructor.getEnclosingType();
+      JClassType type = constructor.getEnclosingType();
 
       // Define the method
       JMethod synthetic = program.createMethod(type.getSourceInfo().makeChild(
@@ -419,12 +415,8 @@ public class BuildTypeMap {
       // new Foo() : Create the instance
       JNewInstance newInstance = new JNewInstance(
           type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-              "new instance"), (JNonNullType) synthetic.getType());
+              "new instance"), constructor, type);
 
-      // (new Foo()).Foo() : Invoke the constructor method on the instance
-      JMethodCall call = new JMethodCall(type.getSourceInfo().makeChild(
-          BuildDeclMapVisitor.class, "constructor invocation"), newInstance,
-          constructor);
       /*
        * If the type isn't static, make the first parameter a reference to the
        * instance of the enclosing class. It's the first instance to allow the
@@ -449,16 +441,16 @@ public class BuildTypeMap {
          * implicitly as the last argument to the constructor.
          */
         if (enclosingInstance != null && !i.hasNext()) {
-          call.addArg(new JParameterRef(synthetic.getSourceInfo().makeChild(
-              BuildDeclMapVisitor.class, "enclosing instance"),
-              enclosingInstance));
+          newInstance.addArg(new JParameterRef(
+              synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
+                  "enclosing instance"), enclosingInstance));
         } else {
           JParameter syntheticParam = program.createParameter(
               synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
                   "Argument " + param.getName()),
               param.getName().toCharArray(), param.getType(), true, false,
               synthetic);
-          call.addArg(new JParameterRef(
+          newInstance.addArg(new JParameterRef(
               syntheticParam.getSourceInfo().makeChild(
                   BuildDeclMapVisitor.class, "reference"), syntheticParam));
         }
@@ -467,10 +459,10 @@ public class BuildTypeMap {
       // Lock the method.
       synthetic.freezeParamTypes();
 
-      // return (new Foo()).Foo() : The only statement in the function
+      // return new Foo() : The only statement in the function
       JReturnStatement ret = new JReturnStatement(
           synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-              "Return statement"), call);
+              "Return statement"), newInstance);
 
       // Add the return statement to the method body
       JMethodBody body = (JMethodBody) synthetic.getBody();

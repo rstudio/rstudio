@@ -48,7 +48,7 @@ import java.util.Stack;
  * {@link JsInliner}. <b>Not all expressions are necessarily implemented</b>,
  * only those that are safe to hoist into outer call sites.
  */
-final class JsHoister {
+public final class JsHoister {
   /**
    * Implements actual cloning logic. We rely on the JsExpressions to provide
    * traversal logic. The {@link #stack} field is used to accumulate
@@ -56,8 +56,8 @@ final class JsHoister {
    * that argument lists are on the stack in reverse order, so lists should be
    * constructed via inserts, rather than appends.
    */
-  private static class Cloner extends JsVisitor {
-    private final Stack<JsExpression> stack = new Stack<JsExpression>();
+  public static class Cloner extends JsVisitor {
+    protected final Stack<JsExpression> stack = new Stack<JsExpression>();
     private boolean successful = true;
 
     @Override

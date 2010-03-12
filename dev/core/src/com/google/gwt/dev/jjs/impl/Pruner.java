@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -35,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNameOf;
+import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
@@ -167,43 +169,17 @@ public class Pruner {
 
       // Did we prune the parameters of the method we're calling?
       if (methodToOriginalParamsMap.containsKey(method)) {
-        // This must be a static method
-        assert method.isStatic();
-
         JMethodCall newCall = new JMethodCall(x, x.getInstance());
-        List<JParameter> originalParams = methodToOriginalParamsMap.get(method);
-        JMultiExpression currentMulti = null;
-        for (int i = 0, c = x.getArgs().size(); i < c; ++i) {
-          JExpression arg = x.getArgs().get(i);
-          JParameter param = null;
-          if (i < originalParams.size()) {
-            param = originalParams.get(i);
-          }
+        replaceForPrunedParameters(x, newCall, ctx);
+      }
+    }
 
-          if (param != null && referencedNonTypes.contains(param)) {
-            // If there is an existing multi, terminate it.
-            if (currentMulti != null) {
-              currentMulti.exprs.add(arg);
-              newCall.addArg(currentMulti);
-              currentMulti = null;
-            } else {
-              newCall.addArg(arg);
-            }
-          } else if (arg.hasSideEffects()) {
-            // The argument is only needed for side effects, add it to a multi.
-            if (currentMulti == null) {
-              currentMulti = new JMultiExpression(x.getSourceInfo());
-            }
-            currentMulti.exprs.add(arg);
-          }
-        }
-
-        // Add any orphaned parameters on the end. Extra params are OK.
-        if (currentMulti != null) {
-          newCall.addArg(currentMulti);
-        }
-
-        ctx.replaceMe(newCall);
+    @Override
+    public void endVisit(JNewInstance x, Context ctx) {
+      // Did we prune the parameters of the method we're calling?
+      if (methodToOriginalParamsMap.containsKey(x.getTarget())) {
+        JMethodCall newCall = new JNewInstance(x);
+        replaceForPrunedParameters(x, newCall, ctx);
       }
     }
 
@@ -305,6 +281,44 @@ public class Pruner {
         return multi;
       }
     }
+
+    private void replaceForPrunedParameters(JMethodCall x, JMethodCall newCall,
+        Context ctx) {
+      assert !x.getTarget().canBePolymorphic();
+      List<JParameter> originalParams = methodToOriginalParamsMap.get(x.getTarget());
+      JMultiExpression currentMulti = null;
+      for (int i = 0, c = x.getArgs().size(); i < c; ++i) {
+        JExpression arg = x.getArgs().get(i);
+        JParameter param = null;
+        if (i < originalParams.size()) {
+          param = originalParams.get(i);
+        }
+
+        if (param != null && referencedNonTypes.contains(param)) {
+          // If there is an existing multi, terminate it.
+          if (currentMulti != null) {
+            currentMulti.exprs.add(arg);
+            newCall.addArg(currentMulti);
+            currentMulti = null;
+          } else {
+            newCall.addArg(arg);
+          }
+        } else if (arg.hasSideEffects()) {
+          // The argument is only needed for side effects, add it to a multi.
+          if (currentMulti == null) {
+            currentMulti = new JMultiExpression(x.getSourceInfo());
+          }
+          currentMulti.exprs.add(arg);
+        }
+      }
+
+      // Add any orphaned parameters on the end. Extra params are OK.
+      if (currentMulti != null) {
+        newCall.addArg(currentMulti);
+      }
+
+      ctx.replaceMe(newCall);
+    }
   }
 
   /**
@@ -395,7 +409,7 @@ public class Pruner {
 
     @Override
     public boolean visit(JMethod x, Context ctx) {
-      if (x.isStatic()) {
+      if (!x.canBePolymorphic()) {
         /*
          * Don't prune parameters on unreferenced methods. The methods might not
          * be reachable through the current method traversal routines, but might
@@ -657,6 +671,9 @@ public class Pruner {
     for (JClassType type : program.codeGenTypes) {
       livenessAnalyzer.traverseFromReferenceTo(type);
       for (JMethod method : type.getMethods()) {
+        if (method instanceof JConstructor) {
+          livenessAnalyzer.traverseFromInstantiationOf(type);
+        }
         livenessAnalyzer.traverseFrom(method);
       }
     }

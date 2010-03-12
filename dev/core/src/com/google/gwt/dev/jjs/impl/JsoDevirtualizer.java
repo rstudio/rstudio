@@ -180,7 +180,7 @@ public class JsoDevirtualizer {
     }
 
     for (JMethod method : jsoType.getMethods()) {
-      if (!method.isStatic()) {
+      if (method.needsVtable()) {
         virtualJsoMethods.add(method);
       }
     }

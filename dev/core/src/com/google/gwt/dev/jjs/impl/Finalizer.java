@@ -19,6 +19,7 @@ import com.google.gwt.dev.jjs.ast.CanBeSetFinal;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -69,6 +70,11 @@ public class Finalizer {
       if (!x.isFinal() && !isSubclassed.contains(x)) {
         setFinal(x);
       }
+    }
+
+    @Override
+    public void endVisit(JConstructor x, Context ctx) {
+      // Not applicable.
     }
 
     @Override
@@ -134,6 +140,11 @@ public class Finalizer {
       }
     }
 
+    @Override
+    public void endVisit(JConstructor x, Context ctx) {
+      // Never overridden.
+    }
+    
     @Override
     public void endVisit(JDeclarationStatement x, Context ctx) {
       // This is not a reassignment, the target may still be final.

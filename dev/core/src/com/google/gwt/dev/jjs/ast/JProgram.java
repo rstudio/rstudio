@@ -439,6 +439,20 @@ public class JProgram extends JNode {
     return x;
   }
 
+  public JConstructor createConstructor(SourceInfo info,
+      JClassType enclosingType) {
+    JConstructor x = new JConstructor(info, enclosingType,
+        getNonNullType(enclosingType));
+    x.setBody(new JMethodBody(info));
+    if (indexedTypes.containsValue(enclosingType)) {
+      indexedMethods.put(enclosingType.getShortName() + '.'
+          + enclosingType.getShortName(), x);
+    }
+
+    enclosingType.addMethod(x);
+    return x;
+  }
+
   public JEnumType createEnum(SourceInfo info, char[][] name) {
     String sname = dotify(name);
     JEnumType x = new JEnumType(info, sname);
@@ -987,7 +1001,7 @@ public class JProgram extends JNode {
     if (nullMethod == null) {
       nullMethod = new JMethod(createSourceInfoSynthetic(JProgram.class,
           "Null method"), "nullMethod", null, JNullType.INSTANCE, false, false,
-          true, true);
+          true, false);
       nullMethod.setSynthetic();
     }
     return nullMethod;

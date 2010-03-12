@@ -35,7 +35,7 @@ public class JMethodCall extends JExpression {
 
   /**
    * Initialize a new method call equivalent to another one. A new instance must
-   * be specified, and the new object has not arguments on initialization. This
+   * be specified, and the new object has no arguments on initialization. This
    * forces the caller to potentially deal with cloning objects if needed.
    */
   public JMethodCall(JMethodCall other, JExpression instance) {
@@ -50,7 +50,7 @@ public class JMethodCall extends JExpression {
   public JMethodCall(SourceInfo info, JExpression instance, JMethod method) {
     super(info);
     assert (method != null);
-    assert (instance != null || method.isStatic());
+    assert (instance != null || method.isStatic() || this instanceof JNewInstance);
     this.instance = instance;
     this.method = method;
     this.overrideReturnType = null;
@@ -108,7 +108,7 @@ public class JMethodCall extends JExpression {
 
   public boolean canBePolymorphic() {
     return !cannotBePolymorphic && !staticDispatchOnly && !method.isFinal()
-        && !method.isStatic();
+        && method.canBePolymorphic();
   }
 
   /**
@@ -168,12 +168,16 @@ public class JMethodCall extends JExpression {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      if (instance != null) {
-        instance = visitor.accept(instance);
-      }
-      args = visitor.acceptImmutable(args);
+      visitChildren(visitor);
     }
     visitor.endVisit(this, ctx);
+  }
+
+  protected void visitChildren(JVisitor visitor) {
+    if (instance != null) {
+      instance = visitor.accept(instance);
+    }
+    args = visitor.acceptImmutable(args);
   }
 
 }

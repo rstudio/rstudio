@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -42,6 +43,11 @@ public class MethodCallTightener {
    * the qualifier.
    */
   public class MethodCallTighteningVisitor extends JModVisitor {
+
+    @Override
+    public void endVisit(JNewInstance x, Context ctx) {
+      // Do not tighten new operations.
+    }
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {

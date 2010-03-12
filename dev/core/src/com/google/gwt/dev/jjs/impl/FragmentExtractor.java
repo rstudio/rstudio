@@ -17,12 +17,15 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.js.JsHoister.Cloner;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
+import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsEmpty;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
@@ -30,6 +33,8 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsNew;
+import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVars;
@@ -269,8 +274,18 @@ public class FragmentExtractor {
         }
 
         boolean keepIt;
-
-        if (containsRemovableVars(stat)) {
+        JClassType vtableTypeAssigned = vtableTypeAssigned(stat);
+        if (vtableTypeAssigned != null
+            && livenessPredicate.isLive(vtableTypeAssigned)) {
+          JsExprStmt result = extractPrototypeSetup(livenessPredicate,
+              alreadyLoadedPredicate, stat, vtableTypeAssigned);
+          if (result != null) {
+            stat = result;
+            keepIt = true;
+          } else {
+            keepIt = false;
+          }
+        } else if (containsRemovableVars(stat)) {
           stat = removeSomeVars((JsVars) stat, livenessPredicate,
               alreadyLoadedPredicate);
           keepIt = !(stat instanceof JsEmpty);
@@ -282,8 +297,8 @@ public class FragmentExtractor {
         statementLogger.logStatement(stat, keepIt);
 
         if (keepIt) {
-          if (vtableTypeAssigned(stat) != null) {
-            currentVtableType = vtableTypeAssigned(stat);
+          if (vtableTypeAssigned != null) {
+            currentVtableType = vtableTypeAssigned;
           }
           JClassType vtableType = vtableTypeNeeded(stat);
           if (vtableType != null && vtableType != currentVtableType) {
@@ -358,6 +373,60 @@ public class FragmentExtractor {
   }
 
   /**
+   * Weird case: the seed function's liveness is associated with the type
+   * itself. However, individual constructors can have a liveness that is a
+   * subset of the type's liveness. We essentially have to break up the
+   * prototype chain according to exactly what's newly live.
+   */
+  private JsExprStmt extractPrototypeSetup(
+      final LivenessPredicate livenessPredicate,
+      final LivenessPredicate alreadyLoadedPredicate, JsStatement stat,
+      final JClassType vtableTypeAssigned) {
+    final boolean[] anyLiveCode = new boolean[1];
+    Cloner c = new Cloner() {
+      @Override
+      public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+        JsExpression rhs = stack.pop();
+        JsNameRef lhs = (JsNameRef) stack.pop();
+        if (rhs instanceof JsNew || rhs instanceof JsObjectLiteral) {
+          // The super op is being assigned to the seed prototype.
+          if (alreadyLoadedPredicate.isLive(vtableTypeAssigned)) {
+            stack.push(lhs);
+            return;
+          } else {
+            anyLiveCode[0] = true;
+          }
+        } else if (lhs.getQualifier() == null) {
+          // The underscore is being assigned to.
+          assert "_".equals(lhs.getIdent());
+        } else {
+          // A constructor function is being assigned to.
+          assert "prototype".equals(lhs.getIdent());
+          JsNameRef ctorRef = (JsNameRef) lhs.getQualifier();
+          JConstructor ctor = (JConstructor) map.nameToMethod(ctorRef.getName());
+          assert ctor != null;
+          if (livenessPredicate.isLive(ctor)
+              && !alreadyLoadedPredicate.isLive(ctor)) {
+            anyLiveCode[0] = true;
+          } else {
+            stack.push(rhs);
+            return;
+          }
+        }
+
+        JsBinaryOperation toReturn = new JsBinaryOperation(x.getSourceInfo(),
+            x.getOperator());
+        toReturn.setArg2(rhs);
+        toReturn.setArg1(lhs);
+        stack.push(toReturn);
+      }
+    };
+    c.accept(((JsExprStmt) stat).getExpression());
+    JsExprStmt result = anyLiveCode[0] ? c.getExpression().makeStmt() : null;
+    return result;
+  }
+
+  /**
    * Check whether the statement invokes an entry method. Detect JavaScript code
    * of the form foo() where foo is a the JavaScript function corresponding to
    * an entry method.
@@ -398,7 +467,7 @@ public class FragmentExtractor {
       }
       // The method is live. Check that its enclosing type is instantiable.
       // TODO(spoon): this check should not be needed once the CFA is updated
-      return meth.isStatic()
+      return !meth.needsVtable()
           || livenessPredicate.isLive(meth.getEnclosingType());
     }
 
@@ -554,7 +623,7 @@ public class FragmentExtractor {
   private JClassType vtableTypeNeeded(JsStatement stat) {
     JMethod meth = map.vtableInitToMethod(stat);
     if (meth != null) {
-      if (!meth.isStatic()) {
+      if (meth.needsVtable()) {
         return (JClassType) meth.getEnclosingType();
       }
     }

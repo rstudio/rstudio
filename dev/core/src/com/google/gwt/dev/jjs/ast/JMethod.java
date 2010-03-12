@@ -30,9 +30,8 @@ import java.util.Set;
 /**
  * A Java method implementation.
  */
-public final class JMethod extends JNode implements HasAnnotations,
-    HasEnclosingType, HasName, HasType, CanBeAbstract, CanBeSetFinal,
-    CanBeNative, CanBeStatic {
+public class JMethod extends JNode implements HasAnnotations, HasEnclosingType,
+    HasName, HasType, CanBeAbstract, CanBeSetFinal, CanBeNative, CanBeStatic {
 
   private static final String TRACE_METHOD_WILDCARD = "*";
 
@@ -96,6 +95,7 @@ public final class JMethod extends JNode implements HasAnnotations,
    * Add a method that this method overrides.
    */
   public void addOverride(JMethod toAdd) {
+    assert canBePolymorphic();
     overrides = Lists.add(overrides, toAdd);
   }
 
@@ -103,6 +103,7 @@ public final class JMethod extends JNode implements HasAnnotations,
    * Add methods that this method overrides.
    */
   public void addOverrides(List<JMethod> toAdd) {
+    assert canBePolymorphic();
     overrides = Lists.addAll(overrides, toAdd);
   }
 
@@ -119,6 +120,15 @@ public final class JMethod extends JNode implements HasAnnotations,
 
   public void addThrownExceptions(List<JClassType> exceptionTypes) {
     thrownExceptions = Lists.addAll(thrownExceptions, exceptionTypes);
+  }
+
+  /**
+   * Returns true if this method can participate in virtual dispatch. Returns
+   * true for non-private instance methods; false for static methods, private
+   * instance methods, and constructors.
+   */
+  public boolean canBePolymorphic() {
+    return !isStatic() && !isPrivate();
   }
 
   public JAnnotation findAnnotation(String className) {
@@ -215,6 +225,14 @@ public final class JMethod extends JNode implements HasAnnotations,
   }
 
   /**
+   * Returns <code>true</code> if this method can participate in instance
+   * dispatch.
+   */
+  public boolean needsVtable() {
+    return !isStatic();
+  }
+
+  /**
    * Removes the parameter at the specified index.
    */
   public void removeParam(int index) {
@@ -272,27 +290,41 @@ public final class JMethod extends JNode implements HasAnnotations,
 
   public void traverse(JVisitor visitor, Context ctx) {
     String before = null;
-    if (trace && visitor instanceof JModVisitor) {
-      before = this.toSource();
-      if (traceFirst) {
-        traceFirst = false;
-        trace("JAVA INITIAL", before);
-      }
-    }
+    before = traceBefore(visitor);
     if (visitor.visit(this, ctx)) {
-      annotations = visitor.acceptImmutable(annotations);
-      params = visitor.acceptImmutable(params);
-      if (body != null) {
-        body = (JAbstractMethodBody) visitor.accept(body);
-      }
+      visitChildren(visitor);
     }
     visitor.endVisit(this, ctx);
+    traceAfter(visitor, before);
+  }
+
+  protected void traceAfter(JVisitor visitor, String before) {
     if (trace && visitor instanceof JModVisitor) {
       String after = this.toSource();
       if (!after.equals(before)) {
         String title = visitor.getClass().getSimpleName();
         trace(title, after);
       }
+    }
+  }
+
+  protected String traceBefore(JVisitor visitor) {
+    if (trace && visitor instanceof JModVisitor) {
+      String source = this.toSource();
+      if (traceFirst) {
+        traceFirst = false;
+        trace("JAVA INITIAL", source);
+      }
+      return source;
+    }
+    return null;
+  }
+
+  protected void visitChildren(JVisitor visitor) {
+    annotations = visitor.acceptImmutable(annotations);
+    params = visitor.acceptImmutable(params);
+    if (body != null) {
+      body = (JAbstractMethodBody) visitor.accept(body);
     }
   }
 

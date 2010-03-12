@@ -43,6 +43,7 @@ import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
@@ -451,6 +452,23 @@ public class DeadCodeElimination {
       if (x.exprs.size() == 1) {
         ctx.replaceMe(x.exprs.get(0));
       }
+    }
+
+    @Override
+    public void endVisit(JNewInstance x, Context ctx) {
+      super.endVisit(x, ctx);
+      if (!ignoringExpressionOutput.contains(x) || !x.getTarget().isEmpty()) {
+        return;
+      }
+      // Replace the new operation with a multi.
+      JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
+      multi.exprs.addAll(x.getArgs());
+      JMethodCall clinit = maybeCreateClinitCall(x);
+      if (clinit != null) {
+        multi.exprs.add(clinit);
+      }
+
+      ctx.replaceMe(accept(multi));
     }
 
     @Override
@@ -1188,6 +1206,15 @@ public class DeadCodeElimination {
     private JMethodCall maybeCreateClinitCall(JFieldRef x) {
       if (x.hasClinit()) {
         JMethod clinit = x.getField().getEnclosingType().getMethods().get(0);
+        assert (JProgram.isClinit(clinit));
+        return new JMethodCall(x.getSourceInfo(), null, clinit);
+      }
+      return null;
+    }
+
+    private JMethodCall maybeCreateClinitCall(JNewInstance x) {
+      if (x.hasClinit()) {
+        JMethod clinit = x.getTarget().getEnclosingType().getMethods().get(0);
         assert (JProgram.isClinit(clinit));
         return new JMethodCall(x.getSourceInfo(), null, clinit);
       }

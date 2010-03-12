@@ -15,10 +15,12 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
@@ -229,6 +231,12 @@ public class MakeCallsStatic {
       enclosingType.getMethods().add(myIndexInClass + 1, newMethod);
       return false;
     }
+
+    @Override
+    public boolean visit(JConstructor x, Context ctx) {
+      throw new InternalCompilerException(
+          "Should not try to staticify constructors");
+    }
   }
 
   /**
@@ -251,7 +259,7 @@ public class MakeCallsStatic {
       if (x.canBePolymorphic()) {
         return;
       }
-      if (method.isStatic()) {
+      if (!method.needsVtable()) {
         return;
       }
       if (method.isAbstract()) {
@@ -281,7 +289,7 @@ public class MakeCallsStatic {
     private boolean currentMethodIsInitiallyLive;
     private ControlFlowAnalyzer initiallyLive;
 
-    /*
+    /**
      * In cases where callers are directly referencing (effectively) final
      * instance methods, rewrite the call site to reference the newly-generated
      * static method instead.
