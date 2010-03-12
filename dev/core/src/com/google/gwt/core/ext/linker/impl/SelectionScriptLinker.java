@@ -26,8 +26,6 @@ import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.ScriptReference;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.StylesheetReference;
-import com.google.gwt.dev.cfg.BindingProperty;
-import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.collect.Lists;
@@ -163,8 +161,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
           + result.getStrongName() + File.separator + i + FRAGMENT_EXTENSION));
     }
 
-    toReturn.addAll(emitSelectionInformation(result.getPermutation().getId(),
-        result.getStrongName(), result.getPermutation().getPropertyOracles()));
+    toReturn.addAll(emitSelectionInformation(result.getStrongName(), result));
 
     return toReturn;
   }
@@ -434,18 +431,14 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     }
   }
 
-  private List<Artifact<?>> emitSelectionInformation(int id, String strongName,
-      StaticPropertyOracle[] staticPropertyOracles) {
+  private List<Artifact<?>> emitSelectionInformation(String strongName,
+      CompilationResult result) {
     List<Artifact<?>> emitted = new ArrayList<Artifact<?>>();
 
-    for (int propOracleId = 0; propOracleId < staticPropertyOracles.length; propOracleId++) {
-      StaticPropertyOracle propOracle = staticPropertyOracles[propOracleId];
+    for (SortedMap<SelectionProperty, String> propertyMap : result.getPropertyMap()) {
       TreeMap<String, String> propMap = new TreeMap<String, String>();
-
-      BindingProperty[] orderedProps = propOracle.getOrderedProps();
-      String[] orderedPropValues = propOracle.getOrderedPropValues();
-      for (int i = 0; i < orderedProps.length; i++) {
-        propMap.put(orderedProps[i].getName(), orderedPropValues[i]);
+      for (Map.Entry<SelectionProperty, String> entry : propertyMap.entrySet()) {
+        propMap.put(entry.getKey().getName(), entry.getValue());
       }
       emitted.add(new SelectionInformation(strongName, propMap));
     }

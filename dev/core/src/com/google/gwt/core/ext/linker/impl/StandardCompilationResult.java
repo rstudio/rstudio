@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.SymbolData;
-import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
@@ -84,18 +83,20 @@ public class StandardCompilationResult extends CompilationResult {
 
   private final long symbolToken;
 
+  private final int permutationId;
+
   public StandardCompilationResult(PermutationResult permutationResult) {
-    super(StandardLinkerContext.class, permutationResult.getPermutation());
+    super(StandardLinkerContext.class);
     byte[][] js = permutationResult.getJs();
-    strongName = Util.computeStrongName(js);
+    this.strongName = Util.computeStrongName(js);
     byte[] serializedSymbolMap = permutationResult.getSerializedSymbolMap();
-    statementRanges = permutationResult.getStatementRanges();
-    Permutation permutation = permutationResult.getPermutation();
-    jsToken = new long[js.length];
+    this.statementRanges = permutationResult.getStatementRanges();
+    this.permutationId = permutationResult.getPermutation().getId();
+    this.jsToken = new long[js.length];
     for (int i = 0; i < jsToken.length; ++i) {
       jsToken[i] = diskCache.writeByteArray(js[i]);
     }
-    symbolToken = diskCache.writeByteArray(serializedSymbolMap);
+    this.symbolToken = diskCache.writeByteArray(serializedSymbolMap);
   }
 
   /**
@@ -116,6 +117,11 @@ public class StandardCompilationResult extends CompilationResult {
       js[i] = diskCache.readString(jsToken[i]);
     }
     return js;
+  }
+
+  @Override
+  public int getPermutationId() {
+    return permutationId;
   }
 
   @Override

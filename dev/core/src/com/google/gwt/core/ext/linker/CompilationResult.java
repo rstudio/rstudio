@@ -16,7 +16,6 @@
 package com.google.gwt.core.ext.linker;
 
 import com.google.gwt.core.ext.Linker;
-import com.google.gwt.dev.Permutation;
 
 import java.util.Map;
 import java.util.SortedMap;
@@ -27,12 +26,9 @@ import java.util.SortedSet;
  * result in identical JavaScript.
  */
 public abstract class CompilationResult extends Artifact<CompilationResult> {
-  private final Permutation permutation;
 
-  protected CompilationResult(Class<? extends Linker> linkerType,
-      Permutation permutation) {
+  protected CompilationResult(Class<? extends Linker> linkerType) {
     super(linkerType);
-    this.permutation = permutation;
   }
 
   /**
@@ -48,18 +44,9 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
   public abstract String[] getJavaScript();
 
   /**
-   * Return the permutation that compiled to this result.
-   */
-  public Permutation getPermutation() {
-    return permutation;
-  }
-
-  /**
    * Returns the permutation ID.
    */
-  public int getPermutationId() {
-    return getPermutation().getId();
-  }
+  public abstract int getPermutationId();
 
   /**
    * Provides values for {@link SelectionProperty} instances that are not
