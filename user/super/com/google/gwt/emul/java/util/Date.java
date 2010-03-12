@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,7 +15,7 @@
  */
 package java.util;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsDate;
 
 import java.io.Serializable;
 
@@ -25,34 +25,31 @@ import java.io.Serializable;
 public class Date implements Cloneable, Comparable<Date>, Serializable {
 
   /**
-   * Used only by toString().
+   * Encapsulates static data to avoid Date itself having a static initializer.
    */
-  private static final String[] DAYS = {
-      "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
-  };
+  private static class StringData {
+    public static final String[] DAYS = {
+        "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
-  /**
-   * Used only by toString().
-   */
-  private static final String[] MONTHS = {
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-  };
+    public static final String[] MONTHS = {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+        "Nov", "Dec"};
+  }
 
   public static long parse(String s) {
-    long d = (long) parse0(s);
-    if (d != -1) {
-      return d;
-    } else {
+    double parsed = JsDate.parse(s);
+    if (Double.isNaN(parsed)) {
       throw new IllegalArgumentException();
     }
+    return (long) parsed;
   }
 
   // CHECKSTYLE_OFF: Matching the spec.
-  public static long UTC(int year, int month, int date, int hrs,
-      int min, int sec) {
-    return (long) utc0(year, month, date, hrs, min, sec);
+  public static long UTC(int year, int month, int date, int hrs, int min,
+      int sec) {
+    return (long) JsDate.UTC(year + 1900, month, date, hrs, min, sec, 0);
   }
+
   // CHECKSTYLE_ON
 
   /**
@@ -69,71 +66,35 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
   }
 
   /**
-   *  Return the names for the days of the week as specified by the Date
-   *  specification.
-   */
-  @SuppressWarnings("unused") // called by JSNI
-  private static String dayToString(int day) {
-    return DAYS[day];
-  }
-
-  /**
-   *  Return the names for the months of the year as specified by the Date
-   *  specification.
-   */
-  @SuppressWarnings("unused") // called by JSNI
-  private static String monthToString(int month) {
-    return MONTHS[month];
-  }
-
-  private static native double parse0(String s) /*-{
-    var d = Date.parse(s);
-    return isNaN(d) ? -1 : d;
-  }-*/;
-
-  /**
-   * Throw an exception if jsdate is not an object.
-   * 
-   * @param val
-   */
-  @SuppressWarnings("unused") // called by JSNI
-  private static void throwJsDateException(String val) {
-    throw new IllegalStateException("jsdate is " + val);
-  }
-
-  private static native double utc0(int year, int month, int date, int hrs,
-      int min, int sec) /*-{
-    return Date.UTC(year + 1900, month, date, hrs, min, sec);
-  }-*/;
-  
-  /**
    * JavaScript Date instance.
    */
-  @SuppressWarnings("unused") // used from JSNI
-  private JavaScriptObject jsdate;
-  
+  private final JsDate jsdate;
+
   public Date() {
-    init();
+    jsdate = JsDate.create();
   }
 
   public Date(int year, int month, int date) {
-    init(year, month, date, 0, 0, 0);
+    this(year, month, date, 0, 0, 0);
   }
 
   public Date(int year, int month, int date, int hrs, int min) {
-    init(year, month, date, hrs, min, 0);
+    this(year, month, date, hrs, min, 0);
   }
 
   public Date(int year, int month, int date, int hrs, int min, int sec) {
-    init(year, month, date, hrs, min, sec);
+    jsdate = JsDate.create();
+    jsdate.setFullYear(year + 1900, month, date);
+    jsdate.setHours(hrs, min, sec, 0);
+    fixDaylightSavings(hrs);
   }
 
   public Date(long date) {
-    init(date);
+    jsdate = JsDate.create(date);
   }
 
   public Date(String date) {
-    init(Date.parse(date));
+    this(Date.parse(date));
   }
 
   public boolean after(Date when) {
@@ -165,161 +126,113 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
     return ((obj instanceof Date) && (getTime() == ((Date) obj).getTime()));
   }
 
-  public native int getDate() /*-{
-    this.@java.util.Date::checkJsDate()();
-    return this.@java.util.Date::jsdate.getDate();
-  }-*/;
-
-  public native int getDay() /*-{
-    this.@java.util.Date::checkJsDate()();
-    return this.@java.util.Date::jsdate.getDay();
-  }-*/;
-
-  public native int getHours() /*-{
-    this.@java.util.Date::checkJsDate()();
-    return this.@java.util.Date::jsdate.getHours();
-  }-*/;
-
-  public native int getMinutes() /*-{
-    this.@java.util.Date::checkJsDate()();
-    return this.@java.util.Date::jsdate.getMinutes();
-  }-*/;
-
-  public native int getMonth() /*-{
-    this.@java.util.Date::checkJsDate()();
-    return this.@java.util.Date::jsdate.getMonth();
-  }-*/;
-
-  public native int getSeconds() /*-{
-    this.@java.util.Date::checkJsDate()();
-    return this.@java.util.Date::jsdate.getSeconds();
-  }-*/;
-
-  public long getTime() {
-    return (long) getTime0();
+  public int getDate() {
+    return jsdate.getDate();
   }
 
-  public native int getTimezoneOffset() /*-{
-    this.@java.util.Date::checkJsDate()();
-    return this.@java.util.Date::jsdate.getTimezoneOffset();
-  }-*/;
+  public int getDay() {
+    return jsdate.getDay();
+  }
 
-  public native int getYear() /*-{
-    this.@java.util.Date::checkJsDate()();
-    return this.@java.util.Date::jsdate.getFullYear() - 1900;
-  }-*/;
+  public int getHours() {
+    return jsdate.getHours();
+  }
+
+  public int getMinutes() {
+    return jsdate.getMinutes();
+  }
+
+  public int getMonth() {
+    return jsdate.getMonth();
+  }
+
+  public int getSeconds() {
+    return jsdate.getSeconds();
+  }
+
+  public long getTime() {
+    return (long) jsdate.getTime();
+  }
+
+  public int getTimezoneOffset() {
+    return jsdate.getTimezoneOffset();
+  }
+
+  public int getYear() {
+    return jsdate.getFullYear() - 1900;
+  }
 
   @Override
   public int hashCode() {
-    return (int) (this.getTime() ^ (this.getTime() >>> 32));
+    long time = getTime();
+    return (int) (time ^ (time >>> 32));
   }
 
-  public native void setDate(int date) /*-{
-    this.@java.util.Date::checkJsDate()();
-    var hours = this.@java.util.Date::jsdate.getHours()
-    this.@java.util.Date::jsdate.setDate(date);
-    this.@java.util.Date::fixDaylightSavings(I)(hours);
-  }-*/;
+  public void setDate(int date) {
+    int hours = jsdate.getHours();
+    jsdate.setDate(date);
+    fixDaylightSavings(hours);
+  }
 
-  public native void setHours(int hours) /*-{
-    this.@java.util.Date::checkJsDate()();
-    this.@java.util.Date::jsdate.setHours(hours);
-    this.@java.util.Date::fixDaylightSavings(I)(hours);
-  }-*/;
+  public void setHours(int hours) {
+    jsdate.setHours(hours);
+    fixDaylightSavings(hours);
+  }
 
-  public native void setMinutes(int minutes) /*-{
-    this.@java.util.Date::checkJsDate()();
-    // Truncate (minutes / 60) to int.
-    var hours = this.@java.util.Date::jsdate.getHours() + ~~(minutes / 60);
-    this.@java.util.Date::jsdate.setMinutes(minutes);
-    this.@java.util.Date::fixDaylightSavings(I)(hours);
-  }-*/;
+  public void setMinutes(int minutes) {
+    int hours = getHours() + minutes / 60;
+    jsdate.setMinutes(minutes);
+    fixDaylightSavings(hours);
+  }
 
-  public native void setMonth(int month) /*-{
-    this.@java.util.Date::checkJsDate()();
-    var hours = this.@java.util.Date::jsdate.getHours();
-    this.@java.util.Date::jsdate.setMonth(month);
-    this.@java.util.Date::fixDaylightSavings(I)(hours);
-  }-*/;
+  public void setMonth(int month) {
+    int hours = jsdate.getHours();
+    jsdate.setMonth(month);
+    fixDaylightSavings(hours);
+  }
 
-  public native void setSeconds(int seconds) /*-{
-    this.@java.util.Date::checkJsDate()();
-    // Truncate (seconds / (60 * 60)) to int.
-    var hours = this.@java.util.Date::jsdate.getHours() + ~~(seconds / (60 * 60));
-    this.@java.util.Date::jsdate.setSeconds(seconds);
-    this.@java.util.Date::fixDaylightSavings(I)(hours);
-  }-*/;
+  public void setSeconds(int seconds) {
+    int hours = getHours() + seconds / (60 * 60);
+    jsdate.setSeconds(seconds);
+    fixDaylightSavings(hours);
+  }
 
   public void setTime(long time) {
-    setTime0(time);
+    jsdate.setTime(time);
   }
 
-  public native void setYear(int year) /*-{
-    this.@java.util.Date::checkJsDate()();
-    var hours = this.@java.util.Date::jsdate.getHours()
-    this.@java.util.Date::jsdate.setFullYear(year + 1900);
-    this.@java.util.Date::fixDaylightSavings(I)(hours);
-  }-*/;
+  public void setYear(int year) {
+    int hours = jsdate.getHours();
+    jsdate.setFullYear(year + 1900);
+    fixDaylightSavings(hours);
+  }
 
-  public native String toGMTString() /*-{
-    this.@java.util.Date::checkJsDate()();
-    var d = this.@java.util.Date::jsdate;
-    var padTwo = @java.util.Date::padTwo(I);
-    var month =
-        @java.util.Date::monthToString(I)(this.@java.util.Date::jsdate.getUTCMonth());
-  
-    return d.getUTCDate() + " " +
-        month + " " +
-        d.getUTCFullYear() + " " +
-        padTwo(d.getUTCHours()) + ":" +
-        padTwo(d.getUTCMinutes()) + ":" +
-        padTwo(d.getUTCSeconds()) +
-        " GMT";
-  }-*/;
+  public String toGMTString() {
+    return jsdate.getUTCDate() + " " + StringData.MONTHS[jsdate.getUTCMonth()]
+        + " " + jsdate.getUTCFullYear() + " " + padTwo(jsdate.getUTCHours())
+        + ":" + padTwo(jsdate.getUTCMinutes()) + ":"
+        + padTwo(jsdate.getUTCSeconds()) + " GMT";
+  }
 
-  public native String toLocaleString() /*-{
-    this.@java.util.Date::checkJsDate()();
-    return this.@java.util.Date::jsdate.toLocaleString();
-  }-*/;
+  public String toLocaleString() {
+    return jsdate.toLocaleString();
+  }
 
   @Override
-  public native String toString() /*-{
-    this.@java.util.Date::checkJsDate()();
-    var d = this.@java.util.Date::jsdate;
-    var padTwo = @java.util.Date::padTwo(I);
-    var day =
-        @java.util.Date::dayToString(I)(d.getDay());
-    var month =
-        @java.util.Date::monthToString(I)(d.getMonth());
-
+  public String toString() {
     // Compute timezone offset. The value that getTimezoneOffset returns is
     // backwards for the transformation that we want.
-    var offset = -d.getTimezoneOffset();
-    var hourOffset = String((offset >= 0) ?
-        "+" + Math.floor(offset / 60) : Math.ceil(offset / 60));
-    var minuteOffset = padTwo(Math.abs(offset) % 60);
+    int offset = -jsdate.getTimezoneOffset();
+    String hourOffset = ((offset >= 0) ? "+" : "") + (offset / 60);
+    String minuteOffset = padTwo(Math.abs(offset) % 60);
 
-    return day + " " + month + " " +
-        padTwo(d.getDate()) + " " +
-        padTwo(d.getHours()) + ":" +
-        padTwo(d.getMinutes()) + ":" +
-        padTwo(d.getSeconds()) +
-        " GMT" + hourOffset + minuteOffset +
-        + " " + d.getFullYear();
-  }-*/;
+    return StringData.DAYS[jsdate.getDay()] + " "
+        + StringData.MONTHS[jsdate.getMonth()] + " " + padTwo(jsdate.getDate())
+        + " " + padTwo(jsdate.getHours()) + ":" + padTwo(jsdate.getMinutes())
+        + ":" + padTwo(jsdate.getSeconds()) + " GMT" + hourOffset
+        + minuteOffset + " " + jsdate.getFullYear();
+  }
 
-  /**
-   *  Check that jsdate is valid and throw an exception if not.
-   */
-  @SuppressWarnings("unused") // called by JSNI
-  private native void checkJsDate() /*-{
-    if (!this.@java.util.Date::jsdate
-        || typeof this.@java.util.Date::jsdate != "object") {
-      @java.util.Date::throwJsDateException(Ljava/lang/String;)(""
-          + this.@java.util.Date::jsdate);
-    }
-  }-*/;
-  
   /*
    * Some browsers have the following behavior:
    * 
@@ -339,66 +252,27 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
    * local time advancing into daylight savings time. If so, push the requested
    * time forward out of the non-existent range.
    */
-  @SuppressWarnings("unused") // called by JSNI
-  private native void fixDaylightSavings(int hours) /*-{
-    if ((this.@java.util.Date::jsdate.getHours() % 24) != (hours % 24)) {
-      // Find the change in time zone offset between the current
-      // time and the same time the following day
-      var d = new Date();
-      d.setTime(this.@java.util.Date::jsdate.getTime());
-      var noff = d.getTimezoneOffset();
-      d.setDate(d.getDate() + 1);
-      var loff = d.getTimezoneOffset();
-      var timeDiff = noff - loff;
-      var timeDiffHours = ~~(timeDiff / 60);
-      var timeDiffMinutes = timeDiff % 60;
+  private void fixDaylightSavings(int hours) {
+    if ((jsdate.getHours() % 24) != (hours % 24)) {
+      JsDate copy = JsDate.create(jsdate.getTime());
+      copy.setDate(copy.getDate() + 1);
+      int timeDiff = jsdate.getTimezoneOffset() - copy.getTimezoneOffset();
 
       // If the time zone offset is changing, advance the hours and
       // minutes from the initially requested time by the change amount
       if (timeDiff > 0) {
-        var year = this.@java.util.Date::jsdate.getYear() + 1900;
-        var month = this.@java.util.Date::jsdate.getMonth();
-        var day = this.@java.util.Date::jsdate.getDate();
-        var badHours = this.@java.util.Date::jsdate.getHours();
-        var minute = this.@java.util.Date::jsdate.getMinutes();
-        var second = this.@java.util.Date::jsdate.getSeconds();
+        int timeDiffHours = timeDiff / 60;
+        int timeDiffMinutes = timeDiff % 60;
+        int day = jsdate.getDate();
+        int badHours = jsdate.getHours();
         if (badHours + timeDiffHours >= 24) {
           day++;
         }
-        var newTime = new Date(year, month, day,
-            hours + timeDiffHours,
-            minute + timeDiffMinutes, second);
-        this.@java.util.Date::jsdate.setTime(newTime.getTime());
+        JsDate newTime = JsDate.create(jsdate.getFullYear(), jsdate.getMonth(),
+            day, hours + timeDiffHours, jsdate.getMinutes() + timeDiffMinutes,
+            jsdate.getSeconds(), jsdate.getMilliseconds());
+        jsdate.setTime(newTime.getTime());
       }
     }
-  }-*/;
-
-  private native double getTime0() /*-{
-    this.@java.util.Date::checkJsDate()();
-    return this.@java.util.Date::jsdate.getTime();
-  }-*/;
-
-  private native void init() /*-{
-    this.@java.util.Date::jsdate = new Date();
-  }-*/;
-
-  private native void init(double date) /*-{
-    this.@java.util.Date::jsdate = new Date(date);
-  }-*/;
-
-  private native void init(int year, int month, int date, int hrs, int min,
-      int sec) /*-{
-    this.@java.util.Date::jsdate = new Date();
-    this.@java.util.Date::checkJsDate()();
-    this.@java.util.Date::jsdate.setFullYear(year + 1900, month, date);
-    this.@java.util.Date::jsdate.setHours(hrs, min, sec, 0);
-    
-    // Set the expected hour.
-    this.@java.util.Date::fixDaylightSavings(I)(hrs);
-  }-*/;
-
-  private native void setTime0(double time) /*-{
-    this.@java.util.Date::checkJsDate()();
-    this.@java.util.Date::jsdate.setTime(time);
-  }-*/;
+  }
 }

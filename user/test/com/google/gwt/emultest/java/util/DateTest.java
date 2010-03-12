@@ -33,19 +33,6 @@ public class DateTest extends GWTTestCase {
   public static final String PAST = "PAST";
   public static final long SECOND_MILLISECONDS_SHIFT = 10;
 
-  private static native void mungeDateNull(Date d) /*-{
-    d.@java.util.Date::jsdate = null;
-  }-*/;
-
-  private static native void mungeDatePrimitive(Date d) /*-{
-    d.@java.util.Date::jsdate = 42;
-  }-*/;
-
-  private static native void mungeDateUndef(Date d) /*-{
-    // use (void 0) to get an undefined value
-    d.@java.util.Date::jsdate = (void 0);
-  }-*/;
-
   Date theDate = new Date();
 
   /**
@@ -108,39 +95,6 @@ public class DateTest extends GWTTestCase {
     Date arg30 = create();
     boolean a2 = accum2.before(arg30);
     assertFalse(a2);
-  }
-
-  /**
-   * Test that Date correctly catches when its internal jsdate
-   * instance is mangled.
-   */
-  public void testCheck() {
-    if (GWT.isScript()) {
-      Date d = new Date();
-      mungeDateNull(d);
-      try {
-        d.getHours();
-        fail("Expected IllegalStateException");
-      } catch (IllegalStateException expected) {
-        // do nothing
-      }
-      d = new Date();
-      mungeDateUndef(d);
-      try {
-        d.getHours();
-        fail("Expected IllegalStateException");
-      } catch (IllegalStateException expected) {
-        // do nothing
-      }
-      d = new Date();
-      mungeDatePrimitive(d);
-      try {
-        d.getHours();
-        fail("Expected IllegalStateException");
-      } catch (IllegalStateException expected) {
-        // do nothing
-      }
-    }
   }
 
   /**
