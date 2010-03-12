@@ -35,7 +35,7 @@ import com.google.gwt.user.client.ui.TextBox;
  */
 public class BuySellPopup extends DialogBox {
 
-
+  // Row numbers for popup fields
   private static final int TICKER = 0;
   private static final int NAME = 1;
   private static final int PRICE = 2;

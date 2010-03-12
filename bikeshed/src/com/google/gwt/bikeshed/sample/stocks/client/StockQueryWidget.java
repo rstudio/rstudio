@@ -78,7 +78,7 @@ public class StockQueryWidget extends Composite {
 
   private String normalize(String input) {
     String output = input;
-    output = output.replaceAll("\\|+", "|");
+    output = output.replaceAll("\\|+", " ");
     output = output.replaceAll("^[\\| ]+", "");
     output = output.replaceAll("[\\| ]+$", "");
     output = output.replaceAll("[ ]+", "|");

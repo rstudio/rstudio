@@ -299,7 +299,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       }
     }
   
-    return new Result(toRet, symbols.size());
+    return new Result(toRet, toRet.size());
   }
 
   // If a query is alpha-only ([A-Za-z]+), return stocks for which:
@@ -339,7 +339,9 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       }
       
       // (2)
-      getTickersByNameRegex(pattern, symbols);
+      if (query.length() > 2) {
+        getTickersByNameRegex(pattern, symbols);
+      }
     }
 
     return getQuotes(symbols, searchRange);

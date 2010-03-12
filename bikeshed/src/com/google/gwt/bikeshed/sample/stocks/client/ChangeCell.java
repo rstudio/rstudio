@@ -24,6 +24,9 @@ public class ChangeCell extends Cell<String> {
 
   @Override
   public void render(String value, StringBuilder sb) {
+    if (value == null || value.length() == 0) {
+      return;
+    }
     sb.append("<span style=\"color:");
     if (value.charAt(0) == '-') {
       sb.append("red\">");

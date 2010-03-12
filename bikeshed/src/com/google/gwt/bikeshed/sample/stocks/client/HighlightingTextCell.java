@@ -25,24 +25,25 @@ import com.google.gwt.regexp.shared.RegExp;
  */
 public class HighlightingTextCell extends Cell<String> {
   
-  private String highlightRegex;
+  private RegExp highlightRegex;
 
   @Override
   public void render(String value, StringBuilder sb) {
-    sb.append("<div style='overflow:hidden; white-space:nowrap; text-overflow:ellipsis;'>");
-    if (highlightRegex == null || highlightRegex.length() == 0) {
+    // sb.append("<div style='overflow:hidden; white-space:nowrap; text-overflow:ellipsis;'>");
+    sb.append("<div>");
+    if (highlightRegex == null) {
       sb.append(value);
       sb.append("</div>");
       return;
     }
 
-    RegExp regExp = RegExp.compile(highlightRegex, "gi");
     int fromIndex = 0;
     int length = value.length();
     MatchResult result;
+    highlightRegex.setLastIndex(0);
     while (fromIndex < length) {
       // Find the next match of the highlight regex
-      result = regExp.exec(value);
+      result = highlightRegex.exec(value);
       if (result == null) {
         // No more matches
         break;
@@ -58,7 +59,7 @@ public class HighlightingTextCell extends Cell<String> {
       sb.append("</b>");
       // Skip past the matched string
       fromIndex = index + match.length();
-      regExp.setLastIndex(fromIndex);
+      highlightRegex.setLastIndex(fromIndex);
     }
     // Append the tail of the string
     if (fromIndex < length) {
@@ -67,7 +68,11 @@ public class HighlightingTextCell extends Cell<String> {
     sb.append("</div>");
   }
 
-  public void setHighlightRegex(String highlightRegex) {
-    this.highlightRegex = highlightRegex;
+  public void setHighlightRegex(String highlightText) {
+    if (highlightText != null && highlightText.length() > 0) {
+      highlightRegex = RegExp.compile(highlightText, "gi");
+    } else {
+      highlightRegex = null;
+    }
   }
 }
