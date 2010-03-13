@@ -25,7 +25,6 @@ import java.util.Set;
  * to particular sets of values.
  */
 public interface ValueStore {
-
   /**
    * Most validations are per field or per id and set via annotation. Note that
    * validations are only actually enforced by in {@link DeltaValueStore}

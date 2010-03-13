@@ -17,10 +17,11 @@ package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.sample.expenses.shared.Employee;
-import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
-import com.google.gwt.sample.expenses.shared.Report;
+import com.google.gwt.sample.expenses.gen.ExpenseRequestFactoryImpl;
+import com.google.gwt.sample.expenses.shared.EmployeeRef;
+import com.google.gwt.sample.expenses.shared.ReportRef;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.valuestore.client.ValuesImpl;
 import com.google.gwt.valuestore.shared.Values;
 
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public class Expenses implements EntryPoint {
       + "attempting to contact the server. Please check your network "
       + "connection and try again.";
 
-  private final ExpenseRequestFactory requestFactory = GWT.create(ExpenseRequestFactory.class);
+  private final ExpenseRequestFactoryImpl requestFactory = GWT.create(ExpenseRequestFactoryImpl.class);
 
   /**
    * This is the entry point method.
@@ -53,9 +54,9 @@ public class Expenses implements EntryPoint {
     
     shell.setListener(new Shell.Listener() {
       public void setFirstPurpose(String purpose) {
-        ValuesImpl<Report> reportValues = (ValuesImpl<Report> )shell.getValues().get(0);
-        reportValues.setString(Report.PURPOSE, purpose);
-        List<Values<Report>> deltaValueStore = new ArrayList<Values<Report>>();
+        ValuesImpl<ReportRef> reportValues = (ValuesImpl<ReportRef>) shell.getValues().get(0);
+        reportValues.setString(ReportRef.PURPOSE, purpose);
+        List<Values<?>> deltaValueStore = new ArrayList<Values<?>>();
         deltaValueStore.add(reportValues);
         
         requestFactory.syncRequest(deltaValueStore).fire();
@@ -63,17 +64,17 @@ public class Expenses implements EntryPoint {
     });
 
     employees.setListener(new EmployeeList.Listener() {
-      public void onEmployeeSelected(Employee e) {
+      public void onEmployeeSelected(EmployeeRef e) {
         requestFactory.reportRequest().//
-        findReportsByEmployee(e.slot(Employee.ID)).//
-        forProperty(Report.CREATED).//
-        forProperty(Report.PURPOSE).//
+        findReportsByEmployee(e.getFieldRef(EmployeeRef.ID)).//
+        forProperty(ReportRef.CREATED).//
+        forProperty(ReportRef.PURPOSE).//
         to(shell).//
         fire();
       }
     });
 
     requestFactory.employeeRequest().findAllEmployees().forProperty(
-        Employee.DISPLAY_NAME).forProperty(Employee.USER_NAME).to(employees).fire();
+        EmployeeRef.DISPLAY_NAME).forProperty(EmployeeRef.USER_NAME).to(employees).fire();
   }
 }

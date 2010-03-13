@@ -23,11 +23,11 @@ import com.google.gwt.valuestore.shared.Property;
  * @param <E> Entity
  * @param <V> Value
  */
-public class Slot<E extends Entity<E>, V> {
+public class FieldRef<E extends EntityRef<E>, V> {
   private final E entity;
   private final Property<E, V> property;
 
-  public Slot(E entity, Property<E, V> property) {
+  public FieldRef(E entity, Property<E, V> property) {
     assert null != entity;
     assert null != property;
     this.entity = entity;
@@ -47,7 +47,7 @@ public class Slot<E extends Entity<E>, V> {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    Slot<E, V> other = (Slot<E, V>) obj;
+    FieldRef<E, V> other = (FieldRef<E, V>) obj;
     if (!entity.getId().equals(other.entity.getId())) {
       return false;
     }

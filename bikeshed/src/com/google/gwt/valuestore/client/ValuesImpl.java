@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.client;
+package com.google.gwt.valuestore.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -48,7 +48,7 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
     }
     if (Date.class.equals(property.getValueType())) {
       double millis = getDouble(property.getName());
-      //TODO (rjrjr) bring this back when Date gets JSO friendly again
+      // TODO (rjrjr) bring this back when Date gets JSO friendly again
 //      if (GWT.isScript()) {
 //        return (V) initDate(new Date(), millis);
 //      } else {
@@ -60,10 +60,6 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
     return nativeGet(property);
   }
 
-  public native void setString(Property<T, String> property, String value) /*-{
-    this[property.@com.google.gwt.valuestore.shared.Property::getName()()] = value;
-  }-*/;
-
   public native T getPropertyHolder() /*-{
     return this.propertyHolder;
   }-*/;
@@ -72,21 +68,8 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
     this.propertyHolder = propertyHolder;
   }-*/;
 
-  private native double getDouble(String name) /*-{
-    return this[name];
-  }-*/;
-
-  private native int getInt(String name) /*-{
-    return this[name];
-  }-*/;
-
-//  private native Date initDate(Date date, double millis) /*-{
-//    date.@java.util.Date::init(D)(millis);
-//    return date;
-//  }-*/;
-
-  private native <V, P extends Property<T, V>> V nativeGet(P property) /*-{
-    return this[property.@com.google.gwt.valuestore.shared.Property::getName()()];
+  public native void setString(Property<T, String> property, String value) /*-{
+    this[property.@com.google.gwt.valuestore.shared.Property::getName()()] = value;
   }-*/;
 
   /**
@@ -100,5 +83,22 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
       }
     }
     return output;
+  }-*/;
+
+  private native double getDouble(String name) /*-{
+    return this[name];
+  }-*/;
+
+//  private native Date initDate(Date date, double millis) /*-{
+//    date.@java.util.Date::init(D)(millis);
+//    return date;
+//  }-*/;
+
+  private native int getInt(String name) /*-{
+    return this[name];
+  }-*/;
+
+  private native <V, P extends Property<T, V>> V nativeGet(P property) /*-{
+    return this[property.@com.google.gwt.valuestore.shared.Property::getName()()];
   }-*/;
 }

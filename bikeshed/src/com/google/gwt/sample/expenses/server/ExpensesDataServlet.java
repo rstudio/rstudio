@@ -15,9 +15,9 @@
  */
 package com.google.gwt.sample.expenses.server;
 
-import com.google.gwt.sample.expenses.domain.Employee;
-import com.google.gwt.sample.expenses.domain.Report;
-import com.google.gwt.sample.expenses.shared.MethodName;
+import com.google.gwt.sample.expenses.gen.MethodName;
+import com.google.gwt.sample.expenses.server.domain.Employee;
+import com.google.gwt.sample.expenses.server.domain.Report;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -65,16 +65,16 @@ public class ExpensesDataServlet extends HttpServlet {
         // TODO clearly there should be centralized code for these conversions
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(
-            com.google.gwt.sample.expenses.shared.Employee.ID.getName(),
+            com.google.gwt.sample.expenses.shared.EmployeeRef.ID.getName(),
             Long.toString(e.getId()));
         jsonObject.put(
-            com.google.gwt.sample.expenses.shared.Employee.VERSION.getName(),
+            com.google.gwt.sample.expenses.shared.EmployeeRef.VERSION.getName(),
             e.getVersion().intValue());
         jsonObject.put(
-            com.google.gwt.sample.expenses.shared.Employee.USER_NAME.getName(),
+            com.google.gwt.sample.expenses.shared.EmployeeRef.USER_NAME.getName(),
             e.getUserName());
         jsonObject.put(
-            com.google.gwt.sample.expenses.shared.Employee.DISPLAY_NAME.getName(),
+            com.google.gwt.sample.expenses.shared.EmployeeRef.DISPLAY_NAME.getName(),
             e.getDisplayName());
         jsonArray.put(jsonObject);
       } catch (JSONException ex) {
@@ -94,16 +94,16 @@ public class ExpensesDataServlet extends HttpServlet {
         // TODO clearly there should be centralized code for these conversions
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(
-            com.google.gwt.sample.expenses.shared.Employee.ID.getName(),
+            com.google.gwt.sample.expenses.shared.EmployeeRef.ID.getName(),
             Long.toString(r.getId()));
         jsonObject.put(
-            com.google.gwt.sample.expenses.shared.Report.VERSION.getName(),
+            com.google.gwt.sample.expenses.shared.ReportRef.VERSION.getName(),
             r.getVersion().intValue());
         jsonObject.put(
-            com.google.gwt.sample.expenses.shared.Report.CREATED.getName(),
+            com.google.gwt.sample.expenses.shared.ReportRef.CREATED.getName(),
             Double.valueOf(r.getCreated().getTime()));
         jsonObject.put(
-            com.google.gwt.sample.expenses.shared.Report.PURPOSE.getName(),
+            com.google.gwt.sample.expenses.shared.ReportRef.PURPOSE.getName(),
             r.getPurpose());
         jsonArray.put(jsonObject);
       } catch (JSONException ex) {

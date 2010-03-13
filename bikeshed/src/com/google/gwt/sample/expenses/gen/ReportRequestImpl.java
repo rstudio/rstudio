@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.shared;
+package com.google.gwt.sample.expenses.gen;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.http.client.Request;
@@ -22,9 +22,12 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
-import com.google.gwt.requestfactory.shared.Slot;
-import com.google.gwt.sample.expenses.client.ValuesImpl;
+import com.google.gwt.requestfactory.shared.FieldRef;
+import com.google.gwt.sample.expenses.shared.EmployeeRef;
+import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
+import com.google.gwt.sample.expenses.shared.ReportRef;
 import com.google.gwt.user.client.ui.HasValueList;
+import com.google.gwt.valuestore.client.ValuesImpl;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.Values;
@@ -36,19 +39,19 @@ import java.util.Set;
 
 /**
  * "Generated" from static methods of
- * {@link com.google.gwt.sample.expenses.domain.Employee}.
+ * {@link com.google.gwt.sample.expenses.server.domain.Employee}.
  */
-public class ReportRequests {
+public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
 
-  public ReportRequests(ValueStore values) {
+  public ReportRequestImpl(ValueStore values) {
   }
 
-  public EntityListRequest<Report> findReportsByEmployee(
-      final Slot<Employee, String> id) {
+  public EntityListRequest<ReportRef> findReportsByEmployee(
+      final FieldRef<EmployeeRef, String> id) {
 
-    return new EntityListRequest<Report>() {
-      Set<Property<Report, ?>> properties = new HashSet<Property<Report, ?>>();
-      private HasValueList<Values<Report>> watcher;
+    return new EntityListRequest<ReportRef>() {
+      Set<Property<ReportRef, ?>> properties = new HashSet<Property<ReportRef, ?>>();
+      private HasValueList<Values<ReportRef>> watcher;
 
       public void fire() {
 
@@ -68,14 +71,14 @@ public class ReportRequests {
           public void onResponseReceived(Request request, Response response) {
             if (200 == response.getStatusCode()) {
               String text = response.getText();
-              JsArray<ValuesImpl<Report>> valueArray = ValuesImpl.arrayFromJson(text);
-              List<Values<Report>> valueList = new ArrayList<Values<Report>>(
+              JsArray<ValuesImpl<ReportRef>> valueArray = ValuesImpl.arrayFromJson(text);
+              List<Values<ReportRef>> valueList = new ArrayList<Values<ReportRef>>(
                   valueArray.length());
               for (int i = 0; i < valueArray.length(); i++) {
-                ValuesImpl<Report> values = valueArray.get(i);
-                String id2 = values.get(Report.ID);
-                Integer version = values.get(Report.VERSION);
-                values.setPropertyHolder(new Report(id2,
+                ValuesImpl<ReportRef> values = valueArray.get(i);
+                String id2 = values.get(ReportRef.ID);
+                Integer version = values.get(ReportRef.VERSION);
+                values.setPropertyHolder(new ReportRef(id2,
                     version));
                 valueList.add(values);
               }
@@ -97,12 +100,12 @@ public class ReportRequests {
         // values.subscribe(watcher, future, properties);
       }
 
-      public EntityListRequest<Report> forProperty(Property<Report, ?> property) {
+      public EntityListRequest<ReportRef> forProperty(Property<ReportRef, ?> property) {
         properties.add(property);
         return this;
       }
 
-      public EntityListRequest<Report> to(HasValueList<Values<Report>> watcher) {
+      public EntityListRequest<ReportRef> to(HasValueList<Values<ReportRef>> watcher) {
         this.watcher = watcher;
         return this;
       }

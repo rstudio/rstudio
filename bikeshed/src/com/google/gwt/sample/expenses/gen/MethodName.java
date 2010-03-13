@@ -13,28 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.domain;
+package com.google.gwt.sample.expenses.gen;
 
-class EntityTester {
-  Currency currency;
-  Employee employee;
-  Report report;
-  ReportItem reportItem;
-
-  final Entity[] all;
-  
-  EntityTester() {
-    currency = new Currency();
-    employee = new Employee();
-    report = new Report();
-    reportItem = new ReportItem();
-
-    all = new Entity[] {currency, employee, report, reportItem};
-  }
-
-  void run(EntityVisitor<?> v) {
-    for (Entity e : all) {
-      e.accept(v);
-    }
-  }
+/**
+ * Represents the MethodName.
+ */
+public enum MethodName {
+  FIND_ALL_EMPLOYEES, FIND_EMPLOYEE, FIND_REPORTS_BY_EMPLOYEE, SYNC,
 }

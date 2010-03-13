@@ -13,16 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.domain;
+package com.google.gwt.sample.expenses.server.domain;
 
-/**
- * Expense report life cycle states.
- */
-public enum Status {
-  Draft, // -> submitted
-  Submitted,  // -> approved_manager -> declined
-  Approved_Manager,  // -> approved_accounting
-  Approved_Accounting,  // -> paid -> declined
-  Paid,  // -> finish
-  Declined // -> draft
+class EntityTester {
+  Currency currency;
+  Employee employee;
+  Report report;
+  ReportItem reportItem;
+
+  final Entity[] all;
+  
+  EntityTester() {
+    currency = new Currency();
+    employee = new Employee();
+    report = new Report();
+    reportItem = new ReportItem();
+
+    all = new Entity[] {currency, employee, report, reportItem};
+  }
+
+  void run(EntityVisitor<?> v) {
+    for (Entity e : all) {
+      e.accept(v);
+    }
+  }
 }

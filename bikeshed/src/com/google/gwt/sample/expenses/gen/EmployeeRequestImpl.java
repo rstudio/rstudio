@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.shared;
+package com.google.gwt.sample.expenses.gen;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.http.client.Request;
@@ -22,8 +22,10 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
-import com.google.gwt.sample.expenses.client.ValuesImpl;
+import com.google.gwt.sample.expenses.shared.EmployeeRef;
+import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
 import com.google.gwt.user.client.ui.HasValueList;
+import com.google.gwt.valuestore.client.ValuesImpl;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.Values;
@@ -32,16 +34,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * "Generated" from static methods of {@link com.google.gwt.sample.expenses.domain.Employee}.
+ * "Generated" from static methods of {@link com.google.gwt.sample.expenses.server.domain.Employee}.
  */
-public class EmployeeRequests {
+public class EmployeeRequestImpl implements ExpenseRequestFactory.EmployeeRequest {
 
-  public EmployeeRequests(ValueStore values) {
+  public EmployeeRequestImpl(ValueStore values) {
   }
 
-  public EntityListRequest<Employee> findAllEmployees() {
-    return new EntityListRequest<Employee>() {
-      private HasValueList<Values<Employee>> watcher;
+  public EntityListRequest<EmployeeRef> findAllEmployees() {
+    return new EntityListRequest<EmployeeRef>() {
+      private HasValueList<Values<EmployeeRef>> watcher;
 
       public void fire() {
 
@@ -59,15 +61,15 @@ public class EmployeeRequests {
           public void onResponseReceived(Request request, Response response) {
             if (200 == response.getStatusCode()) {
               String text = response.getText();
-              JsArray<ValuesImpl<Employee>> valueArray = ValuesImpl.arrayFromJson(text);
+              JsArray<ValuesImpl<EmployeeRef>> valueArray = ValuesImpl.arrayFromJson(text);
               // Handy for FireBug snooping
 //              Document.get().getBody().setPropertyJSO("foo", valueArray);
-              List<Values<Employee>> valueList = new ArrayList<Values<Employee>>(
+              List<Values<EmployeeRef>> valueList = new ArrayList<Values<EmployeeRef>>(
                   valueArray.length());
               for (int i = 0; i < valueArray.length(); i++) {
-                ValuesImpl<Employee> values = valueArray.get(i);
-                values.setPropertyHolder(new Employee(values.get(Employee.ID),
-                    values.get(Employee.VERSION)));
+                ValuesImpl<EmployeeRef> values = valueArray.get(i);
+                values.setPropertyHolder(new EmployeeRef(values.get(EmployeeRef.ID),
+                    values.get(EmployeeRef.VERSION)));
                 valueList.add(values);
               }
               watcher.setValueList(valueList);
@@ -88,13 +90,13 @@ public class EmployeeRequests {
         // values.subscribe(watcher, future, properties);
       }
       
-      public EntityListRequest<Employee> forProperty(
-          Property<Employee, ?> property) {
+      public EntityListRequest<EmployeeRef> forProperty(
+          Property<EmployeeRef, ?> property) {
         return this;
       }
 
-      public EntityListRequest<Employee> to(
-          HasValueList<Values<Employee>> watcher) {
+      public EntityListRequest<EmployeeRef> to(
+          HasValueList<Values<EmployeeRef>> watcher) {
         this.watcher = watcher;
         return this;
       }

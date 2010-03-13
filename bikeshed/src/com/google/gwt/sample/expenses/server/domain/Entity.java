@@ -13,11 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.shared;
+package com.google.gwt.sample.expenses.server.domain;
+
 
 /**
- * Represents the MethodName.
+ * Pale imitation on the stuff JPA entities get baked into them.
  */
-public enum MethodName {
-  FIND_ALL_EMPLOYEES, FIND_EMPLOYEE, FIND_REPORTS_BY_EMPLOYEE, SYNC,
+interface Entity {
+  /**
+   * Double dispatch mechanism to ease imitation of framework mechanisms.
+   */
+  <T> T accept(EntityVisitor<T> visitor);
+
+  Long getId();
+
+  Integer getVersion();
 }

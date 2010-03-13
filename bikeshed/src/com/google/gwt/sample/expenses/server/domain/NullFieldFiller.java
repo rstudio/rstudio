@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.domain;
+package com.google.gwt.sample.expenses.server.domain;
+
 
 /**
  * Does the merging that a persistence framework would have done for us. If

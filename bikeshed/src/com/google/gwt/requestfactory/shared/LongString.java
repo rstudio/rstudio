@@ -13,17 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.domain;
+package com.google.gwt.requestfactory.shared;
 
 /**
- * Double dispatch mechanism to ease imitation of framework mechanisms.
+ * Marks a String {@link Property} that represents a long server side.
  */
-interface EntityVisitor<T> {
-  T visit(Currency currency);
+public @interface LongString {
 
-  T visit(Employee employee);
-
-  T visit(Report report);
-
-  T visit(ReportItem reportItem);
 }

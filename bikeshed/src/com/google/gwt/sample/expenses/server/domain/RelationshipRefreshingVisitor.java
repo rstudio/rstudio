@@ -13,42 +13,37 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.domain;
+package com.google.gwt.sample.expenses.server.domain;
+
 
 /**
- * Used by {@link Storage#persist(Entity)} to ensure relationships are valid
- * (can't point to an Entity with no id).
+ * Used by {@link Storage#get(Entity)} to refreshes fields that point to other
+ * entities.
  */
-public class RelationshipValidationVisitor implements EntityVisitor<Void> {
+class RelationshipRefreshingVisitor implements EntityVisitor<Void> {
+  private final Storage s;
+
+  public RelationshipRefreshingVisitor(Storage s) {
+    this.s = s;
+  }
 
   public Void visit(Currency currency) {
     return null;
   }
 
   public Void visit(Employee employee) {
-    validate(employee, employee.getSupervisor());
+    employee.setSupervisor(s.get(employee.getSupervisor()));
     return null;
   }
 
   public Void visit(Report report) {
-    validate(report, report.getApprovedSupervisor());
-    validate(report, report.getReporter());
+    report.setApprovedSupervisor(s.get(report.getApprovedSupervisor()));
+    report.setReporter(s.get(report.getReporter()));
     return null;
   }
 
   public Void visit(ReportItem reportItem) {
-    validate(reportItem, reportItem.getReport());
+    reportItem.setReport(s.get(reportItem.getReport()));
     return null;
-  }
-
-  /**
-   * @param supervisor
-   */
-  private void validate(Entity from, Entity to) {
-    if ((to != null) && (to.getId() == null)) {
-      throw new IllegalArgumentException(String.format(
-          "Attempt to point from %s " + "to invalid (null id) entity %s", from,
-          to));
-    }
   }
 }

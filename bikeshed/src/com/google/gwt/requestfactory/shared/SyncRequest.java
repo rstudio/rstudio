@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,21 +15,9 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.valuestore.shared.Property;
-
 /**
- * Client side proxy object for server side entity.
- *
- * @param <E>
+ * Request to commit CRUD operations accumulated in a DeltaValueStore.
  */
-public interface Entity<E extends Entity<E>> {
-  Object getId();
-  Comparable<?> getVersion();
-  
-  <V> Slot<E, V> slot(Property<E, V> property);
-  
-  // TODO(rjrjr) Possible?
-//  <V> Path<E, V> through(Property<E, V> property);
-//
-//  <V> Path<E, V> through(Path<E, V> property);
+public interface SyncRequest {
+  void fire();
 }
