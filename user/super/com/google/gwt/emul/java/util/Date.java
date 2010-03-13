@@ -248,6 +248,21 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
    */
 
   /**
+   * Package private factory for JSNI use, to allow cheap creation of dates from
+   * doubles.
+   */
+  static Date createFrom(double milliseconds) {
+    return new Date(milliseconds, false);
+  }
+
+  /**
+   * For use by {@link #createFrom(double)}, should inline away.
+   */
+  Date(double milliseconds, boolean dummyArgForOverloadResolution) {
+    jsdate = JsDate.create(milliseconds);
+  }
+
+  /**
    * Detects if the requested time falls into a non-existent time range due to
    * local time advancing into daylight savings time. If so, push the requested
    * time forward out of the non-existent range.

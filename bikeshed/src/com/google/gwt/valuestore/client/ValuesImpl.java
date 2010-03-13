@@ -15,6 +15,7 @@
  */
 package com.google.gwt.valuestore.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.valuestore.shared.Property;
@@ -48,13 +49,12 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
     }
     if (Date.class.equals(property.getValueType())) {
       double millis = getDouble(property.getName());
-      // TODO (rjrjr) bring this back when Date gets JSO friendly again
-//      if (GWT.isScript()) {
-//        return (V) initDate(new Date(), millis);
-//      } else {
+      if (GWT.isScript()) {
+        return (V) dateForDouble(millis);
+      } else {
         // In dev mode, we're using real JRE dates
         return (V) new Date((long) millis);
-//      }
+      }
     }
 
     return nativeGet(property);
@@ -89,10 +89,9 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
     return this[name];
   }-*/;
 
-//  private native Date initDate(Date date, double millis) /*-{
-//    date.@java.util.Date::init(D)(millis);
-//    return date;
-//  }-*/;
+  private native Date dateForDouble(double millis) /*-{
+    return @java.util.Date::createFrom(D)(millis);
+  }-*/;
 
   private native int getInt(String name) /*-{
     return this[name];
