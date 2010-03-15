@@ -85,12 +85,12 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
     return output;
   }-*/;
 
-  private native double getDouble(String name) /*-{
-    return this[name];
-  }-*/;
-
   private native Date dateForDouble(double millis) /*-{
     return @java.util.Date::createFrom(D)(millis);
+  }-*/;
+
+  private native double getDouble(String name) /*-{
+    return this[name];
   }-*/;
 
   private native int getInt(String name) /*-{

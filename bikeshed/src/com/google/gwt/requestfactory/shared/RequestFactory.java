@@ -25,9 +25,9 @@ import java.util.List;
  */
 public interface RequestFactory {
 
-  public ValueStore getValueStore();
+  ValueStore getValueStore();
 
   // TODO actually a DeltaValueStore, interim hack
-  public SyncRequest syncRequest(final List<Values<?>> deltaValueStore);
+  SyncRequest syncRequest(final List<Values<?>> deltaValueStore);
 
 }

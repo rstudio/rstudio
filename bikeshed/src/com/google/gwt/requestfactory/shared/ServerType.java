@@ -15,7 +15,6 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-
 /**
  * Identifies the server domain class represented by an {@link EntityRef}.
  */
