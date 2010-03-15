@@ -66,6 +66,14 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
   }
 
   /**
+   * Package private factory for JSNI use, to allow cheap creation of dates from
+   * doubles.
+   */
+  static Date createFrom(double milliseconds) {
+    return new Date(milliseconds, false);
+  }
+
+  /**
    * JavaScript Date instance.
    */
   private final JsDate jsdate;
@@ -95,6 +103,13 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
 
   public Date(String date) {
     this(Date.parse(date));
+  }
+
+  /**
+   * For use by {@link #createFrom(double)}, should inline away.
+   */
+  Date(double milliseconds, boolean dummyArgForOverloadResolution) {
+    jsdate = JsDate.create(milliseconds);
   }
 
   public boolean after(Date when) {
@@ -246,21 +261,6 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
    * for the requested time and a time one day later, and add the adjustment to
    * the hours and minutes of the requested time.
    */
-
-  /**
-   * Package private factory for JSNI use, to allow cheap creation of dates from
-   * doubles.
-   */
-  static Date createFrom(double milliseconds) {
-    return new Date(milliseconds, false);
-  }
-
-  /**
-   * For use by {@link #createFrom(double)}, should inline away.
-   */
-  Date(double milliseconds, boolean dummyArgForOverloadResolution) {
-    jsdate = JsDate.create(milliseconds);
-  }
 
   /**
    * Detects if the requested time falls into a non-existent time range due to
