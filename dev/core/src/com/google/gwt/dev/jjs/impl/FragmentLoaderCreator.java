@@ -26,7 +26,6 @@ import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor;
 
 import java.io.PrintWriter;
-import java.util.List;
 
 /**
  * Generates code for loading an island. The pattern of generated classes is
@@ -40,12 +39,12 @@ public class FragmentLoaderCreator {
   public static final String ASYNC_FRAGMENT_LOADER = "com.google.gwt.core.client.impl.AsyncFragmentLoader";
   public static final String ASYNC_LOADER_CLASS_PREFIX = "AsyncLoader";
   public static final String ASYNC_LOADER_PACKAGE = "com.google.gwt.lang.asyncloaders";
+  public static final String BROWSER_LOADER = "AsyncFragmentLoader.BROWSER_LOADER";
   public static final String LOADER_METHOD_RUN_ASYNC = "runAsync";
   public static final String RUN_ASYNC_CALLBACK = "com.google.gwt.core.client.RunAsyncCallback";
   private static final String GWT_CLASS = FindDeferredBindingSitesVisitor.MAGIC_CLASS;
   private static final String PROP_RUN_ASYNC_NEVER_RUNS = "gwt.jjs.runAsyncNeverRuns";
-  private static final String UNCAUGHT_EXCEPTION_HANDLER_CLASS = GWT_CLASS
-      + ".UncaughtExceptionHandler";
+  private static final String UNCAUGHT_EXCEPTION_HANDLER_CLASS = "GWT.UncaughtExceptionHandler";
 
   private final StandardGeneratorContext context;
   private int entryNumber = 0;
@@ -75,7 +74,6 @@ public class FragmentLoaderCreator {
     }
 
     generateLoaderFields(loaderWriter);
-    generateOnErrorMethod(loaderWriter);
     generateOnLoadMethod(loaderWriter);
     generateRunAsyncMethod(loaderWriter);
     generateRunCallbacksMethod(loaderWriter);
@@ -86,22 +84,11 @@ public class FragmentLoaderCreator {
     context.commit(logger, loaderWriter);
 
     writeCallbackListClass(logger, context);
-    writeLoaderSuperclass(logger, context);
 
     return getLoaderQualifiedName();
   }
 
   private void generateLoaderFields(PrintWriter srcWriter) {
-    srcWriter.println("// Whether the code for this entry point has loaded");
-    srcWriter.println("private static boolean loaded = false;");
-
-    srcWriter.println("// Whether the code for this entry point is currently loading");
-    srcWriter.println("private static boolean loading = false;");
-
-    srcWriter.println("// A callback caller for this entry point");
-    srcWriter.println("private static " + getLoaderSuperclassSimpleName()
-        + " instance = new " + getLoaderSuperclassSimpleName() + "();");
-
     srcWriter.println("// Callbacks that are pending");
     srcWriter.println("private static " + getCallbackListSimpleName()
         + " callbacksHead = null;");
@@ -109,27 +96,23 @@ public class FragmentLoaderCreator {
     srcWriter.println("// The tail of the callbacks list");
     srcWriter.println("private static " + getCallbackListSimpleName()
         + " callbacksTail = null;");
-  }
 
-  private void generateOnErrorMethod(PrintWriter srcWriter) {
-    srcWriter.println("public static void onError(Throwable e) {");
-    srcWriter.println("loading = false;");
-    srcWriter.println("runCallbackOnFailures(e);");
-    srcWriter.println("}");
+    srcWriter.println("// A callback caller for this entry point");
+    srcWriter.println("private static " + getLoaderSimpleName()
+        + " instance = null;");
   }
 
   private void generateOnLoadMethod(PrintWriter srcWriter) {
     srcWriter.println("public static void onLoad() {");
-    srcWriter.println("loaded = true;");
     srcWriter.println("instance = new " + getLoaderSimpleName() + "();");
-    srcWriter.println(ASYNC_FRAGMENT_LOADER + ".BROWSER_LOADER.fragmentHasLoaded("
-        + entryNumber + ");");
+    srcWriter.println(BROWSER_LOADER + ".fragmentHasLoaded(" + entryNumber
+        + ");");
 
-    srcWriter.println(ASYNC_FRAGMENT_LOADER
-        + ".BROWSER_LOADER.logEventProgress(\"runCallbacks" + entryNumber + "\", \"begin\");");
+    srcWriter.println(BROWSER_LOADER + ".logEventProgress(\"runCallbacks"
+        + entryNumber + "\", \"begin\");");
     srcWriter.println("instance.runCallbacks();");
-    srcWriter.println(ASYNC_FRAGMENT_LOADER
-        + ".BROWSER_LOADER.logEventProgress(\"runCallbacks" + entryNumber + "\", \"end\");");
+    srcWriter.println(BROWSER_LOADER + ".logEventProgress(\"runCallbacks"
+        + entryNumber + "\", \"end\");");
 
     srcWriter.println("}");
   }
@@ -154,16 +137,15 @@ public class FragmentLoaderCreator {
     srcWriter.println("  callbacksHead = newCallback;");
     srcWriter.println("}");
 
-    srcWriter.println("if (loaded) {");
-    srcWriter.println("instance.runCallbacks();");
-    srcWriter.println("return;");
+    srcWriter.println("if (instance != null) {");
+    srcWriter.println("  instance.runCallbacks();");
+    srcWriter.println("  return;");
     srcWriter.println("}");
-    srcWriter.println("if (!loading) {");
-    srcWriter.println("loading = true;");
-    srcWriter.println("AsyncFragmentLoader.BROWSER_LOADER.inject(" + entryNumber + ",");
+    srcWriter.println("if (!" + BROWSER_LOADER + ".isLoading(" + entryNumber
+        + ")) {");
+    srcWriter.println("  " + BROWSER_LOADER + ".inject(" + entryNumber + ",");
     srcWriter.println("  new AsyncFragmentLoader.LoadErrorHandler() {");
     srcWriter.println("    public void loadFailed(Throwable reason) {");
-    srcWriter.println("      loading = false;");
     srcWriter.println("      runCallbackOnFailures(reason);");
     srcWriter.println("    }");
     srcWriter.println("  });");
@@ -174,8 +156,8 @@ public class FragmentLoaderCreator {
   private void generateRunCallbackOnFailuresMethod(PrintWriter srcWriter) {
     srcWriter.println("private static void runCallbackOnFailures(Throwable e) {");
     srcWriter.println("while (callbacksHead != null) {");
-    srcWriter.println("callbacksHead.callback.onFailure(e);");
-    srcWriter.println("callbacksHead = callbacksHead.next;");
+    srcWriter.println("  callbacksHead.callback.onFailure(e);");
+    srcWriter.println("  callbacksHead = callbacksHead.next;");
     srcWriter.println("}");
     srcWriter.println("callbacksTail = null;");
     srcWriter.println("}");
@@ -187,8 +169,7 @@ public class FragmentLoaderCreator {
     srcWriter.println("while (callbacksHead != null) {");
 
     srcWriter.println("  " + UNCAUGHT_EXCEPTION_HANDLER_CLASS + " handler = "
-        + FindDeferredBindingSitesVisitor.MAGIC_CLASS
-        + ".getUncaughtExceptionHandler();");
+        + "GWT.getUncaughtExceptionHandler();");
 
     srcWriter.println("  " + getCallbackListSimpleName()
         + " next = callbacksHead;");
@@ -231,14 +212,6 @@ public class FragmentLoaderCreator {
     return ASYNC_LOADER_CLASS_PREFIX + entryNumber;
   }
 
-  private String getLoaderSuperclassQualifiedName() {
-    return ASYNC_LOADER_PACKAGE + getLoaderSuperclassSimpleName();
-  }
-
-  private String getLoaderSuperclassSimpleName() {
-    return getLoaderSimpleName() + "__Super";
-  }
-
   private String getPackage() {
     return ASYNC_LOADER_PACKAGE;
   }
@@ -253,15 +226,12 @@ public class FragmentLoaderCreator {
 
     printWriter.println("package " + getPackage() + ";");
     String[] imports = new String[] {
-        RUN_ASYNC_CALLBACK, List.class.getCanonicalName(),
-        ASYNC_FRAGMENT_LOADER};
+        GWT_CLASS, RUN_ASYNC_CALLBACK, ASYNC_FRAGMENT_LOADER};
     for (String imp : imports) {
       printWriter.println("import " + imp + ";");
     }
 
-    printWriter.println("public class " + getLoaderSimpleName() + " extends "
-        + getLoaderSuperclassSimpleName() + " {");
-
+    printWriter.println("public class " + getLoaderSimpleName() + " {");
     return printWriter;
   }
 
@@ -279,33 +249,6 @@ public class FragmentLoaderCreator {
     printWriter.println("public class " + getCallbackListSimpleName() + "{");
     printWriter.println(RUN_ASYNC_CALLBACK + " callback;");
     printWriter.println(getCallbackListSimpleName() + " next;");
-    printWriter.println("}");
-
-    printWriter.close();
-    ctx.commit(logger, printWriter);
-  }
-
-  /**
-   * Create a stand-in superclass of the actual loader. This is used to keep the
-   * liveness analyzer from thinking the real <code>runCallbacks()</code>
-   * method is available until <code>onLoad</code> has been called and the
-   * real loader instantiated. A little work on TypeTightener could prevent the
-   * need for this class.
-   */
-  private void writeLoaderSuperclass(TreeLogger logger, GeneratorContext ctx)
-      throws UnableToCompleteException {
-    PrintWriter printWriter = ctx.tryCreate(logger, getPackage(),
-        getLoaderSuperclassSimpleName());
-    if (printWriter == null) {
-      logger.log(TreeLogger.ERROR, "Could not create type: "
-          + getLoaderSuperclassQualifiedName());
-      throw new UnableToCompleteException();
-    }
-
-    printWriter.println("package " + getPackage() + ";");
-    printWriter.println("public class " + getLoaderSuperclassSimpleName()
-        + " {");
-    printWriter.println("public void runCallbacks() { }");
     printWriter.println("}");
 
     printWriter.close();

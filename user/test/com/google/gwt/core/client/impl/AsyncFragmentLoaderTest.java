@@ -21,8 +21,6 @@ import com.google.gwt.core.client.impl.AsyncFragmentLoader.Logger;
 
 import junit.framework.TestCase;
 
-import static java.util.Arrays.asList;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -454,7 +452,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
         1, 2, 3}, reqs, progress);
     loader.startPrefetching();
     // request a prefetch of something in the initial load sequence
-    loader.setPrefetchQueue(asList(2));
+    loader.setPrefetchQueue(2);
     reqs.assertFragmentsRequested(1);
     progress.assertEvent("download1", BEGIN, 1);
 
@@ -468,7 +466,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     progress.assertEvent("download2", END, 2);
     progress.assertNoEvents();
     // request a prefetch of an exclusive
-    loader.setPrefetchQueue(asList(4));
+    loader.setPrefetchQueue(4);
     reqs.assertFragmentsRequested(3);
     progress.assertEvent("download3", BEGIN, 3);
 
@@ -487,7 +485,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     progress.assertEvent("download4", END, 4);
     progress.assertNoEvents();
     // request a prefetch, but check that an inject call takes priority
-    loader.setPrefetchQueue(asList(5,6));
+    loader.setPrefetchQueue(5, 6);
     reqs.assertFragmentsRequested(5);
     progress.assertEvent("download5", BEGIN, 5);
 
@@ -510,10 +508,10 @@ public class AsyncFragmentLoaderTest extends TestCase {
     progress.assertEvent("download6", END, 6);
     progress.assertNoEvents();
     // request prefetches, then request different prefetches
-    loader.setPrefetchQueue(asList(8,9));
+    loader.setPrefetchQueue(8, 9);
     reqs.assertFragmentsRequested(8);
     progress.assertEvent("download8", BEGIN, 8);
-    loader.setPrefetchQueue(asList(10));
+    loader.setPrefetchQueue(10);
     reqs.assertFragmentsRequested();
     progress.assertNoEvents();
 
@@ -527,7 +525,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     progress.assertEvent("download10", END, 10);
     progress.assertNoEvents();
     // request prefetches that have already been loaded
-    loader.setPrefetchQueue(asList(1, 3, 7, 10));
+    loader.setPrefetchQueue(1, 3, 7, 10);
     reqs.assertFragmentsRequested();
     progress.assertNoEvents();
   }
@@ -543,7 +541,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
         1, 2, 3}, reqs, progress);
     loader.startPrefetching();
     // request a prefetch of something in the initial load sequence
-    loader.setPrefetchQueue(asList(3, 2, 1));
+    loader.setPrefetchQueue(3, 2, 1);
     reqs.assertFragmentsRequested(1);
     progress.assertEvent("download1", BEGIN, 1);
 
@@ -589,7 +587,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
         new int[] {}, reqs, progress);
     loader.stopPrefetching();
     // Prefetch 1, but leave prefetching off
-    loader.setPrefetchQueue(asList(1));
+    loader.setPrefetchQueue(1);
     reqs.assertFragmentsRequested();
     progress.assertNoEvents();
 
@@ -646,7 +644,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     progress.assertEvent("download1", END, 1);
     progress.assertNoEvents();
     // Start prefetching a fragment
-    loader.setPrefetchQueue(asList(2));
+    loader.setPrefetchQueue(2);
     reqs.assertFragmentsRequested(2);
     progress.assertEvent("download2", BEGIN, 2);
 

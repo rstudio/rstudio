@@ -18,10 +18,6 @@ package com.google.gwt.core.client.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 /**
  * <p>
  * Low-level support to download an extra fragment of code. This should not be
@@ -187,21 +183,14 @@ public class AsyncFragmentLoader {
        * Make a local list of the handlers to run, in case one of them calls
        * another runAsync
        */
-      List<LoadErrorHandler> handlersToRun = new ArrayList<LoadErrorHandler>();
+      LoadErrorHandler[] handlersToRun = pendingDownloadErrorHandlers;
+      pendingDownloadErrorHandlers = new LoadErrorHandler[numEntries + 1];
 
       /*
        * Call clear() here so that requestedExclusives makes all of its space
        * available for later requests.
        */
       requestedExclusives.clear();
-
-      // add handlers for pending downloads
-      for (LoadErrorHandler handler : pendingDownloadErrorHandlers) {
-        if (handler != null) {
-          handlersToRun.add(handler);
-        }
-      }
-      pendingDownloadErrorHandlers.clear();
 
       fragmentLoading = -1;
 
@@ -212,10 +201,12 @@ public class AsyncFragmentLoader {
       RuntimeException lastException = null;
 
       for (LoadErrorHandler handler : handlersToRun) {
-        try {
-          handler.loadFailed(reason);
-        } catch (RuntimeException e) {
-          lastException = e;
+        if (handler != null) {
+          try {
+            handler.loadFailed(reason);
+          } catch (RuntimeException e) {
+            lastException = e;
+          }
         }
       }
 
@@ -340,7 +331,7 @@ public class AsyncFragmentLoader {
    * Externally provided handlers for all outstanding and queued download
    * requests.
    */
-  private ArrayList<LoadErrorHandler> pendingDownloadErrorHandlers = new ArrayList<LoadErrorHandler>();
+  private LoadErrorHandler[] pendingDownloadErrorHandlers;
 
   /**
    * Whether prefetching is currently enabled.
@@ -373,8 +364,10 @@ public class AsyncFragmentLoader {
     this.initialLoadSequence = initialLoadSequence;
     this.loadingStrategy = loadingStrategy;
     this.logger = logger;
-    requestedExclusives = new BoundedIntQueue(numEntries + 1);
-    isLoaded = new boolean[numEntries + 1];
+    int numEntriesPlusOne = numEntries + 1;
+    requestedExclusives = new BoundedIntQueue(numEntriesPlusOne);
+    isLoaded = new boolean[numEntriesPlusOne];
+    pendingDownloadErrorHandlers = new LoadErrorHandler[numEntriesPlusOne];
   }
 
   /**
@@ -382,8 +375,8 @@ public class AsyncFragmentLoader {
    */
   public void fragmentHasLoaded(int fragment) {
     logFragmentLoaded(fragment);
-    if (fragment < pendingDownloadErrorHandlers.size()) {
-      pendingDownloadErrorHandlers.set(fragment, null);
+    if (fragment < pendingDownloadErrorHandlers.length) {
+      pendingDownloadErrorHandlers[fragment] = null;
     }
 
     if (isInitial(fragment)) {
@@ -410,8 +403,7 @@ public class AsyncFragmentLoader {
    * @param splitPoint the split point whose code needs to be loaded
    */
   public void inject(int splitPoint, LoadErrorHandler loadErrorHandler) {
-    setCapacity(pendingDownloadErrorHandlers, splitPoint + 1);
-    pendingDownloadErrorHandlers.set(splitPoint, loadErrorHandler);
+    pendingDownloadErrorHandlers[splitPoint] = loadErrorHandler;
     if (!isInitial(splitPoint)) {
       requestedExclusives.add(splitPoint);
     }
@@ -420,6 +412,10 @@ public class AsyncFragmentLoader {
 
   public boolean isAlreadyLoaded(int splitPoint) {
    return isLoaded[splitPoint];
+  }
+
+  public boolean isLoading(int splitPoint) {
+    return pendingDownloadErrorHandlers[splitPoint] != null;
   }
 
   public void leftoversFragmentHasLoaded() {
@@ -439,12 +435,12 @@ public class AsyncFragmentLoader {
    * whenever there is nothing else to download. Each call to this method
    * overwrites the entire prefetch queue with the newly specified one.
    */
-  public void setPrefetchQueue(Collection<? extends Integer> splitPoints) {
+  public void setPrefetchQueue(int... runAsyncSplitPoints) {
     if (prefetchQueue == null) {
       prefetchQueue = new BoundedIntQueue(numEntries);
     }
     prefetchQueue.clear();
-    for (Integer sp : splitPoints) {
+    for (int sp : runAsyncSplitPoints) {
       prefetchQueue.add(sp);
     }
     startLoadingNextFragment();
@@ -472,8 +468,8 @@ public class AsyncFragmentLoader {
     while (requestedExclusives.size() > 0
         && isLoaded[requestedExclusives.peek()]) {
       int offset = requestedExclusives.remove();
-      if (offset < pendingDownloadErrorHandlers.size()) {
-        pendingDownloadErrorHandlers.set(offset, null);
+      if (offset < pendingDownloadErrorHandlers.length) {
+        pendingDownloadErrorHandlers[offset] = null;
       }
     }
 
@@ -512,12 +508,12 @@ public class AsyncFragmentLoader {
   }
 
   /**
-   * Return if the the ArrayList is empty.
-   * @param list the list to check if empty
+   * Returns <code>true</code> if array contains only <code>null</code>
+   * elements.
    */
-  private boolean isEmpty(ArrayList<?> list) {
-    for (int i = 0; i < list.size(); i++) {
-      if (list.get(i) != null) {
+  private boolean isEmpty(Object[] array) {
+    for (int i = 0; i < array.length; i++) {
+      if (array[i] != null) {
         return false;
       }
     }
@@ -549,25 +545,14 @@ public class AsyncFragmentLoader {
    * <code>fragment</code> and <code>size</code> objects are allowed to be
    * <code>null</code>.
    */
-  private void logEventProgress(String eventGroup, String type,
-      Integer fragment, Integer size) {
+  private void logEventProgress(String eventGroup, String type, int fragment,
+      int size) {
     logger.logEventProgress(eventGroup, type, fragment, size);
   }
 
   private void logFragmentLoaded(int fragment) {
     String logGroup = downloadGroup(fragment);
     logEventProgress(logGroup, LwmLabels.END, fragment, -1);
-  }
-
-  /**
-   * Set capacity ArrayList list.
-   * @param list the list to add capacity to.
-   * @param size the new size to increase the capacity to.
-   */
-  private void setCapacity(ArrayList<?> list, int size) {
-    while (list.size() < size) {
-      list.add(null);
-    }
   }
 
   private void startLoadingFragment(int fragment) {

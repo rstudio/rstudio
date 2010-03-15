@@ -18,9 +18,7 @@ package com.google.gwt.core.client.prefetch;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.impl.AsyncFragmentLoader;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * This class allows requesting the download of resources before they are
@@ -37,14 +35,15 @@ public class Prefetcher {
       return;
     }
 
-    List<Integer> runAsyncSplitPoints = new ArrayList<Integer>();
-
+    // No range checking in web mode means we needn't precompute the size.
+    int[] runAsyncSplitPoints = new int[0];
+    int i = 0;
     for (PrefetchableResource resource : resources) {
       if (resource instanceof RunAsyncCode) {
         RunAsyncCode resourceRunAsync = (RunAsyncCode) resource;
         int splitPoint = resourceRunAsync.getSplitPoint();
         if (splitPoint >= 0) { // Skip placeholders, which have a -1 split point
-          runAsyncSplitPoints.add(splitPoint);
+          runAsyncSplitPoints[i++] = splitPoint;
         }
         continue;
       }
