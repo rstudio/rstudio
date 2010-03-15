@@ -159,8 +159,12 @@ public class SchedulerImpl extends Scheduler {
   private static JsArray<Task> runRepeatingTasks(JsArray<Task> tasks) {
     assert tasks != null : "tasks";
 
-    boolean canceledSomeTasks = false;
     int length = tasks.length();
+    if (length == 0) {
+      return null;
+    }
+
+    boolean canceledSomeTasks = false;
     double start = Duration.currentTimeMillis();
 
     while (Duration.currentTimeMillis() - start < TIME_SLICE) {
