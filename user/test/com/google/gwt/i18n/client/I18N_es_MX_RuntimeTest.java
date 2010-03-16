@@ -34,7 +34,7 @@ public class I18N_es_MX_RuntimeTest extends GWTTestCase {
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest_es_MX_runtime";
   }
-  
+
   public void testAvailableLocales() {
     String[] locales = LocaleInfo.getAvailableLocaleNames();
     Set<String> localeSet = new HashSet<String>();
@@ -59,11 +59,11 @@ public class I18N_es_MX_RuntimeTest extends GWTTestCase {
     assertEquals("$", data.getCurrencySymbol());
     assertEquals(2, data.getDefaultFractionDigits());
   }
-  
+
   public void testOtherCurrency() {
     CurrencyData ars = CurrencyList.get().lookup("ARS");
     assertEquals("ARS", ars.getCurrencyCode());
-    assertEquals("Arg$", ars.getCurrencySymbol());
+    assertEquals("AR$", ars.getCurrencySymbol());
     assertEquals(2, ars.getDefaultFractionDigits());
     CurrencyData data = CurrencyList.get().lookup("MXN");
     assertEquals("MXN", data.getCurrencyCode());
@@ -89,13 +89,13 @@ public class I18N_es_MX_RuntimeTest extends GWTTestCase {
     MyMessages msg = GWT.create(MyMessages.class);
     assertEquals("es_419", msg.getSourceLocale());
     MyConstants cst = GWT.create(MyConstants.class);
-    // Since our copile-time locale is es_419 (Latin America), we do
+    // Since our compile-time locale is es_419 (Latin America), we do
     // not get es_019 (Central America) in the inheritance chain for
     // es_MX as only the compile-time locales are used for translation
     // inheritance.
     assertEquals("default", cst.getSourceLocale());
   }
-  
+
   public void testRuntimeLocale() {
     assertEquals("es_MX", LocaleInfo.getCurrentLocale().getLocaleName());
   }

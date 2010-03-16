@@ -123,7 +123,7 @@ public class NumberFormat_en_Test extends GWTTestCase {
     // Test using a deprecated currency.
     formatter = NumberFormat.getCurrencyFormat("ITL");
     str = formatter.format(1234.556);
-    assertEquals("₤1,235", str);
+    assertEquals("IT₤1,235", str);
   }
 
   public void testExponential() {
