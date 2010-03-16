@@ -104,7 +104,8 @@ function __MODULE_FUNC__() {
     ,markerId = "__gwt_marker___MODULE_NAME__"
     ,markerScript;
 
-    if (base = metaProps['baseUrl']) {
+    if (metaProps['baseUrl']) {
+      base = metaProps['baseUrl'];
       return;
     }
 
