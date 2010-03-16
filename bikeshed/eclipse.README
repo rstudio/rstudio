@@ -16,7 +16,9 @@ bikeshed/war/tree
 
 * Install the Google Plugin for Eclipse
 * Import bikeshed as a new Java project with existing source
-* Bring up the project properties and find the Google settings, and turn on AppEngine and WebKit
+* Bring up the project properties 
+  * find the Google settings and turn on AppEngine and WebKit
+  * Java Build Path > Libraries > Add Variable > GWT_TOOLS, Extend > redist/json/r2_20080312/json.jar
 * Copy tools/redist/json/r2_20080312/json.jar to bikeshed/war/WEB_INF/lib
 * Right click on the bikeshed project and choose Run as > Web Application. Choose from the various .html files
 
