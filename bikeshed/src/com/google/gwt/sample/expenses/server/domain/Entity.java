@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
-
 /**
  * Pale imitation on the stuff JPA entities get baked into them.
  */

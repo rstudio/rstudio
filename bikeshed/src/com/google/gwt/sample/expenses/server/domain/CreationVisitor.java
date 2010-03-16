@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
-
 /**
  * Creates a new entity of the type of the receiver.
  *

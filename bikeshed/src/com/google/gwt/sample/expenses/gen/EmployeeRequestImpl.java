@@ -38,6 +38,7 @@ import java.util.List;
  */
 public class EmployeeRequestImpl implements ExpenseRequestFactory.EmployeeRequest {
 
+  @SuppressWarnings("unused")
   public EmployeeRequestImpl(ValueStore values) {
   }
 

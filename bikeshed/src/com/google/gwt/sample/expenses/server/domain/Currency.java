@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
-
 /**
  * Models a type of currency.
  */

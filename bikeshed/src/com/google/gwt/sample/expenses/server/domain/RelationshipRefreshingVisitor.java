@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
-
 /**
  * Used by {@link Storage#get(Entity)} to refreshes fields that point to other
  * entities.

@@ -17,7 +17,6 @@ package com.google.gwt.sample.expenses.server.domain;
 
 import junit.framework.TestCase;
 
-
 /**
  * Eponymous test class.
  */

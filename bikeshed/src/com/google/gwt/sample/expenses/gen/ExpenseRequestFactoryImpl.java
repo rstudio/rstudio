@@ -94,16 +94,16 @@ public class ExpenseRequestFactoryImpl implements ExpenseRequestFactory {
 
       public void fire() {
 
-        // TODO: need some way to track that this request has been issued so that
-        // we don't issue another request that arrives while we are waiting for
-        // the response.
+        // TODO: need some way to track that this request has been issued so
+        // that we don't issue another request that arrives while we are
+        // waiting for the response.
         RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
             "/expenses/data?methodName=" + MethodName.SYNC.name());
 
-        StringBuilder requestData = new StringBuilder("{");
+        StringBuilder requestData = new StringBuilder("[");
         boolean first = true;
         for (Values<?> v : deltaValueStore) {
-          ValuesImpl<?> impl = (ValuesImpl<?>)v;
+          ValuesImpl<?> impl = (ValuesImpl<?>) v;
           if (first) {
             first = false;
           } else {
@@ -111,8 +111,8 @@ public class ExpenseRequestFactoryImpl implements ExpenseRequestFactory {
           }
           requestData.append(impl.toJson());
         }
-        requestData.append("}");
-        
+        requestData.append("]");
+
         builder.setRequestData(requestData.toString());
         builder.setCallback(new RequestCallback() {
 
@@ -122,7 +122,10 @@ public class ExpenseRequestFactoryImpl implements ExpenseRequestFactory {
 
           public void onResponseReceived(Request request, Response response) {
             if (200 == response.getStatusCode()) {
-              String text = response.getText();
+              // String text = response.getText();
+              // parse the return value.
+
+              // publish this value to all subscribers that are interested.
             } else {
               // shell.error.setInnerText(SERVER_ERROR + " ("
               // + response.getStatusText() + ")");
@@ -136,10 +139,9 @@ public class ExpenseRequestFactoryImpl implements ExpenseRequestFactory {
           // shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +
           // ")");
         }
-
         // values.subscribe(watcher, future, properties);
       }
-      
+
     };
   }
 }

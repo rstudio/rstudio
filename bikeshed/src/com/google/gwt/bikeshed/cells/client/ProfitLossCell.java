@@ -16,8 +16,8 @@
 package com.google.gwt.bikeshed.cells.client;
 
 /**
- * A {@link Cell} used to render currency.  Positive values are shown in green
- * with a "+" sign and negative values are shown in red with a "-" sign.
+ * A {@link Cell} used to render profit and loss.  Positive values are shown in
+ * green with a "+" sign and negative values are shown in red with a "-" sign.
  */
 public class ProfitLossCell extends Cell<Integer> {
 

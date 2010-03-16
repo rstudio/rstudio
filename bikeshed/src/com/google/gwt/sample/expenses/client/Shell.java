@@ -89,7 +89,8 @@ public class Shell extends Composite implements HasValueList<Values<ReportRef>> 
     listener.setFirstPurpose(e.getValue());
   }
   
-  @UiHandler("save") 
+  @UiHandler("save")
+  @SuppressWarnings("unused")
   public void onSaveClick(ClickEvent e) {
     listener.setFirstPurpose(purpose.getValue());
   }

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
-
 import java.util.Date;
 
 /**

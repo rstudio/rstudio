@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
-
 /**
  * Double dispatch mechanism to ease imitation of framework mechanisms.
  */

@@ -43,6 +43,7 @@ import java.util.Set;
  */
 public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
 
+  @SuppressWarnings("unused")
   public ReportRequestImpl(ValueStore values) {
   }
 

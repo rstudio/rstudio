@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
-
 /**
  * Used by {@link Storage#persist(Entity)} to ensure relationships are valid
  * (can't point to an Entity with no id).

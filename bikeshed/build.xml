@@ -1,4 +1,4 @@
-<project name="user" default="build" basedir=".">
+<project name="bikeshed" default="build" basedir=".">
   <property name="gwt.root" location=".." />
   <property name="project.tail" value="bikeshed" />
   <property name="test.args" value="" />
@@ -9,7 +9,7 @@
     <gwt.checkstyle>
       <fileset dir="src" />
     </gwt.checkstyle>
-    <gwt.checkstyle.tests>
+     <gwt.checkstyle.tests>
       <fileset dir="test">
         <include name="com/google/**/*.java" />
         <include name="test/**" />

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.valuestore.shared;
 
-
 /**
  * Provides access to the values of an object managed by the {@link ValueStore}.
  * 

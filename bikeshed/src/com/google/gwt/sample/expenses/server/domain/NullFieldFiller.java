@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
-
 /**
  * Does the merging that a persistence framework would have done for us. If
  * persistence frameworks did this "null field means no change" kind of thing.
