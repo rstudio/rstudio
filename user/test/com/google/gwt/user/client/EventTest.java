@@ -381,6 +381,24 @@ public class EventTest extends GWTTestCase {
     assertTrue(Event.fireNativePreviewEvent(null));
   }
 
+  public void testGetTypeInt() {
+    assertEquals(Event.ONBLUR, Event.getTypeInt("blur"));
+    assertEquals(Event.ONCHANGE, Event.getTypeInt("change"));
+    assertEquals(Event.ONCLICK, Event.getTypeInt("click"));
+    assertEquals(Event.ONERROR, Event.getTypeInt("error"));
+    assertEquals(Event.ONFOCUS, Event.getTypeInt("focus"));
+    assertEquals(Event.ONKEYDOWN, Event.getTypeInt("keydown"));
+    assertEquals(Event.ONKEYPRESS, Event.getTypeInt("keypress"));
+    assertEquals(Event.ONKEYUP, Event.getTypeInt("keyup"));
+    assertEquals(Event.ONLOAD, Event.getTypeInt("load"));
+    assertEquals(Event.ONMOUSEDOWN, Event.getTypeInt("mousedown"));
+    assertEquals(Event.ONMOUSEMOVE, Event.getTypeInt("mousemove"));
+    assertEquals(Event.ONMOUSEOUT, Event.getTypeInt("mouseout"));
+    assertEquals(Event.ONMOUSEOVER, Event.getTypeInt("mouseover"));
+    assertEquals(Event.ONMOUSEUP, Event.getTypeInt("mouseup"));
+    assertEquals(-1, Event.getTypeInt("undefined"));
+  }
+
   /**
    * Test that legacy EventPreview and NativePreviewHandlers can both cancel the
    * event.

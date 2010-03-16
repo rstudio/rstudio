@@ -585,7 +585,7 @@ public class DOM {
    * Gets the enumerated type of this event (as defined in {@link Event}).
    * 
    * @param evt the event to be tested
-   * @return the event's enumerated type
+   * @return the event's enumerated type, or -1 if not defined
    */
   public static int eventGetType(Event evt) {
     return impl.eventGetTypeInt(evt);

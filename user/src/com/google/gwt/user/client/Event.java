@@ -485,7 +485,7 @@ public class Event extends NativeEvent {
    * Gets the enumerated type of this event given a valid event type name.
    * 
    * @param typeName the typeName to be tested
-   * @return the event's enumerated type
+   * @return the event's enumerated type, or -1 if not defined
    */
   public static int getTypeInt(String typeName) {
     return DOM.impl.eventGetTypeInt(typeName);
