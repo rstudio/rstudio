@@ -73,16 +73,17 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
   }-*/;
 
   /**
-   * @return
+   * Return JSON representation using org.json library.
+   * @return returned string.
    */
   public native String toJson() /*-{
-    var output = "";
-    for (property in this) { 
-      if (property != 'propertyHolder') {
-        output += '"' + property + '": ' + '"' + this[property] + '"' + '; ';
+    var replacer = function(key, value) {
+      if (key == 'propertyHolder') {
+        return;
       }
+      return value;
     }
-    return output;
+    return JSON.stringify(this, replacer);
   }-*/;
 
   private native Date dateForDouble(double millis) /*-{
