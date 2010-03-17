@@ -244,7 +244,11 @@ public class XMLElement {
       return defaultValue;
     }
     String value = attribute.consumeRawValue();
-    return getParser(attribute, types).parse(value);
+    AttributeParser parser = getParser(attribute, types);
+    if (parser == null) {
+      logger.die("In %s, no such attribute %s", this, name);
+    }
+    return parser.parse(value);
   }
 
   /**

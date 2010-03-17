@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.shared;
 
-import com.google.gwt.requestfactory.shared.EntityRef;
 import com.google.gwt.requestfactory.shared.FieldRef;
 import com.google.gwt.requestfactory.shared.LongString;
 import com.google.gwt.requestfactory.shared.ServerType;
@@ -28,7 +27,7 @@ import java.util.Date;
  * {@link com.google.gwt.sample.expenses.server.domain.Report domain.Report}.
  */
 @ServerType(com.google.gwt.sample.expenses.server.domain.Report.class)
-public class ReportRef implements EntityRef<ReportRef> {
+public class ReportRef implements ExpensesEntity<ReportRef> {
 
   @LongString
   public static final Property<ReportRef, String> ID = new Property<ReportRef, String>(
@@ -49,6 +48,14 @@ public class ReportRef implements EntityRef<ReportRef> {
   public ReportRef(String id, Integer version) {
     this.id = id;
     this.version = version;
+  }
+
+  public <T> T accept(ExpensesEntityFilter<T> filter) {
+    return filter.filter(this);
+  }
+
+  public void accept(ExpensesEntityVisitor visitor) {
+    visitor.visit(this);
   }
 
   public <V> FieldRef<ReportRef, V> getFieldRef(Property<ReportRef, V> property) {

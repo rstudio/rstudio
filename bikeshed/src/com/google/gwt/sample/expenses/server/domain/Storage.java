@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -29,8 +28,8 @@ import java.util.Set;
  * Pretend pool of domain objects, trying to act more or less like persistence
  * frameworks do. For goodness sake don't imitate this for production code.
  */
-class Storage {
-  static final Storage INSTANCE;
+public class Storage {
+  public static final Storage INSTANCE;
   static {
     INSTANCE = new Storage();
     fill(INSTANCE);
@@ -134,6 +133,39 @@ class Storage {
   private int getDepth = 0;
   private long serial = 0;
 
+  public synchronized <E extends Entity> E persist(final E delta) {
+    E next = null;
+    E previous = null;
+
+    if (delta.getId() == null) {
+      next = delta.accept(new CreationVisitor<E>(++serial, 0));
+      delta.accept(new NullFieldFiller(next));
+    } else {
+      previous = get(delta);
+      if (!previous.getVersion().equals(delta.getVersion())) {
+        throw new IllegalArgumentException(String.format(
+            "Version mismatch of %s. Cannot update %d from %d", delta,
+            previous.getVersion(), delta.getVersion()));
+      }
+
+      next = previous.accept(new CreationVisitor<E>(previous.getId(),
+          previous.getVersion() + 1));
+
+      NullFieldFiller filler = new NullFieldFiller(next);
+      // Copy the changed fields into the new version
+      delta.accept(filler);
+      // And copy the old fields into any null fields remaining on the new
+      // version
+      previous.accept(filler);
+    }
+
+    next.accept(new RelationshipValidationVisitor());
+
+    updateIndices(previous, next);
+    soup.put(next.getId(), next);
+    return get(next);
+  }
+
   synchronized List<Employee> findAllEmployees() {
     List<Employee> rtn = new ArrayList<Employee>();
     for (Map.Entry<String, Long> entry : employeeUserNameIndex.entrySet()) {
@@ -141,10 +173,38 @@ class Storage {
     }
     return rtn;
   }
+  
+  synchronized List<Report> findAllReports() {
+    List<Report> rtn = new ArrayList<Report>();
+    for (Entity e : soup.values()) {
+      if (e instanceof Report) {
+        rtn.add(get((Report) e));
+      }
+    }
+    return rtn;
+  }
+
+  /**
+   * Returns Employee by id.
+   * @param id
+   * @return
+   */
+  synchronized Employee findEmployee(Long id) {
+    return get((Employee) rawGet(id));
+  }
 
   synchronized Employee findEmployeeByUserName(String userName) {
     Long id = employeeUserNameIndex.get(userName);
-    return get((Employee) rawGet(id));
+    return findEmployee(id);
+  }
+
+  /**
+   * Returns report by id.
+   * @param id
+   * @return
+   */
+  synchronized Report findReport(Long id) {
+    return get((Report) rawGet(id));
   }
 
   synchronized List<Report> findReportsByEmployee(long id) {
@@ -198,39 +258,6 @@ class Storage {
         freshForCurrentGet = null;
       }
     }
-  }
-
-  synchronized <E extends Entity> E persist(final E delta) {
-    E next = null;
-    E previous = null;
-
-    if (delta.getId() == null) {
-      next = delta.accept(new CreationVisitor<E>(++serial, 0));
-      delta.accept(new NullFieldFiller(next));
-    } else {
-      previous = get(delta);
-      if (!previous.getVersion().equals(delta.getVersion())) {
-        throw new IllegalArgumentException(String.format(
-            "Version mismatch of %s. Cannot update %d from %d", delta,
-            previous.getVersion(), delta.getVersion()));
-      }
-
-      next = previous.accept(new CreationVisitor<E>(previous.getId(),
-          previous.getVersion() + 1));
-
-      NullFieldFiller filler = new NullFieldFiller(next);
-      // Copy the changed fields into the new version
-      delta.accept(filler);
-      // And copy the old fields into any null fields remaining on the new
-      // version
-      previous.accept(filler);
-    }
-
-    next.accept(new RelationshipValidationVisitor());
-
-    updateIndices(previous, next);
-    soup.put(next.getId(), next);
-    return get(next);
   }
 
   /**

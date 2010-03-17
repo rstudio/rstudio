@@ -13,26 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared;
-
-import com.google.gwt.user.client.ui.HasValueList;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Values;
-
-import java.util.Collection;
+package com.google.gwt.sample.expenses.shared;
 
 /**
- * Implemented by RequestObjects for service methods that return list
- * properties.
+ * Implemented by filters of {@link ExpensesEntity}.
  * 
- * @param <E>
+ * @param <T> the type to filter to
  */
-public interface EntityListRequest<E> {
-  void fire();
+public interface ExpensesEntityFilter<T> {
+  T filter(EmployeeRef employeeRef);
 
-  EntityListRequest<E> forProperties(Collection<Property<E, ?>> properties);
-  
-  EntityListRequest<E> forProperty(Property<E, ?> property);
-
-  EntityListRequest<E> to(HasValueList<Values<E>> watcher);
+  T filter(ReportRef reportRef);
 }

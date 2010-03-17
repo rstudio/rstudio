@@ -13,26 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared;
+package com.google.gwt.sample.expenses.client.place;
 
-import com.google.gwt.user.client.ui.HasValueList;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Values;
-
-import java.util.Collection;
+import com.google.gwt.app.place.Place;
 
 /**
- * Implemented by RequestObjects for service methods that return list
- * properties.
- * 
- * @param <E>
+ * Base type of places for the Expenses Scaffold app.
  */
-public interface EntityListRequest<E> {
-  void fire();
+public abstract class ExpensesScaffoldPlace extends Place {
+  public abstract void accept(ExpensesScaffoldPlaceVisitor visitor);
 
-  EntityListRequest<E> forProperties(Collection<Property<E, ?>> properties);
-  
-  EntityListRequest<E> forProperty(Property<E, ?> property);
-
-  EntityListRequest<E> to(HasValueList<Values<E>> watcher);
+  public abstract <T> T accept(ExpensesScaffoldPlaceFilter<T> filter);
 }

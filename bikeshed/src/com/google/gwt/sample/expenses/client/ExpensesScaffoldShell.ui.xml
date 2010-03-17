@@ -1,0 +1,54 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:a='urn:import:com.google.gwt.app.client'>
+
+  <ui:style>
+    .disabled {
+     color: gray;
+    }
+    
+    .banner {
+       background-color: wheat;
+     }
+     
+    .title {
+       text-align: left;
+       margin-left: 1em;
+     }
+     
+    .error {
+     position: absolute;
+     left: 12%;
+     right: 12%;
+     text-align: center;
+     background-color: red;
+    }
+    
+    .users {
+     position: absolute;
+     right: 0;
+    }
+  </ui:style>
+
+  <g:DockLayoutPanel unit='EM'>
+    <g:north size='4.5'>
+      <g:HTML styleName='{style.banner}'>
+        <div class='{style.error}' ui:field='error'></div>
+        <h2 class='{style.title}'>Expenses Entity Browser</h2>
+      </g:HTML>
+    </g:north>
+    <g:west size='15'>
+      <a:ListBoxPlacePickerView width='90%' visibleItemCount='10' ui:field='placesBox'/>
+    </g:west>
+
+    <g:center>
+      <g:SimplePanel ui:field='body'>
+      <g:HTML>
+      <h3>Welcome to Expenses</h3>
+      <p>Choose an entity set from the list on the left to get started</p>
+      </g:HTML>
+      </g:SimplePanel>
+    </g:center>
+  </g:DockLayoutPanel>
+</ui:UiBinder>

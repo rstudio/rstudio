@@ -13,26 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared;
+package com.google.gwt.app.place;
 
-import com.google.gwt.user.client.ui.HasValueList;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Values;
-
-import java.util.Collection;
+import com.google.gwt.user.client.ui.HasValueMap;
 
 /**
- * Implemented by RequestObjects for service methods that return list
- * properties.
+ * View for a {@link PlacePicker}.
  * 
- * @param <E>
+ * @param <P> the type of place displayed
  */
-public interface EntityListRequest<E> {
-  void fire();
+public interface PlacePickerView<P extends Place> extends HasValueMap<P> {
 
-  EntityListRequest<E> forProperties(Collection<Property<E, ?>> properties);
+   /**
+    * Implemented by the presenter currently using this view.
+    */
+  interface Listener<P> {
+    void placePicked(P place);
+  }
   
-  EntityListRequest<E> forProperty(Property<E, ?> property);
-
-  EntityListRequest<E> to(HasValueList<Values<E>> watcher);
+  void setListener(Listener<P> listener);
 }

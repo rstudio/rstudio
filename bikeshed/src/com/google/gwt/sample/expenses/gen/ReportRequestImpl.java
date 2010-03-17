@@ -33,6 +33,7 @@ import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.Values;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -101,12 +102,91 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
         // values.subscribe(watcher, future, properties);
       }
 
+      public EntityListRequest<ReportRef> forProperties(
+          Collection<Property<ReportRef, ?>> properties) {
+        for (Property<ReportRef, ?> property : properties) {
+          forProperty(property);
+        }
+        return this;
+      }
+
       public EntityListRequest<ReportRef> forProperty(Property<ReportRef, ?> property) {
         properties.add(property);
         return this;
       }
 
+
       public EntityListRequest<ReportRef> to(HasValueList<Values<ReportRef>> watcher) {
+        this.watcher = watcher;
+        return this;
+      }
+    };
+  }
+
+  public EntityListRequest<ReportRef> findAllReports() {
+    return new EntityListRequest<ReportRef>() {
+      private HasValueList<Values<ReportRef>> watcher;
+
+      public void fire() {
+
+        // TODO: need someway to track that this request has been issued so that
+        // we don't issue another request that arrives while we are waiting for
+        // the response.
+        RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
+            "/expenses/data?methodName=" + MethodName.FIND_ALL_REPORTS.name());
+        builder.setCallback(new RequestCallback() {
+
+          public void onError(Request request, Throwable exception) {
+            // shell.error.setInnerText(SERVER_ERROR);
+          }
+
+          public void onResponseReceived(Request request, Response response) {
+            if (200 == response.getStatusCode()) {
+              String text = response.getText();
+              JsArray<ValuesImpl<ReportRef>> valueArray = ValuesImpl.arrayFromJson(text);
+              // Handy for FireBug snooping
+//              Document.get().getBody().setPropertyJSO("foo", valueArray);
+              List<Values<ReportRef>> valueList = new ArrayList<Values<ReportRef>>(
+                  valueArray.length());
+              for (int i = 0; i < valueArray.length(); i++) {
+                ValuesImpl<ReportRef> values = valueArray.get(i);
+                values.setPropertyHolder(new ReportRef(values.get(ReportRef.ID),
+                    values.get(ReportRef.VERSION)));
+                valueList.add(values);
+              }
+              watcher.setValueList(valueList);
+            } else {
+              // shell.error.setInnerText(SERVER_ERROR + " ("
+              // + response.getStatusText() + ")");
+            }
+          }
+        });
+
+        try {
+          builder.send();
+        } catch (RequestException e) {
+          // shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +
+          // ")");
+        }
+
+        // values.subscribe(watcher, future, properties);
+      }
+      
+      public EntityListRequest<ReportRef> forProperties(
+          Collection<Property<ReportRef, ?>> properties) {
+        for (Property<ReportRef, ?> property : properties) {
+          forProperty(property);
+        }
+        return this;
+      }
+
+      public EntityListRequest<ReportRef> forProperty(
+          Property<ReportRef, ?> property) {
+        return this;
+      }
+
+      public EntityListRequest<ReportRef> to(
+          HasValueList<Values<ReportRef>> watcher) {
         this.watcher = watcher;
         return this;
       }

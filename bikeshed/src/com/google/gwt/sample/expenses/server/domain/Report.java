@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
-
 import java.util.Date;
 import java.util.List;
 
@@ -24,12 +23,24 @@ import java.util.List;
  */
 // @javax.persistence.Entity
 public class Report implements Entity {
+
+  /**
+   * @return
+   */
+  public static List<Report> findAllReports() {
+    return Storage.INSTANCE.findAllReports();
+  }
+
+  public static Report findReport(Long id) {
+    return Storage.INSTANCE.findReport(id);
+  }
+
   public static List<Report> findReportsByEmployee(long id) {
     return Storage.INSTANCE.findReportsByEmployee(id);
   }
-
   private final Long id;
-  private final Integer version;
+
+private final Integer version;
 
 //  @javax.validation.constraints.NotNull
 //  @javax.validation.constraints.Past
@@ -46,12 +57,12 @@ public class Report implements Entity {
   // @javax.persistence.JoinColumn
   private Employee reporter;
 
-//  @javax.validation.constraints.Size(min = 3, max = 100)
-  private String purpose;
-
   // @javax.persistence.OneToMany(cascade = javax.persistence.CascadeType.ALL,
   // mappedBy = "report")
   // private Set<ReportItem> items = new HashSet<ReportItem>();
+
+  //  @javax.validation.constraints.Size(min = 3, max = 100)
+  private String purpose;
 
   // @javax.persistence.ManyToOne(targetEntity =
   // com.google.io.expenses.server.domain.Employee.class)
@@ -120,14 +131,14 @@ public class Report implements Entity {
   public Integer getVersion() {
     return version;
   }
-
+  
   /**
    * @param approvedSupervisor the approved_supervisor to set
    */
   public void setApprovedSupervisor(Employee approvedSupervisor) {
     this.approvedSupervisor = approvedSupervisor;
   }
-  
+
   public void setCreated(Date date) {
     this.created = date;
   }
@@ -138,14 +149,14 @@ public class Report implements Entity {
   public void setPurpose(String purpose) {
     this.purpose = purpose;
   }
-
+  
   /**
    * @param reporter the reporter to set
    */
   public void setReporter(Employee reporter) {
     this.reporter = reporter;
   }
-  
+
   /**
    * @param status the status to set
    */

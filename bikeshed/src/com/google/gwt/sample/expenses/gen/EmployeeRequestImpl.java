@@ -31,6 +31,7 @@ import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.Values;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -91,6 +92,14 @@ public class EmployeeRequestImpl implements ExpenseRequestFactory.EmployeeReques
         // values.subscribe(watcher, future, properties);
       }
       
+      public EntityListRequest<EmployeeRef> forProperties(
+          Collection<Property<EmployeeRef, ?>> properties) {
+        for (Property<EmployeeRef, ?> property : properties) {
+          forProperty(property);
+        }
+        return this;
+      }
+
       public EntityListRequest<EmployeeRef> forProperty(
           Property<EmployeeRef, ?> property) {
         return this;

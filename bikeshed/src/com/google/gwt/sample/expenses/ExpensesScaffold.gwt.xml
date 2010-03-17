@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Could not determine the version of your GWT SDK; using the module DTD from GWT 1.6.4. You may want to change this. -->
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 1.6.4//EN" "http://google-web-toolkit.googlecode.com/svn/tags/1.6.4/distro-source/core/src/gwt-module.dtd">
+<module rename-to='expensesScaffold'>
+  <inherits name='com.google.gwt.user.User' />
+  <inherits name='com.google.gwt.app.App' />
+  <inherits name='com.google.gwt.user.theme.standard.Standard' />
+
+  <inherits name="com.google.gwt.requestfactory.RequestFactory" />
+
+  <source path='client' />
+  <source path='shared' />
+  <source path='gen' />
+  <entry-point
+    class="com.google.gwt.sample.expenses.client.ExpensesScaffold" />
+    
+  <!-- TODO: generate-with --> 
+  <replace-with class='com.google.gwt.sample.expenses.gen.ExpenseRequestFactoryImpl'>
+    <when-type-is class='com.google.gwt.sample.expenses.shared.ExpenseRequestFactory'/>
+  </replace-with> 
+    
+</module>

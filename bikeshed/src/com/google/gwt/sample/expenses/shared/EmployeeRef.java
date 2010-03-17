@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.shared;
 
-import com.google.gwt.requestfactory.shared.EntityRef;
 import com.google.gwt.requestfactory.shared.FieldRef;
 import com.google.gwt.requestfactory.shared.LongString;
 import com.google.gwt.requestfactory.shared.ServerType;
@@ -26,7 +25,7 @@ import com.google.gwt.valuestore.shared.Property;
  * domain.Employee}.
  */
 @ServerType(com.google.gwt.sample.expenses.server.domain.Employee.class)
-public class EmployeeRef implements EntityRef<EmployeeRef> {
+public class EmployeeRef implements ExpensesEntity<EmployeeRef> {
 
   @LongString
   public static final Property<EmployeeRef, String> ID = new Property<EmployeeRef, String>(
@@ -49,6 +48,14 @@ public class EmployeeRef implements EntityRef<EmployeeRef> {
   public EmployeeRef(String id, Integer version) {
     this.id = id;
     this.version = version;
+  }
+
+  public <T> T accept(ExpensesEntityFilter<T> filter) {
+    return filter.filter(this);
+  }
+
+  public void accept(ExpensesEntityVisitor visitor) {
+    visitor.visit(this);
   }
 
   public <V> FieldRef<EmployeeRef, V> getFieldRef(Property<EmployeeRef, V> property) {

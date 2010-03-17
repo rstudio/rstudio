@@ -48,6 +48,11 @@ public interface ExpenseRequestFactory extends RequestFactory {
      */
     EntityListRequest<ReportRef> findReportsByEmployee(
         @LongString FieldRef<EmployeeRef, String> id);
+
+    /**
+     * @return a request object
+     */
+    EntityListRequest<ReportRef> findAllReports();
   }
 
   /**
