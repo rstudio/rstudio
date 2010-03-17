@@ -223,6 +223,7 @@ public class ListListModel<T> extends AbstractListModel<T> {
 
   @Override
   protected void onRangeChanged() {
+    updateDataSize(listWrapper.size(), true);
     updateViewData(0, listWrapper.size(), listWrapper);
   }
 }

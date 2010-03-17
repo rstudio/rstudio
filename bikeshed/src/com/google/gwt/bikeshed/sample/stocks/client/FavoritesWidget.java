@@ -47,6 +47,7 @@ public class FavoritesWidget extends Composite {
     listView.addColumn(Columns.changeColumn, new TextHeader("change"));
     listView.addColumn(Columns.sharesColumn, new TextHeader("shares"));
     listView.addColumn(Columns.dollarsColumn, new TextHeader("value"));
+    listView.addColumn(Columns.profitLossColumn, new TextHeader("profit/loss"));
     listView.addColumn(Columns.buyColumn);
     listView.addColumn(Columns.sellColumn);
   }

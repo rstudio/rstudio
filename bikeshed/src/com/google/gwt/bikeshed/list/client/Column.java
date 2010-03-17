@@ -35,17 +35,19 @@ public abstract class Column<T, C> {
     this.cell = cell;
   }
 
-  public void onBrowserEvent(Element elem, final T object, NativeEvent event) {
+  public void onBrowserEvent(Element elem, final int index, final T object,
+      NativeEvent event) {
     cell.onBrowserEvent(elem, getValue(object), event,
         fieldUpdater == null ? null : new ValueUpdater<C>() {
       public void update(C value) {
-        fieldUpdater.update(object, value);
+        fieldUpdater.update(index, object, value);
       }
     });
   }
 
   public void render(T object, StringBuilder sb) {
-    cell.render(getValue(object), sb);
+    C value = getValue(object);
+    cell.render(value, sb);
   }
 
   public void setFieldUpdater(FieldUpdater<T, C> fieldUpdater) {
@@ -54,6 +56,10 @@ public abstract class Column<T, C> {
 
   protected Cell<C> getCell() {
     return cell;
+  }
+
+  protected FieldUpdater<T, C> getFieldUpdater() {
+    return fieldUpdater;
   }
 
   protected abstract C getValue(T object);

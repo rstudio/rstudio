@@ -143,19 +143,19 @@ public class StockSample implements EntryPoint, Updater {
 
     // Hook up handlers to columns and the buy/sell popup.
     Columns.favoriteColumn.setFieldUpdater(new FieldUpdater<StockQuote, Boolean>() {
-      public void update(StockQuote object, Boolean value) {
+      public void update(int index, StockQuote object, Boolean value) {
         setFavorite(object.getTicker(), value);
       }
     });
 
     Columns.buyColumn.setFieldUpdater(new FieldUpdater<StockQuote, String>() {
-      public void update(StockQuote quote, String value) {
+      public void update(int index, StockQuote quote, String value) {
         buy(quote);
       }
     });
 
     Columns.sellColumn.setFieldUpdater(new FieldUpdater<StockQuote, String>() {
-      public void update(StockQuote quote, String value) {
+      public void update(int index, StockQuote quote, String value) {
         sell(quote);
       }
     });

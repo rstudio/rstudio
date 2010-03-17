@@ -149,7 +149,7 @@ public class PagingTableListView<T> extends Widget {
       int row = tr.getSectionRowIndex();
       T value = data.get(row);
       Column<T, ?> column = columns.get(col);
-      column.onBrowserEvent(cell, value, event);
+      column.onBrowserEvent(cell, curPage * pageSize + row, value, event);
     }
   }
 

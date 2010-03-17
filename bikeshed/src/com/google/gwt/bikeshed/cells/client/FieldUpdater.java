@@ -26,9 +26,9 @@ public interface FieldUpdater<T, C> {
   
   /**
    * Announces a new value for a field within a base object.
-   * 
+   * @param index TODO
    * @param object the base object to be updated
    * @param value the new value of the field being updated.
    */
-  void update(T object, C value);
+  void update(int index, T object, C value);
 }
