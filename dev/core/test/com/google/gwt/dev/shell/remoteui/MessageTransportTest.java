@@ -123,9 +123,21 @@ public class MessageTransportTest extends TestCase {
     requestMessageBuilder.setServiceType(Message.Request.ServiceType.DEV_MODE);
     Message.Request request = requestMessageBuilder.build();
 
-    // Close the server's input stream; that will close the client's output
+    // Close the server's socket; that will close the client's output
     // stream
-    network.getServerSocket().getInputStream().close();
+    network.getServerSocket().close();
+
+    int sleepCycles = 0;
+    while (!network.getServerSocket().isClosed() && sleepCycles < 8) {
+      // Wait until the stream is closed before attempting to execute the
+      // request.
+      Thread.sleep(250);
+      sleepCycles++;
+    }
+
+    assertTrue(
+        "Unable to shut down server's input stream; cannot proceed with the test.",
+        network.getServerSocket().isClosed());
 
     Future<Response> responseFuture = null;
     responseFuture = messageTransport.executeRequestAsync(request);
