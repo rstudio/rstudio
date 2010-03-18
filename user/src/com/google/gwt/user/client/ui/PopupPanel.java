@@ -34,12 +34,11 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventPreview;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -134,6 +133,13 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     private PopupPanel curPanel = null;
 
     /**
+     * Indicates whether or not the {@link PopupPanel} is in the process of
+     * unloading. If the popup is unloading, then the animation just does
+     * cleanup.
+     */
+    private boolean isUnloading;
+
+    /**
      * The offset height and width of the current {@link PopupPanel}.
      */
     private int offsetHeight, offsetWidth = -1;
@@ -142,6 +148,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
      * A boolean indicating whether we are showing or hiding the popup.
      */
     private boolean showing;
+
+    /**
+     * The timer used to delay the show animation.
+     */
+    private Timer showTimer;
 
     /**
      * A boolean indicating whether the glass element is currently attached.
@@ -166,12 +177,25 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
      * 
      * @param showing true if the popup is showing, false if not
      */
-    public void setState(boolean showing) {
+    public void setState(boolean showing, boolean isUnloading) {
       // Immediately complete previous open/close animation
+      this.isUnloading = isUnloading;
       cancel();
 
+      // If there is a pending timer to start a show animation, then just cancel
+      // the timer and complete the show operation.
+      if (showTimer != null) {
+        showTimer.cancel();
+        showTimer = null;
+        onComplete();
+      }
+
+      // Update the logical state.
+      curPanel.showing = showing;
+      curPanel.updateHandlers();
+
       // Determine if we need to animate
-      boolean animate = curPanel.isAnimationEnabled;
+      boolean animate = !isUnloading && curPanel.isAnimationEnabled;
       if (curPanel.animType != AnimationType.CENTER && !showing) {
         animate = false;
       }
@@ -196,14 +220,21 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
           impl.setClip(curPanel.getElement(), getRectString(0, 0, 0, 0));
           RootPanel.get().add(curPanel);
           impl.onShow(curPanel.getElement());
-        }
 
-        // Wait for the popup panel to be attached before running the animation
-        DeferredCommand.addCommand(new Command() {
-          public void execute() {
-            run(ANIMATION_DURATION);
-          }
-        });
+          // Wait for the popup panel and iframe to be attached before running
+          // the animation. We use a Timer instead of a DeferredCommand so we
+          // can cancel it if the popup is hidden synchronously.
+          showTimer = new Timer() {
+            @Override
+            public void run() {
+              showTimer = null;
+              ResizeAnimation.this.run(ANIMATION_DURATION);
+            }
+          };
+          showTimer.schedule(1);
+        } else {
+          run(ANIMATION_DURATION);
+        }
       } else {
         onInstantaneousRun();
       }
@@ -213,7 +244,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     protected void onComplete() {
       if (!showing) {
         maybeShowGlass();
-        RootPanel.get().remove(curPanel);
+        if (!isUnloading) {
+          RootPanel.get().remove(curPanel);
+        }
         impl.onHide(curPanel.getElement());
       }
       impl.setClip(curPanel.getElement(), "rect(auto, auto, auto, auto)");
@@ -311,7 +344,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         RootPanel.get().add(curPanel);
         impl.onShow(curPanel.getElement());
       } else {
-        RootPanel.get().remove(curPanel);
+        if (!isUnloading) {
+          RootPanel.get().remove(curPanel);
+        }
         impl.onHide(curPanel.getElement());
       }
       DOM.setStyleAttribute(curPanel.getElement(), "overflow", "visible");
@@ -582,7 +617,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     if (!isShowing()) {
       return;
     }
-    setState(false, true);
+    resizeAnimation.setState(false, false);
     CloseEvent.fire(this, this, autoClosed);
   }
 
@@ -967,7 +1002,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     if (showing) {
       return;
     }
-    setState(true, true);
+    resizeAnimation.setState(true, false);
   }
 
   /**
@@ -1019,11 +1054,13 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   @Override
   protected void onUnload() {
+    super.onUnload();
+
     // Just to be sure, we perform cleanup when the popup is unloaded (i.e.
     // removed from the DOM). This is normally taken care of in hide(), but it
     // can be missed if someone removes the popup directly from the RootPanel.
     if (isShowing()) {
-      setState(false, false);
+      resizeAnimation.setState(false, true);
     }
   }
 
@@ -1363,22 +1400,20 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Set the showing state of the popup. If maybeAnimate is true, the animation
-   * will be used to set the state. If it is false, the animation will be
-   * cancelled.
-   * 
-   * @param showing the new state
-   * @param maybeAnimate true to possibly run the animation
+   * Register or unregister the handlers used by {@link PopupPanel}.
    */
-  private void setState(boolean showing, boolean maybeAnimate) {
-    if (maybeAnimate) {
-      resizeAnimation.setState(showing);
-    } else {
-      resizeAnimation.cancel();
+  private void updateHandlers() {
+    // Remove any existing handlers.
+    if (nativePreviewHandlerRegistration != null) {
+      nativePreviewHandlerRegistration.removeHandler();
+      nativePreviewHandlerRegistration = null;
     }
-    this.showing = showing;
+    if (historyHandlerRegistration != null) {
+      historyHandlerRegistration.removeHandler();
+      historyHandlerRegistration = null;
+    }
 
-    // Create or remove the native preview handler
+    // Create handlers if showing.
     if (showing) {
       nativePreviewHandlerRegistration = Event.addNativePreviewHandler(new NativePreviewHandler() {
         public void onPreviewNativeEvent(NativePreviewEvent event) {
@@ -1392,15 +1427,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
           }
         }
       });
-    } else {
-      if (nativePreviewHandlerRegistration != null) {
-        nativePreviewHandlerRegistration.removeHandler();
-        nativePreviewHandlerRegistration = null;
-      }
-      if (historyHandlerRegistration != null) {
-        historyHandlerRegistration.removeHandler();
-        historyHandlerRegistration = null;
-      }
     }
   }
 }

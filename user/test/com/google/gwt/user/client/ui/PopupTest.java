@@ -271,6 +271,23 @@ public class PopupTest extends GWTTestCase {
   }
 
   /**
+   * Test the hiding a popup while it is showing will not result in an illegal
+   * state.
+   */
+  public void testHideWhileShowing() {
+    PopupPanel popup = createPopupPanel();
+
+    // Start showing the popup.
+    popup.setAnimationEnabled(true);
+    popup.show();
+    assertTrue(popup.isShowing());
+
+    // Hide the popup while its showing.
+    popup.hide();
+    assertFalse(popup.isShowing());
+  }
+
+  /**
    * Test that the onLoad method is only called once when showing the popup.
    */
   public void testOnLoad() {
@@ -364,6 +381,21 @@ public class PopupTest extends GWTTestCase {
       }
     });
     popup.hide();
+  }
+
+  /**
+   * Issue 4720: Glass is not removed when removeFromParent is called.
+   */
+  public void testRemoveFromParent() {
+    PopupPanel popup = createPopupPanel();
+    popup.setGlassEnabled(true);
+    assertNull(popup.getGlassElement().getParentElement());
+
+    popup.show();
+    assertNotNull(popup.getGlassElement().getParentElement());
+
+    popup.removeFromParent();
+    assertNull(popup.getGlassElement().getParentElement());
   }
 
   public void testSeparateContainers() {
