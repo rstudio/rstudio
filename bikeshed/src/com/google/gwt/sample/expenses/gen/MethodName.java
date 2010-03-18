@@ -17,7 +17,37 @@ package com.google.gwt.sample.expenses.gen;
 
 /**
  * Represents the MethodName.
+ *
+ * TODO: Remove this class in preference to RequestFactory interfaces or
+ * generate automatically from RequestFactory interfaces.
  */
 public enum MethodName {
-  FIND_ALL_EMPLOYEES, FIND_ALL_REPORTS, FIND_EMPLOYEE, FIND_REPORTS_BY_EMPLOYEE, SYNC,
+  FIND_ALL_EMPLOYEES("Employee", "findAllEmployees"), FIND_ALL_REPORTS(
+      "Report", "findAllReports"), FIND_EMPLOYEE("Employee", "findEmployee"), FIND_REPORTS_BY_EMPLOYEE(
+      "Report", "findReportsByEmployee"), SYNC("", "");
+
+  /* the className that contains the method */
+  private final String className;
+
+  /* the methodName */
+  private final String methodName;
+
+  private MethodName(String className, String methodName) {
+    this.className = className;
+    this.methodName = methodName;
+  }
+
+  /**
+   * @return the className
+   */
+  public String getClassName() {
+    return className;
+  }
+
+  /**
+   * @return the methodName
+   */
+  public String getMethodName() {
+    return methodName;
+  }
 }

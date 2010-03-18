@@ -16,7 +16,7 @@
 package com.google.gwt.sample.expenses.server;
 
 import com.google.gwt.sample.expenses.gen.MethodName;
-import com.google.gwt.sample.expenses.server.domain.Employee;
+import com.google.gwt.sample.expenses.gen.UrlParameterManager;
 import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.sample.expenses.server.domain.Storage;
 
@@ -27,6 +27,14 @@ import org.json.JSONObject;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -37,32 +45,67 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class ExpensesDataServlet extends HttpServlet {
 
+  // TODO: Remove this hack
+  private static final Set<String> PROPERTY_SET = new HashSet<String>();
+  static {
+    for (String str : new String[] {
+        "ID", "VERSION", "DISPLAY_NAME", "USER_NAME", "PURPOSE", "CREATED"}) {
+      PROPERTY_SET.add(str);
+    }
+  }
+
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
 
     response.setStatus(HttpServletResponse.SC_OK);
-
-    MethodName methodName = getMethodName(request.getParameter("methodName"));
     PrintWriter writer = response.getWriter();
-    switch (methodName) {
-      case FIND_ALL_EMPLOYEES:
-        findAllEmployees(writer);
-        break;
-      case FIND_ALL_REPORTS:
-        findAllReports(writer);
-        break;
-      case FIND_EMPLOYEE:
-        // TODO
-        break;
-      case FIND_REPORTS_BY_EMPLOYEE:
-        findReportsByEmployee(request, writer);
-        break;
-      default:
-        System.err.println("Unknown method " + methodName);
-        break;
+    MethodName operation = getMethodName(request.getParameter("methodName"));
+    try {
+      Class<?> classOperation = Class.forName("com.google.gwt.sample.expenses.server.domain."
+          + operation.getClassName());
+      Method methodOperation = null;
+      // TODO: check if method names must be unique in a class.
+      for (Method method : classOperation.getDeclaredMethods()) {
+        if (method.getName().equals(operation.getMethodName())) {
+          methodOperation = method;
+          break;
+        }
+      }
+      if (methodOperation == null) {
+        throw new IllegalArgumentException("unable to find "
+            + operation.getMethodName() + " in " + classOperation);
+      }
+      if (!Modifier.isStatic(methodOperation.getModifiers())) {
+        throw new IllegalArgumentException("the " + methodOperation.getName()
+            + " is not static");
+      }
+      Map<String, String[]> parameterMap = request.getParameterMap();
+      Object args[] = UrlParameterManager.getObjectsFromFragment(parameterMap,
+          methodOperation.getParameterTypes());
+      Object resultList = methodOperation.invoke(null, args);
+      if (!(resultList instanceof List)) {
+        throw new IllegalArgumentException("return value not a list "
+            + resultList);
+      }
+      JSONArray jsonArray = getJsonArray((List<?>) resultList);
+      writer.print(jsonArray.toString());
+      writer.flush();
+      // TODO: clean exception handling code below.
+    } catch (ClassNotFoundException e) {
+      throw new IllegalArgumentException("unable to load the class: "
+          + operation);
+    } catch (IllegalAccessException e) {
+      throw new IllegalArgumentException(e);
+    } catch (InvocationTargetException e) {
+      throw new IllegalArgumentException(e);
+    } catch (SecurityException e) {
+      throw new IllegalArgumentException(e);
+    } catch (JSONException e) {
+      throw new IllegalArgumentException(e);
+    } catch (NoSuchMethodException e) {
+      throw new IllegalArgumentException(e);
     }
-    writer.flush();
   }
 
   @Override
@@ -83,49 +126,43 @@ public class ExpensesDataServlet extends HttpServlet {
     writer.flush();
   }
 
-  private void findAllEmployees(PrintWriter writer) {
+  /**
+   * Converts the returnValue of a 'get' method to a JSONArray.
+   * 
+   * @param resultObject object returned by a 'get' method, must be of type
+   *          List<? extends Entity>
+   * @return the JSONArray
+   * @throws ClassNotFoundException
+   * @throws InvocationTargetException
+   * @throws IllegalAccessException
+   * @throws NoSuchMethodException
+   * @throws JSONException
+   * @throws SecurityException
+   */
+  private JSONArray getJsonArray(List<?> resultList)
+      throws ClassNotFoundException, SecurityException, JSONException,
+      NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     JSONArray jsonArray = new JSONArray();
-    for (Employee e : Employee.findAllEmployees()) {
-      try {
-        // TODO should only be getting requested properties
-        // TODO clearly there should be centralized code for these conversions
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put(
-            com.google.gwt.sample.expenses.shared.EmployeeRef.ID.getName(),
-            Long.toString(e.getId()));
-        jsonObject.put(
-            com.google.gwt.sample.expenses.shared.EmployeeRef.VERSION.getName(),
-            e.getVersion().intValue());
-        jsonObject.put(
-            com.google.gwt.sample.expenses.shared.EmployeeRef.USER_NAME.getName(),
-            e.getUserName());
-        jsonObject.put(
-            com.google.gwt.sample.expenses.shared.EmployeeRef.DISPLAY_NAME.getName(),
-            e.getDisplayName());
-        jsonArray.put(jsonObject);
-      } catch (JSONException ex) {
-        System.err.println("Unable to create a JSON object " + ex);
+    if (resultList.size() == 0) {
+      return jsonArray;
+    }
+    Object firstElement = resultList.get(0);
+    Class<?> entityClass = firstElement.getClass();
+    Class<?> entityRefClass = Class.forName("com.google.gwt.sample.expenses.shared."
+        + entityClass.getSimpleName() + "Ref");
+    for (Object entityElement : resultList) {
+      JSONObject jsonObject = new JSONObject();
+      for (Field field : entityRefClass.getFields()) {
+        // TODO: perhaps get the property names from javax.persistence.Id fields
+        if (isProperty(field) && requestedProperty(field)) {
+          String propertyName = getPropertyName(field);
+          jsonObject.put(propertyName, getPropertyValue(entityElement,
+              propertyName));
+        }
       }
+      jsonArray.put(jsonObject);
     }
-    writer.print(jsonArray.toString());
-  }
-
-  private void findAllReports(PrintWriter writer) {
-    JSONArray jsonArray = new JSONArray();
-    for (Report r : Report.findAllReports()) {
-      reportToJson(jsonArray, r);
-    }
-    writer.print(jsonArray.toString());
-  }
-
-  private void findReportsByEmployee(HttpServletRequest request,
-      PrintWriter writer) {
-    JSONArray jsonArray = new JSONArray();
-    Long id = Long.valueOf(request.getParameter("id"));
-    for (Report r : Report.findReportsByEmployee(id)) {
-      reportToJson(jsonArray, r);
-    }
-    writer.print(jsonArray.toString());
+    return jsonArray;
   }
 
   /**
@@ -142,30 +179,85 @@ public class ExpensesDataServlet extends HttpServlet {
   }
 
   /**
-   * @param jsonArray
-   * @param r
+   * Returns methodName corresponding to the propertyName that can be invoked on
+   * an {@link Entity} object.
+   *
+   * Example: "USER_NAME" returns "getUserName". "VERSION" returns "getVersion"
    */
-  private void reportToJson(JSONArray jsonArray, Report r) {
-    try {
-      // TODO should only be getting requested properties
-      // TODO clearly there should be centralized code for these conversions
-      JSONObject jsonObject = new JSONObject();
-      jsonObject.put(
-          com.google.gwt.sample.expenses.shared.EmployeeRef.ID.getName(),
-          Long.toString(r.getId()));
-      jsonObject.put(
-          com.google.gwt.sample.expenses.shared.ReportRef.VERSION.getName(),
-          r.getVersion().intValue());
-      jsonObject.put(
-          com.google.gwt.sample.expenses.shared.ReportRef.CREATED.getName(),
-          Double.valueOf(r.getCreated().getTime()));
-      jsonObject.put(
-          com.google.gwt.sample.expenses.shared.ReportRef.PURPOSE.getName(),
-          r.getPurpose());
-      jsonArray.put(jsonObject);
-    } catch (JSONException ex) {
-      System.err.println("Unable to create a JSON object " + ex);
+  private String getMethodNameFromPropertyName(String propertyName) {
+    assert propertyName != null;
+    assert propertyName.equals(propertyName.toUpperCase());
+    StringBuffer methodName = new StringBuffer("get");
+    int index = 0;
+    int length = propertyName.length();
+    while (index < length) {
+      int underscore = propertyName.indexOf('_', index);
+      if (underscore == -1) {
+        underscore = length;
+      }
+      methodName.append(propertyName.charAt(index));
+      methodName.append(propertyName.substring(index + 1, underscore).toLowerCase());
+      index = underscore + 1; // skip the '_' character.
     }
+    return methodName.toString();
+  }
+
+  /**
+   * returns the property name.
+   */
+  private String getPropertyName(Field field) {
+    return field.getName();
+  }
+
+  /**
+   * @param entityElement
+   * @param property
+   * @return
+   * @throws NoSuchMethodException
+   * @throws SecurityException
+   * @throws InvocationTargetException
+   * @throws IllegalAccessException
+   */
+  private Object getPropertyValue(Object entityElement, String propertyName)
+      throws SecurityException, NoSuchMethodException, IllegalAccessException,
+      InvocationTargetException {
+    String methodName = getMethodNameFromPropertyName(propertyName);
+    Method method = entityElement.getClass().getMethod(methodName);
+    Object returnValue = method.invoke(entityElement);
+    /*
+     * TODO: make these conventions more prominent. 1. encoding long as String
+     * 2. encoding Date as Double
+     */
+    if (returnValue instanceof java.lang.Long) {
+      return returnValue.toString();
+    }
+    if (returnValue instanceof java.util.Date) {
+      return new Double(((java.util.Date) returnValue).getTime());
+    }
+    return returnValue;
+  }
+
+  /**
+   * @param field
+   * @return
+   */
+  private boolean isProperty(Field field) {
+    int modifiers = field.getModifiers();
+    if (!Modifier.isStatic(modifiers) || !Modifier.isFinal(modifiers)
+        || !Modifier.isPublic(modifiers)) {
+      return false;
+    }
+    return "Property".equals(field.getType().getSimpleName());
+  }
+
+  /**
+   * returns true if the property has been requested. TODO: fix this hack.
+   *
+   * @param field the field of entity ref
+   * @return has the property value been requested
+   */
+  private boolean requestedProperty(Field field) {
+    return PROPERTY_SET.contains(field.getName());
   }
 
   /**

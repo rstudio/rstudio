@@ -57,13 +57,14 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
 
       public void fire() {
 
-        // TODO: need some way to track that this request has been issued so that
-        // we don't issue another request that arrives while we are waiting for
-        // the response.
-        RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
+        // TODO: need some way to track that this request has been issued so
+        // that we don't issue another request that arrives while we are waiting
+        // for the response.
+        RequestBuilder builder = new RequestBuilder(
+            RequestBuilder.GET,
             "/expenses/data?methodName="
-                + MethodName.FIND_REPORTS_BY_EMPLOYEE.name() + "&id="
-                + id.getEntity().getId());
+                + MethodName.FIND_REPORTS_BY_EMPLOYEE.name()
+                + UrlParameterManager.getUrlFragment(new Object[] {id.getEntity().getId()}));
         builder.setCallback(new RequestCallback() {
 
           public void onError(Request request, Throwable exception) {
