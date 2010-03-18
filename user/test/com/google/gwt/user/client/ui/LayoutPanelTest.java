@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
@@ -52,6 +53,33 @@ public class LayoutPanelTest extends WidgetTestBase {
             finishTest();
           }
         });
+      }
+    });
+  }
+
+  /**
+   * Ensures that the popup implementation doesn't interfere with layout. This
+   * cropped up on IE7 as a result of CSS expressions used in PopupImplIE6, as
+   * described in issue 4532.
+   */
+  public void testWeirdPopupInteraction() {
+    assertTrue(Document.get().isCSS1Compat());
+
+    final LayoutPanel lp = new LayoutPanel();
+    lp.add(new HTML("foo"));
+    RootLayoutPanel.get().add(lp);
+
+    PopupPanel popup = new PopupPanel();
+    popup.center();
+
+    delayTestFinish(2000);
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        int offsetWidth = lp.getOffsetWidth();
+        int offsetHeight = lp.getOffsetHeight();
+        assertTrue(offsetWidth > 0);
+        assertTrue(offsetHeight > 0);
+        finishTest();
       }
     });
   }

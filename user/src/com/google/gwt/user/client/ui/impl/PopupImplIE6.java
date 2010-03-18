@@ -33,6 +33,8 @@ public class PopupImplIE6 extends PopupImpl {
       frame.parentElement.removeChild(frame);
       frame.__popup = null;
       popup.__frame = null;
+      popup.onresize = null;
+      popup.onmove = null;
     }
   }-*/;
 
@@ -60,7 +62,7 @@ public class PopupImplIE6 extends PopupImpl {
 
     // Visibility of frame should match visiblity of popup element.
     style.visibility = popup.currentStyle.visibility;
-  
+
     // Issue 2443: remove styles that affect the size of the iframe
     style.border = 0;
     style.padding = 0;
@@ -74,14 +76,18 @@ public class PopupImplIE6 extends PopupImpl {
     style.zIndex = popup.currentStyle.zIndex;
 
     // updates position and dimensions as popup is moved & resized
-    style.setExpression('left', 'this.__popup.offsetLeft');
-    style.setExpression('top', 'this.__popup.offsetTop');
-    style.setExpression('width', 'this.__popup.offsetWidth');
-    style.setExpression('height', 'this.__popup.offsetHeight');
+    popup.onmove = function() {
+      frame.style.left = popup.offsetLeft;
+      frame.style.top = popup.offsetTop;
+    };
+    popup.onresize = function() {
+      frame.style.width = popup.offsetWidth;
+      frame.style.height = popup.offsetHeight;
+    };
     style.setExpression('zIndex', 'this.__popup.currentStyle.zIndex');
     popup.parentElement.insertBefore(frame, popup);
   }-*/;
-  
+
   @Override
   public native void setVisible(Element popup, boolean visible) /*-{
     if (popup.__frame) {
