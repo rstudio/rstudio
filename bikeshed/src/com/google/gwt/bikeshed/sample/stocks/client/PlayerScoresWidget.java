@@ -75,6 +75,6 @@ public class PlayerScoresWidget extends Composite {
 
   @UiFactory
   SimpleCellList<PlayerInfo> createListView() {
-    return new SimpleCellList<PlayerInfo>(model, new PlayerInfoCell());
+    return new SimpleCellList<PlayerInfo>(model, new PlayerInfoCell(), 1, 1);
   }
 }

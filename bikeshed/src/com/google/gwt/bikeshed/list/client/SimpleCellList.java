@@ -22,9 +22,12 @@ import com.google.gwt.bikeshed.list.shared.ListHandler;
 import com.google.gwt.bikeshed.list.shared.ListModel;
 import com.google.gwt.bikeshed.list.shared.ListRegistration;
 import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -40,48 +43,34 @@ public class SimpleCellList<T> extends Widget {
 
   private final Cell<T> cell;
   private final ArrayList<T> data = new ArrayList<T>();
+  private int increment;
+  private int maxSize;
+  private ListModel<T> model;
+  private final Element showMoreElem;
   private final Element tmpElem;
   private ListRegistration reg;
   private ValueUpdater<T> valueUpdater;
-
-  public SimpleCellList(ListModel<T> model, Cell<T> cell) {
+  
+  public SimpleCellList(ListModel<T> model, Cell<T> cell, int maxSize, int increment) {
+    this.maxSize = maxSize;
+    this.increment = increment;
+    this.model = model;
     this.cell = cell;
+    
     tmpElem = Document.get().createDivElement();
+    
+    showMoreElem = Document.get().createDivElement();
+    showMoreElem.setInnerHTML("<i>Show " + increment + " more</i>");
+    showMoreElem.getStyle().setDisplay(Display.NONE);
 
     // TODO: find some way for cells to communicate what they're interested in.
-    setElement(Document.get().createDivElement());
+    DivElement outerDiv = Document.get().createDivElement();
+    DivElement innerDiv = Document.get().createDivElement();
+    outerDiv.appendChild(innerDiv);
+    outerDiv.appendChild(showMoreElem);
+    setElement(outerDiv);
     sinkEvents(Event.ONCLICK);
     sinkEvents(Event.ONCHANGE);
-
-    // Register for model events.
-    reg = model.addListHandler(new ListHandler<T>() {
-      public void onDataChanged(ListEvent<T> event) {
-        int start = event.getStart(), len = event.getLength();
-        List<T> values = event.getValues();
-        for (int i = 0; i < len; ++i) {
-          data.set(start + i, values.get(i));
-        }
-        render(start, len, values);
-      }
-
-      public void onSizeChanged(SizeChangeEvent event) {
-        int size = event.getSize();
-
-        // Is there no better way than this mess?
-        data.ensureCapacity(size);
-        while (data.size() < size) {
-          data.add(null);
-        }
-        // TODO: This only grows. It needs to shrink as well.
-
-        gc(size);
-        reg.setRangeOfInterest(0, size);
-      }
-    });
-
-    // Start with no range of interest. This will be updated as soon as the
-    // list size changes.
-    reg.setRangeOfInterest(0, 0);
   }
 
   @Override
@@ -97,9 +86,61 @@ public class SimpleCellList<T> extends Widget {
       cell.onBrowserEvent(target, data.get(idx), event, valueUpdater);
     }
   }
-
+  
   public void setValueUpdater(ValueUpdater<T> valueUpdater) {
     this.valueUpdater = valueUpdater;
+  }
+
+  @Override
+  protected void onLoad() {
+    super.onLoad();
+    
+    // Register for model events.
+    this.reg = model.addListHandler(new ListHandler<T>() {
+      public void onDataChanged(ListEvent<T> event) {
+        int start = event.getStart(), len = event.getLength();
+        List<T> values = event.getValues();
+        for (int i = 0; i < len; ++i) {
+          data.set(start + i, values.get(i));
+        }
+        render(start, len, values);
+      }
+
+      public void onSizeChanged(SizeChangeEvent event) {
+        int size = event.getSize();
+        if (size > maxSize) {
+          showMoreElem.getStyle().clearDisplay();
+        } else {
+          showMoreElem.getStyle().setDisplay(Display.NONE);
+        }
+        
+        int dataSize = data.size();
+        if (size < dataSize) {
+          while (size < dataSize) {
+            data.remove(dataSize - 1);
+            dataSize--;
+          }
+        } else {
+          data.ensureCapacity(size);
+          while (dataSize < size) {
+            data.add(null);
+            dataSize++;
+          }
+        }
+        
+        // TODO: This only grows. It needs to shrink as well.
+        gc(size);
+      }
+    });
+
+    // Request up to maxSize elements
+    reg.setRangeOfInterest(0, maxSize);
+  }
+  
+  @Override
+  protected void onUnload() {
+    this.reg.removeHandler();
+    this.reg = null;
   }
 
   private void gc(int size) {
@@ -111,7 +152,7 @@ public class SimpleCellList<T> extends Widget {
   }
 
   private void render(int start, int len, List<T> values) {
-    Element parent = getElement();
+    Element parent = getElement().getFirstChildElement();
     int childCount = parent.getChildCount();
 
     // Create innerHTML for the new items.

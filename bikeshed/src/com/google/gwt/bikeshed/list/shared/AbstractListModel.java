@@ -82,7 +82,7 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
     public void setRangeOfInterest(int start, int length) {
       this.start = start;
       this.length = length;
-      onRangeChanged();
+      onRangeChanged(start, length);
     }
 
     protected ListHandler<T> getHandler() {
@@ -126,7 +126,7 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
   /**
    * Called when a view changes its range of interest.
    */
-  protected abstract void onRangeChanged();
+  protected abstract void onRangeChanged(int start, int length);
 
   /**
    * Inform the views of the total number of items that are available.

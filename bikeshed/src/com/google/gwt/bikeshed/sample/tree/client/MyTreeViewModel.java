@@ -18,7 +18,7 @@ package com.google.gwt.bikeshed.sample.tree.client;
 import com.google.gwt.bikeshed.cells.client.ButtonCell;
 import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.ValueUpdater;
-import com.google.gwt.bikeshed.list.shared.AsyncListModel;
+import com.google.gwt.bikeshed.list.shared.AbstractListModel;
 import com.google.gwt.bikeshed.list.shared.ListModel;
 import com.google.gwt.bikeshed.tree.client.TreeNode;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel;
@@ -35,47 +35,53 @@ import java.util.List;
  */
 public class MyTreeViewModel implements TreeViewModel {
 
-  private static class IntegerListModel extends AsyncListModel<Integer> {
-    public IntegerListModel(final int length) {
-      super(new DataSource<Integer>() {
-        public void requestData(AsyncListModel<Integer> listModel) {
-          listModel.updateDataSize(1, true);
-          List<Integer> values = new ArrayList<Integer>(1);
-          values.add(length);
-          listModel.updateViewData(0, 1, values);
-        }
-      });
+  private static class IntegerListModel extends AbstractListModel<Integer> {
+    int wordLength;
+    
+    public IntegerListModel(int wordLength) {
+      this.wordLength = wordLength;
+    }
+    
+    @Override
+    protected void onRangeChanged(int start, int length) {
+      List<Integer> values = new ArrayList<Integer>(1);
+      values.add(wordLength);
+      updateDataSize(1, true);
+      updateViewData(0, 1, values);
     }
   }
 
-  private static class StringListModel extends AsyncListModel<String> {
+  private static class StringListModel extends AbstractListModel<String> {
+    String value;
+    
     public StringListModel(final String value) {
-      super(new DataSource<String>() {
-        public void requestData(final AsyncListModel<String> listModel) {
-          String prefix = value.endsWith("...") ? value.substring(0,
-              value.length() - 3) : value;
-          dataService.getNext(prefix, new AsyncCallback<List<String>>() {
-            public void onFailure(Throwable caught) {
-              String message = caught.getMessage();
-              if (message.contains("Not logged in")) {
-                // Force the user to login.
-                Window.Location.reload();
-              } else {
-                Window.alert("ERROR: " + caught.getMessage());
-              }
-            }
+      this.value = value;
+    }
+    
+    @Override
+    protected void onRangeChanged(int start, int length) {
+      String prefix = value.endsWith("...") ? value.substring(0,
+          value.length() - 3) : value;
+      dataService.getNext(prefix, new AsyncCallback<List<String>>() {
+        public void onFailure(Throwable caught) {
+          String message = caught.getMessage();
+          if (message.contains("Not logged in")) {
+            // Force the user to login.
+            Window.Location.reload();
+          } else {
+            Window.alert("ERROR: " + caught.getMessage());
+          }
+        }
 
-            public void onSuccess(final List<String> result) {
-              // Use a timer to simulate network delay.
-              new Timer() {
-                @Override
-                public void run() {
-                  listModel.updateDataSize(result.size(), true);
-                  listModel.updateViewData(0, result.size(), result);
-                }
-              }.schedule(500);
+        public void onSuccess(final List<String> result) {
+          // Use a timer to simulate network delay.
+          new Timer() {
+            @Override
+            public void run() {
+              updateDataSize(result.size(), true);
+              updateViewData(0, result.size(), result);
             }
-          });
+          }.schedule(500);
         }
       });
     }

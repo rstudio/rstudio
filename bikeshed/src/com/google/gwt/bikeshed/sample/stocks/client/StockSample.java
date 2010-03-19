@@ -19,7 +19,6 @@ import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.list.shared.AsyncListModel;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.bikeshed.list.shared.Range;
-import com.google.gwt.bikeshed.list.shared.AsyncListModel.DataSource;
 import com.google.gwt.bikeshed.sample.stocks.client.TransactionTreeViewModel.SectorListModel;
 import com.google.gwt.bikeshed.sample.stocks.shared.PlayerInfo;
 import com.google.gwt.bikeshed.sample.stocks.shared.StockQuote;
@@ -111,26 +110,25 @@ public class StockSample implements EntryPoint, Updater {
   public void onModuleLoad() {
     // Create the various models. Do this before binding the UI, because some
     // of the UiFactories need the models to instantiate their widgets.
-    searchListModel = new AsyncListModel<StockQuote>(
-        new DataSource<StockQuote>() {
-          public void requestData(AsyncListModel<StockQuote> listModel) {
-            update();
-          }
-        });
+    searchListModel = new AsyncListModel<StockQuote>() {
+      @Override
+      protected void onRangeChanged(int start, int length) {
+        update();
+      }
+    };
 
-    favoritesListModel = new AsyncListModel<StockQuote>(
-        new DataSource<StockQuote>() {
-          public void requestData(AsyncListModel<StockQuote> listModel) {
-            update();
-          }
-        });
+    favoritesListModel = new AsyncListModel<StockQuote>() {
+      @Override
+      protected void onRangeChanged(int start, int length) {
+        update();
+      }
+    };
 
-    playerScoresListModel = new AsyncListModel<PlayerInfo>(
-        new DataSource<PlayerInfo>() {
-          public void requestData(AsyncListModel<PlayerInfo> listModel) {
-            // Player cannot request data from this view.
-          }
-        });
+    playerScoresListModel = new AsyncListModel<PlayerInfo>() {
+      @Override
+      protected void onRangeChanged(int start, int length) {
+      }
+    };
 
     treeModel = new TransactionTreeViewModel(this, favoritesListModel,
         transactionListListModelsByTicker);

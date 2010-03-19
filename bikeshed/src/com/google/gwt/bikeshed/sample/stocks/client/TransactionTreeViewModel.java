@@ -42,17 +42,17 @@ class TransactionTreeViewModel implements TreeViewModel {
 
     String sector;
 
-    public SectorListModel(final Updater updater, String sector) {
-      super(new DataSource<StockQuote>() {
-        public void requestData(AsyncListModel<StockQuote> listModel) {
-          updater.update();
-        }
-      });
+    public SectorListModel(String sector) {
       this.sector = sector;
     }
 
     public String getSector() {
       return sector;
+    }
+
+    @Override
+    protected void onRangeChanged(int start, int length) {
+      updater.update();
     }
   }
 
@@ -131,7 +131,7 @@ class TransactionTreeViewModel implements TreeViewModel {
             }
           });
     } else if (value instanceof String) {
-      SectorListModel listModel = new SectorListModel(updater, (String) value);
+      SectorListModel listModel = new SectorListModel((String) value);
       sectorListModels.put((String) value, listModel);
       return new TreeViewModel.DefaultNodeInfo<StockQuote>(listModel, STOCK_QUOTE_CELL) {
         @Override

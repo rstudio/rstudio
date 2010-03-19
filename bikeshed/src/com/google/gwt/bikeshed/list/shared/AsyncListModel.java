@@ -18,55 +18,31 @@ package com.google.gwt.bikeshed.list.shared;
 import java.util.List;
 
 /**
- * Asynchronous version of a {@link ListModel}.
+ * An implementation of {@link AbstractListModel} that allows the data to be
+ * modified.
  * 
- * @param <T> the data type
+ * @param <T> the data type of records in the list
  */
-public class AsyncListModel<T> extends AbstractListModel<T> {
-
+public abstract class AsyncListModel<T> extends AbstractListModel<T> {
+  
   /**
-   * The source of data for the list model.
+   * Inform the views of the total number of items that are available.
    * 
-   * @param <T> the data type
+   * @param size the new size
+   * @param exact true if the size is exact, false if it is a guess
    */
-  public static interface DataSource<T> {
-
-    /**
-     * Request that the data source pushes new data to the client. The data
-     * source should call {@link #updateViewData} and/or {@link #updateDataSize}
-     * when the data is available.
-     * 
-     * @param listModel the model requesting the data
-     */
-    void requestData(AsyncListModel<T> listModel);
-  }
-
-  /**
-   * The data source.
-   */
-  private DataSource<T> dataSource;
-
-  /**
-   * Construct a new {@link AsyncListModel}.
-   * 
-   * @param dataSource the data source
-   */
-  public AsyncListModel(DataSource<T> dataSource) {
-    this.dataSource = dataSource;
-  }
-
-  @Override
   public void updateDataSize(int size, boolean exact) {
     super.updateDataSize(size, exact);
   }
 
-  @Override
+  /**
+   * Inform the views of the new data.
+   * 
+   * @param start the start index
+   * @param length the length of the data
+   * @param values the data values
+   */
   public void updateViewData(int start, int length, List<T> values) {
     super.updateViewData(start, length, values);
-  }
-
-  @Override
-  protected void onRangeChanged() {
-    dataSource.requestData(this);
   }
 }

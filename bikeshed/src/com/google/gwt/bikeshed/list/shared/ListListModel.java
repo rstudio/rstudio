@@ -222,7 +222,9 @@ public class ListListModel<T> extends AbstractListModel<T> {
   }
 
   @Override
-  protected void onRangeChanged() {
+  protected void onRangeChanged(int start, int length) {
+    // TODO - update size only when needed
+    // TODO - update only relevant range of data
     updateDataSize(listWrapper.size(), true);
     updateViewData(0, listWrapper.size(), listWrapper);
   }

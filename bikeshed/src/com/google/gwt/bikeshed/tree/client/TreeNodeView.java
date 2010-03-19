@@ -426,8 +426,13 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
 
       public void onSizeChanged(SizeChangeEvent event) {
         if (event.getSize() == 0 && event.isExact()) {
-          // Close the node
-          setState(false, false);
+          ensureChildContainer().setInnerHTML("<i>no data</i>");
+          if (children != null) {
+            for (TreeNodeView<?> child : children) {
+              child.cleanup();
+            }
+            children = null;
+          }
         }
       }
     });
