@@ -276,7 +276,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     var hashCodeMap = this.@java.util.AbstractHashMap::hashCodeMap;
     for (var hashCode in hashCodeMap) {
       // sanity check that it's really an integer
-      if (hashCode == parseInt(hashCode)) {
+      if (hashCode == parseInt(hashCode, 10)) {
         var array = hashCodeMap[hashCode];
         for (var i = 0, c = array.length; i < c; ++i) {
           dest.@java.util.Collection::add(Ljava/lang/Object;)(array[i]);
@@ -312,7 +312,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     var hashCodeMap = this.@java.util.AbstractHashMap::hashCodeMap;
     for (var hashCode in hashCodeMap) {
       // sanity check that it's really one of ours
-      if (hashCode == parseInt(hashCode)) {
+      if (hashCode == parseInt(hashCode, 10)) {
         var array = hashCodeMap[hashCode];
         for (var i = 0, c = array.length; i < c; ++i) {
           var entry = array[i];
