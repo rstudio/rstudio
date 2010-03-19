@@ -82,7 +82,6 @@ public final class GWT {
    *          instantiated
    * @return the new instance, which must be typecast to the requested class.
    */
-  @SuppressWarnings("unused")
   public static <T> T create(Class<?> classLiteral) {
     if (sGWTBridge == null) {
       /*

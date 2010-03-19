@@ -183,7 +183,7 @@ import java.lang.annotation.Target;
  * 
  * <p>
  * This can lead to performance problems when using image bundles, because the
- * large composite image will be re-requested unecessarily. In addition,
+ * large composite image will be re-requested unnecessarily. In addition,
  * <code>clear.cache.gif</code>, which is a blank image used by the image
  * bundle implementation, will be re-requested as well. While some browsers will
  * only re-request these images for each page load, others will re-request them

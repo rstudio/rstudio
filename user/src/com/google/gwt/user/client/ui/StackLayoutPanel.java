@@ -94,7 +94,7 @@ import java.util.NoSuchElementException;
  * </pre>
  */
 public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
-    RequiresResize, ProvidesResize, IndexedPanel,
+    ProvidesResize, IndexedPanel,
     HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
 
   private class Header extends Composite implements HasClickHandlers {
@@ -159,7 +159,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
    * stack header.
    * 
    * @param widget the child widget to be added
-   * @param text the text to be shown on its header
+   * @param header the text to be shown on its header
    * @param asHtml <code>true</code> to treat the specified text as HTML
    * @param headerSize the size of the header widget
    */
@@ -172,7 +172,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
    * stack header.
    * 
    * @param widget the child widget to be added
-   * @param text the text to be shown on its header
+   * @param header the text to be shown on its header
    * @param headerSize the size of the header widget
    */
   public void add(final Widget widget, String header, double headerSize) {
@@ -416,7 +416,7 @@ public class StackLayoutPanel extends ResizeComposite implements HasWidgets,
   /**
    * Shows the widget at the specified index.
    * 
-   * @param widget the child widget to be shown.
+   * @param index the index of the child widget to be shown.
    */
   public void showWidget(int index) {
     checkIndex(index);

@@ -278,6 +278,11 @@ public abstract class AbstractClientBundleGenerator extends Generator {
    * Provides a hook for subtypes to add additional fields or requirements to
    * the bundle.
    * 
+   * @param logger a TreeLogger
+   * @param context the GeneratorContext
+   * @param fields ClentBundle fields
+   * @param requirements ClientBundleRequirements
+   * 
    * @throws UnableToCompleteException if an error occurs.
    */
   protected void doAddFieldsAndRequirements(TreeLogger logger,
@@ -289,6 +294,11 @@ public abstract class AbstractClientBundleGenerator extends Generator {
    * This method is called after the ClientBundleRequirements have been
    * evaluated and a new ClientBundle implementation is being created.
    * 
+   * @param logger a TreeLogger
+   * @param generatorContext the GeneratoContext
+   * @param fields ClientBundle fields
+   * @param generatedSimpleSourceName a String
+   * 
    * @throws UnableToCompleteException if an error occurs.
    */
   protected void doCreateBundleForPermutation(TreeLogger logger,
@@ -298,6 +308,8 @@ public abstract class AbstractClientBundleGenerator extends Generator {
 
   /**
    * Provides a hook for finalizing generated resources.
+   * 
+   * @param logger a TreeLogger
    * 
    * @throws UnableToCompleteException if an error occurs.
    */

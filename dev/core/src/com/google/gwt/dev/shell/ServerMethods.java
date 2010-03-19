@@ -32,11 +32,10 @@ public class ServerMethods {
    * Tell the server that the client no longer has any references to the
    * specified Java object.
    * 
-   * @param ids ID of object to free
+   * @param ids IDs of objects to free
    * @return false if an error occurred
    */
-  static boolean freeJava(BrowserChannelClient channel,
-      SessionHandlerClient handler, int ids[]) {
+  static boolean freeJava(BrowserChannelClient channel, int ids[]) {
     if (!channel.isConnected()) {
       // ignoring freeJava after disconnect.
       return true;

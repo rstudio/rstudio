@@ -42,7 +42,6 @@ import com.google.gwt.user.client.ui.impl.RichTextAreaImpl;
  *   <dd>Applied to the rich text element.</dd>
  * </dl>
  */
-@SuppressWarnings("deprecation")
 public class RichTextArea extends FocusWidget implements HasHTML,
     HasInitializeHandlers {
 

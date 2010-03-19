@@ -115,9 +115,9 @@ public class SoycReportLinker extends Linker {
     }
 
     if (onePermutation) {
-      return emitPermutationDescriptions(logger, context, artifacts);
+      return emitPermutationDescriptions(artifacts);
     } else {
-      return buildTopLevelFiles(logger, context, artifacts);
+      return buildTopLevelFiles(logger, artifacts);
     }
   }
 
@@ -133,7 +133,7 @@ public class SoycReportLinker extends Linker {
   }
 
   private ArtifactSet buildTopLevelFiles(TreeLogger logger,
-      LinkerContext context, ArtifactSet artifacts) {
+      ArtifactSet artifacts) {
     artifacts = new ArtifactSet(artifacts);
 
     ArtifactsOutputDirectory out = new ArtifactsOutputDirectory();
@@ -149,8 +149,7 @@ public class SoycReportLinker extends Linker {
     return artifacts;
   }
 
-  private ArtifactSet emitPermutationDescriptions(TreeLogger logger,
-      LinkerContext context, ArtifactSet artifacts) {
+  private ArtifactSet emitPermutationDescriptions(ArtifactSet artifacts) {
     artifacts = new ArtifactSet(artifacts);
 
     for (CompilationResult res : artifacts.find(CompilationResult.class)) {

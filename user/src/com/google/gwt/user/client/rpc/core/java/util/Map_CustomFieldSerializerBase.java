@@ -28,6 +28,7 @@ import java.util.Map.Entry;
  */
 public final class Map_CustomFieldSerializerBase {
 
+  @SuppressWarnings("unchecked")
   public static void deserialize(SerializationStreamReader streamReader,
       Map instance) throws SerializationException {
     int size = streamReader.readInt();
@@ -40,6 +41,7 @@ public final class Map_CustomFieldSerializerBase {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public static void serialize(SerializationStreamWriter streamWriter,
       Map instance) throws SerializationException {
     int size = instance.size();

@@ -27,6 +27,8 @@ public class RunAsyncCode implements PrefetchableResource {
   /**
    * Create an instance for the split point named with the given class. The
    * provided class must be a class literal.
+   * 
+   * @param splitPoint a Class literal used to name the split point
    */
   public static RunAsyncCode runAsyncCode(Class<?> splitPoint) {
     // This is a place holder for development mode.

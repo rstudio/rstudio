@@ -123,7 +123,6 @@ public class HTMLPanel extends ComplexPanel {
    * @param widget the widget to be added
    * @param toReplace the element to be replaced by the widget
    */
-  @SuppressWarnings("deprecation")
   public final void addAndReplaceElement(Widget widget, Element toReplace) {
     com.google.gwt.user.client.Element clientElem = toReplace.cast();
     addAndReplaceElement(widget, clientElem);

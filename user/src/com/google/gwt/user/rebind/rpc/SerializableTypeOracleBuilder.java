@@ -322,7 +322,7 @@ public class SerializableTypeOracleBuilder {
       return "Default";
     }
 
-    public boolean isAllowed(@SuppressWarnings("unused") JClassType type) {
+    public boolean isAllowed(JClassType type) {
       return true;
     }
   };
@@ -803,7 +803,6 @@ public class SerializableTypeOracleBuilder {
    * Builds a {@link SerializableTypeOracle} for a given set of root types.
    * 
    * @param logger
-   * 
    * @return a {@link SerializableTypeOracle} for the specified set of root
    *         types
    * 

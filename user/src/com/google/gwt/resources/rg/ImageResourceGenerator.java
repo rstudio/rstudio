@@ -157,7 +157,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
   public void createFields(TreeLogger logger, ResourceContext context,
       ClientBundleFields fields) throws UnableToCompleteException {
     if (!prepared) {
-      finalizeArrangements(logger, context);
+      finalizeArrangements(logger);
     }
 
     for (ImageRect rect : shared.imageRectsByName.values()) {
@@ -262,7 +262,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
     }
   }
 
-  private void finalizeArrangements(TreeLogger logger, ResourceContext context)
+  private void finalizeArrangements(TreeLogger logger)
       throws UnableToCompleteException {
     for (Map.Entry<RepeatStyle, ImageBundleBuilder> entry : shared.buildersByRepeatStyle.entrySet()) {
       RepeatStyle repeatStyle = entry.getKey();

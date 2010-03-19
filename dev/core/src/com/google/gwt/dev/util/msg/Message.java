@@ -88,7 +88,7 @@ public abstract class Message {
    * @param c a Class
    * @return a suitable Formatter
    */
-  protected final Formatter getFormatter(Class c) {
+  protected final Formatter getFormatter(Class<?> c) {
     return FMT_CLASS;
   }
 

@@ -29,6 +29,10 @@ import java.math.BigInteger;
  */
 public class BigInteger_CustomFieldSerializer {
 
+  /**
+   * @param streamReader a SerializationStreamReader instance
+   * @param instance the instance to be deserialized
+   */
   public static void deserialize(SerializationStreamReader streamReader,
       BigInteger instance) {
   }

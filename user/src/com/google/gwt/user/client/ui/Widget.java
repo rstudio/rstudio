@@ -91,7 +91,7 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
       case Event.ONMOUSEOUT:
         // Only fire the mouse out event if it's leaving this
         // widget.
-        Element related = event.getRelatedTarget();
+        Element related = event.getRelatedEventTarget().cast();
         if (related != null && getElement().isOrHasChild(related)) {
           return;
         }

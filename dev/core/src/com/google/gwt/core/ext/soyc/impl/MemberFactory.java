@@ -51,7 +51,7 @@ public class MemberFactory {
   }
 
   @SuppressWarnings("unchecked")
-  private <K, V extends Member> Map<K, V> getElementMap(K key, Class<V> clazz) {
+  private <K, V extends Member> Map<K, V> getElementMap(Class<V> clazz) {
     Map<K, V> elementMap = (Map<K, V>) map.get(clazz);
     if (elementMap == null) {
       elementMap = new IdentityHashMap<K, V>();
@@ -74,7 +74,7 @@ public class MemberFactory {
    */
   private <K, V extends Member> V getOrCreate(K key, Class<V> implClazz,
       Class<? super K> constructorParam) {
-    Map<K, V> elementMap = getElementMap(key, implClazz);
+    Map<K, V> elementMap = getElementMap(implClazz);
 
     V toReturn = elementMap.get(key);
     if (toReturn == null) {

@@ -59,6 +59,7 @@ public class JsVisitor {
     }
   };
 
+  @SuppressWarnings("unchecked")
   protected static final JsContext UNMODIFIABLE_CONTEXT = new JsContext() {
 
     public boolean canInsert() {
@@ -90,7 +91,7 @@ public class JsVisitor {
     }
   };
 
-  @SuppressWarnings("cast")
+  @SuppressWarnings("unchecked")
   public final <T extends JsVisitable> T accept(T node) {
     // The following cast to T is needed for javac 1.5.0_13
     // as shipped on OS X
@@ -417,11 +418,13 @@ public class JsVisitor {
     return true;
   }
 
+  @SuppressWarnings({"unchecked", "cast"})
   protected <T extends JsVisitable<T>> T doAccept(T node) {
     doTraverse(node, (JsContext<T>) UNMODIFIABLE_CONTEXT);
     return node;
   }
 
+  @SuppressWarnings({"unchecked", "cast"})
   protected <T extends JsVisitable<T>> void doAcceptList(List<T> collection) {
     for (Iterator<T> it = collection.iterator(); it.hasNext();) {
       doTraverse(it.next(), (JsContext<T>) UNMODIFIABLE_CONTEXT);
@@ -433,6 +436,7 @@ public class JsVisitor {
     return expr;
   }
 
+  @SuppressWarnings({"unchecked", "cast"})
   protected <T extends JsVisitable<T>> void doAcceptWithInsertRemove(
       List<T> collection) {
     for (Iterator<T> it = collection.iterator(); it.hasNext();) {

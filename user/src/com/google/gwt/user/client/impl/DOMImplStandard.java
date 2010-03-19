@@ -44,11 +44,11 @@ abstract class DOMImplStandard extends DOMImpl {
   @Override
   public Element eventGetFromElement(Event evt) {
     if (evt.getType().equals("mouseover")) {
-      return evt.getRelatedTarget().cast();
+      return evt.getRelatedEventTarget().cast();
     }
 
     if (evt.getType().equals("mouseout")) {
-      return evt.getTarget().cast();
+      return evt.getEventTarget().cast();
     }
 
     return null;  
@@ -57,11 +57,11 @@ abstract class DOMImplStandard extends DOMImpl {
   @Override
   public Element eventGetToElement(Event evt) {
     if (evt.getType().equals("mouseover")) {
-      return evt.getTarget().cast();
+      return evt.getEventTarget().cast();
     }
 
     if (evt.getType().equals("mouseout")) {
-      return evt.getRelatedTarget().cast();
+      return evt.getRelatedEventTarget().cast();
     }
 
     return null;

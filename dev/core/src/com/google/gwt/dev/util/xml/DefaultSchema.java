@@ -44,7 +44,7 @@ public class DefaultSchema extends Schema {
   }
 
   public void onBadAttributeValue(int line, String elem, String attr,
-      String value, Class paramType) throws UnableToCompleteException {
+      String value, Class<?> paramType) throws UnableToCompleteException {
     Messages.XML_ATTRIBUTE_CONVERSION_ERROR.log(logger, line, attr, paramType,
         null);
     throw new UnableToCompleteException();

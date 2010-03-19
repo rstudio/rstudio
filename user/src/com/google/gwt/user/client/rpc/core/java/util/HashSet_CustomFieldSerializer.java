@@ -26,11 +26,13 @@ import java.util.HashSet;
  */
 public final class HashSet_CustomFieldSerializer {
 
+  @SuppressWarnings("unchecked")
   public static void deserialize(SerializationStreamReader streamReader,
       HashSet instance) throws SerializationException {
     Collection_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
+  @SuppressWarnings("unchecked")
   public static void serialize(SerializationStreamWriter streamWriter,
       HashSet instance) throws SerializationException {
     Collection_CustomFieldSerializerBase.serialize(streamWriter, instance);

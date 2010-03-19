@@ -93,7 +93,6 @@ public class SerializationUtils {
    * field serializer. If the type is not serializable then it can return null.
    * 
    * @param type the type that is going to be serialized
-   * 
    * @return the fully qualified name of the field serializer for the given type
    */
   static String getFieldSerializerName(TypeOracle typeOracle, JType type) {
@@ -175,8 +174,7 @@ public class SerializationUtils {
    * @param serviceIntf service interface
    * @return the simple name of the type serializer class
    */
-  static String getTypeSerializerSimpleName(TypeOracle typeOracle,
-      JClassType serviceIntf) throws IllegalArgumentException {
+  static String getTypeSerializerSimpleName(JClassType serviceIntf) throws IllegalArgumentException {
     if (serviceIntf.isInterface() == null) {
       throw new IllegalArgumentException(serviceIntf.getQualifiedSourceName()
           + " is not a service interface");

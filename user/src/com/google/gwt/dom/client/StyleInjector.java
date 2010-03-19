@@ -106,7 +106,6 @@ public class StyleInjector {
       return $doc.styleSheets[index].cssText.length;
     }-*/;
 
-
     public native void appendContents(StyleElement style, String contents) /*-{
       style.cssText += contents;
     }-*/;

@@ -1077,6 +1077,7 @@ public final class CompilingClassLoader extends ClassLoader implements
     return lookupClassName;
   }
 
+  @SuppressWarnings("deprecation")
   private byte[] findClassBytes(String className) {
     if (JavaScriptHost.class.getName().equals(className)) {
       // No need to rewrite.

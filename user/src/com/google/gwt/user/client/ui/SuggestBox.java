@@ -189,6 +189,8 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     /**
      * This is here for legacy reasons. It is intentionally not visible.
      * 
+     * @param enable true to enable animation
+     * 
      * @deprecated implemented in DefaultSuggestionDisplay
      */
     @Deprecated
@@ -198,6 +200,8 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
 
     /**
      * This is here for legacy reasons. It is intentionally not visible.
+     * 
+     * @param style the style name
      * 
      * @deprecated implemented in DefaultSuggestionDisplay
      */

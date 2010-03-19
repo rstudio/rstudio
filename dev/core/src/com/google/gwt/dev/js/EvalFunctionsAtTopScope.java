@@ -40,7 +40,6 @@ import java.util.Stack;
  */
 public class EvalFunctionsAtTopScope extends JsModVisitor {
 
-
   public static void exec(JsProgram jsProgram, JavaToJavaScriptMap map) {
     EvalFunctionsAtTopScope fev = new EvalFunctionsAtTopScope(map);
     fev.accept(jsProgram);
@@ -55,8 +54,6 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
   private JavaToJavaScriptMap java2jsMap;
   
   private final Stack<JsBlock> scopeStack = new Stack<JsBlock>();
-  
-  
   
   public EvalFunctionsAtTopScope(JavaToJavaScriptMap java2jsMap) {
     this.java2jsMap = java2jsMap;
@@ -116,7 +113,7 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
 
   @Override
   public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
-    JsFunction func = JsStaticEval.isFunctionDecl(currentStatement);
+    JsStaticEval.isFunctionDecl(currentStatement);
     
     /*
      * We do this during visit() to preserve first-to-last evaluation order.
@@ -144,7 +141,6 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
     scopeStack.push(x.getBody());
     return true;
   }
-
 
   @Override
   public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {

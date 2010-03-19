@@ -45,7 +45,6 @@ public class StringBuilderImpl {
       array.explicitLength = length;
     }-*/;
 
-    @SuppressWarnings("unused")
     private String[] array = new String[0];
 
     public ImplArray() {

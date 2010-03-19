@@ -317,8 +317,10 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<td>" + className + "</a></td>");
         outFile.println("<td>");
         outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
+        // CHECKSTYLE_OFF
         outFile.println("<div style=\"width:" + perc
             + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
+        // CHECKSTYLE_ON
         outFile.println("</div>");
         outFile.println(size + " (" + formatNumber(perc) + "%)");
         outFile.println("</td>");
@@ -421,8 +423,10 @@ public class MakeTopLevelHtmlForPerm {
         }
         outFile.println("<td>");
         outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
+        // CHECKSTYLE_OFF
         outFile.println("<div style=\"width:" + perc
             + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
+        // CHECKSTYLE_ON
         outFile.println("</div>");
         outFile.println(size + " (" + formatNumber(perc) + "%)");
         outFile.println("</td>");
@@ -527,8 +531,10 @@ public class MakeTopLevelHtmlForPerm {
             + splitPointDescription + "</a></td>");
         outFile.println("<td>");
         outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
+        // CHECKSTYLE_OFF
         outFile.println("<div style=\"width:" + ratio
             + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
+        // CHECKSTYLE_ON
         outFile.println("</div>");
         outFile.println((int) size + " Bytes (" + formatNumber(ratio) + "%)");
         outFile.println("</td>");
@@ -693,8 +699,10 @@ public class MakeTopLevelHtmlForPerm {
           + "\" target=\"_top\">" + codeType + "</a></td>");
       outFile.println("<td>");
       outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
+      // CHECKSTYLE_OFF
       outFile.println("<div style=\"width:" + perc
           + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
+      // CHECKSTYLE_ON
       outFile.println("</div>");
       outFile.println(size + " (" + formatNumber(perc) + "%)");
       outFile.println("</td>");
@@ -858,8 +866,10 @@ public class MakeTopLevelHtmlForPerm {
           + "\" target=\"_top\">" + packageName + "</a></td>");
       outFile.println("<td>");
       outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
+      // CHECKSTYLE_OFF
       outFile.println("<div style=\"width:" + perc
           + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
+      // CHECKSTYLE_ON
       outFile.println("</div>");
       outFile.println(size + " (" + formatNumber(perc) + "%)");
       outFile.println("</td>");

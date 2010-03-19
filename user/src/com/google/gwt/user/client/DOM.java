@@ -98,6 +98,7 @@ public class DOM {
    * 
    * @return the newly-created element
    */
+  @SuppressWarnings("deprecation")
   public static Element createButton() {
     return Document.get().createButtonElement().cast();
   }
@@ -456,7 +457,7 @@ public class DOM {
    * @see DOM#eventGetTarget(Event)
    */
   public static Element eventGetCurrentTarget(Event evt) {
-    return evt.getCurrentTarget().cast();
+    return evt.getCurrentEventTarget().cast();
   }
 
   /**
@@ -566,7 +567,7 @@ public class DOM {
    * @return the target element
    */
   public static Element eventGetTarget(Event evt) {
-    return (Element) evt.getTarget();
+    return evt.getEventTarget().cast();
   }
 
   /**

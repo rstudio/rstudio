@@ -102,6 +102,7 @@ public abstract class Linker {
    * @param logger the TreeLogger to record to
    * @param context provides access to the Linker's environment
    * @param artifacts an unmodifiable view of the artifacts to link
+   * @param onePermutation true for a one-permutation call
    * @return the artifacts that should be propagated through the linker chain
    * @throws UnableToCompleteException if compilation violates assumptions made
    *           by the Linker or for errors encountered by the Linker
@@ -129,7 +130,6 @@ public abstract class Linker {
    * @throws UnableToCompleteException if compilation violates assumptions made
    *           by the Linker or for errors encountered by the Linker
    */
-  @SuppressWarnings("unused")
   public ArtifactSet relink(TreeLogger logger, LinkerContext context,
       ArtifactSet newArtifacts) throws UnableToCompleteException {
     return newArtifacts;

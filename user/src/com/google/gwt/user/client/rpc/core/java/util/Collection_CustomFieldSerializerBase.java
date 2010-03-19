@@ -26,6 +26,7 @@ import java.util.Collection;
  */
 public final class Collection_CustomFieldSerializerBase {
 
+  @SuppressWarnings("unchecked")
   public static void deserialize(SerializationStreamReader streamReader,
       Collection instance) throws SerializationException {
     int size = streamReader.readInt();
@@ -35,6 +36,7 @@ public final class Collection_CustomFieldSerializerBase {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public static void serialize(SerializationStreamWriter streamWriter,
       Collection instance) throws SerializationException {
     int size = instance.size();

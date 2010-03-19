@@ -45,7 +45,7 @@ public class DefaultHandlerRegistration implements HandlerRegistration {
   /**
    * Removes the given handler from its manager.
    */
-  @SuppressWarnings({"unchecked", "deprecation"})
+  @SuppressWarnings("unchecked")
   // This is safe because when the elements were passed in they conformed to
   // Type<H>,H.
   public void removeHandler() {

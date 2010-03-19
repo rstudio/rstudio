@@ -37,7 +37,7 @@ public abstract class Schema {
    * Finds the most recent converter in the schema chain that can convert the
    * specified type.
    */
-  public AttributeConverter getAttributeConverter(Class type) {
+  public AttributeConverter getAttributeConverter(Class<?> type) {
     AttributeConverter converter = convertersByType.get(type);
     if (converter != null) {
       return converter;
@@ -54,7 +54,7 @@ public abstract class Schema {
   }
 
   public void onBadAttributeValue(int line, String elem, String attr,
-      String value, Class paramType) throws UnableToCompleteException {
+      String value, Class<?> paramType) throws UnableToCompleteException {
     if (parent != null) {
       parent.onBadAttributeValue(line, elem, attr, value, paramType);
     }
@@ -95,7 +95,7 @@ public abstract class Schema {
     }
   }
 
-  public void registerAttributeConverter(Class type,
+  public void registerAttributeConverter(Class<?> type,
       AttributeConverter converter) {
     convertersByType.put(type, converter);
   }

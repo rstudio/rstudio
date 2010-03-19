@@ -27,12 +27,12 @@ public final class Message2ClassClass extends Message2 {
     super(type, fmt);
   }
 
-  public TreeLogger branch(TreeLogger logger, Class c1, Class c2,
+  public TreeLogger branch(TreeLogger logger, Class<?> c1, Class<?> c2,
       Throwable caught) {
     return branch2(logger, c1, c2, getFormatter(c1), getFormatter(c2), caught);
   }
 
-  public void log(TreeLogger logger, Class c1, Class c2, Throwable caught) {
+  public void log(TreeLogger logger, Class<?> c1, Class<?> c2, Throwable caught) {
     log2(logger, c1, c2, getFormatter(c1), getFormatter(c2), caught);
   }
 }

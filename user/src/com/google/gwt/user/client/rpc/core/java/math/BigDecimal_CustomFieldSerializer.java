@@ -29,6 +29,10 @@ import java.math.BigDecimal;
  */
 public class BigDecimal_CustomFieldSerializer {
 
+  /**
+   * @param streamReader a SerializationStreamReader instance
+   * @param instance the instance to be deserialized
+   */
   public static void deserialize(SerializationStreamReader streamReader,
       BigDecimal instance) {
   }

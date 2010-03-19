@@ -28,7 +28,7 @@ public class SyntheticClassMember implements Member {
     this.clazz = clazz;
   }
 
-  public Class getDeclaringClass() {
+  public Class<?> getDeclaringClass() {
     return clazz;
   }
 

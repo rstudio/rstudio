@@ -70,7 +70,6 @@ class DelegateMembers extends AbstractMembers {
     return methods.length == 0 ? methods : methods.clone();
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public JMethod[] getOverloads(String name) {
     initMethods();

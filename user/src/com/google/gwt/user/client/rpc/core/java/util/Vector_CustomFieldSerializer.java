@@ -26,11 +26,13 @@ import java.util.Vector;
  */
 public final class Vector_CustomFieldSerializer {
 
+  @SuppressWarnings("unchecked")
   public static void deserialize(SerializationStreamReader streamReader,
       Vector instance) throws SerializationException {
     Collection_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
+  @SuppressWarnings("unchecked")
   public static void serialize(SerializationStreamWriter streamWriter,
       Vector instance) throws SerializationException {
     Collection_CustomFieldSerializerBase.serialize(streamWriter, instance);

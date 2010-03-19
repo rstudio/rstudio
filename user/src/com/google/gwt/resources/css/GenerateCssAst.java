@@ -89,6 +89,7 @@ import java.util.regex.Pattern;
 /**
  * Generates a CssStylesheet from the contents of a URL.
  */
+@SuppressWarnings("unused")
 public class GenerateCssAst {
 
   /**

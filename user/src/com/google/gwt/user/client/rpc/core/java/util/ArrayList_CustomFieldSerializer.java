@@ -26,11 +26,13 @@ import java.util.ArrayList;
  */
 public final class ArrayList_CustomFieldSerializer {
 
+  @SuppressWarnings("unchecked")
   public static void deserialize(SerializationStreamReader streamReader,
       ArrayList instance) throws SerializationException {
     Collection_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
+  @SuppressWarnings("unchecked")
   public static void serialize(SerializationStreamWriter streamWriter,
       ArrayList instance) throws SerializationException {
     Collection_CustomFieldSerializerBase.serialize(streamWriter, instance);

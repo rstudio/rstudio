@@ -33,7 +33,7 @@ public final class HandlerMethod {
   private static final Schema sArbitraryChildHandler = new Schema() {
 
     public void onBadAttributeValue(int lineNumber, String elemName,
-        String attrName, String attrValue, Class paramType) {
+        String attrName, String attrValue, Class<?> paramType) {
       // Ignore
     }
 
@@ -76,6 +76,7 @@ public final class HandlerMethod {
    * handler but the containing class does not have the proper parameter
    * metafields.
    */
+  @SuppressWarnings("unchecked")
   public static HandlerMethod tryCreate(Method method) {
     String methodName = method.getName();
     String normalizedTagName = null;

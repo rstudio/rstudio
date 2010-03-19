@@ -40,18 +40,18 @@ public final class Arrays {
      */
     @SuppressWarnings("unused")
     public static void deserialize(SerializationStreamReader streamReader,
-        List instance) throws SerializationException {
+        List<?> instance) throws SerializationException {
       // Handled in instantiate.
     }
 
-    public static List instantiate(SerializationStreamReader streamReader)
+    public static List<?> instantiate(SerializationStreamReader streamReader)
         throws SerializationException {
       Object[] array = (Object[]) streamReader.readObject();
       return java.util.Arrays.asList(array);
     }
 
     public static void serialize(SerializationStreamWriter streamWriter,
-        List instance) throws SerializationException {
+        List<?> instance) throws SerializationException {
       Object[] array;
       if (GWT.isScript()) {
         // Violator pattern.
@@ -63,7 +63,7 @@ public final class Arrays {
       streamWriter.writeObject(array);
     }
 
-    private static native Object[] getArray0(List instance) /*-{
+    private static native Object[] getArray0(List<?> instance) /*-{
       return instance.@java.util.Arrays$ArrayList::array;
     }-*/;
   }

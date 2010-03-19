@@ -24,15 +24,14 @@ import org.w3c.dom.Element;
 /**
  * The default implemenatation of {@link XMLElementProvider}.
  */
+@SuppressWarnings("deprecation")
 public class XMLElementProviderImpl implements XMLElementProvider {
   private final AttributeParsers attributeParsers;
-  @SuppressWarnings("deprecation")
   // bundleParsers for legacy templates
   private final BundleAttributeParsers bundleParsers;
   private final MortalLogger logger;
   private final TypeOracle oracle;
 
-  @SuppressWarnings("deprecation")
   // bundleParsers for legacy templates
   public XMLElementProviderImpl(AttributeParsers attributeParsers,
       BundleAttributeParsers bundleParsers, TypeOracle oracle,

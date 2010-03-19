@@ -22,7 +22,7 @@ import java.util.ArrayList;
 
 /**
  * Base class for the client and server serialization streams. This class
- * handles the basic serialization and desirialization formatting for primitive
+ * handles the basic serialization and deserialization formatting for primitive
  * types since these are common between the client and the server.
  */
 public abstract class AbstractSerializationStreamReader extends
@@ -30,6 +30,11 @@ public abstract class AbstractSerializationStreamReader extends
 
   private ArrayList<Object> seenArray = new ArrayList<Object>();
 
+ /**
+  * Prepare to read the stream.
+  *
+  * @param encoded unused true if the stream is encoded
+  */
   public void prepareToRead(String encoded) throws SerializationException {
     seenArray.clear();
 

@@ -113,7 +113,7 @@ public final class HandlerParam {
     return normalizedAttrName;
   }
 
-  public Class getParamType() {
+  public Class<?> getParamType() {
     return paramType;
   }
 }

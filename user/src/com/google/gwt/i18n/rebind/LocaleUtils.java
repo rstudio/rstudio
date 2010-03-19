@@ -130,7 +130,7 @@ public class LocaleUtils {
         }
         LocaleUtils localeUtils = cache.get(key);
         if (localeUtils == null) {
-          localeUtils = createInstance(logger, localeProp, runtimeLocaleProp);
+          localeUtils = createInstance(localeProp, runtimeLocaleProp);
           cache.put(key, localeUtils);
         }
         return localeUtils;
@@ -156,8 +156,8 @@ public class LocaleUtils {
     return factory;
   }
 
-  private static LocaleUtils createInstance(TreeLogger logger,
-      SelectionProperty localeProp, ConfigurationProperty prop) {
+  private static LocaleUtils createInstance(SelectionProperty localeProp,
+      ConfigurationProperty prop) {
     GwtLocale compileLocale = null;
     Set<GwtLocale> allLocales = new HashSet<GwtLocale>();
     Set<GwtLocale> allCompileLocales = new HashSet<GwtLocale>();

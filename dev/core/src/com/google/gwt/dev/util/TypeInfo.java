@@ -51,7 +51,7 @@ public class TypeInfo {
   // types below
   public static final int TYPE_WRAP_STRING = 0x000001;
 
-  public static int classifyType(Class type) {
+  public static int classifyType(Class<?> type) {
     int ret = isPrimitiveType(type);
     if (ret != 0) {
       return ret;
@@ -69,8 +69,8 @@ public class TypeInfo {
     return TYPE_USER;
   }
 
-  public static Method getInterfaceMethod(Class intf, String methodName,
-      Class[] paramTypes, boolean includeInherited) {
+  public static Method getInterfaceMethod(Class<?> intf, String methodName,
+      Class<?>[] paramTypes, boolean includeInherited) {
     try {
       return intf.getDeclaredMethod(methodName, paramTypes);
     } catch (NoSuchMethodException e) {
@@ -111,7 +111,7 @@ public class TypeInfo {
     return after.toString();
   }
 
-  public static String getSourceRepresentation(Class type) {
+  public static String getSourceRepresentation(Class<?> type) {
     // Primitives
     //
     if (type.equals(Integer.TYPE)) {
@@ -144,7 +144,7 @@ public class TypeInfo {
     return type.getName().replace('$', '.');
   }
 
-  public static int isPrimitiveType(Class type) {
+  public static int isPrimitiveType(Class<?> type) {
     if (type.equals(Integer.TYPE)) {
       return TYPE_PRIM_INT;
     } else if (type.equals(Long.TYPE)) {
@@ -168,7 +168,7 @@ public class TypeInfo {
     }
   }
 
-  public static int isPrimitiveWrapperType(Class type) {
+  public static int isPrimitiveWrapperType(Class<?> type) {
     if (type.equals(String.class)) {
       return TYPE_WRAP_STRING;
     } else if (type.equals(Integer.class)) {

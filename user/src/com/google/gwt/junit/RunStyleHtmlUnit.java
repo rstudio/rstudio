@@ -173,8 +173,8 @@ public class RunStyleHtmlUnit extends RunStyle {
   private static Map<String, BrowserVersion> createBrowserMap() {
     Map<String, BrowserVersion> browserMap = new HashMap<String, BrowserVersion>();
     for (BrowserVersion browser : new BrowserVersion[] {
-        BrowserVersion.FIREFOX_2, BrowserVersion.FIREFOX_3,
-        BrowserVersion.INTERNET_EXPLORER_6, BrowserVersion.INTERNET_EXPLORER_7}) {
+        BrowserVersion.FIREFOX_3, BrowserVersion.INTERNET_EXPLORER_6,
+        BrowserVersion.INTERNET_EXPLORER_7}) {
       browserMap.put(browser.getNickname(), browser);
     }
     return Collections.unmodifiableMap(browserMap);

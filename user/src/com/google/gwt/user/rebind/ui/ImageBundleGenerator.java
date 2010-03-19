@@ -52,6 +52,7 @@ public class ImageBundleGenerator extends Generator {
    */
   interface JMethodOracle {
 
+    @SuppressWarnings("deprecation")
     Resource getAnnotation(Class<Resource> clazz);
 
     String getName();
@@ -80,6 +81,7 @@ public class ImageBundleGenerator extends Generator {
       this.delegate = delegate;
     }
 
+    @SuppressWarnings("deprecation")
     public Resource getAnnotation(Class<Resource> clazz) {
       return delegate.getAnnotation(clazz);
     }
@@ -392,6 +394,7 @@ public class ImageBundleGenerator extends Generator {
    * @return the string specified in in the {@link ImageBundle.Resource}
    *         annotation, or <code>null</code>
    */
+  @SuppressWarnings("deprecation")
   private String tryGetImageNameFromAnnotation(JMethodOracle method) {
     ImageBundle.Resource imgResAnn = method.getAnnotation(ImageBundle.Resource.class);
     String imgName = null;
@@ -442,5 +445,4 @@ public class ImageBundleGenerator extends Generator {
     // Success.
     return imgFileName;
   }
-
 }

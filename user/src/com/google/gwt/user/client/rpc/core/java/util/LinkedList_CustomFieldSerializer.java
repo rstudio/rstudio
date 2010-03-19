@@ -26,11 +26,13 @@ import java.util.LinkedList;
  */
 public final class LinkedList_CustomFieldSerializer {
 
+  @SuppressWarnings("unchecked")
   public static void deserialize(SerializationStreamReader streamReader,
       LinkedList instance) throws SerializationException {
     Collection_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
+  @SuppressWarnings("unchecked")
   public static void serialize(SerializationStreamWriter streamWriter,
       LinkedList instance) throws SerializationException {
     Collection_CustomFieldSerializerBase.serialize(streamWriter, instance);
