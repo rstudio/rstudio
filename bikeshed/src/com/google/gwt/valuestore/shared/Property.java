@@ -22,21 +22,15 @@ package com.google.gwt.valuestore.shared;
  * @param <V> type of the property
  */
 public class Property<T, V> {
-  private final Class<T> propertyHolderType;
+  // TODO Is this actually useful as a class, or do we need
+  // the EntityKey instance? Either way, need a getter for it.
+  // Should become clear as ValueStore is implemented
   private final Class<V> valueType;
   private final String name;
 
-  public Property(Class<T> propertyHolderType, Class<V> valueType, String name) {
-    this.propertyHolderType = propertyHolderType;
+  public Property(Class<V> valueType, String name) {
     this.valueType = valueType;
     this.name = name;
-  }
-
-  /**
-   * @return the entityType
-   */
-  public Class<T> getEntityType() {
-    return propertyHolderType;
   }
 
   /**

@@ -25,7 +25,7 @@ import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.sample.expenses.shared.ReportRef;
+import com.google.gwt.sample.expenses.shared.ReportKey;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -45,7 +45,7 @@ import java.util.List;
  * UI shell for expenses sample app. A horrible clump of stuff that should be
  * refactored into proper MVP pieces.
  */
-public class Shell extends Composite implements HasValueList<Values<ReportRef>> {
+public class Shell extends Composite implements HasValueList<Values<ReportKey>> {
   interface Listener {
     void setFirstPurpose(String purpose);
   }
@@ -69,18 +69,18 @@ public class Shell extends Composite implements HasValueList<Values<ReportRef>> 
   TextBox purpose;
   @UiField
   Button save;
-  private List<Values<ReportRef>> values;
+  private List<Values<ReportKey>> values;
 
   public Shell() {
     initWidget(uiBinder.createAndBindUi(this));
   }
 
   public void editValueList(boolean replace, int index,
-      List<Values<ReportRef>> newValues) {
+      List<Values<ReportKey>> newValues) {
     throw new UnsupportedOperationException();
   }
 
-  public List<Values<ReportRef>> getValues() {
+  public List<Values<ReportKey>> getValues() {
     return values;
   }
   
@@ -99,7 +99,7 @@ public class Shell extends Composite implements HasValueList<Values<ReportRef>> 
     this.listener = listener;
   }
   
-  public void setValueList(List<Values<ReportRef>> newValues) {
+  public void setValueList(List<Values<ReportKey>> newValues) {
     this.values = newValues;
     int r = 1; // skip header
     NodeList<TableRowElement> tableRows = table.getRows();
@@ -108,10 +108,10 @@ public class Shell extends Composite implements HasValueList<Values<ReportRef>> 
     purpose.setEnabled(enabled);
     save.setEnabled(enabled);
     for (int i = 0; i < newValues.size(); i++) {
-      Values<ReportRef> valueRow = newValues.get(i);
+      Values<ReportKey> valueRow = newValues.get(i);
 
       if (i == 0) {
-        purpose.setText(valueRow.get(ReportRef.PURPOSE));
+        purpose.setText(valueRow.get(ReportKey.get().getPurpose()));
       }
       if (r < tableRows.getLength()) {
         reuseRow(r, tableRows, valueRow);
@@ -119,7 +119,7 @@ public class Shell extends Composite implements HasValueList<Values<ReportRef>> 
         TableRowElement tableRow = Document.get().createTRElement();
 
         TableCellElement tableCell = Document.get().createTDElement();
-        tableCell.setInnerText(renderDate(valueRow, ReportRef.CREATED));
+        tableCell.setInnerText(renderDate(valueRow, ReportKey.get().getCreated()));
         tableRow.appendChild(tableCell);
 
         tableCell = Document.get().createTDElement();
@@ -127,7 +127,7 @@ public class Shell extends Composite implements HasValueList<Values<ReportRef>> 
         tableRow.appendChild(tableCell);
 
         tableCell = Document.get().createTDElement();
-        tableCell.setInnerText(valueRow.get(ReportRef.PURPOSE));
+        tableCell.setInnerText(valueRow.get(ReportKey.get().getPurpose()));
         tableRow.appendChild(tableCell);
 
         table.appendChild(tableRow);
@@ -153,11 +153,11 @@ public class Shell extends Composite implements HasValueList<Values<ReportRef>> 
    * @param valueRow
    */
   private void reuseRow(int r, NodeList<TableRowElement> tableRows,
-      Values<ReportRef> valueRow) {
+      Values<ReportKey> valueRow) {
     TableRowElement tableRow = tableRows.getItem(r);
     NodeList<TableCellElement> tableCells = tableRow.getCells();
 
-    // tableCells.getItem(0).setInnerText(valueRow.get(Report.CREATED).toString());
-    tableCells.getItem(2).setInnerText(valueRow.get(ReportRef.PURPOSE));
+    // tableCells.getItem(0).setInnerText(valueRow.get(Report.instance().CREATED).toString());
+    tableCells.getItem(2).setInnerText(valueRow.get(ReportKey.get().getPurpose()));
   }
 }

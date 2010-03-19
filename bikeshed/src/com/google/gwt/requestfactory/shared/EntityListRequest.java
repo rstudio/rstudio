@@ -25,7 +25,7 @@ import java.util.Collection;
  * Implemented by RequestObjects for service methods that return list
  * properties.
  * 
- * @param <E>
+ * @param <E> The type held by the returned list
  */
 public interface EntityListRequest<E> {
   void fire();

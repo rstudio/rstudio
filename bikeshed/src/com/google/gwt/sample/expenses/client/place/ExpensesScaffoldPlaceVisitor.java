@@ -20,15 +20,15 @@ package com.google.gwt.sample.expenses.client.place;
  */
 public interface ExpensesScaffoldPlaceVisitor {
 
-  /**
-   * @param editEntityPlace
-   */
-  void visit(EditEntityPlace editEntityPlace);
-
-  /**
-   * @param entityDetailsPlace
-   */
-  void visit(EntityDetailsPlace entityDetailsPlace);
+//  /**
+//   * @param editEntityPlace
+//   */
+//  void visit(EditEntityPlace editEntityPlace);
+//
+//  /**
+//   * @param entityDetailsPlace
+//   */
+//  void visit(EntityDetailsPlace entityDetailsPlace);
 
   /**
    * @param entityListPlace

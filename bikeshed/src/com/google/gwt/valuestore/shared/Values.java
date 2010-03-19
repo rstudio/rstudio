@@ -21,7 +21,11 @@ package com.google.gwt.valuestore.shared;
  * @param <T> value type.
  */
 public interface Values<T> {
+  // TODO At the moment this isn't actually used. If it stays unused
+  // once ValueStore is in place, delete it
   T getPropertyHolder();
 
   <V, P extends Property<T, V>> V get(P property);
+  
+  <V> ValueRef<T, V> getRef(Property<T, V> property);
 }

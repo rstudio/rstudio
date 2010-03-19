@@ -22,7 +22,7 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
-import com.google.gwt.sample.expenses.shared.EmployeeRef;
+import com.google.gwt.sample.expenses.shared.EmployeeKey;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
 import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.valuestore.client.ValuesImpl;
@@ -32,26 +32,32 @@ import com.google.gwt.valuestore.shared.Values;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * "Generated" from static methods of {@link com.google.gwt.sample.expenses.server.domain.Employee}.
  */
 public class EmployeeRequestImpl implements ExpenseRequestFactory.EmployeeRequest {
 
-  @SuppressWarnings("unused")
-  public EmployeeRequestImpl(ValueStore values) {
+  @SuppressWarnings("unused") // TODO next step is to use it
+  private ValueStore valueStore;
+
+  public EmployeeRequestImpl(ValueStore valueStore) {
+    this.valueStore = valueStore;
   }
 
-  public EntityListRequest<EmployeeRef> findAllEmployees() {
-    return new EntityListRequest<EmployeeRef>() {
-      private HasValueList<Values<EmployeeRef>> watcher;
+  public EntityListRequest<EmployeeKey> findAllEmployees() {
+    
+    
+    return new EntityListRequest<EmployeeKey>() {
+      private HasValueList<Values<EmployeeKey>> watcher;
+      private Set<Property<EmployeeKey, ?>> properties = new HashSet<Property<EmployeeKey, ?>>();
 
       public void fire() {
-
-        // TODO: need someway to track that this request has been issued so that
-        // we don't issue another request that arrives while we are waiting for
-        // the response.
+        // TODO: accumulate and batch fire requests, e.g. once batch per event loop
+        // TODO: cache and short circuit find requests
         RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
             "/expenses/data?methodName=" + MethodName.FIND_ALL_EMPLOYEES.name());
         builder.setCallback(new RequestCallback() {
@@ -63,17 +69,19 @@ public class EmployeeRequestImpl implements ExpenseRequestFactory.EmployeeReques
           public void onResponseReceived(Request request, Response response) {
             if (200 == response.getStatusCode()) {
               String text = response.getText();
-              JsArray<ValuesImpl<EmployeeRef>> valueArray = ValuesImpl.arrayFromJson(text);
-              // Handy for FireBug snooping
-//              Document.get().getBody().setPropertyJSO("foo", valueArray);
-              List<Values<EmployeeRef>> valueList = new ArrayList<Values<EmployeeRef>>(
+//              DeltaValueStore deltaStore = valueStore.edit();
+              JsArray<ValuesImpl<EmployeeKey>> valueArray = ValuesImpl.arrayFromJson(text);
+              List<Values<EmployeeKey>> valueList = new ArrayList<Values<EmployeeKey>>(
                   valueArray.length());
               for (int i = 0; i < valueArray.length(); i++) {
-                ValuesImpl<EmployeeRef> values = valueArray.get(i);
-                values.setPropertyHolder(new EmployeeRef(values.get(EmployeeRef.ID),
-                    values.get(EmployeeRef.VERSION)));
+                ValuesImpl<EmployeeKey> values = valueArray.get(i);
+                values.setPropertyHolder(EmployeeKey.get());
+//                deltaStore.setValue(propertyHolder, properties, values);
                 valueList.add(values);
               }
+
+//              valueStore.subscribe(watcher, valueList, properties);
+//              deltaStore.commit();
               watcher.setValueList(valueList);
             } else {
               // shell.error.setInnerText(SERVER_ERROR + " ("
@@ -88,25 +96,24 @@ public class EmployeeRequestImpl implements ExpenseRequestFactory.EmployeeReques
           // shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +
           // ")");
         }
-
-        // values.subscribe(watcher, future, properties);
       }
-      
-      public EntityListRequest<EmployeeRef> forProperties(
-          Collection<Property<EmployeeRef, ?>> properties) {
-        for (Property<EmployeeRef, ?> property : properties) {
+
+      public EntityListRequest<EmployeeKey> forProperties(
+          Collection<Property<EmployeeKey, ?>> properties) {
+        for (Property<EmployeeKey, ?> property : properties) {
           forProperty(property);
         }
         return this;
       }
 
-      public EntityListRequest<EmployeeRef> forProperty(
-          Property<EmployeeRef, ?> property) {
+      public EntityListRequest<EmployeeKey> forProperty(
+          Property<EmployeeKey, ?> property) {
+        properties.add(property);
         return this;
       }
 
-      public EntityListRequest<EmployeeRef> to(
-          HasValueList<Values<EmployeeRef>> watcher) {
+      public EntityListRequest<EmployeeKey> to(
+          HasValueList<Values<EmployeeKey>> watcher) {
         this.watcher = watcher;
         return this;
       }

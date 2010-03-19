@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.expenses.client;
 
-import com.google.gwt.requestfactory.shared.EntityRef;
+import com.google.gwt.requestfactory.shared.EntityKey;
 import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
@@ -28,7 +28,7 @@ import java.util.List;
  * 
  * @param <E> the type of entity listed
  */
-public class EntityList<E extends EntityRef<E>> implements
+public class EntityList<E extends EntityKey<E>> implements
     HasValueList<Values<E>> {
   protected final EntityListView view;
   protected final List<Property<E, ?>> properties;

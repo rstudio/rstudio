@@ -13,8 +13,10 @@ classes/
 # Matches gwtc output in the war directory, e.g. war/com.google.gwt.bikeshed.tree.Tree/
 com.google.gwt.*
 bikeshed/war/expenses/
+bikeshed/war/expensesScaffold/
 bikeshed/war/stocks/
 bikeshed/war/tree/
+bikeshed/war/validation/
 
 * Install the Google Plugin for Eclipse
 * Import trunk/bikeshed/ as a new Java project with existing source

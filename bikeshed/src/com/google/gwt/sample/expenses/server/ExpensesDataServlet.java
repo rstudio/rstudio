@@ -15,10 +15,13 @@
  */
 package com.google.gwt.sample.expenses.server;
 
+import com.google.gwt.requestfactory.shared.EntityKey;
 import com.google.gwt.sample.expenses.gen.MethodName;
 import com.google.gwt.sample.expenses.gen.UrlParameterManager;
 import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.sample.expenses.server.domain.Storage;
+import com.google.gwt.sample.expenses.shared.ReportKey;
+import com.google.gwt.valuestore.shared.Property;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,7 +30,6 @@ import org.json.JSONObject;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -49,11 +51,12 @@ public class ExpensesDataServlet extends HttpServlet {
   private static final Set<String> PROPERTY_SET = new HashSet<String>();
   static {
     for (String str : new String[] {
-        "ID", "VERSION", "DISPLAY_NAME", "USER_NAME", "PURPOSE", "CREATED"}) {
+        "id", "version", "displayName", "userName", "purpose", "created"}) {
       PROPERTY_SET.add(str);
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
@@ -105,7 +108,7 @@ public class ExpensesDataServlet extends HttpServlet {
       throw new IllegalArgumentException(e);
     } catch (NoSuchMethodException e) {
       throw new IllegalArgumentException(e);
-    }
+    } 
   }
 
   @Override
@@ -132,12 +135,6 @@ public class ExpensesDataServlet extends HttpServlet {
    * @param resultObject object returned by a 'get' method, must be of type
    *          List<? extends Entity>
    * @return the JSONArray
-   * @throws ClassNotFoundException
-   * @throws InvocationTargetException
-   * @throws IllegalAccessException
-   * @throws NoSuchMethodException
-   * @throws JSONException
-   * @throws SecurityException
    */
   private JSONArray getJsonArray(List<?> resultList)
       throws ClassNotFoundException, SecurityException, JSONException,
@@ -148,14 +145,19 @@ public class ExpensesDataServlet extends HttpServlet {
     }
     Object firstElement = resultList.get(0);
     Class<?> entityClass = firstElement.getClass();
-    Class<?> entityRefClass = Class.forName("com.google.gwt.sample.expenses.shared."
-        + entityClass.getSimpleName() + "Ref");
+
+    // TODO This brittle mapping from server name to client name is why we need
+    // the custom RequestFactory interface to serve as the config
+    Class<?> entityKeyClass = Class.forName("com.google.gwt.sample.expenses.shared."
+        + entityClass.getSimpleName() + "Key");
+
+    EntityKey<?> key = (EntityKey<?>) entityKeyClass.getMethod("get").invoke(null);
     for (Object entityElement : resultList) {
       JSONObject jsonObject = new JSONObject();
-      for (Field field : entityRefClass.getFields()) {
-        // TODO: perhaps get the property names from javax.persistence.Id fields
-        if (isProperty(field) && requestedProperty(field)) {
-          String propertyName = getPropertyName(field);
+      for (Property<?, ?> p : key.getProperties()) {
+
+        if (requestedProperty(p)) {
+          String propertyName = p.getName();
           jsonObject.put(propertyName, getPropertyValue(entityElement,
               propertyName));
         }
@@ -181,42 +183,24 @@ public class ExpensesDataServlet extends HttpServlet {
   /**
    * Returns methodName corresponding to the propertyName that can be invoked on
    * an {@link Entity} object.
-   *
-   * Example: "USER_NAME" returns "getUserName". "VERSION" returns "getVersion"
+   * 
+   * Example: "userName" returns "getUserName". "version" returns "getVersion"
    */
   private String getMethodNameFromPropertyName(String propertyName) {
-    assert propertyName != null;
-    assert propertyName.equals(propertyName.toUpperCase());
-    StringBuffer methodName = new StringBuffer("get");
-    int index = 0;
-    int length = propertyName.length();
-    while (index < length) {
-      int underscore = propertyName.indexOf('_', index);
-      if (underscore == -1) {
-        underscore = length;
-      }
-      methodName.append(propertyName.charAt(index));
-      methodName.append(propertyName.substring(index + 1, underscore).toLowerCase());
-      index = underscore + 1; // skip the '_' character.
+    if (propertyName == null) {
+      throw new NullPointerException("propertyName must not be null");
     }
-    return methodName.toString();
-  }
 
-  /**
-   * returns the property name.
-   */
-  private String getPropertyName(Field field) {
-    return field.getName();
+    StringBuffer methodName = new StringBuffer("get");
+    methodName.append(propertyName.substring(0, 1).toUpperCase());
+    methodName.append(propertyName.substring(1));
+    return methodName.toString();
   }
 
   /**
    * @param entityElement
    * @param property
    * @return
-   * @throws NoSuchMethodException
-   * @throws SecurityException
-   * @throws InvocationTargetException
-   * @throws IllegalAccessException
    */
   private Object getPropertyValue(Object entityElement, String propertyName)
       throws SecurityException, NoSuchMethodException, IllegalAccessException,
@@ -238,26 +222,13 @@ public class ExpensesDataServlet extends HttpServlet {
   }
 
   /**
-   * @param field
-   * @return
-   */
-  private boolean isProperty(Field field) {
-    int modifiers = field.getModifiers();
-    if (!Modifier.isStatic(modifiers) || !Modifier.isFinal(modifiers)
-        || !Modifier.isPublic(modifiers)) {
-      return false;
-    }
-    return "Property".equals(field.getType().getSimpleName());
-  }
-
-  /**
    * returns true if the property has been requested. TODO: fix this hack.
-   *
-   * @param field the field of entity ref
+   * 
+   * @param p the field of entity ref
    * @return has the property value been requested
    */
-  private boolean requestedProperty(Field field) {
-    return PROPERTY_SET.contains(field.getName());
+  private boolean requestedProperty(Property<?, ?> p) {
+    return PROPERTY_SET.contains(p.getName());
   }
 
   /**
@@ -281,12 +252,10 @@ public class ExpensesDataServlet extends HttpServlet {
       int length = reportArray.length();
       if (length > 0) {
         JSONObject report = reportArray.getJSONObject(0);
-        Report r = Report.findReport(report.getLong(com.google.gwt.sample.expenses.shared.ReportRef.ID.getName()));
-        r.setPurpose(report.getString(com.google.gwt.sample.expenses.shared.ReportRef.PURPOSE.getName()));
+        Report r = Report.findReport(report.getLong(ReportKey.get().getId().getName()));
+        r.setPurpose(report.getString(ReportKey.get().getPurpose().getName()));
         r = Storage.INSTANCE.persist(r);
-        report.put(
-            com.google.gwt.sample.expenses.shared.ReportRef.VERSION.getName(),
-            r.getVersion());
+        report.put(ReportKey.get().getVersion().getName(), r.getVersion());
         JSONArray returnArray = new JSONArray();
         // TODO: don't echo back everything.
         returnArray.put(report);

@@ -17,7 +17,7 @@ package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.sample.expenses.shared.EmployeeRef;
+import com.google.gwt.sample.expenses.shared.EmployeeKey;
 import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.valuestore.shared.Values;
@@ -28,22 +28,21 @@ import java.util.List;
  * Manages the Employee ListBox. This shoudl grow into a proper View, with a
  * corresponding Presenter factored out of {@link Expenses}
  */
-public final class EmployeeList implements HasValueList<Values<EmployeeRef>> {
+public final class EmployeeList implements HasValueList<Values<EmployeeKey>> {
   interface Listener {
-    void onEmployeeSelected(EmployeeRef e);
+    void onEmployeeSelected(Values<EmployeeKey> e);
   }
 
   private final class MyChangeHandler implements ChangeHandler {
     public void onChange(ChangeEvent event) {
       int selectedIndex = listBox.getSelectedIndex();
-      Values<EmployeeRef> values = employeeValues.get(selectedIndex);
-      EmployeeRef e = values.getPropertyHolder();
-      listener.onEmployeeSelected(e);
+      Values<EmployeeKey> values = employeeValues.get(selectedIndex);
+      listener.onEmployeeSelected(values);
     }
   }
 
   private final ListBox listBox;
-  private List<Values<EmployeeRef>> employeeValues;
+  private List<Values<EmployeeKey>> employeeValues;
   private Listener listener;
 
   /**
@@ -56,7 +55,7 @@ public final class EmployeeList implements HasValueList<Values<EmployeeRef>> {
   }
 
   public void editValueList(boolean replace, int index,
-      List<Values<EmployeeRef>> newValues) {
+      List<Values<EmployeeKey>> newValues) {
     throw new UnsupportedOperationException();
   }
 
@@ -64,12 +63,12 @@ public final class EmployeeList implements HasValueList<Values<EmployeeRef>> {
     this.listener = listener;
   }
 
-  public void setValueList(List<Values<EmployeeRef>> newValues) {
+  public void setValueList(List<Values<EmployeeKey>> newValues) {
     this.employeeValues = newValues;
     listBox.clear();
     for (int i = 0; i < employeeValues.size(); i++) {
-      Values<EmployeeRef> values = employeeValues.get(i);
-      listBox.addItem(values.get(EmployeeRef.DISPLAY_NAME));
+      Values<EmployeeKey> values = employeeValues.get(i);
+      listBox.addItem(values.get(EmployeeKey.get().getDisplayName()));
     }
   }
 

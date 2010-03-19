@@ -18,8 +18,8 @@ package com.google.gwt.sample.expenses.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.sample.expenses.gen.ExpenseRequestFactoryImpl;
-import com.google.gwt.sample.expenses.shared.EmployeeRef;
-import com.google.gwt.sample.expenses.shared.ReportRef;
+import com.google.gwt.sample.expenses.shared.EmployeeKey;
+import com.google.gwt.sample.expenses.shared.ReportKey;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.valuestore.client.ValuesImpl;
 import com.google.gwt.valuestore.shared.Values;
@@ -54,8 +54,8 @@ public class Expenses implements EntryPoint {
     
     shell.setListener(new Shell.Listener() {
       public void setFirstPurpose(String purpose) {
-        ValuesImpl<ReportRef> reportValues = (ValuesImpl<ReportRef>) shell.getValues().get(0);
-        reportValues.setString(ReportRef.PURPOSE, purpose);
+        ValuesImpl<ReportKey> reportValues = (ValuesImpl<ReportKey>) shell.getValues().get(0);
+        reportValues.setString(ReportKey.get().getPurpose(), purpose);
         List<Values<?>> deltaValueStore = new ArrayList<Values<?>>();
         deltaValueStore.add(reportValues);
         
@@ -64,17 +64,17 @@ public class Expenses implements EntryPoint {
     });
 
     employees.setListener(new EmployeeList.Listener() {
-      public void onEmployeeSelected(EmployeeRef e) {
+      public void onEmployeeSelected(Values<EmployeeKey> e) {
         requestFactory.reportRequest().//
-        findReportsByEmployee(e.getFieldRef(EmployeeRef.ID)).//
-        forProperty(ReportRef.CREATED).//
-        forProperty(ReportRef.PURPOSE).//
+        findReportsByEmployee(e.getRef(EmployeeKey.get().getId())).//
+        forProperty(ReportKey.get().getCreated()).//
+        forProperty(ReportKey.get().getPurpose()).//
         to(shell).//
         fire();
       }
     });
 
     requestFactory.employeeRequest().findAllEmployees().forProperty(
-        EmployeeRef.DISPLAY_NAME).forProperty(EmployeeRef.USER_NAME).to(employees).fire();
+        EmployeeKey.get().getDisplayName()).forProperty(EmployeeKey.get().getUserName()).to(employees).fire();
   }
 }

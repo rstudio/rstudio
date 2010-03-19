@@ -13,19 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.shared;
+package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.requestfactory.shared.EntityRef;
+import com.google.gwt.valuestore.shared.Property;
+
+import java.util.Set;
 
 /**
- * Implemented by entities of the {@link ExpensesRequestFactory}.
+ * Implemented by client side meta data for server side domain entities.
  * 
- * @param <E> the type of this entity
+ * @param <T> type of this entity
  */
-public interface ExpensesEntity<E extends ExpensesEntity<E>>
-    extends EntityRef<E> {
-  
-  void accept(ExpensesEntityVisitor visitor);
+public interface EntityKey<T extends EntityKey<T>> {
 
-  <T> T accept(ExpensesEntityFilter<T> filter);
+  /**
+   * @return the set of properties such entities have
+   */
+  Set<Property<T, ?>> getProperties();
 }

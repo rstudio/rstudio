@@ -16,10 +16,10 @@
 package com.google.gwt.sample.expenses.shared;
 
 import com.google.gwt.requestfactory.shared.EntityListRequest;
-import com.google.gwt.requestfactory.shared.FieldRef;
 import com.google.gwt.requestfactory.shared.LongString;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.valuestore.shared.DeltaValueStore;
+import com.google.gwt.valuestore.shared.ValueRef;
 
 /**
  * Generated for the service methods of
@@ -35,7 +35,7 @@ public interface ExpenseRequestFactory extends RequestFactory {
     /**
      * @return a request object
      */
-    EntityListRequest<EmployeeRef> findAllEmployees();
+    EntityListRequest<EmployeeKey> findAllEmployees();
   }
 
   /**
@@ -46,13 +46,13 @@ public interface ExpenseRequestFactory extends RequestFactory {
     /**
      * @return a request object
      */
-    EntityListRequest<ReportRef> findReportsByEmployee(
-        @LongString FieldRef<EmployeeRef, String> id);
+    EntityListRequest<ReportKey> findReportsByEmployee(
+        @LongString ValueRef<EmployeeKey, String> id);
 
     /**
      * @return a request object
      */
-    EntityListRequest<ReportRef> findAllReports();
+    EntityListRequest<ReportKey> findAllReports();
   }
 
   /**

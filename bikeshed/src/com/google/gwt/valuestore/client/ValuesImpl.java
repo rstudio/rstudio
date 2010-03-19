@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.ValueRef;
 import com.google.gwt.valuestore.shared.Values;
 
 import java.util.Date;
@@ -61,11 +62,15 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
   }
 
   public native T getPropertyHolder() /*-{
-    return this.propertyHolder;
+    return this['__key'];
   }-*/;
 
-  public native void setPropertyHolder(T propertyHolder) /*-{
-    this.propertyHolder = propertyHolder;
+  public <V> ValueRef<T, V> getRef(Property<T, V> property) {
+    return new ValueRef<T, V>(this, property);
+  }
+
+  public native void setPropertyHolder(T key) /*-{
+    this['__key'] = key;
   }-*/;
 
   public native void setString(Property<T, String> property, String value) /*-{
@@ -78,7 +83,7 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
    */
   public native String toJson() /*-{
     var replacer = function(key, value) {
-      if (key == 'propertyHolder') {
+      if (key == '__key') {
         return;
       }
       return value;

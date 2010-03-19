@@ -61,9 +61,7 @@ public class ExpenseRequestFactoryImpl implements ExpenseRequestFactory {
     public <T, V> void subscribe(HasValueList<Values<T>> watcher,
         T propertyOwner, Set<Property<T, ?>> properties) {
       // TODO Auto-generated method stub
-    }
-
-  };
+    }};
 
   public EmployeeRequest employeeRequest() {
     return new EmployeeRequestImpl(values);
@@ -94,9 +92,9 @@ public class ExpenseRequestFactoryImpl implements ExpenseRequestFactory {
 
       public void fire() {
 
-        // TODO: need some way to track that this request has been issued so
-        // that we don't issue another request that arrives while we are
-        // waiting for the response.
+        // TODO: need some way to track that this request has been issued so that
+        // we don't issue another request that arrives while we are waiting for
+        // the response.
         RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
             "/expenses/data?methodName=" + MethodName.SYNC.name());
 

@@ -22,13 +22,13 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
-import com.google.gwt.requestfactory.shared.FieldRef;
-import com.google.gwt.sample.expenses.shared.EmployeeRef;
+import com.google.gwt.sample.expenses.shared.EmployeeKey;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
-import com.google.gwt.sample.expenses.shared.ReportRef;
+import com.google.gwt.sample.expenses.shared.ReportKey;
 import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.valuestore.client.ValuesImpl;
 import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.ValueRef;
 import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.Values;
 
@@ -48,12 +48,12 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
   public ReportRequestImpl(ValueStore values) {
   }
 
-  public EntityListRequest<ReportRef> findReportsByEmployee(
-      final FieldRef<EmployeeRef, String> id) {
+  public EntityListRequest<ReportKey> findReportsByEmployee(
+      final ValueRef<EmployeeKey, String> id) {
 
-    return new EntityListRequest<ReportRef>() {
-      Set<Property<ReportRef, ?>> properties = new HashSet<Property<ReportRef, ?>>();
-      private HasValueList<Values<ReportRef>> watcher;
+    return new EntityListRequest<ReportKey>() {
+      Set<Property<ReportKey, ?>> properties = new HashSet<Property<ReportKey, ?>>();
+      private HasValueList<Values<ReportKey>> watcher;
 
       public void fire() {
 
@@ -64,7 +64,7 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
             RequestBuilder.GET,
             "/expenses/data?methodName="
                 + MethodName.FIND_REPORTS_BY_EMPLOYEE.name()
-                + UrlParameterManager.getUrlFragment(new Object[] {id.getEntity().getId()}));
+                + UrlParameterManager.getUrlFragment(new Object[] {id.get()}));
         builder.setCallback(new RequestCallback() {
 
           public void onError(Request request, Throwable exception) {
@@ -74,15 +74,12 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
           public void onResponseReceived(Request request, Response response) {
             if (200 == response.getStatusCode()) {
               String text = response.getText();
-              JsArray<ValuesImpl<ReportRef>> valueArray = ValuesImpl.arrayFromJson(text);
-              List<Values<ReportRef>> valueList = new ArrayList<Values<ReportRef>>(
+              JsArray<ValuesImpl<ReportKey>> valueArray = ValuesImpl.arrayFromJson(text);
+              List<Values<ReportKey>> valueList = new ArrayList<Values<ReportKey>>(
                   valueArray.length());
               for (int i = 0; i < valueArray.length(); i++) {
-                ValuesImpl<ReportRef> values = valueArray.get(i);
-                String id2 = values.get(ReportRef.ID);
-                Integer version = values.get(ReportRef.VERSION);
-                values.setPropertyHolder(new ReportRef(id2,
-                    version));
+                ValuesImpl<ReportKey> values = valueArray.get(i);
+                values.setPropertyHolder(ReportKey.get());
                 valueList.add(values);
               }
               watcher.setValueList(valueList);
@@ -103,30 +100,30 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
         // values.subscribe(watcher, future, properties);
       }
 
-      public EntityListRequest<ReportRef> forProperties(
-          Collection<Property<ReportRef, ?>> properties) {
-        for (Property<ReportRef, ?> property : properties) {
+      public EntityListRequest<ReportKey> forProperties(
+          Collection<Property<ReportKey, ?>> properties) {
+        for (Property<ReportKey, ?> property : properties) {
           forProperty(property);
         }
         return this;
       }
 
-      public EntityListRequest<ReportRef> forProperty(Property<ReportRef, ?> property) {
+      public EntityListRequest<ReportKey> forProperty(Property<ReportKey, ?> property) {
         properties.add(property);
         return this;
       }
 
 
-      public EntityListRequest<ReportRef> to(HasValueList<Values<ReportRef>> watcher) {
+      public EntityListRequest<ReportKey> to(HasValueList<Values<ReportKey>> watcher) {
         this.watcher = watcher;
         return this;
       }
     };
   }
 
-  public EntityListRequest<ReportRef> findAllReports() {
-    return new EntityListRequest<ReportRef>() {
-      private HasValueList<Values<ReportRef>> watcher;
+  public EntityListRequest<ReportKey> findAllReports() {
+    return new EntityListRequest<ReportKey>() {
+      private HasValueList<Values<ReportKey>> watcher;
 
       public void fire() {
 
@@ -144,15 +141,14 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
           public void onResponseReceived(Request request, Response response) {
             if (200 == response.getStatusCode()) {
               String text = response.getText();
-              JsArray<ValuesImpl<ReportRef>> valueArray = ValuesImpl.arrayFromJson(text);
+              JsArray<ValuesImpl<ReportKey>> valueArray = ValuesImpl.arrayFromJson(text);
               // Handy for FireBug snooping
 //              Document.get().getBody().setPropertyJSO("foo", valueArray);
-              List<Values<ReportRef>> valueList = new ArrayList<Values<ReportRef>>(
+              List<Values<ReportKey>> valueList = new ArrayList<Values<ReportKey>>(
                   valueArray.length());
               for (int i = 0; i < valueArray.length(); i++) {
-                ValuesImpl<ReportRef> values = valueArray.get(i);
-                values.setPropertyHolder(new ReportRef(values.get(ReportRef.ID),
-                    values.get(ReportRef.VERSION)));
+                ValuesImpl<ReportKey> values = valueArray.get(i);
+                values.setPropertyHolder(ReportKey.get());
                 valueList.add(values);
               }
               watcher.setValueList(valueList);
@@ -173,21 +169,21 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
         // values.subscribe(watcher, future, properties);
       }
       
-      public EntityListRequest<ReportRef> forProperties(
-          Collection<Property<ReportRef, ?>> properties) {
-        for (Property<ReportRef, ?> property : properties) {
+      public EntityListRequest<ReportKey> forProperties(
+          Collection<Property<ReportKey, ?>> properties) {
+        for (Property<ReportKey, ?> property : properties) {
           forProperty(property);
         }
         return this;
       }
 
-      public EntityListRequest<ReportRef> forProperty(
-          Property<ReportRef, ?> property) {
+      public EntityListRequest<ReportKey> forProperty(
+          Property<ReportKey, ?> property) {
         return this;
       }
 
-      public EntityListRequest<ReportRef> to(
-          HasValueList<Values<ReportRef>> watcher) {
+      public EntityListRequest<ReportKey> to(
+          HasValueList<Values<ReportKey>> watcher) {
         this.watcher = watcher;
         return this;
       }

@@ -15,8 +15,6 @@
  */
 package com.google.gwt.sample.expenses.client.place;
 
-import com.google.gwt.sample.expenses.shared.ExpensesEntity;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -40,11 +38,11 @@ public class Places {
     return navPlaces;
   }
 
-  public EntityDetailsPlace getDetailsPlaceFor(ExpensesEntity<?> e) {
-    return new EntityDetailsPlace(e);
-  }
-
-  public EditEntityPlace getEditPlaceFor(ExpensesEntity<?> e) {
-    return new EditEntityPlace(e);
-  }
+//  public EntityDetailsPlace getDetailsPlaceFor(ExpensesEntity<?> e) {
+//    return new EntityDetailsPlace(e);
+//  }
+//
+//  public EditEntityPlace getEditPlaceFor(ExpensesEntity<?> e) {
+//    return new EditEntityPlace(e);
+//  }
 }

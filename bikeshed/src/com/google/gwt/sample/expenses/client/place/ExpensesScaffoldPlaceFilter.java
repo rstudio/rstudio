@@ -23,17 +23,17 @@ package com.google.gwt.sample.expenses.client.place;
  */
 public interface ExpensesScaffoldPlaceFilter<T> {
 
-  /**
-   * @param editEntityPlace
-   * @return
-   */
-  T filter(EditEntityPlace editEntityPlace);
-
-  /**
-   * @param entityDetailsPlace
-   * @return
-   */
-  T filter(EntityDetailsPlace entityDetailsPlace);
+//  /**
+//   * @param editEntityPlace
+//   * @return
+//   */
+//  T filter(EditEntityPlace editEntityPlace);
+//
+//  /**
+//   * @param entityDetailsPlace
+//   * @return
+//   */
+//  T filter(EntityDetailsPlace entityDetailsPlace);
 
   /**
    * @param entityListPlace

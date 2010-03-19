@@ -19,9 +19,9 @@ import com.google.gwt.app.place.Place;
 import com.google.gwt.app.place.PlaceChanged;
 import com.google.gwt.sample.expenses.client.place.EntityListPlace;
 import com.google.gwt.sample.expenses.client.place.Places;
-import com.google.gwt.sample.expenses.shared.EmployeeRef;
+import com.google.gwt.sample.expenses.shared.EmployeeKey;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
-import com.google.gwt.sample.expenses.shared.ReportRef;
+import com.google.gwt.sample.expenses.shared.ReportKey;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.valuestore.shared.Property;
 
@@ -36,9 +36,9 @@ public final class ListRequester implements PlaceChanged.Handler {
 
   private final SimplePanel panel;
   private final TableEntityListView entitiesView;
-  private final List<Property<ReportRef, ?>> reportColumns;
+  private final List<Property<ReportKey, ?>> reportColumns;
   private final ExpenseRequestFactory requests;
-  private final List<Property<EmployeeRef, ?>> employeeColumns;
+  private final List<Property<EmployeeKey, ?>> employeeColumns;
 
   /**
    * @param shell
@@ -51,13 +51,13 @@ public final class ListRequester implements PlaceChanged.Handler {
     this.entitiesView = entitiesView;
     this.requests = requests;
 
-    employeeColumns = new ArrayList<Property<EmployeeRef, ?>>();
-    employeeColumns.add(EmployeeRef.USER_NAME);
-    employeeColumns.add(EmployeeRef.DISPLAY_NAME);
+    employeeColumns = new ArrayList<Property<EmployeeKey, ?>>();
+    employeeColumns.add(EmployeeKey.get().getUserName());
+    employeeColumns.add(EmployeeKey.get().getDisplayName());
 
-    reportColumns = new ArrayList<Property<ReportRef, ?>>();
-    reportColumns.add(ReportRef.CREATED);
-    reportColumns.add(ReportRef.PURPOSE);
+    reportColumns = new ArrayList<Property<ReportKey, ?>>();
+    reportColumns.add(ReportKey.get().getCreated());
+    reportColumns.add(ReportKey.get().getPurpose());
   }
 
   public void onPlaceChanged(PlaceChanged event) {
@@ -74,12 +74,12 @@ public final class ListRequester implements PlaceChanged.Handler {
     }
 
     if (newPlace == Places.EMPLOYEE_LIST) {
-      EntityList<EmployeeRef> list = new EntityList<EmployeeRef>("Employees",
+      EntityList<EmployeeKey> list = new EntityList<EmployeeKey>("Employees",
           entitiesView, employeeColumns);
       requests.employeeRequest().findAllEmployees().forProperties(
           employeeColumns).to(list).fire();
     } else if (newPlace == Places.REPORT_LIST) {
-      EntityList<ReportRef> list = new EntityList<ReportRef>("Reports",
+      EntityList<ReportKey> list = new EntityList<ReportKey>("Reports",
           entitiesView, reportColumns);
       requests.reportRequest().findAllReports().forProperties(reportColumns).to(
           list).fire();
