@@ -4,6 +4,7 @@ To create a Bikeshed project in Eclipse:
 the following files and directories. Eclipse needs to edit them,
 but they should not be submitted.
 
+*.jar
 .settings
 .classpath
 .project
@@ -19,7 +20,7 @@ bikeshed/war/tree/
 bikeshed/war/validation/
 
 * Install the Google Plugin for Eclipse
-* Import trunk/bikeshed/ as a new Java project with existing source
+* Create a new Java project with trunk/bikeshed/ as its existing source
 * Bring up the project properties
   * Google > Web Toolkit > Use Google Web Toolkit
   * Google > App Engine > Use Google App Engine
