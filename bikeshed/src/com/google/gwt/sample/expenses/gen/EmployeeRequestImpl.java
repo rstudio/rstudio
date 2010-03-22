@@ -15,9 +15,11 @@
  */
 package com.google.gwt.sample.expenses.gen;
 
+import com.google.gwt.requestfactory.client.gen.ClientRequestObject;
 import com.google.gwt.requestfactory.client.impl.AbstractListJsonRequestObject;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory.Service;
+import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.sample.expenses.shared.EmployeeKey;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
 import com.google.gwt.valuestore.shared.ValueStore;
@@ -55,15 +57,9 @@ public class EmployeeRequestImpl implements
 
   public EntityListRequest<EmployeeKey> findAllEmployees() {
     return new Request() {
-      public String getRequestData(String data) {
-        // TODO Dear Amit: your code here
-        throw new UnsupportedOperationException();
-      }
-
-      @SuppressWarnings("deprecation")
-      public String getRequestUrl() {
-        return "/expenses/data?methodName="
-            + MethodName.FIND_ALL_EMPLOYEES.name();
+      public String getRequestData() {
+        return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(MethodName.FIND_ALL_EMPLOYEES,
+            null, null));
       }
     };
   }

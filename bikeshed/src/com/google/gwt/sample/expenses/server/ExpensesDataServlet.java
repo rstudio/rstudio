@@ -16,7 +16,7 @@
 package com.google.gwt.sample.expenses.server;
 
 import com.google.gwt.requestfactory.shared.EntityKey;
-import com.google.gwt.requestfactory.shared.impl.UrlParameterManager;
+import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.sample.expenses.gen.MethodName;
 import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.sample.expenses.server.domain.Storage;
@@ -33,7 +33,9 @@ import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,48 +58,61 @@ public class ExpensesDataServlet extends HttpServlet {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  protected void doGet(HttpServletRequest request, HttpServletResponse response)
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
 
-    response.setStatus(HttpServletResponse.SC_OK);
-    PrintWriter writer = response.getWriter();
-    MethodName operation = getMethodName(request.getParameter("methodName"));
+    MethodName methodName = null;
     try {
-      Class<?> classOperation = Class.forName("com.google.gwt.sample.expenses.server.domain."
-          + operation.getClassName());
-      Method methodOperation = null;
-      // TODO: check if method names must be unique in a class.
-      for (Method method : classOperation.getDeclaredMethods()) {
-        if (method.getName().equals(operation.getMethodName())) {
-          methodOperation = method;
+      response.setStatus(HttpServletResponse.SC_OK);
+      JSONObject topLevelJsonObject = new JSONObject(getContent(request));
+      methodName = getMethodName(topLevelJsonObject.getString(RequestDataManager.METHOD_TOKEN));
+      PrintWriter writer = response.getWriter();
+      switch (methodName) {
+        case FIND_ALL_EMPLOYEES:
+        case FIND_ALL_REPORTS:
+        case FIND_EMPLOYEE:
+        case FIND_REPORTS_BY_EMPLOYEE:
+          Class<?> classOperation = Class.forName("com.google.gwt.sample.expenses.server.domain."
+              + methodName.getClassName());
+          Method methodOperation = null;
+          // TODO: check if method names must be unique in a class.
+          for (Method method : classOperation.getDeclaredMethods()) {
+            if (method.getName().equals(methodName.getMethodName())) {
+              methodOperation = method;
+              break;
+            }
+          }
+          if (methodOperation == null) {
+            throw new IllegalArgumentException("unable to find "
+                + methodName.getMethodName() + " in " + classOperation);
+          }
+          if (!Modifier.isStatic(methodOperation.getModifiers())) {
+            throw new IllegalArgumentException("the "
+                + methodOperation.getName() + " is not static");
+          }
+          Object args[] = RequestDataManager.getObjectsFromParameterMap(
+              getParameterMap(topLevelJsonObject), methodOperation.getParameterTypes());
+          Object resultList = methodOperation.invoke(null, args);
+          if (!(resultList instanceof List)) {
+            throw new IllegalArgumentException("return value not a list "
+                + resultList);
+          }
+          JSONArray jsonArray = getJsonArray((List<?>) resultList);
+          writer.print(jsonArray.toString());
           break;
-        }
+        case SYNC:
+          sync(topLevelJsonObject.getString(RequestDataManager.CONTENT_TOKEN), writer);
+          break;
+        default:
+          System.err.println("POST: unknown method " + methodName);
+          break;
       }
-      if (methodOperation == null) {
-        throw new IllegalArgumentException("unable to find "
-            + operation.getMethodName() + " in " + classOperation);
-      }
-      if (!Modifier.isStatic(methodOperation.getModifiers())) {
-        throw new IllegalArgumentException("the " + methodOperation.getName()
-            + " is not static");
-      }
-      Map<String, String[]> parameterMap = request.getParameterMap();
-      Object args[] = UrlParameterManager.getObjectsFromFragment(parameterMap,
-          methodOperation.getParameterTypes());
-      Object resultList = methodOperation.invoke(null, args);
-      if (!(resultList instanceof List)) {
-        throw new IllegalArgumentException("return value not a list "
-            + resultList);
-      }
-      JSONArray jsonArray = getJsonArray((List<?>) resultList);
-      writer.print(jsonArray.toString());
       writer.flush();
       // TODO: clean exception handling code below.
     } catch (ClassNotFoundException e) {
       throw new IllegalArgumentException("unable to load the class: "
-          + operation);
+          + methodName);
     } catch (IllegalAccessException e) {
       throw new IllegalArgumentException(e);
     } catch (InvocationTargetException e) {
@@ -108,25 +123,19 @@ public class ExpensesDataServlet extends HttpServlet {
       throw new IllegalArgumentException(e);
     } catch (NoSuchMethodException e) {
       throw new IllegalArgumentException(e);
-    } 
+    }
   }
 
-  @Override
-  protected void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-
-    response.setStatus(HttpServletResponse.SC_OK);
-    MethodName methodName = getMethodName(request.getParameter("methodName"));
-    PrintWriter writer = response.getWriter();
-    switch (methodName) {
-      case SYNC:
-        sync(request, writer);
-        break;
-      default:
-        System.err.println("POST: unknown method " + methodName);
-        break;
+  private String getContent(HttpServletRequest request) throws IOException {
+    int contentLength = request.getContentLength();
+    byte contentBytes[] = new byte[contentLength];
+    BufferedInputStream bis = new BufferedInputStream(request.getInputStream());
+    int readBytes = 0;
+    while (bis.read(contentBytes, readBytes, contentLength - readBytes) > 0) {
+      // read the contents
     }
-    writer.flush();
+    // TODO: encoding issues?
+    return new String(contentBytes);
   }
 
   /**
@@ -198,6 +207,23 @@ public class ExpensesDataServlet extends HttpServlet {
   }
 
   /**
+   * @param jsonObject
+   * @return
+   * @throws JSONException
+   */
+  private Map<String, String> getParameterMap(JSONObject jsonObject) throws JSONException {
+    Map<String, String> parameterMap = new HashMap<String, String>();
+    Iterator keys = jsonObject.keys();
+    while (keys.hasNext()) {
+      String key = keys.next().toString();
+      if (key.startsWith(RequestDataManager.PARAM_TOKEN)) {
+        parameterMap.put(key, jsonObject.getString(key));
+      }
+    }
+    return parameterMap;
+  }
+
+  /**
    * @param entityElement
    * @param property
    * @return
@@ -232,21 +258,10 @@ public class ExpensesDataServlet extends HttpServlet {
   }
 
   /**
-   * @param request
-   * @param writer
    * @throws IOException
    */
-  private void sync(HttpServletRequest request, PrintWriter writer)
-      throws IOException {
-    int contentLength = request.getContentLength();
-    byte contentBytes[] = new byte[contentLength];
-    BufferedInputStream bis = new BufferedInputStream(request.getInputStream());
-    int readBytes = 0;
-    while (bis.read(contentBytes, readBytes, contentLength - readBytes) > 0) {
-      // read the contents
-    }
-    // TODO: encoding issues?
-    String content = new String(contentBytes);
+  private void sync(String content, PrintWriter writer) throws IOException {
+
     try {
       JSONArray reportArray = new JSONArray(content);
       int length = reportArray.length();

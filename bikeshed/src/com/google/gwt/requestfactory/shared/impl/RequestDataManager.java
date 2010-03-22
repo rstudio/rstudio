@@ -15,19 +15,25 @@
  */
 package com.google.gwt.requestfactory.shared.impl;
 
+import com.google.gwt.sample.expenses.gen.MethodName;
+
+import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An utitlity class to manage the encoding and decoding of parameters.
- *
+ * An utitlity class to manage the encoding and decoding of parameters and
+ * methodNames.
+ * 
  * TODO: add appropriate unit tests.
  */
-public class UrlParameterManager {
+public class RequestDataManager {
 
-  private static final String TOKEN = "param";
+  public static final String CONTENT_TOKEN = "contentData";
+  public static final String METHOD_TOKEN = "methodName";
+  public static final String PARAM_TOKEN = "param";
 
-  public static Object[] getObjectsFromFragment(
-      Map<String, String[]> parameterMap, Class<?> parameterClasses[]) {
+  public static Object[] getObjectsFromParameterMap(
+      Map<String, String> parameterMap, Class<?> parameterClasses[]) {
     assert parameterClasses != null;
     Object args[] = new Object[parameterClasses.length];
     for (int i = 0; i < parameterClasses.length; i++) {
@@ -38,23 +44,23 @@ public class UrlParameterManager {
   }
 
   /**
-   * Returns the string that encodes the values. The string has a leading &.
+   * Returns the string that encodes the request data.
    * 
-   * @param values
-   * @return
    */
-  public static String getUrlFragment(Object values[]) {
-    assert values != null;
-    StringBuffer fragment = new StringBuffer();
-    for (int i = 0; i < values.length; i++) {
-      Object value = values[i];
-      fragment.append("&");
-      fragment.append(TOKEN);
-      fragment.append(i);
-      fragment.append("=");
-      fragment.append(value.toString());
+  public static Map<String, String> getRequestMap(MethodName methodName,
+      Object values[], String content) {
+    Map<String, String> requestMap = new HashMap<String, String>();
+    requestMap.put(METHOD_TOKEN, methodName.name());
+    if (values != null) {
+      for (int i = 0; i < values.length; i++) {
+        Object value = values[i];
+        requestMap.put(PARAM_TOKEN + i, value.toString());
+      }
     }
-    return fragment.toString();
+    if (content != null) {
+      requestMap.put(CONTENT_TOKEN, content);
+    }
+    return requestMap;
   }
 
   /**
@@ -62,10 +68,7 @@ public class UrlParameterManager {
    * 
    */
   private static Object encodeParameterValue(String parameterType,
-      String parameterValues[]) {
-    assert parameterValues != null;
-    assert parameterValues.length == 1;
-    String parameterValue = parameterValues[0];
+      String parameterValue) {
     if ("java.lang.String".equals(parameterType)) {
       return parameterValue;
     }

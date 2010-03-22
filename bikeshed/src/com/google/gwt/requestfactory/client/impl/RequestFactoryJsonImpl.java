@@ -20,8 +20,10 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.requestfactory.client.gen.ClientRequestObject;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncRequest;
+import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.sample.expenses.gen.MethodName;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.HasValueList;
@@ -39,7 +41,7 @@ import java.util.Set;
  */
 public class RequestFactoryJsonImpl implements RequestFactory,
     RequestFactory.Service {
-  
+
   private final ValueStore valueStore = new ValueStore() {
 
     public void addValidation() {
@@ -59,13 +61,13 @@ public class RequestFactoryJsonImpl implements RequestFactory,
         T propertyOwner, Set<Property<T, ?>> properties) {
       throw new UnsupportedOperationException();
     }
-    
+
   };
 
-  @SuppressWarnings("deprecation")
   public void fire(final RequestObject requestObject) {
-    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-        requestObject.getRequestUrl());
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
+        RequestFactory.URL);
+    builder.setRequestData(requestObject.getRequestData());
     builder.setCallback(new RequestCallback() {
 
       public void onError(Request request, Throwable exception) {
@@ -106,7 +108,7 @@ public class RequestFactoryJsonImpl implements RequestFactory,
       public void fire() {
 
         RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
-            "/expenses/data?methodName=" + MethodName.SYNC.name());
+            "/expenses/data");
 
         StringBuilder requestData = new StringBuilder("[");
         boolean first = true;
@@ -121,7 +123,8 @@ public class RequestFactoryJsonImpl implements RequestFactory,
         }
         requestData.append("]");
 
-        builder.setRequestData(requestData.toString());
+        builder.setRequestData(ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
+            MethodName.SYNC, null, requestData.toString())));
         builder.setCallback(new RequestCallback() {
 
           public void onError(Request request, Throwable exception) {

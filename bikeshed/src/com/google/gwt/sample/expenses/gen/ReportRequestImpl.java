@@ -15,10 +15,11 @@
  */
 package com.google.gwt.sample.expenses.gen;
 
+import com.google.gwt.requestfactory.client.gen.ClientRequestObject;
 import com.google.gwt.requestfactory.client.impl.AbstractListJsonRequestObject;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory.Service;
-import com.google.gwt.requestfactory.shared.impl.UrlParameterManager;
+import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.sample.expenses.shared.EmployeeKey;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
 import com.google.gwt.sample.expenses.shared.ReportKey;
@@ -57,32 +58,20 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
 
   public EntityListRequest<ReportKey> findAllReports() {
     return new Request() {
-      public String getRequestData(String data) {
-        // TODO Dear Amit: your code here
-        throw new UnsupportedOperationException();
+      public String getRequestData() {
+        return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
+            MethodName.FIND_ALL_REPORTS, null, null));
       }
 
-      @SuppressWarnings("deprecation")
-      public String getRequestUrl() {
-        return "/expenses/data?methodName="
-            + MethodName.FIND_ALL_REPORTS.name();
-      }
     };
   };
 
   public EntityListRequest<ReportKey> findReportsByEmployee(
       final ValueRef<EmployeeKey, String> id) {
     return new Request() {
-      public String getRequestData(String data) {
-        // TODO Dear Amit: your code here
-        throw new UnsupportedOperationException();
-      }
-
-      @SuppressWarnings("deprecation")
-      public String getRequestUrl() {
-        return "/expenses/data?methodName="
-            + MethodName.FIND_REPORTS_BY_EMPLOYEE.name()
-            + UrlParameterManager.getUrlFragment(new Object[] {id.get()});
+      public String getRequestData() {
+        return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
+            MethodName.FIND_REPORTS_BY_EMPLOYEE, new Object[] {id.get()}, null));
       }
     };
   }

@@ -25,18 +25,15 @@ import java.util.List;
  */
 public interface RequestFactory {
 
+  String URL = "/expenses/data";
+
   /**
    * Implemented by the request objects created by this factory.
    */
   interface RequestObject {
     void fire();
 
-    String getRequestData(String data);
-
-    /**
-     * @deprecated Here only until we can move everything into the post data
-     */
-    String getRequestUrl();
+    String getRequestData();
 
     void handleResponseText(String responseText);
   }
