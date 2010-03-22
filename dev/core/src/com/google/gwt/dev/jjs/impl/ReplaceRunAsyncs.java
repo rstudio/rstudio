@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -40,11 +41,10 @@ import java.util.Map;
  * Replaces calls to
  * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback)}
  * and
- * {@link com.google.gwt.core.client.GWT#runAsync(Class, com.google.gwt.core.client.RunAsyncCallback)
+ * {@link com.google.gwt.core.client.GWT#runAsync(Class, com.google.gwt.core.client.RunAsyncCallback)}
  * by calls to a fragment loader. Additionally, replaces access to
- * 
- * @link RunAsyncCode#forSplitPoint(Class)} by an equivalent call using an
- *       integer rather than a class literal.
+ * {@link com.google.gwt.core.client.prefetch.RunAsyncCode#runAsyncCode(Class)}
+ * by an equivalent call using an integer rather than a class literal.
  */
 public class ReplaceRunAsyncs {
   /**
@@ -178,17 +178,25 @@ public class ReplaceRunAsyncs {
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       if (x.getTarget() == program.getIndexedMethod("RunAsyncCode.runAsyncCode")) {
-        JClassLiteral lit = (JClassLiteral) x.getArgs().get(0);
+        JExpression arg0 = x.getArgs().get(0);
+        if (!(arg0 instanceof JClassLiteral)) {
+          error(arg0.getSourceInfo(),
+              "Only a class literal may be passed to runAsyncCode");
+          return;
+        }
+        JClassLiteral lit = (JClassLiteral) arg0;
         String name = nameFromClassLiteral(lit);
         List<RunAsyncReplacement> matches = replacementsByName.get(name);
         if (matches == null || matches.size() == 0) {
-          error("No runAsync call is named " + name);
+          error(x.getSourceInfo(), "No runAsync call is named " + name);
           return;
         }
         if (matches.size() > 1) {
-          TreeLogger branch = error("Multiple runAsync calls are named " + name);
+          TreeLogger branch = error(x.getSourceInfo(),
+              "Multiple runAsync calls are named " + name);
           for (RunAsyncReplacement match : matches) {
-            branch.log(TreeLogger.ERROR, "One call is in " + methodDescription(match.getEnclosingMethod()));
+            branch.log(TreeLogger.ERROR, "One call is in "
+                + methodDescription(match.getEnclosingMethod()));
           }
           return;
         }
@@ -211,7 +219,7 @@ public class ReplaceRunAsyncs {
       desc.append(':');
       desc.append(method.getSourceInfo().getStartLine());
       desc.append(")");
-      
+
       return desc.toString();
     }
   }
@@ -252,9 +260,16 @@ public class ReplaceRunAsyncs {
     this.program = program;
   }
 
-  private TreeLogger error(String message) {
+  private TreeLogger error(SourceInfo info, String message) {
     errorsFound = true;
-    return logger.branch(TreeLogger.ERROR, message);
+    TreeLogger fileLogger = logger.branch(TreeLogger.ERROR, "Error in '"
+        + info.getFileName() + "'");
+    String linePrefix = "";
+    if (info.getStartLine() > 0) {
+      linePrefix = "Line " + info.getStartLine() + ": ";
+    }
+    fileLogger.log(TreeLogger.ERROR, linePrefix + message);
+    return fileLogger;
   }
 
   private void execImpl() throws UnableToCompleteException {

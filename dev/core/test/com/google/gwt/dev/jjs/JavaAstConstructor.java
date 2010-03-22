@@ -73,6 +73,7 @@ public class JavaAstConstructor {
       code.append("  static <T> Class<T> createForClass(String packageName, String className, String seedName, Class<? super T> superclass) { return new Class<T>(); }\n");
       code.append("  static <T> Class<T> createForEnum(String packageName, String className, String seedName, Class<? super T> superclass, JavaScriptObject enumConstantsFunc) { return new Class<T>(); }\n");
       code.append("  static <T> Class<T> createForInterface(String packageName, String className) { return new Class<T>(); }\n");
+      code.append("  static <T> Class<T> createForPrimitive(String packageName, String className, String jni) { return new Class<T>(); }\n");
       code.append("  static boolean isClassMetadataEnabled() { return true; }\n");
       code.append("  public boolean desiredAssertionStatus() { return true; }\n");
       code.append("}\n");
@@ -99,9 +100,19 @@ public class JavaAstConstructor {
       code.append("public final class GWT {\n");
       code.append("  public boolean isClient() { return true; };\n");
       code.append("  public boolean isScript() { return true; };\n");
-      code.append("  public static void runAsync(Object callback) { }\n");
-      code.append("  public static void runAsync(Class<?> name, Object callback) { }\n");
+      code.append("  public static void runAsync(RunAsyncCallback callback) { }\n");
+      code.append("  public static void runAsync(Class<?> name, RunAsyncCallback callback) { }\n");
       code.append("}\n");
+      return code;
+    }
+  };
+  public static final MockJavaResource RUNASYNCCALLBACK = new MockJavaResource(
+      "com.google.gwt.core.client.RunAsyncCallback") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.core.client;\n");
+      code.append("public interface RunAsyncCallback { }\n");
       return code;
     }
   };
@@ -198,7 +209,8 @@ public class JavaAstConstructor {
     Collections.addAll(result, JavaResourceBase.getStandardResources());
     // Replace the basic Class with a compiler-specific one.
     result.remove(JavaResourceBase.CLASS);
-    Collections.addAll(result, ARRAY, CLASS, CLASSLITERALHOLDER, GWT);
+    Collections.addAll(result, ARRAY, CLASS, CLASSLITERALHOLDER, GWT,
+        RUNASYNCCALLBACK);
     return result.toArray(new MockJavaResource[result.size()]);
   }
 }
