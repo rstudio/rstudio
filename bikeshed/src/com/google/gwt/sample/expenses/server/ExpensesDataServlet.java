@@ -16,8 +16,8 @@
 package com.google.gwt.sample.expenses.server;
 
 import com.google.gwt.requestfactory.shared.EntityKey;
+import com.google.gwt.requestfactory.shared.impl.UrlParameterManager;
 import com.google.gwt.sample.expenses.gen.MethodName;
-import com.google.gwt.sample.expenses.gen.UrlParameterManager;
 import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.sample.expenses.server.domain.Storage;
 import com.google.gwt.sample.expenses.shared.ReportKey;

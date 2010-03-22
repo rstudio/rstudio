@@ -15,176 +15,74 @@
  */
 package com.google.gwt.sample.expenses.gen;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
+import com.google.gwt.requestfactory.client.impl.AbstractListJsonRequestObject;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
+import com.google.gwt.requestfactory.shared.RequestFactory.Service;
+import com.google.gwt.requestfactory.shared.impl.UrlParameterManager;
 import com.google.gwt.sample.expenses.shared.EmployeeKey;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
 import com.google.gwt.sample.expenses.shared.ReportKey;
-import com.google.gwt.user.client.ui.HasValueList;
-import com.google.gwt.valuestore.client.ValuesImpl;
-import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.ValueRef;
 import com.google.gwt.valuestore.shared.ValueStore;
-import com.google.gwt.valuestore.shared.Values;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
- * "Generated" from static methods of
- * {@link com.google.gwt.sample.expenses.server.domain.Employee}.
+ * "Code generated" implementation of {ExpenseRequestFactory.ReportRequest}
+ * <p>
+ * IRL this will be generated as a side effect of a call to
+ * GWT.create(ExpenseRequestFactory.class)
  */
 public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
 
-  @SuppressWarnings("unused")
-  public ReportRequestImpl(ValueStore values) {
+  private abstract class Request extends
+      AbstractListJsonRequestObject<ReportKey, Request> implements
+      EntityListRequest<ReportKey> {
+
+    Request() {
+      super(ReportKey.get(), valueStore, requestService);
+    }
+
+    @Override
+    protected Request getThis() {
+      return this;
+    }
   }
 
-  public EntityListRequest<ReportKey> findReportsByEmployee(
-      final ValueRef<EmployeeKey, String> id) {
+  private final ValueStore valueStore;
+  private final Service requestService;
 
-    return new EntityListRequest<ReportKey>() {
-      Set<Property<ReportKey, ?>> properties = new HashSet<Property<ReportKey, ?>>();
-      private HasValueList<Values<ReportKey>> watcher;
-
-      public void fire() {
-
-        // TODO: need some way to track that this request has been issued so
-        // that we don't issue another request that arrives while we are waiting
-        // for the response.
-        RequestBuilder builder = new RequestBuilder(
-            RequestBuilder.GET,
-            "/expenses/data?methodName="
-                + MethodName.FIND_REPORTS_BY_EMPLOYEE.name()
-                + UrlParameterManager.getUrlFragment(new Object[] {id.get()}));
-        builder.setCallback(new RequestCallback() {
-
-          public void onError(Request request, Throwable exception) {
-            // shell.error.setInnerText(SERVER_ERROR);
-          }
-
-          public void onResponseReceived(Request request, Response response) {
-            if (200 == response.getStatusCode()) {
-              String text = response.getText();
-              JsArray<ValuesImpl<ReportKey>> valueArray = ValuesImpl.arrayFromJson(text);
-              List<Values<ReportKey>> valueList = new ArrayList<Values<ReportKey>>(
-                  valueArray.length());
-              for (int i = 0; i < valueArray.length(); i++) {
-                ValuesImpl<ReportKey> values = valueArray.get(i);
-                values.setPropertyHolder(ReportKey.get());
-                valueList.add(values);
-              }
-              watcher.setValueList(valueList);
-            } else {
-              // shell.error.setInnerText(SERVER_ERROR + " ("
-              // + response.getStatusText() + ")");
-            }
-          }
-        });
-
-        try {
-          builder.send();
-        } catch (RequestException e) {
-          // shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +
-          // ")");
-        }
-
-        // values.subscribe(watcher, future, properties);
-      }
-
-      public EntityListRequest<ReportKey> forProperties(
-          Collection<Property<ReportKey, ?>> properties) {
-        for (Property<ReportKey, ?> property : properties) {
-          forProperty(property);
-        }
-        return this;
-      }
-
-      public EntityListRequest<ReportKey> forProperty(Property<ReportKey, ?> property) {
-        properties.add(property);
-        return this;
-      }
-
-      public EntityListRequest<ReportKey> to(HasValueList<Values<ReportKey>> watcher) {
-        this.watcher = watcher;
-        return this;
-      }
-    };
+  public ReportRequestImpl(ValueStore valueStore, Service requestService) {
+    this.valueStore = valueStore;
+    this.requestService = requestService;
   }
 
   public EntityListRequest<ReportKey> findAllReports() {
-    return new EntityListRequest<ReportKey>() {
-      private HasValueList<Values<ReportKey>> watcher;
-
-      public void fire() {
-
-        // TODO: need someway to track that this request has been issued so that
-        // we don't issue another request that arrives while we are waiting for
-        // the response.
-        RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-            "/expenses/data?methodName=" + MethodName.FIND_ALL_REPORTS.name());
-        builder.setCallback(new RequestCallback() {
-
-          public void onError(Request request, Throwable exception) {
-            // shell.error.setInnerText(SERVER_ERROR);
-          }
-
-          public void onResponseReceived(Request request, Response response) {
-            if (200 == response.getStatusCode()) {
-              String text = response.getText();
-              JsArray<ValuesImpl<ReportKey>> valueArray = ValuesImpl.arrayFromJson(text);
-              // Handy for FireBug snooping
-//              Document.get().getBody().setPropertyJSO("foo", valueArray);
-              List<Values<ReportKey>> valueList = new ArrayList<Values<ReportKey>>(
-                  valueArray.length());
-              for (int i = 0; i < valueArray.length(); i++) {
-                ValuesImpl<ReportKey> values = valueArray.get(i);
-                values.setPropertyHolder(ReportKey.get());
-                valueList.add(values);
-              }
-              watcher.setValueList(valueList);
-            } else {
-              // shell.error.setInnerText(SERVER_ERROR + " ("
-              // + response.getStatusText() + ")");
-            }
-          }
-        });
-
-        try {
-          builder.send();
-        } catch (RequestException e) {
-          // shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +
-          // ")");
-        }
-
-        // values.subscribe(watcher, future, properties);
-      }
-      
-      public EntityListRequest<ReportKey> forProperties(
-          Collection<Property<ReportKey, ?>> properties) {
-        for (Property<ReportKey, ?> property : properties) {
-          forProperty(property);
-        }
-        return this;
+    return new Request() {
+      public String getRequestData(String data) {
+        // TODO Dear Amit: your code here
+        throw new UnsupportedOperationException();
       }
 
-      public EntityListRequest<ReportKey> forProperty(
-          Property<ReportKey, ?> property) {
-        return this;
+      @SuppressWarnings("deprecation")
+      public String getRequestUrl() {
+        return "/expenses/data?methodName="
+            + MethodName.FIND_ALL_REPORTS.name();
+      }
+    };
+  };
+
+  public EntityListRequest<ReportKey> findReportsByEmployee(
+      final ValueRef<EmployeeKey, String> id) {
+    return new Request() {
+      public String getRequestData(String data) {
+        // TODO Dear Amit: your code here
+        throw new UnsupportedOperationException();
       }
 
-      public EntityListRequest<ReportKey> to(
-          HasValueList<Values<ReportKey>> watcher) {
-        this.watcher = watcher;
-        return this;
+      @SuppressWarnings("deprecation")
+      public String getRequestUrl() {
+        return "/expenses/data?methodName="
+            + MethodName.FIND_REPORTS_BY_EMPLOYEE.name()
+            + UrlParameterManager.getUrlFragment(new Object[] {id.get()});
       }
     };
   }

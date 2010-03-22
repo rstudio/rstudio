@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,9 +25,32 @@ import java.util.List;
  */
 public interface RequestFactory {
 
+  /**
+   * Implemented by the request objects created by this factory.
+   */
+  interface RequestObject {
+    void fire();
+
+    String getRequestData(String data);
+
+    /**
+     * @deprecated Here only until we can move everything into the post data
+     */
+    String getRequestUrl();
+
+    void handleResponseText(String responseText);
+  }
+
+  /**
+   * Implemented by the RPC service backing this factory.
+   */
+  interface Service {
+    void fire(RequestObject request);
+  }
+
   ValueStore getValueStore();
 
-  // TODO actually a DeltaValueStore, interim hack
+  // TODO actually a DeltaValueStore, List is an interim hack
   SyncRequest syncRequest(final List<Values<?>> deltaValueStore);
 
 }

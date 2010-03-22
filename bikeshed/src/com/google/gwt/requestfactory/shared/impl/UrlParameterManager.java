@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.gen;
+package com.google.gwt.requestfactory.shared.impl;
 
 import java.util.Map;
 

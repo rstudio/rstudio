@@ -27,9 +27,7 @@ import java.util.Collection;
  * 
  * @param <E> The type held by the returned list
  */
-public interface EntityListRequest<E> {
-  void fire();
-
+public interface EntityListRequest<E> extends RequestFactory.RequestObject {
   EntityListRequest<E> forProperties(Collection<Property<E, ?>> properties);
   
   EntityListRequest<E> forProperty(Property<E, ?> property);
