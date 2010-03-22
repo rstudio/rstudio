@@ -65,6 +65,16 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   protected static final String FRAGMENT_SUBDIR = "deferredjs";
 
   /**
+   * File name for computeScriptBase.js.
+   */
+  static final String COMPUTE_SCRIPT_BASE_JS = "com/google/gwt/core/ext/linker/impl/computeScriptBase.js";
+
+  /**
+   * File name for processMetas.js.
+   */
+  static final String PROCESS_METAS_JS = "com/google/gwt/core/ext/linker/impl/processMetas.js";
+
+  /**
    * Determines whether or not the URL is relative.
    * 
    * @param src the test url
@@ -256,15 +266,22 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       LinkerContext context, ArtifactSet artifacts)
       throws UnableToCompleteException {
     StringBuffer selectionScript;
+    String processMetas;
+    String computeScriptBase;
     try {
       selectionScript = new StringBuffer(
-          Utility.getFileFromClassPath(getSelectionScriptTemplate(logger, context)));
+          Utility.getFileFromClassPath(getSelectionScriptTemplate(logger,
+              context)));
+      processMetas = Utility.getFileFromClassPath(PROCESS_METAS_JS);
+      computeScriptBase = Utility.getFileFromClassPath(COMPUTE_SCRIPT_BASE_JS);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to read selection script template",
           e);
       throw new UnableToCompleteException();
     }
 
+    replaceAll(selectionScript, "__PROCESS_METAS__", processMetas);
+    replaceAll(selectionScript, "__COMPUTE_SCRIPT_BASE__", computeScriptBase);
     replaceAll(selectionScript, "__MODULE_FUNC__",
         context.getModuleFunctionName());
     replaceAll(selectionScript, "__MODULE_NAME__", context.getModuleName());
@@ -418,8 +435,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   protected abstract String getModuleSuffix(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
 
-  protected abstract String getSelectionScriptTemplate(TreeLogger logger, LinkerContext context)
-      throws UnableToCompleteException;
+  protected abstract String getSelectionScriptTemplate(TreeLogger logger,
+      LinkerContext context) throws UnableToCompleteException;
 
   /**
    * Find all instances of {@link SelectionInformation} and add them to the
