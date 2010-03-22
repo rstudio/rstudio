@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.client.place;
 
-
 /**
  * Place in the app that lists all Entities of a type.
  */

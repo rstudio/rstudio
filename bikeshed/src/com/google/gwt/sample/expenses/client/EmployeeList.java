@@ -25,7 +25,7 @@ import com.google.gwt.valuestore.shared.Values;
 import java.util.List;
 
 /**
- * Manages the Employee ListBox. This shoudl grow into a proper View, with a
+ * Manages the Employee ListBox. This should grow into a proper View, with a
  * corresponding Presenter factored out of {@link Expenses}
  */
 public final class EmployeeList implements HasValueList<Values<EmployeeKey>> {

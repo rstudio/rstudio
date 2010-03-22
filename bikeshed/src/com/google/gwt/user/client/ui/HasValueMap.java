@@ -27,5 +27,5 @@ public interface HasValueMap<T> {
   /**
    * @param values A map of acceptable values and their display strings
    */
-  public void setValues(Map<? extends T, String> values);
+  void setValues(Map<? extends T, String> values);
 }

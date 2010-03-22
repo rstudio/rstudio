@@ -113,7 +113,6 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
         return this;
       }
 
-
       public EntityListRequest<ReportKey> to(HasValueList<Values<ReportKey>> watcher) {
         this.watcher = watcher;
         return this;

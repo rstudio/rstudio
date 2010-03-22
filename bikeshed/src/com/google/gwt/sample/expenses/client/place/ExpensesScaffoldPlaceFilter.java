@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.client.place;
 
-
 /**
  * Implemented by filters of {@link ExpensesScaffoldPlace}.
  * 

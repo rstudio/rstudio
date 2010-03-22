@@ -28,7 +28,6 @@ import com.google.gwt.sample.expenses.client.place.Places;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 
-
 /**
  * Application for browsing the entities of the Expenses app.
  */

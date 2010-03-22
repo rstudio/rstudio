@@ -18,7 +18,7 @@ package com.google.gwt.sample.expenses.client;
 import java.util.List;
 
 /**
- * Simple display of a list of entities
+ * Simple display of a list of entities.
  */
 public interface EntityListView {
   void setHeading(String text);
