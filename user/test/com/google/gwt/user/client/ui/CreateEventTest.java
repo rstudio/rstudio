@@ -448,7 +448,10 @@ public class CreateEventTest extends GWTTestCase {
 
   /**
    * Tests createKeyPressEvent().
+   * 
+   * Failed in all modes due to HtmlUnit bug:
    */
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testTriggerKeyPressEvent() {
     KeyPressEventListener listener = new KeyPressEventListener();
     EventCreator creator = new EventCreator() {
@@ -523,7 +526,10 @@ public class CreateEventTest extends GWTTestCase {
 
   /**
    * Tests createMouseOutEvent().
+   * 
+   * Failed in all modes due to HtmlUnit bug:
    */
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testTriggerMouseOutEvent() {
     MouseEventListener listener = new MouseEventListener("mouseout") {
       @Override
@@ -546,7 +552,10 @@ public class CreateEventTest extends GWTTestCase {
 
   /**
    * Tests createMouseOverEvent().
+   * 
+   * Failed in all modes due to HtmlUnit bug:
    */
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testTriggerMouseOverEvent() {
     MouseEventListener listener = new MouseEventListener("mouseover") {
       @Override
@@ -583,6 +592,12 @@ public class CreateEventTest extends GWTTestCase {
     testTriggerEventWithShiftKeys(listener, creator);
   }
 
+  /**
+   * Tests createKeyPressEvent().
+   * 
+   * Failed in all modes due to HtmlUnit bug:
+   */
+  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testTriggerScrollEvent() {
     NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(
         "scroll") {
