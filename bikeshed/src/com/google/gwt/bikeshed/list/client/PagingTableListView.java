@@ -49,7 +49,7 @@ public class PagingTableListView<T> extends Widget {
   private int numPages;
   private ListRegistration listReg;
   private int totalSize;
-  private List<Column<T, ?>> columns = new ArrayList<Column<T, ?>>();
+  private List<Column<T, ?, ?>> columns = new ArrayList<Column<T, ?, ?>>();
   private ArrayList<T> data = new ArrayList<T>();
 
   private List<Header<?>> headers = new ArrayList<Header<?>>();
@@ -92,16 +92,16 @@ public class PagingTableListView<T> extends Widget {
     listReg.setRangeOfInterest(0, pageSize);
   }
 
-  public void addColumn(Column<T, ?> col) {
+  public void addColumn(Column<T, ?, ?> col) {
     addColumn(col, null, null);
   }
 
-  public void addColumn(Column<T, ?> col, Header<?> header) {
+  public void addColumn(Column<T, ?, ?> col, Header<?> header) {
     addColumn(col, header, null);
   }
 
   // TODO: remove(Column)
-  public void addColumn(Column<T, ?> col, Header<?> header, Header<?> footer) {
+  public void addColumn(Column<T, ?, ?> col, Header<?> header, Header<?> footer) {
     headers.add(header);
     footers.add(footer);
     createHeadersAndFooters();  // TODO: defer header recreation
@@ -148,7 +148,7 @@ public class PagingTableListView<T> extends Widget {
     } else if (section == tbody) {
       int row = tr.getSectionRowIndex();
       T value = data.get(row);
-      Column<T, ?> column = columns.get(col);
+      Column<T, ?, ?> column = columns.get(col);
       column.onBrowserEvent(cell, curPage * pageSize + row, value, event);
     }
   }

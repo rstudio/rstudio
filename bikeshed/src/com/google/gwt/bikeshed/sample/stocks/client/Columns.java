@@ -29,7 +29,7 @@ import com.google.gwt.bikeshed.sample.stocks.shared.Transaction;
  */
 public class Columns {
 
-  static Column<StockQuote, String> buyColumn = new Column<StockQuote, String>(
+  static Column<StockQuote, String, Void> buyColumn = new Column<StockQuote, String, Void>(
       new ButtonCell()) {
     @Override
     protected String getValue(StockQuote object) {
@@ -37,93 +37,93 @@ public class Columns {
     }
   };
 
-  static Column<StockQuote, String> changeColumn =
-    new Column<StockQuote, String>(new ChangeCell()) {
+  static Column<StockQuote, String, Void> changeColumn = new Column<StockQuote, String, Void>(
+      new ChangeCell()) {
     @Override
     protected String getValue(StockQuote object) {
       return object.getChange();
     }
   };
 
-  static Column<StockQuote, Integer> dollarsColumn =
-    new Column<StockQuote, Integer>(new CurrencyCell()) {
+  static Column<StockQuote, Integer, Void> dollarsColumn = new Column<StockQuote, Integer, Void>(
+      new CurrencyCell()) {
     @Override
     protected Integer getValue(StockQuote object) {
       return object.getPrice() * object.getSharesOwned();
     }
   };
-  
-  static Column<StockQuote, Boolean> favoriteColumn =
-    new Column<StockQuote, Boolean>(new CheckboxCell()) {
+
+  static Column<StockQuote, Boolean, Void> favoriteColumn = new Column<StockQuote, Boolean, Void>(
+      new CheckboxCell()) {
     @Override
     protected Boolean getValue(StockQuote object) {
       return object.isFavorite();
     }
   };
 
-  // TODO - use an ellipsis cell  
+  // TODO - use an ellipsis cell
   static HighlightingTextCell nameCell = new HighlightingTextCell();
 
-  static Column<StockQuote, String> nameColumn =
-    new Column<StockQuote, String>(nameCell) {
+  static Column<StockQuote, String, Void> nameColumn = new Column<StockQuote, String, Void>(
+      nameCell) {
     @Override
     protected String getValue(StockQuote object) {
       return object.getName();
     }
   };
 
-  static Column<StockQuote, Integer> priceColumn =
-    new Column<StockQuote, Integer>(new CurrencyCell()) {
+  static Column<StockQuote, Integer, Void> priceColumn = new Column<StockQuote, Integer, Void>(
+      new CurrencyCell()) {
     @Override
     protected Integer getValue(StockQuote object) {
       return object.getPrice();
     }
   };
 
-  static Column<StockQuote, Integer> profitLossColumn =
-    new Column<StockQuote, Integer>(new ProfitLossCell()) {
+  static Column<StockQuote, Integer, Void> profitLossColumn = new Column<StockQuote, Integer, Void>(
+      new ProfitLossCell()) {
     @Override
     protected Integer getValue(StockQuote object) {
       return object.getValue() - object.getTotalPaid();
     }
   };
 
-  static Column<StockQuote, String> sellColumn =
-    new Column<StockQuote, String>(new ButtonCell()) {
+  static Column<StockQuote, String, Void> sellColumn = new Column<StockQuote, String, Void>(
+      new ButtonCell()) {
     @Override
     protected String getValue(StockQuote object) {
       return "Sell";
     }
   };
 
-  static Column<StockQuote, String> sharesColumn =
-    new Column<StockQuote, String>(new TextCell()) {
+  static Column<StockQuote, String, Void> sharesColumn = new Column<StockQuote, String, Void>(
+      new TextCell()) {
     @Override
     protected String getValue(StockQuote object) {
       return "" + object.getSharesOwned();
     }
   };
 
-  static Column<Transaction, String> subtotalColumn =
-    new Column<Transaction, String>(new TextCell()) {
+  static Column<Transaction, String, Void> subtotalColumn = new Column<Transaction, String, Void>(
+      new TextCell()) {
     @Override
     protected String getValue(Transaction object) {
       int price = object.getActualPrice() * object.getQuantity();
-      return (object.isBuy() ? " (" : " ") + StockSample.getFormattedPrice(price) + 
-          (object.isBuy() ? ")" : "");
+      return (object.isBuy() ? " (" : " ")
+          + StockSample.getFormattedPrice(price) + (object.isBuy() ? ")" : "");
     }
   };
-  
-  static Column<StockQuote, String> tickerColumn =
-    new Column<StockQuote, String>(new TextCell()) {
+
+  static Column<StockQuote, String, Void> tickerColumn = new Column<StockQuote, String, Void>(
+      new TextCell()) {
     @Override
     protected String getValue(StockQuote object) {
       return object.getTicker();
     }
   };
-  
-  static Column<Transaction, String> transactionColumn =
-    new Column<Transaction, String>(new TextCell()) {
+
+  static Column<Transaction, String, Void> transactionColumn = new Column<Transaction, String, Void>(
+      new TextCell()) {
     @Override
     protected String getValue(Transaction object) {
       return object.toString();

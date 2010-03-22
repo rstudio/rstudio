@@ -41,9 +41,9 @@ public class PlayerScoresWidget extends Composite {
   /**
    * A {@link Cell} that displays the status of a single player.
    */
-  private static final class PlayerInfoCell extends Cell<PlayerInfo> {
+  private static final class PlayerInfoCell extends Cell<PlayerInfo, Void> {
     @Override
-    public void render(PlayerInfo value, StringBuilder sb) {
+    public void render(PlayerInfo value, Void viewData, StringBuilder sb) {
       sb.append("<div class='playerScoreBox'>");
       sb.append("<b>Name: </b>");
       sb.append(value.getDisplayName());

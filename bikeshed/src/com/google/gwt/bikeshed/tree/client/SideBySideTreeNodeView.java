@@ -66,14 +66,14 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
 
   @Override
   protected <C> TreeNodeView<C> createTreeNodeView(NodeInfo<C> nodeInfo,
-      Element childElem, C childValue, int idx) {
+      Element childElem, C childValue, Void viewData, int idx) {
     return new SideBySideTreeNodeView<C>(getTree(), this, nodeInfo, childElem,
         childValue, level + 1, path + "-" + idx, columnWidth, columnHeight);
   }
 
   @Override
   protected <C> void emitHtml(StringBuilder sb, List<C> childValues,
-      List<TreeNodeView<?>> savedViews, Cell<C> cell) {
+      List<TreeNodeView<?>> savedViews, Cell<C, Void> cell) {
     TreeView tree = getTree();
     TreeViewModel model = tree.getTreeViewModel();
     int imageWidth = tree.getImageWidth();
@@ -94,7 +94,7 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
         sb.append(tree.getClosedImageHtml(imageLeft));
       }
       sb.append("<div class=\"gwt-sstree-cell\">");
-      cell.render(childValue, sb);
+      cell.render(childValue, null, sb);
       sb.append("</div></div>");
 
       idx++;

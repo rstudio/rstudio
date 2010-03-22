@@ -56,21 +56,21 @@ class TransactionTreeViewModel implements TreeViewModel {
     }
   }
 
-  static class TransactionCell extends Cell<Transaction> {
+  static class TransactionCell extends Cell<Transaction, Void> {
     @Override
-    public void render(Transaction value, StringBuilder sb) {
+    public void render(Transaction value, Void viewData, StringBuilder sb) {
       sb.append(value.toString());
     }
   }
 
-  private static final Cell<StockQuote> STOCK_QUOTE_CELL = new Cell<StockQuote>() {
+  private static final Cell<StockQuote, Void> STOCK_QUOTE_CELL = new Cell<StockQuote, Void>() {
     @Override
-    public void render(StockQuote value, StringBuilder sb) {
+    public void render(StockQuote value, Void viewData, StringBuilder sb) {
       sb.append(value.getTicker() + " - " + value.getDisplayPrice());
     }
   };
 
-  private static final Cell<Transaction> TRANSACTION_CELL =
+  private static final Cell<Transaction, Void> TRANSACTION_CELL =
     new TransactionCell();
 
   private Map<String, SectorListModel> sectorListModels = new HashMap<String, SectorListModel>();
@@ -120,8 +120,8 @@ class TransactionTreeViewModel implements TreeViewModel {
       list.add("Buy");
       list.add("Sell");
       return new TreeViewModel.DefaultNodeInfo<String>(listModel, new ButtonCell(),
-          new ValueUpdater<String>() {
-            public void update(String value) {
+          new ValueUpdater<String, Void>() {
+            public void update(String value, Void viewData) {
               StockQuote stockQuote = (StockQuote) treeNode.getParentNode().getValue();
               if ("Buy".equals(value)) {
                 updater.buy(stockQuote);

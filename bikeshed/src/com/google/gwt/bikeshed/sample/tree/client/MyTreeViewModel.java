@@ -92,9 +92,9 @@ public class MyTreeViewModel implements TreeViewModel {
   /**
    * The cell used to render integers.
    */
-  private static final Cell<Integer> INTEGER_CELL = new Cell<Integer>() {
+  private static final Cell<Integer, Void> INTEGER_CELL = new Cell<Integer, Void>() {
     @Override
-    public void render(Integer value, StringBuilder sb) {
+    public void render(Integer value, Void viewData, StringBuilder sb) {
       sb.append(value);
     }
   };
@@ -117,16 +117,16 @@ public class MyTreeViewModel implements TreeViewModel {
     if (value.endsWith("...")) {
       ListModel<String> listModel = new StringListModel(value.toString());
       return new DefaultNodeInfo<String>(listModel, new ButtonCell(),
-          new ValueUpdater<String>() {
-            public void update(String value) {
+          new ValueUpdater<String, Void>() {
+            public void update(String value, Void viewData) {
               Window.alert("Clicked: " + value);
             }
           });
     } else {
       ListModel<Integer> listModel = new IntegerListModel(value.length());
       return new DefaultNodeInfo<Integer>(listModel, INTEGER_CELL,
-          new ValueUpdater<Integer>() {
-            public void update(Integer value) {
+          new ValueUpdater<Integer, Void>() {
+            public void update(Integer value, Void viewData) {
               Window.alert("Integer = " + value);
             }
           });

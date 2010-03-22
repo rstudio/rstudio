@@ -16,16 +16,14 @@
 package com.google.gwt.bikeshed.sample.validation.client;
 
 /**
- * A field value with a pending future value and a valid flag.
+ * A field with a pending value and an 'is invalid' flag.
  *
  * @param <T> the value type of the field
  */
 public interface ValidatableField<T> {
-  T getPendingValue();
   T getValue();
   boolean isInvalid();
   void setInvalid(boolean isInvalid);
-  void setPendingValue(T pendingValue);
   void setValue(T value);
 
   /**
@@ -34,10 +32,9 @@ public interface ValidatableField<T> {
    * @param <T> the value type of the field
    */
   public static class DefaultValidatableField<T> implements ValidatableField<T> {
-    static int genserial = 0;
-    int serial;
+    static int genserial = 0; // debugging
+    int serial; // debugging
     boolean isInvalid;
-    T pendingValue;
     T value;
 
     public DefaultValidatableField(T value) {
@@ -50,12 +47,7 @@ public interface ValidatableField<T> {
         this.serial = ((DefaultValidatableField<T>) other).serial;
       }
       this.value = other.getValue();
-      this.pendingValue = other.getPendingValue();
       this.isInvalid = other.isInvalid();
-    }
-
-    public T getPendingValue() {
-      return pendingValue;
     }
 
     public T getValue() {
@@ -68,10 +60,6 @@ public interface ValidatableField<T> {
 
     public void setInvalid(boolean isInvalid) {
       this.isInvalid = isInvalid;
-    }
-
-    public void setPendingValue(T pendingValue) {
-      this.pendingValue = pendingValue;
     }
 
     public void setValue(T value) {

@@ -26,11 +26,11 @@ import com.google.gwt.dom.client.NativeEvent;
  * @param <H> the {#link Cell} type
  */
 public class Header<H> {
-  private final Cell<H> cell;
-  private ValueUpdater<H> updater;
+  private final Cell<H, Void> cell;
+  private ValueUpdater<H, Void> updater;
   private H value;
 
-  public Header(Cell<H> cell) {
+  public Header(Cell<H, Void> cell) {
     this.cell = cell;
   }
 
@@ -39,14 +39,14 @@ public class Header<H> {
   }
 
   public void onBrowserEvent(Element elem, NativeEvent event) {
-    cell.onBrowserEvent(elem, value, event, updater);
+    cell.onBrowserEvent(elem, value, null, event, updater);
   }
 
   public void render(StringBuilder sb) {
-    cell.render(value, sb);
+    cell.render(value, null, sb);
   }
 
-  public void setUpdater(ValueUpdater<H> updater) {
+  public void setUpdater(ValueUpdater<H, Void> updater) {
     this.updater = updater;
   }
 

@@ -21,44 +21,59 @@ import com.google.gwt.bikeshed.cells.client.ValueUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * A representation of a column in a table.
+ * A representation of a column in a table.  The column may maintain view data
+ * for each cell on demand.  New view data, if needed, is created by the
+ * cell's onBrowserEvent method, stored in the Column, and passed to future
+ * calls to Cell's {@link Cell#onBrowserEvent} and @link{Cell#render} methods.
  * 
  * @param <T> the row type
  * @param <C> the column type
+ * @param <V> the view data type
  */
-public abstract class Column<T, C> {
-  private final Cell<C> cell;
-  private FieldUpdater<T, C> fieldUpdater;
+// TODO - when can we get rid of a view data object?
+// TODO - should viewData implement some interface? (e.g., with commit/rollback/dispose)
+public abstract class Column<T, C, V> {
+  protected final Cell<C, V> cell;
+  protected Map<T, V> viewDataMap = new HashMap<T, V>();
+  protected FieldUpdater<T, C, V> fieldUpdater;
 
-  public Column(Cell<C> cell) {
+  public Column(Cell<C, V> cell) {
     this.cell = cell;
   }
 
   public void onBrowserEvent(Element elem, final int index, final T object,
       NativeEvent event) {
-    cell.onBrowserEvent(elem, getValue(object), event,
-        fieldUpdater == null ? null : new ValueUpdater<C>() {
-      public void update(C value) {
-        fieldUpdater.update(index, object, value);
-      }
-    });
+    V viewData = viewDataMap.get(object);
+    V newViewData = cell.onBrowserEvent(elem,
+        getValue(object), viewData, event, fieldUpdater == null ? null
+            : new ValueUpdater<C, V>() {
+              public void update(C value, V viewData) {
+                fieldUpdater.update(index, object, value, viewData);
+              }
+            });
+    if (newViewData != viewData) {
+      viewDataMap.put(object, newViewData);
+    }
   }
 
   public void render(T object, StringBuilder sb) {
     C value = getValue(object);
-    cell.render(value, sb);
+    cell.render(value, viewDataMap.get(object), sb);
   }
 
-  public void setFieldUpdater(FieldUpdater<T, C> fieldUpdater) {
+  public void setFieldUpdater(FieldUpdater<T, C, V> fieldUpdater) {
     this.fieldUpdater = fieldUpdater;
   }
 
-  protected Cell<C> getCell() {
+  protected Cell<C, V> getCell() {
     return cell;
   }
 
-  protected FieldUpdater<T, C> getFieldUpdater() {
+  protected FieldUpdater<T, C, V> getFieldUpdater() {
     return fieldUpdater;
   }
 

@@ -23,34 +23,47 @@ import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 
 /**
- * A String Cell that supports validation.
+ * A String {@link Cell} that supports validation using a
+ * {@link ValidatableField}.
  */
-public class ValidatableInputCell extends Cell<ValidatableField<String>> {
+public class ValidatableInputCell extends Cell<String, ValidatableField<String>> {
 
   @Override
-  public void onBrowserEvent(Element parent, ValidatableField<String> value, NativeEvent event,
-      ValueUpdater<ValidatableField<String>> valueUpdater) {
+  public ValidatableField<String> onBrowserEvent(Element parent, String value, 
+      ValidatableField<String> viewData, NativeEvent event,
+      ValueUpdater<String, ValidatableField<String>> valueUpdater) {
     if (event.getType().equals("change")) {
       InputElement input = parent.getFirstChild().cast();
 
-      // Mark as pending
+      // Mark cell as containing a pending change
       input.getStyle().setColor("blue");
 
-      ValidatableField<String> field = new DefaultValidatableField<String>(value);
-      field.setPendingValue(input.getValue());
-      valueUpdater.update(field);
+      // Create a new ValidatableField if needed
+      if (viewData == null) {
+        viewData = new DefaultValidatableField<String>(input.getValue());
+      }
+      viewData.setValue(input.getValue());
+      valueUpdater.update(value, viewData);
     }
+
+    return viewData;
   }
 
   @Override
-  public void render(ValidatableField<String> value, StringBuilder sb) {
-    String pendingValue = value.getPendingValue();
+  public void render(String value, ValidatableField<String> viewData, StringBuilder sb) {
+    /*
+     * If viewData is null, just paint the contents black. If it is non-null,
+     * show the pending value and paint the contents red if they are known to be
+     * invalid.
+     */
+    String pendingValue = viewData == null ? null : viewData.getValue();
+    boolean invalid = viewData == null ? false : viewData.isInvalid();
+    
     sb.append("<input type=\"text\" value=\"");
-    boolean invalid = value.isInvalid();
     if (pendingValue != null) {
       sb.append(pendingValue);        
     } else {
-      sb.append(value.getValue());
+      sb.append(value);
     }
     sb.append("\" style=\"color:");
     if (pendingValue != null) {

@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class SimpleCellList<T> extends Widget {
 
-  private final Cell<T> cell;
+  private final Cell<T, Void> cell;
   private final ArrayList<T> data = new ArrayList<T>();
   private int increment;
   private int maxSize;
@@ -48,9 +48,10 @@ public class SimpleCellList<T> extends Widget {
   private final Element showMoreElem;
   private final Element tmpElem;
   private ListRegistration reg;
-  private ValueUpdater<T> valueUpdater;
+  private ValueUpdater<T, Void> valueUpdater;
   
-  public SimpleCellList(ListModel<T> model, Cell<T> cell, int maxSize, int increment) {
+  public SimpleCellList(ListModel<T> model, Cell<T, Void> cell, int maxSize,
+      int increment) {
     this.maxSize = maxSize;
     this.increment = increment;
     this.model = model;
@@ -82,11 +83,11 @@ public class SimpleCellList<T> extends Widget {
     }
     if (idxString.length() > 0) {
       int idx = Integer.parseInt(idxString);
-      cell.onBrowserEvent(target, data.get(idx), event, valueUpdater);
+      cell.onBrowserEvent(target, data.get(idx), null, event, valueUpdater);
     }
   }
   
-  public void setValueUpdater(ValueUpdater<T> valueUpdater) {
+  public void setValueUpdater(ValueUpdater<T, Void> valueUpdater) {
     this.valueUpdater = valueUpdater;
   }
 
@@ -162,7 +163,7 @@ public class SimpleCellList<T> extends Widget {
     int totalToAdd = 0;
     for (int i = childCount; i < start; ++i) {
       html.append("<div __idx='" + i + "'>");
-      cell.render(null, html);
+      cell.render(null, null, html);
       html.append("</div>");
       ++totalToAdd;
     }
@@ -170,7 +171,7 @@ public class SimpleCellList<T> extends Widget {
     // Items rendered from data.
     for (int i = start; i < end; ++i) {
       html.append("<div __idx='" + i + "'>");
-      cell.render(values.get(i - start), html);
+      cell.render(values.get(i - start), null, html);
       html.append("</div>");
       ++totalToAdd;
     }

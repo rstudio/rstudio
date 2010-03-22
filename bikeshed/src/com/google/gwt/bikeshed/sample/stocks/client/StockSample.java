@@ -65,6 +65,7 @@ public class StockSample implements EntryPoint, Updater {
   static String getFormattedPrice(int price) {
     return NumberFormat.getCurrencyFormat("USD").format(price / 100.0);
   }
+
   @UiField Label cashLabel;
 
   @UiField FavoritesWidget favoritesWidget;
@@ -140,20 +141,20 @@ public class StockSample implements EntryPoint, Updater {
     RootLayoutPanel.get().add(binder.createAndBindUi(this));
 
     // Hook up handlers to columns and the buy/sell popup.
-    Columns.favoriteColumn.setFieldUpdater(new FieldUpdater<StockQuote, Boolean>() {
-      public void update(int index, StockQuote object, Boolean value) {
+    Columns.favoriteColumn.setFieldUpdater(new FieldUpdater<StockQuote, Boolean, Void>() {
+      public void update(int index, StockQuote object, Boolean value, Void viewData) {
         setFavorite(object.getTicker(), value);
       }
     });
 
-    Columns.buyColumn.setFieldUpdater(new FieldUpdater<StockQuote, String>() {
-      public void update(int index, StockQuote quote, String value) {
+    Columns.buyColumn.setFieldUpdater(new FieldUpdater<StockQuote, String, Void>() {
+      public void update(int index, StockQuote quote, String value, Void viewData) {
         buy(quote);
       }
     });
 
-    Columns.sellColumn.setFieldUpdater(new FieldUpdater<StockQuote, String>() {
-      public void update(int index, StockQuote quote, String value) {
+    Columns.sellColumn.setFieldUpdater(new FieldUpdater<StockQuote, String, Void>() {
+      public void update(int index, StockQuote quote, String value, Void viewData) {
         sell(quote);
       }
     });

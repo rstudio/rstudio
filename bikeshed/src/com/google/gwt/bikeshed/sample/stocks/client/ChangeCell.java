@@ -20,10 +20,10 @@ import com.google.gwt.bikeshed.cells.client.Cell;
 /**
  * A cell that represents a {@link StockQuote}.
  */
-public class ChangeCell extends Cell<String> {
+public class ChangeCell extends Cell<String, Void> {
 
   @Override
-  public void render(String value, StringBuilder sb) {
+  public void render(String value, Void viewData, StringBuilder sb) {
     if (value == null || value.length() == 0) {
       return;
     }

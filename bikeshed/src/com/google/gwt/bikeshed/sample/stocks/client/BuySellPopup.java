@@ -164,7 +164,7 @@ public class BuySellPopup extends DialogBox {
     layout.setText(NAME, 1, quote.getName());
     layout.setText(PRICE, 1, quote.getDisplayPrice());
     if (isBuying) {
-      layout.setText(MAX_QUANTITY, 1, "" + (int) Math.floor(cash / quote.getPrice()));
+      layout.setText(MAX_QUANTITY, 1, "" + cash / quote.getPrice());
     } else {
       layout.setText(MAX_QUANTITY, 1, "" + quote.getSharesOwned());
     }

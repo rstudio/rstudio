@@ -19,10 +19,10 @@ package com.google.gwt.bikeshed.cells.client;
  * A {@link Cell} used to render profit and loss.  Positive values are shown in
  * green with a "+" sign and negative values are shown in red with a "-" sign.
  */
-public class ProfitLossCell extends Cell<Integer> {
+public class ProfitLossCell extends Cell<Integer, Void> {
 
   @Override
-  public void render(Integer priceDelta, StringBuilder sb) {
+  public void render(Integer priceDelta, Void viewData, StringBuilder sb) {
     boolean negative = priceDelta < 0;
     if (negative) {
       priceDelta = -priceDelta;

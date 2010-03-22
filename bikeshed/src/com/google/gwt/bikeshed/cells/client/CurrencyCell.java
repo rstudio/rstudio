@@ -18,10 +18,10 @@ package com.google.gwt.bikeshed.cells.client;
 /**
  * A {@link Cell} used to render currency.
  */
-public class CurrencyCell extends Cell<Integer> {
+public class CurrencyCell extends Cell<Integer, Void> {
 
   @Override
-  public void render(Integer price, StringBuilder sb) {
+  public void render(Integer price, Void viewData, StringBuilder sb) {
     boolean negative = price < 0;
     if (negative) {
       price = -price;

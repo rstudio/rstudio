@@ -21,14 +21,16 @@ package com.google.gwt.bikeshed.cells.client;
  * 
  * @param <T> the data type that will be modified
  * @param <C> the data type of the modified field
+ * @param <V> the data type of the view data for the field
  */
-public interface FieldUpdater<T, C> {
+public interface FieldUpdater<T, C, V> {
   
   /**
    * Announces a new value for a field within a base object.
-   * @param index TODO
+   * @param index the current row index of the object
    * @param object the base object to be updated
-   * @param value the new value of the field being updated.
+   * @param value the new value of the field being updated
+   * @param viewData the view data associated with the field
    */
-  void update(int index, T object, C value);
+  void update(int index, T object, C value, V viewData);
 }

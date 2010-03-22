@@ -23,12 +23,12 @@ import com.google.gwt.regexp.shared.RegExp;
  * A {@link Cell} used to render text, with portions matching a given
  * regular expression highlighted.
  */
-public class HighlightingTextCell extends Cell<String> {
+public class HighlightingTextCell extends Cell<String, Void> {
   
   private RegExp highlightRegex;
 
   @Override
-  public void render(String value, StringBuilder sb) {
+  public void render(String value, Void viewData, StringBuilder sb) {
     // sb.append("<div style='overflow:hidden; white-space:nowrap; text-overflow:ellipsis;'>");
     sb.append("<div>");
     if (highlightRegex == null) {

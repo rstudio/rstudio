@@ -236,29 +236,30 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
    * Returns an instance of TreeNodeView of the same subclass as the
    * calling object.
    *
-   * @param <C> the data type of the node's children.
-   * @param nodeInfo a NodeInfo object describing the child nodes.
-   * @param childElem the DOM element used to parent the new TreeNodeView.
-   * @param childValue the child's value.
-   * @param idx the index of the child within its parent node.
-   * @return a TreeNodeView of suitable type.
+   * @param <C> the data type of the node's children
+   * @param nodeInfo a NodeInfo object describing the child nodes
+   * @param childElem the DOM element used to parent the new TreeNodeView
+   * @param childValue the child's value
+   * @param viewData view data associated with the node
+   * @param idx the index of the child within its parent node
+   * @return a TreeNodeView of suitable type
    */
   protected abstract <C> TreeNodeView<C> createTreeNodeView(NodeInfo<C> nodeInfo,
-      Element childElem, C childValue, int idx);
+      Element childElem, C childValue, Void viewData, int idx);
 
   /**
    * Write the HTML for a list of child values into the given StringBuilder.
    *
-   * @param <C> the data type of the child nodes.
-   * @param sb a StringBuilder to write to.
-   * @param childValues a List of child node values.
+   * @param <C> the data type of the child nodes
+   * @param sb a StringBuilder to write to
+   * @param childValues a List of child node values
    * @param savedViews a List of TreeNodeView instances corresponding to
    *   the child values; a non-null value indicates a TreeNodeView previously
-   *   associated with a given child value.
-   * @param cell the Cell to use for rendering each child value.
+   *   associated with a given child value
+   * @param cell the Cell to use for rendering each child value
    */
   protected abstract <C> void emitHtml(StringBuilder sb, List<C> childValues,
-      List<TreeNodeView<?>> savedViews, Cell<C> cell);
+      List<TreeNodeView<?>> savedViews, Cell<C, Void> cell);
 
   /**
    * Ensure that the animation frame exists and return it.
@@ -344,7 +345,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
    *
    * @param nodeInfo the {@link NodeInfo} that provides information about the
    *          child values
-   * @param <C> the child data type of the node.
+   * @param <C> the child data type of the node
    */
   protected <C> void onOpen(final NodeInfo<C> nodeInfo) {
     // Add a loading message.
@@ -396,7 +397,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
         int idx = 0;
         for (C childValue : event.getValues()) {
           TreeNodeView<C> child = createTreeNodeView(nodeInfo, childElem,
-              childValue, idx);
+              childValue, null, idx);
           TreeNodeView<?> savedChild = map.get(nodeInfo.getKey(childValue));
           // Copy the saved child's state into the new child
           if (savedChild != null) {

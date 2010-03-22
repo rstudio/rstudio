@@ -35,7 +35,7 @@ public interface TreeViewModel {
      * 
      * @return the cell
      */
-    Cell<C> getCell();
+    Cell<C, Void> getCell();
 
     /**
      * Return a key that may be used to identify values that should
@@ -69,9 +69,9 @@ public interface TreeViewModel {
    */
   class DefaultNodeInfo<C> implements NodeInfo<C> {
 
-    private Cell<C> cell;
+    private Cell<C, Void> cell;
     private ListModel<C> listModel;
-    private ValueUpdater<C> valueUpdater;
+    private ValueUpdater<C, Void> valueUpdater;
 
     /**
      * Construct a new {@link DefaultNodeInfo}.
@@ -79,7 +79,7 @@ public interface TreeViewModel {
      * @param listModel the {@link ListModel} that provides the child values
      * @param cell the {@link Cell} used to render the child values
      */
-    public DefaultNodeInfo(ListModel<C> listModel, Cell<C> cell) {
+    public DefaultNodeInfo(ListModel<C> listModel, Cell<C, Void> cell) {
       this.cell = cell;
       this.listModel = listModel;
     }
@@ -91,13 +91,13 @@ public interface TreeViewModel {
      * @param cell the {@link Cell} used to render the child values
      * @param valueUpdater the {@link ValueUpdater}
      */
-    public DefaultNodeInfo(ListModel<C> listModel, Cell<C> cell,
-        ValueUpdater<C> valueUpdater) {
+    public DefaultNodeInfo(ListModel<C> listModel, Cell<C, Void> cell,
+        ValueUpdater<C, Void> valueUpdater) {
       this(listModel, cell);
       this.valueUpdater = valueUpdater;
     }
 
-    public Cell<C> getCell() {
+    public Cell<C, Void> getCell() {
       return cell;
     }
 
@@ -110,7 +110,7 @@ public interface TreeViewModel {
     }
 
     public void onBrowserEvent(Element elem, final C object, NativeEvent event) {
-      cell.onBrowserEvent(elem, object, event, valueUpdater);
+      cell.onBrowserEvent(elem, object, null, event, valueUpdater);
     }
   }
 

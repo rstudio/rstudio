@@ -22,25 +22,40 @@ import com.google.gwt.dom.client.NativeEvent;
  * A light weight representation of a renderable object.
  * 
  * @param <C> the type that this Cell represents
+ * @param <V> the type of view data that this cell consumes
  */
-public abstract class Cell<C> {
+public abstract class Cell<C, V> {
 
   /**
-   * @param parent
-   * @param value
-   * @param event
+   * Handle a browser event that took place within the cell. The default
+   * implementation returns null.
+   * 
+   * @param parent the parent Element
+   * @param value the value associated with the cell
+   * @param viewData the view data associated with the cell, or null
+   * @param event the native browser event
    * @param valueUpdater a {@link ValueUpdater}, or null
+   * @return a view data object which may be the one passed in or a new object
    */
-  public void onBrowserEvent(Element parent, C value, NativeEvent event,
-      ValueUpdater<C> valueUpdater) {
+  public V onBrowserEvent(Element parent, C value, V viewData,
+      NativeEvent event, ValueUpdater<C, V> valueUpdater) {
+    return null;
   }
 
-  // TODO: render needs a way of assuming text by default, but allowing HTML.
-  public abstract void render(C value, StringBuilder sb);
+  /**
+   * Render a cell as HTML into a StringBuilder, suitable for passing
+   * to setInnerHTML on a container element.
+   * 
+   * @param value the cell value to be rendered
+   * @param viewData view data associated with the cell
+   * @param sb the StringBuilder to be written to
+   */
+  // TODO: render needs a way of assuming text by default, but allowing HTML
+  public abstract void render(C value, V viewData, StringBuilder sb);
 
-  public void setValue(Element parent, C value) {
+  public void setValue(Element parent, C value, V viewData) {
     StringBuilder sb = new StringBuilder();
-    render(value, sb);
+    render(value, viewData, sb);
     parent.setInnerHTML(sb.toString());
   }
 }

@@ -18,10 +18,10 @@ package com.google.gwt.bikeshed.cells.client;
 /**
  * Call that displays overflow using an ellipsis.
  */
-public class EllipsisCell extends Cell<String> {
+public class EllipsisCell extends Cell<String, Void> {
 
   @Override
-  public void render(String value, StringBuilder sb) {
+  public void render(String value, Void viewData, StringBuilder sb) {
     sb.append("<div style='overflow:hidden; white-space:nowrap; text-overflow:ellipsis;'>");
     sb.append(value);
     sb.append("</div>");

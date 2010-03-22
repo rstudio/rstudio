@@ -18,10 +18,10 @@ package com.google.gwt.bikeshed.cells.client;
 /**
  * A {@link Cell} used to render text.
  */
-public class TextCell extends Cell<String> {
+public class TextCell extends Cell<String, Void> {
 
   @Override
-  public void render(String value, StringBuilder sb) {
+  public void render(String value, Void viewData, StringBuilder sb) {
     if (value != null) {
       sb.append(value);
     }
