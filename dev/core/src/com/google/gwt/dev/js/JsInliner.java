@@ -136,7 +136,7 @@ public class JsInliner {
        */
       affectedBySideEffects = true;
     }
-    
+
     @Override
     public void endVisit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
       affectedBySideEffects = true;
@@ -600,6 +600,9 @@ public class JsInliner {
    * invocations occur.
    */
   private static class EvaluationOrderVisitor extends JsVisitor {
+    public static final JsName THIS_NAME = (new JsScope("fake scope") {
+    }).declareName("this");
+
     private boolean maintainsOrder = true;
     private final List<JsName> toEvaluate;
     private final List<JsName> unevaluated;
@@ -673,8 +676,19 @@ public class JsInliner {
 
     @Override
     public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
-      JsName name = x.getName();
+      checkName(x.getName());
+    }
 
+    @Override
+    public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
+      checkName(THIS_NAME);
+    }
+
+    public boolean maintainsOrder() {
+      return maintainsOrder && unevaluated.size() == 0;
+    }
+
+    private void checkName(JsName name) {
       if (!toEvaluate.contains(name)) {
         return;
       }
@@ -682,10 +696,6 @@ public class JsInliner {
       if (unevaluated.size() == 0 || !unevaluated.remove(0).equals(name)) {
         maintainsOrder = false;
       }
-    }
-
-    public boolean maintainsOrder() {
-      return maintainsOrder && unevaluated.size() == 0;
     }
 
     /**
@@ -913,6 +923,7 @@ public class JsInliner {
       }
 
       inlining.push(invokedFunction);
+      x = tryToUnravelExplicitCall(x);
       JsExpression op = process(x, callerFunction, invokedFunction);
 
       if (x != op) {
@@ -1030,6 +1041,7 @@ public class JsInliner {
 
       List<JsExpression> hoisted = new ArrayList<JsExpression>(
           statements.size());
+      JsExpression thisExpr = ((JsNameRef) x.getQualifier()).getQualifier();
       List<JsName> localVariableNames = new ArrayList<JsName>();
       boolean sawReturnStatement = false;
 
@@ -1102,13 +1114,14 @@ public class JsInliner {
       }
 
       // Confirm that the expression conforms to the desired heuristics
-      if (!isInlinable(program, callerFunction, invokedFunction,
+      if (!isInlinable(program, callerFunction, invokedFunction, thisExpr,
           x.getArguments(), op)) {
         return x;
       }
 
       // Perform the name replacement
-      NameRefReplacerVisitor v = new NameRefReplacerVisitor(x, invokedFunction);
+      NameRefReplacerVisitor v = new NameRefReplacerVisitor(thisExpr,
+          x.getArguments(), invokedFunction.getParameters());
       for (ListIterator<JsName> nameIterator = localVariableNames.listIterator(); nameIterator.hasNext();) {
         JsName name = nameIterator.next();
 
@@ -1180,21 +1193,12 @@ public class JsInliner {
 
     @Override
     public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
-      JsFunction function = isFunction(x.getQualifier());
-      if (function != null) {
-        Integer count = invocationCount.get(function);
-        if (count == null) {
-          assert (!removingCounts);
-          count = 1;
-        } else {
-          if (removingCounts) {
-            count -= 1;
-          } else {
-            count += 1;
-          }
-        }
-        invocationCount.put(function, count);
-      }
+      checkFunctionCall(x.getQualifier());
+    }
+
+    @Override
+    public void endVisit(JsNew x, JsContext<JsExpression> ctx) {
+      checkFunctionCall(x.getConstructorExpression());
     }
 
     public Integer invocationCount(JsFunction f) {
@@ -1209,6 +1213,24 @@ public class JsInliner {
       removingCounts = true;
       accept(expr);
       removingCounts = false;
+    }
+
+    private void checkFunctionCall(JsExpression qualifier) {
+      JsFunction function = isFunction(qualifier);
+      if (function != null) {
+        Integer count = invocationCount.get(function);
+        if (count == null) {
+          assert (!removingCounts);
+          count = 1;
+        } else {
+          if (removingCounts) {
+            count -= 1;
+          } else {
+            count += 1;
+          }
+        }
+        invocationCount.put(function, count);
+      }
     }
   }
 
@@ -1228,15 +1250,13 @@ public class JsInliner {
     final Map<JsName, JsExpression> paramsToArgsMap = new IdentityHashMap<JsName, JsExpression>();
 
     /**
-     * Constructor.
-     * 
-     * @param invocation The call site
-     * @param function The function that encloses the inlined statement
+     * A replacement expression for this references.
      */
-    public NameRefReplacerVisitor(JsInvocation invocation, JsFunction function) {
-      List<JsParameter> parameters = function.getParameters();
-      List<JsExpression> arguments = invocation.getArguments();
+    private JsExpression thisExpr;
 
+    public NameRefReplacerVisitor(JsExpression thisExpr,
+        List<JsExpression> arguments, List<JsParameter> parameters) {
+      this.thisExpr = thisExpr;
       if (parameters.size() != arguments.size()) {
         // This shouldn't happen if the cloned JsInvocation has been properly
         // configured
@@ -1268,6 +1288,12 @@ public class JsInliner {
       if (replacement != null) {
         ctx.replaceMe(replacement);
       }
+    }
+
+    @Override
+    public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
+      assert thisExpr != null;
+      ctx.replaceMe(thisExpr);
     }
 
     /**
@@ -1754,6 +1780,13 @@ public class JsInliner {
     if (e instanceof JsNameRef) {
       JsNameRef ref = (JsNameRef) e;
 
+      // Unravel foo.call(...).
+      if (!ref.getName().isObfuscatable() && "call".equals(ref.getIdent())) {
+        if (ref.getQualifier() instanceof JsNameRef) {
+          ref = (JsNameRef) ref.getQualifier();
+        }
+      }
+
       JsNode staticRef = ref.getName().getStaticRef();
       if (staticRef instanceof JsFunction) {
         return (JsFunction) staticRef;
@@ -1767,7 +1800,8 @@ public class JsInliner {
    * Determine if a statement can be inlined into a call site.
    */
   private static boolean isInlinable(JsProgram program, JsFunction caller,
-      JsFunction callee, List<JsExpression> arguments, JsNode<?> toInline) {
+      JsFunction callee, JsExpression thisExpr, List<JsExpression> arguments,
+      JsNode<?> toInline) {
 
     /*
      * This will happen with varargs-style JavaScript functions that rely on the
@@ -1810,18 +1844,30 @@ public class JsInliner {
       return false;
     }
 
+    List<JsExpression> evalArgs;
+    if (thisExpr == null) {
+      evalArgs = arguments;
+    } else {
+      evalArgs = new ArrayList<JsExpression>(1 + arguments.size());
+      evalArgs.add(thisExpr);
+      evalArgs.addAll(arguments);
+    }
+
     /*
      * Determine if the evaluation of the invocation's arguments may create side
      * effects. This will determine how aggressively the parameters may be
      * reordered.
      */
-    if (isVolatile(program, arguments, caller)) {
+    if (isVolatile(program, evalArgs, caller)) {
       /*
        * Determine the order in which the parameters must be evaluated. This
        * will vary between call sites, based on whether or not the invocation's
        * arguments can be repeated without ill effect.
        */
       List<JsName> requiredOrder = new ArrayList<JsName>();
+      if (thisExpr != null && isVolatile(program, thisExpr, callee)) {
+        requiredOrder.add(EvaluationOrderVisitor.THIS_NAME);
+      }
       for (int i = 0; i < arguments.size(); i++) {
         JsExpression e = arguments.get(i);
         JsParameter p = callee.getParameters().get(i);
@@ -1886,6 +1932,34 @@ public class JsInliner {
       JsFunction context) {
     return hasSideEffects(list)
         || affectedBySideEffects(program, list, context);
+  }
+
+  /**
+   * Transforms any <code>foo.call(this)</code> into <code>this.foo()</code> to
+   * be compatible with our inlining algorithm.
+   */
+  private static JsInvocation tryToUnravelExplicitCall(JsInvocation x) {
+    if (!(x.getQualifier() instanceof JsNameRef)) {
+      return x;
+    }
+    JsNameRef ref = (JsNameRef) x.getQualifier();
+    if (ref.getName().isObfuscatable() || !"call".equals(ref.getIdent())) {
+      return x;
+    }
+    List<JsExpression> oldArgs = x.getArguments();
+    if (oldArgs.size() < 1) {
+      return x;
+    }
+
+    JsNameRef oldTarget = (JsNameRef) ref.getQualifier();
+    JsNameRef newTarget = new JsNameRef(oldTarget.getSourceInfo(),
+        oldTarget.getName());
+    newTarget.setQualifier(oldArgs.get(0));
+    JsInvocation newCall = new JsInvocation(x.getSourceInfo());
+    newCall.setQualifier(newTarget);
+    // Don't have to clone because the returned invocation is transient.
+    newCall.getArguments().addAll(oldArgs.subList(1, oldArgs.size()));
+    return newCall;
   }
 
   /**

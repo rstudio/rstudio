@@ -221,16 +221,9 @@ public final class JsHoister {
       stack.push(x);
     }
 
-    /**
-     * A "this" reference can only effectively be hoisted if the call site is
-     * qualified by a JsNameRef, so we'll ignore this for now.
-     */
     @Override
     public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
-      // Set a flag to indicate that we cannot continue, and push a null so
-      // we don't run out of elements on the stack.
-      successful = false;
-      stack.push(null);
+      stack.push(new JsThisRef(x.getSourceInfo()));
     }
 
     public JsExpression getExpression() {
