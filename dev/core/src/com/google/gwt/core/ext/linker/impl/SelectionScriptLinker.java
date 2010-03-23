@@ -125,7 +125,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
       ArtifactSet artifacts) throws UnableToCompleteException {
     ArtifactSet toReturn = link(logger, context, artifacts, true);
-    toReturn = link(logger, context, artifacts, false);
+    toReturn = link(logger, context, toReturn, false);
     return toReturn;
   }
 
