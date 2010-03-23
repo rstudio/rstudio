@@ -214,7 +214,6 @@ public class SelectionScriptJavaScriptTest extends TestCase {
 
     final List<String> alerts = new ArrayList<String>();
     webClient.setAlertHandler(new AlertHandler() {
-      @Override
       public void handleAlert(Page page, String msg) {
         alerts.add(msg);
       }
