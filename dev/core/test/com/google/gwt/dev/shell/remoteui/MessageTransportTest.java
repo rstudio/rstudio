@@ -83,18 +83,15 @@ public class MessageTransportTest extends TestCase {
   }
 
   /**
-   * Tests that sending an async request to a server when the sending stream is
-   * closed will result in:
-   * 
-   * 1) A rejection of the request to the executor 2) An ExecutionException on a
-   * call to future.get()
+   * Tests that sending an async request to a server when the server's socket is
+   * closed with result in an ExecutionException on a call to future.get().
    * 
    * @throws ExecutionException
    * @throws InterruptedException
    * @throws IOException
    */
-  public void testExecuteAsyncRequestWithClosedSendStream() throws IOException,
-      InterruptedException, ExecutionException {
+  public void testExecuteAsyncRequestWithClosedServerSocket()
+      throws IOException, InterruptedException, ExecutionException {
     MockNetwork network = createMockNetwork();
 
     /*
@@ -135,8 +132,7 @@ public class MessageTransportTest extends TestCase {
       sleepCycles++;
     }
 
-    assertTrue(
-        "Unable to shut down server's input stream; cannot proceed with the test.",
+    assertTrue("Unable to close socket; cannot proceed with the test.",
         network.getServerSocket().isClosed());
 
     Future<Response> responseFuture = null;
@@ -149,8 +145,15 @@ public class MessageTransportTest extends TestCase {
     } catch (TimeoutException te) {
       fail("Should not have timed out");
     } catch (ExecutionException e) {
-      assertTrue("Expected: IllegalStateException, actual:" + e.getCause(),
-          e.getCause() instanceof IllegalStateException);
+      /*
+       * An IOException can happen if the request gets in the queue before the
+       * message processing thread terminates. If the request gets in the queue
+       * after the message processing thread terminates, then the result will be
+       * an IllegalStateException.
+       */
+      assertTrue("Expected: IllegalStateException or IOException, actual:"
+          + e.getCause(), e.getCause() instanceof IllegalStateException
+          || e.getCause() instanceof IOException);
     } catch (Exception e) {
       fail("Should not have thrown any other exception");
     }
@@ -300,62 +303,6 @@ public class MessageTransportTest extends TestCase {
           + e.getCause(), e.getCause() instanceof RequestException);
       RequestException re = (RequestException) e.getCause();
       assertEquals(re.getMessage(), "Unable to process the request.");
-    } catch (Exception e) {
-      fail("Should not have thrown any other exception");
-    }
-
-    network.shutdown();
-  }
-
-  /**
-   * Tests that a future for an async request to a remote server will be
-   * interrupted if the server closes the connection before the response is
-   * received.
-   */
-  public void testExecuteRequestAsyncWithClosedReceiveStreamBeforeResponse()
-      throws IOException, InterruptedException, ExecutionException,
-      TimeoutException {
-    MockNetwork network = createMockNetwork();
-
-    /*
-     * Define a dummy request processor. The message transport is being set up
-     * on the client side, which means that it should not be receiving any
-     * requests (any responses).
-     */
-    RequestProcessor requestProcessor = new RequestProcessor() {
-      public Response execute(Request request) throws Exception {
-        fail("Should not reach here.");
-        return null;
-      }
-    };
-
-    // Set up a message transport on the client side
-    MessageTransport messageTransport = new MessageTransport(
-        network.getClientSocket().getInputStream(),
-        network.getClientSocket().getOutputStream(), requestProcessor,
-        new MessageTransport.TerminationCallback() {
-          public void onTermination(Exception e) {
-          }
-        });
-    messageTransport.start();
-
-    Message.Request.Builder requestMessageBuilder = Message.Request.newBuilder();
-    requestMessageBuilder.setServiceType(Message.Request.ServiceType.DEV_MODE);
-    Message.Request request = requestMessageBuilder.build();
-
-    // This will close the client's input stream
-    network.getServerSocket().getOutputStream().close();
-
-    try {
-      Future<Response> response = messageTransport.executeRequestAsync(request);
-      response.get(2, TimeUnit.SECONDS);
-      fail("Should have thrown an exception");
-    } catch (TimeoutException te) {
-      fail("Should not have timed out");
-    } catch (ExecutionException e) {
-      // This is where we should hit
-      assertTrue("Expected: IllegalStateException, actual:" + e.getCause(),
-          e.getCause() instanceof IllegalStateException);
     } catch (Exception e) {
       fail("Should not have thrown any other exception");
     }
