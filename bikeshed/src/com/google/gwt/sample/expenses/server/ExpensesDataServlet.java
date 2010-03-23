@@ -17,7 +17,6 @@ package com.google.gwt.sample.expenses.server;
 
 import com.google.gwt.requestfactory.shared.EntityKey;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
-import com.google.gwt.sample.expenses.gen.MethodName;
 import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.sample.expenses.server.domain.Storage;
 import com.google.gwt.sample.expenses.shared.ReportKey;
@@ -62,57 +61,52 @@ public class ExpensesDataServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
 
-    MethodName methodName = null;
+    String className = null;
+    String methodName = null;
     try {
       response.setStatus(HttpServletResponse.SC_OK);
       JSONObject topLevelJsonObject = new JSONObject(getContent(request));
-      methodName = getMethodName(topLevelJsonObject.getString(RequestDataManager.METHOD_TOKEN));
+      className = topLevelJsonObject.getString(RequestDataManager.CLASS_TOKEN);
+      methodName = topLevelJsonObject.getString(RequestDataManager.METHOD_TOKEN);
       PrintWriter writer = response.getWriter();
-      switch (methodName) {
-        case FIND_ALL_EMPLOYEES:
-        case FIND_ALL_REPORTS:
-        case FIND_EMPLOYEE:
-        case FIND_REPORTS_BY_EMPLOYEE:
-          Class<?> classOperation = Class.forName("com.google.gwt.sample.expenses.server.domain."
-              + methodName.getClassName());
-          Method methodOperation = null;
-          // TODO: check if method names must be unique in a class.
-          for (Method method : classOperation.getDeclaredMethods()) {
-            if (method.getName().equals(methodName.getMethodName())) {
-              methodOperation = method;
-              break;
-            }
+      if (methodName.equals("sync")) {
+        sync(topLevelJsonObject.getString(RequestDataManager.CONTENT_TOKEN),
+            writer);
+      } else {
+        Class<?> classOperation = Class.forName("com.google.gwt.sample.expenses.server.domain."
+            + className);
+        Method methodOperation = null;
+        // TODO: check if method names must be unique in a class.
+        for (Method method : classOperation.getDeclaredMethods()) {
+          if (method.getName().equals(methodName)) {
+            methodOperation = method;
+            break;
           }
-          if (methodOperation == null) {
-            throw new IllegalArgumentException("unable to find "
-                + methodName.getMethodName() + " in " + classOperation);
-          }
-          if (!Modifier.isStatic(methodOperation.getModifiers())) {
-            throw new IllegalArgumentException("the "
-                + methodOperation.getName() + " is not static");
-          }
-          Object args[] = RequestDataManager.getObjectsFromParameterMap(
-              getParameterMap(topLevelJsonObject), methodOperation.getParameterTypes());
-          Object resultList = methodOperation.invoke(null, args);
-          if (!(resultList instanceof List)) {
-            throw new IllegalArgumentException("return value not a list "
-                + resultList);
-          }
-          JSONArray jsonArray = getJsonArray((List<?>) resultList);
-          writer.print(jsonArray.toString());
-          break;
-        case SYNC:
-          sync(topLevelJsonObject.getString(RequestDataManager.CONTENT_TOKEN), writer);
-          break;
-        default:
-          System.err.println("POST: unknown method " + methodName);
-          break;
+        }
+        if (methodOperation == null) {
+          throw new IllegalArgumentException("unable to find " + methodName
+              + " in " + classOperation);
+        }
+        if (!Modifier.isStatic(methodOperation.getModifiers())) {
+          throw new IllegalArgumentException("the " + methodOperation.getName()
+              + " is not static");
+        }
+        Object args[] = RequestDataManager.getObjectsFromParameterMap(
+            getParameterMap(topLevelJsonObject),
+            methodOperation.getParameterTypes());
+        Object resultList = methodOperation.invoke(null, args);
+        if (!(resultList instanceof List)) {
+          throw new IllegalArgumentException("return value not a list "
+              + resultList);
+        }
+        JSONArray jsonArray = getJsonArray((List<?>) resultList);
+        writer.print(jsonArray.toString());
       }
       writer.flush();
       // TODO: clean exception handling code below.
     } catch (ClassNotFoundException e) {
       throw new IllegalArgumentException("unable to load the class: "
-          + methodName);
+          + className);
     } catch (IllegalAccessException e) {
       throw new IllegalArgumentException(e);
     } catch (InvocationTargetException e) {
@@ -160,7 +154,8 @@ public class ExpensesDataServlet extends HttpServlet {
     Class<?> entityKeyClass = Class.forName("com.google.gwt.sample.expenses.shared."
         + entityClass.getSimpleName() + "Key");
 
-    EntityKey<?> key = (EntityKey<?>) entityKeyClass.getMethod("get").invoke(null);
+    EntityKey<?> key = (EntityKey<?>) entityKeyClass.getMethod("get").invoke(
+        null);
     for (Object entityElement : resultList) {
       JSONObject jsonObject = new JSONObject();
       for (Property<?, ?> p : key.getProperties()) {
@@ -174,19 +169,6 @@ public class ExpensesDataServlet extends HttpServlet {
       jsonArray.put(jsonObject);
     }
     return jsonArray;
-  }
-
-  /**
-   * @param request
-   * @return
-   */
-  private MethodName getMethodName(String methodString) {
-    for (MethodName method : MethodName.values()) {
-      if (method.name().equals(methodString)) {
-        return method;
-      }
-    }
-    throw new IllegalArgumentException("unknown methodName: " + methodString);
   }
 
   /**
@@ -211,7 +193,8 @@ public class ExpensesDataServlet extends HttpServlet {
    * @return
    * @throws JSONException
    */
-  private Map<String, String> getParameterMap(JSONObject jsonObject) throws JSONException {
+  private Map<String, String> getParameterMap(JSONObject jsonObject)
+      throws JSONException {
     Map<String, String> parameterMap = new HashMap<String, String>();
     Iterator keys = jsonObject.keys();
     while (keys.hasNext()) {

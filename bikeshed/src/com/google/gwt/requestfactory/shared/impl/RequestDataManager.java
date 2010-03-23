@@ -15,8 +15,6 @@
  */
 package com.google.gwt.requestfactory.shared.impl;
 
-import com.google.gwt.sample.expenses.gen.MethodName;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,6 +26,7 @@ import java.util.Map;
  */
 public class RequestDataManager {
 
+  public static final String CLASS_TOKEN = "className";
   public static final String CONTENT_TOKEN = "contentData";
   public static final String METHOD_TOKEN = "methodName";
   public static final String PARAM_TOKEN = "param";
@@ -47,10 +46,11 @@ public class RequestDataManager {
    * Returns the string that encodes the request data.
    * 
    */
-  public static Map<String, String> getRequestMap(MethodName methodName,
-      Object values[], String content) {
+  public static Map<String, String> getRequestMap(String className,
+      String methodName, Object values[], String content) {
     Map<String, String> requestMap = new HashMap<String, String>();
-    requestMap.put(METHOD_TOKEN, methodName.name());
+    requestMap.put(CLASS_TOKEN, className);
+    requestMap.put(METHOD_TOKEN, methodName);
     if (values != null) {
       for (int i = 0; i < values.length; i++) {
         Object value = values[i];

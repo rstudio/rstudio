@@ -58,8 +58,8 @@ public class EmployeeRequestImpl implements
   public EntityListRequest<EmployeeKey> findAllEmployees() {
     return new Request() {
       public String getRequestData() {
-        return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(MethodName.FIND_ALL_EMPLOYEES,
-            null, null));
+        return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
+            "Employee", "findAllEmployees", null, null));
       }
     };
   }

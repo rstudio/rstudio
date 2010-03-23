@@ -24,7 +24,6 @@ import com.google.gwt.requestfactory.client.gen.ClientRequestObject;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncRequest;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
-import com.google.gwt.sample.expenses.gen.MethodName;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.valuestore.client.ValuesImpl;
@@ -123,8 +122,9 @@ public class RequestFactoryJsonImpl implements RequestFactory,
         }
         requestData.append("]");
 
+        // TODO: Fix the className for this request
         builder.setRequestData(ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
-            MethodName.SYNC, null, requestData.toString())));
+            "", "sync", null, requestData.toString())));
         builder.setCallback(new RequestCallback() {
 
           public void onError(Request request, Throwable exception) {

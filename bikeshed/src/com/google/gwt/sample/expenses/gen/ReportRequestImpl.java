@@ -60,7 +60,7 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
     return new Request() {
       public String getRequestData() {
         return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
-            MethodName.FIND_ALL_REPORTS, null, null));
+            "Report", "findAllReports", null, null));
       }
 
     };
@@ -71,7 +71,7 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
     return new Request() {
       public String getRequestData() {
         return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
-            MethodName.FIND_REPORTS_BY_EMPLOYEE, new Object[] {id.get()}, null));
+            "Report", "findReportsByEmployee", new Object[] {id.get()}, null));
       }
     };
   }
