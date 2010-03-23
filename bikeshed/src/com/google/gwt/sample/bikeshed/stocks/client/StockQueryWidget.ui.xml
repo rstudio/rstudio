@@ -1,0 +1,24 @@
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:l='urn:import:com.google.gwt.bikeshed.list.client'
+  xmlns:t='urn:import:com.google.gwt.bikeshed.tree.client'
+  xmlns:s='urn:import:com.google.gwt.sample.bikeshed.stocks.client'>
+
+  <ui:style field='common' src='common.css'/>
+
+  <g:DockLayoutPanel unit='EM'>
+    <g:north size='2'>
+      <g:HTMLPanel>
+        <span class='{common.header-left}'>Enter query:</span>
+        <g:TextBox ui:field='queryField'/>
+      </g:HTMLPanel>
+    </g:north>
+
+    <g:center>
+      <g:ScrollPanel>
+        <l:PagingTableListView ui:field='listView' styleName='{common.table}'/>
+      </g:ScrollPanel>
+    </g:center>
+  </g:DockLayoutPanel>
+</ui:UiBinder>

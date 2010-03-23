@@ -13,12 +13,12 @@
 
   <servlet>
     <servlet-name>stockServlet</servlet-name>
-    <servlet-class>com.google.gwt.bikeshed.sample.stocks.server.StockServiceImpl</servlet-class>
+    <servlet-class>com.google.gwt.sample.bikeshed.stocks.server.StockServiceImpl</servlet-class>
   </servlet>
 
   <servlet>
     <servlet-name>treeServlet</servlet-name>
-    <servlet-class>com.google.gwt.bikeshed.sample.tree.server.TreeServiceImpl</servlet-class>
+    <servlet-class>com.google.gwt.sample.bikeshed.tree.server.TreeServiceImpl</servlet-class>
   </servlet>
 
   <servlet-mapping>
