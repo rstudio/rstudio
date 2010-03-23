@@ -17,23 +17,73 @@ package com.google.gwt.resources.css;
 
 import com.google.gwt.resources.css.ast.Context;
 import com.google.gwt.resources.css.ast.CssExternalSelectors;
+import com.google.gwt.resources.css.ast.CssSelector;
 import com.google.gwt.resources.css.ast.CssVisitor;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
 
 /**
- * Collects all {@code @external} declarations in the stylesheet.
+ * Collects all {@code @external} declarations in the stylesheet. This visitor
+ * will expand tail-globs.
  */
 public class ExternalClassesCollector extends CssVisitor {
-  private final Set<String> classes = new HashSet<String>();
+  public static final String GLOB_STRING = "*";
+
+  private final SortedSet<String> allClasses = new TreeSet<String>();
+  private final SortedSet<String> externalClasses = new TreeSet<String>();
+  private final Set<String> globs = new HashSet<String>();
+
+  /**
+   * This is a short-circuit for <code>{@literal @external} *</code>.
+   */
+  private boolean matchAll;
 
   @Override
   public void endVisit(CssExternalSelectors x, Context ctx) {
-    classes.addAll(x.getClasses());
+    if (matchAll) {
+      return;
+    }
+
+    for (String selector : x.getClasses()) {
+      if (selector.equals(GLOB_STRING)) {
+        matchAll = true;
+        return;
+      } else if (selector.endsWith(GLOB_STRING)) {
+        globs.add(selector.substring(0, selector.length() - 1));
+      } else {
+        externalClasses.add(selector);
+      }
+    }
   }
 
-  public Set<String> getClasses() {
-    return classes;
+  @Override
+  public void endVisit(CssSelector x, Context ctx) {
+    Matcher m = CssSelector.CLASS_SELECTOR_PATTERN.matcher(x.getSelector());
+
+    while (m.find()) {
+      allClasses.add(m.group(1));
+    }
+  }
+
+  public SortedSet<String> getClasses() {
+    if (matchAll) {
+      return allClasses;
+    }
+
+    glob : for (String glob : globs) {
+      for (String clazz : allClasses.tailSet(glob)) {
+        if (clazz.startsWith(glob)) {
+          externalClasses.add(clazz);
+        } else {
+          continue glob;
+        }
+      }
+    }
+
+    return externalClasses;
   }
 }

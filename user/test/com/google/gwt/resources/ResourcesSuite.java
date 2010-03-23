@@ -21,6 +21,7 @@ import com.google.gwt.resources.client.ImageResourceNoInliningTest;
 import com.google.gwt.resources.client.ImageResourceTest;
 import com.google.gwt.resources.client.NestedBundleTest;
 import com.google.gwt.resources.client.TextResourceTest;
+import com.google.gwt.resources.css.CssExternalTest;
 import com.google.gwt.resources.css.CssNodeClonerTest;
 import com.google.gwt.resources.css.CssReorderTest;
 import com.google.gwt.resources.css.CssRtlTest;
@@ -37,6 +38,7 @@ public class ResourcesSuite {
   public static Test suite() {
 
     GWTTestSuite suite = new GWTTestSuite("Test for com.google.gwt.resources");
+    suite.addTestSuite(CssExternalTest.class);
     suite.addTestSuite(CSSResourceTest.class);
     suite.addTestSuite(CssReorderTest.class);
     suite.addTestSuite(CssRtlTest.class);
