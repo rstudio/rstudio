@@ -350,8 +350,7 @@ public class GenerateJavaScriptAST {
        */
       if (!stripStack || !polymorphicNames.containsKey(x) || x.isNative()) {
         globalName = topScope.declareName(mangleName, name);
-        x.getSourceInfo().addCorrelation(
-            program.getCorrelator().by(globalName));
+        x.getSourceInfo().addCorrelation(program.getCorrelator().by(globalName));
         names.put(x, globalName);
         recordSymbol(x, globalName);
       }
@@ -366,13 +365,13 @@ public class GenerateJavaScriptAST {
         SourceInfo sourceInfo = x.getSourceInfo().makeChild(
             CreateNamesAndScopesVisitor.class, "Translated JS function");
         /*
-         * It would be more correct here to check for an inline assignment,
-         * such as var foo = function blah() {} and introduce a separate scope
-         * for the function's name according to EcmaScript-262, but this would
-         * mess up stack traces by allowing two inner scope function names to
-         * onfuscate to the same identifier, making function names no longer
-         * a 1:1 mapping to obfuscated symbols. Leaving them in global scope
-         * causes no harm. 
+         * It would be more correct here to check for an inline assignment, such
+         * as var foo = function blah() {} and introduce a separate scope for
+         * the function's name according to EcmaScript-262, but this would mess
+         * up stack traces by allowing two inner scope function names to
+         * onfuscate to the same identifier, making function names no longer a
+         * 1:1 mapping to obfuscated symbols. Leaving them in global scope
+         * causes no harm.
          */
         jsFunction = new JsFunction(sourceInfo, topScope, globalName, true);
       }
@@ -1573,14 +1572,14 @@ public class GenerateJavaScriptAST {
       // Add it first, so that script-tag chunking in IFrameLinker works
       globalStatements.add(0, nullFunc.makeStmt());
     }
-    
+
     private void generateSeedFuncAndPrototype(JClassType x,
         List<JsStatement> globalStmts) {
       SourceInfo sourceInfo = x.getSourceInfo().makeChild(
           GenerateJavaScriptVisitor.class, "Seed and function prototype");
       if (x != program.getTypeJavaLangString()) {
         JsName seedFuncName = names.get(x);
-        
+
         // seed function
         // function com_example_foo_Foo() { }
         JsFunction seedFunc = new JsFunction(sourceInfo, topScope,
@@ -1609,7 +1608,7 @@ public class GenerateJavaScriptAST {
 
         // Chain assign the same prototype to every live constructor.
         for (JMethod method : x.getMethods()) {
-          if (method instanceof JConstructor) {
+          if (liveCtors.contains(method)) {
             JsNameRef protoRef = prototype.makeRef(sourceInfo);
             protoRef.setQualifier(names.get(method).makeRef(sourceInfo));
             protoAsg = createAssignment(protoRef, protoAsg);
@@ -1731,8 +1730,8 @@ public class GenerateJavaScriptAST {
           JsNameRef lhs = polymorphicNames.get(method).makeRef(sourceInfo);
           lhs.setQualifier(globalTemp.makeRef(sourceInfo));
           /*
-           * Inline JsFunction rather than reference, e.g.
-           * _.vtableName = function functionName() { ... }
+           * Inline JsFunction rather than reference, e.g. _.vtableName =
+           * function functionName() { ... }
            */
           JsExpression rhs = methodBodyMap.get(method.getBody());
           JsExpression asg = createAssignment(lhs, rhs);
@@ -1876,8 +1875,14 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
+    public void endVisit(JNewInstance x, Context ctx) {
+      super.endVisit(x, ctx);
+      liveCtors.add(x.getTarget());
+    }
+
+    @Override
     public void endVisit(JProgram x, Context ctx) {
-      // Entry methods can be called externally, so they must run clinit. 
+      // Entry methods can be called externally, so they must run clinit.
       crossClassTargets.addAll(x.getAllEntryMethods());
     }
 
@@ -1952,6 +1957,8 @@ public class GenerateJavaScriptAST {
 
   private final JsProgram jsProgram;
 
+  private final Set<JConstructor> liveCtors = new IdentityHashSet<JConstructor>();
+
   /**
    * Sorted to avoid nondeterministic iteration.
    */
@@ -1967,10 +1974,10 @@ public class GenerateJavaScriptAST {
    */
   private final JsScope objectScope;
   private final JsOutputOption output;
-  private final Map<JMethod, JsName> polymorphicNames = new IdentityHashMap<JMethod, JsName>();
   private final Set<JsFunction> polymorphicJsFunctions = new IdentityHashSet<JsFunction>();
+  private final Map<JMethod, JsName> polymorphicNames = new IdentityHashMap<JMethod, JsName>();
   private final JProgram program;
-  
+
   /**
    * All of the fields and polymorphic methods in String.
    * 
@@ -1992,7 +1999,7 @@ public class GenerateJavaScriptAST {
    * not assigned topScope identifiers.
    */
   private boolean stripStack;
-  
+
   /**
    * Maps JsNames to machine-usable identifiers.
    */
@@ -2021,8 +2028,7 @@ public class GenerateJavaScriptAST {
     this.output = output;
     this.symbolTable = symbolTable;
 
-    this.stripStack = JsStackEmulator.getStackMode(propertyOracles) == 
-        JsStackEmulator.StackMode.STRIP;
+    this.stripStack = JsStackEmulator.getStackMode(propertyOracles) == JsStackEmulator.StackMode.STRIP;
     /*
      * Because we modify String's prototype, all fields and polymorphic methods
      * on String's super types need special handling.
