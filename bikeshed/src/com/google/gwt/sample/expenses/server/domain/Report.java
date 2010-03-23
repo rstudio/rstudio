@@ -35,7 +35,7 @@ public class Report implements Entity {
     return Storage.INSTANCE.findReport(id);
   }
 
-  public static List<Report> findReportsByEmployee(long id) {
+  public static List<Report> findReportsByEmployee(Long id) {
     return Storage.INSTANCE.findReportsByEmployee(id);
   }
   private final Long id;

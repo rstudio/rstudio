@@ -25,7 +25,7 @@ import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
 import com.google.gwt.valuestore.shared.ValueStore;
 
 /**
- * "Code generated" implementation of {ExpenseRequestFactory.EmployeeRequest}
+ * "Code generated" implementation of {ExpenseRequestFactory.EmployeeRequest}.
  * <p>
  * IRL this will be generated as a side effect of a call to
  * GWT.create(ExpenseRequestFactory.class)
@@ -59,7 +59,7 @@ public class EmployeeRequestImpl implements
     return new Request() {
       public String getRequestData() {
         return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
-            "Employee", "findAllEmployees", null, null));
+            ExpenseRequestFactory.ServerSideOperation.FIND_ALL_EMPLOYEES, null, null));
       }
     };
   }

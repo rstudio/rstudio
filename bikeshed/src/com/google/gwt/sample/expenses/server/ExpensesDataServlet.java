@@ -19,6 +19,7 @@ import com.google.gwt.requestfactory.shared.EntityKey;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.sample.expenses.server.domain.Storage;
+import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory.ServerSideOperation;
 import com.google.gwt.sample.expenses.shared.ReportKey;
 import com.google.gwt.valuestore.shared.Property;
 
@@ -61,52 +62,48 @@ public class ExpensesDataServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
 
-    String className = null;
-    String methodName = null;
+    ServerSideOperation operation = null;
     try {
       response.setStatus(HttpServletResponse.SC_OK);
       JSONObject topLevelJsonObject = new JSONObject(getContent(request));
-      className = topLevelJsonObject.getString(RequestDataManager.CLASS_TOKEN);
-      methodName = topLevelJsonObject.getString(RequestDataManager.METHOD_TOKEN);
+      operation = getOperationFromName(topLevelJsonObject.getString(RequestDataManager.OPERATION_TOKEN));
       PrintWriter writer = response.getWriter();
-      if (methodName.equals("sync")) {
-        sync(topLevelJsonObject.getString(RequestDataManager.CONTENT_TOKEN),
-            writer);
-      } else {
-        Class<?> classOperation = Class.forName("com.google.gwt.sample.expenses.server.domain."
-            + className);
-        Method methodOperation = null;
-        // TODO: check if method names must be unique in a class.
-        for (Method method : classOperation.getDeclaredMethods()) {
-          if (method.getName().equals(methodName)) {
-            methodOperation = method;
-            break;
+      switch (operation) {
+        case SYNC:
+          sync(topLevelJsonObject.getString(RequestDataManager.CONTENT_TOKEN),
+              writer);
+          break;
+        case FIND_ALL_EMPLOYEES:
+        case FIND_ALL_REPORTS:
+        case FIND_EMPLOYEE:
+        case FIND_REPORTS_BY_EMPLOYEE:
+          Class<?> domainClass = Class.forName(operation.getDomainClassName());
+          Method domainMethod = domainClass.getMethod(
+              operation.getDomainMethodName(), operation.getParameterTypes());
+          if (!Modifier.isStatic(domainMethod.getModifiers())) {
+            throw new IllegalArgumentException("the " + domainMethod.getName()
+                + " is not static");
           }
-        }
-        if (methodOperation == null) {
-          throw new IllegalArgumentException("unable to find " + methodName
-              + " in " + classOperation);
-        }
-        if (!Modifier.isStatic(methodOperation.getModifiers())) {
-          throw new IllegalArgumentException("the " + methodOperation.getName()
-              + " is not static");
-        }
-        Object args[] = RequestDataManager.getObjectsFromParameterMap(
-            getParameterMap(topLevelJsonObject),
-            methodOperation.getParameterTypes());
-        Object resultList = methodOperation.invoke(null, args);
-        if (!(resultList instanceof List)) {
-          throw new IllegalArgumentException("return value not a list "
-              + resultList);
-        }
-        JSONArray jsonArray = getJsonArray((List<?>) resultList);
-        writer.print(jsonArray.toString());
+          Object args[] = RequestDataManager.getObjectsFromParameterMap(
+              getParameterMap(topLevelJsonObject),
+              domainMethod.getParameterTypes());
+          Object resultList = domainMethod.invoke(null, args);
+          if (!(resultList instanceof List)) {
+            throw new IllegalArgumentException("return value not a list "
+                + resultList);
+          }
+          JSONArray jsonArray = getJsonArray((List<?>) resultList,
+              operation.getReturnType());
+          writer.print(jsonArray.toString());
+          break;
+        default:
+          throw new IllegalArgumentException("Unknow operation " + operation);
       }
       writer.flush();
       // TODO: clean exception handling code below.
     } catch (ClassNotFoundException e) {
       throw new IllegalArgumentException("unable to load the class: "
-          + className);
+          + operation.getDomainClassName());
     } catch (IllegalAccessException e) {
       throw new IllegalArgumentException(e);
     } catch (InvocationTargetException e) {
@@ -136,24 +133,16 @@ public class ExpensesDataServlet extends HttpServlet {
    * Converts the returnValue of a 'get' method to a JSONArray.
    * 
    * @param resultObject object returned by a 'get' method, must be of type
-   *          List<? extends Entity>
+   *          List<?>
    * @return the JSONArray
    */
-  private JSONArray getJsonArray(List<?> resultList)
-      throws ClassNotFoundException, SecurityException, JSONException,
+  private JSONArray getJsonArray(List<?> resultList,
+      Class<? extends EntityKey<?>> entityKeyClass) throws JSONException,
       NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     JSONArray jsonArray = new JSONArray();
     if (resultList.size() == 0) {
       return jsonArray;
     }
-    Object firstElement = resultList.get(0);
-    Class<?> entityClass = firstElement.getClass();
-
-    // TODO This brittle mapping from server name to client name is why we need
-    // the custom RequestFactory interface to serve as the config
-    Class<?> entityKeyClass = Class.forName("com.google.gwt.sample.expenses.shared."
-        + entityClass.getSimpleName() + "Key");
-
     EntityKey<?> key = (EntityKey<?>) entityKeyClass.getMethod("get").invoke(
         null);
     for (Object entityElement : resultList) {
@@ -188,6 +177,15 @@ public class ExpensesDataServlet extends HttpServlet {
     return methodName.toString();
   }
 
+  private ServerSideOperation getOperationFromName(String operationName) {
+    for (ServerSideOperation operation : ServerSideOperation.values()) {
+      if (operation.name().equals(operationName)) {
+        return operation;
+      }
+    }
+    throw new IllegalArgumentException("Unknown operation " + operationName);
+  }
+
   /**
    * @param jsonObject
    * @return
@@ -196,7 +194,7 @@ public class ExpensesDataServlet extends HttpServlet {
   private Map<String, String> getParameterMap(JSONObject jsonObject)
       throws JSONException {
     Map<String, String> parameterMap = new HashMap<String, String>();
-    Iterator keys = jsonObject.keys();
+    Iterator<?> keys = jsonObject.keys();
     while (keys.hasNext()) {
       String key = keys.next().toString();
       if (key.startsWith(RequestDataManager.PARAM_TOKEN)) {

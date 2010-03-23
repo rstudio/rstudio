@@ -27,7 +27,7 @@ import com.google.gwt.valuestore.shared.ValueRef;
 import com.google.gwt.valuestore.shared.ValueStore;
 
 /**
- * "Code generated" implementation of {ExpenseRequestFactory.ReportRequest}
+ * "Code generated" implementation of {ExpenseRequestFactory.ReportRequest}.
  * <p>
  * IRL this will be generated as a side effect of a call to
  * GWT.create(ExpenseRequestFactory.class)
@@ -60,7 +60,8 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
     return new Request() {
       public String getRequestData() {
         return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
-            "Report", "findAllReports", null, null));
+            ExpenseRequestFactory.ServerSideOperation.FIND_ALL_REPORTS, null,
+            null));
       }
 
     };
@@ -71,7 +72,8 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
     return new Request() {
       public String getRequestData() {
         return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
-            "Report", "findReportsByEmployee", new Object[] {id.get()}, null));
+            ExpenseRequestFactory.ServerSideOperation.FIND_REPORTS_BY_EMPLOYEE,
+            new Object[] {id.get()}, null));
       }
     };
   }

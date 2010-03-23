@@ -15,20 +15,22 @@
  */
 package com.google.gwt.requestfactory.shared.impl;
 
+import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory.ServerSideOperation;
+
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An utitlity class to manage the encoding and decoding of parameters and
+ * An utility class to manage the encoding and decoding of parameters and
  * methodNames.
  * 
  * TODO: add appropriate unit tests.
  */
 public class RequestDataManager {
 
-  public static final String CLASS_TOKEN = "className";
   public static final String CONTENT_TOKEN = "contentData";
   public static final String METHOD_TOKEN = "methodName";
+  public static final String OPERATION_TOKEN = "operation";
   public static final String PARAM_TOKEN = "param";
 
   public static Object[] getObjectsFromParameterMap(
@@ -46,11 +48,10 @@ public class RequestDataManager {
    * Returns the string that encodes the request data.
    * 
    */
-  public static Map<String, String> getRequestMap(String className,
-      String methodName, Object values[], String content) {
+  public static Map<String, String> getRequestMap(
+      ServerSideOperation operation, Object values[], String content) {
     Map<String, String> requestMap = new HashMap<String, String>();
-    requestMap.put(CLASS_TOKEN, className);
-    requestMap.put(METHOD_TOKEN, methodName);
+    requestMap.put(OPERATION_TOKEN, operation.name());
     if (values != null) {
       for (int i = 0; i < values.length; i++) {
         Object value = values[i];
