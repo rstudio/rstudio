@@ -25,30 +25,28 @@ import java.util.Map;
  */
 public class ClientRequestObject {
 
+  private static class MyJSO extends JavaScriptObject {
+    static native MyJSO create() /*-{
+      return {};
+    }-*/;
+
+    protected MyJSO() {
+    }
+
+    private native void put(String key, String value)/*-{
+      this[key] = value;
+    }-*/;
+
+    private native String toJsonString()/*-{
+      return JSON.stringify(this);
+    }-*/;
+  }
+
   public static String getRequestString(Map<String, String> requestData) {
-    ClientRequestObject requestObject = new ClientRequestObject();
-    requestObject.init();
+    MyJSO requestObject = MyJSO.create();
     for (String key : requestData.keySet()) {
       requestObject.put(key, requestData.get(key));
     }
     return requestObject.toJsonString();
   }
-
-  private JavaScriptObject map;
-
-  ClientRequestObject() {
-    init();
-  }
-
-  private native void init()/*-{
-    this.@com.google.gwt.requestfactory.client.gen.ClientRequestObject::map = {};
-  }-*/;
-
-  private native void put(String key, String value)/*-{
-    this.@com.google.gwt.requestfactory.client.gen.ClientRequestObject::map[key] = value;
-  }-*/;
-
-  private native String toJsonString()/*-{
-    return JSON.stringify(this.@com.google.gwt.requestfactory.client.gen.ClientRequestObject::map);
-  }-*/;
 }
