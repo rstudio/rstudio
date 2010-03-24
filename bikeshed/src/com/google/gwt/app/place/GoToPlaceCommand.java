@@ -13,40 +13,29 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.client;
+package com.google.gwt.app.place;
 
 import com.google.gwt.user.client.Command;
 
-import java.util.List;
-
 /**
- * Simple display of a list of entities.
+ * Command to change the app location.
+ * 
+ * @param <P> the type of place managed by the {@link PlaceController}
  */
-public interface EntityListView {
+public class GoToPlaceCommand<P extends Place> implements Command {
+  private final P place;
+  private final PlaceController<? super P> placeController;
 
   /**
-   * Interface implemented by a row of data to display.
+   * @param place
+   * @param placeController
    */
-  interface Row {
-    /**
-     * @return command to edit this row
-     */
-    Command getEditCommand();
-    
-    /**
-     * @return command to show the details for this row
-     */
-    Command getShowDetailsCommand();
-    
-    /**
-     * @return the strings to render for this row
-     */
-    List<String> getValues();
+  public GoToPlaceCommand(P place, PlaceController<? super P> placeController) {
+    this.place = place;
+    this.placeController = placeController;
   }
-  
-  void setColumnNames(List<String> names);
-  
-  void setHeading(String text);
-  
-  void setRowData(List<Row> rows);
+
+  public void execute() {
+    placeController.goTo(place);
+  }
 }

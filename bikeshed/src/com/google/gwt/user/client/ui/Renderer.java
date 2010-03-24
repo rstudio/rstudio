@@ -13,24 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.client.place;
-
-import com.google.gwt.sample.expenses.shared.ExpensesEntityKey;
+package com.google.gwt.user.client.ui;
 
 /**
- * Place in the app that lists all Entities of a type.
+ * An object that can render other objects of a particular type into plain-text
+ * form.
+ * 
+ * @param <T> the type to render
  */
-public class EntityListPlace extends AbstractExpensesPlace {
-  private final ExpensesEntityKey<?> key;
-
+public interface Renderer<T> {
   /**
-   * @param key the schema of the entities at this place
+   * Renders {@code object} as plain text.
    */
-  public EntityListPlace(ExpensesEntityKey<?> key) {
-    this.key = key;
-  }
-  
-  public ExpensesEntityKey<?> getKey() {
-    return key;
-  }
+  String render(T object);
 }

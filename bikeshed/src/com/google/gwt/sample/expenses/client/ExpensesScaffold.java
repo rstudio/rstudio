@@ -23,9 +23,11 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.sample.expenses.client.place.ExpensesScaffoldPlace;
+import com.google.gwt.sample.expenses.client.place.EntityListPlace;
+import com.google.gwt.sample.expenses.client.place.AbstractExpensesPlace;
 import com.google.gwt.sample.expenses.client.place.Places;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 
 /**
@@ -34,23 +36,38 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 public class ExpensesScaffold implements EntryPoint {
 
   public void onModuleLoad() {
+
+    // App controllers and services
     final ExpenseRequestFactory requests = GWT.create(ExpenseRequestFactory.class);
     final HandlerManager eventBus = new HandlerManager(null);
-    final PlaceController<ExpensesScaffoldPlace> placeController = new PlaceController<ExpensesScaffoldPlace>(
+    final PlaceController<AbstractExpensesPlace> placeController = new PlaceController<AbstractExpensesPlace>(
         eventBus);
+    final Places places = new Places(placeController);
 
+    // Renderers
+    final EntityNameRenderer entityNamer = new EntityNameRenderer();
+    final ListPlaceRenderer listPlaceNamer = new ListPlaceRenderer(entityNamer);
+    
+    // Top level UI
     final ExpensesScaffoldShell shell = new ExpensesScaffoldShell();
 
-    PlacePicker<ExpensesScaffoldPlace> placePicker = new PlacePicker<ExpensesScaffoldPlace>(
-        shell.getPlacesBox(), placeController);
-    placePicker.setPlaces(Places.getListPlacesAndNames());
+    // Left side
+    PlacePicker<EntityListPlace> placePicker = new PlacePicker<EntityListPlace>(
+        shell.getPlacesBox(), placeController, listPlaceNamer);
+    placePicker.setPlaces(places.getListPlaces());
 
-    // TODO Shouldn't create this until it's actually needed
+    // Shared view for entity lists. Perhaps real app would have
+    // a separate view per type?
     final TableEntityListView entitiesView = new TableEntityListView();
+    eventBus.addHandler(PlaceChanged.TYPE, new ListRequester(places,
+        shell.getBody(), entitiesView, requests, listPlaceNamer));
+    
+    // Shared view for entity details. Again, perhaps real app should not share
+    final HTML detailsView = new HTML();
+    eventBus.addHandler(PlaceChanged.TYPE, new DetailsRequester(entityNamer,
+        shell.getBody(), detailsView));
 
-    eventBus.addHandler(PlaceChanged.TYPE, new ListRequester(shell.getBody(),
-        entitiesView, requests));
-
+    // Hide the loading method
     Element loading = Document.get().getElementById("loading");
     loading.getParentElement().removeChild(loading);
 

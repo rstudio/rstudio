@@ -15,13 +15,15 @@
  */
 package com.google.gwt.sample.expenses.client;
 
-import com.google.gwt.app.place.Place;
 import com.google.gwt.app.place.PlaceChanged;
 import com.google.gwt.sample.expenses.client.place.EntityListPlace;
 import com.google.gwt.sample.expenses.client.place.Places;
 import com.google.gwt.sample.expenses.shared.EmployeeKey;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
+import com.google.gwt.sample.expenses.shared.ExpensesEntityKey;
+import com.google.gwt.sample.expenses.shared.ExpensesEntityVisitor;
 import com.google.gwt.sample.expenses.shared.ReportKey;
+import com.google.gwt.user.client.ui.Renderer;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.valuestore.shared.Property;
 
@@ -29,60 +31,73 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * In charge of requesting and displaying the appropriate entity lists
- * when the user goes to an {@link EntityListPlace}.
+ * In charge of requesting and displaying the appropriate entity lists when the
+ * user goes to an {@link EntityListPlace}.
  */
 public final class ListRequester implements PlaceChanged.Handler {
 
   private final SimplePanel panel;
   private final TableEntityListView entitiesView;
-  private final List<Property<ReportKey, ?>> reportColumns;
   private final ExpenseRequestFactory requests;
-  private final List<Property<EmployeeKey, ?>> employeeColumns;
+  private final Renderer<EntityListPlace> listNameFilter;
+  private final Places places;
 
-  /**
-   * @param shell
-   * @param entitiesView
-   * @param requests
-   */
-  public ListRequester(SimplePanel panel, TableEntityListView entitiesView,
-      ExpenseRequestFactory requests) {
+  public ListRequester(Places places, SimplePanel panel,
+      TableEntityListView entitiesView, ExpenseRequestFactory requests,
+      Renderer<EntityListPlace> renderer) {
+    this.places = places;
     this.panel = panel;
     this.entitiesView = entitiesView;
     this.requests = requests;
-
-    employeeColumns = new ArrayList<Property<EmployeeKey, ?>>();
-    employeeColumns.add(EmployeeKey.get().getUserName());
-    employeeColumns.add(EmployeeKey.get().getDisplayName());
-
-    reportColumns = new ArrayList<Property<ReportKey, ?>>();
-    reportColumns.add(ReportKey.get().getCreated());
-    reportColumns.add(ReportKey.get().getPurpose());
+    this.listNameFilter = renderer;
   }
 
   public void onPlaceChanged(PlaceChanged event) {
-    // TODO all this "instanceof" and "if else" stuff is not so great
-
-    Place newPlace = event.getNewPlace();
-    if (!(newPlace instanceof EntityListPlace)) {
+    if (!(event.getNewPlace() instanceof EntityListPlace)) {
       return;
     }
+    EntityListPlace newPlace = (EntityListPlace) event.getNewPlace();
+    final String name = listNameFilter.render(newPlace);
+
+    final ExpensesEntityKey<?> key = newPlace.getKey();
+
+    // TODO Would be simpler if every entity key knew its find method
+    key.accept(new ExpensesEntityVisitor() {
+
+      public void visit(EmployeeKey employeeKey) {
+        List<Property<EmployeeKey, ?>> columns = getEmployeeColumns();
+        EntityListPresenter<EmployeeKey> presenter = new EntityListPresenter<EmployeeKey>(
+            name, entitiesView, columns, places);
+        requests.employeeRequest().findAllEmployees().forProperties(columns).to(
+            presenter).fire();
+      }
+
+      public void visit(ReportKey reportKey) {
+        List<Property<ReportKey, ?>> columns = getReportColumns();
+        EntityListPresenter<ReportKey> presenter = new EntityListPresenter<ReportKey>(
+            name, entitiesView, columns, places);
+        requests.reportRequest().findAllReports().forProperties(columns).to(
+            presenter).fire();
+      }
+    });
 
     if (entitiesView.getParent() == null) {
       panel.clear();
       panel.add(entitiesView);
     }
+  }
 
-    if (newPlace == Places.EMPLOYEE_LIST) {
-      EntityList<EmployeeKey> list = new EntityList<EmployeeKey>("Employees",
-          entitiesView, employeeColumns);
-      requests.employeeRequest().findAllEmployees().forProperties(
-          employeeColumns).to(list).fire();
-    } else if (newPlace == Places.REPORT_LIST) {
-      EntityList<ReportKey> list = new EntityList<ReportKey>("Reports",
-          entitiesView, reportColumns);
-      requests.reportRequest().findAllReports().forProperties(reportColumns).to(
-          list).fire();
-    }
+  private List<Property<EmployeeKey, ?>> getEmployeeColumns() {
+    List<Property<EmployeeKey, ?>> columns = new ArrayList<Property<EmployeeKey, ?>>();
+    columns.add(EmployeeKey.get().getUserName());
+    columns.add(EmployeeKey.get().getDisplayName());
+    return columns;
+  }
+
+  private List<Property<ReportKey, ?>> getReportColumns() {
+    List<Property<ReportKey, ?>> columns = new ArrayList<Property<ReportKey, ?>>();
+    columns.add(ReportKey.get().getCreated());
+    columns.add(ReportKey.get().getPurpose());
+    return columns;
   }
 }

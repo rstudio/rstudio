@@ -18,7 +18,7 @@ package com.google.gwt.sample.expenses.client;
 import com.google.gwt.app.client.ListBoxPlacePickerView;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.sample.expenses.client.place.ExpensesScaffoldPlace;
+import com.google.gwt.sample.expenses.client.place.EntityListPlace;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -34,7 +34,7 @@ public class ExpensesScaffoldShell extends Composite {
   private static final Binder BINDER = GWT.create(Binder.class);
   
   @UiField SimplePanel body;
-  @UiField ListBoxPlacePickerView<ExpensesScaffoldPlace> placesBox;
+  @UiField ListBoxPlacePickerView<EntityListPlace> placesBox;
   @UiField DivElement error;
   
   public ExpensesScaffoldShell() {
@@ -51,7 +51,7 @@ public class ExpensesScaffoldShell extends Composite {
   /**
    * @return the banner
    */
-  public ListBoxPlacePickerView<ExpensesScaffoldPlace> getPlacesBox() {
+  public ListBoxPlacePickerView<EntityListPlace> getPlacesBox() {
     return placesBox;
   }
 

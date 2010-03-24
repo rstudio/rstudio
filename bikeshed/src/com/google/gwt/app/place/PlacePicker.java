@@ -15,7 +15,10 @@
  */
 package com.google.gwt.app.place;
 
-import java.util.Map;
+import com.google.gwt.user.client.ui.Renderer;
+
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * Presenter that goes to {@link Place}s the user picks.
@@ -25,19 +28,27 @@ import java.util.Map;
 public class PlacePicker<P extends Place> implements
     PlacePickerView.Listener<P> {
   private final PlacePickerView<P> view;
-  private final PlaceController<P> placeController;
+  private final PlaceController<? super P> placeController;
+  private final Renderer<P> renderer;
 
-  public PlacePicker(PlacePickerView<P> view, PlaceController<P> placeController) {
+  public PlacePicker(PlacePickerView<P> view,
+      PlaceController<? super P> placeController, Renderer<P> renderer) {
+    // ? super P to allow us to pick subtypes of the PlaceController's type
     this.view = view;
     this.placeController = placeController;
     this.view.setListener(this);
+    this.renderer = renderer;
   }
 
   public void placePicked(P place) {
     placeController.goTo(place);
   }
 
-  public void setPlaces(Map<? extends P, String> places) {
-    view.setValues(places);
+  public void setPlaces(List<? extends P> places) {
+    LinkedHashMap<P, String> map = new LinkedHashMap<P, String>();
+    for (P place : places) {
+      map.put(place, renderer.render(place));
+    }
+    view.setValues(map);
   }
 }

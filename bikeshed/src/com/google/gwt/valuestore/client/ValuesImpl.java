@@ -61,7 +61,7 @@ public final class ValuesImpl<T> extends JavaScriptObject implements Values<T> {
     return nativeGet(property);
   }
 
-  public native T getPropertyHolder() /*-{
+  public native T getEntityKey() /*-{
     return this['__key'];
   }-*/;
 

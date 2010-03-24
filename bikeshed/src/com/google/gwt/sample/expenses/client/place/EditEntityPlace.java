@@ -15,29 +15,15 @@
  */
 package com.google.gwt.sample.expenses.client.place;
 
+import com.google.gwt.sample.expenses.shared.ExpensesEntityKey;
+import com.google.gwt.valuestore.shared.Values;
+
 /**
- * Implemented by filters of {@link ExpensesScaffoldPlace}.
- * 
- * @param <T> the type to filter to
+ * Place in the app to edit an entity.
  */
-public interface ExpensesScaffoldPlaceFilter<T> {
+public class EditEntityPlace extends ExpenseEntityPlace {
 
-//  /**
-//   * @param editEntityPlace
-//   * @return
-//   */
-//  T filter(EditEntityPlace editEntityPlace);
-//
-//  /**
-//   * @param entityDetailsPlace
-//   * @return
-//   */
-//  T filter(EntityDetailsPlace entityDetailsPlace);
-
-  /**
-   * @param entityListPlace
-   * @return
-   */
-  T filter(EntityListPlace entityListPlace);
-
+  public EditEntityPlace(Values<? extends ExpensesEntityKey<?>> entity) {
+    super(entity);
+  }
 }

@@ -16,21 +16,28 @@
 package com.google.gwt.sample.expenses.client.place;
 
 import com.google.gwt.sample.expenses.shared.ExpensesEntityKey;
+import com.google.gwt.valuestore.shared.Values;
 
 /**
- * Place in the app that lists all Entities of a type.
+ * A place in the app focused on a particular entity.
  */
-public class EntityListPlace extends AbstractExpensesPlace {
-  private final ExpensesEntityKey<?> key;
+public abstract class ExpenseEntityPlace extends AbstractExpensesPlace {
+
+  private final Values<? extends ExpensesEntityKey<?>> entity;
 
   /**
-   * @param key the schema of the entities at this place
+   * @param entity
    */
-  public EntityListPlace(ExpensesEntityKey<?> key) {
-    this.key = key;
+  public ExpenseEntityPlace(Values<? extends ExpensesEntityKey<?>> entity) {
+
+    this.entity = entity;
   }
-  
-  public ExpensesEntityKey<?> getKey() {
-    return key;
+
+  /**
+   * @return the entity
+   */
+  public Values<? extends ExpensesEntityKey<?>> getEntity() {
+    return entity;
   }
+
 }

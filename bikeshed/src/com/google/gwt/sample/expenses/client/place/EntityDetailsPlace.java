@@ -16,21 +16,19 @@
 package com.google.gwt.sample.expenses.client.place;
 
 import com.google.gwt.sample.expenses.shared.ExpensesEntityKey;
+import com.google.gwt.valuestore.shared.Values;
 
 /**
- * Place in the app that lists all Entities of a type.
+ * Place in the app to see details of an entity.
  */
-public class EntityListPlace extends AbstractExpensesPlace {
-  private final ExpensesEntityKey<?> key;
+public class EntityDetailsPlace extends ExpenseEntityPlace {
 
   /**
-   * @param key the schema of the entities at this place
+   * @param e
    */
-  public EntityListPlace(ExpensesEntityKey<?> key) {
-    this.key = key;
-  }
-  
-  public ExpensesEntityKey<?> getKey() {
-    return key;
+  public EntityDetailsPlace(Values<? extends ExpensesEntityKey<?>> entity) {
+    // TODO it is bad to be passing the values rather than an id. Want
+    // to force UI code to request the data it needs
+    super(entity);
   }
 }

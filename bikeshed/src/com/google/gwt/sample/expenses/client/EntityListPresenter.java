@@ -15,7 +15,9 @@
  */
 package com.google.gwt.sample.expenses.client;
 
-import com.google.gwt.requestfactory.shared.EntityKey;
+import com.google.gwt.sample.expenses.client.place.Places;
+import com.google.gwt.sample.expenses.shared.ExpensesEntityKey;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
@@ -24,19 +26,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Base class for showing a list of entities.
+ * Presenter that shows a list of entities and provides "edit" and "show"
+ * commands for them.
  * 
  * @param <E> the type of entity listed
  */
-public class EntityList<E extends EntityKey<E>> implements
+public class EntityListPresenter<E extends ExpensesEntityKey<?>> implements
     HasValueList<Values<E>> {
-  protected final EntityListView view;
-  protected final List<Property<E, ?>> properties;
+  private final EntityListView view;
+  private final List<Property<E, ?>> properties;
+  private final Places places;
 
-  public EntityList(String heading, EntityListView view, List<Property<E, ?>> properties) {
+  public EntityListPresenter(String heading, EntityListView view,
+      List<Property<E, ?>> properties, Places places) {
     this.view = view;
     view.setHeading(heading);
     this.properties = properties;
+    this.places = places;
 
     List<String> names = new ArrayList<String>();
     for (Property<E, ?> property : properties) {
@@ -51,17 +57,32 @@ public class EntityList<E extends EntityKey<E>> implements
   }
 
   public void setValueList(List<Values<E>> newValues) {
-    List<List<String>> strings = new ArrayList<List<String>>();
+    List<EntityListView.Row> rows = new ArrayList<EntityListView.Row>();
 
-    for (Values<E> values : newValues) {
-      List<String> row = new ArrayList<String>();
+    for (final Values<E> values : newValues) {
+      final List<String> strings = new ArrayList<String>();
       for (Property<E, ?> property : properties) {
-        row.add(values.get(property).toString());
+        strings.add(values.get(property).toString());
       }
-      strings.add(row);
+      EntityListView.Row row = new EntityListView.Row() {
+
+        public Command getEditCommand() {
+          return places.getGoToEditFor(values);
+        }
+
+        public Command getShowDetailsCommand() {
+          return places.getGoToDetailsFor(values);
+        }
+
+        public List<String> getValues() {
+          return strings;
+        }
+
+      };
+      rows.add(row);
     }
 
-    view.setValues(strings);
+    view.setRowData(rows);
   }
 
   public void setValueListSize(int size, boolean exact) {

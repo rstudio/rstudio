@@ -20,8 +20,6 @@ import com.google.gwt.app.place.Place;
 /**
  * Base type of places for the Expenses Scaffold app.
  */
-public abstract class ExpensesScaffoldPlace extends Place {
-  public abstract void accept(ExpensesScaffoldPlaceVisitor visitor);
-
-  public abstract <T> T accept(ExpensesScaffoldPlaceFilter<T> filter);
+public abstract class AbstractExpensesPlace extends Place {
+  // TODO is there actual value in this base class?
 }

@@ -18,12 +18,15 @@ package com.google.gwt.sample.expenses.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableColElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
@@ -31,7 +34,8 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 
 /**
- * Interim table based implementation of {@link EntityListView}.
+ * Interim table based implementation of {@link EntityListView}. Will be replaced
+ * by some descendant of {@link com.google.gwt.bikeshed.list.client.PagingTableListView<}
  */
 public class TableEntityListView extends Widget implements EntityListView {
   interface Binder extends UiBinder<Element, TableEntityListView> {
@@ -44,8 +48,27 @@ public class TableEntityListView extends Widget implements EntityListView {
   @UiField TableRowElement header;
   @UiField TableElement table;
 
+  private List<Row> values;
+
   public TableEntityListView() {
     setElement(BINDER.createAndBindUi(this));
+    addDomHandler(new ClickHandler() {
+
+      public void onClick(ClickEvent event) {
+        EventTarget target = event.getNativeEvent().getEventTarget();
+        if (Element.is(target)) {
+          Element e = Element.as(target);
+          String tagName = e.getTagName().toLowerCase();
+          if ("td".equals(tagName)) {
+            TableCellElement cell = TableCellElement.as(e);
+            int rowIndex = TableRowElement.as(cell.getParentElement()).getRowIndex();
+//            int cellIndex = cell.getCellIndex();
+            values.get(rowIndex - 1).getShowDetailsCommand().execute(); 
+          }
+        }
+      }
+      
+    }, ClickEvent.getType());
   }
 
   public void setColumnNames(List<String> names) {
@@ -59,12 +82,13 @@ public class TableEntityListView extends Widget implements EntityListView {
     heading.setInnerText(text);
   }
 
-  public void setValues(List<List<String>> newValues) {
+  public void setRowData(List<Row> newValues) {
+    this.values = newValues;
     int r = 1; // skip header
     NodeList<TableRowElement> tableRows = table.getRows();
 
     for (int i = 0; i < newValues.size(); i++) {
-      List<String> valueRow = newValues.get(i);
+      List<String> valueRow = newValues.get(i).getValues();
 
       if (r < tableRows.getLength()) {
         reuseRow(r, tableRows, valueRow);

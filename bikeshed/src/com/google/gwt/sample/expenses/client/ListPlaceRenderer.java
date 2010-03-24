@@ -15,38 +15,25 @@
  */
 package com.google.gwt.sample.expenses.client;
 
-import com.google.gwt.user.client.Command;
-
-import java.util.List;
+import com.google.gwt.sample.expenses.client.place.EntityListPlace;
+import com.google.gwt.sample.expenses.shared.ExpensesEntityKey;
+import com.google.gwt.user.client.ui.Renderer;
 
 /**
- * Simple display of a list of entities.
+ * Renders {@link EntityListPlace}s for display to users.
  */
-public interface EntityListView {
+public class ListPlaceRenderer implements Renderer<EntityListPlace> {
+
+  private final Renderer<ExpensesEntityKey<?>> entityRenderer;
 
   /**
-   * Interface implemented by a row of data to display.
+   * @param entityRenderer
    */
-  interface Row {
-    /**
-     * @return command to edit this row
-     */
-    Command getEditCommand();
-    
-    /**
-     * @return command to show the details for this row
-     */
-    Command getShowDetailsCommand();
-    
-    /**
-     * @return the strings to render for this row
-     */
-    List<String> getValues();
+  public ListPlaceRenderer(Renderer<ExpensesEntityKey<?>> entityRenderer) {
+    this.entityRenderer = entityRenderer;
   }
-  
-  void setColumnNames(List<String> names);
-  
-  void setHeading(String text);
-  
-  void setRowData(List<Row> rows);
+
+  public String render(EntityListPlace object) {
+    return entityRenderer.render(object.getKey());
+  }
 }
