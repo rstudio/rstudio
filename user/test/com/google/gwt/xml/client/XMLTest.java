@@ -383,15 +383,19 @@ public class XMLTest extends GWTTestCase {
     for (Iterator<Node> iter = textLikeNodes.iterator(); iter.hasNext();) {
       CharacterData textLike = (CharacterData) iter.next();
       textLike.setData(b.toString());
+      // CHECKSTYLE_OFF
       assertEquals("initialLength type:" + textLike.getNodeType(), 30000 - 32,
           textLike.getLength());
       assertEquals("initialEquals", textLike.getData(), b.toString());
+      // CHECKSTYLE_ON
     }
     for (int i = 32; i < 29900; i += 100) {
       for (Iterator<Node> iter = textLikeNodes.iterator(); iter.hasNext();) {
         CharacterData textLike = (CharacterData) iter.next();
+        // CHECKSTYLE_OFF
         assertEquals("substring type:" + textLike.getNodeType() + " count: "
             + i, b.substring(i, i + 100), textLike.substringData(i, 100));
+        // CHECKSTYLE_ON
       }
     }
     for (Iterator<Node> iter = textLikeNodes.iterator(); iter.hasNext();) {
@@ -399,10 +403,12 @@ public class XMLTest extends GWTTestCase {
       CharacterData textLike = (CharacterData) iter.next();
       textLike.deleteData(100, 100);
       bTemp.delete(100, 200);
+      // CHECKSTYLE_OFF
       assertEquals("deleteLength type:" + textLike.getNodeType(),
           bTemp.length(), textLike.getData().length());
       assertEquals("deleteEquals type:" + textLike.getNodeType(),
           bTemp.toString(), textLike.getData());
+      // CHECKSTYLE_ON
       bTemp.setLength(0);
     }
     for (Iterator<Node> iter = textLikeNodes.iterator(); iter.hasNext();) {
@@ -411,10 +417,12 @@ public class XMLTest extends GWTTestCase {
       textLike.setData(bTemp.toString());
       textLike.replaceData(50, 100, " ");
       bTemp.replace(50, 150, " ");
+      // CHECKSTYLE_OFF
       assertEquals("replaceLength type:" + textLike.getNodeType(),
           bTemp.length(), textLike.getData().length());
       assertEquals("replaceEquals type:" + textLike.getNodeType(),
           bTemp.toString(), textLike.getData());
+      // CHECKSTYLE_ON
       bTemp.setLength(0);
     }
     for (Iterator<Node> iter = textLikeNodes.iterator(); iter.hasNext();) {

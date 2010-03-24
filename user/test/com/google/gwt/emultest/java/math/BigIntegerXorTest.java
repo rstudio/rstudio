@@ -42,11 +42,11 @@ import com.google.gwt.emultest.java.util.EmulTestBase;
 import java.math.BigInteger;
 
 /**
- * Class: java.math.BigInteger Method: xor
+ * Class: java.math.BigInteger Method: xor.
  */
 public class BigIntegerXorTest extends EmulTestBase {
   /**
-   * Xor for two negative numbers; the first is longer
+   * Xor for two negative numbers; the first is longer.
    */
   public void testNegNegFirstLonger() {
     String numA = "-2837462783428374767845648748973847593874837948575684767";
@@ -59,7 +59,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for two negative numbers; the first is shorter
+   * Xor for two negative numbers; the first is shorter.
    */
   public void testNegNegFirstShorter() {
     String numA = "293478573489347658763745839457637";
@@ -72,7 +72,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for two negative numbers of the same length
+   * Xor for two negative numbers of the same length.
    */
   public void testNegNegSameLength() {
     String numA = "-283746278342837476784564875684767";
@@ -85,7 +85,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for a negative number and zero
+   * Xor for a negative number and zero.
    */
   public void testNegPos() {
     String numA = "-27384627835298756289327365";
@@ -98,7 +98,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for a negative and a positive numbers; the first is longer
+   * Xor for a negative and a positive numbers; the first is longer.
    */
   public void testNegPosFirstLonger() {
     String numA = "-2837462783428374767845648748973847593874837948575684767";
@@ -111,7 +111,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for two negative numbers; the first is shorter
+   * Xor for two negative numbers; the first is shorter.
    */
   public void testNegPosFirstShorter() {
     String numA = "-293478573489347658763745839457637";
@@ -124,7 +124,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for two numbers of different signs and the same length
+   * Xor for two numbers of different signs and the same length.
    */
   public void testNegPosSameLength() {
     String numA = "-283746278342837476784564875684767";
@@ -137,7 +137,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for one and one
+   * Xor for one and one.
    */
   public void testOneOne() {
     String numA = "1";
@@ -150,7 +150,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for a positive and a negative numbers; the first is longer
+   * Xor for a positive and a negative numbers; the first is longer.
    */
   public void testPosNegFirstLonger() {
     String numA = "2837462783428374767845648748973847593874837948575684767";
@@ -163,7 +163,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for a positive and a negative number; the first is shorter
+   * Xor for a positive and a negative number; the first is shorter.
    */
   public void testPosNegFirstShorter() {
     String numA = "293478573489347658763745839457637";
@@ -176,7 +176,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for two numbers of different signs and the same length
+   * Xor for two numbers of different signs and the same length.
    */
   public void testPosNegSameLength() {
     String numA = "283746278342837476784564875684767";
@@ -189,7 +189,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for two positive numbers; the first is longer
+   * Xor for two positive numbers; the first is longer.
    */
   public void testPosPosFirstLonger() {
     String numA = "2837462783428374767845648748973847593874837948575684767";
@@ -202,7 +202,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for two positive numbers; the first is shorter
+   * Xor for two positive numbers; the first is shorter.
    */
   public void testPosPosFirstShorter() {
     String numA = "293478573489347658763745839457637";
@@ -215,7 +215,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for two positive numbers of the same length
+   * Xor for two positive numbers of the same length.
    */
   public void testPosPosSameLength() {
     String numA = "283746278342837476784564875684767";
@@ -228,7 +228,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for a positive number and zero
+   * Xor for a positive number and zero.
    */
   public void testPosZero() {
     String numA = "27384627835298756289327365";
@@ -241,7 +241,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for zero and a negative number
+   * Xor for zero and a negative number.
    */
   public void testZeroNeg() {
     String numA = "0";
@@ -254,7 +254,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for zero and one
+   * Xor for zero and one.
    */
   public void testZeroOne() {
     String numA = "0";
@@ -267,7 +267,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for zero and a positive number
+   * Xor for zero and a positive number.
    */
   public void testZeroPos() {
     String numA = "0";
@@ -280,7 +280,7 @@ public class BigIntegerXorTest extends EmulTestBase {
   }
 
   /**
-   * Xor for zero and zero
+   * Xor for zero and zero.
    */
   public void testZeroZero() {
     String numA = "0";

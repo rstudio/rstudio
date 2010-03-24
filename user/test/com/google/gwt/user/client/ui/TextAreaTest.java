@@ -16,7 +16,6 @@
 
 package com.google.gwt.user.client.ui;
 
-
 /**
  * Tests a {@link TextArea}.
  */

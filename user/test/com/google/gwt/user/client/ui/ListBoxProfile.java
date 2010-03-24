@@ -45,7 +45,9 @@ public class ListBoxProfile extends WidgetProfile {
     RootPanel.get().add(b);
     resetTimer();
     for (int i = 0; i < num; i++) {
+      // CHECKSTYLE_OFF
       b.addItem("item" + i, "i:" + i);
+      // CHECKSTYLE_ON
     }
     timing("add(" + num + ")");
   }

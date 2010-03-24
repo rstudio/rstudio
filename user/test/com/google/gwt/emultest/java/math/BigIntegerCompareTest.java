@@ -43,11 +43,11 @@ import java.math.BigInteger;
 
 /**
  * Class: java.math.BigInteger Methods: abs, compareTo, equals, max, min,
- * negate, signum
+ * negate, signum.
  */
 public class BigIntegerCompareTest extends EmulTestBase {
   /**
-   * abs() for a negative number
+   * abs() for a negative number.
    */
   public void testAbsNegative() {
     byte aBytes[] = {1, 2, 3, 4, 5, 6, 7};
@@ -64,7 +64,7 @@ public class BigIntegerCompareTest extends EmulTestBase {
   }
 
   /**
-   * abs() for a positive number
+   * abs() for a positive number.
    */
   public void testAbsPositive() {
     byte aBytes[] = {1, 2, 3, 4, 5, 6, 7};

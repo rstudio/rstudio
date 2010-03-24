@@ -43,7 +43,7 @@ import java.math.BigInteger;
 
 /**
  * Class: java.math.BigInteger Methods: intValue, longValue, toByteArray(),
- * valueOf(long val), floatValue(), doubleValue()
+ * valueOf(long val), floatValue(), doubleValue().
  */
 public class BigIntegerConvertTest extends EmulTestBase {
   /**

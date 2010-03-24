@@ -137,7 +137,9 @@ class ElementParserTester {
     b.append(xml);
     b.append("</ui:UiBinder>");
 
+    // CHECKSTYLE_OFF
     String tag = "g:" + parsedType.getName();
+    // CHECKSTYLE_ON
     parser.parse(getElem(b.toString(), tag), FIELD_NAME, parsedType, writer);
     return fieldManager.lookup(FIELD_NAME);
   }

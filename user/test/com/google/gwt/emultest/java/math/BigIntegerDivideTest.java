@@ -43,11 +43,11 @@ import java.math.BigInteger;
 
 /**
  * Class: java.math.BigInteger Methods: divide, remainder, mod, and
- * divideAndRemainder
+ * divideAndRemainder.
  */
 public class BigIntegerDivideTest extends EmulTestBase {
   /**
-   * Divide by zero
+   * Divide by zero.
    */
   public void testCase1() {
     byte aBytes[] = {1, 2, 3, 4, 5, 6, 7};
@@ -158,7 +158,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * Remainder of division by zero
+   * Remainder of division by zero.
    */
   public void testCase15() {
     byte aBytes[] = {1, 2, 3, 4, 5, 6, 7};
@@ -177,7 +177,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * Remainder of division of equal numbers
+   * Remainder of division of equal numbers.
    */
   public void testCase16() {
     byte aBytes[] = {-127, 100, 56, 7, 98, -1, 39, -128, 127};
@@ -197,7 +197,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * Remainder of division of two positive numbers
+   * Remainder of division of two positive numbers.
    */
   public void testCase17() {
     byte aBytes[] = {-127, 100, 56, 7, 98, -1, 39, -128, 127, 75};
@@ -217,7 +217,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * Remainder of division of two negative numbers
+   * Remainder of division of two negative numbers.
    */
   public void testCase18() {
     byte aBytes[] = {-127, 100, 56, 7, 98, -1, 39, -128, 127, 75};
@@ -258,7 +258,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * Divide by ZERO
+   * Divide by ZERO.
    */
   public void testCase2() {
     byte aBytes[] = {1, 2, 3, 4, 5, 6, 7};
@@ -326,7 +326,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * mod when modulus is negative
+   * mod when modulus is negative.
    */
   public void testCase22() {
     byte aBytes[] = {1, 2, 3, 4, 5, 6, 7};
@@ -345,7 +345,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * mod when a divisor is positive
+   * mod when a divisor is positive.
    */
   public void testCase23() {
     byte aBytes[] = {-127, 100, 56, 7, 98, -1, 39, -128, 127, 75};
@@ -365,7 +365,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * mod when a divisor is negative
+   * mod when a divisor is negative.
    */
   public void testCase24() {
     byte aBytes[] = {-127, 100, 56, 7, 98, -1, 39, -128, 127, 75};
@@ -385,7 +385,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * Divide two equal positive numbers
+   * Divide two equal positive numbers.
    */
   public void testCase3() {
     byte aBytes[] = {-127, 100, 56, 7, 98, -1, 39, -128, 127};
@@ -586,7 +586,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * Divide the number of multi digits by the number of one digit
+   * Divide the number of multi digits by the number of one digit.
    */
   public void testDivisionKnuthMultiDigitsByOneDigit() {
     byte aBytes[] = {113, -83, 123, -5, 18, -34, 67, 39, -29};
@@ -606,7 +606,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * Divide the number of one digit by the number of one digit
+   * Divide the number of one digit by the number of one digit.
    */
   public void testDivisionKnuthOneDigitByOneDigit() {
     byte aBytes[] = {113, -83, 123, -5};
@@ -626,7 +626,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * Tests the step D6 from the Knuth algorithm
+   * Tests the step D6 from the Knuth algorithm.
    */
   public void testRemainderKnuth1() {
     byte aBytes[] = {-9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1};
@@ -646,7 +646,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * Divide the number of multi digits by the number of one digit
+   * Divide the number of multi digits by the number of one digit.
    */
   public void testRemainderKnuthMultiDigitsByOneDigit() {
     byte aBytes[] = {113, -83, 123, -5, 18, -34, 67, 39, -29};
@@ -666,7 +666,7 @@ public class BigIntegerDivideTest extends EmulTestBase {
   }
 
   /**
-   * Divide the number of one digit by the number of one digit
+   * Divide the number of one digit by the number of one digit.
    */
   public void testRemainderKnuthOneDigitByOneDigit() {
     byte aBytes[] = {113, -83, 123, -5};

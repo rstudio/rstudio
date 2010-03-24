@@ -26,7 +26,7 @@ import com.google.gwt.user.client.Random;
 import com.google.gwt.user.client.ui.RootPanel;
 
 /**
- * Tests {@link UiBinderUtil}
+ * Tests {@link UiBinderUtil}.
  */
 public class UiBinderUtilTest extends GWTTestCase {
 

@@ -529,7 +529,7 @@ public class RegExpTest extends GWTTestCase {
   }
 
   /**
-   * Failed in all modes due to HtmlUnit bug:
+   * Failed in all modes due to HtmlUnit bug.  See:
    * https://sourceforge.net/tracker/?func=detail&aid=2949446&group_id=47038&atid=448266
    */
   @DoNotRunWith({Platform.HtmlUnitBug})

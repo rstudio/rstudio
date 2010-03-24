@@ -42,12 +42,12 @@ import com.google.gwt.emultest.java.util.EmulTestBase;
 import java.math.BigInteger;
 
 /**
- * Class: java.math.BigInteger Method: add
+ * Class: java.math.BigInteger Method: add.
  */
 public class BigIntegerAddTest extends EmulTestBase {
 
   /**
-   * Add two positive numbers of the same length
+   * Add two positive numbers of the same length.
    */
   public void testCase1() {
     byte aBytes[] = {1, 2, 3, 4, 5, 6, 7, 1, 2, 3};
@@ -67,7 +67,7 @@ public class BigIntegerAddTest extends EmulTestBase {
   }
 
   /**
-   * Add two negative numbers of the same length
+   * Add two negative numbers of the same length.
    */
   public void testCase2() {
     byte aBytes[] = {1, 2, 3, 4, 5, 6, 7, 1, 2, 3};
@@ -335,7 +335,7 @@ public class BigIntegerAddTest extends EmulTestBase {
   }
 
   /**
-   * Add two equal numbers of different signs
+   * Add two equal numbers of different signs.
    */
   public void testCase15() {
     byte aBytes[] = {1, 2, 3, 4, 5, 6, 7};
@@ -354,7 +354,7 @@ public class BigIntegerAddTest extends EmulTestBase {
   }
 
   /**
-   * Add zero to a number
+   * Add zero to a number.
    */
   public void testCase16() {
     byte aBytes[] = {1, 2, 3, 4, 5, 6, 7};
@@ -374,7 +374,7 @@ public class BigIntegerAddTest extends EmulTestBase {
   }
 
   /**
-   * Add a number to zero
+   * Add a number to zero.
    */
   public void testCase17() {
     byte aBytes[] = {0};
@@ -394,7 +394,7 @@ public class BigIntegerAddTest extends EmulTestBase {
   }
 
   /**
-   * Add zero to zero
+   * Add zero to zero.
    */
   public void testCase18() {
     byte aBytes[] = {0};
@@ -414,7 +414,7 @@ public class BigIntegerAddTest extends EmulTestBase {
   }
 
   /**
-   * Add ZERO to a number
+   * Add ZERO to a number.
    */
   public void testCase19() {
     byte aBytes[] = {1, 2, 3, 4, 5, 6, 7};
@@ -432,7 +432,7 @@ public class BigIntegerAddTest extends EmulTestBase {
   }
 
   /**
-   * Add a number to zero
+   * Add a number to zero.
    */
   public void testCase20() {
     byte bBytes[] = {1, 2, 3, 4, 5, 6, 7};
@@ -450,7 +450,7 @@ public class BigIntegerAddTest extends EmulTestBase {
   }
 
   /**
-   * Add ZERO to ZERO
+   * Add ZERO to ZERO.
    */
   public void testCase21() {
     byte rBytes[] = {0};
@@ -466,7 +466,7 @@ public class BigIntegerAddTest extends EmulTestBase {
   }
 
   /**
-   * Add ONE to ONE
+   * Add ONE to ONE.
    */
   public void testCase22() {
     byte rBytes[] = {2};
@@ -482,7 +482,7 @@ public class BigIntegerAddTest extends EmulTestBase {
   }
 
   /**
-   * Add two numbers so that carry is 1
+   * Add two numbers so that carry is 1.
    */
   public void testCase23() {
     byte aBytes[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};

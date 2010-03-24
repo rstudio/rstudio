@@ -16,7 +16,6 @@
 
 package com.google.gwt.user.client.ui;
 
-
 /**
  * Test for {@link DeckPanel}.
  */

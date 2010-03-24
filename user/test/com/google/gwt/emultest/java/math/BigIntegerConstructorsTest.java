@@ -44,12 +44,12 @@ import java.util.Random;
 
 /**
  * Class: java.math.BigInteger Constructors: BigInteger(byte[] a),
- * BigInteger(int sign, byte[] a), BigInteger(String val, int radix)
+ * BigInteger(int sign, byte[] a), BigInteger(String val, int radix).
  */
 public class BigIntegerConstructorsTest extends EmulTestBase {
   /**
    * Create a number from an array of bytes. Verify an exception thrown if an
-   * array is zero bytes long
+   * array is zero bytes long.
    */
   public void testConstructorBytesException() {
     byte aBytes[] = {};

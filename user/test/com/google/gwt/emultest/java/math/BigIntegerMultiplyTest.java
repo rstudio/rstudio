@@ -42,11 +42,11 @@ import com.google.gwt.emultest.java.util.EmulTestBase;
 import java.math.BigInteger;
 
 /**
- * Class: java.math.BigInteger Method: multiply
+ * Class: java.math.BigInteger Method: multiply.
  */
 public class BigIntegerMultiplyTest extends EmulTestBase {
   /**
-   * Multiply two negative numbers of the same length
+   * Multiply two negative numbers of the same length.
    */
   public void testCase1() {
     byte aBytes[] = {1, 2, 3, 4, 5, 6, 7, 1, 2, 3};

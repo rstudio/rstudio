@@ -42,7 +42,7 @@ import com.google.gwt.emultest.java.util.EmulTestBase;
 import java.math.BigInteger;
 
 /**
- * Class: java.math.BigInteger Method: subtract
+ * Class: java.math.BigInteger Method: subtract.
  */
 public class BigIntegerSubtractTest extends EmulTestBase {
   /**

@@ -42,11 +42,11 @@ import com.google.gwt.emultest.java.util.EmulTestBase;
 import java.math.BigInteger;
 
 /**
- * Class: java.math.BigInteger Methods: and, andNot
+ * Class: java.math.BigInteger Methods: and, andNot.
  */
 public class BigIntegerNotTest extends EmulTestBase {
   /**
-   * andNot for two negative numbers; the first is longer
+   * andNot for two negative numbers; the first is longer.
    */
   public void testAndNotNegNegFirstLonger() {
     byte aBytes[] = {
@@ -68,7 +68,7 @@ public class BigIntegerNotTest extends EmulTestBase {
   }
 
   /**
-   * andNot for two positive numbers; the first is longer
+   * andNot for two positive numbers; the first is longer.
    */
   public void testAndNotPosPosFirstLonger() {
     byte aBytes[] = {
@@ -92,7 +92,7 @@ public class BigIntegerNotTest extends EmulTestBase {
   }
 
   /**
-   * andNot for two positive numbers; the first is shorter
+   * andNot for two positive numbers; the first is shorter.
    */
   public void testAndNotPosPosFirstShorter() {
     byte aBytes[] = {-2, -3, -4, -4, 5, 14, 23, 39, 48, 57, 66, 5, 14, 23};
@@ -114,7 +114,7 @@ public class BigIntegerNotTest extends EmulTestBase {
   }
 
   /**
-   * andNot for a negative and a positive numbers; the first is longer
+   * andNot for a negative and a positive numbers; the first is longer.
    */
   public void testNegPosFirstLonger() {
     byte aBytes[] = {
@@ -138,7 +138,7 @@ public class BigIntegerNotTest extends EmulTestBase {
   }
 
   /**
-   * Not for a negative number
+   * Not for a negative number.
    */
   public void testNotNeg() {
     byte aBytes[] = {-128, 56, 100, -2, -76, 89, 45, 91, 3, -15, 35, 26, -117};
@@ -156,7 +156,7 @@ public class BigIntegerNotTest extends EmulTestBase {
   }
 
   /**
-   * Not for ONE
+   * Not for ONE.
    */
   public void testNotOne() {
     byte rBytes[] = {-2};
@@ -171,7 +171,7 @@ public class BigIntegerNotTest extends EmulTestBase {
   }
 
   /**
-   * Not for a positive number
+   * Not for a positive number.
    */
   public void testNotPos() {
     byte aBytes[] = {-128, 56, 100, -2, -76, 89, 45, 91, 3, -15, 35, 26, -117};
@@ -189,7 +189,7 @@ public class BigIntegerNotTest extends EmulTestBase {
   }
 
   /**
-   * Not for a negative number
+   * Not for a negative number.
    */
 
   public void testNotSpecialCase() {
@@ -207,7 +207,7 @@ public class BigIntegerNotTest extends EmulTestBase {
   }
 
   /**
-   * Not for ZERO
+   * Not for ZERO.
    */
   public void testNotZero() {
     byte rBytes[] = {-1};
