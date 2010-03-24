@@ -76,37 +76,30 @@ public class SelectionScriptLinkerUnitTest extends TestCase {
   }
 
   private static class MockLinkerContext implements LinkerContext {
-    @Override
     public SortedSet<ConfigurationProperty> getConfigurationProperties() {
       return new TreeSet<ConfigurationProperty>();
     }
 
-    @Override
     public String getModuleFunctionName() {
       return "test";
     }
 
-    @Override
     public long getModuleLastModified() {
       return 0;
     }
 
-    @Override
     public String getModuleName() {
       return "test";
     }
 
-    @Override
     public SortedSet<SelectionProperty> getProperties() {
       return new TreeSet<SelectionProperty>();
     }
 
-    @Override
     public boolean isOutputCompact() {
       return true;
     }
 
-    @Override
     public String optimizeJavaScript(TreeLogger logger, String jsProgram) {
       return jsProgram;
     }
@@ -115,35 +108,29 @@ public class SelectionScriptLinkerUnitTest extends TestCase {
   private static class MockPermutationResult implements PermutationResult {
     private ArtifactSet artifacts = new ArtifactSet();
 
-    @Override
     public void addArtifacts(Collection<? extends Artifact<?>> newArtifacts) {
       artifacts.addAll(newArtifacts);
     }
 
-    @Override
     public ArtifactSet getArtifacts() {
       return artifacts;
     }
 
-    @Override
     public byte[][] getJs() {
       return new byte[][] {
           getBytes("code for fragment 0"), getBytes("code for fragment 1")};
     }
 
-    @Override
     public Permutation getPermutation() {
       return new Permutation(0, new StaticPropertyOracle(
           new BindingProperty[0], new String[0],
           new com.google.gwt.dev.cfg.ConfigurationProperty[0]));
     }
 
-    @Override
     public byte[] getSerializedSymbolMap() {
       return getBytes("symbol map");
     }
 
-    @Override
     public StatementRanges[] getStatementRanges() {
       ArrayList<StatementRanges> ranges = new ArrayList<StatementRanges>();
       for (byte[] js : getJs()) {
@@ -160,17 +147,14 @@ public class SelectionScriptLinkerUnitTest extends TestCase {
       this.length = length;
     }
 
-    @Override
     public int end(int i) {
       return length;
     }
 
-    @Override
     public int numStatements() {
       return 1;
     }
 
-    @Override
     public int start(int i) {
       return 0;
     }
