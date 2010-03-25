@@ -177,11 +177,14 @@ public class StockSample implements EntryPoint, Updater {
    * @param response the stock response
    */
   public void processStockResponse(StockResponse response) {
-    // Update the search list.
+    // Update the search list if the query has not changed.
     StockQuoteList searchResults = response.getSearchResults();
-    searchListModel.updateDataSize(response.getNumSearchResults(), true);
-    searchListModel.updateViewData(searchResults.getStartIndex(),
-        searchResults.size(), searchResults);
+    String searchQuery = queryWidget.getSearchQuery();
+    if (searchQuery != null && searchQuery.equals(response.getSearchQuery())) {
+      searchListModel.updateDataSize(response.getNumSearchResults(), true);
+      searchListModel.updateViewData(searchResults.getStartIndex(),
+          searchResults.size(), searchResults);
+    }
 
     // Update the favorites list.
     updateFavorites(response);

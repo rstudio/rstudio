@@ -25,6 +25,7 @@ import com.google.gwt.sample.bikeshed.stocks.shared.StockQuote;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -59,10 +60,17 @@ public class StockQueryWidget extends Composite {
     queryField.setText("G");
 
     // Add a handler to send the name to the server
+    final Timer requestTimer = new Timer() {
+      @Override
+      public void run() {
+        updater.update();
+      }
+    };
     queryField.addKeyUpHandler(new KeyUpHandler() {
       public void onKeyUp(KeyUpEvent event) {
         Columns.nameCell.setHighlightRegex(getSearchQuery());
-        updater.update();
+        // Delay the request until the user stops typing.
+        requestTimer.schedule(250);
       }
     });
   }

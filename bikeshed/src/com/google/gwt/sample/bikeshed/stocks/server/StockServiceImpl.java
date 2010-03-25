@@ -158,8 +158,9 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     PlayerStatus player = ensurePlayer();
     player.addFavorite(ticker);
     Result favorites = queryFavorites(favoritesRange);
-    player.addStatus(player.getDisplayName() + " added " + ticker + " to favorites");
-    return createStockResponse(player, null, favorites, null, null);
+    player.addStatus(player.getDisplayName() + " added " + ticker
+        + " to favorites");
+    return createStockResponse(player, null, null, favorites, null, null);
   }
 
   public Result getSectorQuotes(String sector, Range sectorRange) {
@@ -187,19 +188,20 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     Result searchResults = getSearchQuotes(query, searchRange);
     Result favorites = queryFavorites(favoritesRange);
     String sectorName = request.getSector();
-    Result sector = sectorRange != null ?
-        getSectorQuotes(sectorName, sectorRange) : null;
+    Result sector = sectorRange != null ? getSectorQuotes(sectorName,
+        sectorRange) : null;
 
-    return createStockResponse(player, searchResults, favorites, sectorName,
-        sector);
+    return createStockResponse(player, request.getSearchQuery(), searchResults,
+        favorites, sectorName, sector);
   }
 
   public StockResponse removeFavorite(String ticker, Range favoritesRange) {
     PlayerStatus player = ensurePlayer();
     player.removeFavorite(ticker);
     Result favorites = queryFavorites(favoritesRange);
-    player.addStatus(player.getDisplayName() + " removed " + ticker + " from favorites");
-    return createStockResponse(player, null, favorites, null, null);
+    player.addStatus(player.getDisplayName() + " removed " + ticker
+        + " from favorites");
+    return createStockResponse(player, null, null, favorites, null, null);
   }
 
   public Transaction transact(Transaction transaction)
@@ -238,6 +240,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
    * Create a stock response, updating the current user's net worth.
    * 
    * @param player the player info
+   * @param searchQuery the original search query
    * @param searchResults the search results
    * @param favorites the users favorites
    * @param sectorName the name of the sector
@@ -245,8 +248,8 @@ public class StockServiceImpl extends RemoteServiceServlet implements
    * @return a {@link StockResponse}
    */
   private StockResponse createStockResponse(PlayerStatus player,
-      Result searchResults, Result favorites, String sectorName,
-      Result sectorResults) {
+      String searchQuery, Result searchResults, Result favorites,
+      String sectorName, Result sectorResults) {
     // Default to no search results.
     if (searchResults == null) {
       searchResults = new Result(null, 0);
@@ -271,7 +274,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
         return o2.getNetWorth() - o1.getNetWorth();
       }
     });
-    StockResponse response = new StockResponse(player.copy(),
+    StockResponse response = new StockResponse(player.copy(), searchQuery,
         searchResults.quotes, favorites.quotes, sectorName != null ? sectorName
             : null, sectorResults.quotes, searchResults.numRows,
         favorites.numRows, sectorResults.numRows, playerInfo);

@@ -26,6 +26,7 @@ public class StockResponse implements Serializable {
   /**
    * The amount of available cash in pennies.
    */
+  private String searchQuery;
   private StockQuoteList favorites;
   private int numFavorites;
   private int numSearchResults;
@@ -36,11 +37,12 @@ public class StockResponse implements Serializable {
   private PlayerInfo player;
   private List<PlayerInfo> playerInfo;
 
-  public StockResponse(PlayerInfo player, StockQuoteList searchResults,
-      StockQuoteList favorites, String sectorName, StockQuoteList sector,
-      int numSearchResults, int numFavorites, int numSector,
-      List<PlayerInfo> playerInfo) {
+  public StockResponse(PlayerInfo player, String searchQuery,
+      StockQuoteList searchResults, StockQuoteList favorites,
+      String sectorName, StockQuoteList sector, int numSearchResults,
+      int numFavorites, int numSector, List<PlayerInfo> playerInfo) {
     this.player = player;
+    this.searchQuery = searchQuery;
     this.searchResults = searchResults;
     this.favorites = favorites;
     this.sectorName = sectorName;
@@ -91,6 +93,10 @@ public class StockResponse implements Serializable {
    */
   public List<PlayerInfo> getPlayers() {
     return playerInfo;
+  }
+
+  public String getSearchQuery() {
+    return searchQuery;
   }
 
   public StockQuoteList getSearchResults() {
