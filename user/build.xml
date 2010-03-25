@@ -490,12 +490,11 @@
       <antcall target="test.draft.selenium"/>
       <antcall target="test.nometa.selenium"/>
       <antcall target="test.noserver"/>
-      <!-- TODO(jlabanca): Enable htmlunit tests when they are stable. -->
-      <!-- <antcall target="test.dev.htmlunit"/> -->
-      <!-- <antcall target="test.emma.htmlunit"/> -->
-      <!-- <antcall target="test.web.htmlunit"/> -->
-      <!-- <antcall target="test.draft.htmlunit"/> -->
-      <!-- <antcall target="test.nometa.htmlunit"/> -->
+      <antcall target="test.dev.htmlunit"/>
+      <antcall target="test.emma.htmlunit"/>
+      <antcall target="test.web.htmlunit"/>
+      <antcall target="test.draft.htmlunit"/>
+      <antcall target="test.nometa.htmlunit"/>
     </parallel>
     </limit>
   </target>
