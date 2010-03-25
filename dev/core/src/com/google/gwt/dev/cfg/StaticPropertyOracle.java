@@ -158,4 +158,17 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
 
     throw new BadPropertyValueException(propertyName);
   }
+  
+  /**
+   * Dumps the binding property key/value pairs; For debugging use only.
+   */
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0, j = orderedProps.length; i < j; i++) {
+      sb.append(orderedProps[i].getName()).append(" = ").append(
+          orderedPropValues[i]).append(" ");
+    }
+    return sb.toString();
+  }
 }

@@ -32,17 +32,25 @@ import java.util.TreeMap;
 public class SelectionInformation extends Artifact<SelectionInformation> {
   private final int hashCode;
   private final TreeMap<String, String> propMap;
+  private final int softPermutationId;
   private final String strongName;
 
-  public SelectionInformation(String strongName, TreeMap<String, String> propMap) {
+  public SelectionInformation(String strongName, int softPermutationId,
+      TreeMap<String, String> propMap) {
     super(SelectionScriptLinker.class);
     this.strongName = strongName;
+    this.softPermutationId = softPermutationId;
     this.propMap = propMap;
-    hashCode = strongName.hashCode() + propMap.hashCode() * 17 + 11;
+    hashCode = strongName.hashCode() + softPermutationId * 19
+        + propMap.hashCode() * 17 + 11;
   }
 
   public TreeMap<String, String> getPropMap() {
     return propMap;
+  }
+
+  public int getSoftPermutationId() {
+    return softPermutationId;
   }
 
   public String getStrongName() {
@@ -58,6 +66,11 @@ public class SelectionInformation extends Artifact<SelectionInformation> {
   protected int compareToComparableArtifact(SelectionInformation o) {
     // compare the strong names
     int cmp = getStrongName().compareTo(o.getStrongName());
+    if (cmp != 0) {
+      return cmp;
+    }
+
+    cmp = getSoftPermutationId() - o.getSoftPermutationId();
     if (cmp != 0) {
       return cmp;
     }

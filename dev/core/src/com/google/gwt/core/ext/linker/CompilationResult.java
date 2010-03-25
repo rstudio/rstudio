@@ -57,6 +57,12 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
   public abstract SortedSet<SortedMap<SelectionProperty, String>> getPropertyMap();
 
   /**
+   * Returns the permutations of the collapsed deferred-binding property values
+   * that are compiled into the CompilationResult.
+   */
+  public abstract SoftPermutation[] getSoftPermutations();
+
+  /**
    * Returns the statement ranges for the JavaScript returned by
    * {@link #getJavaScript()}. Some subclasses return <code>null</code>, in
    * which case there is no statement range information available.

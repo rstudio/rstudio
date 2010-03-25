@@ -35,10 +35,12 @@ import com.google.gwt.dev.util.xml.Schema;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 // CHECKSTYLE_NAMING_OFF
 /**
@@ -51,6 +53,12 @@ public class ModuleDefSchema extends Schema {
     protected final String __add_linker_1_name = null;
 
     protected final String __clear_configuration_property_1_name = null;
+
+    protected final String __collapse_all_properties_1_value = "true";
+
+    protected final String __collapse_property_1_name = null;
+
+    protected final String __collapse_property_2_values = null;
 
     protected final String __define_configuration_property_1_name = null;
 
@@ -173,6 +181,52 @@ public class ModuleDefSchema extends Schema {
       ((ConfigurationProperty) prop).clear();
 
       // No children.
+      return null;
+    }
+
+    protected Schema __collapse_all_properties_begin(boolean collapse) {
+      moduleDef.setCollapseAllProperties(collapse);
+      return null;
+    }
+
+    protected Schema __collapse_property_begin(PropertyName name,
+        PropertyValueGlob[] values) throws UnableToCompleteException {
+      Property prop = moduleDef.getProperties().find(name.token);
+      if (prop == null) {
+        logger.log(TreeLogger.ERROR, "No property named " + name.token
+            + " has been defined");
+        throw new UnableToCompleteException();
+      } else if (!(prop instanceof BindingProperty)) {
+        logger.log(TreeLogger.ERROR, "The property " + name.token
+            + " is not a deferred-binding property");
+        throw new UnableToCompleteException();
+      }
+
+      BindingProperty binding = (BindingProperty) prop;
+      List<String> allowed = Arrays.asList(binding.getDefinedValues());
+
+      String[] tokens = new String[values.length];
+      boolean error = false;
+      for (int i = 0, j = values.length; i < j; i++) {
+        tokens[i] = values[i].token;
+        if (values[i].isGlob()) {
+          // Expanded later in BindingProperty
+          continue;
+        } else if (!allowed.contains(tokens[i])) {
+          logger.log(TreeLogger.ERROR, "The value " + tokens[i]
+              + " was not previously defined for the property "
+              + binding.getName());
+          error = true;
+        }
+      }
+
+      if (error) {
+        throw new UnableToCompleteException();
+      }
+
+      binding.addCollapsedValues(tokens);
+
+      // No children
       return null;
     }
 
@@ -1014,6 +1068,58 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
+  private static class PropertyValueGlob {
+    public final String token;
+
+    public PropertyValueGlob(String token) {
+      this.token = token;
+    }
+
+    public boolean isGlob() {
+      return token.contains(BindingProperty.GLOB_STAR);
+    }
+  }
+
+  /**
+   * Converts a comma-separated string into an array of property value tokens.
+   */
+  private final class PropertyValueGlobArrayAttrCvt extends AttributeConverter {
+    public Object convertToArg(Schema schema, int line, String elem,
+        String attr, String value) throws UnableToCompleteException {
+      String[] tokens = value.split(",");
+      PropertyValueGlob[] values = new PropertyValueGlob[tokens.length];
+
+      // Validate each token as we copy it over.
+      //
+      for (int i = 0; i < tokens.length; i++) {
+        values[i] = (PropertyValueGlob) propValueGlobAttrCvt.convertToArg(
+            schema, line, elem, attr, tokens[i]);
+      }
+
+      return values;
+    }
+  }
+
+  /**
+   * Converts a string into a property value glob, validating it in the process.
+   */
+  private final class PropertyValueGlobAttrCvt extends AttributeConverter {
+    public Object convertToArg(Schema schema, int line, String elem,
+        String attr, String value) throws UnableToCompleteException {
+
+      String token = value.trim();
+      String tokenNoStar = token.replaceAll(
+          Pattern.quote(BindingProperty.GLOB_STAR), "");
+      if (BindingProperty.GLOB_STAR.equals(token)
+          || Util.isValidJavaIdent(tokenNoStar)) {
+        return new PropertyValueGlob(token);
+      } else {
+        Messages.PROPERTY_VALUE_INVALID.log(logger, token, null);
+        throw new UnableToCompleteException();
+      }
+    }
+  }
+
   private static class ScriptSchema extends Schema {
 
     private StringBuffer script;
@@ -1087,6 +1193,8 @@ public class ModuleDefSchema extends Schema {
   private final PropertyNameAttrCvt propNameAttrCvt = new PropertyNameAttrCvt();
   private final PropertyValueArrayAttrCvt propValueArrayAttrCvt = new PropertyValueArrayAttrCvt();
   private final PropertyValueAttrCvt propValueAttrCvt = new PropertyValueAttrCvt();
+  private final PropertyValueGlobArrayAttrCvt propValueGlobArrayAttrCvt = new PropertyValueGlobArrayAttrCvt();
+  private final PropertyValueGlobAttrCvt propValueGlobAttrCvt = new PropertyValueGlobAttrCvt();
 
   public ModuleDefSchema(TreeLogger logger, ModuleDefLoader loader,
       String moduleName, URL moduleURL, String modulePackageAsPath,
@@ -1106,6 +1214,9 @@ public class ModuleDefSchema extends Schema {
         configurationPropAttrCvt);
     registerAttributeConverter(PropertyValue.class, propValueAttrCvt);
     registerAttributeConverter(PropertyValue[].class, propValueArrayAttrCvt);
+    registerAttributeConverter(PropertyValueGlob.class, propValueGlobAttrCvt);
+    registerAttributeConverter(PropertyValueGlob[].class,
+        propValueGlobArrayAttrCvt);
     registerAttributeConverter(LinkerName.class, linkerNameAttrCvt);
     registerAttributeConverter(NullableName.class, nullableNameAttrCvt);
     registerAttributeConverter(Class.class, classAttrCvt);

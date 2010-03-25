@@ -25,7 +25,9 @@ import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.ScriptReference;
 import com.google.gwt.core.ext.linker.SelectionProperty;
+import com.google.gwt.core.ext.linker.SoftPermutation;
 import com.google.gwt.core.ext.linker.StylesheetReference;
+import com.google.gwt.dev.util.StringKey;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.collect.Lists;
@@ -53,6 +55,30 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * TODO(bobv): Move this class into c.g.g.core.linker when HostedModeLinker
    * goes away?
    */
+
+  /**
+   * This represents the combination of a unique content hash (i.e. the MD5 of
+   * the bytes to be written into the cache.html file) and a soft permutation
+   * id.
+   */
+  protected static class PermutationId extends StringKey {
+    private final int softPermutationId;
+    private final String strongName;
+
+    public PermutationId(String strongName, int softPermutationId) {
+      super(strongName + ":" + softPermutationId);
+      this.strongName = strongName;
+      this.softPermutationId = softPermutationId;
+    }
+
+    public int getSoftPermutationId() {
+      return softPermutationId;
+    }
+
+    public String getStrongName() {
+      return strongName;
+    }
+  }
 
   /**
    * The extension added to demand-loaded fragment files.
@@ -111,11 +137,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   }
 
   /**
-   * This maps each compilation strong name to the property settings for that
+   * This maps each unique permutation to the property settings for that
    * compilation. A single compilation can have multiple property settings if
    * the compiles for those settings yielded the exact same compiled output.
    */
-  private final SortedMap<String, List<Map<String, String>>> propMapsByStrongName = new TreeMap<String, List<Map<String, String>>>();
+  private final SortedMap<PermutationId, List<Map<String, String>>> propMapsByPermutation = new TreeMap<PermutationId, List<Map<String, String>>>();
 
   /**
    * This method is left in place for existing subclasses of
@@ -321,21 +347,21 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     startPos = selectionScript.indexOf("// __PERMUTATIONS_END__");
     if (startPos != -1) {
       StringBuffer text = new StringBuffer();
-      if (propMapsByStrongName.size() == 0) {
+      if (propMapsByPermutation.size() == 0) {
         // Hosted mode link.
         text.append("alert(\"GWT module '" + context.getModuleName()
             + "' may need to be (re)compiled\");");
         text.append("return;");
 
-      } else if (propMapsByStrongName.size() == 1) {
+      } else if (propMapsByPermutation.size() == 1) {
         // Just one distinct compilation; no need to evaluate properties
         text.append("strongName = '"
-            + propMapsByStrongName.keySet().iterator().next() + "';");
+            + propMapsByPermutation.keySet().iterator().next() + "';");
       } else {
         Set<String> propertiesUsed = new HashSet<String>();
-        for (String strongName : propMapsByStrongName.keySet()) {
-          for (Map<String, String> propertyMap : propMapsByStrongName.get(strongName)) {
-            // unflatten([v1, v2, v3], 'strongName');
+        for (PermutationId permutationId : propMapsByPermutation.keySet()) {
+          for (Map<String, String> propertyMap : propMapsByPermutation.get(permutationId)) {
+            // unflatten([v1, v2, v3], 'strongName' + ':softPermId');
             text.append("unflattenKeylistIntoAnswers([");
             boolean needsComma = false;
             for (SelectionProperty p : context.getProperties()) {
@@ -353,7 +379,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
               text.append("'" + propertyMap.get(p.getName()) + "'");
               propertiesUsed.add(p.getName());
             }
-            text.append("], '").append(strongName).append("');\n");
+
+            // Concatenate the soft permutation id to improve string interning
+            text.append("], '").append(permutationId.getStrongName()).append(
+                "' + ':").append(permutationId.getSoftPermutationId()).append(
+                "');\n");
           }
         }
 
@@ -457,7 +487,17 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       for (Map.Entry<SelectionProperty, String> entry : propertyMap.entrySet()) {
         propMap.put(entry.getKey().getName(), entry.getValue());
       }
-      emitted.add(new SelectionInformation(strongName, propMap));
+
+      // The soft properties may not be a subset of the existing set
+      for (SoftPermutation soft : result.getSoftPermutations()) {
+        // Make a copy we can add add more properties to
+        TreeMap<String, String> softMap = new TreeMap<String, String>(propMap);
+        // Make sure this SelectionInformation contains the soft properties
+        for (Map.Entry<SelectionProperty, String> entry : soft.getPropertyMap().entrySet()) {
+          softMap.put(entry.getKey().getName(), entry.getValue());
+        }
+        emitted.add(new SelectionInformation(strongName, soft.getId(), softMap));
+      }
     }
 
     return emitted;
@@ -466,13 +506,14 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   private Map<String, String> processSelectionInformation(
       SelectionInformation selInfo) {
     TreeMap<String, String> entries = selInfo.getPropMap();
-    String strongName = selInfo.getStrongName();
-    if (!propMapsByStrongName.containsKey(strongName)) {
-      propMapsByStrongName.put(strongName,
+    PermutationId permutationId = new PermutationId(selInfo.getStrongName(),
+        selInfo.getSoftPermutationId());
+    if (!propMapsByPermutation.containsKey(permutationId)) {
+      propMapsByPermutation.put(permutationId,
           Lists.<Map<String, String>> create(entries));
     } else {
-      propMapsByStrongName.put(strongName, Lists.add(
-          propMapsByStrongName.get(strongName), entries));
+      propMapsByPermutation.put(permutationId, Lists.add(
+          propMapsByPermutation.get(permutationId), entries));
     }
     return entries;
   }

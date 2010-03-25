@@ -15,15 +15,24 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.dev.util.collect.IdentityHashSet;
+import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Sets;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 /**
  * Represents a single named deferred binding or configuration property that can
@@ -32,9 +41,10 @@ import java.util.TreeSet;
  * of the defined set.
  */
 public class BindingProperty extends Property {
-
+  public static final String GLOB_STAR = "*";
   private static final String EMPTY = "";
 
+  private List<SortedSet<String>> collapsedValues = Lists.create();
   private final Map<Condition, SortedSet<String>> conditionalValues = new LinkedHashMap<Condition, SortedSet<String>>();
   private final SortedSet<String> definedValues = new TreeSet<String>();
   private PropertyProvider provider;
@@ -48,6 +58,27 @@ public class BindingProperty extends Property {
   public BindingProperty(String name) {
     super(name);
     fallback = EMPTY;
+  }
+
+  /**
+   * Add an equivalence set of property values.
+   */
+  public void addCollapsedValues(String... values) {
+
+    // Sanity check caller
+    for (String value : values) {
+      if (value.contains(GLOB_STAR)) {
+        // Expanded in normalizeCollapsedValues()
+        continue;
+      } else if (!definedValues.contains(value)) {
+        throw new IllegalArgumentException(
+            "Attempting to collapse unknown value " + value);
+      }
+    }
+
+    // We want a mutable set, because it simplifies normalizeCollapsedValues
+    SortedSet<String> temp = new TreeSet<String>(Arrays.asList(values));
+    collapsedValues = Lists.add(collapsedValues, temp);
   }
 
   public void addDefinedValue(Condition condition, String newValue) {
@@ -68,6 +99,10 @@ public class BindingProperty extends Property {
   public String[] getAllowedValues(Condition condition) {
     Set<String> allowedValues = conditionalValues.get(condition);
     return allowedValues.toArray(new String[allowedValues.size()]);
+  }
+
+  public List<SortedSet<String>> getCollapsedValues() {
+    return collapsedValues;
   }
 
   public Map<Condition, SortedSet<String>> getConditionalValues() {
@@ -190,5 +225,83 @@ public class BindingProperty extends Property {
 
   public void setProvider(PropertyProvider provider) {
     this.provider = provider;
+  }
+
+  /**
+   * Create a minimal number of equivalence sets, expanding any glob patterns.
+   */
+  void normalizeCollapsedValues() {
+    if (collapsedValues.isEmpty()) {
+      return;
+    }
+
+    // Expand globs
+    for (Set<String> set : collapsedValues) {
+      // Compile a regex that matches all glob expressions that we see
+      StringBuilder pattern = new StringBuilder();
+      for (Iterator<String> it = set.iterator(); it.hasNext();) {
+        String value = it.next();
+        if (value.contains(GLOB_STAR)) {
+          it.remove();
+          if (pattern.length() > 0) {
+            pattern.append("|");
+          }
+
+          // a*b ==> (a.*b)
+          pattern.append("(");
+          // We know value is a Java ident, so no special escaping is needed
+          pattern.append(value.replace(GLOB_STAR, ".*"));
+          pattern.append(")");
+        }
+      }
+
+      if (pattern.length() == 0) {
+        continue;
+      }
+
+      Pattern p = Pattern.compile(pattern.toString());
+      for (String definedValue : definedValues) {
+        if (p.matcher(definedValue).matches()) {
+          set.add(definedValue);
+        }
+      }
+    }
+
+    // Minimize number of sets
+
+    // Maps a value to the set that contains that value
+    Map<String, SortedSet<String>> map = new HashMap<String, SortedSet<String>>();
+
+    // For each equivalence set we have
+    for (SortedSet<String> set : collapsedValues) {
+      // Examine each original value in the set
+      for (String value : new LinkedHashSet<String>(set)) {
+        // See if the value was previously assigned to another set
+        SortedSet<String> existing = map.get(value);
+        if (existing == null) {
+          map.put(value, set);
+        } else {
+          // If so, merge the existing set into this one and update pointers
+          set.addAll(existing);
+          for (String mergedValue : existing) {
+            map.put(mergedValue, set);
+          }
+        }
+      }
+    }
+
+    // The values of the maps will now contain the minimal number of sets
+    collapsedValues = new ArrayList<SortedSet<String>>(
+        new IdentityHashSet<SortedSet<String>>(map.values()));
+
+    // Sort the list
+    Lists.sort(collapsedValues, new Comparator<SortedSet<String>>() {
+      public int compare(SortedSet<String> o1, SortedSet<String> o2) {
+        String s1 = o1.toString();
+        String s2 = o2.toString();
+        assert !s1.equals(s2) : "Should not have seen equal sets";
+        return s1.compareTo(s2);
+      }
+    });
   }
 }

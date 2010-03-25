@@ -17,16 +17,19 @@ package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.SelectionProperty;
+import com.google.gwt.core.ext.linker.SoftPermutation;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -64,6 +67,8 @@ public class StandardCompilationResult extends CompilationResult {
     }
   }
 
+  private static final SoftPermutation[] EMPTY_SOFT_PERMUTATION_ARRAY = {};
+
   /**
    * Smaller maps come before larger maps, then we compare the concatenation of
    * every value.
@@ -76,6 +81,8 @@ public class StandardCompilationResult extends CompilationResult {
 
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
+
+  private List<SoftPermutation> softPermutations = Lists.create();
 
   private final StatementRanges[] statementRanges;
 
@@ -110,6 +117,11 @@ public class StandardCompilationResult extends CompilationResult {
     propertyValues.add(Collections.unmodifiableSortedMap(map));
   }
 
+  public void addSoftPermutation(Map<SelectionProperty, String> propertyMap) {
+    softPermutations = Lists.add(softPermutations, new StandardSoftPermutation(
+        softPermutations.size(), propertyMap));
+  }
+
   @Override
   public String[] getJavaScript() {
     String[] js = new String[jsToken.length];
@@ -127,6 +139,11 @@ public class StandardCompilationResult extends CompilationResult {
   @Override
   public SortedSet<SortedMap<SelectionProperty, String>> getPropertyMap() {
     return Collections.unmodifiableSortedSet(propertyValues);
+  }
+
+  @Override
+  public SoftPermutation[] getSoftPermutations() {
+    return softPermutations.toArray(new SoftPermutation[softPermutations.size()]);
   }
 
   @Override

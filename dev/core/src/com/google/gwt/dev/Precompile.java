@@ -42,6 +42,7 @@ import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
+import com.google.gwt.dev.util.CollapsedPropertyKey;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
@@ -68,11 +69,17 @@ import com.google.gwt.dev.util.arg.OptionEnableGeneratingOnShards;
 import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.OptionValidateOnly;
+import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -517,16 +524,18 @@ public class Precompile {
       PerfLogger.end();
 
       // Merge all identical permutations together.
-      Permutation[] permutations = rpo.getPermutations();
+      List<Permutation> permutations = new ArrayList<Permutation>(
+          Arrays.asList(rpo.getPermutations()));
+
+      mergeCollapsedPermutations(permutations);
+
       // Sort the permutations by an ordered key to ensure determinism.
-      SortedMap<String, Permutation> merged = new TreeMap<String, Permutation>();
+      SortedMap<RebindAnswersPermutationKey, Permutation> merged = new TreeMap<RebindAnswersPermutationKey, Permutation>();
       SortedSet<String> liveRebindRequests = unifiedAst.getRebindRequests();
       for (Permutation permutation : permutations) {
-        // Construct a key from the stringified map of live rebind answers.
-        SortedMap<String, String> rebindAnswers = new TreeMap<String, String>(
-            permutation.getRebindAnswers());
-        rebindAnswers.keySet().retainAll(liveRebindRequests);
-        String key = rebindAnswers.toString();
+        // Construct a key for the live rebind answers.
+        RebindAnswersPermutationKey key = new RebindAnswersPermutationKey(
+            permutation, liveRebindRequests);
         if (merged.containsKey(key)) {
           Permutation existing = merged.get(key);
           existing.mergeFrom(permutation, liveRebindRequests);
@@ -534,6 +543,7 @@ public class Precompile {
           merged.put(key, permutation);
         }
       }
+
       return new Precompilation(unifiedAst, merged.values(), permutationBase,
           generatedArtifacts);
     } catch (UnableToCompleteException e) {
@@ -563,6 +573,54 @@ public class Precompile {
     }
     throw new RuntimeException("Unable to instantiate compiler class '"
         + compilerClassName + "'", caught);
+  }
+
+  /**
+   * This merges Permutations that can be considered equivalent by considering
+   * their collapsed properties. The list passed into this method may have
+   * elements removed from it.
+   */
+  private static void mergeCollapsedPermutations(List<Permutation> permutations) {
+    if (permutations.size() < 2) {
+      return;
+    }
+
+    // See the doc for CollapsedPropertyKey
+    SortedMap<CollapsedPropertyKey, List<Permutation>> mergedByCollapsedProperties = new TreeMap<CollapsedPropertyKey, List<Permutation>>();
+
+    // This loop creates the equivalence sets
+    for (Iterator<Permutation> it = permutations.iterator(); it.hasNext();) {
+      Permutation entry = it.next();
+      CollapsedPropertyKey key = new CollapsedPropertyKey(entry);
+
+      List<Permutation> equivalenceSet = mergedByCollapsedProperties.get(key);
+      if (equivalenceSet == null) {
+        equivalenceSet = Lists.create();
+      } else {
+        // Mutate list
+        it.remove();
+        equivalenceSet = Lists.add(equivalenceSet, entry);
+      }
+      mergedByCollapsedProperties.put(key, equivalenceSet);
+    }
+
+    // This loop merges the Permutations together
+    for (Map.Entry<CollapsedPropertyKey, List<Permutation>> entry : mergedByCollapsedProperties.entrySet()) {
+      Permutation mergeInto = entry.getKey().getPermutation();
+
+      /*
+       * Merge the deferred-binding properties once we no longer need the
+       * PropertyOracle data from the extra permutations.
+       */
+      for (Permutation mergeFrom : entry.getValue()) {
+        mergeInto.mergeRebindsFromCollapsed(mergeFrom);
+      }
+    }
+
+    // Renumber the Permutations
+    for (int i = 0, j = permutations.size(); i < j; i++) {
+      permutations.set(i, new Permutation(i, permutations.get(i)));
+    }
   }
 
   private final PrecompileOptionsImpl options;
@@ -625,7 +683,7 @@ public class Precompile {
             "Precompiling (minimal) module " + module.getName());
         Util.writeObjectAsFile(logger, precompilationFile, options);
         int numPermutations = new PropertyPermutations(module.getProperties(),
-            module.getActiveLinkerNames()).size();
+            module.getActiveLinkerNames()).collapseProperties().size();
         Util.writeStringAsFile(logger, new File(compilerWorkDir,
             PERM_COUNT_FILENAME), String.valueOf(numPermutations));
         branch.log(TreeLogger.INFO,

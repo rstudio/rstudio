@@ -1468,9 +1468,10 @@ public class GenerateJavaScriptAST {
       /**
        * <pre>
        * var $entry = Impl.registerEntry();
-       * function gwtOnLoad(errFn, modName, modBase){
+       * function gwtOnLoad(errFn, modName, modBase, softPermutationId){
        *   $moduleName = modName;
        *   $moduleBase = modBase;
+       *   CollapsedPropertyHolder.permutationId = softPermutationId;
        *   if (errFn) {
        *     try {
        *       $entry(init)();
@@ -1510,9 +1511,11 @@ public class GenerateJavaScriptAST {
       JsName errFn = fnScope.declareName("errFn");
       JsName modName = fnScope.declareName("modName");
       JsName modBase = fnScope.declareName("modBase");
+      JsName softPermutationId = fnScope.declareName("softPermutationId");
       params.add(new JsParameter(sourceInfo, errFn));
       params.add(new JsParameter(sourceInfo, modName));
       params.add(new JsParameter(sourceInfo, modBase));
+      params.add(new JsParameter(sourceInfo, softPermutationId));
       JsExpression asg = createAssignment(
           topScope.findExistingUnobfuscatableName("$moduleName").makeRef(
               sourceInfo), modName.makeRef(sourceInfo));
@@ -1520,6 +1523,15 @@ public class GenerateJavaScriptAST {
       asg = createAssignment(topScope.findExistingUnobfuscatableName(
           "$moduleBase").makeRef(sourceInfo), modBase.makeRef(sourceInfo));
       body.getStatements().add(asg.makeStmt());
+
+      // Assignment to CollapsedPropertyHolder.permutationId only if it's used
+      JsName permutationIdFieldName = names.get(program.getIndexedField("CollapsedPropertyHolder.permutationId"));
+      if (permutationIdFieldName != null) {
+        asg = createAssignment(permutationIdFieldName.makeRef(sourceInfo),
+            softPermutationId.makeRef(sourceInfo));
+        body.getStatements().add(asg.makeStmt());
+      }
+
       JsIf jsIf = new JsIf(sourceInfo);
       body.getStatements().add(jsIf);
       jsIf.setIfExpr(errFn.makeRef(sourceInfo));

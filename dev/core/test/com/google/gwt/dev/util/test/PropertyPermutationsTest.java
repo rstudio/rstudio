@@ -24,7 +24,9 @@ import com.google.gwt.dev.cfg.PropertyPermutations;
 
 import junit.framework.TestCase;
 
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -90,6 +92,38 @@ public class PropertyPermutationsTest extends TestCase {
     assertEquals("true", perm[0]);
   }
 
+  public void testOneDimensionPermWithCollapse() {
+    ModuleDef md = new ModuleDef("testOneDimensionPerm");
+    Properties props = md.getProperties();
+
+    {
+      BindingProperty prop = props.createBinding("debug");
+      prop.addDefinedValue(prop.getRootCondition(), "false");
+      prop.addDefinedValue(prop.getRootCondition(), "true");
+      prop.addCollapsedValues("true", "false");
+    }
+
+    // Permutations and their values are in stable alphabetical order.
+    //
+    PropertyPermutations perms = new PropertyPermutations(md.getProperties(),
+        md.getActiveLinkerNames());
+
+    List<PropertyPermutations> collapsed = perms.collapseProperties();
+    assertEquals("size", 1, collapsed.size());
+    perms = collapsed.get(0);
+
+    String[] perm;
+    Iterator<String[]> iter = perms.iterator();
+
+    assertTrue(iter.hasNext());
+    perm = iter.next();
+    assertEquals("false", perm[0]);
+
+    assertTrue(iter.hasNext());
+    perm = iter.next();
+    assertEquals("true", perm[0]);
+  }
+
   public void testTwoDimensionPerm() {
     ModuleDef md = new ModuleDef("testTwoDimensionPerm");
     Properties props = md.getProperties();
@@ -143,6 +177,45 @@ public class PropertyPermutationsTest extends TestCase {
     perm = iter.next();
     assertEquals("true", perm[0]);
     assertEquals("opera", perm[1]);
+  }
+
+  public void testTwoDimensionPermWithCollapse() {
+    ModuleDef md = new ModuleDef("testTwoDimensionPerm");
+    Properties props = md.getProperties();
+
+    {
+      BindingProperty prop = props.createBinding("user.agent");
+      prop.addDefinedValue(prop.getRootCondition(), "moz");
+      prop.addDefinedValue(prop.getRootCondition(), "ie6");
+      prop.addDefinedValue(prop.getRootCondition(), "opera");
+      prop.addCollapsedValues("moz", "ie6", "opera");
+    }
+
+    {
+      BindingProperty prop = props.createBinding("debug");
+      prop.addDefinedValue(prop.getRootCondition(), "false");
+      prop.addDefinedValue(prop.getRootCondition(), "true");
+    }
+
+    // String[]s and their values are in stable alphabetical order.
+    //
+    PropertyPermutations perms = new PropertyPermutations(md.getProperties(),
+        md.getActiveLinkerNames());
+
+    List<PropertyPermutations> collapsed = perms.collapseProperties();
+    assertEquals("size", 2, collapsed.size());
+
+    Iterator<String[]> it = collapsed.get(0).iterator();
+    assertEquals(Arrays.asList("false", "ie6"), Arrays.asList(it.next()));
+    assertEquals(Arrays.asList("false", "moz"), Arrays.asList(it.next()));
+    assertEquals(Arrays.asList("false", "opera"), Arrays.asList(it.next()));
+    assertFalse(it.hasNext());
+
+    it = collapsed.get(1).iterator();
+    assertEquals(Arrays.asList("true", "ie6"), Arrays.asList(it.next()));
+    assertEquals(Arrays.asList("true", "moz"), Arrays.asList(it.next()));
+    assertEquals(Arrays.asList("true", "opera"), Arrays.asList(it.next()));
+    assertFalse(it.hasNext());
   }
 
   public void testTwoDimensionPermWithExpansion() {

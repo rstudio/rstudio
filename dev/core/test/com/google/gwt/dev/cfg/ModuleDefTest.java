@@ -28,6 +28,8 @@ import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.SortedSet;
 
 /**
  * Runs tests directly on ModuleDef.
@@ -82,6 +84,59 @@ public class ModuleDefTest extends TestCase {
   @LinkerOrder(Order.PRIMARY)
   @Shardable
   static class FakeLinkerPrimary2 extends FakeLinker {
+  }
+
+  public void testCollapsedProperties() {
+    ModuleDef def = new ModuleDef("fake");
+
+    Properties p = def.getProperties();
+    BindingProperty b = p.createBinding("fake");
+    b.addDefinedValue(b.getRootCondition(), "a");
+    b.addDefinedValue(b.getRootCondition(), "b");
+    b.addDefinedValue(b.getRootCondition(), "c");
+    b.addDefinedValue(b.getRootCondition(), "d");
+    b.addDefinedValue(b.getRootCondition(), "e");
+    b.addDefinedValue(b.getRootCondition(), "f1");
+    b.addDefinedValue(b.getRootCondition(), "f2");
+    b.addDefinedValue(b.getRootCondition(), "f3");
+    b.addDefinedValue(b.getRootCondition(), "g1a");
+    b.addDefinedValue(b.getRootCondition(), "g2a");
+    b.addDefinedValue(b.getRootCondition(), "g1b");
+    b.addDefinedValue(b.getRootCondition(), "g2b");
+
+    // Check de-duplication
+    b.addCollapsedValues("a", "b");
+    b.addCollapsedValues("b", "a");
+
+    // Check transitivity
+    b.addCollapsedValues("c", "d");
+    b.addCollapsedValues("c", "e");
+
+    // Check globs
+    b.addCollapsedValues("f*");
+    b.addCollapsedValues("g*a");
+
+    b.normalizeCollapsedValues();
+
+    List<SortedSet<String>> collapsedValues = b.getCollapsedValues();
+    assertEquals(4, collapsedValues.size());
+    assertEquals(Arrays.asList("a", "b"), new ArrayList<String>(
+        collapsedValues.get(0)));
+    assertEquals(Arrays.asList("c", "d", "e"), new ArrayList<String>(
+        collapsedValues.get(1)));
+    assertEquals(Arrays.asList("f1", "f2", "f3"), new ArrayList<String>(
+        collapsedValues.get(2)));
+    assertEquals(Arrays.asList("g1a", "g2a"), new ArrayList<String>(
+        collapsedValues.get(3)));
+
+    // Collapse everything
+    b.addCollapsedValues("*");
+    b.normalizeCollapsedValues();
+
+    collapsedValues = b.getCollapsedValues();
+    assertEquals(1, collapsedValues.size());
+    assertEquals(Arrays.asList(b.getDefinedValues()), new ArrayList<String>(
+        collapsedValues.get(0)));
   }
 
   public void testLinkerOrder() throws UnableToCompleteException {

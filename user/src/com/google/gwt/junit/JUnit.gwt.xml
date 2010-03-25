@@ -42,4 +42,6 @@
 
   <inherits name="com.google.gwt.benchmarks.Benchmarks"/>
 
+  <!-- Speed up test compilations by producing one permutation -->
+  <collapse-all-properties />
 </module>

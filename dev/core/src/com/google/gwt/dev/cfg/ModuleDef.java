@@ -77,6 +77,8 @@ public class ModuleDef implements PublicOracle {
 
   private String activePrimaryLinker;
 
+  private boolean collapseAllProperties;
+
   private final DefaultFilters defaultFilters;
 
   private final List<String> entryPointTypeNames = new ArrayList<String>();
@@ -400,6 +402,13 @@ public class ModuleDef implements PublicOracle {
   }
 
   /**
+   * Mainly for testing and decreasing compile times.
+   */
+  public void setCollapseAllProperties(boolean collapse) {
+    collapseAllProperties = collapse;
+  }
+  
+  /**
    * Override the module's apparent name. Setting this value to
    * <code>null<code> will disable the name override.
    */
@@ -435,6 +444,13 @@ public class ModuleDef implements PublicOracle {
     for (Property current : getProperties()) {
       if (current instanceof BindingProperty) {
         BindingProperty prop = (BindingProperty) current;
+        
+        if (collapseAllProperties) {
+          prop.addCollapsedValues("*");
+        }
+
+        prop.normalizeCollapsedValues();
+
         /*
          * Create a default property provider for any properties with more than
          * one possible value and no existing provider.

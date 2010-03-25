@@ -334,9 +334,10 @@ public class CompilePerms {
     ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
     PropertyPermutations allPermutations = new PropertyPermutations(
         module.getProperties(), module.getActiveLinkerNames());
+    List<PropertyPermutations> collapsedPermutations = allPermutations.collapseProperties();
     int[] perms = options.getPermsToCompile();
     if (perms == null) {
-      perms = new int[allPermutations.size()];
+      perms = new int[collapsedPermutations.size()];
       for (int i = 0; i < perms.length; ++i) {
         perms[i] = i;
       }
@@ -347,12 +348,10 @@ public class CompilePerms {
     for (int permId : perms) {
       /*
        * TODO(spoon,scottb): move Precompile out of the loop to run only once
-       * per shard. We'll need a new PropertyPermutations constructor that can
-       * take a precise list. Then figure out a way to avoid copying the
-       * generated artifacts into every perm result on a shard.
+       * per shard. Then figure out a way to avoid copying the generated
+       * artifacts into every perm result on a shard.
        */
-      PropertyPermutations onePerm = new PropertyPermutations(allPermutations,
-          permId, 1);
+      PropertyPermutations onePerm = collapsedPermutations.get(permId);
 
       assert (precompilationOptions.getDumpSignatureFile() == null);
       Precompilation precompilation = Precompile.precompile(logger,

@@ -220,7 +220,6 @@ public class JavaToJavaScriptCompiler {
     InternalCompilerException.preload();
     PropertyOracle[] propertyOracles = permutation.getPropertyOracles();
     int permutationId = permutation.getId();
-    Map<String, String> rebindAnswers = permutation.getRebindAnswers();
     logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId
         + "...");
     long permStart = System.currentTimeMillis();
@@ -238,7 +237,7 @@ public class JavaToJavaScriptCompiler {
       Map<StandardSymbolData, JsName> symbolTable = new TreeMap<StandardSymbolData, JsName>(
           new SymbolData.ClassIdentComparator());
 
-      ResolveRebinds.exec(jprogram, rebindAnswers);
+      ResolveRebinds.exec(jprogram, permutation.getOrderedRebindAnswers());
 
       // (4) Optimize the normalized Java AST for each permutation.
       if (options.isDraftCompile()) {

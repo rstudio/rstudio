@@ -18,6 +18,7 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.util.CollapsedPropertyKey;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -26,6 +27,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Generates all possible permutations of properties in a module. Each
@@ -159,6 +162,52 @@ public class PropertyPermutations implements Iterable<String[]> {
       int firstPerm, int numPerms) {
     this.properties = allPermutations.properties;
     values = allPermutations.values.subList(firstPerm, firstPerm + numPerms);
+  }
+
+  /**
+   * Copy constructor that allows the list of property values to be reset.
+   */
+  public PropertyPermutations(PropertyPermutations allPermutations,
+      List<String[]> values) {
+    this.properties = allPermutations.properties;
+    this.values = values;
+  }
+
+  /**
+   * Return a list of PropertyPermutations that represent the hard permutations
+   * that result from collapsing the soft properties in the
+   * PropertyPermutation's Properties object.
+   */
+  public List<PropertyPermutations> collapseProperties() {
+    // Collate property values in this map
+    SortedMap<CollapsedPropertyKey, List<String[]>> map = new TreeMap<CollapsedPropertyKey, List<String[]>>();
+
+    // Loop over all possible property value permutations
+    for (Iterator<String[]> it = iterator(); it.hasNext();) {
+      String[] propertyValues = it.next();
+      assert propertyValues.length == getOrderedProperties().length;
+
+      StaticPropertyOracle oracle = new StaticPropertyOracle(
+          getOrderedProperties(), propertyValues, new ConfigurationProperty[0]);
+      CollapsedPropertyKey key = new CollapsedPropertyKey(
+          oracle);
+
+      List<String[]> list = map.get(key);
+      if (list == null) {
+        list = new ArrayList<String[]>();
+        map.put(key, list);
+      }
+      list.add(propertyValues);
+    }
+
+    // Return the collated values
+    List<PropertyPermutations> toReturn = new ArrayList<PropertyPermutations>(
+        map.size());
+    for (List<String[]> list : map.values()) {
+      toReturn.add(new PropertyPermutations(this, list));
+    }
+
+    return toReturn;
   }
 
   public BindingProperty[] getOrderedProperties() {

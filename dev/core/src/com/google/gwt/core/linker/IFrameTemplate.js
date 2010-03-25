@@ -42,6 +42,9 @@ function __MODULE_FUNC__() {
   // the strong name of the cache.js file to load.
   ,answers = []
 
+  // Provides the module with the soft permutation id
+  ,softPermutationId = 0
+
   // Error functions.  Default unset in compiled mode, may be set by meta props.
   ,onLoadErrorFunc, propertyErrorFunc
 
@@ -98,7 +101,7 @@ function __MODULE_FUNC__() {
       // remove this whole function from the global namespace to allow GC
       __MODULE_FUNC__ = null;
       // JavaToJavaScriptCompiler logs onModuleLoadStart for each EntryPoint.
-      frameWnd.gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__', base);
+      frameWnd.gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__', base, softPermutationId);
       // Record when the module EntryPoints return.
       $stats && $stats({
         moduleName: '__MODULE_NAME__',
@@ -267,6 +270,11 @@ function __MODULE_FUNC__() {
 // __PERMUTATIONS_BEGIN__
       // Permutation logic
 // __PERMUTATIONS_END__
+      var idx = strongName.indexOf(':');
+      if (idx != -1) {
+        softPermutationId = Number(strongName.substring(idx + 1));
+        strongName = strongName.substring(0, idx);
+      }
       initialHtml = strongName + ".cache.html";
     } catch (e) {
       // intentionally silent on property failure

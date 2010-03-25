@@ -65,6 +65,7 @@ public class JProgram extends JNode {
   public static final Set<String> CODEGEN_TYPES_SET = new LinkedHashSet<String>(
       Arrays.asList(new String[] {
           "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
+          "com.google.gwt.lang.CollapsedPropertyHolder",
           "com.google.gwt.lang.Exceptions", "com.google.gwt.lang.LongLib",
           "com.google.gwt.lang.Stats",}));
 

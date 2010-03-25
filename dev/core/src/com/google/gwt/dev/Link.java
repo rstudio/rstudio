@@ -301,6 +301,8 @@ public class Link {
     for (StaticPropertyOracle propOracle : perm.getPropertyOracles()) {
       compilation.addSelectionPermutation(computeSelectionPermutation(
           linkerContext, propOracle));
+      compilation.addSoftPermutation(computeSoftPermutation(linkerContext,
+          propOracle));
     }
   }
 
@@ -350,6 +352,22 @@ public class Link {
       unboundProperties.put(key, orderedPropValues[i]);
     }
     return unboundProperties;
+  }
+
+  private static Map<SelectionProperty, String> computeSoftPermutation(
+      StandardLinkerContext linkerContext, StaticPropertyOracle propOracle) {
+    BindingProperty[] orderedProps = propOracle.getOrderedProps();
+    String[] orderedPropValues = propOracle.getOrderedPropValues();
+    Map<SelectionProperty, String> softProperties = new HashMap<SelectionProperty, String>();
+    for (int i = 0; i < orderedProps.length; i++) {
+      if (orderedProps[i].getCollapsedValues().isEmpty()) {
+        continue;
+      }
+
+      SelectionProperty key = linkerContext.getProperty(orderedProps[i].getName());
+      softProperties.put(key, orderedPropValues[i]);
+    }
+    return softProperties;
   }
 
   /**
@@ -584,7 +602,7 @@ public class Link {
       ModuleDef module, JJSOptions precompileOptions)
       throws UnableToCompleteException {
     int numPermutations = new PropertyPermutations(module.getProperties(),
-        module.getActiveLinkerNames()).size();
+        module.getActiveLinkerNames()).collapseProperties().size();
     List<File> resultFiles = new ArrayList<File>(numPermutations);
     for (int i = 0; i < numPermutations; ++i) {
       File f = CompilePerms.makePermFilename(compilerWorkDir, i);

@@ -34,6 +34,7 @@ import junit.framework.TestCase;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -179,6 +180,7 @@ public class SelectionScriptLinkerUnitTest extends TestCase {
     StandardCompilationResult result = new StandardCompilationResult(
         new MockPermutationResult());
     result.addSelectionPermutation(new TreeMap<SelectionProperty, String>());
+    result.addSoftPermutation(Collections.<SelectionProperty, String> emptyMap());
     artifacts.add(result);
 
     ArtifactSet updated = new NonShardableSelectionScriptLinker().link(

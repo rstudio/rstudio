@@ -134,6 +134,17 @@
 	name CDATA #REQUIRED
 	values CDATA #REQUIRED
 >
+<!-- Collapse property values to produce soft permutations -->
+<!ELEMENT collapse-property EMPTY>
+<!ATTLIST collapse-property
+	name CDATA #REQUIRED
+	value CDATA #REQUIRED
+>
+<!-- Collapse all deferred-binding properties to produce a single permutation -->
+<!ELEMENT collapse-all-properties EMPTY>
+<!ATTLIST collapse-all-properties
+	value (true | false) "true"
+>
 <!-- Add additional allowable values to a configuration property -->
 <!ELEMENT extend-configuration-property EMPTY>
 <!ATTLIST extend-configuration-property
