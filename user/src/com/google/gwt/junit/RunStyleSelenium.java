@@ -88,21 +88,25 @@ public class RunStyleSelenium extends RunStyle {
   }
 
   /**
-   * The list of hosts that were interrupted.
+   * The list of hosts that were interrupted. Protected by {@link #lock}.
    */
   private Set<String> interruptedHosts;
+
+  /**
+   * Indicates that testing has stopped, and we no longer need to run keep
+   * alive checks. Protected by {@link #lock}.
+   */
+  private boolean stopped;
 
   private SeleniumWrapper remotes[];
 
   /**
-   * A separate lock to control access to {@link #interruptedHosts}. This keeps
-   * the main thread calls into {@link #getInterruptedHosts()} from having to be
-   * synchronized on the containing instance and potentially block on RPC calls.
-   * It is okay to take the {@link #wasInterruptedLock} while locking the
-   * containing instance; it is NOT okay to do the opposite or deadlock could
-   * occur.
+   * A separate lock to control access to {@link Selenium}, {@link #stopped},
+   * {@link #remotes}, and {@link #interruptedHosts}. This ensures that the
+   * keepAlive thread doesn't call getTitle after the shutdown thread calls
+   * {@link Selenium#stop()}.
    */
-  private final Object wasInterruptedLock = new Object();
+  private final Object lock = new Object();
 
   public RunStyleSelenium(final JUnitShell shell) {
     super(shell);
@@ -110,7 +114,7 @@ public class RunStyleSelenium extends RunStyle {
 
   @Override
   public String[] getInterruptedHosts() {
-    synchronized (wasInterruptedLock) {
+    synchronized (lock) {
       if (interruptedHosts == null) {
         return null;
       }
@@ -137,20 +141,28 @@ public class RunStyleSelenium extends RunStyle {
       }
     }
 
+    // We don't need a lock at this point because we haven't started the keep-
+    // alive thread.
     this.remotes = targets;
 
     // Install a shutdown hook that will close all of our outstanding Selenium
-    // sessions.
+    // sessions. The hook is only executed if the JVM is exited normally. If the
+    // process is terminated, the shutdown hook will not run, which leaves
+    // browser instances open on the Selenium server. We'll need to modify
+    // Selenium Server to do its own cleanup after a timeout.
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-        for (SeleniumWrapper remote : remotes) {
-          if (remote.getSelenium() != null) {
-            try {
-              remote.getSelenium().stop();
-            } catch (SeleniumException se) {
-              shell.getTopLogger().log(TreeLogger.WARN,
-                  "Error stopping selenium session", se);
+        synchronized (lock) {
+          stopped = true;
+          for (SeleniumWrapper remote : remotes) {
+            if (remote.getSelenium() != null) {
+              try {
+                remote.getSelenium().stop();
+              } catch (SeleniumException se) {
+                shell.getTopLogger().log(TreeLogger.WARN,
+                    "Error stopping selenium session", se);
+              }
             }
           }
         }
@@ -161,25 +173,27 @@ public class RunStyleSelenium extends RunStyle {
   }
 
   @Override
-  public synchronized void launchModule(String moduleName) {
+  public void launchModule(String moduleName) {
     // Get the localhost address.
     String domain = "http://" + getLocalHostName() + ":" + shell.getPort()
         + "/";
 
     // Startup all the selenia and point them at the module url.
-    for (SeleniumWrapper remote : remotes) {
-      try {
-        String url = shell.getModuleUrl(moduleName);
-        shell.getTopLogger().log(TreeLogger.TRACE,
-            "Starting with domain: " + domain + " Opening URL: " + url);
-        remote.createSelenium(domain);
-        remote.getSelenium().start();
-        remote.getSelenium().open(url);
-      } catch (Exception e) {
-        shell.getTopLogger().log(
-            TreeLogger.ERROR,
-            "Error launching browser via Selenium-RC at "
-                + remote.getSpecifier(), e);
+    synchronized (lock) {
+      for (SeleniumWrapper remote : remotes) {
+        try {
+          String url = shell.getModuleUrl(moduleName);
+          shell.getTopLogger().log(TreeLogger.TRACE,
+              "Starting with domain: " + domain + " Opening URL: " + url);
+          remote.createSelenium(domain);
+          remote.getSelenium().start();
+          remote.getSelenium().open(url);
+        } catch (Exception e) {
+          shell.getTopLogger().log(
+              TreeLogger.ERROR,
+              "Error launching browser via Selenium-RC at "
+                  + remote.getSpecifier(), e);
+        }
       }
     }
   }
@@ -215,27 +229,38 @@ public class RunStyleSelenium extends RunStyle {
     keepAliveThread.start();
   }
 
-  private synchronized boolean doKeepAlives() {
-    if (remotes != null) {
-      for (SeleniumWrapper remote : remotes) {
-        // Use getTitle() as a cheap way to see if the Selenium server's still
-        // responding (Selenium seems to provide no way to check the server
-        // status directly).
-        try {
-          if (remote.getSelenium() != null) {
-            remote.getSelenium().getTitle();
-          }
-        } catch (Throwable e) {
-          synchronized (wasInterruptedLock) {
-            if (interruptedHosts == null) {
-              interruptedHosts = new HashSet<String>();
+  private boolean doKeepAlives() {
+    synchronized (lock) {
+      if (remotes != null) {
+        // If the shutdown thread has already executed, then we can stop this
+        // thread.
+        if (stopped) {
+          return false;
+        }
+
+        for (SeleniumWrapper remote : remotes) {
+          // Use getTitle() as a cheap way to see if the Selenium server's still
+          // responding (Selenium seems to provide no way to check the server
+          // status directly).
+          try {
+            if (remote.getSelenium() != null) {
+              remote.getSelenium().getTitle();
             }
-            interruptedHosts.add(remote.getSpecifier());
+          } catch (Throwable e) {
+            // If we ask for the title of the page while a new module is
+            // loading, IE will throw a permission denied exception.
+            String message = e.getMessage();
+            if (message != null
+                && message.toLowerCase().contains("permission denied")) {
+              if (interruptedHosts == null) {
+                interruptedHosts = new HashSet<String>();
+              }
+              interruptedHosts.add(remote.getSpecifier());
+            }
           }
         }
       }
+      return interruptedHosts == null;
     }
-
-    return interruptedHosts == null;
   }
 }
