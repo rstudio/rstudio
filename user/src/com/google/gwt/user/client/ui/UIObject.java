@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 
@@ -122,6 +123,13 @@ import com.google.gwt.user.client.DOM;
  * Style names can be space or comma separated.
  */
 public abstract class UIObject {
+
+  /**
+   * Stores a regular expression object to extract float values from the
+   * leading portion of an input string.
+   */
+  @SuppressWarnings("unused")
+  private static JavaScriptObject numberRegex;
 
   /*
    * WARNING: For historical reasons, there are two Element classes being used
@@ -817,8 +825,7 @@ public abstract class UIObject {
   }
 
   /**
-   * Intended to be used to pull the value out of a CSS length. We rely on the
-   * behavior of parseFloat to ignore non-numeric chars in its input. If the
+   * Intended to be used to pull the value out of a CSS length. If the
    * value is "auto" or "inherit", 0 will be returned.
    * 
    * @param s The CSS length string to extract
@@ -829,6 +836,17 @@ public abstract class UIObject {
     if (s == "auto" || s == "inherit" || s == "") {
       return 0;
     } else {
+      // numberRegex is similar to java.lang.Number.floatRegex, but divides
+      // the string into a leading numeric portion followed by an arbitrary
+      // portion.
+      var numberRegex = @com.google.gwt.user.client.ui.UIObject::numberRegex;
+      if (!numberRegex) {
+        numberRegex = @com.google.gwt.user.client.ui.UIObject::numberRegex =
+          /^(\s*[+-]?((\d+\.?\d*)|(\.\d+))([eE][+-]?\d+)?)(.*)$/;
+      }
+
+      // Extract the leading numeric portion of s
+      s = s.replace(numberRegex, "$1");
       return parseFloat(s);
     }
   }-*/;

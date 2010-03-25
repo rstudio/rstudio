@@ -43,6 +43,34 @@ public class DoubleTest extends GWTTestCase {
     }
 
     try {
+      Double.parseDouble(".");
+      fail("parse");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+
+    try {
+      Double.parseDouble(".e");
+      fail("parse");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+
+    try {
+      Double.parseDouble("e5");
+      fail("parse");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+
+    try {
+      Double.parseDouble(".e5");
+      fail("parse");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+
+    try {
       Double.valueOf("0x0e");
       fail("valueOf");
     } catch (NumberFormatException e) {
@@ -66,6 +94,8 @@ public class DoubleTest extends GWTTestCase {
 
   public void testParse() {
     assertTrue(0 == Double.parseDouble("0"));
+    assertTrue(100 == Double.parseDouble("1e2"));
+    assertTrue(-100 == Double.parseDouble("-1e2"));
     assertTrue(-1.5 == Double.parseDouble("-1.5"));
     assertTrue(3.0 == Double.parseDouble("3."));
     assertTrue(0.5 == Double.parseDouble(".5"));
