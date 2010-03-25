@@ -119,10 +119,7 @@ public class DOMTest extends GWTTestCase {
   /**
    * Tests {@link DOM#getAbsoluteLeft(Element)} and
    * {@link DOM#getAbsoluteTop(Element)}.
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith(Platform.HtmlUnit)
   public void testGetAbsolutePosition() {
     final int border = 8;
     final int margin = 9;
@@ -159,6 +156,7 @@ public class DOMTest extends GWTTestCase {
    * contains children and has scrollbars. See issue #1093 for more details.
    * 
    */
+  @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testGetAbsolutePositionWhenScrolled() {
     final Element outer = DOM.createDiv();
     final Element inner = DOM.createDiv();

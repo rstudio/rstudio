@@ -41,7 +41,6 @@ import com.google.gwt.user.client.WindowTest;
 /**
  * Tests for the {@link Layout} class.
  */
-@DoNotRunWith(Platform.HtmlUnitBug)
 public class LayoutTest extends GWTTestCase {
 
   /**
@@ -150,6 +149,7 @@ public class LayoutTest extends GWTTestCase {
   /**
    * Tests child alignment within a layer.
    */
+  @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testChildAlignment() {
     layer0.setLeftWidth(0, PX, 128, PX);
     layer0.setTopHeight(0, PX, 256, PX);
@@ -186,6 +186,7 @@ public class LayoutTest extends GWTTestCase {
    * Test that fillParent() works properly when the outer div is a child of
    * another div, and that it correctly follows that div's size.
    */
+  @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testFillParent() {
     // We don't use the default elements created in gwtSetUp() because we need
     // to test the behavior when the layout is contained by an element other
@@ -235,6 +236,7 @@ public class LayoutTest extends GWTTestCase {
    * Test that fillParent() works properly when the outer div is a child of the
    * document body.
    */
+  @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testFillWindow() {
     layer0.setTopBottom(0, PX, 0, PX);
     layer0.setLeftRight(0, PX, 0, PX);
@@ -300,6 +302,7 @@ public class LayoutTest extends GWTTestCase {
    * bottom-height). Ok, so we don't test the *entire* cross-product, but enough
    * to be comfortable.
    */
+  @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testStaticConstraints() {
     // left-right, top-bottom
     layer0.setTopBottom(32, PX, 32, PX);
@@ -337,6 +340,7 @@ public class LayoutTest extends GWTTestCase {
   /**
    * Tests all unit types.
    */
+  @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testUnits() {
     // CM
     layer0.setTopBottom(1, CM, 1, CM);
@@ -391,6 +395,7 @@ public class LayoutTest extends GWTTestCase {
    * Tests layout in the presence of decorations on the parent and child
    * elements.
    */
+  @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testWithDecorations() {
     layer0.setTopBottom(0, PX, 0, PX);
     layer0.setLeftRight(0, PX, 0, PX);

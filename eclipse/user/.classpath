@@ -29,7 +29,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/easymock/easymockclassextension.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/objectweb/asm-3.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5424/htmlunit-r5424.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5424/htmlunit-r5424-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5424/htmlunit-core-js-r5424.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5424/htmlunit-core-js-r5424-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-r5607.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-r5607-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-core-js-r5607.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-core-js-r5607-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

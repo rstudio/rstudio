@@ -21,8 +21,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
@@ -43,7 +41,6 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Functional test of UiBinder.
  */
-@DoNotRunWith({Platform.HtmlUnitBug})
 public class UiBinderTest extends GWTTestCase {
   private WidgetBasedUi widgetUi;
   private DomBasedUi domUi;
@@ -344,7 +341,6 @@ public class UiBinderTest extends GWTTestCase {
     WidgetBasedUi.Style style();
   }
 
-  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testNoOverrideInheritedSharedCssClasses() {
     Bundle bundle = GWT.create(Bundle.class);
     WidgetBasedUi ui = GWT.create(WidgetBasedUi.class);
@@ -470,7 +466,6 @@ public class UiBinderTest extends GWTTestCase {
     assertNotNull(widgetUi.heartCursorResource.getUrl());
   }
 
-  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testCssImportedScopes() {
     assertEquals(100, widgetUi.cssImportScopeSample.inner.getOffsetWidth());
   }

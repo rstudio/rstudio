@@ -176,10 +176,7 @@ public class ElementTest extends GWTTestCase {
 
   /**
    * getAbsolute[Left|Top|Right|Bottom].
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testGetAbsolutePosition() {
     final int border = 8;
     final int margin = 9;
@@ -231,6 +228,7 @@ public class ElementTest extends GWTTestCase {
   /**
    * scroll[Left|Top], getAbsolute[Left|Top].
    */
+  @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testGetAbsolutePositionWhenBodyScrolled() {
     Document doc = Document.get();
     BodyElement body = doc.getBody();
@@ -439,6 +437,7 @@ public class ElementTest extends GWTTestCase {
   /**
    * scroll[Left|Top], scrollIntoView.
    */
+  @DoNotRunWith({Platform.HtmlUnitLayout})
   public void testScrollIntoView() {
     final DivElement outer = Document.get().createDivElement();
     final DivElement inner = Document.get().createDivElement();
@@ -475,7 +474,7 @@ public class ElementTest extends GWTTestCase {
    * Failed in all modes due to HtmlUnit bug:
    * https://sourceforge.net/tracker/?func=detail&aid=2941255&group_id=47038&atid=448266
    */
-  @DoNotRunWith({Platform.HtmlUnitBug})
+  @DoNotRunWith({Platform.HtmlUnitLayout})
   public void testScrollLeftInRtl() {
     final DivElement outer = Document.get().createDivElement();
     final DivElement inner = Document.get().createDivElement();

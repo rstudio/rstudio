@@ -20,8 +20,6 @@ import com.google.gwt.event.dom.client.ErrorEvent;
 import com.google.gwt.event.dom.client.ErrorHandler;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
@@ -103,11 +101,6 @@ public class ImageResourceTest extends GWTTestCase {
     assertFalse(a.getURL().equals(r.i16x16().getURL()));
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testDedup() {
     Resources r = GWT.create(Resources.class);
 

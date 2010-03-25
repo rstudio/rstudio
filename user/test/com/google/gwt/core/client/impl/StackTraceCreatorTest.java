@@ -20,8 +20,6 @@ import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorChrome;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -30,11 +28,6 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class StackTraceCreatorTest extends GWTTestCase {
   
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public static void testJavaScriptException() {
     JsArrayString start = sample();
     Throwable t = null;
@@ -70,10 +63,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
 
   /**
    * Just make sure that reentrant behavior doesn't fail.
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */  
-  @DoNotRunWith({Platform.HtmlUnit})
   public static void testReentrantCalls() {
     if (!GWT.isScript()) {
       // sample is useless in hosted mode
@@ -90,11 +80,6 @@ public class StackTraceCreatorTest extends GWTTestCase {
     assertEquals(start, end);
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public static void testStackTraces() {
     JsArrayString start = sample();
 
@@ -180,11 +165,6 @@ public class StackTraceCreatorTest extends GWTTestCase {
     return "com.google.gwt.core.Core";
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testExtractName() {
     assertEquals("anonymous",
         StackTraceCreator.extractNameFromToString("function(){}"));
@@ -202,11 +182,6 @@ public class StackTraceCreatorTest extends GWTTestCase {
         StackTraceCreator.extractNameFromToString("  function foo (){}"));
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testChromeExtractName() {
     CollectorChrome c = new CollectorChrome();
 

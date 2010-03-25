@@ -27,6 +27,8 @@ import com.gargoylesoftware.htmlunit.ScriptResult;
 import com.gargoylesoftware.htmlunit.WebWindow;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine;
+import com.gargoylesoftware.htmlunit.javascript.SimpleScriptable;
+import com.gargoylesoftware.htmlunit.javascript.SimpleScriptableProxy;
 import com.gargoylesoftware.htmlunit.javascript.host.Window;
 
 import net.sourceforge.htmlunit.corejs.javascript.Context;
@@ -161,11 +163,20 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
      * thisObject to ScriptableObject 4. Convert args 5. Get return value
      */
     Context jsContext = Context.getCurrentContext();
-    ScriptableObject jsThis;
+    ScriptableObject jsThis = null;
     if (thisObj.getType() == ValueType.NULL) {
       jsThis = window;
     } else {
-      jsThis = (ScriptableObject) makeJsvalFromValue(jsContext, thisObj);
+      Object obj = makeJsvalFromValue(jsContext, thisObj);
+      if (obj instanceof ScriptableObject) {
+        jsThis = (ScriptableObject) obj;
+      } else if (obj instanceof SimpleScriptableProxy) {
+        jsThis = ((SimpleScriptableProxy<SimpleScriptable>) obj).getDelegee();
+      } else {
+        logger.log(TreeLogger.ERROR, "Unable to convert " + obj + " to either "
+            + " ScriptableObject or SimpleScriptableProxy");
+        return new ExceptionOrReturnValue(true, new Value(null));
+      }
     }
     Object functionObject = ScriptableObject.getProperty(
         window, methodName);

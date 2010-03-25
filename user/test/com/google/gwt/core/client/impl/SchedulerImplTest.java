@@ -19,8 +19,6 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.core.client.impl.SchedulerImpl.Task;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -84,11 +82,6 @@ public class SchedulerImplTest extends GWTTestCase {
     return "com.google.gwt.core.Core";
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testDeferredCommands() {
     final SchedulerImpl impl = new SchedulerImpl();
 
@@ -157,11 +150,6 @@ public class SchedulerImplTest extends GWTTestCase {
     });
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testFixedDelayCommands() {
     final SchedulerImpl impl = new SchedulerImpl();
     final int[] values = {0, 4};

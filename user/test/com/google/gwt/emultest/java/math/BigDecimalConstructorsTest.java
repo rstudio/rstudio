@@ -38,8 +38,6 @@
 package com.google.gwt.emultest.java.math;
 
 import com.google.gwt.emultest.java.util.EmulTestBase;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -282,7 +280,6 @@ public class BigDecimalConstructorsTest extends EmulTestBase {
   /**
    * new BigDecimal(double value) when value is denormalized.
    */
-  @DoNotRunWith(Platform.HtmlUnit)
   public void testConstrDoubleDenormalized() {
     // HtmlUnit incorrectly converts the following double to a string
     // Safari can't handle e-309 here

@@ -17,6 +17,7 @@ package com.google.gwt.dev.shell;
 
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine;
 import com.gargoylesoftware.htmlunit.javascript.host.Window;
+import com.gargoylesoftware.htmlunit.javascript.host.WindowProxy;
 
 import net.sourceforge.htmlunit.corejs.javascript.Context;
 import net.sourceforge.htmlunit.corejs.javascript.Function;
@@ -114,8 +115,7 @@ public class HostedModePluginObject extends ScriptableObject {
             + " init: expected 1, got " + args.length);
       }
       try {
-        window = (Window) args[0];
-        // TODO (amitmanjhi): what checking needs to be done here for window?
+        window = ((WindowProxy) args[0]).getDelegee();
         return init(VERSION);
       } catch (ClassCastException e) {
         throw Context.reportRuntimeError("Incorrect parameter types for "

@@ -16,8 +16,6 @@
 package com.google.gwt.regexp.shared;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -528,11 +526,6 @@ public class RegExpTest extends GWTTestCase {
     checkReplace("the A stops here", "$$$$", "the $$ stops here");
   }
 
-  /**
-   * Failed in all modes due to HtmlUnit bug.  See:
-   * https://sourceforge.net/tracker/?func=detail&aid=2949446&group_id=47038&atid=448266
-   */
-  @DoNotRunWith({Platform.HtmlUnitBug})
   public void testReplace_doubleDigitGroupReplacement() {
     regExp = RegExp.compile("(1)(2)(3)(4)(5)(6)(7)(8)(9)(a)(b)(c)");
     checkReplace("it's 123456789abc.", "[$11]", "it's [b].");

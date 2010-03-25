@@ -182,7 +182,11 @@ public class RequestBuilderTest extends RequestTestBase {
     testSend(builder, SERVLET_GET_RESPONSE);
   }
 
-  @DoNotRunWith({Platform.HtmlUnitBug})
+  /*
+   * Need to file an HtmlUnit bug. TODO(amitmanjhi): contribute an HtmlUnit
+   * patch.
+   */
+  @DoNotRunWith( {Platform.HtmlUnitBug})
   public void testSend_HEAD() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.HEAD,
         getTestBaseURL());
@@ -217,7 +221,11 @@ public class RequestBuilderTest extends RequestTestBase {
     testSendRequest(builder, null, SERVLET_GET_RESPONSE);
   }
 
-  @DoNotRunWith({Platform.HtmlUnitBug})
+  /*
+   * Need to file an HtmlUnit bug. TODO(amitmanjhi): contribute an HtmlUnit
+   * patch.
+   */
+  @DoNotRunWith( {Platform.HtmlUnitBug})
   public void testSendRequest_HEAD() throws RequestException {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.HEAD,
         getTestBaseURL());
@@ -374,8 +382,10 @@ public class RequestBuilderTest extends RequestTestBase {
    * <li>Timeout greater than the server's response time
    * <li>Timeout is less than the server's response time
    * </ul>
+   * <p>
+   * XHR handling is synchronous in HtmlUnit at present (svn r5607).
    */
-  @DoNotRunWith({Platform.HtmlUnit})
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testSetTimeout_timeout() throws RequestException {
     delayTestFinishForRequest();
 

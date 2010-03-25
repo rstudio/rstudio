@@ -23,8 +23,6 @@ import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -33,10 +31,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * Test Case for {@link Event}.
- * Failed intermittently due to threading issues with HtmlUnit.
- * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
  */
-@DoNotRunWith({Platform.HtmlUnit})
 public class EventTest extends GWTTestCase {
   /**
    * An EventPreview used for testing.
@@ -128,10 +123,7 @@ public class EventTest extends GWTTestCase {
    * Test that concurrent removal of a {@link NativePreviewHandler} does not
    * trigger an exception. The handler should not actually be removed until the
    * end of the event loop.
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testConcurrentRemovalOfNativePreviewHandler() {
     // Add handler0
     final TestNativePreviewHandler handler0 = new TestNativePreviewHandler(
@@ -160,10 +152,7 @@ public class EventTest extends GWTTestCase {
   /**
    * Test that a double click results in exactly one simulated click event in
    * IE. See issue 3392 for more info.
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */  
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testDoubleClickEvent() {
     TestLabel label = new TestLabel();
     RootPanel.get().add(label);

@@ -128,9 +128,6 @@ public class MenuBarTest extends WidgetTestBase {
     assertNull(l1.getPopup());
   }
 
-  /*
-   * Failed in all modes with HtmlUnit.
-   */
   @DoNotRunWith({Platform.HtmlUnitBug})
   public void testBlur() {
     // Create a menu bar with children.
@@ -149,11 +146,6 @@ public class MenuBarTest extends WidgetTestBase {
     assertNull(menu.getSelectedItem());
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testEscapeKey() {
     // Create a menu bar with children.
     MenuBar l0 = new MenuBar();
@@ -281,11 +273,6 @@ public class MenuBarTest extends WidgetTestBase {
     assertNull(bar.getSelectedItem());
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testDebugId() {
     // Create a sub menu
     MenuBar subMenu = new MenuBar(true);
@@ -356,11 +343,6 @@ public class MenuBarTest extends WidgetTestBase {
     assertNull(bar.getSelectedItem());
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testTabKey() {
     // Create a menu bar with children.
     MenuBar l0 = new MenuBar();

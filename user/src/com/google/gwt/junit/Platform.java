@@ -18,12 +18,18 @@ package com.google.gwt.junit;
 /**
  * An enum to indicate the Platform where a test should run. In general, it
  * should be able to represent a large matrix such as: Browser * Os_combo *
- * {hosted, web} * {htmlUnit, actual_browser}. For now, we just distinguish
- * between HtmlUnit and non-HtmlUnit platforms.
+ * {hosted, web} * {htmlUnit, actual_browser}.
+ * <p>
+ * For HtmlUnit, we distinguish among three categories of failures:
+ * <li>{@link HtmlUnitBug}: Gwt tests that are failing due to a bug in HtmlUnit.
+ * Ideally, these must be accompanied by a bug report on the HtmlUnit issue
+ * tracker.
+ * <li>{@link HtmlUnitLayout}: Gwt tests that test layout. HtmlUnit does not use
+ * a layout engine, though some simple layout tests do pass with HtmlUnit.
+ * <li>{@link HtmlUnitUnknown}: Gwt tests whose failures have not been
+ * investigated yet.
+ *
  */
 public enum Platform {
-  Devel,
-  HtmlUnitBug,
-  HtmlUnit,
-  Prod,
+  Devel, HtmlUnitBug, HtmlUnitLayout, HtmlUnitUnknown, Prod,
 }

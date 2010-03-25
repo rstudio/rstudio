@@ -17,8 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
@@ -35,10 +33,7 @@ public class DialogBoxTest extends PopupTest {
 
   /**
    * Test the accessors.
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   @Override
   public void testAccessors() {
     super.testAccessors();
@@ -76,11 +71,6 @@ public class DialogBoxTest extends PopupTest {
     assertTrue(dialogBox.getHTML().equalsIgnoreCase("<b>text</b>"));
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testSimpleCloseButtonOnModalDialog() {
     final DialogBox dialogBox = new DialogBox(false, true);
     Button button = new Button();
@@ -95,11 +85,6 @@ public class DialogBoxTest extends PopupTest {
     assertFalse(dialogBox.isShowing());
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testDebugId() {
     DialogBox dBox = new DialogBox();
     dBox.setAnimationEnabled(false);
@@ -125,12 +110,7 @@ public class DialogBoxTest extends PopupTest {
     });
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
   @Override
-  @DoNotRunWith(Platform.HtmlUnit)
   public void testDependantPopupPanel() {
     // Create the dependent popup
     final PopupPanel dependantPopup = createPopupPanel();

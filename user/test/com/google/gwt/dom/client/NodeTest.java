@@ -16,6 +16,8 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -245,6 +247,7 @@ public class NodeTest extends GWTTestCase {
   /**
    * ownerDocument.
    */
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testOwnerDocument() {
     Document doc = Document.get();
     BodyElement body = doc.getBody();

@@ -17,8 +17,6 @@ package com.google.gwt.emultest.java.util;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 
 import org.apache.commons.collections.TestMap;
 
@@ -1748,10 +1746,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   /**
    * Test method for 'java.lang.Object.toString()'.
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith(Platform.HtmlUnit)
   public void testToString() {
     Map<K, V> map = createMap();
     map.put(getKeys()[0], getValues()[0]);

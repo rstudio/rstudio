@@ -176,11 +176,12 @@ public class JsonpRequestTest extends GWTTestCase {
   }
 
   /**
-   * Fails in devmode with HtmlUnit, JS "null" exception
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   * Fails in devmode with HtmlUnit, JS "null" exception.
+   * <p>
+   * Call occurs through postponedActions in HtmlUnit that execute
+   * synchronously. Should be async. Need to file HtmlUnitBug.
    */
-  @DoNotRunWith(Platform.HtmlUnit)
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testCancel() {
     delayTestFinish(2000);
     // setup a server request that will delay for 500ms
@@ -193,7 +194,7 @@ public class JsonpRequestTest extends GWTTestCase {
       @Override
       public void run() {
         finishTest();
-      }      
+      }
     }.schedule(1000);
   }
 
@@ -203,11 +204,6 @@ public class JsonpRequestTest extends GWTTestCase {
         new AssertSuccessCallback<String>("A"));
   }
 
-  /**
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith(Platform.HtmlUnit)
   public void testDouble() {
     delayTestFinish(RESPONSE_DELAY);
     jsonp.requestDouble(echo("123.456"), new AssertSuccessCallback<Double>(
@@ -222,11 +218,12 @@ public class JsonpRequestTest extends GWTTestCase {
   }
 
   /**
-   * Hangs indefinitely in devmode with HtmlUnit
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
+   * Hangs indefinitely in devmode with HtmlUnit.
+   * <p>
+   * Call occurs through postponedActions in HtmlUnit that execute
+   * synchronously. Should be async. Need to file HtmlUnitBug.
    */
-  @DoNotRunWith(Platform.HtmlUnit)
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testIds() {
     delayTestFinish(RESPONSE_DELAY);
     JsonpRequest<String> reqA = jsonp.requestString(echo("'A'"),
@@ -275,11 +272,6 @@ public class JsonpRequestTest extends GWTTestCase {
     jsonp.requestString(echo("null"), new AssertSuccessCallback<String>(null));
   }
 
-  /*
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testOverlapped() {
     delayTestFinish(RESPONSE_DELAY);
     Counter counter = new Counter(3);

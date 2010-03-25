@@ -368,14 +368,6 @@ public class GWTTestCaseTest extends GWTTestCase {
   }
 
   /**
-   * Just setting the htmlunit mode.
-   */
-  @DoNotRunWith(Platform.HtmlUnitBug)
-  public void testSetRetry() {
-    htmlunitMode = false;
-  }
-
-  /**
    * Test skipping a test for dev mode.
    */
   @DoNotRunWith(Platform.Devel)
@@ -389,18 +381,6 @@ public class GWTTestCaseTest extends GWTTestCase {
   @DoNotRunWith(Platform.Prod)
   public void testPlatformProd() {
     assertTrue("Should not run in prod mode", !GWT.isScript());
-  }
-
-  /*
-   * This test MUST appear after testSetRetry().
-   */
-  public void testRetry() {
-    if (htmlunitMode && !attemptedOnce) {
-      // fail
-      attemptedOnce = true;
-      throw new RuntimeException();
-    }
-    assertTrue(true);
   }
 
   public void testSetUpTearDown() throws Exception {

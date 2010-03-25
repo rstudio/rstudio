@@ -33,7 +33,6 @@ import com.google.gwt.user.client.Timer;
  * Tests for the Image widget. Images in both clipped mode and unclipped mode
  * are tested, along with the transitions between the two modes.
  */
-@DoNotRunWith({Platform.HtmlUnitBug})
 public class ImageTest extends GWTTestCase {
   interface Bundle extends ClientBundle {
     ImageResource prettyPiccy();
@@ -134,6 +133,7 @@ public class ImageTest extends GWTTestCase {
   /**
    * Tests the transition from the clipped state to the unclipped state.
    */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testChangeClippedImageToUnclipped() {
     final Image image = new Image("counting-forwards.png", 12, 13, 8, 8);
     assertEquals("clipped", getCurrentImageStateName(image));
@@ -164,6 +164,7 @@ public class ImageTest extends GWTTestCase {
   /**
    * Tests the transition from the unclipped state to the clipped state.
    */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testChangeImageToClipped() {
     final Image image = new Image("counting-forwards.png");
     assertEquals("unclipped", getCurrentImageStateName(image));
@@ -195,6 +196,7 @@ public class ImageTest extends GWTTestCase {
   /**
    * Tests the creation of an image in unclipped mode.
    */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testCreateImage() {
     final Image image = new Image("counting-forwards.png");
 
@@ -221,6 +223,7 @@ public class ImageTest extends GWTTestCase {
   /**
    * Tests the creation of an image that does not exist.
    */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testCreateImageWithError() {
     final Image image = new Image("imageDoesNotExist.png");
 
@@ -270,6 +273,7 @@ public class ImageTest extends GWTTestCase {
    * <code>setUrlAndVisibleRect(String, int, int, int, int)</code> method on an
    * unclipped image, which causes a state transition to the clipped state.
    */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testSetUrlAndVisibleRectOnUnclippedImage() {
     final Image image = new Image("counting-backwards.png");
     assertEquals("unclipped", getCurrentImageStateName(image));

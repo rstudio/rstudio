@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dom.client;
 
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -95,10 +93,7 @@ public class StyleInjectorTest extends GWTTestCase {
   /*
    * Tests against issue #879: Ensure that empty history tokens do not add
    * additional characters after the '#' symbol in the URL.
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith(Platform.HtmlUnit)
   public void testStyleInjectorBatched() {
     testStyleInjector("testStyleInjectorBatched", false);
   }

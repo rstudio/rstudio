@@ -17,8 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -71,10 +69,7 @@ public class HTMLPanelTest extends GWTTestCase {
    * move its element to a hidden div so that getElementById() would work.
    * Unfortunately, we didn't move it back to its original parent, causing
    * a problem in the case described in this test.
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testAddPartiallyAttached() {
     SimplePanel sp = new SimplePanel();
     HTMLPanel p = new HTMLPanel("<div id='foo'></div>");
@@ -93,10 +88,7 @@ public class HTMLPanelTest extends GWTTestCase {
 
   /**
    * Tests child attachment order using {@link HasWidgetsTester}.
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testAttachDetachOrder() {
     HTMLPanel p = new HTMLPanel("<div id='w00t'></div>");
     HasWidgetsTester.testAll(p, new Adder(), true);
@@ -105,10 +97,7 @@ public class HTMLPanelTest extends GWTTestCase {
   /**
    * Ensures that attachToDomAndGetElement() puts the HTMLPanel back exactly
    * where it was in the DOM originally.
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testAttachDoesntMangleChildOrder() {
     FlowPanel fp = new FlowPanel();
 

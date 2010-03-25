@@ -20,8 +20,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
@@ -30,7 +28,6 @@ import com.google.gwt.user.client.Window;
 /**
  * Tests for {@link PopupPanel}.
  */
-@DoNotRunWith({Platform.HtmlUnit})
 public class PopupTest extends GWTTestCase {
 
   /**
@@ -147,10 +144,7 @@ public class PopupTest extends GWTTestCase {
   /**
    * Tests that a large PopupPanel is not positioned off the top or left edges
    * of the browser window, making part of the panel unreachable.
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testCenterLargePopup() {
     PopupPanel popup = new PopupPanel();
     popup.setHeight("4096px");
@@ -167,10 +161,7 @@ public class PopupTest extends GWTTestCase {
    * into conflicts with the animations. The {@link MenuBar} exhibits this
    * behavior because, when we detach a {@link MenuBar} from the page, it closes
    * all of its sub menus, each located in a different {@link PopupPanel}.
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
    */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testDependantPopupPanel() {
     // Create the dependent popup
     final PopupPanel dependantPopup = createPopupPanel();
@@ -326,11 +317,6 @@ public class PopupTest extends GWTTestCase {
     }
   }
 
-  /**
-   * Failed intermittently due to threading issues with HtmlUnit.
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=4496
-   */
-  @DoNotRunWith({Platform.HtmlUnit})
   public void testPopup() {
     // Get rid of window margins so we can test absolute position.
     Window.setMargin("0px");

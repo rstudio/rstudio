@@ -98,9 +98,7 @@ public class RunStyleHtmlUnit extends RunStyle {
       setupWebClient(webClient);
       try {
         Page page = webClient.getPage(url);
-        // TODO(jat): is this necessary?
         webClient.waitForBackgroundJavaScriptStartingBefore(2000);
-        page.getEnclosingWindow().getJobManager().waitForJobs(60000);
         treeLogger.log(TreeLogger.SPAM, "getPage returned "
             + ((HtmlPage) page).asXml());
         // TODO(amitmanjhi): call webClient.closeAllWindows()
@@ -153,7 +151,7 @@ public class RunStyleHtmlUnit extends RunStyle {
    * as long as this number is greater than 1, GWTTestCaseTest::testRetry will
    * pass
    */
-  private static final int DEFAULT_TRIES = 3;
+  private static final int DEFAULT_TRIES = 1;
 
   /**
    * Returns the list of browsers Htmlunit emulates as a comma separated string.
