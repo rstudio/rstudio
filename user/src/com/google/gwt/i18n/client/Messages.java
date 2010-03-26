@@ -30,7 +30,9 @@ import java.lang.annotation.Target;
  * generated subclass that is implemented using message templates selected based
  * on locale. Message templates are based on a subset of the format used by <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/text/MessageFormat.html">
- * <code>MessageFormat</code></a>.
+ * <code>MessageFormat</code></a>.  Note in particular that single quotes are
+ * used to quote other characters, and should be doubled for a literal single
+ * quote.
  * 
  * <p>
  * Locale is specified at run time using a meta tag or query string as described
@@ -74,6 +76,10 @@ import java.lang.annotation.Target;
  * {@example com.google.gwt.examples.i18n.GameStatusMessagesAnnot}
  * </p>
  * 
+ * <p>In this example, calling <code>msg.turnsLeft("John", 13)</code> would
+ * return the string <code>"Turns left for player 'John': 13"</code>.
+ * </p>
+ * 
  * <h3>Defining Message Accessors</h3>
  * Message accessors must be of the form
  * 
@@ -97,7 +103,7 @@ import java.lang.annotation.Target;
  * {@code @PluralCount} if necessary, but you will almost never need to
  * do this). The actual plural forms for the default locale can be supplied in a
  * {@code @PluralText} annotation on the method, such as
- * {@code @PluralText({"one", "You have one widget"})}, or they can be
+ * <code>@PluralText({"one", "You have one widget"})</code>, or they can be
  * supplied in the properties file as {@code methodkey[one]=You have one widget}. Note
  * that non-default plural forms are not inherited between locales, because the
  * different locales may have different plural rules (especially {@code default} and
