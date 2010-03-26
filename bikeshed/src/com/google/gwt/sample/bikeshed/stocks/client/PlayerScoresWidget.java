@@ -48,9 +48,9 @@ public class PlayerScoresWidget extends Composite {
       sb.append("<b>Name: </b>");
       sb.append(value.getDisplayName());
       sb.append("<br><b>Net Worth: </b>");
-      sb.append(StockSample.getFormattedPrice(value.getNetWorth()));
+      sb.append(StocksDesktop.getFormattedPrice(value.getNetWorth()));
       sb.append("<br><b>Cash: </b>");
-      sb.append(StockSample.getFormattedPrice(value.getCash()));
+      sb.append(StocksDesktop.getFormattedPrice(value.getCash()));
       
       List<String> status = value.getStatus();
       if (status != null) {

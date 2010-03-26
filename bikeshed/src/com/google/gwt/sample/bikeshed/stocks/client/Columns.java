@@ -110,7 +110,7 @@ public class Columns {
     protected String getValue(Transaction object) {
       int price = object.getActualPrice() * object.getQuantity();
       return (object.isBuy() ? " (" : " ")
-          + StockSample.getFormattedPrice(price) + (object.isBuy() ? ")" : "");
+          + StocksDesktop.getFormattedPrice(price) + (object.isBuy() ? ")" : "");
     }
   };
 

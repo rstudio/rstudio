@@ -51,9 +51,9 @@ import java.util.Map;
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
-public class StockSample implements EntryPoint, Updater {
+public class StocksDesktop implements EntryPoint, Updater {
 
-  interface Binder extends UiBinder<Widget, StockSample> { }
+  interface Binder extends UiBinder<Widget, StocksDesktop> { }
 
   private static final Binder binder = GWT.create(Binder.class);
 
@@ -333,7 +333,7 @@ public class StockSample implements EntryPoint, Updater {
 
   @UiFactory
   SideBySideTreeView createTransactionTree() {
-    return new SideBySideTreeView(treeModel, null, 200, 200);
+    return new SideBySideTreeView(treeModel, null, 200);
   }
 
   // Hack - walk the transaction tree to find the current viewed sector

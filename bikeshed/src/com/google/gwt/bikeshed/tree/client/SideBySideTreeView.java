@@ -15,8 +15,11 @@
  */
 package com.google.gwt.bikeshed.tree.client;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
@@ -28,8 +31,6 @@ import com.google.gwt.user.client.Event;
  */
 public class SideBySideTreeView extends TreeView {
 
-  protected int columnHeight = 200;
-
   protected int columnWidth = 100;
 
   /**
@@ -39,21 +40,18 @@ public class SideBySideTreeView extends TreeView {
    * @param viewModel the {@link TreeViewModel} that backs the tree
    * @param rootValue the hidden root value of the tree
    * @param columnWidth
-   * @param columnHeight
    */
   public <T> SideBySideTreeView(TreeViewModel viewModel, T rootValue,
-      int columnWidth, int columnHeight) {
+      int columnWidth) {
     super(viewModel);
 
     this.columnWidth = columnWidth;
-    this.columnHeight = columnHeight;
 
     Element rootElement = Document.get().createDivElement();
     rootElement.setClassName("gwt-sstree");
     Style style = rootElement.getStyle();
     style.setPosition(Position.RELATIVE);
     style.setWidth(columnWidth, Unit.PX);
-    style.setHeight(columnHeight, Unit.PX);
     setElement(rootElement);
 
     // Add event handlers.
@@ -61,7 +59,7 @@ public class SideBySideTreeView extends TreeView {
 
     // Associate a view with the item.
     TreeNodeView<T> root = new SideBySideTreeNodeView<T>(this, null, null,
-        rootElement, rootValue, 0, "gwt-sstree", columnWidth, columnHeight);
+        rootElement, rootValue, 0, "gwt-sstree", columnWidth);
     setRootNode(root);
     root.setState(true);
   }
@@ -105,5 +103,28 @@ public class SideBySideTreeView extends TreeView {
         }
         break;
     }
+  }
+
+  public void onResize() {
+    if (!isAttached()) {
+      return;
+    }
+
+    int height = getElement().getOffsetHeight();
+    NodeList<Node> children = getElement().getChildNodes();
+    for (int i = 0; i < children.getLength(); ++i) {
+      Element child = children.getItem(i).cast();
+      child.getStyle().setHeight(height, Unit.PX);
+    }
+  }
+
+  @Override
+  protected void onLoad() {
+    // TODO(jgw): This is a total hack.
+    Scheduler.get().scheduleFinally(new Scheduler.ScheduledCommand() {
+      public void execute() {
+        onResize();
+      }
+    });
   }
 }

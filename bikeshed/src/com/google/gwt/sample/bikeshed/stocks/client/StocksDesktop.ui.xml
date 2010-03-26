@@ -31,9 +31,11 @@
     </g:west>
 
     <g:north size="18">
-      <g:ScrollPanel styleName='{common.bg}'>
-        <t:SideBySideTreeView ui:field='transactionTree'/>
-      </g:ScrollPanel>
+      <g:LayoutPanel styleName='{common.bg}'>
+        <g:layer>
+          <t:SideBySideTreeView ui:field='transactionTree'/>
+        </g:layer>
+      </g:LayoutPanel>
     </g:north>
 
     <g:center>

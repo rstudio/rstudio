@@ -28,7 +28,12 @@
 
   <servlet-mapping>
     <servlet-name>stockServlet</servlet-name>
-    <url-pattern>/stocks/stock</url-pattern>
+    <url-pattern>/stocksdesktop/stock</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>stockServlet</servlet-name>
+    <url-pattern>/stocksmobile/stock</url-pattern>
   </servlet-mapping>
 
   <servlet-mapping>

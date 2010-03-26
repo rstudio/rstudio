@@ -1,16 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 0.0.999//EN" "http://google-web-toolkit.googlecode.com/svn/tags/0.0.999/distro-source/core/src/gwt-module.dtd">
-<module rename-to='stocks'>
-  <!-- Inherit the core Web Toolkit stuff.                        -->
+<module>
   <inherits name='com.google.gwt.user.User'/>
   <inherits name='com.google.gwt.regexp.RegExp'/>
   <inherits name='com.google.gwt.bikeshed.list.List'/>
   <inherits name='com.google.gwt.bikeshed.tree.Tree'/>
 
-  <!-- Specify the app entry point class.                         -->
-  <entry-point class='com.google.gwt.sample.bikeshed.stocks.client.StockSample'/>
-
-  <!-- Specify the paths for translatable code                    -->
   <source path='client'/>
   <source path='shared'/>
 </module>

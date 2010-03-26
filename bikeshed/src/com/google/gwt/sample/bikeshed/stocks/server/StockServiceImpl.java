@@ -185,7 +185,8 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     Range sectorRange = request.getSectorRange();
 
     PlayerStatus player = ensurePlayer();
-    Result searchResults = getSearchQuotes(query, searchRange);
+    Result searchResults = searchRange != null ?
+        getSearchQuotes(query, searchRange) : null;
     Result favorites = queryFavorites(favoritesRange);
     String sectorName = request.getSector();
     Result sector = sectorRange != null ? getSectorQuotes(sectorName,

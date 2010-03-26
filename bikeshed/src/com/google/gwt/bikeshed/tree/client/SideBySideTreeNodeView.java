@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.RequiresResize;
 
 import java.util.List;
 
@@ -31,8 +32,6 @@ import java.util.List;
  * @param <T> the type that this {@link TreeNodeView} contains
  */
 public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
-
-  private int columnHeight;
 
   private int columnWidth;
 
@@ -53,13 +52,12 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
    */
   SideBySideTreeNodeView(final TreeView tree, final SideBySideTreeNodeView<?> parent,
       NodeInfo<T> parentNodeInfo, Element elem, T value, int level, String path,
-      int columnWidth, int columnHeight) {
+      int columnWidth) {
     super(tree, parent, parentNodeInfo, value);
     this.imageLeft = columnWidth - 16 - tree.getImageWidth();
     this.level = level;
     this.path = path;
     this.columnWidth = columnWidth;
-    this.columnHeight = columnHeight;
 
     setElement(elem);
   }
@@ -68,7 +66,7 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
   protected <C> TreeNodeView<C> createTreeNodeView(NodeInfo<C> nodeInfo,
       Element childElem, C childValue, Void viewData, int idx) {
     return new SideBySideTreeNodeView<C>(getTree(), this, nodeInfo, childElem,
-        childValue, level + 1, path + "-" + idx, columnWidth, columnHeight);
+        childValue, level + 1, path + "-" + idx, columnWidth);
   }
 
   @Override
@@ -117,6 +115,13 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
       animFrame.getStyle().setPosition(Position.RELATIVE);
       animFrame.setId("animFrame");
       setChildContainer(animFrame.appendChild(Document.get().createDivElement()));
+    }
+
+    // TODO(jgw): Kind of a hack. We should probably be propagating onResize()
+    // down from the TreeView, but this is simpler for the moment.
+    TreeView tree = getTree();
+    if (tree instanceof RequiresResize) {
+      ((RequiresResize) tree).onResize();
     }
 
     return getChildContainer();
@@ -195,7 +200,6 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
       style.setTop(0, Unit.PX);
       style.setLeft(level * columnWidth, Unit.PX);
       style.setWidth(columnWidth, Unit.PX);
-      style.setHeight(columnHeight, Unit.PX);
 
       childCount++;
     }
