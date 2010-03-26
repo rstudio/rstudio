@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -575,7 +574,7 @@ public abstract class AbstractClientBundleGenerator extends Generator {
       ClientBundleRequirements requirements) throws UnableToCompleteException {
     // Try to provide as many errors as possible before failing.
     boolean success = true;
-    Map<ResourceGenerator, List<JMethod>> toReturn = new IdentityHashMap<ResourceGenerator, List<JMethod>>();
+    Map<ResourceGenerator, List<JMethod>> toReturn = new LinkedHashMap<ResourceGenerator, List<JMethod>>();
 
     // Run the ResourceGenerators to generate implementations of the methods
     for (Map.Entry<Class<? extends ResourceGenerator>, List<JMethod>> entry : taskList.entrySet()) {
