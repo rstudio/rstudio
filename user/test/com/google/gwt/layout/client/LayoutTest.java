@@ -56,6 +56,7 @@ public class LayoutTest extends GWTTestCase {
   private Element wrapper0, wrapper1;
   private Layout layout;
   private Layer layer0, layer1;
+  private boolean resized;
 
   @Override
   public String getModuleName() {
@@ -304,6 +305,11 @@ public class LayoutTest extends GWTTestCase {
    */
   @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testStaticConstraints() {
+    // This test assumes enough size. Ignore it if size cannot be guaranteed.
+    if (!resized) {
+      return;
+    }
+
     // left-right, top-bottom
     layer0.setTopBottom(32, PX, 32, PX);
     layer0.setLeftRight(32, PX, 32, PX);
@@ -342,6 +348,11 @@ public class LayoutTest extends GWTTestCase {
    */
   @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testUnits() {
+    // This test assumes enough size. Ignore it if size cannot be guaranteed.
+    if (!resized) {
+      return;
+    }
+
     // CM
     layer0.setTopBottom(1, CM, 1, CM);
     layer0.setLeftRight(1, CM, 1, CM);
@@ -428,7 +439,7 @@ public class LayoutTest extends GWTTestCase {
   @Override
   protected void gwtSetUp() throws Exception {
     // ensure enough sizes for this test
-    WindowTest.ResizeHelper.resizeTo(800, 600);
+    resized = WindowTest.ResizeHelper.resizeTo(800, 600);
 
     Window.enableScrolling(false);
 
