@@ -186,7 +186,6 @@ public class UnicodeEscapingTest extends GWTTestCase {
    * equivalent in that case.  Surrogate characters are also not tested here,
    * see {@link #disabled_testServerToClientBMPSurrogates()}.
    */
-  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testServerToClientBMP() {
     delayTestFinish(TEST_FINISH_DELAY_MS);
     serverToClientVerify(Character.MIN_CODE_POINT,

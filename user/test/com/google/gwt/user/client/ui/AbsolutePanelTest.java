@@ -39,8 +39,8 @@ public class AbsolutePanelTest extends PanelTestBase<AbsolutePanel> {
   }
 
   /**
-   * Failed in all modes due to HtmlUnit bug.  See:
-   * https://sourceforge.net/tracker/?func=detail&aid=2892289&group_id=47038&atid=448266
+   * Failed in all modes with absolute positioning.
+   * TODO: (flin) File a new HtmlUnit bug.
    */
   @DoNotRunWith(Platform.HtmlUnitBug)
   public void testPositioning() {
