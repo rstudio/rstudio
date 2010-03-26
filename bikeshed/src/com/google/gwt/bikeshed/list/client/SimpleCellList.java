@@ -25,7 +25,6 @@ import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
@@ -43,30 +42,40 @@ public class SimpleCellList<T> extends Widget {
   private final Cell<T, Void> cell;
   private final ArrayList<T> data = new ArrayList<T>();
   private int increment;
+  private int initialMaxSize;
   private int maxSize;
   private ListModel<T> model;
-  private final Element showMoreElem;
-  private final Element tmpElem;
   private ListRegistration reg;
+  private int seq; // for debugging - TODO: remove
+  private final Element showFewerElem;
+  private final Element showMoreElem;
+  private int size;
+  private final Element tmpElem;
   private ValueUpdater<T, Void> valueUpdater;
-  
   public SimpleCellList(ListModel<T> model, Cell<T, Void> cell, int maxSize,
       int increment) {
-    this.maxSize = maxSize;
+    this.initialMaxSize = this.maxSize = maxSize;
     this.increment = increment;
     this.model = model;
     this.cell = cell;
+    this.seq = 0;
     
     tmpElem = Document.get().createDivElement();
     
     showMoreElem = Document.get().createDivElement();
-    showMoreElem.setInnerHTML("<i>Show " + increment + " more</i>");
-    showMoreElem.getStyle().setDisplay(Display.NONE);
+    showMoreElem.setInnerHTML("<button>Show more</button>");
+
+    showFewerElem = Document.get().createDivElement();
+    showFewerElem.setInnerHTML("<button>Show fewer</button>");
+
+    showOrHide(showMoreElem, false);
+    showOrHide(showFewerElem, false);
 
     // TODO: find some way for cells to communicate what they're interested in.
     DivElement outerDiv = Document.get().createDivElement();
     DivElement innerDiv = Document.get().createDivElement();
     outerDiv.appendChild(innerDiv);
+    outerDiv.appendChild(showFewerElem);
     outerDiv.appendChild(showMoreElem);
     setElement(outerDiv);
     sinkEvents(Event.ONCLICK);
@@ -76,14 +85,22 @@ public class SimpleCellList<T> extends Widget {
   @Override
   public void onBrowserEvent(Event event) {
     Element target = event.getEventTarget().cast();
-    String idxString = "";
-    while ((target != null)
-        && ((idxString = target.getAttribute("__idx")).length() == 0)) {
-      target = target.getParentElement();
-    }
-    if (idxString.length() > 0) {
-      int idx = Integer.parseInt(idxString);
-      cell.onBrowserEvent(target, data.get(idx), null, event, valueUpdater);
+    if (target.getParentElement() == showMoreElem) {
+      this.maxSize += increment;
+      reg.setRangeOfInterest(0, maxSize);
+    } else if (target.getParentElement() == showFewerElem) {
+      this.maxSize = Math.max(initialMaxSize, maxSize - increment);
+      reg.setRangeOfInterest(0, maxSize);
+    } else {
+      String idxString = "";
+      while ((target != null)
+          && ((idxString = target.getAttribute("__idx")).length() == 0)) {
+        target = target.getParentElement();
+      }
+      if (idxString.length() > 0) {
+        int idx = Integer.parseInt(idxString);
+        cell.onBrowserEvent(target, data.get(idx), null, event, valueUpdater);
+      }
     }
   }
   
@@ -98,38 +115,64 @@ public class SimpleCellList<T> extends Widget {
     // Register for model events.
     this.reg = model.addListHandler(new ListHandler<T>() {
       public void onDataChanged(ListEvent<T> event) {
-        int start = event.getStart(), len = event.getLength();
+        int start = event.getStart();
+        int len = event.getLength();
         List<T> values = event.getValues();
-        for (int i = 0; i < len; ++i) {
-          data.set(start + i, values.get(i));
+
+        // Construct a run of element from start (inclusive) to start + len (exclusive)
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < len; i++) {
+          sb.append("<div __idx='" + (start + i) + "' __seq='" + seq++ + "'>");
+          cell.render(values.get(i), null, sb);
+          sb.append("</div>");
         }
-        render(start, len, values);
+
+        Element parent = getElement().getFirstChildElement();
+        if (start == 0 && len == maxSize) {
+          parent.setInnerHTML(sb.toString());
+        } else {
+          makeElements();
+          tmpElem.setInnerHTML(sb.toString());
+          for (int i = 0; i < len; i++) {
+            Element child = parent.getChild(start + i).cast();
+            parent.replaceChild(tmpElem.getChild(0), child);
+          }
+        }
       }
 
       public void onSizeChanged(SizeChangeEvent event) {
-        int size = event.getSize();
-        if (size > maxSize) {
-          showMoreElem.getStyle().clearDisplay();
-        } else {
-          showMoreElem.getStyle().setDisplay(Display.NONE);
-        }
+        size = event.getSize();
+        showOrHide(showMoreElem, size > maxSize);
+        showOrHide(showFewerElem, maxSize > initialMaxSize);
+      }
+
+      private void makeElements() {
+        Element parent = getElement().getFirstChildElement();
+        int childCount = parent.getChildCount();
         
-        int dataSize = data.size();
-        if (size < dataSize) {
-          while (size < dataSize) {
-            data.remove(dataSize - 1);
-            dataSize--;
+        int actualSize = Math.min(size, maxSize);
+        if (actualSize > childCount) {
+          // Create new elements with a "loading..." message
+          StringBuilder sb = new StringBuilder();
+          int newElements = actualSize - childCount;
+          for (int i = 0; i < newElements; i++) {
+            sb.append("<div __idx='" + (childCount + i) + "'><i>loading...</i></div>");
           }
-        } else {
-          data.ensureCapacity(size);
-          while (dataSize < size) {
-            data.add(null);
-            dataSize++;
+
+          if (childCount == 0) {
+            parent.setInnerHTML(sb.toString());
+          } else {
+            tmpElem.setInnerHTML(sb.toString());
+            for (int i = 0; i < newElements; i++) {
+              parent.appendChild(tmpElem.getChild(0));
+            }
+          }
+        } else if (actualSize < childCount) {
+          // Remove excess elements
+          while (actualSize < childCount) {
+            parent.getChild(--childCount).removeFromParent();
           }
         }
-        
-        // TODO: This only grows. It needs to shrink as well.
-        gc(size);
       }
     });
 
@@ -143,69 +186,11 @@ public class SimpleCellList<T> extends Widget {
     this.reg = null;
   }
 
-  private void gc(int size) {
-    // Remove unused children if the size shrinks.
-    int childCount = getElement().getChildCount();
-    while (size < childCount) {
-      getElement().getChild(--childCount).removeFromParent();
-    }
-  }
-
-  private void render(int start, int len, List<T> values) {
-    Element parent = getElement().getFirstChildElement();
-    int childCount = parent.getChildCount();
-
-    // Create innerHTML for the new items.
-    int end = start + len;
-    StringBuilder html = new StringBuilder();
-
-    // Empty items to fill any gaps.
-    int totalToAdd = 0;
-    for (int i = childCount; i < start; ++i) {
-      html.append("<div __idx='" + i + "'>");
-      cell.render(null, null, html);
-      html.append("</div>");
-      ++totalToAdd;
-    }
-
-    // Items rendered from data.
-    for (int i = start; i < end; ++i) {
-      html.append("<div __idx='" + i + "'>");
-      cell.render(values.get(i - start), null, html);
-      html.append("</div>");
-      ++totalToAdd;
-    }
-
-    if (childCount == 0) {
-      // Fast path: No cells existed, so we can just user innerHTML.
-      parent.setInnerHTML(html.toString());
+  private void showOrHide(Element element, boolean show) {
+    if (show) {
+      element.getStyle().clearDisplay();
     } else {
-      // Slower path: We can't clobber the existing cells, so we use innerHTML
-      // in a temporary element, then move the cells back to the main element.
-      tmpElem.setInnerHTML(html.toString());
-
-      // Clear out old cells that overlap the new cells.
-      if (start < childCount) {
-        int toRemove = Math.min(end, childCount) - start;
-        for (int i = 0; i < toRemove; ++i) {
-          parent.removeChild(parent.getChild(start));
-        }
-        childCount = parent.getChildCount();
-      }
-
-      // Move the new cells over from the temp element.
-      if (start >= childCount) {
-        // Just append to the end.
-        for (int i = 0; i < totalToAdd; ++i) {
-          parent.appendChild(tmpElem.getChild(0));
-        }
-      } else {
-        // Insert them in the middle somewhere.
-        Node before = parent.getChild(start);
-        for (int i = 0; i < totalToAdd; ++i) {
-          parent.insertBefore(tmpElem.getChild(0), before);
-        }
-      }
+      element.getStyle().setDisplay(Display.NONE);
     }
   }
 }

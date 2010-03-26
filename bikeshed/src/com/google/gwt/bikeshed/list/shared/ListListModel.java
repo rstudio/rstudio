@@ -53,8 +53,14 @@ public class ListListModel<T> extends AbstractListModel<T> {
           curSize = newSize;
           updateDataSize(curSize, true);
         }
-        updateViewData(0, list.size(), list);
         
+        if (modified) {
+          int length = maxModified - minModified;
+          updateViewData(minModified, length, list.subList(minModified, maxModified));
+          modified = false;
+        }
+        minModified = Integer.MAX_VALUE;
+        maxModified = Integer.MIN_VALUE;
         flushPending = false;
       }
     };
@@ -69,29 +75,72 @@ public class ListListModel<T> extends AbstractListModel<T> {
      */
     private List<T> list;
 
+    /**
+     * If modified is true, the smallest modified index.
+     */
+    private int maxModified;
+
+    /**
+     * If modified is true, one past the largest modified index.
+     */
+    private int minModified;
+
+    /**
+     * True if the list data has been modified.
+     */
+    private boolean modified;
+
     public ListWrapper(List<T> list) {
       this.list = list;
+      minModified = 0;
+      maxModified = list.size();
+      modified = true;
     }
 
     public void add(int index, T element) {
-      list.add(index, element);
-      flush();
+      try {
+        list.add(index, element);
+        minModified = Math.min(minModified, index);
+        maxModified = size();
+        modified = true;
+        flush();
+      } catch (IndexOutOfBoundsException e) {
+        throw new IndexOutOfBoundsException(e.getMessage());
+      }
     }
 
     public boolean add(T e) {
-      return flush(list.add(e));
+      boolean toRet = list.add(e);
+      minModified = Math.min(minModified, size() - 1);
+      maxModified = size();
+      modified = true;
+      return flush(toRet);
     }
 
     public boolean addAll(Collection<? extends T> c) {
-      return flush(list.addAll(c));
+      minModified = Math.min(minModified, size());
+      boolean toRet = list.addAll(c);
+      maxModified = size();
+      modified = true;
+      return flush(toRet);
     }
 
     public boolean addAll(int index, Collection<? extends T> c) {
-      return flush(list.addAll(index, c));
+      try {
+        boolean toRet = list.addAll(index, c);
+        minModified = Math.min(minModified, index);
+        maxModified = size();
+        modified = true;
+        return flush(toRet);
+      } catch (IndexOutOfBoundsException e) {
+        throw new IndexOutOfBoundsException(e.getMessage());
+      }
     }
 
     public void clear() {
       list.clear();
+      minModified = maxModified = 0;
+      modified = true;
       flush();
     }
 
@@ -145,25 +194,48 @@ public class ListListModel<T> extends AbstractListModel<T> {
     }
 
     public T remove(int index) {
-      T toRet = list.remove(index);
-      flush();
-      return toRet;
+      try {
+        T toRet = list.remove(index);
+        minModified = Math.min(minModified, index);
+        maxModified = size();
+        modified = true;
+        flush();
+        return toRet;
+      } catch (IndexOutOfBoundsException e) {
+        throw new IndexOutOfBoundsException(e.getMessage());
+      }
     }
 
     public boolean remove(Object o) {
-      return flush(list.remove(o));
+      int index = indexOf(o);
+      if (index == -1) {
+        return false;
+      }
+      remove(index);
+      return true;
     }
 
     public boolean removeAll(Collection<?> c) {
-      return flush(list.removeAll(c));
+      boolean toRet = list.removeAll(c);
+      minModified = 0;
+      maxModified = size();
+      modified = true;
+      return flush(toRet);
     }
 
     public boolean retainAll(Collection<?> c) {
-      return flush(list.retainAll(c));
+      boolean toRet = list.retainAll(c);
+      minModified = 0;
+      maxModified = size();
+      modified = true;
+      return flush(toRet);
     }
 
     public T set(int index, T element) {
       T toRet = list.set(index, element);
+      minModified = Math.min(minModified, index);
+      maxModified = Math.max(maxModified, index + 1);
+      modified = true;
       flush();
       return toRet;
     }
