@@ -23,108 +23,75 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JRealClassType;
+import com.google.gwt.util.regexfilter.RegexFilter;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 class BlacklistTypeFilter implements TypeFilter {
-  
-  private List<Boolean> includeType;
+  private static String PROP_RPC_BLACKLIST = "rpc.blacklist";
+
+  /**
+   * Configure {@link RegexFilter} for use for RPC blacklists.
+   */
+  private static class RpcBlacklist extends RegexFilter {
+    public RpcBlacklist(TreeLogger logger, List<String> regexes)
+        throws UnableToCompleteException {
+      super(logger, regexes);
+    }
+
+    @Override
+    protected boolean acceptByDefault() {
+      return true;
+    }
+
+    @Override
+    protected boolean entriesArePositiveByDefault() {
+      return false;
+    }
+  }
+
+  private final RpcBlacklist blacklist;
   private TreeLogger logger;
-  private List<Pattern> typePatterns;
-  private List<String> values;
-  
+
   public BlacklistTypeFilter(TreeLogger logger, PropertyOracle propertyOracle)
       throws UnableToCompleteException {
+    ConfigurationProperty prop;
+    try {
+      prop = propertyOracle.getConfigurationProperty(PROP_RPC_BLACKLIST);
+    } catch (BadPropertyValueException e) {
+      logger.log(TreeLogger.ERROR, "Could not find property "
+          + PROP_RPC_BLACKLIST);
+      throw new UnableToCompleteException();
+    }
+
     this.logger = logger.branch(TreeLogger.DEBUG,
         "Analyzing RPC blacklist information");
-    try {
-      ConfigurationProperty prop
-          = propertyOracle.getConfigurationProperty("rpc.blacklist");
-
-      values = prop.getValues();
-      int size = values.size();
-      typePatterns = new ArrayList<Pattern>(size);
-      includeType = new ArrayList<Boolean>(size);
-
-      // TODO investigate grouping multiple patterns into a single regex
-      for (String regex : values) {
-        // Patterns that don't start with [+-] are considered to be [-]
-        boolean include = false;
-        // Ignore empty regexes
-        if (regex.length() == 0) {
-          logger.log(TreeLogger.ERROR, "Got empty RPC blacklist entry");
-          throw new UnableToCompleteException();
-        }
-        char c = regex.charAt(0);
-        if (c == '+' || c == '-') {
-          regex = regex.substring(1); // skip initial character
-          include = (c == '+');
-        }
-        try {
-          Pattern p = Pattern.compile(regex);
-          typePatterns.add(p);
-          includeType.add(include);
-          
-          logger.log(TreeLogger.DEBUG,
-              "Got RPC blacklist entry '" + regex + "'");
-        } catch (PatternSyntaxException e) {
-          logger.log(TreeLogger.ERROR,
-              "Got malformed RPC blacklist entry '" + regex + "'");
-          throw new UnableToCompleteException();
-        }
-      }
-    } catch (BadPropertyValueException e) {
-      logger.log(TreeLogger.DEBUG, "No RPC blacklist entries present");
-    }
+    blacklist = new RpcBlacklist(logger, prop.getValues());
   }
 
   public String getName() {
     return "BlacklistTypeFilter";
   }
-  
+
   public boolean isAllowed(JClassType type) {
     String name = getBaseTypeName(type);
     // For types not handled by getBaseTypeName just return true.
     if (name == null) {
       return true;
     }
-    
-    // Process patterns in reverse order for early exit
-    int size = typePatterns.size();
-    for (int idx = size - 1; idx >= 0; idx--) {
-      logger.log(TreeLogger.DEBUG, "Considering RPC rule " + values.get(idx)
-          + " for type " + name);
-      boolean include = includeType.get(idx);
-      Pattern pattern = typePatterns.get(idx);
-      if (pattern.matcher(name).matches()) {
-        if (include) {
-          logger.log(TreeLogger.DEBUG, "Whitelisting type " + name
-              + " according to rule " + values.get(idx));
-          return true;
-        } else {
-          logger.log(TreeLogger.DEBUG, "Blacklisting type " + name
-              + " according to rule " + values.get(idx));
-          return false;
-        }
-      }
-    }
-    
-    // Type does not match any pattern, pass it through
-    return true;
+
+    return blacklist.isIncluded(logger, name);
   }
 
   /**
    * Returns a simple qualified name for simple types, including classes and
-   * interfaces, parameterized, and raw types.  Null is returned for other types
+   * interfaces, parameterized, and raw types. Null is returned for other types
    * such as arrays and type parameters (e.g., 'E' in java.util.List<E>) because
    * filtering is meaningless for such types.
    */
   private String getBaseTypeName(JClassType type) {
     JClassType baseType = null;
-    
+
     if (type instanceof JRealClassType) {
       baseType = type;
     } else if (type.isParameterized() != null) {
@@ -132,8 +99,7 @@ class BlacklistTypeFilter implements TypeFilter {
     } else if (type.isRawType() != null) {
       baseType = type.isRawType();
     }
-    
+
     return baseType == null ? null : baseType.getQualifiedSourceName();
   }
 }
-

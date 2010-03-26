@@ -43,6 +43,7 @@ import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ValueTypesTest;
 import com.google.gwt.user.client.rpc.ValueTypesTestWithTypeObfuscation;
+import com.google.gwt.user.rebind.rpc.BlacklistTypeFilterTest;
 import com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilderTest;
 import com.google.gwt.user.rebind.rpc.TypeHierarchyUtilsTest;
 import com.google.gwt.user.server.Base64Test;
@@ -74,6 +75,7 @@ public class RPCSuite {
         "Test for com.google.gwt.user.client.rpc");
 
     // Non GWTTestCases
+    suite.addTestSuite(BlacklistTypeFilterTest.class);
     suite.addTestSuite(SerializableTypeOracleBuilderTest.class);
     suite.addTestSuite(TypeHierarchyUtilsTest.class);
     suite.addTestSuite(RPCTest.class);
