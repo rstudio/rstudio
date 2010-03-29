@@ -170,6 +170,41 @@ public class SuggestBoxTest extends WidgetTestBase {
     assertEquals("A", display.getSuggestion(0).getReplacementString());
     assertEquals("B", display.getSuggestion(1).getReplacementString());
   }
+  
+  public void testSuggestionSelection() {
+    MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
+    oracle.setDefaultSuggestionsFromText(Arrays.asList("A", "B"));
+    TestSuggestionDisplay display = new TestSuggestionDisplay();
+    SuggestBox box = new SuggestBox(oracle, new TextBox(), display);
+    box.setAutoSelectEnabled(false);
+    RootPanel.get().add(box);
+    box.showSuggestionList();
+
+    // If nothing is selected, moving down will select the first item
+    assertNull(display.getCurrentSelection());
+    display.moveSelectionDown();
+    assertEquals("A", display.getCurrentSelection().getReplacementString());
+    
+    // Once something is selected, selections are made as expected, but we do
+    // not move outside the box
+    display.moveSelectionDown();
+    assertEquals("B", display.getCurrentSelection().getReplacementString());
+    display.moveSelectionDown();
+    assertEquals("B", display.getCurrentSelection().getReplacementString());
+    display.moveSelectionUp();
+    assertEquals("A", display.getCurrentSelection().getReplacementString());
+    display.moveSelectionUp();
+    assertEquals("A", display.getCurrentSelection().getReplacementString());
+    
+    // Reset the suggestions so that nothing is selected again
+    display.hideSuggestions();
+    box.showSuggestionList();
+    assertNull(display.getCurrentSelection());
+    
+    // If nothing is selected, moving up will select the last item
+    display.moveSelectionUp();
+    assertEquals("B", display.getCurrentSelection().getReplacementString());
+  }
 
   public void testShowFirst() {
     SuggestBox box = createSuggestBox();

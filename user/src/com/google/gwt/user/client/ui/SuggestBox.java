@@ -366,6 +366,8 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       // Make sure that the menu is actually showing. These keystrokes
       // are only relevant when choosing a suggestion.
       if (isSuggestionListShowing()) {
+        // If nothing is selected, getSelectedItemIndex will return -1 and we
+        // will select index 0 (the first item) by default.
         suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() + 1);
       }
     }
@@ -375,7 +377,17 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       // Make sure that the menu is actually showing. These keystrokes
       // are only relevant when choosing a suggestion.
       if (isSuggestionListShowing()) {
-        suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() - 1);
+        // if nothing is selected, then we should select the last suggestion by
+        // default. This is because, in some cases, the suggestions menu will
+        // appear above the text box rather than below it (for example, if the
+        // text box is at the bottom of the window and the suggestions will not
+        // fit below the text box). In this case, users would expect to be able
+        // to use the up arrow to navigate to the suggestions.
+        if (suggestionMenu.getSelectedItemIndex() == -1) {
+          suggestionMenu.selectItem(suggestionMenu.getNumItems() - 1);
+        } else {
+          suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() - 1);
+        }
       }
     }
 
