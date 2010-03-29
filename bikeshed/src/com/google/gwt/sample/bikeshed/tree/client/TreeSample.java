@@ -33,7 +33,7 @@ public class TreeSample implements EntryPoint {
 
     RootPanel.get().add(new HTML("<hr>"));
 
-    SideBySideTreeView sstree = new SideBySideTreeView(new MyTreeViewModel(), "...", 100);
+    SideBySideTreeView sstree = new SideBySideTreeView(new MyTreeViewModel(), "...", 100, 4); 
     sstree.setHeight("200px");
     RootPanel.get().add(sstree);
   }

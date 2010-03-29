@@ -31,10 +31,13 @@ import com.google.gwt.user.client.Event;
  */
 public class SideBySideTreeView extends TreeView {
 
-  protected int columnWidth = 100;
+  protected int columnWidth;
+
+  protected int maxColumns;
 
   /**
-   * Construct a new {@link TreeView}.
+   * Construct a new {@link TreeView} that will display as many columns as
+   * needed.
    *
    * @param <T> the type of data in the root node
    * @param viewModel the {@link TreeViewModel} that backs the tree
@@ -43,9 +46,24 @@ public class SideBySideTreeView extends TreeView {
    */
   public <T> SideBySideTreeView(TreeViewModel viewModel, T rootValue,
       int columnWidth) {
+    this(viewModel, rootValue, columnWidth, Integer.MAX_VALUE);
+  }
+
+  /**
+   * Construct a new {@link TreeView}.
+   *
+   * @param <T> the type of data in the root node
+   * @param viewModel the {@link TreeViewModel} that backs the tree
+   * @param rootValue the hidden root value of the tree
+   * @param columnWidth the width of each column
+   * @param maxColumns the maximum number of columns to display horizontally.
+   */
+  public <T> SideBySideTreeView(TreeViewModel viewModel, T rootValue,
+      int columnWidth, int maxColumns) {
     super(viewModel);
 
     this.columnWidth = columnWidth;
+    this.maxColumns = maxColumns;
 
     Element rootElement = Document.get().createDivElement();
     rootElement.setClassName("gwt-sstree");
@@ -59,7 +77,7 @@ public class SideBySideTreeView extends TreeView {
 
     // Associate a view with the item.
     TreeNodeView<T> root = new SideBySideTreeNodeView<T>(this, null, null,
-        rootElement, rootValue, 0, "gwt-sstree", columnWidth);
+        rootElement, rootValue, 0, "gwt-sstree", columnWidth, maxColumns);
     setRootNode(root);
     root.setState(true);
   }

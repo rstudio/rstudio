@@ -36,18 +36,33 @@ import java.util.Map;
  */
 // TODO - when can we get rid of a view data object?
 // TODO - should viewData implement some interface? (e.g., with commit/rollback/dispose)
-public abstract class Column<T, C, V> {
+public abstract class Column<T, C, V> implements HasKey<T> {
   protected final Cell<C, V> cell;
-  protected Map<T, V> viewDataMap = new HashMap<T, V>();
   protected FieldUpdater<T, C, V> fieldUpdater;
+  protected Map<Object, V> viewDataMap = new HashMap<Object, V>();
 
   public Column(Cell<C, V> cell) {
     this.cell = cell;
   }
 
+  public boolean consumesEvents() {
+    return cell.consumesEvents();
+  }
+
+  /**
+   * Returns a key to be used to associate view data with the given object.
+   * The default implementation simply returns the object.
+   */
+  public Object getKey(T object) {
+    return object;
+  }
+
+  public abstract C getValue(T object);
+
   public void onBrowserEvent(Element elem, final int index, final T object,
       NativeEvent event) {
-    V viewData = viewDataMap.get(object);
+    Object key = getKey(object);
+    V viewData = viewDataMap.get(key);
     V newViewData = cell.onBrowserEvent(elem,
         getValue(object), viewData, event, fieldUpdater == null ? null
             : new ValueUpdater<C, V>() {
@@ -56,7 +71,7 @@ public abstract class Column<T, C, V> {
               }
             });
     if (newViewData != viewData) {
-      viewDataMap.put(object, newViewData);
+      viewDataMap.put(key, newViewData);
     }
   }
 
@@ -76,6 +91,4 @@ public abstract class Column<T, C, V> {
   protected FieldUpdater<T, C, V> getFieldUpdater() {
     return fieldUpdater;
   }
-
-  protected abstract C getValue(T object);
 }

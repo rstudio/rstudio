@@ -20,6 +20,7 @@ import com.google.gwt.bikeshed.tree.client.TreeViewModel.NodeInfo;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -39,6 +40,8 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
 
   private int level;
 
+  private int maxColumns;
+
   private String path;
 
   /**
@@ -47,17 +50,19 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
    * @param tree the parent {@link TreeView}
    * @param parent the parent {@link TreeNodeView}
    * @param parentNodeInfo the {@link NodeInfo} of the parent
-   * @param elem the outer element of this {@link TreeNodeView}.
+   * @param elem the outer element of this {@link TreeNodeView}
    * @param value the value of this node
+   * @param maxColumns the maximum number of columns to display
    */
   SideBySideTreeNodeView(final TreeView tree, final SideBySideTreeNodeView<?> parent,
       NodeInfo<T> parentNodeInfo, Element elem, T value, int level, String path,
-      int columnWidth) {
+      int columnWidth, int maxColumns) {
     super(tree, parent, parentNodeInfo, value);
     this.imageLeft = columnWidth - 16 - tree.getImageWidth();
     this.level = level;
     this.path = path;
     this.columnWidth = columnWidth;
+    this.maxColumns = maxColumns;
 
     setElement(elem);
   }
@@ -66,7 +71,7 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
   protected <C> TreeNodeView<C> createTreeNodeView(NodeInfo<C> nodeInfo,
       Element childElem, C childValue, Void viewData, int idx) {
     return new SideBySideTreeNodeView<C>(getTree(), this, nodeInfo, childElem,
-        childValue, level + 1, path + "-" + idx, columnWidth);
+        childValue, level + 1, path + "-" + idx, columnWidth, maxColumns);
   }
 
   @Override
@@ -188,7 +193,7 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
   private Element createContainer(int level) {
     // Resize the root element
     Element rootElement = getTree().getElement();
-    rootElement.getStyle().setWidth((level + 1) * columnWidth, Unit.PX);
+    rootElement.getStyle().setWidth(Math.min(maxColumns, level + 1) * columnWidth, Unit.PX);
 
     // Create children of the root container as needed.
     int childCount = rootElement.getChildCount();
@@ -198,10 +203,24 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
       Style style = div.getStyle();
       style.setPosition(Position.ABSOLUTE);
       style.setTop(0, Unit.PX);
-      style.setLeft(level * columnWidth, Unit.PX);
       style.setWidth(columnWidth, Unit.PX);
 
       childCount++;
+    }
+
+    Element child = rootElement.getFirstChild().cast();
+
+    int x = Math.min(0, maxColumns - (level + 1));
+    while (child != null) {
+      Style style = child.getStyle();
+      style.setLeft(x * columnWidth, Unit.PX);
+      if (x < 0) {
+        style.setDisplay(Display.NONE);
+      } else {
+        style.clearDisplay();
+      }
+      child = child.getNextSibling().cast();
+      x++;
     }
 
     return rootElement.getChild(level).cast();

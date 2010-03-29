@@ -17,6 +17,7 @@ package com.google.gwt.bikeshed.tree.client;
 
 import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.ValueUpdater;
+import com.google.gwt.bikeshed.list.client.HasKey;
 import com.google.gwt.bikeshed.list.shared.ListModel;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -29,23 +30,13 @@ public interface TreeViewModel {
   /**
    * The info needed to create a {@link TreeNodeView}.
    */
-  interface NodeInfo<C> {
+  interface NodeInfo<C> extends HasKey<C> {
     /**
      * Get the {@link Cell} used to render child nodes.
      * 
      * @return the cell
      */
     Cell<C, Void> getCell();
-
-    /**
-     * Return a key that may be used to identify values that should
-     * be treated as the same in UI views.
-     *
-     * @param value a value of type C.
-     * @return an Object that implements appropriate hashCode() and equals()
-     * methods.
-     */
-    Object getKey(C value);
 
     /**
      * Get the {@link ListModel} used to retrieve child node values.

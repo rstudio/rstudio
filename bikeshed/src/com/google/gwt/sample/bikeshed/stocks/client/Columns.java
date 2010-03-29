@@ -32,7 +32,7 @@ public class Columns {
   static Column<StockQuote, String, Void> buyColumn = new Column<StockQuote, String, Void>(
       new ButtonCell()) {
     @Override
-    protected String getValue(StockQuote object) {
+    public String getValue(StockQuote object) {
       return "Buy";
     }
   };
@@ -40,7 +40,7 @@ public class Columns {
   static Column<StockQuote, String, Void> changeColumn = new Column<StockQuote, String, Void>(
       new ChangeCell()) {
     @Override
-    protected String getValue(StockQuote object) {
+    public String getValue(StockQuote object) {
       return object.getChange();
     }
   };
@@ -48,7 +48,7 @@ public class Columns {
   static Column<StockQuote, Integer, Void> dollarsColumn = new Column<StockQuote, Integer, Void>(
       new CurrencyCell()) {
     @Override
-    protected Integer getValue(StockQuote object) {
+    public Integer getValue(StockQuote object) {
       return object.getPrice() * object.getSharesOwned();
     }
   };
@@ -56,7 +56,7 @@ public class Columns {
   static Column<StockQuote, Boolean, Void> favoriteColumn = new Column<StockQuote, Boolean, Void>(
       new CheckboxCell()) {
     @Override
-    protected Boolean getValue(StockQuote object) {
+    public Boolean getValue(StockQuote object) {
       return object.isFavorite();
     }
   };
@@ -67,7 +67,7 @@ public class Columns {
   static Column<StockQuote, String, Void> nameColumn = new Column<StockQuote, String, Void>(
       nameCell) {
     @Override
-    protected String getValue(StockQuote object) {
+    public String getValue(StockQuote object) {
       return object.getName();
     }
   };
@@ -75,7 +75,7 @@ public class Columns {
   static Column<StockQuote, Integer, Void> priceColumn = new Column<StockQuote, Integer, Void>(
       new CurrencyCell()) {
     @Override
-    protected Integer getValue(StockQuote object) {
+    public Integer getValue(StockQuote object) {
       return object.getPrice();
     }
   };
@@ -83,7 +83,7 @@ public class Columns {
   static Column<StockQuote, Integer, Void> profitLossColumn = new Column<StockQuote, Integer, Void>(
       new ProfitLossCell()) {
     @Override
-    protected Integer getValue(StockQuote object) {
+    public Integer getValue(StockQuote object) {
       return object.getValue() - object.getTotalPaid();
     }
   };
@@ -91,7 +91,7 @@ public class Columns {
   static Column<StockQuote, String, Void> sellColumn = new Column<StockQuote, String, Void>(
       new ButtonCell()) {
     @Override
-    protected String getValue(StockQuote object) {
+    public String getValue(StockQuote object) {
       return "Sell";
     }
   };
@@ -99,7 +99,7 @@ public class Columns {
   static Column<StockQuote, String, Void> sharesColumn = new Column<StockQuote, String, Void>(
       new TextCell()) {
     @Override
-    protected String getValue(StockQuote object) {
+    public String getValue(StockQuote object) {
       return "" + object.getSharesOwned();
     }
   };
@@ -107,7 +107,7 @@ public class Columns {
   static Column<Transaction, String, Void> subtotalColumn = new Column<Transaction, String, Void>(
       new TextCell()) {
     @Override
-    protected String getValue(Transaction object) {
+    public String getValue(Transaction object) {
       int price = object.getActualPrice() * object.getQuantity();
       return (object.isBuy() ? " (" : " ")
           + StocksDesktop.getFormattedPrice(price) + (object.isBuy() ? ")" : "");
@@ -117,7 +117,7 @@ public class Columns {
   static Column<StockQuote, String, Void> tickerColumn = new Column<StockQuote, String, Void>(
       new TextCell()) {
     @Override
-    protected String getValue(StockQuote object) {
+    public String getValue(StockQuote object) {
       return object.getTicker();
     }
   };
@@ -125,7 +125,7 @@ public class Columns {
   static Column<Transaction, String, Void> transactionColumn = new Column<Transaction, String, Void>(
       new TextCell()) {
     @Override
-    protected String getValue(Transaction object) {
+    public String getValue(Transaction object) {
       return object.toString();
     }
   };
