@@ -240,6 +240,23 @@ abstract class DOMImpl {
     return node.nodeType;
   }-*/;
 
+  /**
+   * Get the child of a parent ignoring all text nodes that might be children of the parent.
+   * Returns null if the index is out of bounds.
+   */
+  public Node getNonTextChild(Node parent, int index) {
+    int i = 0;    
+    for (Node child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {     
+      if (child.getNodeType() == Node.ELEMENT_NODE) {
+        if (i == index) {
+          return child.cast();
+        }
+        i++;
+      }
+    }
+    return null;
+  }
+  
   public native Element getParentElement(Node node) /*-{
     var parent = node.parentNode;
     if (!parent || parent.nodeType != 1) {
@@ -361,4 +378,6 @@ abstract class DOMImpl {
   public native String toString(Element elem) /*-{
     return elem.outerHTML;
   }-*/;
+  
+ 
 }

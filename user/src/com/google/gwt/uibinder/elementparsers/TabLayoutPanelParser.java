@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.uibinder.rebind.DomCursor;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
@@ -80,7 +81,9 @@ public class TabLayoutPanelParser implements ElementParser {
       if (children.header != null) {
         HtmlInterpreter htmlInt = HtmlInterpreter.newInterpreterForUiObject(
             writer, fieldName);
-        String html = children.header.consumeInnerHtml(htmlInt);
+        DomCursor cursor = writer.beginDomSection(fieldName + ".getElement()");
+        String html = children.header.consumeInnerHtml(htmlInt, cursor);
+        writer.endDomSection();
         writer.addStatement("%s.add(%s, \"%s\", true);", fieldName,
             childFieldName, html);
       } else if (children.customHeader != null) {

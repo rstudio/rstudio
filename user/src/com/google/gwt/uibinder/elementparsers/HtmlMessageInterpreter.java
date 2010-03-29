@@ -73,7 +73,8 @@ public class HtmlMessageInterpreter implements XMLElement.Interpreter<String> {
       }
 
       MessageWriter message = messages.newMessage(elem);
-      message.setDefaultMessage(elem.consumeInnerHtml(phiProvider.get(message)));
+      message.setDefaultMessage(elem.consumeInnerHtml(phiProvider.get(message),
+          uiWriter.getCurrentDomCursor()));
       return uiWriter.tokenForExpression(messages.declareMessage(message));
     }
 

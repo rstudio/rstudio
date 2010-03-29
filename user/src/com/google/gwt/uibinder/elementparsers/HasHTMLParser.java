@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.DomCursor;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -28,11 +29,12 @@ public class HasHTMLParser implements ElementParser {
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
 
+    writer.addInitComment("HasHtmlParser.parse");
     HtmlInterpreter interpreter =
       HtmlInterpreter.newInterpreterForUiObject(writer, fieldName);
-    writer.beginAttachedSection(fieldName + ".getElement()");
-    String html = elem.consumeInnerHtml(interpreter);
-    writer.endAttachedSection();
+    DomCursor cursor = writer.beginDomSection(fieldName + ".getElement()");
+    String html = elem.consumeInnerHtml(interpreter, cursor);
+    writer.endDomSection();
     // TODO(jgw): throw an error if there's a conflicting 'html' attribute.
     if (html.trim().length() > 0) {
       writer.genStringPropertySet(fieldName, "HTML", html);

@@ -105,7 +105,7 @@ public class UiBinderWriter {
     text = text.replaceAll(">", "&gt;");
 
     if (!preserveWhitespace) {
-      text = text.replaceAll("\\s+", " ");
+      text = text.replaceAll("\\s+", " ");      
     }
 
     return escapeTextForJavaStringLiteral(text);
@@ -201,22 +201,13 @@ public class UiBinderWriter {
   private String gwtPrefix;
 
   private String rendered;
-
+  
   /**
    * Stack of element variable names that have been attached.
    */
-  private final LinkedList<String> attachSectionElements = new LinkedList<String>();
-  /**
-   * Maps from field element name to the temporary attach record variable name.
-   */
-  private final Map<String, String> attachedVars = new HashMap<String, String>();
-  private int nextAttachVar = 0;
-
-  /**
-   * Stack of statements to be executed after we detach the current attach
-   * section.
-   */
-  private final LinkedList<List<String>> detachStatementsStack = new LinkedList<List<String>>();
+  private final LinkedList<DomCursor> domSectionElements = 
+      new LinkedList<DomCursor>();
+  
   private final AttributeParsers attributeParsers;
   private final BundleAttributeParsers bundleParsers;
 
@@ -267,18 +258,13 @@ public class UiBinderWriter {
   }
 
   /**
-   * Add a statement to be executed right after the current attached element is
-   * detached. This is useful for doing things that might be expensive while the
-   * element is attached to the DOM.
-   * 
+   * Adds a comment in the current init stream.  Useful for debugging generated code.
    * @param format
-   * @param args
-   * @see #beginAttachedSection(String)
+   * @param params
    */
-  public void addDetachStatement(String format, Object... args) {
-    detachStatementsStack.getFirst().add(String.format(format, args));
+  public void addInitComment(String format, Object... params) {
+    addInitStatement("// " + format, params);
   }
-
   /**
    * Add a statement to be run after everything has been instantiated, in the
    * style of {@link String#format}.
@@ -296,50 +282,35 @@ public class UiBinderWriter {
   }
 
   /**
-   * Begin a section where a new attachable element is being parsed--that is,
-   * one that will be constructed as a big innerHTML string, and then briefly
-   * attached to the dom to allow fields accessing its to be filled (at the
+   * Begin a section where a new DOM tree is being parsed--that is,
+   * one that will be constructed as a big innerHTML string, and then walked to
+   * allow fields accessing its to be filled (at the
    * moment, HasHTMLParser, HTMLPanelParser, and DomElementParser.).
    * <p>
-   * Succeeding calls made to {@link #ensureAttached} and
-   * {@link #ensureFieldAttached} must refer to children of this element, until
-   * {@link #endAttachedSection} is called.
    * 
    * @param element Java expression for the generated code that will return the
-   *          dom element to be attached.
+   *          DOM element to be attached.
    */
-  public void beginAttachedSection(String element) {
-    attachSectionElements.addFirst(element);
-    detachStatementsStack.addFirst(new ArrayList<String>());
+  public DomCursor beginDomSection(String element) {
+    DomCursor cursor = new DomCursor(element, this);
+    domSectionElements.addFirst(cursor);
+    addInitComment("writer.beginAttachedSection %s", cursor.toString());
+    return cursor;
   }
 
   /**
-   * Declare a field that will hold an Element instance. Returns a token that
-   * the caller must set as the id attribute of that element in whatever
-   * innerHTML expression will reproduce it at runtime.
-   * <P>
-   * In the generated code, this token will be replaced by an expression to
-   * generate a unique dom id at runtime. Further code will be generated to be
-   * run after widgets are instantiated, to use that dom id in a getElementById
-   * call and assign the Element instance to its field.
+   * Declare a field that will hold an Element instance. 
    * 
    * @param fieldName The name of the field being declared
-   * @param parentElementExpression an expression to be evaluated at runtime,
-   *          which will return an Element that is an ancestor of this one
-   *          (needed by the getElementById call mentioned above).
+   * @param tag The tag name of the DOM element that is being referenced.
+   * @throws UnableToCompleteException 
    */
-  public String declareDomField(String fieldName, String parentElementExpression)
-      throws UnableToCompleteException {
-    ensureAttached(parentElementExpression);
-    String name = declareDomIdHolder();
+  public void declareDomField(String fieldName, String tag) throws UnableToCompleteException {    
     setFieldInitializer(fieldName, "null");
-    addInitStatement(
-        "%s = com.google.gwt.dom.client.Document.get().getElementById(%s).cast();",
-        fieldName, name);
-    addInitStatement("%s.removeAttribute(\"id\");", fieldName);
-    return tokenForExpression(name);
+    addInitStatement("%s = %s;", fieldName, 
+        domSectionElements.getFirst().getAccessExpression(fieldName, tag));
   }
-
+  
   /**
    * Declare a variable that will be filled at runtime with a unique id, safe
    * for use as a dom element's id attribute.
@@ -347,13 +318,15 @@ public class UiBinderWriter {
    * @return that variable's name.
    */
   public String declareDomIdHolder() throws UnableToCompleteException {
-    String domHolderName = "domId" + domId++;
+    String domHolderName = "domId" + getUniqueId();
     FieldWriter domField = fieldManager.registerField(
         oracle.findType(String.class.getName()), domHolderName);
     domField.setInitializer("com.google.gwt.dom.client.Document.get().createUniqueId()");
     return domHolderName;
   }
 
+
+  
   /**
    * Declares a field of the given type name, returning the name of the declared
    * field. If the element has a field or id attribute, use its value.
@@ -427,48 +400,11 @@ public class UiBinderWriter {
    * End the current attachable section. This will detach the element if it was
    * ever attached and execute any detach statements.
    * 
-   * @see #beginAttachedSection(String)
+   * @see #beginDomSection(String)
    */
-  public void endAttachedSection() {
-    String elementVar = attachSectionElements.removeFirst();
-    List<String> detachStatements = detachStatementsStack.removeFirst();
-    if (attachedVars.containsKey(elementVar)) {
-      String attachedVar = attachedVars.remove(elementVar);
-      addInitStatement("%s.detach();", attachedVar);
-      for (String statement : detachStatements) {
-        addInitStatement(statement);
-      }
-    }
-  }
-
-  /**
-   * Ensure that the specified element is attached to the DOM.
-   * 
-   * @param element variable name of element to be attached
-   * @see #beginAttachedSection(String)
-   */
-  public void ensureAttached(String element) {
-    String attachSectionElement = attachSectionElements.getFirst();
-    if (!attachedVars.containsKey(attachSectionElement)) {
-      String attachedVar = "attachRecord" + nextAttachVar;
-      addInitStatement(
-          "UiBinderUtil.TempAttachment %s = UiBinderUtil.attachToDom(%s);",
-          attachedVar, attachSectionElement);
-      attachedVars.put(attachSectionElement, attachedVar);
-      nextAttachVar++;
-    }
-  }
-
-  /**
-   * Ensure that the specified field is attached to the DOM. The field must hold
-   * an object that responds to Element getElement(). Convenience wrapper for
-   * {@link ensureAttached}<code>(field + ".getElement()")</code>.
-   * 
-   * @param field variable name of the field to be attached
-   * @see #beginAttachedSection(String)
-   */
-  public void ensureFieldAttached(String field) {
-    ensureAttached(field + ".getElement()");
+  public void endDomSection() {
+    DomCursor cursor = domSectionElements.removeFirst();
+    addInitComment("writer.endAttachedSection %s", cursor.toString());
   }
 
   /**
@@ -536,14 +472,35 @@ public class UiBinderWriter {
   public ImplicitClientBundle getBundleClass() {
     return bundleClass;
   }
+  
+  /**
+   * Get the current cursor for the DOM.  This can be used for accessing expressions, or walking
+   * subtrees.
+   */
+  public DomCursor getCurrentDomCursor() {
+    return domSectionElements.getFirst();
+  }
 
+  /**
+   * Returns an expression for accessing the current position in the DOM.
+   * @param varName optional variable where the result of this expression will be stored for 
+   *        cacheing
+   * @param tag optional name of the HTML tag we are using the expression for.
+   * @throws UnableToCompleteException 
+   */
+  public String getDomAccessExpression(String varName, String tag) 
+      throws UnableToCompleteException {
+    addInitComment("getDomAccessExpression %s", domSectionElements.getFirst().toString());
+    return domSectionElements.getFirst().getAccessExpression(varName, tag);
+  }
+  
   /**
    * @return The logger, at least until we get get it handed off to parsers via
    *         constructor args.
    */
   public MortalLogger getLogger() {
     return logger;
-  }
+  }  
 
   /**
    * Get the {@link MessagesWriter} for this UI, generating it if necessary.
@@ -567,6 +524,10 @@ public class UiBinderWriter {
     return gwtPrefix + ":field";
   }
 
+  public int getUniqueId() {
+    return domId++;
+  }
+  
   public boolean isBinderElement(XMLElement elem) {
     String uri = elem.getNamespaceUri();
     return uri != null && UiBinderGenerator.BINDER_URI.equals(uri);
@@ -723,15 +684,11 @@ public class UiBinderWriter {
    * 
    * @throws UnableToCompleteException
    */
-  private void ensureAttachmentCleanedUp() throws UnableToCompleteException {
-    if (!attachSectionElements.isEmpty()) {
+  private void ensureCursorCleanedUp() {
+    if (!domSectionElements.isEmpty()) {
       throw new IllegalStateException("Attachments not cleaned up: "
-          + attachSectionElements);
-    }
-    if (!detachStatementsStack.isEmpty()) {
-      throw new IllegalStateException("Detach not cleaned up: "
-          + detachStatementsStack);
-    }
+          + domSectionElements);
+    }    
   }
 
   /**
@@ -897,7 +854,7 @@ public class UiBinderWriter {
         new PrintWriter(stringWriter));
     writeBinder(niceWriter, rootField);
 
-    ensureAttachmentCleanedUp();
+    ensureCursorCleanedUp();
     return stringWriter.toString();
   }
 

@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.DomCursor;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -35,10 +36,12 @@ public class DomElementParser implements ElementParser {
 
     interpreter.interpretElement(elem);
 
-    writer.beginAttachedSection(fieldName);
-    String html = elem.consumeOpeningTag() + elem.consumeInnerHtml(interpreter)
+    DomCursor cursor = writer.beginDomSection(fieldName);
+    
+    String html = elem.consumeOpeningTag() + elem.consumeInnerHtml(interpreter,
+        cursor)
         + elem.getClosingTag();
-    writer.endAttachedSection();
+    writer.endDomSection();
     writer.setFieldInitializer(fieldName, String.format(
         "(%1$s) UiBinderUtil.fromHtml(\"%2$s\")",
         type.getQualifiedSourceName(), html));

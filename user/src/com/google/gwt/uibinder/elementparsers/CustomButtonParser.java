@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.DomCursor;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.XMLElement.Interpreter;
@@ -67,7 +68,9 @@ public class CustomButtonParser implements ElementParser {
 
         HtmlInterpreter interpreter = HtmlInterpreter.newInterpreterForUiObject(
             writer, fieldName);
-        String innerHtml = child.consumeInnerHtml(interpreter);
+        DomCursor cursor = writer.beginDomSection(fieldName + ".getElement()");
+        String innerHtml = child.consumeInnerHtml(interpreter, cursor);
+        writer.endDomSection();
         if (innerHtml.length() > 0) {
           writer.addStatement("%s.%s().setHTML(\"%s\");", fieldName,
               faceNameGetter(faceName), innerHtml);

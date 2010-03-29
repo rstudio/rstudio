@@ -37,17 +37,8 @@ import com.google.gwt.uibinder.rebind.XMLElement;
       throws UnableToCompleteException {
     String fieldName = writer.declareFieldIfNeeded(elem);
     if (fieldName != null) {
-      String token = writer.declareDomField(fieldName, element);
-
-      if (elem.hasAttribute("id")) {
-        writer.die(String.format(
-            "Cannot declare id=\"%s\" and %s=\"%s\" on the same element",
-            elem.consumeRawAttribute("id"), writer.getUiFieldAttributeName(),
-            fieldName));
-      }
-
-      elem.setAttribute("id", token);
-    }
+      writer.declareDomField(fieldName, elem.getLocalName());
+    }    
 
     /*
      * Return null because we don't want to replace the dom element with any

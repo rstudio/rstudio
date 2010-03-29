@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.uibinder.rebind.DomCursor;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.messages.MessageWriter;
@@ -64,12 +65,15 @@ class HtmlPlaceholderInterpreter extends PlaceholderInterpreter {
        * This recursive innerHtml call has already been escaped. Hide it in a
        * token to avoid double escaping
        */
-      String body = tokenator.nextToken(elem.consumeInnerHtml(this));
-
+      DomCursor currentDomCursor = uiWriter.getCurrentDomCursor();
+      String body = tokenator.nextToken(elem.consumeInnerHtml(this, 
+          currentDomCursor));      
+      
       String closeTag = elem.getClosingTag();
       String closePlaceholder =
           nextPlaceholder(name + "End", closeTag, closeTag);
 
+      currentDomCursor.advanceChild();
       return openPlaceholder + body + closePlaceholder;
     }
 
@@ -79,7 +83,8 @@ class HtmlPlaceholderInterpreter extends PlaceholderInterpreter {
   @Override
   protected String consumePlaceholderInnards(XMLElement elem)
       throws UnableToCompleteException {
-    return elem.consumeInnerHtml(fieldAndComputed);
+    return elem.consumeInnerHtml(fieldAndComputed, 
+        uiWriter.getCurrentDomCursor());
   }
 
   /**

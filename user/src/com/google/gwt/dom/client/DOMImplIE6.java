@@ -24,6 +24,8 @@ class DOMImplIE6 extends DOMImplTrident {
   private static boolean isIE6;
   private static boolean isIE6Detected;
 
+  
+  
   /**
    * Check if the browser is IE6 or IE7.
    * 
@@ -84,6 +86,11 @@ class DOMImplIE6 extends DOMImplTrident {
         / getZoomMultiple(doc) + doc.getScrollTop());
   }
 
+  @Override 
+  public native Node getNonTextChild(Node parent, int index) /*-{
+    return parent.children[index];
+  }-*/;
+  
   @Override
   public int getScrollLeft(Element elem) {
     if (isRTL(elem)) {

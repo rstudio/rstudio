@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.DomCursor;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
@@ -59,7 +60,9 @@ public class TabPanelParser implements ElementParser {
         if (tabChild.getLocalName().equals(TAG_TABHTML)) {
           HtmlInterpreter interpreter = HtmlInterpreter.newInterpreterForUiObject(
               writer, fieldName);
-          tabHTML = tabChild.consumeInnerHtml(interpreter);
+          DomCursor cursor = writer.beginDomSection(fieldName + ".getElement()");
+          tabHTML = tabChild.consumeInnerHtml(interpreter, cursor);
+          writer.endDomSection();
         } else {
           if (childFieldName != null) {
             writer.die("%s may only have a single child widget", child);

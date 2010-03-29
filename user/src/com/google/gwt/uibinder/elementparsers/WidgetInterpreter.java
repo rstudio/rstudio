@@ -68,30 +68,26 @@ class WidgetInterpreter implements XMLElement.Interpreter<String> {
 
   public String interpretElement(XMLElement elem) 
       throws UnableToCompleteException {
-    if (uiWriter.isWidgetElement(elem)) {
-      // Allocate a local variable to hold the dom id for this widget. Note
-      // that idHolder is a local variable reference, not a string id. We
-      // have to generate the ids at runtime, not compile time, or else
-      // we'll reuse ids for any template rendered more than once.
-      String idHolder = uiWriter.declareDomIdHolder();
-      String childField = uiWriter.parseElementToField(elem);
-      uiWriter.ensureFieldAttached(fieldName);
+    if (uiWriter.isWidgetElement(elem)) { 
       
-      String elementPointer = idHolder + "Element";
+      String tag = getLegalPlaceholderTag(elem);
+      
+      String childField = uiWriter.parseElementToField(elem);
+      
+      String elementPointer = "element" + uiWriter.getUniqueId();
       uiWriter.addInitStatement(
-          "com.google.gwt.user.client.Element %s = " +
-          "com.google.gwt.dom.client.Document.get().getElementById(%s).cast();",
-          elementPointer, idHolder);
-      // Delay replacing the placeholders with the widgets until after 
-      // detachment so as not to end up attaching the widget to the DOM 
-      // unnecessarily
-      uiWriter.addDetachStatement(
+          "com.google.gwt.user.client.Element %s = %s;",
+          elementPointer, uiWriter.getDomAccessExpression(elementPointer, tag));
+
+      uiWriter.addInitStatement(
           "%1$s.addAndReplaceElement(%2$s, %3$s);", 
           fieldName, childField, elementPointer);      
 
+      
+      // Increment DOM cursor based on the tag we are adding.
+      uiWriter.getCurrentDomCursor().advanceChild();
       // Create an element to hold the widget.
-      String tag = getLegalPlaceholderTag(elem);
-      return "<" + tag + " id='\" + " + idHolder + " + \"'></" + tag + ">";
+      return "<" + tag + "></" + tag + ">";
     }
     return null;
   }

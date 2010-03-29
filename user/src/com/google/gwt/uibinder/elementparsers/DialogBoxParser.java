@@ -17,6 +17,7 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.uibinder.rebind.DomCursor;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.DialogBox;
@@ -40,7 +41,9 @@ public class DialogBoxParser implements ElementParser {
 
         HtmlInterpreter interpreter = HtmlInterpreter.newInterpreterForUiObject(
             writer, fieldName);
-        caption = child.consumeInnerHtml(interpreter);
+        DomCursor cursor = writer.beginDomSection(fieldName + ".getElement()");
+        caption = child.consumeInnerHtml(interpreter, cursor);
+        writer.endDomSection();
       } else {
         if (body != null) {
           writer.die("In %s, may have only one widget, but found %s and %s",

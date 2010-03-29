@@ -18,6 +18,7 @@ package com.google.gwt.uibinder.elementparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.uibinder.rebind.DomCursor;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.messages.MessageWriter;
@@ -61,10 +62,10 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   private int serial = 0;
   private final String ancestorExpression;
   private final String fieldName;
-  private final Map<String, XMLElement> idToWidgetElement =
-    new HashMap<String, XMLElement>();
-  private final Set<String> idIsHasHTML = new HashSet<String>();
-  private final Set<String> idIsHasText = new HashSet<String>();
+  private final Map<String, XMLElement> elementHolderToWidgetElement = 
+      new HashMap<String, XMLElement>();
+  private final Set<String> elementIsHasHTML = new HashSet<String>();
+  private final Set<String> elementIsHasText = new HashSet<String>();
 
   WidgetPlaceholderInterpreter(String fieldName, UiBinderWriter writer,
       MessageWriter message, String ancestorExpression) {
@@ -81,6 +82,7 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
       return super.interpretElement(elem);
     }
 
+    uiWriter.addInitComment("WidgetPlaceholderInterpreter.interpretElement");
     JClassType type = uiWriter.findFieldType(elem);
     TypeOracle oracle = uiWriter.getOracle();
 
@@ -90,39 +92,46 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
       name = "widget" + (++serial);
     }
 
-    String idHolder = uiWriter.declareDomIdHolder();
-    idToWidgetElement.put(idHolder, elem);
+    DomCursor cursor = uiWriter.getCurrentDomCursor();
+    String elementHolder = cursor.getAccessExpression();
+    // We are going to generate another element right here, so we advance the child pointer.
+    cursor.advanceChild();
+    elementHolderToWidgetElement.put(elementHolder, elem);
 
     if (oracle.findType(HasHTML.class.getName()).isAssignableFrom(type)) {
-      return handleHasHTMLPlaceholder(elem, name, idHolder);
+      return handleHasHTMLPlaceholder(elem, name, elementHolder);
     }
 
     if (oracle.findType(HasText.class.getName()).isAssignableFrom(type)) {
-      return handleHasTextPlaceholder(elem, name, idHolder);
+      return handleHasTextPlaceholder(elem, name, elementHolder);
    }
 
-    return handleOpaqueWidgetPlaceholder(name, idHolder);
+    return handleOpaqueWidgetPlaceholder(name);
   }
 
+ 
   /**
    * Called by {@link XMLElement#consumeInnerHtml} after all elements
    * have been handed to {@link #interpretElement}.
    */
   @Override
   public String postProcess(String consumed) throws UnableToCompleteException {
-    for (String idHolder : idToWidgetElement.keySet()) {
-      XMLElement childElem = idToWidgetElement.get(idHolder);
+    for (Map.Entry<String, XMLElement> entry : elementHolderToWidgetElement.entrySet()) {
+      String element = entry.getKey();
+      XMLElement childElem = entry.getValue();
       String childField = uiWriter.parseElementToField(childElem);
 
-      genSetWidgetTextCall(idHolder, childField);
-      uiWriter.addInitStatement("%1$s.addAndReplaceElement(%2$s, %3$s);",
-          fieldName, childField, idHolder);
+      genSetWidgetTextCall(element, childField);
+      
+      uiWriter.addInitStatement("%1$s.addAndReplaceElement(%2$s, " +
+          "(com.google.gwt.user.client.Element)%3$s);",
+          fieldName, childField, element);
     }
     /*
      * We get used recursively, so this will be called again. Empty the map 
      * or else we'll re-register things.
      */
-    idToWidgetElement.clear();
+    elementHolderToWidgetElement.clear();
     return super.postProcess(consumed);
   }
 
@@ -132,34 +141,36 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
     return closePlaceholder;
   }
 
-  private String genOpenTag(String name, String idHolder) {
-    String openTag = String.format("<span id='\" + %s + \"'>", idHolder);
+  private String genOpenTag(String name) {
+    String openTag = "<span>";
     String openPlaceholder =
         nextPlaceholder(name + "Begin", "<span>", openTag);
     return openPlaceholder;
   }
 
-  private void genSetWidgetTextCall(String idHolder, String childField) {
-    if (idIsHasText.contains(idHolder)) {
+  private void genSetWidgetTextCall(String elementHolder, String childField) {
+    if (elementIsHasText.contains(elementHolder)) {
       uiWriter.addInitStatement(
-          "%s.setText(%s.getElementById(%s).getInnerText());", childField,
-          fieldName, idHolder);
+          "%s.setText(((com.google.gwt.user.client.Element)%s).getInnerText());", 
+          childField, elementHolder);
     }
-    if (idIsHasHTML.contains(idHolder)) {
+    if (elementIsHasHTML.contains(elementHolder)) {
       uiWriter.addInitStatement(
-          "%s.setHTML(%s.getElementById(%s).getInnerHTML());", childField,
-          fieldName, idHolder);
+          "%s.setHTML(((com.google.gwt.user.client.Element)%s).getInnerHTML());", 
+          childField, elementHolder);
     }
   }
 
   private String handleHasHTMLPlaceholder(XMLElement elem, String name,
-      String idHolder) throws UnableToCompleteException {
-    idIsHasHTML.add(idHolder);
-    String openPlaceholder = genOpenTag(name, idHolder);
+      String elementHolder) throws UnableToCompleteException {
+    elementIsHasHTML.add(elementHolder);
+    String openPlaceholder = genOpenTag(name);
 
+    DomCursor cursor = uiWriter.beginDomSection(elementHolder);
     String body =
         elem.consumeInnerHtml(new HtmlPlaceholderInterpreter(uiWriter,
-            message, ancestorExpression));
+            message, ancestorExpression), cursor);
+    uiWriter.endDomSection();
     String bodyToken = tokenator.nextToken(body);
 
     String closePlaceholder = genCloseTag(name);
@@ -167,9 +178,9 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
   }
 
   private String handleHasTextPlaceholder(XMLElement elem, String name,
-      String idHolder) throws UnableToCompleteException {
-    idIsHasText.add(idHolder);
-    String openPlaceholder = genOpenTag(name, idHolder);
+      String elementHolder) throws UnableToCompleteException {
+    elementIsHasText.add(elementHolder);
+    String openPlaceholder = genOpenTag(name);
 
     String body =
         elem.consumeInnerText(new TextPlaceholderInterpreter(uiWriter,
@@ -180,8 +191,8 @@ class WidgetPlaceholderInterpreter extends HtmlPlaceholderInterpreter {
     return openPlaceholder + bodyToken + closePlaceholder;
   }
 
-  private String handleOpaqueWidgetPlaceholder(String name, String idHolder) {
-    String tag = String.format("<span id='\" + %s + \"'></span>", idHolder);
+  private String handleOpaqueWidgetPlaceholder(String name) {
+    String tag = "<span></span>";
     String placeholder = nextPlaceholder(name, "<span></span>", tag);
     return placeholder;
   }

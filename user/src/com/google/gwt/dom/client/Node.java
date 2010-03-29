@@ -168,6 +168,16 @@ public class Node extends JavaScriptObject {
   }-*/;
 
   /**
+   * Get the child by index ignoring all text node children.
+   * Returns null if the index is out of bounds.
+   * 
+   * @param index The child index ignoring text node children
+   */
+  public final Node getNonTextChild(int index) {
+    return DOMImpl.impl.getNonTextChild(this, index);
+  }
+  
+  /**
    * The Document object associated with this node. This is also the
    * {@link Document} object used to create new nodes.
    */
@@ -183,7 +193,7 @@ public class Node extends JavaScriptObject {
   public final Element getParentElement() {
     return DOMImpl.impl.getParentElement(this);
   }
-
+  
   /**
    * The parent of this node. All nodes except Document may have a parent.
    * However, if a node has just been created and not yet added to the tree, or
