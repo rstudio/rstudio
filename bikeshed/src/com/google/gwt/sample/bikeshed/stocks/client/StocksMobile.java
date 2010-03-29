@@ -1,3 +1,18 @@
+/*
+ * Copyright 2010 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.sample.bikeshed.stocks.client;
 
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
@@ -19,9 +34,14 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+/**
+ * Mobile client for the stocks demo.
+ */
 public class StocksMobile {
 
-  interface Binder extends UiBinder<Widget, StocksMobile> {}
+  interface Binder extends UiBinder<Widget, StocksMobile> {  
+  }
+  
   private static final Binder binder = GWT.create(Binder.class);
 
   /**
@@ -99,17 +119,17 @@ public class StocksMobile {
 
   @UiFactory
   PagingTableListView<StockQuote> createFavoritesWidget() {
-    PagingTableListView<StockQuote> listView = new PagingTableListView<StockQuote>(
+    PagingTableListView<StockQuote> favorite = new PagingTableListView<StockQuote>(
         favoritesListModel, 10);
 
-    listView.addColumn(Columns.tickerColumn, new TextHeader("ticker"));
-    listView.addColumn(Columns.priceColumn, new TextHeader("price"));
-    listView.addColumn(Columns.changeColumn, new TextHeader("change"));
-    listView.addColumn(Columns.sharesColumn, new TextHeader("shares"));
-    listView.addColumn(Columns.dollarsColumn, new TextHeader("value"));
-    listView.addColumn(Columns.profitLossColumn, new TextHeader("profit/loss"));
+    favorite.addColumn(Columns.tickerColumn, new TextHeader("ticker"));
+    favorite.addColumn(Columns.priceColumn, new TextHeader("price"));
+    favorite.addColumn(Columns.changeColumn, new TextHeader("change"));
+    favorite.addColumn(Columns.sharesColumn, new TextHeader("shares"));
+    favorite.addColumn(Columns.dollarsColumn, new TextHeader("value"));
+    favorite.addColumn(Columns.profitLossColumn, new TextHeader("profit/loss"));
 
-    return listView;
+    return favorite;
   }
 
   /**
@@ -143,4 +163,3 @@ public class StocksMobile {
         favorites.size(), favorites);
   }
 }
-

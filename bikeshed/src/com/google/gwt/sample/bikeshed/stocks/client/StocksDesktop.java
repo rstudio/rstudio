@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Entry point classes define <code>onModuleLoad()</code>.
+ * Desktop client for the stocks demo.
  */
 public class StocksDesktop implements EntryPoint, Updater {
 

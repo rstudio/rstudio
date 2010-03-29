@@ -72,7 +72,7 @@ public final class Permutation implements Serializable {
 
   /**
    * This is called to merge two permutations that either have identical rebind
-   * answers or were explicitly collapsed using <collapse-property>
+   * answers or were explicitly collapsed using <collapse-property>.
    */
   public void mergeFrom(Permutation other, SortedSet<String> liveRebindRequests) {
     if (getClass().desiredAssertionStatus()) {
