@@ -27,6 +27,14 @@ import com.google.gwt.dom.client.NativeEvent;
 public abstract class Cell<C, V> {
 
   /**
+   * Returns true if the cell is interested in browser events. The default
+   * implementation returns false.
+   */
+  public boolean consumesEvents() {
+    return false;
+  }
+
+  /**
    * Handle a browser event that took place within the cell. The default
    * implementation returns null.
    * 
@@ -43,8 +51,8 @@ public abstract class Cell<C, V> {
   }
 
   /**
-   * Render a cell as HTML into a StringBuilder, suitable for passing
-   * to setInnerHTML on a container element.
+   * Render a cell as HTML into a StringBuilder, suitable for passing to
+   * {@link Element#setInnerHTML} on a container element.
    * 
    * @param value the cell value to be rendered
    * @param viewData view data associated with the cell

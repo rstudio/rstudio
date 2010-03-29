@@ -29,6 +29,11 @@ import com.google.gwt.sample.bikeshed.validation.client.ValidatableField.Default
 public class ValidatableInputCell extends Cell<String, ValidatableField<String>> {
 
   @Override
+  public boolean consumesEvents() {
+    return true;
+  }
+
+  @Override
   public ValidatableField<String> onBrowserEvent(Element parent, String value, 
       ValidatableField<String> viewData, NativeEvent event,
       ValueUpdater<String, ValidatableField<String>> valueUpdater) {

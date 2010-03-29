@@ -23,6 +23,11 @@ import com.google.gwt.dom.client.NativeEvent;
  * A {@link Cell} used to render a checkbox.
  */
 public class CheckboxCell extends Cell<Boolean, Void> {
+  
+  @Override
+  public boolean consumesEvents() {
+    return true;
+  }
 
   @Override
   public Void onBrowserEvent(Element parent, Boolean value, Void viewData,

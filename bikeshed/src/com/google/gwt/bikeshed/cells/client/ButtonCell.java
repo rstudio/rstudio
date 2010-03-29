@@ -22,6 +22,11 @@ import com.google.gwt.dom.client.NativeEvent;
  * A {@link Cell} used to render a button.
  */
 public class ButtonCell extends Cell<String, Void> {
+  
+  @Override
+  public boolean consumesEvents() {
+    return true;
+  }
 
   @Override
   public Void onBrowserEvent(Element parent, String value, Void viewData,

@@ -23,6 +23,11 @@ import com.google.gwt.dom.client.NativeEvent;
  * A {@link Cell} used to render a text input.
  */
 public class TextInputCell extends Cell<String, Void> {
+  
+  @Override
+  public boolean consumesEvents() {
+    return true;
+  }
 
   @Override
   public Void onBrowserEvent(Element parent, String value, Void viewData,
