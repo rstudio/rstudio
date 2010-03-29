@@ -200,6 +200,39 @@ public class RemoteServiceServletTest extends RpcTestBase {
   }
 
   /**
+   * Send request without the permutation strong name and expect a
+   * SecurityException. This tests
+   * RemoteServiceServlet#checkPermutationStrongName.
+   */
+  public void testRequestWithoutStrongNameHeader() {
+    RemoteServiceServletTestServiceAsync service = getAsyncService();
+    ((ServiceDefTarget) service).setRpcRequestBuilder(new RpcRequestBuilder() {
+      /**
+       * Copied from base class.
+       */
+      @Override
+      protected void doFinish(RequestBuilder rb) {
+        // Don't set permutation strong name
+        rb.setHeader(MODULE_BASE_HEADER, GWT.getModuleBaseURL());
+      }
+
+    });
+
+    delayTestFinishForRpc();
+    service.test(new AsyncCallback<Void>() {
+      public void onFailure(Throwable caught) {
+        assertTrue(caught instanceof StatusCodeException);
+        assertEquals(500, ((StatusCodeException) caught).getStatusCode());
+        finishTest();
+      }
+
+      public void onSuccess(Void result) {
+        fail();
+      }
+    });
+  }
+
+  /**
    * Ensure that each doFoo method is called.
    */
   public void testRpcRequestBuilder() {
