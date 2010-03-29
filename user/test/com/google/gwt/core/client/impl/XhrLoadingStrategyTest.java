@@ -15,7 +15,7 @@
  */
 package com.google.gwt.core.client.impl;
 
-import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadErrorHandler;
+import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadTerminatedHandler;
 import com.google.gwt.core.client.impl.XhrLoadingStrategy.MockableXMLHttpRequest;
 import com.google.gwt.xhr.client.ReadyStateChangeHandler;
 
@@ -31,18 +31,16 @@ import java.util.HashMap;
 public class XhrLoadingStrategyTest extends TestCase {
 
   static class MockXhr implements MockableXMLHttpRequest {
-    public static final String SUCCESSFUL_RESPONSE_TEXT =
-        "successful response text";
-    public static final String INSTALL_FAILED_RESPONSE_TEXT =
-        "install failed response text";
+    public static final String SUCCESSFUL_RESPONSE_TEXT = "successful response text";
+    public static final String INSTALL_FAILED_RESPONSE_TEXT = "install failed response text";
 
     private ReadyStateChangeHandler handler;
     private int httpStatus;
     private int state;
-    private String statusText; 
+    private String statusText;
     private String text;
-    private HashMap<String,String> headers;
-    
+    private HashMap<String, String> headers;
+
     public MockXhr(int status, String statusText, boolean loads,
         boolean installs, String... headers) {
       this.httpStatus = status;
@@ -57,7 +55,7 @@ public class XhrLoadingStrategyTest extends TestCase {
       handler = null;
       state = 0;
       assert headers.length % 2 == 0;
-      this.headers = new HashMap<String,String>();
+      this.headers = new HashMap<String, String>();
       for (int i = 0; i < headers.length; i += 2) {
         this.headers.put(headers[i], headers[i + 1]);
       }
@@ -75,7 +73,7 @@ public class XhrLoadingStrategyTest extends TestCase {
       return state > 3 ? text : null;
     }
 
-    public int getStatus() { 
+    public int getStatus() {
       return state > 1 ? httpStatus : 0;
     }
 
@@ -93,12 +91,13 @@ public class XhrLoadingStrategyTest extends TestCase {
         throw new IllegalStateException("not all expected headers set");
       }
       if (handler != null) {
-        /* This is brittle, but I don't have a better idea.  The problem is
-         * that onReadyStateChange takes a REAL XMLHttpRequest, which I can't
-         * mock because it's all final.  I don't want to open
-         * ReadyStateChangeHandler's long-standing API to let it take a
-         * non-real XMLHttpRequest, just for my wee test here, so instead I
-         * admit that null works 'cause the handler won't *use* its argument.
+        /*
+         * This is brittle, but I don't have a better idea. The problem is that
+         * onReadyStateChange takes a REAL XMLHttpRequest, which I can't mock
+         * because it's all final. I don't want to open
+         * ReadyStateChangeHandler's long-standing API to let it take a non-real
+         * XMLHttpRequest, just for my wee test here, so instead I admit that
+         * null works 'cause the handler won't *use* its argument.
          */
         handler.onReadyStateChange(null);
       }
@@ -111,12 +110,11 @@ public class XhrLoadingStrategyTest extends TestCase {
     public void setRequestHeader(String header, String value) {
       String val = headers.get(header);
       if (val == null) {
-        throw new IllegalArgumentException("set of unexpected header "
-            + header);
+        throw new IllegalArgumentException("set of unexpected header " + header);
       }
       if (!val.equals(value)) {
-        throw new IllegalArgumentException("set of header "
-            + header + " to unexpected value " + value + ", not " + val);
+        throw new IllegalArgumentException("set of header " + header
+            + " to unexpected value " + value + ", not " + val);
       }
       headers.remove(header);
     }
@@ -128,15 +126,15 @@ public class XhrLoadingStrategyTest extends TestCase {
   static class MockXhrLoadingStrategy extends XhrLoadingStrategy {
     private static final String FRAGMENT_URL = "http://nowhere.net/fragment";
     private ArrayList<MockXhr> xhrs;
-    
+
     public MockXhrLoadingStrategy(MockXhr... input) {
       xhrs = new ArrayList<MockXhr>(Arrays.asList(input));
     }
 
     public void assertDone() {
       if (xhrs.size() != 0) {
-        throw new IllegalStateException("leftover createXhr() data" +
-        " (too few load retries?)");
+        throw new IllegalStateException("leftover createXhr() data"
+            + " (too few load retries?)");
       }
     }
 
@@ -155,28 +153,28 @@ public class XhrLoadingStrategyTest extends TestCase {
      */
     @Override
     protected String gwtStartLoadingFragment(int fragment,
-        LoadErrorHandler loadErrorHandler) {
+        LoadTerminatedHandler LoadFinishedHandler) {
       return FRAGMENT_URL;
     }
 
     @Override
     protected MockableXMLHttpRequest createXhr() {
       if (xhrs.size() == 0) {
-        throw new IllegalStateException("createXhr() underflow" +
-            " (too many load retries?)");
+        throw new IllegalStateException("createXhr() underflow"
+            + " (too many load retries?)");
       }
       return xhrs.remove(0);
     }
   }
-  
+
   /**
    * Basic succeeds-on-first-try case.
    */
   public void testNoRetrySucceeds() {
-    MockXhrLoadingStrategy xls = new MockXhrLoadingStrategy(
-        new MockXhr(200, "200 Ok", true, true));
-    xls.startLoadingFragment(1, new LoadErrorHandler() {
-      public void loadFailed(Throwable reason) {
+    MockXhrLoadingStrategy xls = new MockXhrLoadingStrategy(new MockXhr(200,
+        "200 Ok", true, true));
+    xls.startLoadingFragment(1, new LoadTerminatedHandler() {
+      public void loadTerminated(Throwable reason) {
         fail();
       }
     });
@@ -189,10 +187,10 @@ public class XhrLoadingStrategyTest extends TestCase {
   public void testNoRetryFails() {
     final boolean loadFailedCalled[] = new boolean[1];
     loadFailedCalled[0] = false;
-    MockXhrLoadingStrategy xls = new MockXhrLoadingStrategy(
-        new MockXhr(200, "Ok", true, false));
-    xls.startLoadingFragment(1, new LoadErrorHandler() {
-      public void loadFailed(Throwable reason) {
+    MockXhrLoadingStrategy xls = new MockXhrLoadingStrategy(new MockXhr(200,
+        "Ok", true, false));
+    xls.startLoadingFragment(1, new LoadTerminatedHandler() {
+      public void loadTerminated(Throwable reason) {
         loadFailedCalled[0] = true;
       }
     });
@@ -206,15 +204,15 @@ public class XhrLoadingStrategyTest extends TestCase {
    * Needs some retries, but succeeds.
    */
   public void testRetrySucceeds() {
-    MockXhrLoadingStrategy xls = new MockXhrLoadingStrategy(
-        new MockXhr(0, "Could not connect", false, false),
-        new MockXhr(200, "Ok", true, true, "Cache-Control", "no-cache"));
-    xls.startLoadingFragment(1, new LoadErrorHandler() {
-      public void loadFailed(Throwable reason) {
+    MockXhrLoadingStrategy xls = new MockXhrLoadingStrategy(new MockXhr(0,
+        "Could not connect", false, false), new MockXhr(200, "Ok", true, true,
+        "Cache-Control", "no-cache"));
+    xls.startLoadingFragment(1, new LoadTerminatedHandler() {
+      public void loadTerminated(Throwable reason) {
         fail();
       }
     });
-    xls.assertDone();    
+    xls.assertDone();
   }
 
   /**
@@ -223,14 +221,12 @@ public class XhrLoadingStrategyTest extends TestCase {
   public void testRetryFails() {
     final boolean loadFailedCalled[] = new boolean[1];
     loadFailedCalled[0] = false;
-    MockXhrLoadingStrategy xls = new MockXhrLoadingStrategy(
-        new MockXhr(0, "Could not connect", false, false),
-        new MockXhr(0, "Could not connect", false, false,
-            "Cache-Control", "no-cache"),
-        new MockXhr(0, "Could not connect", false, false,
-            "Cache-Control", "no-cache"));
-    xls.startLoadingFragment(1, new LoadErrorHandler() {
-      public void loadFailed(Throwable reason) {
+    MockXhrLoadingStrategy xls = new MockXhrLoadingStrategy(new MockXhr(0,
+        "Could not connect", false, false), new MockXhr(0, "Could not connect",
+        false, false, "Cache-Control", "no-cache"), new MockXhr(0,
+        "Could not connect", false, false, "Cache-Control", "no-cache"));
+    xls.startLoadingFragment(1, new LoadTerminatedHandler() {
+      public void loadTerminated(Throwable reason) {
         loadFailedCalled[0] = true;
       }
     });
@@ -244,14 +240,12 @@ public class XhrLoadingStrategyTest extends TestCase {
    * A bizarre case we've seen in the wild...
    */
   public void testNull200Case() {
-    MockXhrLoadingStrategy xls = new MockXhrLoadingStrategy(
-        new MockXhr(200, "Ok", false, false),
-        new MockXhr(200, "Ok", false, false,
-            "Cache-Control", "no-cache"),
-        new MockXhr(200, "Ok", true, true,
-            "Cache-Control", "no-cache"));
-    xls.startLoadingFragment(1, new LoadErrorHandler() {
-      public void loadFailed(Throwable reason) {
+    MockXhrLoadingStrategy xls = new MockXhrLoadingStrategy(new MockXhr(200,
+        "Ok", false, false), new MockXhr(200, "Ok", false, false,
+        "Cache-Control", "no-cache"), new MockXhr(200, "Ok", true, true,
+        "Cache-Control", "no-cache"));
+    xls.startLoadingFragment(1, new LoadTerminatedHandler() {
+      public void loadTerminated(Throwable reason) {
         fail();
       }
     });
@@ -262,14 +256,12 @@ public class XhrLoadingStrategyTest extends TestCase {
    * Check some HTTP status codes....
    */
   public void testRetryCodes() {
-    MockXhrLoadingStrategy xls = new MockXhrLoadingStrategy(
-        new MockXhr(500, "Server Error", false, false),
-        new MockXhr(404, "Not Found", false, false,
-            "Cache-Control", "no-cache"),
-        new MockXhr(200, "Ok", true, true,
-            "Cache-Control", "no-cache"));
-    xls.startLoadingFragment(1, new LoadErrorHandler() {
-      public void loadFailed(Throwable reason) {
+    MockXhrLoadingStrategy xls = new MockXhrLoadingStrategy(new MockXhr(500,
+        "Server Error", false, false), new MockXhr(404, "Not Found", false,
+        false, "Cache-Control", "no-cache"), new MockXhr(200, "Ok", true, true,
+        "Cache-Control", "no-cache"));
+    xls.startLoadingFragment(1, new LoadTerminatedHandler() {
+      public void loadTerminated(Throwable reason) {
         fail();
       }
     });

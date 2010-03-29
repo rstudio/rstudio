@@ -12,11 +12,17 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
+<!-- Defines the cross-site linker   -->
 <module>
-  <inherits name="com.google.gwt.core.Core" />
-  <source path="test" />
-  <servlet path="/runAsyncFailure"
-    class="com.google.gwt.user.server.runasync.RunAsyncFailureServlet" />
-  <set-configuration-property name="iframe.linker.deferredjs.subdir"
-    value="runAsyncFailure/deferredjs" />
+  <define-linker name="xs" class="com.google.gwt.core.linker.XSLinker" />
+
+  <replace-with class="com.google.gwt.core.client.impl.CrossSiteLoadingStrategy">
+    <when-type-is
+      class="com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadingStrategy" />
+    <when-linker-added name="xs" />
+  </replace-with>
+
+  <set-property name="compiler.predeclare.cross.fragment.references" value="true">
+    <when-linker-added name="xs" />
+  </set-property>
 </module>

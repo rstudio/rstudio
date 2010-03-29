@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,14 +23,18 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Iterator;
+import java.util.regex.Pattern;
 
 /**
  * Re-orders function declarations according to a given metric and clustering
  * algorithm in order to boost gzip/deflation compression efficiency. This
  * version uses the edit-distance algorithm as a metric, and a semi-greedy
- * strategy for grouping functions together. 
+ * strategy for grouping functions together.
  */
 public class JsFunctionClusterer extends JsAbstractTextTransformer {
+
+  private static Pattern functionPattern =
+      Pattern.compile("^(function |[A-Za-z0-9_$]+=function)");
 
   /**
    * Limit edit-distance search to MAX_DIST.
@@ -39,16 +43,16 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
 
   private static final int MAX_DISTANCE_LIMIT = 100;
 
-  private List<Integer> functionIndices;
-
   private int[] clusteredIndices;
 
-  public JsFunctionClusterer(String js, StatementRanges statementRanges) {
-    super(js, statementRanges);
-  }
+  private List<Integer> functionIndices;
 
   public JsFunctionClusterer(JsAbstractTextTransformer xformer) {
     super(xformer);
+  }
+
+  public JsFunctionClusterer(String js, StatementRanges statementRanges) {
+    super(js, statementRanges);
   }
 
   public void exec() {
@@ -57,7 +61,7 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
     // gather up all of the indices of function decl statements
     for (int i = 0; i < statementRanges.numStatements(); i++) {
       String code = getJsForRange(i);
-      if (code.startsWith("function")) {
+      if (functionPattern.matcher(code).find()) {
         functionIndices.add(i);
       }
     }
@@ -88,8 +92,7 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
       Iterator<Integer> it = functionIndices.iterator();
       int count = 0;
       // search up to MAX_DIST functions for the best match
-      while (it.hasNext() &&
-             count < Math.min(MAX_DIST, functionIndices.size())) {
+      while (it.hasNext() && count < Math.min(MAX_DIST, functionIndices.size())) {
         int functionIndex = it.next();
         String testCode = getJsForRange(functionIndex);
         int distanceLimit = Math.min(bestDistance, MAX_DISTANCE_LIMIT);
@@ -172,8 +175,8 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
       while (j <= jmax) {
         char c2 = str2.charAt(j - 1);
         int costSwap = c1 == c2 ? 0 : 1;
-        nextRow[j] = Math.min(Math.min(lastRow[j] + 1, nextRow[j - 1] + 1),
-            lastRow[j - 1] + costSwap);
+        nextRow[j] =
+            Math.min(Math.min(lastRow[j] + 1, nextRow[j - 1] + 1), lastRow[j - 1] + costSwap);
         j = j + 1;
       }
       int tmpRow[] = nextRow;

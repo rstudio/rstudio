@@ -1,5 +1,5 @@
 <!--                                                                        -->
-<!-- Copyright 2009 Google Inc.                                             -->
+<!-- Copyright 2010 Google Inc.                                             -->
 <!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
 <!-- may not use this file except in compliance with the License. You may   -->
 <!-- may obtain a copy of the License at                                    -->
@@ -12,11 +12,6 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module>
-  <inherits name="com.google.gwt.core.Core" />
-  <source path="test" />
-  <servlet path="/runAsyncFailure"
-    class="com.google.gwt.user.server.runasync.RunAsyncFailureServlet" />
-  <set-configuration-property name="iframe.linker.deferredjs.subdir"
-    value="runAsyncFailure/deferredjs" />
-</module>
+<!-- Define an empty __gwtStatsEvent just to make sure that the      -->
+<!-- lightweight metrics machinery runs during bootstrapping  -->
+function __gwtStatsEvent(evt) { return true; }

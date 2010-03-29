@@ -69,6 +69,7 @@ import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
 import com.google.gwt.dev.jjs.impl.FragmentLoaderCreator;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
+import com.google.gwt.dev.jjs.impl.HandleCrossFragmentReferences;
 import com.google.gwt.dev.jjs.impl.JavaScriptObjectNormalizer;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JsFunctionClusterer;
@@ -234,8 +235,8 @@ public class JavaToJavaScriptCompiler {
       JProgram jprogram = ast.getJProgram();
       JsProgram jsProgram = ast.getJsProgram();
       JJSOptions options = unifiedAst.getOptions();
-      Map<StandardSymbolData, JsName> symbolTable = new TreeMap<StandardSymbolData, JsName>(
-          new SymbolData.ClassIdentComparator());
+      Map<StandardSymbolData, JsName> symbolTable =
+          new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
 
       ResolveRebinds.exec(jprogram, permutation.getOrderedRebindAnswers());
 
@@ -345,6 +346,11 @@ public class JavaToJavaScriptCompiler {
         default:
           throw new InternalCompilerException("Unknown output mode");
       }
+      
+      // (10.8) Handle cross-island references.
+      // No new JsNames or references to JSNames can be introduced after this
+      // point.
+      HandleCrossFragmentReferences.exec(logger, jsProgram, propertyOracles);
 
       // (11) Perform any post-obfuscation normalizations.
 

@@ -17,19 +17,41 @@ package com.google.gwt.core.client.impl;
 
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.HttpDownloadFailure;
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.HttpInstallFailure;
-import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadErrorHandler;
+import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadTerminatedHandler;
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadingStrategy;
 import com.google.gwt.xhr.client.ReadyStateChangeHandler;
 import com.google.gwt.xhr.client.XMLHttpRequest;
 
 /**
- * The standard loading strategy used in a web browser.
+ * The standard loading strategy used in a web browser. The linker it is used
+ * with should provide JavaScript-level functions to indicate how to handle
+ * downloading and installing code. There is support to use XHR for the
+ * download.
+ * 
+ * Linkers should always provide a function
+ * <code>__gwtStartLoadingFragment</code>. This function is called by
+ * AsyncFragmentLoader with two arguments: an integer fragment number that needs
+ * to be downloaded, and a one-argument loadFinished function. If the load
+ * fails, that function should be called with a descriptive exception as the
+ * argument. If the load succeeds, that function may also be called, so long as
+ * it isn't called until the downloaded code has been installed.
+ * 
+ * 
+ * If the mechanism for loading the contents of fragments is provided by the
+ * linker, the <code>__gwtStartLoadingFragment</code> function should return
+ * <code>null</code> or <code>undefined</code>.
+ * 
+ * Alternatively, the function can return a URL designating from where the code
+ * for the requested fragment can be downloaded. In that case, the linker should
+ * also provide a function <code>__gwtInstallCode</code> for actually installing
+ * the code once it is downloaded. That function will be passed the loaded code
+ * once it has been downloaded.
  */
 public class XhrLoadingStrategy implements LoadingStrategy {
   
   /**
    * A {@link MockableXMLHttpRequest} that is really just a vanilla
-   * XMLHttpRequest.  This wrapper (and thus {@code MockableXMLHttpRequest) is
+   * XMLHttpRequest.  This wrapper (and thus {@code MockableXMLHttpRequest} is
    * needed because so much of {@link XMLHttpRequest} is final, which in turn
    * is because it extends {@code JavaScriptObject} and is subject to its
    * restrictions.
@@ -104,9 +126,9 @@ public class XhrLoadingStrategy implements LoadingStrategy {
   protected class RequestData {
     String url;
     int retryCount;
-    LoadErrorHandler errorHandler = null;
+    LoadTerminatedHandler errorHandler = null;
     
-    public RequestData(String url, LoadErrorHandler errorHandler) {
+    public RequestData(String url, LoadTerminatedHandler errorHandler) {
       this.url = url;
       this.errorHandler = errorHandler;
       this.retryCount = 0;
@@ -139,7 +161,7 @@ public class XhrLoadingStrategy implements LoadingStrategy {
   private static final int MAX_RETRY_COUNT = 3;
 
   public void startLoadingFragment(int fragment,
-      final LoadErrorHandler loadErrorHandler) {
+      final LoadTerminatedHandler loadErrorHandler) {
     String url = gwtStartLoadingFragment(fragment, loadErrorHandler);
     if (url == null) {
       // The download has already started; nothing more to do
@@ -173,9 +195,9 @@ public class XhrLoadingStrategy implements LoadingStrategy {
    * makes sense.
    */
   protected native String gwtStartLoadingFragment(int fragment,
-      LoadErrorHandler loadErrorHandler) /*-{
+      LoadTerminatedHandler loadErrorHandler) /*-{
     function loadFailed(e) {
-      loadErrorHandler.@com.google.gwt.core.client.impl.AsyncFragmentLoader$LoadErrorHandler::loadFailed(Ljava/lang/Throwable;)(e);
+      loadErrorHandler.@com.google.gwt.core.client.impl.AsyncFragmentLoader$LoadTerminatedHandler::loadTerminated(*)(e);
     }
     return __gwtStartLoadingFragment(fragment, loadFailed);
   }-*/;
@@ -194,7 +216,7 @@ public class XhrLoadingStrategy implements LoadingStrategy {
         return;
       }
     }
-    request.errorHandler.loadFailed(e); 
+    request.errorHandler.loadTerminated(e); 
   }
 
   /**

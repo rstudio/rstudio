@@ -144,8 +144,8 @@ public class FragmentLoaderCreator {
     srcWriter.println("if (!" + BROWSER_LOADER + ".isLoading(" + entryNumber
         + ")) {");
     srcWriter.println("  " + BROWSER_LOADER + ".inject(" + entryNumber + ",");
-    srcWriter.println("  new AsyncFragmentLoader.LoadErrorHandler() {");
-    srcWriter.println("    public void loadFailed(Throwable reason) {");
+    srcWriter.println("  new AsyncFragmentLoader.LoadTerminatedHandler() {");
+    srcWriter.println("    public void loadTerminated(Throwable reason) {");
     srcWriter.println("      runCallbackOnFailures(reason);");
     srcWriter.println("    }");
     srcWriter.println("  });");

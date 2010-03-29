@@ -21,6 +21,7 @@ function __MODULE_FUNC__() {
   var $wnd = window
   ,$doc = document
   ,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null
+  ,$sessionId = $wnd.__gwtStatsSessionId ? $wnd.__gwtStatsSessionId : null
 
   // These variables gate calling gwtOnLoad; all must be true to start
   ,gwtOnLoad, bodyDone
@@ -163,8 +164,8 @@ function __MODULE_FUNC__() {
   // Called when the compiled script identified by moduleName is done loading.
   //
   __MODULE_FUNC__.onScriptLoad = function(gwtOnLoadFunc) {
-    // remove this whole function from the global namespace to allow GC
-    __MODULE_FUNC__ = null;
+    // remove the callback to prevent it being called twice
+    __MODULE_FUNC__.onScriptLoad = null;
     gwtOnLoad = gwtOnLoadFunc;
     maybeStartModule();
   }
@@ -270,17 +271,17 @@ function __MODULE_FUNC__() {
   // from *within* the stats script, guaranteeing order at the expense of near
   // total inscrutability :(
   var compiledScriptTag = '"<script src=\\"' + base + strongName + '.cache.js\\"></scr" + "ipt>"';
-  $doc.write('<script><!--\n'
+  $doc.write('<scr' + 'ipt><!-' + '-\n'
     + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
-    + 'moduleName:"__MODULE_NAME__", sessionId:$sessionId, subSystem:"startup",'
+    + 'moduleName:"__MODULE_NAME__", sessionId:window.__gwtStatsSessionId, subSystem:"startup",'
     + 'evtGroup: "loadExternalRefs", millis:(new Date()).getTime(),'
     + 'type: "end"});'
     + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
-    + 'moduleName:"__MODULE_NAME__", sessionId:$sessionId, subSystem:"startup",'
+    + 'moduleName:"__MODULE_NAME__", sessionId:window.__gwtStatsSessionId, subSystem:"startup",'
     + 'evtGroup: "moduleStartup", millis:(new Date()).getTime(),'
     + 'type: "moduleRequested"});'
     + 'document.write(' + compiledScriptTag + ');'
-    + '\n--></script>');
+    + '\n-' + '-></scr' + 'ipt>');
 }
 
 __MODULE_FUNC__();

@@ -125,8 +125,136 @@ public class JsToStringGenerationVisitor extends JsVisitor {
    */
   private static final Pattern VALID_NAME_PATTERN = Pattern.compile("[a-zA-Z_$][\\w$]*");
 
-  protected boolean needSemi = true;
+  /**
+   * Generate JavaScript code that evaluates to the supplied string. Adapted
+   * from {@link com.google.gwt.dev.js.rhino.ScriptRuntime#escapeString(String)}
+   * . The difference is that we quote with either &quot; or &apos; depending on
+   * which one is used less inside the string.
+   */
+  public static String javaScriptString(String value) {
+    char[] chars = value.toCharArray();
+    final int n = chars.length;
+    int quoteCount = 0;
+    int aposCount = 0;
+    for (int i = 0; i < n; ++i) {
+      switch (chars[i]) {
+        case '"':
+          ++quoteCount;
+          break;
+        case '\'':
+          ++aposCount;
+          break;
+      }
+    }
 
+    StringBuffer result = new StringBuffer(value.length() + 16);
+
+    char quoteChar = (quoteCount < aposCount) ? '"' : '\'';
+    result.append(quoteChar);
+
+    for (int i = 0; i < n; ++i) {
+      char c = chars[i];
+
+      if (' ' <= c && c <= '~' && c != quoteChar && c != '\\') {
+        // an ordinary print character (like C isprint())
+        result.append(c);
+        continue;
+      }
+
+      int escape = -1;
+      switch (c) {
+        case '\b':
+          escape = 'b';
+          break;
+        case '\f':
+          escape = 'f';
+          break;
+        case '\n':
+          escape = 'n';
+          break;
+        case '\r':
+          escape = 'r';
+          break;
+        case '\t':
+          escape = 't';
+          break;
+        case '"':
+          escape = '"';
+          break; // only reach here if == quoteChar
+        case '\'':
+          escape = '\'';
+          break; // only reach here if == quoteChar
+        case '\\':
+          escape = '\\';
+          break;
+      }
+
+      if (escape >= 0) {
+        // an \escaped sort of character
+        result.append('\\');
+        result.append((char) escape);
+      } else {
+        /*
+         * Emit characters from 0 to 31 that don't have a single character
+         * escape sequence in octal where possible. This saves one or two
+         * characters compared to the hexadecimal format '\xXX'.
+         * 
+         * These short octal sequences may only be used at the end of the string
+         * or where the following character is a non-digit. Otherwise, the
+         * following character would be incorrectly interpreted as belonging to
+         * the sequence.
+         */
+        if (c < ' ' && (i == n - 1 || chars[i + 1] < '0' || chars[i + 1] > '9')) {
+          result.append('\\');
+          if (c > 0x7) {
+            result.append((char) ('0' + (0x7 & (c >> 3))));
+          }
+          result.append((char) ('0' + (0x7 & c)));
+        } else {
+          int hexSize;
+          if (c < 256) {
+            // 2-digit hex
+            result.append("\\x");
+            hexSize = 2;
+          } else {
+            // Unicode.
+            result.append("\\u");
+            hexSize = 4;
+          }
+          // append hexadecimal form of ch left-padded with 0
+          for (int shift = (hexSize - 1) * 4; shift >= 0; shift -= 4) {
+            int digit = 0xf & (c >> shift);
+            result.append(HEX_DIGITS[digit]);
+          }
+        }
+      }
+    }
+    result.append(quoteChar);
+    escapeClosingTags(result);
+    String resultString = result.toString();
+    return resultString;
+  }
+
+  /**
+   * Escapes any closing XML tags embedded in <code>str</code>, which could
+   * potentially cause a parse failure in a browser, for example, embedding a
+   * closing <code>&lt;script&gt;</code> tag.
+   * 
+   * @param str an unescaped literal; May be null
+   */
+  private static void escapeClosingTags(StringBuffer str) {
+    if (str == null) {
+      return;
+    }
+
+    int index = 0;
+
+    while ((index = str.indexOf("</", index)) != -1) {
+      str.insert(index + 1, '\\');
+    }
+  }
+
+  protected boolean needSemi = true;
   /**
    * "Global" blocks are either the global block of a fragment, or a block
    * nested directly within some other global block. This definition matters
@@ -135,7 +263,9 @@ public class JsToStringGenerationVisitor extends JsVisitor {
    */
   private Set<JsBlock> globalBlocks = new HashSet<JsBlock>();
   private final TextOutput p;
+
   private ArrayList<Integer> statementEnds = new ArrayList<Integer>();
+
   private ArrayList<Integer> statementStarts = new ArrayList<Integer>();
 
   public JsToStringGenerationVisitor(TextOutput out) {
@@ -564,8 +694,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       accept(q);
       if (q instanceof JsNumberLiteral) {
         /**
-         * Fix for Issue #3796. "42.foo" is not allowed, but
-         * "42 .foo" is.
+         * Fix for Issue #3796. "42.foo" is not allowed, but "42 .foo" is.
          */
         _space();
       }
@@ -592,8 +721,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     }
 
     /*
-     * If a constructor call has no arguments, it may simply be
-     * replaced with "new Constructor" with no parentheses.
+     * If a constructor call has no arguments, it may simply be replaced with
+     * "new Constructor" with no parentheses.
      */
     List<JsExpression> args = x.getArguments();
     if (args.size() > 0) {
@@ -1232,25 +1361,6 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   // CHECKSTYLE_NAMING_ON
 
-  /**
-   * Escapes any closing XML tags embedded in <code>str</code>, which could
-   * potentially cause a parse failure in a browser, for example, embedding a
-   * closing <code>&lt;script&gt;</code> tag.
-   * 
-   * @param str an unescaped literal; May be null
-   */
-  private void escapeClosingTags(StringBuffer str) {
-    if (str == null) {
-      return;
-    }
-
-    int index = 0;
-
-    while ((index = str.indexOf("</", index)) != -1) {
-      str.insert(index + 1, '\\');
-    }
-  }
-
   private void indent() {
     p.indentIn();
   }
@@ -1259,113 +1369,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     p.indentOut();
   }
 
-  /**
-   * Adapted from
-   * {@link com.google.gwt.dev.js.rhino.ScriptRuntime#escapeString(String)}. The
-   * difference is that we quote with either &quot; or &apos; depending on which
-   * one is used less inside the string.
-   */
   private void printStringLiteral(String value) {
-    char[] chars = value.toCharArray();
-    final int n = chars.length;
-    int quoteCount = 0;
-    int aposCount = 0;
-    for (int i = 0; i < n; ++i) {
-      switch (chars[i]) {
-        case '"':
-          ++quoteCount;
-          break;
-        case '\'':
-          ++aposCount;
-          break;
-      }
-    }
-
-    StringBuffer result = new StringBuffer(value.length() + 16);
-
-    char quoteChar = (quoteCount < aposCount) ? '"' : '\'';
-    p.print(quoteChar);
-
-    for (int i = 0; i < n; ++i) {
-      char c = chars[i];
-
-      if (' ' <= c && c <= '~' && c != quoteChar && c != '\\') {
-        // an ordinary print character (like C isprint())
-        result.append(c);
-        continue;
-      }
-
-      int escape = -1;
-      switch (c) {
-        case '\b':
-          escape = 'b';
-          break;
-        case '\f':
-          escape = 'f';
-          break;
-        case '\n':
-          escape = 'n';
-          break;
-        case '\r':
-          escape = 'r';
-          break;
-        case '\t':
-          escape = 't';
-          break;
-        case '"':
-          escape = '"';
-          break; // only reach here if == quoteChar
-        case '\'':
-          escape = '\'';
-          break; // only reach here if == quoteChar
-        case '\\':
-          escape = '\\';
-          break;
-      }
-
-      if (escape >= 0) {
-        // an \escaped sort of character
-        result.append('\\');
-        result.append((char) escape);
-      } else {
-        /*
-         * Emit characters from 0 to 31 that don't have a single character
-         * escape sequence in octal where possible. This saves one or two
-         * characters compared to the hexadecimal format '\xXX'.
-         * 
-         * These short octal sequences may only be used at the end of the string
-         * or where the following character is a non-digit. Otherwise, the
-         * following character would be incorrectly interpreted as belonging to
-         * the sequence.
-         */
-        if (c < ' ' &&
-            (i == n - 1 || chars[i + 1] < '0' || chars[i + 1] > '9')) {
-          result.append('\\');
-          if (c > 0x7) {
-            result.append((char) ('0' + (0x7 & (c >> 3))));
-          }
-          result.append((char) ('0' + (0x7 & c)));
-        } else {
-          int hexSize;
-          if (c < 256) {
-            // 2-digit hex
-            result.append("\\x");
-            hexSize = 2;
-          } else {
-            // Unicode.
-            result.append("\\u");
-            hexSize = 4;
-          }
-          // append hexadecimal form of ch left-padded with 0
-          for (int shift = (hexSize - 1) * 4; shift >= 0; shift -= 4) {
-            int digit = 0xf & (c >> shift);
-            result.append(HEX_DIGITS[digit]);
-          }
-        }
-      }
-    }
-    result.append(quoteChar);
-    escapeClosingTags(result);
-    p.print(result.toString());
+    String resultString = javaScriptString(value);
+    p.print(resultString);
   }
 }

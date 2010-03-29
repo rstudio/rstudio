@@ -22,6 +22,17 @@
   <define-configuration-property name='compiler.splitpoint.initial.sequence'
     is-multi-valued='true' />
 
+  <!--
+    Whether or not the compiler should predeclare variables that are defined
+    outside the initial download and are referenced from a different code
+    fragment than the one defining them. This is usually determined by which
+    linker is used and is not directly meaningful to users.
+  -->
+  <define-property name="compiler.predeclare.cross.fragment.references"
+    values="true,false" />
+  <set-property name="compiler.predeclare.cross.fragment.references"
+    value="false" />
+
   <!-- From here down, the properties are unsupported and are only available for test cases -->
 
   <!--
@@ -42,7 +53,17 @@
     JsIEBlockSizeVisitor has its usual effect.
   -->
   <define-configuration-property name="iframe.linker.script.chunk.size"
-    is-multi-valued="false" />
+  is-multi-valued="false" />
   <set-configuration-property name="iframe.linker.script.chunk.size"
-    value="30000" /> 
+    value="30000" />
+
+  <!--
+    The compiler emits deferred code into a deferredjs subdirectory of the
+    output. This property allows test cases to have the iframe linker
+    load the deferred code from a different subdirectory.
+  -->
+  <define-configuration-property name="iframe.linker.deferredjs.subdir"
+    is-multi-valued="false" />
+  <set-configuration-property name="iframe.linker.deferredjs.subdir"
+    value="deferredjs" />
 </module>

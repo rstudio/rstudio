@@ -29,7 +29,7 @@
 
   <define-linker name="sso" class="com.google.gwt.core.linker.SingleScriptLinker" />
   <define-linker name="std" class="com.google.gwt.core.linker.IFrameLinker" />
-  <define-linker name="xs" class="com.google.gwt.core.linker.XSLinker" />
+  <inherits name="com.google.gwt.core.XSLinker" />
 
   <define-linker name="soycReport" class="com.google.gwt.core.linker.SoycReportLinker" />
   <define-linker name="symbolMaps" class="com.google.gwt.core.linker.SymbolMapsLinker" />

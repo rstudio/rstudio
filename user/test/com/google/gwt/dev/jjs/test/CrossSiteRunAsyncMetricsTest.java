@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,20 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.server.runasync;
+package com.google.gwt.dev.jjs.test;
 
-import com.google.gwt.core.ext.linker.Shardable;
-import com.google.gwt.core.linker.IFrameLinker;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 
 /**
- * Load modules from a custom servlet in order to test download failure
- * behavior.
+ * Tests runAsync lightweight metrics when the cross-site linker is used.
  */
-@Shardable
-public class RunAsyncFailureIFrameLinker extends IFrameLinker {
-
+@DoNotRunWith(Platform.Devel)
+public class CrossSiteRunAsyncMetricsTest extends
+    RunAsyncMetricsIntegrationTest {
   @Override
-  protected String getFragmentSubdir() {
-    return "runAsyncFailure/" + FRAGMENT_SUBDIR;
+  public String getModuleName() {
+    return "com.google.gwt.dev.jjs.CrossSiteRunAsyncMetrics";
   }
 }

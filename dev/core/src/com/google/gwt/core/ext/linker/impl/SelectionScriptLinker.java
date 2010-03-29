@@ -186,7 +186,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     byte[][] bytes = new byte[js.length][];
     bytes[0] = generatePrimaryFragment(logger, context, result, js);
     for (int i = 1; i < js.length; i++) {
-      bytes[i] = Util.getBytes(js[i]);
+      bytes[i] = Util.getBytes(generateDeferredFragment(logger, context, i,
+          js[i]));
     }
 
     Collection<Artifact<?>> toReturn = new ArrayList<Artifact<?>>();
@@ -223,6 +224,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
     return emitString(logger, selectionScript, context.getModuleName()
         + ".nocache.js", lastModified);
+  }
+
+  protected String generateDeferredFragment(TreeLogger logger,
+      LinkerContext context, int fragment, String js) {
+    return js;
   }
 
   /**

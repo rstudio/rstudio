@@ -18,4 +18,5 @@
 <!-- order of those events could change.                                -->
 <module>
     <inherits name="com.google.gwt.dev.jjs.CompilerSuite"/>
+    <script src="empty-gwt-stats.js" />
 </module>

@@ -17,12 +17,17 @@ package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 
 /**
  * Tests runAsync server/network failure handling.
+ *
+ * This is skipped in dev mode because runAsync never fails in dev mode.
  */
+@DoNotRunWith(Platform.Devel)
 public class RunAsyncFailureTest extends GWTTestCase {
 
   abstract static class MyRunAsyncCallback implements RunAsyncCallback {

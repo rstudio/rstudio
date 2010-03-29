@@ -13,10 +13,6 @@
 <!-- limitations under the License.                                         -->
 
 <module>
-  <inherits name="com.google.gwt.core.Core" />
-  <source path="test" />
-  <servlet path="/runAsyncFailure"
-    class="com.google.gwt.user.server.runasync.RunAsyncFailureServlet" />
-  <set-configuration-property name="iframe.linker.deferredjs.subdir"
-    value="runAsyncFailure/deferredjs" />
+  <inherits name="com.google.gwt.dev.jjs.CompilerSuite"/>
+  <add-linker name="xs"/>
 </module>

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.core.client.impl;
 
-import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadErrorHandler;
+import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadTerminatedHandler;
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadingStrategy;
 import com.google.gwt.core.client.impl.AsyncFragmentLoader.Logger;
 
@@ -33,20 +33,20 @@ import java.util.Queue;
  * correct lightweight metrics under a variety of request patterns.
  */
 public class AsyncFragmentLoaderTest extends TestCase {
-  private static class MockErrorHandler implements LoadErrorHandler {
+  private static class MockErrorHandler implements LoadTerminatedHandler {
     private boolean wasCalled = false;
 
     public boolean getWasCalled() {
       return wasCalled;
     }
 
-    public void loadFailed(Throwable reason) {
+    public void loadTerminated(Throwable reason) {
       wasCalled = true;
     }
   }
 
   private static class MockLoadStrategy implements LoadingStrategy {
-    public final Map<Integer, LoadErrorHandler> errorHandlers = new HashMap<Integer, LoadErrorHandler>();
+    public final Map<Integer, LoadTerminatedHandler> errorHandlers = new HashMap<Integer, LoadTerminatedHandler>();
     private List<Integer> loadRequests = new LinkedList<Integer>();
 
     public void assertFragmentsRequested(int... expectedAry) {
@@ -61,7 +61,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     }
 
     public void startLoadingFragment(int fragment,
-        LoadErrorHandler loadErrorHandler) {
+        LoadTerminatedHandler loadErrorHandler) {
       errorHandlers.put(fragment, loadErrorHandler);
       loadRequests.add(fragment);
     }
@@ -138,8 +138,8 @@ public class AsyncFragmentLoaderTest extends TestCase {
   private static final String END = "end";
   private static final String LEFTOVERS_DOWNLOAD = "leftoversDownload";
 
-  private static final LoadErrorHandler NULL_ERROR_HANDLER = new LoadErrorHandler() {
-    public void loadFailed(Throwable reason) {
+  private static final LoadTerminatedHandler NULL_ERROR_HANDLER = new LoadTerminatedHandler() {
+    public void loadTerminated(Throwable reason) {
     }
   };
 
@@ -285,7 +285,11 @@ public class AsyncFragmentLoaderTest extends TestCase {
     reqs.assertFragmentsRequested();
     assertFalse(error6try2.getWasCalled());
     progress.assertEvent("download6", END, 6);
-
+    
+    // a finish event should do nothing if the fragment has already succeeded
+    progress.assertNoEvents();
+    loadFailed(reqs, 6);
+    assertFalse(error6try2.getWasCalled());
     progress.assertNoEvents();
   }
 
@@ -726,6 +730,6 @@ public class AsyncFragmentLoaderTest extends TestCase {
   }
 
   private void loadFailed(MockLoadStrategy reqs, int fragment) {
-    reqs.errorHandlers.get(fragment).loadFailed(makeLoadFailedException());
+    reqs.errorHandlers.get(fragment).loadTerminated(makeLoadFailedException());
   }
 }

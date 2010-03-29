@@ -35,39 +35,29 @@ import com.google.gwt.core.client.JavaScriptObject;
  * </ul>
  * 
  * <p>
- * Since the precise way to load code depends on the linker, each linker should
- * provide functions for fragment loading for any compilation that includes more
- * than one fragment. Linkers should always provide a function
- * <code>__gwtStartLoadingFragment</code>. This function is called by
- * AsyncFragmentLoader with two arguments: an integer fragment number that needs
- * to be downloaded, and a one-argument loadFailed function that can be called
- * if the load fails. If the load fails, that function should be called with a
- * descriptive exception as the argument. If the mechanism for loading the
- * contents of fragments is provided by the linker, the
- * <code>__gwtStartLoadingFragment</code> function should return
- * <code>null</code> or <code>undefined</code>.
- * </p>
- * <p>
- * Alternatively, the function can return a URL designating from where the code
- * for the requested fragment can be downloaded. In that case, the linker should
- * also provide a function <code>__gwtInstallCode</code> for actually installing
- * the code once it is downloaded. That function will be passed the loaded code
- * once it has been downloaded.
- * </p>
+ * Since the precise way to load code depends on the linker, linkers should
+ * specify a rebind of {@link LoadingStrategy}.  The default rebind is
+ * {@link XhrLoadingStrategy}.
  */
 public class AsyncFragmentLoader {
   /**
-   * An interface for handlers of load errors.
+   * An interface for handlers of load completion.  On a failed download,
+   * this callback should be invoked or else the requested download will
+   * hang indefinitely.  On a successful download, it's optional to call
+   * this method.  If it is called at all, it must be called after
+   * the downloaded code has been installed, so that {@link AsyncFragmentLoader}
+   * can distinguish successful from unsuccessful downloads.
    */
-  public static interface LoadErrorHandler {
-    void loadFailed(Throwable reason);
+  public static interface LoadTerminatedHandler {
+    void loadTerminated(Throwable reason);
   }
 
   /**
    * A strategy for loading code fragments.
    */
   public interface LoadingStrategy {
-    void startLoadingFragment(int fragment, LoadErrorHandler loadErrorHandler);
+    void startLoadingFragment(int fragment,
+        LoadTerminatedHandler loadTerminatedHandler);
   }
 
   /**
@@ -95,6 +85,77 @@ public class AsyncFragmentLoader {
 
     private static String downloadGroupForExclusive(int splitPoint) {
       return "download" + splitPoint;
+    }
+  }
+
+  /**
+   * The standard logger used in a web browser. It uses the lightweight metrics
+   * system.
+   */
+  public static class StandardLogger implements Logger {
+    /**
+     * Always use this as {@link isStatsAvailable} &amp;&amp;
+     * {@link #stats(JavaScriptObject)}.
+     */
+    private static native boolean stats(JavaScriptObject data) /*-{
+      return $stats(data);
+    }-*/;
+
+    public void logEventProgress(String eventGroup, String type,
+        int fragment, int size) {
+      @SuppressWarnings("unused")
+      boolean toss = isStatsAvailable()
+          && stats(createStatsEvent(eventGroup, type, fragment, size));
+    }
+
+    private native JavaScriptObject createStatsEvent(String eventGroup,
+        String type, int fragment, int size) /*-{
+      var evt = {
+       moduleName: @com.google.gwt.core.client.GWT::getModuleName()(), 
+        sessionId: $sessionId,
+        subSystem: 'runAsync',
+        evtGroup: eventGroup,
+        millis: (new Date()).getTime(),
+        type: type
+      };
+      if (fragment >= 0) {
+        evt.fragment = fragment;
+      }
+      if (size >= 0) {
+        evt.size = size;
+      }
+      return evt;
+    }-*/;
+
+    private native boolean isStatsAvailable() /*-{
+      return !!$stats;
+    }-*/;
+  }
+
+  /**
+   * An exception indicating than at HTTP download failed.
+   */
+  static class HttpDownloadFailure extends RuntimeException {
+    private final int statusCode;
+
+    public HttpDownloadFailure(String url, int statusCode, String statusText) {
+      super("Download of " + url + " failed with status " + statusCode + "("
+          + statusText + ")");
+      this.statusCode = statusCode;
+    }
+
+    public int getStatusCode() {
+      return statusCode;
+    }
+  }
+
+  /**
+   * An exception indicating than at HTTP download succeeded, but installing
+   * its body failed.
+   */
+  static class HttpInstallFailure extends RuntimeException {
+    public HttpInstallFailure(String url, String text, Throwable rootCause) {
+      super("Install of " + url + " failed with text " + text, rootCause);
     }
   }
 
@@ -143,39 +204,21 @@ public class AsyncFragmentLoader {
   }
 
   /**
-   * An exception indicating than at HTTP download failed.
-   */
-  static class HttpDownloadFailure extends RuntimeException {
-    private final int statusCode;
-
-    public HttpDownloadFailure(String url, int statusCode, String statusText) {
-      super("Download of " + url + " failed with status " + statusCode + "("
-          + statusText + ")");
-      this.statusCode = statusCode;
-    }
-
-    public int getStatusCode() {
-      return statusCode;
-    }
-  }
-
-  /**
-   * An exception indicating than at HTTP download succeeded, but installing
-   * its body failed.
-   */
-  static class HttpInstallFailure extends RuntimeException {
-    public HttpInstallFailure(String url, String text, Throwable rootCause) {
-      super("Install of " + url + " failed with text " + text, rootCause);
-    }
-  }
-
-  /**
    * Internal load error handler. This calls all user-provided error handlers
    * and cancels all pending downloads.
    */
-  private class ResetAfterDownloadFailure implements LoadErrorHandler {
-    public void loadFailed(Throwable reason) {
-      assert fragmentLoading >= 0;
+  private class ResetAfterDownloadFailure implements LoadTerminatedHandler {
+    private final int fragment;
+    
+    public ResetAfterDownloadFailure(int myFragment) {
+      this.fragment = myFragment;
+    }
+
+    public void loadTerminated(Throwable reason) {
+      if (fragmentLoading != fragment) {
+        // fragment already loaded successfully
+        return;
+      }
 
       // Cancel all pending downloads.
 
@@ -183,8 +226,8 @@ public class AsyncFragmentLoader {
        * Make a local list of the handlers to run, in case one of them calls
        * another runAsync
        */
-      LoadErrorHandler[] handlersToRun = pendingDownloadErrorHandlers;
-      pendingDownloadErrorHandlers = new LoadErrorHandler[numEntries + 1];
+      LoadTerminatedHandler[] handlersToRun = pendingDownloadErrorHandlers;
+      pendingDownloadErrorHandlers = new LoadTerminatedHandler[numEntries + 1];
 
       /*
        * Call clear() here so that requestedExclusives makes all of its space
@@ -200,10 +243,10 @@ public class AsyncFragmentLoader {
        */
       RuntimeException lastException = null;
 
-      for (LoadErrorHandler handler : handlersToRun) {
+      for (LoadTerminatedHandler handler : handlersToRun) {
         if (handler != null) {
           try {
-            handler.loadFailed(reason);
+            handler.loadTerminated(reason);
           } catch (RuntimeException e) {
             lastException = e;
           }
@@ -214,50 +257,6 @@ public class AsyncFragmentLoader {
         throw lastException;
       }
     }
-  }
-
-  /**
-   * The standard logger used in a web browser. It uses the lightweight metrics
-   * system.
-   */
-  private static class StandardLogger implements Logger {
-    /**
-     * Always use this as {@link isStatsAvailable} &amp;&amp;
-     * {@link #stats(JavaScriptObject)}.
-     */
-    private static native boolean stats(JavaScriptObject data) /*-{
-      return $stats(data);
-    }-*/;
-
-    public void logEventProgress(String eventGroup, String type,
-        int fragment, int size) {
-      @SuppressWarnings("unused")
-      boolean toss = isStatsAvailable()
-          && stats(createStatsEvent(eventGroup, type, fragment, size));
-    }
-
-    private native JavaScriptObject createStatsEvent(String eventGroup,
-        String type, int fragment, int size) /*-{
-      var evt = {
-       moduleName: @com.google.gwt.core.client.GWT::getModuleName()(), 
-        sessionId: $sessionId,
-        subSystem: 'runAsync',
-        evtGroup: eventGroup,
-        millis: (new Date()).getTime(),
-        type: type
-      };
-      if (fragment >= 0) {
-        evt.fragment = fragment;
-      }
-      if (size >= 0) {
-        evt.size = size;
-      }
-      return evt;
-    }-*/;
-
-    private native boolean isStatsAvailable() /*-{
-      return !!$stats;
-    }-*/;
   }
 
   /**
@@ -307,7 +306,7 @@ public class AsyncFragmentLoader {
    * loaded. This array will hold the initial sequence of bases followed by the
    * leftovers fragment. It is filled in by
    * {@link com.google.gwt.dev.jjs.impl.CodeSplitter} modifying the initializer
-   * to {@link #INSTANCE}. The list does <em>not</em> include the leftovers
+   * to {@link #BROWSER_LOADER}. The list does <em>not</em> include the leftovers
    * fragment, which must be loaded once all of these are finished.
    */
   private final int[] initialLoadSequence;
@@ -331,7 +330,7 @@ public class AsyncFragmentLoader {
    * Externally provided handlers for all outstanding and queued download
    * requests.
    */
-  private LoadErrorHandler[] pendingDownloadErrorHandlers;
+  private LoadTerminatedHandler[] pendingDownloadErrorHandlers;
 
   /**
    * Whether prefetching is currently enabled.
@@ -367,7 +366,7 @@ public class AsyncFragmentLoader {
     int numEntriesPlusOne = numEntries + 1;
     requestedExclusives = new BoundedIntQueue(numEntriesPlusOne);
     isLoaded = new boolean[numEntriesPlusOne];
-    pendingDownloadErrorHandlers = new LoadErrorHandler[numEntriesPlusOne];
+    pendingDownloadErrorHandlers = new LoadTerminatedHandler[numEntriesPlusOne];
   }
 
   /**
@@ -402,7 +401,7 @@ public class AsyncFragmentLoader {
    * 
    * @param splitPoint the split point whose code needs to be loaded
    */
-  public void inject(int splitPoint, LoadErrorHandler loadErrorHandler) {
+  public void inject(int splitPoint, LoadTerminatedHandler loadErrorHandler) {
     pendingDownloadErrorHandlers[splitPoint] = loadErrorHandler;
     if (!isInitial(splitPoint)) {
       requestedExclusives.add(splitPoint);
@@ -560,7 +559,7 @@ public class AsyncFragmentLoader {
     fragmentLoading = fragment;
     logDownloadStart(fragment);
     loadingStrategy.startLoadingFragment(fragment,
-        new ResetAfterDownloadFailure());
+        new ResetAfterDownloadFailure(fragment));
   }
 
   /**

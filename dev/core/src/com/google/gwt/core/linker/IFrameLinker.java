@@ -57,6 +57,12 @@ public class IFrameLinker extends SelectionScriptLinker {
   private static final String CHUNK_SIZE_PROPERTY = "iframe.linker.script.chunk.size";
 
   /**
+   * A configuration property that can be used to have the linker load from
+   * somewhere other than {@link #FRAGMENT_SUBDIR}
+   */
+  private static final String PROP_FRAGMENT_SUBDIR_OVERRIDE = "iframe.linker.deferredjs.subdir";
+
+  /**
    * Split a JavaScript string into multiple chunks, at statement boundaries.
    * Insert and end-script tag and a start-script tag in between each chunk.
    * This method is made default access for testing.
@@ -187,23 +193,38 @@ public class IFrameLinker extends SelectionScriptLinker {
 
   /**
    * Returns the subdirectory name to be used by getModulPrefix when requesting
-   * a runAsync module. The default implementation returns the value of
-   * FRAGMENT_SUDBIR. This has been factored out for test cases.
+   * a runAsync module. It is specified by
+   * {@link #PROP_FRAGMENT_SUBDIR_OVERRIDE} and, aside from test cases, is
+   * always {@link #FRAGMENT_SUBDIR}.
    */
-  protected String getFragmentSubdir() {
-    return FRAGMENT_SUBDIR;
+  protected final String getFragmentSubdir(TreeLogger logger,
+      LinkerContext context) throws UnableToCompleteException {
+    String subdir = null;
+    for (ConfigurationProperty prop : context.getConfigurationProperties()) {
+      if (prop.getName().equals(PROP_FRAGMENT_SUBDIR_OVERRIDE)) {
+        subdir = prop.getValues().get(0);
+      }
+    }
+
+    if (subdir == null) {
+      logger.log(TreeLogger.ERROR, "Could not find property "
+          + PROP_FRAGMENT_SUBDIR_OVERRIDE);
+      throw new UnableToCompleteException();
+    }
+
+    return subdir;
   }
 
   @Override
   protected String getModulePrefix(TreeLogger logger, LinkerContext context,
-      String strongName) {
-    return getModulePrefix(context, strongName, true);
+      String strongName) throws UnableToCompleteException {
+    return getModulePrefix(logger, context, strongName, true);
   }
 
   @Override
   protected String getModulePrefix(TreeLogger logger, LinkerContext context,
-      String strongName, int numFragments) {
-    return getModulePrefix(context, strongName, numFragments > 1);
+      String strongName, int numFragments) throws UnableToCompleteException {
+    return getModulePrefix(logger, context, strongName, numFragments > 1);
   }
 
   @Override
@@ -257,8 +278,9 @@ public class IFrameLinker extends SelectionScriptLinker {
    * This is the real implementation of <code>getModulePrefix</code> for this
    * linker. The other versions forward to this one.
    */
-  private String getModulePrefix(LinkerContext context, String strongName,
-      boolean supportRunAsync) {
+  private String getModulePrefix(TreeLogger logger, LinkerContext context,
+      String strongName, boolean supportRunAsync)
+      throws UnableToCompleteException {
     DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
     out.print("<html>");
     out.newlineOpt();
@@ -280,7 +302,7 @@ public class IFrameLinker extends SelectionScriptLinker {
       out.print("function __gwtStartLoadingFragment(frag) {");
       out.indentIn();
       out.newlineOpt();
-      out.print("  return $moduleBase + '" + getFragmentSubdir()
+      out.print("  return $moduleBase + '" + getFragmentSubdir(logger, context)
           + "/'  + $strongName + '/' + frag + '" + FRAGMENT_EXTENSION + "';");
       out.indentOut();
       out.newlineOpt();
