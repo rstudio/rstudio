@@ -54,28 +54,23 @@ public class PrecompressLinkerTest extends TestCase {
       this.hasMultipleValues = hasMultipleValues;
     }
 
-    @Override
     public int compareTo(MockConfigurationProperty o) {
       return getName().compareTo(o.getName());
     }
 
-    @Override
     public String getName() {
       return name;
     }
 
-    @Override
     @Deprecated
     public String getValue() {
       return values.get(0);
     }
 
-    @Override
     public List<String> getValues() {
       return values;
     }
 
-    @Override
     public boolean hasMultipleValues() {
       return hasMultipleValues;
     }
@@ -87,38 +82,31 @@ public class PrecompressLinkerTest extends TestCase {
   }
 
   private class MockLinkerContext implements LinkerContext {
-    @Override
     public SortedSet<ConfigurationProperty> getConfigurationProperties() {
       return new TreeSet<ConfigurationProperty>(Arrays.asList(
           propLeaveOriginals, propPathRegexes));
     }
 
-    @Override
     public String getModuleFunctionName() {
       return "MockModule";
     }
 
-    @Override
     public long getModuleLastModified() {
       return 0;
     }
 
-    @Override
     public String getModuleName() {
       return "MockModule";
     }
 
-    @Override
     public SortedSet<SelectionProperty> getProperties() {
       return new TreeSet<SelectionProperty>();
     }
 
-    @Override
     public boolean isOutputCompact() {
       return true;
     }
 
-    @Override
     public String optimizeJavaScript(TreeLogger logger, String jsProgram) {
       return jsProgram;
     }

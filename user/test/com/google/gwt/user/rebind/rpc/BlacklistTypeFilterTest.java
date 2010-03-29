@@ -50,19 +50,16 @@ public class BlacklistTypeFilterTest extends TestCase {
       this.name = name;
     }
 
-    @Override
     public String getName() {
       return name;
     }
 
-    @Override
     public List<String> getValues() {
       return values;
     }
   }
 
   private class MockPropertyOracle implements PropertyOracle {
-    @Override
     public ConfigurationProperty getConfigurationProperty(String propertyName)
         throws BadPropertyValueException {
       if (propertyName.equals(propRpcBlacklist.getName())) {
@@ -71,14 +68,12 @@ public class BlacklistTypeFilterTest extends TestCase {
       throw new BadPropertyValueException("No property named " + propertyName);
     }
 
-    @Override
     @Deprecated
     public String getPropertyValue(TreeLogger logger, String propertyName)
         throws BadPropertyValueException {
       return getConfigurationProperty(propertyName).getValues().get(0);
     }
 
-    @Override
     @Deprecated
     public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
         throws BadPropertyValueException {
@@ -86,7 +81,6 @@ public class BlacklistTypeFilterTest extends TestCase {
           new String[0]);
     }
 
-    @Override
     public SelectionProperty getSelectionProperty(TreeLogger logger,
         String propertyName) throws BadPropertyValueException {
       throw new BadPropertyValueException("No property named " + propertyName);
