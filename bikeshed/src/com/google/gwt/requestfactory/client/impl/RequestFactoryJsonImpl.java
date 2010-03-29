@@ -21,7 +21,6 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.requestfactory.client.gen.ClientRequestObject;
-import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory.ServerSideOperation;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncRequest;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
@@ -125,7 +124,7 @@ public class RequestFactoryJsonImpl implements RequestFactory,
 
         // TODO: Fix the className for this request
         builder.setRequestData(ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
-            ServerSideOperation.SYNC, null, requestData.toString())));
+            RequestFactory.UPDATE_STRING, null, requestData.toString())));
         builder.setCallback(new RequestCallback() {
 
           public void onError(Request request, Throwable exception) {

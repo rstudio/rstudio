@@ -59,7 +59,7 @@ public class EmployeeRequestImpl implements
     return new Request() {
       public String getRequestData() {
         return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
-            ExpenseRequestFactory.ServerSideOperation.FIND_ALL_EMPLOYEES, null, null));
+            ExpenseRequestFactory.ServerSideOperation.FIND_ALL_EMPLOYEES.name(), null, null));
       }
     };
   }

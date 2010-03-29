@@ -16,10 +16,11 @@
 package com.google.gwt.sample.expenses.server;
 
 import com.google.gwt.requestfactory.shared.EntityKey;
+import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.RequestFactory.RequestDefinition;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.sample.expenses.server.domain.Storage;
-import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory.ServerSideOperation;
 import com.google.gwt.sample.expenses.shared.ReportKey;
 import com.google.gwt.valuestore.shared.Property;
 
@@ -29,6 +30,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -38,6 +40,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.servlet.http.HttpServlet;
@@ -49,6 +52,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class ExpensesDataServlet extends HttpServlet {
 
+  private static final String PROPERTY_FILENAME = "servlet.properties";
   // TODO: Remove this hack
   private static final Set<String> PROPERTY_SET = new HashSet<String>();
   static {
@@ -62,48 +66,48 @@ public class ExpensesDataServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
 
-    ServerSideOperation operation = null;
+    RequestDefinition operation = null;
     try {
       response.setStatus(HttpServletResponse.SC_OK);
-      JSONObject topLevelJsonObject = new JSONObject(getContent(request));
-      operation = getOperationFromName(topLevelJsonObject.getString(RequestDataManager.OPERATION_TOKEN));
       PrintWriter writer = response.getWriter();
-      switch (operation) {
-        case SYNC:
-          sync(topLevelJsonObject.getString(RequestDataManager.CONTENT_TOKEN),
-              writer);
-          break;
-        case FIND_ALL_EMPLOYEES:
-        case FIND_ALL_REPORTS:
-        case FIND_EMPLOYEE:
-        case FIND_REPORTS_BY_EMPLOYEE:
-          Class<?> domainClass = Class.forName(operation.getDomainClassName());
-          Method domainMethod = domainClass.getMethod(
-              operation.getDomainMethodName(), operation.getParameterTypes());
-          if (!Modifier.isStatic(domainMethod.getModifiers())) {
-            throw new IllegalArgumentException("the " + domainMethod.getName()
-                + " is not static");
-          }
-          Object args[] = RequestDataManager.getObjectsFromParameterMap(
-              getParameterMap(topLevelJsonObject),
-              domainMethod.getParameterTypes());
-          Object resultList = domainMethod.invoke(null, args);
-          if (!(resultList instanceof List)) {
-            throw new IllegalArgumentException("return value not a list "
-                + resultList);
-          }
-          JSONArray jsonArray = getJsonArray((List<?>) resultList,
-              operation.getReturnType());
-          writer.print(jsonArray.toString());
-          break;
-        default:
-          throw new IllegalArgumentException("Unknow operation " + operation);
+      JSONObject topLevelJsonObject = new JSONObject(getContent(request));
+      String operationName = topLevelJsonObject.getString(RequestDataManager.OPERATION_TOKEN);
+      if (operationName.equals(RequestFactory.UPDATE_STRING)) {
+        sync(topLevelJsonObject.getString(RequestDataManager.CONTENT_TOKEN),
+            writer);
+      } else {
+        InputStream is = this.getClass().getClassLoader().getResourceAsStream(PROPERTY_FILENAME);
+        if (is == null) {
+          throw new IllegalArgumentException("unable to find servlet.properties");
+        }
+        Properties properties = new Properties();
+        properties.load(is);
+        operation = getOperationFromName(
+            operationName,
+            (Class<RequestDefinition>) Class.forName(properties.getProperty("servlet.serveroperation")));
+        Class<?> domainClass = Class.forName(operation.getDomainClassName());
+        Method domainMethod = domainClass.getMethod(
+            operation.getDomainMethodName(), operation.getParameterTypes());
+        if (!Modifier.isStatic(domainMethod.getModifiers())) {
+          throw new IllegalArgumentException("the " + domainMethod.getName()
+              + " is not static");
+        }
+        Object args[] = RequestDataManager.getObjectsFromParameterMap(
+            getParameterMap(topLevelJsonObject),
+            domainMethod.getParameterTypes());
+        Object resultList = domainMethod.invoke(null, args);
+        if (!(resultList instanceof List)) {
+          throw new IllegalArgumentException("return value not a list "
+              + resultList);
+        }
+        JSONArray jsonArray = getJsonArray((List<?>) resultList,
+            operation.getReturnType());
+        writer.print(jsonArray.toString());
       }
       writer.flush();
       // TODO: clean exception handling code below.
     } catch (ClassNotFoundException e) {
-      throw new IllegalArgumentException("unable to load the class: "
-          + operation.getDomainClassName());
+      throw new IllegalArgumentException(e);
     } catch (IllegalAccessException e) {
       throw new IllegalArgumentException(e);
     } catch (InvocationTargetException e) {
@@ -177,8 +181,11 @@ public class ExpensesDataServlet extends HttpServlet {
     return methodName.toString();
   }
 
-  private ServerSideOperation getOperationFromName(String operationName) {
-    for (ServerSideOperation operation : ServerSideOperation.values()) {
+  private RequestDefinition getOperationFromName(String operationName,
+      Class<RequestDefinition> enumClass) throws SecurityException,
+      IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+    for (RequestDefinition operation : ((RequestDefinition[]) enumClass.getMethod(
+        "values").invoke(null))) {
       if (operation.name().equals(operationName)) {
         return operation;
       }

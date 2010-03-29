@@ -15,8 +15,6 @@
  */
 package com.google.gwt.requestfactory.shared.impl;
 
-import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory.ServerSideOperation;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,9 +47,9 @@ public class RequestDataManager {
    * 
    */
   public static Map<String, String> getRequestMap(
-      ServerSideOperation operation, Object values[], String content) {
+      String operation, Object values[], String content) {
     Map<String, String> requestMap = new HashMap<String, String>();
-    requestMap.put(OPERATION_TOKEN, operation.name());
+    requestMap.put(OPERATION_TOKEN, operation);
     if (values != null) {
       for (int i = 0; i < values.length; i++) {
         Object value = values[i];

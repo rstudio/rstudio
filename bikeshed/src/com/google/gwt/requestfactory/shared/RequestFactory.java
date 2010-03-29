@@ -27,6 +27,11 @@ public interface RequestFactory {
 
   String URL = "/expenses/data";
 
+  /*
+   * eventually, this will become an enum of update operations. 
+   */
+  String UPDATE_STRING = "SYNC";
+
   /**
    * Implemented by the request objects created by this factory.
    */
@@ -50,4 +55,34 @@ public interface RequestFactory {
   // TODO actually a DeltaValueStore, List is an interim hack
   SyncRequest syncRequest(final List<Values<?>> deltaValueStore);
 
+  /**
+   * Implemented by Enums sent in the request.
+   */
+  interface RequestDefinition {
+    /**
+     * Returns the name.
+     */
+    String name();
+
+    /**
+     * Returns the name of the (domain) class that contains the method to be
+     * invoked on the server.
+     */
+    String getDomainClassName();
+
+    /**
+     * Returns the name of the method to be invoked on the server.
+     */
+    String getDomainMethodName();
+
+    /**
+     * Returns the parameter types of the method to be invoked on the server.
+     */
+    Class<?>[] getParameterTypes();
+
+    /**
+     * Returns the return type of the method to be invoked on the server.
+     */
+    Class<? extends EntityKey<?>> getReturnType();
+  }
 }

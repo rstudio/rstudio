@@ -60,7 +60,7 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
     return new Request() {
       public String getRequestData() {
         return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
-            ExpenseRequestFactory.ServerSideOperation.FIND_ALL_REPORTS, null,
+            ExpenseRequestFactory.ServerSideOperation.FIND_ALL_REPORTS.name(), null,
             null));
       }
 
@@ -72,7 +72,7 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
     return new Request() {
       public String getRequestData() {
         return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
-            ExpenseRequestFactory.ServerSideOperation.FIND_REPORTS_BY_EMPLOYEE,
+            ExpenseRequestFactory.ServerSideOperation.FIND_REPORTS_BY_EMPLOYEE.name(),
             new Object[] {id.get()}, null));
       }
     };
