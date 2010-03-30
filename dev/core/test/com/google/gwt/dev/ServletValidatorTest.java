@@ -20,7 +20,6 @@ import com.google.gwt.dev.util.UnitTestTreeLogger;
 
 import junit.framework.TestCase;
 
-import org.mortbay.log.Logger;
 import org.xml.sax.SAXParseException;
 
 import java.io.File;
@@ -31,39 +30,6 @@ import java.net.URL;
  * Test for {@link ServletValidator}.
  */
 public class ServletValidatorTest extends TestCase {
-
-  public static class DummyJettyLogger implements Logger {
-    public void debug(String msg, Object arg0, Object arg1) {
-    }
-
-    public void debug(String msg, Throwable th) {
-    }
-
-    public Logger getLogger(String name) {
-      return this;
-    }
-
-    public void info(String msg, Object arg0, Object arg1) {
-    }
-
-    public boolean isDebugEnabled() {
-      return false;
-    }
-
-    public void setDebugEnabled(boolean enabled) {
-    }
-
-    public void warn(String msg, Object arg0, Object arg1) {
-    }
-
-    public void warn(String msg, Throwable th) {
-    }
-  }
-
-  static {
-    System.setProperty("org.mortbay.log.class",
-        DummyJettyLogger.class.getName());
-  }
 
   public void testBadUrl() throws Exception {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();

@@ -16,24 +16,24 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.shell.jetty.JettyNullLogger;
+import com.google.gwt.dev.util.collect.HashSet;
 
-import org.mortbay.jetty.servlet.ServletHandler;
-import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.jetty.servlet.ServletMapping;
-import org.mortbay.jetty.webapp.WebAppContext;
-import org.mortbay.jetty.webapp.WebXmlConfiguration;
-import org.mortbay.log.Log;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
+import java.util.Map.Entry;
+
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 /**
  * Validates that <code>&lt;servlet&gt;</code> tags in a GWT module match ones
@@ -41,10 +41,130 @@ import java.util.Set;
  */
 class ServletValidator {
 
-  static {
-    // Suppress spammy Jetty log initialization.
-    System.setProperty("org.mortbay.log.class", JettyNullLogger.class.getName());
-    Log.getLog();
+  /**
+   * Collect servlet information from a web xml.
+   */
+  private static final class WebXmlDataCollector extends DefaultHandler {
+    /*
+     * TODO(scottb): this should have been implemented as a Schema.
+     */
+
+    private static class ElementStack {
+      private final Stack<String> stack = new Stack<String>();
+
+      public boolean exactly(String elementName, int depth) {
+        return (depth == stack.size() - 1)
+            && elementName.equals(stack.get(depth));
+      }
+
+      public String peek() {
+        return stack.peek();
+      }
+
+      public String pop() {
+        return stack.pop();
+      }
+
+      public void push(String elementName) {
+        stack.push(elementName);
+      }
+
+      public boolean within(String elementName, int depth) {
+        return (depth < stack.size()) && elementName.equals(stack.get(depth));
+      }
+    }
+
+    private Set<String> accumulateClasses = new HashSet<String>();
+    private Set<String> accumulatePaths = new HashSet<String>();
+    private final TreeLogger branch;
+    private final Stack<StringBuilder> cdataStack = new Stack<StringBuilder>();
+    private final Map<String, String> classNameToServletName;
+    private final ElementStack context = new ElementStack();
+    private String currentServletName;
+    private String indent = "";
+    private final Map<String, Set<String>> servletNameToPaths;
+
+    private WebXmlDataCollector(TreeLogger branch,
+        Map<String, String> classNameToServletName,
+        Map<String, Set<String>> servletNameToPaths) {
+      this.branch = branch;
+      this.classNameToServletName = classNameToServletName;
+      this.servletNameToPaths = servletNameToPaths;
+    }
+
+    @Override
+    public void characters(char[] ch, int start, int length)
+        throws SAXException {
+      cdataStack.peek().append(ch, start, length);
+    }
+
+    @Override
+    public void endElement(String uri, String localName, String qName)
+        throws SAXException {
+      String cdata = cdataStack.pop().toString().trim();
+      if (context.within("web-app", 0)) {
+        if (context.within("servlet", 1)) {
+          if (context.exactly("servlet-name", 2)) {
+            currentServletName = cdata;
+          } else if (context.exactly("servlet-class", 2)) {
+            accumulateClasses.add(cdata);
+          } else if (context.exactly("servlet", 1)) {
+            if (currentServletName != null) {
+              for (String className : accumulateClasses) {
+                classNameToServletName.put(className, currentServletName);
+              }
+              currentServletName = null;
+            }
+            accumulateClasses.clear();
+          }
+        } else if (context.within("servlet-mapping", 1)) {
+          if (context.exactly("servlet-name", 2)) {
+            currentServletName = cdata;
+          } else if (context.exactly("url-pattern", 2)) {
+            accumulatePaths.add(cdata);
+          } else if (context.exactly("servlet-mapping", 1)) {
+            if (currentServletName != null) {
+              Set<String> servletPaths = servletNameToPaths.get(currentServletName);
+              if (servletPaths == null) {
+                servletPaths = new HashSet<String>();
+                servletNameToPaths.put(currentServletName, servletPaths);
+              }
+              servletPaths.addAll(accumulatePaths);
+            }
+            currentServletName = null;
+            accumulatePaths.clear();
+          }
+        }
+      }
+
+      assert qName.equals(context.peek());
+      context.pop();
+
+      if (cdata.length() > 0) {
+        branch.log(TreeLogger.DEBUG, "  characters: " + indent + cdata);
+      }
+      indent = indent.substring(2);
+      branch.log(TreeLogger.DEBUG, "  endElement: " + indent + qName);
+    }
+
+    @Override
+    public void startElement(String uri, String localName, String qName,
+        Attributes attributes) throws SAXException {
+      context.push(qName);
+      cdataStack.push(new StringBuilder());
+
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < attributes.getLength(); ++i) {
+        sb.append(' ');
+        sb.append(attributes.getQName(i));
+        sb.append("=\"");
+        sb.append(attributes.getValue(i));
+        sb.append('"');
+      }
+      branch.log(TreeLogger.DEBUG, "startElement: " + indent + qName
+          + sb.toString());
+      indent += "  ";
+    }
   }
 
   public static ServletValidator create(TreeLogger logger, File webXml) {
@@ -59,39 +179,35 @@ class ServletValidator {
 
   public static ServletValidator create(TreeLogger logger, URL webXmlUrl) {
     String webXmlUrlString = webXmlUrl.toExternalForm();
-    String oldProp = System.getProperty("org.mortbay.xml.XmlParser.Validating",
-        "false");
     try {
-      System.setProperty("org.mortbay.xml.XmlParser.Validating", "false");
-      WebXmlConfiguration wxc = new WebXmlConfiguration();
-      ServletHandler myServletHandler = new ServletHandler();
-      wxc.setWebAppContext(new WebAppContext(null, null, myServletHandler, null));
-      wxc.configure(webXmlUrlString);
-      ServletMapping[] mappings = myServletHandler.getServletMappings();
-      ServletHolder[] servlets = myServletHandler.getServlets();
-      Map<String, String> servletNameToClassName = new HashMap<String, String>();
-      Map<String, Set<String>> classNameToPaths = new HashMap<String, Set<String>>();
+      final TreeLogger branch = logger.branch(TreeLogger.DEBUG, "Parsing "
+          + webXmlUrlString);
+      SAXParserFactory fac = SAXParserFactory.newInstance();
+      fac.setValidating(false);
+      fac.setNamespaceAware(false);
+      SAXParser parser = fac.newSAXParser();
+      parser.getXMLReader().setFeature(
+          "http://xml.org/sax/features/validation", false);
+      parser.getXMLReader().setFeature(
+          "http://xml.org/sax/features/namespaces", false);
+      parser.getXMLReader().setFeature(
+          "http://xml.org/sax/features/namespace-prefixes", false);
+
       Map<String, String> classNameToServletName = new HashMap<String, String>();
-      for (ServletHolder servlet : servlets) {
-        servletNameToClassName.put(servlet.getName(), servlet.getClassName());
-        classNameToServletName.put(servlet.getClassName(), servlet.getName());
-        classNameToPaths.put(servlet.getClassName(), new HashSet<String>());
-      }
-      for (ServletMapping mapping : mappings) {
-        String servletName = mapping.getServletName();
-        String className = servletNameToClassName.get(servletName);
-        assert (className != null);
-        Set<String> paths = classNameToPaths.get(className);
-        assert (paths != null);
-        paths.addAll(Arrays.asList(mapping.getPathSpecs()));
+      Map<String, Set<String>> servletNameToPaths = new HashMap<String, Set<String>>();
+      parser.parse(webXmlUrlString, new WebXmlDataCollector(branch,
+          classNameToServletName, servletNameToPaths));
+
+      Map<String, Set<String>> classNameToPaths = new HashMap<String, Set<String>>();
+      for (Entry<String, String> entry : classNameToServletName.entrySet()) {
+        classNameToPaths.put(entry.getKey(),
+            servletNameToPaths.get(entry.getValue()));
       }
       return new ServletValidator(classNameToServletName, classNameToPaths);
     } catch (Exception e) {
       logger.log(TreeLogger.WARN, "Unable to process '" + webXmlUrlString
           + "' for servlet validation", e);
       return null;
-    } finally {
-      System.setProperty("org.mortbay.xml.XmlParser.Validating", oldProp);
     }
   }
 
