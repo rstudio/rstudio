@@ -31,4 +31,10 @@ public abstract class BinaryEmittedArtifact extends EmittedArtifact {
   protected BinaryEmittedArtifact(String partialPath) {
     super(StandardLinkerContext.class, partialPath);
   }
+  
+  /**
+   * Force subclasses to define.
+   */
+  @Override
+  public abstract long getLastModified();
 }

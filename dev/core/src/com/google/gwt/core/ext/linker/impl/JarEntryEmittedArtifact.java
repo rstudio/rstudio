@@ -83,4 +83,9 @@ public class JarEntryEmittedArtifact extends BinaryEmittedArtifact {
       throw new UnableToCompleteException();
     }
   }
+
+  @Override
+  public long getLastModified() {
+    return entry.getTime();
+  }
 }

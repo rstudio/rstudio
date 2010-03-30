@@ -154,10 +154,10 @@ public class Link {
         module, precompileOptions);
     ArtifactSet artifacts = doSimulatedShardingLink(logger, module,
         linkerContext, generatedArtifacts, permutations, resultFiles);
-    OutputFileSet outFileSet = new OutputFileSetOnDirectory(outDir,
-        module.getName() + "/");
-    OutputFileSet extraFileSet = new OutputFileSetOnDirectory(outDir,
-        module.getName() + "-aux/");
+    OutputFileSet outFileSet = chooseOutputFileSet(outDir, module.getName()
+        + "/");
+    OutputFileSet extraFileSet = chooseOutputFileSet(outDir, module.getName()
+        + "-aux/");
     doProduceOutput(logger, artifacts, linkerContext, outFileSet, extraFileSet);
   }
 
@@ -216,7 +216,9 @@ public class Link {
         } else {
           jarEntryPath = "target/" + art.getPartialPath();
         }
-        jar.putNextEntry(new ZipEntry(jarEntryPath));
+        ZipEntry ze = new ZipEntry(jarEntryPath);
+        ze.setTime(art.getLastModified());
+        jar.putNextEntry(ze);
         art.writeTo(logger, jar);
         jar.closeEntry();
       }

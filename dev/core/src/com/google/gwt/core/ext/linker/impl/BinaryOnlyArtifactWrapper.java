@@ -40,4 +40,9 @@ public class BinaryOnlyArtifactWrapper extends BinaryEmittedArtifact {
       throws UnableToCompleteException {
     return underlyingArtifact.getContents(logger);
   }
+
+  @Override
+  public long getLastModified() {
+    return underlyingArtifact.getLastModified();
+  }
 }
