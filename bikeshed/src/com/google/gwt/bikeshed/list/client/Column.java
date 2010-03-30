@@ -36,35 +36,42 @@ import java.util.Map;
  */
 // TODO - when can we get rid of a view data object?
 // TODO - should viewData implement some interface? (e.g., with commit/rollback/dispose)
-public abstract class Column<T, C, V> implements HasKey<T> {
+public abstract class Column<T, C, V> {
+
   protected final Cell<C, V> cell;
+
   protected FieldUpdater<T, C, V> fieldUpdater;
+
+  /**
+   * An instance of HasKey<T> that is used to provide a key for a row object
+   * for the purpose of retrieving view data.  A value of null means that
+   * the row object itself will be used as the key.
+   */
+  protected HasKey<T> hasKey;
+
   protected Map<Object, V> viewDataMap = new HashMap<Object, V>();
 
-  public Column(Cell<C, V> cell) {
+  public Column(Cell<C, V> cell, HasKey<T> hasKey) {
     this.cell = cell;
+    this.hasKey = hasKey;
+  }
+
+  public Column(Cell<C, V> cell) {
+    this(cell, null);
   }
 
   public boolean consumesEvents() {
     return cell.consumesEvents();
   }
 
-  /**
-   * Returns a key to be used to associate view data with the given object.
-   * The default implementation simply returns the object.
-   */
-  public Object getKey(T object) {
-    return object;
-  }
-
-  public abstract C getValue(T object);
+  public abstract C getValue(T object, int index);
 
   public void onBrowserEvent(Element elem, final int index, final T object,
       NativeEvent event) {
-    Object key = getKey(object);
+    Object key = hasKey == null ? object : hasKey.getKey(object);
     V viewData = viewDataMap.get(key);
     V newViewData = cell.onBrowserEvent(elem,
-        getValue(object), viewData, event, fieldUpdater == null ? null
+        getValue(object, index), viewData, event, fieldUpdater == null ? null
             : new ValueUpdater<C, V>() {
               public void update(C value, V viewData) {
                 fieldUpdater.update(index, object, value, viewData);
@@ -75,8 +82,8 @@ public abstract class Column<T, C, V> implements HasKey<T> {
     }
   }
 
-  public void render(T object, StringBuilder sb) {
-    C value = getValue(object);
+  public void render(T object, int index, StringBuilder sb) {
+    C value = getValue(object, index);
     cell.render(value, viewDataMap.get(object), sb);
   }
 

@@ -18,6 +18,7 @@ package com.google.gwt.sample.bikeshed.validation.client;
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.cells.client.TextCell;
 import com.google.gwt.bikeshed.list.client.Column;
+import com.google.gwt.bikeshed.list.client.HasKey;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.core.client.EntryPoint;
@@ -85,21 +86,21 @@ public class Validation implements EntryPoint {
     Column<Address, String, Void> stateColumn = new Column<Address, String, Void>(
         new TextCell()) {
       @Override
-      public String getValue(Address object) {
+      public String getValue(Address object, int index) {
         return object.state;
       }
     };
 
-    Column<Address, String, ValidatableField<String>> zipColumn =
-      new Column<Address, String, ValidatableField<String>>(
-        new ValidatableInputCell()) {
-      @Override
+    HasKey<Address> key = new HasKey<Address>() {
       public Object getKey(Address object) {
         return object.key;
       }
-
+    };
+    Column<Address, String, ValidatableField<String>> zipColumn =
+      new Column<Address, String, ValidatableField<String>>(
+        new ValidatableInputCell(), key) {
       @Override
-      public String getValue(Address object) {
+      public String getValue(Address object, int index) {
         return object.zip;
       }
     };
@@ -133,7 +134,7 @@ public class Validation implements EntryPoint {
     Column<Address, String, Void> messageColumn = new Column<Address, String, Void>(
         new TextCell()) {
       @Override
-      public String getValue(Address object) {
+      public String getValue(Address object, int index) {
         return object.zipInvalid ? "Please fix the zip code" : "";
       }
     };

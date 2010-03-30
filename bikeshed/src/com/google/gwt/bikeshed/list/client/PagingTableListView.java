@@ -21,6 +21,7 @@ import com.google.gwt.bikeshed.list.shared.ListModel;
 import com.google.gwt.bikeshed.list.shared.ListRegistration;
 import com.google.gwt.bikeshed.list.shared.SelectionModel;
 import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
+import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionListener;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
@@ -62,6 +63,12 @@ public class PagingTableListView<T> extends Widget {
   private TableSectionElement tfoot;
   private TableSectionElement thead;
   private int totalSize;
+
+  private SelectionListener listener = new SelectionListener() {
+    public void selectionChanged() {
+      refresh();
+    }
+  };
   
   public PagingTableListView(ListModel<T> listModel, final int pageSize) {
     this.pageSize = pageSize;
@@ -120,6 +127,10 @@ public class PagingTableListView<T> extends Widget {
    */
   public int getPage() {
     return curPage;
+  }
+  
+  public int getPageSize() {
+    return pageSize;
   }
 
   public void nextPage() {
@@ -202,7 +213,11 @@ public class PagingTableListView<T> extends Widget {
   }
 
   public void setSelectionModel(SelectionModel<T> selectionModel) {
+    if (this.selectionModel != null) {
+      this.selectionModel.removeListener(listener);
+    }
     this.selectionModel = selectionModel;
+    selectionModel.addListener(listener);
   }
 
   protected void render(int start, int length, List<T> values) {
@@ -213,7 +228,7 @@ public class PagingTableListView<T> extends Widget {
     for (int r = start; r < start + length; ++r) {
       TableRowElement row = rows.getItem(r - pageStart);
       T q = values.get(r - start);
-      if (selectionModel != null && selectionModel.isSelected(q)) {
+      if (selectionModel != null && selectionModel.isSelected(q, r)) {
         row.setClassName("pagingTableListView selected");
       } else {
         row.setClassName("pagingTableListView " +
@@ -224,7 +239,7 @@ public class PagingTableListView<T> extends Widget {
       for (int c = 0; c < numCols; ++c) {
         TableCellElement cell = row.getCells().getItem(c);
         StringBuilder sb = new StringBuilder();
-        columns.get(c).render(q, sb);
+        columns.get(c).render(q, r, sb);
         cell.setInnerHTML(sb.toString());
 
         // TODO: Really total hack! There's gotta be a better way...

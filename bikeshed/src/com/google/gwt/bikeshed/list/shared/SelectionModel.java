@@ -15,14 +15,60 @@
  */
 package com.google.gwt.bikeshed.list.shared;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A model for selection within a list.
  * 
  * @param <T> the data type of records in the list
  */
 public interface SelectionModel<T> {
+  
+  /**
+   * A listener who will be updated when the selection changes.
+   */
+  interface SelectionListener {
+    void selectionChanged();
+  }
+  
+  /**
+   * A default implementation of SelectionModel that provides listener
+   * addition and removal.
+   *
+   * @param <T> the data type of records in the list
+   */
+  abstract class DefaultSelectionModel<T> implements SelectionModel<T> {
 
-  boolean isSelected(T object);
+    protected List<SelectionListener> listeners = new ArrayList<SelectionListener>();
+
+    public void addListener(SelectionListener listener) {
+      if (!listeners.contains(listener)) {
+        listeners.add(listener);
+      }
+    }
+    
+    public void removeListener(SelectionListener listener) {
+      if (listeners.contains(listener)) {
+        listeners.remove(listener);
+      }
+    }
+    
+    public void updateListeners() {
+      // Inform the listeners
+      for (SelectionListener listener : listeners) {
+        listener.selectionChanged();
+      }
+    }
+  }
+  
+  void addListener(SelectionListener listener);
+
+  boolean isSelected(T object, int index);
+  
+  void removeListener(SelectionListener listener);
+  
+  void setSelected(int index, boolean selected);
 
   void setSelected(T object, boolean selected);
 }

@@ -27,7 +27,7 @@ import com.google.gwt.requestfactory.shared.EntityKey;
  * @param <K> this entity type
  */
 public interface ExpensesEntityKey<K extends EntityKey<K>> extends EntityKey<K> {
-  public abstract void accept(ExpensesEntityVisitor visitor);
+  void accept(ExpensesEntityVisitor visitor);
 
-  public abstract <T> T accept(ExpensesEntityFilter<T> filter);
+  <T> T accept(ExpensesEntityFilter<T> filter);
 }

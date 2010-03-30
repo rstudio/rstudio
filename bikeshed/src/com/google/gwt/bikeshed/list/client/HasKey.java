@@ -16,20 +16,20 @@
 package com.google.gwt.bikeshed.list.client;
 
 /**
- * An interface for extracting a key from a value.  The extracted key
- * must contain suitable implementations of hashCode() and equals().
+ * An interface for extracting a key from a value. The extracted key must
+ * contain suitable implementations of hashCode() and equals().
  *
  * @param <C> the value type for which keys are to be returned
  */
 public interface HasKey<C> {
 
   /**
-   * Return a key that may be used to identify values that should
-   * be treated as the same in UI views.
+   * Return a key that may be used to identify values that should be treated as
+   * the same in UI views.
    *
    * @param value a value of type C.
    * @return an Object that implements appropriate hashCode() and equals()
-   * methods.
+   *         methods.
    */
   Object getKey(C value);
 }
