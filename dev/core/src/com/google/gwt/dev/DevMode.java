@@ -220,11 +220,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       return sclArgs;
     }
 
-    @Override
-    public File getShellBaseWorkDir(ModuleDef moduleDef) {
-      return new File(new File(getWorkDir(), moduleDef.getName()), "shell");
-    }
-
     public File getWarDir() {
       return warDir;
     }
@@ -368,7 +363,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
         // Create a hard reference to the module to avoid gc-ing it until we
         // actually load the module from the browser.
         startupModules.put(module.getName(), module);
-        Util.recursiveDelete(options.getShellBaseWorkDir(module), false);
         if (!options.isNoServer()) {
           validateServletTags(moduleBranch, servletValidator, module, webXml);
         }

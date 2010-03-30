@@ -48,8 +48,6 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
   private StandardRebindOracle rebindOracle;
 
-  private final File shellDir;
-
   private ModuleSpace space;
 
   /**
@@ -58,12 +56,11 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
    */
   public ShellModuleSpaceHost(TreeLogger logger,
       CompilationState compilationState, ModuleDef module, File genDir,
-      File shellDir, ArtifactAcceptor artifactAcceptor) {
+      ArtifactAcceptor artifactAcceptor) {
     this.logger = logger;
     this.compilationState = compilationState;
     this.module = module;
     this.genDir = genDir;
-    this.shellDir = shellDir;
     this.artifactAcceptor = artifactAcceptor;
   }
 
@@ -95,7 +92,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     //
     Rules rules = module.getRules();
     StandardGeneratorContext genCtx = new StandardGeneratorContext(
-        compilationState, module, genDir, shellDir, new ArtifactSet());
+        compilationState, module, genDir, new ArtifactSet());
     rebindOracle = new StandardRebindOracle(propOracle, rules, genCtx);
 
     // Create a completely isolated class loader which owns all classes

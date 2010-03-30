@@ -179,12 +179,10 @@ public class Compiler {
       for (String moduleName : options.getModuleNames()) {
         ModuleDef module = ModuleDefLoader.loadFromClassPath(logger,
             moduleName, true);
-        File compilerWorkDir = options.getCompilerWorkDir(moduleName);
 
         if (options.isValidateOnly()) {
           if (!Precompile.validate(logger, options, module,
-              options.getGenDir(), compilerWorkDir,
-              options.getDumpSignatureFile())) {
+              options.getGenDir(), options.getDumpSignatureFile())) {
             return false;
           }
         } else {
@@ -195,7 +193,7 @@ public class Compiler {
           // Optimize early since permutation compiles will run in process.
           options.setOptimizePrecompile(true);
           Precompilation precompilation = Precompile.precompile(branch,
-              options, module, options.getGenDir(), compilerWorkDir,
+              options, module, options.getGenDir(),
               options.getDumpSignatureFile());
 
           if (precompilation == null) {

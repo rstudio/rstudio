@@ -172,12 +172,10 @@ public class GWTCompiler {
 
       for (ModuleDef module : modules) {
         String moduleName = module.getName();
-        File compilerWorkDir = options.getCompilerWorkDir(moduleName);
 
         if (options.isValidateOnly()) {
           if (!Precompile.validate(logger, options, module,
-              options.getGenDir(), compilerWorkDir,
-              options.getDumpSignatureFile())) {
+              options.getGenDir(), options.getDumpSignatureFile())) {
             return false;
           }
         } else {
@@ -188,7 +186,7 @@ public class GWTCompiler {
           // Optimize early since permutation compiles will run in process.
           options.setOptimizePrecompile(true);
           Precompilation precompilation = Precompile.precompile(logger,
-              options, module, options.getGenDir(), compilerWorkDir,
+              options, module, options.getGenDir(),
               options.getDumpSignatureFile());
 
           if (precompilation == null) {

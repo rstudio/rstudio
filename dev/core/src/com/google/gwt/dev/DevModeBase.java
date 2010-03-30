@@ -38,7 +38,6 @@ import com.google.gwt.dev.ui.DevModeUI;
 import com.google.gwt.dev.ui.DoneCallback;
 import com.google.gwt.dev.ui.DoneEvent;
 import com.google.gwt.dev.util.BrowserInfo;
-import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.OptionGenDir;
@@ -58,7 +57,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The main executable class for the hosted mode shell. This class must not have
@@ -434,14 +432,6 @@ abstract class DevModeBase implements DoneCallback {
       OptionLogLevel, OptionGenDir, OptionNoServer, OptionPort,
       OptionCodeServerPort, OptionStartupURLs, OptionRemoteUI,
       OptionBindAddress {
-
-    /**
-     * The base shell work directory.
-     * 
-     * @param moduleDef
-     * @return working directory base
-     */
-    File getShellBaseWorkDir(ModuleDef moduleDef);
   }
 
   /**
@@ -507,10 +497,6 @@ abstract class DevModeBase implements DoneCallback {
 
     public int getRemoteUIHostPort() {
       return remoteUIHostPort;
-    }
-
-    public File getShellBaseWorkDir(ModuleDef moduleDef) {
-      return new File(new File(getWorkDir(), moduleDef.getName()), "shell");
     }
 
     public List<String> getStartupURLs() {
@@ -658,8 +644,6 @@ abstract class DevModeBase implements DoneCallback {
   }
 
   private static final Random RNG = new Random();
-
-  private static final AtomicLong uniqueId = new AtomicLong();
 
   public static String normalizeURL(String unknownUrlText, int port, String host) {
     if (unknownUrlText.indexOf(":") != -1) {
@@ -822,15 +806,10 @@ abstract class DevModeBase implements DoneCallback {
   protected final ShellModuleSpaceHost doCreateShellModuleSpaceHost(
       TreeLogger logger, CompilationState compilationState, ModuleDef moduleDef)
       throws UnableToCompleteException {
-    // Clear out the shell temp directory.
-    File shellBaseWorkDir = options.getShellBaseWorkDir(moduleDef);
-    File sessionWorkDir = new File(shellBaseWorkDir,
-        String.valueOf(uniqueId.getAndIncrement()));
-    Util.recursiveDelete(sessionWorkDir, false);
     ArtifactAcceptor artifactAcceptor = createArtifactAcceptor(logger,
         moduleDef);
     return new ShellModuleSpaceHost(logger, compilationState, moduleDef,
-        options.getGenDir(), new File(sessionWorkDir, "gen"), artifactAcceptor);
+        options.getGenDir(), artifactAcceptor);
   }
 
   protected abstract void doShutDownServer();

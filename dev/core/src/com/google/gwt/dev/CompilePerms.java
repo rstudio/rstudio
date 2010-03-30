@@ -356,7 +356,7 @@ public class CompilePerms {
       assert (precompilationOptions.getDumpSignatureFile() == null);
       Precompilation precompilation = Precompile.precompile(logger,
           precompilationOptions, module, permId, onePerm,
-          precompilationOptions.getGenDir(), compilerWorkDir, null);
+          precompilationOptions.getGenDir(), null);
       if (precompilation == null) {
         return false;
       }

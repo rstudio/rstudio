@@ -736,6 +736,19 @@ public final class Util {
     }
   }
 
+  /**
+   * Reads an entire input stream as bytes. Closes the input stream.
+   */
+  public static byte[] readStreamAsBytes(InputStream in) {
+    try {
+      ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
+      copy(in, out);
+      return out.toByteArray();
+    } catch (IOException e) {
+      return null;
+    }
+  }
+
   public static <T> T readStreamAsObject(InputStream inputStream, Class<T> type)
       throws ClassNotFoundException, IOException {
     ObjectInputStream objectInputStream = null;

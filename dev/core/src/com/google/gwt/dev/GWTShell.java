@@ -105,7 +105,8 @@ public class GWTShell extends DevModeBase {
     }
 
     public File getShellPublicGenDir(ModuleDef moduleDef) {
-      return new File(getShellBaseWorkDir(moduleDef), "public");
+      File moduleWorkDir = new File(getWorkDir(), moduleDef.getName());
+      return new File(moduleWorkDir, "public");
     }
 
     @Override

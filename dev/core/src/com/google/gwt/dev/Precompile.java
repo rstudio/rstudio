@@ -299,13 +299,13 @@ public class Precompile {
 
     public DistillerRebindPermutationOracle(ModuleDef module,
         CompilationState compilationState, ArtifactSet generatorArtifacts,
-        PropertyPermutations perms, File genDir, File generatorResourcesDir) {
+        PropertyPermutations perms, File genDir) {
       this.compilationState = compilationState;
       permutations = new Permutation[perms.size()];
       propertyOracles = new StaticPropertyOracle[perms.size()];
       rebindOracles = new RebindOracle[perms.size()];
       generatorContext = new StandardGeneratorContext(compilationState, module,
-          genDir, generatorResourcesDir, generatorArtifacts);
+          genDir, generatorArtifacts);
       BindingProperty[] orderedProps = perms.getOrderedProperties();
       SortedSet<ConfigurationProperty> configPropSet = module.getProperties().getConfigurationProperties();
       ConfigurationProperty[] configProps = configPropSet.toArray(new ConfigurationProperty[configPropSet.size()]);
@@ -425,16 +425,15 @@ public class Precompile {
    * @param module the module to compile
    * @param genDir optional directory to dump generated source, may be
    *          <code>null</code>
-   * @param generatorResourcesDir required directory to dump generator resources
    * @return the precompilation
    */
   public static Precompilation precompile(TreeLogger logger,
       JJSOptions jjsOptions, ModuleDef module, File genDir,
-      File generatorResourcesDir, File dumpSignatureFile) {
+      File dumpSignatureFile) {
     PropertyPermutations allPermutations = new PropertyPermutations(
         module.getProperties(), module.getActiveLinkerNames());
     return precompile(logger, jjsOptions, module, 0, allPermutations, genDir,
-        generatorResourcesDir, dumpSignatureFile);
+        dumpSignatureFile);
   }
 
   /**
@@ -445,11 +444,9 @@ public class Precompile {
    * @param module the module to compile
    * @param genDir optional directory to dump generated source, may be
    *          <code>null</code>
-   * @param generatorResourcesDir required directory to dump generator resources
    */
   public static boolean validate(TreeLogger logger, JJSOptions jjsOptions,
-      ModuleDef module, File genDir, File generatorResourcesDir,
-      File dumpSignatureFile) {
+      ModuleDef module, File genDir, File dumpSignatureFile) {
     try {
       CompilationState compilationState = module.getCompilationState(logger);
       if (dumpSignatureFile != null) {
@@ -474,7 +471,7 @@ public class Precompile {
       DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
           module, compilationState, generatorArtifacts,
           new PropertyPermutations(module.getProperties(),
-              module.getActiveLinkerNames()), genDir, generatorResourcesDir);
+              module.getActiveLinkerNames()), genDir);
       // Allow GC later.
       compilationState = null;
       if (dumpSignatureFile != null) {
@@ -495,8 +492,7 @@ public class Precompile {
 
   static Precompilation precompile(TreeLogger logger, JJSOptions jjsOptions,
       ModuleDef module, int permutationBase,
-      PropertyPermutations allPermutations, File genDir,
-      File generatorResourcesDir, File dumpSignatureFile) {
+      PropertyPermutations allPermutations, File genDir, File dumpSignatureFile) {
 
     try {
       CompilationState compilationState = module.getCompilationState(logger);
@@ -514,8 +510,7 @@ public class Precompile {
 
       ArtifactSet generatedArtifacts = new ArtifactSet();
       DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
-          module, compilationState, generatedArtifacts, allPermutations,
-          genDir, generatorResourcesDir);
+          module, compilationState, generatedArtifacts, allPermutations, genDir);
       // Allow GC later.
       compilationState = null;
       PerfLogger.start("Precompile");
@@ -694,7 +689,7 @@ public class Precompile {
           TreeLogger branch = logger.branch(TreeLogger.INFO,
               "Validating compilation " + module.getName());
           if (!validate(branch, options, module, options.getGenDir(),
-              compilerWorkDir, options.getDumpSignatureFile())) {
+              options.getDumpSignatureFile())) {
             branch.log(TreeLogger.ERROR, "Validation failed");
             return false;
           }
@@ -704,8 +699,7 @@ public class Precompile {
               "Precompiling module " + module.getName());
 
           Precompilation precompilation = precompile(branch, options, module,
-              options.getGenDir(), compilerWorkDir,
-              options.getDumpSignatureFile());
+              options.getGenDir(), options.getDumpSignatureFile());
           if (precompilation == null) {
             branch.log(TreeLogger.ERROR, "Precompilation failed");
             return false;

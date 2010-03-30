@@ -43,11 +43,12 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.Map.Entry;
 
 /**
  * Manages generators and generated units during a single compilation.
@@ -171,34 +172,48 @@ public class StandardGeneratorContext implements GeneratorContext {
   /**
    * Manages a resource that is in the process of being created by a generator.
    */
-  private static class PendingResource {
+  private static class PendingResource extends OutputStream {
 
-    private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    private ByteArrayOutputStream baos = new ByteArrayOutputStream();
     private final String partialPath;
-    private final File pendingFile;
 
-    public PendingResource(File outDir, String partialPath) {
+    public PendingResource(String partialPath) {
       this.partialPath = partialPath;
-      this.pendingFile = new File(outDir, partialPath);
     }
 
-    public void commit(TreeLogger logger) throws UnableToCompleteException {
-      logger = logger.branch(TreeLogger.TRACE, "Writing generated resource '"
-          + pendingFile.getAbsolutePath() + "'", null);
-
-      Util.writeBytesToFile(logger, pendingFile, baos.toByteArray());
-    }
-
-    public File getFile() {
-      return pendingFile;
-    }
-
-    public OutputStream getOutputStream() {
-      return baos;
+    public void abort() {
+      baos = null;
     }
 
     public String getPartialPath() {
       return partialPath;
+    }
+
+    public byte[] takeBytes() {
+      byte[] result = baos.toByteArray();
+      baos = null;
+      return result;
+    }
+
+    public void write(byte[] b) throws IOException {
+      if (baos == null) {
+        throw new IOException("stream closed");
+      }
+      baos.write(b);
+    }
+
+    public void write(byte[] b, int off, int len) throws IOException {
+      if (baos == null) {
+        throw new IOException("stream closed");
+      }
+      baos.write(b, off, len);
+    }
+
+    public void write(int b) throws IOException {
+      if (baos == null) {
+        throw new IOException("stream closed");
+      }
+      baos.write(b);
     }
   }
 
@@ -214,8 +229,6 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private final File genDir;
 
-  private final File generatorResourcesDir;
-
   private final Map<Class<? extends Generator>, Generator> generators = new IdentityHashMap<Class<? extends Generator>, Generator>();
 
   private final ModuleDef module;
@@ -224,7 +237,7 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private final Set<String> newlyGeneratedTypeNames = new HashSet<String>();
 
-  private final Map<OutputStream, PendingResource> pendingResourcesByOutputStream = new IdentityHashMap<OutputStream, PendingResource>();
+  private final Map<String, PendingResource> pendingResources = new HashMap<String, PendingResource>();
 
   private transient PropertyOracle propOracle;
 
@@ -235,12 +248,10 @@ public class StandardGeneratorContext implements GeneratorContext {
    * available in the supplied type oracle although it isn't strictly required.
    */
   public StandardGeneratorContext(CompilationState compilationState,
-      ModuleDef module, File genDir, File generatorResourcesDir,
-      ArtifactSet allGeneratedArtifacts) {
+      ModuleDef module, File genDir, ArtifactSet allGeneratedArtifacts) {
     this.compilationState = compilationState;
     this.module = module;
     this.genDir = genDir;
-    this.generatorResourcesDir = generatorResourcesDir;
     this.allGeneratedArtifacts = allGeneratedArtifacts;
   }
 
@@ -271,8 +282,7 @@ public class StandardGeneratorContext implements GeneratorContext {
    * Adds an Artifact to the ArtifactSet if one has been provided to the
    * context.
    */
-  public void commitArtifact(TreeLogger logger, Artifact<?> artifact)
-      throws UnableToCompleteException {
+  public void commitArtifact(TreeLogger logger, Artifact<?> artifact) {
     allGeneratedArtifacts.replace(artifact);
     newlyGeneratedArtifacts.add(artifact);
   }
@@ -280,32 +290,28 @@ public class StandardGeneratorContext implements GeneratorContext {
   public GeneratedResource commitResource(TreeLogger logger, OutputStream os)
       throws UnableToCompleteException {
 
-    // Find the pending resource using its output stream as a key.
-    PendingResource pendingResource = pendingResourcesByOutputStream.get(os);
-    if (pendingResource != null) {
-      // Actually write the bytes to disk.
-      pendingResource.commit(logger);
-
-      // Add the GeneratedResource to the ArtifactSet
-      GeneratedResource toReturn = new StandardGeneratedResource(
-          currentGenerator, pendingResource.getPartialPath(),
-          pendingResource.getFile());
-      commitArtifact(logger, toReturn);
-
-      /*
-       * The resource is now no longer pending, so remove it from the map. If
-       * the commit above throws an exception, it's okay to leave the entry in
-       * the map because it will be reported later as not having been committed,
-       * which is accurate.
-       */
-      pendingResourcesByOutputStream.remove(os);
-
-      return toReturn;
-    } else {
+    PendingResource pendingResource = null;
+    String partialPath = null;
+    if (os instanceof PendingResource) {
+      pendingResource = (PendingResource) os;
+      partialPath = pendingResource.getPartialPath();
+      // Make sure it's ours by looking it up in the map.
+      if (pendingResource != pendingResources.get(partialPath)) {
+        pendingResource = null;
+      }
+    }
+    if (pendingResource == null) {
       logger.log(TreeLogger.WARN,
           "Generator attempted to commit an unknown OutputStream", null);
       throw new UnableToCompleteException();
     }
+
+    // Add the GeneratedResource to the ArtifactSet
+    GeneratedResource toReturn = new StandardGeneratedResource(
+        currentGenerator, partialPath, pendingResource.takeBytes());
+    commitArtifact(logger, toReturn);
+    pendingResources.remove(pendingResource.getPartialPath());
+    return toReturn;
   }
 
   /**
@@ -508,8 +514,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     // Disallow absolute paths.
-    File f = new File(partialPath);
-    if (f.isAbsolute()) {
+    if (new File(partialPath).isAbsolute()) {
       logger.log(
           TreeLogger.ERROR,
           "Resource paths are intended to be relative to the compiled output directory and cannot be absolute",
@@ -542,27 +547,19 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     // See if the file is pending.
-    for (Iterator<PendingResource> iter = pendingResourcesByOutputStream.values().iterator(); iter.hasNext();) {
-      PendingResource pendingResource = iter.next();
-      if (pendingResource.getPartialPath().equals(partialPath)) {
-        // It is already pending.
-        logger.log(TreeLogger.WARN, "The file '" + partialPath
-            + "' is already a pending resource", null);
-        return null;
-      }
+    if (pendingResources.containsKey(partialPath)) {
+      // It is already pending.
+      logger.log(TreeLogger.WARN, "The file '" + partialPath
+          + "' is already a pending resource", null);
+      return null;
     }
-
-    // Record that this file is pending.
-    PendingResource pendingResource = new PendingResource(
-        generatorResourcesDir, partialPath);
-    OutputStream os = pendingResource.getOutputStream();
-    pendingResourcesByOutputStream.put(os, pendingResource);
-
-    return os;
+    PendingResource pendingResource = new PendingResource(partialPath);
+    pendingResources.put(partialPath, pendingResource);
+    return pendingResource;
   }
 
   private void abortUncommittedResources(TreeLogger logger) {
-    if (pendingResourcesByOutputStream.isEmpty()) {
+    if (pendingResources.isEmpty()) {
       // Nothing to do.
       return;
     }
@@ -573,14 +570,10 @@ public class StandardGeneratorContext implements GeneratorContext {
         "The following resources will not be created because they were never committed (did you forget to call commit()?)",
         null);
 
-    try {
-      for (Iterator<PendingResource> iter = pendingResourcesByOutputStream.values().iterator(); iter.hasNext();) {
-        PendingResource pendingResource = iter.next();
-        logger.log(TreeLogger.WARN,
-            pendingResource.getFile().getAbsolutePath(), null);
-      }
-    } finally {
-      pendingResourcesByOutputStream.clear();
+    for (Entry<String, PendingResource> entry : pendingResources.entrySet()) {
+      logger.log(TreeLogger.WARN, entry.getKey());
+      entry.getValue().abort();
     }
+    pendingResources.clear();
   }
 }

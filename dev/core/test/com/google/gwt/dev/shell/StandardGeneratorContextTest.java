@@ -23,7 +23,6 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.dev.cfg.ModuleDef;
@@ -130,9 +129,6 @@ public class StandardGeneratorContextTest extends TestCase {
       TreeLogger.NULL, Collections.<Resource> emptySet());
   private final TreeLogger mockLogger = TreeLogger.NULL;
   private final PropertyOracle mockPropOracle = new MockPropertyOracle();
-  private int tempFileCounter;
-  private final File tempGenDir;
-  private final File tempOutDir;
   /**
    * Stores the File objects to delete in the order they were created. Delete
    * them in reverse order.
@@ -140,10 +136,8 @@ public class StandardGeneratorContextTest extends TestCase {
   private final List<File> toDelete = new ArrayList<File>();
 
   public StandardGeneratorContextTest() {
-    tempGenDir = createTempDir("gwt-gen-");
-    tempOutDir = createTempDir("gwt-out-");
     genCtx = new StandardGeneratorContext(mockCompilationState,
-        new MockModuleDef(), tempGenDir, tempOutDir, artifactSet);
+        new MockModuleDef(), null, artifactSet);
     genCtx.setPropertyOracle(mockPropOracle);
     genCtx.setCurrentGenerator(Generator.class);
   }
@@ -195,27 +189,15 @@ public class StandardGeneratorContextTest extends TestCase {
    */
   public void testTryCreateResource_commitCalledTwice()
       throws UnableToCompleteException, IOException {
-    String path = createTempOutFilename();
+    String path = "testTryCreateResource/commitCalledTwice";
     OutputStream os = genCtx.tryCreateResource(mockLogger, path);
     os.write("going to call commit twice after this...".getBytes(Util.DEFAULT_ENCODING));
     genCtx.setCurrentGenerator(MockGenerator.class);
     GeneratedResource res = genCtx.commitResource(mockLogger, os);
     assertEquals(path, res.getPartialPath());
     assertEquals(MockGenerator.class, res.getGenerator());
-    File createdFile = new File(tempOutDir, path);
-    assertTrue(createdFile.exists());
     assertEquals(1, artifactSet.size());
-
-    // we need the unqualified nextArt to avoid a bug in Sun JDK1.6.0 on
-    // linux... generatedResource = artifactSet.iterator().next() dies, but
-    // this two-step equivalent does not.
-    @SuppressWarnings("unchecked")
-    Artifact nextArt = artifactSet.iterator().next();
-    GeneratedResource generatedResource = (GeneratedResource) nextArt;
-
-    assertEquals(path, generatedResource.getPartialPath());
-    assertEquals(MockGenerator.class, generatedResource.getGenerator());
-    rememberToDelete(createdFile);
+    assertTrue(artifactSet.contains(res));
     try {
       genCtx.commitResource(mockLogger, os);
       fail("Calling commit() again on the same stream object should have caused an exception");
@@ -228,17 +210,19 @@ public class StandardGeneratorContextTest extends TestCase {
 
   public void testTryCreateResource_commitNotCalled()
       throws UnableToCompleteException, IOException {
-    String path = createTempOutFilename();
+    String path = "testTryCreateResource/commitNotCalled";
     OutputStream os = genCtx.tryCreateResource(mockLogger, path);
     byte[] arrayWritten = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     os.write(arrayWritten);
 
     // Note that we're *not* committing before calling finish().
     genCtx.finish(mockLogger);
-
-    File wouldBeCreatedFile = new File(tempOutDir, path);
-    assertFalse(wouldBeCreatedFile.exists());
     assertEquals(0, artifactSet.size());
+    try {
+      os.write(arrayWritten);
+      fail("Expected IOException for writing after abort");
+    } catch (IOException expected) {
+    }
   }
 
   public void testTryCreateResource_commitWithBadStream() {
@@ -270,22 +254,20 @@ public class StandardGeneratorContextTest extends TestCase {
   public void testTryCreateResource_creationWorksBetweenFinishes()
       throws UnableToCompleteException, IOException {
     genCtx.finish(mockLogger);
-    testTryCreateResource_normalCompletionWithoutSubDir();
+    testTryCreateResource_normalCompletion("creationWorksBetweenFinishes1");
     genCtx.finish(mockLogger);
-    testTryCreateResource_normalCompletionWithoutSubDir();
+    testTryCreateResource_normalCompletion("creationWorksBetweenFinishes2");
     genCtx.finish(mockLogger);
   }
 
   public void testTryCreateResource_duplicateCreationAfterCommit()
       throws UnableToCompleteException, UnsupportedEncodingException,
       IOException {
-    String path = createTempOutFilename();
+    String path = "testTryCreateResource/duplicateCreationAfterCommit";
     OutputStream os1 = genCtx.tryCreateResource(mockLogger, path);
     os1.write("going to call commit twice after this...".getBytes(Util.DEFAULT_ENCODING));
     genCtx.commitResource(mockLogger, os1);
-    File createdFile = new File(tempOutDir, path);
-    assertTrue(createdFile.exists());
-    rememberToDelete(createdFile);
+    assertEquals(1, artifactSet.size());
 
     OutputStream os2 = genCtx.tryCreateResource(mockLogger, path);
     assertNull(os2);
@@ -293,7 +275,7 @@ public class StandardGeneratorContextTest extends TestCase {
 
   public void testTryCreateResource_duplicateCreationAttempt()
       throws UnableToCompleteException {
-    String path = createTempOutFilename();
+    String path = "testTryCreateResource/duplicateCreationAttempt";
     OutputStream os1 = genCtx.tryCreateResource(mockLogger, path);
     assertNotNull(os1);
     OutputStream os2 = genCtx.tryCreateResource(mockLogger, path);
@@ -315,20 +297,19 @@ public class StandardGeneratorContextTest extends TestCase {
 
   public void testTryCreateResource_normalCompletionWithoutSubDir()
       throws UnableToCompleteException, IOException {
-    String path = createTempOutFilename();
-    testTryCreateResource_normalCompletion(null, path);
+    String path = "normalCompletionWithoutSubDir";
+    testTryCreateResource_normalCompletion(path);
   }
 
   public void testTryCreateResource_normalCompletionWithSubDir()
       throws UnableToCompleteException, IOException {
-    String subdir = createTempOutFilename();
-    String filename = createTempOutFilename();
-    testTryCreateResource_normalCompletion(subdir, filename);
+    String filename = "testTryCreateResource/normalCompletionWithSubDir";
+    testTryCreateResource_normalCompletion(filename);
   }
 
   /**
-   * Tests that tryCreateResource() returns <code>null</code> when the
-   * specified file is already on the public path.
+   * Tests that tryCreateResource() returns <code>null</code> when the specified
+   * file is already on the public path.
    * 
    * @throws UnableToCompleteException
    * @throws IOException
@@ -342,6 +323,21 @@ public class StandardGeneratorContextTest extends TestCase {
     assertEquals(0, artifactSet.size());
   }
 
+  public void testTryCreateResource_writeAfterCommit()
+      throws UnableToCompleteException, IOException {
+    String path = "normalCompletionWithoutSubDir";
+    OutputStream os = genCtx.tryCreateResource(mockLogger, path);
+    assertNotNull(os);
+    byte[] arrayWritten = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    os.write(arrayWritten);
+    genCtx.commitResource(mockLogger, os);
+    try {
+      os.write(arrayWritten);
+      fail("Expected IOException for writing after commit");
+    } catch (IOException expected) {
+    }
+  }
+
   @Override
   protected void tearDown() throws Exception {
     for (int i = toDelete.size() - 1; i >= 0; --i) {
@@ -351,52 +347,18 @@ public class StandardGeneratorContextTest extends TestCase {
     }
   }
 
-  private File createTempDir(String prefix) {
-    String baseTempPath = System.getProperty("java.io.tmpdir");
-    File newTempDir;
-    do {
-      newTempDir = new File(baseTempPath, prefix + System.currentTimeMillis());
-    } while (!newTempDir.mkdirs());
-    rememberToDelete(newTempDir);
-    return newTempDir;
-  }
-
-  private String createTempOutFilename() {
-    File tempFile;
-    do {
-      tempFile = new File(tempOutDir, System.currentTimeMillis() + "-"
-          + (++tempFileCounter) + ".gwt.tmp");
-    } while (tempFile.exists());
-    return tempFile.getName();
-  }
-
-  private void rememberToDelete(File f) {
-    toDelete.add(f);
-  }
-
-  private void testTryCreateResource_normalCompletion(String subdir, String name)
+  private void testTryCreateResource_normalCompletion(String name)
       throws UnableToCompleteException, IOException {
-    if (subdir != null) {
-      name = subdir + "/" + name;
-    }
     OutputStream os = genCtx.tryCreateResource(mockLogger, name);
     assertNotNull(os);
     byte[] arrayWritten = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     os.write(arrayWritten);
-    genCtx.commitResource(mockLogger, os);
-
-    if (subdir != null) {
-      File createdDir = new File(tempOutDir, subdir);
-      assertTrue(createdDir.exists());
-      rememberToDelete(createdDir);
-    }
-
-    File createdFile = new File(tempOutDir, name);
-    assertTrue(createdFile.exists());
-    rememberToDelete(createdFile);
+    GeneratedResource res = genCtx.commitResource(mockLogger, os);
+    assertEquals(name, res.getPartialPath());
+    assertTrue(artifactSet.contains(res));
 
     // Read the file.
-    byte[] arrayRead = Util.readFileAsBytes(createdFile);
+    byte[] arrayRead = Util.readStreamAsBytes(res.getContents(mockLogger));
     assertTrue(Arrays.equals(arrayWritten, arrayRead));
   }
 
