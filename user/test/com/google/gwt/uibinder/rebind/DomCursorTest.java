@@ -41,8 +41,7 @@ public class DomCursorTest extends TestCase {
         UiBinderWriter.class);
     org.easymock.classextension.EasyMock.expect(writer.getUniqueId()).andStubAnswer(new IAnswer<Integer>() {
       private int nextId = 1;
-      @Override
-      public Integer answer() throws Throwable {
+      public Integer answer() {
         return nextId++;
       }      
     });
