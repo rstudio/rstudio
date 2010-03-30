@@ -216,7 +216,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
      * mode, we just set it to now.
      */
     long lastModified;
-    if (artifacts.find(CompilationResult.class).size() == 0) {
+    if (propMapsByPermutation.isEmpty()) {
       lastModified = context.getModuleLastModified();
     } else {
       lastModified = System.currentTimeMillis();
