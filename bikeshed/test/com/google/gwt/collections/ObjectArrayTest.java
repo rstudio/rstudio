@@ -26,13 +26,13 @@ public class ObjectArrayTest extends GWTTestCase {
   
   boolean assertionsEnabled;
   
-  public void gwtSetUp() {
-    assertionsEnabled = this.getClass().desiredAssertionStatus();
-  }
-
   @Override
   public String getModuleName() {
     return null;
+  }
+
+  public void gwtSetUp() {
+    assertionsEnabled = this.getClass().desiredAssertionStatus();
   }
 
   public void testClear() {
@@ -55,58 +55,51 @@ public class ObjectArrayTest extends GWTTestCase {
   }
 
   public void testInsertAtBeginning() {
-    final int N = 10;
+    final int n = 10;
     MutableArray<Integer> b = createMutableArray();
 
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < n; ++i) {
       b.insert(0, i);
     }
 
-    for (int i = 0; i < N; ++i) {
-      assertEquals(N - i - 1, b.get(i).intValue());
+    for (int i = 0; i < n; ++i) {
+      assertEquals(n - i - 1, b.get(i).intValue());
     }
   }
 
   public void testInsertAtEnd() {
-    final int N = 10;
+    final int n = 10;
     MutableArray<Integer> b = createMutableArray();
 
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < n; ++i) {
       b.insert(b.size(), i);
     }
 
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < n; ++i) {
       assertEquals(i, b.get(i).intValue());
     }
   }
 
   public void testInsertInMiddle() {
-    final int N = 10;
+    final int n = 10;
     MutableArray<Integer> b = createMutableArray();
 
     // Fill the array with 0..(N-1)
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < n; ++i) {
       b.insert(b.size(), i);
     }
 
     // Double each number by inserting.
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < n; ++i) {
       b.insert(i * 2, i);
     }
 
-    for (int i = 0, j = 0; i < 2 * N; i += 2, ++j) {
+    for (int i = 0, j = 0; i < 2 * n; i += 2, ++j) {
       assertEquals(j, b.get(i).intValue());
       assertEquals(j, b.get(i + 1).intValue());
     }
   }
   
-  public void testSingleElementNull() {
-    MutableArray<String> b = createMutableArray();
-    b.add(null);
-    
-    assertEquals(null, b.get(0));
-  }
-
   public void testMultiElementArrayManipulations() {
     MutableArray<String> b = createMutableArray();
     b.add("apple");
@@ -161,30 +154,37 @@ public class ObjectArrayTest extends GWTTestCase {
     assertEquals(2, b.get(0).intValue());
     assertEquals(4, b.get(1).intValue());
   }
-  
-  public void testSingleElementAddAndRemove() {
-    MutableArray<String> a = createMutableArray();
-    
-    a.add("foo");
-    
-    assertEquals(1, a.size());
-    assertEquals("foo", a.get(0));
-    
-    a.remove(0);
-    
-    assertEquals(0, a.size());    
 
-    a.add("bar");
+  public void testSingleElementAddAndRemove() {
+      MutableArray<String> a = createMutableArray();
+
+      a.add("foo");
+
+      assertEquals(1, a.size());
+      assertEquals("foo", a.get(0));
+
+      a.remove(0);
+
+      assertEquals(0, a.size());
+
+      a.add("bar");
+
+      assertEquals(1, a.size());
+      assertEquals("bar", a.get(0));
+  }
+
+  public void testSingleElementNull() {
+    MutableArray<String> b = createMutableArray();
+    b.add(null);
     
-    assertEquals(1, a.size());
-    assertEquals("bar", a.get(0));
-}
+    assertEquals(null, b.get(0));
+  }
 
   public void testSingletonArrayCreationAndRetrieval() throws Exception {
-    final int C = 2112;
+    final int c = 2112;
     MutableArray<Integer> b = createMutableArray();
-    b.add(C);
-    assertEquals(C, b.get(0).intValue());
+    b.add(c);
+    assertEquals(c, b.get(0).intValue());
 
     Array<Integer> a = b;
     assertEquals(1, a.size());
