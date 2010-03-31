@@ -58,7 +58,7 @@ public class IFrameLinker extends SelectionScriptLinker {
 
   /**
    * A configuration property that can be used to have the linker load from
-   * somewhere other than {@link #FRAGMENT_SUBDIR}
+   * somewhere other than {@link #FRAGMENT_SUBDIR}.
    */
   private static final String PROP_FRAGMENT_SUBDIR_OVERRIDE = "iframe.linker.deferredjs.subdir";
 

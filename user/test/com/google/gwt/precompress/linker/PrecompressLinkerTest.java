@@ -30,7 +30,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -112,8 +112,6 @@ public class PrecompressLinkerTest extends TestCase {
     }
   }
 
-  private static final Charset UTF_8 = Charset.forName("UTF-8");
-
   private static void assertEqualBytes(byte[] expected, byte[] actual) {
     assertEquals(expected.length, actual.length);
     for (int i = 0; i < expected.length; i++) {
@@ -173,7 +171,11 @@ public class PrecompressLinkerTest extends TestCase {
   }
 
   private static SyntheticArtifact emit(String path, String contents) {
-    return emit(path, contents.getBytes(UTF_8));
+    try {
+      return emit(path, contents.getBytes("UTF-8"));
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e.getMessage());
+    }
   }
 
   private static SyntheticArtifact emitPrivate(String string, String contents) {
@@ -204,13 +206,17 @@ public class PrecompressLinkerTest extends TestCase {
   }
 
   private static byte[] uncompressibleContent() {
-    byte[] content = fooFileContents().getBytes(UTF_8);
-    while (true) {
-      byte[] updated = compress(content);
-      if (updated.length >= content.length) {
-        return content;
+    try {
+      byte[] content = fooFileContents().getBytes("UTF-8");
+      while (true) {
+        byte[] updated = compress(content);
+        if (updated.length >= content.length) {
+          return content;
+        }
+        content = updated;
       }
-      content = updated;
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e.getMessage());
     }
   }
 
