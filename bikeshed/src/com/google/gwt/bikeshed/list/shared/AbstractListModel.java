@@ -159,7 +159,8 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
         int realStart = curStart < start ? start : curStart;
         int realEnd = curEnd > end ? end : curEnd;
         int realLength = realEnd - realStart;
-        List<T> realValues = values.subList(0, realLength);
+        List<T> realValues = values.subList(realStart - start,
+            realStart - start + realLength);
         ListEvent<T> event = new ListEvent<T>(realStart, realLength, realValues);
         reg.getHandler().onDataChanged(event);
       }

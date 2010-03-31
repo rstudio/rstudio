@@ -48,6 +48,8 @@ public class ListListModel<T> extends AbstractListModel<T> {
      */
     private Command flushCommand = new Command() {
       public void execute() {
+        flushPending = false;
+
         int newSize = list.size();
         if (curSize != newSize) {
           curSize = newSize;
@@ -61,7 +63,6 @@ public class ListListModel<T> extends AbstractListModel<T> {
         }
         minModified = Integer.MAX_VALUE;
         maxModified = Integer.MIN_VALUE;
-        flushPending = false;
       }
     };
 
