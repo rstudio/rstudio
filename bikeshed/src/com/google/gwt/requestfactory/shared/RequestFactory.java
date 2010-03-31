@@ -48,7 +48,8 @@ public interface RequestFactory {
   SyncRequest syncRequest(DeltaValueStore deltaValueStore);
 
   /**
-   * Implemented by Enums sent in the request.
+   * Implemented by the enum that defines the mapping between request objects
+   * and service methods.
    */
   interface RequestDefinition {
     /**
