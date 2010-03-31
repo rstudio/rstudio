@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.server.rpc;
 
+import com.google.gwt.user.client.rpc.SerializableGenericWrapperType;
 import com.google.gwt.user.client.rpc.ValueTypesTestService;
 
 import java.math.BigDecimal;
@@ -62,6 +63,11 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
   }
 
   public BigInteger echo(BigInteger value) {
+    return value;
+  }
+
+  public SerializableGenericWrapperType<Void> echo(
+      SerializableGenericWrapperType<Void> value) {
     return value;
   }
 

@@ -408,6 +408,17 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  public ArrayList<Void> echoArrayListVoid(ArrayList<Void> value)
+      throws CollectionsTestServiceException {
+    ArrayList<Void> expected = TestSetFactory.createArrayListVoid();
+    if (!TestSetValidator.isValidArrayListVoid(value)) {
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + value.toString());
+    }
+
+    return value;
+  }
+
   public List<MarkerTypeArraysAsList> echoArraysAsList(
       List<MarkerTypeArraysAsList> value)
       throws CollectionsTestServiceException {

@@ -106,6 +106,23 @@ public class CollectionsTest extends RpcTestBase {
           }
         });
   }
+  
+  public void testArrayListVoid() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echoArrayListVoid(TestSetFactory.createArrayListVoid(),
+        new AsyncCallback<ArrayList<Void>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(ArrayList<Void> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidArrayListVoid(result));
+            finishTest();
+          }
+        });
+  }
 
   public void testArraysAsList() {
     CollectionsTestServiceAsync service = getServiceAsync();

@@ -145,6 +145,9 @@ public interface CollectionsTestService extends RemoteService {
   Vector<MarkerTypeVector> echo(Vector<MarkerTypeVector> value)
       throws CollectionsTestServiceException;
 
+  ArrayList<Void> echoArrayListVoid(ArrayList<Void> value)
+      throws CollectionsTestServiceException;
+
   List<MarkerTypeArraysAsList> echoArraysAsList(
       List<MarkerTypeArraysAsList> value)
       throws CollectionsTestServiceException;

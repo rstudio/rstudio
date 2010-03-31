@@ -127,6 +127,9 @@ public interface CollectionsTestServiceAsync {
   void echo(Vector<MarkerTypeVector> value,
       AsyncCallback<Vector<MarkerTypeVector>> callback);
 
+  void echoArrayListVoid(ArrayList<Void> value,
+      AsyncCallback<ArrayList<Void>> callback);
+
   void echoArraysAsList(List<MarkerTypeArraysAsList> value,
       AsyncCallback<List<MarkerTypeArraysAsList>> callback);
 }

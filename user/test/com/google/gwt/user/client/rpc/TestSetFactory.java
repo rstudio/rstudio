@@ -366,6 +366,13 @@ public class TestSetFactory {
     return list;
   }
 
+  public static ArrayList<Void> createArrayListVoid() {
+    ArrayList<Void> list = new ArrayList<Void>();
+    list.add(null);
+    list.add(null);
+    return list;
+  }
+
   public static List<MarkerTypeArraysAsList> createArraysAsList() {
     return Arrays.asList(new MarkerTypeArraysAsList("foo"),
         new MarkerTypeArraysAsList("bar"), new MarkerTypeArraysAsList("baz"),

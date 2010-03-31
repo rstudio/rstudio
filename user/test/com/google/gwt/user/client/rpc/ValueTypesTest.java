@@ -577,6 +577,24 @@ public class ValueTypesTest extends RpcTestBase {
     });
   }
 
+  public void testVoidParameterizedType() {
+    ValueTypesTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echo(new SerializableGenericWrapperType<Void>(),
+        new AsyncCallback<SerializableGenericWrapperType<Void>>() {
+
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(SerializableGenericWrapperType<Void> result) {
+            assertNotNull(result);
+            assertNull(result.getValue());
+            finishTest();
+          }
+        });
+  }
+  
   private void assertEcho(final BigDecimal value) {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();

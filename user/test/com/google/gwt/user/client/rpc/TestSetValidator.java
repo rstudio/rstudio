@@ -447,6 +447,18 @@ public class TestSetValidator {
     return true;
   }
 
+  public static boolean isValidArrayListVoid(ArrayList<Void> list) {
+    if (list.size() != 2) {
+      return false;
+    }
+
+    if (list.get(0) != null || list.get(1) != null) {
+      return false;
+    }
+
+    return true;
+  }
+
   public static boolean isValidAsList(List<?> list) {
     if (list == null) {
       return false;
