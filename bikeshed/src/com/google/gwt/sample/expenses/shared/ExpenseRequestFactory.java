@@ -15,12 +15,11 @@
  */
 package com.google.gwt.sample.expenses.shared;
 
-import com.google.gwt.requestfactory.shared.EntityKey;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
 import com.google.gwt.requestfactory.shared.LongString;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.ValueRef;
+import com.google.gwt.valuestore.shared.ValuesKey;
 
 /**
  * "API generated" for the service methods of
@@ -98,10 +97,10 @@ public interface ExpenseRequestFactory extends RequestFactory {
      * for "READ" methods, the methods return a List. This class denotes the types
      * of the elements of the list.
      */
-    private final Class<? extends EntityKey<?>> returnType;
+    private final Class<? extends ValuesKey<?>> returnType;
 
     private ServerSideOperation(String domainClassName, String domainMethodName,
-        Class<?> parameterTypes[], Class<? extends EntityKey<?>> entryReturnType) {
+        Class<?> parameterTypes[], Class<? extends ValuesKey<?>> entryReturnType) {
       this.domainClassName = domainClassName;
       this.domainMethodName = domainMethodName;
       this.parameterTypes = parameterTypes;
@@ -120,7 +119,7 @@ public interface ExpenseRequestFactory extends RequestFactory {
       return parameterTypes;
     }
 
-    public Class<? extends EntityKey<?>> getReturnType() {
+    public Class<? extends ValuesKey<?>> getReturnType() {
       return returnType;
     }
   }
@@ -131,17 +130,12 @@ public interface ExpenseRequestFactory extends RequestFactory {
   EmployeeRequest employeeRequest();
 
   /**
-   * @return a request selector based on new values
-   */
-  EmployeeRequest employeeRequest(DeltaValueStore deltas);
-
-  /**
    * @return a request selector
    */
   ReportRequest reportRequest();
-
-  /**
-   * @return a request selector based on new values
-   */
-  ReportRequest reportRequest(DeltaValueStore deltas);
+  // todo: probably will also need something like this to support custom service methods
+  // that do mutations, not just find:
+//  public ReportRequest reportRequest(DeltaValueStore deltas) {
+//    return new ReportRequestImpl(this);
+//  }
 }

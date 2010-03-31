@@ -13,21 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.requestfactory.shared;
+package com.google.gwt.user.client.ui;
 
-import com.google.gwt.valuestore.shared.Property;
-
-import java.util.Set;
+import java.util.List;
 
 /**
- * Implemented by client side meta data for server side domain entities.
+ * Implemented by objects that want to be kept apprised of a list of values.
  * 
- * @param <T> type of this entity
+ * @param <V> value type
  */
-public interface EntityKey<T extends EntityKey<T>> {
-
-  /**
-   * @return the set of properties such entities have
-   */
-  Set<Property<T, ?>> getProperties();
+public interface TakesValueList<V> {
+  void setValueList(List<V> newValues);
 }

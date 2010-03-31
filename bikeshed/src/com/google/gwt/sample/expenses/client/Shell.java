@@ -25,18 +25,20 @@ import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.sample.expenses.shared.ReportChanged;
 import com.google.gwt.sample.expenses.shared.ReportKey;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.TakesValueList;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
+import com.google.gwt.valuestore.shared.ValuesKey;
 
 import java.util.Date;
 import java.util.List;
@@ -45,7 +47,7 @@ import java.util.List;
  * UI shell for expenses sample app. A horrible clump of stuff that should be
  * refactored into proper MVP pieces.
  */
-public class Shell extends Composite implements HasValueList<Values<ReportKey>> {
+public class Shell extends Composite implements TakesValueList<Values<ReportKey>>, ReportChanged.Handler {
   interface Listener {
     void setFirstPurpose(String purpose);
   }
@@ -75,11 +77,6 @@ public class Shell extends Composite implements HasValueList<Values<ReportKey>> 
     initWidget(uiBinder.createAndBindUi(this));
   }
 
-  public void editValueList(boolean replace, int index,
-      List<Values<ReportKey>> newValues) {
-    throw new UnsupportedOperationException();
-  }
-
   public List<Values<ReportKey>> getValues() {
     return values;
   }
@@ -87,6 +84,10 @@ public class Shell extends Composite implements HasValueList<Values<ReportKey>> 
   @UiHandler("purpose") 
   public void onPurposeChange(ValueChangeEvent<String> e) {
     listener.setFirstPurpose(e.getValue());
+  }
+  
+  public void onReportChanged(ReportChanged event) {
+    refresh();
   }
   
   @UiHandler("save")
@@ -98,17 +99,21 @@ public class Shell extends Composite implements HasValueList<Values<ReportKey>> 
   public void setListener(Listener listener) {
     this.listener = listener;
   }
-  
+
   public void setValueList(List<Values<ReportKey>> newValues) {
     this.values = newValues;
+    refresh();
+  }
+
+  private void refresh() {
     int r = 1; // skip header
     NodeList<TableRowElement> tableRows = table.getRows();
     purpose.setText("");
-    boolean enabled = newValues.size() > 0;
+    boolean enabled = values.size() > 0;
     purpose.setEnabled(enabled);
     save.setEnabled(enabled);
-    for (int i = 0; i < newValues.size(); i++) {
-      Values<ReportKey> valueRow = newValues.get(i);
+    for (int i = 0; i < values.size(); i++) {
+      Values<ReportKey> valueRow = values.get(i);
 
       if (i == 0) {
         purpose.setText(valueRow.get(ReportKey.get().getPurpose()));
@@ -139,11 +144,7 @@ public class Shell extends Composite implements HasValueList<Values<ReportKey>> 
     }
   }
 
-  public void setValueListSize(int size, boolean exact) {
-    throw new UnsupportedOperationException();
-  }
-
-  private <T> String renderDate(Values<T> values, Property<T, Date> property) {
+  private <K extends ValuesKey<K>> String renderDate(Values<K> values, Property<K, Date> property) {
     return DateTimeFormat.getShortDateFormat().format(values.get(property));
   }
 

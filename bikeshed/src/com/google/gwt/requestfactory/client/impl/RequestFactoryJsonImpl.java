@@ -24,44 +24,24 @@ import com.google.gwt.requestfactory.client.gen.ClientRequestObject;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncRequest;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
-import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.HasValueList;
-import com.google.gwt.valuestore.client.ValuesImpl;
+import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory.ServerSideOperation;
+import com.google.gwt.valuestore.client.DeltaValueStoreJsonImpl;
+import com.google.gwt.valuestore.client.ValueStoreJsonImpl;
 import com.google.gwt.valuestore.shared.DeltaValueStore;
-import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.ValueStore;
-import com.google.gwt.valuestore.shared.Values;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Base implementation of RequestFactory.
  */
-public class RequestFactoryJsonImpl implements RequestFactory,
-    RequestFactory.Service {
+public class RequestFactoryJsonImpl implements RequestFactory {
 
-  private final ValueStore valueStore = new ValueStore() {
+  private final ValueStoreJsonImpl valueStore;
 
-    public void addValidation() {
-      throw new UnsupportedOperationException();
-    }
-
-    public DeltaValueStore edit() {
-      throw new UnsupportedOperationException();
-    }
-
-    public <T, V> void subscribe(HasValue<V> watcher, T propertyOwner,
-        Property<T, V> property) {
-      throw new UnsupportedOperationException();
-    }
-
-    public <T, V> void subscribe(HasValueList<Values<T>> watcher,
-        T propertyOwner, Set<Property<T, ?>> properties) {
-      throw new UnsupportedOperationException();
-    }
-
-  };
+  /**
+   * @param valueStore
+   */
+  public RequestFactoryJsonImpl(ValueStoreJsonImpl valueStore) {
+    this.valueStore = valueStore;
+  }
 
   public void fire(final RequestObject requestObject) {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
@@ -93,15 +73,14 @@ public class RequestFactoryJsonImpl implements RequestFactory,
     }
   }
 
-  public ValueStore getValueStore() {
+  public ValueStoreJsonImpl getValueStore() {
     return valueStore;
   }
 
-  /**
-   * @param deltaValueStore
-   * @return
-   */
-  public SyncRequest syncRequest(final List<Values<?>> deltaValueStore) {
+  public SyncRequest syncRequest(DeltaValueStore deltas) {
+    assert deltas instanceof DeltaValueStoreJsonImpl;
+    final DeltaValueStoreJsonImpl jsonDeltas = (DeltaValueStoreJsonImpl) deltas;
+
     return new SyncRequest() {
 
       public void fire() {
@@ -109,22 +88,8 @@ public class RequestFactoryJsonImpl implements RequestFactory,
         RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
             "/expenses/data");
 
-        StringBuilder requestData = new StringBuilder("[");
-        boolean first = true;
-        for (Values<?> v : deltaValueStore) {
-          ValuesImpl<?> impl = (ValuesImpl<?>) v;
-          if (first) {
-            first = false;
-          } else {
-            requestData.append(",");
-          }
-          requestData.append(impl.toJson());
-        }
-        requestData.append("]");
-
-        // TODO: Fix the className for this request
         builder.setRequestData(ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
-            RequestFactory.UPDATE_STRING, null, requestData.toString())));
+            RequestFactory.UPDATE_STRING, null, jsonDeltas.toJson())));
         builder.setCallback(new RequestCallback() {
 
           public void onError(Request request, Throwable exception) {
@@ -136,7 +101,7 @@ public class RequestFactoryJsonImpl implements RequestFactory,
               // String text = response.getText();
               // parse the return value.
 
-              // publish this value to all subscribers that are interested.
+              jsonDeltas.commit();
             } else {
               // shell.error.setInnerText(SERVER_ERROR + " ("
               // + response.getStatusText() + ")");
@@ -150,9 +115,7 @@ public class RequestFactoryJsonImpl implements RequestFactory,
           // shell.error.setInnerText(SERVER_ERROR + " (" + e.getMessage() +
           // ")");
         }
-        // values.subscribe(watcher, future, properties);
       }
-
     };
   }
 }

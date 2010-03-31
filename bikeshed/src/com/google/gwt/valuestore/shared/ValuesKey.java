@@ -15,21 +15,34 @@
  */
 package com.google.gwt.valuestore.shared;
 
+import java.util.Set;
+
 /**
- * Represents a property of a record managed by {@link ValueStore}.
+ * The set of {@link Property properties} for {@ValueStore} records
+ * of a particular type.
  * 
- * @param <K> type of the property holder
- * @param <V> type of the property
+ * @param <K> type of this key
  */
-public interface Property<K extends ValuesKey<K>, V> {
+public interface ValuesKey<K extends ValuesKey<K>> {
 
   /**
-   * @return the key
+   * @return the set of properties such records have, as well as those of any
+   *         supertypes
    */
-  K getKey();
+  Set<? extends Property<K, ?>> all();
 
   /**
-   * @return the name
+   * @return an event to announce changes to the given record
    */
-  String getName();
+  ValuesChangedEvent<K, ?> createChangeEvent(Values<K> values);
+  
+  /**
+   * @return the id property for records of this type
+   */
+  Property<K, String> getId();
+  
+  /**
+   * @return the id property for records of this type
+   */
+  Property<K, Integer> getVersion();
 }

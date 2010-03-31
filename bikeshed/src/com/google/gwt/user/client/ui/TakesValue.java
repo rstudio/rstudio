@@ -1,34 +1,29 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared;
+package com.google.gwt.user.client.ui;
 
-import java.util.List;
 
 /**
- * A path of entity properties. 
- *
- * @param <T> The type of the property owner at the head of the path.
- * @param <V> The value type of the last property in the path.
+ * Implemented by objects that want to be kept apprised of a value.
+ * 
+ * @param <V> value type
  */
-public class Path<T, V> {
-  List<Property<?,?>> getProperties() {
-    return null;
-  }
-  
-  Property<?,V> getLastProperty() {
-    return null;
-  }
+public interface TakesValue<V> {
+  /**
+   * @param value the new value
+   */
+  void setValue(V value);
 }

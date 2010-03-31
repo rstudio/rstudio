@@ -22,7 +22,6 @@ import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.TableCellElement;
-import com.google.gwt.dom.client.TableColElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -44,7 +43,6 @@ public class TableEntityListView extends Widget implements EntityListView {
   private static final Binder BINDER = GWT.create(Binder.class);
 
   @UiField HeadingElement heading;
-  @UiField TableColElement narrowColumns;
   @UiField TableRowElement header;
   @UiField TableElement table;
 

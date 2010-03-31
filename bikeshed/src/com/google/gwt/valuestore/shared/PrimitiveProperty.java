@@ -13,22 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.ui;
-
-import java.util.List;
+package com.google.gwt.valuestore.shared;
 
 /**
- * Alternative to ListHandler that stays away from complexities of event
- * handling, better parallel to {@link HasValue} being a passive receiver of
- * data changes.
+ * Represents a "primitive" property of a record managed by {@link ValueStore}.
+ * Primitives include {@link java.lang.Number} and its subclasses,
+ * {@link java.lang.String}, {@link java.lang.Date} and enums (tbd).
  * 
- * @param <V> value type
+ * @param <K> type of the property holder
+ * @param <V> type of the property
  */
-public interface HasValueList<V> {
-  void editValueList(boolean replace, int index, List<V> newValues);
+public interface PrimitiveProperty<K extends ValuesKey<K>, V> extends
+    Property<K, V> {
 
-  void setValueList(List<V> newValues);
-  
-  void setValueListSize(int size, boolean exact); // @jlabanca: What does exact
-  // mean?
+  /**
+   * @return the valueClass
+   */
+  Class<V> getValueType();
 }

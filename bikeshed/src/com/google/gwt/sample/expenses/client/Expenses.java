@@ -16,65 +16,81 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.sample.expenses.gen.ExpenseRequestFactoryImpl;
 import com.google.gwt.sample.expenses.shared.EmployeeKey;
+import com.google.gwt.sample.expenses.shared.ReportChanged;
 import com.google.gwt.sample.expenses.shared.ReportKey;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
-import com.google.gwt.valuestore.client.ValuesImpl;
+import com.google.gwt.valuestore.client.ValueStoreJsonImpl;
+import com.google.gwt.valuestore.shared.DeltaValueStore;
+import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
+ * <p>
+ * This app is a mess right now, but it will become the showcase example of a
+ * custom app written to RequestFactory
  */
 public class Expenses implements EntryPoint {
-//  /**
-//   * The message displayed to the user when the server cannot be reached or
-//   * returns an error.
-//   */
-//  private static final String SERVER_ERROR = "An error occurred while "
-//      + "attempting to contact the server. Please check your network "
-//      + "connection and try again.";
-
-  private final ExpenseRequestFactoryImpl requestFactory = GWT.create(ExpenseRequestFactoryImpl.class);
 
   /**
    * This is the entry point method.
    */
   public void onModuleLoad() {
+    final HandlerManager eventBus = new HandlerManager(null);
+    final ValueStoreJsonImpl valueStore = new ValueStoreJsonImpl(eventBus);
+    final ExpenseRequestFactoryImpl requestFactory = new ExpenseRequestFactoryImpl(
+        valueStore);
+
     RootLayoutPanel root = RootLayoutPanel.get();
 
     final Shell shell = new Shell();
     final EmployeeList employees = new EmployeeList(shell.users);
 
     root.add(shell);
-    
+
     shell.setListener(new Shell.Listener() {
       public void setFirstPurpose(String purpose) {
-        ValuesImpl<ReportKey> reportValues = (ValuesImpl<ReportKey>) shell.getValues().get(0);
-        reportValues.setString(ReportKey.get().getPurpose(), purpose);
-        List<Values<?>> deltaValueStore = new ArrayList<Values<?>>();
-        deltaValueStore.add(reportValues);
-        
+        DeltaValueStore deltaValueStore = requestFactory.getValueStore().spawnDeltaView();
+        Values<ReportKey> report = shell.getValues().get(0);
+        deltaValueStore.set(report.getKey().getPurpose(), report, purpose);
         requestFactory.syncRequest(deltaValueStore).fire();
       }
     });
 
     employees.setListener(new EmployeeList.Listener() {
       public void onEmployeeSelected(Values<EmployeeKey> e) {
-        requestFactory.reportRequest().//
-        findReportsByEmployee(e.getRef(EmployeeKey.get().getId())).//
-        forProperty(ReportKey.get().getCreated()).//
-        forProperty(ReportKey.get().getPurpose()).//
-        to(shell).//
-        fire();
+        requestFactory.reportRequest().findReportsByEmployee(
+            e.getRef(EmployeeKey.get().getId())).forProperties(
+            getReportColumns()).to(shell).fire();
       }
     });
 
-    requestFactory.employeeRequest().findAllEmployees().forProperty(
-        EmployeeKey.get().getDisplayName()).forProperty(EmployeeKey.get().getUserName()).to(employees).fire();
+    eventBus.addHandler(ReportChanged.TYPE, shell);
+
+    requestFactory.employeeRequest().findAllEmployees().forProperties(
+        getEmployeeMenuProperties()).to(employees).fire();
+  }
+
+  private Collection<Property<EmployeeKey, ?>> getEmployeeMenuProperties() {
+    final EmployeeKey key = EmployeeKey.get();
+    List<Property<EmployeeKey, ?>> columns = new ArrayList<Property<EmployeeKey, ?>>();
+    columns.add(key.getDisplayName());
+    columns.add(key.getUserName());
+    return columns;
+  }
+
+  private Collection<Property<ReportKey, ?>> getReportColumns() {
+    final ReportKey key = ReportKey.get();
+    List<Property<ReportKey, ?>> columns = new ArrayList<Property<ReportKey, ?>>();
+    columns.add(key.getCreated());
+    columns.add(key.getPurpose());
+    return columns;
   }
 }

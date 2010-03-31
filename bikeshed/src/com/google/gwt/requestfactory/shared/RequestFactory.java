@@ -15,10 +15,9 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.ValueStore;
-import com.google.gwt.valuestore.shared.Values;
-
-import java.util.List;
+import com.google.gwt.valuestore.shared.ValuesKey;
 
 /**
  * Marker interface for the RequestFactory code generator.
@@ -28,7 +27,7 @@ public interface RequestFactory {
   String URL = "/expenses/data";
 
   /*
-   * eventually, this will become an enum of update operations. 
+   * eventually, this will become an enum of update operations.
    */
   String UPDATE_STRING = "SYNC";
 
@@ -43,17 +42,10 @@ public interface RequestFactory {
     void handleResponseText(String responseText);
   }
 
-  /**
-   * Implemented by the RPC service backing this factory.
-   */
-  interface Service {
-    void fire(RequestObject request);
-  }
-
   ValueStore getValueStore();
 
-  // TODO actually a DeltaValueStore, List is an interim hack
-  SyncRequest syncRequest(final List<Values<?>> deltaValueStore);
+
+  SyncRequest syncRequest(DeltaValueStore deltaValueStore);
 
   /**
    * Implemented by Enums sent in the request.
@@ -83,6 +75,6 @@ public interface RequestFactory {
     /**
      * Returns the return type of the method to be invoked on the server.
      */
-    Class<? extends EntityKey<?>> getReturnType();
+    Class<? extends ValuesKey<?>> getReturnType();
   }
 }

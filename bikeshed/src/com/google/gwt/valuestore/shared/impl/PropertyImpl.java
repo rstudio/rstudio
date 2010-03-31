@@ -13,7 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared;
+package com.google.gwt.valuestore.shared.impl;
+
+import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.ValuesKey;
 
 /**
  * Represents a property of a record managed by {@link ValueStore}.
@@ -21,15 +24,27 @@ package com.google.gwt.valuestore.shared;
  * @param <K> type of the property holder
  * @param <V> type of the property
  */
-public interface Property<K extends ValuesKey<K>, V> {
+public class PropertyImpl<K extends ValuesKey<K>, V> implements Property<K, V> {
+  private final String name;
 
-  /**
-   * @return the key
-   */
-  K getKey();
+  private K key; // Cannot be final due to circular realtionship with ValuesKey 
+
+  public PropertyImpl(String name) {
+    this.name = name;
+  }
+
+  public K getKey() {
+    return key;
+  }
 
   /**
    * @return the name
    */
-  String getName();
+  public String getName() {
+    return name;
+  }
+  
+  public void setKey(K key) {
+    this.key = key;
+  }
 }

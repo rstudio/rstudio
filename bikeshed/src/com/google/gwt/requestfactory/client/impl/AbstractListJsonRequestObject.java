@@ -16,61 +16,54 @@
 package com.google.gwt.requestfactory.client.impl;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.requestfactory.shared.EntityKey;
+import com.google.gwt.requestfactory.shared.EntityListRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
-import com.google.gwt.requestfactory.shared.RequestFactory.Service;
-import com.google.gwt.user.client.ui.HasValueList;
+import com.google.gwt.user.client.ui.TakesValueList;
 import com.google.gwt.valuestore.client.ValuesImpl;
 import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.Values;
+import com.google.gwt.valuestore.shared.ValuesKey;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
  * Abstract implementation of {@link RequestFactory.RequestObject} for methods
- * returning lists of entities.
+ * returning lists of entities (as opposed to lists of primitives or enums).
  * 
  * @param <T> the type of entities returned
  * @param <R> this request type
  */
-public abstract class AbstractListJsonRequestObject<T extends EntityKey<T>, R extends AbstractListJsonRequestObject<T, R>>
-    implements RequestFactory.RequestObject {
+public abstract class AbstractListJsonRequestObject<T extends ValuesKey<T>, R extends AbstractListJsonRequestObject<T, R>>
+    implements RequestFactory.RequestObject, EntityListRequest<T> {
 
   private final T key;
-  private final Service requestService;
-  @SuppressWarnings("unused")
-  // That's next
-  private final ValueStore valueStore;
-
+  private final RequestFactoryJsonImpl requestFactory;
   private final Set<Property<T, ?>> properties = new HashSet<Property<T, ?>>();
 
-  private HasValueList<Values<T>> watcher;
+  private TakesValueList<Values<T>> target;
 
-  public AbstractListJsonRequestObject(T key, ValueStore valueStore,
-      RequestFactory.Service requestService) {
-    this.requestService = requestService;
-    this.valueStore = valueStore;
+  public AbstractListJsonRequestObject(T key,
+      RequestFactoryJsonImpl requestService) {
+    this.requestFactory = requestService;
     this.key = key;
   }
 
   public void fire() {
-    requestService.fire(this);
+    requestFactory.fire(this);
   }
 
   public R forProperties(Collection<Property<T, ?>> properties) {
-    for (Property<T, ?> property : properties) {
-      forProperty(property);
-    }
+    this.properties.addAll(properties);
     return getThis();
   }
 
   public R forProperty(Property<T, ?> property) {
-    properties.add(property);
+    this.properties.add(property);
     return getThis();
   }
 
@@ -78,29 +71,27 @@ public abstract class AbstractListJsonRequestObject<T extends EntityKey<T>, R ex
    * @return the properties
    */
   public Set<Property<T, ?>> getProperties() {
-    return properties;
+    return Collections.unmodifiableSet(properties);
   }
 
   public void handleResponseText(String text) {
-    // DeltaValueStore deltaStore = valueStore.edit();
     JsArray<ValuesImpl<T>> valueArray = ValuesImpl.arrayFromJson(text);
     List<Values<T>> valueList = new ArrayList<Values<T>>(valueArray.length());
     for (int i = 0; i < valueArray.length(); i++) {
       ValuesImpl<T> values = valueArray.get(i);
-      values.setPropertyHolder(key);
-      // deltaStore.setValue(propertyHolder, properties, values);
+      values.setKey(key);
       valueList.add(values);
     }
 
-    // valueStore.subscribe(watcher, valueList, properties);
-    // deltaStore.commit();
-    watcher.setValueList(valueList);
+    requestFactory.getValueStore().setRecords(valueArray);
+    target.setValueList(valueList);
   }
 
-  public R to(HasValueList<Values<T>> watcher) {
-    this.watcher = watcher;
+  public R to(TakesValueList<Values<T>> target) {
+    this.target = target;
     return getThis();
   }
+
 
   /**
    * Subclasses must override to return {@code this}, to allow builder-style

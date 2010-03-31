@@ -48,7 +48,7 @@ public final class DetailsRequester implements PlaceChanged.Handler {
     }
     EntityDetailsPlace newPlace = (EntityDetailsPlace) event.getNewPlace();
     final Values<? extends ExpensesEntityKey<?>> entity = newPlace.getEntity();
-    ExpensesEntityKey<?> key = entity.getEntityKey();
+    ExpensesEntityKey<?> key = entity.getKey();
 
     // TODO make a pretty uibinder page, not least because we're rendering
     // user strings here, which is dangerous

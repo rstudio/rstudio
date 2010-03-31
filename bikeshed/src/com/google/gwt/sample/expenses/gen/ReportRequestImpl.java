@@ -18,13 +18,11 @@ package com.google.gwt.sample.expenses.gen;
 import com.google.gwt.requestfactory.client.gen.ClientRequestObject;
 import com.google.gwt.requestfactory.client.impl.AbstractListJsonRequestObject;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
-import com.google.gwt.requestfactory.shared.RequestFactory.Service;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.sample.expenses.shared.EmployeeKey;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
 import com.google.gwt.sample.expenses.shared.ReportKey;
 import com.google.gwt.valuestore.shared.ValueRef;
-import com.google.gwt.valuestore.shared.ValueStore;
 
 /**
  * "Code generated" implementation of {ExpenseRequestFactory.ReportRequest}.
@@ -34,30 +32,27 @@ import com.google.gwt.valuestore.shared.ValueStore;
  */
 public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
 
-  private abstract class Request extends
-      AbstractListJsonRequestObject<ReportKey, Request> implements
-      EntityListRequest<ReportKey> {
+  private abstract class RequestImpl extends
+      AbstractListJsonRequestObject<ReportKey, RequestImpl> {
 
-    Request() {
-      super(ReportKey.get(), valueStore, requestService);
+    RequestImpl() {
+      super(ReportKey.get(), requestFactory);
     }
 
     @Override
-    protected Request getThis() {
+    protected RequestImpl getThis() {
       return this;
     }
   }
 
-  private final ValueStore valueStore;
-  private final Service requestService;
+  private final ExpenseRequestFactoryImpl requestFactory;
 
-  public ReportRequestImpl(ValueStore valueStore, Service requestService) {
-    this.valueStore = valueStore;
-    this.requestService = requestService;
+  public ReportRequestImpl(ExpenseRequestFactoryImpl requestFactory) {
+    this.requestFactory = requestFactory;
   }
 
   public EntityListRequest<ReportKey> findAllReports() {
-    return new Request() {
+    return new RequestImpl() {
       public String getRequestData() {
         return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
             ExpenseRequestFactory.ServerSideOperation.FIND_ALL_REPORTS.name(), null,
@@ -69,7 +64,7 @@ public class ReportRequestImpl implements ExpenseRequestFactory.ReportRequest {
 
   public EntityListRequest<ReportKey> findReportsByEmployee(
       final ValueRef<EmployeeKey, String> id) {
-    return new Request() {
+    return new RequestImpl() {
       public String getRequestData() {
         return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
             ExpenseRequestFactory.ServerSideOperation.FIND_REPORTS_BY_EMPLOYEE.name(),

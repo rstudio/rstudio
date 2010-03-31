@@ -17,7 +17,7 @@ package com.google.gwt.requestfactory.shared;
 
 /**
  * Marks the version {@link com.google.gwt.valuestore.shared.Property Property}
- * of an {@link EntityKey}.
+ * of an {@link com.google.gwt.valuestore.shared.ValuesKey ValuesKey}.
  */
 public @interface Version {
   // TODO prove the servlet will use this info

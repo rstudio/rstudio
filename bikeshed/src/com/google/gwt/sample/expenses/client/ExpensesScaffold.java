@@ -19,16 +19,16 @@ import com.google.gwt.app.place.PlaceChanged;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.app.place.PlacePicker;
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.sample.expenses.client.place.EntityListPlace;
 import com.google.gwt.sample.expenses.client.place.AbstractExpensesPlace;
+import com.google.gwt.sample.expenses.client.place.EntityListPlace;
 import com.google.gwt.sample.expenses.client.place.Places;
-import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
+import com.google.gwt.sample.expenses.gen.ExpenseRequestFactoryImpl;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.valuestore.client.ValueStoreJsonImpl;
 
 /**
  * Application for browsing the entities of the Expenses app.
@@ -38,8 +38,9 @@ public class ExpensesScaffold implements EntryPoint {
   public void onModuleLoad() {
 
     // App controllers and services
-    final ExpenseRequestFactory requests = GWT.create(ExpenseRequestFactory.class);
     final HandlerManager eventBus = new HandlerManager(null);
+    final ValueStoreJsonImpl valueStore = new ValueStoreJsonImpl(eventBus);
+    final ExpenseRequestFactoryImpl requests = new ExpenseRequestFactoryImpl(valueStore);
     final PlaceController<AbstractExpensesPlace> placeController = new PlaceController<AbstractExpensesPlace>(
         eventBus);
     final Places places = new Places(placeController);
@@ -48,9 +49,10 @@ public class ExpensesScaffold implements EntryPoint {
     final EntityNameRenderer entityNamer = new EntityNameRenderer();
     final ListPlaceRenderer listPlaceNamer = new ListPlaceRenderer(entityNamer);
     
+    
     // Top level UI
     final ExpensesScaffoldShell shell = new ExpensesScaffoldShell();
-
+    
     // Left side
     PlacePicker<EntityListPlace> placePicker = new PlacePicker<EntityListPlace>(
         shell.getPlacesBox(), placeController, listPlaceNamer);
@@ -67,7 +69,7 @@ public class ExpensesScaffold implements EntryPoint {
     eventBus.addHandler(PlaceChanged.TYPE, new DetailsRequester(entityNamer,
         shell.getBody(), detailsView));
 
-    // Hide the loading method
+    // Hide the loading message
     Element loading = Document.get().getElementById("loading");
     loading.getParentElement().removeChild(loading);
 

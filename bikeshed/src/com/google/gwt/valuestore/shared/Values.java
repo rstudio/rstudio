@@ -16,14 +16,19 @@
 package com.google.gwt.valuestore.shared;
 
 /**
- * Provides access to the values of an object managed by the {@link ValueStore}.
+ * Provides access to the property values of a record in a {@link ValueStore}
  * 
- * @param <T> value type.
+ * @param <K> value type.
  */
-public interface Values<T> {
-  T getEntityKey();
+public interface Values<K extends ValuesKey<K>> {
+  <V, P extends Property<K, V>> V get(P property);
 
-  <V, P extends Property<T, V>> V get(P property);
-  
-  <V> ValueRef<T, V> getRef(Property<T, V> property);
+  String getId();
+
+  K getKey();
+
+  /** 
+   * TODO: Starting to wonder again if this is useful. 
+   */
+  <V> ValueRef<K, V> getRef(Property<K, V> property);
 }

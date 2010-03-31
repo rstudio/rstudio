@@ -15,7 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server;
 
-import com.google.gwt.requestfactory.shared.EntityKey;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestFactory.RequestDefinition;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
@@ -23,6 +22,7 @@ import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.sample.expenses.server.domain.Storage;
 import com.google.gwt.sample.expenses.shared.ReportKey;
 import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.ValuesKey;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -141,17 +141,17 @@ public class ExpensesDataServlet extends HttpServlet {
    * @return the JSONArray
    */
   private JSONArray getJsonArray(List<?> resultList,
-      Class<? extends EntityKey<?>> entityKeyClass) throws JSONException,
+      Class<? extends ValuesKey<?>> entityKeyClass) throws JSONException,
       NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     JSONArray jsonArray = new JSONArray();
     if (resultList.size() == 0) {
       return jsonArray;
     }
-    EntityKey<?> key = (EntityKey<?>) entityKeyClass.getMethod("get").invoke(
+    ValuesKey<?> key = (ValuesKey<?>) entityKeyClass.getMethod("get").invoke(
         null);
     for (Object entityElement : resultList) {
       JSONObject jsonObject = new JSONObject();
-      for (Property<?, ?> p : key.getProperties()) {
+      for (Property<?, ?> p : key.all()) {
 
         if (requestedProperty(p)) {
           String propertyName = p.getName();

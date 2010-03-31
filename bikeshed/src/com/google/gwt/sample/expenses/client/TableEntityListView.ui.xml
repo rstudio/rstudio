@@ -11,8 +11,10 @@
   <div>
   <h3 ui:field='heading'/>
   <table ui:field='table' class='{style.reports}' width='100%'>
+    <!-- commented out due to UiBinder bug 
     <col ui:field='narrowColumns' width='0%'></col>
     <col width='100%'></col>
+    -->
     <tr ui:field='header'>
       <th></th>
       <th align='left'></th>

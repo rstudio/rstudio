@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.expenses.shared;
 
-import com.google.gwt.requestfactory.shared.EntityKey;
+import com.google.gwt.valuestore.shared.ValuesKey;
 
 /**
  * "API Generated" base interface for proxy keys to
@@ -26,7 +26,7 @@ import com.google.gwt.requestfactory.shared.EntityKey;
  * 
  * @param <K> this entity type
  */
-public interface ExpensesEntityKey<K extends EntityKey<K>> extends EntityKey<K> {
+public interface ExpensesEntityKey<K extends ExpensesEntityKey<K>> extends ValuesKey<K> {
   void accept(ExpensesEntityVisitor visitor);
 
   <T> T accept(ExpensesEntityFilter<T> filter);

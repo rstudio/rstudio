@@ -18,8 +18,8 @@ package com.google.gwt.sample.expenses.client;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.sample.expenses.shared.EmployeeKey;
-import com.google.gwt.user.client.ui.HasValueList;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.TakesValueList;
 import com.google.gwt.valuestore.shared.Values;
 
 import java.util.List;
@@ -28,7 +28,7 @@ import java.util.List;
  * Manages the Employee ListBox. This should grow into a proper View, with a
  * corresponding Presenter factored out of {@link Expenses}
  */
-public final class EmployeeList implements HasValueList<Values<EmployeeKey>> {
+public final class EmployeeList implements TakesValueList<Values<EmployeeKey>> {
   interface Listener {
     void onEmployeeSelected(Values<EmployeeKey> e);
   }
@@ -54,11 +54,6 @@ public final class EmployeeList implements HasValueList<Values<EmployeeKey>> {
     listBox.addChangeHandler(new MyChangeHandler());
   }
 
-  public void editValueList(boolean replace, int index,
-      List<Values<EmployeeKey>> newValues) {
-    throw new UnsupportedOperationException();
-  }
-
   public void setListener(Listener listener) {
     this.listener = listener;
   }
@@ -70,9 +65,5 @@ public final class EmployeeList implements HasValueList<Values<EmployeeKey>> {
       Values<EmployeeKey> values = employeeValues.get(i);
       listBox.addItem(values.get(EmployeeKey.get().getDisplayName()));
     }
-  }
-
-  public void setValueListSize(int size, boolean exact) {
-    throw new UnsupportedOperationException();
   }
 }

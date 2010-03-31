@@ -15,31 +15,18 @@
  */
 package com.google.gwt.valuestore.shared;
 
-import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.HasValueList;
-
-import java.util.Set;
 
 /**
- * A store of property values. Allows interested parties to subscribe to changes
- * to particular sets of values.
+ * A store of records with properties. Each record has a {@link ValuesKey}
+ * associated with it to indicate its type.
  */
 public interface ValueStore {
   /**
    * Most validations are per field or per id and set via annotation. Note that
    * validations are only actually enforced by in {@link DeltaValueStore}
-   * instances spawned by {@link #edit()}
+   * instances spawned by {@link #forEditContext(Object)}
    */
   void addValidation(/* what's a validation. JSR 303? Learn from Pectin? */);
-
-  /**
-   * Returns an editable overlay view of the receiver.
-   */
-  DeltaValueStore edit();
-
-  <T, V> void subscribe(HasValue<V> watcher, T propertyOwner,
-      Property<T, V> property);
-
-  <T, V> void subscribe(HasValueList<Values<T>> watcher, T propertyOwner,
-      Set<Property<T, ?>> properties);
+  
+  DeltaValueStore spawnDeltaView();
 }

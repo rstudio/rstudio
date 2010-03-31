@@ -17,7 +17,7 @@ package com.google.gwt.requestfactory.shared;
 
 /**
  * Marks the id {@link com.google.gwt.valuestore.shared.Property Property} of an
- * {@link EntityKey}.
+ * {@link com.google.gwt.valuestore.shared.ValuesKey ValuesKey}.
  */
 public @interface Id {
   // TODO prove the servlet will use this info

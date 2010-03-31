@@ -21,7 +21,7 @@ package com.google.gwt.valuestore.shared;
  * @param <K> Key type
  * @param <V> Value type
  */
-public class ValueRef<K, V> {
+public class ValueRef<K extends ValuesKey<K>, V> {
   private final Values<K> values;
   private final Property<K, V> property;
 

@@ -17,7 +17,7 @@ package com.google.gwt.sample.expenses.gen;
 
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
-import com.google.gwt.valuestore.shared.DeltaValueStore;
+import com.google.gwt.valuestore.client.ValueStoreJsonImpl;
 
 /**
  * "Code generated" factory for requests against
@@ -28,19 +28,16 @@ import com.google.gwt.valuestore.shared.DeltaValueStore;
  */
 public class ExpenseRequestFactoryImpl extends RequestFactoryJsonImpl implements
     ExpenseRequestFactory {
-  public EmployeeRequest employeeRequest() {
-    return new EmployeeRequestImpl(getValueStore(), this);
+
+  public ExpenseRequestFactoryImpl(ValueStoreJsonImpl valueStore) {
+    super(valueStore);
   }
 
-  public EmployeeRequest employeeRequest(DeltaValueStore deltas) {
-    return new EmployeeRequestImpl(deltas, this);
+  public EmployeeRequest employeeRequest() {
+    return new EmployeeRequestImpl(this);
   }
 
   public ReportRequest reportRequest() {
-    return new ReportRequestImpl(getValueStore(), this);
-  }
-
-  public ReportRequest reportRequest(DeltaValueStore deltas) {
-    return new ReportRequestImpl(deltas, this);
+    return new ReportRequestImpl(this);
   }
 }

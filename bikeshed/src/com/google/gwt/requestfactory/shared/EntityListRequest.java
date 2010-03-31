@@ -15,22 +15,27 @@
  */
 package com.google.gwt.requestfactory.shared;
 
-import com.google.gwt.user.client.ui.HasValueList;
+import com.google.gwt.user.client.ui.TakesValueList;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
+import com.google.gwt.valuestore.shared.ValuesKey;
 
 import java.util.Collection;
 
 /**
- * Implemented by RequestObjects for service methods that return list
- * properties.
+ * Implemented by RequestObjects for service methods that return lists of
+ * entities.
+ * <p>
+ * TODO Really should be for lists of anything.
  * 
- * @param <E> The type held by the returned list
+ * @param <K> The type held by the returned list
  */
-public interface EntityListRequest<E> extends RequestFactory.RequestObject {
-  EntityListRequest<E> forProperties(Collection<Property<E, ?>> properties);
-  
-  EntityListRequest<E> forProperty(Property<E, ?> property);
+public interface EntityListRequest<K extends ValuesKey<K>> extends
+    RequestFactory.RequestObject {
 
-  EntityListRequest<E> to(HasValueList<Values<E>> watcher);
+  EntityListRequest<K> forProperties(Collection<Property<K, ?>> properties);
+
+  EntityListRequest<K> forProperty(Property<K, ?> property);
+
+  EntityListRequest<K> to(TakesValueList<Values<K>> target);
 }

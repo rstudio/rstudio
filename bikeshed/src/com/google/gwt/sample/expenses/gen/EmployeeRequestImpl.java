@@ -18,11 +18,9 @@ package com.google.gwt.sample.expenses.gen;
 import com.google.gwt.requestfactory.client.gen.ClientRequestObject;
 import com.google.gwt.requestfactory.client.impl.AbstractListJsonRequestObject;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
-import com.google.gwt.requestfactory.shared.RequestFactory.Service;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.sample.expenses.shared.EmployeeKey;
 import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
-import com.google.gwt.valuestore.shared.ValueStore;
 
 /**
  * "Code generated" implementation of {ExpenseRequestFactory.EmployeeRequest}.
@@ -33,30 +31,27 @@ import com.google.gwt.valuestore.shared.ValueStore;
 public class EmployeeRequestImpl implements
     ExpenseRequestFactory.EmployeeRequest {
 
-  private abstract class Request extends
-      AbstractListJsonRequestObject<EmployeeKey, Request> implements
-      EntityListRequest<EmployeeKey> {
+  private abstract class RequestImpl extends
+      AbstractListJsonRequestObject<EmployeeKey, RequestImpl> {
 
-    Request() {
-      super(EmployeeKey.get(), valueStore, requestService);
+    RequestImpl() {
+      super(EmployeeKey.get(), factory);
     }
 
     @Override
-    protected Request getThis() {
+    protected RequestImpl getThis() {
       return this;
     }
   }
 
-  private final ValueStore valueStore;
-  public final Service requestService;
-
-  public EmployeeRequestImpl(ValueStore valueStore, Service requestService) {
-    this.valueStore = valueStore;
-    this.requestService = requestService;
+  private final ExpenseRequestFactoryImpl factory;
+  
+  public EmployeeRequestImpl(ExpenseRequestFactoryImpl factory) {
+    this.factory = factory;
   }
 
   public EntityListRequest<EmployeeKey> findAllEmployees() {
-    return new Request() {
+    return new RequestImpl() {
       public String getRequestData() {
         return ClientRequestObject.getRequestString(RequestDataManager.getRequestMap(
             ExpenseRequestFactory.ServerSideOperation.FIND_ALL_EMPLOYEES.name(), null, null));
