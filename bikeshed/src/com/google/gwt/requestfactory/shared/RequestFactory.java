@@ -44,7 +44,6 @@ public interface RequestFactory {
 
   ValueStore getValueStore();
 
-
   SyncRequest syncRequest(DeltaValueStore deltaValueStore);
 
   /**

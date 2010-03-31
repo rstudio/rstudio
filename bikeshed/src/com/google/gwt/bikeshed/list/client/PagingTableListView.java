@@ -120,6 +120,22 @@ public class PagingTableListView<T> extends Widget {
     setPage(curPage); // TODO: better way to refresh?
   }
 
+  // TODO - bounds check
+  public T getDisplayedItem(int indexOnPage) {
+    if (indexOnPage < 0 || indexOnPage >= getNumDisplayedItems()) {
+      throw new IndexOutOfBoundsException("indexOnPage = " + indexOnPage);
+    }
+    return data.get(indexOnPage);
+  }
+  
+  public List<T> getDisplayedItems() {
+    return new ArrayList<T>(data);
+  }
+  
+  public int getNumDisplayedItems() {
+    return Math.min(getPageSize(), totalSize - curPage * pageSize);
+  }
+
   /**
    * Get the current page.
    * 
@@ -132,7 +148,7 @@ public class PagingTableListView<T> extends Widget {
   public int getPageSize() {
     return pageSize;
   }
-
+  
   public void nextPage() {
     setPage(curPage + 1);
   }
@@ -226,20 +242,21 @@ public class PagingTableListView<T> extends Widget {
 
     NodeList<TableRowElement> rows = tbody.getRows();
     for (int r = start; r < start + length; ++r) {
-      TableRowElement row = rows.getItem(r - pageStart);
+      int indexOnPage = r - pageStart;
+      TableRowElement row = rows.getItem(indexOnPage);
       T q = values.get(r - start);
-      if (selectionModel != null && selectionModel.isSelected(q, r)) {
+      if (selectionModel != null && selectionModel.isSelected(q)) {
         row.setClassName("pagingTableListView selected");
       } else {
         row.setClassName("pagingTableListView " +
-            (((r - pageStart) & 0x1) == 0 ? "evenRow" : "oddRow"));
+            ((indexOnPage & 0x1) == 0 ? "evenRow" : "oddRow"));
       }
 
-      data.set(r - pageStart, q);
+      data.set(indexOnPage, q);
       for (int c = 0; c < numCols; ++c) {
         TableCellElement cell = row.getCells().getItem(c);
         StringBuilder sb = new StringBuilder();
-        columns.get(c).render(q, r, sb);
+        columns.get(c).render(q, sb);
         cell.setInnerHTML(sb.toString());
 
         // TODO: Really total hack! There's gotta be a better way...

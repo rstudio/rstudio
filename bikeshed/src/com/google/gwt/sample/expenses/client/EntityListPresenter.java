@@ -36,6 +36,7 @@ public class EntityListPresenter<T extends ExpensesEntityKey<T>> implements
   private final EntityListView view;
   private final List<Property<T, ?>> properties;
   private final Places places;
+  private List<String> columnNames;
 
   public EntityListPresenter(String heading, EntityListView view,
       List<Property<T, ?>> properties, Places places) {
@@ -44,11 +45,10 @@ public class EntityListPresenter<T extends ExpensesEntityKey<T>> implements
     this.properties = properties;
     this.places = places;
 
-    List<String> names = new ArrayList<String>();
+   columnNames = new ArrayList<String>();
     for (Property<T, ?> property : properties) {
-      names.add(property.getName());
+      columnNames.add(property.getName());
     }
-    this.view.setColumnNames(names);
   }
 
   public void setValueList(List<Values<T>> newValues) {
@@ -77,6 +77,6 @@ public class EntityListPresenter<T extends ExpensesEntityKey<T>> implements
       rows.add(row);
     }
 
-    view.setRowData(rows);
+    view.setRowData(columnNames, rows);
   }
 }

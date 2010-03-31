@@ -15,7 +15,6 @@
  */
 package com.google.gwt.valuestore.shared;
 
-
 /**
  * A store of records with properties. Each record has a {@link ValuesKey}
  * associated with it to indicate its type.

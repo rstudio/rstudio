@@ -49,7 +49,6 @@ public class ExpensesScaffold implements EntryPoint {
     final EntityNameRenderer entityNamer = new EntityNameRenderer();
     final ListPlaceRenderer listPlaceNamer = new ListPlaceRenderer(entityNamer);
     
-    
     // Top level UI
     final ExpensesScaffoldShell shell = new ExpensesScaffoldShell();
     

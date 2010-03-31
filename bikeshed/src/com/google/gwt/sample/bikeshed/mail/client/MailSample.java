@@ -36,9 +36,9 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.TreeMap;
 
 /**
  * A demo of selection features.
@@ -53,29 +53,17 @@ public class MailSample implements EntryPoint {
     private static final int SUBJECT = 4;
     private static final int UNREAD = 5;
 
-    private Set<Integer> minusIdExceptions = new TreeSet<Integer>();
-    private Set<Integer> minusRowExceptions = new TreeSet<Integer>();
-    private Set<Integer> plusIdExceptions = new TreeSet<Integer>();
-    private Set<Integer> plusRowExceptions = new TreeSet<Integer>();
+    private Map<Integer, Boolean> exceptions = new TreeMap<Integer, Boolean>();
 
     private String search;
     private int type = NONE;
 
-    public boolean isSelected(Message object, int index) {
-      // Check row exceptions first
-      if (plusRowExceptions.contains(index)) {
-        return true;
-      }
-      if (minusRowExceptions.contains(index)) {
-        return false;
-      }
-      // Check id exceptions next
+    public boolean isSelected(Message object) {
+      // Check exceptions
       int id = object.id;
-      if (plusIdExceptions.contains(id)) {
-        return true;
-      }
-      if (minusIdExceptions.contains(id)) {
-        return false;
+      Boolean exception = exceptions.get(id);
+      if (exception != null) {
+        return exception.booleanValue();
       }
       return isDefaultSelected(object);
     }
@@ -84,52 +72,25 @@ public class MailSample implements EntryPoint {
       this.search = search.toLowerCase();
       updateListeners();
     }
-
-    public void setSelected(int index, boolean selected) {
-      if (!selected) {
-        plusRowExceptions.remove(index);
-        minusRowExceptions.add(index);
-      } else {
-        plusRowExceptions.add(index);
-        minusRowExceptions.remove(index);
-      }
-      updateListeners();
-    }
-
-    public void setSelected(int start, int len, boolean selected) {
-      for (int index = start; index < start + len; index++) {
-        if (!selected) {
-          plusRowExceptions.remove(index);
-          minusRowExceptions.add(index);
-        } else {
-          plusRowExceptions.add(index);
-          minusRowExceptions.remove(index);
-        }
+    
+    public void setSelected(List<Message> objects, boolean selected) {
+      for (Message object : objects) {
+        addException(object.id, selected);
       }
       updateListeners();
     }
 
     public void setSelected(Message object, boolean selected) {
-      int id = object.id;
-      if (!selected) {
-        plusIdExceptions.remove(id);
-        minusIdExceptions.add(id);
-      } else {
-        plusIdExceptions.add(id);
-        minusIdExceptions.remove(id);
-      }
-      updateListeners();
-    }
-    
-    public void setType(int type) {
-      this.type = type;
-      plusIdExceptions.clear();
-      plusRowExceptions.clear();
-      minusIdExceptions.clear();
-      minusRowExceptions.clear();
+      addException(object.id, selected);
       updateListeners();
     }
 
+    public void setType(int type) {
+      this.type = type;
+      exceptions.clear();
+      updateListeners();
+    }
+    
     public String toString() {
       StringBuilder sb = new StringBuilder();
       switch (type) {
@@ -158,17 +119,10 @@ public class MailSample implements EntryPoint {
       }
 
       boolean first = true;
-      for (int i : plusRowExceptions) {
-        if (first) {
-          first = false;
-          sb.append("+row(s) ");
+      for (int i : exceptions.keySet()) {
+        if (exceptions.get(i) != Boolean.TRUE) {
+          continue;
         }
-        sb.append(i);
-        sb.append(' ');
-      }
-
-      first = true;
-      for (int i : plusIdExceptions) {
         if (first) {
           first = false;
           sb.append("+msg(s) ");
@@ -178,17 +132,10 @@ public class MailSample implements EntryPoint {
       }
 
       first = true;
-      for (int i : minusRowExceptions) {
-        if (first) {
-          first = false;
-          sb.append("-row(s) ");
+      for (int i : exceptions.keySet()) {
+        if (exceptions.get(i) != Boolean.FALSE) {
+          continue;
         }
-        sb.append(i);
-        sb.append(' ');
-      }
-
-      first = true;
-      for (int i : minusIdExceptions) {
         if (first) {
           first = false;
           sb.append("-msg(s) ");
@@ -205,6 +152,15 @@ public class MailSample implements EntryPoint {
       selectionLabel.setText("Selected " + this.toString());
     }
 
+    private void addException(int id, boolean selected) {
+      Boolean currentlySelected = exceptions.get(id);
+      if (currentlySelected != null && currentlySelected.booleanValue() != selected) {
+        exceptions.remove(id);
+      } else {
+        exceptions.put(id, selected);
+      }      
+    }
+
     private boolean isDefaultSelected(Message object) {
       switch (type) {
         case NONE:
@@ -216,8 +172,14 @@ public class MailSample implements EntryPoint {
         case UNREAD:
           return !object.isRead();
         case SENDER:
+          if (search == null || search.length() == 0) {
+            return false;
+          }
           return object.getSender().toLowerCase().contains(search);
         case SUBJECT:
+          if (search == null || search.length() == 0) {
+            return false;
+          }
           return object.getSubject().toLowerCase().contains(search);
         default:
           throw new IllegalStateException("type = " + type);
@@ -275,10 +237,21 @@ public class MailSample implements EntryPoint {
   }
 
   private static final String[] senders = {
-      "test@example.com", "spam1@spam.com", "gwt@google.com"};
+      "test@example.com", "spam1@spam.com", "gwt@google.com", "Mai Oleta",
+      "Barbara Myles", "Celsa Ocie", "Elwood Holloway", "Bolanle Alford",
+      "Amaka Ackland", "Afia Audley", "Pearlene Cher", "Pei Sunshine",
+      "Zonia Dottie", "Krystie Jetta", "Alaba Banvard", "Ines Azalee",
+      "Kaan Boulier", "Emilee Naoma", "Atino Alice", "Debby Renay",
+      "Versie Nereida", "Ramon Erikson", "Karole Crissy", "Nelda Olsen",
+      "Mariana Dann", "Reda Cheyenne", "Edelmira Jody", "Agueda Shante",
+      "Marla Dorris"
+  };
 
   private static final String[] subjects = {
-      "GWT rocks", "What's a widget?", "Money in Nigeria"};
+      "GWT rocks", "What's a widget?", "Money in Nigeria",
+      "Impress your colleagues with bling-bling", "Degree available",
+      "Rolex Watches", "Re: Re: yo bud", "Important notice"
+  };
 
   private Label selectionLabel = new Label();
 
@@ -304,8 +277,8 @@ public class MailSample implements EntryPoint {
     Column<Message, Boolean, Void> selectedColumn = new Column<Message, Boolean, Void>(
         new CheckboxCell()) {
       @Override
-      public Boolean getValue(Message object, int index) {
-        return selectionModel.isSelected(object, index);
+      public Boolean getValue(Message object) {
+        return selectionModel.isSelected(object);
       }
     };
     selectedColumn.setFieldUpdater(new FieldUpdater<Message, Boolean, Void>() {
@@ -320,7 +293,7 @@ public class MailSample implements EntryPoint {
     Column<Message, String, Void> isReadColumn = new Column<Message, String, Void>(
         textCell) {
       @Override
-      public String getValue(Message object, int index) {
+      public String getValue(Message object) {
         return object.isRead ? "read" : "unread";
       }
     };
@@ -331,7 +304,7 @@ public class MailSample implements EntryPoint {
     Column<Message, String, Void> senderColumn = new Column<Message, String, Void>(
         new TextCell()) {
       @Override
-      public String getValue(Message object, int index) {
+      public String getValue(Message object) {
         return object.getSender();
       }
     };
@@ -342,7 +315,7 @@ public class MailSample implements EntryPoint {
     Column<Message, String, Void> subjectColumn = new Column<Message, String, Void>(
         textCell) {
       @Override
-      public String getValue(Message object, int index) {
+      public String getValue(Message object) {
         return object.getSubject();
       }
     };
@@ -376,8 +349,7 @@ public class MailSample implements EntryPoint {
 
     allOnPageButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        int pageSize = table.getPageSize();
-        selectionModel.setSelected(table.getPage() * pageSize, pageSize, true);
+        selectionModel.setSelected(table.getDisplayedItems(), true);
       }
     });
 

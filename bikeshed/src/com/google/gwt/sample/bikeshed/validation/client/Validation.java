@@ -86,7 +86,7 @@ public class Validation implements EntryPoint {
     Column<Address, String, Void> stateColumn = new Column<Address, String, Void>(
         new TextCell()) {
       @Override
-      public String getValue(Address object, int index) {
+      public String getValue(Address object) {
         return object.state;
       }
     };
@@ -100,7 +100,7 @@ public class Validation implements EntryPoint {
       new Column<Address, String, ValidatableField<String>>(
         new ValidatableInputCell(), key) {
       @Override
-      public String getValue(Address object, int index) {
+      public String getValue(Address object) {
         return object.zip;
       }
     };
@@ -134,7 +134,7 @@ public class Validation implements EntryPoint {
     Column<Address, String, Void> messageColumn = new Column<Address, String, Void>(
         new TextCell()) {
       @Override
-      public String getValue(Address object, int index) {
+      public String getValue(Address object) {
         return object.zipInvalid ? "Please fix the zip code" : "";
       }
     };

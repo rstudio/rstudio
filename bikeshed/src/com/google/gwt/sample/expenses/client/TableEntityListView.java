@@ -15,20 +15,19 @@
  */
 package com.google.gwt.sample.expenses.client;
 
+import com.google.gwt.bikeshed.cells.client.TextCell;
+import com.google.gwt.bikeshed.list.client.Column;
+import com.google.gwt.bikeshed.list.client.Header;
+import com.google.gwt.bikeshed.list.client.PagingTableListView;
+import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.HeadingElement;
-import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.dom.client.TableCellElement;
-import com.google.gwt.dom.client.TableElement;
-import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 
 import java.util.List;
 
@@ -36,83 +35,68 @@ import java.util.List;
  * Interim table based implementation of {@link EntityListView}. Will be replaced
  * by some descendant of {@link com.google.gwt.bikeshed.list.client.PagingTableListView<}
  */
-public class TableEntityListView extends Widget implements EntityListView {
-  interface Binder extends UiBinder<Element, TableEntityListView> {
+public class TableEntityListView extends Composite implements EntityListView {
+  interface Binder extends UiBinder<HTMLPanel, TableEntityListView> {
   }
 
   private static final Binder BINDER = GWT.create(Binder.class);
 
-  @UiField HeadingElement heading;
-  @UiField TableRowElement header;
-  @UiField TableElement table;
-
-  private List<Row> values;
+   @UiField SimplePanel body;
+   @UiField HeadingElement heading;
+   
+   private final TextCell textCell = new TextCell();
 
   public TableEntityListView() {
-    setElement(BINDER.createAndBindUi(this));
-    addDomHandler(new ClickHandler() {
-
-      public void onClick(ClickEvent event) {
-        EventTarget target = event.getNativeEvent().getEventTarget();
-        if (Element.is(target)) {
-          Element e = Element.as(target);
-          String tagName = e.getTagName().toLowerCase();
-          if ("td".equals(tagName)) {
-            TableCellElement cell = TableCellElement.as(e);
-            int rowIndex = TableRowElement.as(cell.getParentElement()).getRowIndex();
-//            int cellIndex = cell.getCellIndex();
-            values.get(rowIndex - 1).getShowDetailsCommand().execute(); 
-          }
-        }
-      }
-      
-    }, ClickEvent.getType());
-  }
-
-  public void setColumnNames(List<String> names) {
-    NodeList<TableCellElement> cells = header.getCells();
-    for (int i = 0; i < names.size(); i++) {
-      cells.getItem(i).setInnerText(names.get(i));
-    }
+    initWidget(BINDER.createAndBindUi(this));
   }
 
   public void setHeading(String text) {
     heading.setInnerText(text);
   }
 
-  public void setRowData(List<Row> newValues) {
-    this.values = newValues;
-    int r = 1; // skip header
-    NodeList<TableRowElement> tableRows = table.getRows();
-
-    for (int i = 0; i < newValues.size(); i++) {
-      List<String> valueRow = newValues.get(i).getValues();
-
-      if (r < tableRows.getLength()) {
-        reuseRow(r, tableRows, valueRow);
-      } else {
-        TableRowElement tableRow = Document.get().createTRElement();
-        for (String s : valueRow) {
-          TableCellElement tableCell = Document.get().createTDElement();
-          tableCell.setInnerText(s);
-          tableRow.appendChild(tableCell);
-        }
-        table.appendChild(tableRow);
+  public void setRowData(final List<String> columnNames, List<Row> newValues) {
+    ListListModel<Row> model = new ListListModel<Row>();
+    List<Row> list = model.getList();
+    list.addAll(newValues);
+    
+    PagingTableListView<Row> table = new PagingTableListView<Row>(model, 100);
+    
+    Column<Row, Command, Void> showColumn =
+      new Column<Row, Command, Void>(new CommandCell("Show")) {
+      @Override
+      public Command getValue(Row object) {
+        return object.getShowDetailsCommand();
       }
-      r++;
-    }
-    while (r < tableRows.getLength()) {
-      table.removeChild(tableRows.getItem(r));
-    }
-  }
+    };
+    Header<String> showHeader = new Header<String>(textCell);
+    showHeader.setValue("Show");
+    table.addColumn(showColumn, showHeader);
+    
+    Column<Row, Command, Void> editColumn =
+      new Column<Row, Command, Void>(new CommandCell("Edit")) {
+      @Override
+      public Command getValue(Row object) {
+        return object.getShowDetailsCommand();
+      }
+    };
+    Header<String> editHeader = new Header<String>(textCell);
+    editHeader.setValue("Show");
+    table.addColumn(editColumn, editHeader);
 
-  private void reuseRow(int r, NodeList<TableRowElement> tableRows,
-      List<String> valueRow) {
-    TableRowElement tableRow = tableRows.getItem(r);
-    NodeList<TableCellElement> tableCells = tableRow.getCells();
-
-    for (int i = 0; i < valueRow.size(); i++) {
-      tableCells.getItem(i).setInnerText(valueRow.get(i));
+    for (int i = 0; i < columnNames.size(); i++) {
+      final int index = i;
+      Column<Row, String, Void> column =
+        new Column<Row, String, Void>(textCell) {
+        @Override
+        public String getValue(Row object) {
+          return object.getValues().get(index);
+        }
+      };
+      Header<String> header = new Header<String>(textCell);
+      header.setValue(columnNames.get(i));
+      table.addColumn(column, header);
     }
+    
+    body.setWidget(table);
   }
 }

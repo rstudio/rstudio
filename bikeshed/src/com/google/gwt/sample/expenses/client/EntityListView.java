@@ -44,9 +44,7 @@ public interface EntityListView {
     List<String> getValues();
   }
   
-  void setColumnNames(List<String> names);
-  
   void setHeading(String text);
   
-  void setRowData(List<Row> rows);
+  void setRowData(List<String> columnNames, List<Row> rows);
 }

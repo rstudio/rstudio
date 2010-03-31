@@ -1,5 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'>
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:b='urn:import:com.google.gwt.bikeshed.list.client'>
   <ui:style>
     table.reports td {
      border-width: 1px;
@@ -8,17 +10,8 @@
      background-color: white;
     }
   </ui:style>
-  <div>
+  <g:HTMLPanel>
   <h3 ui:field='heading'/>
-  <table ui:field='table' class='{style.reports}' width='100%'>
-    <!-- commented out due to UiBinder bug 
-    <col ui:field='narrowColumns' width='0%'></col>
-    <col width='100%'></col>
-    -->
-    <tr ui:field='header'>
-      <th></th>
-      <th align='left'></th>
-    </tr>
-  </table>
-  </div>
+  <g:SimplePanel ui:field='body'/>
+  </g:HTMLPanel>
 </ui:UiBinder>

@@ -92,7 +92,6 @@ public abstract class AbstractListJsonRequestObject<T extends ValuesKey<T>, R ex
     return getThis();
   }
 
-
   /**
    * Subclasses must override to return {@code this}, to allow builder-style
    * methods to do the same.

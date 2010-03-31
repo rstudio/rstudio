@@ -64,11 +64,11 @@ public interface SelectionModel<T> {
   
   void addListener(SelectionListener listener);
 
-  boolean isSelected(T object, int index);
+  boolean isSelected(T object);
   
   void removeListener(SelectionListener listener);
-  
-  void setSelected(int index, boolean selected);
 
   void setSelected(T object, boolean selected);
+  
+  void setSelected(List<T> object, boolean selected);
 }

@@ -24,7 +24,6 @@ import com.google.gwt.requestfactory.client.gen.ClientRequestObject;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncRequest;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
-import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory.ServerSideOperation;
 import com.google.gwt.valuestore.client.DeltaValueStoreJsonImpl;
 import com.google.gwt.valuestore.client.ValueStoreJsonImpl;
 import com.google.gwt.valuestore.shared.DeltaValueStore;

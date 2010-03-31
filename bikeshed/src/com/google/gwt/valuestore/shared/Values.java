@@ -16,7 +16,7 @@
 package com.google.gwt.valuestore.shared;
 
 /**
- * Provides access to the property values of a record in a {@link ValueStore}
+ * Provides access to the property values of a record in a {@link ValueStore}.
  * 
  * @param <K> value type.
  */

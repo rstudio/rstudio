@@ -7,7 +7,8 @@
   <inherits name='com.google.gwt.user.theme.standard.Standard' />
 
   <inherits name="com.google.gwt.requestfactory.RequestFactory" />
-
+  <inherits name="com.google.gwt.bikeshed.list.List" />
+  
   <source path='client' />
   <source path='shared' />
   <source path='gen' />
