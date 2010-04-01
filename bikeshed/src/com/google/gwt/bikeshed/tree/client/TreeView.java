@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,6 +16,7 @@
 package com.google.gwt.bikeshed.tree.client;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.bikeshed.list.shared.SelectionModel;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
@@ -114,6 +115,8 @@ public abstract class TreeView extends Widget {
    */
   private TreeNodeView<?> rootNode;
 
+  private SelectionModel<Object> selectionModel;
+
   /**
    * Construct a new {@link TreeView}.
    *
@@ -133,9 +136,13 @@ public abstract class TreeView extends Widget {
   public TreeNodeViewAnimation getAnimation() {
     return animation;
   }
-  
+
   public TreeNode<?> getRootNode() {
     return rootNode;
+  }
+
+  public SelectionModel<Object> getSelectionModel() {
+    return selectionModel;
   }
 
   public TreeViewModel getTreeViewModel() {
@@ -164,6 +171,11 @@ public abstract class TreeView extends Widget {
       animation.cancel();
     }
   }
+
+  public void setSelectionModel(SelectionModel<Object> selectionModel) {
+    this.selectionModel = selectionModel;
+  }
+
   /**
    * @return the HTML to render the closed image.
    */

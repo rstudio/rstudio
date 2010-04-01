@@ -30,7 +30,7 @@ import com.google.gwt.sample.bikeshed.stocks.shared.Transaction;
 public class Columns {
 
   static SimpleColumn<StockQuote, String> buyColumn = new SimpleColumn<StockQuote, String>(
-      new ButtonCell()) {
+      ButtonCell.getInstance()) {
     @Override
     public String getValue(StockQuote object) {
       return "Buy";
@@ -89,7 +89,7 @@ public class Columns {
   };
 
   static SimpleColumn<StockQuote, String> sellColumn = new SimpleColumn<StockQuote, String>(
-      new ButtonCell()) {
+      ButtonCell.getInstance()) {
     @Override
     public String getValue(StockQuote object) {
       return "Sell";

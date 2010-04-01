@@ -1,5 +1,9 @@
 /** Add css rules here for your application. */
 
+div.gwt-stree-selectedItem {
+  border-style: solid;
+}
+
 div.gwt-sstree-column {
   overflow-y: scroll;
   overflow-x: auto;

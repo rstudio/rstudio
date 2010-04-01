@@ -15,7 +15,8 @@
  */
 package com.google.gwt.bikeshed.tree.client;
 
-import com.google.gwt.bikeshed.cells.client.Cell;
+import com.google.gwt.bikeshed.list.client.HasCell;
+import com.google.gwt.bikeshed.list.shared.SelectionModel;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel.NodeInfo;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -48,11 +49,6 @@ public class StandardTreeNodeView<T> extends TreeNodeView<T> {
   }
 
   @Override
-  protected void postClose() {
-    getTree().maybeAnimateTreeNode(this);
-  }
-
-  @Override
   protected <C> TreeNodeView<C> createTreeNodeView(NodeInfo<C> nodeInfo,
       Element childElem, C childValue, Void viewData, int idx) {
     return new StandardTreeNodeView<C>(getTree(), this, nodeInfo, childElem,
@@ -61,10 +57,12 @@ public class StandardTreeNodeView<T> extends TreeNodeView<T> {
 
   @Override
   protected <C> void emitHtml(StringBuilder sb, List<C> childValues,
-      List<TreeNodeView<?>> savedViews, Cell<C, Void> cell) {
+      List<HasCell<C, ?, Void>> hasCells, List<TreeNodeView<?>> savedViews) {
     TreeView tree = getTree();
     TreeViewModel model = tree.getTreeViewModel();
     int imageWidth = tree.getImageWidth();
+
+    SelectionModel<Object> selectionModel = tree.getSelectionModel();
 
     int idx = 0;
     for (C childValue : childValues) {
@@ -78,8 +76,20 @@ public class StandardTreeNodeView<T> extends TreeNodeView<T> {
       } else {
         sb.append(tree.getClosedImageHtml(0));
       }
-      sb.append("<div>");
-      cell.render(childValue, null, sb);
+      if (selectionModel != null && selectionModel.isSelected(childValue)) {
+        sb.append("<div class='gwt-stree-selectedItem'>");
+      } else {
+        sb.append("<div>");
+      }
+
+      for (int i = 0; i < hasCells.size(); i++) {
+        sb.append("<span __idx='");
+        sb.append(i);
+        sb.append("'>");
+        render(sb, childValue, hasCells.get(i));
+        sb.append("</span>");
+      }
+
       sb.append("</div></div>");
     }
   }
@@ -117,5 +127,15 @@ public class StandardTreeNodeView<T> extends TreeNodeView<T> {
   @Override
   protected Element getImageElement() {
     return getElement().getFirstChildElement();
+  }
+
+  @Override
+  protected void postClose() {
+    getTree().maybeAnimateTreeNode(this);
+  }
+
+  private <C, X> void render(StringBuilder sb, C childValue,
+      HasCell<C, X, Void> hc) {
+    hc.getCell().render(hc.getValue(childValue), null, sb);
   }
 }

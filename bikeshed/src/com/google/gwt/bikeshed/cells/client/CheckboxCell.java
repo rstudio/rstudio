@@ -32,7 +32,8 @@ public class CheckboxCell extends Cell<Boolean, Void> {
   @Override
   public Void onBrowserEvent(Element parent, Boolean value, Void viewData,
       NativeEvent event, ValueUpdater<Boolean, Void> valueUpdater) {
-    if (valueUpdater != null && "change".equals(event.getType())) {
+    String type = event.getType();
+    if (valueUpdater != null && "change".equals(type)) {
       InputElement input = parent.getFirstChild().cast();
       valueUpdater.update(input.isChecked(), viewData);
     }

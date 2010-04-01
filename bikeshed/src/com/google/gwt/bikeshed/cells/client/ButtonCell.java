@@ -23,6 +23,18 @@ import com.google.gwt.dom.client.NativeEvent;
  */
 public class ButtonCell extends Cell<String, Void> {
   
+  private static ButtonCell instance;
+
+  public static ButtonCell getInstance() {
+    if (instance == null) {
+      instance = new ButtonCell();
+    }
+    return instance;
+  }
+
+  private ButtonCell() {
+  }
+
   @Override
   public boolean consumesEvents() {
     return true;

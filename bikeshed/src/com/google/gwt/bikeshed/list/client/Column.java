@@ -37,7 +37,7 @@ import java.util.Map;
 // TODO - when can we get rid of a view data object?
 // TODO - should viewData implement some interface? (e.g., with commit/rollback/dispose)
 // TODO - have a ViewDataColumn superclass / SimpleColumn subclass
-public abstract class Column<T, C, V> {
+public abstract class Column<T, C, V> implements HasCell<T, C, V> {
 
   protected final Cell<C, V> cell;
 
@@ -65,6 +65,14 @@ public abstract class Column<T, C, V> {
     return cell.consumesEvents();
   }
 
+  public Cell<C, V> getCell() {
+    return cell;
+  }
+
+  public FieldUpdater<T, C, V> getFieldUpdater() {
+    return fieldUpdater;
+  }
+
   public abstract C getValue(T object);
 
   public void onBrowserEvent(Element elem, final int index, final T object,
@@ -90,13 +98,5 @@ public abstract class Column<T, C, V> {
 
   public void setFieldUpdater(FieldUpdater<T, C, V> fieldUpdater) {
     this.fieldUpdater = fieldUpdater;
-  }
-
-  protected Cell<C, V> getCell() {
-    return cell;
-  }
-
-  protected FieldUpdater<T, C, V> getFieldUpdater() {
-    return fieldUpdater;
   }
 }

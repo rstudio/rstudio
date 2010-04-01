@@ -15,7 +15,7 @@
  */
 package com.google.gwt.bikeshed.tree.client;
 
-import com.google.gwt.bikeshed.cells.client.Cell;
+import com.google.gwt.bikeshed.list.client.HasCell;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel.NodeInfo;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -76,7 +76,7 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
 
   @Override
   protected <C> void emitHtml(StringBuilder sb, List<C> childValues,
-      List<TreeNodeView<?>> savedViews, Cell<C, Void> cell) {
+      List<HasCell<C, ?, Void>> hasCells, List<TreeNodeView<?>> savedViews) {
     TreeView tree = getTree();
     TreeViewModel model = tree.getTreeViewModel();
     int imageWidth = tree.getImageWidth();
@@ -97,7 +97,13 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
         sb.append(tree.getClosedImageHtml(imageLeft));
       }
       sb.append("<div class=\"gwt-sstree-cell\">");
-      cell.render(childValue, null, sb);
+      for (int i = 0; i < hasCells.size(); i++) {
+        sb.append("<span __idx='");
+        sb.append(i);
+        sb.append("'>");
+        render(sb, childValue, hasCells.get(i));
+        sb.append("</span>");
+      }
       sb.append("</div></div>");
 
       idx++;
@@ -243,5 +249,10 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
     }
 
     setChildContainer(null);
+  }
+
+  private <C, X> void render(StringBuilder sb, C childValue,
+      HasCell<C, X, Void> hc) {
+    hc.getCell().render(hc.getValue(childValue), null, sb);
   }
 }

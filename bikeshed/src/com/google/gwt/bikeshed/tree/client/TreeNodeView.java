@@ -15,7 +15,7 @@
  */
 package com.google.gwt.bikeshed.tree.client;
 
-import com.google.gwt.bikeshed.cells.client.Cell;
+import com.google.gwt.bikeshed.list.client.HasCell;
 import com.google.gwt.bikeshed.list.shared.ListEvent;
 import com.google.gwt.bikeshed.list.shared.ListHandler;
 import com.google.gwt.bikeshed.list.shared.ListModel;
@@ -253,13 +253,13 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
    * @param <C> the data type of the child nodes
    * @param sb a StringBuilder to write to
    * @param childValues a List of child node values
+   * @param hasCells the cells and values to use for rendering each child value
    * @param savedViews a List of TreeNodeView instances corresponding to
    *   the child values; a non-null value indicates a TreeNodeView previously
    *   associated with a given child value
-   * @param cell the Cell to use for rendering each child value
    */
   protected abstract <C> void emitHtml(StringBuilder sb, List<C> childValues,
-      List<TreeNodeView<?>> savedViews, Cell<C, Void> cell);
+      List<HasCell<C, ?, Void>> hasCells, List<TreeNodeView<?>> savedViews);
 
   /**
    * Ensure that the animation frame exists and return it.
@@ -388,7 +388,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
 
         // Construct the child contents.
         StringBuilder sb = new StringBuilder();
-        emitHtml(sb, event.getValues(), savedViews, nodeInfo.getCell());
+        emitHtml(sb, event.getValues(), nodeInfo.getHasCells(), savedViews);
         childContainer.setInnerHTML(sb.toString());
 
         // Create the child TreeNodeViews from the new elements.

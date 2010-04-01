@@ -119,7 +119,7 @@ class TransactionTreeViewModel implements TreeViewModel {
       List<String> list = listModel.getList();
       list.add("Buy");
       list.add("Sell");
-      return new TreeViewModel.DefaultNodeInfo<String>(listModel, new ButtonCell(),
+      return new TreeViewModel.DefaultNodeInfo<String>(listModel, ButtonCell.getInstance(),
           new ValueUpdater<String, Void>() {
             public void update(String value, Void viewData) {
               StockQuote stockQuote = (StockQuote) treeNode.getParentNode().getValue();

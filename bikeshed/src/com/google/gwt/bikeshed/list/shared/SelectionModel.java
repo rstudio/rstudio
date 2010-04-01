@@ -70,5 +70,5 @@ public interface SelectionModel<T> {
 
   void setSelected(T object, boolean selected);
   
-  void setSelected(List<T> object, boolean selected);
+  void setSelected(List<T> objects, boolean selected);
 }

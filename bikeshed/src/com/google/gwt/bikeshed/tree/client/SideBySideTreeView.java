@@ -73,7 +73,7 @@ public class SideBySideTreeView extends TreeView {
     setElement(rootElement);
 
     // Add event handlers.
-    sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN | Event.ONMOUSEUP);
+    sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONCHANGE);
 
     // Associate a view with the item.
     TreeNodeView<T> root = new SideBySideTreeNodeView<T>(this, null, null,
@@ -88,7 +88,7 @@ public class SideBySideTreeView extends TreeView {
 
     int eventType = DOM.eventGetType(event);
     switch (eventType) {
-      case Event.ONMOUSEUP:
+      case Event.ONMOUSEUP: case Event.ONCHANGE:
         Element currentTarget = event.getCurrentEventTarget().cast();
         if (currentTarget == getElement()) {
           Element target = event.getEventTarget().cast();

@@ -212,7 +212,7 @@ public class StandardTreeView extends TreeView implements HasAnimation {
     setAnimation(SlideAnimation.create());
 
     // Add event handlers.
-    sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN | Event.ONMOUSEUP);
+    sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONCHANGE);
 
     // Associate a view with the item.
     TreeNodeView<T> root = new StandardTreeNodeView<T>(this, null, null, getElement(), rootValue);
@@ -226,7 +226,7 @@ public class StandardTreeView extends TreeView implements HasAnimation {
 
     int eventType = DOM.eventGetType(event);
     switch (eventType) {
-      case Event.ONMOUSEUP:
+      case Event.ONMOUSEUP: case Event.ONCHANGE:
         Element currentTarget = event.getCurrentEventTarget().cast();
         if (currentTarget == getElement()) {
           Element target = event.getEventTarget().cast();
