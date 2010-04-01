@@ -16,20 +16,23 @@
 package com.google.gwt.collections;
 
 /**
- * The root Array type that provides read-access to an array that might still
- * be mutable by another actor.
+ * An array that is guaranteed not to change, thus making it safe for disparate
+ * portions of code to maintain references to a shared instance, rather than
+ * feeling the need to make defensive copies.
  * 
  * @param <E> The type stored in the array elements
  */
-public abstract class Array<E> {
+public abstract class ImmutableArray<E> extends Array<E> {
 
-  Array() {
+  @SuppressWarnings("unchecked")
+  private static final ImmutableArray EMPTY = new ImmutableArrayEmptyImpl();
+
+  @SuppressWarnings("unchecked")
+  static <E> ImmutableArray<E> getEmptyInstance() {
+    return EMPTY;
   }
 
-  @ConstantTime
-  public abstract E get(int index);
+  ImmutableArray() {
+  }
 
-  @ConstantTime
-  public abstract int size();
-  
 }

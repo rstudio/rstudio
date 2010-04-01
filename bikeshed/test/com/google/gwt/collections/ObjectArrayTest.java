@@ -20,7 +20,7 @@ import static com.google.gwt.collections.CollectionFactory.createMutableArray;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Tests immutable and mutable arrays.
+ * Tests mutable arrays.
  */
 public class ObjectArrayTest extends GWTTestCase {
   

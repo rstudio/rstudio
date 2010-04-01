@@ -23,7 +23,7 @@ package com.google.gwt.collections;
 public class MutableArray<E> extends Array<E> {
 
   // The elements in the array
-  private E[] elems;
+  E[] elems;
 
   // Tracks when this array is frozen (for assertion enforcement only)
   private boolean frozen;
@@ -41,7 +41,27 @@ public class MutableArray<E> extends Array<E> {
 
   @ConstantTime
   public void clear() {
+    Assertions.assertNotFrozen(this);
     elems = null;
+  }
+  
+  /**
+   * Creates an immutable array based on this one. Also marks this object as read-only. 
+   * After calling {@code freeze()}, only use methods from {@link Array} or the returned 
+   * {@link ImmutableArray} should be to access the elements 
+   * of the array is preferred.
+   */
+  public ImmutableArray<E> freeze() {
+    Assertions.markFrozen(this);
+
+    ImmutableArray<E> r;
+    if (elems != null) {
+      r = new ImmutableArrayImpl<E>(elems);
+    } else {
+      r = ImmutableArray.getEmptyInstance();
+    }
+    
+    return r;
   }
 
   @Override
@@ -66,6 +86,7 @@ public class MutableArray<E> extends Array<E> {
   @SuppressWarnings("unchecked")
   @LinearTime
   public void insert(int index, E elem) {
+    Assertions.assertNotFrozen(this);
     Assertions.assertIndexInRange(index, 0, size() + 1);
 
     // TODO benchmark to see if we need to grow smartly (2x size?)
@@ -88,6 +109,7 @@ public class MutableArray<E> extends Array<E> {
   @SuppressWarnings("unchecked")
   @LinearTime
   public void remove(int index) {
+    Assertions.assertNotFrozen(this);
     Assertions.assertIndexInRange(index, 0, size());
     if (elems != null && elems.length >= 1) {
       // TODO: replace with splice using JSNI
@@ -111,6 +133,7 @@ public class MutableArray<E> extends Array<E> {
    */
   @ConstantTime
   public void set(int index, E elem) {
+    Assertions.assertNotFrozen(this);
     Assertions.assertIndexInRange(index, 0, size());
     if (elems != null) {
       elems[index] = elem;

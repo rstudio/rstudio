@@ -20,13 +20,27 @@ package com.google.gwt.collections;
  */
 class Assertions {
   
+  static void assertGetFromImmutableEmpty() {
+    assert false : "Attempt to get an element from an immutable empty array";
+  }
+
   static void assertIndexInRange(int index, int minInclusive, int maxExclusive) {
     assert (index >= minInclusive && index < maxExclusive) : "Index " + index 
         + " was not in the acceptable range [" + minInclusive + ", " + maxExclusive + ")";
   }
 
+  static <E> void assertNotFrozen(MutableArray<E> a) {
+    assert !a.isFrozen() :  "This operation is illegal on a frozen collection";
+  }
+
   static void assertNotNull(Object ref) {
     assert (ref != null) : "A null reference is not allowed here";
+  }
+  
+  static <E> void markFrozen(MutableArray<E> a) {
+    if (Assertions.class.desiredAssertionStatus()) {
+      a.markFrozen();
+    }
   }
 
 }
