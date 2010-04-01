@@ -30,7 +30,6 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -40,7 +39,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import javax.servlet.http.HttpServlet;
@@ -52,7 +50,6 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class ExpensesDataServlet extends HttpServlet {
 
-  private static final String PROPERTY_FILENAME = "servlet.properties";
   // TODO: Remove this hack
   private static final Set<String> PROPERTY_SET = new HashSet<String>();
   static {
@@ -76,15 +73,10 @@ public class ExpensesDataServlet extends HttpServlet {
         sync(topLevelJsonObject.getString(RequestDataManager.CONTENT_TOKEN),
             writer);
       } else {
-        InputStream is = this.getClass().getClassLoader().getResourceAsStream(PROPERTY_FILENAME);
-        if (is == null) {
-          throw new IllegalArgumentException("unable to find servlet.properties");
-        }
-        Properties properties = new Properties();
-        properties.load(is);
         operation = getOperationFromName(
             operationName,
-            (Class<RequestDefinition>) Class.forName(properties.getProperty("servlet.serveroperation")));
+            (Class<RequestDefinition>) Class.forName(getServletContext().getInitParameter(
+                "servlet.serverOperation")));
         Class<?> domainClass = Class.forName(operation.getDomainClassName());
         Method domainMethod = domainClass.getMethod(
             operation.getDomainMethodName(), operation.getParameterTypes());

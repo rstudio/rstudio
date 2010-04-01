@@ -5,6 +5,11 @@
 
 <web-app>
 
+ <context-param>
+    <param-name>servlet.serverOperation</param-name>
+    <param-value>com.google.gwt.sample.expenses.shared.ExpenseRequestFactory$ServerSideOperation</param-value>
+  </context-param>
+
   <!-- Servlets -->
   <servlet>
     <servlet-name>expensesData</servlet-name>
