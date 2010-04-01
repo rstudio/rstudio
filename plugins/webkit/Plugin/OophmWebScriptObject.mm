@@ -248,7 +248,10 @@ bool PluginCrashHandler::hasCrashed() {
 
 - (void)finalizeForWebScript {
   Debug::log(Debug::Info) << "Finalizing OophmWebScriptObject" << Debug::flush;
-  
+
+  // Disable any lingering JS proxy objects
+  _hasCrashed = true;
+
   // Free memory
   delete _sessionHandler;
   
