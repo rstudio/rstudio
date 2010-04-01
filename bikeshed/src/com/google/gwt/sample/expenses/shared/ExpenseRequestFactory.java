@@ -18,6 +18,7 @@ package com.google.gwt.sample.expenses.shared;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
 import com.google.gwt.requestfactory.shared.LongString;
 import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.ServerOperation;
 import com.google.gwt.valuestore.shared.ValueRef;
 import com.google.gwt.valuestore.shared.ValuesKey;
 
@@ -38,6 +39,7 @@ public interface ExpenseRequestFactory extends RequestFactory {
     /**
      * @return a request object
      */
+    @ServerOperation("FIND_ALL_EMPLOYEES")
     EntityListRequest<EmployeeKey> findAllEmployees();
   }
 
@@ -49,12 +51,14 @@ public interface ExpenseRequestFactory extends RequestFactory {
     /**
      * @return a request object
      */
+    @ServerOperation("FIND_REPORTS_BY_EMPLOYEE")
     EntityListRequest<ReportKey> findReportsByEmployee(
         @LongString ValueRef<EmployeeKey, String> id);
 
     /**
      * @return a request object
      */
+    @ServerOperation("FIND_ALL_REPORTS")
     EntityListRequest<ReportKey> findAllReports();
   }
 
@@ -70,9 +74,6 @@ public interface ExpenseRequestFactory extends RequestFactory {
     FIND_ALL_REPORTS("com.google.gwt.sample.expenses.server.domain.Report",
         "findAllReports", null,
         com.google.gwt.sample.expenses.shared.ReportKey.class), //
-    FIND_EMPLOYEE("com.google.gwt.sample.expenses.server.domain.Employee",
-        "findEmployee", new Class[] {java.lang.Long.class},
-        com.google.gwt.sample.expenses.shared.EmployeeKey.class), //
     FIND_REPORTS_BY_EMPLOYEE(
         "com.google.gwt.sample.expenses.server.domain.Report",
         "findReportsByEmployee", new Class[] {java.lang.Long.class},

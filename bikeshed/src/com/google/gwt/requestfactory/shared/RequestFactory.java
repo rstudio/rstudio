@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.ValuesKey;
@@ -43,6 +44,8 @@ public interface RequestFactory {
   }
 
   ValueStore getValueStore();
+
+  void init(HandlerManager handlerManager);
 
   SyncRequest syncRequest(DeltaValueStore deltaValueStore);
 

@@ -19,4 +19,7 @@
 
   <source path="client"/>
   <source path="shared"/>
+  <generate-with class="com.google.gwt.requestfactory.rebind.RequestFactoryGenerator">
+    <when-type-assignable class='com.google.gwt.requestfactory.shared.RequestFactory'/>
+  </generate-with>
 </module>

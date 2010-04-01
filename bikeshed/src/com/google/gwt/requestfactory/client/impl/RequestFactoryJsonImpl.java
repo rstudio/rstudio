@@ -15,6 +15,7 @@
  */
 package com.google.gwt.requestfactory.client.impl;
 
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -33,13 +34,13 @@ import com.google.gwt.valuestore.shared.DeltaValueStore;
  */
 public class RequestFactoryJsonImpl implements RequestFactory {
 
-  private final ValueStoreJsonImpl valueStore;
+  private ValueStoreJsonImpl valueStore;
 
   /**
    * @param valueStore
    */
-  public RequestFactoryJsonImpl(ValueStoreJsonImpl valueStore) {
-    this.valueStore = valueStore;
+  public void init(HandlerManager handlerManager) {
+    this.valueStore = new ValueStoreJsonImpl(handlerManager);
   }
 
   public void fire(final RequestObject requestObject) {

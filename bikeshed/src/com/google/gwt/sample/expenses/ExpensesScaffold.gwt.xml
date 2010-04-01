@@ -14,10 +14,4 @@
   <source path='gen' />
   <entry-point
     class="com.google.gwt.sample.expenses.client.ExpensesScaffold" />
-    
-  <!-- TODO: generate-with --> 
-  <replace-with class='com.google.gwt.sample.expenses.gen.ExpenseRequestFactoryImpl'>
-    <when-type-is class='com.google.gwt.sample.expenses.shared.ExpenseRequestFactory'/>
-  </replace-with> 
-    
 </module>

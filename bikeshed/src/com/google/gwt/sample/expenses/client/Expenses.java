@@ -16,13 +16,13 @@
 package com.google.gwt.sample.expenses.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.sample.expenses.gen.ExpenseRequestFactoryImpl;
 import com.google.gwt.sample.expenses.shared.EmployeeKey;
+import com.google.gwt.sample.expenses.shared.ExpenseRequestFactory;
 import com.google.gwt.sample.expenses.shared.ReportChanged;
 import com.google.gwt.sample.expenses.shared.ReportKey;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
-import com.google.gwt.valuestore.client.ValueStoreJsonImpl;
 import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
@@ -44,9 +44,8 @@ public class Expenses implements EntryPoint {
    */
   public void onModuleLoad() {
     final HandlerManager eventBus = new HandlerManager(null);
-    final ValueStoreJsonImpl valueStore = new ValueStoreJsonImpl(eventBus);
-    final ExpenseRequestFactoryImpl requestFactory = new ExpenseRequestFactoryImpl(
-        valueStore);
+    final ExpenseRequestFactory requestFactory = GWT.create(ExpenseRequestFactory.class);
+    requestFactory.init(eventBus);
 
     RootLayoutPanel root = RootLayoutPanel.get();
 
