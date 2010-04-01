@@ -183,7 +183,8 @@ public class JsniRefLookup {
    */
   private static void findMostDerivedMembers(
       LinkedHashMap<String, LinkedHashMap<String, HasEnclosingType>> matchesBySig,
-      JDeclaredType targetType, String memberName, boolean addConstructors) {
+      JDeclaredType targetType, String memberName,
+      boolean addConstructorsAndPrivates) {
     /*
      * Analyze superclasses and interfaces first. More derived members will thus
      * be seen later.
@@ -202,10 +203,16 @@ public class JsniRefLookup {
     // Get the methods on this class/interface.
     for (JMethod method : targetType.getMethods()) {
       if (method.getName().equals(memberName)) {
-        if (addConstructors || !method.getName().equals(JsniRef.NEW)) {
-          addMember(matchesBySig, method, getJsniSignature(method, false));
-          addMember(matchesBySig, method, getJsniSignature(method, true));
+        if (!addConstructorsAndPrivates) {
+          if (method.getName().equals(JsniRef.NEW)) {
+            continue;
+          }
+          if (method.isPrivate()) {
+            continue;
+          }
         }
+        addMember(matchesBySig, method, getJsniSignature(method, false));
+        addMember(matchesBySig, method, getJsniSignature(method, true));
       }
     }
 

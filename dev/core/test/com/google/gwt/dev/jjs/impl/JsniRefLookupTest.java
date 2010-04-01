@@ -124,10 +124,39 @@ public class JsniRefLookupTest extends OptimizerTestBase {
       }
     });
 
+    sourceOracle.addOrReplace(new MockJavaResource("test.PrivateSup") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuffer code = new StringBuffer();
+        code.append("package test;\n");
+        code.append("public class PrivateSup {\n");
+        code.append("  private static int field;\n");
+        code.append("  private static int method() { return 0; }\n");
+        code.append("  private static int fieldSup;\n");
+        code.append("  private static int methodSuP() { return 0; }\n");
+        code.append("}\n");
+        return code;
+      }
+    });
+
+    sourceOracle.addOrReplace(new MockJavaResource("test.PrivateSub") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuffer code = new StringBuffer();
+        code.append("package test;\n");
+        code.append("public class PrivateSub extends PrivateSup {\n");
+        code.append("  private static float field;\n");
+        code.append("  private static float method() { return 0; }\n");
+        code.append("  private static float methodSub() { return 0; }\n");
+        code.append("}\n");
+        return code;
+      }
+    });
+
     try {
       // The snippet must reference the classes so they will be compiled in
       program = compileSnippet("void",
-          "new test.Foo(); new test.Bar(); new ClassWithBridge();");
+          "new test.Foo(); new test.Bar(); new ClassWithBridge(); new PrivateSub();");
     } catch (UnableToCompleteException e) {
       throw new RuntimeException(e);
     }
@@ -397,6 +426,36 @@ public class JsniRefLookupTest extends OptimizerTestBase {
     {
       MockErrorReporter errors = new MockErrorReporter();
       JMethod res = (JMethod) lookup("test.Intf::foo(*)", errors);
+      errors.assertHasError();
+    }
+  }
+
+  public void testPrivate() {
+    // test private entries in the requested class
+    {
+      MockErrorReporter errors = new MockErrorReporter();
+      JMethod res = (JMethod) lookup("test.PrivateSub::method()", errors);
+      errors.assertNoError();
+      assertEquals("test.PrivateSub", res.getEnclosingType().getName());
+      assertEquals("method", res.getName());
+    }
+    {
+      MockErrorReporter errors = new MockErrorReporter();
+      JField res = (JField) lookup("test.PrivateSub::field", errors);
+      errors.assertNoError();
+      assertEquals("test.PrivateSub", res.getEnclosingType().getName());
+      assertEquals("field", res.getName());
+    }
+    
+    // test private entries in the superclass
+    {
+      MockErrorReporter errors = new MockErrorReporter();
+      JMethod res = (JMethod) lookup("test.PrivateSub::methodSup()", errors);
+      errors.assertHasError();
+    }
+    {
+      MockErrorReporter errors = new MockErrorReporter();
+      JField res = (JField) lookup("test.PrivateSub::fieldSup", errors);
       errors.assertHasError();
     }
   }
