@@ -16,7 +16,6 @@
 package com.google.gwt.sample.bikeshed.stocks.client;
 
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.client.TextHeader;
 import com.google.gwt.bikeshed.list.shared.ListModel;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockQuote;
@@ -42,12 +41,12 @@ public class FavoritesWidget extends Composite {
     this.model = model;
     initWidget(binder.createAndBindUi(this));
 
-    listView.addColumn(Columns.tickerColumn, new TextHeader("ticker"));
-    listView.addColumn(Columns.priceColumn, new TextHeader("price"));
-    listView.addColumn(Columns.changeColumn, new TextHeader("change"));
-    listView.addColumn(Columns.sharesColumn, new TextHeader("shares"));
-    listView.addColumn(Columns.dollarsColumn, new TextHeader("value"));
-    listView.addColumn(Columns.profitLossColumn, new TextHeader("profit/loss"));
+    listView.addColumn(Columns.tickerColumn, "ticker");
+    listView.addColumn(Columns.priceColumn, "price");
+    listView.addColumn(Columns.changeColumn, "change");
+    listView.addColumn(Columns.sharesColumn, "shares");
+    listView.addColumn(Columns.dollarsColumn, "value");
+    listView.addColumn(Columns.profitLossColumn, "profit/loss");
     listView.addColumn(Columns.buyColumn);
     listView.addColumn(Columns.sellColumn);
   }

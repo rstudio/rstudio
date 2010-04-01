@@ -16,10 +16,10 @@
 package com.google.gwt.sample.bikeshed.validation.client;
 
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
-import com.google.gwt.bikeshed.cells.client.TextCell;
 import com.google.gwt.bikeshed.list.client.Column;
 import com.google.gwt.bikeshed.list.client.HasKey;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
+import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.Timer;
@@ -83,8 +83,7 @@ public class Validation implements EntryPoint {
 
     PagingTableListView<Address> table = new PagingTableListView<Address>(
         listModel, 10);
-    Column<Address, String, Void> stateColumn = new Column<Address, String, Void>(
-        new TextCell()) {
+    TextColumn<Address> stateColumn = new TextColumn<Address>() {
       @Override
       public String getValue(Address object) {
         return object.state;
@@ -131,8 +130,7 @@ public class Validation implements EntryPoint {
       }
     });
 
-    Column<Address, String, Void> messageColumn = new Column<Address, String, Void>(
-        new TextCell()) {
+    TextColumn<Address> messageColumn = new TextColumn<Address>() {
       @Override
       public String getValue(Address object) {
         return object.zipInvalid ? "Please fix the zip code" : "";

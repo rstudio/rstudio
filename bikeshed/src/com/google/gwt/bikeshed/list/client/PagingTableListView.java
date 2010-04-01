@@ -110,6 +110,10 @@ public class PagingTableListView<T> extends Widget {
     addColumn(col, header, null);
   }
 
+  public void addColumn(Column<T, ?, ?> col, String headerString) {
+    addColumn(col, new TextHeader(headerString), null);
+  }
+
   // TODO: remove(Column)
   public void addColumn(Column<T, ?, ?> col, Header<?> header, Header<?> footer) {
     headers.add(header);

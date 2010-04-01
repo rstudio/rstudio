@@ -18,12 +18,18 @@ package com.google.gwt.bikeshed.list.client;
 import com.google.gwt.bikeshed.cells.client.TextCell;
 
 /**
- * A Header containing String data rendered by a TextCell.
- */
-public class TextHeader extends Header<String> {
+ * A column that displays its contents with a {@link TextCell} and does not make
+ * use of view data.
 
-  public TextHeader(String text) {
+ * @param <T> the row type
+ */
+public abstract class TextColumn<T> extends Column<T, String, Void> {
+
+  public TextColumn(HasKey<T> hasKey) {
+    super(TextCell.getInstance(), hasKey);
+  }
+
+  public TextColumn() {
     super(TextCell.getInstance());
-    setValue(text);
   }
 }

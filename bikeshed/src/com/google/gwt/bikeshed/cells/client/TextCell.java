@@ -20,6 +20,18 @@ package com.google.gwt.bikeshed.cells.client;
  */
 public class TextCell extends Cell<String, Void> {
 
+  private static TextCell instance;
+
+  public static TextCell getInstance() {
+    if (instance == null) {
+      instance = new TextCell();
+    }
+    return instance;
+  }
+
+  private TextCell() {
+  }
+
   @Override
   public void render(String value, Void viewData, StringBuilder sb) {
     if (value != null) {

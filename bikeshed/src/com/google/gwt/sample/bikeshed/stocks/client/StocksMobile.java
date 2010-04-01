@@ -16,7 +16,6 @@
 package com.google.gwt.sample.bikeshed.stocks.client;
 
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.client.TextHeader;
 import com.google.gwt.bikeshed.list.shared.AsyncListModel;
 import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.core.client.GWT;
@@ -122,12 +121,12 @@ public class StocksMobile {
     PagingTableListView<StockQuote> favorite = new PagingTableListView<StockQuote>(
         favoritesListModel, 10);
 
-    favorite.addColumn(Columns.tickerColumn, new TextHeader("ticker"));
-    favorite.addColumn(Columns.priceColumn, new TextHeader("price"));
-    favorite.addColumn(Columns.changeColumn, new TextHeader("change"));
-    favorite.addColumn(Columns.sharesColumn, new TextHeader("shares"));
-    favorite.addColumn(Columns.dollarsColumn, new TextHeader("value"));
-    favorite.addColumn(Columns.profitLossColumn, new TextHeader("profit/loss"));
+    favorite.addColumn(Columns.tickerColumn, "ticker");
+    favorite.addColumn(Columns.priceColumn, "price");
+    favorite.addColumn(Columns.changeColumn, "change");
+    favorite.addColumn(Columns.sharesColumn, "shares");
+    favorite.addColumn(Columns.dollarsColumn, "value");
+    favorite.addColumn(Columns.profitLossColumn, "profit/loss");
 
     return favorite;
   }

@@ -15,10 +15,9 @@
  */
 package com.google.gwt.sample.expenses.client;
 
-import com.google.gwt.bikeshed.cells.client.TextCell;
-import com.google.gwt.bikeshed.list.client.Column;
-import com.google.gwt.bikeshed.list.client.Header;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
+import com.google.gwt.bikeshed.list.client.SimpleColumn;
+import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.HeadingElement;
@@ -43,8 +42,6 @@ public class TableEntityListView extends Composite implements EntityListView {
 
    @UiField SimplePanel body;
    @UiField HeadingElement heading;
-   
-   private final TextCell textCell = new TextCell();
 
   public TableEntityListView() {
     initWidget(BINDER.createAndBindUi(this));
@@ -61,40 +58,33 @@ public class TableEntityListView extends Composite implements EntityListView {
     
     PagingTableListView<Row> table = new PagingTableListView<Row>(model, 100);
     
-    Column<Row, Command, Void> showColumn =
-      new Column<Row, Command, Void>(new CommandCell("Show")) {
+    SimpleColumn<Row, Command> showColumn =
+      new SimpleColumn<Row, Command>(new CommandCell("Show")) {
       @Override
       public Command getValue(Row object) {
         return object.getShowDetailsCommand();
       }
     };
-    Header<String> showHeader = new Header<String>(textCell);
-    showHeader.setValue("Show");
-    table.addColumn(showColumn, showHeader);
+    table.addColumn(showColumn, "Show");
     
-    Column<Row, Command, Void> editColumn =
-      new Column<Row, Command, Void>(new CommandCell("Edit")) {
+    SimpleColumn<Row, Command> editColumn =
+      new SimpleColumn<Row, Command>(new CommandCell("Edit")) {
       @Override
       public Command getValue(Row object) {
         return object.getShowDetailsCommand();
       }
     };
-    Header<String> editHeader = new Header<String>(textCell);
-    editHeader.setValue("Show");
-    table.addColumn(editColumn, editHeader);
+    table.addColumn(editColumn, "Edit");
 
     for (int i = 0; i < columnNames.size(); i++) {
       final int index = i;
-      Column<Row, String, Void> column =
-        new Column<Row, String, Void>(textCell) {
+      TextColumn<Row> column = new TextColumn<Row>() {
         @Override
         public String getValue(Row object) {
           return object.getValues().get(index);
         }
       };
-      Header<String> header = new Header<String>(textCell);
-      header.setValue(columnNames.get(i));
-      table.addColumn(column, header);
+      table.addColumn(column, columnNames.get(index));
     }
     
     body.setWidget(table);

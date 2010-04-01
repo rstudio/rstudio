@@ -17,10 +17,9 @@ package com.google.gwt.sample.bikeshed.mail.client;
 
 import com.google.gwt.bikeshed.cells.client.CheckboxCell;
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
-import com.google.gwt.bikeshed.cells.client.TextCell;
-import com.google.gwt.bikeshed.list.client.Column;
-import com.google.gwt.bikeshed.list.client.Header;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
+import com.google.gwt.bikeshed.list.client.SimpleColumn;
+import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.bikeshed.list.shared.SelectionModel.DefaultSelectionModel;
 import com.google.gwt.core.client.EntryPoint;
@@ -43,7 +42,7 @@ import java.util.TreeMap;
 /**
  * A demo of selection features.
  */
-public class MailSample implements EntryPoint {
+public class MailSample implements EntryPoint, ClickHandler {
 
   class MailSelectionModel extends DefaultSelectionModel<Message> {
     private static final int ALL = 0;
@@ -53,6 +52,7 @@ public class MailSample implements EntryPoint {
     private static final int SUBJECT = 4;
     private static final int UNREAD = 5;
 
+    // Use a TreeMap in order to get sorted diagnostic output
     private Map<Integer, Boolean> exceptions = new TreeMap<Integer, Boolean>();
 
     private String search;
@@ -65,11 +65,12 @@ public class MailSample implements EntryPoint {
       if (exception != null) {
         return exception.booleanValue();
       }
+      // If not in exceptions, return the default
       return isDefaultSelected(object);
     }
 
     public void setSearch(String search) {
-      this.search = search.toLowerCase();
+      this.search = canonicalize(search);
       updateListeners();
     }
     
@@ -161,6 +162,10 @@ public class MailSample implements EntryPoint {
       }      
     }
 
+    private String canonicalize(String input) {
+      return input.toUpperCase();
+    }
+
     private boolean isDefaultSelected(Message object) {
       switch (type) {
         case NONE:
@@ -175,12 +180,12 @@ public class MailSample implements EntryPoint {
           if (search == null || search.length() == 0) {
             return false;
           }
-          return object.getSender().toLowerCase().contains(search);
+          return canonicalize(object.getSender()).contains(search);
         case SUBJECT:
           if (search == null || search.length() == 0) {
             return false;
           }
-          return object.getSubject().toLowerCase().contains(search);
+          return canonicalize(object.getSubject()).contains(search);
         default:
           throw new IllegalStateException("type = " + type);
       }
@@ -253,11 +258,41 @@ public class MailSample implements EntryPoint {
       "Rolex Watches", "Re: Re: yo bud", "Important notice"
   };
 
+  private Button allButton = new Button("Select All");
+  private Button allOnPageButton = new Button("Select All On This Page");
+  private Button noneButton = new Button("Select None");
+  private Button readButton = new Button("Select Read");
   private Label selectionLabel = new Label();
+  private MailSelectionModel selectionModel = new MailSelectionModel();
+  private Button senderButton = new Button("Search Senders");
+  private Button subjectButton = new Button("Search Subject");
+
+  private PagingTableListView<Message> table;
+
+  private Button unreadButton = new Button("Select Unread");
+
+  // Handle events for all buttons here in order to avoid creating multiple
+  // ClickHandlers
+  public void onClick(ClickEvent event) {
+    Button source = (Button) event.getSource();
+    if (source == noneButton) {
+      selectionModel.setType(MailSelectionModel.NONE);
+    } else if (source == allOnPageButton) {
+      selectionModel.setSelected(table.getDisplayedItems(), true);
+    } else if (source == allButton) {
+      selectionModel.setType(MailSelectionModel.ALL);
+    } else if (source == readButton) {
+      selectionModel.setType(MailSelectionModel.READ);
+    } else if (source == unreadButton) {
+      selectionModel.setType(MailSelectionModel.UNREAD);
+    } else if (source == senderButton) {
+      selectionModel.setType(MailSelectionModel.SENDER);
+    } else if (source == subjectButton) {
+      selectionModel.setType(MailSelectionModel.SUBJECT);
+    }
+  }
 
   public void onModuleLoad() {
-    TextCell textCell = new TextCell();
-
     ListListModel<Message> listModel = new ListListModel<Message>();
     List<Message> messages = listModel.getList();
     Random rand = new Random();
@@ -269,61 +304,48 @@ public class MailSample implements EntryPoint {
       messages.add(message);
     }
 
-    final MailSelectionModel selectionModel = new MailSelectionModel();
+    table = new PagingTableListView<Message>(listModel, 10);
+    table.setSelectionModel(selectionModel);
 
-    final PagingTableListView<Message> table = new PagingTableListView<Message>(
-        listModel, 10);
-
-    Column<Message, Boolean, Void> selectedColumn = new Column<Message, Boolean, Void>(
+    // The state of the checkbox is taken from the selection model
+    SimpleColumn<Message, Boolean> selectedColumn = new SimpleColumn<Message, Boolean>(
         new CheckboxCell()) {
       @Override
       public Boolean getValue(Message object) {
         return selectionModel.isSelected(object);
       }
     };
+    // Update the selection model when the checkbox is changed manually
     selectedColumn.setFieldUpdater(new FieldUpdater<Message, Boolean, Void>() {
       public void update(int index, Message object, Boolean value, Void viewData) {
         selectionModel.setSelected(object, value);
       }
     });
-    Header<String> selectedHeader = new Header<String>(textCell);
-    selectedHeader.setValue("Selected");
-    table.addColumn(selectedColumn, selectedHeader);
+    table.addColumn(selectedColumn, "Selected");
 
-    Column<Message, String, Void> isReadColumn = new Column<Message, String, Void>(
-        textCell) {
+    TextColumn<Message> isReadColumn = new TextColumn<Message>() {
       @Override
       public String getValue(Message object) {
         return object.isRead ? "read" : "unread";
       }
     };
-    Header<String> isReadHeader = new Header<String>(textCell);
-    isReadHeader.setValue("Read");
-    table.addColumn(isReadColumn, isReadHeader);
+    table.addColumn(isReadColumn, "Read");
 
-    Column<Message, String, Void> senderColumn = new Column<Message, String, Void>(
-        new TextCell()) {
+    TextColumn<Message> senderColumn = new TextColumn<Message>() {
       @Override
       public String getValue(Message object) {
         return object.getSender();
       }
     };
-    Header<String> senderHeader = new Header<String>(textCell);
-    senderHeader.setValue("Sender");
-    table.addColumn(senderColumn, senderHeader);
+    table.addColumn(senderColumn, "Sender");
 
-    Column<Message, String, Void> subjectColumn = new Column<Message, String, Void>(
-        textCell) {
+    TextColumn<Message> subjectColumn = new TextColumn<Message>() {
       @Override
       public String getValue(Message object) {
         return object.getSubject();
       }
     };
-    Header<String> subjectHeader = new Header<String>(textCell);
-    subjectHeader.setValue("Subject");
-    table.addColumn(subjectColumn, subjectHeader);
-
-    table.setSelectionModel(selectionModel);
+    table.addColumn(subjectColumn, "Subject");
     
     Label searchLabel = new Label("Search Sender or Subject:");
     final TextBox searchBox = new TextBox();
@@ -333,55 +355,13 @@ public class MailSample implements EntryPoint {
       }
     });
 
-    Button noneButton = new Button("Select None");
-    Button allOnPageButton = new Button("Select All On This Page");
-    Button allButton = new Button("Select All");
-    Button readButton = new Button("Select Read");
-    Button unreadButton = new Button("Select Unread");
-    Button senderButton = new Button("Search Senders");
-    Button subjectButton = new Button("Search Subject");
-
-    noneButton.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        selectionModel.setType(MailSelectionModel.NONE);
-      }
-    });
-
-    allOnPageButton.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        selectionModel.setSelected(table.getDisplayedItems(), true);
-      }
-    });
-
-    allButton.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        selectionModel.setType(MailSelectionModel.ALL);
-      }
-    });
-
-    readButton.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        selectionModel.setType(MailSelectionModel.READ);
-      }
-    });
-
-    unreadButton.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        selectionModel.setType(MailSelectionModel.UNREAD);
-      }
-    });
-    
-    senderButton.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        selectionModel.setType(MailSelectionModel.SENDER);
-      }
-    });
-    
-    subjectButton.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        selectionModel.setType(MailSelectionModel.SUBJECT);
-      }
-    });
+    noneButton.addClickHandler(this);
+    allOnPageButton.addClickHandler(this);
+    allButton.addClickHandler(this);
+    readButton.addClickHandler(this);
+    unreadButton.addClickHandler(this);
+    senderButton.addClickHandler(this);
+    subjectButton.addClickHandler(this);
     
     HorizontalPanel panel = new HorizontalPanel();
     panel.add(searchLabel);
@@ -398,6 +378,7 @@ public class MailSample implements EntryPoint {
     RootPanel.get().add(unreadButton);
     RootPanel.get().add(subjectButton);
     RootPanel.get().add(senderButton);
+    RootPanel.get().add(new HTML("<hr>"));
     RootPanel.get().add(selectionLabel);
   }
 }

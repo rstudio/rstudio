@@ -16,7 +16,6 @@
 package com.google.gwt.sample.bikeshed.stocks.client;
 
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.client.TextHeader;
 import com.google.gwt.bikeshed.list.shared.ListModel;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -48,10 +47,10 @@ public class StockQueryWidget extends Composite {
     initWidget(binder.createAndBindUi(this));
 
     listView.addColumn(Columns.favoriteColumn);
-    listView.addColumn(Columns.tickerColumn, new TextHeader("ticker"));
-    listView.addColumn(Columns.nameColumn, new TextHeader("name"));
-    listView.addColumn(Columns.changeColumn, new TextHeader("change"));
-    listView.addColumn(Columns.priceColumn, new TextHeader("price"));
+    listView.addColumn(Columns.tickerColumn, "ticker");
+    listView.addColumn(Columns.nameColumn, "name");
+    listView.addColumn(Columns.changeColumn, "change");
+    listView.addColumn(Columns.priceColumn, "price");
     listView.addColumn(Columns.buyColumn);
 
     // Focus the cursor on the name field when the app loads

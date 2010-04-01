@@ -96,7 +96,7 @@ class TransactionTreeViewModel implements TreeViewModel {
   public <T> NodeInfo<?> getNodeInfo(T value, final TreeNode<T> treeNode) {
     if (value == null) {
       return new TreeViewModel.DefaultNodeInfo<String>(topLevelListListModel,
-          new TextCell());
+          TextCell.getInstance());
     } else if ("Favorites".equals(value)) {
       return new TreeViewModel.DefaultNodeInfo<StockQuote>(stockQuoteListModel,
           STOCK_QUOTE_CELL) {
@@ -144,7 +144,7 @@ class TransactionTreeViewModel implements TreeViewModel {
       List<String> list = listModel.getList();
       list.add("Actions");
       list.add("History");
-      return new TreeViewModel.DefaultNodeInfo<String>(listModel, new TextCell());
+      return new TreeViewModel.DefaultNodeInfo<String>(listModel, TextCell.getInstance());
     }
 
     throw new IllegalArgumentException(value.toString());

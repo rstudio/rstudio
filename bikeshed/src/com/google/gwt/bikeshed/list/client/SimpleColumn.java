@@ -15,15 +15,21 @@
  */
 package com.google.gwt.bikeshed.list.client;
 
-import com.google.gwt.bikeshed.cells.client.TextCell;
+import com.google.gwt.bikeshed.cells.client.Cell;
 
 /**
- * A Header containing String data rendered by a TextCell.
+ * A column that does not make use of view data.
+ *
+ * @param <T> the row type
+ * @param <C> the column type
  */
-public class TextHeader extends Header<String> {
+public abstract class SimpleColumn<T, C>  extends Column<T, C, Void> {
 
-  public TextHeader(String text) {
-    super(TextCell.getInstance());
-    setValue(text);
+  public SimpleColumn(Cell<C, Void> cell, HasKey<T> hasKey) {
+    super(cell, hasKey);
+  }
+
+  public SimpleColumn(Cell<C, Void> cell) {
+    super(cell);
   }
 }

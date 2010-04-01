@@ -36,7 +36,8 @@ public class SimpleCellListSample implements EntryPoint {
       list.add("" + (i * 1000));
     }
 
-    SimpleCellList<String> simpleCellList = new SimpleCellList<String>(listModel, new TextCell(), 10, 5);
+    SimpleCellList<String> simpleCellList =
+      new SimpleCellList<String>(listModel, TextCell.getInstance(), 10, 5);
 
     RootPanel.get().add(simpleCellList);
 
