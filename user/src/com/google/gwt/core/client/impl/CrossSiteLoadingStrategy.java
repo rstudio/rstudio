@@ -83,6 +83,10 @@ public class CrossSiteLoadingStrategy implements LoadingStrategy {
       int fragment, JavaScriptObject tag,
       LoadTerminatedHandler loadFinishedHandler) /*-{
      return function(exception) {
+       if (tag.parentNode == null) {
+         // onSuccess or onFailure must have already been called.
+         return;
+       }
        var head = document.getElementsByTagName('head').item(0);
        head.removeChild(tag);
        @com.google.gwt.core.client.impl.CrossSiteLoadingStrategy::clearOnSuccess(*)(fragment);
