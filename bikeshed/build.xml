@@ -5,6 +5,9 @@
 
   <import file="${gwt.root}/common.ant.xml" />
 
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
+  <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
+
   <target name="checkstyle" description="Static analysis of source">
     <gwt.checkstyle>
       <fileset dir="src" />
@@ -16,4 +19,25 @@
       </fileset>
     </gwt.checkstyle.tests>
   </target>
+
+  <target name="compile" description="Compile all class files"
+      unless="compile.complete">
+    <mkdir dir="${javac.out}" />
+    <gwt.javac excludes="**/sample/**">
+      <classpath>
+        <pathelement location="${gwt.dev.jar}" />
+        <pathelement location="${gwt.user.jar}" />
+      </classpath>
+    </gwt.javac>
+  </target>
+
+  <target name="build" depends="compile"
+      description="Build and package this project">
+    <mkdir dir="${gwt.build.lib}" />
+    <gwt.jar>
+      <fileset dir="src" excludes="**/sample/**" />
+      <fileset dir="${javac.out}" />
+    </gwt.jar>
+  </target>
+
 </project>

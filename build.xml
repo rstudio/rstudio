@@ -37,6 +37,7 @@
           description="[action] Minimal one-platform devel build, without distro packaging">
     <call-subproject subproject="dev" subtarget="build" />
     <call-subproject subproject="user" subtarget="build" />
+    <call-subproject subproject="bikeshed" subtarget="build" />
     <call-subproject subproject="servlet" subtarget="build" />
     <call-subproject subproject="jni" subtarget="build" />
   </target>
@@ -57,6 +58,12 @@
   <target name="user" description="[subdir] Builds (or runs ${target} if set) only the user library">
     <call-subproject subproject="dev" subtarget="build"/>
     <gwt.ant dir="user" />
+  </target>
+
+  <target name="bikeshed" description="[subdir] Builds (or runs ${target} if set) only the bikeshed library">
+    <call-subproject subproject="dev" subtarget="build"/>
+    <call-subproject subproject="user" subtarget="build"/>
+    <gwt.ant dir="bikeshed" />
   </target>
 
   <target name="tools" description="[subdir] Builds (or runs ${target} if set) only the tools">
