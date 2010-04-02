@@ -198,6 +198,9 @@
       <gwt:Image ui:field='babyWidget' resource='{prettyImage}'
           altText='expected alt text' styleName='expected style name'
       />
+      <demo:FooImage ui:field='fooImage' resource='{prettyImage}'
+          altText='expected alt text' styleName='expected style name'
+      />
       </div>
 
       <p ui:field='simpleSpriteParagraph'

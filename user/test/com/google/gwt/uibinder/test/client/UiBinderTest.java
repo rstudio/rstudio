@@ -445,6 +445,15 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("funny characters \" ' ' & < > > { }", t);
   }
 
+  public void testCustomImageClass() {
+    ImageResource resource = widgetUi.prettyImage;
+    Image widget = widgetUi.fooImage;
+    assertEquals(resource.getWidth(), widget.getOffsetWidth());
+    assertEquals(resource.getHeight(), widget.getOffsetHeight());
+    assertEquals(resource.getTop(), widget.getOriginTop());
+    assertEquals(resource.getLeft(), widget.getOriginLeft());
+  }
+  
   public void testImageResourceInImageWidget() {
     ImageResource resource = widgetUi.prettyImage;
     Image widget = widgetUi.babyWidget;

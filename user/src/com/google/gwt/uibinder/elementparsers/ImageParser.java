@@ -17,9 +17,11 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
-import com.google.gwt.user.client.ui.Image;
 
 /**
  * Custom parsing of Image widgets. Sets ImageResource via constructor, because
@@ -29,11 +31,17 @@ public class ImageParser implements ElementParser {
 
   public void parse(XMLElement elem, String fieldName, JClassType type,
       UiBinderWriter writer) throws UnableToCompleteException {
-    String resource = elem.consumeImageResourceAttribute("resource");
-    if (null != resource) {
-      writer.setFieldInitializerAsConstructor(fieldName,
-          writer.getOracle().findType(Image.class.getName()),
-          resource);
+    if (hasImageResourceConstructor(writer.getOracle(), type)) {
+      String resource = elem.consumeImageResourceAttribute("resource");
+      if (null != resource) {
+        writer.setFieldInitializerAsConstructor(fieldName, type, resource);
+      }
     }
+  }
+
+  private boolean hasImageResourceConstructor(TypeOracle typeOracle,
+      JClassType type) {
+    JType imageResourceType = typeOracle.findType(ImageResource.class.getName());
+    return type.findConstructor(new JType[] {imageResourceType}) != null;
   }
 }

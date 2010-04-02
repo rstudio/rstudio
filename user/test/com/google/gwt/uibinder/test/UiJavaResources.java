@@ -174,8 +174,10 @@ public class UiJavaResources {
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.user.client.ui;\n");
+      code.append("import com.google.gwt.resources.client.ImageResource;\n");
       code.append("public class Image extends Widget {\n");
       code.append("  public Image() {} ");
+      code.append("  public Image(ImageResource r) {} ");
       code.append("}\n");
       return code;
     }
@@ -222,7 +224,7 @@ public class UiJavaResources {
     }
   };
   public static final MockJavaResource LIST_BOX = new MockJavaResource(
-    "com.google.gwt.user.client.ui.ListBox") {
+      "com.google.gwt.user.client.ui.ListBox") {
     @Override
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();

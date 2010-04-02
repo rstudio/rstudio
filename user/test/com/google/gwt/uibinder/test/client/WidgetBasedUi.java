@@ -126,6 +126,7 @@ public class WidgetBasedUi extends Composite {
   @UiField SpanElement totallyPrivateStyleSpan;
   @UiField ImageResource prettyImage;
   @UiField ImageResource prettyTilingImage;
+  @UiField FooImage fooImage;
   @UiField Image babyWidget;
   @UiField ParagraphElement simpleSpriteParagraph;
   @UiField DataResource heartCursorResource;

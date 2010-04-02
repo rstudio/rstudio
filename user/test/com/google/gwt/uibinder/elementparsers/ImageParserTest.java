@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.uibinder.rebind.FieldWriter;
 
 import junit.framework.TestCase;
@@ -30,12 +31,84 @@ import java.io.IOException;
 public class ImageParserTest extends TestCase {
   private static final String PARSED_TYPE = "com.google.gwt.user.client.ui.Image";
 
+  private static final MockJavaResource IMAGE_SUBCLASS_NO_CONSTRUCTOR = new MockJavaResource(
+      "my.MyImage") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package my;\n");
+      code.append("import com.google.gwt.user.client.ui.Image;\n");
+      code.append("public class MyImage extends Image {\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+  private static final MockJavaResource IMAGE_SUBCLASS_RESOURCE_CONSTRUCTOR = new MockJavaResource(
+      "my.MyConstructedImage") {
+    @Override
+    protected CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package my;\n");
+      code.append("import com.google.gwt.user.client.ui.Image;\n");
+      code.append("import com.google.gwt.resources.client.ImageResource;\n");
+      code.append("public class MyConstructedImage extends Image {\n");
+      code.append("  public MyConstructedImage(ImageResource r) { super(r); }");
+      code.append("}\n");
+      return code;
+    }
+  };
   private ElementParserTester tester;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     tester = new ElementParserTester(PARSED_TYPE, new ImageParser());
+  }
+
+  public void testHappyWithDefaultInstantiableSubclass()
+      throws UnableToCompleteException, SAXException, IOException {
+    tester = new ElementParserTester("my.MyImage", new ImageParser(),
+        IMAGE_SUBCLASS_NO_CONSTRUCTOR, IMAGE_SUBCLASS_RESOURCE_CONSTRUCTOR);
+    ImageParser parser = new ImageParser();
+    StringBuffer b = new StringBuffer();
+
+    b.append("<ui:UiBinder xmlns:ui='" + ElementParserTester.BINDER_URI + "'");
+    b.append("    xmlns:my='urn:import:my'");
+    b.append("    xmlns:g='urn:import:com.google.gwt.user.client.ui'>");
+    b.append("  <my:MyImage resource='{someImageResource}'/> ");
+    b.append("</ui:UiBinder>");
+
+    parser.parse(tester.getElem(b.toString(), "my:MyImage"), "fieldName", 
+        tester.parsedType, tester.writer);
+    FieldWriter w = tester.fieldManager.lookup("fieldName");
+    assertNull(w.getInitializer());
+
+    assertTrue(tester.writer.statements.isEmpty());
+    assertNull(tester.logger.died);
+  }
+
+  public void testHappyWithSubclassWithImageResourceConstructor()
+      throws UnableToCompleteException, SAXException, IOException {
+    ImageParser parser = new ImageParser();
+    tester = new ElementParserTester("my.MyConstructedImage", new ImageParser(),
+        IMAGE_SUBCLASS_NO_CONSTRUCTOR, IMAGE_SUBCLASS_RESOURCE_CONSTRUCTOR);
+
+    StringBuffer b = new StringBuffer();
+
+    b.append("<ui:UiBinder xmlns:ui='" + ElementParserTester.BINDER_URI + "'");
+    b.append("    xmlns:my='urn:import:my'");
+    b.append("    xmlns:g='urn:import:com.google.gwt.user.client.ui'>");
+    b.append("  <my:MyConstructedImage resource='{someImageResource}'/> ");
+    b.append("</ui:UiBinder>");
+
+    parser.parse(tester.getElem(b.toString(), "my:MyConstructedImage"), "fieldName", 
+        tester.parsedType, tester.writer);
+    FieldWriter w = tester.fieldManager.lookup("fieldName");
+    assertEquals("new my.MyConstructedImage(someImageResource)",
+        w.getInitializer());
+
+    assertTrue(tester.writer.statements.isEmpty());
+    assertNull(tester.logger.died);
   }
 
   public void testHappyWithResource() throws UnableToCompleteException,
