@@ -36,6 +36,7 @@
   <target name="dist-bikeshed" depends="buildonly"
           description="[action] Build bikeshed and minimal stuff, without distro packaging">
     <call-subproject subproject="bikeshed" subtarget="build" />
+    <call-subproject subproject="soyc" subtarget="build" />
     <gwt.ant dir="distro-source" target="build" />
   </target>
 
@@ -69,6 +70,12 @@
     <call-subproject subproject="dev" subtarget="build"/>
     <call-subproject subproject="user" subtarget="build"/>
     <gwt.ant dir="bikeshed" />
+  </target>
+
+  <target name="soyc" description="[subdir] Builds (or runs ${target} if set) only the soyc library">
+    <call-subproject subproject="dev" subtarget="build"/>
+    <call-subproject subproject="user" subtarget="build"/>
+    <gwt.ant dir="tools/soyc-vis" />
   </target>
 
   <target name="tools" description="[subdir] Builds (or runs ${target} if set) only the tools">
