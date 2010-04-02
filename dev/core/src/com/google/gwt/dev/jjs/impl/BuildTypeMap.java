@@ -144,8 +144,9 @@ public class BuildTypeMap {
         SourceInfo info = makeSourceInfo(argument, enclosingBody.getMethod());
         LocalVariableBinding b = argument.binding;
         JType localType = (JType) typeMap.get(b.type);
-        JLocal newLocal = program.createLocal(info, argument.name, localType,
-            b.isFinal(), enclosingBody);
+        JLocal newLocal = JProgram.createLocal(info,
+            String.valueOf(argument.name), localType, b.isFinal(),
+            enclosingBody);
         typeMap.put(b, newLocal);
         return true;
       } catch (Throwable e) {
@@ -170,9 +171,9 @@ public class BuildTypeMap {
 
         // Enums have hidden arguments for name and value
         if (enclosingType.isEnumOrSubclass() != null) {
-          program.createParameter(info, "enum$name".toCharArray(),
+          JProgram.createParameter(info, "enum$name",
               program.getTypeJavaLangString(), true, false, newCtor);
-          program.createParameter(info, "enum$ordinal".toCharArray(),
+          JProgram.createParameter(info, "enum$ordinal",
               program.getTypePrimitiveInt(), true, false, newCtor);
         }
 
@@ -262,8 +263,9 @@ public class BuildTypeMap {
         JMethodBody enclosingBody = findEnclosingMethod(scope);
         SourceInfo info = makeSourceInfo(localDeclaration,
             enclosingBody.getMethod());
-        JLocal newLocal = program.createLocal(info, localDeclaration.name,
-            localType, b.isFinal(), enclosingBody);
+        JLocal newLocal = JProgram.createLocal(info,
+            String.valueOf(localDeclaration.name), localType, b.isFinal(),
+            enclosingBody);
         typeMap.put(b, newLocal);
         return true;
       } catch (Throwable e) {
@@ -307,8 +309,7 @@ public class BuildTypeMap {
       return process(typeDeclaration);
     }
 
-    private void addThrownExceptions(MethodBinding methodBinding, 
-        JMethod method) {
+    private void addThrownExceptions(MethodBinding methodBinding, JMethod method) {
       for (ReferenceBinding thrownBinding : methodBinding.thrownExceptions) {
         JClassType type = (JClassType) typeMap.get(thrownBinding.erasure());
         method.addThrownException(type);
@@ -318,8 +319,9 @@ public class BuildTypeMap {
     private JField createEnumField(SourceInfo info, FieldBinding binding,
         JReferenceType enclosingType) {
       JType type = (JType) typeMap.get(binding.type);
-      JField field = program.createEnumField(info, binding.name,
-          (JEnumType) enclosingType, (JClassType) type, binding.original().id);
+      JField field = program.createEnumField(info,
+          String.valueOf(binding.name), (JEnumType) enclosingType,
+          (JClassType) type, binding.original().id);
       info.addCorrelation(program.getCorrelator().by(field));
       typeMap.put(binding, field);
       return field;
@@ -346,8 +348,8 @@ public class BuildTypeMap {
         disposition = Disposition.NONE;
       }
 
-      JField field = program.createField(info, binding.name, enclosingType,
-          type, binding.isStatic(), disposition);
+      JField field = program.createField(info, String.valueOf(binding.name),
+          enclosingType, type, binding.isStatic(), disposition);
       typeMap.put(binding, field);
       info.addCorrelation(program.getCorrelator().by(field));
       return field;
@@ -358,8 +360,8 @@ public class BuildTypeMap {
       JType type = (JType) typeMap.get(binding.type);
       SourceInfo info = enclosingType.getSourceInfo().makeChild(
           BuildDeclMapVisitor.class, "Field " + String.valueOf(binding.name));
-      JField field = program.createField(info, binding.name, enclosingType,
-          type, false, Disposition.FINAL);
+      JField field = program.createField(info, String.valueOf(binding.name),
+          enclosingType, type, false, Disposition.FINAL);
       info.addCorrelation(program.getCorrelator().by(field));
       if (binding.matchingField != null) {
         typeMap.put(binding.matchingField, field);
@@ -372,8 +374,9 @@ public class BuildTypeMap {
         JMethod enclosingMethod) {
       JType type = (JType) typeMap.get(binding.type);
       SourceInfo info = makeSourceInfo(binding.declaration, enclosingMethod);
-      JParameter param = program.createParameter(info, binding.name, type,
-          binding.isFinal(), false, enclosingMethod);
+      JParameter param = JProgram.createParameter(info,
+          String.valueOf(binding.name), type, binding.isFinal(), false,
+          enclosingMethod);
       typeMap.put(binding, param);
       return param;
     }
@@ -381,10 +384,10 @@ public class BuildTypeMap {
     private JParameter createParameter(SyntheticArgumentBinding arg,
         String argName, JMethod enclosingMethod) {
       JType type = (JType) typeMap.get(arg.type);
-      JParameter param = program.createParameter(
+      JParameter param = JProgram.createParameter(
           enclosingMethod.getSourceInfo().makeChild(BuildTypeMap.class,
-              "Parameter " + argName), argName.toCharArray(), type, true,
-          false, enclosingMethod);
+              "Parameter " + argName), argName, type, true, false,
+          enclosingMethod);
       return param;
     }
 
@@ -405,9 +408,8 @@ public class BuildTypeMap {
 
       // Define the method
       JMethod synthetic = program.createMethod(type.getSourceInfo().makeChild(
-          BuildDeclMapVisitor.class, "Synthetic constructor"),
-          "new".toCharArray(), type, program.getNonNullType(type), false, true,
-          true, false, false);
+          BuildDeclMapVisitor.class, "Synthetic constructor"), "new", type,
+          program.getNonNullType(type), false, true, true, false, false);
       synthetic.setSynthetic();
 
       synthetic.addThrownExceptions(constructor.getThrownExceptions());
@@ -424,10 +426,10 @@ public class BuildTypeMap {
        */
       JParameter enclosingInstance = null;
       if (!staticClass) {
-        enclosingInstance = program.createParameter(
+        enclosingInstance = JProgram.createParameter(
             synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-                "outer instance"), "this$outer".toCharArray(), enclosingType,
-            false, false, synthetic);
+                "outer instance"), "this$outer", enclosingType, false, false,
+            synthetic);
       }
 
       /*
@@ -445,11 +447,10 @@ public class BuildTypeMap {
               synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
                   "enclosing instance"), enclosingInstance));
         } else {
-          JParameter syntheticParam = program.createParameter(
+          JParameter syntheticParam = JProgram.createParameter(
               synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-                  "Argument " + param.getName()),
-              param.getName().toCharArray(), param.getType(), true, false,
-              synthetic);
+                  "Argument " + param.getName()), param.getName(),
+              param.getType(), true, false, synthetic);
           newInstance.addArg(new JParameterRef(
               syntheticParam.getSourceInfo().makeChild(
                   BuildDeclMapVisitor.class, "reference"), syntheticParam));
@@ -567,7 +568,7 @@ public class BuildTypeMap {
             && type != program.getIndexedType("Array")) {
           JMethod getClassMethod = program.createMethod(
               type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-                  "Synthetic getClass()"), "getClass".toCharArray(), type,
+                  "Synthetic getClass()"), "getClass", type,
               program.getTypeJavaLangClass(), false, false, false, false, false);
           assert (type.getMethods().get(2) == getClassMethod);
           getClassMethod.freezeParamTypes();
@@ -640,10 +641,9 @@ public class BuildTypeMap {
           } else if (parameters.length == 1) {
             assert newMethod.getName().equals("valueOf");
             assert typeMap.get(parameters[0]) == program.getTypeJavaLangString();
-            program.createParameter(newMethod.getSourceInfo().makeChild(
-                BuildDeclMapVisitor.class, "name parameter"),
-                "name".toCharArray(), program.getTypeJavaLangString(), true,
-                false, newMethod);
+            JProgram.createParameter(newMethod.getSourceInfo().makeChild(
+                BuildDeclMapVisitor.class, "name parameter"), "name",
+                program.getTypeJavaLangString(), true, false, newMethod);
           } else {
             assert false;
           }
@@ -655,8 +655,9 @@ public class BuildTypeMap {
     private JMethod processMethodBinding(MethodBinding b,
         JDeclaredType enclosingType, SourceInfo info) {
       JType returnType = (JType) typeMap.get(b.returnType);
-      JMethod newMethod = program.createMethod(info, b.selector, enclosingType,
-          returnType, b.isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate(),
+      JMethod newMethod = program.createMethod(info,
+          String.valueOf(b.selector), enclosingType, returnType,
+          b.isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate(),
           b.isNative());
       addThrownExceptions(b, newMethod);
       if (b.isSynthetic()) {
@@ -767,7 +768,7 @@ public class BuildTypeMap {
 
     private boolean process(TypeDeclaration typeDeclaration) {
       try {
-        char[][] name = typeDeclaration.binding.compoundName;
+        String name = dotify(typeDeclaration.binding.compoundName);
         SourceTypeBinding binding = typeDeclaration.binding;
         if (binding instanceof LocalTypeBinding) {
           char[] localName = binding.constantPoolName();
@@ -779,13 +780,7 @@ public class BuildTypeMap {
             return false;
           }
 
-          for (int i = 0, c = localName.length; i < c; ++i) {
-            if (localName[i] == '/') {
-              localName[i] = '.';
-            }
-          }
-          name = new char[1][0];
-          name[0] = localName;
+          name = new String(localName).replace('/', '.');
         }
 
         SourceInfo info = makeSourceInfo(typeDeclaration);
@@ -815,17 +810,15 @@ public class BuildTypeMap {
          * exists) is always in slot 1.
          */
         JMethod clinit = program.createMethod(info.makeChild(
-            BuildTypeMapVisitor.class, "Class initializer"),
-            "$clinit".toCharArray(), newType, program.getTypeVoid(), false,
-            true, true, true, false);
+            BuildTypeMapVisitor.class, "Class initializer"), "$clinit",
+            newType, program.getTypeVoid(), false, true, true, true, false);
         clinit.freezeParamTypes();
         clinit.setSynthetic();
 
         if (newType instanceof JClassType) {
           JMethod init = program.createMethod(info.makeChild(
-              BuildTypeMapVisitor.class, "Instance initializer"),
-              "$init".toCharArray(), newType, program.getTypeVoid(), false,
-              false, true, true, false);
+              BuildTypeMapVisitor.class, "Instance initializer"), "$init",
+              newType, program.getTypeVoid(), false, false, true, true, false);
           init.freezeParamTypes();
           init.setSynthetic();
         }
@@ -884,6 +877,18 @@ public class BuildTypeMap {
       CompilationUnitDeclaration[] unitDecls, JsProgram jsProgram) {
     createPeersForTypes(unitDecls, typeMap);
     return createPeersForNonTypeDecls(unitDecls, typeMap, jsProgram);
+  }
+
+  static String dotify(char[][] name) {
+    StringBuffer result = new StringBuffer();
+    for (int i = 0; i < name.length; ++i) {
+      if (i > 0) {
+        result.append('.');
+      }
+
+      result.append(name[i]);
+    }
+    return result.toString();
   }
 
   private static TypeDeclaration[] createPeersForNonTypeDecls(

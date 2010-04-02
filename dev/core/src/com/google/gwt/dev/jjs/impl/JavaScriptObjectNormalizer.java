@@ -232,10 +232,9 @@ public class JavaScriptObjectNormalizer {
         SourceInfo info = instance.getSourceInfo().makeChild(
             JavaScriptObjectNormalizer.class,
             "Temporary assignment for instance with side-effects");
-        JLocal local = program.createLocal(info,
-            "maybeJsoInvocation".toCharArray(), instance.getType(), true,
-            currentMethodBody.peek());
-        multi.exprs.add(program.createAssignmentStmt(info,
+        JLocal local = JProgram.createLocal(info, "maybeJsoInvocation",
+            instance.getType(), true, currentMethodBody.peek());
+        multi.exprs.add(JProgram.createAssignmentStmt(info,
             new JLocalRef(info, local), instance).getExpr());
 
         instance = new JLocalRef(info, local);

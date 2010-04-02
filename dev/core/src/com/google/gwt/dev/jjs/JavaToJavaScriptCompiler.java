@@ -323,13 +323,12 @@ public class JavaToJavaScriptCompiler {
         case OBFUSCATED:
           obfuscateMap = JsStringInterner.exec(jprogram, jsProgram);
           JsObfuscateNamer.exec(jsProgram);
-          if (JsStackEmulator.getStackMode(propertyOracles) ==
-              JsStackEmulator.StackMode.STRIP) {
+          if (JsStackEmulator.getStackMode(propertyOracles) == JsStackEmulator.StackMode.STRIP) {
             boolean changed = false;
             for (int i = 0; i < jsProgram.getFragmentCount(); i++) {
               JsBlock fragment = jsProgram.getFragmentBlock(i);
               changed = JsDuplicateFunctionRemover.exec(jsProgram, fragment)
-                        || changed;
+                  || changed;
             }
             if (changed) {
               JsUnusedFunctionRemover.exec(jsProgram);
@@ -347,7 +346,7 @@ public class JavaToJavaScriptCompiler {
         default:
           throw new InternalCompilerException("Unknown output mode");
       }
-      
+
       // (10.8) Handle cross-island references.
       // No new JsNames or references to JSNames can be introduced after this
       // point.
@@ -677,7 +676,7 @@ public class JavaToJavaScriptCompiler {
     if (isAggressivelyOptimize) {
       // inlining
       didChange = MethodInliner.exec(jprogram) || didChange;
-      
+
       // remove same parameters value
       didChange = SameParameterValueOptimizer.exec(jprogram) || didChange;
     }
@@ -805,9 +804,9 @@ public class JavaToJavaScriptCompiler {
       throws UnableToCompleteException {
     SourceInfo sourceInfo = program.createSourceInfoSynthetic(
         JavaToJavaScriptCompiler.class, "Bootstrap method");
-    JMethod bootStrapMethod = program.createMethod(sourceInfo,
-        "init".toCharArray(), program.getIndexedType("EntryMethodHolder"),
-        program.getTypeVoid(), false, true, true, false, false);
+    JMethod bootStrapMethod = program.createMethod(sourceInfo, "init",
+        program.getIndexedType("EntryMethodHolder"), program.getTypeVoid(),
+        false, true, true, false, false);
     bootStrapMethod.freezeParamTypes();
     bootStrapMethod.setSynthetic();
 
@@ -817,7 +816,7 @@ public class JavaToJavaScriptCompiler {
     // Also remember $entry, which we'll handle specially in GenerateJsAst
     JMethod registerEntry = program.getIndexedMethod("Impl.registerEntry");
     program.addEntryMethod(registerEntry);
-    
+
     for (String mainClassName : mainClassNames) {
       block.addStmt(makeStatsCalls(program, mainClassName));
       JDeclaredType mainType = program.getFromTypeMap(mainClassName);

@@ -71,7 +71,7 @@ public class CatchBlockNormalizer {
         JMethod caughtMethod = program.getIndexedMethod("Exceptions.caught");
         JMethodCall call = new JMethodCall(catchInfo, null, caughtMethod);
         call.addArg(new JLocalRef(catchInfo, exVar));
-        newCatchBlock.addStmt(program.createAssignmentStmt(catchInfo,
+        newCatchBlock.addStmt(JProgram.createAssignmentStmt(catchInfo,
             new JLocalRef(catchInfo, exVar), call));
       }
 
@@ -153,9 +153,8 @@ public class CatchBlockNormalizer {
 
   private void pushTempLocal(SourceInfo sourceInfo) {
     if (localIndex == tempLocals.size()) {
-      JLocal newTemp = program.createLocal(sourceInfo,
-          ("$e" + localIndex).toCharArray(), program.getTypeJavaLangObject(),
-          false, currentMethodBody);
+      JLocal newTemp = JProgram.createLocal(sourceInfo, "$e" + localIndex,
+          program.getTypeJavaLangObject(), false, currentMethodBody);
       tempLocals.add(newTemp);
     }
     ++localIndex;

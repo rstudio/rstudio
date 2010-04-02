@@ -131,6 +131,39 @@ public class JProgram extends JNode {
     }
   }
 
+  /**
+   * Helper to create an assignment, used to initalize fields, etc.
+   */
+  public static JExpressionStatement createAssignmentStmt(SourceInfo info,
+      JExpression lhs, JExpression rhs) {
+    JBinaryOperation assign = new JBinaryOperation(info, lhs.getType(),
+        JBinaryOperator.ASG, lhs, rhs);
+    return assign.makeStatement();
+  }
+
+  public static JLocal createLocal(SourceInfo info, String name, JType type,
+      boolean isFinal, JMethodBody enclosingMethodBody) {
+    assert (name != null);
+    assert (type != null);
+    assert (enclosingMethodBody != null);
+    JLocal x = new JLocal(info, name, type, isFinal, enclosingMethodBody);
+    enclosingMethodBody.addLocal(x);
+    return x;
+  }
+
+  public static JParameter createParameter(SourceInfo info, String name,
+      JType type, boolean isFinal, boolean isThis, JMethod enclosingMethod) {
+    assert (name != null);
+    assert (type != null);
+    assert (enclosingMethod != null);
+
+    JParameter x = new JParameter(info, name, type, isFinal, isThis,
+        enclosingMethod);
+
+    enclosingMethod.addParam(x);
+    return x;
+  }
+
   public static String getJsniSig(JMethod method) {
     return getJsniSig(method, true);
   }
@@ -183,18 +216,6 @@ public class JProgram extends JNode {
           frag);
     }
     return latest;
-  }
-
-  private static String dotify(char[][] name) {
-    StringBuffer result = new StringBuffer();
-    for (int i = 0; i < name.length; ++i) {
-      if (i > 0) {
-        result.append('.');
-      }
-
-      result.append(name[i]);
-    }
-    return result.toString();
   }
 
   /**
@@ -393,46 +414,30 @@ public class JProgram extends JNode {
     optimizationsStarted = true;
   }
 
-  /**
-   * Helper to create an assignment, used to initalize fields, etc.
-   */
-  public JExpressionStatement createAssignmentStmt(SourceInfo info,
-      JExpression lhs, JExpression rhs) {
-    JBinaryOperation assign = new JBinaryOperation(info, lhs.getType(),
-        JBinaryOperator.ASG, lhs, rhs);
-    return assign.makeStatement();
-  }
-
-  public JClassType createClass(SourceInfo info, char[][] name,
+  public JClassType createClass(SourceInfo info, String name,
       boolean isAbstract, boolean isFinal) {
-    String sname = dotify(name);
-    return createClass(info, sname, isAbstract, isFinal);
-  }
-
-  public JClassType createClass(SourceInfo info, String sname,
-      boolean isAbstract, boolean isFinal) {
-    JClassType x = new JClassType(info, sname, isAbstract, isFinal);
+    JClassType x = new JClassType(info, name, isAbstract, isFinal);
 
     allTypes.add(x);
-    putIntoTypeMap(sname, x);
+    putIntoTypeMap(name, x);
 
-    if (CODEGEN_TYPES_SET.contains(sname)) {
+    if (CODEGEN_TYPES_SET.contains(name)) {
       codeGenTypes.add(x);
     }
-    if (INDEX_TYPES_SET.contains(sname)) {
+    if (INDEX_TYPES_SET.contains(name)) {
       indexedTypes.put(x.getShortName(), x);
-      if (sname.equals("java.lang.Object")) {
+      if (name.equals("java.lang.Object")) {
         typeJavaLangObject = x;
-      } else if (sname.equals("java.lang.String")) {
+      } else if (name.equals("java.lang.String")) {
         typeString = x;
         typeNonNullString = getNonNullType(x);
-      } else if (sname.equals("java.lang.Enum")) {
+      } else if (name.equals("java.lang.Enum")) {
         typeJavaLangEnum = x;
-      } else if (sname.equals("java.lang.Class")) {
+      } else if (name.equals("java.lang.Class")) {
         typeClass = x;
-      } else if (sname.equals("com.google.gwt.core.client.JavaScriptObject")) {
+      } else if (name.equals("com.google.gwt.core.client.JavaScriptObject")) {
         typeSpecialJavaScriptObject = x;
-      } else if (sname.equals("com.google.gwt.lang.ClassLiteralHolder")) {
+      } else if (name.equals("com.google.gwt.lang.ClassLiteralHolder")) {
         typeSpecialClassLiteralHolder = x;
       }
     }
@@ -454,100 +459,75 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JEnumType createEnum(SourceInfo info, char[][] name) {
-    String sname = dotify(name);
-    JEnumType x = new JEnumType(info, sname);
+  public JEnumType createEnum(SourceInfo info, String name) {
+    JEnumType x = new JEnumType(info, name);
     x.setSuperClass(getTypeJavaLangEnum());
 
     allTypes.add(x);
-    putIntoTypeMap(sname, x);
+    putIntoTypeMap(name, x);
 
     return x;
   }
 
-  public JField createEnumField(SourceInfo info, char[] name,
+  public JField createEnumField(SourceInfo info, String name,
       JEnumType enclosingType, JClassType type, int ordinal) {
     assert (name != null);
     assert (type != null);
     assert (ordinal >= 0);
 
-    String sname = String.valueOf(name);
-    JEnumField x = new JEnumField(info, sname, ordinal, enclosingType, type);
+    JEnumField x = new JEnumField(info, name, ordinal, enclosingType, type);
     enclosingType.addField(x);
     return x;
   }
 
-  public JExternalType createExternalType(SourceInfo info, char[][] name) {
+  public JExternalType createExternalType(SourceInfo info, String name) {
     JExternalType x;
-    String sname = dotify(name);
-    x = externalTypes.get(sname);
+    x = externalTypes.get(name);
     if (x != null) {
       return x;
     }
 
-    x = new JExternalType(info, sname);
-    if (INDEX_TYPES_SET.contains(sname)) {
+    x = new JExternalType(info, name);
+    if (INDEX_TYPES_SET.contains(name)) {
       indexedTypes.put(x.getShortName(), x);
     }
     return x;
   }
 
-  public JField createField(SourceInfo info, char[] name,
+  public JField createField(SourceInfo info, String name,
       JDeclaredType enclosingType, JType type, boolean isStatic,
       Disposition disposition) {
     assert (name != null);
     assert (enclosingType != null);
     assert (type != null);
 
-    String sname = String.valueOf(name);
-    JField x = new JField(info, sname, enclosingType, type, isStatic,
+    JField x = new JField(info, name, enclosingType, type, isStatic,
         disposition);
 
     if (indexedTypes.containsValue(enclosingType)) {
-      indexedFields.put(enclosingType.getShortName() + '.' + sname, x);
+      indexedFields.put(enclosingType.getShortName() + '.' + name, x);
     }
 
     enclosingType.addField(x);
     return x;
   }
 
-  public JInterfaceType createInterface(SourceInfo info, char[][] name) {
-    String sname = dotify(name);
-    JInterfaceType x = new JInterfaceType(info, sname);
+  public JInterfaceType createInterface(SourceInfo info, String name) {
+    JInterfaceType x = new JInterfaceType(info, name);
 
     allTypes.add(x);
-    putIntoTypeMap(sname, x);
+    putIntoTypeMap(name, x);
 
-    if (INDEX_TYPES_SET.contains(sname)) {
+    if (INDEX_TYPES_SET.contains(name)) {
       indexedTypes.put(x.getShortName(), x);
-      if (sname.equals("java.lang.Cloneable")) {
+      if (name.equals("java.lang.Cloneable")) {
         typeJavaLangCloneable = x;
-      } else if (sname.equals("java.io.Serializable")) {
+      } else if (name.equals("java.io.Serializable")) {
         typeJavaIoSerializable = x;
       }
     }
 
     return x;
-  }
-
-  public JLocal createLocal(SourceInfo info, char[] name, JType type,
-      boolean isFinal, JMethodBody enclosingMethodBody) {
-    assert (name != null);
-    assert (type != null);
-    assert (enclosingMethodBody != null);
-
-    JLocal x = new JLocal(info, String.valueOf(name), type, isFinal,
-        enclosingMethodBody);
-
-    enclosingMethodBody.addLocal(x);
-    return x;
-  }
-
-  public JMethod createMethod(SourceInfo info, char[] name,
-      JDeclaredType enclosingType, JType returnType, boolean isAbstract,
-      boolean isStatic, boolean isFinal, boolean isPrivate, boolean isNative) {
-    return createMethod(info, String.valueOf(name), enclosingType, returnType,
-        isAbstract, isStatic, isFinal, isPrivate, isNative);
   }
 
   public JMethod createMethod(SourceInfo info, String name,
@@ -570,19 +550,6 @@ public class JProgram extends JNode {
     }
 
     enclosingType.addMethod(x);
-    return x;
-  }
-
-  public JParameter createParameter(SourceInfo info, char[] name, JType type,
-      boolean isFinal, boolean isThis, JMethod enclosingMethod) {
-    assert (name != null);
-    assert (type != null);
-    assert (enclosingMethod != null);
-
-    JParameter x = new JParameter(info, String.valueOf(name), type, isFinal,
-        isThis, enclosingMethod);
-
-    enclosingMethod.addParam(x);
     return x;
   }
 

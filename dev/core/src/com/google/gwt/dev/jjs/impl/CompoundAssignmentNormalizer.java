@@ -440,8 +440,7 @@ public abstract class CompoundAssignmentNormalizer {
 
     if (temp == null) {
       temp = program.createLocal(currentMethodBody.getSourceInfo(),
-          (getTempPrefix() + localCounter++).toCharArray(), type, false,
-          currentMethodBody);
+          getTempPrefix() + localCounter++, type, false, currentMethodBody);
     }
     tracker.useLocal(temp);
     return temp;

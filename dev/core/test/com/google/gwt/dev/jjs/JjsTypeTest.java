@@ -141,7 +141,7 @@ public class JjsTypeTest extends TestCase {
 
     assertTrue(typeOracle.canTriviallyCast(classJso, classJso1));
     assertTrue(typeOracle.canTriviallyCast(classJso, classJso1));
-    
+
     assertTrue(typeOracle.canTriviallyCast(arrayOfA, intfSerializable));
     assertFalse(typeOracle.canTriviallyCast(intfSerializable, arrayOfA));
 
@@ -215,15 +215,14 @@ public class JjsTypeTest extends TestCase {
 
   private JClassType createClass(String className, JClassType superClass,
       boolean isAbstract, boolean isFinal) {
-    JClassType clazz = program.createClass(synthSource, CharOperation.splitOn(
-        '.', className.toCharArray()), isAbstract, isFinal);
+    JClassType clazz = program.createClass(synthSource, className, isAbstract,
+        isFinal);
     clazz.setSuperClass(superClass);
     return clazz;
   }
 
   private JInterfaceType createInterface(String className) {
-    JInterfaceType intf = program.createInterface(synthSource,
-        CharOperation.splitOn('.', className.toCharArray()));
+    JInterfaceType intf = program.createInterface(synthSource, className);
     return intf;
   }
 

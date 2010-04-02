@@ -680,7 +680,7 @@ public class GenerateJavaAST {
                 JParameter param = paramIt.next();
                 if (arg.matchingField != null) {
                   JField field = (JField) typeMap.get(arg);
-                  block.addStmt(program.createAssignmentStmt(info,
+                  block.addStmt(JProgram.createAssignmentStmt(info,
                       createVariableRef(info, field), createVariableRef(info,
                           param)));
                 }
@@ -692,7 +692,7 @@ public class GenerateJavaAST {
                 SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
                 JParameter param = paramIt.next();
                 JField field = (JField) typeMap.get(arg);
-                block.addStmt(program.createAssignmentStmt(info,
+                block.addStmt(JProgram.createAssignmentStmt(info,
                     createVariableRef(info, field), createVariableRef(info,
                         param)));
               }
@@ -1573,19 +1573,22 @@ public class GenerateJavaAST {
       if (x.collection.resolvedType.isArrayType()) {
         /**
          * <pre>
-         * for (T[] i$array = collection, int i$index = 0, int i$max = i$array.length;
-         *     i$index < i$max; ++i$index) {
+         * for (final T[] i$array = collection,
+         *          int i$index = 0,
+         *          final int i$max = i$array.length;
+         *      i$index < i$max; ++i$index) {
          *   T elementVar = i$array[i$index];
          *   // user action
          * }
          * </pre>
          */
-        JLocal arrayVar = createSyntheticLocal(info, elementVarName + "$array",
-            (JType) typeMap.get(x.collection.resolvedType));
-        JLocal indexVar = createSyntheticLocal(info, elementVarName + "$index",
-            program.getTypePrimitiveInt());
-        JLocal maxVar = createSyntheticLocal(info, elementVarName + "$max",
-            program.getTypePrimitiveInt());
+        JLocal arrayVar = JProgram.createLocal(info, elementVarName + "$array",
+            ((JType) typeMap.get(x.collection.resolvedType)), true,
+            currentMethodBody);
+        JLocal indexVar = JProgram.createLocal(info, elementVarName + "$index",
+            program.getTypePrimitiveInt(), false, currentMethodBody);
+        JLocal maxVar = JProgram.createLocal(info, elementVarName + "$max",
+            program.getTypePrimitiveInt(), true, currentMethodBody);
 
         List<JStatement> initializers = new ArrayList<JStatement>(3);
         // T[] i$array = arr
@@ -1626,8 +1629,9 @@ public class GenerateJavaAST {
          * }
          * </pre>
          */
-        JLocal iteratorVar = createSyntheticLocal(info, elementVarName
-            + "$iterator", program.getIndexedType("Iterator"));
+        JLocal iteratorVar = JProgram.createLocal(info,
+            (elementVarName + "$iterator"), program.getIndexedType("Iterator"),
+            false, currentMethodBody);
 
         List<JStatement> initializers = new ArrayList<JStatement>(1);
         // Iterator<T> i$iterator = collection.iterator()
@@ -2012,7 +2016,7 @@ public class GenerateJavaAST {
       }
     }
 
-   /**
+    /**
      * Create a bridge method. It calls a same-named method with the same
      * arguments, but with a different type signature.
      * 
@@ -2026,7 +2030,7 @@ public class GenerateJavaAST {
           GenerateJavaAST.class, "bridge method");
       // create the method itself
       JMethod bridgeMethod = program.createMethod(info,
-          jdtBridgeMethod.selector, clazz,
+          String.valueOf(jdtBridgeMethod.selector), clazz,
           (JType) typeMap.get(jdtBridgeMethod.returnType.erasure()), false,
           false, true, false, false);
       bridgeMethod.setSynthetic();
@@ -2098,13 +2102,12 @@ public class GenerateJavaAST {
         JFieldRef value = new JFieldRef(sourceInfo, null, field, type);
         map.propInits.add(new JsonObject.JsonPropInit(sourceInfo, key, value));
       }
-      JField mapField = program.createField(sourceInfo,
-          "enum$map".toCharArray(), type, map.getType(), true,
-          Disposition.FINAL);
+      JField mapField = program.createField(sourceInfo, "enum$map", type,
+          map.getType(), true, Disposition.FINAL);
 
       // Initialize in clinit.
       JMethodBody clinitBody = (JMethodBody) type.getMethods().get(0).getBody();
-      JExpressionStatement assignment = program.createAssignmentStmt(
+      JExpressionStatement assignment = JProgram.createAssignmentStmt(
           sourceInfo, createVariableRef(sourceInfo, mapField), map);
       clinitBody.getBlock().addStmt(assignment);
       return mapField;
@@ -2122,11 +2125,6 @@ public class GenerateJavaAST {
       List<JExpression> list = new ArrayList<JExpression>();
       addAllOuterThisRefsPlusSuperChain(list, expr, (JClassType) currentClass);
       return createThisRef(targetType, list);
-    }
-
-    private JLocal createSyntheticLocal(SourceInfo info, String name, JType type) {
-      return program.createLocal(info, name.toCharArray(), type, false,
-          currentMethodBody);
     }
 
     /**
@@ -2483,7 +2481,7 @@ public class GenerateJavaAST {
         if (type == null) {
           // Indicates a binary-only class literal
           type = program.createExternalType(info,
-              ((ReferenceBinding) value).compoundName);
+              BuildTypeMap.dotify(((ReferenceBinding) value).compoundName));
         }
         return Lists.<JAnnotationArgument> create(program.getLiteralClass(type));
 
@@ -2508,7 +2506,7 @@ public class GenerateJavaAST {
           toReturn = new JAnnotation(info, type);
         } else {
           JExternalType external = program.createExternalType(info,
-              annotationType.compoundName);
+              BuildTypeMap.dotify(annotationType.compoundName));
           toReturn = new JAnnotation(info, external);
         }
 
@@ -2575,7 +2573,7 @@ public class GenerateJavaAST {
         } else {
           // Indicates a binary-only annotation type
           JExternalType externalType = program.createExternalType(
-              x.getSourceInfo(), binding.compoundName);
+              x.getSourceInfo(), BuildTypeMap.dotify(binding.compoundName));
           annotation = new JAnnotation(x.getSourceInfo(), externalType);
         }
         processAnnotationProperties(x.getSourceInfo(), annotation,
