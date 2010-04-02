@@ -336,7 +336,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
    * implementation of NodeInfo.getKey().
    */
   protected Object getValueKey() {
-    return getParentNodeInfo().getKey(getValue());
+    return getParentNodeInfo().getListModel().getKey(getValue());
   }
 
   /**
@@ -353,7 +353,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
     ensureAnimationFrame().getStyle().setProperty("display", "");
 
     // Get the node info.
-    ListModel<C> listModel = nodeInfo.getListModel();
+    final ListModel<C> listModel = nodeInfo.getListModel();
     listReg = listModel.addListHandler(new ListHandler<C>() {
       public void onDataChanged(ListEvent<C> event) {
         // TODO - handle event start and length
@@ -364,8 +364,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
           for (TreeNodeView<?> child : children) {
             // Ignore child nodes that are closed
             if (child.getState()) {
-              Object key = child.getValueKey();
-              map.put(key, child);
+              map.put(child.getValueKey(), child);
             }
           }
         }
@@ -379,7 +378,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
         for (C childValue : event.getValues()) {
           // Remove any child elements that correspond to prior children
           // so the call to setInnerHtml will not destroy them
-          TreeNodeView<?> savedView = map.get(nodeInfo.getKey(childValue));
+          TreeNodeView<?> savedView = map.get(listModel.getKey(childValue));
           if (savedView != null) {
             savedView.getContainer().getFirstChild().removeFromParent();
           }
@@ -398,7 +397,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
         for (C childValue : event.getValues()) {
           TreeNodeView<C> child = createTreeNodeView(nodeInfo, childElem,
               childValue, null, idx);
-          TreeNodeView<?> savedChild = map.get(nodeInfo.getKey(childValue));
+          TreeNodeView<?> savedChild = map.get(listModel.getKey(childValue));
           // Copy the saved child's state into the new child
           if (savedChild != null) {
             child.children = savedChild.children;

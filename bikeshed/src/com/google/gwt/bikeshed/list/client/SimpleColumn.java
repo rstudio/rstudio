@@ -19,15 +19,11 @@ import com.google.gwt.bikeshed.cells.client.Cell;
 
 /**
  * A column that does not make use of view data.
- *
+ * 
  * @param <T> the row type
  * @param <C> the column type
  */
-public abstract class SimpleColumn<T, C>  extends Column<T, C, Void> {
-
-  public SimpleColumn(Cell<C, Void> cell, HasKey<T> hasKey) {
-    super(cell, hasKey);
-  }
+public abstract class SimpleColumn<T, C> extends Column<T, C, Void> {
 
   public SimpleColumn(Cell<C, Void> cell) {
     super(cell);

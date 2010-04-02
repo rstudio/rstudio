@@ -13,23 +13,27 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.bikeshed.list.client;
+package com.google.gwt.bikeshed.list.shared;
 
 /**
- * An interface for extracting a key from a value. The extracted key must
- * contain suitable implementations of hashCode() and equals().
- *
- * @param <C> the value type for which keys are to be returned
+ * <p>
+ * Implementors of {@link ProvidesKey} provide a key for list items.
+ * </p>
+ * <p>
+ * The key must implement a coherent set of {@link #equals(Object)} and
+ * {@link #hashCode()} methods. If the item type is a not uniquely identifiable,
+ * such as a list of {@link String}, the index can be used a the key.
+ * </p>
+ * 
+ * @param <T> the data type of records in the list
  */
-public interface HasKey<C> {
+public interface ProvidesKey<T> {
 
   /**
-   * Return a key that may be used to identify values that should be treated as
-   * the same in UI views.
-   *
-   * @param value a value of type C.
-   * @return an Object that implements appropriate hashCode() and equals()
-   *         methods.
+   * Get the key for a list item.
+   * 
+   * @param item the list item
+   * @return the key that represents the item
    */
-  Object getKey(C value);
+  Object getKey(T item);
 }

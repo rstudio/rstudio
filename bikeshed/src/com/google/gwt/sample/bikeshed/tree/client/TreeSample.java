@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.bikeshed.tree.client;
 
-import com.google.gwt.bikeshed.list.shared.SelectionModel.DefaultSelectionModel;
+import com.google.gwt.bikeshed.list.shared.SelectionModel.AbstractSelectionModel;
 import com.google.gwt.bikeshed.tree.client.SideBySideTreeView;
 import com.google.gwt.bikeshed.tree.client.StandardTreeView;
 import com.google.gwt.core.client.EntryPoint;
@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -32,7 +31,7 @@ import java.util.TreeSet;
  */
 public class TreeSample implements EntryPoint {
 
-  class MySelectionModel extends DefaultSelectionModel<Object> {
+  class MySelectionModel extends AbstractSelectionModel<Object> {
 
     private Label label;
     private Set<Object> selectedSet = new TreeSet<Object>();
@@ -45,24 +44,15 @@ public class TreeSample implements EntryPoint {
       return selectedSet.contains(object);
     }
 
+    @Override
     public void setSelected(Object object, boolean selected) {
-      setSelectedHelper(object, selected);
-      label.setText("Selected " + selectedSet.toString());
-    }
-
-    public void setSelected(List<Object> objects, boolean selected) {
-      for (Object object : objects) {
-        setSelectedHelper(object, selected);
-      }
-      label.setText("Selected " + selectedSet.toString());
-    }
-
-    public void setSelectedHelper(Object object, boolean selected) {
       if (selected) {
         selectedSet.add(object);
       } else {
         selectedSet.remove(object);
       }
+      label.setText("Selected " + selectedSet.toString());
+      super.setSelected(object, selected);
     }
   }
 

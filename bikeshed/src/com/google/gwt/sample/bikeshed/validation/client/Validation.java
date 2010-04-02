@@ -17,10 +17,10 @@ package com.google.gwt.sample.bikeshed.validation.client;
 
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.list.client.Column;
-import com.google.gwt.bikeshed.list.client.HasKey;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
 import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
+import com.google.gwt.bikeshed.list.shared.ProvidesKey;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -80,6 +80,11 @@ public class Validation implements EntryPoint {
       String zip = "300" + i;
       list.add(new Address("GA", zip));
     }
+    listModel.setKeyProvider(new ProvidesKey<Address>() {
+      public Object getKey(Address object) {
+        return object.key;
+      }
+    });
 
     PagingTableListView<Address> table = new PagingTableListView<Address>(
         listModel, 10);
@@ -90,14 +95,9 @@ public class Validation implements EntryPoint {
       }
     };
 
-    HasKey<Address> key = new HasKey<Address>() {
-      public Object getKey(Address object) {
-        return object.key;
-      }
-    };
     Column<Address, String, ValidatableField<String>> zipColumn =
       new Column<Address, String, ValidatableField<String>>(
-        new ValidatableInputCell(), key) {
+        new ValidatableInputCell()) {
       @Override
       public String getValue(Address object) {
         return object.zip;

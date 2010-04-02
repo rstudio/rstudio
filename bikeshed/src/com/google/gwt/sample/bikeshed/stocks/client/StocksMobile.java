@@ -78,6 +78,7 @@ public class StocksMobile {
         update();
       }
     };
+    favoritesListModel.setKeyProvider(StockQuote.KEY_PROVIDER);
 
     // Now create the UI.
     RootPanel.get().add(binder.createAndBindUi(this));

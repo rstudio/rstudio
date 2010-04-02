@@ -15,12 +15,23 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.shared;
 
+import com.google.gwt.bikeshed.list.shared.ProvidesKey;
+
 import java.io.Serializable;
 
 /**
  * A single stock quote.
  */
 public class StockQuote implements Serializable {
+
+  /**
+   * Provides the key for {@link StockQuote}.
+   */
+  public static final ProvidesKey<StockQuote> KEY_PROVIDER = new ProvidesKey<StockQuote>() {
+    public Object getKey(StockQuote item) {
+      return item.getTicker();
+    }
+  };
 
   private boolean favorite;
   private String name;

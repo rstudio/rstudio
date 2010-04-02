@@ -21,7 +21,7 @@ import com.google.gwt.bikeshed.list.client.PagingTableListView;
 import com.google.gwt.bikeshed.list.client.SimpleColumn;
 import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
-import com.google.gwt.bikeshed.list.shared.SelectionModel.DefaultSelectionModel;
+import com.google.gwt.bikeshed.list.shared.SelectionModel.AbstractSelectionModel;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -44,7 +44,7 @@ import java.util.TreeMap;
  */
 public class MailSample implements EntryPoint, ClickHandler {
 
-  class MailSelectionModel extends DefaultSelectionModel<Message> {
+  class MailSelectionModel extends AbstractSelectionModel<Message> {
     private static final int ALL = 0;
     private static final int NONE = 1;
     private static final int READ = 2;
@@ -73,14 +73,8 @@ public class MailSample implements EntryPoint, ClickHandler {
       this.search = canonicalize(search);
       updateListeners();
     }
-    
-    public void setSelected(List<Message> objects, boolean selected) {
-      for (Message object : objects) {
-        addException(object.id, selected);
-      }
-      updateListeners();
-    }
 
+    @Override
     public void setSelected(Message object, boolean selected) {
       addException(object.id, selected);
       updateListeners();
@@ -91,7 +85,8 @@ public class MailSample implements EntryPoint, ClickHandler {
       exceptions.clear();
       updateListeners();
     }
-    
+
+    @Override
     public String toString() {
       StringBuilder sb = new StringBuilder();
       switch (type) {
@@ -124,6 +119,7 @@ public class MailSample implements EntryPoint, ClickHandler {
         if (exceptions.get(i) != Boolean.TRUE) {
           continue;
         }
+
         if (first) {
           first = false;
           sb.append("+msg(s) ");
@@ -137,6 +133,7 @@ public class MailSample implements EntryPoint, ClickHandler {
         if (exceptions.get(i) != Boolean.FALSE) {
           continue;
         }
+
         if (first) {
           first = false;
           sb.append("-msg(s) ");
@@ -148,18 +145,14 @@ public class MailSample implements EntryPoint, ClickHandler {
       return sb.toString();
     }
 
-    public void updateListeners() {
-      super.updateListeners();
-      selectionLabel.setText("Selected " + this.toString());
-    }
-
     private void addException(int id, boolean selected) {
       Boolean currentlySelected = exceptions.get(id);
-      if (currentlySelected != null && currentlySelected.booleanValue() != selected) {
+      if (currentlySelected != null
+          && currentlySelected.booleanValue() != selected) {
         exceptions.remove(id);
       } else {
         exceptions.put(id, selected);
-      }      
+      }
     }
 
     private String canonicalize(String input) {
@@ -189,6 +182,11 @@ public class MailSample implements EntryPoint, ClickHandler {
         default:
           throw new IllegalStateException("type = " + type);
       }
+    }
+
+    private void updateListeners() {
+      selectionLabel.setText("Selected " + this.toString());
+      scheduleSelectionChangeEvent();
     }
   }
 
@@ -249,14 +247,12 @@ public class MailSample implements EntryPoint, ClickHandler {
       "Kaan Boulier", "Emilee Naoma", "Atino Alice", "Debby Renay",
       "Versie Nereida", "Ramon Erikson", "Karole Crissy", "Nelda Olsen",
       "Mariana Dann", "Reda Cheyenne", "Edelmira Jody", "Agueda Shante",
-      "Marla Dorris"
-  };
+      "Marla Dorris"};
 
   private static final String[] subjects = {
       "GWT rocks", "What's a widget?", "Money in Nigeria",
       "Impress your colleagues with bling-bling", "Degree available",
-      "Rolex Watches", "Re: Re: yo bud", "Important notice"
-  };
+      "Rolex Watches", "Re: Re: yo bud", "Important notice"};
 
   private Button allButton = new Button("Select All");
   private Button allOnPageButton = new Button("Select All On This Page");
@@ -278,7 +274,11 @@ public class MailSample implements EntryPoint, ClickHandler {
     if (source == noneButton) {
       selectionModel.setType(MailSelectionModel.NONE);
     } else if (source == allOnPageButton) {
-      selectionModel.setSelected(table.getDisplayedItems(), true);
+      selectionModel.setType(MailSelectionModel.NONE);
+      List<Message> selectedItems = table.getDisplayedItems();
+      for (Message item : selectedItems) {
+        selectionModel.setSelected(item, true);
+      }
     } else if (source == allButton) {
       selectionModel.setType(MailSelectionModel.ALL);
     } else if (source == readButton) {
@@ -346,7 +346,7 @@ public class MailSample implements EntryPoint, ClickHandler {
       }
     };
     table.addColumn(subjectColumn, "Subject");
-    
+
     Label searchLabel = new Label("Search Sender or Subject:");
     final TextBox searchBox = new TextBox();
     searchBox.addKeyUpHandler(new KeyUpHandler() {
@@ -362,11 +362,11 @@ public class MailSample implements EntryPoint, ClickHandler {
     unreadButton.addClickHandler(this);
     senderButton.addClickHandler(this);
     subjectButton.addClickHandler(this);
-    
+
     HorizontalPanel panel = new HorizontalPanel();
     panel.add(searchLabel);
     panel.add(searchBox);
-    
+
     RootPanel.get().add(panel);
     RootPanel.get().add(new HTML("<br>"));
     RootPanel.get().add(table);

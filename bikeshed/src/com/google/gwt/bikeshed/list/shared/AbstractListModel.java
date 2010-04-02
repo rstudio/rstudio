@@ -99,6 +99,11 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
   }
 
   /**
+   * The provider of keys for list items.
+   */
+  private ProvidesKey<T> keyProvider;
+
+  /**
    * The handlers that are listening to this model.
    */
   private List<DefaultListRegistration> registrations = new ArrayList<DefaultListRegistration>();
@@ -107,6 +112,26 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
     DefaultListRegistration reg = new DefaultListRegistration(handler);
     registrations.add(reg);
     return reg;
+  }
+
+  /**
+   * Get the key for a list item. The default implementation returns the item
+   * itself.
+   * 
+   * @param item the list item
+   * @return the key that represents the item
+   */
+  public Object getKey(T item) {
+    return keyProvider == null ? item : keyProvider.getKey(item);
+  }
+
+  /**
+   * Get the {@link ProvidesKey} that provides keys for list items.
+   * 
+   * @return the {@link ProvidesKey}
+   */
+  public ProvidesKey<T> getKeyProvider() {
+    return keyProvider;
   }
 
   /**
@@ -121,6 +146,15 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
       ranges[i] = new DefaultRange(reg.getStart(), reg.getLength());
     }
     return ranges;
+  }
+
+  /**
+   * Set the {@link ProvidesKey} that provides keys for list items.
+   * 
+   * @param keyProvider the {@link ProvidesKey}
+   */
+  public void setKeyProvider(ProvidesKey<T> keyProvider) {
+    this.keyProvider = keyProvider;
   }
 
   /**
@@ -159,8 +193,8 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
         int realStart = curStart < start ? start : curStart;
         int realEnd = curEnd > end ? end : curEnd;
         int realLength = realEnd - realStart;
-        List<T> realValues = values.subList(realStart - start,
-            realStart - start + realLength);
+        List<T> realValues = values.subList(realStart - start, realStart
+            - start + realLength);
         ListEvent<T> event = new ListEvent<T>(realStart, realLength, realValues);
         reg.getHandler().onDataChanged(event);
       }

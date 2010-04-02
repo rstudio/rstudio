@@ -21,7 +21,8 @@ import com.google.gwt.bikeshed.list.shared.ListModel;
 import com.google.gwt.bikeshed.list.shared.ListRegistration;
 import com.google.gwt.bikeshed.list.shared.SelectionModel;
 import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
-import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionListener;
+import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionChangeEvent;
+import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionChangeHandler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
@@ -33,6 +34,7 @@ import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -46,15 +48,23 @@ import java.util.List;
  */
 public class PagingTableListView<T> extends Widget {
 
+  private class TableSelectionHandler implements SelectionChangeHandler {
+    public void onSelectionChange(SelectionChangeEvent event) {
+      refresh();
+    }
+  }
+
   protected int curPage;
   private List<Column<T, ?, ?>> columns = new ArrayList<Column<T, ?, ?>>();
   private ArrayList<T> data = new ArrayList<T>();
   private List<Header<?>> footers = new ArrayList<Header<?>>();
   private List<Header<?>> headers = new ArrayList<Header<?>>();
   private ListRegistration listReg;
+  private ListModel<T> listModel;
   private int numPages;
 
   private int pageSize;
+  private HandlerRegistration selectionHandler;
   private SelectionModel<T> selectionModel;
 
   private TableElement table;
@@ -64,13 +74,8 @@ public class PagingTableListView<T> extends Widget {
   private TableSectionElement thead;
   private int totalSize;
 
-  private SelectionListener listener = new SelectionListener() {
-    public void selectionChanged() {
-      refresh();
-    }
-  };
-  
   public PagingTableListView(ListModel<T> listModel, final int pageSize) {
+    this.listModel = listModel;
     this.pageSize = pageSize;
     setElement(table = Document.get().createTableElement());
     thead = table.createTHead();
@@ -82,24 +87,6 @@ public class PagingTableListView<T> extends Widget {
     // those events actually needed by cells.
     sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.KEYEVENTS
         | Event.ONCHANGE);
-
-    // Attach to the list model.
-    listReg = listModel.addListHandler(new ListHandler<T>() {
-      public void onDataChanged(ListEvent<T> event) {
-        render(event.getStart(), event.getLength(), event.getValues());
-      }
-
-      public void onSizeChanged(SizeChangeEvent event) {
-        totalSize = event.getSize();
-        if (totalSize <= 0) {
-          numPages = 0;
-        } else {
-          numPages = 1 + (totalSize - 1) / pageSize;
-        }
-        setPage(curPage);
-      }
-    });
-    listReg.setRangeOfInterest(0, pageSize);
   }
 
   public void addColumn(Column<T, ?, ?> col) {
@@ -118,7 +105,7 @@ public class PagingTableListView<T> extends Widget {
   public void addColumn(Column<T, ?, ?> col, Header<?> header, Header<?> footer) {
     headers.add(header);
     footers.add(footer);
-    createHeadersAndFooters();  // TODO: defer header recreation
+    createHeadersAndFooters(); // TODO: defer header recreation
     columns.add(col);
     createRows();
     setPage(curPage); // TODO: better way to refresh?
@@ -131,11 +118,11 @@ public class PagingTableListView<T> extends Widget {
     }
     return data.get(indexOnPage);
   }
-  
+
   public List<T> getDisplayedItems() {
     return new ArrayList<T>(data);
   }
-  
+
   public int getNumDisplayedItems() {
     return Math.min(getPageSize(), totalSize - curPage * pageSize);
   }
@@ -148,11 +135,11 @@ public class PagingTableListView<T> extends Widget {
   public int getPage() {
     return curPage;
   }
-  
+
   public int getPageSize() {
     return pageSize;
   }
-  
+
   public void nextPage() {
     setPage(curPage + 1);
   }
@@ -184,14 +171,15 @@ public class PagingTableListView<T> extends Widget {
       T value = data.get(row);
       Column<T, ?, ?> column = columns.get(col);
 
-      column.onBrowserEvent(cell, curPage * pageSize + row, value, event);
+      column.onBrowserEvent(cell, curPage * pageSize + row, value, event,
+          listModel);
     }
   }
 
   public void previousPage() {
     setPage(curPage - 1);
   }
-  
+
   public void refresh() {
     listReg.setRangeOfInterest(curPage * pageSize, pageSize);
     updateRowVisibility();
@@ -233,11 +221,55 @@ public class PagingTableListView<T> extends Widget {
   }
 
   public void setSelectionModel(SelectionModel<T> selectionModel) {
-    if (this.selectionModel != null) {
-      this.selectionModel.removeListener(listener);
+    if (selectionHandler != null) {
+      selectionHandler.removeHandler();
+      selectionHandler = null;
     }
     this.selectionModel = selectionModel;
-    selectionModel.addListener(listener);
+    if (selectionModel != null && isAttached()) {
+      selectionHandler = selectionModel.addSelectionChangeHandler(new TableSelectionHandler());
+    }
+  }
+
+  @Override
+  protected void onLoad() {
+    // Attach a selection handler.
+    if (selectionModel != null) {
+      selectionHandler = selectionModel.addSelectionChangeHandler(new TableSelectionHandler());
+    }
+
+    // Attach to the list model.
+    listReg = listModel.addListHandler(new ListHandler<T>() {
+      public void onDataChanged(ListEvent<T> event) {
+        render(event.getStart(), event.getLength(), event.getValues());
+      }
+
+      public void onSizeChanged(SizeChangeEvent event) {
+        totalSize = event.getSize();
+        if (totalSize <= 0) {
+          numPages = 0;
+        } else {
+          numPages = 1 + (totalSize - 1) / pageSize;
+        }
+        setPage(curPage);
+      }
+    });
+    listReg.setRangeOfInterest(curPage * pageSize, pageSize);
+  }
+
+  @Override
+  protected void onUnload() {
+    // Detach the selection handler.
+    if (selectionHandler != null) {
+      selectionHandler.removeHandler();
+      selectionHandler = null;
+    }
+
+    // Detach from the list model.
+    if (listReg != null) {
+      listReg.removeHandler();
+      listReg = null;
+    }
   }
 
   protected void render(int start, int length, List<T> values) {
@@ -252,8 +284,8 @@ public class PagingTableListView<T> extends Widget {
       if (selectionModel != null && selectionModel.isSelected(q)) {
         row.setClassName("pagingTableListView selected");
       } else {
-        row.setClassName("pagingTableListView " +
-            ((indexOnPage & 0x1) == 0 ? "evenRow" : "oddRow"));
+        row.setClassName("pagingTableListView "
+            + ((indexOnPage & 0x1) == 0 ? "evenRow" : "oddRow"));
       }
 
       data.set(indexOnPage, q);
@@ -272,7 +304,8 @@ public class PagingTableListView<T> extends Widget {
     }
   }
 
-  private void createHeaders(List<Header<?>> headers, TableSectionElement section) {
+  private void createHeaders(List<Header<?>> headers,
+      TableSectionElement section) {
     StringBuilder sb = new StringBuilder();
     sb.append("<tr>");
     for (Header<?> header : headers) {
@@ -303,7 +336,8 @@ public class PagingTableListView<T> extends Widget {
 
     for (int r = 0; r < pageSize; ++r) {
       TableRowElement row = tbody.insertRow(0);
-      row.setClassName("pagingTableListView " + ((r & 0x1) == 0 ? "evenRow" : "oddRow"));
+      row.setClassName("pagingTableListView "
+          + ((r & 0x1) == 0 ? "evenRow" : "oddRow"));
 
       // TODO: use cloneNode() to make this even faster.
       for (int c = 0; c < numCols; ++c) {

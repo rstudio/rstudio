@@ -20,7 +20,7 @@ package com.google.gwt.bikeshed.list.shared;
  * 
  * @param <T> the data type of records in the list
  */
-public interface ListModel<T> {
+public interface ListModel<T> extends ProvidesKey<T> {
 
   /**
    * Add a {@link ListHandler} to the model.

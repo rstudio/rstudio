@@ -117,6 +117,7 @@ public class StocksDesktop implements EntryPoint, Updater {
         update();
       }
     };
+    searchListModel.setKeyProvider(StockQuote.KEY_PROVIDER);
 
     favoritesListModel = new AsyncListModel<StockQuote>() {
       @Override
@@ -124,6 +125,7 @@ public class StocksDesktop implements EntryPoint, Updater {
         update();
       }
     };
+    favoritesListModel.setKeyProvider(StockQuote.KEY_PROVIDER);
 
     playerScoresListModel = new AsyncListModel<PlayerInfo>() {
       @Override

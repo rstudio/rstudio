@@ -18,6 +18,7 @@ package com.google.gwt.bikeshed.list.client;
 import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.cells.client.ValueUpdater;
+import com.google.gwt.bikeshed.list.shared.ProvidesKey;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
@@ -37,28 +38,16 @@ import java.util.Map;
 // TODO - when can we get rid of a view data object?
 // TODO - should viewData implement some interface? (e.g., with commit/rollback/dispose)
 // TODO - have a ViewDataColumn superclass / SimpleColumn subclass
-public abstract class Column<T, C, V> implements HasCell<T, C, V> {
+public abstract class Column<T, C, V> {
 
   protected final Cell<C, V> cell;
 
   protected FieldUpdater<T, C, V> fieldUpdater;
 
-  /**
-   * An instance of HasKey<T> that is used to provide a key for a row object
-   * for the purpose of retrieving view data.  A value of null means that
-   * the row object itself will be used as the key.
-   */
-  protected HasKey<T> hasKey;
-
   protected Map<Object, V> viewDataMap = new HashMap<Object, V>();
 
-  public Column(Cell<C, V> cell, HasKey<T> hasKey) {
-    this.cell = cell;
-    this.hasKey = hasKey;
-  }
-
   public Column(Cell<C, V> cell) {
-    this(cell, null);
+    this.cell = cell;
   }
 
   public boolean consumesEvents() {
@@ -76,8 +65,8 @@ public abstract class Column<T, C, V> implements HasCell<T, C, V> {
   public abstract C getValue(T object);
 
   public void onBrowserEvent(Element elem, final int index, final T object,
-      NativeEvent event) {
-    Object key = hasKey == null ? object : hasKey.getKey(object);
+      NativeEvent event, ProvidesKey<T> providesKey) {
+    Object key = providesKey.getKey(object);
     V viewData = viewDataMap.get(key);
     V newViewData = cell.onBrowserEvent(elem,
         getValue(object), viewData, event, fieldUpdater == null ? null
