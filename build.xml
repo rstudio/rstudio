@@ -33,11 +33,16 @@
   <property name="gwt.apicheck.config" 
     location="tools/api-checker/config/gwt20_21userApi.conf"/>
 
+  <target name="dist-bikeshed" depends="buildonly"
+          description="[action] Build bikeshed and minimal stuff, without distro packaging">
+    <call-subproject subproject="bikeshed" subtarget="build" />
+    <gwt.ant dir="distro-source" target="build" />
+  </target>
+
   <target name="buildonly"
           description="[action] Minimal one-platform devel build, without distro packaging">
     <call-subproject subproject="dev" subtarget="build" />
     <call-subproject subproject="user" subtarget="build" />
-    <call-subproject subproject="bikeshed" subtarget="build" />
     <call-subproject subproject="servlet" subtarget="build" />
     <call-subproject subproject="jni" subtarget="build" />
   </target>
