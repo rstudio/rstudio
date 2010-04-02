@@ -634,7 +634,7 @@ public class GenerateJavaScriptAST {
       List<JsFunction> jsFuncs = popList(x.getMethods().size()); // methods
       List<JsNode> jsFields = popList(x.getFields().size()); // fields
 
-      if (x.hasClinit()) {
+      if (x.getClinitTarget() == x) {
         JsFunction superClinit = clinitMap.get(x.getSuperClass());
         JsFunction myClinit = jsFuncs.get(0);
         handleClinit(myClinit, superClinit);
@@ -898,7 +898,7 @@ public class GenerateJavaScriptAST {
       List<JsVar> jsFields = popList(x.getFields().size()); // fields
       List<JsStatement> globalStmts = jsProgram.getGlobalBlock().getStatements();
 
-      if (x.hasClinit()) {
+      if (x.getClinitTarget() == x) {
         JsFunction clinitFunc = jsFuncs.get(0);
         handleClinit(clinitFunc, null);
         globalStmts.add(clinitFunc.makeStmt());
@@ -1771,7 +1771,7 @@ public class GenerateJavaScriptAST {
         return null;
       }
 
-      JDeclaredType targetType = x.getEnclosingType();
+      JDeclaredType targetType = x.getEnclosingType().getClinitTarget();
       if (!currentMethod.getEnclosingType().checkClinitTo(targetType)) {
         return null;
       } else if (targetType.equals(program.getTypeClassLiteralHolder())) {
@@ -1802,7 +1802,7 @@ public class GenerateJavaScriptAST {
         return null;
       }
 
-      JMethod clinitMethod = enclosingType.getMethods().get(0);
+      JMethod clinitMethod = enclosingType.getClinitTarget().getMethods().get(0);
       SourceInfo sourceInfo = x.getSourceInfo().makeChild(
           GenerateJavaScriptVisitor.class, "clinit call");
       JsInvocation jsInvocation = new JsInvocation(sourceInfo);

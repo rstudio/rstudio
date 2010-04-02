@@ -222,6 +222,10 @@ public class JTypeOracle implements Serializable {
    */
   private final Map<JInterfaceType, Set<JClassType>> isImplementedMap = new IdentityHashMap<JInterfaceType, Set<JClassType>>();
 
+  private JDeclaredType javaIoSerializable;
+
+  private JDeclaredType javaLangCloneable;
+
   /**
    * Caches the {@link Object} class.
    */
@@ -261,7 +265,6 @@ public class JTypeOracle implements Serializable {
    * indirectly.
    */
   private final Map<JInterfaceType, Set<JInterfaceType>> superInterfaceMap = new IdentityHashMap<JInterfaceType, Set<JInterfaceType>>();
-
   /**
    * A map of all methods with virtual overrides, onto the collection of
    * overridden methods. Each key method's collections is a map of the set of
@@ -270,9 +273,6 @@ public class JTypeOracle implements Serializable {
    * override, see {@link #getAllVirtualOverrides(JMethod)}.
    */
   private final Map<JMethod, Map<JClassType, Set<JMethod>>> virtualUpRefMap = new IdentityHashMap<JMethod, Map<JClassType, Set<JMethod>>>();
-
-  private JDeclaredType javaIoSerializable;
-  private JDeclaredType javaLangCloneable;
 
   public JTypeOracle(JProgram program) {
     this.program = program;
@@ -348,16 +348,6 @@ public class JTypeOracle implements Serializable {
     return true;
   }
 
-  public boolean canTriviallyCast(JType type, JType qType) {
-    if (type instanceof JPrimitiveType && 
-        qType instanceof JPrimitiveType) {
-      return type == qType;
-    } else if (type instanceof JReferenceType && 
-        qType instanceof JReferenceType) {
-      return canTriviallyCast((JReferenceType) type, (JReferenceType) qType); 
-    }
-    return false;
-  }
   public boolean canTriviallyCast(JReferenceType type, JReferenceType qType) {
     if (type.canBeNull() && !qType.canBeNull()) {
       // Cannot reliably cast nullable to non-nullable
@@ -429,6 +419,16 @@ public class JTypeOracle implements Serializable {
       return true;
     }
 
+    return false;
+  }
+
+  public boolean canTriviallyCast(JType type, JType qType) {
+    if (type instanceof JPrimitiveType && qType instanceof JPrimitiveType) {
+      return type == qType;
+    } else if (type instanceof JReferenceType
+        && qType instanceof JReferenceType) {
+      return canTriviallyCast((JReferenceType) type, (JReferenceType) qType);
+    }
     return false;
   }
 
@@ -595,11 +595,8 @@ public class JTypeOracle implements Serializable {
    */
   public void recomputeAfterOptimizations() {
     Set<JDeclaredType> computed = new IdentityHashSet<JDeclaredType>();
-    for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
-      JDeclaredType type = program.getDeclaredTypes().get(i);
-      if (type.hasClinit()) {
-        computeHasClinit(type, computed);
-      }
+    for (JDeclaredType type : program.getDeclaredTypes()) {
+      computeHasClinitTarget(type, computed);
     }
   }
 
@@ -638,16 +635,32 @@ public class JTypeOracle implements Serializable {
     }
   }
 
-  private void computeHasClinit(JDeclaredType type, Set<JDeclaredType> computed) {
-    if (computeHasClinitRecursive(type, computed,
-        new IdentityHashSet<JDeclaredType>())) {
-      computed.add(type);
-    } else {
-      type.removeClinit();
+  private void computeHasClinitTarget(JDeclaredType type,
+      Set<JDeclaredType> computed) {
+    if (!type.hasClinit() || computed.contains(type)) {
+      return;
     }
+    if (type.getSuperClass() != null) {
+      /*
+       * Compute super first so that it's already been tightened to the tightest
+       * possible target; this ensures if we're tightened as well it's to the
+       * transitively tightest target.
+       */
+      computeHasClinitTarget(type.getSuperClass(), computed);
+    }
+    if (type.getClinitTarget() != type) {
+      // I already have a trivial clinit, just follow my super chain.
+      type.setClinitTarget(type.getSuperClass().getClinitTarget());
+    } else {
+      // I still have a real clinit, actually compute.
+      JDeclaredType target = computeHasClinitTargetRecursive(type, computed,
+          new IdentityHashSet<JDeclaredType>());
+      type.setClinitTarget(target);
+    }
+    computed.add(type);
   }
 
-  private boolean computeHasClinitRecursive(JDeclaredType type,
+  private JDeclaredType computeHasClinitTargetRecursive(JDeclaredType type,
       Set<JDeclaredType> computed, Set<JDeclaredType> alreadySeen) {
     // Track that we've been seen.
     alreadySeen.add(type);
@@ -657,9 +670,18 @@ public class JTypeOracle implements Serializable {
     CheckClinitVisitor v = new CheckClinitVisitor();
     v.accept(method);
     if (v.hasLiveCode()) {
-      return true;
+      return type;
     }
-    for (JDeclaredType target : v.getClinitTargets()) {
+    // Check for trivial super clinit.
+    JDeclaredType[] clinitTargets = v.getClinitTargets();
+    if (clinitTargets.length == 1) {
+      JDeclaredType singleTarget = clinitTargets[0];
+      if (type instanceof JClassType && singleTarget instanceof JClassType
+          && isSuperClass((JClassType) type, (JClassType) singleTarget)) {
+        return singleTarget.getClinitTarget();
+      }
+    }
+    for (JDeclaredType target : clinitTargets) {
       if (!target.hasClinit()) {
         // A false result is always accurate.
         continue;
@@ -670,7 +692,7 @@ public class JTypeOracle implements Serializable {
        * recomputed this run.
        */
       if (target.hasClinit() && computed.contains(target)) {
-        return true;
+        return type;
       }
 
       /*
@@ -681,15 +703,15 @@ public class JTypeOracle implements Serializable {
         continue;
       }
 
-      if (computeHasClinitRecursive(target, computed, alreadySeen)) {
+      if (computeHasClinitTargetRecursive(target, computed, alreadySeen) != null) {
         // Calling a non-empty clinit means I am a real clinit.
-        return true;
+        return type;
       } else {
         // This clinit is okay, keep going.
         continue;
       }
     }
-    return false;
+    return null;
   }
 
   /**

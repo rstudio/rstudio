@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
@@ -330,9 +331,9 @@ public class DeadCodeElimination {
         multi.exprs.add(instance);
       }
 
-      JMethodCall clinit = maybeCreateClinitCall(x);
-      if (clinit != null) {
-        multi.exprs.add(clinit);
+      if (x.hasClinit()) {
+        multi.exprs.add(createClinitCall(x.getSourceInfo(),
+            x.getField().getEnclosingType()));
       }
 
       if (literal != null) {
@@ -415,6 +416,10 @@ public class DeadCodeElimination {
         // Eliminate the call if the target is now empty.
         if (!targetType.hasClinit()) {
           ctx.replaceMe(program.getLiteralNull());
+        } else if (targetType != targetType.getClinitTarget()) {
+          // Tighten the target.
+          ctx.replaceMe(createClinitCall(x.getSourceInfo(),
+              targetType.getClinitTarget()));
         }
       }
     }
@@ -464,9 +469,9 @@ public class DeadCodeElimination {
       // Replace the new operation with a multi.
       JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
       multi.exprs.addAll(x.getArgs());
-      JMethodCall clinit = maybeCreateClinitCall(x);
-      if (clinit != null) {
-        multi.exprs.add(clinit);
+      if (x.hasClinit()) {
+        multi.exprs.add(createClinitCall(x.getSourceInfo(),
+            x.getTarget().getEnclosingType()));
       }
 
       ctx.replaceMe(accept(multi));
@@ -690,6 +695,13 @@ public class DeadCodeElimination {
         }
       }
       return true;
+    }
+
+    private JMethodCall createClinitCall(SourceInfo sourceInfo,
+        JDeclaredType targetType) {
+      JMethod clinit = targetType.getClinitTarget().getMethods().get(0);
+      assert (JProgram.isClinit(clinit));
+      return new JMethodCall(sourceInfo, null, clinit);
     }
 
     private void evalConcat(JExpression lhs, JExpression rhs, Context ctx) {
@@ -1202,24 +1214,6 @@ public class DeadCodeElimination {
 
     private Class<?> mapType(JType type) {
       return typeClassMap.get(type);
-    }
-
-    private JMethodCall maybeCreateClinitCall(JFieldRef x) {
-      if (x.hasClinit()) {
-        JMethod clinit = x.getField().getEnclosingType().getMethods().get(0);
-        assert (JProgram.isClinit(clinit));
-        return new JMethodCall(x.getSourceInfo(), null, clinit);
-      }
-      return null;
-    }
-
-    private JMethodCall maybeCreateClinitCall(JNewInstance x) {
-      if (x.hasClinit()) {
-        JMethod clinit = x.getTarget().getEnclosingType().getMethods().get(0);
-        assert (JProgram.isClinit(clinit));
-        return new JMethodCall(x.getSourceInfo(), null, clinit);
-      }
-      return null;
     }
 
     private int numRemovableExpressions(JMultiExpression x) {

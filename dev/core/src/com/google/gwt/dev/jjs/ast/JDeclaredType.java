@@ -52,10 +52,10 @@ public abstract class JDeclaredType extends JReferenceType implements
   protected transient List<JMethod> methods = Lists.create();
 
   /**
-   * Tracks whether this class has a dynamic clinit. Defaults to true until
-   * shown otherwise.
+   * Tracks the target static initialization for this class. Default to self
+   * until removed or set to be a superclass.
    */
-  private boolean hasClinit = true;
+  private JDeclaredType clinitTarget = this;
 
   /**
    * This type's super class.
@@ -124,17 +124,12 @@ public abstract class JDeclaredType extends JReferenceType implements
       // Target has no clinit (common case).
       return false;
     }
-
-    // See if I'm a subclass.
-    JClassType checkType = this.getSuperClass();
-    while (checkType != null) {
-      if (checkType == targetType) {
-        // I am a subclass.
-        return false;
-      }
-      checkType = checkType.getSuperClass();
-    }
-    return true;
+    /*
+     * The clinit for the source of the reference must already have run, so if
+     * it's the same as this one, there it must have already run. One example is
+     * a reference from a subclass to something in a superclass.
+     */
+    return this.getClinitTarget() != targetType.getClinitTarget();
   }
 
   public JAnnotation findAnnotation(String className) {
@@ -147,6 +142,14 @@ public abstract class JDeclaredType extends JReferenceType implements
 
   public List<JNode> getArtificialRescues() {
     return artificialRescues;
+  }
+
+  /**
+   * Returns the class that must be initialized to use this class. May be a
+   * superclass, or <code>null</code> if this class has no static initializer.
+   */
+  public JDeclaredType getClinitTarget() {
+    return clinitTarget;
   }
 
   /**
@@ -202,7 +205,7 @@ public abstract class JDeclaredType extends JReferenceType implements
    * Returns <code>true</code> when this class's clinit must be run dynamically.
    */
   public boolean hasClinit() {
-    return hasClinit;
+    return clinitTarget != null;
   }
 
   /**
@@ -265,7 +268,7 @@ public abstract class JDeclaredType extends JReferenceType implements
     annotations = (List<JAnnotation>) stream.readObject();
   }
 
-/**
+  /**
    * See {@link #writeMethodBodies(ObjectOutputStream).
    * 
    * @see #writeMethodBodies(ObjectOutputStream)
@@ -278,13 +281,19 @@ public abstract class JDeclaredType extends JReferenceType implements
   }
 
   /**
-   * Called when this class's clinit is empty or can be run at the top level.
+   * Called to set this class's trivial initializer to point to a superclass.
    */
-  void removeClinit() {
-    assert hasClinit();
-    JMethod clinitMethod = methods.get(0);
-    assert JProgram.isClinit(clinitMethod);
-    hasClinit = false;
+  void setClinitTarget(JDeclaredType newClinitTarget) {
+    if (clinitTarget == newClinitTarget) {
+      return;
+    }
+    if (getClass().desiredAssertionStatus()) {
+      // Make sure this is a pure upgrade to a superclass or null.
+      for (JDeclaredType current = clinitTarget; current != newClinitTarget; current = current.getSuperClass()) {
+        assert current.getSuperClass() != null;
+      }
+    }
+    clinitTarget = newClinitTarget;
   }
 
   /**

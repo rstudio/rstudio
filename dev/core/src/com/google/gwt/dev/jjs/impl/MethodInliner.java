@@ -155,8 +155,8 @@ public class MethodInliner {
     }
 
     private JMethodCall createClinitCall(JMethodCall x) {
-      JDeclaredType targetEnclosingType = x.getTarget().getEnclosingType();
-      if (!currentMethod.getEnclosingType().checkClinitTo(targetEnclosingType)) {
+      JDeclaredType targetType = x.getTarget().getEnclosingType().getClinitTarget();
+      if (!currentMethod.getEnclosingType().checkClinitTo(targetType)) {
         // Access from this class to the target class won't trigger a clinit
         return null;
       }
@@ -164,12 +164,12 @@ public class MethodInliner {
         // No clinit needed; target is really an instance method.
         return null;
       }
-      if (x.getTarget() == x.getTarget().getEnclosingType().getMethods().get(0)) {
+      if (JProgram.isClinit(x.getTarget())) {
         // This is a clinit call, doesn't need another clinit
         return null;
       }
 
-      JMethod clinit = targetEnclosingType.getMethods().get(0);
+      JMethod clinit = targetType.getMethods().get(0);
 
       // If the clinit is a non-native, empty body we can optimize it out here
       if (!clinit.isNative()
