@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.uibinder.rebind.DomCursor;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.StackLayoutPanel;
@@ -76,9 +75,7 @@ public class StackLayoutPanelParser implements ElementParser {
         HtmlInterpreter htmlInt = HtmlInterpreter.newInterpreterForUiObject(
             writer, fieldName);
         String size = children.header.consumeRequiredDoubleAttribute("size");
-        DomCursor cursor = writer.beginDomSection(fieldName + ".getElement()");
-        String html = children.header.consumeInnerHtml(htmlInt, cursor);
-        writer.endDomSection();
+        String html = children.header.consumeInnerHtml(htmlInt);
         writer.addStatement("%s.add(%s, \"%s\", true, %s);", fieldName,
             childFieldName, html, size);
       } else if (children.customHeader != null) {

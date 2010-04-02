@@ -97,10 +97,10 @@ public class UiBinderUtilTest extends GWTTestCase {
   }
 
   private void findAndAssertTextBeforeFirstChild(Element div, String id,
-      String firstText) {    
-    Document.get().getBody().appendChild(div);
+      String firstText) {
+    UiBinderUtil.TempAttachment t = UiBinderUtil.attachToDom(div);
     Element child = Document.get().getElementById(id);
-    Document.get().getBody().removeChild(div);    
+    t.detach();
     assertStartsWith(child.getInnerHTML(), firstText + "<");
   }
 
@@ -146,9 +146,9 @@ public class UiBinderUtilTest extends GWTTestCase {
       findAndAssertTextBeforeFirstChild(div, ableId, ableText);
       findAndAssertTextBeforeFirstChild(div, bakerId, bakerText);
       findAndAssertTextBeforeFirstChild(div, charlieId, charlieText);
-      Document.get().getBody().appendChild(div);
+      UiBinderUtil.TempAttachment t = UiBinderUtil.attachToDom(div);
       Element e = Document.get().getElementById(deltaId);
-      Document.get().getBody().removeChild(div);
+      t.detach();
       assertEquals(deltaText, e.getInnerText());
     } finally {
       // tearDown isn't reliable enough, e.g. doesn't fire when exceptions

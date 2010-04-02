@@ -379,15 +379,13 @@ public class XMLElement {
    * @param interpreter Called for each element, expected to return a string
    *          replacement for it, or null if it should be left as is
    */
-  public String consumeInnerHtml(Interpreter<String> interpreter,
-      DomCursor domCursor)
+  public String consumeInnerHtml(Interpreter<String> interpreter)
       throws UnableToCompleteException {
     if (interpreter == null) {
       throw new NullPointerException("interpreter must not be null");
     }
     StringBuffer buf = new StringBuffer();
-    GetInnerHtmlVisitor.getEscapedInnerHtml(elem, buf, interpreter, provider,
-        domCursor, logger);
+    GetInnerHtmlVisitor.getEscapedInnerHtml(elem, buf, interpreter, provider);
 
     clearChildren(elem);
     return buf.toString().trim();
@@ -397,11 +395,9 @@ public class XMLElement {
    * Refines {@link #consumeInnerHtml(Interpreter)} to handle
    * PostProcessingInterpreter.
    */
-  public String consumeInnerHtml(PostProcessingInterpreter<String> interpreter,
-      DomCursor domCursor)
+  public String consumeInnerHtml(PostProcessingInterpreter<String> interpreter)
       throws UnableToCompleteException {
-    String html = consumeInnerHtml((Interpreter<String>) interpreter, 
-        domCursor);
+    String html = consumeInnerHtml((Interpreter<String>) interpreter);
     return interpreter.postProcess(html);
   }
 

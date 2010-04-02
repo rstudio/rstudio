@@ -286,23 +286,6 @@ public class ElementTest extends GWTTestCase {
     assertEquals("foo", nodes.getItem(0).getInnerText());
     assertEquals("bar", nodes.getItem(1).getInnerText());
   }
-  
-  public void testGetNonTextElement() {
-    DivElement div = Document.get().createDivElement();
-    Text text1 = Document.get().createTextNode("my text");
-    DivElement innerDiv = Document.get().createDivElement();
-    Text text2 = Document.get().createTextNode(" ");
-    SpanElement span = Document.get().createSpanElement();
-    Text text3 = Document.get().createTextNode("my text2");
-    div.appendChild(text1);
-    div.appendChild(innerDiv);
-    div.appendChild(text2);
-    div.appendChild(span);
-    div.appendChild(text3);
-    
-    assertEquals(innerDiv, div.getNonTextChild(0));
-    assertEquals(span, div.getNonTextChild(1));
-  }
 
   public void testHasAttribute() {
     DivElement div = Document.get().createDivElement();

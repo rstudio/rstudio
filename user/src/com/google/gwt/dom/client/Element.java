@@ -719,6 +719,4 @@ public class Element extends Node {
      // on some browsers.
      this.title = title || '';
    }-*/;
-  
-  
 }

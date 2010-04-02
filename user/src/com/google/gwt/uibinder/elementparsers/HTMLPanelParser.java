@@ -18,7 +18,6 @@ package com.google.gwt.uibinder.elementparsers;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.uibinder.elementparsers.HtmlMessageInterpreter.PlaceholderInterpreterProvider;
-import com.google.gwt.uibinder.rebind.DomCursor;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.messages.MessageWriter;
@@ -46,10 +45,10 @@ public class HTMLPanelParser implements ElementParser {
      */
     HtmlInterpreter htmlInterpreter = makeHtmlInterpreter(fieldName, writer);
 
-    DomCursor cursor = writer.beginDomSection(fieldName + ".getElement()");
+    writer.beginAttachedSection(fieldName + ".getElement()");
     String html = elem.consumeInnerHtml(InterpreterPipe.newPipe(
-        widgetInterpreter, htmlInterpreter), cursor);
-    writer.endDomSection();
+        widgetInterpreter, htmlInterpreter));
+    writer.endAttachedSection();
 
     /*
      * HTMLPanel has no no-arg ctor, so we have to generate our own, using the

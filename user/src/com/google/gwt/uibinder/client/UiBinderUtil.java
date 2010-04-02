@@ -18,14 +18,67 @@ package com.google.gwt.uibinder.client;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.UIObject;
 
 /**
  * Static helper methods used by UiBinder. These methods are likely to move,
  * so please don't use them for non-UiBinder code.
  */
 public class UiBinderUtil {
+  /**
+   * Temporary attachment record that keeps track of where an element was
+   * before attachment.  Use the detach method to put things back.
+   *
+   */
+  public static class TempAttachment {
+    private final Element element;
+    private final Element origParent;
+    private final Element origSibling;    
+    
+    private TempAttachment(Element origParent, Element origSibling, 
+        Element element) {
+      this.origParent = origParent;
+      this.origSibling = origSibling;
+      this.element = element;
+    }
+    
+    /**
+     * Restore to previous DOM state before attachment.
+     */
+    public void detach() {
+      // Put the panel's element back where it was.
+      if (origParent != null) {
+        origParent.insertBefore(element, origSibling);
+      } else {
+        orphan(element);
+      }
+    }
+  }  
   
   private static Element hiddenDiv;
+  
+  /**
+   * Attaches the element to the dom temporarily.  Keeps track of where it is 
+   * attached so that things can be put back latter.
+   * 
+   * @return attachment record which can be used for reverting back to previous
+   *         DOM state
+   */
+  public static TempAttachment attachToDom(Element element) {
+    // TODO(rjrjr) This is copied from HTMLPanel. Reconcile
+    ensureHiddenDiv();
+    
+    // Hang on to the panel's original parent and sibling elements so that it
+    // can be replaced.
+    Element origParent = element.getParentElement();
+    Element origSibling = element.getNextSiblingElement();
+
+    // Attach the panel's element to the hidden div.
+    hiddenDiv.appendChild(element);
+    
+    return new TempAttachment(origParent, origSibling, element);
+  }
 
   public static Element fromHtml(String html) {
     ensureHiddenDiv();
@@ -34,57 +87,13 @@ public class UiBinderUtil {
     orphan(newbie);
     return newbie;
   }
-  
-  public static Node getChild(Node node, int child) {
-    return node.getChild(child);
-  }
-  
-  public static Node getNonTextChild(Node node, int child) {
-    return node.getNonTextChild(child);
-  }
-  
-  public static Node getTableChild(Node node, int child) {
-    // If the table, has a tbody inside...
-    Element table = (Element)node;
-    Element firstChild = table.getNonTextChild(0).cast();
-    if ("tbody".equalsIgnoreCase(firstChild.getTagName())) {
-      return firstChild.getNonTextChild(child);
-    } else {
-      return table.getNonTextChild(child);
-    }
-  }
-  
-  public static native Element lookupNodeByTreeIndicies(Element parent, String query,
-      String xpath) /*-{
-    if (parent.querySelector) {
-      return parent.querySelector(query);
-    } else {
-      return parent.ownerDocument.evaluate(
-        xpath, parent, null, XPathResult.ANY_TYPE, null).iterateNext();
-    }
-  }-*/;
-  
-  public static native Element lookupNodeByTreeIndiciesIE(Element parent, int[] indicies) /*-{
-  var currentNode = parent;
-  for(var i = 0; i < indicies.length; i = i + 1) {
-    currentNode = currentNode.children[indicies[i]];
-  }
-  return currentNode;
-}-*/;
-  
-  public static native Element lookupNodeByTreeIndiciesUsingQuery(Element parent, String query) /*-{
-    return parent.querySelector(query);
-  }-*/; 
-  
-  public static native Element lookupNodeByTreeIndiciesUsingXpath(Element parent, String xpath) /*-{
-    return parent.ownerDocument.evaluate(
-        xpath, parent, null, XPathResult.ANY_TYPE, null).iterateNext();
-  }-*/; 
-  
+
   private static void ensureHiddenDiv() {
     // If the hidden DIV has not been created, create it.
     if (hiddenDiv == null) {
-      hiddenDiv = Document.get().createDivElement();      
+      hiddenDiv = Document.get().createDivElement();
+      UIObject.setVisible(hiddenDiv, false);
+      RootPanel.getBodyElement().appendChild(hiddenDiv);
     }
   }
 
