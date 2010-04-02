@@ -32,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
+import com.google.gwt.dev.util.PerfCounter;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -177,7 +178,13 @@ public class SameParameterValueOptimizer {
   }
 
   public static boolean exec(JProgram program) {
-    return new SameParameterValueOptimizer(program).execImpl(program);
+    PerfCounter.start("SameParameterValueOptimizer.exec");
+    boolean didChange = new SameParameterValueOptimizer(program).execImpl(program);
+    PerfCounter.end("SameParameterValueOptimizer.exec");
+    if (didChange) {
+      PerfCounter.inc("SameParameterValueOptimizer.exec.didChange");
+    }
+    return didChange;
   }
 
   /**

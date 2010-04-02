@@ -36,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
+import com.google.gwt.dev.util.PerfCounter;
 
 import java.util.HashSet;
 import java.util.List;
@@ -492,7 +493,13 @@ public class MethodInliner {
   }
 
   public static boolean exec(JProgram program) {
-    return new MethodInliner(program).execImpl();
+    PerfCounter.start("MethodInliner.exec");
+    boolean didChange = new MethodInliner(program).execImpl();
+    PerfCounter.end("MethodInliner.exec");
+    if (didChange) {
+      PerfCounter.inc("MethodInliner.exec.didChange");
+    }
+    return didChange;
   }
 
   /**

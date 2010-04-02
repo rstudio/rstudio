@@ -32,16 +32,19 @@ import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAnalysis;
 import com.google.gwt.dev.jjs.impl.gflow.copy.CopyAnalysis;
 import com.google.gwt.dev.jjs.impl.gflow.liveness.LivenessAnalysis;
 import com.google.gwt.dev.jjs.impl.gflow.unreachable.UnreachableAnalysis;
-import com.google.gwt.dev.util.PerfLogger;
+import com.google.gwt.dev.util.PerfCounter;
 import com.google.gwt.dev.util.Preconditions;
 
 /**
  */
 public class DataflowOptimizer {
   public static boolean exec(JProgram jprogram, JNode node) {
-    PerfLogger.start("DataflowOptimizer");
+    PerfCounter.start("DataflowOptimizer.exec");
     boolean didChange = new DataflowOptimizer(jprogram).execImpl(node);
-    PerfLogger.end();
+    PerfCounter.end("DataflowOptimizer.exec");
+    if (didChange) {
+      PerfCounter.inc("DataflowOptimizer.exec.didChange");
+    }
     return didChange;
   }
 

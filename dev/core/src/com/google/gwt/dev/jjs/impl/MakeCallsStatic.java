@@ -43,6 +43,7 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsThisRef;
+import com.google.gwt.dev.util.PerfCounter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -330,7 +331,13 @@ public class MakeCallsStatic {
   }
 
   public static boolean exec(JProgram program) {
-    return new MakeCallsStatic(program).execImpl();
+    PerfCounter.start("MakeCallsStatic.exec");
+    boolean didChange = new MakeCallsStatic(program).execImpl();
+    PerfCounter.end("MakeCallsStatic.exec");
+    if (didChange) {
+      PerfCounter.inc("MakeCallsStatic.exec.didChange");
+    }
+    return didChange;
   }
 
   static JExpression makeStaticCall(JMethodCall x, JMethod newMethod) {

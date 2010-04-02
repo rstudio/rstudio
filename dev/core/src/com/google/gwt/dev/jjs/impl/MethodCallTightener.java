@@ -27,6 +27,7 @@ import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.util.PerfCounter;
 
 /**
  * Update polymorphic method calls to tighter bindings based on the type of the
@@ -138,7 +139,13 @@ public class MethodCallTightener {
   }
 
   public static boolean exec(JProgram program) {
-    return new MethodCallTightener(program).execImpl();
+    PerfCounter.start("MethodCallTightener.exec");
+    boolean didChange = new MethodCallTightener(program).execImpl();
+    PerfCounter.end("MethodCallTightener.exec");
+    if (didChange) {
+      PerfCounter.inc("MethodCallTightener.exec.didChange");
+    }
+    return didChange;
   }
 
   private final JProgram program;

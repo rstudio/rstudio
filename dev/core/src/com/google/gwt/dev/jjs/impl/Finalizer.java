@@ -35,6 +35,7 @@ import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
+import com.google.gwt.dev.util.PerfCounter;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -188,7 +189,13 @@ public class Finalizer {
   }
 
   public static boolean exec(JProgram program) {
-    return new Finalizer().execImpl(program);
+    PerfCounter.start("Finalizer.exec");
+    boolean didChange = new Finalizer().execImpl(program);
+    PerfCounter.end("Finalizer.exec");
+    if (didChange) {
+      PerfCounter.inc("Finalizer.exec.didChange");
+    }
+    return didChange;
   }
 
   private final Set<JMethod> isOverriden = new HashSet<JMethod>();

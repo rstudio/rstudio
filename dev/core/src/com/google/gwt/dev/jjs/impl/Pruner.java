@@ -50,6 +50,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.util.PerfCounter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -525,7 +526,13 @@ public class Pruner {
   }
 
   public static boolean exec(JProgram program, boolean noSpecialTypes) {
-    return new Pruner(program, noSpecialTypes).execImpl();
+    PerfCounter.start("Pruner.exec");
+    boolean didChange = new Pruner(program, noSpecialTypes).execImpl();
+    PerfCounter.end("Pruner.exec");
+    if (didChange) {
+      PerfCounter.inc("Pruner.exec.didChange");
+    }
+    return didChange;
   }
 
   /**

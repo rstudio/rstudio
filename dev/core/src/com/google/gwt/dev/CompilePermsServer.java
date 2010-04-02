@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.FileBackedObject;
+import com.google.gwt.dev.util.PerfCounter;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -228,15 +229,18 @@ public class CompilePermsServer {
   }
 
   public static void main(String[] args) {
+    int exitCode = -1;
     final CompileServerOptions options = new CompileServerOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(options.getLogLevel());
       if (run(options, logger)) {
-        System.exit(0);
+        exitCode = 0;
       }
     }
-    System.exit(-1);
+
+    PerfCounter.print();
+    System.exit(exitCode);
   }
 
   public static boolean run(CompileServerOptions options, TreeLogger logger) {

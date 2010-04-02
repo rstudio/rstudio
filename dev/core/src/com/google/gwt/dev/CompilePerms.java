@@ -25,6 +25,7 @@ import com.google.gwt.dev.cfg.PropertyPermutations;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.FileBackedObject;
+import com.google.gwt.dev.util.PerfCounter;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.OptionLocalWorkers;
@@ -206,6 +207,7 @@ public class CompilePerms {
   }
 
   public static void main(String[] args) {
+    int exitCode = -1;
     /*
      * NOTE: main always exits with a call to System.exit to terminate any
      * non-daemon threads that were started in Generators. Typically, this is to
@@ -221,11 +223,11 @@ public class CompilePerms {
       };
       if (CompileTaskRunner.runWithAppropriateLogger(options, task)) {
         // Exit w/ success code.
-        System.exit(0);
+        exitCode = 0;
       }
     }
-    // Exit w/ non-success code.
-    System.exit(1);
+    PerfCounter.print();
+    System.exit(exitCode);
   }
 
   public static List<FileBackedObject<PermutationResult>> makeResultFiles(

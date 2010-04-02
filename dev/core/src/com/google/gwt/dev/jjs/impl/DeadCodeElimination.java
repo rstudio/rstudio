@@ -62,6 +62,7 @@ import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
+import com.google.gwt.dev.util.PerfCounter;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -1789,11 +1790,23 @@ public class DeadCodeElimination {
   }
 
   public static boolean exec(JProgram program) {
-    return new DeadCodeElimination(program).execImpl(program);
+    PerfCounter.start("DeadCodeElimination.exec");
+    boolean didChange = new DeadCodeElimination(program).execImpl(program);
+    PerfCounter.end("DeadCodeElimination.exec");
+    if (didChange) {
+      PerfCounter.inc("DeadCodeElimination.exec.didChange");
+    }
+    return didChange;
   }
 
   public static boolean exec(JProgram program, JNode node) {
-    return new DeadCodeElimination(program).execImpl(node);
+    PerfCounter.start("DeadCodeElimination.execNode");
+    boolean didChange = new DeadCodeElimination(program).execImpl(node);
+    PerfCounter.end("DeadCodeElimination.execNode");
+    if (didChange) {
+      PerfCounter.inc("DeadCodeElimination.execNode.didChange");
+    }
+    return didChange;
   }
 
   private final JProgram program;

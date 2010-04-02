@@ -53,6 +53,7 @@ import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
+import com.google.gwt.dev.util.PerfCounter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -804,7 +805,13 @@ public class TypeTightener {
   }
 
   public static boolean exec(JProgram program) {
-    return new TypeTightener(program).execImpl();
+    PerfCounter.start("TypeTightener.exec");
+    boolean didChange = new TypeTightener(program).execImpl();
+    PerfCounter.end("TypeTightener.exec");
+    if (didChange) {
+      PerfCounter.inc("TypeTightener.exec.didChange");
+    }
+    return didChange;
   }
 
   private static <T, V> void add(T target, V value, Map<T, Set<V>> map) {

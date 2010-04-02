@@ -117,6 +117,7 @@ import com.google.gwt.dev.util.AbstractTextOutput;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Memory;
+import com.google.gwt.dev.util.PerfCounter;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.Util;
@@ -623,6 +624,7 @@ public class JavaToJavaScriptCompiler {
      */
     jprogram.beginOptimizations();
 
+    PerfCounter.start("JavaToJavaScriptCompiler.optimize");
     PerfLogger.start("optimize");
     do {
       if (Thread.interrupted()) {
@@ -637,12 +639,14 @@ public class JavaToJavaScriptCompiler {
       DataflowOptimizer.exec(jprogram);
     }
 
+    PerfCounter.end("JavaToJavaScriptCompiler.optimize");
     PerfLogger.end();
   }
 
   protected static boolean optimizeLoop(JProgram jprogram,
       boolean isAggressivelyOptimize) {
     PerfLogger.start("optimize loop");
+    PerfCounter.start("JavaToJavaScriptCompiler.optimizeLoop");
 
     // Recompute clinits each time, they can become empty.
     jprogram.typeOracle.recomputeAfterOptimizations();
@@ -681,6 +685,7 @@ public class JavaToJavaScriptCompiler {
     // prove that any types that have been culled from the main tree are
     // unreferenced due to type tightening?
 
+    PerfCounter.end("JavaToJavaScriptCompiler.optimizeLoop");
     PerfLogger.end();
     return didChange;
   }
