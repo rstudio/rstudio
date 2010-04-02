@@ -20,6 +20,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
@@ -162,6 +164,7 @@ public class PopupTest extends GWTTestCase {
    * behavior because, when we detach a {@link MenuBar} from the page, it closes
    * all of its sub menus, each located in a different {@link PopupPanel}.
    */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testDependantPopupPanel() {
     // Create the dependent popup
     final PopupPanel dependantPopup = createPopupPanel();

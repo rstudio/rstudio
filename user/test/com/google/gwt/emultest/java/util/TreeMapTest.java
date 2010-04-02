@@ -17,6 +17,8 @@ package com.google.gwt.emultest.java.util;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 
 import org.apache.commons.collections.TestMap;
 
@@ -1131,6 +1133,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
    * @see java.util.Map#put(Object, Object)
    */
   @SuppressWarnings("unchecked")
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testPut_throwsClassCastException_key() {
     // The _throwsUnsupportedOperationException version of this test will
     // verify that the method is not supported.
