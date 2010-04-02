@@ -25,5 +25,21 @@
       that you don't want the translators to mess with. You can protect
       these with <span style="font-weight:bold"
         ui:ph="boldSpan">placeholders</span><ui:ph name="tm"><sup ui:field="tmElement">TM</sup></ui:ph>.</ui:msg></p>
+  <table>
+    <col ui:field='narrowColumn' width='0%'></col>
+    <col width='100%'></col>
+    <tr ui:field='tr'>
+      <th ui:field='th1'>Tables with col elements</th>
+      <th ui:field='th2' align='left'>are</th>
+      <th ui:field='th3' align='left'>tricky</th>
+    </tr>
+  </table>
+  <table>
+    <tbody ui:field='tbody'>
+    <tr ui:field='tr2'>
+      <th ui:field='th4'>Tables with tbody elements too</th>
+    </tr>
+    </tbody>
+  </table>
   </div>
 </ui:UiBinder>

@@ -70,6 +70,18 @@ public class UiBinderTest extends GWTTestCase {
     super.gwtTearDown();
   }
   
+  public void testTableWithColumns() {
+    assertEquals("col", domUi.narrowColumn.getTagName().toLowerCase());
+    assertEquals("tr", domUi.tr.getTagName().toLowerCase());
+    assertEquals("th", domUi.th1.getTagName().toLowerCase());
+    assertEquals("th", domUi.th2.getTagName().toLowerCase());
+  }
+  
+  public void testTableWithExplicitTbody() {
+    assertEquals("tbody", domUi.tbody.getTagName().toLowerCase());
+    assertEquals("th", domUi.th4.getTagName().toLowerCase());
+  }
+  
   public void testAutoboxingFieldRef() {
     FakeBundle fakeBundle = new FakeBundle();
 
