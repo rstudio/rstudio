@@ -42,7 +42,6 @@ import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
@@ -58,10 +57,8 @@ import java.util.List;
  */
 public class CloneExpressionVisitor extends JVisitor {
   private JExpression expression;
-  private JProgram program;
 
-  public CloneExpressionVisitor(JProgram program) {
-    this.program = program;
+  public CloneExpressionVisitor() {
   }
 
   @SuppressWarnings("unchecked")
@@ -228,7 +225,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JNameOf x, Context ctx) {
-    expression = new JNameOf(x.getSourceInfo(), program, x.getNode());
+    expression = new JNameOf(x.getSourceInfo(), x.getType(), x.getNode());
     return false;
   }
 
@@ -294,7 +291,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JThisRef x, Context ctx) {
-    expression = program.getExprThisRef(x.getSourceInfo(), x.getClassType());
+    expression = new JThisRef(x.getSourceInfo(), x.getType());
     return false;
   }
 }

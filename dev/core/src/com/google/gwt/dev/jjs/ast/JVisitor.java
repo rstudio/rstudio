@@ -519,7 +519,7 @@ public class JVisitor {
   }
 
   public boolean visit(JContinueStatement x, Context ctx) {
-    return visit((JNode) x, ctx);
+    return visit((JStatement) x, ctx);
   }
 
   public boolean visit(JDeclarationStatement x, Context ctx) {

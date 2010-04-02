@@ -19,6 +19,7 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 
 /**
@@ -28,11 +29,11 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 public class PostOptimizationCompoundAssignmentNormalizer extends
     CompoundAssignmentNormalizer {
   public static void exec(JProgram program) {
-    new PostOptimizationCompoundAssignmentNormalizer(program).breakUpAssignments();
+    new PostOptimizationCompoundAssignmentNormalizer().accept(program);
   }
 
-  protected PostOptimizationCompoundAssignmentNormalizer(JProgram program) {
-    super(program, true);
+  protected PostOptimizationCompoundAssignmentNormalizer() {
+    super(true);
   }
 
   @Override
@@ -42,12 +43,12 @@ public class PostOptimizationCompoundAssignmentNormalizer extends
 
   @Override
   protected boolean shouldBreakUp(JBinaryOperation x) {
-    if (x.getType() == program.getTypePrimitiveLong()) {
+    if (x.getType() == JPrimitiveType.LONG) {
       return true;
     }
     if (x.getOp() == JBinaryOperator.ASG_DIV
-        && x.getType() != program.getTypePrimitiveFloat()
-        && x.getType() != program.getTypePrimitiveDouble()) {
+        && x.getType() != JPrimitiveType.FLOAT
+        && x.getType() != JPrimitiveType.DOUBLE) {
       return true;
     }
     return false;
@@ -55,7 +56,7 @@ public class PostOptimizationCompoundAssignmentNormalizer extends
 
   @Override
   protected boolean shouldBreakUp(JPostfixOperation x) {
-    if (x.getType() == program.getTypePrimitiveLong()) {
+    if (x.getType() == JPrimitiveType.LONG) {
       return true;
     }
     return false;
@@ -63,7 +64,7 @@ public class PostOptimizationCompoundAssignmentNormalizer extends
 
   @Override
   protected boolean shouldBreakUp(JPrefixOperation x) {
-    if (x.getType() == program.getTypePrimitiveLong()) {
+    if (x.getType() == JPrimitiveType.LONG) {
       return true;
     }
     return false;

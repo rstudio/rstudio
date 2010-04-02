@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.liveness;
 
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.gflow.CfgIntegratedAnalysisTestBase;
 import com.google.gwt.dev.jjs.impl.gflow.IntegratedAnalysis;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
@@ -86,8 +85,7 @@ public class LivenessTransformationTest extends CfgIntegratedAnalysisTestBase<Li
   }
   
   @Override
-  protected IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, LivenessAssumption> createIntegratedAnalysis(
-      JProgram program) {
+  protected IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, LivenessAssumption> createIntegratedAnalysis() {
     return new LivenessAnalysis();
   }
 }

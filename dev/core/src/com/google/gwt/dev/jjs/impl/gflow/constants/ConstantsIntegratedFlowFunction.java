@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.constants;
 
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.gflow.AssumptionMap;
 import com.google.gwt.dev.jjs.impl.gflow.IntegratedFlowFunction;
 import com.google.gwt.dev.jjs.impl.gflow.TransformationFunction.Transformation;
@@ -35,8 +34,8 @@ public class ConstantsIntegratedFlowFunction
 
   private final ConstantsTransformationFunction transformationFunction;
 
-  public ConstantsIntegratedFlowFunction(JProgram program) {
-    transformationFunction = new ConstantsTransformationFunction(program);
+  public ConstantsIntegratedFlowFunction() {
+    transformationFunction = new ConstantsTransformationFunction();
   }
 
   public Transformation<CfgTransformer, Cfg> interpretOrReplace(

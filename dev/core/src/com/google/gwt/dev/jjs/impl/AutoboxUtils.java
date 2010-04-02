@@ -139,14 +139,14 @@ public class AutoboxUtils {
 
   private void computeBoxablePrimitiveTypes() {
     boxablePrimitiveTypes = new LinkedHashSet<JPrimitiveType>();
-    boxablePrimitiveTypes.add(program.getTypePrimitiveBoolean());
-    boxablePrimitiveTypes.add(program.getTypePrimitiveByte());
-    boxablePrimitiveTypes.add(program.getTypePrimitiveChar());
-    boxablePrimitiveTypes.add(program.getTypePrimitiveShort());
-    boxablePrimitiveTypes.add(program.getTypePrimitiveInt());
-    boxablePrimitiveTypes.add(program.getTypePrimitiveLong());
-    boxablePrimitiveTypes.add(program.getTypePrimitiveFloat());
-    boxablePrimitiveTypes.add(program.getTypePrimitiveDouble());
+    boxablePrimitiveTypes.add(JPrimitiveType.BOOLEAN);
+    boxablePrimitiveTypes.add(JPrimitiveType.BYTE);
+    boxablePrimitiveTypes.add(JPrimitiveType.CHAR);
+    boxablePrimitiveTypes.add(JPrimitiveType.SHORT);
+    boxablePrimitiveTypes.add(JPrimitiveType.INT);
+    boxablePrimitiveTypes.add(JPrimitiveType.LONG);
+    boxablePrimitiveTypes.add(JPrimitiveType.FLOAT);
+    boxablePrimitiveTypes.add(JPrimitiveType.DOUBLE);
   }
 
   private void computeBoxClassToPrimitiveMap() {

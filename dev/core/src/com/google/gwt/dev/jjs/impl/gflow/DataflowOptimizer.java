@@ -76,7 +76,7 @@ public class DataflowOptimizer {
         fwdAnalysis = CombinedIntegratedAnalysis.createAnalysis();
         
         fwdAnalysis.addAnalysis(new UnreachableAnalysis());
-        fwdAnalysis.addAnalysis(new ConstantsAnalysis(program));
+        fwdAnalysis.addAnalysis(new ConstantsAnalysis());
         fwdAnalysis.addAnalysis(new CopyAnalysis());
         // fwdAnalysis.addAnalysis(new InlineVarAnalysis(program));
   

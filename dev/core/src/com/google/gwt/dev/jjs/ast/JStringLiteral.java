@@ -39,7 +39,7 @@ public class JStringLiteral extends JValueLiteral {
     throw new UnsupportedOperationException();
   }
 
-  public JType getType() {
+  public JNonNullType getType() {
     return stringType;
   }
 

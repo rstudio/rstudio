@@ -166,7 +166,7 @@ public class SameParameterValueOptimizer {
         JExpression expression) {
       this.parameter = parameter;
       this.expression = expression;
-      cloner = new CloneExpressionVisitor(program);
+      cloner = new CloneExpressionVisitor();
     }
 
     @Override

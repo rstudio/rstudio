@@ -22,13 +22,17 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
+import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
+import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -202,13 +206,13 @@ public abstract class CompoundAssignmentNormalizer {
       }
 
       JExpression one;
-      if (arg.getType() == program.getTypePrimitiveLong()) {
+      if (arg.getType() == JPrimitiveType.LONG) {
         // use an explicit long, so that LongEmulationNormalizer does not get
         // confused
-        one = program.getLiteralLong(1);
+        one = JLongLiteral.get(1);
       } else {
         // int is safe to add to all other types
-        one = program.getLiteralInt(1);
+        one = JIntLiteral.get(1);
       }
       // arg is cloned below because the caller is allowed to use it somewhere
       JBinaryOperation asg = new JBinaryOperation(arg.getSourceInfo(), arg.getType(),
@@ -347,7 +351,6 @@ public abstract class CompoundAssignmentNormalizer {
     }
   }
 
-  protected final JProgram program;
   private final CloneExpressionVisitor cloner;
 
   private JMethodBody currentMethodBody;
@@ -372,17 +375,15 @@ public abstract class CompoundAssignmentNormalizer {
    */
   private final boolean reuseTemps;
 
-  protected CompoundAssignmentNormalizer(JProgram program, 
-      boolean reuseTemps) {
-    this.program = program;
+  protected CompoundAssignmentNormalizer(boolean reuseTemps) {
     this.reuseTemps = reuseTemps;
-    cloner = new CloneExpressionVisitor(program);
+    cloner = new CloneExpressionVisitor();
     clearLocals();
   }
 
-  public void breakUpAssignments() {
+  public void accept(JNode node) {
     BreakupAssignOpsVisitor breaker = new BreakupAssignOpsVisitor();
-    breaker.accept(program);
+    breaker.accept(node);
   }
 
   /**
@@ -439,7 +440,7 @@ public abstract class CompoundAssignmentNormalizer {
     }
 
     if (temp == null) {
-      temp = program.createLocal(currentMethodBody.getSourceInfo(),
+      temp = JProgram.createLocal(currentMethodBody.getSourceInfo(),
           getTempPrefix() + localCounter++, type, false, currentMethodBody);
     }
     tracker.useLocal(temp);

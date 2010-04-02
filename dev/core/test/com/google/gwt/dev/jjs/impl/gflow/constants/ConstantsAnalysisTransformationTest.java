@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.constants;
 
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.gflow.CfgIntegratedAnalysisTestBase;
 import com.google.gwt.dev.jjs.impl.gflow.IntegratedAnalysis;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
@@ -138,8 +137,7 @@ public class ConstantsAnalysisTransformationTest extends CfgIntegratedAnalysisTe
   }
 
   @Override
-  protected IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, ConstantsAssumption> createIntegratedAnalysis(
-      JProgram program) {
-    return new ConstantsAnalysis(program);
+  protected IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, ConstantsAssumption> createIntegratedAnalysis() {
+    return new ConstantsAnalysis();
   }
 }

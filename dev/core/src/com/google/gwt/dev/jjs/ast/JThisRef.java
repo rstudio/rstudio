@@ -34,7 +34,7 @@ public class JThisRef extends JExpression {
     return (JClassType) type.getUnderlyingType();
   }
 
-  public JType getType() {
+  public JNonNullType getType() {
     return type;
   }
 

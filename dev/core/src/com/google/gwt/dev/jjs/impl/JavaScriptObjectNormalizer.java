@@ -132,7 +132,7 @@ public class JavaScriptObjectNormalizer {
           localCall.addArgs(x.getArgs());
 
           // We need a second copy of the arguments for the else expression
-          CloneExpressionVisitor cloner = new CloneExpressionVisitor(program);
+          CloneExpressionVisitor cloner = new CloneExpressionVisitor();
 
           // instance.jsoMethod(arg, arg)
           JMethodCall jsoCall = new JMethodCall(info,

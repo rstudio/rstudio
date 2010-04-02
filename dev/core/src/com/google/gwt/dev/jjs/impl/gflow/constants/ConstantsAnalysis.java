@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.constants;
 
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.gflow.Analysis;
 import com.google.gwt.dev.jjs.impl.gflow.AssumptionMap;
 import com.google.gwt.dev.jjs.impl.gflow.IntegratedAnalysis;
@@ -35,18 +34,12 @@ public class ConstantsAnalysis implements
     Analysis<CfgNode<?>, CfgEdge, Cfg, ConstantsAssumption>,
     IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, ConstantsAssumption> {
 
-  private final JProgram program;
-
-  public ConstantsAnalysis(JProgram program) {
-    this.program = program;
-  }
-
   public ConstantsFlowFunction getFlowFunction() {
     return new ConstantsFlowFunction();
   }
 
   public ConstantsIntegratedFlowFunction getIntegratedFlowFunction() {
-    return new ConstantsIntegratedFlowFunction(program);
+    return new ConstantsIntegratedFlowFunction();
   }
 
   public void setInitialGraphAssumptions(Cfg graph,

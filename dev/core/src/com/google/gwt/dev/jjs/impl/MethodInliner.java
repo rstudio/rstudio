@@ -56,12 +56,7 @@ public class MethodInliner {
   /**
    * Clones an expression, ensuring no local or this refs.
    */
-  private class CloneCalleeExpressionVisitor extends CloneExpressionVisitor {
-
-    public CloneCalleeExpressionVisitor() {
-      super(program);
-    }
-
+  private static class CloneCalleeExpressionVisitor extends CloneExpressionVisitor {
     @Override
     public boolean visit(JLocalRef x, Context ctx) {
       throw new InternalCompilerException(
@@ -452,11 +447,12 @@ public class MethodInliner {
 
     @Override
     public void endVisit(JParameterRef x, Context ctx) {
-      int paramIndex = methodCall.getTarget().getParams().indexOf(x.getParameter());
+      int paramIndex = methodCall.getTarget().getParams().indexOf(
+          x.getParameter());
       assert paramIndex != -1;
 
       // Replace with a cloned call argument.
-      CloneExpressionVisitor cloner = new CloneExpressionVisitor(program);
+      CloneExpressionVisitor cloner = new CloneExpressionVisitor();
       JExpression arg = methodCall.getArgs().get(paramIndex);
       JExpression clone = cloner.cloneExpression(arg);
 

@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNameOf;
+import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
@@ -92,12 +93,13 @@ public class ReplaceRebinds {
     private void replaceImplNameOf(JMethodCall x, Context ctx) {
       JExpression arg0 = x.getArgs().get(0);
       assert arg0 instanceof JStringLiteral;
-      String stringLiteral = ((JStringLiteral) arg0).getValue();
+      JStringLiteral stringLiteral = (JStringLiteral) arg0;
+      String stringValue = stringLiteral.getValue();
 
       HasName named = null;
 
       JDeclaredType refType;
-      JsniRef ref = JsniRef.parse(stringLiteral);
+      JsniRef ref = JsniRef.parse(stringValue);
 
       if (ref != null) {
         final List<String> errors = new ArrayList<String>();
@@ -120,8 +122,8 @@ public class ReplaceRebinds {
 
       } else {
         // See if it's just @foo.Bar, which would result in the class seed
-        refType = program.getFromTypeMap(stringLiteral.charAt(0) == '@'
-            ? stringLiteral.substring(1) : stringLiteral);
+        refType = program.getFromTypeMap(stringValue.charAt(0) == '@'
+            ? stringValue.substring(1) : stringValue);
         if (refType != null) {
           named = refType;
         }
@@ -129,9 +131,10 @@ public class ReplaceRebinds {
 
       if (named == null) {
         // Not found, must be null
-        ctx.replaceMe(program.getLiteralNull());
+        ctx.replaceMe(JNullLiteral.INSTANCE);
       } else {
-        ctx.replaceMe(new JNameOf(x.getSourceInfo(), program, named));
+        ctx.replaceMe(new JNameOf(x.getSourceInfo(), stringLiteral.getType(),
+            named));
       }
     }
   }

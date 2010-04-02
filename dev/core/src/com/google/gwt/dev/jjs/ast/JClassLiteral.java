@@ -53,17 +53,20 @@ public class JClassLiteral extends JLiteral implements JAnnotationArgument {
     assert method != null;
 
     JMethodCall call = new JMethodCall(info, null, method);
-    call.addArgs(program.getLiteralString(info, getPackageName(typeName)),
-        program.getLiteralString(info, getClassName(typeName)));
+    JStringLiteral packageName = program.getLiteralString(info,
+        getPackageName(typeName));
+    JStringLiteral className = program.getLiteralString(info,
+        getClassName(typeName));
+    call.addArgs(packageName, className);
 
     if (type instanceof JArrayType) {
       // There's only one seed function for all arrays
       JDeclaredType arrayType = program.getIndexedType("Array");
-      call.addArg(new JNameOf(info, program, arrayType));
+      call.addArg(new JNameOf(info, className.getType(), arrayType));
 
     } else if (type instanceof JClassType) {
       // Add the name of the seed function for concrete types
-      call.addArg(new JNameOf(info, program, type));
+      call.addArg(new JNameOf(info, className.getType(), type));
 
     } else if (type instanceof JPrimitiveType) {
       // And give primitive types an illegal, though meaningful, value

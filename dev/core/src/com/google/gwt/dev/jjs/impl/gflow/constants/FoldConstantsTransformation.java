@@ -15,14 +15,13 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.constants;
 
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.gflow.TransformationFunction.Transformation;
-import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
-import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgUtil;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNopNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgReadNode;
+import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
+import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgUtil;
 
 /**
  * Transformation that replaces read node with Nop node in graph, and replaces
@@ -33,19 +32,16 @@ final class FoldConstantsTransformation implements
   private final ConstantsAssumption assumption;
   private final Cfg graph;
   private final CfgReadNode node;
-  private final JProgram program;
 
-  FoldConstantsTransformation(JProgram program,
-      ConstantsAssumption assumptions,
+  FoldConstantsTransformation(ConstantsAssumption assumptions,
       CfgReadNode node, Cfg graph) {
-    this.program = program;
     this.assumption = assumptions;
     this.node = node;
     this.graph = graph;
   }
 
   public CfgTransformer getGraphTransformer() {
-    return new FoldConstantTransformer(program, assumption, node);
+    return new FoldConstantTransformer(assumption, node);
   }
 
   public Cfg getNewSubgraph() {

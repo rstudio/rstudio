@@ -1,6 +1,5 @@
 package com.google.gwt.dev.jjs.impl.gflow.copy;
 
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.gflow.Analysis;
 import com.google.gwt.dev.jjs.impl.gflow.CfgAnalysisTestBase;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
@@ -88,8 +87,7 @@ public class CopyAnalysisTest extends CfgAnalysisTestBase<CopyAssumption> {
   }
 
   @Override
-  protected Analysis<CfgNode<?>, CfgEdge, Cfg, CopyAssumption> createAnalysis(
-      JProgram program) {
+  protected Analysis<CfgNode<?>, CfgEdge, Cfg, CopyAssumption> createAnalysis() {
     return new CopyAnalysis();
   }
 }

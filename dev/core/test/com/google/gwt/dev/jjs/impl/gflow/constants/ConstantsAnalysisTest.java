@@ -1,6 +1,5 @@
 package com.google.gwt.dev.jjs.impl.gflow.constants;
 
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.gflow.Analysis;
 import com.google.gwt.dev.jjs.impl.gflow.CfgAnalysisTestBase;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
@@ -213,8 +212,7 @@ public class ConstantsAnalysisTest extends CfgAnalysisTestBase<ConstantsAssumpti
   }
 
   @Override
-  protected Analysis<CfgNode<?>, CfgEdge, Cfg, ConstantsAssumption> createAnalysis(
-      JProgram program) {
-    return new ConstantsAnalysis(program);
+  protected Analysis<CfgNode<?>, CfgEdge, Cfg, ConstantsAssumption> createAnalysis() {
+    return new ConstantsAnalysis();
   }
 }

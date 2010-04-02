@@ -52,7 +52,7 @@ public class FixAssignmentToUnbox extends JModVisitor {
     private final AutoboxUtils autoboxUtils;
 
     protected CompoundAssignmentToUnboxNormalizer(JProgram program) {
-      super(program, false);
+      super(false);
       autoboxUtils = new AutoboxUtils(program);
     }
 
@@ -95,8 +95,8 @@ public class FixAssignmentToUnbox extends JModVisitor {
   }
 
   public static void exec(JProgram program) {
-    (new CompoundAssignmentToUnboxNormalizer(program)).breakUpAssignments();
-    (new FixAssignmentToUnbox(program)).accept(program);
+    new CompoundAssignmentToUnboxNormalizer(program).accept(program);
+    new FixAssignmentToUnbox(program).accept(program);
   }
 
   private final AutoboxUtils autoboxUtils;

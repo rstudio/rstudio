@@ -26,11 +26,11 @@ public abstract class CfgAnalysisTestBase<A extends Assumption<A>>
 
     assertNotNull(cfgGraph);
 
-    Map<CfgEdge, A> map = AnalysisSolver.solve(cfgGraph, createAnalysis(program), forward);
+    Map<CfgEdge, A> map = AnalysisSolver.solve(cfgGraph, createAnalysis(), forward);
     return new AnalysisResult(cfgGraph, map);
   }
 
-  protected abstract Analysis<CfgNode<?>, CfgEdge, Cfg, A> createAnalysis(JProgram program);
+  protected abstract Analysis<CfgNode<?>, CfgEdge, Cfg, A> createAnalysis();
 
   protected class AnalysisResult {
     private final Map<CfgEdge, A> assumptions;

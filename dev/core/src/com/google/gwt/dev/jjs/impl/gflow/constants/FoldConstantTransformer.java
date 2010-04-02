@@ -18,15 +18,14 @@ package com.google.gwt.dev.jjs.impl.gflow.constants;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNode;
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.impl.CloneExpressionVisitor;
-import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgReadNode;
+import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 import com.google.gwt.dev.util.Preconditions;
 
 /**
@@ -37,11 +36,11 @@ final class FoldConstantTransformer implements CfgTransformer {
   private CloneExpressionVisitor cloner;
   private final CfgReadNode nodeToFold;
 
-  public FoldConstantTransformer(JProgram program, 
-      ConstantsAssumption assumptions, CfgReadNode nodeToFold) {
+  public FoldConstantTransformer(ConstantsAssumption assumptions,
+      CfgReadNode nodeToFold) {
     this.assumption = assumptions;
     this.nodeToFold = nodeToFold;
-    cloner = new CloneExpressionVisitor(program);
+    cloner = new CloneExpressionVisitor();
   }
 
   public boolean transform(CfgNode<?> node, Cfg cfgGraph) {

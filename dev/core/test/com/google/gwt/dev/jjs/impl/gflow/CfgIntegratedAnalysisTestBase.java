@@ -25,7 +25,7 @@ public abstract class CfgIntegratedAnalysisTestBase<A extends Assumption<A>>
 
     assertNotNull(cfgGraph);
 
-    AnalysisSolver.solveIntegrated(cfgGraph, createIntegratedAnalysis(program), forward);
+    AnalysisSolver.solveIntegrated(cfgGraph, createIntegratedAnalysis(), forward);
     return new Result(program);
   }
 
@@ -55,6 +55,5 @@ public abstract class CfgIntegratedAnalysisTestBase<A extends Assumption<A>>
     }
   }
 
-  protected abstract IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, A> createIntegratedAnalysis(
-      JProgram program);
+  protected abstract IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, A> createIntegratedAnalysis();
 }

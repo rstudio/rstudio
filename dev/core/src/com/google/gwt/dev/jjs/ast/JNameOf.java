@@ -23,19 +23,19 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public class JNameOf extends JExpression {
 
   private final HasName node;
-  private final JType stringType;
+  private final JNonNullType stringType;
 
-  public JNameOf(SourceInfo info, JProgram program, HasName node) {
+  public JNameOf(SourceInfo info, JNonNullType stringType, HasName node) {
     super(info);
     this.node = node;
-    stringType = program.getTypeJavaLangString();
+    this.stringType = stringType;
   }
 
   public HasName getNode() {
     return node;
   }
 
-  public JType getType() {
+  public JNonNullType getType() {
     return stringType;
   }
 

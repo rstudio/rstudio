@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.impl.gflow.constants;
 
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.impl.gflow.AssumptionMap;
 import com.google.gwt.dev.jjs.impl.gflow.AssumptionUtil;
@@ -73,16 +72,9 @@ public class ConstantsTransformationFunction implements
     @Override
     public void visitReadNode(CfgReadNode node) {
       if (assumption.hasAssumption(node.getTarget())) {
-        result = new FoldConstantsTransformation(program, assumption, node, 
-            graph);
+        result = new FoldConstantsTransformation(assumption, node, graph);
       }
     }
-  }
-
-  private final JProgram program;
-
-  public ConstantsTransformationFunction(JProgram program) {
-    this.program = program;
   }
 
   public Transformation<CfgTransformer, Cfg> transform(
