@@ -151,7 +151,9 @@ public class UnicodeEscapingTest extends GWTTestCase {
    * equivalent in that case.
    * 
    * @throws InvalidCharacterException
+   * HtmlUnit test failed intermittently in draft mode.
    */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testClientToServerBMPLow() throws InvalidCharacterException {
     delayTestFinish(TEST_FINISH_DELAY_MS);
     clientToServerVerifyRange(Character.MIN_CODE_POINT,
@@ -185,7 +187,10 @@ public class UnicodeEscapingTest extends GWTTestCase {
    * issue, particularly with combining marks, though they should be logically
    * equivalent in that case.  Surrogate characters are also not tested here,
    * see {@link #disabled_testServerToClientBMPSurrogates()}.
+   * 
+   * HtmlUnit test failed intermittently in draft mode.
    */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testServerToClientBMP() {
     delayTestFinish(TEST_FINISH_DELAY_MS);
     serverToClientVerify(Character.MIN_CODE_POINT,

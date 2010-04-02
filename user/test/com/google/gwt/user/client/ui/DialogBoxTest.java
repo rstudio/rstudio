@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
@@ -110,6 +112,10 @@ public class DialogBoxTest extends PopupTest {
     });
   }
 
+  /**
+   * HtmlUnit test failed intermittently in nometa mode.
+   */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   @Override
   public void testDependantPopupPanel() {
     // Create the dependent popup
