@@ -596,7 +596,7 @@ public class JTypeOracle implements Serializable {
   public void recomputeAfterOptimizations() {
     Set<JDeclaredType> computed = new IdentityHashSet<JDeclaredType>();
     for (JDeclaredType type : program.getDeclaredTypes()) {
-      computeHasClinitTarget(type, computed);
+      computeClinitTarget(type, computed);
     }
   }
 
@@ -609,33 +609,7 @@ public class JTypeOracle implements Serializable {
     getOrCreate(map, key).add(value);
   }
 
-  /**
-   * Compute all of the things I might conceivably implement, either through
-   * super types or sub types.
-   */
-  private void computeCouldImplement(JClassType type) {
-    Set<JInterfaceType> couldImplementSet = new IdentityHashSet<JInterfaceType>();
-    // all of my direct implements are trivially true
-    couldImplementSet.addAll(get(implementsMap, type));
-    List<JClassType> subclasses = new ArrayList<JClassType>();
-    subclasses.addAll(get(subClassMap, type));
-    for (JClassType subclass : subclasses) {
-      for (JInterfaceType intf : subclass.getImplements()) {
-        couldImplementSet.add(intf);
-        for (JInterfaceType isup : get(superInterfaceMap, intf)) {
-          couldImplementSet.add(isup);
-        }
-      }
-    }
-    if (!couldImplementSet.isEmpty()) {
-      couldImplementMap.put(type, IdentitySets.normalize(couldImplementSet));
-      for (JInterfaceType couldImpl : couldImplementSet) {
-        add(couldBeImplementedMap, couldImpl, type);
-      }
-    }
-  }
-
-  private void computeHasClinitTarget(JDeclaredType type,
+  private void computeClinitTarget(JDeclaredType type,
       Set<JDeclaredType> computed) {
     if (!type.hasClinit() || computed.contains(type)) {
       return;
@@ -646,21 +620,21 @@ public class JTypeOracle implements Serializable {
        * possible target; this ensures if we're tightened as well it's to the
        * transitively tightest target.
        */
-      computeHasClinitTarget(type.getSuperClass(), computed);
+      computeClinitTarget(type.getSuperClass(), computed);
     }
     if (type.getClinitTarget() != type) {
       // I already have a trivial clinit, just follow my super chain.
       type.setClinitTarget(type.getSuperClass().getClinitTarget());
     } else {
       // I still have a real clinit, actually compute.
-      JDeclaredType target = computeHasClinitTargetRecursive(type, computed,
+      JDeclaredType target = computeClinitTargetRecursive(type, computed,
           new IdentityHashSet<JDeclaredType>());
       type.setClinitTarget(target);
     }
     computed.add(type);
   }
 
-  private JDeclaredType computeHasClinitTargetRecursive(JDeclaredType type,
+  private JDeclaredType computeClinitTargetRecursive(JDeclaredType type,
       Set<JDeclaredType> computed, Set<JDeclaredType> alreadySeen) {
     // Track that we've been seen.
     alreadySeen.add(type);
@@ -703,7 +677,7 @@ public class JTypeOracle implements Serializable {
         continue;
       }
 
-      if (computeHasClinitTargetRecursive(target, computed, alreadySeen) != null) {
+      if (computeClinitTargetRecursive(target, computed, alreadySeen) != null) {
         // Calling a non-empty clinit means I am a real clinit.
         return type;
       } else {
@@ -712,6 +686,32 @@ public class JTypeOracle implements Serializable {
       }
     }
     return null;
+  }
+
+  /**
+   * Compute all of the things I might conceivably implement, either through
+   * super types or sub types.
+   */
+  private void computeCouldImplement(JClassType type) {
+    Set<JInterfaceType> couldImplementSet = new IdentityHashSet<JInterfaceType>();
+    // all of my direct implements are trivially true
+    couldImplementSet.addAll(get(implementsMap, type));
+    List<JClassType> subclasses = new ArrayList<JClassType>();
+    subclasses.addAll(get(subClassMap, type));
+    for (JClassType subclass : subclasses) {
+      for (JInterfaceType intf : subclass.getImplements()) {
+        couldImplementSet.add(intf);
+        for (JInterfaceType isup : get(superInterfaceMap, intf)) {
+          couldImplementSet.add(isup);
+        }
+      }
+    }
+    if (!couldImplementSet.isEmpty()) {
+      couldImplementMap.put(type, IdentitySets.normalize(couldImplementSet));
+      for (JInterfaceType couldImpl : couldImplementSet) {
+        add(couldBeImplementedMap, couldImpl, type);
+      }
+    }
   }
 
   /**
