@@ -25,6 +25,7 @@
     <mkdir dir="${javac.out}" />
     <gwt.javac excludes="**/sample/**">
       <classpath>
+        <pathelement location="${gwt.tools.redist}/json/r2_20080312/json.jar" />
         <pathelement location="${gwt.dev.jar}" />
         <pathelement location="${gwt.user.jar}" />
       </classpath>
