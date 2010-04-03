@@ -15,9 +15,13 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<module>
-  <inherits name='com.google.gwt.user.User'/>
+<module rename-to="expensesScaffold">
+  <inherits name="com.google.gwt.user.User" />
+  <inherits name="com.google.gwt.user.theme.standard.Standard" />
 
-  <source path="client"/>
-  <source path="shared"/>
+  <inherits name="com.google.gwt.sample.expenses.gwt.ExpensesCommon" />
+  
+  <source path="scaffold" />
+  <entry-point
+    class="com.google.gwt.sample.expenses.gwt.scaffold.Scaffold" />
 </module>

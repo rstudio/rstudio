@@ -13,9 +13,13 @@ build/
 classes/
 # Matches gwtc output in the war directory, e.g. war/com.google.gwt.bikeshed.tree.Tree/
 com.google.gwt.*
-bikeshed/war/expenses/
+bikeshed/war/expensesCustomized/
 bikeshed/war/expensesScaffold/
-bikeshed/war/stocks/
+bikeshed/war/mail/
+bikeshed/war/pagedExpenses/
+bikeshed/war/simplecelllist/
+bikeshed/war/stocksdesktop/
+bikeshed/war/stocksmobile/
 bikeshed/war/tree/
 bikeshed/war/validation/
 

@@ -16,9 +16,9 @@
 package com.google.gwt.sample.expenses.server;
 
 import com.google.gwt.requestfactory.server.RequestFactoryServlet;
+import com.google.gwt.sample.expenses.gwt.request.ReportKey;
 import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.sample.expenses.server.domain.Storage;
-import com.google.gwt.sample.expenses.shared.ReportKey;
 
 import org.json.JSONArray;
 import org.json.JSONException;

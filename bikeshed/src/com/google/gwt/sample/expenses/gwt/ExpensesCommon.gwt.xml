@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 0.0.999//EN" "http://google-web-toolkit.googlecode.com/svn/tags/0.0.999/distro-source/core/src/gwt-module.dtd">
+<module>
+  <inherits name='com.google.gwt.app.App' />
+  <inherits name='com.google.gwt.requestfactory.RequestFactory'/>
+  <inherits name="com.google.gwt.bikeshed.list.List" />
+
+  <source path='request'/>
+  <source path='place'/>
+  <source path='ui'/>
+</module>
