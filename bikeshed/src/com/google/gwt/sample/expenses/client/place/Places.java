@@ -15,8 +15,8 @@
  */
 package com.google.gwt.sample.expenses.client.place;
 
-import com.google.gwt.app.place.GoToPlaceCommand;
 import com.google.gwt.app.place.PlaceController;
+import com.google.gwt.bikeshed.cells.client.ActionCell;
 import com.google.gwt.sample.expenses.shared.EmployeeKey;
 import com.google.gwt.sample.expenses.shared.ExpensesEntityKey;
 import com.google.gwt.sample.expenses.shared.ReportKey;
@@ -31,9 +31,9 @@ import java.util.List;
  */
 public class Places {
   private final PlaceController<AbstractExpensesPlace> controller;
-  
+
   private final List<EntityListPlace> listPlaces;
-  
+
   public Places(PlaceController<AbstractExpensesPlace> controller) {
     this.controller = controller;
 
@@ -42,16 +42,32 @@ public class Places {
     places.add(new EntityListPlace(ReportKey.get()));
     listPlaces = Collections.unmodifiableList(places);
   }
-  
-  public GoToPlaceCommand<EntityDetailsPlace> getGoToDetailsFor(Values<? extends ExpensesEntityKey<?>> e) {
-    return new GoToPlaceCommand<EntityDetailsPlace>(new EntityDetailsPlace(e), controller);
+
+  public <K extends ExpensesEntityKey<K>> ActionCell.Delegate<Values<K>> getDetailsGofer() {
+    return new ActionCell.Delegate<Values<K>>() {
+      public void execute(Values<K> object) {
+        goToDetailsFor(object);
+      }
+    };
   }
 
-  public GoToPlaceCommand<EditEntityPlace> getGoToEditFor(Values<? extends ExpensesEntityKey<?>> e) {
-    return new GoToPlaceCommand<EditEntityPlace>(new EditEntityPlace(e), controller);
+  public <K extends ExpensesEntityKey<K>> ActionCell.Delegate<Values<K>> getEditorGofer() {
+    return new ActionCell.Delegate<Values<K>>() {
+      public void execute(Values<K> object) {
+        goToEditorFor(object);
+      }
+    };
   }
 
   public List<EntityListPlace> getListPlaces() {
     return listPlaces;
+  }
+
+  private void goToDetailsFor(Values<? extends ExpensesEntityKey<?>> e) {
+    controller.goTo(new EntityDetailsPlace(e));
+  }
+
+  private void goToEditorFor(Values<? extends ExpensesEntityKey<?>> e) {
+    controller.goTo(new EditEntityPlace(e));
   }
 }

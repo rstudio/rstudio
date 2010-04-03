@@ -8,6 +8,7 @@
   <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
   <inherits name='com.google.gwt.app.App' />
   <inherits name='com.google.gwt.requestfactory.RequestFactory'/>
+  <inherits name="com.google.gwt.bikeshed.list.List" />
 
   <!-- Specify the app entry point class.                         -->
   <entry-point class='com.google.gwt.sample.expenses.client.Expenses'/>

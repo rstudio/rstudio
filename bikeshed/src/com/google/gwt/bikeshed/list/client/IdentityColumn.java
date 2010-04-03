@@ -13,29 +13,29 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.app.place;
+package com.google.gwt.bikeshed.list.client;
 
-import com.google.gwt.user.client.Command;
+import com.google.gwt.bikeshed.cells.client.Cell;
+
 
 /**
- * Command to change the app location.
+ * A passthrough column, useful for giving cells access to the entire row
+ * object.
  * 
- * @param <P> the type of place managed by the {@link PlaceController}
+ * @param <T> the row type
  */
-public class GoToPlaceCommand<P extends Place> implements Command {
-  private final P place;
-  private final PlaceController<? super P> placeController;
+public class IdentityColumn<T> extends SimpleColumn<T, T> {
 
   /**
-   * @param place
-   * @param placeController
+   * @param cell
+   * @param hasKey
    */
-  public GoToPlaceCommand(P place, PlaceController<? super P> placeController) {
-    this.place = place;
-    this.placeController = placeController;
+  public IdentityColumn(Cell<T, Void> cell) {
+    super(cell);
   }
 
-  public void execute() {
-    placeController.goTo(place);
+  @Override
+  public T getValue(T object) {
+    return object;
   }
 }

@@ -13,40 +13,48 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.expenses.client;
+package com.google.gwt.bikeshed.cells.client;
 
-import com.google.gwt.bikeshed.cells.client.Cell;
-import com.google.gwt.bikeshed.cells.client.ValueUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.client.Command;
 
 /**
- * A Cell embedding a Command.
+ * A cell that renders a button and takes a delegate to perform actions on
+ * mouseUp.
+ * 
+ * @param <C> the type that this Cell represents
  */
-public class CommandCell extends Cell<Command, Void> {
-  
-  private String message;
+public class ActionCell<C> extends Cell<C, Void> {
+  /**
+   * @param <C> the type that this delegate acts on
+   */
+  public interface Delegate<T> {
+    void execute(T object);
+  }
 
-  public CommandCell(String message) {
+  private final String message;
+  private final Delegate<C> delegate;
+
+  /**
+   * @param message
+   * @param delegate
+   */
+  public ActionCell(String message, Delegate<C> delegate) {
     this.message = message;
+    this.delegate = delegate;
   }
-  
+
   @Override
-  public Void onBrowserEvent(Element parent, Command value, Void viewData,
-      NativeEvent event, ValueUpdater<Command, Void> valueUpdater) {
+  public Void onBrowserEvent(Element parent, C value, Void viewData,
+      NativeEvent event, ValueUpdater<C, Void> valueUpdater) {
     if ("mouseup".equals(event.getType())) {
-      if (valueUpdater != null) {
-        valueUpdater.update(value, viewData);
-      }
-      value.execute();
+      delegate.execute(value);
     }
-
-    return viewData;
+    return null;
   }
 
   @Override
-  public void render(Command value, Void viewData, StringBuilder sb) {
+  public void render(C value, Void viewData, StringBuilder sb) {
     sb.append("<button>" + message + "</button>");
   }
 }

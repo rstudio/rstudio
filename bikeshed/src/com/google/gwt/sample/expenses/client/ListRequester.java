@@ -25,10 +25,9 @@ import com.google.gwt.sample.expenses.shared.ExpensesEntityVisitor;
 import com.google.gwt.sample.expenses.shared.ReportKey;
 import com.google.gwt.user.client.ui.Renderer;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.valuestore.shared.Property;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * In charge of requesting and displaying the appropriate entity lists when the
@@ -37,67 +36,54 @@ import java.util.List;
 public final class ListRequester implements PlaceChanged.Handler {
 
   private final SimplePanel panel;
-  private final TableEntityListView entitiesView;
   private final ExpenseRequestFactory requests;
-  private final Renderer<EntityListPlace> listNameFilter;
+  private final Renderer<EntityListPlace> placeRenderer;
   private final Places places;
 
+  // TODO This dependency on view classes prevents testing this class in JRE.
+  // Get a factory in here or something
+  private final Map<EntityListPlace, ValuesListViewTable<?>> viewMap = new HashMap<EntityListPlace, ValuesListViewTable<?>>();
+
   public ListRequester(Places places, SimplePanel panel,
-      TableEntityListView entitiesView, ExpenseRequestFactory requests,
-      Renderer<EntityListPlace> renderer) {
+      ExpenseRequestFactory requests, Renderer<EntityListPlace> renderer) {
     this.places = places;
     this.panel = panel;
-    this.entitiesView = entitiesView;
     this.requests = requests;
-    this.listNameFilter = renderer;
+    this.placeRenderer = renderer;
   }
 
   public void onPlaceChanged(PlaceChanged event) {
     if (!(event.getNewPlace() instanceof EntityListPlace)) {
       return;
     }
-    EntityListPlace newPlace = (EntityListPlace) event.getNewPlace();
-    final String name = listNameFilter.render(newPlace);
+    final EntityListPlace newPlace = (EntityListPlace) event.getNewPlace();
+    ExpensesEntityKey<?> key = newPlace.getKey();
 
-    final ExpensesEntityKey<?> key = newPlace.getKey();
-
-    // TODO Would be simpler if every entity key knew its find method
     key.accept(new ExpensesEntityVisitor() {
 
       public void visit(EmployeeKey employeeKey) {
-        List<Property<EmployeeKey, ?>> columns = getEmployeeColumns();
-        EntityListPresenter<EmployeeKey> presenter = new EntityListPresenter<EmployeeKey>(
-            name, entitiesView, columns, places);
-        requests.employeeRequest().findAllEmployees().forProperties(columns).to(
-            presenter).fire();
+        ValuesListViewTable<?> view = viewMap.get(newPlace);
+        if (null == view) {
+          view = new EmployeeListView(placeRenderer.render(newPlace), places,
+              requests);
+          viewMap.put(newPlace, view);
+        }
       }
 
       public void visit(ReportKey reportKey) {
-        List<Property<ReportKey, ?>> columns = getReportColumns();
-        EntityListPresenter<ReportKey> presenter = new EntityListPresenter<ReportKey>(
-            name, entitiesView, columns, places);
-        requests.reportRequest().findAllReports().forProperties(columns).to(
-            presenter).fire();
+        ValuesListViewTable<?> view = viewMap.get(newPlace);
+        if (null == view) {
+          view = new ReportListView(placeRenderer.render(newPlace), places,
+              requests);
+          viewMap.put(newPlace, view);
+        }
       }
     });
 
+    ValuesListViewTable<?> entitiesView = viewMap.get(newPlace);
     if (entitiesView.getParent() == null) {
       panel.clear();
       panel.add(entitiesView);
     }
-  }
-
-  private List<Property<EmployeeKey, ?>> getEmployeeColumns() {
-    List<Property<EmployeeKey, ?>> columns = new ArrayList<Property<EmployeeKey, ?>>();
-    columns.add(EmployeeKey.get().getUserName());
-    columns.add(EmployeeKey.get().getDisplayName());
-    return columns;
-  }
-
-  private List<Property<ReportKey, ?>> getReportColumns() {
-    List<Property<ReportKey, ?>> columns = new ArrayList<Property<ReportKey, ?>>();
-    columns.add(ReportKey.get().getCreated());
-    columns.add(ReportKey.get().getPurpose());
-    return columns;
   }
 }

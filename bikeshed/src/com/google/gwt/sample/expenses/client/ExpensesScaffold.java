@@ -39,8 +39,8 @@ public class ExpensesScaffold implements EntryPoint {
 
     // App controllers and services
     final HandlerManager eventBus = new HandlerManager(null);
-    final ExpenseRequestFactory requests = GWT.create(ExpenseRequestFactory.class);
-    requests.init(eventBus);
+    final ExpenseRequestFactory requestFactory = GWT.create(ExpenseRequestFactory.class);
+    requestFactory.init(eventBus);
 
     final PlaceController<AbstractExpensesPlace> placeController = new PlaceController<AbstractExpensesPlace>(
         eventBus);
@@ -49,22 +49,21 @@ public class ExpensesScaffold implements EntryPoint {
     // Renderers
     final EntityNameRenderer entityNamer = new EntityNameRenderer();
     final ListPlaceRenderer listPlaceNamer = new ListPlaceRenderer(entityNamer);
-    
+
     // Top level UI
     final ExpensesScaffoldShell shell = new ExpensesScaffoldShell();
-    
+
     // Left side
     PlacePicker<EntityListPlace> placePicker = new PlacePicker<EntityListPlace>(
         shell.getPlacesBox(), placeController, listPlaceNamer);
     placePicker.setPlaces(places.getListPlaces());
 
-    // Shared view for entity lists. Perhaps real app would have
-    // a separate view per type?
-    final TableEntityListView entitiesView = new TableEntityListView();
+    // Shows entity lists
     eventBus.addHandler(PlaceChanged.TYPE, new ListRequester(places,
-        shell.getBody(), entitiesView, requests, listPlaceNamer));
-    
-    // Shared view for entity details. Again, perhaps real app should not share
+        shell.getBody(), requestFactory, listPlaceNamer));
+
+    // Shared view for entity details.
+    // TODO Real app should not share
     final HTML detailsView = new HTML();
     eventBus.addHandler(PlaceChanged.TYPE, new DetailsRequester(entityNamer,
         shell.getBody(), detailsView));

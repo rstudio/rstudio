@@ -2,16 +2,8 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:b='urn:import:com.google.gwt.bikeshed.list.client'>
-  <ui:style>
-    table.reports td {
-     border-width: 1px;
-     padding: 1px;
-     border-style: solid;
-     background-color: white;
-    }
-  </ui:style>
   <g:HTMLPanel>
-  <h3 ui:field='heading'/>
-  <g:SimplePanel ui:field='body'/>
+    <h3 ui:field='heading'/>
+    <b:PagingTableListView ui:field='table'/>
   </g:HTMLPanel>
 </ui:UiBinder>
