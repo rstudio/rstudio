@@ -8,7 +8,7 @@
   <!--  Configures expensesData servlet -->
   <context-param>
     <param-name>servlet.serverOperation</param-name>
-    <param-value>com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory$ServerSideOperation</param-value>
+    <param-value>com.google.gwt.sample.expenses.gwt.request.ExpensesRequests</param-value>
   </context-param>
 
   <!-- Servlets -->

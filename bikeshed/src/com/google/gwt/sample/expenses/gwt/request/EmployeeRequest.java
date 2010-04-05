@@ -13,28 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.bikeshed.list.client;
+package com.google.gwt.sample.expenses.gwt.request;
 
-import com.google.gwt.bikeshed.cells.client.Cell;
-
+import com.google.gwt.requestfactory.shared.EntityListRequest;
+import com.google.gwt.requestfactory.shared.ServerOperation;
 
 /**
- * A passthrough column, useful for giving cells access to the entire row
- * object.
- * 
- * @param <T> the row type
+ * Request selector.
  */
-public class IdentityColumn<T> extends SimpleColumn<T, T> {
+public interface EmployeeRequest {
 
   /**
-   * @param cell
+   * @return a request object
    */
-  public IdentityColumn(Cell<T, Void> cell) {
-    super(cell);
-  }
-
-  @Override
-  public T getValue(T object) {
-    return object;
-  }
+  @ServerOperation("FIND_ALL_EMPLOYEES")
+  EntityListRequest<EmployeeKey> findAllEmployees();
 }

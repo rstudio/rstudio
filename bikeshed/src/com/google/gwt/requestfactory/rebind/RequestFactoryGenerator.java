@@ -37,9 +37,7 @@ import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.valuestore.client.ValueStoreJsonImpl;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -88,10 +86,78 @@ public class RequestFactoryGenerator extends Generator {
     return packageName + "." + implName;
   }
 
-  private void generateNestedInterfaceImplementation(TreeLogger logger,
+  private void generateOnce(TreeLogger logger,
+      GeneratorContext generatorContext, PrintWriterManager printWriters,
+      PrintWriter out, JClassType interfaceType, String packageName,
+      String implName) throws UnableToCompleteException {
+
+    logger = logger.branch(TreeLogger.INFO, String.format(
+        "Generating implementation of %s", interfaceType.getName()));
+
+    ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
+        packageName, implName);
+    f.addImport(RequestFactoryJsonImpl.class.getName());
+    f.addImport(ValueStoreJsonImpl.class.getName());
+    f.addImplementedInterface(interfaceType.getQualifiedSourceName());
+    f.setSuperclass(RequestFactoryJsonImpl.class.getName());
+
+    SourceWriter sw = f.createSourceWriter(generatorContext, out);
+    sw.println();
+
+    // the return types tell us what request selector interfaces
+    // to implement
+    Set<JClassType> requestSelectors = new HashSet<JClassType>();
+    for (JMethod methodType : interfaceType.getMethods()) {
+      JType returnType = methodType.getReturnType();
+      if (null == returnType) {
+        logger.log(TreeLogger.ERROR, String.format(
+            "Illegal return type for %s. Methods of %s must return interfaces",
+            methodType.getName(), interfaceType.getName()));
+        throw new UnableToCompleteException();
+      }
+      JClassType asInterface = returnType.isInterface();
+      if (null == asInterface) {
+        logger.log(TreeLogger.ERROR, String.format(
+            "Illegal return type for %s. Methods of %s must return interfaces",
+            methodType.getName(), interfaceType.getName()));
+        throw new UnableToCompleteException();
+      }
+      requestSelectors.add(asInterface);
+    }
+    // write a method for each sub-interface
+    for (JClassType requestSelector : requestSelectors) {
+      String simpleSourceName = requestSelector.getSimpleSourceName();
+      sw.println("public " + simpleSourceName + " "
+          + getMethodName(simpleSourceName) + "() {");
+      sw.indent();
+      sw.println("return new " + simpleSourceName + "Impl(this);");
+      sw.outdent();
+      sw.println("}");
+      sw.println();
+    }
+    sw.outdent();
+    sw.println("}");
+
+    // generate an implementation for each request selector
+
+    for (JClassType nestedInterface : requestSelectors) {
+      String nestedImplName = nestedInterface.getName() + "Impl";
+      PrintWriter pw = printWriters.makePrintWriterFor(nestedImplName);
+      if (pw != null) {
+        generateRequestSelectorImplementation(logger, generatorContext, pw,
+            nestedInterface, interfaceType, packageName, nestedImplName);
+      }
+    }
+    printWriters.commit();
+  }
+
+  private void generateRequestSelectorImplementation(TreeLogger logger,
       GeneratorContext generatorContext, PrintWriter out,
       JClassType interfaceType, JClassType mainType, String packageName,
       String implName) throws UnableToCompleteException {
+    logger = logger.branch(TreeLogger.INFO, String.format(
+        "Generating implementation of %s", interfaceType.getName()));
+    
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
     f.addImport(ClientRequestObject.class.getName());
@@ -152,59 +218,6 @@ public class RequestFactoryGenerator extends Generator {
     sw.println("}");
   }
 
-  private void generateOnce(TreeLogger logger,
-      GeneratorContext generatorContext, PrintWriterManager printWriters,
-      PrintWriter out, JClassType interfaceType, String packageName,
-      String implName) throws UnableToCompleteException {
-    ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
-        packageName, implName);
-    f.addImport(RequestFactoryJsonImpl.class.getName());
-    f.addImport(ValueStoreJsonImpl.class.getName());
-    f.addImplementedInterface(interfaceType.getQualifiedSourceName());
-    f.setSuperclass(RequestFactoryJsonImpl.class.getName());
-
-    SourceWriter sw = f.createSourceWriter(generatorContext, out);
-    sw.println();
-
-    // get the sub-interfaces
-    List<JClassType> nestedInterfaces = new ArrayList<JClassType>();
-    for (JClassType nestedType : interfaceType.getNestedTypes()) {
-      if (nestedType.isInterface() != null) {
-        nestedInterfaces.add(nestedType);
-      }
-    }
-    // write a method for each sub-interface
-    for (JClassType nestedInterface : nestedInterfaces) {
-      String simpleSourceName = nestedInterface.getSimpleSourceName();
-      sw.println("public " + simpleSourceName + " "
-          + getMethodName(simpleSourceName) + "() {");
-      sw.indent();
-      sw.println("return new " + simpleSourceName + "Impl(this);");
-      sw.outdent();
-      sw.println("}");
-      sw.println();
-    }
-    sw.outdent();
-    sw.println("}");
-
-    // generate an implementation for each nested interface
-    String interfacePrefix = interfaceType.getName() + ".";
-    for (JClassType nestedInterface : nestedInterfaces) {
-      String nestedImplName = nestedInterface.getName();
-      if (nestedImplName.startsWith(interfacePrefix)) {
-        nestedImplName = nestedImplName.substring(interfacePrefix.length(),
-            nestedImplName.length())
-            + "Impl";
-      }
-      PrintWriter pw = printWriters.makePrintWriterFor(nestedImplName);
-      if (pw != null) {
-        generateNestedInterfaceImplementation(logger, generatorContext, pw,
-            nestedInterface, interfaceType, packageName, nestedImplName);
-      }
-    }
-    printWriters.commit();
-  }
-
   /**
    * This method is very similar to {@link
    * com.google.gwt.core.ext.typeinfo.JMethod.getReadableDeclaration()}. The
@@ -262,7 +275,7 @@ public class RequestFactoryGenerator extends Generator {
    * Inspect all the get methods that are returning a List of "domain type".
    * Return the domain type.
    * <p>
-   * TODO: Lift the restriction that there be just one return type. 
+   * TODO: Lift the restriction that there be just one return type.
    */
   private JClassType getReturnType(TreeLogger logger, JClassType interfaceType)
       throws UnableToCompleteException {
