@@ -16,49 +16,31 @@
 package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.requestfactory.server.RequestFactoryServlet;
 import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.ValuesKey;
+
+import java.util.Map;
 
 /**
  * Marker interface for the RequestFactory code generator.
  */
 public interface RequestFactory {
 
-  String URL = "/expenses/data";
-
-  /*
-   * eventually, this will become an enum of update operations.
-   */
-  String UPDATE_STRING = "SYNC";
-
   /**
-   * Implemented by the request objects created by this factory.
+   * Implemented by the configuration class used by
+   * {@link RequestFactoryServlet}.
    */
-  interface RequestObject {
-    void fire();
-
-    String getRequestData();
-
-    void handleResponseText(String responseText);
+  interface Config {
+    Map<String, RequestDefinition> requestDefinitions();
   }
 
-  ValueStore getValueStore();
-
-  void init(HandlerManager handlerManager);
-
-  SyncRequest syncRequest(DeltaValueStore deltaValueStore);
-
   /**
-   * Implemented by the enum that defines the mapping between request objects
-   * and service methods.
+   * Implemented by enums that defines the mapping between request objects and
+   * service methods.
    */
   interface RequestDefinition {
-    /**
-     * Returns the name.
-     */
-    String name();
-
     /**
      * Returns the name of the (domain) class that contains the method to be
      * invoked on the server.
@@ -79,5 +61,34 @@ public interface RequestFactory {
      * Returns the return type of the method to be invoked on the server.
      */
     Class<? extends ValuesKey<?>> getReturnType();
+
+    /**
+     * Returns the name.
+     */
+    String name();
   }
+
+  /**
+   * Implemented by the request objects created by this factory.
+   */
+  interface RequestObject {
+    void fire();
+
+    String getRequestData();
+
+    void handleResponseText(String responseText);
+  }
+
+  String URL = "/expenses/data";
+
+  /*
+   * eventually, this will become an enum of update operations.
+   */
+  String UPDATE_STRING = "SYNC";
+
+  ValueStore getValueStore();
+
+  void init(HandlerManager handlerManager);
+
+  SyncRequest syncRequest(DeltaValueStore deltaValueStore);
 }

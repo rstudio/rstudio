@@ -16,12 +16,33 @@
 package com.google.gwt.sample.expenses.gwt.request;
 
 import com.google.gwt.requestfactory.shared.EntityListRequest;
+import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.ServerOperation;
+import com.google.gwt.valuestore.shared.ValuesKey;
 
 /**
  * Request selector.
  */
 public interface EmployeeRequest {
+  public enum ServerOperations implements RequestFactory.RequestDefinition {
+    FIND_ALL_EMPLOYEES {
+      public String getDomainMethodName() {
+        return "findAllEmployees";
+      }
+
+      public Class<? extends ValuesKey<?>> getReturnType() {
+        return com.google.gwt.sample.expenses.gwt.request.EmployeeKey.class;
+      }
+    };
+
+    public String getDomainClassName() {
+      return "com.google.gwt.sample.expenses.server.domain.Employee";
+    }
+
+    public Class<?>[] getParameterTypes() {
+      return null;
+    }
+  }
 
   /**
    * @return a request object

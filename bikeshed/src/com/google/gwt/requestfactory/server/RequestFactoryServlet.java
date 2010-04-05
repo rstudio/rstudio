@@ -16,6 +16,7 @@
 package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.RequestFactory.Config;
 import com.google.gwt.requestfactory.shared.RequestFactory.RequestDefinition;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.valuestore.shared.Property;
@@ -43,15 +44,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Handles GWT RequestFactory requests. Configured via servlet context param
- * servlet.serverOperation, which must be set to the fully qualified name of an
- * enum implementing {@link RequestDefinition}.
+ * Handles GWT RequestFactory JSON requests. Configured via servlet context
+ * param <code>servlet.serverOperation</code>, which must be set to the name of a default
+ * instantiable class implementing
+ * com.google.gwt.requestfactory.shared.RequestFactory.Config.
  * <p>
  * e.g.
  * 
  * <pre>  &lt;context-param>
     &lt;param-name>servlet.serverOperation&lt;/param-name>
-    &lt;param-value>com.google.gwt.sample.expenses.shared.ExpenseRequestFactory$ServerSideOperation&lt;/param-value>
+    &lt;param-value>com.myco.myapp.MyAppServerSideOperations&lt;/param-value>
   &lt;/context-param>
 
  * </pre>
@@ -69,6 +71,8 @@ public class RequestFactoryServlet extends HttpServlet {
     }
   }
 
+  private Config config;
+
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
@@ -83,8 +87,7 @@ public class RequestFactoryServlet extends HttpServlet {
         sync(topLevelJsonObject.getString(RequestDataManager.CONTENT_TOKEN),
             writer);
       } else {
-
-        operation = getOperationFromName(operationName, getConfigClass());
+        operation = getOperation(operationName);
         Class<?> domainClass = Class.forName(operation.getDomainClassName());
         Method domainMethod = domainClass.getMethod(
             operation.getDomainMethodName(), operation.getParameterTypes());
@@ -122,8 +125,9 @@ public class RequestFactoryServlet extends HttpServlet {
   }
 
   /**
-   * Allows subclass to provide hack implementation. TODO real reflection based
-   * implsementation.
+   * Allows subclass to provide hack implementation.
+   * <p>
+   * TODO real reflection based implementation.
    */
   @SuppressWarnings("unused")
   protected void sync(String content, PrintWriter writer) {
@@ -131,24 +135,48 @@ public class RequestFactoryServlet extends HttpServlet {
   }
 
   @SuppressWarnings("unchecked")
-  private Class<? extends RequestDefinition> getConfigClass() {
-    try {
-      final String serverOperation = getServletContext().getInitParameter(
-          SERVER_OPERATION_CONTEXT_PARAM);
-      if (null == serverOperation) {
-        throw new IllegalStateException(String.format(
-            "Context parameter \"%s\" must name an enum implementing %s",
-            SERVER_OPERATION_CONTEXT_PARAM, RequestDefinition.class.getName()));
+  private void ensureConfig() {
+    if (config == null) {
+      synchronized (this) {
+        if (config != null) {
+          return;
+        }
+        try {
+          final String serverOperation = getServletContext().getInitParameter(
+              SERVER_OPERATION_CONTEXT_PARAM);
+          if (null == serverOperation) {
+            failConfig();
+          }
+          Class<?> clazz = Class.forName(serverOperation);
+          if (Config.class.isAssignableFrom(clazz)) {
+            config = ((Class<? extends Config>) clazz).newInstance();
+          }
+
+        } catch (ClassNotFoundException e) {
+          failConfig(e);
+        } catch (InstantiationException e) {
+          failConfig(e);
+        } catch (IllegalAccessException e) {
+          failConfig(e);
+        } catch (SecurityException e) {
+          failConfig(e);
+        } catch (ClassCastException e) {
+          failConfig(e);
+        }
       }
-      Class<?> clazz = Class.forName(serverOperation);
-      if (!RequestDefinition.class.isAssignableFrom(clazz)) {
-        throw new RuntimeException(serverOperation + " must implement "
-            + RequestDefinition.class.getName());
-      }
-      return (Class<? extends RequestDefinition>) clazz;
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
     }
+  }
+
+  private void failConfig() {
+    failConfig(null);
+  }
+
+  private void failConfig(Throwable e) {
+    final String message = String.format("Context parameter \"%s\" must name "
+        + "a default instantiable configuration class implementing %s",
+        SERVER_OPERATION_CONTEXT_PARAM, RequestFactory.Config.class.getName());
+
+    throw new IllegalStateException(message, e);
   }
 
   private String getContent(HttpServletRequest request) throws IOException {
@@ -211,16 +239,15 @@ public class RequestFactoryServlet extends HttpServlet {
     return methodName.toString();
   }
 
-  private RequestDefinition getOperationFromName(String operationName,
-      Class<? extends RequestDefinition> enumClass) throws SecurityException,
-      IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-    for (RequestDefinition operation : ((RequestDefinition[]) enumClass.getMethod(
-        "values").invoke(null))) {
-      if (operation.name().equals(operationName)) {
-        return operation;
-      }
+  private RequestDefinition getOperation(String operationName) {
+    RequestDefinition operation;
+    ensureConfig();
+    operation = config.requestDefinitions().get(operationName);
+    if (null == operation) {
+      throw new IllegalArgumentException("Unknown operation "
+          + operationName);
     }
-    throw new IllegalArgumentException("Unknown operation " + operationName);
+    return operation;
   }
 
   /**

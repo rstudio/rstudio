@@ -17,13 +17,48 @@ package com.google.gwt.sample.expenses.gwt.request;
 
 import com.google.gwt.requestfactory.shared.EntityListRequest;
 import com.google.gwt.requestfactory.shared.LongString;
+import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.ServerOperation;
 import com.google.gwt.valuestore.shared.ValueRef;
+import com.google.gwt.valuestore.shared.ValuesKey;
 
 /**
  * Request selector.
  */
 public interface ReportRequest {
+  public enum ServerOperations implements RequestFactory.RequestDefinition {
+    FIND_REPORTS_BY_EMPLOYEE {
+      public String getDomainMethodName() {
+        return "findReportsByEmployee";
+      }
+
+      public Class<?>[] getParameterTypes() {
+        return new Class[] { java.lang.Long.class };
+      }
+
+      public Class<? extends ValuesKey<?>> getReturnType() {
+        return com.google.gwt.sample.expenses.gwt.request.ReportKey.class;
+      }
+    },
+
+    FIND_ALL_REPORTS {
+      public String getDomainMethodName() {
+        return "findAllReports";
+      }
+
+      public Class<? extends ValuesKey<?>> getReturnType() {
+        return com.google.gwt.sample.expenses.gwt.request.ReportKey.class;
+      }
+    };
+
+    public String getDomainClassName() {
+      return "com.google.gwt.sample.expenses.server.domain.Report";
+    }
+
+    public Class<?>[] getParameterTypes() {
+      return null;
+    }
+  }
 
   /**
    * @return a request object
