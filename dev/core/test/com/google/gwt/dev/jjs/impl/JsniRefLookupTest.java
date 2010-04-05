@@ -153,6 +153,32 @@ public class JsniRefLookupTest extends OptimizerTestBase {
       }
     });
 
+    sourceOracle.addOrReplace(new MockJavaResource("test.DiffRetSuper") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuffer code = new StringBuffer();
+        code.append("package test;\n");
+        code.append("public interface DiffRetSuper {\n");
+        code.append("  Object foo();\n");
+        code.append("}\n");
+        return code;
+      }
+    });
+
+    sourceOracle.addOrReplace(new MockJavaResource("test.DiffRetSub") {
+      @Override
+      protected CharSequence getContent() {
+        StringBuffer code = new StringBuffer();
+        code.append("package test;\n");
+        code.append("public interface DiffRetSub extends DiffRetSuper {\n");
+        code.append("  String foo();\n");
+        code.append("}\n");
+        return code;
+      }
+    });
+
+    addSnippetImport("test.DiffRetSub");
+
     try {
       // The snippet must reference the classes so they will be compiled in
       program = compileSnippet("void",
@@ -375,6 +401,18 @@ public class JsniRefLookupTest extends OptimizerTestBase {
       HasEnclosingType res = lookup("test.Bar::foo(*)", errors);
       errors.assertHasError();
     }
+
+    /*
+     * Test a lookup where the subtype has a narrower return type than the
+     * supertype.
+     */
+    {
+      MockErrorReporter errors = new MockErrorReporter();
+      JMethod res = (JMethod) lookup("test.DiffRetSub::foo()", errors);
+      errors.assertNoError();
+      assertEquals("test.DiffRetSub", res.getEnclosingType().getName());
+      assertEquals("foo", res.getName());
+    }
   }
 
   public void testInterfaces() {
@@ -446,7 +484,7 @@ public class JsniRefLookupTest extends OptimizerTestBase {
       assertEquals("test.PrivateSub", res.getEnclosingType().getName());
       assertEquals("field", res.getName());
     }
-    
+
     // test private entries in the superclass
     {
       MockErrorReporter errors = new MockErrorReporter();

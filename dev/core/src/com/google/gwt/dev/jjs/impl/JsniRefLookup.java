@@ -156,22 +156,22 @@ public class JsniRefLookup {
     }
   }
 
+  /**
+   * Add a member to the table of most derived members.
+   * 
+   * @param matchesBySig The table so far of most derived members
+   * @param member The member to add to it
+   * @param refSig The string used to refer to that member, possibly shortened
+   * @param fullSig The fully qualified signature for that member
+   */
   private static void addMember(
       LinkedHashMap<String, LinkedHashMap<String, HasEnclosingType>> matchesBySig,
-      HasEnclosingType member, String refSig) {
+      HasEnclosingType member, String refSig, String fullSig) {
     LinkedHashMap<String, HasEnclosingType> matchesByFullSig = matchesBySig.get(refSig);
     if (matchesByFullSig == null) {
       matchesByFullSig = new LinkedHashMap<String, HasEnclosingType>();
       matchesBySig.put(refSig, matchesByFullSig);
     }
-
-    String fullSig;
-    if (member instanceof JField) {
-      fullSig = ((JField) member).getName();
-    } else {
-      fullSig = JProgram.getJsniSig((JMethod) member);
-    }
-
     matchesByFullSig.put(fullSig, member);
   }
 
@@ -211,15 +211,17 @@ public class JsniRefLookup {
             continue;
           }
         }
-        addMember(matchesBySig, method, getJsniSignature(method, false));
-        addMember(matchesBySig, method, getJsniSignature(method, true));
+        String fullSig = getJsniSignature(method, false);
+        String wildcardSig = getJsniSignature(method, true);
+        addMember(matchesBySig, method, fullSig, fullSig);
+        addMember(matchesBySig, method, wildcardSig, fullSig);
       }
     }
 
     // Get the fields on this class/interface.
     for (JField field : targetType.getFields()) {
       if (field.getName().equals(memberName)) {
-        addMember(matchesBySig, field, field.getName());
+        addMember(matchesBySig, field, field.getName(), field.getName());
       }
     }
   }
