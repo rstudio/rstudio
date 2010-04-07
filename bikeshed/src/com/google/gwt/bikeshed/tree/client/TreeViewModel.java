@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -40,14 +40,14 @@ public interface TreeViewModel {
 
     /**
      * Get the {@link ListModel} used to retrieve child node values.
-     * 
+     *
      * @return the list model
      */
     ListModel<T> getListModel();
 
     /**
      * Handle an event that is fired on one of the children of this item.
-     * 
+     *
      * @param elem the parent element of the item
      * @param object the data value of the item
      * @param event the event that was fired
@@ -65,7 +65,7 @@ public interface TreeViewModel {
     /**
      * Construct a new {@link DefaultNodeInfo} with a single cell and a
      * {@link ValueUpdater}.
-     * 
+     *
      * @param listModel the {@link ListModel} that provides the child values
      * @param cell the {@link Cell} used to render the child values
      * @param valueUpdater the {@link ValueUpdater}
@@ -94,7 +94,7 @@ public interface TreeViewModel {
 
     /**
      * Construct a new {@link DefaultNodeInfo}.
-     * 
+     *
      * @param listModel the {@link ListModel} that provides the child values
      * @param cell the {@link Cell} used to render the child values
      */
@@ -145,7 +145,7 @@ public interface TreeViewModel {
   /**
    * Get the {@link NodeInfo} that will provide the {@link ListModel} and
    * {@link Cell} to retrieve the children of the specified value.
-   * 
+   *
    * @param value the value in the parent node
    * @param treeNode the {@link TreeNode} that contains the value
    * @return the {@link NodeInfo}
@@ -154,10 +154,10 @@ public interface TreeViewModel {
 
   /**
    * Check if the value is known to be a leaf node.
-   * 
+   *
    * @param value the value at the node
    * @param treeNode the {@link TreeNode} that contains the value
-   * 
+   *
    * @return true if the node is known to be a leaf node, false otherwise
    */
   boolean isLeaf(Object value, TreeNode<?> treeNode);

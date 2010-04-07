@@ -17,7 +17,6 @@ package com.google.gwt.bikeshed.list.client;
 
 import com.google.gwt.bikeshed.cells.client.Cell;
 
-
 /**
  * A passthrough column, useful for giving cells access to the entire row
  * object.

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,7 +25,7 @@ import com.google.gwt.event.shared.HasHandlers;
 
 /**
  * A model for selection within a list.
- * 
+ *
  * @param <T> the data type of records in the list
  */
 public interface SelectionModel<T> extends HasHandlers {
@@ -37,7 +37,7 @@ public interface SelectionModel<T> extends HasHandlers {
 
     /**
      * Called when {@link SelectionChangeEvent} is fired.
-     * 
+     *
      * @param event the {@link SelectionChangeEvent} that was fired
      */
     void onSelectionChange(SelectionChangeEvent event);
@@ -57,7 +57,7 @@ public interface SelectionModel<T> extends HasHandlers {
     /**
      * Fires a selection change event on all registered handlers in the handler
      * manager. If no such handlers exist, this method will do nothing.
-     * 
+     *
      * @param source the source of the handlers
      */
     static void fire(SelectionModel<?> source) {
@@ -69,7 +69,7 @@ public interface SelectionModel<T> extends HasHandlers {
 
     /**
      * Gets the type associated with this event.
-     * 
+     *
      * @return returns the handler type
      */
     public static Type<SelectionChangeHandler> getType() {
@@ -99,7 +99,7 @@ public interface SelectionModel<T> extends HasHandlers {
   /**
    * A default implementation of SelectionModel that provides listener addition
    * and removal.
-   * 
+   *
    * @param <T> the data type of records in the list
    */
   abstract class AbstractSelectionModel<T> implements SelectionModel<T> {
@@ -143,7 +143,7 @@ public interface SelectionModel<T> extends HasHandlers {
 
   /**
    * Adds a {@link SelectionChangeEvent} handler.
-   * 
+   *
    * @param handler the handler
    * @return the registration for the event
    */
@@ -151,7 +151,7 @@ public interface SelectionModel<T> extends HasHandlers {
 
   /**
    * Check if an object is selected.
-   * 
+   *
    * @param object the object
    * @return true if selected, false if not
    */
@@ -159,7 +159,7 @@ public interface SelectionModel<T> extends HasHandlers {
 
   /**
    * Set the selected state of an object.
-   * 
+   *
    * @param object the object to select or deselect
    * @param selected true to select, false to deselect
    */
