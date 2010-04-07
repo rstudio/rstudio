@@ -98,6 +98,19 @@ public class ImmutableArrayTest extends GWTTestCase {
     assertEquals("pear", ia.get(0));
   }
   
+  public void testImmutableNoCopy() {
+    MutableArray<String> ma = CollectionFactory.createMutableArray();
+    ma.add("pear");
+    ma.add("apple");
+    ImmutableArrayImpl<String> ia1 = (ImmutableArrayImpl<String>) ma.freeze();
+    
+    assertTrue(ma.elems == ia1.elems);
+  
+    ImmutableArrayImpl<String> ia2 = (ImmutableArrayImpl<String>) ma.freeze();
+    
+    assertTrue(ia1.elems == ia2.elems);
+  }
+
   public void testModifyFrozenMutable() {    
     // Do not test undefined behavior with assertions disabled
     if (!assertionsEnabled) {
@@ -143,19 +156,6 @@ public class ImmutableArrayTest extends GWTTestCase {
     } catch (AssertionError e) {
       assertEquals(("This operation is illegal on a frozen collection"), e.getMessage());
     }
-  }
-  
-  public void testImmutableNoCopy() {
-    MutableArray<String> ma = CollectionFactory.createMutableArray();
-    ma.add("pear");
-    ma.add("apple");
-    ImmutableArrayImpl<String> ia1 = (ImmutableArrayImpl<String>) ma.freeze();
-    
-    assertTrue(ma.elems == ia1.elems);
-  
-    ImmutableArrayImpl<String> ia2 = (ImmutableArrayImpl<String>) ma.freeze();
-    
-    assertTrue(ia1.elems == ia2.elems);
   }
   
 }
