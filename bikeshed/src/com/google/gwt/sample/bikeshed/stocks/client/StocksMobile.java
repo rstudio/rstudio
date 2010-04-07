@@ -17,6 +17,7 @@ package com.google.gwt.sample.bikeshed.stocks.client;
 
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
 import com.google.gwt.bikeshed.list.shared.AsyncListModel;
+import com.google.gwt.bikeshed.list.shared.ListRegistration;
 import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
@@ -74,7 +75,7 @@ public class StocksMobile {
     // of the UiFactories need the models to instantiate their widgets.
     favoritesListModel = new AsyncListModel<StockQuote>() {
       @Override
-      protected void onRangeChanged(int start, int length) {
+      protected void onRangeChanged(ListRegistration reg, int start, int length) {
         update();
       }
     };

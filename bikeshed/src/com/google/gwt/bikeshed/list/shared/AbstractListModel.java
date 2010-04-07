@@ -57,7 +57,7 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
    * An implementation of {@link ListRegistration} that remembers its own range
    * of interest.
    */
-  private class DefaultListRegistration implements ListRegistration {
+  private class DefaultListRegistration implements ListRegistration<T> {
 
     private final ListHandler<T> handler;
     private int start;
@@ -72,6 +72,18 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
       this.handler = handler;
     }
 
+    public ListHandler<T> getHandler() {
+      return handler;
+    }
+
+    public int getLength() {
+      return length;
+    }
+
+    public int getStart() {
+      return start;
+    }
+
     public void removeHandler() {
       if (!registrations.contains(this)) {
         throw new IllegalStateException("ListHandler has already been removed.");
@@ -82,19 +94,7 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
     public void setRangeOfInterest(int start, int length) {
       this.start = start;
       this.length = length;
-      onRangeChanged(start, length);
-    }
-
-    protected ListHandler<T> getHandler() {
-      return handler;
-    }
-
-    protected int getLength() {
-      return length;
-    }
-
-    protected int getStart() {
-      return start;
+      onRangeChanged(this, start, length);
     }
   }
 
@@ -108,7 +108,7 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
    */
   private List<DefaultListRegistration> registrations = new ArrayList<DefaultListRegistration>();
 
-  public ListRegistration addListHandler(ListHandler<T> handler) {
+  public ListRegistration<T> addListHandler(ListHandler<T> handler) {
     DefaultListRegistration reg = new DefaultListRegistration(handler);
     registrations.add(reg);
     return reg;
@@ -159,8 +159,13 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
 
   /**
    * Called when a view changes its range of interest.
+   * 
+   * @param reg the list whose range has changed
+   * @param start the start of the list's new range
+   * @param length the length of the list's new range
    */
-  protected abstract void onRangeChanged(int start, int length);
+  protected abstract void onRangeChanged(ListRegistration<T> reg, int start,
+      int length);
 
   /**
    * Inform the views of the total number of items that are available.
@@ -183,21 +188,33 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
    * @param values the data values
    */
   protected void updateViewData(int start, int length, List<T> values) {
+    for (ListRegistration<T> reg : registrations) {
+      updateViewData(reg, start, length, values);
+    }
+  }
+
+  /**
+   * Informs a single view (via its {@link ListRegistration}) of new data.
+   * 
+   * @param reg the list registration of the view to be updated
+   * @param start the start index
+   * @param length the length of the data
+   * @param values the data values
+   */
+  protected void updateViewData(ListRegistration<T> reg, int start, int length, List<T> values) {
     int end = start + length;
-    for (DefaultListRegistration reg : registrations) {
-      int curStart = reg.getStart();
-      int curLength = reg.getLength();
-      int curEnd = curStart + curLength;
-      if (curStart < end && curEnd > start) {
-        // Fire the handler with the data that is in the range.
-        int realStart = curStart < start ? start : curStart;
-        int realEnd = curEnd > end ? end : curEnd;
-        int realLength = realEnd - realStart;
-        List<T> realValues = values.subList(realStart - start, realStart
-            - start + realLength);
-        ListEvent<T> event = new ListEvent<T>(realStart, realLength, realValues);
-        reg.getHandler().onDataChanged(event);
-      }
+    int curStart = reg.getStart();
+    int curLength = reg.getLength();
+    int curEnd = curStart + curLength;
+    if (curStart < end && curEnd > start) {
+      // Fire the handler with the data that is in the range.
+      int realStart = curStart < start ? start : curStart;
+      int realEnd = curEnd > end ? end : curEnd;
+      int realLength = realEnd - realStart;
+      List<T> realValues = values.subList(realStart - start, realStart
+          - start + realLength);
+      ListEvent<T> event = new ListEvent<T>(realStart, realLength, realValues);
+      reg.getHandler().onDataChanged(event);
     }
   }
 }

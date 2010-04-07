@@ -59,7 +59,7 @@ public class PagingTableListView<T> extends Widget {
   private ArrayList<T> data = new ArrayList<T>();
   private List<Header<?>> footers = new ArrayList<Header<?>>();
   private List<Header<?>> headers = new ArrayList<Header<?>>();
-  private ListRegistration listReg;
+  private ListRegistration<T> listReg;
   private ListModel<T> listModel;
   private int numPages;
 
@@ -86,7 +86,7 @@ public class PagingTableListView<T> extends Widget {
     // TODO: Total hack. It would almost definitely be preferable to sink only
     // those events actually needed by cells.
     sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.KEYEVENTS
-        | Event.ONCHANGE);
+        | Event.ONCHANGE | Event.FOCUSEVENTS);
   }
 
   public void addColumn(Column<T, ?, ?> col) {

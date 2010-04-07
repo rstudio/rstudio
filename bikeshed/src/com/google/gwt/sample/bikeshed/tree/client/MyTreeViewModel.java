@@ -24,6 +24,7 @@ import com.google.gwt.bikeshed.list.client.HasCell;
 import com.google.gwt.bikeshed.list.shared.AbstractListModel;
 import com.google.gwt.bikeshed.list.shared.ListModel;
 import com.google.gwt.bikeshed.list.shared.SelectionModel;
+import com.google.gwt.bikeshed.list.shared.ListRegistration;
 import com.google.gwt.bikeshed.tree.client.TreeNode;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel;
 import com.google.gwt.core.client.GWT;
@@ -47,7 +48,7 @@ public class MyTreeViewModel implements TreeViewModel {
     }
 
     @Override
-    protected void onRangeChanged(int start, int length) {
+    protected void onRangeChanged(ListRegistration reg, int start, int length) {
       List<Integer> values = new ArrayList<Integer>(1);
       values.add(wordLength);
       updateDataSize(1, true);
@@ -63,7 +64,7 @@ public class MyTreeViewModel implements TreeViewModel {
     }
 
     @Override
-    protected void onRangeChanged(int start, int length) {
+    protected void onRangeChanged(ListRegistration reg, int start, int length) {
       String prefix = value.endsWith("...") ? value.substring(0,
           value.length() - 3) : value;
       dataService.getNext(prefix, new AsyncCallback<List<String>>() {

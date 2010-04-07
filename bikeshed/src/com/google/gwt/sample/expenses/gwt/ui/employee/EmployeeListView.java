@@ -22,6 +22,7 @@ import com.google.gwt.bikeshed.list.client.IdentityColumn;
 import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.client.TextHeader;
 import com.google.gwt.bikeshed.list.shared.ListModel;
+import com.google.gwt.bikeshed.list.shared.ListRegistration;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesPlaces;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeKey;
@@ -80,9 +81,8 @@ public class EmployeeListView extends ValuesListViewTable<EmployeeKey> {
   private static ListModel<Values<EmployeeKey>> getModel(
       final ExpensesRequestFactory requests) {
     return new ListModelAdapter<EmployeeKey>() {
-
       @Override
-      protected void onRangeChanged(int start, int length) {
+      protected void onRangeChanged(ListRegistration reg, int start, int length) {
         requests.employeeRequest().findAllEmployees().forProperties(
             getProperties()).to(this).fire();
       }

@@ -282,7 +282,23 @@ public class ListListModel<T> extends AbstractListModel<T> {
   /**
    * The wrapper around the actual list.
    */
-  private ListWrapper listWrapper = new ListWrapper(new ArrayList<T>());
+  private ListWrapper listWrapper;
+
+  /**
+   * Creates an empty model.
+   */
+  public ListListModel() {
+    this(new ArrayList<T>());
+  }
+
+  /**
+   * Creates a list model that wraps the given collection. Changes to the
+   * wrapped list must be made via this model in order to be correctly applied
+   * to views.
+   */
+  public ListListModel(List<T> wrappee) {
+    listWrapper = new ListWrapper(wrappee);
+  }
 
   /**
    * Get the list that backs this model. Changes to the list will be reflected
@@ -294,11 +310,20 @@ public class ListListModel<T> extends AbstractListModel<T> {
     return listWrapper;
   }
 
-  @Override
-  protected void onRangeChanged(int start, int length) {
-    // TODO - update size only when needed
-    // TODO - update only relevant range of data
+  /**
+   * Replaces this model's list.
+   * 
+   * @param wrappee the model's new list
+   */
+  public void setList(List<T> wrappee) {
+    listWrapper = new ListWrapper(wrappee);
     updateDataSize(listWrapper.size(), true);
     updateViewData(0, listWrapper.size(), listWrapper);
+  }
+
+  @Override
+  protected void onRangeChanged(ListRegistration<T> reg, int start, int length) {
+    // TODO - update only relevant range of data
+    updateViewData(reg, 0, listWrapper.size(), listWrapper);
   }
 }

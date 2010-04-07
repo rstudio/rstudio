@@ -27,5 +27,5 @@ public interface ListModel<T> extends ProvidesKey<T> {
    * 
    * @param handler the {@link ListHandler}
    */
-  ListRegistration addListHandler(ListHandler<T> handler);
+  ListRegistration<T> addListHandler(ListHandler<T> handler);
 }

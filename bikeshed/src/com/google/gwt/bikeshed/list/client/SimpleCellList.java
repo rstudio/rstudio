@@ -45,7 +45,7 @@ public class SimpleCellList<T> extends Widget {
   private int initialMaxSize;
   private int maxSize;
   private ListModel<T> model;
-  private ListRegistration reg;
+  private ListRegistration<T> reg;
   private int seq; // for debugging - TODO: remove
   private final Element showFewerElem;
   private final Element showMoreElem;

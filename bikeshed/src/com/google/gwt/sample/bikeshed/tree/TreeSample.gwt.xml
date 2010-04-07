@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 0.0.999//EN" "http://google-web-toolkit.googlecode.com/svn/tags/0.0.999/distro-source/core/src/gwt-module.dtd">
-<module rename-to='tree'>
+<module rename-to='treesample'>
   <!-- Inherit the core Web Toolkit stuff.                        -->
   <inherits name='com.google.gwt.user.User'/>
   <inherits name='com.google.gwt.bikeshed.list.List'/>

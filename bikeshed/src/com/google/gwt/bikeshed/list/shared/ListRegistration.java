@@ -19,8 +19,10 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
  * Registration returned from a call to ListModel#addListHandler.
+ * 
+ * @param <T> the data type displayed by the list
  */
-public interface ListRegistration extends HandlerRegistration {
+public interface ListRegistration<T> extends HandlerRegistration {
 
   /**
    * Set the range of data that is interesting to the {@link ListHandler}.
@@ -29,4 +31,19 @@ public interface ListRegistration extends HandlerRegistration {
    * @param length the length
    */
   void setRangeOfInterest(int start, int length);
+
+  /**
+   * Gets the {@link ListHandler} associated with this registration.
+   */
+  ListHandler<T> getHandler();
+
+  /**
+   * Gets the length of this registration's range of interest.
+   */
+  int getLength();
+
+  /**
+   * Gets the start of this registration's range of interest.
+   */
+  int getStart();
 }

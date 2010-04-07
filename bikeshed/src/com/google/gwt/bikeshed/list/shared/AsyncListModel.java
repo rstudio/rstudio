@@ -31,6 +31,7 @@ public abstract class AsyncListModel<T> extends AbstractListModel<T> {
    * @param size the new size
    * @param exact true if the size is exact, false if it is a guess
    */
+  @Override
   public void updateDataSize(int size, boolean exact) {
     super.updateDataSize(size, exact);
   }
@@ -42,6 +43,7 @@ public abstract class AsyncListModel<T> extends AbstractListModel<T> {
    * @param length the length of the data
    * @param values the data values
    */
+  @Override
   public void updateViewData(int start, int length, List<T> values) {
     super.updateViewData(start, length, values);
   }

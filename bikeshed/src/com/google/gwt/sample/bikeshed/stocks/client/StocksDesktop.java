@@ -18,6 +18,7 @@ package com.google.gwt.sample.bikeshed.stocks.client;
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.list.shared.AsyncListModel;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
+import com.google.gwt.bikeshed.list.shared.ListRegistration;
 import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.bikeshed.tree.client.SideBySideTreeView;
 import com.google.gwt.bikeshed.tree.client.TreeNode;
@@ -113,7 +114,7 @@ public class StocksDesktop implements EntryPoint, Updater {
     // of the UiFactories need the models to instantiate their widgets.
     searchListModel = new AsyncListModel<StockQuote>() {
       @Override
-      protected void onRangeChanged(int start, int length) {
+      protected void onRangeChanged(ListRegistration reg, int start, int length) {
         update();
       }
     };
@@ -121,7 +122,7 @@ public class StocksDesktop implements EntryPoint, Updater {
 
     favoritesListModel = new AsyncListModel<StockQuote>() {
       @Override
-      protected void onRangeChanged(int start, int length) {
+      protected void onRangeChanged(ListRegistration reg, int start, int length) {
         update();
       }
     };
@@ -129,7 +130,7 @@ public class StocksDesktop implements EntryPoint, Updater {
 
     playerScoresListModel = new AsyncListModel<PlayerInfo>() {
       @Override
-      protected void onRangeChanged(int start, int length) {
+      protected void onRangeChanged(ListRegistration reg, int start, int length) {
       }
     };
 

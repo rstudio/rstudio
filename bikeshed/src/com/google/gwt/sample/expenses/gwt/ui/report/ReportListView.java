@@ -24,6 +24,7 @@ import com.google.gwt.bikeshed.list.client.SimpleColumn;
 import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.client.TextHeader;
 import com.google.gwt.bikeshed.list.shared.ListModel;
+import com.google.gwt.bikeshed.list.shared.ListRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesPlaces;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
@@ -85,9 +86,8 @@ public class ReportListView extends ValuesListViewTable<ReportKey> {
   private static ListModel<Values<ReportKey>> getModel(
       final ExpensesRequestFactory requests) {
     return new ListModelAdapter<ReportKey>() {
-
       @Override
-      protected void onRangeChanged(int start, int length) {
+      protected void onRangeChanged(ListRegistration reg, int start, int length) {
         requests.reportRequest().findAllReports().forProperties(getProperties()).to(
             this).fire();
       }
