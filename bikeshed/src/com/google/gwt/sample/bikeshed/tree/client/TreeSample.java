@@ -44,7 +44,6 @@ public class TreeSample implements EntryPoint {
       return selectedSet.contains(object);
     }
 
-    @Override
     public void setSelected(Object object, boolean selected) {
       if (selected) {
         selectedSet.add(object);
@@ -52,7 +51,7 @@ public class TreeSample implements EntryPoint {
         selectedSet.remove(object);
       }
       label.setText("Selected " + selectedSet.toString());
-      super.setSelected(object, selected);
+      scheduleSelectionChangeEvent();
     }
   }
 

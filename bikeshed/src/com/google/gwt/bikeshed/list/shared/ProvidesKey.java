@@ -22,7 +22,7 @@ package com.google.gwt.bikeshed.list.shared;
  * <p>
  * The key must implement a coherent set of {@link #equals(Object)} and
  * {@link #hashCode()} methods. If the item type is a not uniquely identifiable,
- * such as a list of {@link String}, the index can be used a the key.
+ * such as a list of {@link String}, the index can be used as the key.
  * </p>
  * 
  * @param <T> the data type of records in the list

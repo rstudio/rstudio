@@ -50,7 +50,7 @@ public class PagingTableListView<T> extends Widget {
 
   private class TableSelectionHandler implements SelectionChangeHandler {
     public void onSelectionChange(SelectionChangeEvent event) {
-      refresh();
+      refreshSelection();
     }
   }
 
@@ -183,6 +183,20 @@ public class PagingTableListView<T> extends Widget {
   public void refresh() {
     listReg.setRangeOfInterest(curPage * pageSize, pageSize);
     updateRowVisibility();
+  }
+
+  public void refreshSelection() {
+    NodeList<TableRowElement> rows = tbody.getRows();
+    for (int indexOnPage = 0; indexOnPage < pageSize; indexOnPage++) {
+      TableRowElement row = rows.getItem(indexOnPage);
+      T q = data.get(indexOnPage);
+      if (q != null && selectionModel != null && selectionModel.isSelected(q)) {
+        row.setClassName("pagingTableListView selected");
+      } else {
+        row.setClassName("pagingTableListView "
+            + ((indexOnPage & 0x1) == 0 ? "evenRow" : "oddRow"));
+      }
+    }
   }
 
   /**

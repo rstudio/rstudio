@@ -15,13 +15,14 @@
  */
 package com.google.gwt.sample.bikeshed.mail.client;
 
+import com.google.gwt.bikeshed.cells.client.ButtonCell;
 import com.google.gwt.bikeshed.cells.client.CheckboxCell;
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
 import com.google.gwt.bikeshed.list.client.SimpleColumn;
 import com.google.gwt.bikeshed.list.client.TextColumn;
+import com.google.gwt.bikeshed.list.shared.DefaultSelectionModel;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
-import com.google.gwt.bikeshed.list.shared.SelectionModel.AbstractSelectionModel;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -34,6 +35,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -44,122 +46,23 @@ import java.util.TreeMap;
  */
 public class MailSample implements EntryPoint, ClickHandler {
 
-  class MailSelectionModel extends AbstractSelectionModel<Message> {
-    private static final int ALL = 0;
-    private static final int NONE = 1;
-    private static final int READ = 2;
-    private static final int SENDER = 3;
-    private static final int SUBJECT = 4;
-    private static final int UNREAD = 5;
+  static class MailSelectionModel extends DefaultSelectionModel<Message> {
+    enum Type {
+      ALL(), NONE(), READ(), SENDER(), SUBJECT(), UNREAD();
 
-    // Use a TreeMap in order to get sorted diagnostic output
-    private Map<Integer, Boolean> exceptions = new TreeMap<Integer, Boolean>();
+      Type() {
+        typeMap.put(this.toString(), this);
+      }
+    }
+
+    // A map from enum names to their values
+    private static Map<String, Type> typeMap = new HashMap<String, Type>();
 
     private String search;
-    private int type = NONE;
-
-    public boolean isSelected(Message object) {
-      // Check exceptions
-      int id = object.id;
-      Boolean exception = exceptions.get(id);
-      if (exception != null) {
-        return exception.booleanValue();
-      }
-      // If not in exceptions, return the default
-      return isDefaultSelected(object);
-    }
-
-    public void setSearch(String search) {
-      this.search = canonicalize(search);
-      updateListeners();
-    }
+    private Type type = Type.NONE;
 
     @Override
-    public void setSelected(Message object, boolean selected) {
-      addException(object.id, selected);
-      updateListeners();
-    }
-
-    public void setType(int type) {
-      this.type = type;
-      exceptions.clear();
-      updateListeners();
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder();
-      switch (type) {
-        case NONE:
-          sb.append("NONE ");
-          break;
-        case ALL:
-          sb.append("ALL ");
-          break;
-        case READ:
-          sb.append("READ ");
-          break;
-        case UNREAD:
-          sb.append("UNREAD ");
-          break;
-        case SENDER:
-          sb.append("SENDER ");
-          sb.append(search);
-          sb.append(' ');
-          break;
-        case SUBJECT:
-          sb.append("SUBJECT ");
-          sb.append(search);
-          sb.append(' ');
-          break;
-      }
-
-      boolean first = true;
-      for (int i : exceptions.keySet()) {
-        if (exceptions.get(i) != Boolean.TRUE) {
-          continue;
-        }
-
-        if (first) {
-          first = false;
-          sb.append("+msg(s) ");
-        }
-        sb.append(i);
-        sb.append(' ');
-      }
-
-      first = true;
-      for (int i : exceptions.keySet()) {
-        if (exceptions.get(i) != Boolean.FALSE) {
-          continue;
-        }
-
-        if (first) {
-          first = false;
-          sb.append("-msg(s) ");
-        }
-        sb.append(i);
-        sb.append(' ');
-      }
-
-      return sb.toString();
-    }
-
-    private void addException(int id, boolean selected) {
-      Boolean currentlySelected = exceptions.get(id);
-      if (currentlySelected != null
-          && currentlySelected.booleanValue() != selected) {
-        exceptions.remove(id);
-      } else {
-        exceptions.put(id, selected);
-      }
-    }
-
-    private String canonicalize(String input) {
-      return input.toUpperCase();
-    }
-
-    private boolean isDefaultSelected(Message object) {
+    public boolean isDefaultSelected(Message object) {
       switch (type) {
         case NONE:
           return false;
@@ -184,13 +87,67 @@ public class MailSample implements EntryPoint, ClickHandler {
       }
     }
 
-    private void updateListeners() {
-      selectionLabel.setText("Selected " + this.toString());
+    public void setSearch(String search) {
+      this.search = canonicalize(search);
       scheduleSelectionChangeEvent();
+    }
+
+    public void setType(String type) {
+      this.type = typeMap.get(type);
+      clearExceptions();
+      scheduleSelectionChangeEvent();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append(type.name());
+      sb.append(' ');
+      if (type == Type.SENDER || type == Type.SUBJECT) {
+        sb.append(search);
+        sb.append(' ');
+      }
+
+      // Copy the exceptions into a TreeMap in order to sort by message id
+      TreeMap<Message, Boolean> exceptions = new TreeMap<Message, Boolean>();
+      getExceptions(exceptions);
+
+      appendExceptions(sb, exceptions, true);
+      appendExceptions(sb, exceptions, false);
+
+      return sb.toString();
+    }
+
+    protected void scheduleSelectionChangeEvent() {
+      selectionLabel.setText("Selected " + this.toString());
+      super.scheduleSelectionChangeEvent();
+    }
+
+    private void appendExceptions(StringBuilder sb,
+        Map<Message, Boolean> exceptions, boolean selected) {
+      boolean first = true;
+      for (Message message : exceptions.keySet()) {
+        if (exceptions.get(message) != selected) {
+          continue;
+        }
+
+        if (first) {
+          first = false;
+          sb.append(selected ? '+' : '-');
+          sb.append("msg(s) ");
+        }
+        sb.append(message.id);
+        sb.append(' ');
+      }
+    }
+
+    private String canonicalize(String input) {
+      return input.toUpperCase();
     }
   }
 
-  class Message {
+  // Hashing, comparison, and equality are based on the message id
+  class Message implements Comparable<Message> {
     int id;
     boolean isRead;
     String sender;
@@ -201,6 +158,10 @@ public class MailSample implements EntryPoint, ClickHandler {
       this.id = id;
       this.sender = sender;
       this.subject = subject;
+    }
+
+    public int compareTo(Message o) {
+      return id - o.id;
     }
 
     @Override
@@ -239,6 +200,8 @@ public class MailSample implements EntryPoint, ClickHandler {
     }
   }
 
+  private static Label selectionLabel = new Label("Selected NONE");
+
   private static final String[] senders = {
       "test@example.com", "spam1@spam.com", "gwt@google.com", "Mai Oleta",
       "Barbara Myles", "Celsa Ocie", "Elwood Holloway", "Bolanle Alford",
@@ -247,48 +210,31 @@ public class MailSample implements EntryPoint, ClickHandler {
       "Kaan Boulier", "Emilee Naoma", "Atino Alice", "Debby Renay",
       "Versie Nereida", "Ramon Erikson", "Karole Crissy", "Nelda Olsen",
       "Mariana Dann", "Reda Cheyenne", "Edelmira Jody", "Agueda Shante",
-      "Marla Dorris"};
+      "Marla Dorris"
+  };
 
   private static final String[] subjects = {
       "GWT rocks", "What's a widget?", "Money in Nigeria",
       "Impress your colleagues with bling-bling", "Degree available",
-      "Rolex Watches", "Re: Re: yo bud", "Important notice"};
+      "Rolex Watches", "Re: Re: yo bud", "Important notice"
+  };
 
-  private Button allButton = new Button("Select All");
-  private Button allOnPageButton = new Button("Select All On This Page");
-  private Button noneButton = new Button("Select None");
-  private Button readButton = new Button("Select Read");
-  private Label selectionLabel = new Label();
   private MailSelectionModel selectionModel = new MailSelectionModel();
-  private Button senderButton = new Button("Search Senders");
-  private Button subjectButton = new Button("Search Subject");
 
   private PagingTableListView<Message> table;
-
-  private Button unreadButton = new Button("Select Unread");
 
   // Handle events for all buttons here in order to avoid creating multiple
   // ClickHandlers
   public void onClick(ClickEvent event) {
-    Button source = (Button) event.getSource();
-    if (source == noneButton) {
-      selectionModel.setType(MailSelectionModel.NONE);
-    } else if (source == allOnPageButton) {
-      selectionModel.setType(MailSelectionModel.NONE);
+    String id = ((Button) event.getSource()).getElement().getId();
+    if ("PAGE".equals(id)) {
+      // selectionModel.setType(MailSelectionModel.NONE);
       List<Message> selectedItems = table.getDisplayedItems();
       for (Message item : selectedItems) {
         selectionModel.setSelected(item, true);
       }
-    } else if (source == allButton) {
-      selectionModel.setType(MailSelectionModel.ALL);
-    } else if (source == readButton) {
-      selectionModel.setType(MailSelectionModel.READ);
-    } else if (source == unreadButton) {
-      selectionModel.setType(MailSelectionModel.UNREAD);
-    } else if (source == senderButton) {
-      selectionModel.setType(MailSelectionModel.SENDER);
-    } else if (source == subjectButton) {
-      selectionModel.setType(MailSelectionModel.SUBJECT);
+    } else {
+      selectionModel.setType(id);
     }
   }
 
@@ -347,6 +293,21 @@ public class MailSample implements EntryPoint, ClickHandler {
     };
     table.addColumn(subjectColumn, "Subject");
 
+    SimpleColumn<Message, String> toggleColumn =
+      new SimpleColumn<Message, String>(ButtonCell.getInstance()) {
+      @Override
+      public String getValue(Message object) {
+        return object.isRead ? "Mark Unread" : "Mark Read";
+      }
+    };
+    toggleColumn.setFieldUpdater(new FieldUpdater<Message, String, Void>() {
+      public void update(int index, Message object, String value, Void viewData) {
+        object.isRead = !object.isRead;
+        table.refresh();
+      }
+    });
+    table.addColumn(toggleColumn, "Toggle Read/Unread");
+
     Label searchLabel = new Label("Search Sender or Subject:");
     final TextBox searchBox = new TextBox();
     searchBox.addKeyUpHandler(new KeyUpHandler() {
@@ -355,30 +316,29 @@ public class MailSample implements EntryPoint, ClickHandler {
       }
     });
 
-    noneButton.addClickHandler(this);
-    allOnPageButton.addClickHandler(this);
-    allButton.addClickHandler(this);
-    readButton.addClickHandler(this);
-    unreadButton.addClickHandler(this);
-    senderButton.addClickHandler(this);
-    subjectButton.addClickHandler(this);
-
     HorizontalPanel panel = new HorizontalPanel();
     panel.add(searchLabel);
     panel.add(searchBox);
 
     RootPanel.get().add(panel);
+    RootPanel.get().add(makeButton("Search Subject", "SUBJECT"));
+    RootPanel.get().add(makeButton("Search Senders", "SENDER"));
     RootPanel.get().add(new HTML("<br>"));
     RootPanel.get().add(table);
     RootPanel.get().add(new HTML("<br>"));
-    RootPanel.get().add(noneButton);
-    RootPanel.get().add(allOnPageButton);
-    RootPanel.get().add(allButton);
-    RootPanel.get().add(readButton);
-    RootPanel.get().add(unreadButton);
-    RootPanel.get().add(subjectButton);
-    RootPanel.get().add(senderButton);
+    RootPanel.get().add(makeButton("Select None", "NONE"));
+    RootPanel.get().add(makeButton("Select All On This Page", "PAGE"));
+    RootPanel.get().add(makeButton("Select All", "ALL"));
+    RootPanel.get().add(makeButton("Select Read", "READ"));
+    RootPanel.get().add(makeButton("Select Unread", "UNREAD"));
     RootPanel.get().add(new HTML("<hr>"));
     RootPanel.get().add(selectionLabel);
+  }
+
+  private Button makeButton(String label, String id) {
+    Button button = new Button(label);
+    button.getElement().setId(id);
+    button.addClickHandler(this);
+    return button;
   }
 }

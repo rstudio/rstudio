@@ -120,10 +120,6 @@ public interface SelectionModel<T> extends HasHandlers {
       handlerManager.fireEvent(event);
     }
 
-    public void setSelected(T object, boolean selected) {
-      scheduleSelectionChangeEvent();
-    }
-
     /**
      * Schedules a {@link SelectionModel.SelectionChangeEvent} to fire at the
      * end of the current event loop.
