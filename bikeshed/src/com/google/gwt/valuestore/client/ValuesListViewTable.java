@@ -33,7 +33,7 @@ import java.util.List;
 
 /**
  * A widget that displays lists of {@link com.google.gwt.valuestore.ValueStore
- * ValueStore} records in a {@link PagingTableListView}
+ * ValueStore} records in a {@link PagingTableListView}.
  * <p>
  * TODO needs MVP separation
  * 

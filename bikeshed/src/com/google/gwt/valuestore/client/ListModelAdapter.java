@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * Simple adapter from a {@link com.google.gwt.valuestore.shared.ValueStore
  * ValueStore} to a {@link com.google.gwt.bikeshed.list.shared.ListModel
- * ListModel}
+ * ListModel}.
  * <p>
  * TODO: pay attention to the visible range info that subclasses receive via
  * {@link #onRangeChanged}

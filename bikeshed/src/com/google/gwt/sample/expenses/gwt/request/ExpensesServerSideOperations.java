@@ -25,7 +25,7 @@ import java.util.Map;
 /**
  * Configuration class for
  * {@link com.google.gwt.requestfactory.server.RequestFactoryServlet
- * RequestFactoryServlet}
+ * RequestFactoryServlet}.
  */
 public class ExpensesServerSideOperations implements Config {
 

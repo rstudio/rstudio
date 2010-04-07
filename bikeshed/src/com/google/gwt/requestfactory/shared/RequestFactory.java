@@ -16,7 +16,6 @@
 package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.requestfactory.server.RequestFactoryServlet;
 import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.ValuesKey;

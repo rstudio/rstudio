@@ -26,6 +26,10 @@ import com.google.gwt.valuestore.shared.ValuesKey;
  * Request selector.
  */
 public interface ReportRequest {
+
+  /**
+   * Enum for server operations.
+   */
   public enum ServerOperations implements RequestFactory.RequestDefinition {
     FIND_REPORTS_BY_EMPLOYEE {
       public String getDomainMethodName() {
