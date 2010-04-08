@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.Preconditions;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.IOException;
@@ -287,10 +288,15 @@ public abstract class JDeclaredType extends JReferenceType implements
     if (clinitTarget == newClinitTarget) {
       return;
     }
-    if (getClass().desiredAssertionStatus()) {
+    if (newClinitTarget != null && getClass().desiredAssertionStatus()) {
       // Make sure this is a pure upgrade to a superclass or null.
       for (JDeclaredType current = clinitTarget; current != newClinitTarget; current = current.getSuperClass()) {
-        assert current.getSuperClass() != null;
+        Preconditions.checkNotNull(current.getSuperClass(), 
+            "Null super class for: %s (currentTarget: %s; newTarget: %s) in %s",
+            current,
+            clinitTarget,
+            newClinitTarget,
+            this);
       }
     }
     clinitTarget = newClinitTarget;
