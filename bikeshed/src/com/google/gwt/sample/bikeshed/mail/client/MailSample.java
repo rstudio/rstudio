@@ -23,6 +23,7 @@ import com.google.gwt.bikeshed.list.client.SimpleColumn;
 import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.shared.DefaultSelectionModel;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
+import com.google.gwt.bikeshed.list.shared.ProvidesKey;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -55,11 +56,23 @@ public class MailSample implements EntryPoint, ClickHandler {
       }
     }
 
+    private static ProvidesKey<Message> keyProvider =
+      new ProvidesKey<Message>() {
+        public Object getKey(Message item) {
+          return Integer.valueOf(item.id);
+        }
+    };
+
     // A map from enum names to their values
     private static Map<String, Type> typeMap = new HashMap<String, Type>();
 
     private String search;
     private Type type = Type.NONE;
+
+    @Override
+    public ProvidesKey<Message> getKeyProvider() {
+      return keyProvider;
+    }
 
     @Override
     public boolean isDefaultSelected(Message object) {
@@ -109,7 +122,7 @@ public class MailSample implements EntryPoint, ClickHandler {
       }
 
       // Copy the exceptions into a TreeMap in order to sort by message id
-      TreeMap<Message, Boolean> exceptions = new TreeMap<Message, Boolean>();
+      TreeMap<Object, Boolean> exceptions = new TreeMap<Object, Boolean>();
       getExceptions(exceptions);
 
       appendExceptions(sb, exceptions, true);
@@ -124,10 +137,10 @@ public class MailSample implements EntryPoint, ClickHandler {
     }
 
     private void appendExceptions(StringBuilder sb,
-        Map<Message, Boolean> exceptions, boolean selected) {
+        Map<Object, Boolean> exceptions, boolean selected) {
       boolean first = true;
-      for (Message message : exceptions.keySet()) {
-        if (exceptions.get(message) != selected) {
+      for (Object messageId : exceptions.keySet()) {
+        if (exceptions.get(messageId) != selected) {
           continue;
         }
 
@@ -136,7 +149,7 @@ public class MailSample implements EntryPoint, ClickHandler {
           sb.append(selected ? '+' : '-');
           sb.append("msg(s) ");
         }
-        sb.append(message.id);
+        sb.append(messageId);
         sb.append(' ');
       }
     }
@@ -257,6 +270,11 @@ public class MailSample implements EntryPoint, ClickHandler {
     SimpleColumn<Message, Boolean> selectedColumn = new SimpleColumn<Message, Boolean>(
         new CheckboxCell()) {
       @Override
+      public boolean dependsOnSelection() {
+        return true;
+      }
+
+      @Override
       public Boolean getValue(Message object) {
         return selectionModel.isSelected(object);
       }
@@ -268,6 +286,14 @@ public class MailSample implements EntryPoint, ClickHandler {
       }
     });
     table.addColumn(selectedColumn, "Selected");
+
+    TextColumn<Message> idColumn = new TextColumn<Message>() {
+      @Override
+      public String getValue(Message object) {
+        return "" + object.id;
+      }
+    };
+    table.addColumn(idColumn, "ID");
 
     TextColumn<Message> isReadColumn = new TextColumn<Message>() {
       @Override

@@ -29,7 +29,9 @@ import java.util.Map;
 public abstract class DefaultSelectionModel<T> extends
     AbstractSelectionModel<T> {
 
-  private final Map<T, Boolean> exceptions = new HashMap<T, Boolean>();
+  private final Map<Object, Boolean> exceptions = new HashMap<Object, Boolean>();
+
+  private final ProvidesKey<T> keyProvider = getKeyProvider();
 
   /**
    * Removes all exceptions.
@@ -53,7 +55,8 @@ public abstract class DefaultSelectionModel<T> extends
    */
   public boolean isSelected(T object) {
     // Check exceptions first
-    Boolean exception = exceptions.get(object);
+    Object key = getKey(object);
+    Boolean exception = exceptions.get(key);
     if (exception != null) {
       return exception.booleanValue();
     }
@@ -69,12 +72,13 @@ public abstract class DefaultSelectionModel<T> extends
    * selected state.
    */
   public void setSelected(T object, boolean selected) {
-    Boolean currentlySelected = exceptions.get(object);
+    Object key = getKey(object);
+    Boolean currentlySelected = exceptions.get(key);
     if (currentlySelected != null
         && currentlySelected.booleanValue() != selected) {
-      exceptions.remove(object);
+      exceptions.remove(key);
     } else {
-      exceptions.put(object, selected);
+      exceptions.put(key, selected);
     }
 
     scheduleSelectionChangeEvent();
@@ -83,8 +87,15 @@ public abstract class DefaultSelectionModel<T> extends
   /**
    * Copies the exceptions map into a user-supplied map.
    */
-  protected void getExceptions(Map<T, Boolean> output) {
+  protected void getExceptions(Map<Object, Boolean> output) {
     output.clear();
     output.putAll(exceptions);
+  }
+
+  private Object getKey(T object) {
+    if (keyProvider == null) {
+      return object;
+    }
+    return keyProvider.getKey(object);
   }
 }

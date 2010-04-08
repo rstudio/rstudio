@@ -196,6 +196,17 @@ public class PagingTableListView<T> extends Widget {
         row.setClassName("pagingTableListView "
             + ((indexOnPage & 0x1) == 0 ? "evenRow" : "oddRow"));
       }
+
+      int numCols = columns.size();
+      for (int c = 0; c < numCols; ++c) {
+        TableCellElement cell = row.getCells().getItem(c);
+        StringBuilder sb = new StringBuilder();
+        Column<T, ?, ?> column = columns.get(c);
+        if (column.dependsOnSelection()) {
+          columns.get(c).render(q, sb);
+          cell.setInnerHTML(sb.toString());
+        }
+      }
     }
   }
 

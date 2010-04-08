@@ -54,6 +54,15 @@ public abstract class Column<T, C, V> {
     return cell.consumesEvents();
   }
 
+  /**
+   * Returns true if the contents of the column may depend on the current
+   * state of the selection model associated with the table that is displaying
+   * this column.  The default implementation returns false.
+   */
+  public boolean dependsOnSelection() {
+    return false;
+  }
+
   public Cell<C, V> getCell() {
     return cell;
   }

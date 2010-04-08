@@ -111,6 +111,8 @@ public interface SelectionModel<T> extends HasHandlers {
      */
     private boolean isEventScheduled;
 
+    private ProvidesKey<T> keyProvider;
+
     public HandlerRegistration addSelectionChangeHandler(
         SelectionChangeHandler handler) {
       return handlerManager.addHandler(SelectionChangeEvent.getType(), handler);
@@ -118,6 +120,20 @@ public interface SelectionModel<T> extends HasHandlers {
 
     public void fireEvent(GwtEvent<?> event) {
       handlerManager.fireEvent(event);
+    }
+
+    /**
+     * Returns a ProvidesKey instance that simply returns the input data item.
+     */
+    public ProvidesKey<T> getKeyProvider() {
+      if (keyProvider == null) {
+        keyProvider  = new ProvidesKey<T>() {
+          public Object getKey(T item) {
+            return item;
+          }
+        };
+      }
+      return keyProvider;
     }
 
     /**
@@ -144,6 +160,12 @@ public interface SelectionModel<T> extends HasHandlers {
    * @return the registration for the event
    */
   HandlerRegistration addSelectionChangeHandler(SelectionChangeHandler handler);
+
+  /**
+   * Returns a ProvidesKey instance that may be used to provide a unique
+   * key for each record.
+   */
+  ProvidesKey<T> getKeyProvider();
 
   /**
    * Check if an object is selected.
