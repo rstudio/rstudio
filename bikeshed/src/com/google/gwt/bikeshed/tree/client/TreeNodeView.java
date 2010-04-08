@@ -64,7 +64,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
   /**
    * The list registration for the list of children.
    */
-  private ListRegistration listReg;
+  private ListRegistration<?> listReg;
 
   /**
    * The info about children of this node.

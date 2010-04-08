@@ -52,7 +52,7 @@ class TransactionTreeViewModel implements TreeViewModel {
     }
 
     @Override
-    protected void onRangeChanged(ListRegistration reg, int start, int length) {
+    protected void onRangeChanged(ListRegistration<StockQuote> reg, int start, int length) {
       updater.update();
     }
   }

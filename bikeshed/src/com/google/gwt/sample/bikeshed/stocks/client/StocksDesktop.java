@@ -114,7 +114,7 @@ public class StocksDesktop implements EntryPoint, Updater {
     // of the UiFactories need the models to instantiate their widgets.
     searchListModel = new AsyncListModel<StockQuote>() {
       @Override
-      protected void onRangeChanged(ListRegistration reg, int start, int length) {
+      protected void onRangeChanged(ListRegistration<StockQuote> reg, int start, int length) {
         update();
       }
     };
@@ -122,7 +122,7 @@ public class StocksDesktop implements EntryPoint, Updater {
 
     favoritesListModel = new AsyncListModel<StockQuote>() {
       @Override
-      protected void onRangeChanged(ListRegistration reg, int start, int length) {
+      protected void onRangeChanged(ListRegistration<StockQuote> reg, int start, int length) {
         update();
       }
     };
@@ -130,7 +130,7 @@ public class StocksDesktop implements EntryPoint, Updater {
 
     playerScoresListModel = new AsyncListModel<PlayerInfo>() {
       @Override
-      protected void onRangeChanged(ListRegistration reg, int start, int length) {
+      protected void onRangeChanged(ListRegistration<PlayerInfo> reg, int start, int length) {
       }
     };
 

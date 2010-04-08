@@ -75,7 +75,7 @@ public class StocksMobile {
     // of the UiFactories need the models to instantiate their widgets.
     favoritesListModel = new AsyncListModel<StockQuote>() {
       @Override
-      protected void onRangeChanged(ListRegistration reg, int start, int length) {
+      protected void onRangeChanged(ListRegistration<StockQuote> reg, int start, int length) {
         update();
       }
     };
