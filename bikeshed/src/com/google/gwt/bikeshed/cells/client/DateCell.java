@@ -25,7 +25,11 @@ import java.util.Date;
 public class DateCell extends Cell<Date, Void> {
 
   private final DateTimeFormat format;
-  
+
+  public DateCell() {
+    this(DateTimeFormat.getFullDateFormat());
+  }
+
   public DateCell(DateTimeFormat format) {
     this.format = format;
   }

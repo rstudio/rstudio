@@ -15,30 +15,25 @@
  */
 package com.google.gwt.sample.expenses.gwt.customized;
 
+import com.google.gwt.bikeshed.cells.client.DateCell;
+import com.google.gwt.bikeshed.cells.client.EditTextCell;
+import com.google.gwt.bikeshed.cells.client.FieldUpdater;
+import com.google.gwt.bikeshed.cells.client.TextCell;
+import com.google.gwt.bikeshed.list.client.Column;
+import com.google.gwt.bikeshed.list.client.PagingTableListView;
+import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.dom.client.TableCellElement;
-import com.google.gwt.dom.client.TableElement;
-import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.sample.expenses.gwt.request.ReportChanged;
 import com.google.gwt.sample.expenses.gwt.request.ReportKey;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TakesValueList;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
-import com.google.gwt.valuestore.shared.ValuesKey;
 
 import java.util.Date;
 import java.util.List;
@@ -49,53 +44,72 @@ import java.util.List;
  */
 public class CustomizedShell extends Composite implements TakesValueList<Values<ReportKey>>, ReportChanged.Handler {
   interface Listener {
-    void setFirstPurpose(String purpose);
+    void setPurpose(Values<ReportKey> report, String purpose);
   }
-  
+
   interface ShellUiBinder extends UiBinder<Widget, CustomizedShell> {
   } 
 
   private static ShellUiBinder uiBinder = GWT.create(ShellUiBinder.class);
 
   private Listener listener;
-
-  @UiField
-  Element error;
-  @UiField
-  TableElement table;
-  @UiField
-  TableRowElement header;
-  @UiField
-  ListBox users;
-  @UiField
-  TextBox purpose;
-  @UiField
-  Button save;
   private List<Values<ReportKey>> values;
+  private final ListListModel<Values<ReportKey>> model;
+
+  @UiField Element error;
+  @UiField ListBox users;
+  @UiField PagingTableListView<Values<ReportKey>> listView;
+
+  private Column<Values<ReportKey>, Date, Void> createdCol = new Column<Values<ReportKey>, Date, Void>(
+      new DateCell()) {
+    @Override
+    public Date getValue(Values<ReportKey> object) {
+      return object.get(ReportKey.get().getCreated());
+    }
+  };
+
+  private Column<Values<ReportKey>, String, Void> statusCol = new Column<Values<ReportKey>, String, Void>(
+      TextCell.getInstance()) {
+    @Override
+    public String getValue(Values<ReportKey> object) {
+      return "...";
+    }
+  };
+
+  private Column<Values<ReportKey>, String, String> purposeCol = new Column<Values<ReportKey>, String, String>(
+      new EditTextCell()) {
+    @Override
+    public String getValue(Values<ReportKey> object) {
+      return object.get(ReportKey.get().getPurpose());
+    }
+  };
 
   public CustomizedShell() {
+    model = new ListListModel<Values<ReportKey>>();
     initWidget(uiBinder.createAndBindUi(this));
+
+    listView.addColumn(createdCol, "Created");
+    listView.addColumn(statusCol, "Status (tbd)");
+    listView.addColumn(purposeCol, "Purpose");
+
+    purposeCol.setFieldUpdater(new FieldUpdater<Values<ReportKey>, String, String>() {
+      @Override
+      public void update(int index, Values<ReportKey> object, String value,
+          String viewData) {
+        model.getList().set(index, object);
+        listener.setPurpose(object, value);
+      }
+    });
   }
 
   public List<Values<ReportKey>> getValues() {
     return values;
   }
-  
-  @UiHandler("purpose") 
-  public void onPurposeChange(ValueChangeEvent<String> e) {
-    listener.setFirstPurpose(e.getValue());
-  }
-  
+
   public void onReportChanged(ReportChanged event) {
     refresh();
   }
-  
-  @UiHandler("save")
-  @SuppressWarnings("unused")
-  public void onSaveClick(ClickEvent e) {
-    listener.setFirstPurpose(purpose.getValue());
-  }
-  
+
   public void setListener(Listener listener) {
     this.listener = listener;
   }
@@ -106,59 +120,11 @@ public class CustomizedShell extends Composite implements TakesValueList<Values<
   }
 
   private void refresh() {
-    int r = 1; // skip header
-    NodeList<TableRowElement> tableRows = table.getRows();
-    purpose.setText("");
-    boolean enabled = values.size() > 0;
-    purpose.setEnabled(enabled);
-    save.setEnabled(enabled);
-    for (int i = 0; i < values.size(); i++) {
-      Values<ReportKey> valueRow = values.get(i);
-
-      if (i == 0) {
-        purpose.setText(valueRow.get(ReportKey.get().getPurpose()));
-      }
-      if (r < tableRows.getLength()) {
-        reuseRow(r, tableRows, valueRow);
-      } else {
-        TableRowElement tableRow = Document.get().createTRElement();
-
-        TableCellElement tableCell = Document.get().createTDElement();
-        tableCell.setInnerText(renderDate(valueRow, ReportKey.get().getCreated()));
-        tableRow.appendChild(tableCell);
-
-        tableCell = Document.get().createTDElement();
-        /* status goes here */
-        tableRow.appendChild(tableCell);
-
-        tableCell = Document.get().createTDElement();
-        tableCell.setInnerText(valueRow.get(ReportKey.get().getPurpose()));
-        tableRow.appendChild(tableCell);
-
-        table.appendChild(tableRow);
-      }
-      r++;
-    }
-    while (r < tableRows.getLength()) {
-      table.removeChild(tableRows.getItem(r));
-    }
+    model.setList(values);
   }
 
-  private <K extends ValuesKey<K>> String renderDate(Values<K> values, Property<K, Date> property) {
-    return DateTimeFormat.getShortDateFormat().format(values.get(property));
-  }
-
-  /**
-   * @param r
-   * @param tableRows
-   * @param valueRow
-   */
-  private void reuseRow(int r, NodeList<TableRowElement> tableRows,
-      Values<ReportKey> valueRow) {
-    TableRowElement tableRow = tableRows.getItem(r);
-    NodeList<TableCellElement> tableCells = tableRow.getCells();
-
-    // tableCells.getItem(0).setInnerText(valueRow.get(Report.instance().CREATED).toString());
-    tableCells.getItem(2).setInnerText(valueRow.get(ReportKey.get().getPurpose()));
+  @UiFactory
+  PagingTableListView<Values<ReportKey>> createListView() {
+    return new PagingTableListView<Values<ReportKey>>(model, 10);
   }
 }

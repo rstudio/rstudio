@@ -55,9 +55,8 @@ public class Customized implements EntryPoint {
     root.add(shell);
 
     shell.setListener(new CustomizedShell.Listener() {
-      public void setFirstPurpose(String purpose) {
+      public void setPurpose(Values<ReportKey> report, String purpose) {
         DeltaValueStore deltaValueStore = requestFactory.getValueStore().spawnDeltaView();
-        Values<ReportKey> report = shell.getValues().get(0);
         deltaValueStore.set(report.getKey().getPurpose(), report, purpose);
         requestFactory.syncRequest(deltaValueStore).fire();
       }
