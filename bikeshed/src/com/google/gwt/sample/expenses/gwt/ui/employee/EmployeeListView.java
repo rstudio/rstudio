@@ -21,17 +21,14 @@ import com.google.gwt.bikeshed.list.client.Header;
 import com.google.gwt.bikeshed.list.client.IdentityColumn;
 import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.client.TextHeader;
-import com.google.gwt.bikeshed.list.shared.ListModel;
-import com.google.gwt.bikeshed.list.shared.ListRegistration;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesPlaces;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeKey;
-import com.google.gwt.valuestore.client.ListModelAdapter;
 import com.google.gwt.valuestore.client.ValuesListViewTable;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,6 +37,13 @@ import java.util.List;
  * TODO The bulk of this should be in a <g:table> in a ui.xml file
  */
 public class EmployeeListView extends ValuesListViewTable<EmployeeKey> {
+  private static final List<Property<EmployeeKey, ?>> properties;
+  static {
+    List<Property<EmployeeKey, ?>> p = new ArrayList<Property<EmployeeKey, ?>>();
+    p.add(EmployeeKey.get().getUserName());
+    p.add(EmployeeKey.get().getDisplayName());
+    properties = Collections.unmodifiableList(p);
+  }
 
   private static List<Column<Values<EmployeeKey>, ?, ?>> getColumns(
       final ExpensesPlaces places) {
@@ -63,42 +67,26 @@ public class EmployeeListView extends ValuesListViewTable<EmployeeKey> {
         new ActionCell<Values<EmployeeKey>>("Show",
             places.<EmployeeKey> getDetailsGofer())));
 
-//    columns.add(new IdentityColumn<Values<EmployeeKey>>(
-//        new ActionCell<Values<EmployeeKey>>("Edit",
-//            places.<EmployeeKey> getEditorGofer())));
+    // columns.add(new IdentityColumn<Values<EmployeeKey>>(
+    // new ActionCell<Values<EmployeeKey>>("Edit",
+    // places.<EmployeeKey> getEditorGofer())));
 
     return columns;
   }
 
   private static List<Header<?>> getHeaders() {
     List<Header<?>> headers = new ArrayList<Header<?>>();
-    for (final Property<EmployeeKey, ?> property : getProperties()) {
+    for (final Property<EmployeeKey, ?> property : properties) {
       headers.add(new TextHeader(property.getName()));
     }
     return headers;
   }
 
-  private static ListModel<Values<EmployeeKey>> getModel(
-      final ExpensesRequestFactory requests) {
-    return new ListModelAdapter<EmployeeKey>() {
-      @Override
-      protected void onRangeChanged(ListRegistration reg, int start, int length) {
-        requests.employeeRequest().findAllEmployees().forProperties(
-            getProperties()).to(this).fire();
-      }
-    };
+  public EmployeeListView(String headingMessage, ExpensesPlaces places) {
+    super(headingMessage, getColumns(places), getHeaders());
   }
 
-  private static List<Property<EmployeeKey, ?>> getProperties() {
-    List<Property<EmployeeKey, ?>> properties = new ArrayList<Property<EmployeeKey, ?>>();
-    properties.add(EmployeeKey.get().getUserName());
-    properties.add(EmployeeKey.get().getDisplayName());
+  public List<Property<EmployeeKey, ?>> getProperties() {
     return properties;
   }
-
-  public EmployeeListView(String headingMessage, ExpensesPlaces places,
-      ExpensesRequestFactory requests) {
-    super(headingMessage, getModel(requests), getColumns(places), getHeaders());
-  }
-
 }

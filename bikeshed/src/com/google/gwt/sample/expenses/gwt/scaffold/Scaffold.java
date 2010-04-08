@@ -26,9 +26,9 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesListPlace;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesPlace;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesPlaces;
-import com.google.gwt.sample.expenses.gwt.request.EmployeeKey;
+import com.google.gwt.sample.expenses.gwt.request.ExpensesKey;
+import com.google.gwt.sample.expenses.gwt.request.ExpensesKeyProcessor;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.gwt.request.ReportKey;
 import com.google.gwt.sample.expenses.gwt.ui.ExpensesKeyNameRenderer;
 import com.google.gwt.sample.expenses.gwt.ui.ListPlaceRenderer;
 import com.google.gwt.user.client.ui.HTML;
@@ -64,26 +64,36 @@ public class Scaffold implements EntryPoint {
     // Left side
     PlacePicker<ExpensesListPlace> placePicker = new PlacePicker<ExpensesListPlace>(
         shell.getPlacesBox(), placeController, listPlaceNamer);
-    List<ExpensesListPlace> topPlaces = new ArrayList<ExpensesListPlace>();
-    topPlaces.add(new ExpensesListPlace(EmployeeKey.get()));
-    topPlaces.add(new ExpensesListPlace(ReportKey.get()));
-    topPlaces = Collections.unmodifiableList(topPlaces);
+    List<ExpensesListPlace> topPlaces = getTopPlaces();
     placePicker.setPlaces(topPlaces);
 
     // Shows entity lists
-    eventBus.addHandler(PlaceChanged.TYPE, new ScaffoldListRequester(places,
-        shell.getBody(), requestFactory, listPlaceNamer));
+    eventBus.addHandler(PlaceChanged.TYPE, new ScaffoldListRequester(
+        shell.getBody(), new ScaffoldListViewBuilder(places, requestFactory,
+            listPlaceNamer)));
 
     // Shared view for entity details.
-    // TODO Real app should not share
-    final HTML detailsView = new HTML();
-    eventBus.addHandler(PlaceChanged.TYPE, new ScaffoldDetailsRequester(entityNamer,
-        shell.getBody(), detailsView));
+    final HTML detailsView = new HTML(); // TODO Real app should not share?
+
+    // Shows entity details
+    eventBus.addHandler(PlaceChanged.TYPE, new ScaffoldDetailsRequester(
+        entityNamer, shell.getBody(), detailsView,
+        new ScaffoldDetailsViewBuilder()));
 
     // Hide the loading message
     Element loading = Document.get().getElementById("loading");
     loading.getParentElement().removeChild(loading);
 
     RootLayoutPanel.get().add(shell);
+  }
+
+  private List<ExpensesListPlace> getTopPlaces() {
+    final List<ExpensesListPlace> rtn = new ArrayList<ExpensesListPlace>();
+    ExpensesKeyProcessor.processAll(new ExpensesKeyProcessor.KeyProcessor() {
+      public void processKey(ExpensesKey<?> key) {
+        rtn.add(new ExpensesListPlace(key));
+      }
+    });
+    return Collections.unmodifiableList(rtn);
   }
 }

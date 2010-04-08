@@ -18,41 +18,47 @@ package com.google.gwt.valuestore.client;
 import com.google.gwt.bikeshed.list.client.Column;
 import com.google.gwt.bikeshed.list.client.Header;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.shared.ListModel;
+import com.google.gwt.bikeshed.list.shared.ListRegistration;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Values;
 import com.google.gwt.valuestore.shared.ValuesKey;
+import com.google.gwt.valuestore.shared.ValuesListView;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
 /**
  * A widget that displays lists of {@link com.google.gwt.valuestore.ValueStore
- * ValueStore} records in a {@link PagingTableListView}.
- * <p>
- * TODO needs MVP separation
- * 
+ * ValueStore} records in a {@link PagingTableListView}
+ *
  * @param <K> the type of the ValuesKey shared by these records
  */
-public class ValuesListViewTable<K extends ValuesKey<K>> extends Composite {
+public abstract class ValuesListViewTable<K extends ValuesKey<K>> extends
+    Composite implements ValuesListView<K> {
   interface Binder extends UiBinder<HTMLPanel, ValuesListViewTable<?>> {
   }
 
   private static final Binder BINDER = GWT.create(Binder.class);
+
+  public ValuesListView.Delegate delegate;
+  public ListModelAdapter<K> listModel;
 
   @UiField(provided = true)
   PagingTableListView<Values<K>> table;
   @UiField
   HeadingElement heading;
 
-  public ValuesListViewTable(String headingMessage, ListModel<Values<K>> model,
+  public ValuesListViewTable(String headingMessage,
       List<Column<Values<K>, ?, ?>> columns, List<Header<?>> headers) {
-    table = new PagingTableListView<Values<K>>(model, 100);
+    listModel = createModel();
+    table = new PagingTableListView<Values<K>>(listModel, 100);
     final Iterator<Header<?>> nextHeader = headers.iterator();
     for (Column<Values<K>, ?, ?> column : columns) {
       if (nextHeader.hasNext()) {
@@ -64,5 +70,38 @@ public class ValuesListViewTable<K extends ValuesKey<K>> extends Composite {
     initWidget(BINDER.createAndBindUi(this));
 
     heading.setInnerText(headingMessage);
+  }
+
+  public ValuesListViewTable<K> asWidget() {
+    return this;
+  }
+
+  /**
+   * @return the delegate for this view, or null if there is none
+   */
+  public ValuesListView.Delegate getDelegate() {
+    return delegate;
+  }
+
+  public abstract Collection<Property<K, ?>> getProperties();
+
+  /**
+   * @param delegate the new delegate for this view. May be null
+   */
+  public void setDelegate(ValuesListView.Delegate delegate) {
+    this.delegate = delegate;
+  }
+  
+  public void setValueList(List<Values<K>> newValues) {
+    listModel.setValueList(newValues);
+  }
+
+  private ListModelAdapter<K> createModel() {
+    return new ListModelAdapter<K>() {
+      @Override
+      protected void onRangeChanged(ListRegistration<Values<K>> reg, int start, int length) {
+        getDelegate().onRangeChanged(start, length);
+      }
+    };
   }
 }

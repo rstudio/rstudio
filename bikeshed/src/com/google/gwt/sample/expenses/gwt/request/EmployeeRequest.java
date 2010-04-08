@@ -24,9 +24,9 @@ import com.google.gwt.valuestore.shared.ValuesKey;
  * Request selector.
  */
 public interface EmployeeRequest {
-  
+
   /**
-   * Enum for server operations.
+   * Defines the server operations that handle these requests.
    */
   public enum ServerOperations implements RequestFactory.RequestDefinition {
     FIND_ALL_EMPLOYEES {

@@ -17,20 +17,8 @@ package com.google.gwt.sample.expenses.gwt.scaffold;
 
 import com.google.gwt.app.place.PlaceChanged;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesListPlace;
-import com.google.gwt.sample.expenses.gwt.place.ExpensesPlaces;
-import com.google.gwt.sample.expenses.gwt.request.EmployeeKey;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKey;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKeyVisitor;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.gwt.request.ReportKey;
-import com.google.gwt.sample.expenses.gwt.ui.employee.EmployeeListView;
-import com.google.gwt.sample.expenses.gwt.ui.report.ReportListView;
-import com.google.gwt.user.client.ui.Renderer;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.valuestore.client.ValuesListViewTable;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * In charge of requesting and displaying the appropriate record lists in the
@@ -40,20 +28,12 @@ import java.util.Map;
 public final class ScaffoldListRequester implements PlaceChanged.Handler {
 
   private final SimplePanel panel;
-  private final ExpensesRequestFactory requests;
-  private final Renderer<ExpensesListPlace> placeRenderer;
-  private final ExpensesPlaces places;
+  private final ScaffoldListViewBuilder builder;
 
-  // TODO This dependency on view classes prevents testing this class in JRE.
-  // Get a factory in here or something
-  private final Map<ExpensesListPlace, ValuesListViewTable<?>> viewMap = new HashMap<ExpensesListPlace, ValuesListViewTable<?>>();
-
-  public ScaffoldListRequester(ExpensesPlaces places, SimplePanel panel,
-      ExpensesRequestFactory requests, Renderer<ExpensesListPlace> renderer) {
-    this.places = places;
+  public ScaffoldListRequester(SimplePanel panel,
+      ScaffoldListViewBuilder builder) {
     this.panel = panel;
-    this.requests = requests;
-    this.placeRenderer = renderer;
+    this.builder = builder;
   }
 
   public void onPlaceChanged(PlaceChanged event) {
@@ -61,33 +41,16 @@ public final class ScaffoldListRequester implements PlaceChanged.Handler {
       return;
     }
     final ExpensesListPlace newPlace = (ExpensesListPlace) event.getNewPlace();
-    ExpensesKey<?> key = newPlace.getKey();
 
-    key.accept(new ExpensesKeyVisitor() {
+    Widget view = builder.getListView(newPlace).asWidget();
 
-      public void visit(EmployeeKey employeeKey) {
-        ValuesListViewTable<?> view = viewMap.get(newPlace);
-        if (null == view) {
-          view = new EmployeeListView(placeRenderer.render(newPlace), places,
-              requests);
-          viewMap.put(newPlace, view);
-        }
-      }
+    if (null == view) {
+      throw new RuntimeException("Unable to locate a view for " + newPlace);
+    }
 
-      public void visit(ReportKey reportKey) {
-        ValuesListViewTable<?> view = viewMap.get(newPlace);
-        if (null == view) {
-          view = new ReportListView(placeRenderer.render(newPlace), places,
-              requests);
-          viewMap.put(newPlace, view);
-        }
-      }
-    });
-
-    ValuesListViewTable<?> entitiesView = viewMap.get(newPlace);
-    if (entitiesView.getParent() == null) {
+    if (view.getParent() == null) {
       panel.clear();
-      panel.add(entitiesView);
+      panel.add(view);
     }
   }
 }

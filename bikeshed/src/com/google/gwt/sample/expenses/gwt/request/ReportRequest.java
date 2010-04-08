@@ -28,7 +28,7 @@ import com.google.gwt.valuestore.shared.ValuesKey;
 public interface ReportRequest {
 
   /**
-   * Enum for server operations.
+   * Defines the server operations that handle these requests.
    */
   public enum ServerOperations implements RequestFactory.RequestDefinition {
     FIND_REPORTS_BY_EMPLOYEE {

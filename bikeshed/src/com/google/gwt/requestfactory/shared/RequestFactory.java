@@ -29,7 +29,8 @@ public interface RequestFactory {
 
   /**
    * Implemented by the configuration class used by
-   * {@link RequestFactoryServlet}.
+   * {@link com.google.gwt.requestfactory.server.RequestFactoryServlet
+   * RequestFactoryServlet}.
    */
   interface Config {
     Map<String, RequestDefinition> requestDefinitions();

@@ -37,6 +37,6 @@ public abstract class ListModelAdapter<K extends ValuesKey<K>> extends
 
   public void setValueList(List<Values<K>> newValues) {
     updateDataSize(newValues.size(), true);
-    updateViewData(0, newValues.size() - 1, newValues);
+    updateViewData(0, newValues.size(), newValues);
   }
 }
