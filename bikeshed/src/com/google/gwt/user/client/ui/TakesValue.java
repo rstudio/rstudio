@@ -17,7 +17,7 @@ package com.google.gwt.user.client.ui;
 
 /**
  * Implemented by objects that want to be kept apprised of a value.
- * 
+ *
  * @param <V> value type
  */
 public interface TakesValue<V> {

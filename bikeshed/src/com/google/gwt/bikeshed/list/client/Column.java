@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -30,7 +30,7 @@ import java.util.Map;
  * for each cell on demand.  New view data, if needed, is created by the
  * cell's onBrowserEvent method, stored in the Column, and passed to future
  * calls to Cell's {@link Cell#onBrowserEvent} and @link{Cell#render} methods.
- * 
+ *
  * @param <T> the row type
  * @param <C> the column type
  * @param <V> the view data type

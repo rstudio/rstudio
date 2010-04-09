@@ -47,7 +47,7 @@
         <g:center>
           <s:FavoritesWidget styleName='{common.bg}' ui:field='favoritesWidget'/>
         </g:center>
-      </g:DockLayoutPanel>       
+      </g:DockLayoutPanel>
     </g:center>
   </g:DockLayoutPanel>
 </ui:UiBinder>

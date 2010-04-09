@@ -22,22 +22,22 @@ import com.google.gwt.event.shared.GwtEvent;
  * Event thrown when the user has reached a new location in the app.
  */
 public class PlaceChanged extends GwtEvent<PlaceChanged.Handler> {
-  
+
   /**
    * Implemented by handlers of PlaceChanged events.
    */
   public interface Handler extends EventHandler {
     void onPlaceChanged(PlaceChanged event);
   }
-  
+
   public static Type<Handler> TYPE = new Type<Handler>();
 
   private final Place newPlace;
-  
+
   public PlaceChanged(Place newPlace) {
     this.newPlace = newPlace;
   }
-  
+
   @Override
   public GwtEvent.Type<Handler> getAssociatedType() {
     return TYPE;

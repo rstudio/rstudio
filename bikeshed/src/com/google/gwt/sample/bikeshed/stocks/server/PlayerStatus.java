@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -63,7 +63,7 @@ public class PlayerStatus extends PlayerInfo {
 
   /**
    * Add a stock to the favorites list.
-   * 
+   *
    * @param ticker the stock ticker
    */
   public void addFavorite(String ticker) {
@@ -73,7 +73,7 @@ public class PlayerStatus extends PlayerInfo {
 
   /**
    * Purchase stock.
-   * 
+   *
    * @param ticker the stock ticker
    * @param quantity the number of shares to buy
    * @param price the price of the stock
@@ -109,7 +109,7 @@ public class PlayerStatus extends PlayerInfo {
   /**
    * Returns the total cost of the currently owned shared, using an average cost
    * basis method.
-   * 
+   *
    * @param ticker the stock ticker
    */
   public int getAverageCostBasis(String ticker) {
@@ -123,7 +123,7 @@ public class PlayerStatus extends PlayerInfo {
 
   /**
    * Get this players favorite pattern.
-   * 
+   *
    * @return the pattern
    */
   public Pattern getFavoritesPattern() {
@@ -132,7 +132,7 @@ public class PlayerStatus extends PlayerInfo {
 
   /**
    * Get this players favorite query.
-   * 
+   *
    * @return the query
    */
   public String getFavoritesQuery() {
@@ -141,7 +141,7 @@ public class PlayerStatus extends PlayerInfo {
 
   /**
    * Get the number of shares owned for a given stock.
-   * 
+   *
    * @param ticker the stock ticker
    * @return the number of shares owned
    */
@@ -152,7 +152,7 @@ public class PlayerStatus extends PlayerInfo {
 
   /**
    * Check if the stock ticker is in the favorites list.
-   * 
+   *
    * @param ticker the stock sticker
    * @return true if a favorite, false if not
    */
@@ -162,7 +162,7 @@ public class PlayerStatus extends PlayerInfo {
 
   /**
    * Remove a stock from the favorites list.
-   * 
+   *
    * @param ticker the stock ticker
    */
   public void removeFavorite(String ticker) {
@@ -172,7 +172,7 @@ public class PlayerStatus extends PlayerInfo {
 
   /**
    * Sell stock.
-   * 
+   *
    * @param ticker the stock ticker
    * @param quantity the number of shares to sell
    * @param price the price of the stock

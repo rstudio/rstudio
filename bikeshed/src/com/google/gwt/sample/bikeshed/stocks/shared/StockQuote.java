@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -43,7 +43,7 @@ public class StockQuote implements Serializable {
 
   /**
    * Construct a new {@link StockQuote}.
-   * 
+   *
    * @param ticker the ticket symbol
    * @param name the company name
    * @param price the price in pennies
@@ -66,7 +66,7 @@ public class StockQuote implements Serializable {
    */
   StockQuote() {
   }
-  
+
   public String getChange() {
     return change;
   }
@@ -101,11 +101,11 @@ public class StockQuote implements Serializable {
   public String getTicker() {
     return ticker;
   }
-  
+
   public int getTotalPaid() {
     return totalPaid;
   }
-  
+
   public int getValue() {
     return price * sharesOwned;
   }

@@ -25,6 +25,6 @@ import java.util.List;
  */
 @RemoteServiceRelativePath("tree")
 public interface TreeService extends RemoteService {
-  
+
   List<String> getNext(String prefix);
 }

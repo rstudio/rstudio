@@ -32,7 +32,7 @@ public class Category {
 
   /**
    * Gets the recipes in this category.
-   * 
+   *
    * @return this category's recipes
    */
   public List<Recipe> getRecipes() {
@@ -41,7 +41,7 @@ public class Category {
 
   /**
    * Gets this category's title.
-   * 
+   *
    * @return the category title
    */
   public String getTitle() {

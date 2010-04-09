@@ -19,22 +19,22 @@ import com.google.gwt.event.shared.HandlerManager;
 
 /**
  * In charge of the user's location in the app.
- * 
+ *
  * @param <P> the type of places managed
  */
 public class PlaceController<P extends Place> {
   private final HandlerManager eventBus;
-  
+
   private P where;
-  
+
   public PlaceController(HandlerManager eventBus) {
     this.eventBus = eventBus;
   }
-  
+
   public  P getWhere() {
     return where;
   }
-  
+
   public void goTo(P newPlace) {
     where = newPlace;
     eventBus.fireEvent(new PlaceChanged(newPlace));

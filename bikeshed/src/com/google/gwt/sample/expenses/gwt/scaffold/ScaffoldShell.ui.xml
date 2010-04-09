@@ -7,16 +7,16 @@
     .disabled {
      color: gray;
     }
-    
+
     .banner {
        background-color: wheat;
      }
-     
+
     .title {
        text-align: left;
        margin-left: 1em;
      }
-     
+
     .error {
      position: absolute;
      left: 12%;
@@ -24,7 +24,7 @@
      text-align: center;
      background-color: red;
     }
-    
+
     .users {
      position: absolute;
      right: 0;

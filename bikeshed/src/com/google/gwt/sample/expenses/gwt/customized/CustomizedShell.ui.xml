@@ -7,21 +7,21 @@
     .disabled {
      color: gray;
     }
-    
+
     table.reports td {
      border-width: 1px;
      padding: 1px;
      border-style: solid;
      background-color: white;
     }
-    
+
     .error {
      position: absolute;
      width: 100%;
      text-align: center;
      background-color: red;
     }
-    
+
     .users {
      position: absolute;
      right: 0;

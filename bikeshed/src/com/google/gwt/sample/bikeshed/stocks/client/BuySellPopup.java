@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -132,7 +132,7 @@ public class BuySellPopup extends DialogBox {
 
   /**
    * Get the last transaction.
-   * 
+   *
    * @return the last transaction, or null if canceled
    */
   public Transaction getTransaction() {
@@ -141,7 +141,7 @@ public class BuySellPopup extends DialogBox {
 
   /**
    * Set the available cash.
-   * 
+   *
    * @param cash the available cash
    */
   public void setAvailableCash(int cash) {
@@ -152,7 +152,7 @@ public class BuySellPopup extends DialogBox {
 
   /**
    * Set the current {@link StockQuote}.
-   * 
+   *
    * @param quote the stock quote to buy
    * @param isBuying true if buying the stock
    */

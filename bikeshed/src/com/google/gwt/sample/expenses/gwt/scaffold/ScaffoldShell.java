@@ -32,11 +32,11 @@ public class ScaffoldShell extends Composite {
   interface Binder extends UiBinder<Widget, ScaffoldShell> {
   }
   private static final Binder BINDER = GWT.create(Binder.class);
-  
+
   @UiField SimplePanel body;
   @UiField ListBoxPlacePickerView<ExpensesListPlace> placesBox;
   @UiField DivElement error;
-  
+
   public ScaffoldShell() {
     initWidget(BINDER.createAndBindUi(this));
   }
@@ -47,7 +47,7 @@ public class ScaffoldShell extends Composite {
   public SimplePanel getBody() {
     return body;
   }
-  
+
   /**
    * @return the banner
    */

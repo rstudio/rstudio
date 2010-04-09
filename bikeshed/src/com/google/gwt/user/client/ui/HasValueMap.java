@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * Implemented by widgets that let the user pick from a set
  * of values.
- * 
+ *
  * @param <T> the value type
  */
 public interface HasValueMap<T> {

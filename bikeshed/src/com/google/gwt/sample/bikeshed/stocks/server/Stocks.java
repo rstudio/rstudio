@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,7 +27,7 @@ import java.util.TreeSet;
  * A list of NYSE and NASDAQ stocks (note: this is a snapshot plus some
  * corrections, not a definitive list).  Stocks are listed in the file
  * symbols.txt, which contains a series of lines of the form:
- * 
+ *
  * <ticker> <name>
  */
 public class Stocks {
@@ -36,7 +36,7 @@ public class Stocks {
 
   public static final HashMap<String, String> companyNamesBySymbol =
     new HashMap<String, String>();
-  
+
   public static final TreeSet<String> stockTickers = new TreeSet<String>();
 
   static {
@@ -53,7 +53,7 @@ public class Stocks {
       reader.close();
     } catch (IOException e) {
     }
-    
+
     int num = SYMBOLS.size();
     for (int i = 0; i < num - 1; i += 2) {
       String symbol = SYMBOLS.get(i);

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * A class to perform queries against the Google Finance server.
  */
 public class GoogleFinance {
-  
+
   private static final Pattern DATA_PATTERN =
     Pattern.compile("\"([^\"]*)\"\\s*:\\s*\"([^\"]*)\"");
 
@@ -48,7 +48,7 @@ public class GoogleFinance {
       sb.append(symbol);
       first = false;
     }
-  
+
     // Send the request.
     String content = "";
     try {
@@ -60,22 +60,22 @@ public class GoogleFinance {
         // See http://weblogs.java.net/blog/pat/archive/2004/10/stupid_scanner_1.html
         content = contentScanner.useDelimiter("\\A").next();
       }
-  
+
       // System.out.println(content);
     } catch (MalformedURLException mue) {
       System.err.println(mue);
     } catch (IOException ioe) {
       System.err.println(ioe);
     }
-  
+
     Matcher matcher = QUOTE_PATTERN.matcher(content);
     while (matcher.find()) {
       String group = matcher.group();
-  
+
       String symbol = null;
       String dprice = null;
       String change = null;
-  
+
       Matcher dataMatcher = DATA_PATTERN.matcher(group);
       while (dataMatcher.find()) {
         String tag = dataMatcher.group(1);
@@ -88,11 +88,11 @@ public class GoogleFinance {
           change = data;
         }
       }
-  
+
       if (symbol != null && dprice != null && change != null) {
         try {
           int price = (int) (Double.parseDouble(dprice) * 100);
-          
+
           // Cache the quote (will be good for 5 seconds)
           quotes.put(symbol, new StockServiceImpl.Quote(price, change));
         } catch (NumberFormatException e) {
