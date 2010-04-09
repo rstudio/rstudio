@@ -22,7 +22,8 @@ import com.google.gwt.bikeshed.list.client.PagingTableListView;
 import com.google.gwt.bikeshed.list.client.SimpleColumn;
 import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.shared.DefaultSelectionModel;
-import com.google.gwt.bikeshed.list.shared.ListListModel;
+import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
+import com.google.gwt.bikeshed.list.shared.ProvidesKey;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -55,11 +56,22 @@ public class MailRecipe extends Recipe implements ClickHandler {
       }
     }
 
+    private static ProvidesKey<Message> keyProvider = new ProvidesKey<Message>() {
+      public Object getKey(Message item) {
+        return Integer.valueOf(item.id);
+      }
+    };
+
     // A map from enum names to their values
     private static Map<String, Type> typeMap = new HashMap<String, Type>();
 
     private String search;
     private Type type = Type.NONE;
+
+    @Override
+    public ProvidesKey<Message> getKeyProvider() {
+      return keyProvider;
+    }
 
     @Override
     public boolean isDefaultSelected(Message object) {
@@ -127,8 +139,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
     private void appendExceptions(StringBuilder sb,
         Map<Object, Boolean> exceptions, boolean selected) {
       boolean first = true;
-      for (Object messageId : exceptions.keySet()) {
-        if (exceptions.get(messageId) != selected) {
+      for (Map.Entry<Object, Boolean> entry : exceptions.entrySet()) {
+        if (entry.getValue() != selected) {
           continue;
         }
 
@@ -137,7 +149,7 @@ public class MailRecipe extends Recipe implements ClickHandler {
           sb.append(selected ? '+' : '-');
           sb.append("msg(s) ");
         }
-        sb.append(messageId);
+        sb.append(entry.getKey());
         sb.append(' ');
       }
     }
@@ -148,7 +160,7 @@ public class MailRecipe extends Recipe implements ClickHandler {
   }
 
   // Hashing, comparison, and equality are based on the message id
-  class Message implements Comparable<Message> {
+  static class Message {
     int id;
     boolean isRead;
     String sender;
@@ -159,10 +171,6 @@ public class MailRecipe extends Recipe implements ClickHandler {
       this.id = id;
       this.sender = sender;
       this.subject = subject;
-    }
-
-    public int compareTo(Message o) {
-      return id - o.id;
     }
 
     @Override
@@ -245,8 +253,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
 
   @Override
   protected Widget createWidget() {
-    ListListModel<Message> listModel = new ListListModel<Message>();
-    List<Message> messages = listModel.getList();
+    ListViewAdapter<Message> adapter = new ListViewAdapter<Message>();
+    List<Message> messages = adapter.getList();
     Random rand = new Random();
     for (int i = 0; i < 1000; i++) {
       Message message = new Message(10000 + i,
@@ -256,8 +264,9 @@ public class MailRecipe extends Recipe implements ClickHandler {
       messages.add(message);
     }
 
-    table = new PagingTableListView<Message>(listModel, 10);
+    table = new PagingTableListView<Message>(adapter, 10);
     table.setSelectionModel(selectionModel);
+    adapter.addView(table);
 
     // The state of the checkbox is taken from the selection model
     SimpleColumn<Message, Boolean> selectedColumn = new SimpleColumn<Message, Boolean>(
@@ -287,7 +296,7 @@ public class MailRecipe extends Recipe implements ClickHandler {
       }
     };
     table.addColumn(idColumn, "ID");
-  
+
     TextColumn<Message> isReadColumn = new TextColumn<Message>() {
       @Override
       public String getValue(Message object) {

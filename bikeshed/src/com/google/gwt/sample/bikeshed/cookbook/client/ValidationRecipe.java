@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,7 +19,7 @@ import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.list.client.Column;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
 import com.google.gwt.bikeshed.list.client.TextColumn;
-import com.google.gwt.bikeshed.list.shared.ListListModel;
+import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
 import com.google.gwt.bikeshed.list.shared.ProvidesKey;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
@@ -74,8 +74,8 @@ public class ValidationRecipe extends Recipe {
 
   @Override
   protected Widget createWidget() {
-    ListListModel<Address> listModel = new ListListModel<Address>();
-    final List<Address> list = listModel.getList();
+    ListViewAdapter<Address> adapter = new ListViewAdapter<Address>();
+    final List<Address> list = adapter.getList();
     for (int i = 10; i < 50; i++) {
       if (zipInvalid(30000 + i)) {
         continue;
@@ -84,14 +84,15 @@ public class ValidationRecipe extends Recipe {
       String zip = "300" + i;
       list.add(new Address("GA", zip));
     }
-    listModel.setKeyProvider(new ProvidesKey<Address>() {
+    adapter.setKeyProvider(new ProvidesKey<Address>() {
       public Object getKey(Address object) {
         return object.key;
       }
     });
 
     PagingTableListView<Address> table = new PagingTableListView<Address>(
-        listModel, 10);
+        adapter, 10);
+    adapter.addView(table);
     TextColumn<Address> stateColumn = new TextColumn<Address>() {
       @Override
       public String getValue(Address object) {

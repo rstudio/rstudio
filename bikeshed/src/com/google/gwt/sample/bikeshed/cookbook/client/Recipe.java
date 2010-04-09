@@ -28,15 +28,15 @@ public abstract class Recipe {
     this.title = title;
   }
 
+  public String getTitle() {
+    return title;
+  }
+
   public final Widget getWidget() {
     if (widget == null) {
       widget = createWidget();
     }
     return widget;
-  }
-
-  public String getTitle() {
-    return title;
   }
 
   protected abstract Widget createWidget();

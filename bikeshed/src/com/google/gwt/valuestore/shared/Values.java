@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,8 +17,8 @@ package com.google.gwt.valuestore.shared;
 
 /**
  * Provides access to the property values of a record in a {@link ValueStore}.
- * 
- * @param <K> value type.
+ *
+ * @param <K> value type
  */
 public interface Values<K extends ValuesKey<K>> {
   <V, P extends Property<K, V>> V get(P property);
@@ -27,8 +27,8 @@ public interface Values<K extends ValuesKey<K>> {
 
   K getKey();
 
-  /** 
-   * TODO: Starting to wonder again if this is useful. 
+  /**
+   * TODO: Starting to wonder again if this is useful.
    */
   <V> ValueRef<K, V> getRef(Property<K, V> property);
 }

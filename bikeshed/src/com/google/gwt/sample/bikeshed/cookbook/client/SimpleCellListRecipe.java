@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,7 +17,7 @@ package com.google.gwt.sample.bikeshed.cookbook.client;
 
 import com.google.gwt.bikeshed.cells.client.TextCell;
 import com.google.gwt.bikeshed.list.client.SimpleCellList;
-import com.google.gwt.bikeshed.list.shared.ListListModel;
+import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -34,14 +34,15 @@ public class SimpleCellListRecipe extends Recipe {
 
   @Override
   protected Widget createWidget() {
-    ListListModel<String> listModel = new ListListModel<String>();
-    final List<String> list = listModel.getList();
-    for (int i = 0; i < 50; i++) {
-      list.add("" + (i * 1000));
+    ListViewAdapter<String> adapter = new ListViewAdapter<String>();
+    final List<String> list = adapter.getList();
+    for (int i = 0; i < 40; i++) {
+      list.add("" + ((i + 10) * 1000));
     }
 
     SimpleCellList<String> simpleCellList =
-      new SimpleCellList<String>(listModel, TextCell.getInstance(), 10, 5);
+      new SimpleCellList<String>(TextCell.getInstance(), 10, 5);
+    adapter.addView(simpleCellList);
 
     new Timer() {
       int index = 0;

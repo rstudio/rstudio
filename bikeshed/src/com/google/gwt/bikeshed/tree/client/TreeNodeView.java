@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,11 +16,12 @@
 package com.google.gwt.bikeshed.tree.client;
 
 import com.google.gwt.bikeshed.list.client.HasCell;
+import com.google.gwt.bikeshed.list.client.ListView;
 import com.google.gwt.bikeshed.list.shared.ListEvent;
-import com.google.gwt.bikeshed.list.shared.ListHandler;
-import com.google.gwt.bikeshed.list.shared.ListModel;
-import com.google.gwt.bikeshed.list.shared.ListRegistration;
+import com.google.gwt.bikeshed.list.shared.ProvidesKey;
+import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
+import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter.DefaultRange;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel.NodeInfo;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -47,14 +48,14 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
   public static final String LEAF_IMAGE = "<div style='position:absolute;display:none;'></div>";
 
   /**
-   * A reference to the element that contains the children.
-   */
-  private Element childContainer;
-
-  /**
    * True during the time a node should be animated.
    */
   private boolean animate;
+
+  /**
+   * A reference to the element that contains the children.
+   */
+  private Element childContainer;
 
   /**
    * A reference to the element that contains the children.
@@ -64,7 +65,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
   /**
    * The list registration for the list of children.
    */
-  private ListRegistration<?> listReg;
+  private ListView<?> listView;
 
   /**
    * The info about children of this node.
@@ -152,7 +153,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
   public boolean isOpen() {
     return open;
   }
-  
+
   /**
    * Check if this is a root node at the top of the tree.
    *
@@ -212,9 +213,9 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
    */
   protected void cleanup() {
     // Unregister the list handler.
-    if (listReg != null) {
-      listReg.removeHandler();
-      listReg = null;
+    if (listView != null) {
+      nodeInfo.unsetView();
+      listView = null;
     }
 
     // Recursively kill children.
@@ -336,7 +337,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
    * implementation of NodeInfo.getKey().
    */
   protected Object getValueKey() {
-    return getParentNodeInfo().getListModel().getKey(getValue());
+    return getParentNodeInfo().getProvidesKey().getKey(getValue());
   }
 
   /**
@@ -353,8 +354,12 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
     ensureAnimationFrame().getStyle().setProperty("display", "");
 
     // Get the node info.
-    final ListModel<C> listModel = nodeInfo.getListModel();
-    listReg = listModel.addListHandler(new ListHandler<C>() {
+    final ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
+    ListView<C> view = new ListView<C>() {
+      public Range getRange() {
+        return new DefaultRange(0, 100);
+      }
+
       public void onDataChanged(ListEvent<C> event) {
         // TODO - handle event start and length
 
@@ -378,7 +383,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
         for (C childValue : event.getValues()) {
           // Remove any child elements that correspond to prior children
           // so the call to setInnerHtml will not destroy them
-          TreeNodeView<?> savedView = map.get(listModel.getKey(childValue));
+          TreeNodeView<?> savedView = map.get(providesKey.getKey(childValue));
           if (savedView != null) {
             savedView.getContainer().getFirstChild().removeFromParent();
           }
@@ -397,12 +402,11 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
         for (C childValue : event.getValues()) {
           TreeNodeView<C> child = createTreeNodeView(nodeInfo, childElem,
               childValue, null, idx);
-          TreeNodeView<?> savedChild = map.get(listModel.getKey(childValue));
+          TreeNodeView<?> savedChild = map.get(providesKey.getKey(childValue));
           // Copy the saved child's state into the new child
           if (savedChild != null) {
             child.children = savedChild.children;
             child.childContainer = savedChild.childContainer;
-            child.listReg = savedChild.listReg;
             child.nodeInfo = savedChild.nodeInfo;
             child.nodeInfoLoaded = savedChild.nodeInfoLoaded;
             child.open = savedChild.getState();
@@ -435,8 +439,16 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
           }
         }
       }
-    });
-    listReg.setRangeOfInterest(0, 100);
+
+      public void setDelegate(ListView.Delegate<C> delegate) {
+        // Range never actually changes so no need to store the delegate
+        if (delegate != null) {
+          delegate.onRangeChanged(this);
+        }
+      }
+    };
+    nodeInfo.setView(view);
+    this.listView = view;
   }
 
   /**

@@ -22,16 +22,21 @@ import java.util.TreeSet;
 
 /**
  * A simple selection model that allows only multiple objects to be selected.
+ *
+ * @param <T> the record data type
  */
 public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
 
   private Set<T> selectedSet = new TreeSet<T>();
 
+  public Set<T> getSelectedSet() {
+    return selectedSet;
+  }
+
   public boolean isSelected(T object) {
     return selectedSet.contains(object);
   }
 
-  @Override
   public void setSelected(T object, boolean selected) {
     if (selected) {
       selectedSet.add(object);
@@ -39,9 +44,5 @@ public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
       selectedSet.remove(object);
     }
     scheduleSelectionChangeEvent();
-  }
-
-  public Set<T> getSelectedSet() {
-    return selectedSet;
   }
 }

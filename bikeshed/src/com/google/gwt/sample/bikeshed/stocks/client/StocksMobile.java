@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,9 +15,9 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.client;
 
+import com.google.gwt.bikeshed.list.client.ListView;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.shared.AsyncListModel;
-import com.google.gwt.bikeshed.list.shared.ListRegistration;
+import com.google.gwt.bikeshed.list.shared.AsyncListViewAdapter;
 import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
@@ -39,9 +39,9 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class StocksMobile {
 
-  interface Binder extends UiBinder<Widget, StocksMobile> {  
+  interface Binder extends UiBinder<Widget, StocksMobile> {
   }
-  
+
   private static final Binder binder = GWT.create(Binder.class);
 
   /**
@@ -55,7 +55,7 @@ public class StocksMobile {
 
   @UiField PagingTableListView<StockQuote> listView;
   private final StockServiceAsync dataService = GWT.create(StockService.class);
-  private AsyncListModel<StockQuote> favoritesListModel;
+  private AsyncListViewAdapter<StockQuote> favoritesListViewAdapter;
 
   /**
    * The timer used to update the stock quotes.
@@ -73,13 +73,13 @@ public class StocksMobile {
   public void onModuleLoad() {
     // Create the various models. Do this before binding the UI, because some
     // of the UiFactories need the models to instantiate their widgets.
-    favoritesListModel = new AsyncListModel<StockQuote>() {
+    favoritesListViewAdapter = new AsyncListViewAdapter<StockQuote>() {
       @Override
-      protected void onRangeChanged(ListRegistration<StockQuote> reg, int start, int length) {
+      protected void onRangeChanged(ListView<StockQuote> view) {
         update();
       }
     };
-    favoritesListModel.setKeyProvider(StockQuote.KEY_PROVIDER);
+    favoritesListViewAdapter.setKeyProvider(StockQuote.KEY_PROVIDER);
 
     // Now create the UI.
     RootPanel.get().add(binder.createAndBindUi(this));
@@ -88,7 +88,7 @@ public class StocksMobile {
 
   /**
    * Process the {@link StockResponse} from the server.
-   * 
+   *
    * @param response the stock response
    */
   public void processStockResponse(StockResponse response) {
@@ -100,7 +100,7 @@ public class StocksMobile {
   }
 
   public void update() {
-    Range[] favoritesRanges = favoritesListModel.getRanges();
+    Range[] favoritesRanges = favoritesListViewAdapter.getRanges();
 
     StockRequest request = new StockRequest("TODO", null, null,
         favoritesRanges[0], null);
@@ -121,7 +121,8 @@ public class StocksMobile {
   @UiFactory
   PagingTableListView<StockQuote> createFavoritesWidget() {
     PagingTableListView<StockQuote> favorite = new PagingTableListView<StockQuote>(
-        favoritesListModel, 10);
+        favoritesListViewAdapter, 10);
+    favoritesListViewAdapter.addView(favorite);
 
     favorite.addColumn(Columns.tickerColumn, "ticker");
     favorite.addColumn(Columns.priceColumn, "price");
@@ -135,7 +136,7 @@ public class StocksMobile {
 
   /**
    * Display a message to the user when an RPC call fails.
-   * 
+   *
    * @param caught the exception
    * @param displayMessage the message to display to the user, or null to
    *          display a default message
@@ -159,8 +160,8 @@ public class StocksMobile {
   private void updateFavorites(StockResponse response) {
     // Update the favorites list.
     StockQuoteList favorites = response.getFavorites();
-    favoritesListModel.updateDataSize(response.getNumFavorites(), true);
-    favoritesListModel.updateViewData(favorites.getStartIndex(),
+    favoritesListViewAdapter.updateDataSize(response.getNumFavorites(), true);
+    favoritesListViewAdapter.updateViewData(favorites.getStartIndex(),
         favorites.size(), favorites);
   }
 }

@@ -16,7 +16,7 @@
 package com.google.gwt.sample.bikeshed.stocks.client;
 
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.shared.ListModel;
+import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
@@ -40,10 +40,10 @@ public class StockQueryWidget extends Composite {
   @UiField PagingTableListView<StockQuote> listView;
   @UiField TextBox queryField = new TextBox();
 
-  private final ListModel<StockQuote> model;
+  private final AbstractListViewAdapter<StockQuote> adapter;
 
-  public StockQueryWidget(ListModel<StockQuote> model, final Updater updater) {
-    this.model = model;
+  public StockQueryWidget(AbstractListViewAdapter<StockQuote> adapter, final Updater updater) {
+    this.adapter = adapter;
     initWidget(binder.createAndBindUi(this));
 
     listView.addColumn(Columns.favoriteColumn);
@@ -77,10 +77,12 @@ public class StockQueryWidget extends Composite {
   public String getSearchQuery() {
     return normalize(queryField.getText());
   }
-  
+
   @UiFactory
   PagingTableListView<StockQuote> createListView() {
-    return new PagingTableListView<StockQuote>(model, 10);
+    PagingTableListView<StockQuote> view = new PagingTableListView<StockQuote>(adapter, 10);
+    adapter.addView(view);
+    return view;
   }
 
   private String normalize(String input) {

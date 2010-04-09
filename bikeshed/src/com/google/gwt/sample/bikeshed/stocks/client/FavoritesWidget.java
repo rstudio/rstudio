@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,7 +16,7 @@
 package com.google.gwt.sample.bikeshed.stocks.client;
 
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.shared.ListModel;
+import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockQuote;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -35,10 +35,10 @@ public class FavoritesWidget extends Composite {
 
   @UiField PagingTableListView<StockQuote> listView;
 
-  private final ListModel<StockQuote> model;
+  private final AbstractListViewAdapter<StockQuote> adapter;
 
-  public FavoritesWidget(ListModel<StockQuote> model) {
-    this.model = model;
+  public FavoritesWidget(AbstractListViewAdapter<StockQuote> adapter) {
+    this.adapter = adapter;
     initWidget(binder.createAndBindUi(this));
 
     listView.addColumn(Columns.tickerColumn, "ticker");
@@ -53,6 +53,8 @@ public class FavoritesWidget extends Composite {
 
   @UiFactory
   PagingTableListView<StockQuote> createListView() {
-    return new PagingTableListView<StockQuote>(model, 10);
+    PagingTableListView<StockQuote> view = new PagingTableListView<StockQuote>(adapter, 10);
+    adapter.addView(view);
+    return view;
   }
 }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.bikeshed.list.shared;
 
+import com.google.gwt.bikeshed.list.client.ListView;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 
@@ -25,11 +26,12 @@ import java.util.List;
 import java.util.ListIterator;
 
 /**
- * A {@link ListModel} that is backed by a list.
- * 
+ * A concrete subclass of {@link AbstractListViewAdapter} that is backed by an
+ * in-memory list.
+ *
  * @param <T> the data type of the list
  */
-public class ListListModel<T> extends AbstractListModel<T> {
+public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
 
   /**
    * A wrapper around a list that updates the model on any change.
@@ -55,10 +57,11 @@ public class ListListModel<T> extends AbstractListModel<T> {
           curSize = newSize;
           updateDataSize(curSize, true);
         }
-        
+
         if (modified) {
           int length = maxModified - minModified;
-          updateViewData(minModified, length, list.subList(minModified, maxModified));
+          updateViewData(minModified, length, list.subList(minModified,
+              maxModified));
           modified = false;
         }
         minModified = Integer.MAX_VALUE;
@@ -259,16 +262,6 @@ public class ListListModel<T> extends AbstractListModel<T> {
     }
 
     /**
-     * Flush the data to the model and return the boolean.
-     * 
-     * @param toRet the boolean to return
-     */
-    private boolean flush(boolean toRet) {
-      flush();
-      return toRet;
-    }
-
-    /**
      * Flush the data to the model.
      */
     private void flush() {
@@ -276,6 +269,16 @@ public class ListListModel<T> extends AbstractListModel<T> {
         flushPending = true;
         DeferredCommand.addCommand(flushCommand);
       }
+    }
+
+    /**
+     * Flush the data to the model and return the boolean.
+     *
+     * @param toRet the boolean to return
+     */
+    private boolean flush(boolean toRet) {
+      flush();
+      return toRet;
     }
   }
 
@@ -287,7 +290,7 @@ public class ListListModel<T> extends AbstractListModel<T> {
   /**
    * Creates an empty model.
    */
-  public ListListModel() {
+  public ListViewAdapter() {
     this(new ArrayList<T>());
   }
 
@@ -296,14 +299,14 @@ public class ListListModel<T> extends AbstractListModel<T> {
    * wrapped list must be made via this model in order to be correctly applied
    * to views.
    */
-  public ListListModel(List<T> wrappee) {
+  public ListViewAdapter(List<T> wrappee) {
     listWrapper = new ListWrapper(wrappee);
   }
 
   /**
    * Get the list that backs this model. Changes to the list will be reflected
    * in the model.
-   * 
+   *
    * @return the list
    */
   public List<T> getList() {
@@ -312,7 +315,7 @@ public class ListListModel<T> extends AbstractListModel<T> {
 
   /**
    * Replaces this model's list.
-   * 
+   *
    * @param wrappee the model's new list
    */
   public void setList(List<T> wrappee) {
@@ -322,8 +325,7 @@ public class ListListModel<T> extends AbstractListModel<T> {
   }
 
   @Override
-  protected void onRangeChanged(ListRegistration<T> reg, int start, int length) {
-    // TODO - update only relevant range of data
-    updateViewData(reg, 0, listWrapper.size(), listWrapper);
+  protected void onRangeChanged(ListView<T> view) {
+    updateViewData(view, 0, listWrapper.size(), listWrapper);
   }
 }

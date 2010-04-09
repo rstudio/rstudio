@@ -101,11 +101,6 @@ public abstract class TreeView extends Widget {
   private String loadingHtml = "Loading...";
 
   /**
-   * The {@link TreeViewModel} that backs the tree.
-   */
-  private TreeViewModel model;
-
-  /**
    * The HTML used to generate the open image.
    */
   private String openImageHtml;
@@ -115,7 +110,15 @@ public abstract class TreeView extends Widget {
    */
   private TreeNodeView<?> rootNode;
 
+  /**
+   * The {@link SelectionModel} for the tree.
+   */
   private SelectionModel<Object> selectionModel;
+
+  /**
+   * The {@link TreeViewModel} that backs the tree.
+   */
+  private TreeViewModel viewModel;
 
   /**
    * Construct a new {@link TreeView}.
@@ -123,7 +126,7 @@ public abstract class TreeView extends Widget {
    * @param viewModel the {@link TreeViewModel} that backs the tree
    */
   public TreeView(TreeViewModel viewModel) {
-    this.model = viewModel;
+    this.viewModel = viewModel;
   }
 
   /**
@@ -146,7 +149,7 @@ public abstract class TreeView extends Widget {
   }
 
   public TreeViewModel getTreeViewModel() {
-    return model;
+    return viewModel;
   }
 
   public boolean isAnimationEnabled() {
@@ -157,7 +160,7 @@ public abstract class TreeView extends Widget {
    * Set the animation used to open and close nodes in this tree. You must call
    * {@link #setAnimationEnabled(boolean)} to enable or disable animation.
    *
-   * @param animation a {@link TreeNodeViewAnimation}.
+   * @param animation a {@link TreeNodeViewAnimation}
    * @see #setAnimationEnabled(boolean)
    */
   public void setAnimation(TreeNodeViewAnimation animation) {

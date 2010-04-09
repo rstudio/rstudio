@@ -21,10 +21,9 @@ import com.google.gwt.bikeshed.cells.client.CheckboxCell;
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.cells.client.ValueUpdater;
 import com.google.gwt.bikeshed.list.client.HasCell;
-import com.google.gwt.bikeshed.list.shared.AbstractListModel;
-import com.google.gwt.bikeshed.list.shared.ListModel;
+import com.google.gwt.bikeshed.list.client.ListView;
+import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter;
 import com.google.gwt.bikeshed.list.shared.SelectionModel;
-import com.google.gwt.bikeshed.list.shared.ListRegistration;
 import com.google.gwt.bikeshed.tree.client.TreeNode;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel;
 import com.google.gwt.core.client.GWT;
@@ -40,15 +39,15 @@ import java.util.List;
  */
 public class MyTreeViewModel implements TreeViewModel {
 
-  private static class IntegerListModel extends AbstractListModel<Integer> {
+  private static class IntegerListViewAdapter extends AbstractListViewAdapter<Integer> {
     int wordLength;
 
-    public IntegerListModel(int wordLength) {
+    public IntegerListViewAdapter(int wordLength) {
       this.wordLength = wordLength;
     }
 
     @Override
-    protected void onRangeChanged(ListRegistration<Integer> reg, int start, int length) {
+    protected void onRangeChanged(ListView<Integer> view) {
       List<Integer> values = new ArrayList<Integer>(1);
       values.add(wordLength);
       updateDataSize(1, true);
@@ -56,15 +55,15 @@ public class MyTreeViewModel implements TreeViewModel {
     }
   }
 
-  private static class StringListModel extends AbstractListModel<String> {
+  private static class StringListViewAdapter extends AbstractListViewAdapter<String> {
     String value;
 
-    public StringListModel(final String value) {
+    public StringListViewAdapter(final String value) {
       this.value = value;
     }
 
     @Override
-    protected void onRangeChanged(ListRegistration<String> reg, int start, int length) {
+    protected void onRangeChanged(ListView<String> view) {
       String prefix = value.endsWith("...") ? value.substring(0,
           value.length() - 3) : value;
       dataService.getNext(prefix, new AsyncCallback<List<String>>() {
@@ -162,11 +161,11 @@ public class MyTreeViewModel implements TreeViewModel {
 
   private NodeInfo<?> getNodeInfoHelper(final String value) {
     if (value.endsWith("...")) {
-      ListModel<String> listModel = new StringListModel(value.toString());
-      return new DefaultNodeInfo<String>(listModel, hasCells);
+      AbstractListViewAdapter<String> adapter = new StringListViewAdapter(value.toString());
+      return new DefaultNodeInfo<String>(adapter, hasCells);
     } else {
-      ListModel<Integer> listModel = new IntegerListModel(value.length());
-      return new DefaultNodeInfo<Integer>(listModel, INTEGER_CELL,
+      AbstractListViewAdapter<Integer> adapter = new IntegerListViewAdapter(value.length());
+      return new DefaultNodeInfo<Integer>(adapter, INTEGER_CELL,
           new ValueUpdater<Integer, Void>() {
             public void update(Integer value, Void viewData) {
               Window.alert("Integer = " + value);

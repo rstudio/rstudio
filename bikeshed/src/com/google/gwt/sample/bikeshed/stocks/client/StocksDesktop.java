@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,9 +16,9 @@
 package com.google.gwt.sample.bikeshed.stocks.client;
 
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
-import com.google.gwt.bikeshed.list.shared.AsyncListModel;
-import com.google.gwt.bikeshed.list.shared.ListListModel;
-import com.google.gwt.bikeshed.list.shared.ListRegistration;
+import com.google.gwt.bikeshed.list.client.ListView;
+import com.google.gwt.bikeshed.list.shared.AsyncListViewAdapter;
+import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
 import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.bikeshed.tree.client.SideBySideTreeView;
 import com.google.gwt.bikeshed.tree.client.TreeNode;
@@ -27,7 +27,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.sample.bikeshed.stocks.client.TransactionTreeViewModel.SectorListModel;
+import com.google.gwt.sample.bikeshed.stocks.client.TransactionTreeViewModel.SectorListViewAdapter;
 import com.google.gwt.sample.bikeshed.stocks.shared.PlayerInfo;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockQuote;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockQuoteList;
@@ -81,12 +81,12 @@ public class StocksDesktop implements EntryPoint, Updater {
   private BuySellPopup buySellPopup = new BuySellPopup();
   private final StockServiceAsync dataService = GWT.create(StockService.class);
 
-  private AsyncListModel<StockQuote> favoritesListModel;
-  private AsyncListModel<PlayerInfo> playerScoresListModel;
-  private AsyncListModel<StockQuote> searchListModel;
-  private Map<String, ListListModel<Transaction>> transactionListListModelsByTicker =
-    new HashMap<String, ListListModel<Transaction>>();
-  private ListListModel<Transaction> transactionListModel;
+  private AsyncListViewAdapter<StockQuote> favoritesListViewAdapter;
+  private AsyncListViewAdapter<PlayerInfo> playerScoresListViewAdapter;
+  private AsyncListViewAdapter<StockQuote> searchListViewAdapter;
+  private Map<String, ListViewAdapter<Transaction>> transactionListViewAdaptersByTicker =
+    new HashMap<String, ListViewAdapter<Transaction>>();
+  private ListViewAdapter<Transaction> transactionListViewAdapter;
   private List<Transaction> transactions;
 
   private TransactionTreeViewModel treeModel;
@@ -112,33 +112,33 @@ public class StocksDesktop implements EntryPoint, Updater {
   public void onModuleLoad() {
     // Create the various models. Do this before binding the UI, because some
     // of the UiFactories need the models to instantiate their widgets.
-    searchListModel = new AsyncListModel<StockQuote>() {
+    searchListViewAdapter = new AsyncListViewAdapter<StockQuote>() {
       @Override
-      protected void onRangeChanged(ListRegistration<StockQuote> reg, int start, int length) {
+      protected void onRangeChanged(ListView<StockQuote> view) {
         update();
       }
     };
-    searchListModel.setKeyProvider(StockQuote.KEY_PROVIDER);
+    searchListViewAdapter.setKeyProvider(StockQuote.KEY_PROVIDER);
 
-    favoritesListModel = new AsyncListModel<StockQuote>() {
+    favoritesListViewAdapter = new AsyncListViewAdapter<StockQuote>() {
       @Override
-      protected void onRangeChanged(ListRegistration<StockQuote> reg, int start, int length) {
+      protected void onRangeChanged(ListView<StockQuote> view) {
         update();
       }
     };
-    favoritesListModel.setKeyProvider(StockQuote.KEY_PROVIDER);
+    favoritesListViewAdapter.setKeyProvider(StockQuote.KEY_PROVIDER);
 
-    playerScoresListModel = new AsyncListModel<PlayerInfo>() {
+    playerScoresListViewAdapter = new AsyncListViewAdapter<PlayerInfo>() {
       @Override
-      protected void onRangeChanged(ListRegistration<PlayerInfo> reg, int start, int length) {
+      protected void onRangeChanged(ListView<PlayerInfo> view) {
       }
     };
 
-    treeModel = new TransactionTreeViewModel(this, favoritesListModel,
-        transactionListListModelsByTicker);
+    treeModel = new TransactionTreeViewModel(this, favoritesListViewAdapter,
+        transactionListViewAdaptersByTicker);
 
-    transactionListModel = new ListListModel<Transaction>();
-    transactions = transactionListModel.getList();
+    transactionListViewAdapter = new ListViewAdapter<Transaction>();
+    transactions = transactionListViewAdapter.getList();
 
     // Now create the UI.
     RootLayoutPanel.get().add(binder.createAndBindUi(this));
@@ -176,7 +176,7 @@ public class StocksDesktop implements EntryPoint, Updater {
 
   /**
    * Process the {@link StockResponse} from the server.
-   * 
+   *
    * @param response the stock response
    */
   public void processStockResponse(StockResponse response) {
@@ -184,8 +184,8 @@ public class StocksDesktop implements EntryPoint, Updater {
     StockQuoteList searchResults = response.getSearchResults();
     String searchQuery = queryWidget.getSearchQuery();
     if (searchQuery != null && searchQuery.equals(response.getSearchQuery())) {
-      searchListModel.updateDataSize(response.getNumSearchResults(), true);
-      searchListModel.updateViewData(searchResults.getStartIndex(),
+      searchListViewAdapter.updateDataSize(response.getNumSearchResults(), true);
+      searchListViewAdapter.updateViewData(searchResults.getStartIndex(),
           searchResults.size(), searchResults);
     }
 
@@ -212,13 +212,13 @@ public class StocksDesktop implements EntryPoint, Updater {
 
   /**
    * Set or unset a ticker symbol as a 'favorite'.
-   * 
+   *
    * @param ticker the ticker symbol
    * @param favorite if true, make the stock a favorite
    */
   public void setFavorite(String ticker, boolean favorite) {
     if (favorite) {
-      dataService.addFavorite(ticker, favoritesListModel.getRanges()[0],
+      dataService.addFavorite(ticker, favoritesListViewAdapter.getRanges()[0],
           new AsyncCallback<StockResponse>() {
             public void onFailure(Throwable caught) {
               handleRpcError(caught, "Error adding favorite");
@@ -230,7 +230,7 @@ public class StocksDesktop implements EntryPoint, Updater {
             }
           });
     } else {
-      dataService.removeFavorite(ticker, favoritesListModel.getRanges()[0],
+      dataService.removeFavorite(ticker, favoritesListViewAdapter.getRanges()[0],
           new AsyncCallback<StockResponse>() {
             public void onFailure(Throwable caught) {
               handleRpcError(caught, "Error removing favorite");
@@ -266,10 +266,10 @@ public class StocksDesktop implements EntryPoint, Updater {
 
         // Update the next level of the transaction tree
         // for the given ticker
-        ListListModel<Transaction> t = transactionListListModelsByTicker.get(ticker);
+        ListViewAdapter<Transaction> t = transactionListViewAdaptersByTicker.get(ticker);
         if (t == null) {
-          t = new ListListModel<Transaction>();
-          transactionListListModelsByTicker.put(ticker, t);
+          t = new ListViewAdapter<Transaction>();
+          transactionListViewAdaptersByTicker.put(ticker, t);
         }
         t.getList().add(result);
       }
@@ -286,14 +286,14 @@ public class StocksDesktop implements EntryPoint, Updater {
 
     updateTimer.cancel();
 
-    Range[] searchRanges = searchListModel.getRanges();
-    Range[] favoritesRanges = favoritesListModel.getRanges();
+    Range[] searchRanges = searchListViewAdapter.getRanges();
+    Range[] favoritesRanges = favoritesListViewAdapter.getRanges();
 
     String sectorName = getSectorName();
-    SectorListModel sectorListModel = sectorName != null
-        ? treeModel.getSectorListModel(sectorName) : null;
-    Range[] sectorRanges = sectorListModel == null ? null
-        : sectorListModel.getRanges();
+    SectorListViewAdapter sectorListViewAdapter = sectorName != null
+        ? treeModel.getSectorListViewAdapter(sectorName) : null;
+    Range[] sectorRanges = sectorListViewAdapter == null ? null
+        : sectorListViewAdapter.getRanges();
 
     if (searchRanges == null || searchRanges.length == 0
         || favoritesRanges == null || favoritesRanges.length == 0) {
@@ -303,7 +303,7 @@ public class StocksDesktop implements EntryPoint, Updater {
     String searchQuery = queryWidget.getSearchQuery();
 
     StockRequest request = new StockRequest(searchQuery,
-        sectorListModel != null ? sectorListModel.getSector() : null,
+        sectorListViewAdapter != null ? sectorListViewAdapter.getSector() : null,
         searchRanges[0], favoritesRanges[0], sectorRanges != null
             && sectorRanges.length > 0 ? sectorRanges[0] : null);
     dataService.getStockQuotes(request, new AsyncCallback<StockResponse>() {
@@ -321,17 +321,17 @@ public class StocksDesktop implements EntryPoint, Updater {
 
   @UiFactory
   FavoritesWidget createFavoritesWidget() {
-    return new FavoritesWidget(favoritesListModel);
+    return new FavoritesWidget(favoritesListViewAdapter);
   }
 
   @UiFactory
   PlayerScoresWidget createPlayerScoresWidget() {
-    return new PlayerScoresWidget(playerScoresListModel);
+    return new PlayerScoresWidget(playerScoresListViewAdapter);
   }
 
   @UiFactory
   StockQueryWidget createQueryWidget() {
-    return new StockQueryWidget(searchListModel, this);
+    return new StockQueryWidget(searchListViewAdapter, this);
   }
 
   @UiFactory
@@ -354,8 +354,8 @@ public class StocksDesktop implements EntryPoint, Updater {
 
   /**
    * Display a message to the user when an RPC call fails.
-   * 
-   * @param caught the exception
+   *
+   * @param caughtbad the exception
    * @param displayMessage the message to display to the user, or null to
    *          display a default message
    * @return true if recoverable, false if not
@@ -378,8 +378,8 @@ public class StocksDesktop implements EntryPoint, Updater {
   private void updateFavorites(StockResponse response) {
     // Update the favorites list.
     StockQuoteList favorites = response.getFavorites();
-    favoritesListModel.updateDataSize(response.getNumFavorites(), true);
-    favoritesListModel.updateViewData(favorites.getStartIndex(),
+    favoritesListViewAdapter.updateDataSize(response.getNumFavorites(), true);
+    favoritesListViewAdapter.updateViewData(favorites.getStartIndex(),
         favorites.size(), favorites);
   }
 
@@ -387,18 +387,18 @@ public class StocksDesktop implements EntryPoint, Updater {
     // Update the player scores.
     List<PlayerInfo> playerScores = response.getPlayers();
     int numPlayers = playerScores.size();
-    playerScoresListModel.updateDataSize(numPlayers, true);
-    playerScoresListModel.updateViewData(0, numPlayers, playerScores);
+    playerScoresListViewAdapter.updateDataSize(numPlayers, true);
+    playerScoresListViewAdapter.updateViewData(0, numPlayers, playerScores);
   }
 
   private void updateSector(StockResponse response) {
     // Update the sector list.
     StockQuoteList sectorList = response.getSector();
     if (sectorList != null) {
-      SectorListModel sectorListModel = treeModel.getSectorListModel(getSectorName());
-      if (sectorListModel != null) {
-        sectorListModel.updateDataSize(response.getNumSector(), true);
-        sectorListModel.updateViewData(sectorList.getStartIndex(),
+      SectorListViewAdapter sectorListViewAdapter = treeModel.getSectorListViewAdapter(getSectorName());
+      if (sectorListViewAdapter != null) {
+        sectorListViewAdapter.updateDataSize(response.getNumSector(), true);
+        sectorListViewAdapter.updateViewData(sectorList.getStartIndex(),
             sectorList.size(), sectorList);
       }
     }

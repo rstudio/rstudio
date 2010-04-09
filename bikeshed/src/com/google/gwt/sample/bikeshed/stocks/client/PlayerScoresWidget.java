@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,7 +17,7 @@ package com.google.gwt.sample.bikeshed.stocks.client;
 
 import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.list.client.SimpleCellList;
-import com.google.gwt.bikeshed.list.shared.ListModel;
+import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.sample.bikeshed.stocks.shared.PlayerInfo;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -51,7 +51,7 @@ public class PlayerScoresWidget extends Composite {
       sb.append(StocksDesktop.getFormattedPrice(value.getNetWorth()));
       sb.append("<br><b>Cash: </b>");
       sb.append(StocksDesktop.getFormattedPrice(value.getCash()));
-      
+
       List<String> status = value.getStatus();
       if (status != null) {
         for (String s : status) {
@@ -66,15 +66,17 @@ public class PlayerScoresWidget extends Composite {
   @UiField
   SimpleCellList<PlayerInfo> listView;
 
-  private final ListModel<PlayerInfo> model;
+  private final AbstractListViewAdapter<PlayerInfo> adapter;
 
-  public PlayerScoresWidget(ListModel<PlayerInfo> model) {
-    this.model = model;
+  public PlayerScoresWidget(AbstractListViewAdapter<PlayerInfo> adapter) {
+    this.adapter = adapter;
     initWidget(binder.createAndBindUi(this));
   }
 
   @UiFactory
   SimpleCellList<PlayerInfo> createListView() {
-    return new SimpleCellList<PlayerInfo>(model, new PlayerInfoCell(), 1, 1);
+    SimpleCellList<PlayerInfo> view = new SimpleCellList<PlayerInfo>(new PlayerInfoCell(), 1, 1);
+    adapter.addView(view);
+    return view;
   }
 }

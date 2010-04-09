@@ -31,7 +31,7 @@ public class EditTextCell extends Cell<String, String> {
     if (viewData != null) {
       return editEvent(parent, value, viewData, event, valueUpdater);
     }
-    return nonEditEvent(parent, value, viewData, event, valueUpdater);
+    return nonEditEvent(parent, value, event);
   }
 
   @Override
@@ -78,11 +78,10 @@ public class EditTextCell extends Cell<String, String> {
     return viewData;
   }
 
-  private String nonEditEvent(Element parent, String value, String viewData,
-      NativeEvent event, ValueUpdater<String, String> valueUpdater) {
+  private String nonEditEvent(Element parent, String value, NativeEvent event) {
     if ("click".equals(event.getType())) {
       return edit(parent, value);
     }
-    return viewData;
+    return null;
   }
 }

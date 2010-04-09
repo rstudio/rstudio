@@ -16,7 +16,7 @@
 package com.google.gwt.sample.bikeshed.cookbook.client;
 
 import com.google.gwt.bikeshed.cells.client.Cell;
-import com.google.gwt.bikeshed.list.shared.ListListModel;
+import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
 import com.google.gwt.bikeshed.list.shared.SelectionModel;
 import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionChangeEvent;
 import com.google.gwt.bikeshed.tree.client.StandardTreeView;
@@ -38,7 +38,8 @@ import java.util.List;
  */
 public class Cookbook implements EntryPoint {
 
-  interface Binder extends UiBinder<Widget, Cookbook> {}
+  interface Binder extends UiBinder<Widget, Cookbook> {
+  }
 
   static class CategoryCell extends Cell<Category, Void> {
     @Override
@@ -54,24 +55,22 @@ public class Cookbook implements EntryPoint {
     }
   }
 
-  private final class RecipeTreeModel implements TreeViewModel {
-    private ListListModel<Category> catModel = new ListListModel<Category>();
+  private static final class RecipeTreeModel implements TreeViewModel {
+    private ListViewAdapter<Category> adapter = new ListViewAdapter<Category>();
 
-    @Override
     public <T> NodeInfo<?> getNodeInfo(T value, TreeNode<T> treeNode) {
       if (value == null) {
         // Categories at the root.
-        return new DefaultNodeInfo<Category>(catModel, new CategoryCell());
+        return new DefaultNodeInfo<Category>(adapter, new CategoryCell());
       } else if (value instanceof Category) {
         // Demos for each category.
         Category category = (Category) value;
-        return new DefaultNodeInfo<Recipe>(new ListListModel<Recipe>(
+        return new DefaultNodeInfo<Recipe>(new ListViewAdapter<Recipe>(
             category.getRecipes()), new RecipeCell());
       }
       return null;
     }
 
-    @Override
     public boolean isLeaf(Object value, TreeNode<?> treeNode) {
       // The root and categories have children.
       if (value == null || value instanceof Category) {
@@ -93,15 +92,13 @@ public class Cookbook implements EntryPoint {
   private SimpleCellListRecipe defaultRecipe;
   private Recipe curRecipe;
 
-  @Override
   public void onModuleLoad() {
     RootLayoutPanel.get().add(binder.createAndBindUi(this));
-    createRecipes(recipeTreeModel.catModel.getList());
+    createRecipes(recipeTreeModel.adapter.getList());
 
     treeSelection = new SingleSelectionModel<Object>();
     recipeTree.setSelectionModel(treeSelection);
     treeSelection.addSelectionChangeHandler(new SelectionModel.SelectionChangeHandler() {
-      @Override
       public void onSelectionChange(SelectionChangeEvent event) {
         Object o = treeSelection.getSelectedObject();
         if (o instanceof Recipe) {

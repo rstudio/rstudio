@@ -19,10 +19,10 @@ import com.google.gwt.bikeshed.cells.client.ButtonCell;
 import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.TextCell;
 import com.google.gwt.bikeshed.cells.client.ValueUpdater;
-import com.google.gwt.bikeshed.list.shared.AsyncListModel;
-import com.google.gwt.bikeshed.list.shared.ListListModel;
-import com.google.gwt.bikeshed.list.shared.ListModel;
-import com.google.gwt.bikeshed.list.shared.ListRegistration;
+import com.google.gwt.bikeshed.list.client.ListView;
+import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter;
+import com.google.gwt.bikeshed.list.shared.AsyncListViewAdapter;
+import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
 import com.google.gwt.bikeshed.tree.client.TreeNode;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockQuote;
@@ -38,11 +38,11 @@ import java.util.Map;
  */
 class TransactionTreeViewModel implements TreeViewModel {
 
-  class SectorListModel extends AsyncListModel<StockQuote> {
+  class SectorListViewAdapter extends AsyncListViewAdapter<StockQuote> {
 
     String sector;
 
-    public SectorListModel(String sector) {
+    public SectorListViewAdapter(String sector) {
       this.sector = sector;
       setKeyProvider(StockQuote.KEY_PROVIDER);
     }
@@ -52,7 +52,7 @@ class TransactionTreeViewModel implements TreeViewModel {
     }
 
     @Override
-    protected void onRangeChanged(ListRegistration<StockQuote> reg, int start, int length) {
+    protected void onRangeChanged(ListView<StockQuote> view) {
       updater.update();
     }
   }
@@ -73,48 +73,48 @@ class TransactionTreeViewModel implements TreeViewModel {
 
   private static final Cell<Transaction, Void> TRANSACTION_CELL = new TransactionCell();
 
-  private Map<String, SectorListModel> sectorListModels = new HashMap<String, SectorListModel>();
-  private ListModel<StockQuote> stockQuoteListModel;
-  private ListListModel<String> topLevelListListModel = new ListListModel<String>();
+  private Map<String, SectorListViewAdapter> sectorListViewAdapters = new HashMap<String, SectorListViewAdapter>();
+  private AbstractListViewAdapter<StockQuote> stockQuoteListViewAdapter;
+  private ListViewAdapter<String> topLevelListViewAdapter = new ListViewAdapter<String>();
 
-  private Map<String, ListListModel<Transaction>> transactionListListModelsByTicker;
+  private Map<String, ListViewAdapter<Transaction>> transactionListViewAdaptersByTicker;
 
   private Updater updater;
 
   public TransactionTreeViewModel(Updater updater,
-      ListModel<StockQuote> stockQuoteListModel,
-      Map<String, ListListModel<Transaction>> transactionListListModelsByTicker) {
+      AbstractListViewAdapter<StockQuote> stockQuoteListViewAdapter,
+      Map<String, ListViewAdapter<Transaction>> transactionListViewAdaptersByTicker) {
     this.updater = updater;
-    this.stockQuoteListModel = stockQuoteListModel;
-    List<String> topLevelList = topLevelListListModel.getList();
+    this.stockQuoteListViewAdapter = stockQuoteListViewAdapter;
+    List<String> topLevelList = topLevelListViewAdapter.getList();
     topLevelList.add("Favorites");
     topLevelList.add("Dow Jones Industrials");
     topLevelList.add("S&P 500");
-    this.transactionListListModelsByTicker = transactionListListModelsByTicker;
+    this.transactionListViewAdaptersByTicker = transactionListViewAdaptersByTicker;
   }
 
   public <T> NodeInfo<?> getNodeInfo(T value, final TreeNode<T> treeNode) {
     if (value == null) {
-      return new TreeViewModel.DefaultNodeInfo<String>(topLevelListListModel,
+      return new TreeViewModel.DefaultNodeInfo<String>(topLevelListViewAdapter,
           TextCell.getInstance());
     } else if ("Favorites".equals(value)) {
-      return new TreeViewModel.DefaultNodeInfo<StockQuote>(stockQuoteListModel,
+      return new TreeViewModel.DefaultNodeInfo<StockQuote>(stockQuoteListViewAdapter,
           STOCK_QUOTE_CELL);
     } else if ("History".equals(value)) {
       String ticker = ((StockQuote) treeNode.getParentNode().getValue()).getTicker();
-      ListListModel<Transaction> listModel = transactionListListModelsByTicker.get(ticker);
-      if (listModel == null) {
-        listModel = new ListListModel<Transaction>();
-        transactionListListModelsByTicker.put(ticker, listModel);
+      ListViewAdapter<Transaction> adapter = transactionListViewAdaptersByTicker.get(ticker);
+      if (adapter == null) {
+        adapter = new ListViewAdapter<Transaction>();
+        transactionListViewAdaptersByTicker.put(ticker, adapter);
       }
-      return new TreeViewModel.DefaultNodeInfo<Transaction>(listModel,
+      return new TreeViewModel.DefaultNodeInfo<Transaction>(adapter,
           TRANSACTION_CELL);
     } else if ("Actions".equals(value)) {
-      ListListModel<String> listModel = new ListListModel<String>();
-      List<String> list = listModel.getList();
+      ListViewAdapter<String> adapter = new ListViewAdapter<String>();
+      List<String> list = adapter.getList();
       list.add("Buy");
       list.add("Sell");
-      return new TreeViewModel.DefaultNodeInfo<String>(listModel,
+      return new TreeViewModel.DefaultNodeInfo<String>(adapter,
           ButtonCell.getInstance(), new ValueUpdater<String, Void>() {
             public void update(String value, Void viewData) {
               StockQuote stockQuote = (StockQuote) treeNode.getParentNode().getValue();
@@ -126,24 +126,24 @@ class TransactionTreeViewModel implements TreeViewModel {
             }
           });
     } else if (value instanceof String) {
-      SectorListModel listModel = new SectorListModel((String) value);
-      sectorListModels.put((String) value, listModel);
-      return new TreeViewModel.DefaultNodeInfo<StockQuote>(listModel,
+      SectorListViewAdapter adapter = new SectorListViewAdapter((String) value);
+      sectorListViewAdapters.put((String) value, adapter);
+      return new TreeViewModel.DefaultNodeInfo<StockQuote>(adapter,
           STOCK_QUOTE_CELL);
     } else if (value instanceof StockQuote) {
-      ListListModel<String> listModel = new ListListModel<String>();
-      List<String> list = listModel.getList();
+      ListViewAdapter<String> adapter = new ListViewAdapter<String>();
+      List<String> list = adapter.getList();
       list.add("Actions");
       list.add("History");
-      return new TreeViewModel.DefaultNodeInfo<String>(listModel,
+      return new TreeViewModel.DefaultNodeInfo<String>(adapter,
           TextCell.getInstance());
     }
 
     throw new IllegalArgumentException(value.toString());
   }
 
-  public SectorListModel getSectorListModel(String value) {
-    return sectorListModels.get(value);
+  public SectorListViewAdapter getSectorListViewAdapter(String value) {
+    return sectorListViewAdapters.get(value);
   }
 
   public boolean isLeaf(Object value, final TreeNode<?> parentNode) {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,11 +16,11 @@
 package com.google.gwt.bikeshed.list.client;
 
 import com.google.gwt.bikeshed.list.shared.ListEvent;
-import com.google.gwt.bikeshed.list.shared.ListHandler;
-import com.google.gwt.bikeshed.list.shared.ListModel;
-import com.google.gwt.bikeshed.list.shared.ListRegistration;
+import com.google.gwt.bikeshed.list.shared.ProvidesKey;
+import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.bikeshed.list.shared.SelectionModel;
 import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
+import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter.DefaultRange;
 import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionChangeEvent;
 import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionChangeHandler;
 import com.google.gwt.dom.client.Document;
@@ -43,10 +43,10 @@ import java.util.List;
 
 /**
  * A list view that supports paging and columns.
- * 
- * @param <T> the data type of each row.
+ *
+ * @param <T> the data type of each row
  */
-public class PagingTableListView<T> extends Widget {
+public class PagingTableListView<T> extends Widget implements ListView<T> {
 
   private class TableSelectionHandler implements SelectionChangeHandler {
     public void onSelectionChange(SelectionChangeEvent event) {
@@ -57,13 +57,12 @@ public class PagingTableListView<T> extends Widget {
   protected int curPage;
   private List<Column<T, ?, ?>> columns = new ArrayList<Column<T, ?, ?>>();
   private ArrayList<T> data = new ArrayList<T>();
+  private Delegate<T> delegate;
   private List<Header<?>> footers = new ArrayList<Header<?>>();
   private List<Header<?>> headers = new ArrayList<Header<?>>();
-  private ListRegistration<T> listReg;
-  private ListModel<T> listModel;
   private int numPages;
-
   private int pageSize;
+  private ProvidesKey<T> providesKey;
   private HandlerRegistration selectionHandler;
   private SelectionModel<T> selectionModel;
 
@@ -74,8 +73,8 @@ public class PagingTableListView<T> extends Widget {
   private TableSectionElement thead;
   private int totalSize;
 
-  public PagingTableListView(ListModel<T> listModel, final int pageSize) {
-    this.listModel = listModel;
+  public PagingTableListView(ProvidesKey<T> providesKey, final int pageSize) {
+    this.providesKey = providesKey;
     this.pageSize = pageSize;
     setElement(table = Document.get().createTableElement());
     thead = table.createTHead();
@@ -97,10 +96,6 @@ public class PagingTableListView<T> extends Widget {
     addColumn(col, header, null);
   }
 
-  public void addColumn(Column<T, ?, ?> col, String headerString) {
-    addColumn(col, new TextHeader(headerString), null);
-  }
-
   // TODO: remove(Column)
   public void addColumn(Column<T, ?, ?> col, Header<?> header, Header<?> footer) {
     headers.add(header);
@@ -109,6 +104,10 @@ public class PagingTableListView<T> extends Widget {
     columns.add(col);
     createRows();
     setPage(curPage); // TODO: better way to refresh?
+  }
+
+  public void addColumn(Column<T, ?, ?> col, String headerString) {
+    addColumn(col, new TextHeader(headerString), null);
   }
 
   // TODO - bounds check
@@ -129,7 +128,7 @@ public class PagingTableListView<T> extends Widget {
 
   /**
    * Get the current page.
-   * 
+   *
    * @return the current page
    */
   public int getPage() {
@@ -138,6 +137,10 @@ public class PagingTableListView<T> extends Widget {
 
   public int getPageSize() {
     return pageSize;
+  }
+
+  public Range getRange() {
+    return new DefaultRange(curPage * pageSize, pageSize);
   }
 
   public void nextPage() {
@@ -172,8 +175,22 @@ public class PagingTableListView<T> extends Widget {
       Column<T, ?, ?> column = columns.get(col);
 
       column.onBrowserEvent(cell, curPage * pageSize + row, value, event,
-          listModel);
+          providesKey);
     }
+  }
+
+  public void onDataChanged(ListEvent<T> event) {
+    render(event.getStart(), event.getLength(), event.getValues());
+  }
+
+  public void onSizeChanged(SizeChangeEvent event) {
+    totalSize = event.getSize();
+    if (totalSize <= 0) {
+      numPages = 0;
+    } else {
+      numPages = 1 + (totalSize - 1) / pageSize;
+    }
+    setPage(curPage);
   }
 
   public void previousPage() {
@@ -181,7 +198,9 @@ public class PagingTableListView<T> extends Widget {
   }
 
   public void refresh() {
-    listReg.setRangeOfInterest(curPage * pageSize, pageSize);
+    if (delegate != null) {
+      delegate.onRangeChanged(this);
+    }
     updateRowVisibility();
   }
 
@@ -210,9 +229,16 @@ public class PagingTableListView<T> extends Widget {
     }
   }
 
+  public void setDelegate(Delegate<T> delegate) {
+    this.delegate = delegate;
+    if (delegate != null) {
+      delegate.onRangeChanged(this);
+    }
+  }
+
   /**
    * Set the current visible page.
-   * 
+   *
    * @param page the page index
    */
   public void setPage(int page) {
@@ -225,7 +251,9 @@ public class PagingTableListView<T> extends Widget {
     // Early exit if we are already on the right page.
     if (curPage != newPage) {
       curPage = newPage;
-      listReg.setRangeOfInterest(curPage * pageSize, pageSize);
+      if (delegate != null) {
+        delegate.onRangeChanged(this);
+      }
     }
 
     updateRowVisibility();
@@ -233,7 +261,7 @@ public class PagingTableListView<T> extends Widget {
 
   /**
    * Set the number of rows per page.
-   * 
+   *
    * @param pageSize the page size
    */
   public void setPageSize(int pageSize) {
@@ -262,24 +290,6 @@ public class PagingTableListView<T> extends Widget {
     if (selectionModel != null) {
       selectionHandler = selectionModel.addSelectionChangeHandler(new TableSelectionHandler());
     }
-
-    // Attach to the list model.
-    listReg = listModel.addListHandler(new ListHandler<T>() {
-      public void onDataChanged(ListEvent<T> event) {
-        render(event.getStart(), event.getLength(), event.getValues());
-      }
-
-      public void onSizeChanged(SizeChangeEvent event) {
-        totalSize = event.getSize();
-        if (totalSize <= 0) {
-          numPages = 0;
-        } else {
-          numPages = 1 + (totalSize - 1) / pageSize;
-        }
-        setPage(curPage);
-      }
-    });
-    listReg.setRangeOfInterest(curPage * pageSize, pageSize);
   }
 
   @Override
@@ -288,12 +298,6 @@ public class PagingTableListView<T> extends Widget {
     if (selectionHandler != null) {
       selectionHandler.removeHandler();
       selectionHandler = null;
-    }
-
-    // Detach from the list model.
-    if (listReg != null) {
-      listReg.removeHandler();
-      listReg = null;
     }
   }
 
@@ -396,7 +400,7 @@ public class PagingTableListView<T> extends Widget {
 
   /**
    * Update the text that shows the current page.
-   * 
+   *
    * @param page the current page
    */
   private void updatePageText(int page) {

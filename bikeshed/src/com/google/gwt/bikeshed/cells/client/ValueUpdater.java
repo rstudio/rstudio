@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,16 +17,16 @@ package com.google.gwt.bikeshed.cells.client;
 
 /**
  * A {@link ValueUpdater} may be added to a Cell to provide updated data.
- * 
+ *
  * @param <C> the data type of the cell
  * @param <V> the data type of view data associated with the cell
  */
 public interface ValueUpdater<C, V> {
-  
+
   /**
    * Announces a new value.
-   * 
-   * @param value the updated value.
+   *
+   * @param value the updated value
    */
   void update(C value, V viewData);
 }

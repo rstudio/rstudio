@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,7 +29,7 @@ import java.util.Date;
 
 /**
  * JSO implementation of {@link Values}.
- * 
+ *
  * @param <K> value type
  */
 public final class ValuesImpl<K extends ValuesKey<K>> extends JavaScriptObject
@@ -105,8 +105,7 @@ public final class ValuesImpl<K extends ValuesKey<K>> extends JavaScriptObject
   }
 
   /**
-   * @param property
-   * @return
+   * @param name
    */
   public native boolean isDefined(String name)/*-{
     return this[name] !== undefined;
@@ -145,11 +144,11 @@ public final class ValuesImpl<K extends ValuesKey<K>> extends JavaScriptObject
     if (value instanceof String) {
       setString(property.getName(), (String) value);
       return;
-    } 
+    }
     if (value instanceof Integer) {
       setInt(property.getName(), (Integer) value);
       return;
-    } 
+    }
     throw new UnsupportedOperationException("Can't yet set properties of type " + value.getClass().getName());
   }
 
@@ -159,7 +158,7 @@ public final class ValuesImpl<K extends ValuesKey<K>> extends JavaScriptObject
 
   /**
    * Return JSON representation using org.json library.
-   * 
+   *
    * @return returned string.
    */
   public native String toJson() /*-{

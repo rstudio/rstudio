@@ -19,7 +19,9 @@ import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.cells.client.ValueUpdater;
 import com.google.gwt.bikeshed.list.client.HasCell;
-import com.google.gwt.bikeshed.list.shared.ListModel;
+import com.google.gwt.bikeshed.list.client.ListView;
+import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter;
+import com.google.gwt.bikeshed.list.shared.ProvidesKey;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
@@ -32,46 +34,36 @@ import java.util.List;
 public interface TreeViewModel {
 
   /**
-   * The info needed to create a {@link TreeNodeView}.
-   */
-  interface NodeInfo<T> {
-
-    List<HasCell<T, ?, Void>> getHasCells();
-
-    /**
-     * Get the {@link ListModel} used to retrieve child node values.
-     *
-     * @return the list model
-     */
-    ListModel<T> getListModel();
-
-    /**
-     * Handle an event that is fired on one of the children of this item.
-     *
-     * @param elem the parent element of the item
-     * @param object the data value of the item
-     * @param event the event that was fired
-     */
-    void onBrowserEvent(Element elem, final T object, NativeEvent event);
-  }
-
-  /**
    * Default implementation of {@link NodeInfo}.
    */
   class DefaultNodeInfo<T> implements NodeInfo<T> {
     private List<HasCell<T, ?, Void>> hasCells = new ArrayList<HasCell<T, ?, Void>>();
-    private ListModel<T> listModel;
+    private AbstractListViewAdapter<T> listViewAdapter;
+    private ListView<T> view;
+
+    /**
+     * Construct a new {@link DefaultNodeInfo}.
+     *
+     * @param adapter the {@link AbstractListViewAdapter} that provides the
+     *          child values
+     * @param cell the {@link Cell} used to render the child values
+     */
+    public DefaultNodeInfo(AbstractListViewAdapter<T> adapter,
+        Cell<T, Void> cell) {
+      this(adapter, cell, null);
+    }
 
     /**
      * Construct a new {@link DefaultNodeInfo} with a single cell and a
      * {@link ValueUpdater}.
      *
-     * @param listModel the {@link ListModel} that provides the child values
+     * @param adapter the {@link AbstractListViewAdapter} that provides the
+     *          child values
      * @param cell the {@link Cell} used to render the child values
      * @param valueUpdater the {@link ValueUpdater}
      */
-    public DefaultNodeInfo(ListModel<T> listModel, final Cell<T, Void> cell,
-        final ValueUpdater<T, Void> valueUpdater) {
+    public DefaultNodeInfo(AbstractListViewAdapter<T> adapter,
+        final Cell<T, Void> cell, final ValueUpdater<T, Void> valueUpdater) {
       hasCells.add(new HasCell<T, T, Void>() {
         public Cell<T, Void> getCell() {
           return cell;
@@ -89,31 +81,21 @@ public interface TreeViewModel {
           return object;
         }
       });
-      this.listModel = listModel;
+      this.listViewAdapter = adapter;
     }
 
-    /**
-     * Construct a new {@link DefaultNodeInfo}.
-     *
-     * @param listModel the {@link ListModel} that provides the child values
-     * @param cell the {@link Cell} used to render the child values
-     */
-    public DefaultNodeInfo(ListModel<T> listModel, Cell<T, Void> cell) {
-      this(listModel, cell, null);
-    }
-
-    public DefaultNodeInfo(ListModel<T> listModel,
+    public DefaultNodeInfo(AbstractListViewAdapter<T> adapter,
         List<HasCell<T, ?, Void>> hasCells) {
       this.hasCells.addAll(hasCells);
-      this.listModel = listModel;
+      this.listViewAdapter = adapter;
     }
 
     public List<HasCell<T, ?, Void>> getHasCells() {
       return hasCells;
     }
 
-    public ListModel<T> getListModel() {
-      return listModel;
+    public ProvidesKey<T> getProvidesKey() {
+      return listViewAdapter;
     }
 
     // TODO - dispatch into cells
@@ -130,6 +112,15 @@ public interface TreeViewModel {
       }
     }
 
+    public void setView(ListView<T> view) {
+      this.view = view;
+      listViewAdapter.addView(view);
+    }
+
+    public void unsetView() {
+      listViewAdapter.removeView(view);
+    }
+
     private <X> void dispatch(Element target, final T object,
         NativeEvent event, HasCell<T, X, Void> hc) {
       final FieldUpdater<T, X, Void> fieldUpdater = hc.getFieldUpdater();
@@ -143,8 +134,32 @@ public interface TreeViewModel {
   }
 
   /**
-   * Get the {@link NodeInfo} that will provide the {@link ListModel} and
-   * {@link Cell} to retrieve the children of the specified value.
+   * The info needed to create a {@link TreeNodeView}.
+   */
+  interface NodeInfo<T> {
+
+    List<HasCell<T, ?, Void>> getHasCells();
+
+    ProvidesKey<T> getProvidesKey();
+
+    /**
+     * Handle an event that is fired on one of the children of this item.
+     *
+     * @param elem the parent element of the item
+     * @param object the data value of the item
+     * @param event the event that was fired
+     */
+    void onBrowserEvent(Element elem, final T object, NativeEvent event);
+
+    void setView(ListView<T> view);
+
+    void unsetView();
+  }
+
+  /**
+   * Get the {@link NodeInfo} that will provide the {@link ProvidesKey},
+   * {@link Cell}, and {@link ListView}s to retrieve and display the children of
+   * the specified value.
    *
    * @param value the value in the parent node
    * @param treeNode the {@link TreeNode} that contains the value

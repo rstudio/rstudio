@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,7 +19,7 @@ import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
 import com.google.gwt.bikeshed.list.shared.Range;
-import com.google.gwt.bikeshed.list.shared.AbstractListModel.DefaultRange;
+import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter.DefaultRange;
 import com.google.gwt.sample.bikeshed.stocks.client.StockService;
 import com.google.gwt.sample.bikeshed.stocks.shared.PlayerInfo;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockQuote;
@@ -147,7 +147,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       return null;
     }
   }
-  
+
   /**
    * A mapping of usernames to {@link PlayerStatus}.
    */
@@ -222,7 +222,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
     // Perform the transaction with the user.
     int quantity = transaction.getQuantity();
     int price = quote.getPrice();
-    
+
     PlayerStatus player = ensurePlayer();
     if (transaction.isBuy()) {
       player.buy(ticker, quantity, price);
@@ -239,7 +239,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
 
   /**
    * Create a stock response, updating the current user's net worth.
-   * 
+   *
    * @param player the player info
    * @param searchQuery the original search query
    * @param searchResults the search results
@@ -286,7 +286,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
   /**
    * Ensure that a {@link PlayerStatus} for the current player exists and return
    * it.
-   * 
+   *
    * @return the {@link PlayerStatus} for the current player
    */
   private PlayerStatus ensurePlayer() {

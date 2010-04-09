@@ -21,7 +21,7 @@ import com.google.gwt.bikeshed.cells.client.TextCell;
 import com.google.gwt.bikeshed.list.client.Column;
 import com.google.gwt.bikeshed.list.client.Header;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.shared.ListListModel;
+import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
@@ -52,11 +52,12 @@ public class EditableTableRecipe extends Recipe {
 
   @Override
   protected Widget createWidget() {
-    final ListListModel<String> model = new ListListModel<String>();
-    final PagingTableListView<String> table = new PagingTableListView<String>(model, 10);
+    final ListViewAdapter<String> adapter = new ListViewAdapter<String>();
+    final PagingTableListView<String> table = new PagingTableListView<String>(adapter, 10);
+    adapter.addView(table);
 
     for (int i = 0; i < 25; ++i) {
-      model.getList().add("" + i);
+      adapter.getList().add("" + i);
     }
 
     EditTextColumn column = new EditTextColumn();
@@ -65,26 +66,23 @@ public class EditableTableRecipe extends Recipe {
     table.addColumn(column, header);
 
     column.setFieldUpdater(new FieldUpdater<String, String, String>() {
-      @Override
       public void update(int index, String object, String value, String viewData) {
-        model.getList().set(index, value);
+        adapter.getList().set(index, value);
       }
     });
 
     FlowPanel plusMinusPanel = new FlowPanel();
     Button addBtn = new Button("+", new ClickHandler() {
-      @Override
       public void onClick(ClickEvent event) {
-        List<String> list = model.getList();
+        List<String> list = adapter.getList();
         list.add("" + list.size());
       }
     });
     Button removeBtn = new Button("-", new ClickHandler() {
-      @Override
       public void onClick(ClickEvent event) {
-        int size = model.getList().size();
+        int size = adapter.getList().size();
         if (size > 0) {
-          model.getList().remove(size - 1);
+          adapter.getList().remove(size - 1);
         }
       }
     });
@@ -93,13 +91,11 @@ public class EditableTableRecipe extends Recipe {
 
     FlowPanel nextPrevPanel = new FlowPanel();
     Button prevBtn = new Button("<", new ClickHandler() {
-      @Override
       public void onClick(ClickEvent event) {
         table.previousPage();
       }
     });
     Button nextBtn = new Button(">", new ClickHandler() {
-      @Override
       public void onClick(ClickEvent event) {
         table.nextPage();
       }

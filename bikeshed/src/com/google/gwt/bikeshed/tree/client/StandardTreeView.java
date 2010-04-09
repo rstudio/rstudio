@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,7 +31,8 @@ import java.util.ArrayList;
 public class StandardTreeView extends TreeView implements HasAnimation {
 
   /**
-   * A {@link TreeNodeAnimation} that reveals the contents of child nodes.
+   * A {@link TreeView.TreeNodeViewAnimation} that reveals the contents of child
+   * nodes.
    */
   public static class RevealAnimation extends TreeNodeViewAnimation {
 
@@ -144,7 +145,7 @@ public class StandardTreeView extends TreeView implements HasAnimation {
   }
 
   /**
-   * A {@link TreeNodeAnimation} that slides children into view.
+   * A {@link TreeView.TreeNodeViewAnimation} that slides children into view.
    */
   public static class SlideAnimation extends RevealAnimation {
     /**
@@ -210,10 +211,12 @@ public class StandardTreeView extends TreeView implements HasAnimation {
     setAnimation(SlideAnimation.create());
 
     // Add event handlers.
-    sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONCHANGE);
+    sinkEvents(Event.ONCLICK | Event.ONMOUSEDOWN | Event.ONMOUSEUP
+        | Event.ONCHANGE);
 
     // Associate a view with the item.
-    TreeNodeView<T> root = new StandardTreeNodeView<T>(this, null, null, getElement(), rootValue);
+    TreeNodeView<T> root = new StandardTreeNodeView<T>(this, null, null,
+        getElement(), rootValue);
     setRootNode(root);
     root.setState(true);
   }
@@ -252,8 +255,8 @@ public class StandardTreeView extends TreeView implements HasAnimation {
   /**
    * Collects parents going up the element tree, terminated at the tree root.
    */
-  private void collectElementChain(ArrayList<Element> chain, ArrayList<String> ids, Element hRoot,
-      Element hElem) {
+  private void collectElementChain(ArrayList<Element> chain,
+      ArrayList<String> ids, Element hRoot, Element hElem) {
     if ((hElem == null) || (hElem == hRoot)) {
       return;
     }

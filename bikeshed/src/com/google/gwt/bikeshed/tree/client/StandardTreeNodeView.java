@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -38,7 +38,7 @@ public class StandardTreeNodeView<T> extends TreeNodeView<T> {
    * @param tree the parent {@link TreeView}
    * @param parent the parent {@link TreeNodeView}
    * @param parentNodeInfo the {@link NodeInfo} of the parent
-   * @param elem the outer element of this {@link TreeNodeView}.
+   * @param elem the outer element of this {@link TreeNodeView}
    * @param value the value of this node
    */
   StandardTreeNodeView(final TreeView tree,
