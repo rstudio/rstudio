@@ -13,14 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.bikeshed.validation.client;
+package com.google.gwt.sample.bikeshed.cookbook.client;
 
 import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.ValueUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.sample.bikeshed.validation.client.ValidatableField.DefaultValidatableField;
+import com.google.gwt.sample.bikeshed.cookbook.client.ValidatableField.DefaultValidatableField;
 
 /**
  * A String {@link Cell} that supports validation using a

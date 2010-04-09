@@ -13,21 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.bikeshed.tree.server;
+package com.google.gwt.sample.bikeshed.cookbook.client;
 
-import com.google.gwt.sample.bikeshed.tree.client.TreeService;
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import java.util.List;
 
 /**
- * The server side implementation of the RPC service.
+ * The async counterpart of <code>TreeService</code>.
  */
-@SuppressWarnings("serial")
-public class TreeServiceImpl extends RemoteServiceServlet implements
-    TreeService {
-
-  public List<String> getNext(String prefix) {
-    return Dictionary.getNext(prefix);
-  }
+public interface TreeServiceAsync {
+  
+  void getNext(String prefix, AsyncCallback<List<String>> callback);
 }

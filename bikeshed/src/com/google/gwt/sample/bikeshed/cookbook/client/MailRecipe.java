@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.bikeshed.mail.client;
+package com.google.gwt.sample.bikeshed.cookbook.client;
 
 import com.google.gwt.bikeshed.cells.client.ButtonCell;
 import com.google.gwt.bikeshed.cells.client.CheckboxCell;
@@ -23,18 +23,17 @@ import com.google.gwt.bikeshed.list.client.SimpleColumn;
 import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.shared.DefaultSelectionModel;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
-import com.google.gwt.bikeshed.list.shared.ProvidesKey;
-import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
 import java.util.List;
@@ -43,9 +42,9 @@ import java.util.Random;
 import java.util.TreeMap;
 
 /**
- * A demo of selection features.
+ * A recipe for mail-like selection features.
  */
-public class MailSample implements EntryPoint, ClickHandler {
+public class MailRecipe extends Recipe implements ClickHandler {
 
   static class MailSelectionModel extends DefaultSelectionModel<Message> {
     enum Type {
@@ -56,23 +55,11 @@ public class MailSample implements EntryPoint, ClickHandler {
       }
     }
 
-    private static ProvidesKey<Message> keyProvider =
-      new ProvidesKey<Message>() {
-        public Object getKey(Message item) {
-          return Integer.valueOf(item.id);
-        }
-    };
-
     // A map from enum names to their values
     private static Map<String, Type> typeMap = new HashMap<String, Type>();
 
     private String search;
     private Type type = Type.NONE;
-
-    @Override
-    public ProvidesKey<Message> getKeyProvider() {
-      return keyProvider;
-    }
 
     @Override
     public boolean isDefaultSelected(Message object) {
@@ -131,6 +118,7 @@ public class MailSample implements EntryPoint, ClickHandler {
       return sb.toString();
     }
 
+    @Override
     protected void scheduleSelectionChangeEvent() {
       selectionLabel.setText("Selected " + this.toString());
       super.scheduleSelectionChangeEvent();
@@ -236,6 +224,10 @@ public class MailSample implements EntryPoint, ClickHandler {
 
   private PagingTableListView<Message> table;
 
+  public MailRecipe() {
+    super("Mail");
+  }
+
   // Handle events for all buttons here in order to avoid creating multiple
   // ClickHandlers
   public void onClick(ClickEvent event) {
@@ -251,7 +243,8 @@ public class MailSample implements EntryPoint, ClickHandler {
     }
   }
 
-  public void onModuleLoad() {
+  @Override
+  protected Widget createWidget() {
     ListListModel<Message> listModel = new ListListModel<Message>();
     List<Message> messages = listModel.getList();
     Random rand = new Random();
@@ -294,7 +287,7 @@ public class MailSample implements EntryPoint, ClickHandler {
       }
     };
     table.addColumn(idColumn, "ID");
-
+  
     TextColumn<Message> isReadColumn = new TextColumn<Message>() {
       @Override
       public String getValue(Message object) {
@@ -346,19 +339,21 @@ public class MailSample implements EntryPoint, ClickHandler {
     panel.add(searchLabel);
     panel.add(searchBox);
 
-    RootPanel.get().add(panel);
-    RootPanel.get().add(makeButton("Search Subject", "SUBJECT"));
-    RootPanel.get().add(makeButton("Search Senders", "SENDER"));
-    RootPanel.get().add(new HTML("<br>"));
-    RootPanel.get().add(table);
-    RootPanel.get().add(new HTML("<br>"));
-    RootPanel.get().add(makeButton("Select None", "NONE"));
-    RootPanel.get().add(makeButton("Select All On This Page", "PAGE"));
-    RootPanel.get().add(makeButton("Select All", "ALL"));
-    RootPanel.get().add(makeButton("Select Read", "READ"));
-    RootPanel.get().add(makeButton("Select Unread", "UNREAD"));
-    RootPanel.get().add(new HTML("<hr>"));
-    RootPanel.get().add(selectionLabel);
+    FlowPanel p = new FlowPanel();
+    p.add(panel);
+    p.add(makeButton("Search Subject", "SUBJECT"));
+    p.add(makeButton("Search Senders", "SENDER"));
+    p.add(new HTML("<br>"));
+    p.add(table);
+    p.add(new HTML("<br>"));
+    p.add(makeButton("Select None", "NONE"));
+    p.add(makeButton("Select All On This Page", "PAGE"));
+    p.add(makeButton("Select All", "ALL"));
+    p.add(makeButton("Select Read", "READ"));
+    p.add(makeButton("Select Unread", "UNREAD"));
+    p.add(new HTML("<hr>"));
+    p.add(selectionLabel);
+    return p;
   }
 
   private Button makeButton(String label, String id) {

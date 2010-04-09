@@ -13,23 +13,27 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.bikeshed.simplecelllist.client;
+package com.google.gwt.sample.bikeshed.cookbook.client;
 
 import com.google.gwt.bikeshed.cells.client.TextCell;
 import com.google.gwt.bikeshed.list.client.SimpleCellList;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
-import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
 /**
- * SimpleCellList demo.
+ * SimpleCellList Recipe.
  */
-public class SimpleCellListSample implements EntryPoint {
+public class SimpleCellListRecipe extends Recipe {
 
-  public void onModuleLoad() {
+  public SimpleCellListRecipe() {
+    super("Simple Cell List");
+  }
+
+  @Override
+  protected Widget createWidget() {
     ListListModel<String> listModel = new ListListModel<String>();
     final List<String> list = listModel.getList();
     for (int i = 0; i < 50; i++) {
@@ -38,8 +42,6 @@ public class SimpleCellListSample implements EntryPoint {
 
     SimpleCellList<String> simpleCellList =
       new SimpleCellList<String>(listModel, TextCell.getInstance(), 10, 5);
-
-    RootPanel.get().add(simpleCellList);
 
     new Timer() {
       int index = 0;
@@ -52,5 +54,7 @@ public class SimpleCellListSample implements EntryPoint {
           schedule(100);
       }
     }.schedule(100);
+
+    return simpleCellList;
   }
 }

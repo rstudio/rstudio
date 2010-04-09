@@ -17,11 +17,9 @@ package com.google.gwt.bikeshed.tree.client;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HasAnimation;
 
@@ -224,15 +222,30 @@ public class StandardTreeView extends TreeView implements HasAnimation {
   public void onBrowserEvent(Event event) {
     super.onBrowserEvent(event);
 
-    int eventType = DOM.eventGetType(event);
-    switch (eventType) {
-      case Event.ONMOUSEUP: case Event.ONCHANGE:
-        Element currentTarget = event.getCurrentEventTarget().cast();
-        if (currentTarget == getElement()) {
-          Element target = event.getEventTarget().cast();
-          elementClicked(target, event, getRootTreeNodeView());
+    Element target = event.getEventTarget().cast();
+    TreeNodeView<?> rootNode = getRootTreeNodeView();
+
+    ArrayList<Element> chain = new ArrayList<Element>();
+    ArrayList<String> ids = new ArrayList<String>();
+    collectElementChain(chain, ids, getElement(), target);
+
+    TreeNodeView<?> nodeView = findItemByChain(chain, 0, rootNode);
+    if (nodeView != null && nodeView != rootNode) {
+      if (nodeView.getImageElement().isOrHasChild(target)) {
+        if ("click".equals(event.getType())) {
+          nodeView.setState(!nodeView.getState());
         }
-        break;
+      } else if (nodeView.getCellParent().isOrHasChild(target)) {
+        nodeView.fireEventToCell(event);
+
+        // TODO(jgw): Kind of a hacky way to set selection. Need to generalize
+        // this to some sort of keyboard/mouse->selection controller.
+        if (getSelectionModel() != null) {
+          if ("click".equals(event.getType())) {
+            getSelectionModel().setSelected(nodeView.getValue(), true);
+          }
+        }
+      }
     }
   }
 
@@ -248,25 +261,6 @@ public class StandardTreeView extends TreeView implements HasAnimation {
     collectElementChain(chain, ids, hRoot, hElem.getParentElement());
     chain.add(hElem);
     ids.add(hElem.getId());
-  }
-
-  private boolean elementClicked(Element hElem, NativeEvent event, TreeNodeView<?> rootNode) {
-    ArrayList<Element> chain = new ArrayList<Element>();
-    ArrayList<String> ids = new ArrayList<String>();
-    collectElementChain(chain, ids, getElement(), hElem);
-
-    TreeNodeView<?> nodeView = findItemByChain(chain, 0, rootNode);
-    if (nodeView != null && nodeView != rootNode) {
-      if (nodeView.getImageElement().isOrHasChild(hElem)) {
-        nodeView.setState(!nodeView.getState());
-        return true;
-      } else if (nodeView.getCellParent().isOrHasChild(hElem)) {
-        nodeView.fireEventToCell(event);
-        return true;
-      }
-    }
-
-    return false;
   }
 
   private TreeNodeView<?> findItemByChain(ArrayList<Element> chain, int idx,

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.bikeshed.tree.server;
+package com.google.gwt.sample.bikeshed.cookbook.server;
 
 import java.util.ArrayList;
 import java.util.List;

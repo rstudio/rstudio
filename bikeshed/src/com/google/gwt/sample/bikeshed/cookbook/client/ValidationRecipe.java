@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.bikeshed.validation.client;
+package com.google.gwt.sample.bikeshed.cookbook.client;
 
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.list.client.Column;
@@ -21,16 +21,15 @@ import com.google.gwt.bikeshed.list.client.PagingTableListView;
 import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.shared.ListListModel;
 import com.google.gwt.bikeshed.list.shared.ProvidesKey;
-import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
 /**
  * Validation demo.
  */
-public class Validation implements EntryPoint {
+public class ValidationRecipe extends Recipe {
 
   static class Address {
     static int genkey = 0;
@@ -69,7 +68,12 @@ public class Validation implements EntryPoint {
     return zip % 3 == 0;
   }
 
-  public void onModuleLoad() {
+  public ValidationRecipe() {
+    super("Validation");
+  }
+
+  @Override
+  protected Widget createWidget() {
     ListListModel<Address> listModel = new ListListModel<Address>();
     final List<Address> list = listModel.getList();
     for (int i = 10; i < 50; i++) {
@@ -113,7 +117,7 @@ public class Validation implements EntryPoint {
             String pendingValue = viewData.getValue();
 
             int zip = Integer.parseInt(pendingValue);
-            boolean zipInvalid = Validation.zipInvalid(zip);
+            boolean zipInvalid = ValidationRecipe.zipInvalid(zip);
 
             final Address newValue = new Address(object);
             newValue.zip = pendingValue == null ? value : pendingValue;
@@ -141,6 +145,6 @@ public class Validation implements EntryPoint {
     table.addColumn(zipColumn);
     table.addColumn(messageColumn);
 
-    RootPanel.get().add(table);
+    return table;
   }
 }

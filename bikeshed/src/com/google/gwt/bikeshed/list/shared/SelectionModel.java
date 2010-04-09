@@ -102,7 +102,7 @@ public interface SelectionModel<T> extends HasHandlers {
    *
    * @param <T> the data type of records in the list
    */
-  abstract class AbstractSelectionModel<T> implements SelectionModel<T> {
+  public abstract class AbstractSelectionModel<T> implements SelectionModel<T> {
 
     private final HandlerManager handlerManager = new HandlerManager(this);
 

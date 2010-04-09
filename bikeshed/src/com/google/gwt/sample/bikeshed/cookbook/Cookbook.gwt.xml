@@ -1,0 +1,7 @@
+<module rename-to='cookbook'>
+  <inherits name='com.google.gwt.user.User'/>
+  <inherits name='com.google.gwt.bikeshed.list.List'/>
+  <inherits name='com.google.gwt.bikeshed.tree.Tree'/>
+
+  <entry-point class='com.google.gwt.sample.bikeshed.cookbook.client.Cookbook'/>
+</module>
