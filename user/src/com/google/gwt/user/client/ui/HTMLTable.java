@@ -482,8 +482,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
      * Resize the column group element.
      * 
      * @param columns the number of columns
+     * @param growOnly true to only grow, false to shrink if needed
      */
-    void resizeColumnGroup(int columns) {
+    void resizeColumnGroup(int columns, boolean growOnly) {
       // The colgroup should always have at least one element.  See
       // prepareColumnGroup() for more details.
       columns = Math.max(columns, 1);
@@ -493,7 +494,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
         for (int i = num; i < columns; i++) {
           columnGroup.appendChild(Document.get().createColElement());
         }
-      } else if (num > columns) {
+      } else if (!growOnly && num > columns) {
         for (int i = num; i > columns; i--) {
           columnGroup.removeChild(columnGroup.getLastChild());
         }
@@ -503,7 +504,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     private Element ensureColumn(int col) {
       prepareColumn(col);
       prepareColumnGroup();
-      resizeColumnGroup(col + 1);
+      resizeColumnGroup(col + 1, true);
       return columnGroup.getChild(col).cast();
     }
 

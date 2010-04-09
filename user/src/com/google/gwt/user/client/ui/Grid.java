@@ -200,7 +200,7 @@ public class Grid extends HTMLTable {
     numColumns = columns;
 
     // Update the size of the colgroup.
-    getColumnFormatter().resizeColumnGroup(columns);
+    getColumnFormatter().resizeColumnGroup(columns, false);
   }
 
   /**

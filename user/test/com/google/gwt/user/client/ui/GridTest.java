@@ -89,14 +89,18 @@ public class GridTest extends HTMLTableTestBase {
     columns.removeStyleName(0, "c");
     assertEquals("base b", columns.getStyleName(0));
 
-    // Only one column should be created.
+    // All five cols should be created.
     Element e = DOM.getChild(r.getElement(), 0);
-    assertEquals(1, DOM.getChildCount(e));
+    assertEquals(5, DOM.getChildCount(e));
 
     columns.addStyleName(3, "a");
-    // Now there shoud be three such columns .
+    // There should still be five columns.
     e = DOM.getChild(r.getElement(), 0);
-    assertEquals(4, DOM.getChildCount(e));
+    assertEquals(5, DOM.getChildCount(e));
+
+    // Querying column 0 should not invalidate column 3.
+    assertEquals("base b", columns.getStyleName(0));
+    assertEquals("a", columns.getStyleName(3));
   }
 
   public void testColumnMessage() {
