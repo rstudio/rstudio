@@ -44,6 +44,9 @@ import com.google.gwt.i18n.client.TimeZoneTest;
 import com.google.gwt.i18n.rebind.MessageFormatParserTest;
 import com.google.gwt.i18n.server.GwtLocaleTest;
 import com.google.gwt.i18n.server.RegionInheritanceTest;
+import com.google.gwt.i18n.shared.BidiFormatterTest;
+import com.google.gwt.i18n.shared.BidiUtilsTest;
+import com.google.gwt.i18n.shared.GwtBidiUtilsTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -58,6 +61,8 @@ public class I18NSuite {
     // $JUnit-BEGIN$
     suite.addTestSuite(ArabicPluralsTest.class);
     suite.addTestSuite(AnnotationsTest.class);
+    suite.addTestSuite(BidiFormatterTest.class);
+    suite.addTestSuite(BidiUtilsTest.class);
     suite.addTestSuite(ConstantMapTest.class);
     suite.addTestSuite(CurrencyTest.class);
     suite.addTestSuite(CustomPluralsTest.class);
@@ -67,6 +72,7 @@ public class I18NSuite {
     suite.addTestSuite(DateTimeFormat_pl_Test.class);
     suite.addTestSuite(DateTimeParse_en_Test.class);
     suite.addTestSuite(DateTimeParse_zh_CN_Test.class);
+    suite.addTestSuite(GwtBidiUtilsTest.class);
     suite.addTestSuite(GwtLocaleTest.class);
     suite.addTestSuite(I18NTest.class);
     suite.addTestSuite(I18N2Test.class);

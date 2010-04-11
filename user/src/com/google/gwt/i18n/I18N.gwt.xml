@@ -15,6 +15,9 @@
 <!-- Internationalization support.                                          -->
 <!--                                                                        -->
 <module>
+  <inherits name="com.google.gwt.regexp.RegExp"/>
+  <source path="" includes="client/,shared/" />
+  
   <!-- Browser-sensitive code should use the 'locale' client property. -->
   <!-- 'default' is always defined.                                    -->
   <define-property name="locale" values="default" />
