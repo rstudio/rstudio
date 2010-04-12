@@ -118,7 +118,7 @@ public class MutableArray<E> extends Array<E> {
       System.arraycopy(elems, 0, newElems, 0, index);
       System.arraycopy(elems, index + 1, newElems, index, oldLen - index - 1);
       elems = newElems;
-    } else if (elems.length == 1) {
+    } else if (elems != null && elems.length == 1) {
       elems = null;
     } else {
       assert false : "index " + index + " in range [0, " + size() + "), but remove(int) failed";
