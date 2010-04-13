@@ -673,10 +673,27 @@ public class JsInliner {
         maintainsOrder = false;
       }
     }
-
+    
     @Override
     public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
       checkName(x.getName());
+    }
+
+    @Override
+    public void endVisit(JsNew x, JsContext<JsExpression> ctx) {
+      /*
+       * Unless all arguments have already been evaluated, assume
+       * that invoking the new expression might interfere with
+       * the evaluation of the argument.
+       *
+       * It would be possible to allow this if the invoked function
+       * either does nothing or does nothing that affects the 
+       * remaining arguments.  However, currently there is no
+       * analysis of the invoked function.
+       */
+      if (unevaluated.size() > 0) {
+        maintainsOrder = false;
+      }
     }
 
     @Override

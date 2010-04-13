@@ -80,6 +80,29 @@ public class JsInlinerTest extends OptimizerTestBase {
     compare(expected, input);
   }
 
+  /**
+   * Test that a new expression breaks argument ordering.
+   */
+  public void testOrderingNew() throws Exception {
+    StringBuffer code = new StringBuffer();
+    // A static variable x
+    code.append("var x;");
+
+    // foo() uses x
+    code.append("function foo() { alert('x = ' + x); }");
+
+    // callee does "new foo" before evaluating its argument
+    code.append("function callee(arg) { new foo(); return arg; }");
+
+    // caller invokes callee with a multi that initializes x
+    code.append("function caller() { callee((x=1,2)); }");
+
+    // bootstrap the program
+    code.append("caller();");
+
+    compare(code.toString(), code.toString());
+  }
+
   public void testSelfRecursion() throws Exception {
     String input = "function a1() { return blah && b1() }"
         + "function b1() { return bar && a1()}" + "function c() { a1() } c()";
@@ -94,7 +117,6 @@ public class JsInlinerTest extends OptimizerTestBase {
     input = optimize(input, JsSymbolResolver.class, FixStaticRefsVisitor.class,
         JsInliner.class, JsUnusedFunctionRemover.class);
     expected = optimize(expected);
-    System.err.println("Input vs ");
     assertEquals(expected, input);
   }
 }
