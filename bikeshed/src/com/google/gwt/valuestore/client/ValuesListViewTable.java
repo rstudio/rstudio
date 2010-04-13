@@ -92,6 +92,9 @@ public abstract class ValuesListViewTable<K extends ValuesKey<K>> extends
    */
   public void setDelegate(ValuesListView.Delegate delegate) {
     this.delegate = delegate;
+    if (delegate != null) {
+      delegate.onRangeChanged(0, table.getNumDisplayedItems());
+    }
   }
 
   public void setValueList(List<Values<K>> newValues) {
@@ -103,7 +106,10 @@ public abstract class ValuesListViewTable<K extends ValuesKey<K>> extends
       @Override
       protected void onRangeChanged(ListView<Values<K>> view) {
         Range range = view.getRange();
-        getDelegate().onRangeChanged(range.getStart(), range.getLength());
+        Delegate delegate = getDelegate();
+        if (delegate != null) {
+          delegate.onRangeChanged(range.getStart(), range.getLength());
+        }
       }
     };
   }
