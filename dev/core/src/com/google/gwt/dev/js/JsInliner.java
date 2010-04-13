@@ -1368,25 +1368,36 @@ public class JsInliner {
 
   /**
    * Detects uses of parameters that would produce incorrect results if inlined.
-   * Generally speaking, we disallow the use of parameters as lvalues.
+   * Generally speaking, we disallow the use of parameters as lvalues. Also
+   * detects trying to inline a method which references 'this' where the call
+   * site has no qualifier.
    */
   private static class ParameterUsageVisitor extends JsVisitor {
-    private boolean lvalue = false;
+    private final boolean hasThisExpr;
     private final Set<JsName> parameterNames;
+    private boolean violation = false;
 
-    public ParameterUsageVisitor(Set<JsName> parameterNames) {
+    public ParameterUsageVisitor(boolean hasThisExpr, Set<JsName> parameterNames) {
+      this.hasThisExpr = hasThisExpr;
       this.parameterNames = parameterNames;
     }
 
     @Override
     public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
       if (ctx.isLvalue() && isParameter(x)) {
-        lvalue = true;
+        violation = true;
       }
     }
 
-    public boolean parameterAsLValue() {
-      return lvalue;
+    @Override
+    public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
+      if (!hasThisExpr) {
+        violation = true;
+      }
+    }
+
+    public boolean hasViolation() {
+      return violation;
     }
 
     /**
@@ -1911,9 +1922,10 @@ public class JsInliner {
     }
 
     // Check that parameters aren't used in such a way as to prohibit inlining
-    ParameterUsageVisitor v = new ParameterUsageVisitor(parameterNames);
+    ParameterUsageVisitor v = new ParameterUsageVisitor(thisExpr != null,
+        parameterNames);
     v.accept(toInline);
-    if (v.parameterAsLValue()) {
+    if (v.hasViolation()) {
       return false;
     }
 
