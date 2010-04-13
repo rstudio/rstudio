@@ -15,6 +15,8 @@
  */
 package com.google.gwt.collections;
 
+import java.util.Arrays;
+
 /**
  * An array whose content and length can change over time.
  * 
@@ -22,6 +24,7 @@ package com.google.gwt.collections;
  */
 public class MutableArray<E> extends Array<E> {
 
+  // TODO: refactor the unchecked elems construction into a separate method
   // The elements in the array
   E[] elems;
 
@@ -140,6 +143,46 @@ public class MutableArray<E> extends Array<E> {
     } else {
       assert false : "index " + index + " in range [0, " + size() + "), but set(int,E) failed";
     }
+  }
+  
+  /**
+   * Changes the array size. If {@code newSize} is less than the current size, the array is 
+   * truncated. If {@code newSize} is greater than the current size the array is grown and
+   * the new elements of the array filled up with {@code fillValue}.
+   */
+  @SuppressWarnings("unchecked")
+  @LinearTime
+  public void setSize(int newSize, E fillValue) {
+    Assertions.assertNotFrozen(this);
+    assert newSize >= 0 : "expecting newSize >= 0, got " + newSize;
+    
+    int fillStart;
+
+    if (newSize == size()) {
+      return;
+    } else if (newSize == 0) {
+      elems = null;
+      return;
+    }
+    
+    if (elems == null) {
+      fillStart = 0;
+    } else if (newSize < elems.length) {
+      // nothing to fill
+      fillStart = newSize;      
+    } else {
+      fillStart = elems.length;
+    }
+    
+    E[] newElems = (E[]) new Object[newSize];
+    
+    if (fillStart != 0) {
+      System.arraycopy(elems, 0, newElems, 0, fillStart);
+    }
+    
+    Arrays.fill(newElems, fillStart, newSize, fillValue);
+    
+    elems = newElems;
   }
 
   @Override

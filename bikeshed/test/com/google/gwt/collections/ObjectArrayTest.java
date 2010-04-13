@@ -265,5 +265,34 @@ public class ObjectArrayTest extends GWTTestCase {
     Array<String> a = b;
     assertEquals(0, a.size());
   }
+  
+  public void testSetSize() {
+    MutableArray<String> b = createMutableArray();
+
+    b.setSize(1, "fillValue");
+    assertEquals(1, b.size());
+    assertEquals("fillValue", b.get(0));
+    
+    b.setSize(2, "anotherValue");
+    assertEquals(2, b.size());
+    assertEquals("fillValue", b.get(0));
+    assertEquals("anotherValue", b.get(1));
+
+    b.setSize(1, null);
+    assertEquals(1, b.size());
+    assertEquals("fillValue", b.get(0));
+
+    b.setSize(0, null);
+    assertEquals(0, b.size());
+    assertEquals(null, b.elems);
+  }
+  
+  public void testCreateNonEmptyArray() {
+    MutableArray<String> b = createMutableArray(2, "apples");
+    
+    assertEquals(2, b.size());
+    assertEquals("apples", b.get(0));
+    assertEquals("apples", b.get(1));
+  }
 
 }

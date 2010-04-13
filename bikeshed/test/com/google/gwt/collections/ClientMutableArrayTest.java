@@ -16,18 +16,12 @@
 package com.google.gwt.collections;
 
 /**
- * Made to be switched out using super source even while Collections itself isn't.
+ * Re-run {@link ObjectArrayTest} tests under GWT.
  */
-public class CollectionFactory {
-
-  public static <E> MutableArray<E> createMutableArray() {
-    return new MutableArray<E>();
-  }
-  
-  public static <E> MutableArray<E> createMutableArray(int size, E fillValue) {
-    MutableArray<E> r = new MutableArray<E>();
-    r.setSize(size, fillValue);
-    return r;
+public class ClientMutableArrayTest extends ObjectArrayTest {
+  @Override
+  public String getModuleName() {
+    return "com.google.gwt.collections.Collections";
   }
 
 }
