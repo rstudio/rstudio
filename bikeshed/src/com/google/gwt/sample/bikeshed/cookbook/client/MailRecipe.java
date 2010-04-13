@@ -69,7 +69,7 @@ public class MailRecipe extends Recipe implements ClickHandler {
     private Type type = Type.NONE;
 
     @Override
-    public ProvidesKey<Message> getKeyProvider() {
+    public ProvidesKey<Message> getProvidesKey() {
       return keyProvider;
     }
 

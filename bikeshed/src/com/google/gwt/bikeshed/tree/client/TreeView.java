@@ -17,6 +17,8 @@ package com.google.gwt.bikeshed.tree.client;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.bikeshed.list.shared.SelectionModel;
+import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionChangeEvent;
+import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionChangeHandler;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
@@ -27,7 +29,7 @@ import com.google.gwt.user.client.ui.Widget;
  * A view of a tree.
  */
 public abstract class TreeView extends Widget {
-
+  
   /**
    * An Animation of a {@link TreeNodeView}.
    */
@@ -75,6 +77,12 @@ public abstract class TreeView extends Widget {
      * An image indicating an open branch.
      */
     ImageResource treeOpen();
+  }
+
+  private class TreeSelectionHandler implements SelectionChangeHandler {
+    public void onSelectionChange(SelectionChangeEvent event) {
+      refreshSelection();
+    }
   }
 
   private static final Resources DEFAULT_RESOURCES = GWT.create(Resources.class);
@@ -144,6 +152,10 @@ public abstract class TreeView extends Widget {
     return rootNode;
   }
 
+  /**
+   * Returns the {@link SelectionModel} containing the selection state for
+   * this tree.
+   */
   public SelectionModel<Object> getSelectionModel() {
     return selectionModel;
   }
@@ -154,6 +166,13 @@ public abstract class TreeView extends Widget {
 
   public boolean isAnimationEnabled() {
     return isAnimationEnabled;
+  }
+
+  /**
+   * Refresh any visible cells of this tree that depend on the selection state.
+   */
+  public void refreshSelection() {
+    refreshSelection(rootNode);
   }
 
   /**
@@ -177,6 +196,10 @@ public abstract class TreeView extends Widget {
 
   public void setSelectionModel(SelectionModel<Object> selectionModel) {
     this.selectionModel = selectionModel;
+    // Attach a selection handler.
+    if (selectionModel != null) {
+      selectionModel.addSelectionChangeHandler(new TreeSelectionHandler());
+    }
   }
 
   /**
@@ -256,5 +279,16 @@ public abstract class TreeView extends Widget {
 
   protected void setRootNode(TreeNodeView<?> rootNode) {
     this.rootNode = rootNode;
+  }
+
+  private void refreshSelection(TreeNodeView<?> node) {
+    node.refreshSelection();
+    int count = node.getChildCount();
+    for (int i = 0; i < count; i++) {
+      TreeNodeView<?> child = node.getChildTreeNodeView(i);
+      if (child.isOpen()) {
+        refreshSelection(child);
+      }
+    }
   }
 }

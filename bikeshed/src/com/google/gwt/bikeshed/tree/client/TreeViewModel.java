@@ -47,10 +47,11 @@ public interface TreeViewModel {
      * @param adapter the {@link AbstractListViewAdapter} that provides the
      *          child values
      * @param cell the {@link Cell} used to render the child values
+     * @param dependsOnSelection TODO
      */
     public DefaultNodeInfo(AbstractListViewAdapter<T> adapter,
-        Cell<T, Void> cell) {
-      this(adapter, cell, null);
+        Cell<T, Void> cell, boolean dependsOnSelection) {
+      this(adapter, cell, dependsOnSelection, null);
     }
 
     /**
@@ -60,11 +61,17 @@ public interface TreeViewModel {
      * @param adapter the {@link AbstractListViewAdapter} that provides the
      *          child values
      * @param cell the {@link Cell} used to render the child values
+     * @param dependsOnSelection TODO
      * @param valueUpdater the {@link ValueUpdater}
      */
     public DefaultNodeInfo(AbstractListViewAdapter<T> adapter,
-        final Cell<T, Void> cell, final ValueUpdater<T, Void> valueUpdater) {
+        final Cell<T, Void> cell, final boolean dependsOnSelection,
+        final ValueUpdater<T, Void> valueUpdater) {
       hasCells.add(new HasCell<T, T, Void>() {
+        public boolean dependsOnSelection() {
+          return dependsOnSelection;
+        }
+
         public Cell<T, Void> getCell() {
           return cell;
         }
@@ -98,7 +105,6 @@ public interface TreeViewModel {
       return listViewAdapter;
     }
 
-    // TODO - dispatch into cells
     public void onBrowserEvent(Element elem, final T object, NativeEvent event) {
       Element target = event.getEventTarget().cast();
       String idxString = "";

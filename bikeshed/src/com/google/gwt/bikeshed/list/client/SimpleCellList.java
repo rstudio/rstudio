@@ -17,9 +17,8 @@ package com.google.gwt.bikeshed.list.client;
 
 import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.ValueUpdater;
-import com.google.gwt.bikeshed.list.shared.ListEvent;
+import com.google.gwt.bikeshed.list.shared.DataChanged;
 import com.google.gwt.bikeshed.list.shared.Range;
-import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
 import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter.DefaultRange;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
@@ -111,7 +110,7 @@ public class SimpleCellList<T> extends Widget implements ListView<T> {
     }
   }
 
-  public void onDataChanged(ListEvent<T> event) {
+  public void setData(DataChanged<T> event) {
     int start = event.getStart();
     int len = event.getLength();
     List<T> values = event.getValues();
@@ -137,16 +136,16 @@ public class SimpleCellList<T> extends Widget implements ListView<T> {
     }
   }
 
-  public void onSizeChanged(SizeChangeEvent event) {
-    size = event.getSize();
-    sizeChanged();
-  }
-
   public void setDelegate(Delegate<T> delegate) {
     this.delegate = delegate;
     if (delegate != null) {
       delegate.onRangeChanged(this);
     }
+  }
+
+  public void setSize(int size, boolean exact) {
+    this.size = size;
+    sizeChanged();
   }
 
   public void setValueUpdater(ValueUpdater<T, Void> valueUpdater) {

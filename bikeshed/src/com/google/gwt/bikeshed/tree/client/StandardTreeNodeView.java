@@ -66,9 +66,9 @@ public class StandardTreeNodeView<T> extends TreeNodeView<T> {
 
     int idx = 0;
     for (C childValue : childValues) {
-      sb.append("<div style=\"position:relative;padding-left:");
+      sb.append("<div style='position:relative;padding-left:");
       sb.append(imageWidth);
-      sb.append("px;\">");
+      sb.append("px;'>");
       if (savedViews.get(idx) != null) {
         sb.append(tree.getOpenImageHtml(0));
       } else if (model.isLeaf(childValue, this)) {
@@ -79,7 +79,7 @@ public class StandardTreeNodeView<T> extends TreeNodeView<T> {
       if (selectionModel != null && selectionModel.isSelected(childValue)) {
         sb.append("<div class='gwt-stree-selectedItem'>");
       } else {
-        sb.append("<div>");
+        sb.append("<div class='gwt-stree-unselectedItem'>");
       }
 
       for (int i = 0; i < hasCells.size(); i++) {
@@ -132,10 +132,5 @@ public class StandardTreeNodeView<T> extends TreeNodeView<T> {
   @Override
   protected void postClose() {
     getTree().maybeAnimateTreeNode(this);
-  }
-
-  private <C, X> void render(StringBuilder sb, C childValue,
-      HasCell<C, X, Void> hc) {
-    hc.getCell().render(hc.getValue(childValue), null, sb);
   }
 }

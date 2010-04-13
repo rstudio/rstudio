@@ -125,7 +125,7 @@ public interface SelectionModel<T> extends HasHandlers {
     /**
      * Returns a ProvidesKey instance that simply returns the input data item.
      */
-    public ProvidesKey<T> getKeyProvider() {
+    public ProvidesKey<T> getProvidesKey() {
       if (keyProvider == null) {
         keyProvider  = new ProvidesKey<T>() {
           public Object getKey(T item) {
@@ -165,7 +165,7 @@ public interface SelectionModel<T> extends HasHandlers {
    * Returns a ProvidesKey instance that may be used to provide a unique
    * key for each record.
    */
-  ProvidesKey<T> getKeyProvider();
+  ProvidesKey<T> getProvidesKey();
 
   /**
    * Check if an object is selected.

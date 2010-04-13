@@ -118,7 +118,7 @@ public class StocksDesktop implements EntryPoint, Updater {
         update();
       }
     };
-    searchListViewAdapter.setKeyProvider(StockQuote.KEY_PROVIDER);
+    searchListViewAdapter.setKeyProvider(StockQuote.PROVIDES_KEY);
 
     favoritesListViewAdapter = new AsyncListViewAdapter<StockQuote>() {
       @Override
@@ -126,7 +126,7 @@ public class StocksDesktop implements EntryPoint, Updater {
         update();
       }
     };
-    favoritesListViewAdapter.setKeyProvider(StockQuote.KEY_PROVIDER);
+    favoritesListViewAdapter.setKeyProvider(StockQuote.PROVIDES_KEY);
 
     playerScoresListViewAdapter = new AsyncListViewAdapter<PlayerInfo>() {
       @Override

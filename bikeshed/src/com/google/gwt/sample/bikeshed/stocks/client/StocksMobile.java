@@ -79,7 +79,7 @@ public class StocksMobile {
         update();
       }
     };
-    favoritesListViewAdapter.setKeyProvider(StockQuote.KEY_PROVIDER);
+    favoritesListViewAdapter.setKeyProvider(StockQuote.PROVIDES_KEY);
 
     // Now create the UI.
     RootPanel.get().add(binder.createAndBindUi(this));

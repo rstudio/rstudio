@@ -31,7 +31,7 @@ public abstract class DefaultSelectionModel<T> extends
 
   private final Map<Object, Boolean> exceptions = new HashMap<Object, Boolean>();
 
-  private final ProvidesKey<T> keyProvider = getKeyProvider();
+  private final ProvidesKey<T> providesKey = getProvidesKey();
 
   /**
    * Removes all exceptions.
@@ -93,9 +93,9 @@ public abstract class DefaultSelectionModel<T> extends
   }
 
   private Object getKey(T object) {
-    if (keyProvider == null) {
+    if (providesKey == null) {
       return object;
     }
-    return keyProvider.getKey(object);
+    return providesKey.getKey(object);
   }
 }
