@@ -114,15 +114,6 @@ public class SideBySideTreeView extends TreeView {
             }
             if (inCell) {
               nodeView.fireEventToCell(event);
-              
-              // TODO(jgw): Kind of a hacky way to set selection. Need to generalize
-              // this to some sort of keyboard/mouse->selection controller.
-              if (getSelectionModel() != null) {
-                String type = event.getType();
-                if ("mouseup".equals(type)) {
-                  getSelectionModel().setSelected(nodeView.getValue(), true);
-                }
-              }
             } else {
               nodeView.setState(!nodeView.getState());
             }

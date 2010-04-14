@@ -69,7 +69,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
   /**
    * The provider of keys for list items.
    */
-  private ProvidesKey<T> providesKey;
+  private ProvidesKey<T> keyProvider;
 
   public void addView(ListView<T> view) {
     if (views.contains(view)) {
@@ -87,7 +87,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
    * @return the key that represents the item
    */
   public Object getKey(T item) {
-    return providesKey == null ? item : providesKey.getKey(item);
+    return keyProvider == null ? item : keyProvider.getKey(item);
   }
 
   /**
@@ -95,8 +95,8 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
    *
    * @return the {@link ProvidesKey}
    */
-  public ProvidesKey<T> getProvidesKey() {
-    return providesKey;
+  public ProvidesKey<T> getKeyProvider() {
+    return keyProvider;
   }
 
   /**
@@ -124,10 +124,10 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
   /**
    * Set the {@link ProvidesKey} that provides keys for list items.
    *
-   * @param providesKey a {@link ProvidesKey} instance
+   * @param keyProvider the {@link ProvidesKey}
    */
-  public void setKeyProvider(ProvidesKey<T> providesKey) {
-    this.providesKey = providesKey;
+  public void setKeyProvider(ProvidesKey<T> keyProvider) {
+    this.keyProvider = keyProvider;
   }
 
   /**
@@ -144,8 +144,9 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
    * @param exact true if the size is exact, false if it is a guess
    */
   protected void updateDataSize(int size, boolean exact) {
+    SizeChangeEvent event = new SizeChangeEvent(size, exact);
     for (ListView<T> view : views) {
-      view.setSize(size, exact);
+      view.onSizeChanged(event);
     }
   }
 
@@ -183,8 +184,8 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
       int realLength = realEnd - realStart;
       List<T> realValues = values.subList(realStart - start, realStart
           - start + realLength);
-      DataChanged<T> event = new DataChanged<T>(realStart, realLength, realValues);
-      view.setData(event);
+      ListEvent<T> event = new ListEvent<T>(realStart, realLength, realValues);
+      view.onDataChanged(event);
     }
   }
 }

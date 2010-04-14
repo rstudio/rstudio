@@ -40,7 +40,8 @@ public class BasicTreeRecipe extends Recipe {
     final MultiSelectionModel<Object> selectionModel = new MultiSelectionModel<Object>();
     selectionModel.addSelectionChangeHandler(new SelectionModel.SelectionChangeHandler() {
       public void onSelectionChange(SelectionChangeEvent event) {
-        label.setText("Selected " + selectionModel.getSelectedSet().toString());
+        label.setText("Selected "
+            + selectionModel.getSelectedSet().toString());
       }
     });
 

@@ -27,7 +27,7 @@ public class StockQuote implements Serializable {
   /**
    * Provides the key for {@link StockQuote}.
    */
-  public static final ProvidesKey<StockQuote> PROVIDES_KEY = new ProvidesKey<StockQuote>() {
+  public static final ProvidesKey<StockQuote> KEY_PROVIDER = new ProvidesKey<StockQuote>() {
     public Object getKey(StockQuote item) {
       return item.getTicker();
     }

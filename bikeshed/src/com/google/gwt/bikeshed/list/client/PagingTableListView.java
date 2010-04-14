@@ -15,10 +15,11 @@
  */
 package com.google.gwt.bikeshed.list.client;
 
-import com.google.gwt.bikeshed.list.shared.DataChanged;
+import com.google.gwt.bikeshed.list.shared.ListEvent;
 import com.google.gwt.bikeshed.list.shared.ProvidesKey;
 import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.bikeshed.list.shared.SelectionModel;
+import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
 import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter.DefaultRange;
 import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionChangeEvent;
 import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionChangeHandler;
@@ -178,6 +179,20 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
     }
   }
 
+  public void onDataChanged(ListEvent<T> event) {
+    render(event.getStart(), event.getLength(), event.getValues());
+  }
+
+  public void onSizeChanged(SizeChangeEvent event) {
+    totalSize = event.getSize();
+    if (totalSize <= 0) {
+      numPages = 0;
+    } else {
+      numPages = 1 + (totalSize - 1) / pageSize;
+    }
+    setPage(curPage);
+  }
+
   public void previousPage() {
     setPage(curPage - 1);
   }
@@ -212,10 +227,6 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
         }
       }
     }
-  }
-
-  public void setData(DataChanged<T> event) {
-    render(event.getStart(), event.getLength(), event.getValues());
   }
 
   public void setDelegate(Delegate<T> delegate) {
@@ -271,15 +282,6 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
     if (selectionModel != null && isAttached()) {
       selectionHandler = selectionModel.addSelectionChangeHandler(new TableSelectionHandler());
     }
-  }
-
-  public void setSize(int size, boolean exact) {
-    if (size <= 0) {
-      numPages = 0;
-    } else {
-      numPages = 1 + (size - 1) / pageSize;
-    }
-    setPage(curPage);
   }
 
   @Override

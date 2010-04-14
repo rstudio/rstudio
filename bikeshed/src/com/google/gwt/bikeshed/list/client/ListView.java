@@ -15,8 +15,9 @@
  */
 package com.google.gwt.bikeshed.list.client;
 
-import com.google.gwt.bikeshed.list.shared.DataChanged;
+import com.google.gwt.bikeshed.list.shared.ListEvent;
 import com.google.gwt.bikeshed.list.shared.Range;
+import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
 
 /**
  * A list view.
@@ -34,12 +35,13 @@ public interface ListView<T> {
     void onRangeChanged(ListView<T> listView);
   }
 
+  void setDelegate(Delegate<T> delegate);
+
   Range getRange();
 
   // TODO - rename to setData, don't use event?
-  void setData(DataChanged<T> event);
+  void onDataChanged(ListEvent<T> event);
 
-  void setDelegate(Delegate<T> delegate);
-
-  void setSize(int size, boolean exact);
+  // TODO - rename to setDataSize, don't use event?
+  void onSizeChanged(SizeChangeEvent event);
 }

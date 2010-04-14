@@ -250,4 +250,9 @@ public class SideBySideTreeNodeView<T> extends TreeNodeView<T> {
 
     setChildContainer(null);
   }
+
+  private <C, X> void render(StringBuilder sb, C childValue,
+      HasCell<C, X, Void> hc) {
+    hc.getCell().render(hc.getValue(childValue), null, sb);
+  }
 }

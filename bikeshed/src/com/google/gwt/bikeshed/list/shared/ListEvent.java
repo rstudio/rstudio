@@ -22,20 +22,20 @@ import java.util.List;
  *
  * @param <T> the type of data in the list
  */
-public class DataChanged<T> {
+public class ListEvent<T> {
 
   private final int length;
   private final int start;
   private final List<T> values;
 
   /**
-   * Creates a {@link DataChanged} instance.
+   * Creates a {@link ListEvent}.
    *
    * @param start the start index of the data
    * @param length the length of the data
    * @param values the new values
    */
-  public DataChanged(int start, int length, List<T> values) {
+  public ListEvent(int start, int length, List<T> values) {
     this.start = start;
     this.length = length;
     this.values = values;
