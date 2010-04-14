@@ -231,9 +231,6 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
 
   public void setDelegate(Delegate<T> delegate) {
     this.delegate = delegate;
-    if (delegate != null) {
-      delegate.onRangeChanged(this);
-    }
   }
 
   /**

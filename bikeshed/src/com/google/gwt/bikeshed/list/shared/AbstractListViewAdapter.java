@@ -71,12 +71,19 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
    */
   private ProvidesKey<T> keyProvider;
 
+  /**
+   * Adds a view to this adapter.  The current range of interest of the view
+   * will be populated with data.
+   *
+   * @param view a {@Link ListView}.
+   */
   public void addView(ListView<T> view) {
     if (views.contains(view)) {
       throw new IllegalStateException("ListView already added");
     }
     views.add(view);
     view.setDelegate(delegate);
+    delegate.onRangeChanged(view);
   }
 
   /**

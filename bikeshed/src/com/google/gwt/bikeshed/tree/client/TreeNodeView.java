@@ -475,9 +475,6 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
 
       public void setDelegate(ListView.Delegate<C> delegate) {
         // Range never actually changes so no need to store the delegate
-        if (delegate != null) {
-          delegate.onRangeChanged(this);
-        }
       }
     };
     nodeInfo.setView(view);

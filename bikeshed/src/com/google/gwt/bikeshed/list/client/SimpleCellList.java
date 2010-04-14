@@ -144,9 +144,6 @@ public class SimpleCellList<T> extends Widget implements ListView<T> {
 
   public void setDelegate(Delegate<T> delegate) {
     this.delegate = delegate;
-    if (delegate != null) {
-      delegate.onRangeChanged(this);
-    }
   }
 
   public void setValueUpdater(ValueUpdater<T, Void> valueUpdater) {
