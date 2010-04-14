@@ -108,6 +108,10 @@ public class MyTreeViewModel implements TreeViewModel {
 
   public MyTreeViewModel(final SelectionModel<Object> selectionModel) {
     hasCells.add(new HasCell<String, Boolean, Void>() {
+      public boolean dependsOnSelection() {
+        return true;
+      }
+
       public Cell<Boolean, Void> getCell() {
         return new CheckboxCell();
       }
@@ -126,6 +130,10 @@ public class MyTreeViewModel implements TreeViewModel {
       }
     });
     hasCells.add(new HasCell<String, String, Void>() {
+      public boolean dependsOnSelection() {
+        return false;
+      }
+
       public Cell<String, Void> getCell() {
         return ButtonCell.getInstance();
       }
@@ -165,7 +173,7 @@ public class MyTreeViewModel implements TreeViewModel {
       return new DefaultNodeInfo<String>(adapter, hasCells);
     } else {
       AbstractListViewAdapter<Integer> adapter = new IntegerListViewAdapter(value.length());
-      return new DefaultNodeInfo<Integer>(adapter, INTEGER_CELL,
+      return new DefaultNodeInfo<Integer>(adapter, INTEGER_CELL, false,
           new ValueUpdater<Integer, Void>() {
             public void update(Integer value, Void viewData) {
               Window.alert("Integer = " + value);

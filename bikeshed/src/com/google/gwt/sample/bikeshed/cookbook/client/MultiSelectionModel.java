@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * A simple selection model that allows only multiple objects to be selected.
+ * A simple selection model that allows multiple objects to be selected.
  *
  * @param <T> the record data type
  */

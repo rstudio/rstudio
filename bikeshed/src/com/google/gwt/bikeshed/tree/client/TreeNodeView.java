@@ -43,6 +43,16 @@ import java.util.Map;
 public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
 
   /**
+   * A NodeInfo and list of data items of matching type.
+   *
+   * @param <C> the data type
+   */
+  static class SavedInfo<C> {
+    NodeInfo<C> nodeInfo;
+    List<C> values;
+  }
+
+  /**
    * The element used in place of an image when a node has no children.
    */
   public static final String LEAF_IMAGE = "<div style='position:absolute;display:none;'></div>";
@@ -91,6 +101,11 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
    * The parent {@link SideBySideTreeNodeView}.
    */
   private final NodeInfo<T> parentNodeInfo;
+
+  /**
+   * The NodeInfo for this node along with saved child data values.
+   */
+  private SavedInfo<?> savedInfo;
 
   /**
    * The info about this node.
@@ -353,6 +368,12 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
     ensureChildContainer().setInnerHTML(tree.getLoadingHtml());
     ensureAnimationFrame().getStyle().setProperty("display", "");
 
+    // Create a SavedInfo object to store the NodeInfo and data values
+    final SavedInfo<C> localSavedInfo = new SavedInfo<C>();
+    localSavedInfo.nodeInfo = nodeInfo;
+    localSavedInfo.values = new ArrayList<C>();
+    TreeNodeView.this.savedInfo = localSavedInfo;
+
     // Get the node info.
     final ProvidesKey<C> providesKey = nodeInfo.getProvidesKey();
     ListView<C> view = new ListView<C>() {
@@ -362,6 +383,18 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
 
       public void onDataChanged(ListEvent<C> event) {
         // TODO - handle event start and length
+
+        int start = event.getStart();
+        int end = start + event.getLength();
+        // Ensure savedInfo has a place to store the data values
+        while (localSavedInfo.values.size() < end) {
+          savedInfo.values.add(null);
+        }
+        // Save child values into savedInfo
+        int index = event.getStart();
+        for (C childValue : event.getValues()) {
+          localSavedInfo.values.set(index++, childValue);
+        }
 
         // Construct a map of former child views based on their value keys.
         Map<Object, TreeNodeView<?>> map = new HashMap<Object, TreeNodeView<?>>();
@@ -463,6 +496,16 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
   protected void preOpen() {
   }
 
+  /**
+   * Refresh any cells that depend on the selection state. The default
+   * implementation works for {@link StandardTreeNodeView} and
+   * {@link SideBySideTreeNodeView}; other subclasses will need to implement
+   * their own versions of this method.
+   */
+  protected void refreshSelection() {
+    refreshSelection(savedInfo);
+  }
+
   protected void setChildContainer(Element childContainer) {
     this.childContainer = childContainer;
   }
@@ -490,5 +533,40 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
 
   TreeView getTree() {
     return tree;
+  }
+
+  <C, X> void render(StringBuilder sb, C childValue,
+      HasCell<C, X, Void> hc) {
+    hc.getCell().render(hc.getValue(childValue), null, sb);
+  }
+
+  /**
+   * Refresh any cells that depend on the selection state.  Note that this
+   * implementation is dependent on the particular DOM structure used by
+   * {@link StandardTreeNodeView} and {@link SideBySideTreeNodeView}.
+   *
+   * @param <C> the child data type
+   * @param savedInfo a SavedInfo object containing a NodeInfo instance
+   * and a list of saved child data values
+   */
+  private <C> void refreshSelection(SavedInfo<C> savedInfo) {
+    List<HasCell<C, ?, Void>> hasCells = savedInfo.nodeInfo.getHasCells();
+    Element outerDiv = childContainer.getFirstChildElement();
+    int index = 0;
+    while (outerDiv != null) {
+      C childValue = savedInfo.values.get(index);
+      Element span = outerDiv.getFirstChildElement().getNextSiblingElement().getFirstChildElement();
+
+      for (HasCell<C, ?, Void> hasCell : hasCells) {
+        if (hasCell.dependsOnSelection()) {
+          StringBuilder sb = new StringBuilder();
+          render(sb, childValue, hasCell);
+          span.setInnerHTML(sb.toString());
+        }
+        span = span.getNextSiblingElement();
+      }
+      outerDiv = outerDiv.getNextSibling().cast();
+      index++;
+    }
   }
 }

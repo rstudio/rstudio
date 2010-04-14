@@ -61,12 +61,12 @@ public class Cookbook implements EntryPoint {
     public <T> NodeInfo<?> getNodeInfo(T value, TreeNode<T> treeNode) {
       if (value == null) {
         // Categories at the root.
-        return new DefaultNodeInfo<Category>(adapter, new CategoryCell());
+        return new DefaultNodeInfo<Category>(adapter, new CategoryCell(), false);
       } else if (value instanceof Category) {
         // Demos for each category.
         Category category = (Category) value;
         return new DefaultNodeInfo<Recipe>(new ListViewAdapter<Recipe>(
-            category.getRecipes()), new RecipeCell());
+            category.getRecipes()), new RecipeCell(), false);
       }
       return null;
     }

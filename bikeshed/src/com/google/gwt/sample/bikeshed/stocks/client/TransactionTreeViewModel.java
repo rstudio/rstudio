@@ -96,10 +96,10 @@ class TransactionTreeViewModel implements TreeViewModel {
   public <T> NodeInfo<?> getNodeInfo(T value, final TreeNode<T> treeNode) {
     if (value == null) {
       return new TreeViewModel.DefaultNodeInfo<String>(topLevelListViewAdapter,
-          TextCell.getInstance());
+          TextCell.getInstance(), false);
     } else if ("Favorites".equals(value)) {
       return new TreeViewModel.DefaultNodeInfo<StockQuote>(stockQuoteListViewAdapter,
-          STOCK_QUOTE_CELL);
+          STOCK_QUOTE_CELL, false);
     } else if ("History".equals(value)) {
       String ticker = ((StockQuote) treeNode.getParentNode().getValue()).getTicker();
       ListViewAdapter<Transaction> adapter = transactionListViewAdaptersByTicker.get(ticker);
@@ -108,14 +108,14 @@ class TransactionTreeViewModel implements TreeViewModel {
         transactionListViewAdaptersByTicker.put(ticker, adapter);
       }
       return new TreeViewModel.DefaultNodeInfo<Transaction>(adapter,
-          TRANSACTION_CELL);
+          TRANSACTION_CELL, false);
     } else if ("Actions".equals(value)) {
       ListViewAdapter<String> adapter = new ListViewAdapter<String>();
       List<String> list = adapter.getList();
       list.add("Buy");
       list.add("Sell");
       return new TreeViewModel.DefaultNodeInfo<String>(adapter,
-          ButtonCell.getInstance(), new ValueUpdater<String, Void>() {
+          ButtonCell.getInstance(), false, new ValueUpdater<String, Void>() {
             public void update(String value, Void viewData) {
               StockQuote stockQuote = (StockQuote) treeNode.getParentNode().getValue();
               if ("Buy".equals(value)) {
@@ -129,14 +129,14 @@ class TransactionTreeViewModel implements TreeViewModel {
       SectorListViewAdapter adapter = new SectorListViewAdapter((String) value);
       sectorListViewAdapters.put((String) value, adapter);
       return new TreeViewModel.DefaultNodeInfo<StockQuote>(adapter,
-          STOCK_QUOTE_CELL);
+          STOCK_QUOTE_CELL, false);
     } else if (value instanceof StockQuote) {
       ListViewAdapter<String> adapter = new ListViewAdapter<String>();
       List<String> list = adapter.getList();
       list.add("Actions");
       list.add("History");
       return new TreeViewModel.DefaultNodeInfo<String>(adapter,
-          TextCell.getInstance());
+          TextCell.getInstance(), false);
     }
 
     throw new IllegalArgumentException(value.toString());

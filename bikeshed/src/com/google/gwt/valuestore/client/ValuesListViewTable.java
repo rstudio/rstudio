@@ -106,9 +106,9 @@ public abstract class ValuesListViewTable<K extends ValuesKey<K>> extends
       @Override
       protected void onRangeChanged(ListView<Values<K>> view) {
         Range range = view.getRange();
-        Delegate delegate = getDelegate();
-        if (delegate != null) {
-          delegate.onRangeChanged(range.getStart(), range.getLength());
+        Delegate myDelegate = getDelegate();
+        if (myDelegate != null) {
+          myDelegate.onRangeChanged(range.getStart(), range.getLength());
         }
       }
     };

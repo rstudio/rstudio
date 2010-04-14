@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,9 +23,9 @@ import com.google.gwt.junit.client.GWTTestCase;
  * Tests mutable arrays.
  */
 public class ObjectArrayTest extends GWTTestCase {
-  
+
   boolean assertionsEnabled;
-  
+
   @Override
   public String getModuleName() {
     return null;
@@ -52,6 +52,14 @@ public class ObjectArrayTest extends GWTTestCase {
       b.clear();
       assertEquals(0, b.size());
     }
+  }
+
+  public void testCreateNonEmptyArray() {
+    MutableArray<String> b = createMutableArray(2, "apples");
+
+    assertEquals(2, b.size());
+    assertEquals("apples", b.get(0));
+    assertEquals("apples", b.get(1));
   }
 
   public void testInsertAtBeginning() {
@@ -99,7 +107,7 @@ public class ObjectArrayTest extends GWTTestCase {
       assertEquals(j, b.get(i + 1).intValue());
     }
   }
-  
+
   public void testMultiElementArrayManipulations() {
     MutableArray<String> b = createMutableArray();
     b.add("apple");
@@ -155,6 +163,27 @@ public class ObjectArrayTest extends GWTTestCase {
     assertEquals(4, b.get(1).intValue());
   }
 
+  public void testSetSize() {
+    MutableArray<String> b = createMutableArray();
+
+    b.setSize(1, "fillValue");
+    assertEquals(1, b.size());
+    assertEquals("fillValue", b.get(0));
+
+    b.setSize(2, "anotherValue");
+    assertEquals(2, b.size());
+    assertEquals("fillValue", b.get(0));
+    assertEquals("anotherValue", b.get(1));
+
+    b.setSize(1, null);
+    assertEquals(1, b.size());
+    assertEquals("fillValue", b.get(0));
+
+    b.setSize(0, null);
+    assertEquals(0, b.size());
+    assertEquals(null, b.elems);
+  }
+
   public void testSingleElementAddAndRemove() {
       MutableArray<String> a = createMutableArray();
 
@@ -176,7 +205,7 @@ public class ObjectArrayTest extends GWTTestCase {
   public void testSingleElementNull() {
     MutableArray<String> b = createMutableArray();
     b.add(null);
-    
+
     assertEquals(null, b.get(0));
   }
 
@@ -206,11 +235,11 @@ public class ObjectArrayTest extends GWTTestCase {
 
     try {
       a.get(1);
-      fail("That should have failed");        
+      fail("That should have failed");
     } catch (AssertionError e) {
-      assertEquals(("Index " + 1 + " was not in the acceptable range [" + 0 + ", " + 1 + ")"), 
+      assertEquals(("Index " + 1 + " was not in the acceptable range [" + 0 + ", " + 1 + ")"),
           e.getMessage());
-    }      
+    }
   }
 
   public void testSingletonArrayManipulations() {
@@ -264,35 +293,6 @@ public class ObjectArrayTest extends GWTTestCase {
     MutableArray<String> b = createMutableArray();
     Array<String> a = b;
     assertEquals(0, a.size());
-  }
-  
-  public void testSetSize() {
-    MutableArray<String> b = createMutableArray();
-
-    b.setSize(1, "fillValue");
-    assertEquals(1, b.size());
-    assertEquals("fillValue", b.get(0));
-    
-    b.setSize(2, "anotherValue");
-    assertEquals(2, b.size());
-    assertEquals("fillValue", b.get(0));
-    assertEquals("anotherValue", b.get(1));
-
-    b.setSize(1, null);
-    assertEquals(1, b.size());
-    assertEquals("fillValue", b.get(0));
-
-    b.setSize(0, null);
-    assertEquals(0, b.size());
-    assertEquals(null, b.elems);
-  }
-  
-  public void testCreateNonEmptyArray() {
-    MutableArray<String> b = createMutableArray(2, "apples");
-    
-    assertEquals(2, b.size());
-    assertEquals("apples", b.get(0));
-    assertEquals("apples", b.get(1));
   }
 
 }

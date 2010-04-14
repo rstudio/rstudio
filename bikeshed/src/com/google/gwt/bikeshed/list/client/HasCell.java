@@ -29,6 +29,8 @@ import com.google.gwt.bikeshed.cells.client.FieldUpdater;
  */
 public interface HasCell<T, C, V> {
 
+  boolean dependsOnSelection();
+
   Cell<C, V> getCell();
 
   FieldUpdater<T, C, V> getFieldUpdater();

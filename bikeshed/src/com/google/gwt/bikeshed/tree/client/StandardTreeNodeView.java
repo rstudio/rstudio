@@ -133,9 +133,4 @@ public class StandardTreeNodeView<T> extends TreeNodeView<T> {
   protected void postClose() {
     getTree().maybeAnimateTreeNode(this);
   }
-
-  private <C, X> void render(StringBuilder sb, C childValue,
-      HasCell<C, X, Void> hc) {
-    hc.getCell().render(hc.getValue(childValue), null, sb);
-  }
 }

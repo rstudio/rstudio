@@ -17,13 +17,16 @@ package com.google.gwt.bikeshed.list.shared;
 
 /**
  * <p>
- * Implementors of {@link ProvidesKey} provide a key for list items.
+ * Implementors of {@link ProvidesKey} provide a key for list items, such that
+ * items that are to be treated as distinct (for example, for editing) have
+ * distinct keys.
  * </p>
  * <p>
  * The key must implement a coherent set of {@link Object#equals(Object)} and
- * {@link Object#hashCode()} methods. If the item type is a not uniquely
- * identifiable, such as a list of {@link String}, the index can be used as the
- * key.
+ * {@link Object#hashCode()} methods such that if objects A and B are to be
+ * treated as identical, then A.equals(B), B.equals(A), and A.hashCode() ==
+ * B.hashCode().  If A and B are to be treated as unequal, then it must
+ * be the case that A.equals(B) == false and B.equals(A) == false.
  * </p>
  *
  * @param <T> the data type of records in the list
