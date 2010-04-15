@@ -15,14 +15,22 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+
 /**
- * Expense report life cycle states.
+ * Factory for creating EntityManager.
  */
-public enum Status {
-  Draft, // -> submitted
-  Submitted,  // -> approved_manager -> declined
-  Approved_Manager,  // -> approved_accounting
-  Approved_Accounting,  // -> paid -> declined
-  Paid,  // -> finish
-  Declined // -> draft
+public final class EMF {
+    private static final EntityManagerFactory emfInstance =
+        Persistence.createEntityManagerFactory("transactions-optional");
+
+    public static EntityManagerFactory get() {
+        return emfInstance;
+    }
+
+    private EMF() {
+      // nothing 
+    }
 }
+

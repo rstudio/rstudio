@@ -15,149 +15,194 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
+import org.datanucleus.jpa.annotations.Extension;
+
 import java.util.Date;
 import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityManager;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.Query;
+import javax.persistence.Version;
 
 /**
  * Models an expense report.
  */
-// @javax.persistence.Entity
-public class Report implements Entity {
+@Entity
+public class Report {
 
+  public static long countReports() {
+    EntityManager em = entityManager();
+    try {
+      return ((Integer) em.createQuery("select count(o) from Report o").getSingleResult()).intValue();
+    } finally {
+      em.close();
+    }
+  }
+
+  public static final EntityManager entityManager() {
+    return EMF.get().createEntityManager();
+  }
+
+  @SuppressWarnings("unchecked")
   public static List<Report> findAllReports() {
-    return Storage.INSTANCE.findAllReports();
+    EntityManager em = entityManager();
+    try {
+      List<Report> reportList = em.createQuery("select o from Report o").getResultList();
+      // force it to materialize
+      reportList.size();
+      return reportList;
+    } finally {
+      em.close();
+    }
   }
 
   public static Report findReport(Long id) {
-    return Storage.INSTANCE.findReport(id);
+    if (id == null) {
+      return null;
+    }
+    EntityManager em = entityManager();
+    try {
+      return em.find(Report.class, id);
+    } finally {
+      em.close();
+    }
   }
 
-  public static List<Report> findReportsByEmployee(Long id) {
-    return Storage.INSTANCE.findReportsByEmployee(id);
+  @SuppressWarnings("unchecked")
+  public static List<Report> findReportEntries(int firstResult, int maxResults) {
+    EntityManager em = entityManager();
+    try {
+      List<Report> reportList = em.createQuery("select o from Report o").setFirstResult(
+          firstResult).setMaxResults(maxResults).getResultList();
+      // force it to materialize
+      reportList.size();
+      return reportList;
+    } finally {
+      em.close();
+    }
   }
-  private final Long id;
 
-private final Integer version;
+  public static List<Report> findReportsByEmployee(String employeeId) {
+    EntityManager em = entityManager();
+    try {
+      Query query = em.createQuery("select o from Report o where o.reporterKey =:reporterKey");
+      query.setParameter("reporterKey", employeeId);
+      List<Report> reportList = query.getResultList();
+      // force it to materialize
+      reportList.size();
+      return reportList;
+    } finally {
+      em.close();
+    }
+  }
 
-//  @javax.validation.constraints.NotNull
-//  @javax.validation.constraints.Past
-  // @javax.persistence.Temporal(javax.persistence.TemporalType.TIMESTAMP)
-  private java.util.Date created;
+  @Id
+  @Column(name = "id")
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Extension(vendorName = "datanucleus", key = "gae.encoded-pk", value = "true")
+  private String id;
 
-//  @javax.validation.constraints.NotNull
-  // @javax.persistence.Enumerated
-  private Status status;
+  @Version
+  @Column(name = "version")
+  private Long version;
 
-//  @javax.validation.constraints.NotNull
-  // @javax.persistence.ManyToOne(targetEntity =
-  // com.google.io.expenses.server.domain.Employee.class)
-  // @javax.persistence.JoinColumn
-  private Employee reporter;
+  private Date created;
 
-  // @javax.persistence.OneToMany(cascade = javax.persistence.CascadeType.ALL,
-  // mappedBy = "report")
-  // private Set<ReportItem> items = new HashSet<ReportItem>();
-
-  //  @javax.validation.constraints.Size(min = 3, max = 100)
   private String purpose;
 
-  // @javax.persistence.ManyToOne(targetEntity =
-  // com.google.io.expenses.server.domain.Employee.class)
-  // @javax.persistence.JoinColumn
-  private Employee approvedSupervisor;
-
-  public Report() {
-    id = null;
-    version = null;
-  }
-
-  Report(Long id, Integer version) {
-    this.id = id;
-    this.version = version;
-  }
-
-  public <T> T accept(EntityVisitor<T> visitor) {
-    return visitor.visit(this);
-  }
-
   /**
-   * @return the approved_supervisor
+   * Store reporter's key instead of reporter because
+   * http://code.google.com/appengine
+   * /docs/java/datastore/relationships.html#Unowned_Relationships
    */
-  public Employee getApprovedSupervisor() {
-    return approvedSupervisor;
+  @JoinColumn
+  @Column(name = "reporter")
+  private String reporterKey;
+
+  @JoinColumn
+  private String approvedSupervisorKey;
+
+  public String getApprovedSupervisorKey() {
+    return approvedSupervisorKey;
   }
 
-  /**
-   * @return the created
-   */
-  public java.util.Date getCreated() {
-    return created;
+  public Date getCreated() {
+    return this.created;
   }
 
-  /**
-   * @return the id
-   */
-  public Long getId() {
-    return id;
+  public String getId() {
+    return this.id;
   }
 
-  /**
-   * @return the purpose
-   */
   public String getPurpose() {
-    return purpose;
+    return this.purpose;
   }
 
-  /**
-   * @return the reporter
-   */
-  public Employee getReporter() {
-    return reporter;
+  public String getReporterKey() {
+    return this.reporterKey;
   }
 
-  /**
-   * @return the status
-   */
-  public Status getStatus() {
-    return status;
+  public Long getVersion() {
+    return this.version;
   }
 
-  /**
-   * @return the version
-   */
-  public Integer getVersion() {
-    return version;
+  public void persist() {
+    EntityManager em = entityManager();
+    try {
+      em.persist(this);
+    } finally {
+      em.close();
+    }
   }
 
-  /**
-   * @param approvedSupervisor the approved_supervisor to set
-   */
-  public void setApprovedSupervisor(Employee approvedSupervisor) {
-    this.approvedSupervisor = approvedSupervisor;
+  public void remove() {
+    EntityManager em = entityManager();
+    try {
+      Report attached = em.find(Report.class, this.id);
+      em.remove(attached);
+    } finally {
+      em.close();
+    }
   }
 
-  public void setCreated(Date date) {
-    this.created = date;
+  public void setApprovedSupervisorKey(String approvedSupervisorKey) {
+    this.approvedSupervisorKey = approvedSupervisorKey;
   }
 
-  /**
-   * @param purpose the purpose to set
-   */
+  public void setCreated(Date created) {
+    this.created = created;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
   public void setPurpose(String purpose) {
     this.purpose = purpose;
   }
 
-  /**
-   * @param reporter the reporter to set
-   */
-  public void setReporter(Employee reporter) {
-    this.reporter = reporter;
+  public void setReporterKey(String reporter) {
+    this.reporterKey = reporter;
   }
 
-  /**
-   * @param status the status to set
-   */
-  public void setStatus(Status status) {
-    this.status = status;
+  public void setVersion(Long version) {
+    this.version = version;
+  }
+
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Id: ").append(getId()).append(", ");
+    sb.append("Version: ").append(getVersion()).append(", ");
+    sb.append("Created: ").append(getCreated()).append(", ");
+    sb.append("Purpose: ").append(getPurpose()).append(", ");
+    sb.append("Reporter: ").append(getReporterKey());
+    sb.append("ApprovedSupervisor: ").append(getApprovedSupervisorKey());
+    return sb.toString();
   }
 }

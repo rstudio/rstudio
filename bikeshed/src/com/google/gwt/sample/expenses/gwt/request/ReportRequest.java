@@ -16,7 +16,6 @@
 package com.google.gwt.sample.expenses.gwt.request;
 
 import com.google.gwt.requestfactory.shared.EntityListRequest;
-import com.google.gwt.requestfactory.shared.LongString;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.ServerOperation;
 import com.google.gwt.valuestore.shared.ValueRef;
@@ -37,7 +36,7 @@ public interface ReportRequest {
       }
 
       public Class<?>[] getParameterTypes() {
-        return new Class[] { java.lang.Long.class };
+        return new Class[] {java.lang.String.class};
       }
 
       public Class<? extends ValuesKey<?>> getReturnType() {
@@ -69,7 +68,7 @@ public interface ReportRequest {
    */
   @ServerOperation("FIND_REPORTS_BY_EMPLOYEE")
   EntityListRequest<ReportKey> findReportsByEmployee(
-      @LongString ValueRef<EmployeeKey, String> id);
+      ValueRef<EmployeeKey, String> id);
 
   /**
    * @return a request object

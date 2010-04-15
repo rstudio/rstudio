@@ -22,6 +22,7 @@ bikeshed/war/stocksdesktop/
 bikeshed/war/stocksmobile/
 bikeshed/war/tree/
 bikeshed/war/validation/
+appengine-generated/
 
 * Install the Google Plugin for Eclipse
 * Create a new Java project with trunk/bikeshed/ as its existing source
@@ -31,6 +32,7 @@ bikeshed/war/validation/
   * Google > App Engine > ORM
     * Remove src and test
     * Add server and shared from src/com/google/gwt/sample/bikeshed/stocks
+    * Add com/google/gwt/sample/expenses/server/domain
   * Java Build Path > Libraries > Add Variable > GWT_TOOLS, Extend > redist/json/r2_20080312/json.jar
 * Copy tools/redist/json/r2_20080312/json.jar to bikeshed/war/WEB_INF/lib
 * Right click on the bikeshed project and choose Run as > Web Application. Choose from the various .html files

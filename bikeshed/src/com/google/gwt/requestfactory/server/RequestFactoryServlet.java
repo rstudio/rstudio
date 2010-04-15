@@ -77,6 +77,8 @@ public class RequestFactoryServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
 
+    initDb(); // temporary place-holder
+    
     RequestDefinition operation = null;
     try {
       response.setStatus(HttpServletResponse.SC_OK);
@@ -124,6 +126,13 @@ public class RequestFactoryServlet extends HttpServlet {
     }
   }
 
+  /**
+   * Allow subclass to initialize database.
+   */
+  @SuppressWarnings("unused")
+  protected void initDb() {
+  }
+  
   /**
    * Allows subclass to provide hack implementation.
    * <p>
