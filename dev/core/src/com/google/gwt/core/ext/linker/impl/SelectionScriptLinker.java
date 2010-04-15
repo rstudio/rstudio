@@ -362,12 +362,14 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       } else if (propMapsByPermutation.size() == 1) {
         // Just one distinct compilation; no need to evaluate properties
         text.append("strongName = '"
-            + propMapsByPermutation.keySet().iterator().next() + "';");
+            + propMapsByPermutation.keySet().iterator().next().getStrongName()
+            + "';");
       } else {
         Set<String> propertiesUsed = new HashSet<String>();
         for (PermutationId permutationId : propMapsByPermutation.keySet()) {
           for (Map<String, String> propertyMap : propMapsByPermutation.get(permutationId)) {
             // unflatten([v1, v2, v3], 'strongName' + ':softPermId');
+            // The soft perm ID is concatenated to improve string interning
             text.append("unflattenKeylistIntoAnswers([");
             boolean needsComma = false;
             for (SelectionProperty p : context.getProperties()) {
@@ -386,10 +388,17 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
               propertiesUsed.add(p.getName());
             }
 
-            // Concatenate the soft permutation id to improve string interning
             text.append("], '").append(permutationId.getStrongName()).append(
-                "' + ':").append(permutationId.getSoftPermutationId()).append(
-                "');\n");
+                "'");
+            /*
+             * For compatibility with older linkers, skip the soft permutation
+             * if it's 0
+             */
+            if (permutationId.getSoftPermutationId() != 0) {
+              text.append(" + ':").append(permutationId.getSoftPermutationId()).append(
+                  "'");
+            }
+            text.append(");\n");
           }
         }
 
