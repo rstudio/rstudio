@@ -428,7 +428,23 @@ public class PopupTest extends GWTTestCase {
   }
 
   /**
-   * Test the showing a popup while it is hiding will not result in an illegal
+   * Test that showing a popup while it is attached does not put it in an
+   * invalid state.
+   */
+  public void testShowWhileAttached() {
+    PopupPanel popup = createPopupPanel();
+    RootPanel.get().add(popup);
+    popup.show();
+    assertTrue(popup.isAttached());
+    assertTrue(popup.isShowing());
+
+    popup.hide();
+    assertFalse(popup.isAttached());
+    assertFalse(popup.isShowing());
+  }
+
+  /**
+   * Test that showing a popup while it is hiding will not result in an illegal
    * state.
    */
   public void testShowWhileHiding() {

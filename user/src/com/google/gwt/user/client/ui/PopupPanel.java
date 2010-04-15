@@ -1001,6 +1001,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   public void show() {
     if (showing) {
       return;
+    } else if (isAttached()) {
+      // The popup is attached directly to another panel, so we need to remove
+      // it from its parent before showing it. This is a weird use case, but
+      // since PopupPanel is a Widget, its legal.
+      this.removeFromParent();
     }
     resizeAnimation.setState(true, false);
   }
