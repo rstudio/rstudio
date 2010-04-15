@@ -40,5 +40,4 @@ public class DateCell extends Cell<Date, Void> {
       sb.append(format.format(value));
     }
   }
-
 }

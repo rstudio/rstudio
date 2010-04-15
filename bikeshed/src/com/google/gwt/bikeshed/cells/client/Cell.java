@@ -45,7 +45,6 @@ public abstract class Cell<C, V> {
    * @param valueUpdater a {@link ValueUpdater}, or null
    * @return a view data object which may be the one passed in or a new object
    */
-  @SuppressWarnings("unused")
   public V onBrowserEvent(Element parent, C value, V viewData,
       NativeEvent event, ValueUpdater<C, V> valueUpdater) {
     return null;

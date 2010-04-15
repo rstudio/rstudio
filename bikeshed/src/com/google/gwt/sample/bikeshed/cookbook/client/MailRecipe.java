@@ -17,7 +17,9 @@ package com.google.gwt.sample.bikeshed.cookbook.client;
 
 import com.google.gwt.bikeshed.cells.client.ButtonCell;
 import com.google.gwt.bikeshed.cells.client.CheckboxCell;
+import com.google.gwt.bikeshed.cells.client.DatePickerCell;
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
+import com.google.gwt.bikeshed.list.client.Column;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
 import com.google.gwt.bikeshed.list.client.SimpleColumn;
 import com.google.gwt.bikeshed.list.client.TextColumn;
@@ -28,6 +30,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -36,6 +39,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -165,12 +169,14 @@ public class MailRecipe extends Recipe implements ClickHandler {
     boolean isRead;
     String sender;
     String subject;
+    Date date;
 
-    public Message(int id, String sender, String subject) {
+    public Message(int id, String sender, String subject, Date date) {
       super();
       this.id = id;
       this.sender = sender;
       this.subject = subject;
+      this.date = date;
     }
 
     @Override
@@ -179,6 +185,10 @@ public class MailRecipe extends Recipe implements ClickHandler {
         return false;
       }
       return id == ((Message) obj).id;
+    }
+
+    public Date getDate() {
+      return date;
     }
 
     public int getId() {
@@ -205,7 +215,7 @@ public class MailRecipe extends Recipe implements ClickHandler {
     @Override
     public String toString() {
       return "Message [id=" + id + ", sender=" + sender + ", subject="
-          + subject + ", read=" + isRead + "]";
+          + subject + ", read=" + isRead + ", date=" + date + "]";
     }
   }
 
@@ -255,11 +265,15 @@ public class MailRecipe extends Recipe implements ClickHandler {
   protected Widget createWidget() {
     ListViewAdapter<Message> adapter = new ListViewAdapter<Message>();
     List<Message> messages = adapter.getList();
+    Date now = new Date();
     Random rand = new Random();
     for (int i = 0; i < 1000; i++) {
+      // Go back up to 90 days from the current date
+      long dateOffset = rand.nextInt(60 * 60 * 24 * 90) * 1000L;
       Message message = new Message(10000 + i,
           senders[rand.nextInt(senders.length)],
-          subjects[rand.nextInt(subjects.length)]);
+          subjects[rand.nextInt(subjects.length)],
+          new Date(now.getTime() - dateOffset));
       message.isRead = rand.nextBoolean();
       messages.add(message);
     }
@@ -304,6 +318,22 @@ public class MailRecipe extends Recipe implements ClickHandler {
       }
     };
     table.addColumn(isReadColumn, "Read");
+
+    Column<Message, Date, Void> dateColumn =
+      new Column<Message, Date, Void>(new DatePickerCell<Void>()) {
+        @Override
+        public Date getValue(Message object) {
+          return object.getDate();
+        }
+    };
+    dateColumn.setFieldUpdater(new FieldUpdater<Message, Date, Void>() {
+      public void update(int index, Message object, Date value, Void viewData) {
+        Window.alert("Changed date from " + object.date + " to " + value);
+        object.date = value;
+        table.refresh();
+      }
+    });
+    table.addColumn(dateColumn, "Date");
 
     TextColumn<Message> senderColumn = new TextColumn<Message>() {
       @Override
