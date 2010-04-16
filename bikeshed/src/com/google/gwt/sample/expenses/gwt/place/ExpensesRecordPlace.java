@@ -13,22 +13,31 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.valuestore.shared;
+package com.google.gwt.sample.expenses.gwt.place;
+
+import com.google.gwt.valuestore.shared.Record;
 
 /**
- * Provides access to the property values of a record in a {@link ValueStore}.
- *
- * @param <K> value type
+ * A place in the app focused on the {@link Values} of a particular type of
+ * {@link com.google.gwt.valuestore.shared.ValueStore ValueStore} record.
  */
-public interface Values<K extends ValuesKey<K>> {
-  <V, P extends Property<K, V>> V get(P property);
+public abstract class ExpensesRecordPlace extends ExpensesPlace {
 
-  String getId();
-
-  K getKey();
+  private final Record record;
 
   /**
-   * TODO: Starting to wonder again if this is useful.
+   * @param record
    */
-  <V> ValueRef<K, V> getRef(Property<K, V> property);
+  public ExpensesRecordPlace(Record record) {
+
+    this.record = record;
+  }
+
+  /**
+   * @return the entity
+   */
+  public Record getEntity() {
+    return record;
+  }
+
 }

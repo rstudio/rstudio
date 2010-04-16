@@ -27,8 +27,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Values;
-import com.google.gwt.valuestore.shared.ValuesKey;
+import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.ValuesListView;
 
 import java.util.Collection;
@@ -39,30 +38,30 @@ import java.util.List;
  * A widget that displays lists of {@link com.google.gwt.valuestore.shared.ValueStore
  * ValueStore} records in a {@link PagingTableListView}.
  *
- * @param <K> the type of the ValuesKey shared by these records
+ * @param <R> the type of the records
  */
-public abstract class ValuesListViewTable<K extends ValuesKey<K>> extends
-    Composite implements ValuesListView<K> {
+public abstract class ValuesListViewTable<R extends Record> extends
+    Composite implements ValuesListView<R> {
   interface Binder extends UiBinder<HTMLPanel, ValuesListViewTable<?>> {
   }
 
   private static final Binder BINDER = GWT.create(Binder.class);
 
   public ValuesListView.Delegate delegate;
-  public ValueStoreListViewAdapter<K> adapter;
+  public ValueStoreListViewAdapter<R> adapter;
 
   @UiField(provided = true)
-  PagingTableListView<Values<K>> table;
+  PagingTableListView<R> table;
   @UiField
   HeadingElement heading;
 
   public ValuesListViewTable(String headingMessage,
-      List<Column<Values<K>, ?, ?>> columns, List<Header<?>> headers) {
+      List<Column<R, ?, ?>> columns, List<Header<?>> headers) {
     adapter = createAdapter();
-    table = new PagingTableListView<Values<K>>(adapter, 100);
+    table = new PagingTableListView<R>(adapter, 100);
     adapter.addView(table);
     final Iterator<Header<?>> nextHeader = headers.iterator();
-    for (Column<Values<K>, ?, ?> column : columns) {
+    for (Column<R, ?, ?> column : columns) {
       if (nextHeader.hasNext()) {
         table.addColumn(column, nextHeader.next());
       } else {
@@ -74,7 +73,7 @@ public abstract class ValuesListViewTable<K extends ValuesKey<K>> extends
     heading.setInnerText(headingMessage);
   }
 
-  public ValuesListViewTable<K> asWidget() {
+  public ValuesListViewTable<R> asWidget() {
     return this;
   }
 
@@ -85,7 +84,7 @@ public abstract class ValuesListViewTable<K extends ValuesKey<K>> extends
     return delegate;
   }
 
-  public abstract Collection<Property<K, ?>> getProperties();
+  public abstract Collection<Property<?>> getProperties();
 
   /**
    * @param delegate the new delegate for this view, may be null
@@ -97,14 +96,14 @@ public abstract class ValuesListViewTable<K extends ValuesKey<K>> extends
     }
   }
 
-  public void setValueList(List<Values<K>> newValues) {
+  public void setValueList(List<R> newValues) {
     adapter.setValueList(newValues);
   }
 
-  private ValueStoreListViewAdapter<K> createAdapter() {
-    return new ValueStoreListViewAdapter<K>() {
+  private ValueStoreListViewAdapter<R> createAdapter() {
+    return new ValueStoreListViewAdapter<R>() {
       @Override
-      protected void onRangeChanged(ListView<Values<K>> view) {
+      protected void onRangeChanged(ListView<R> view) {
         Range range = view.getRange();
         Delegate myDelegate = getDelegate();
         if (myDelegate != null) {

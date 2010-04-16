@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,14 +18,14 @@ package com.google.gwt.sample.expenses.gwt.customized;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.gwt.request.EmployeeKey;
-import com.google.gwt.sample.expenses.gwt.request.ReportChanged;
-import com.google.gwt.sample.expenses.gwt.request.ReportKey;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecordChanged;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Values;
+import com.google.gwt.valuestore.shared.Record;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,40 +55,37 @@ public class Customized implements EntryPoint {
     root.add(shell);
 
     shell.setListener(new CustomizedShell.Listener() {
-      public void setPurpose(Values<ReportKey> report, String purpose) {
+      public void setPurpose(ReportRecord report, String purpose) {
         DeltaValueStore deltaValueStore = requestFactory.getValueStore().spawnDeltaView();
-        deltaValueStore.set(report.getKey().getPurpose(), report, purpose);
+        deltaValueStore.set(ReportRecord.purpose, report, purpose);
         requestFactory.syncRequest(deltaValueStore).fire();
       }
     });
 
     employees.setListener(new EmployeeList.Listener() {
-      public void onEmployeeSelected(Values<EmployeeKey> e) {
+      public void onEmployeeSelected(EmployeeRecord e) {
         requestFactory.reportRequest().findReportsByEmployee(
-            e.getRef(EmployeeKey.get().getId())).forProperties(
-            getReportColumns()).to(shell).fire();
+            e.getRef(Record.id)).forProperties(getReportColumns()).to(shell).fire();
       }
     });
 
-    eventBus.addHandler(ReportChanged.TYPE, shell);
+    eventBus.addHandler(ReportRecordChanged.TYPE, shell);
 
     requestFactory.employeeRequest().findAllEmployees().forProperties(
         getEmployeeMenuProperties()).to(employees).fire();
   }
 
-  private Collection<Property<EmployeeKey, ?>> getEmployeeMenuProperties() {
-    final EmployeeKey key = EmployeeKey.get();
-    List<Property<EmployeeKey, ?>> columns = new ArrayList<Property<EmployeeKey, ?>>();
-    columns.add(key.getDisplayName());
-    columns.add(key.getUserName());
+  private Collection<Property<?>> getEmployeeMenuProperties() {
+    List<Property<?>> columns = new ArrayList<Property<?>>();
+    columns.add(EmployeeRecord.displayName);
+    columns.add(EmployeeRecord.userName);
     return columns;
   }
 
-  private Collection<Property<ReportKey, ?>> getReportColumns() {
-    final ReportKey key = ReportKey.get();
-    List<Property<ReportKey, ?>> columns = new ArrayList<Property<ReportKey, ?>>();
-    columns.add(key.getCreated());
-    columns.add(key.getPurpose());
+  private Collection<Property<?>> getReportColumns() {
+    List<Property<?>> columns = new ArrayList<Property<?>>();
+    columns.add(ReportRecord.created);
+    columns.add(ReportRecord.purpose);
     return columns;
   }
 }

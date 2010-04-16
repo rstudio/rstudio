@@ -26,8 +26,8 @@ import java.util.List;
  *
  * @param <K> the type of the key of the records
  */
-public interface ValuesListView<K extends ValuesKey<K>> extends
-    TakesValueList<Values<K>> {
+public interface ValuesListView<K extends Record> extends
+    TakesValueList<K> {
 
   /**
    * Implemented by ValuesListView delegates, to keep informed when the visible
@@ -39,12 +39,12 @@ public interface ValuesListView<K extends ValuesKey<K>> extends
 
   Widget asWidget();
 
-  Collection<Property<K, ?>> getProperties();
+  Collection<Property<?>> getProperties();
 
   /**
    * @param delegate the new delegate for this view, may be null
    */
   void setDelegate(ValuesListView.Delegate delegate);
 
-  void setValueList(List<Values<K>> newValues);
+  void setValueList(List<K> newValues);
 }

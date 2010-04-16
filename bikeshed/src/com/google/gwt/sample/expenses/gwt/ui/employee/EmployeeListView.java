@@ -22,10 +22,9 @@ import com.google.gwt.bikeshed.list.client.IdentityColumn;
 import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.client.TextHeader;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesPlaces;
-import com.google.gwt.sample.expenses.gwt.request.EmployeeKey;
+import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.valuestore.client.ValuesListViewTable;
 import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Values;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,47 +35,47 @@ import java.util.List;
  * <p>
  * TODO The bulk of this should be in a <g:table> in a ui.xml file
  */
-public class EmployeeListView extends ValuesListViewTable<EmployeeKey> {
-  private static final List<Property<EmployeeKey, ?>> properties;
+public class EmployeeListView extends ValuesListViewTable<EmployeeRecord> {
+  private static final List<Property<?>> properties;
   static {
-    List<Property<EmployeeKey, ?>> p = new ArrayList<Property<EmployeeKey, ?>>();
-    p.add(EmployeeKey.get().getUserName());
-    p.add(EmployeeKey.get().getDisplayName());
+    List<Property<?>> p = new ArrayList<Property<?>>();
+    p.add(EmployeeRecord.userName);
+    p.add(EmployeeRecord.displayName);
     properties = Collections.unmodifiableList(p);
   }
 
-  private static List<Column<Values<EmployeeKey>, ?, ?>> getColumns(
+  private static List<Column<EmployeeRecord, ?, ?>> getColumns(
       final ExpensesPlaces places) {
-    List<Column<Values<EmployeeKey>, ?, ?>> columns = new ArrayList<Column<Values<EmployeeKey>, ?, ?>>();
+    List<Column<EmployeeRecord, ?, ?>> columns = new ArrayList<Column<EmployeeRecord, ?, ?>>();
 
-    columns.add(new TextColumn<Values<EmployeeKey>>() {
+    columns.add(new TextColumn<EmployeeRecord>() {
       @Override
-      public String getValue(Values<EmployeeKey> object) {
-        return object.get(EmployeeKey.get().getUserName());
+      public String getValue(EmployeeRecord object) {
+        return object.getUserName();
       }
     });
 
-    columns.add(new TextColumn<Values<EmployeeKey>>() {
+    columns.add(new TextColumn<EmployeeRecord>() {
       @Override
-      public String getValue(Values<EmployeeKey> object) {
-        return object.get(EmployeeKey.get().getDisplayName());
+      public String getValue(EmployeeRecord object) {
+        return object.getDisplayName();
       }
     });
 
-    columns.add(new IdentityColumn<Values<EmployeeKey>>(
-        new ActionCell<Values<EmployeeKey>>("Show",
-            places.<EmployeeKey> getDetailsGofer())));
+    columns.add(new IdentityColumn<EmployeeRecord>(
+        new ActionCell<EmployeeRecord>("Show",
+            places.<EmployeeRecord> getDetailsGofer())));
 
-    // columns.add(new IdentityColumn<Values<EmployeeKey>>(
-    // new ActionCell<Values<EmployeeKey>>("Edit",
-    // places.<EmployeeKey> getEditorGofer())));
+//    columns.add(new IdentityColumn<EmployeeRecord>(
+//        new ActionCell<EmployeeRecord>("Edit",
+//            places.<EmployeeRecord> getEditorGofer())));
 
     return columns;
   }
 
   private static List<Header<?>> getHeaders() {
     List<Header<?>> headers = new ArrayList<Header<?>>();
-    for (final Property<EmployeeKey, ?> property : properties) {
+    for (final Property<?> property : properties) {
       headers.add(new TextHeader(property.getName()));
     }
     return headers;
@@ -86,7 +85,7 @@ public class EmployeeListView extends ValuesListViewTable<EmployeeKey> {
     super(headingMessage, getColumns(places), getHeaders());
   }
 
-  public List<Property<EmployeeKey, ?>> getProperties() {
+  public List<Property<?>> getProperties() {
     return properties;
   }
 }

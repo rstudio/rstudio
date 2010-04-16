@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,10 +17,9 @@ package com.google.gwt.sample.expenses.gwt.scaffold;
 
 import com.google.gwt.sample.expenses.gwt.place.ExpensesListPlace;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesPlaces;
-import com.google.gwt.sample.expenses.gwt.request.EmployeeKey;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKeyVisitor;
+import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.gwt.request.ReportKey;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.sample.expenses.gwt.ui.employee.AllEmployeesRequester;
 import com.google.gwt.sample.expenses.gwt.ui.employee.EmployeeListView;
 import com.google.gwt.sample.expenses.gwt.ui.report.AllReportsRequester;
@@ -49,22 +48,22 @@ public class ScaffoldListViewBuilder {
   }
 
   public ValuesListViewTable<?> getListView(final ExpensesListPlace newPlace) {
+    // TODO Will these class references prevent customized apps that keep this
+    // view builder around from stripping unsued entity types?
     if (!viewMap.containsKey(newPlace)) {
-      newPlace.getKey().accept(new ExpensesKeyVisitor() {
-        public void visit(EmployeeKey key) {
-          EmployeeListView newView = new EmployeeListView(
-              placeRenderer.render(newPlace), places);
-          newView.setDelegate(new AllEmployeesRequester(requests, newView));
-          viewMap.put(newPlace, newView);
-        }
+      if (newPlace.getType().equals(EmployeeRecord.class)) {
+        EmployeeListView newView = new EmployeeListView(
+            placeRenderer.render(newPlace), places);
+        newView.setDelegate(new AllEmployeesRequester(requests, newView));
+        viewMap.put(newPlace, newView);
+      }
 
-        public void visit(ReportKey key) {
-          ReportListView newView = new ReportListView(
-              placeRenderer.render(newPlace), places);
-          newView.setDelegate(new AllReportsRequester(requests, newView));
-          viewMap.put(newPlace, newView);
-        }
-      });
+      if (newPlace.getType().equals(ReportRecord.class)) {
+        ReportListView newView = new ReportListView(
+            placeRenderer.render(newPlace), places);
+        newView.setDelegate(new AllReportsRequester(requests, newView));
+        viewMap.put(newPlace, newView);
+      }
     }
     return viewMap.get(newPlace);
   }

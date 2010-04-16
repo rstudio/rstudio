@@ -16,7 +16,7 @@
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.gwt.request.ReportKey;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.valuestore.client.ValuesListViewTable;
 import com.google.gwt.valuestore.shared.ValuesListView;
 
@@ -25,11 +25,11 @@ import com.google.gwt.valuestore.shared.ValuesListView;
  * {@link ReportKey} records.
  */
 public final class AllReportsRequester implements ValuesListView.Delegate {
-  private final ValuesListViewTable<ReportKey> view;
+  private final ValuesListViewTable<ReportRecord> view;
   private final ExpensesRequestFactory requests;
 
   public AllReportsRequester(ExpensesRequestFactory requests,
-      ValuesListViewTable<ReportKey> newView) {
+      ValuesListViewTable<ReportRecord> newView) {
     this.view = newView;
     this.requests = requests;
   }

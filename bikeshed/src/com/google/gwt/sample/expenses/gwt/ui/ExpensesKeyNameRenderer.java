@@ -15,28 +15,23 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui;
 
-import com.google.gwt.sample.expenses.gwt.request.EmployeeKey;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKey;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKeyFilter;
-import com.google.gwt.sample.expenses.gwt.request.ReportKey;
+import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.user.client.ui.Renderer;
+import com.google.gwt.valuestore.shared.Record;
 
 /**
  * Renders the name of an {@link ExpensesKey}.
  */
 //TODO i18n
-public class ExpensesKeyNameRenderer implements Renderer<ExpensesKey<?>> {
-  private final ExpensesKeyFilter<String> filter = new ExpensesKeyFilter<String>() {
-    public String filter(EmployeeKey employeeKey) {
+public class ExpensesKeyNameRenderer implements Renderer<Record> {
+  public String render(Record record) {
+    if (record instanceof EmployeeRecord) {
       return "Employees";
     }
-
-    public String filter(ReportKey reportKey) {
+    if (record instanceof ReportRecord) {
       return "Reports";
     }
-  };
-
-  public String render(ExpensesKey<?> entity) {
-    return entity.accept(filter);
+    throw new IllegalArgumentException("Unrecognized schema " + record);
   }
 }

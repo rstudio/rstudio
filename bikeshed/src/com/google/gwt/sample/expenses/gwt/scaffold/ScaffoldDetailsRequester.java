@@ -17,11 +17,10 @@ package com.google.gwt.sample.expenses.gwt.scaffold;
 
 import com.google.gwt.app.place.PlaceChanged;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesDetailsPlace;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKey;
 import com.google.gwt.sample.expenses.gwt.ui.ExpensesKeyNameRenderer;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.valuestore.shared.Values;
+import com.google.gwt.valuestore.shared.Record;
 
 /**
  * In charge of requesting and displaying details of a particular record in the
@@ -50,11 +49,9 @@ public final class ScaffoldDetailsRequester implements PlaceChanged.Handler {
     }
 
     ExpensesDetailsPlace newPlace = (ExpensesDetailsPlace) event.getNewPlace();
-    final Values<? extends ExpensesKey<?>> values = newPlace.getEntity();
-    ExpensesKey<?> key = values.getKey();
-
+    final Record values = newPlace.getEntity();
     final String title = new StringBuilder("<h1>").append(
-        entityNamer.render(key)).append("</h1>").toString();
+        entityNamer.render(values)).append("</h1>").toString();
 
     // TODO would actually issue request to get details here, but
     // at the moment we know we already have them, such as they are.

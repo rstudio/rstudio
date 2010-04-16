@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.employee;
 
-import com.google.gwt.sample.expenses.gwt.request.EmployeeKey;
+import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.valuestore.client.ValuesListViewTable;
 import com.google.gwt.valuestore.shared.ValuesListView;
@@ -25,11 +25,11 @@ import com.google.gwt.valuestore.shared.ValuesListView;
  * {@link EmployeeKey} records.
  */
 public final class AllEmployeesRequester implements ValuesListView.Delegate {
-  private final ValuesListViewTable<EmployeeKey> view;
+  private final ValuesListViewTable<EmployeeRecord> view;
   private final ExpensesRequestFactory requests;
 
   public AllEmployeesRequester(ExpensesRequestFactory requests,
-      ValuesListViewTable<EmployeeKey> newView) {
+      ValuesListViewTable<EmployeeRecord> newView) {
     this.view = newView;
     this.requests = requests;
   }

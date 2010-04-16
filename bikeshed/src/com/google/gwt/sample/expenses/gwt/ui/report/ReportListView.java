@@ -25,10 +25,9 @@ import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.client.TextHeader;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesPlaces;
-import com.google.gwt.sample.expenses.gwt.request.ReportKey;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.valuestore.client.ValuesListViewTable;
 import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Values;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,48 +39,48 @@ import java.util.List;
  * <p>
  * TODO The bulk of this should be in a <g:table> in a ui.xml file
  */
-public class ReportListView extends ValuesListViewTable<ReportKey> {
-  private static final List<Property<ReportKey, ?>> properties;
+public class ReportListView extends ValuesListViewTable<ReportRecord> {
+  private static final List<Property<?>> properties;
   static {
-    List<Property<ReportKey, ?>> p = new ArrayList<Property<ReportKey, ?>>();
-    p.add(ReportKey.get().getCreated());
-    p.add(ReportKey.get().getPurpose());
+    List<Property<?>> p = new ArrayList<Property<?>>();
+    p.add(ReportRecord.created);
+    p.add(ReportRecord.purpose);
     properties = Collections.unmodifiableList(p);
   }
 
-  private static List<Column<Values<ReportKey>, ?, ?>> getColumns(
+  private static List<Column<ReportRecord, ?, ?>> getColumns(
       final ExpensesPlaces places) {
-    List<Column<Values<ReportKey>, ?, ?>> columns = new ArrayList<Column<Values<ReportKey>, ?, ?>>();
+    List<Column<ReportRecord, ?, ?>> columns = new ArrayList<Column<ReportRecord, ?, ?>>();
 
     DateCell dateCell = new DateCell(DateTimeFormat.getShortDateFormat());
-    columns.add(new SimpleColumn<Values<ReportKey>, Date>(dateCell) {
+    columns.add(new SimpleColumn<ReportRecord, Date>(dateCell) {
       @Override
-      public Date getValue(Values<ReportKey> object) {
-        return object.get(ReportKey.get().getCreated());
+      public Date getValue(ReportRecord object) {
+        return object.getCreated();
       }
     });
 
-    columns.add(new TextColumn<Values<ReportKey>>() {
+    columns.add(new TextColumn<ReportRecord>() {
       @Override
-      public String getValue(Values<ReportKey> object) {
-        return object.get(ReportKey.get().getPurpose());
+      public String getValue(ReportRecord object) {
+        return object.getPurpose();
       }
     });
 
-    columns.add(new IdentityColumn<Values<ReportKey>>(
-        new ActionCell<Values<ReportKey>>("Show",
-            places.<ReportKey> getDetailsGofer())));
+    columns.add(new IdentityColumn<ReportRecord>(
+        new ActionCell<ReportRecord>("Show",
+            places.<ReportRecord> getDetailsGofer())));
 
-    // columns.add(new IdentityColumn<Values<ReportKey>>(
-    // new ActionCell<Values<ReportKey>>("Edit",
-    // places.<ReportKey> getEditorGofer())));
+//    columns.add(new IdentityColumn<ReportRecord>(
+//        new ActionCell<ReportRecord>("Edit",
+//            places.<ReportRecord> getEditorGofer())));
 
     return columns;
   }
 
   private static List<Header<?>> getHeaders() {
     List<Header<?>> headers = new ArrayList<Header<?>>();
-    for (final Property<ReportKey, ?> property : properties) {
+    for (final Property<?> property : properties) {
       headers.add(new TextHeader(property.getName()));
     }
     return headers;
@@ -91,7 +90,7 @@ public class ReportListView extends ValuesListViewTable<ReportKey> {
     super(headingMessage, getColumns(places), getHeaders());
   }
 
-  public List<Property<ReportKey, ?>> getProperties() {
+  public List<Property<?>> getProperties() {
     return properties;
   }
 

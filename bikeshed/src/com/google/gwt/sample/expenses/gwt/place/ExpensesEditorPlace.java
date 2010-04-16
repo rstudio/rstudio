@@ -15,16 +15,15 @@
  */
 package com.google.gwt.sample.expenses.gwt.place;
 
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKey;
-import com.google.gwt.valuestore.shared.Values;
+import com.google.gwt.valuestore.shared.Record;
 
 /**
  * Place in an app to edit the values of a particular
  * {@link com.google.gwt.valuestore.shared.ValueStore ValueStore} record.
  */
-public class ExpensesEditorPlace extends ExpensesValuesPlace {
+public class ExpensesEditorPlace extends ExpensesRecordPlace {
 
-  public ExpensesEditorPlace(Values<? extends ExpensesKey<?>> entity) {
+  public ExpensesEditorPlace(Record entity) {
     super(entity);
   }
 }

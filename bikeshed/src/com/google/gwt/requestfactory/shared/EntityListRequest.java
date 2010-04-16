@@ -17,8 +17,7 @@ package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.user.client.ui.TakesValueList;
 import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Values;
-import com.google.gwt.valuestore.shared.ValuesKey;
+import com.google.gwt.valuestore.shared.Record;
 
 import java.util.Collection;
 
@@ -28,14 +27,14 @@ import java.util.Collection;
  * <p>
  * TODO Really should be for lists of anything.
  *
- * @param <K> The type held by the returned list
+ * @param <R> The type held by the returned list
  */
-public interface EntityListRequest<K extends ValuesKey<K>> extends
+public interface EntityListRequest<R extends Record> extends
     RequestFactory.RequestObject {
 
-  EntityListRequest<K> forProperties(Collection<Property<K, ?>> properties);
+  EntityListRequest<R> forProperties(Collection<Property<?>> properties);
 
-  EntityListRequest<K> forProperty(Property<K, ?> property);
+  EntityListRequest<R> forProperty(Property<?> property);
 
-  EntityListRequest<K> to(TakesValueList<Values<K>> target);
+  EntityListRequest<R> to(TakesValueList<R> target);
 }

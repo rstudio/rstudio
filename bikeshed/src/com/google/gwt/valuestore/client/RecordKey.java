@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,15 +15,21 @@
  */
 package com.google.gwt.valuestore.client;
 
-import com.google.gwt.valuestore.shared.Values;
-import com.google.gwt.valuestore.shared.ValuesKey;
+import com.google.gwt.valuestore.shared.impl.RecordImpl;
+import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
+import com.google.gwt.valuestore.shared.impl.RecordSchema;
 
 class RecordKey {
-  final ValuesKey<?> key;
+  final RecordSchema<?> schema;
   final Object id;
 
-  RecordKey(Values<?> record) {
-    this.key = record.getKey();
+  RecordKey(RecordImpl record) {
+    this.schema = record.getSchema();
+    this.id = record.getId();
+  }
+
+  RecordKey(RecordJsoImpl record) {
+    this.schema = record.getSchema();
     this.id = record.getId();
   }
 
@@ -42,7 +48,7 @@ class RecordKey {
     if (!id.equals(other.id)) {
       return false;
     }
-    if (!key.equals(other.key)) {
+    if (!schema.equals(other.schema)) {
       return false;
     }
     return true;
@@ -53,7 +59,13 @@ class RecordKey {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((id == null) ? 0 : id.hashCode());
-    result = prime * result + ((key == null) ? 0 : key.hashCode());
+    result = prime * result + ((schema == null) ? 0 : schema.hashCode());
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "[RecordKey schema: " + schema.getClass().getName() + " id: " + id
+        + "]";
   }
 }

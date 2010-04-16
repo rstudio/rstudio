@@ -15,16 +15,15 @@
  */
 package com.google.gwt.sample.expenses.gwt.place;
 
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKey;
-import com.google.gwt.valuestore.shared.Values;
+import com.google.gwt.valuestore.shared.Record;
 
 /**
  * Place in an app to see details of a particular
  * {@link com.google.gwt.valuestore.shared.ValueStore ValueStore} record.
  */
-public class ExpensesDetailsPlace extends ExpensesValuesPlace {
+public class ExpensesDetailsPlace extends ExpensesRecordPlace {
 
-  public ExpensesDetailsPlace(Values<? extends ExpensesKey<?>> entity) {
+  public ExpensesDetailsPlace(Record entity) {
     // TODO it is bad to be passing the values rather than an id. Want
     // to force UI code to request the data it needs
     super(entity);

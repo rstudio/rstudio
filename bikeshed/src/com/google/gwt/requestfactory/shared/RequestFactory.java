@@ -17,8 +17,8 @@ package com.google.gwt.requestfactory.shared;
 
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.valuestore.shared.DeltaValueStore;
+import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.ValueStore;
-import com.google.gwt.valuestore.shared.ValuesKey;
 
 import java.util.Map;
 
@@ -60,7 +60,7 @@ public interface RequestFactory {
     /**
      * Returns the return type of the method to be invoked on the server.
      */
-    Class<? extends ValuesKey<?>> getReturnType();
+    Class<? extends Record> getReturnType();
 
     /**
      * Returns the name.

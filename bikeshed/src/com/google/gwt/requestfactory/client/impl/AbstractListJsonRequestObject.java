@@ -19,10 +19,10 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.user.client.ui.TakesValueList;
-import com.google.gwt.valuestore.client.ValuesImpl;
 import com.google.gwt.valuestore.shared.Property;
-import com.google.gwt.valuestore.shared.Values;
-import com.google.gwt.valuestore.shared.ValuesKey;
+import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.valuestore.shared.impl.RecordSchema;
+import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,31 +38,31 @@ import java.util.Set;
  * @param <T> the type of entities returned
  * @param <R> this request type
  */
-public abstract class AbstractListJsonRequestObject<T extends ValuesKey<T>, R extends AbstractListJsonRequestObject<T, R>>
+public abstract class AbstractListJsonRequestObject<T extends Record, R extends AbstractListJsonRequestObject<T, R>>
     implements RequestFactory.RequestObject, EntityListRequest<T> {
 
-  private final T key;
+  private final RecordSchema<? extends T> schema;
   private final RequestFactoryJsonImpl requestFactory;
-  private final Set<Property<T, ?>> properties = new HashSet<Property<T, ?>>();
+  private final Set<Property<?>> properties = new HashSet<Property<?>>();
 
-  private TakesValueList<Values<T>> target;
+  private TakesValueList<T> target;
 
-  public AbstractListJsonRequestObject(T key,
+  public AbstractListJsonRequestObject(RecordSchema<? extends T> schema,
       RequestFactoryJsonImpl requestService) {
     this.requestFactory = requestService;
-    this.key = key;
+    this.schema = schema;
   }
 
   public void fire() {
     requestFactory.fire(this);
   }
 
-  public R forProperties(Collection<Property<T, ?>> properties) {
+  public R forProperties(Collection<Property<?>> properties) {
     this.properties.addAll(properties);
     return getThis();
   }
 
-  public R forProperty(Property<T, ?> property) {
+  public R forProperty(Property<?> property) {
     this.properties.add(property);
     return getThis();
   }
@@ -70,24 +70,24 @@ public abstract class AbstractListJsonRequestObject<T extends ValuesKey<T>, R ex
   /**
    * @return the properties
    */
-  public Set<Property<T, ?>> getProperties() {
+  public Set<Property<?>> getProperties() {
     return Collections.unmodifiableSet(properties);
   }
 
   public void handleResponseText(String text) {
-    JsArray<ValuesImpl<T>> valueArray = ValuesImpl.arrayFromJson(text);
-    List<Values<T>> valueList = new ArrayList<Values<T>>(valueArray.length());
-    for (int i = 0; i < valueArray.length(); i++) {
-      ValuesImpl<T> values = valueArray.get(i);
-      values.setKey(key);
-      valueList.add(values);
+    JsArray<RecordJsoImpl> valueJsos = RecordJsoImpl.arrayFromJson(text);
+    List<T> valueList = new ArrayList<T>(valueJsos.length());
+    for (int i = 0; i < valueJsos.length(); i++) {
+      RecordJsoImpl jso = valueJsos.get(i);
+      jso.setSchema(schema);
+      valueList.add(schema.create(jso));
     }
 
-    requestFactory.getValueStore().setRecords(valueArray);
+    requestFactory.getValueStore().setRecords(valueJsos);
     target.setValueList(valueList);
   }
 
-  public R to(TakesValueList<Values<T>> target) {
+  public R to(TakesValueList<T> target) {
     this.target = target;
     return getThis();
   }

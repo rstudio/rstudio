@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,20 +16,28 @@
 package com.google.gwt.valuestore.shared;
 
 /**
- * Represents a property of a record managed by {@link ValueStore}.
- *
- * @param <K> type of the property holder
- * @param <V> type of the property
+ * Defines a property of a {@link Record}
+ * 
+ * @param <V> the type of the property's value
  */
-public interface Property<K extends ValuesKey<K>, V> {
+public class Property<V> {
+  private final String name;
+  private final Class<V> type;
 
   /**
-   * @return the key
+   * @param name the property's name
+   * @param type the class of the property's value
    */
-  K getKey();
+  public Property(String name, Class<V> type) {
+    this.name = name;
+    this.type = type;
+  }
 
-  /**
-   * @return the name
-   */
-  String getName();
+  public String getName() {
+    return name;
+  }
+
+  public Class<V> getType() {
+    return type;
+  }
 }

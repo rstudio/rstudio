@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,24 +20,32 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.requestfactory.client.gen.ClientRequestObject;
 import com.google.gwt.requestfactory.client.impl.AbstractListJsonRequestObject;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
-import com.google.gwt.requestfactory.shared.EntityListRequest;
 import com.google.gwt.requestfactory.shared.ServerOperation;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.PrintWriterManager;
 import com.google.gwt.user.rebind.SourceWriter;
-import com.google.gwt.valuestore.client.ValueStoreJsonImpl;
+import com.google.gwt.valuestore.shared.Property;
+import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.valuestore.shared.RecordChangedEvent;
+import com.google.gwt.valuestore.shared.impl.RecordImpl;
+import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
+import com.google.gwt.valuestore.shared.impl.RecordSchema;
 
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -86,6 +94,146 @@ public class RequestFactoryGenerator extends Generator {
     return packageName + "." + implName;
   }
 
+  private String capitalize(String name) {
+    return name.substring(0, 1).toUpperCase() + name.substring(1);
+  }
+
+  private String ensureRecordType(TreeLogger logger,
+      GeneratorContext generatorContext, PrintWriterManager printWriters,
+      TypeOracle typeOracle, String packageName, JClassType publicRecordType)
+      throws UnableToCompleteException {
+    String recordImplTypeName = publicRecordType.getName() + "Impl";
+
+    PrintWriter pw = printWriters.tryToMakePrintWriterFor(recordImplTypeName);
+    if (pw != null) {
+      logger = logger.branch(TreeLogger.INFO, "Generating "
+          + publicRecordType.getName());
+
+      ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
+          packageName, recordImplTypeName);
+
+      String eventTypeName = publicRecordType.getName() + "Changed";
+      JClassType eventType = typeOracle.findType(packageName, eventTypeName);
+      if (eventType == null) {
+        logger.log(TreeLogger.ERROR, String.format(
+            "Cannot find %s implementation %s.%s",
+            RecordChangedEvent.class.getName(), packageName, eventTypeName));
+        throw new UnableToCompleteException();
+      }
+
+      f.addImport(Property.class.getName());
+      f.addImport(Record.class.getName());
+      f.addImport(RecordImpl.class.getName());
+      f.addImport(RecordJsoImpl.class.getName());
+      f.addImport(RecordSchema.class.getName());
+
+      f.addImport(Collections.class.getName());
+      f.addImport(HashSet.class.getName());
+      f.addImport(Set.class.getName());
+
+      f.setSuperclass(RecordImpl.class.getSimpleName());
+      f.addImplementedInterface(publicRecordType.getName());
+
+      SourceWriter sw = f.createSourceWriter(generatorContext, pw);
+      sw.println();
+      sw.println(String.format(
+          "public static class MySchema extends RecordSchema<%s> {",
+          recordImplTypeName));
+
+      sw.indent();
+      sw.println("private final Set<Property<?>> allProperties;");
+      sw.println("{");
+
+      sw.indent();
+      sw.println("Set<Property<?>> set = new HashSet<Property<?>>();");
+      sw.println("set.addAll(super.allProperties());");
+
+      JClassType propertyType;
+      try {
+        propertyType = typeOracle.getType(Property.class.getName());
+      } catch (NotFoundException e) {
+        throw new RuntimeException(e);
+      }
+
+      for (JField field : publicRecordType.getFields()) {
+        if (propertyType.getErasedType() == field.getType().getErasedType()) {
+          sw.println(String.format("set.add(%s);", field.getName()));
+        }
+      }
+
+      sw.println("allProperties = Collections.unmodifiableSet(set);");
+      sw.outdent();
+      sw.println("}");
+
+      sw.println();
+      sw.println("public Set<Property<?>> allProperties() {");
+      sw.indent();
+      sw.println("return allProperties;");
+      sw.outdent();
+      sw.println("}");
+
+      sw.println();
+      sw.println("@Override");
+      sw.println(String.format("public %s create(RecordJsoImpl jso) {",
+          recordImplTypeName));
+      sw.indent();
+      sw.println(String.format("return new %s(jso);", recordImplTypeName));
+      sw.outdent();
+      sw.println("}");
+
+      sw.println();
+      sw.println("@Override");
+      sw.println(String.format("public %s createChangeEvent(Record record) {",
+          eventType.getName()));
+      sw.indent();
+      sw.println(String.format("return new %s((%s) record);",
+          eventType.getName(), publicRecordType.getName()));
+      sw.outdent();
+      sw.println("}");
+
+      sw.outdent();
+      sw.println("}");
+
+      sw.println();
+      sw.println(String.format(
+          "public static final RecordSchema<%s> SCHEMA = new MySchema();",
+          recordImplTypeName));
+
+      sw.println();
+      sw.println(String.format("private %s(RecordJsoImpl jso) {",
+          recordImplTypeName));
+      sw.indent();
+      sw.println("super(jso);");
+      sw.outdent();
+      sw.println("}");
+
+      for (JField field : publicRecordType.getFields()) {
+        JType fieldType = field.getType();
+        if (propertyType.getErasedType() == fieldType.getErasedType()) {
+          JParameterizedType parameterized = fieldType.isParameterized();
+          if (parameterized == null) {
+            logger.log(TreeLogger.ERROR, fieldType
+                + " must have its param type set.");
+            throw new UnableToCompleteException();
+          }
+          JClassType returnType = parameterized.getTypeArgs()[0];
+          sw.println();
+          sw.println(String.format("public %s get%s() {",
+              returnType.getQualifiedSourceName(), capitalize(field.getName())));
+          sw.indent();
+          sw.println(String.format("return get(%s);", field.getName()));
+          sw.outdent();
+          sw.println("}");
+        }
+      }
+
+      sw.outdent();
+      sw.println("}");
+    }
+
+    return recordImplTypeName;
+  }
+
   private void generateOnce(TreeLogger logger,
       GeneratorContext generatorContext, PrintWriterManager printWriters,
       PrintWriter out, JClassType interfaceType, String packageName,
@@ -97,16 +245,16 @@ public class RequestFactoryGenerator extends Generator {
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
         packageName, implName);
     f.addImport(RequestFactoryJsonImpl.class.getName());
-    f.addImport(ValueStoreJsonImpl.class.getName());
-    f.addImplementedInterface(interfaceType.getQualifiedSourceName());
-    f.setSuperclass(RequestFactoryJsonImpl.class.getName());
+    f.addImport(interfaceType.getQualifiedSourceName());
+    f.addImplementedInterface(interfaceType.getName());
+    f.setSuperclass(RequestFactoryJsonImpl.class.getSimpleName());
 
     SourceWriter sw = f.createSourceWriter(generatorContext, out);
     sw.println();
 
     // the return types tell us what request selector interfaces
     // to implement
-    Set<JClassType> requestSelectors = new HashSet<JClassType>();
+    Set<JClassType> requestSelectors = new LinkedHashSet<JClassType>();
     for (JMethod methodType : interfaceType.getMethods()) {
       JType returnType = methodType.getReturnType();
       if (null == returnType) {
@@ -144,17 +292,18 @@ public class RequestFactoryGenerator extends Generator {
       String nestedImplName = nestedInterface.getName() + "Impl";
       PrintWriter pw = printWriters.makePrintWriterFor(nestedImplName);
       if (pw != null) {
-        generateRequestSelectorImplementation(logger, generatorContext, pw,
-            nestedInterface, interfaceType, packageName, nestedImplName);
+        generateRequestSelectorImplementation(logger, generatorContext,
+            printWriters, pw, nestedInterface, interfaceType, packageName,
+            nestedImplName);
       }
     }
     printWriters.commit();
   }
 
   private void generateRequestSelectorImplementation(TreeLogger logger,
-      GeneratorContext generatorContext, PrintWriter out,
-      JClassType interfaceType, JClassType mainType, String packageName,
-      String implName) throws UnableToCompleteException {
+      GeneratorContext generatorContext, PrintWriterManager printWriters,
+      PrintWriter out, JClassType interfaceType, JClassType mainType,
+      String packageName, String implName) throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.INFO, String.format(
         "Generating implementation of %s", interfaceType.getName()));
 
@@ -162,20 +311,21 @@ public class RequestFactoryGenerator extends Generator {
         packageName, implName);
     f.addImport(ClientRequestObject.class.getName());
     f.addImport(AbstractListJsonRequestObject.class.getName());
-    f.addImport(EntityListRequest.class.getName());
     f.addImport(RequestDataManager.class.getName());
 
     JClassType returnType = getReturnType(logger, interfaceType);
-    f.addImport(returnType.getQualifiedBinaryName());
+    String returnImplTypeName =
 
-    f.addImport(mainType.getQualifiedBinaryName());
+    ensureRecordType(logger, generatorContext, printWriters,
+        generatorContext.getTypeOracle(), returnType.getPackage().getName(),
+        returnType);
+
     f.addImplementedInterface(interfaceType.getName());
 
-    // mainType
     SourceWriter sw = f.createSourceWriter(generatorContext, out);
     sw.println();
 
-    printRequestImplClass(sw, returnType);
+    printRequestImplClass(sw, returnType, returnImplTypeName);
 
     sw.println("private final " + mainType.getName() + "Impl factory;");
     sw.println();
@@ -264,7 +414,7 @@ public class RequestFactoryGenerator extends Generator {
         sb.append(", ");
       }
       sb.append(parameter.getName());
-      if ("com.google.gwt.valuestore.shared.ValueRef".equals(parameter.getType().getQualifiedBinaryName())) {
+      if ("com.google.gwt.valuestore.shared.PropertyReference".equals(parameter.getType().getQualifiedBinaryName())) {
         sb.append(".get()");
       }
     }
@@ -279,7 +429,7 @@ public class RequestFactoryGenerator extends Generator {
    */
   private JClassType getReturnType(TreeLogger logger, JClassType interfaceType)
       throws UnableToCompleteException {
-    Set<JClassType> returnTypes = new HashSet<JClassType>();
+    Set<JClassType> returnTypes = new LinkedHashSet<JClassType>();
     for (JMethod method : interfaceType.getMethods()) {
       JType returnType = method.getReturnType();
       if (returnType instanceof JParameterizedType) {
@@ -298,15 +448,16 @@ public class RequestFactoryGenerator extends Generator {
   /**
    * Prints the RequestImpl class.
    */
-  private void printRequestImplClass(SourceWriter sw, JClassType returnType) {
+  private void printRequestImplClass(SourceWriter sw, JClassType returnType,
+      String returnImplTypeName) {
     sw.println("private abstract class RequestImpl extends "
         + AbstractListJsonRequestObject.class.getSimpleName() + "<"
-        + returnType.getName() + ",RequestImpl> {");
+        + returnType.getName() + ", RequestImpl> {");
     sw.println();
     sw.indent();
     sw.println("RequestImpl() {");
     sw.indent();
-    sw.println("super(" + returnType.getName() + ".get(), factory);");
+    sw.println("super(" + returnImplTypeName + ".SCHEMA, factory);");
     sw.outdent();
     sw.println("}");
     sw.println();

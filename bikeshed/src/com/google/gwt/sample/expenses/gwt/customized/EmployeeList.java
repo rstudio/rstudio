@@ -17,10 +17,9 @@ package com.google.gwt.sample.expenses.gwt.customized;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.sample.expenses.gwt.request.EmployeeKey;
+import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TakesValueList;
-import com.google.gwt.valuestore.shared.Values;
 
 import java.util.List;
 
@@ -28,21 +27,21 @@ import java.util.List;
  * Manages the Employee ListBox. This should grow into a proper View, with a
  * corresponding Presenter factored out of {@link Customized}
  */
-public final class EmployeeList implements TakesValueList<Values<EmployeeKey>> {
+public final class EmployeeList implements TakesValueList<EmployeeRecord> {
   interface Listener {
-    void onEmployeeSelected(Values<EmployeeKey> e);
+    void onEmployeeSelected(EmployeeRecord e);
   }
 
   private final class MyChangeHandler implements ChangeHandler {
     public void onChange(ChangeEvent event) {
       int selectedIndex = listBox.getSelectedIndex();
-      Values<EmployeeKey> values = employeeValues.get(selectedIndex);
+      EmployeeRecord values = employeeValues.get(selectedIndex);
       listener.onEmployeeSelected(values);
     }
   }
 
   private final ListBox listBox;
-  private List<Values<EmployeeKey>> employeeValues;
+  private List<EmployeeRecord> employeeValues;
   private Listener listener;
 
   /**
@@ -57,12 +56,12 @@ public final class EmployeeList implements TakesValueList<Values<EmployeeKey>> {
     this.listener = listener;
   }
 
-  public void setValueList(List<Values<EmployeeKey>> newValues) {
+  public void setValueList(List<EmployeeRecord> newValues) {
     this.employeeValues = newValues;
     listBox.clear();
     for (int i = 0; i < employeeValues.size(); i++) {
-      Values<EmployeeKey> values = employeeValues.get(i);
-      listBox.addItem(values.get(EmployeeKey.get().getDisplayName()));
+      EmployeeRecord values = employeeValues.get(i);
+      listBox.addItem(values.getDisplayName());
     }
   }
 }

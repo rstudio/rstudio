@@ -17,8 +17,7 @@ package com.google.gwt.valuestore.client;
 
 import com.google.gwt.bikeshed.list.shared.AsyncListViewAdapter;
 import com.google.gwt.user.client.ui.TakesValueList;
-import com.google.gwt.valuestore.shared.Values;
-import com.google.gwt.valuestore.shared.ValuesKey;
+import com.google.gwt.valuestore.shared.Record;
 
 import java.util.List;
 
@@ -31,10 +30,10 @@ import java.util.List;
  *
  * @param <K> the ValuesKey of the records to display
  */
-public abstract class ValueStoreListViewAdapter<K extends ValuesKey<K>> extends
-    AsyncListViewAdapter<Values<K>> implements TakesValueList<Values<K>> {
+public abstract class ValueStoreListViewAdapter<K extends Record> extends
+    AsyncListViewAdapter<K> implements TakesValueList<K> {
 
-  public void setValueList(List<Values<K>> newValues) {
+  public void setValueList(List<K> newValues) {
     updateDataSize(newValues.size(), true);
     updateViewData(0, newValues.size(), newValues);
   }

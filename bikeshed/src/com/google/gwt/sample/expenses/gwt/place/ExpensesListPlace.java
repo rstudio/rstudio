@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.place;
 
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKey;
+import com.google.gwt.valuestore.shared.Record;
 
 /**
  * Place in an app that lists
@@ -23,16 +23,16 @@ import com.google.gwt.sample.expenses.gwt.request.ExpensesKey;
  * particular type.
  */
 public class ExpensesListPlace extends ExpensesPlace {
-  private final ExpensesKey<?> key;
+  private final Class<? extends Record> key;
 
   /**
    * @param key the schema of the entities at this place
    */
-  public ExpensesListPlace(ExpensesKey<?> key) {
+  public ExpensesListPlace(Class<? extends Record> key) {
     this.key = key;
   }
 
-  public ExpensesKey<?> getKey() {
+  public Class<? extends Record> getType() {
     return key;
   }
 }

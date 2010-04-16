@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,7 +18,7 @@ package com.google.gwt.valuestore.client;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.valuestore.shared.ValueStore;
-import com.google.gwt.valuestore.shared.ValuesKey;
+import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +31,7 @@ public class ValueStoreJsonImpl implements ValueStore {
 
   final HandlerManager eventBus;
 
-  final Map<RecordKey, ValuesImpl<?>> records = new HashMap<RecordKey, ValuesImpl<?>>();
+  final Map<RecordKey, RecordJsoImpl> records = new HashMap<RecordKey, RecordJsoImpl>();
 
   public ValueStoreJsonImpl(HandlerManager eventBus) {
     this.eventBus = eventBus;
@@ -41,14 +41,13 @@ public class ValueStoreJsonImpl implements ValueStore {
     throw new UnsupportedOperationException("Auto-generated method stub");
   }
 
-  public <K extends ValuesKey<K>> void setRecords(
-      JsArray<ValuesImpl<K>> newRecords) {
+  public void setRecords(JsArray<RecordJsoImpl> newRecords) {
 
     for (int i = 0, l = newRecords.length(); i < l; i++) {
-      ValuesImpl<K> newRecord = newRecords.get(i);
+      RecordJsoImpl newRecord = newRecords.get(i);
       RecordKey recordKey = new RecordKey(newRecord);
 
-      ValuesImpl<?> oldRecord = records.get(recordKey);
+      RecordJsoImpl oldRecord = records.get(recordKey);
       if (oldRecord == null) {
         records.put(recordKey, newRecord);
       } else {
@@ -56,7 +55,7 @@ public class ValueStoreJsonImpl implements ValueStore {
         newRecord = oldRecord.cast();
         newRecords.set(i, newRecord);
         if (changed) {
-          eventBus.fireEvent(newRecord.createChangeEvent());
+          eventBus.fireEvent(newRecord.getSchema().createChangeEvent(newRecord));
         }
       }
     }

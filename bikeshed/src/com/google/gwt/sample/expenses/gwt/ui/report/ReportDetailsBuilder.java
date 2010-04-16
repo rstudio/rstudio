@@ -15,23 +15,22 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
-import com.google.gwt.sample.expenses.gwt.request.ReportKey;
-import com.google.gwt.valuestore.shared.Values;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 
 /**
  * Renders report details to HTML.
  */
 public class ReportDetailsBuilder {
 
-  public void append(StringBuilder list, Values<ReportKey> values) {
-    String purpose = values.get(ReportKey.get().getPurpose());
+  public void append(StringBuilder list, ReportRecord values) {
+    String purpose = values.getPurpose();
     list.append("<div>");
     list.append("<label>").append("Purpose: ").append("</label>");
     list.append("<span>").append(purpose).append("</span>");
     list.append("</div>");
 
     list.append("<div>");
-    String created = values.get(ReportKey.get().getCreated()).toString();
+    String created = values.getCreated().toString();
     list.append("<label>").append("Created: ").append("</label>");
     list.append("<span>").append(created).append("</span>");
     list.append("</div>");

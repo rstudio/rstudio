@@ -16,24 +16,27 @@
 package com.google.gwt.sample.expenses.gwt.ui;
 
 import com.google.gwt.sample.expenses.gwt.place.ExpensesListPlace;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKey;
+import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.user.client.ui.Renderer;
+import com.google.gwt.valuestore.shared.Record;
 
 /**
  * Renders {@link ExpensesListPlace}s for display to users.
  */
 public class ListPlaceRenderer implements Renderer<ExpensesListPlace> {
 
-  private final Renderer<ExpensesKey<?>> entityRenderer;
-
-  /**
-   * @param entityRenderer
-   */
-  public ListPlaceRenderer(Renderer<ExpensesKey<?>> entityRenderer) {
-    this.entityRenderer = entityRenderer;
-  }
-
   public String render(ExpensesListPlace object) {
-    return entityRenderer.render(object.getKey());
+    // TODO Will these class references prevent customized apps that keep this
+    // view builder around from stripping unsued entity types?
+   Class<? extends Record> type = object.getType();
+    if (type.equals(EmployeeRecord.class)) {
+      return "Employees";
+    }
+    if (type.equals(ReportRecord.class)) {
+      return "Reports";
+    }
+    
+    throw new IllegalArgumentException("Cannot render unknown type " + object);
   }
 }

@@ -15,19 +15,29 @@
  */
 package com.google.gwt.valuestore.shared;
 
-/**
- * Represents a "primitive" property of a record managed by {@link ValueStore}.
- * Primitives include {@link java.lang.Number} and its subclasses,
- * {@link java.lang.String}, {@link java.util.Date} and enums (tbd).
- *
- * @param <K> type of the property holder
- * @param <V> type of the property
- */
-public interface PrimitiveProperty<K extends ValuesKey<K>, V> extends
-    Property<K, V> {
 
-  /**
-   * @return the valueClass
-   */
-  Class<V> getValueType();
+/**
+ * A pointer to a particular property value.
+ *
+ * @param <V> Value type
+ */
+public class PropertyReference<V> {
+  private final Record record;
+  private final Property<V> property;
+
+  public PropertyReference(Record record, Property<V> property) {
+    assert null != record;
+    assert null != property;
+
+    this.record = record;
+    this.property = property;
+  }
+
+  public V get() {
+    return record.get(property);
+  }
+
+  Property<V> getProperty() {
+    return property;
+  }
 }

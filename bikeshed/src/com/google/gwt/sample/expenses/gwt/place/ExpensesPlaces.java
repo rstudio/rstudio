@@ -17,8 +17,7 @@ package com.google.gwt.sample.expenses.gwt.place;
 
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.bikeshed.cells.client.ActionCell;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKey;
-import com.google.gwt.valuestore.shared.Values;
+import com.google.gwt.valuestore.shared.Record;
 
 /**
  * Object with knowledge of the places of an app.
@@ -30,27 +29,19 @@ public class ExpensesPlaces {
     this.controller = controller;
   }
 
-  public <K extends ExpensesKey<K>> ActionCell.Delegate<Values<K>> getDetailsGofer() {
-    return new ActionCell.Delegate<Values<K>>() {
-      public void execute(Values<K> object) {
-        goToDetailsFor(object);
+  public <R extends Record> ActionCell.Delegate<R> getDetailsGofer() {
+    return new ActionCell.Delegate<R>() {
+      public void execute(R object) {
+        controller.goTo(new ExpensesDetailsPlace(object));
       }
     };
   }
 
-  public <K extends ExpensesKey<K>> ActionCell.Delegate<Values<K>> getEditorGofer() {
-    return new ActionCell.Delegate<Values<K>>() {
-      public void execute(Values<K> object) {
-        goToEditorFor(object);
+  public <R extends Record> ActionCell.Delegate<R> getEditorGofer() {
+    return new ActionCell.Delegate<R>() {
+      public void execute(R object) {
+        controller.goTo(new ExpensesEditorPlace(object));
       }
     };
-  }
-
-  private void goToDetailsFor(Values<? extends ExpensesKey<?>> e) {
-    controller.goTo(new ExpensesDetailsPlace(e));
-  }
-
-  private void goToEditorFor(Values<? extends ExpensesKey<?>> e) {
-    controller.goTo(new ExpensesEditorPlace(e));
   }
 }

@@ -26,13 +26,13 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesListPlace;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesPlace;
 import com.google.gwt.sample.expenses.gwt.place.ExpensesPlaces;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKey;
-import com.google.gwt.sample.expenses.gwt.request.ExpensesKeyProcessor;
+import com.google.gwt.sample.expenses.gwt.request.ExpensesEntityTypesProcessor;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.ui.ExpensesKeyNameRenderer;
 import com.google.gwt.sample.expenses.gwt.ui.ListPlaceRenderer;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.valuestore.shared.Record;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,7 +56,7 @@ public class Scaffold implements EntryPoint {
 
     // Renderers
     final ExpensesKeyNameRenderer entityNamer = new ExpensesKeyNameRenderer();
-    final ListPlaceRenderer listPlaceNamer = new ListPlaceRenderer(entityNamer);
+    final ListPlaceRenderer listPlaceNamer = new ListPlaceRenderer();
 
     // Top level UI
     final ScaffoldShell shell = new ScaffoldShell();
@@ -89,9 +89,9 @@ public class Scaffold implements EntryPoint {
 
   private List<ExpensesListPlace> getTopPlaces() {
     final List<ExpensesListPlace> rtn = new ArrayList<ExpensesListPlace>();
-    ExpensesKeyProcessor.processAll(new ExpensesKeyProcessor.KeyProcessor() {
-      public void processKey(ExpensesKey<?> key) {
-        rtn.add(new ExpensesListPlace(key));
+    ExpensesEntityTypesProcessor.processAll(new ExpensesEntityTypesProcessor.EntityTypesProcessor() {
+      public void processType(Class<? extends Record> recordType) {
+        rtn.add(new ExpensesListPlace(recordType));
       }
     });
     return Collections.unmodifiableList(rtn);

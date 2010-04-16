@@ -16,9 +16,11 @@
 package com.google.gwt.sample.expenses.server;
 
 import com.google.gwt.requestfactory.server.RequestFactoryServlet;
-import com.google.gwt.sample.expenses.gwt.request.ReportKey;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
+import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.sample.expenses.server.domain.Employee;
 import com.google.gwt.sample.expenses.server.domain.Report;
+import com.google.gwt.valuestore.shared.Record;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,6 +33,7 @@ import java.util.Date;
  * Dwindling interim servlet that calls our mock storage backend directly
  * instead of reflectively. Should soon vanish completely.
  */
+@SuppressWarnings("serial")
 public class ExpensesDataServlet extends RequestFactoryServlet {
 
   @Override
@@ -94,10 +97,10 @@ public class ExpensesDataServlet extends RequestFactoryServlet {
       int length = reportArray.length();
       if (length > 0) {
         JSONObject report = reportArray.getJSONObject(0);
-        Report r = Report.findReport(report.getLong(ReportKey.get().getId().getName()));
-        r.setPurpose(report.getString(ReportKey.get().getPurpose().getName()));
+        Report r = Report.findReport(report.getLong(Record.id.getName()));
+        r.setPurpose(report.getString(ReportRecord.purpose.getName()));
         r.persist();
-        report.put(ReportKey.get().getVersion().getName(), r.getVersion());
+        report.put(Record.version.getName(), r.getVersion());
         JSONArray returnArray = new JSONArray();
         // TODO: don't echo back everything.
         returnArray.put(report);

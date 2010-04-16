@@ -24,8 +24,8 @@ import com.google.gwt.bikeshed.list.client.PagingTableListView;
 import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.sample.expenses.gwt.request.ReportChanged;
-import com.google.gwt.sample.expenses.gwt.request.ReportKey;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecordChanged;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
@@ -33,7 +33,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TakesValueList;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.valuestore.shared.Values;
 
 import java.util.Date;
 import java.util.List;
@@ -43,9 +42,9 @@ import java.util.List;
  * refactored into proper MVP pieces.
  */
 public class CustomizedShell extends Composite implements
-    TakesValueList<Values<ReportKey>>, ReportChanged.Handler {
+    TakesValueList<ReportRecord>, ReportRecordChanged.Handler {
   interface Listener {
-    void setPurpose(Values<ReportKey> report, String purpose);
+    void setPurpose(ReportRecord report, String purpose);
   }
 
   interface ShellUiBinder extends UiBinder<Widget, CustomizedShell> {
@@ -54,47 +53,47 @@ public class CustomizedShell extends Composite implements
   private static ShellUiBinder uiBinder = GWT.create(ShellUiBinder.class);
 
   @UiField Element error;
-  @UiField PagingTableListView<Values<ReportKey>> listView;
+  @UiField PagingTableListView<ReportRecord> listView;
   @UiField ListBox users;
 
-  private Column<Values<ReportKey>, Date, Void> createdCol = new Column<Values<ReportKey>, Date, Void>(
+  private Column<ReportRecord, Date, Void> createdCol = new Column<ReportRecord, Date, Void>(
       new DateCell()) {
     @Override
-    public Date getValue(Values<ReportKey> object) {
-      return object.get(ReportKey.get().getCreated());
+    public Date getValue(ReportRecord object) {
+      return object.getCreated();
     }
   };
   private Listener listener;
-  private final ListViewAdapter<Values<ReportKey>> adapter;
+  private final ListViewAdapter<ReportRecord> adapter;
 
-  private Column<Values<ReportKey>, String, String> purposeCol = new Column<Values<ReportKey>, String, String>(
+  private Column<ReportRecord, String, String> purposeCol = new Column<ReportRecord, String, String>(
       new EditTextCell()) {
     @Override
-    public String getValue(Values<ReportKey> object) {
-      return object.get(ReportKey.get().getPurpose());
+    public String getValue(ReportRecord object) {
+      return object.getPurpose();
     }
   };
 
-  private Column<Values<ReportKey>, String, Void> statusCol = new Column<Values<ReportKey>, String, Void>(
+  private Column<ReportRecord, String, Void> statusCol = new Column<ReportRecord, String, Void>(
       TextCell.getInstance()) {
     @Override
-    public String getValue(Values<ReportKey> object) {
+    public String getValue(ReportRecord object) {
       return "...";
     }
   };
 
-  private List<Values<ReportKey>> values;
+  private List<ReportRecord> values;
 
   public CustomizedShell() {
-    adapter = new ListViewAdapter<Values<ReportKey>>();
+    adapter = new ListViewAdapter<ReportRecord>();
     initWidget(uiBinder.createAndBindUi(this));
 
     listView.addColumn(createdCol, "Created");
     listView.addColumn(statusCol, "Status (tbd)");
     listView.addColumn(purposeCol, "Purpose");
 
-    purposeCol.setFieldUpdater(new FieldUpdater<Values<ReportKey>, String, String>() {
-      public void update(int index, Values<ReportKey> object, String value,
+    purposeCol.setFieldUpdater(new FieldUpdater<ReportRecord, String, String>() {
+      public void update(int index, ReportRecord object, String value,
           String viewData) {
         adapter.getList().set(index, object);
         listener.setPurpose(object, value);
@@ -102,11 +101,11 @@ public class CustomizedShell extends Composite implements
     });
   }
 
-  public List<Values<ReportKey>> getValues() {
+  public List<ReportRecord> getValues() {
     return values;
   }
 
-  public void onReportChanged(ReportChanged event) {
+  public void onReportChanged(ReportRecordChanged event) {
     refresh();
   }
 
@@ -114,14 +113,14 @@ public class CustomizedShell extends Composite implements
     this.listener = listener;
   }
 
-  public void setValueList(List<Values<ReportKey>> newValues) {
+  public void setValueList(List<ReportRecord> newValues) {
     this.values = newValues;
     refresh();
   }
 
   @UiFactory
-  PagingTableListView<Values<ReportKey>> createListView() {
-    PagingTableListView<Values<ReportKey>> table = new PagingTableListView<Values<ReportKey>>(
+  PagingTableListView<ReportRecord> createListView() {
+    PagingTableListView<ReportRecord> table = new PagingTableListView<ReportRecord>(
         adapter, 10);
     adapter.addView(table);
     return table;
