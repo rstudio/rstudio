@@ -15,6 +15,14 @@
  */
 package com.google.gwt.dev.shell.remoteui;
 
+/*
+ * Notes:
+ * - GWT 2.0.3 and earlier set the enum fields as "required" (such as requestType, which is
+ *   of type RequestType, which is an enum).  This ended up preventing new values to be
+ *   added to the enums.  Those enum fields are now set as "optional", allowing future versions
+ *   of GPE and GWT to add new values to the enums.
+ */
+
 option java_outer_classname = "RemoteMessageProto";
 
 // Outer envelope for all messages
@@ -90,7 +98,7 @@ message Message {
         message MainLog {
         }
         
-        required LogType type = 1;
+        optional LogType type = 1;
         optional ModuleLog moduleLog = 2;
         optional ServerLog serverLog = 3;
         optional MainLog mainLog = 4;
@@ -137,7 +145,7 @@ message Message {
         repeated string startupURLs = 2;       
       }
       
-      required RequestType requestType = 1;
+      optional RequestType requestType = 1;
       optional CapabilityExchange capabilityExchange = 2;
       optional AddLog addLog = 3;
       optional AddLogBranch addLogBranch = 4;
@@ -164,12 +172,12 @@ message Message {
       message RestartWebServer {
       }
                
-      required RequestType requestType = 1;
+      optional RequestType requestType = 1;
       optional CapabilityExchange capabilityExchange = 2;
       optional RestartWebServer restartWebServer = 3;      
     }
     
-    required ServiceType serviceType = 1;
+    optional ServiceType serviceType = 1;
     optional ViewerRequest viewerRequest = 2;
     optional DevModeRequest devModeRequest = 3;
   }
@@ -192,7 +200,7 @@ message Message {
       // Response for the capabilities of the ViewerService
       message CapabilityExchange {
         message Capability {
-          required Message.Request.ViewerRequest.RequestType capability = 1;
+          optional Message.Request.ViewerRequest.RequestType capability = 1;
         }
         
         repeated Capability capabilities = 2; 
@@ -208,7 +216,7 @@ message Message {
         required uint32 logHandle = 1;
       }
       
-      required ResponseType responseType = 1;
+      optional ResponseType responseType = 1;
       optional CapabilityExchange capabilityExchange = 2;
       optional AddLog addLog = 3;
       optional AddLogBranch addLogBranch = 4;      
@@ -226,7 +234,7 @@ message Message {
       // Response for the capabilities of the DevModeService
       message CapabilityExchange {
         message Capability {
-          required Message.Request.DevModeRequest.RequestType capability = 1;
+          optional Message.Request.DevModeRequest.RequestType capability = 1;
         }
         
         repeated Capability capabilities = 2;  
@@ -237,7 +245,7 @@ message Message {
       message RestartWebServer {
       }
       
-      required ResponseType responseType = 1;
+      optional ResponseType responseType = 1;
       optional CapabilityExchange capabilityExchange = 2;      
       optional RestartWebServer restartWebServer = 3;     
     }
@@ -255,7 +263,7 @@ message Message {
   // we can make use of it to detect protocol incompatibilities
   optional string protocolVersion = 1;
   
-  required MessageType messageType = 2;
+  optional MessageType messageType = 2;
   required uint32 messageId = 3;
   optional Request request = 4;
   optional Response response = 5;

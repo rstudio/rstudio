@@ -18,6 +18,7 @@ package com.google.gwt.dev.shell.remoteui;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest;
+import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RequestType;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange;
 
@@ -48,21 +49,24 @@ public class DevModeServiceRequestProcessor implements RequestProcessor {
               + request.getServiceType().name());
     }
 
-    switch (request.getDevModeRequest().getRequestType()) {
-      case CAPABILITY_EXCHANGE:
-        return processCapabilityExchange();
+    RequestType requestType = request.getDevModeRequest().getRequestType();
+    if (requestType != null) {
+      switch (requestType) {
+        case CAPABILITY_EXCHANGE:
+          return processCapabilityExchange();
 
-      case RESTART_WEB_SERVER:
-        return processRestartServer();
+        case RESTART_WEB_SERVER:
+          return processRestartServer();
 
-      default: {
-        break;
+        default: {
+          break;
+        }
       }
     }
 
     throw new IllegalArgumentException(
         "Unknown DevModeService Request: The DevModeService cannot handle requests of type "
-            + request.getDevModeRequest().getRequestType().name());
+            + requestType == null ? "(unknown)" : requestType.name());
   }
 
   private Response processCapabilityExchange() {

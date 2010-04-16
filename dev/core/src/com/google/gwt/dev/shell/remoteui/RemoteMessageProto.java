@@ -1667,7 +1667,7 @@ public final class RemoteMessageProto {
             }
           }
           
-          // required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.LogType type = 1;
+          // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.LogType type = 1;
           public static final int TYPE_FIELD_NUMBER = 1;
           private boolean hasType;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.LogType type_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.LogType.MAIN;
@@ -1696,7 +1696,6 @@ public final class RemoteMessageProto {
           public com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog getMainLog() { return mainLog_; }
           
           public final boolean isInitialized() {
-            if (!hasType) return false;
             if (hasModuleLog()) {
               if (!getModuleLog().isInitialized()) return false;
             }
@@ -1973,7 +1972,7 @@ public final class RemoteMessageProto {
             }
             
             
-            // required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.LogType type = 1;
+            // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.LogType type = 1;
             public boolean hasType() {
               return result.hasType();
             }
@@ -4246,7 +4245,7 @@ public final class RemoteMessageProto {
           }
         }
         
-        // required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.RequestType requestType = 1;
+        // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.RequestType requestType = 1;
         public static final int REQUESTTYPE_FIELD_NUMBER = 1;
         private boolean hasRequestType;
         private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.RequestType requestType_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.RequestType.CAPABILITY_EXCHANGE;
@@ -4296,7 +4295,6 @@ public final class RemoteMessageProto {
         public com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize getInitialize() { return initialize_; }
         
         public final boolean isInitialized() {
-          if (!hasRequestType) return false;
           if (hasAddLog()) {
             if (!getAddLog().isInitialized()) return false;
           }
@@ -4636,7 +4634,7 @@ public final class RemoteMessageProto {
           }
           
           
-          // required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.RequestType requestType = 1;
+          // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.RequestType requestType = 1;
           public boolean hasRequestType() {
             return result.hasRequestType();
           }
@@ -5434,7 +5432,7 @@ public final class RemoteMessageProto {
           }
         }
         
-        // required .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RequestType requestType = 1;
+        // optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RequestType requestType = 1;
         public static final int REQUESTTYPE_FIELD_NUMBER = 1;
         private boolean hasRequestType;
         private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RequestType requestType_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RequestType.CAPABILITY_EXCHANGE;
@@ -5456,7 +5454,6 @@ public final class RemoteMessageProto {
         public com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer getRestartWebServer() { return restartWebServer_; }
         
         public final boolean isInitialized() {
-          if (!hasRequestType) return false;
           return true;
         }
         
@@ -5708,7 +5705,7 @@ public final class RemoteMessageProto {
           }
           
           
-          // required .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RequestType requestType = 1;
+          // optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RequestType requestType = 1;
           public boolean hasRequestType() {
             return result.hasRequestType();
           }
@@ -5813,7 +5810,7 @@ public final class RemoteMessageProto {
         }
       }
       
-      // required .com.google.gwt.dev.shell.remoteui.Message.Request.ServiceType serviceType = 1;
+      // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ServiceType serviceType = 1;
       public static final int SERVICETYPE_FIELD_NUMBER = 1;
       private boolean hasServiceType;
       private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ServiceType serviceType_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ServiceType.VIEWER;
@@ -5835,12 +5832,8 @@ public final class RemoteMessageProto {
       public com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest getDevModeRequest() { return devModeRequest_; }
       
       public final boolean isInitialized() {
-        if (!hasServiceType) return false;
         if (hasViewerRequest()) {
           if (!getViewerRequest().isInitialized()) return false;
-        }
-        if (hasDevModeRequest()) {
-          if (!getDevModeRequest().isInitialized()) return false;
         }
         return true;
       }
@@ -6093,7 +6086,7 @@ public final class RemoteMessageProto {
         }
         
         
-        // required .com.google.gwt.dev.shell.remoteui.Message.Request.ServiceType serviceType = 1;
+        // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ServiceType serviceType = 1;
         public boolean hasServiceType() {
           return result.hasServiceType();
         }
@@ -6361,7 +6354,7 @@ public final class RemoteMessageProto {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_Capability_fieldAccessorTable;
             }
             
-            // required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.RequestType capability = 1;
+            // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.RequestType capability = 1;
             public static final int CAPABILITY_FIELD_NUMBER = 1;
             private boolean hasCapability;
             private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.RequestType capability_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.RequestType.CAPABILITY_EXCHANGE;
@@ -6369,7 +6362,6 @@ public final class RemoteMessageProto {
             public com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.RequestType getCapability() { return capability_; }
             
             public final boolean isInitialized() {
-              if (!hasCapability) return false;
               return true;
             }
             
@@ -6583,7 +6575,7 @@ public final class RemoteMessageProto {
               }
               
               
-              // required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.RequestType capability = 1;
+              // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.RequestType capability = 1;
               public boolean hasCapability() {
                 return result.hasCapability();
               }
@@ -6627,9 +6619,6 @@ public final class RemoteMessageProto {
           }
           
           public final boolean isInitialized() {
-            for (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability element : getCapabilitiesList()) {
-              if (!element.isInitialized()) return false;
-            }
             return true;
           }
           
@@ -7443,7 +7432,7 @@ public final class RemoteMessageProto {
           }
         }
         
-        // required .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.ResponseType responseType = 1;
+        // optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.ResponseType responseType = 1;
         public static final int RESPONSETYPE_FIELD_NUMBER = 1;
         private boolean hasResponseType;
         private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.ResponseType responseType_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.ResponseType.CAPABILITY_EXCHANGE;
@@ -7472,10 +7461,6 @@ public final class RemoteMessageProto {
         public com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch getAddLogBranch() { return addLogBranch_; }
         
         public final boolean isInitialized() {
-          if (!hasResponseType) return false;
-          if (hasCapabilityExchange()) {
-            if (!getCapabilityExchange().isInitialized()) return false;
-          }
           if (hasAddLog()) {
             if (!getAddLog().isInitialized()) return false;
           }
@@ -7752,7 +7737,7 @@ public final class RemoteMessageProto {
           }
           
           
-          // required .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.ResponseType responseType = 1;
+          // optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.ResponseType responseType = 1;
           public boolean hasResponseType() {
             return result.hasResponseType();
           }
@@ -8031,7 +8016,7 @@ public final class RemoteMessageProto {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_Capability_fieldAccessorTable;
             }
             
-            // required .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RequestType capability = 1;
+            // optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RequestType capability = 1;
             public static final int CAPABILITY_FIELD_NUMBER = 1;
             private boolean hasCapability;
             private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RequestType capability_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RequestType.CAPABILITY_EXCHANGE;
@@ -8039,7 +8024,6 @@ public final class RemoteMessageProto {
             public com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RequestType getCapability() { return capability_; }
             
             public final boolean isInitialized() {
-              if (!hasCapability) return false;
               return true;
             }
             
@@ -8253,7 +8237,7 @@ public final class RemoteMessageProto {
               }
               
               
-              // required .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RequestType capability = 1;
+              // optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RequestType capability = 1;
               public boolean hasCapability() {
                 return result.hasCapability();
               }
@@ -8297,9 +8281,6 @@ public final class RemoteMessageProto {
           }
           
           public final boolean isInitialized() {
-            for (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability element : getCapabilitiesList()) {
-              if (!element.isInitialized()) return false;
-            }
             return true;
           }
           
@@ -8805,7 +8786,7 @@ public final class RemoteMessageProto {
           }
         }
         
-        // required .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.ResponseType responseType = 1;
+        // optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.ResponseType responseType = 1;
         public static final int RESPONSETYPE_FIELD_NUMBER = 1;
         private boolean hasResponseType;
         private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.ResponseType responseType_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.ResponseType.CAPABILITY_EXCHANGE;
@@ -8827,10 +8808,6 @@ public final class RemoteMessageProto {
         public com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer getRestartWebServer() { return restartWebServer_; }
         
         public final boolean isInitialized() {
-          if (!hasResponseType) return false;
-          if (hasCapabilityExchange()) {
-            if (!getCapabilityExchange().isInitialized()) return false;
-          }
           return true;
         }
         
@@ -9082,7 +9059,7 @@ public final class RemoteMessageProto {
           }
           
           
-          // required .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.ResponseType responseType = 1;
+          // optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.ResponseType responseType = 1;
           public boolean hasResponseType() {
             return result.hasResponseType();
           }
@@ -9204,9 +9181,6 @@ public final class RemoteMessageProto {
       public final boolean isInitialized() {
         if (hasViewerResponse()) {
           if (!getViewerResponse().isInitialized()) return false;
-        }
-        if (hasDevModeResponse()) {
-          if (!getDevModeResponse().isInitialized()) return false;
         }
         return true;
       }
@@ -9842,7 +9816,7 @@ public final class RemoteMessageProto {
     public boolean hasProtocolVersion() { return hasProtocolVersion; }
     public java.lang.String getProtocolVersion() { return protocolVersion_; }
     
-    // required .com.google.gwt.dev.shell.remoteui.Message.MessageType messageType = 2;
+    // optional .com.google.gwt.dev.shell.remoteui.Message.MessageType messageType = 2;
     public static final int MESSAGETYPE_FIELD_NUMBER = 2;
     private boolean hasMessageType;
     private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.MessageType messageType_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.MessageType.REQUEST;
@@ -9878,7 +9852,6 @@ public final class RemoteMessageProto {
     public com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure getFailure() { return failure_; }
     
     public final boolean isInitialized() {
-      if (!hasMessageType) return false;
       if (!hasMessageId) return false;
       if (hasRequest()) {
         if (!getRequest().isInitialized()) return false;
@@ -10205,7 +10178,7 @@ public final class RemoteMessageProto {
         return this;
       }
       
-      // required .com.google.gwt.dev.shell.remoteui.Message.MessageType messageType = 2;
+      // optional .com.google.gwt.dev.shell.remoteui.Message.MessageType messageType = 2;
       public boolean hasMessageType() {
         return result.hasMessageType();
       }
@@ -10517,7 +10490,7 @@ public final class RemoteMessageProto {
       "\n>core/src/com/google/gwt/dev/shell/remo" +
       "teui/remotemessage.proto\022!com.google.gwt" +
       ".dev.shell.remoteui\"\271\'\n\007Message\022\027\n\017proto" +
-      "colVersion\030\001 \001(\t\022K\n\013messageType\030\002 \002(\01626." +
+      "colVersion\030\001 \001(\t\022K\n\013messageType\030\002 \001(\01626." +
       "com.google.gwt.dev.shell.remoteui.Messag" +
       "e.MessageType\022\021\n\tmessageId\030\003 \002(\r\022C\n\007requ" +
       "est\030\004 \001(\01322.com.google.gwt.dev.shell.rem" +
@@ -10525,14 +10498,14 @@ public final class RemoteMessageProto {
       "3.com.google.gwt.dev.shell.remoteui.Mess" +
       "age.Response\022C\n\007failure\030\006 \001(\01322.com.goog",
       "le.gwt.dev.shell.remoteui.Message.Failur" +
-      "e\032\307\026\n\007Request\022S\n\013serviceType\030\001 \002(\0162>.com" +
+      "e\032\307\026\n\007Request\022S\n\013serviceType\030\001 \001(\0162>.com" +
       ".google.gwt.dev.shell.remoteui.Message.R" +
       "equest.ServiceType\022W\n\rviewerRequest\030\002 \001(" +
       "\0132@.com.google.gwt.dev.shell.remoteui.Me" +
       "ssage.Request.ViewerRequest\022Y\n\016devModeRe" +
       "quest\030\003 \001(\0132A.com.google.gwt.dev.shell.r" +
       "emoteui.Message.Request.DevModeRequest\032\310" +
-      "\020\n\rViewerRequest\022a\n\013requestType\030\001 \002(\0162L." +
+      "\020\n\rViewerRequest\022a\n\013requestType\030\001 \001(\0162L." +
       "com.google.gwt.dev.shell.remoteui.Messag",
       "e.Request.ViewerRequest.RequestType\022o\n\022c" +
       "apabilityExchange\030\002 \001(\0132S.com.google.gwt" +
@@ -10551,7 +10524,7 @@ public final class RemoteMessageProto {
       "2K.com.google.gwt.dev.shell.remoteui.Mes" +
       "sage.Request.ViewerRequest.Initialize\032\024\n" +
       "\022CapabilityExchange\032\373\004\n\006AddLog\022]\n\004type\030\001" +
-      " \002(\0162O.com.google.gwt.dev.shell.remoteui" +
+      " \001(\0162O.com.google.gwt.dev.shell.remoteui" +
       ".Message.Request.ViewerRequest.AddLog.Lo" +
       "gType\022d\n\tmoduleLog\030\002 \001(\0132Q.com.google.gw",
       "t.dev.shell.remoteui.Message.Request.Vie" +
@@ -10585,7 +10558,7 @@ public final class RemoteMessageProto {
       "uestType\022\027\n\023CAPABILITY_EXCHANGE\020\000\022\013\n\007ADD" +
       "_LOG\020\001\022\022\n\016ADD_LOG_BRANCH\020\002\022\021\n\rADD_LOG_EN",
       "TRY\020\003\022\022\n\016DISCONNECT_LOG\020\004\022\016\n\nINITIALIZE\020" +
-      "\005\032\276\003\n\016DevModeRequest\022b\n\013requestType\030\001 \002(" +
+      "\005\032\276\003\n\016DevModeRequest\022b\n\013requestType\030\001 \001(" +
       "\0162M.com.google.gwt.dev.shell.remoteui.Me" +
       "ssage.Request.DevModeRequest.RequestType" +
       "\022p\n\022capabilityExchange\030\002 \001(\0132T.com.googl" +
@@ -10603,7 +10576,7 @@ public final class RemoteMessageProto {
       "devModeResponse\030\002 \001(\0132C.com.google.gwt.d" +
       "ev.shell.remoteui.Message.Response.DevMo" +
       "deResponse\032\265\006\n\016ViewerResponse\022e\n\014respons" +
-      "eType\030\001 \002(\0162O.com.google.gwt.dev.shell.r",
+      "eType\030\001 \001(\0162O.com.google.gwt.dev.shell.r",
       "emoteui.Message.Response.ViewerResponse." +
       "ResponseType\022q\n\022capabilityExchange\030\002 \001(\013" +
       "2U.com.google.gwt.dev.shell.remoteui.Mes" +
@@ -10617,13 +10590,13 @@ public final class RemoteMessageProto {
       "\030\002 \003(\0132`.com.google.gwt.dev.shell.remote" +
       "ui.Message.Response.ViewerResponse.Capab" +
       "ilityExchange.Capability\032n\n\nCapability\022`" +
-      "\n\ncapability\030\001 \002(\0162L.com.google.gwt.dev." +
+      "\n\ncapability\030\001 \001(\0162L.com.google.gwt.dev." +
       "shell.remoteui.Message.Request.ViewerReq" +
       "uest.RequestType\032\033\n\006AddLog\022\021\n\tlogHandle\030" +
       "\001 \002(\r\032!\n\014AddLogBranch\022\021\n\tlogHandle\030\001 \002(\r" +
       "\"H\n\014ResponseType\022\027\n\023CAPABILITY_EXCHANGE\020" +
       "\000\022\013\n\007ADD_LOG\020\001\022\022\n\016ADD_LOG_BRANCH\020\002\032\263\005\n\017D" +
-      "evModeResponse\022f\n\014responseType\030\001 \002(\0162P.c",
+      "evModeResponse\022f\n\014responseType\030\001 \001(\0162P.c",
       "om.google.gwt.dev.shell.remoteui.Message" +
       ".Response.DevModeResponse.ResponseType\022r" +
       "\n\022capabilityExchange\030\002 \001(\0132V.com.google." +
@@ -10636,7 +10609,7 @@ public final class RemoteMessageProto {
       "ogle.gwt.dev.shell.remoteui.Message.Resp",
       "onse.DevModeResponse.CapabilityExchange." +
       "Capability\032o\n\nCapability\022a\n\ncapability\030\001" +
-      " \002(\0162M.com.google.gwt.dev.shell.remoteui" +
+      " \001(\0162M.com.google.gwt.dev.shell.remoteui" +
       ".Message.Request.DevModeRequest.RequestT" +
       "ype\032\022\n\020RestartWebServer\"?\n\014ResponseType\022" +
       "\027\n\023CAPABILITY_EXCHANGE\020\000\022\026\n\022RESTART_WEB_" +

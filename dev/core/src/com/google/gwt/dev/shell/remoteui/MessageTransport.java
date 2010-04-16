@@ -374,7 +374,14 @@ public class MessageTransport {
 
   private void processMessage(final Message message)
       throws InterruptedException {
-    switch (message.getMessageType()) {
+
+    MessageType messageType = message.getMessageType();
+    if (messageType == null) {
+      processUnknownMessageType(message.getMessageId(), "unknown");
+      return;
+    }
+
+    switch (messageType) {
       case RESPONSE: {
         processServerResponse(message.getMessageId(), message.getResponse());
         break;
@@ -392,7 +399,7 @@ public class MessageTransport {
 
       default: {
         processUnknownMessageType(message.getMessageId(),
-            message.getMessageType().name());
+            messageType.name());
         break;
       }
     }

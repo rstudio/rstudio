@@ -18,6 +18,7 @@ package com.google.gwt.dev.shell.remoteui;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.protobuf.ByteString;
+import com.google.gwt.dev.shell.remoteui.MessageTransport.RequestException;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response;
 import com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest;
@@ -86,7 +87,7 @@ public class ViewerServiceClient {
 
     Future<Response> responseFuture = transport.executeRequestAsync(requestMessage);
 
-    return waitForResponse(responseFuture).getViewerResponse().getAddLogBranch().getLogHandle();
+    return waitForResponseOrThrowUncheckedException(responseFuture).getViewerResponse().getAddLogBranch().getLogHandle();
   }
 
   /**
@@ -119,7 +120,7 @@ public class ViewerServiceClient {
         viewerRequestBuilder).build();
 
     Future<Response> responseFuture = transport.executeRequestAsync(requestMessage);
-    waitForResponse(responseFuture);
+    waitForResponseOrThrowUncheckedException(responseFuture);
   }
 
   /**
@@ -186,7 +187,7 @@ public class ViewerServiceClient {
     Request.Builder request = buildRequestMessageFromViewerRequest(viewerRequestBuilder);
 
     Future<Response> responseFuture = transport.executeRequestAsync(request.build());
-    Response response = waitForResponse(responseFuture);
+    Response response = waitForResponseOrThrowUncheckedException(responseFuture);
 
     ViewerResponse.CapabilityExchange capabilityExchangeResponse = response.getViewerResponse().getCapabilityExchange();
     List<Capability> capabilityList = capabilityExchangeResponse.getCapabilitiesList();
@@ -222,7 +223,7 @@ public class ViewerServiceClient {
 
     Request.Builder request = buildRequestMessageFromViewerRequest(viewerRequestBuilder);
     Future<Response> responseFuture = transport.executeRequestAsync(request.build());
-    waitForResponse(responseFuture);
+    waitForResponseOrThrowUncheckedException(responseFuture);
   }
 
   public void initialize(String clientId, List<String> startupURLs) {
@@ -237,7 +238,7 @@ public class ViewerServiceClient {
     Request.Builder request = buildRequestMessageFromViewerRequest(viewerRequestBuilder);
 
     Future<Response> responseFuture = transport.executeRequestAsync(request.build());
-    waitForResponse(responseFuture);
+    waitForResponseOrThrowUncheckedException(responseFuture);
   }
 
   private Request.Builder buildRequestMessageFromViewerRequest(
@@ -265,7 +266,7 @@ public class ViewerServiceClient {
     Request.Builder request = buildRequestMessageFromViewerRequest(viewerRequestBuilder);
 
     Future<Response> responseFuture = transport.executeRequestAsync(request.build());
-    return waitForResponse(responseFuture).getViewerResponse().getAddLog().getLogHandle();
+    return waitForResponseOrThrowUncheckedException(responseFuture).getViewerResponse().getAddLog().getLogHandle();
   }
 
   private LogData.Builder generateLogData(Type type, String msg,
@@ -302,12 +303,36 @@ public class ViewerServiceClient {
     return logBuilder;
   }
 
-  private Response waitForResponse(Future<Response> future) {
+  /**
+   * Waits for response and throws a checked exception if the request failed.
+   * 
+   * Requests can fail if the other side does not understand the message -- for
+   * example, if it is running an older version.
+   * 
+   * @throws RequestException if the request failed
+   */
+  private Response waitForResponse(Future<Response> future) throws RequestException {
     try {
       return future.get();
     } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+      Throwable cause = e.getCause();
+      if (cause instanceof RequestException) {
+        throw (RequestException) cause;
+      } else {
+        throw new RuntimeException(e);
+      }
     } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Waits for response and throws an unchecked exception if the request failed.
+   */
+  private Response waitForResponseOrThrowUncheckedException(Future<Response> future) {
+    try {
+      return waitForResponse(future);
+    } catch (RequestException e) {
       throw new RuntimeException(e);
     }
   }

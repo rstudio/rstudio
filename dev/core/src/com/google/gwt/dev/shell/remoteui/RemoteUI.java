@@ -48,7 +48,8 @@ public class RemoteUI extends DevModeUI implements
   private final Socket transportSocket;
   private final MessageTransport transport;
   private ViewerServiceClient viewerServiceClient = null;
-
+  private final List<String> cachedStartupUrls = new ArrayList<String>();
+  
   public RemoteUI(String host, int port, String clientId) {
     try {
       this.clientId = clientId;
@@ -128,10 +129,13 @@ public class RemoteUI extends DevModeUI implements
 
   @Override
   public void moduleLoadComplete(boolean success) {
-    /*
-     * TODO: Send a message to the server indicating that the URLs are
-     * launchable.
-     */
+    // Until the RemoteMessage protobuf's backwards compatibility issues are
+    // resolved, we send the startup URLs as part of the moduleLoadComplete so
+    // they are not displayed before the server is ready to serve the modules at
+    // the URLs.
+    viewerServiceClient = new ViewerServiceClient(transport);
+    viewerServiceClient.initialize(clientId, cachedStartupUrls);
+    viewerServiceClient.checkCapabilities();
   }
 
   public void onTermination(Exception e) {
@@ -167,14 +171,10 @@ public class RemoteUI extends DevModeUI implements
 
   @Override
   public void setStartupUrls(Map<String, URL> urls) {
-    viewerServiceClient = new ViewerServiceClient(transport);
-    List<String> stringURLs = new ArrayList<String>();
     for (URL url : urls.values()) {
-      stringURLs.add(url.toExternalForm());
+      cachedStartupUrls.add(url.toExternalForm());
     }
 
-    viewerServiceClient.initialize(clientId, stringURLs);
-    viewerServiceClient.checkCapabilities();
     super.setStartupUrls(urls);
   }
 }
