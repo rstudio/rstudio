@@ -105,6 +105,10 @@ public abstract class CfgVisitor {
     visitSimpleNode(node);
   }
 
+  public void visitSwitchGotoNode(CfgSwitchGotoNode node) {
+    visitGotoNode(node);
+  }
+
   public void visitThrowNode(CfgThrowNode node) {
     visitNode(node);
   }

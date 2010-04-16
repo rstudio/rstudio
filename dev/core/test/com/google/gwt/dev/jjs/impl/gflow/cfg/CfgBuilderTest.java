@@ -1105,6 +1105,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
             "BLOCK -> [*]",
             "STMT -> [*]",
             "READ(i) -> [*]",
+            "GOTO -> [*]",
             "STMT -> [*]",
             "COND (EntryPoint.i == 1) -> [THEN=*, ELSE=1]",
             "STMT -> [*]",
@@ -1134,6 +1135,63 @@ public class CfgBuilderTest extends OptimizerTestBase {
     );
   }
 
+  public void testSwitch_FirstDefault() throws Exception {
+    assertCfg("void",
+        "switch(i) {",
+        "  default: j = 1; return;",
+        "  case 1: j = 2; return;",
+        "}"
+        ).is(
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "READ(i) -> [*]",
+            "GOTO -> [2]",
+            "1: STMT -> [*]",
+            "STMT -> [*]",
+            "WRITE(j, 1) -> [*]",
+            "STMT -> [*]",
+            "GOTO -> [3]",
+            "2: STMT -> [*]",
+            "COND (EntryPoint.i == 1) -> [THEN=*, ELSE=1]",
+            "STMT -> [*]",
+            "WRITE(j, 2) -> [*]",
+            "STMT -> [*]",
+            "GOTO -> [*]",
+            "3: END"
+    );
+  }
+  
+  public void testSwitch_Empty() throws Exception {
+    assertCfg("void",
+        "switch(i) {",
+        "}"
+        ).is(
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "READ(i) -> [*]",
+            "GOTO -> [*]",
+            "END"
+    );
+  }
+
+  public void testSwitch_OnlyDefault() throws Exception {
+    assertCfg("void",
+        "switch(i) {",
+        "  default: j = 0; return;",
+        "}"
+        ).is(
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "READ(i) -> [*]",
+            "GOTO -> [*]",
+            "STMT -> [*]",
+            "STMT -> [*]",
+            "WRITE(j, 0) -> [*]",
+            "STMT -> [*]",
+            "GOTO -> [*]",
+            "END"
+    );
+  }
   public void testNestedSwitch() throws Exception {
     assertCfg("void",
         "switch(i) {",
@@ -1160,10 +1218,12 @@ public class CfgBuilderTest extends OptimizerTestBase {
         "BLOCK -> [*]",
         "STMT -> [*]",
         "READ(i) -> [*]",
+        "GOTO -> [*]",
         "STMT -> [*]",
         "COND (EntryPoint.i == 1) -> [THEN=*, ELSE=3]",
         "STMT -> [*]",
         "READ(j) -> [*]",
+        "GOTO -> [*]",
         "STMT -> [*]",
         "COND (EntryPoint.j == 0) -> [THEN=*, ELSE=1]",
         "STMT -> [*]",
@@ -1182,6 +1242,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
         "COND (EntryPoint.i == 2) -> [THEN=*, ELSE=6]",
         "STMT -> [*]",
         "READ(j) -> [*]",
+        "GOTO -> [*]",
         "STMT -> [*]",
         "COND (EntryPoint.j == 0) -> [THEN=*, ELSE=4]",
         "STMT -> [*]",
@@ -1200,6 +1261,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
         "COND (EntryPoint.i == 3) -> [THEN=*, ELSE=9]",
         "STMT -> [*]",
         "READ(j) -> [*]",
+        "GOTO -> [*]",
         "STMT -> [*]",
         "COND (EntryPoint.j == 0) -> [THEN=*, ELSE=7]",
         "STMT -> [*]",
@@ -1231,6 +1293,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
             "BLOCK -> [*]",
             "STMT -> [*]",
             "READ(i) -> [*]",
+            "GOTO -> [*]",
             "STMT -> [*]",
             "COND (EntryPoint.i == 1) -> [THEN=*, ELSE=1]",
             "STMT -> [*]",

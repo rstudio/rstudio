@@ -606,7 +606,6 @@ public class CfgBuilder {
     @Override
     public boolean visit(JSwitchStatement x, Context ctx) {
       pushNode(new CfgStatementNode<JStatement>(parent, x));
-      // TODO: Add statement node
       accept(x.getExpr());
       
       JSwitchStatement oldSwitchStatement = switchStatement;
@@ -615,15 +614,26 @@ public class CfgBuilder {
       List<Exit> oldCaseThenExits = removeExits(Exit.Reason.CASE_THEN);
       List<Exit> oldBreakExits = removeExits(Exit.Reason.BREAK);
       switchStatement = x;
+
+      // Goto to the first non-default node.
+      CfgSwitchGotoNode gotoNode = addNode(new CfgSwitchGotoNode(parent, x));
+      Exit gotoExit = Exit.createNormal(gotoNode, null);
       
       int defaultPos = -1;
       
       List<Exit> breakExits = new ArrayList<Exit>();
 
-      for (JStatement s : x.getBody().getStatements()) {
+      List<JStatement> statements = x.getBody().getStatements();
+      
+      for (JStatement s : statements) {
         if (s instanceof JCaseStatement) {
           if (((JCaseStatement) s).getExpr() != null) {
             // case label
+            if (gotoExit != null) {
+              // This is first non-default case.
+              addExit(gotoExit);
+              gotoExit = null;
+            }
             List<Exit> elseExits = removeExits(Exit.Reason.CASE_ELSE);
             for (Exit e : elseExits) {
               addNormalExit(e.getNode(), e.role);
@@ -640,6 +650,16 @@ public class CfgBuilder {
         }
         accept(s);
         breakExits.addAll(removeExits(Exit.Reason.BREAK));
+      }
+
+      if (gotoExit != null) {
+        // Happens when there are no case statements.
+        if (defaultPos >= 0) {
+          addEdge(gotoExit, nodes.get(defaultPos));
+        } else {
+          addExit(gotoExit);
+        }
+        gotoExit = null;
       }
 
       List<Exit> thenExits = removeExits(Exit.Reason.CASE_THEN);
