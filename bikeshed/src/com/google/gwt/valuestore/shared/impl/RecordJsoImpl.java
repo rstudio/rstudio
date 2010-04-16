@@ -90,7 +90,7 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     return this['__key'];
   }-*/;
 
-  public final Integer getVersion() {
+  public final String getVersion() {
     return this.get(version);
   }
 

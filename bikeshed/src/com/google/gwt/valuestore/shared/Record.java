@@ -15,15 +15,17 @@
  */
 package com.google.gwt.valuestore.shared;
 
-
 /**
  * An entry in a {@link com.google.gwt.valuestore.shared.ValueStore ValueStore}.
  */
 public interface Record {
-  public static final Property<String> id = new Property<String>("id",
-      String.class);
-  public static final Property<Integer> version = new Property<Integer>(
-      "version", Integer.class);
+  Property<String> id = new Property<String>("id", String.class);
+  /*
+   * TODO: because of possible appEngine/dataNucleus bug, the version has to be
+   * a long instead of an int on the server side. The choice results in version
+   * being string on the client side. Temporary workaround.
+   */
+  Property<String> version = new Property<String>("version", String.class);
 
   /**
    * Get this record's value for the given property. Behavior is undefined if
@@ -43,18 +45,17 @@ public interface Record {
   String getId();
 
   /**
-   * Get a "pointer" to value of this property in the receiver, useful
-   * for making rpc requests against values that have not yet reached
-   * the client. 
+   * Get a "pointer" to value of this property in the receiver, useful for
+   * making rpc requests against values that have not yet reached the client.
    * 
    * @param <V> the type of the property value
-   * @param property the property referrred to 
-   * @return a reference to the receiver's value of this propertyf
+   * @param property the property referred to
+   * @return a reference to the receiver's value of this property
    */
   <V> PropertyReference<V> getRef(Property<V> property);
 
   /**
    * @return the version of this Record
    */
-  Integer getVersion();
+  String getVersion();
 }

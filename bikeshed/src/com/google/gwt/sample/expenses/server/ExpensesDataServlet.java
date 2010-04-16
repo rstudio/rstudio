@@ -19,7 +19,6 @@ import com.google.gwt.requestfactory.server.RequestFactoryServlet;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
 import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.sample.expenses.server.domain.Employee;
-import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.valuestore.shared.Record;
 
 import org.json.JSONArray;

@@ -54,7 +54,7 @@ public class RecordImpl implements Record {
     return jso.getSchema();
   }
 
-  public Integer getVersion() {
+  public String getVersion() {
     return jso.getVersion();
   }
 }
