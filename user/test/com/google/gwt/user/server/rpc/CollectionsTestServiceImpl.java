@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
@@ -429,4 +430,12 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  public List<MarkerTypeSingleton> echoSingletonList(
+      List<MarkerTypeSingleton> value) throws CollectionsTestServiceException {
+    if (!TestSetValidator.isValidSingletonList(value)) {
+      throw new CollectionsTestServiceException();
+    }
+
+    return value;
+  }
 }

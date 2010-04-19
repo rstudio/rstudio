@@ -24,15 +24,18 @@ import com.google.gwt.user.client.rpc.SerializationStreamWriter;
  */
 public final class Void_CustomFieldSerializer {
 
+  @SuppressWarnings("unused")
   public static void deserialize(SerializationStreamReader streamReader,
       Void instance) {
   }
 
+  @SuppressWarnings("unused")
   public static Void instantiate(SerializationStreamReader streamReader)
       throws SerializationException {
     return null;
   }
 
+  @SuppressWarnings("unused")
   public static void serialize(SerializationStreamWriter streamWriter,
       Void instance) throws SerializationException {
   }

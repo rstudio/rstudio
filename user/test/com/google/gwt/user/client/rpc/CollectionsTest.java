@@ -22,6 +22,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
@@ -562,6 +563,23 @@ public class CollectionsTest extends RpcTestBase {
         finishTest();
       }
     });
+  }
+
+  public void testSingletonList() {
+    CollectionsTestServiceAsync service = getServiceAsync();
+    delayTestFinishForRpc();
+    service.echoSingletonList(TestSetFactory.createSingletonList(),
+        new AsyncCallback<List<MarkerTypeSingleton>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(List<MarkerTypeSingleton> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValidSingletonList(result));
+            finishTest();
+          }
+        });
   }
 
   public void testSqlDateArray() {

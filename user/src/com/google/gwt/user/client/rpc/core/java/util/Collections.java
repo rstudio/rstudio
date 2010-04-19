@@ -99,4 +99,27 @@ public final class Collections {
       // Nothing to serialize -- instantiate always returns the same thing
     }
   }
+
+  /**
+   * Custom field serializer for {@link java.util.Collections$SingletonList}.
+   */
+  public static final class SingletonList_CustomFieldSerializer {
+
+    @SuppressWarnings({"unused", "unchecked"})
+    public static void deserialize(SerializationStreamReader streamReader,
+        List instance) throws SerializationException {
+    }
+
+    @SuppressWarnings({"unused", "unchecked"})
+    public static List instantiate(SerializationStreamReader streamReader)
+        throws SerializationException {
+      return java.util.Collections.singletonList(streamReader.readObject());
+    }
+
+    @SuppressWarnings({"unused", "unchecked"})
+    public static void serialize(SerializationStreamWriter streamWriter,
+        List instance) throws SerializationException {
+      streamWriter.writeObject(instance.get(0));
+    }
+  }
 }

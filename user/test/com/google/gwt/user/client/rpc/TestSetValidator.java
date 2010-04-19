@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmpty;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
@@ -534,6 +535,22 @@ public class TestSetValidator {
     return true;
   }
 
+  public static boolean isValidSingletonList(List<MarkerTypeSingleton> list) {
+    if (list == null || list.size() != 1) {
+      return false;
+    }
+    Object value = list.get(0);
+    // Perform instanceof check in case RPC did the wrong thing
+    if (!(value instanceof MarkerTypeSingleton)) {
+      return false;
+    }
+    MarkerTypeSingleton singleton = (MarkerTypeSingleton) value;
+    if (!"singleton".equals(singleton.getValue())) {
+      return false;
+    }
+    return true;
+  }
+
   public static boolean isValidTrivialCyclicGraph(
       SerializableDoublyLinkedNode actual) {
     if (actual == null) {
@@ -564,7 +581,7 @@ public class TestSetValidator {
   /**
    * Wrap an exception in RuntimeException if necessary so it doesn't have to be
    * listed in throws clauses.
-   * 
+   *
    * @param caught exception to wrap
    */
   public static void rethrowException(Throwable caught) {

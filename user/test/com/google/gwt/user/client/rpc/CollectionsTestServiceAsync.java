@@ -22,6 +22,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
@@ -132,4 +133,8 @@ public interface CollectionsTestServiceAsync {
 
   void echoArraysAsList(List<MarkerTypeArraysAsList> value,
       AsyncCallback<List<MarkerTypeArraysAsList>> callback);
+
+  // For Collections.singletonList()
+  void echoSingletonList(List<MarkerTypeSingleton> value,
+      AsyncCallback<List<MarkerTypeSingleton>> callback);
 }

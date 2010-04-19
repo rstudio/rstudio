@@ -32,7 +32,7 @@ public final class Long_CustomFieldSerializer {
 
   public static Long instantiate(SerializationStreamReader streamReader)
       throws SerializationException {
-    return new Long(streamReader.readLong());
+    return Long.valueOf(streamReader.readLong());
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,

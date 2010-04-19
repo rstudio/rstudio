@@ -183,6 +183,16 @@ public class TestSetFactory {
 
   /**
    * A single-use marker type to independently check type parameter exposure in
+   * singleton collections.
+   */
+  public static final class MarkerTypeSingleton extends MarkerBase {
+    MarkerTypeSingleton() {
+      super("singleton");
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
    * various collections.
    */
   public static final class MarkerTypeTreeMap extends MarkerBase {
@@ -548,6 +558,10 @@ public class TestSetFactory {
     return new Short[] {
         new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE),
         new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE)};
+  }
+
+  public static List<MarkerTypeSingleton> createSingletonList() {
+    return java.util.Collections.singletonList(new MarkerTypeSingleton());
   }
 
   public static java.sql.Date[] createSqlDateArray() {

@@ -22,6 +22,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeSingleton;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
@@ -150,5 +151,9 @@ public interface CollectionsTestService extends RemoteService {
 
   List<MarkerTypeArraysAsList> echoArraysAsList(
       List<MarkerTypeArraysAsList> value)
+      throws CollectionsTestServiceException;
+
+  // For Collections.singletonList()
+  List<MarkerTypeSingleton> echoSingletonList(List<MarkerTypeSingleton> value)
       throws CollectionsTestServiceException;
 }

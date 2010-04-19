@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,7 +23,7 @@ import java.io.Serializable;
  * docs]</a>
  */
 public class Collections {
-  
+
   private static final class EmptyList extends AbstractList implements
       RandomAccess, Serializable {
     @Override
@@ -41,7 +41,7 @@ public class Collections {
       return 0;
     }
   }
-  
+
   private static final class EmptySet extends AbstractSet implements
       Serializable {
     @Override
@@ -110,6 +110,30 @@ public class Collections {
     }
   }
 
+  private static final class SingletonList<E> extends AbstractList<E> implements Serializable {
+    private E element;
+
+    public SingletonList(E element) {
+      this.element = element;
+    }
+
+    public boolean contains(Object item) {
+      return Utility.equalsWithNullCheck(element, item);
+    }
+
+    public E get(int index) {
+      if (index == 0) {
+        return element;
+      } else {
+        throw new IndexOutOfBoundsException();
+      }
+    }
+
+    public int size() {
+      return 1;
+    }
+  }
+
   /*
    * TODO: make the unmodifiable collections serializable.
    */
@@ -172,7 +196,7 @@ public class Collections {
     public <E> E[] toArray(E[] a) {
       return coll.toArray(a);
     }
-    
+
     public String toString() {
       return coll.toString();
     }
@@ -335,7 +359,7 @@ public class Collections {
 
       /**
        * Wrap an array of Map.Entries as UnmodifiableEntries.
-       * 
+       *
        * @param array array to wrap
        * @param size number of entries to wrap
        */
@@ -488,11 +512,11 @@ public class Collections {
     public K lastKey() {
       return sortedMap.lastKey();
     }
-    
+
     public SortedMap<K, V> subMap(K fromKey, K toKey) {
       return new UnmodifiableSortedMap<K, V>(sortedMap.subMap(fromKey, toKey));
     }
-    
+
     public SortedMap<K, V> tailMap(K fromKey) {
       return new UnmodifiableSortedMap<K, V>(sortedMap.tailMap(fromKey));
     }
@@ -511,7 +535,7 @@ public class Collections {
     public Comparator<? super E> comparator() {
       return sortedSet.comparator();
     }
-    
+
     @Override
     public boolean equals(Object o) {
       return sortedSet.equals(o);
@@ -520,7 +544,7 @@ public class Collections {
     public E first() {
       return sortedSet.first();
     }
-    
+
     @Override
     public int hashCode() {
       return sortedSet.hashCode();
@@ -623,13 +647,13 @@ public class Collections {
 
   /**
    * Perform a binary search on a sorted List, using natural ordering.
-   * 
+   *
    * <p>
    * Note: The GWT implementation differs from the JDK implementation in that it
    * does not do an iterator-based binary search for Lists that do not implement
    * RandomAccess.
    * </p>
-   * 
+   *
    * @param sortedList object array to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
@@ -653,7 +677,7 @@ public class Collections {
   // // FUTURE: implement
   // return null;
   // }
-  //  
+  //
   // static <E> List<E> checkedList(List<E> list, Class<E> type) {
   // // FUTURE: implement
   // return null;
@@ -684,13 +708,13 @@ public class Collections {
   /**
    * Perform a binary search on a sorted List, using a user-specified comparison
    * function.
-   * 
+   *
    * <p>
    * Note: The GWT implementation differs from the JDK implementation in that it
    * does not do an iterator-based binary search for Lists that do not implement
    * RandomAccess.
    * </p>
-   * 
+   *
    * @param sortedList List to search
    * @param key value to search for
    * @param comparator comparision function, <code>null</code> indicates
@@ -911,9 +935,7 @@ public class Collections {
   // More efficient at runtime, but more code bloat to download
 
   public static <T> List<T> singletonList(T o) {
-    List<T> list = new ArrayList<T>(1);
-    list.add(o);
-    return unmodifiableList(list);
+    return new SingletonList<T>(o);
   }
 
   public static <K, V> Map<K, V> singletonMap(K key, V value) {
@@ -971,7 +993,7 @@ public class Collections {
 
   /**
    * Replace contents of a list from an array.
-   * 
+   *
    * @param <T> element type
    * @param target list to replace contents from an array
    * @param x an Object array which can contain only T instances
