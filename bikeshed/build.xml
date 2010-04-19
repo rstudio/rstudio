@@ -36,7 +36,7 @@
       description="Build and package this project">
     <mkdir dir="${gwt.build.lib}" />
     <gwt.jar>
-      <fileset dir="src" excludes="**/sample/**" />
+      <fileset dir="src" excludes="**/sample/** **/META-INF/**" />
       <fileset dir="${javac.out}" />
     </gwt.jar>
   </target>
