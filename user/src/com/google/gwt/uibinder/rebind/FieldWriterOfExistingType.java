@@ -16,6 +16,7 @@
 package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JGenericType;
 
 /**
  * Implementation of FieldWriter for fields whose type already exists (that is,
@@ -31,6 +32,12 @@ class FieldWriterOfExistingType extends AbstractFieldWriter {
     if (type == null) {
       throw new IllegalArgumentException("type cannot be null");
     }
+
+    JGenericType genericType = type.isGenericType();
+    if (genericType != null) {
+      type = genericType.getRawType();
+    }
+
     this.type = type;
   }
 

@@ -71,21 +71,6 @@ abstract class AbstractFieldWriter implements FieldWriter {
   }
 
   public void setInitializer(String initializer) {
-    if (this.initializer != null) {
-      throw new IllegalStateException(String.format(
-          "Second attempt to set initializer for field \"%s\", "
-              + "from \"%s\" to \"%s\"", name, this.initializer, initializer));
-    }
-    setInitializerMaybe(initializer);
-  }
-
-  @Deprecated
-  public void setInitializerMaybe(String initializer) {
-    if (this.initializer != null && !this.initializer.equals(initializer)) {
-      throw new IllegalStateException(String.format(
-          "Attempt to change initializer for field \"%s\", "
-              + "from \"%s\" to \"%s\"", name, this.initializer, initializer));
-    }
     this.initializer = initializer;
   }
 

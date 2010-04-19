@@ -74,24 +74,11 @@ public interface FieldWriter {
    * Used to provide an initializer string to use instead of a
    * {@link com.google.gwt.core.client.GWT#create()} call. Note that this is an
    * RHS expression. Don't include the leading '=', and don't end it with ';'.
-   * <p>
-   * TODO(rjrjr) Should be able to make this a constructor argument when
-   * BundleAttributeParser dies.
    * 
    * @throws UnableToCompleteException
    * @throws IllegalStateException on second attempt to set the initializer
    */
   void setInitializer(String initializer);
-
-  /**
-   * @deprecated needed only by
-   *             {@link com.google.gwt.uibinder.attributeparsers.BundleAttributeParser}
-   *             , which will die soon
-   * @throws IllegalStateException if initializer in a later call doesn't match
-   *           earlier call
-   */
-  @Deprecated
-  void setInitializerMaybe(String initializer);
 
   /**
    * Write the field delcaration.

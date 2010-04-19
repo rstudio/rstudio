@@ -37,7 +37,7 @@ import com.google.gwt.uibinder.rebind.XMLElement;
       throws UnableToCompleteException {
     String fieldName = writer.declareFieldIfNeeded(elem);
     if (fieldName != null) {
-      String token = writer.declareDomField(fieldName, element);
+      String token = writer.declareDomField(fieldName);
 
       if (elem.hasAttribute("id")) {
         writer.die(String.format(

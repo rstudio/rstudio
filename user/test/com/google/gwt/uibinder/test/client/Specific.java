@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,19 +15,12 @@
  */
 package com.google.gwt.uibinder.test.client;
 
-import com.google.gwt.junit.client.GWTTestCase;
-
 /**
- * Test that {@literal @}UiFactory and parameterized return types get along.
+ * A specific implementation of {@link Abstract}, used to test generics in
+ * UiBinder. See {@link ParameterizedWidget}.
+ * 
+ * @param <T> a param type
  */
-public class TestParameterizedWidgets extends GWTTestCase {
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.uibinder.test.UiBinderTestApp";
-  }
+public class Specific<T> extends Abstract<T> {
 
-  public void testHappy() {
-    ParameterizedWidget<String> ui = new ParameterizedWidget<String>();
-    assertNotNull(ui.fromFactory);
-  }
 }

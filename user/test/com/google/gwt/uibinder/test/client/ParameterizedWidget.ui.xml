@@ -1,4 +1,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-    xmlns:t="urn:import:com.google.gwt.uibinder.test.client">
- <t:Abstract ui:field='a'></t:Abstract>
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:t="urn:import:com.google.gwt.uibinder.test.client">
+  <g:FlowPanel>
+    <t:Abstract ui:field='fromFactory' />
+    <t:Abstract ui:field='provided' />
+  </g:FlowPanel>
 </ui:UiBinder>

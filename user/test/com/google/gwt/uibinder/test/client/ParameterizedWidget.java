@@ -31,16 +31,16 @@ class ParameterizedWidget<T> extends Composite {
 
   static final Binder binder = GWT.create(Binder.class);
 
-  @UiField
-  Abstract<?> a;
-
+  @UiField Abstract<?> fromFactory;
+  @UiField(provided = true) Specific<T> provided = new Specific<T>();
+  
   ParameterizedWidget() {
     initWidget(binder.createAndBindUi(this));
   }
   
   @UiFactory
-  Abstract<?> createA() {
-    return new Abstract<String>() {
+  Abstract<T> createA() {
+    return new Abstract<T>() {
     };
   }
 }

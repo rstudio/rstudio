@@ -129,8 +129,7 @@ public class UiBinderWriter {
    * @param type the base type
    * @return a breadth-first collection of its type hierarchy
    */
-  static Iterable<JClassType> getClassHierarchyBreadthFirst(
-      JClassType type) {
+  static Iterable<JClassType> getClassHierarchyBreadthFirst(JClassType type) {
     LinkedList<JClassType> list = new LinkedList<JClassType>();
     LinkedList<JClassType> q = new LinkedList<JClassType>();
 
@@ -324,13 +323,10 @@ public class UiBinderWriter {
    * call and assign the Element instance to its field.
    * 
    * @param fieldName The name of the field being declared
-   * @param parentElementExpression an expression to be evaluated at runtime,
-   *          which will return an Element that is an ancestor of this one
-   *          (needed by the getElementById call mentioned above).
    */
-  public String declareDomField(String fieldName, String parentElementExpression)
+  public String declareDomField(String fieldName)
       throws UnableToCompleteException {
-    ensureAttached(parentElementExpression);
+    ensureAttached();
     String name = declareDomIdHolder();
     setFieldInitializer(fieldName, "null");
     addInitStatement(
@@ -444,10 +440,9 @@ public class UiBinderWriter {
   /**
    * Ensure that the specified element is attached to the DOM.
    * 
-   * @param element variable name of element to be attached
    * @see #beginAttachedSection(String)
    */
-  public void ensureAttached(String element) {
+  public void ensureAttached() {
     String attachSectionElement = attachSectionElements.getFirst();
     if (!attachedVars.containsKey(attachSectionElement)) {
       String attachedVar = "attachRecord" + nextAttachVar;
@@ -464,11 +459,10 @@ public class UiBinderWriter {
    * an object that responds to Element getElement(). Convenience wrapper for
    * {@link ensureAttached}<code>(field + ".getElement()")</code>.
    * 
-   * @param field variable name of the field to be attached
    * @see #beginAttachedSection(String)
    */
-  public void ensureFieldAttached(String field) {
-    ensureAttached(field + ".getElement()");
+  public void ensureCurrentFieldAttached() {
+    ensureAttached();
   }
 
   /**
@@ -723,7 +717,7 @@ public class UiBinderWriter {
    * 
    * @throws UnableToCompleteException
    */
-  private void ensureAttachmentCleanedUp() throws UnableToCompleteException {
+  private void ensureAttachmentCleanedUp() {
     if (!attachSectionElements.isEmpty()) {
       throw new IllegalStateException("Attachments not cleaned up: "
           + attachSectionElements);
@@ -856,15 +850,34 @@ public class UiBinderWriter {
       throws UnableToCompleteException {
     JClassType fieldType = ownerField.getType().getRawType();
 
-    if (!templateClass.isAssignableTo(fieldType)) {
-      die("Template field and owner field types don't match: %s != %s",
-          templateClass.getQualifiedSourceName(),
-          fieldType.getQualifiedSourceName());
-    }
-
     if (!ownerField.isProvided()) {
+      /*
+       * Normally check that the type the template created can be slammed into
+       * the @UiField annotated field in the owning class
+       */
+      if (!templateClass.isAssignableTo(fieldType)) {
+        die(
+            "In @UiField %s, template field and owner field types don't match: %s is not assignable to %s",
+            ownerField.getName(), templateClass.getQualifiedSourceName(),
+            fieldType.getQualifiedSourceName());
+      }
+      /*
+       * And initialize the field
+       */
       niceWriter.write("owner.%1$s = %2$s;", ownerField.getName(),
           templateField);
+    } else {
+      /*
+       * But with @UiField(provided=true) the user builds it, so reverse the
+       * direction of the assignability check and do no init.
+       */
+      if (!fieldType.isAssignableTo(templateClass)) {
+        die(
+            "In UiField(provided = true) %s, template field and field types don't match: "
+                + "@UiField(provided=true)%s is not assignable to %s",
+            ownerField.getName(), fieldType.getQualifiedSourceName(),
+            templateClass.getQualifiedSourceName());
+      }
     }
   }
 
@@ -979,7 +992,8 @@ public class UiBinderWriter {
 
     // createAndBindUi method
     w.write("public %s createAndBindUi(final %s owner) {",
-        uiRootType.getParameterizedQualifiedSourceName(), uiOwnerType.getParameterizedQualifiedSourceName());
+        uiRootType.getParameterizedQualifiedSourceName(),
+        uiOwnerType.getParameterizedQualifiedSourceName());
     w.indent();
     w.newline();
 
@@ -1010,7 +1024,9 @@ public class UiBinderWriter {
 
   private void writeClassOpen(IndentedWriter w) {
     w.write("public class %s implements UiBinder<%s, %s>, %s {", implClassName,
-        uiRootType.getParameterizedQualifiedSourceName(), uiOwnerType.getParameterizedQualifiedSourceName(), baseClass.getParameterizedQualifiedSourceName());
+        uiRootType.getParameterizedQualifiedSourceName(),
+        uiOwnerType.getParameterizedQualifiedSourceName(),
+        baseClass.getParameterizedQualifiedSourceName());
     w.indent();
   }
 
@@ -1039,11 +1055,9 @@ public class UiBinderWriter {
         String fieldName = ownerField.getName();
         FieldWriter fieldWriter = fieldManager.lookup(fieldName);
 
-        // TODO(hermes) This can be null due to http://b/1836504. If that
-        // is fixed properly, a null fieldWriter will be an error
-        // (would that be a user error or a runtime error? Not sure)
+        // TODO why can this be null?
         if (fieldWriter != null) {
-          fieldManager.lookup(fieldName).setInitializerMaybe(
+          fieldManager.lookup(fieldName).setInitializer(
               formatCode("owner.%1$s", fieldName));
         }
       }

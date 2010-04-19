@@ -75,7 +75,7 @@ class WidgetInterpreter implements XMLElement.Interpreter<String> {
       // we'll reuse ids for any template rendered more than once.
       String idHolder = uiWriter.declareDomIdHolder();
       String childField = uiWriter.parseElementToField(elem);
-      uiWriter.ensureFieldAttached(fieldName);
+      uiWriter.ensureCurrentFieldAttached();
       
       String elementPointer = idHolder + "Element";
       uiWriter.addInitStatement(
