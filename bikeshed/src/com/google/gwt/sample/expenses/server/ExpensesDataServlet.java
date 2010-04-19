@@ -96,7 +96,7 @@ public class ExpensesDataServlet extends RequestFactoryServlet {
       int length = reportArray.length();
       if (length > 0) {
         JSONObject report = reportArray.getJSONObject(0);
-        Report r = Report.findReport(report.getLong(Record.id.getName()));
+        Report r = Report.findReport(report.getString(Record.id.getName()));
         r.setPurpose(report.getString(ReportRecord.purpose.getName()));
         r.persist();
         report.put(Record.version.getName(), r.getVersion());

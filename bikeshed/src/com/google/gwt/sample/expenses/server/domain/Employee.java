@@ -60,7 +60,7 @@ public class Employee {
     }
   }
 
-  public static Employee findEmployee(Long id) {
+  public static Employee findEmployee(String id) {
     if (id == null) {
       return null;
     }

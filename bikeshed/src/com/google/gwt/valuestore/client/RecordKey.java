@@ -19,18 +19,28 @@ import com.google.gwt.valuestore.shared.impl.RecordImpl;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 import com.google.gwt.valuestore.shared.impl.RecordSchema;
 
+/**
+ * The key used to store {@link com.google.gwt.valuestore.shared.Record Record}s
+ * in {@link com.google.gwt.valuestore.shared.ValueStore ValueStore}.
+ */
 class RecordKey {
   final RecordSchema<?> schema;
   final Object id;
 
   RecordKey(RecordImpl record) {
-    this.schema = record.getSchema();
-    this.id = record.getId();
+    this(record.getId(), record.getSchema());
   }
 
   RecordKey(RecordJsoImpl record) {
-    this.schema = record.getSchema();
-    this.id = record.getId();
+    this(record.getId(), record.getSchema());
+  }
+
+  private RecordKey(Object id, RecordSchema<?> schema) {
+    assert id != null;
+    assert schema != null;
+
+    this.id = id;
+    this.schema = schema;
   }
 
   @Override

@@ -28,12 +28,10 @@ import java.util.Date;
  */
 public interface ReportRecord extends Record {
 
-  public static final Property<Date> created = new Property<Date>("created",
-      Date.class);
-  public static final Property<String> purpose = new Property<String>(
-      "purpose", String.class);
-  public static final Property<EmployeeRecord> reporter = new Property<EmployeeRecord>(
-      "reporter", EmployeeRecord.class);
+  Property<Date> created = new Property<Date>("created", Date.class);
+  Property<String> purpose = new Property<String>("purpose", String.class);
+  Property<EmployeeRecord> reporter = new Property<EmployeeRecord>("reporter",
+      EmployeeRecord.class);
 
   Date getCreated();
 

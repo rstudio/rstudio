@@ -62,7 +62,7 @@ public class Report {
     }
   }
 
-  public static Report findReport(Long id) {
+  public static Report findReport(String id) {
     if (id == null) {
       return null;
     }
