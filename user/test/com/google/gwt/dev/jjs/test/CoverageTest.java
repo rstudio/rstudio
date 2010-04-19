@@ -193,10 +193,10 @@ public class CoverageTest extends CoverageBase {
       }
 
       try {
-        assert i == 3 : 1.2f;
+        assert i == 3 : 1.5f;
         fail();
       } catch (AssertionError e) {
-        assertEquals("1.2", e.getMessage());
+        assertEquals("1.5", e.getMessage());
       }
 
       try {
