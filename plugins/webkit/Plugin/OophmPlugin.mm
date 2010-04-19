@@ -18,6 +18,11 @@
 #import "OophmWebScriptObject.h"
 #import "SlowScriptProxy.h"
 
+@interface OophmPlugin (Private)
+/* Tell GoogleSoftwareUpdate the plugin is being used */
+- (void)recordActive;
+@end
+
 @implementation OophmPlugin
 + (NSView *)plugInViewWithArguments:(NSDictionary *)arguments {
   return [[[OophmPlugin alloc] initWithArguments: arguments] autorelease];
@@ -50,7 +55,9 @@
   if ([_slowScriptProxy respondsToSelector:@selector(webView:setStatusText:)]) {
     [_slowScriptProxy webView:view setStatusText:@"GWT Developer Plugin Active"];
   }
-  
+
+  [self recordActive];
+
   return self;
 }
 
@@ -69,5 +76,33 @@
   }
   [_slowScriptProxy release];
   _slowScriptProxy = nil;
+}
+@end
+
+@implementation OophmPlugin (Private)
+// Touch a file in ~/Library/Google/GoogleSoftwareUpdate/Actives
+- (void)recordActive {
+  NSFileManager* manager = [[NSFileManager alloc] init];
+  [manager autorelease];
+  NSError* error = NULL;
+
+  NSString* activesDirectory = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Google/GoogleSoftwareUpdate/Actives"];
+  Debug::log(Debug::Info) << "Ensuring directory " << [activesDirectory UTF8String] << Debug::flush;
+  if (![manager createDirectoryAtPath:activesDirectory withIntermediateDirectories:YES attributes:nil error:&error]) {
+    Debug::log(Debug::Error) << "Unable to create actives directory " << [activesDirectory UTF8String] <<
+        ": " << [[error localizedDescription] UTF8String] << Debug::flush;
+    return;
+  }
+
+  // Add the product id
+  NSString* file = [activesDirectory stringByAppendingPathComponent:@"com.google.gwt.dev.plugin.safari"];
+
+  // Create an empty file using an empty NSData object
+  if (![manager createFileAtPath:file contents:[NSData data] attributes:nil]) {
+    Debug::log(Debug::Error) << "Unable to create actives file" << Debug::flush;
+    return;
+  }
+
+  Debug::log(Debug::Info) << "Created actives file " << [file UTF8String] << Debug::flush;
 }
 @end
