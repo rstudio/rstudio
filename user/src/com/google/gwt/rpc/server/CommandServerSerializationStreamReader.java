@@ -282,7 +282,6 @@ public class CommandServerSerializationStreamReader implements
 
   public void prepareToRead(List<ValueCommand> commands) {
     values = commands.iterator();
-    assert values.hasNext() : "No commands";
   }
 
   public boolean readBoolean() throws SerializationException {
