@@ -121,7 +121,7 @@ abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String[] getDefaultArgs() {
-      return new String[] {BIND_ADDRESS_TAG, DEFAULT_BIND_ADDRESS};
+      return new String[]{BIND_ADDRESS_TAG, DEFAULT_BIND_ADDRESS};
     }
 
     @Override
@@ -137,7 +137,7 @@ abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"host-name-or-address"};
+      return new String[]{"host-name-or-address"};
     }
 
     @Override
@@ -177,7 +177,7 @@ abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"blacklist-string"};
+      return new String[]{"blacklist-string"};
     }
 
     @Override
@@ -202,7 +202,7 @@ abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String[] getDefaultArgs() {
-      return new String[] {CODE_SERVER_PORT_TAG, DEFAULT_PORT};
+      return new String[]{CODE_SERVER_PORT_TAG, DEFAULT_PORT};
     }
 
     @Override
@@ -218,7 +218,7 @@ abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"port-number | \"auto\""};
+      return new String[]{"port-number | \"auto\""};
     }
 
     @Override
@@ -259,7 +259,7 @@ abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"directory"};
+      return new String[]{"directory"};
     }
 
     @Override
@@ -309,7 +309,7 @@ abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String[] getDefaultArgs() {
-      return new String[] {getTag(), "8888"};
+      return new String[]{getTag(), "8888"};
     }
 
     @Override
@@ -324,7 +324,7 @@ abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"port-number | \"auto\""};
+      return new String[]{"port-number | \"auto\""};
     }
 
     @Override
@@ -363,7 +363,7 @@ abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"port-number:client-id-string | host-string:port-number:client-id-string"};
+      return new String[]{"port-number:client-id-string | host-string:port-number:client-id-string"};
     }
 
     @Override
@@ -419,7 +419,7 @@ abstract class DevModeBase implements DoneCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"whitelist-string"};
+      return new String[]{"whitelist-string"};
     }
 
     @Override
@@ -689,6 +689,8 @@ abstract class DevModeBase implements DoneCallback {
     return buf.toString();
   }
 
+  protected TreeLogger.Type baseLogLevelForUI = null;
+
   protected String bindAddress;
 
   protected int codeServerPort;
@@ -700,7 +702,6 @@ abstract class DevModeBase implements DoneCallback {
   protected final HostedModeBaseOptions options;
 
   protected DevModeUI ui = null;
-  protected TreeLogger.Type baseLogLevelForUI = null;
 
   private final Semaphore blockUntilDone = new Semaphore(0);
 

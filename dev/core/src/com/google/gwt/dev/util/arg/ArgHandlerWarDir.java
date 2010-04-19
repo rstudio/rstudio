@@ -31,7 +31,7 @@ public final class ArgHandlerWarDir extends ArgHandlerDir {
   }
 
   public String[] getDefaultArgs() {
-    return new String[] {getTag(), "war"};
+    return new String[]{getTag(), "war"};
   }
 
   public String getPurpose() {

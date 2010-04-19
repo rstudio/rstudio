@@ -67,7 +67,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       if (options.isNoServer()) {
         return null;
       } else {
-        return new String[] {getTag(), JettyLauncher.class.getName()};
+        return new String[]{getTag(), JettyLauncher.class.getName()};
       }
     }
 
@@ -83,7 +83,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"servletContainerLauncher[:args]"};
+      return new String[]{"servletContainerLauncher[:args]"};
     }
 
     @Override
@@ -145,7 +145,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"url"};
+      return new String[]{"url"};
     }
 
     @Override

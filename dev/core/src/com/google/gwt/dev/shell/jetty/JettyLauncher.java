@@ -475,12 +475,12 @@ public class JettyLauncher extends ServletContainerLauncher {
     System.setProperty("build.compiler", antJavaC);
   }
 
-  private final Object privateInstanceLock = new Object();
-  
   // default value used if setBaseLogLevel isn't called
   private TreeLogger.Type baseLogLevel = TreeLogger.INFO;
 
   private String bindAddress = null;
+
+  private final Object privateInstanceLock = new Object();
 
   @Override
   public String getName() {

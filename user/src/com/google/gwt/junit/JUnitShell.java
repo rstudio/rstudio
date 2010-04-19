@@ -128,7 +128,7 @@ public class JUnitShell extends GWTShell {
       registerHandler(new ArgHandlerPort(options) {
         @Override
         public String[] getDefaultArgs() {
-          return new String[] {"-port", "auto"};
+          return new String[]{"-port", "auto"};
         }
       });
 
@@ -136,7 +136,7 @@ public class JUnitShell extends GWTShell {
       registerHandler(new ArgHandlerCodeServerPort(options) {
         @Override
         public String[] getDefaultArgs() {
-          return new String[] {this.getTag(), "auto"};
+          return new String[]{this.getTag(), "auto"};
         }
       });
 
@@ -197,7 +197,7 @@ public class JUnitShell extends GWTShell {
         public String getTag() {
           return "-web";
         }
-        
+
         @Override
         public boolean isUndocumented() {
           return true;
@@ -209,7 +209,7 @@ public class JUnitShell extends GWTShell {
           return true;
         }
       });
-      
+
       registerHandler(new ArgHandlerFlag() {
         @Override
         public String getPurpose() {
@@ -231,7 +231,7 @@ public class JUnitShell extends GWTShell {
       registerHandler(new ArgHandlerInt() {
         @Override
         public String[] getDefaultArgs() {
-          return new String[] {getTag(), "5"};
+          return new String[]{getTag(), "5"};
         }
 
         @Override
@@ -246,7 +246,7 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public String[] getTagArgs() {
-          return new String[] {"minutes"};
+          return new String[]{"minutes"};
         }
 
         @Override
@@ -263,7 +263,7 @@ public class JUnitShell extends GWTShell {
       registerHandler(new ArgHandlerInt() {
         @Override
         public String[] getDefaultArgs() {
-          return new String[] {getTag(), "1"};
+          return new String[]{getTag(), "1"};
         }
 
         @Override
@@ -279,7 +279,7 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public String[] getTagArgs() {
-          return new String[] {"minutes"};
+          return new String[]{"minutes"};
         }
 
         @Override
@@ -310,7 +310,7 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public String[] getTagArgs() {
-          return new String[] {"runstyle[:args]"};
+          return new String[]{"runstyle[:args]"};
         }
 
         @Override
@@ -338,7 +338,7 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public String[] getTagArgs() {
-          return new String[] {"none|class|module"};
+          return new String[]{"none|class|module"};
         }
 
         @Override
@@ -392,7 +392,7 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public String[] getTagArgs() {
-          return new String[] {"simple|all|parallel"};
+          return new String[]{"simple|all|parallel"};
         }
 
         @Override
@@ -446,7 +446,7 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public String[] getTagArgs() {
-          return new String[] {"1"};
+          return new String[]{"1"};
         }
 
         @Override
@@ -479,7 +479,7 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public String[] getTagArgs() {
-          return new String[] {"userAgents"};
+          return new String[]{"userAgents"};
         }
 
         @Override
@@ -673,13 +673,12 @@ public class JUnitShell extends GWTShell {
         throw new JUnitFatalLaunchException("Error processing shell arguments");
       }
       // Always bind to the wildcard address and substitute the host address in
-      // URLs.  Note that connectAddress isn't actually used here, as we
+      // URLs. Note that connectAddress isn't actually used here, as we
       // override it from the runsStyle in getModuleUrl, but we set it to match
       // what will actually be used anyway to avoid confusion.
       unitTestShell.options.setBindAddress("0.0.0.0");
       try {
-        unitTestShell.options.setConnectAddress(
-            InetAddress.getLocalHost().getHostAddress());
+        unitTestShell.options.setConnectAddress(InetAddress.getLocalHost().getHostAddress());
       } catch (UnknownHostException e) {
         throw new JUnitFatalLaunchException("Unable to resolve my address");
       }
@@ -694,19 +693,18 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
-   * The amount of time to wait for all clients to complete a single test
-   * method, in milliseconds, measured from when the <i>last</i> client
-   * connects (and thus starts the test). Set by the -testMethodTimeout
-   * argument.
-   */
-  private long baseTestMethodTimeoutMillis;
-
-  /**
    * The amount of time to wait for all clients to have contacted the server and
    * begin running the test. "Contacted" does not necessarily mean "the test has
    * begun," e.g. for linker errors stopping the test initialization.
    */
   private long baseTestBeginTimeoutMillis;
+
+  /**
+   * The amount of time to wait for all clients to complete a single test
+   * method, in milliseconds, measured from when the <i>last</i> client connects
+   * (and thus starts the test). Set by the -testMethodTimeout argument.
+   */
+  private long baseTestMethodTimeoutMillis;
 
   /**
    * Determines how to batch up tests for execution.
@@ -776,8 +774,8 @@ public class JUnitShell extends GWTShell {
   private String[] remoteUserAgents;
 
   /**
-   * What type of test we're running; Local development, local production,
-   * or remote production.
+   * What type of test we're running; Local development, local production, or
+   * remote production.
    */
   private RunStyle runStyle = null;
 
@@ -1108,8 +1106,8 @@ public class JUnitShell extends GWTShell {
     } catch (InvocationTargetException e) {
       caught = e;
     }
-    getTopLogger().log(TreeLogger.ERROR, "Unable to create runStyle \""
-        + runStyleName + "\"", caught);
+    getTopLogger().log(TreeLogger.ERROR,
+        "Unable to create runStyle \"" + runStyleName + "\"", caught);
     return -1;
   }
 

@@ -67,7 +67,7 @@ public abstract class CompileStrategy {
       TestInfo testInfo = new TestInfo(testCase.getSyntheticModuleName(),
           testCase.getClass().getName(), testCase.getName());
       List<TestInfo[]> testBlocks = new ArrayList<TestInfo[]>(1);
-      testBlocks.add(new TestInfo[] {testInfo});
+      testBlocks.add(new TestInfo[]{testInfo});
       getMessageQueue().addTestBlocks(testBlocks, false);
     }
   }
@@ -167,7 +167,7 @@ public abstract class CompileStrategy {
      * but also includes JUnit support.
      */
     ModuleDef moduleDef = ModuleDefLoader.createSyntheticModule(treeLogger,
-        syntheticModuleName, new String[] {
+        syntheticModuleName, new String[]{
             moduleName, strategy.getModuleInherit()}, false);
 
     // Replace any user entry points with our test runner.
