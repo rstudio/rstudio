@@ -21,6 +21,8 @@ import com.google.gwt.resources.rg.ImageResourceGenerator;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
@@ -34,6 +36,7 @@ public interface ImageResource extends ResourcePrototype {
    * Specifies additional options to control how an image is bundled.
    */
   @Documented
+  @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.METHOD)
   public @interface ImageOptions {
     /**

@@ -19,6 +19,8 @@ import com.google.gwt.resources.ext.ResourceGeneratorType;
 import com.google.gwt.resources.rg.BundleResourceGenerator;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
@@ -35,6 +37,7 @@ public interface ClientBundle {
    * Specifies the classpath location of the resource or resources associated
    * with the {@link ResourcePrototype}.
    */
+  @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.METHOD)
   public @interface Source {
     String[] value();

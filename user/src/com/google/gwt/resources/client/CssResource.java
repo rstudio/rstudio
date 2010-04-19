@@ -21,6 +21,8 @@ import com.google.gwt.resources.rg.CssResourceGenerator;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
@@ -162,6 +164,7 @@ public interface CssResource extends ResourcePrototype {
    * </pre>
    */
   @Documented
+  @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.METHOD)
   public @interface ClassName {
     String value();
@@ -209,6 +212,7 @@ public interface CssResource extends ResourcePrototype {
    * CssResource.
    */
   @Documented
+  @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.METHOD)
   public @interface Import {
     Class<? extends CssResource>[] value();
@@ -221,6 +225,7 @@ public interface CssResource extends ResourcePrototype {
    * @see Import
    */
   @Documented
+  @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.TYPE)
   public @interface ImportedWithPrefix {
     String value();
@@ -242,6 +247,7 @@ public interface CssResource extends ResourcePrototype {
    * </pre>
    */
   @Documented
+  @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.METHOD)
   public @interface NotStrict {
   }
@@ -286,6 +292,7 @@ public interface CssResource extends ResourcePrototype {
    * enough to warrant an easier use-case.
    */
   @Documented
+  @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.TYPE)
   public @interface Shared {
   }
@@ -296,6 +303,7 @@ public interface CssResource extends ResourcePrototype {
    * @deprecated Strict mode is now the default behavior for CssResource
    */
   @Deprecated
+  @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.METHOD)
   public @interface Strict {
   }
