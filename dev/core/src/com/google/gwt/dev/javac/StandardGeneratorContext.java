@@ -435,9 +435,14 @@ public class StandardGeneratorContext implements GeneratorContext {
       msg += "; in " + (after - before) + " ms";
       logger.log(TreeLogger.DEBUG, msg, null);
       return className;
+    } catch (AssertionError e) {
+      // Catch and log the assertion as a convenience to the developer
+      logger.log(TreeLogger.ERROR, "Generator '" + generatorClass.getName()
+          + "' failed an assertion while rebinding '" + typeName + "'", e);
+      throw new UnableToCompleteException();
     } catch (RuntimeException e) {
       logger.log(TreeLogger.ERROR, "Generator '" + generatorClass.getName()
-          + "' threw threw an exception while rebinding '" + typeName + "'", e);
+          + "' threw an exception while rebinding '" + typeName + "'", e);
       throw new UnableToCompleteException();
     } finally {
       PerfLogger.end();
