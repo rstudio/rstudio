@@ -25,32 +25,31 @@ import com.google.gwt.dom.client.NativeEvent;
  *
  * @param <H> the {#link Cell} type
  */
-public class Header<H> {
+public abstract class Header<H> {
+
   private final Cell<H, Void> cell;
+
   private ValueUpdater<H, Void> updater;
-  private H value;
 
   public Header(Cell<H, Void> cell) {
     this.cell = cell;
   }
 
-  public H getValue() {
-    return value;
+  public boolean dependsOnSelection() {
+    return false;
   }
 
+  public abstract H getValue();
+
   public void onBrowserEvent(Element elem, NativeEvent event) {
-    cell.onBrowserEvent(elem, value, null, event, updater);
+    cell.onBrowserEvent(elem, getValue(), null, event, updater);
   }
 
   public void render(StringBuilder sb) {
-    cell.render(value, null, sb);
+    cell.render(getValue(), null, sb);
   }
 
   public void setUpdater(ValueUpdater<H, Void> updater) {
     this.updater = updater;
-  }
-
-  public void setValue(H value) {
-    this.value = value;
   }
 }

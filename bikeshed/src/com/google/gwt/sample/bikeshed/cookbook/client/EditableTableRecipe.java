@@ -61,8 +61,12 @@ public class EditableTableRecipe extends Recipe {
     }
 
     EditTextColumn column = new EditTextColumn();
-    Header<String> header = new Header<String>(TextCell.getInstance());
-    header.setValue("<b>item</b>");
+    Header<String> header = new Header<String>(TextCell.getInstance()) {
+      @Override
+      public String getValue() {
+        return "<b>item</b>";
+      }
+    };
     table.addColumn(column, header);
 
     column.setFieldUpdater(new FieldUpdater<String, String, String>() {

@@ -60,14 +60,13 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
   private Delegate<T> delegate;
   private List<Header<?>> footers = new ArrayList<Header<?>>();
   private List<Header<?>> headers = new ArrayList<Header<?>>();
+  private TableRowElement hoveringRow;
   private int numPages;
   private int pageSize;
   private ProvidesKey<T> providesKey;
   private HandlerRegistration selectionHandler;
   private SelectionModel<T> selectionModel;
-
   private TableElement table;
-
   private TableSectionElement tbody;
   private TableSectionElement tfoot;
   private TableSectionElement thead;
@@ -171,6 +170,18 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
       }
     } else if (section == tbody) {
       int row = tr.getSectionRowIndex();
+
+      if (event.getType().equals("mouseover")) {
+        if (hoveringRow != null) {
+          hoveringRow.removeClassName("hover");
+        }
+        hoveringRow = tr;
+        tr.addClassName("hover");
+      } else if (event.getType().equals("mouseout")) {
+        hoveringRow = null;
+        tr.removeClassName("hover");
+      }
+
       T value = data.get(row);
       Column<T, ?, ?> column = columns.get(col);
 
@@ -205,6 +216,18 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
   }
 
   public void refreshSelection() {
+    // Refresh headers
+    Element th = thead.getFirstChild().getFirstChild().cast();
+    for (Header<?> header : headers) {
+      if (header.dependsOnSelection()) {
+        StringBuilder sb = new StringBuilder();
+        header.render(sb);
+        th.setInnerHTML(sb.toString());
+      }
+      th = th.getNextSibling().cast();
+    }
+
+    // Refresh body
     NodeList<TableRowElement> rows = tbody.getRows();
     for (int indexOnPage = 0; indexOnPage < pageSize; indexOnPage++) {
       TableRowElement row = rows.getItem(indexOnPage);

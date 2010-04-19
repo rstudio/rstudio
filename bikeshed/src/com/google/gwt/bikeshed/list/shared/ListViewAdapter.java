@@ -33,6 +33,53 @@ import java.util.ListIterator;
  */
 public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
 
+  private class WrappedListIterator implements ListIterator<T> {
+
+    int index;
+    private ListWrapper wrapper;
+
+    public WrappedListIterator(ListWrapper listWrapper, int index) {
+      this.wrapper = listWrapper;
+      this.index = index;
+    }
+
+    public void add(T o) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean hasNext() {
+      return index < wrapper.size();
+    }
+
+    public boolean hasPrevious() {
+      return index > 0;
+    }
+
+    public T next() {
+      return wrapper.get(index++);
+    }
+
+    public int nextIndex() {
+      return index;
+    }
+
+    public T previous() {
+      return wrapper.get(--index);
+    }
+
+    public int previousIndex() {
+      return index - 1;
+    }
+
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+
+    public void set(T o) {
+      wrapper.set(index, o);
+    }
+  }
+
   /**
    * A wrapper around a list that updates the model on any change.
    */
@@ -188,13 +235,11 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
     }
 
     public ListIterator<T> listIterator() {
-      // TODO(jlabanca): Wrap the iterator
-      return list.listIterator();
+      return new WrappedListIterator(this, 0);
     }
 
     public ListIterator<T> listIterator(int index) {
-      // TODO(jlabanca): Wrap the iterator
-      return list.listIterator(index);
+      return new WrappedListIterator(this, index);
     }
 
     public T remove(int index) {

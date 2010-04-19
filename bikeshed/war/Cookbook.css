@@ -24,6 +24,10 @@ tr.oddRow {
   background-color: rgb(220, 220, 220);
 }
 
+tr.hover {
+  background-color: rgb(255, 0, 0);
+}
+
 div.gwt-sstree-column {
   overflow-y: scroll;
   overflow-x: auto;

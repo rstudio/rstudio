@@ -16,13 +16,17 @@
 package com.google.gwt.sample.bikeshed.cookbook.client;
 
 import com.google.gwt.bikeshed.cells.client.ButtonCell;
+import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.CheckboxCell;
-import com.google.gwt.bikeshed.cells.client.DatePickerCell;
+import com.google.gwt.bikeshed.cells.client.ClickableTextCell;
+import com.google.gwt.bikeshed.cells.client.DateCell;
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
+import com.google.gwt.bikeshed.cells.client.TextCell;
+import com.google.gwt.bikeshed.cells.client.ValueUpdater;
 import com.google.gwt.bikeshed.list.client.Column;
+import com.google.gwt.bikeshed.list.client.Header;
 import com.google.gwt.bikeshed.list.client.PagingTableListView;
 import com.google.gwt.bikeshed.list.client.SimpleColumn;
-import com.google.gwt.bikeshed.list.client.TextColumn;
 import com.google.gwt.bikeshed.list.shared.DefaultSelectionModel;
 import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
 import com.google.gwt.bikeshed.list.shared.ProvidesKey;
@@ -39,6 +43,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +56,10 @@ import java.util.TreeMap;
  * A recipe for mail-like selection features.
  */
 public class MailRecipe extends Recipe implements ClickHandler {
+
+  static interface GetValue<T, C> {
+    C getValue(T object);
+  }
 
   static class MailSelectionModel extends DefaultSelectionModel<Message> {
     enum Type {
@@ -75,6 +85,10 @@ public class MailRecipe extends Recipe implements ClickHandler {
     @Override
     public ProvidesKey<Message> getKeyProvider() {
       return keyProvider;
+    }
+
+    public String getType() {
+      return type.toString();
     }
 
     @Override
@@ -165,11 +179,11 @@ public class MailRecipe extends Recipe implements ClickHandler {
 
   // Hashing, comparison, and equality are based on the message id
   static class Message {
+    Date date;
     int id;
     boolean isRead;
     String sender;
     String subject;
-    Date date;
 
     public Message(int id, String sender, String subject, Date date) {
       super();
@@ -229,14 +243,14 @@ public class MailRecipe extends Recipe implements ClickHandler {
       "Kaan Boulier", "Emilee Naoma", "Atino Alice", "Debby Renay",
       "Versie Nereida", "Ramon Erikson", "Karole Crissy", "Nelda Olsen",
       "Mariana Dann", "Reda Cheyenne", "Edelmira Jody", "Agueda Shante",
-      "Marla Dorris"
-  };
+      "Marla Dorris"};
 
   private static final String[] subjects = {
       "GWT rocks", "What's a widget?", "Money in Nigeria",
       "Impress your colleagues with bling-bling", "Degree available",
-      "Rolex Watches", "Re: Re: yo bud", "Important notice"
-  };
+      "Rolex Watches", "Re: Re: yo bud", "Important notice"};
+
+  private List<Message> messages;
 
   private MailSelectionModel selectionModel = new MailSelectionModel();
 
@@ -264,7 +278,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
   @Override
   protected Widget createWidget() {
     ListViewAdapter<Message> adapter = new ListViewAdapter<Message>();
-    List<Message> messages = adapter.getList();
+    messages = adapter.getList();
+
     Date now = new Date();
     Random rand = new Random();
     for (int i = 0; i < 1000; i++) {
@@ -272,60 +287,82 @@ public class MailRecipe extends Recipe implements ClickHandler {
       long dateOffset = rand.nextInt(60 * 60 * 24 * 90) * 1000L;
       Message message = new Message(10000 + i,
           senders[rand.nextInt(senders.length)],
-          subjects[rand.nextInt(subjects.length)],
-          new Date(now.getTime() - dateOffset));
+          subjects[rand.nextInt(subjects.length)], new Date(now.getTime()
+              - dateOffset));
       message.isRead = rand.nextBoolean();
       messages.add(message);
     }
+
+    final Comparator<Message> idComparator = new Comparator<Message>() {
+      public int compare(Message o1, Message o2) {
+        // Integer comparison
+        return o1.id - o2.id;
+      }
+    };
+
+    final Comparator<Message> dateComparator = new Comparator<Message>() {
+      public int compare(Message o1, Message o2) {
+        long cmp = o1.date.getTime() - o2.date.getTime();
+        if (cmp < 0) {
+          return -1;
+        } else if (cmp > 0) {
+          return 1;
+        } else {
+          return 0;
+        }
+      }
+    };
+
+    sortMessages(idComparator, true);
 
     table = new PagingTableListView<Message>(adapter, 10);
     table.setSelectionModel(selectionModel);
     adapter.addView(table);
 
-    // The state of the checkbox is taken from the selection model
-    SimpleColumn<Message, Boolean> selectedColumn = new SimpleColumn<Message, Boolean>(
-        new CheckboxCell()) {
+    // The state of the checkbox is synchronized with the selection model
+    SelectionColumn<Message> selectedColumn = new SelectionColumn<Message>(
+        selectionModel);
+    Header<Boolean> selectedHeader = new Header<Boolean>(new CheckboxCell()) {
       @Override
       public boolean dependsOnSelection() {
         return true;
       }
 
       @Override
-      public Boolean getValue(Message object) {
-        return selectionModel.isSelected(object);
+      public Boolean getValue() {
+        return selectionModel.getType().equals("ALL");
       }
     };
-    // Update the selection model when the checkbox is changed manually
-    selectedColumn.setFieldUpdater(new FieldUpdater<Message, Boolean, Void>() {
-      public void update(int index, Message object, Boolean value, Void viewData) {
-        selectionModel.setSelected(object, value);
+    selectedHeader.setUpdater(new ValueUpdater<Boolean, Void>() {
+      public void update(Boolean value, Void viewData) {
+        if (value == true) {
+          selectionModel.setType("ALL");
+        } else if (value == false) {
+          selectionModel.setType("NONE");
+        }
       }
     });
-    table.addColumn(selectedColumn, "Selected");
+    table.addColumn(selectedColumn, selectedHeader);
 
-    TextColumn<Message> idColumn = new TextColumn<Message>() {
-      @Override
-      public String getValue(Message object) {
-        return "" + object.id;
-      }
-    };
-    table.addColumn(idColumn, "ID");
+    addColumn(table, "ID", TextCell.getInstance(),
+        new GetValue<Message, String>() {
+          public String getValue(Message object) {
+            return "" + object.id;
+          }
+        }, idComparator);
 
-    TextColumn<Message> isReadColumn = new TextColumn<Message>() {
-      @Override
+    addColumn(table, "Read", new GetValue<Message, String>() {
       public String getValue(Message object) {
         return object.isRead ? "read" : "unread";
       }
-    };
-    table.addColumn(isReadColumn, "Read");
+    });
 
-    Column<Message, Date, Void> dateColumn =
-      new Column<Message, Date, Void>(new DatePickerCell<Void>()) {
-        @Override
-        public Date getValue(Message object) {
-          return object.getDate();
-        }
-    };
+    Column<Message, Date, Void> dateColumn = addColumn(table, "Date",
+        new DateCell(), new GetValue<Message, Date>() {
+          public Date getValue(Message object) {
+            return object.date;
+          }
+        }, dateComparator);
     dateColumn.setFieldUpdater(new FieldUpdater<Message, Date, Void>() {
       public void update(int index, Message object, Date value, Void viewData) {
         Window.alert("Changed date from " + object.date + " to " + value);
@@ -333,26 +370,21 @@ public class MailRecipe extends Recipe implements ClickHandler {
         table.refresh();
       }
     });
-    table.addColumn(dateColumn, "Date");
 
-    TextColumn<Message> senderColumn = new TextColumn<Message>() {
-      @Override
+    addColumn(table, "Sender", new GetValue<Message, String>() {
       public String getValue(Message object) {
         return object.getSender();
       }
-    };
-    table.addColumn(senderColumn, "Sender");
+    });
 
-    TextColumn<Message> subjectColumn = new TextColumn<Message>() {
-      @Override
+    addColumn(table, "Subject", new GetValue<Message, String>() {
       public String getValue(Message object) {
         return object.getSubject();
       }
-    };
-    table.addColumn(subjectColumn, "Subject");
+    });
 
-    SimpleColumn<Message, String> toggleColumn =
-      new SimpleColumn<Message, String>(ButtonCell.getInstance()) {
+    SimpleColumn<Message, String> toggleColumn = new SimpleColumn<Message, String>(
+        ButtonCell.getInstance()) {
       @Override
       public String getValue(Message object) {
         return object.isRead ? "Mark Unread" : "Mark Read";
@@ -395,10 +427,64 @@ public class MailRecipe extends Recipe implements ClickHandler {
     return p;
   }
 
+  private Column<Message, String, Void> addColumn(
+      PagingTableListView<Message> table, final String text,
+      final GetValue<Message, String> getter) {
+    return addColumn(table, text, TextCell.getInstance(), getter, null);
+  }
+
+  private <C extends Comparable<C>> Column<Message, C, Void> addColumn(
+      PagingTableListView<Message> table, final String text,
+      final Cell<C, Void> cell, final GetValue<Message, C> getter,
+      final Comparator<Message> comparator) {
+    Column<Message, C, Void> column = new Column<Message, C, Void>(cell) {
+      @Override
+      public C getValue(Message object) {
+        return getter.getValue(object);
+      }
+    };
+    Header<String> header = new Header<String>(ClickableTextCell.getInstance()) {
+      @Override
+      public String getValue() {
+        return text;
+      }
+    };
+    header.setUpdater(new ValueUpdater<String, Void>() {
+      boolean sortUp = true;
+
+      public void update(String value, Void viewData) {
+        if (comparator == null) {
+          sortMessages(new Comparator<Message>() {
+            public int compare(Message o1, Message o2) {
+              return getter.getValue(o1).compareTo(getter.getValue(o2));
+            }
+          }, sortUp);
+        } else {
+          sortMessages(comparator, sortUp);
+        }
+        sortUp = !sortUp;
+      }
+    });
+    table.addColumn(column, header);
+    return column;
+  }
+
   private Button makeButton(String label, String id) {
     Button button = new Button(label);
     button.getElement().setId(id);
     button.addClickHandler(this);
     return button;
+  }
+
+  private void sortMessages(final Comparator<Message> comparator, boolean sortUp) {
+    if (sortUp) {
+      Collections.sort(messages, comparator);
+    } else {
+      Collections.sort(messages, new Comparator<Message>() {
+        public int compare(Message o1, Message o2) {
+          return -comparator.compare(o1, o2);
+        }
+      });
+    }
   }
 }

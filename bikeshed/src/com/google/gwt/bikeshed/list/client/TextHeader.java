@@ -22,8 +22,15 @@ import com.google.gwt.bikeshed.cells.client.TextCell;
  */
 public class TextHeader extends Header<String> {
 
+  private String text;
+
   public TextHeader(String text) {
     super(TextCell.getInstance());
-    setValue(text);
+    this.text = text;
+  }
+
+  @Override
+  public String getValue() {
+    return text;
   }
 }

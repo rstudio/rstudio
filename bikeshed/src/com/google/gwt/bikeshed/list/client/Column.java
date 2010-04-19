@@ -90,8 +90,7 @@ public abstract class Column<T, C, V> {
   }
 
   public void render(T object, StringBuilder sb) {
-    C value = getValue(object);
-    cell.render(value, viewDataMap.get(object), sb);
+    cell.render(getValue(object), viewDataMap.get(object), sb);
   }
 
   public void setFieldUpdater(FieldUpdater<T, C, V> fieldUpdater) {
