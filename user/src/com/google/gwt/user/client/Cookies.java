@@ -228,8 +228,9 @@ public class Cookies {
 
   private static HashMap<String, String> ensureCookies() {
     if (cachedCookies == null || needsRefresh()) {
-      cachedCookies = new HashMap<String, String>();
-      loadCookies(cachedCookies);
+      HashMap<String, String> newCachedCookies = new HashMap<String, String>();
+      loadCookies(newCachedCookies);
+      cachedCookies = newCachedCookies;
     }
     return cachedCookies;
   }
