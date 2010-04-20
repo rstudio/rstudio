@@ -51,7 +51,8 @@ import com.google.gwt.user.client.EventListener;
  * {@example com.google.gwt.examples.CheckBoxExample}
  * </p>
  */
-public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
+public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
+    HasWordWrap {
   InputElement inputElem;
   LabelElement labelElem;
   private boolean valueChangeHandlerInitialized;
@@ -167,6 +168,10 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
     } else {
       return inputElem.isDefaultChecked();
     }
+  }
+
+  public boolean getWordWrap() {
+    return !getElement().getStyle().getProperty("whiteSpace").equals("nowrap");
   }
 
   /**
@@ -303,6 +308,11 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
     if (fireEvents) {
       ValueChangeEvent.fire(this, value);
     }
+  }
+
+  public void setWordWrap(boolean wrap) {
+    getElement().getStyle().setProperty("whiteSpace",
+        wrap ? "normal" : "nowrap");
   }
 
   // Unlike other widgets the CheckBox sinks on its inputElement, not

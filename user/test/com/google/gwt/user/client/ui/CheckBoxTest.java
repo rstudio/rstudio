@@ -253,6 +253,16 @@ public class CheckBoxTest extends GWTTestCase {
     // naught to be done about it.
   }
 
+  public void testWordWrap() {
+    assertTrue(cb.getWordWrap());
+
+    cb.setWordWrap(false);
+    assertFalse(cb.getWordWrap());
+
+    cb.setWordWrap(true);
+    assertTrue(cb.getWordWrap());
+  }
+
   @Override
   protected void gwtSetUp() throws Exception {
     super.gwtSetUp();
