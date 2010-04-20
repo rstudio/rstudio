@@ -73,9 +73,13 @@ public abstract class Column<T, C, V> {
 
   public abstract C getValue(T object);
 
+  /**
+   * @param providesKey an instance of ProvidesKey<T>, or null if the record
+   *          object should act as its own key.
+   */
   public void onBrowserEvent(Element elem, final int index, final T object,
       NativeEvent event, ProvidesKey<T> providesKey) {
-    Object key = providesKey.getKey(object);
+    Object key = providesKey == null ? object : providesKey.getKey(object);
     V viewData = viewDataMap.get(key);
     V newViewData = cell.onBrowserEvent(elem,
         getValue(object), viewData, event, fieldUpdater == null ? null

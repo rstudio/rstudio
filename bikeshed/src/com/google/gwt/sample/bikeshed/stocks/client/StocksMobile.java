@@ -120,8 +120,7 @@ public class StocksMobile {
 
   @UiFactory
   PagingTableListView<StockQuote> createFavoritesWidget() {
-    PagingTableListView<StockQuote> favorite = new PagingTableListView<StockQuote>(
-        favoritesListViewAdapter, 10);
+    PagingTableListView<StockQuote> favorite = new PagingTableListView<StockQuote>(10);
     favoritesListViewAdapter.addView(favorite);
 
     favorite.addColumn(Columns.tickerColumn, "ticker");

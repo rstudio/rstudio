@@ -15,7 +15,6 @@
  */
 package com.google.gwt.valuestore.shared;
 
-
 /**
  * A pointer to a particular property value.
  *

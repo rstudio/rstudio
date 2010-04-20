@@ -15,9 +15,9 @@
  */
 package com.google.gwt.bikeshed.list.client;
 
-import com.google.gwt.bikeshed.list.shared.ListEvent;
 import com.google.gwt.bikeshed.list.shared.Range;
-import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
+
+import java.util.List;
 
 /**
  * A list view.
@@ -39,9 +39,7 @@ public interface ListView<T> {
 
   Range getRange();
 
-  // TODO - rename to setData, don't use event?
-  void onDataChanged(ListEvent<T> event);
+  void setData(int start, int length, List<T> values);
 
-  // TODO - rename to setDataSize, don't use event?
-  void onSizeChanged(SizeChangeEvent event);
+  void setDataSize(int size, boolean isExact);
 }

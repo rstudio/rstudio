@@ -17,10 +17,8 @@ package com.google.gwt.bikeshed.tree.client;
 
 import com.google.gwt.bikeshed.list.client.HasCell;
 import com.google.gwt.bikeshed.list.client.ListView;
-import com.google.gwt.bikeshed.list.shared.ListEvent;
 import com.google.gwt.bikeshed.list.shared.ProvidesKey;
 import com.google.gwt.bikeshed.list.shared.Range;
-import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
 import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter.DefaultRange;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel.NodeInfo;
 import com.google.gwt.dom.client.Document;
@@ -381,18 +379,17 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
         return new DefaultRange(0, 100);
       }
 
-      public void onDataChanged(ListEvent<C> event) {
-        // TODO - handle event start and length
+      public void setData(int start, int length, List<C> values) {
+        // TODO - handle event start and length properly
+        int end = start + length;
 
-        int start = event.getStart();
-        int end = start + event.getLength();
         // Ensure savedInfo has a place to store the data values
         while (localSavedInfo.values.size() < end) {
           savedInfo.values.add(null);
         }
         // Save child values into savedInfo
-        int index = event.getStart();
-        for (C childValue : event.getValues()) {
+        int index = start;
+        for (C childValue : values) {
           localSavedInfo.values.set(index++, childValue);
         }
 
@@ -413,7 +410,7 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
         }
 
         List<TreeNodeView<?>> savedViews = new ArrayList<TreeNodeView<?>>();
-        for (C childValue : event.getValues()) {
+        for (C childValue : values) {
           // Remove any child elements that correspond to prior children
           // so the call to setInnerHtml will not destroy them
           TreeNodeView<?> savedView = map.get(providesKey.getKey(childValue));
@@ -425,14 +422,14 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
 
         // Construct the child contents.
         StringBuilder sb = new StringBuilder();
-        emitHtml(sb, event.getValues(), nodeInfo.getHasCells(), savedViews);
+        emitHtml(sb, values, nodeInfo.getHasCells(), savedViews);
         childContainer.setInnerHTML(sb.toString());
 
         // Create the child TreeNodeViews from the new elements.
         children = new ArrayList<TreeNodeView<?>>();
         Element childElem = childContainer.getFirstChildElement();
         int idx = 0;
-        for (C childValue : event.getValues()) {
+        for (C childValue : values) {
           TreeNodeView<C> child = createTreeNodeView(nodeInfo, childElem,
               childValue, null, idx);
           TreeNodeView<?> savedChild = map.get(providesKey.getKey(childValue));
@@ -461,8 +458,8 @@ public abstract class TreeNodeView<T> extends UIObject implements TreeNode<T> {
         }
       }
 
-      public void onSizeChanged(SizeChangeEvent event) {
-        if (event.getSize() == 0 && event.isExact()) {
+      public void setDataSize(int size, boolean isExact) {
+        if (size == 0 && isExact) {
           ensureChildContainer().setInnerHTML("<i>no data</i>");
           if (children != null) {
             for (TreeNodeView<?> child : children) {

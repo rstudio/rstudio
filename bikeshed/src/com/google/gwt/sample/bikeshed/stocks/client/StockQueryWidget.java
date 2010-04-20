@@ -80,7 +80,7 @@ public class StockQueryWidget extends Composite {
 
   @UiFactory
   PagingTableListView<StockQuote> createListView() {
-    PagingTableListView<StockQuote> view = new PagingTableListView<StockQuote>(adapter, 10);
+    PagingTableListView<StockQuote> view = new PagingTableListView<StockQuote>(10);
     adapter.addView(view);
     return view;
   }

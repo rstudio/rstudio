@@ -19,7 +19,7 @@ import com.google.gwt.bikeshed.cells.client.ButtonCell;
 import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.CheckboxCell;
 import com.google.gwt.bikeshed.cells.client.ClickableTextCell;
-import com.google.gwt.bikeshed.cells.client.DateCell;
+import com.google.gwt.bikeshed.cells.client.DatePickerCell;
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.cells.client.TextCell;
 import com.google.gwt.bikeshed.cells.client.ValueUpdater;
@@ -315,7 +315,7 @@ public class MailRecipe extends Recipe implements ClickHandler {
 
     sortMessages(idComparator, true);
 
-    table = new PagingTableListView<Message>(adapter, 10);
+    table = new PagingTableListView<Message>(10);
     table.setSelectionModel(selectionModel);
     adapter.addView(table);
 
@@ -358,7 +358,7 @@ public class MailRecipe extends Recipe implements ClickHandler {
     });
 
     Column<Message, Date, Void> dateColumn = addColumn(table, "Date",
-        new DateCell(), new GetValue<Message, Date>() {
+        new DatePickerCell<Void>(), new GetValue<Message, Date>() {
           public Date getValue(Message object) {
             return object.date;
           }
@@ -393,7 +393,7 @@ public class MailRecipe extends Recipe implements ClickHandler {
     toggleColumn.setFieldUpdater(new FieldUpdater<Message, String, Void>() {
       public void update(int index, Message object, String value, Void viewData) {
         object.isRead = !object.isRead;
-        table.refresh();
+        messages.set(index, object);
       }
     });
     table.addColumn(toggleColumn, "Toggle Read/Unread");

@@ -120,8 +120,7 @@ public class CustomizedShell extends Composite implements
 
   @UiFactory
   PagingTableListView<ReportRecord> createListView() {
-    PagingTableListView<ReportRecord> table = new PagingTableListView<ReportRecord>(
-        adapter, 10);
+    PagingTableListView<ReportRecord> table = new PagingTableListView<ReportRecord>(10);
     adapter.addView(table);
     return table;
   }

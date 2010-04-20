@@ -151,9 +151,8 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
    * @param exact true if the size is exact, false if it is a guess
    */
   protected void updateDataSize(int size, boolean exact) {
-    SizeChangeEvent event = new SizeChangeEvent(size, exact);
     for (ListView<T> view : views) {
-      view.onSizeChanged(event);
+      view.setDataSize(size, exact);
     }
   }
 
@@ -191,8 +190,7 @@ public abstract class AbstractListViewAdapter<T> implements ProvidesKey<T> {
       int realLength = realEnd - realStart;
       List<T> realValues = values.subList(realStart - start, realStart
           - start + realLength);
-      ListEvent<T> event = new ListEvent<T>(realStart, realLength, realValues);
-      view.onDataChanged(event);
+      view.setData(realStart, realLength, realValues);
     }
   }
 }

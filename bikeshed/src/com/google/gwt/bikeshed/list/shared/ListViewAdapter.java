@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 /**
  * A concrete subclass of {@link AbstractListViewAdapter} that is backed by an
@@ -33,57 +34,80 @@ import java.util.ListIterator;
  */
 public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
 
-  private class WrappedListIterator implements ListIterator<T> {
-
-    int index;
-    private ListWrapper wrapper;
-
-    public WrappedListIterator(ListWrapper listWrapper, int index) {
-      this.wrapper = listWrapper;
-      this.index = index;
-    }
-
-    public void add(T o) {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean hasNext() {
-      return index < wrapper.size();
-    }
-
-    public boolean hasPrevious() {
-      return index > 0;
-    }
-
-    public T next() {
-      return wrapper.get(index++);
-    }
-
-    public int nextIndex() {
-      return index;
-    }
-
-    public T previous() {
-      return wrapper.get(--index);
-    }
-
-    public int previousIndex() {
-      return index - 1;
-    }
-
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
-
-    public void set(T o) {
-      wrapper.set(index, o);
-    }
-  }
-
   /**
    * A wrapper around a list that updates the model on any change.
    */
   private class ListWrapper implements List<T> {
+
+    /**
+     * A wrapped ListIterator.
+     */
+    private final class WrappedListIterator implements ListIterator<T> {
+
+      int i = 0, last = -1;
+
+      private WrappedListIterator() {
+      }
+
+      private WrappedListIterator(int start) {
+        int size = ListWrapper.this.size();
+        if (start < 0 || start > size) {
+          throw new IndexOutOfBoundsException("Index: " + start + ", Size: " + size);
+        }
+        i = start;
+      }
+
+      public void add(T o) {
+        ListWrapper.this.add(i++, o);
+        last = -1;
+      }
+
+      public boolean hasNext() {
+        return i < ListWrapper.this.size();
+      }
+
+      public boolean hasPrevious() {
+        return i > 0;
+      }
+
+      public T next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        return ListWrapper.this.get(last = i++);
+      }
+
+      public int nextIndex() {
+        return i;
+      }
+
+      public T previous() {
+        if (!hasPrevious()) {
+          throw new NoSuchElementException();
+        }
+        return ListWrapper.this.get(last = --i);
+      }
+
+      public int previousIndex() {
+        return i - 1;
+      }
+
+      public void remove() {
+        if (last < 0) {
+          throw new IllegalStateException();
+        }
+        ListWrapper.this.remove(last);
+        i = last;
+        last = -1;
+      }
+
+      public void set(T o) {
+        if (last == -1) {
+          throw new IllegalStateException();
+        }
+        ListWrapper.this.set(last, o);
+      }
+    }
 
     /**
      * The current size of the list.
@@ -235,11 +259,11 @@ public class ListViewAdapter<T> extends AbstractListViewAdapter<T> {
     }
 
     public ListIterator<T> listIterator() {
-      return new WrappedListIterator(this, 0);
+      return new WrappedListIterator();
     }
 
     public ListIterator<T> listIterator(int index) {
-      return new WrappedListIterator(this, index);
+      return new WrappedListIterator(index);
     }
 
     public T remove(int index) {

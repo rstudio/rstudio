@@ -58,7 +58,7 @@ public abstract class ValuesListViewTable<R extends Record> extends
   public ValuesListViewTable(String headingMessage,
       List<Column<R, ?, ?>> columns, List<Header<?>> headers) {
     adapter = createAdapter();
-    table = new PagingTableListView<R>(adapter, 100);
+    table = new PagingTableListView<R>(100);
     adapter.addView(table);
     final Iterator<Header<?>> nextHeader = headers.iterator();
     for (Column<R, ?, ?> column : columns) {

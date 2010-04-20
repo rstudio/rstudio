@@ -17,9 +17,7 @@ package com.google.gwt.bikeshed.list.client;
 
 import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.ValueUpdater;
-import com.google.gwt.bikeshed.list.shared.ListEvent;
 import com.google.gwt.bikeshed.list.shared.Range;
-import com.google.gwt.bikeshed.list.shared.SizeChangeEvent;
 import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter.DefaultRange;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
@@ -111,34 +109,30 @@ public class SimpleCellList<T> extends Widget implements ListView<T> {
     }
   }
 
-  public void onDataChanged(ListEvent<T> event) {
-    int start = event.getStart();
-    int len = event.getLength();
-    List<T> values = event.getValues();
-
-    // Construct a run of element from start (inclusive) to start + len (exclusive)
+  public void setData(int start, int length, List<T> values) {
+    // Construct a run of element from start (inclusive) to start + length (exclusive)
     StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; i < length; i++) {
       sb.append("<div __idx='" + (start + i) + "' __seq='" + seq++ + "'>");
       cell.render(values.get(i), null, sb);
       sb.append("</div>");
     }
 
     Element parent = getElement().getFirstChildElement();
-    if (start == 0 && len == maxSize) {
+    if (start == 0 && length == maxSize) {
       parent.setInnerHTML(sb.toString());
     } else {
       makeElements();
       tmpElem.setInnerHTML(sb.toString());
-      for (int i = 0; i < len; i++) {
+      for (int i = 0; i < length; i++) {
         Element child = parent.getChild(start + i).cast();
         parent.replaceChild(tmpElem.getChild(0), child);
       }
     }
   }
 
-  public void onSizeChanged(SizeChangeEvent event) {
-    size = event.getSize();
+  public void setDataSize(int size, boolean isExact) {
+    this.size = size;
     sizeChanged();
   }
 

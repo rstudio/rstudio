@@ -49,7 +49,7 @@ public class ScaffoldListViewBuilder {
 
   public ValuesListViewTable<?> getListView(final ExpensesListPlace newPlace) {
     // TODO Will these class references prevent customized apps that keep this
-    // view builder around from stripping unsued entity types?
+    // view builder around from stripping unused entity types?
     if (!viewMap.containsKey(newPlace)) {
       if (newPlace.getType().equals(EmployeeRecord.class)) {
         EmployeeListView newView = new EmployeeListView(

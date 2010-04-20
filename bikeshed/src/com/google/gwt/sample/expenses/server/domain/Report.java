@@ -88,6 +88,7 @@ public class Report {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public static List<Report> findReportsByEmployee(String employeeId) {
     EntityManager em = entityManager();
     try {
@@ -117,7 +118,7 @@ public class Report {
   private String purpose;
 
   /**
-   * Store reporter's key instead of reporter because
+   * Store reporter's key instead of reporter.  See:
    * http://code.google.com/appengine
    * /docs/java/datastore/relationships.html#Unowned_Relationships
    */

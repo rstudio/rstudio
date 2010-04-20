@@ -98,6 +98,7 @@ public class DatePickerCell<V> extends Cell<Date, V> {
       this.viewData = viewData;
       this.valueUpdater = valueUpdater;
 
+      datePicker.setCurrentMonth(value);
       datePicker.setValue(value);
       panel.setPopupPositionAndShow(new PositionCallback() {
         public void setPosition(int offsetWidth, int offsetHeight) {

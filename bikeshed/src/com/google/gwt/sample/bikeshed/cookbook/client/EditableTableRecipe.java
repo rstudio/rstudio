@@ -53,7 +53,7 @@ public class EditableTableRecipe extends Recipe {
   @Override
   protected Widget createWidget() {
     final ListViewAdapter<String> adapter = new ListViewAdapter<String>();
-    final PagingTableListView<String> table = new PagingTableListView<String>(adapter, 10);
+    final PagingTableListView<String> table = new PagingTableListView<String>(10);
     adapter.addView(table);
 
     for (int i = 0; i < 25; ++i) {

@@ -20,7 +20,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import java.util.Map;
 
 /**
- * A convenience class to convert a Map<String, String> to a Json string on the
+ * A convenience class to convert a Map<String, String> to a JSON string on the
  * client side.
  */
 public class ClientRequestObject {
@@ -30,6 +30,7 @@ public class ClientRequestObject {
       return {};
     }-*/;
 
+    @SuppressWarnings("unused")
     protected MyJSO() {
     }
 

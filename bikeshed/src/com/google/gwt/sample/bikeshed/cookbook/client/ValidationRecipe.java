@@ -84,14 +84,13 @@ public class ValidationRecipe extends Recipe {
       String zip = "300" + i;
       list.add(new Address("GA", zip));
     }
-    adapter.setKeyProvider(new ProvidesKey<Address>() {
+
+    PagingTableListView<Address> table = new PagingTableListView<Address>(10);
+    table.setProvidesKey(new ProvidesKey<Address>() {
       public Object getKey(Address object) {
         return object.key;
       }
     });
-
-    PagingTableListView<Address> table = new PagingTableListView<Address>(
-        adapter, 10);
     adapter.addView(table);
     TextColumn<Address> stateColumn = new TextColumn<Address>() {
       @Override
