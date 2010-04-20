@@ -21,8 +21,8 @@ import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.user.client.ui.TakesValueList;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
-import com.google.gwt.valuestore.shared.impl.RecordSchema;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
+import com.google.gwt.valuestore.shared.impl.RecordSchema;
 
 import java.util.ArrayList;
 import java.util.Collection;

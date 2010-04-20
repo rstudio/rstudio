@@ -106,7 +106,7 @@ public class RequestFactoryGenerator extends Generator {
 
     PrintWriter pw = printWriters.tryToMakePrintWriterFor(recordImplTypeName);
     if (pw != null) {
-      logger = logger.branch(TreeLogger.INFO, "Generating "
+      logger = logger.branch(TreeLogger.DEBUG, "Generating "
           + publicRecordType.getName());
 
       ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
@@ -239,7 +239,7 @@ public class RequestFactoryGenerator extends Generator {
       PrintWriter out, JClassType interfaceType, String packageName,
       String implName) throws UnableToCompleteException {
 
-    logger = logger.branch(TreeLogger.INFO, String.format(
+    logger = logger.branch(TreeLogger.DEBUG, String.format(
         "Generating implementation of %s", interfaceType.getName()));
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
@@ -304,7 +304,7 @@ public class RequestFactoryGenerator extends Generator {
       GeneratorContext generatorContext, PrintWriterManager printWriters,
       PrintWriter out, JClassType interfaceType, JClassType mainType,
       String packageName, String implName) throws UnableToCompleteException {
-    logger = logger.branch(TreeLogger.INFO, String.format(
+    logger = logger.branch(TreeLogger.DEBUG, String.format(
         "Generating implementation of %s", interfaceType.getName()));
 
     ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
