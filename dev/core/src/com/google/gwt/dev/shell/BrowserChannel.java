@@ -1386,6 +1386,7 @@ public abstract class BrowserChannel {
       stream.writeByte(MessageType.SWITCH_TRANSPORT.getId());
       writeUtf8String(stream, transport);
       writeUtf8String(stream, transportArgs);
+      stream.flush();
     }
   }
 
