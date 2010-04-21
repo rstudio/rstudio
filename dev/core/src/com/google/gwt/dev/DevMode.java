@@ -155,10 +155,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     }
   }
 
-  /**
-   * The argument processor.
-   */
-  protected static class ArgProcessor extends DevModeBase.ArgProcessor {
+  static class ArgProcessor extends DevModeBase.ArgProcessor {
     public ArgProcessor(HostedModeOptions options) {
       super(options, false);
       registerHandler(new ArgHandlerServer(options));
@@ -180,11 +177,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     }
   }
 
-  /**
-   * Options controlling dev mode.
-   */
-  protected interface HostedModeOptions extends HostedModeBaseOptions,
-      CompilerOptions {
+  interface HostedModeOptions extends HostedModeBaseOptions, CompilerOptions {
     ServletContainerLauncher getServletContainerLauncher();
 
     String getServletContainerLauncherArgs();
@@ -197,10 +190,11 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   /**
    * Concrete class to implement all hosted mode options.
    */
-  protected static class HostedModeOptionsImpl extends
-      HostedModeBaseOptionsImpl implements HostedModeOptions {
+  static class HostedModeOptionsImpl extends HostedModeBaseOptionsImpl
+      implements HostedModeOptions {
     private File extraDir;
     private int localWorkers;
+    private File outDir;
     private ServletContainerLauncher scl;
     private String sclArgs;
     private File warDir;
@@ -215,7 +209,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     @Deprecated
     public File getOutDir() {
-      return warDir;
+      return outDir;
     }
 
     public ServletContainerLauncher getServletContainerLauncher() {
@@ -240,7 +234,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     @Deprecated
     public void setOutDir(File outDir) {
-      this.warDir = outDir;
+      this.outDir = outDir;
     }
 
     public void setServletContainerLauncher(ServletContainerLauncher scl) {
@@ -306,7 +300,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   /**
    * Default constructor for testing; no public API yet.
    */
-  protected DevMode() {
+  DevMode() {
   }
 
   /**

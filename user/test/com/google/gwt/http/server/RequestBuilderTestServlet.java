@@ -30,6 +30,10 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class RequestBuilderTestServlet extends HttpServlet {
 
+  private static String getPathInfoBase() {
+    return "/com.google.gwt.http.RequestBuilderTest.JUnit/testRequestBuilder/";
+  }
+
   @Override
   protected void doDelete(HttpServletRequest request,
       HttpServletResponse response) {
@@ -45,7 +49,7 @@ public class RequestBuilderTestServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     String pathInfo = request.getPathInfo();
-    if (pathInfo.equals("/setRequestHeader")) {
+    if (pathInfo.equals(getPathInfoBase() + "setRequestHeader")) {
       String value = request.getHeader("Foo");
       if (value.equals("Bar1")) {
         response.setStatus(HttpServletResponse.SC_OK);
@@ -53,13 +57,13 @@ public class RequestBuilderTestServlet extends HttpServlet {
       } else {
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       }
-    } else if (pathInfo.equals("/send_GET")) {
+    } else if (pathInfo.equals(getPathInfoBase() + "send_GET")) {
       response.setStatus(HttpServletResponse.SC_OK);
       response.getWriter().write(RequestBuilderTest.SERVLET_GET_RESPONSE);
-    } else if (pathInfo.equals("/sendRequest_GET")) {
+    } else if (pathInfo.equals(getPathInfoBase() + "sendRequest_GET")) {
       response.setStatus(HttpServletResponse.SC_OK);
       response.getWriter().write(RequestBuilderTest.SERVLET_GET_RESPONSE);
-    } else if (pathInfo.equals("/setTimeout/timeout")) {
+    } else if (pathInfo.equals(getPathInfoBase() + "setTimeout/timeout")) {
       // cause a timeout on the client
       try {
         Thread.sleep(5000);
@@ -67,7 +71,7 @@ public class RequestBuilderTestServlet extends HttpServlet {
       }
       response.setStatus(HttpServletResponse.SC_OK);
       response.getWriter().print(RequestBuilderTest.SERVLET_GET_RESPONSE);
-    } else if (pathInfo.equals("/setTimeout/noTimeout")) {
+    } else if (pathInfo.equals(getPathInfoBase() + "setTimeout/noTimeout")) {
       // wait but not long enough to timeout
       try {
         Thread.sleep(1000);
@@ -75,7 +79,7 @@ public class RequestBuilderTestServlet extends HttpServlet {
       }
       response.setStatus(HttpServletResponse.SC_OK);
       response.getWriter().print(RequestBuilderTest.SERVLET_GET_RESPONSE);
-    } else if (pathInfo.equals("/user/pass")) {
+    } else if (pathInfo.equals(getPathInfoBase() + "user/pass")) {
       String auth = request.getHeader("Authorization");
       if (auth == null) {
         response.setHeader("WWW-Authenticate", "BASIC");
@@ -107,7 +111,7 @@ public class RequestBuilderTestServlet extends HttpServlet {
          */
         response.getWriter().print(RequestBuilderTest.SERVLET_POST_RESPONSE);
         response.setStatus(HttpServletResponse.SC_OK);
-      } else if (request.getPathInfo().equals("/simplePost")) {
+      } else if (request.getPathInfo().equals(getPathInfoBase() + "simplePost")) {
         response.getWriter().print(RequestBuilderTest.SERVLET_POST_RESPONSE);
         response.setStatus(HttpServletResponse.SC_OK);
       } else {

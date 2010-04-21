@@ -36,6 +36,13 @@
   <property name="test.args.web.selenium" value="${test.args}" />
 
   <!--
+    Only IFrameLinker actually supports -noserver mode; run the other linker
+    tests if and when they are supported
+  -->
+  <property name="gwt.junit.testcase.noserver.includes" value="**/IFrameLinkerTest.class" />
+  <property name="gwt.junit.testcase.noserver.excludes" value="" />
+
+  <!--
     Whether I18NSuite should test e.g. Foo$InnerMsgs_fr.properties (if the
     value is "dollar") or Foo_Inner_fr.properties (for "bar")
    -->
@@ -387,6 +394,22 @@
     <echo message="DEPRECATED: test.hosted has been renamed test.dev"/>
   </target>
 
+  <target name="test.noserver"
+      depends="compile, compile.tests"
+      description="Run noserver tests for this project."
+      unless="test.noserver.disable">
+    <fileset id="test.noserver.tests" dir="${javac.junit.out}"
+        includes="${gwt.junit.testcase.noserver.includes}"
+        excludes="${gwt.junit.testcase.noserver.excludes}" />
+    <gwt.junit test.name="test.noserver"
+        test.args="${test.args} -prod -standardsMode -noserver"
+        test.out="${junit.out}/noserver" test.cases="test.noserver.tests">
+      <extraclasspaths>
+        <path refid="test.extraclasspath" />
+      </extraclasspaths>
+    </gwt.junit>
+  </target>
+
   <target name="test.web.htmlunit"
       depends="compile, compile.tests"
       description="Run web-mode tests with HtmlUnit."
@@ -466,6 +489,7 @@
       <antcall target="test.web.selenium"/>
       <antcall target="test.draft.selenium"/>
       <antcall target="test.nometa.selenium"/>
+      <antcall target="test.noserver"/>
       <antcall target="test.dev.htmlunit"/>
       <antcall target="test.emma.htmlunit"/>
       <antcall target="test.web.htmlunit"/>
@@ -492,6 +516,7 @@
       <antcall target="test.web.htmlunit"/>
       <antcall target="test.draft.htmlunit"/>
       <antcall target="test.nometa.htmlunit"/>
+      <antcall target="test.noserver"/>
     </parallel>
     </limit>
   </target>

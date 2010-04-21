@@ -533,7 +533,8 @@ public class JettyLauncher extends ServletContainerLauncher {
     server.addConnector(connector);
 
     // Create a new web app in the war directory.
-    WebAppContext wac = createWebAppContext(logger, appRootDir);
+    WebAppContext wac = new WebAppContextWithReload(logger,
+        appRootDir.getAbsolutePath(), "/");
 
     RequestLogHandler logHandler = new RequestLogHandler();
     logHandler.setRequestLog(new JettyRequestLogger(logger, getBaseLogLevel()));
@@ -545,18 +546,8 @@ public class JettyLauncher extends ServletContainerLauncher {
     // Now that we're started, log to the top level logger.
     Log.setLog(new JettyTreeLogger(logger));
 
-    return createServletContainer(logger, appRootDir, server, wac,
-        connector.getLocalPort());
-  }
-
-  protected JettyServletContainer createServletContainer(TreeLogger logger,
-      File appRootDir, Server server, WebAppContext wac, int localPort) {
-    return new JettyServletContainer(logger, server, wac, localPort, appRootDir);
-  }
-
-  protected WebAppContext createWebAppContext(TreeLogger logger, File appRootDir) {
-    return new WebAppContextWithReload(logger, appRootDir.getAbsolutePath(),
-        "/");
+    return new JettyServletContainer(logger, server, wac,
+        connector.getLocalPort(), appRootDir);
   }
 
   protected AbstractConnector getConnector() {

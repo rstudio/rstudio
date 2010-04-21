@@ -15,13 +15,9 @@
  */
 package com.google.gwt.core.ext.test;
 
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
-
 /**
  * Tests the cross-site linker.
  */
-@DoNotRunWith(Platform.Devel)
 public class XSLinkerTest extends LinkerTest {
   @Override
   public String getModuleName() {

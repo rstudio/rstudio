@@ -62,7 +62,7 @@ import java.util.concurrent.Semaphore;
  * The main executable class for the hosted mode shell. This class must not have
  * any GUI dependencies.
  */
-public abstract class DevModeBase implements DoneCallback {
+abstract class DevModeBase implements DoneCallback {
 
   /**
    * Implementation of BrowserWidgetHost that supports the abstract UI
@@ -165,9 +165,6 @@ public abstract class DevModeBase implements DoneCallback {
    * Handles the -blacklist command line argument.
    */
   protected static class ArgHandlerBlacklist extends ArgHandlerString {
-    public ArgHandlerBlacklist() {
-    }
-
     @Override
     public String getPurpose() {
       return "Prevents the user browsing URLs that match the specified regexes (comma or space separated)";
@@ -346,9 +343,6 @@ public abstract class DevModeBase implements DoneCallback {
     }
   }
 
-  /**
-   * Handles the -remoteUI command line flag.
-   */
   protected static class ArgHandlerRemoteUI extends ArgHandlerString {
 
     private final HostedModeBaseOptions options;
@@ -413,9 +407,6 @@ public abstract class DevModeBase implements DoneCallback {
    * Handles the -whitelist command line flag.
    */
   protected static class ArgHandlerWhitelist extends ArgHandlerString {
-    public ArgHandlerWhitelist() {
-    }
-
     @Override
     public String getPurpose() {
       return "Allows the user to browse URLs that match the specified regexes (comma or space separated)";
@@ -437,9 +428,6 @@ public abstract class DevModeBase implements DoneCallback {
     }
   }
 
-  /**
-   * Base options for dev mode.
-   */
   protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir,
       OptionLogLevel, OptionGenDir, OptionNoServer, OptionPort,
       OptionCodeServerPort, OptionStartupURLs, OptionRemoteUI,
@@ -560,9 +548,6 @@ public abstract class DevModeBase implements DoneCallback {
     }
   }
 
-  /**
-   * Controls what local address to bind to.
-   */
   protected interface OptionBindAddress {
     String getBindAddress();
 
@@ -573,9 +558,6 @@ public abstract class DevModeBase implements DoneCallback {
     void setConnectAddress(String connectAddress);
   }
 
-  /**
-   * Controls what port the code server listens on.
-   */
   protected interface OptionCodeServerPort {
     int getCodeServerPort();
 
@@ -644,10 +626,7 @@ public abstract class DevModeBase implements DoneCallback {
     List<String> getStartupURLs();
   }
 
-  /**
-   * The base dev mode argument processor.
-   */
-  protected abstract static class ArgProcessor extends ArgProcessorBase {
+  abstract static class ArgProcessor extends ArgProcessorBase {
     public ArgProcessor(HostedModeBaseOptions options, boolean forceServer) {
       if (!forceServer) {
         registerHandler(new ArgHandlerNoServerFlag(options));
