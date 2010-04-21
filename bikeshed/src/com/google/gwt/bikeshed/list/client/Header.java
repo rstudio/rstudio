@@ -21,7 +21,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
 /**
- * A table column header.
+ * A table column header or footer.
  *
  * @param <H> the {#link Cell} type
  */

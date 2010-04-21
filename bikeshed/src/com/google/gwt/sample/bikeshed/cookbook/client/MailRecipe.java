@@ -37,6 +37,7 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -250,7 +251,19 @@ public class MailRecipe extends Recipe implements ClickHandler {
       "Impress your colleagues with bling-bling", "Degree available",
       "Rolex Watches", "Re: Re: yo bud", "Important notice"};
 
+  private Button add1Button;
+
+  private FocusWidget add5Button;
+
   private List<Message> messages;
+
+  private Button nextPageButton;
+
+  private Button prevPageButton;
+
+  private Button remove1Button;
+
+  private Button remove5Button;
 
   private MailSelectionModel selectionModel = new MailSelectionModel();
 
@@ -270,6 +283,18 @@ public class MailRecipe extends Recipe implements ClickHandler {
       for (Message item : selectedItems) {
         selectionModel.setSelected(item, true);
       }
+    } else if ("NEXT".equals(id)) {
+      table.nextPage();
+      updatePagingButtons();
+    } else if ("PREV".equals(id)) {
+      table.previousPage();
+      updatePagingButtons();
+    } else if (id.startsWith("ADD")) {
+      table.setPageSize(table.getPageSize() + Integer.parseInt(id.substring(3)));
+      updatePagingButtons();
+    } else if (id.startsWith("REM")) {
+      table.setPageSize(Math.max(table.getPageSize() - Integer.parseInt(id.substring(3)), 0));
+      updatePagingButtons();
     } else {
       selectionModel.setType(id);
     }
@@ -282,7 +307,7 @@ public class MailRecipe extends Recipe implements ClickHandler {
 
     Date now = new Date();
     Random rand = new Random();
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 25; i++) {
       // Go back up to 90 days from the current date
       long dateOffset = rand.nextInt(60 * 60 * 24 * 90) * 1000L;
       Message message = new Message(10000 + i,
@@ -416,6 +441,18 @@ public class MailRecipe extends Recipe implements ClickHandler {
     p.add(makeButton("Search Senders", "SENDER"));
     p.add(new HTML("<br>"));
     p.add(table);
+    p.add(prevPageButton = makeButton("Previous Page", "PREV"));
+    prevPageButton.setEnabled(false);
+    p.add(nextPageButton = makeButton("Next Page", "NEXT"));
+    nextPageButton.setEnabled(true);
+    p.add(remove1Button = makeButton("Remove row", "REM1"));
+    remove1Button.setEnabled(true);
+    p.add(add1Button = makeButton("Add row", "ADD1"));
+    add1Button.setEnabled(true);
+    p.add(remove5Button = makeButton("Remove 5 rows", "REM5"));
+    remove5Button.setEnabled(true);
+    p.add(add5Button = makeButton("Add 5 rows", "ADD5"));
+    add5Button.setEnabled(true);
     p.add(new HTML("<br>"));
     p.add(makeButton("Select None", "NONE"));
     p.add(makeButton("Select All On This Page", "PAGE"));
@@ -425,12 +462,6 @@ public class MailRecipe extends Recipe implements ClickHandler {
     p.add(new HTML("<hr>"));
     p.add(selectionLabel);
     return p;
-  }
-
-  private Column<Message, String, Void> addColumn(
-      PagingTableListView<Message> table, final String text,
-      final GetValue<Message, String> getter) {
-    return addColumn(table, text, TextCell.getInstance(), getter, null);
   }
 
   private <C extends Comparable<C>> Column<Message, C, Void> addColumn(
@@ -469,6 +500,12 @@ public class MailRecipe extends Recipe implements ClickHandler {
     return column;
   }
 
+  private Column<Message, String, Void> addColumn(
+      PagingTableListView<Message> table, final String text,
+      final GetValue<Message, String> getter) {
+    return addColumn(table, text, TextCell.getInstance(), getter, null);
+  }
+
   private Button makeButton(String label, String id) {
     Button button = new Button(label);
     button.getElement().setId(id);
@@ -486,5 +523,14 @@ public class MailRecipe extends Recipe implements ClickHandler {
         }
       });
     }
+  }
+
+  private void updatePagingButtons() {
+    add1Button.setEnabled(table.canAddRows(1));
+    remove1Button.setEnabled(table.canRemoveRows(1));
+    add5Button.setEnabled(table.canAddRows(5));
+    remove5Button.setEnabled(table.canRemoveRows(5));
+    prevPageButton.setEnabled(table.hasPreviousPage());
+    nextPageButton.setEnabled(table.hasNextPage());
   }
 }
