@@ -15,6 +15,7 @@
  */
 package com.google.gwt.junit;
 
+import com.google.gwt.junit.client.DevModeOnCompiledScriptTest;
 import com.google.gwt.junit.client.GWTTestCaseTest;
 import com.google.gwt.junit.client.PropertyDefiningGWTTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
@@ -33,6 +34,7 @@ public class JUnitSuite {
     // Suppressed due to flakiness on Linux
     // suite.addTestSuite(BenchmarkTest.class);
     suite.addTestSuite(GWTTestCaseTest.class);
+    suite.addTestSuite(DevModeOnCompiledScriptTest.class);
 
     // Must run after a GWTTestCase so JUnitShell is initialized.
     suite.addTestSuite(BatchingStrategyTest.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2010 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,18 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.ext.test;
+package com.google.gwt.junit;
 
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.cfg.ModuleDef;
 
 /**
- * Tests the cross-site linker.
+ * Provides access to {@link JUnitShell}.
  */
-@DoNotRunWith(Platform.Devel)
-public class XSLinkerTest extends LinkerTest {
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.core.ext.XSLinkerTest";
+public class JUnitBridge {
+  public static void compileForWebMode(ModuleDef module)
+      throws UnableToCompleteException {
+    JUnitShell.getUnitTestShell().compileForWebMode(module,
+        JUnitShell.getRemoteUserAgents());
   }
+
 }

@@ -20,26 +20,31 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.GWTCompiler;
-import com.google.gwt.dev.GWTShell;
-import com.google.gwt.dev.LegacyCompilerOptions;
-import com.google.gwt.dev.GWTCompiler.GWTCompilerOptionsImpl;
+import com.google.gwt.dev.ArgProcessorBase;
+import com.google.gwt.dev.Compiler;
+import com.google.gwt.dev.DevMode;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
-import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.shell.CheckForUpdates;
+import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableRunAsync;
 import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
+import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
+import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
+import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
+import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
+import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.junit.JUnitMessageQueue.ClientStatus;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.TimeoutException;
@@ -53,6 +58,10 @@ import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.webapp.WebAppContext;
+
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -61,6 +70,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -96,8 +106,7 @@ import java.util.regex.Pattern;
  * {@link JUnitMessageQueue}, thus closing the loop.
  * </p>
  */
-@SuppressWarnings("deprecation")
-public class JUnitShell extends GWTShell {
+public class JUnitShell extends DevMode {
 
   /**
    * A strategy for running the test.
@@ -112,78 +121,79 @@ public class JUnitShell extends GWTShell {
     void processResult(TestCase testCase, JUnitResult result);
   }
 
-  class ArgProcessor extends GWTShell.ArgProcessor {
+  class ArgProcessor extends ArgProcessorBase {
 
+    @SuppressWarnings("deprecation")
     public ArgProcessor() {
-      super(options, true, true);
+      /*
+       * ----- Options from DevModeBase -------
+       */
+      // DISABLE: ArgHandlerNoServerFlag.
+      registerHandler(new ArgHandlerPort(options) {
+        @Override
+        public String[] getDefaultArgs() {
+          // Override port to auto by default.
+          return new String[]{"-port", "auto"};
+        }
+      });
+      registerHandler(new ArgHandlerWhitelist());
+      registerHandler(new ArgHandlerBlacklist());
+      registerHandler(new ArgHandlerLogDir(options));
+      registerHandler(new ArgHandlerLogLevel(options));
+      registerHandler(new ArgHandlerGenDir(options));
+      // DISABLE: ArgHandlerBindAddress.
+      registerHandler(new ArgHandlerCodeServerPort(options) {
+        @Override
+        public String[] getDefaultArgs() {
+          // Override code server port to auto by default.
+          return new String[]{this.getTag(), "auto"};
+        }
+      });
+      // DISABLE: ArgHandlerRemoteUI.
+
+      /*
+       * ----- Options from DevMode -------
+       */
+      // Hard code the server.
+      options.setServletContainerLauncher(new MyJettyLauncher());
+      // DISABLE: ArgHandlerStartupURLs
+      registerHandler(new com.google.gwt.dev.ArgHandlerOutDirDeprecated(options));
+      registerHandler(new ArgHandlerWarDir(options) {
+        @Override
+        public String[] getDefaultArgs() {
+          // If an outDir was already specified, don't clobber it.
+          if (options.getOutDir() != null) {
+            return null;
+          }
+          return super.getDefaultArgs();
+        }
+      });
+      registerHandler(new ArgHandlerExtraDir(options));
+      registerHandler(new ArgHandlerWorkDirOptional(options));
+      // DISABLE: ArgHandlerModuleName
+
+      /*
+       * ----- Additional options from Compiler not already included -------
+       */
       registerHandler(new ArgHandlerScriptStyle(options));
       registerHandler(new ArgHandlerEnableAssertions(options));
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
       registerHandler(new ArgHandlerDisableClassMetadata(options));
       registerHandler(new ArgHandlerDisableCastChecking(options));
+      registerHandler(new ArgHandlerDisableRunAsync(options));
       registerHandler(new ArgHandlerDraftCompile(options));
+      registerHandler(new ArgHandlerMaxPermsPerPrecompile(options));
       registerHandler(new ArgHandlerLocalWorkers(options));
 
-      // Override port to set auto by default.
-      registerHandler(new ArgHandlerPort(options) {
-        @Override
-        public String[] getDefaultArgs() {
-          return new String[]{"-port", "auto"};
-        }
-      });
-
-      // Override port to set auto by default.
-      registerHandler(new ArgHandlerCodeServerPort(options) {
-        @Override
-        public String[] getDefaultArgs() {
-          return new String[]{this.getTag(), "auto"};
-        }
-      });
-
-      // Disable -bindAddress, fail if it is given
-      // TODO(jat): support -bindAddress in JUnitShell, which will probably
-      // require changes to the RunStyle API.
-      registerHandler(new ArgHandlerBindAddress(options) {
-        @Override
-        public String[] getDefaultArgs() {
-          return null;
-        }
-
-        @Override
-        public boolean isUndocumented() {
-          return true;
-        }
-
-        @Override
-        public boolean setString(String value) {
-          System.err.println("-bindAddress is not supported for JUnitShell");
-          return false;
-        }
-      });
+      /*
+       * ----- Options specific to JUnitShell -----
+       */
 
       // Override log level to set WARN by default..
       registerHandler(new ArgHandlerLogLevel(options) {
         @Override
         protected Type getDefaultLogLevel() {
           return TreeLogger.WARN;
-        }
-      });
-
-      registerHandler(new ArgHandlerFlag() {
-        @Override
-        public String getPurpose() {
-          return "Causes your test to run in -noserver development mode (defaults to development mode)";
-        }
-
-        @Override
-        public String getTag() {
-          return "-noserver";
-        }
-
-        @Override
-        public boolean setFlag() {
-          shouldAutoGenerateResources = false;
-          return true;
         }
       });
 
@@ -374,7 +384,7 @@ public class JUnitShell extends GWTShell {
 
         @Override
         public boolean setFlag() {
-          setHeadlessAccessor(false);
+          JUnitShell.this.setHeadless(false);
           return true;
         }
       });
@@ -492,6 +502,49 @@ public class JUnitShell extends GWTShell {
         }
       });
     }
+
+    @Override
+    protected String getName() {
+      return JUnitShell.class.getName();
+    }
+  }
+
+  private final class MyJettyLauncher extends JettyLauncher {
+
+    /**
+     * Adds in special JUnit stuff.
+     */
+    @Override
+    protected JettyServletContainer createServletContainer(TreeLogger logger,
+        File appRootDir, Server server, WebAppContext wac, int localPort) {
+      // Don't bother shutting down cleanly.
+      server.setStopAtShutdown(false);
+      // Save off the Context so we can add our own servlets later.
+      JUnitShell.this.wac = wac;
+      return super.createServletContainer(logger, appRootDir, server, wac,
+          localPort);
+    }
+
+    /**
+     * Ignore DevMode's normal WEB-INF classloader rules and just allow the
+     * system classloader to dominate. This makes JUnitHostImpl live in the
+     * right classloader (mine).
+     */
+    @SuppressWarnings("unchecked")
+    @Override
+    protected WebAppContext createWebAppContext(TreeLogger logger,
+        File appRootDir) {
+      return new WebAppContext(appRootDir.getAbsolutePath(), "/") {
+        {
+          // Prevent file locking on Windows; pick up file changes.
+          getInitParams().put(
+              "org.mortbay.jetty.servlet.Default.useFileMappedBuffer", "false");
+
+          // Prefer the parent class loader so that JUnit works.
+          setParentLoaderPriority(true);
+        }
+      };
+    }
   }
 
   /**
@@ -597,6 +650,39 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
+   * Retrieves the JUnitShell. This should only be invoked during TestRunner
+   * execution of JUnit tests.
+   */
+  static JUnitShell getUnitTestShell() {
+    if (unitTestShell == null) {
+      unitTestShell = new JUnitShell();
+      unitTestShell.lastLaunchFailed = true;
+      String[] args = unitTestShell.synthesizeArgs();
+      ArgProcessor argProcessor = unitTestShell.new ArgProcessor();
+      if (!argProcessor.processArgs(args)) {
+        throw new JUnitFatalLaunchException("Error processing shell arguments");
+      }
+      // Always bind to the wildcard address and substitute the host address in
+      // URLs. Note that connectAddress isn't actually used here, as we
+      // override it from the runsStyle in getModuleUrl, but we set it to match
+      // what will actually be used anyway to avoid confusion.
+      unitTestShell.options.setBindAddress("0.0.0.0");
+      try {
+        unitTestShell.options.setConnectAddress(InetAddress.getLocalHost().getHostAddress());
+      } catch (UnknownHostException e) {
+        throw new JUnitFatalLaunchException("Unable to resolve my address");
+      }
+      if (!unitTestShell.startUp()) {
+        throw new JUnitFatalLaunchException("Shell failed to start");
+      }
+      // TODO: install a shutdown hook? Not necessary with GWTShell.
+      unitTestShell.lastLaunchFailed = false;
+    }
+    unitTestShell.checkArgs();
+    return unitTestShell;
+  }
+
+  /**
    * Sanity check; if the type we're trying to run did not actually wind up in
    * the type oracle, there's no way this test can possibly run. Bail early
    * instead of failing on the client.
@@ -660,37 +746,9 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
-   * Retrieves the JUnitShell. This should only be invoked during TestRunner
-   * execution of JUnit tests.
+   * Our server's web app context; used to dynamically add servlets.
    */
-  private static JUnitShell getUnitTestShell() {
-    if (unitTestShell == null) {
-      unitTestShell = new JUnitShell();
-      unitTestShell.lastLaunchFailed = true;
-      String[] args = unitTestShell.synthesizeArgs();
-      ArgProcessor argProcessor = unitTestShell.new ArgProcessor();
-      if (!argProcessor.processArgs(args)) {
-        throw new JUnitFatalLaunchException("Error processing shell arguments");
-      }
-      // Always bind to the wildcard address and substitute the host address in
-      // URLs. Note that connectAddress isn't actually used here, as we
-      // override it from the runsStyle in getModuleUrl, but we set it to match
-      // what will actually be used anyway to avoid confusion.
-      unitTestShell.options.setBindAddress("0.0.0.0");
-      try {
-        unitTestShell.options.setConnectAddress(InetAddress.getLocalHost().getHostAddress());
-      } catch (UnknownHostException e) {
-        throw new JUnitFatalLaunchException("Unable to resolve my address");
-      }
-      if (!unitTestShell.startUp()) {
-        throw new JUnitFatalLaunchException("Shell failed to start");
-      }
-      // TODO: install a shutdown hook? Not necessary with GWTShell.
-      unitTestShell.lastLaunchFailed = false;
-    }
-    unitTestShell.checkArgs();
-    return unitTestShell;
-  }
+  WebAppContext wac;
 
   /**
    * The amount of time to wait for all clients to have contacted the server and
@@ -758,6 +816,11 @@ public class JUnitShell extends GWTShell {
   private ModuleDef lastModule;
 
   /**
+   * Records what servlets have been loaded at which paths.
+   */
+  private final Map<String, String> loadedServletsByPath = new HashMap<String, String>();
+
+  /**
    * Portal to interact with the servlet.
    */
   private JUnitMessageQueue messageQueue;
@@ -784,8 +847,6 @@ public class JUnitShell extends GWTShell {
    * logger.
    */
   private String runStyleName = "HtmlUnit";
-
-  private boolean shouldAutoGenerateResources = true;
 
   private boolean standardsMode = false;
 
@@ -987,20 +1048,12 @@ public class JUnitShell extends GWTShell {
   }
 
   @Override
-  protected boolean shouldAutoGenerateResources() {
-    return shouldAutoGenerateResources;
-  }
-
-  @Override
   protected void warnAboutNoStartupUrls() {
     // do nothing -- JUnitShell isn't expected to have startup URLs
   }
 
-  void compileForWebMode(String moduleName, String... userAgents)
+  void compileForWebMode(ModuleDef module, String... userAgents)
       throws UnableToCompleteException {
-    // Never fresh during JUnit.
-    ModuleDef module = ModuleDefLoader.loadFromClassPath(getTopLogger(),
-        moduleName, false);
     if (userAgents != null && userAgents.length > 0) {
       Properties props = module.getProperties();
       Property userAgent = props.find("user.agent");
@@ -1010,28 +1063,36 @@ public class JUnitShell extends GWTShell {
             userAgents);
       }
     }
-    LegacyCompilerOptions newOptions = new GWTCompilerOptionsImpl(options);
-    if (!new GWTCompiler(newOptions).run(getTopLogger(), module)) {
+    if (!new Compiler(options).run(getTopLogger(), module)) {
       throw new UnableToCompleteException();
     }
     // TODO(scottb): prepopulate currentCompilationState somehow?
   }
 
-  void maybeCompileForWebMode(String moduleName, String... userAgents)
+  void maybeCompileForWebMode(ModuleDef module, String... userAgents)
       throws UnableToCompleteException {
-    if (!developmentMode || !shouldAutoGenerateResources) {
-      compileForWebMode(moduleName, userAgents);
+    // Load any declared servlets.
+    for (String path : module.getServletPaths()) {
+      String servletClass = module.findServletForPath(path);
+      path = '/' + module.getName() + path;
+      if (!servletClass.equals(loadedServletsByPath.get(path))) {
+        try {
+          wac.addServlet(servletClass, path);
+          loadedServletsByPath.put(path, servletClass);
+        } catch (RuntimeException alreadyLoggedByJetty) {
+        }
+      }
     }
-  }
-
-  /**
-   * Accessor method to DevModeBase.setHeadless -- without this, we get
-   * IllegalAccessError from the -notHeadless arg handler. Compiler bug?
-   * 
-   * @param headlessMode
-   */
-  void setHeadlessAccessor(boolean headlessMode) {
-    setHeadless(headlessMode);
+    if (developmentMode) {
+      // BACKWARDS COMPATIBILITY: most linkers currently fail in dev mode.
+      if (module.getLinker("std") != null) {
+        // TODO: unfortunately, this could be race condition between dev/prod
+        module.addLinker("std");
+      }
+      super.link(getTopLogger(), module);
+    } else {
+      compileForWebMode(module, userAgents);
+    }
   }
 
   /**

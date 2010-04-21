@@ -38,7 +38,7 @@
   <!-- Override the regular symbolMaps linker to put the data somewhere we can find it -->
   <define-linker name="symbolMaps" class="com.google.gwt.junit.linker.JUnitSymbolMapsLinker" />
 
-  <servlet path='/junithost' class='com.google.gwt.junit.server.JUnitHostImpl'/>
+  <servlet path='/junithost/*' class='com.google.gwt.junit.server.JUnitHostImpl'/>
 
   <inherits name="com.google.gwt.benchmarks.Benchmarks"/>
 

@@ -31,5 +31,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-r5607.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-r5607-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-core-js-r5607.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-r5607/htmlunit-core-js-r5607-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-6.1.11.jar" sourcepath="/GWT_TOOLS/lib/jetty/jetty-6.1.11-src.zip"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
