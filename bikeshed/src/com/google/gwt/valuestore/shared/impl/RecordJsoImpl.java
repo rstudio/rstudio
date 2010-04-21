@@ -71,7 +71,8 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
       }
     }
 
-    return get(property.getName());
+    // Sun JDK compile fails without this cast
+    return (V) get(property.getName());
   }
 
   public final native <T> T get(String propertyName) /*-{
