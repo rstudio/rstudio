@@ -57,11 +57,13 @@ class RunStyleExternalBrowser extends RunStyle {
     @Override
     public void run() {
       for (ExternalBrowser browser : externalBrowsers) {
-        try {
-          browser.getProcess().exitValue();
-        } catch (IllegalThreadStateException e) {
-          // The process is still active. Kill it.
-          browser.getProcess().destroy();
+        if (browser.getProcess() != null) {
+          try {
+            browser.getProcess().exitValue();
+          } catch (IllegalThreadStateException e) {
+            // The process is still active. Kill it.
+            browser.getProcess().destroy();
+          }
         }
       }
     }
