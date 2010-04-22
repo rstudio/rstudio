@@ -47,6 +47,18 @@ public class SplitLayoutPanelTest extends WidgetTestBase {
     assertEquals(l2, p.getCenter());
   }
 
+  public void testSetWidgetMinSizeCenter() {
+    SplitLayoutPanel p = new SplitLayoutPanel();
+    Label west = new Label("west");
+    Label center = new Label("center");
+
+    p.addWest(west, 100);
+    p.add(center);
+
+    // Should be ignored gracefully.
+    p.setWidgetMinSize(center, 10);
+  }
+
   public void testSplitterOrder() {
     SplitLayoutPanel p = new SplitLayoutPanel();
     WidgetCollection children = p.getChildren();
@@ -96,5 +108,28 @@ public class SplitLayoutPanelTest extends WidgetTestBase {
     assertEquals(l2, children.get(0));
     assertEquals(SplitLayoutPanel.HSplitter.class, children.get(1).getClass());
     assertEquals(l1, children.get(2));
+  }
+
+  public void testRemoveOutOfOrder() {
+    SplitLayoutPanel p = new SplitLayoutPanel();
+    WidgetCollection children = p.getChildren();
+
+    Label l0 = new Label("foo");
+    Label l1 = new Label("bar");
+
+    p.addWest(l0, 64);
+    p.addWest(l1, 64);
+    assertEquals(l0, children.get(0));
+    assertEquals(SplitLayoutPanel.HSplitter.class, children.get(1).getClass());
+    assertEquals(l1, children.get(2));
+    assertEquals(SplitLayoutPanel.HSplitter.class, children.get(3).getClass());
+
+    SplitLayoutPanel.HSplitter splitter0 = (SplitLayoutPanel.HSplitter) children.get(1);
+
+    // Remove the second element and make sure the correct splitter is removed.
+    p.remove(l1);
+    assertEquals(2, children.size());
+    assertEquals(l0, children.get(0));
+    assertEquals(splitter0, children.get(1));
   }
 }

@@ -222,12 +222,13 @@ public class SplitLayoutPanel extends DockLayoutPanel {
   public boolean remove(Widget child) {
     assert !(child instanceof Splitter) : "Splitters may not be directly removed";
 
+    int idx = getWidgetIndex(child);
     if (super.remove(child)) {
       // Remove the associated splitter, if any.
-      int idx = getWidgetIndex(child);
-      if (idx < getWidgetCount() - 1) {
+      // Now that the widget is removed, idx is the index of the splitter.
+      if (idx < getWidgetCount()) {
         // Call super.remove(), or we'll end up recursing.
-        super.remove(getWidget(idx + 1));
+        super.remove(getWidget(idx));
       }
       return true;
     }
@@ -238,7 +239,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
    * Sets the minimum allowable size for the given widget.
    * 
    * <p>
-   * Its assocated splitter cannot be dragged to a position that would make it
+   * Its associated splitter cannot be dragged to a position that would make it
    * smaller than this size. This method has no effect for the
    * {@link DockLayoutPanel.Direction#CENTER} widget.
    * </p>
@@ -247,8 +248,12 @@ public class SplitLayoutPanel extends DockLayoutPanel {
    * @param minSize the minimum size for this widget
    */
   public void setWidgetMinSize(Widget child, int minSize) {
+    assertIsChild(child);
     Splitter splitter = getAssociatedSplitter(child);
-    splitter.setMinSize(minSize);
+    // The splitter is null for the center element. 
+    if (splitter != null) {
+      splitter.setMinSize(minSize);
+    }
   }
 
   private Splitter getAssociatedSplitter(Widget child) {
@@ -256,7 +261,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
     // widget that *isn't* followed by a splitter must be the CENTER, which has
     // no associated splitter.
     int idx = getWidgetIndex(child);
-    if (idx < getWidgetCount() - 2) {
+    if (idx > -1 && idx < getWidgetCount() - 1) {
       Widget splitter = getWidget(idx + 1);
       assert splitter instanceof Splitter : "Expected child widget to be splitter";
       return (Splitter) splitter;

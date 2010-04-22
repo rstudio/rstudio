@@ -373,7 +373,7 @@ public class DockLayoutPanel extends ComplexPanel implements AnimatedLayout,
     layout.onDetach();
   }
 
-  private void assertIsChild(Widget widget) {
+  void assertIsChild(Widget widget) {
     assert (widget == null) || (widget.getParent() == this) : "The specified widget is not a child of this panel";
   }
 
