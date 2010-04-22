@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,7 +23,8 @@ import com.google.gwt.bikeshed.list.client.ListView;
 import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter;
 import com.google.gwt.bikeshed.list.shared.AsyncListViewAdapter;
 import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
-import com.google.gwt.bikeshed.tree.client.TreeNode;
+import com.google.gwt.bikeshed.list.shared.ProvidesKey;
+import com.google.gwt.bikeshed.list.shared.SingleSelectionModel;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockQuote;
 import com.google.gwt.sample.bikeshed.stocks.shared.Transaction;
@@ -57,13 +58,9 @@ class TransactionTreeViewModel implements TreeViewModel {
     }
   }
 
-  static class TransactionCell extends Cell<Transaction, Void> {
-    @Override
-    public void render(Transaction value, Void viewData, StringBuilder sb) {
-      sb.append(value.toString());
-    }
-  }
-
+  /**
+   * A {@link Cell} used to render a {@link StockQuote}.
+   */
   private static final Cell<StockQuote, Void> STOCK_QUOTE_CELL = new Cell<StockQuote, Void>() {
     @Override
     public void render(StockQuote value, Void viewData, StringBuilder sb) {
@@ -71,21 +68,52 @@ class TransactionTreeViewModel implements TreeViewModel {
     }
   };
 
-  private static final Cell<Transaction, Void> TRANSACTION_CELL = new TransactionCell();
+  /**
+   * A {@link Cell} used to render a {@link Transaction}.
+   */
+  private static final Cell<Transaction, Void> TRANSACTION_CELL = new Cell<Transaction, Void>() {
+    @Override
+    public void render(Transaction value, Void viewData, StringBuilder sb) {
+      sb.append(value.toString());
+    }
+  };
+
+  /**
+   * The last {@link StockQuote} that was opened.
+   */
+  private StockQuote lastStockQuote;
+
+  /**
+   * The last Sector that was opened.
+   */
+  private String lastSector;
 
   private Map<String, SectorListViewAdapter> sectorListViewAdapters = new HashMap<String, SectorListViewAdapter>();
   private AbstractListViewAdapter<StockQuote> stockQuoteListViewAdapter;
   private ListViewAdapter<String> topLevelListViewAdapter = new ListViewAdapter<String>();
+  private SingleSelectionModel<Object> selectionModel = new SingleSelectionModel<Object>();
 
   private Map<String, ListViewAdapter<Transaction>> transactionListViewAdaptersByTicker;
 
   private Updater updater;
 
-  public TransactionTreeViewModel(Updater updater,
+  public TransactionTreeViewModel(
+      Updater updater,
       AbstractListViewAdapter<StockQuote> stockQuoteListViewAdapter,
       Map<String, ListViewAdapter<Transaction>> transactionListViewAdaptersByTicker) {
+    this.selectionModel.setKeyProvider(new ProvidesKey<Object>() {
+      public Object getKey(Object item) {
+        if (item instanceof StockQuote) {
+          return StockQuote.KEY_PROVIDER.getKey((StockQuote) item);
+        } else {
+          return item;
+        }
+      }
+    });
     this.updater = updater;
     this.stockQuoteListViewAdapter = stockQuoteListViewAdapter;
+    
+    // Setup the sector list.
     List<String> topLevelList = topLevelListViewAdapter.getList();
     topLevelList.add("Favorites");
     topLevelList.add("Dow Jones Industrials");
@@ -93,60 +121,73 @@ class TransactionTreeViewModel implements TreeViewModel {
     this.transactionListViewAdaptersByTicker = transactionListViewAdaptersByTicker;
   }
 
-  public <T> NodeInfo<?> getNodeInfo(T value, final TreeNode<T> treeNode) {
+  public <T> NodeInfo<?> getNodeInfo(T value) {
     if (value == null) {
+      // Return list of sectors.
       return new TreeViewModel.DefaultNodeInfo<String>(topLevelListViewAdapter,
-          TextCell.getInstance(), false);
+          TextCell.getInstance(), selectionModel, null);
     } else if ("Favorites".equals(value)) {
-      return new TreeViewModel.DefaultNodeInfo<StockQuote>(stockQuoteListViewAdapter,
-          STOCK_QUOTE_CELL, false);
+      // Return favorites. 
+      return new TreeViewModel.DefaultNodeInfo<StockQuote>(
+          stockQuoteListViewAdapter, STOCK_QUOTE_CELL, selectionModel, null);
     } else if ("History".equals(value)) {
-      String ticker = ((StockQuote) treeNode.getParentNode().getValue()).getTicker();
+      // Return history of the current stock quote.
+      String ticker = lastStockQuote.getTicker();
       ListViewAdapter<Transaction> adapter = transactionListViewAdaptersByTicker.get(ticker);
       if (adapter == null) {
         adapter = new ListViewAdapter<Transaction>();
         transactionListViewAdaptersByTicker.put(ticker, adapter);
       }
       return new TreeViewModel.DefaultNodeInfo<Transaction>(adapter,
-          TRANSACTION_CELL, false);
+          TRANSACTION_CELL, selectionModel, null);
     } else if ("Actions".equals(value)) {
+      // Return the actions for the current stock quote.
       ListViewAdapter<String> adapter = new ListViewAdapter<String>();
       List<String> list = adapter.getList();
       list.add("Buy");
       list.add("Sell");
       return new TreeViewModel.DefaultNodeInfo<String>(adapter,
-          ButtonCell.getInstance(), false, new ValueUpdater<String, Void>() {
+          ButtonCell.getInstance(), selectionModel,
+          new ValueUpdater<String, Void>() {
             public void update(String value, Void viewData) {
-              StockQuote stockQuote = (StockQuote) treeNode.getParentNode().getValue();
               if ("Buy".equals(value)) {
-                updater.buy(stockQuote);
+                updater.buy(lastStockQuote);
               } else {
-                updater.sell(stockQuote);
+                updater.sell(lastStockQuote);
               }
             }
           });
     } else if (value instanceof String) {
-      SectorListViewAdapter adapter = new SectorListViewAdapter((String) value);
-      sectorListViewAdapters.put((String) value, adapter);
+      // Return the stocks for a given sector.
+      lastSector = (String) value;
+      SectorListViewAdapter adapter = new SectorListViewAdapter(lastSector);
+      sectorListViewAdapters.put(lastSector, adapter);
       return new TreeViewModel.DefaultNodeInfo<StockQuote>(adapter,
-          STOCK_QUOTE_CELL, false);
+          STOCK_QUOTE_CELL, selectionModel, null);
     } else if (value instanceof StockQuote) {
+      // Return the submenu for a stock quote.
+      lastStockQuote = (StockQuote) value;
       ListViewAdapter<String> adapter = new ListViewAdapter<String>();
       List<String> list = adapter.getList();
       list.add("Actions");
       list.add("History");
       return new TreeViewModel.DefaultNodeInfo<String>(adapter,
-          TextCell.getInstance(), false);
+          TextCell.getInstance(), selectionModel, null);
     }
 
     throw new IllegalArgumentException(value.toString());
   }
 
-  public SectorListViewAdapter getSectorListViewAdapter(String value) {
-    return sectorListViewAdapters.get(value);
+  /**
+   * Get the {@link SectorListViewAdapter} for the last selected sector.
+   * 
+   * @return the {@link SectorListViewAdapter}
+   */
+  public SectorListViewAdapter getSectorListViewAdapter() {
+    return lastSector == null ? null : sectorListViewAdapters.get(lastSector);
   }
 
-  public boolean isLeaf(Object value, final TreeNode<?> parentNode) {
+  public boolean isLeaf(Object value) {
     if (value instanceof Transaction || "Buy".equals(value)
         || "Sell".equals(value)) {
       return true;

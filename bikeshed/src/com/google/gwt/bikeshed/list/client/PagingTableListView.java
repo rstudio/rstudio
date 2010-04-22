@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -41,7 +41,7 @@ import java.util.List;
 
 /**
  * A list view that supports paging and columns.
- *
+ * 
  * @param <T> the data type of each row
  */
 public class PagingTableListView<T> extends Widget implements ListView<T> {
@@ -70,7 +70,8 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
   private ProvidesKey<T> providesKey;
 
   private HandlerRegistration selectionHandler;
-  private SelectionModel<T> selectionModel;
+  private SelectionModel<? super T> selectionModel;
+
   private TableElement table;
   private TableSectionElement tbody;
   private TableSectionElement tfoot;
@@ -86,7 +87,7 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
 
   /**
    * Constructs a table with the given page size.
-   *
+   * 
    * @param pageSize the page size
    */
   public PagingTableListView(final int pageSize) {
@@ -349,6 +350,8 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
         TableCellElement cell = row.getCells().getItem(c);
         StringBuilder sb = new StringBuilder();
         columns.get(c).render(q, sb);
+        // TODO(jlabanca): Render as one HTML string instead of embedding HTML
+        // in each cell.
         cell.setInnerHTML(sb.toString());
 
         // TODO: Really total hack! There's gotta be a better way...
@@ -362,7 +365,7 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
 
   public void setDataSize(int size, boolean isExact) {
     this.size = size;
-    refresh();
+    updateRowVisibility();
   }
 
   public void setDelegate(Delegate<T> delegate) {
@@ -371,9 +374,9 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
 
   /**
    * Set the number of rows per page and refresh the table.
-   *
+   * 
    * @param pageSize the page size
-   *
+   * 
    * @throw {@link IllegalArgumentException} if pageSize is negative or 0
    */
   public void setPageSize(int pageSize) {
@@ -396,9 +399,9 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
   }
 
   /**
-   * Set the starting index of the current visible page.  The actual page
-   * start will be clamped in the range [0, getSize() - 1].
-   *
+   * Set the starting index of the current visible page. The actual page start
+   * will be clamped in the range [0, getSize() - 1].
+   * 
    * @param pageStart the index of the row that should appear at the start of
    *          the page
    */
@@ -410,19 +413,16 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
   /**
    * Sets the {@link ProvidesKey} instance that will be used to generate keys
    * for each record object as needed.
-   *
-   * @param providesKey an instance of {@link ProvidesKey<T>} used to generate
-   *          keys for record objects.
+   * 
+   * @param providesKey an instance of {@link ProvidesKey} used to generate keys
+   *          for record objects.
    */
-  // TODO - when is this valid?  Do we rehash column view data if it changes?
+  // TODO - when is this valid? Do we rehash column view data if it changes?
   public void setProvidesKey(ProvidesKey<T> providesKey) {
     this.providesKey = providesKey;
   }
 
-  /**
-   * Sets the selection model.
-   */
-  public void setSelectionModel(SelectionModel<T> selectionModel) {
+  public void setSelectionModel(SelectionModel<? super T> selectionModel) {
     if (selectionHandler != null) {
       selectionHandler.removeHandler();
       selectionHandler = null;

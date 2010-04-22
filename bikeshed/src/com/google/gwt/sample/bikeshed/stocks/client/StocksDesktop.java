@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,7 +21,6 @@ import com.google.gwt.bikeshed.list.shared.AsyncListViewAdapter;
 import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
 import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.bikeshed.tree.client.SideBySideTreeView;
-import com.google.gwt.bikeshed.tree.client.TreeNode;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -54,7 +53,8 @@ import java.util.Map;
  */
 public class StocksDesktop implements EntryPoint, Updater {
 
-  interface Binder extends UiBinder<Widget, StocksDesktop> { }
+  interface Binder extends UiBinder<Widget, StocksDesktop> {
+  }
 
   private static final Binder binder = GWT.create(Binder.class);
 
@@ -67,13 +67,19 @@ public class StocksDesktop implements EntryPoint, Updater {
     return NumberFormat.getCurrencyFormat("USD").format(price / 100.0);
   }
 
-  @UiField Label cashLabel;
+  @UiField
+  Label cashLabel;
 
-  @UiField FavoritesWidget favoritesWidget;
-  @UiField Label netWorthLabel;
-  @UiField PlayerScoresWidget playerScoresWidget;
-  @UiField StockQueryWidget queryWidget;
-  @UiField SideBySideTreeView transactionTree;
+  @UiField
+  FavoritesWidget favoritesWidget;
+  @UiField
+  Label netWorthLabel;
+  @UiField
+  PlayerScoresWidget playerScoresWidget;
+  @UiField
+  StockQueryWidget queryWidget;
+  @UiField
+  SideBySideTreeView transactionTree;
 
   /**
    * The popup used to purchase stock.
@@ -84,8 +90,7 @@ public class StocksDesktop implements EntryPoint, Updater {
   private AsyncListViewAdapter<StockQuote> favoritesListViewAdapter;
   private AsyncListViewAdapter<PlayerInfo> playerScoresListViewAdapter;
   private AsyncListViewAdapter<StockQuote> searchListViewAdapter;
-  private Map<String, ListViewAdapter<Transaction>> transactionListViewAdaptersByTicker =
-    new HashMap<String, ListViewAdapter<Transaction>>();
+  private Map<String, ListViewAdapter<Transaction>> transactionListViewAdaptersByTicker = new HashMap<String, ListViewAdapter<Transaction>>();
   private ListViewAdapter<Transaction> transactionListViewAdapter;
   private List<Transaction> transactions;
 
@@ -145,19 +150,22 @@ public class StocksDesktop implements EntryPoint, Updater {
 
     // Hook up handlers to columns and the buy/sell popup.
     Columns.favoriteColumn.setFieldUpdater(new FieldUpdater<StockQuote, Boolean, Void>() {
-      public void update(int index, StockQuote object, Boolean value, Void viewData) {
+      public void update(int index, StockQuote object, Boolean value,
+          Void viewData) {
         setFavorite(object.getTicker(), value);
       }
     });
 
     Columns.buyColumn.setFieldUpdater(new FieldUpdater<StockQuote, String, Void>() {
-      public void update(int index, StockQuote quote, String value, Void viewData) {
+      public void update(int index, StockQuote quote, String value,
+          Void viewData) {
         buy(quote);
       }
     });
 
     Columns.sellColumn.setFieldUpdater(new FieldUpdater<StockQuote, String, Void>() {
-      public void update(int index, StockQuote quote, String value, Void viewData) {
+      public void update(int index, StockQuote quote, String value,
+          Void viewData) {
         sell(quote);
       }
     });
@@ -176,7 +184,7 @@ public class StocksDesktop implements EntryPoint, Updater {
 
   /**
    * Process the {@link StockResponse} from the server.
-   *
+   * 
    * @param response the stock response
    */
   public void processStockResponse(StockResponse response) {
@@ -212,7 +220,7 @@ public class StocksDesktop implements EntryPoint, Updater {
 
   /**
    * Set or unset a ticker symbol as a 'favorite'.
-   *
+   * 
    * @param ticker the ticker symbol
    * @param favorite if true, make the stock a favorite
    */
@@ -230,7 +238,8 @@ public class StocksDesktop implements EntryPoint, Updater {
             }
           });
     } else {
-      dataService.removeFavorite(ticker, favoritesListViewAdapter.getRanges()[0],
+      dataService.removeFavorite(ticker,
+          favoritesListViewAdapter.getRanges()[0],
           new AsyncCallback<StockResponse>() {
             public void onFailure(Throwable caught) {
               handleRpcError(caught, "Error removing favorite");
@@ -289,9 +298,7 @@ public class StocksDesktop implements EntryPoint, Updater {
     Range[] searchRanges = searchListViewAdapter.getRanges();
     Range[] favoritesRanges = favoritesListViewAdapter.getRanges();
 
-    String sectorName = getSectorName();
-    SectorListViewAdapter sectorListViewAdapter = sectorName != null
-        ? treeModel.getSectorListViewAdapter(sectorName) : null;
+    SectorListViewAdapter sectorListViewAdapter = treeModel.getSectorListViewAdapter();
     Range[] sectorRanges = sectorListViewAdapter == null ? null
         : sectorListViewAdapter.getRanges();
 
@@ -303,8 +310,8 @@ public class StocksDesktop implements EntryPoint, Updater {
     String searchQuery = queryWidget.getSearchQuery();
 
     StockRequest request = new StockRequest(searchQuery,
-        sectorListViewAdapter != null ? sectorListViewAdapter.getSector() : null,
-        searchRanges[0], favoritesRanges[0], sectorRanges != null
+        sectorListViewAdapter != null ? sectorListViewAdapter.getSector()
+            : null, searchRanges[0], favoritesRanges[0], sectorRanges != null
             && sectorRanges.length > 0 ? sectorRanges[0] : null);
     dataService.getStockQuotes(request, new AsyncCallback<StockResponse>() {
       public void onFailure(Throwable caught) {
@@ -336,26 +343,15 @@ public class StocksDesktop implements EntryPoint, Updater {
 
   @UiFactory
   SideBySideTreeView createTransactionTree() {
-    return new SideBySideTreeView(treeModel, null, 200);
-  }
-
-  // Hack - walk the transaction tree to find the current viewed sector
-  private String getSectorName() {
-    int children = transactionTree.getRootNode().getChildCount();
-    for (int i = 0; i < children; i++) {
-      TreeNode<?> childNode = transactionTree.getRootNode().getChildNode(i);
-      if (childNode.isOpen()) {
-        return (String) childNode.getValue();
-      }
-    }
-
-    return null;
+    SideBySideTreeView treeView = new SideBySideTreeView(treeModel, null);
+    treeView.setAnimationEnabled(true);
+    return treeView;
   }
 
   /**
    * Display a message to the user when an RPC call fails.
-   *
-   * @param caughtbad the exception
+   * 
+   * @param caught the exception
    * @param displayMessage the message to display to the user, or null to
    *          display a default message
    * @return true if recoverable, false if not
@@ -395,7 +391,7 @@ public class StocksDesktop implements EntryPoint, Updater {
     // Update the sector list.
     StockQuoteList sectorList = response.getSector();
     if (sectorList != null) {
-      SectorListViewAdapter sectorListViewAdapter = treeModel.getSectorListViewAdapter(getSectorName());
+      SectorListViewAdapter sectorListViewAdapter = treeModel.getSectorListViewAdapter();
       if (sectorListViewAdapter != null) {
         sectorListViewAdapter.updateDataSize(response.getNumSector(), true);
         sectorListViewAdapter.updateViewData(sectorList.getStartIndex(),

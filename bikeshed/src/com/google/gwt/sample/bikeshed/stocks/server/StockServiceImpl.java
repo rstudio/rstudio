@@ -360,7 +360,7 @@ public class StockServiceImpl extends RemoteServiceServlet implements
       }
     }
 
-    return new Result(toRet, toRet.size());
+    return new Result(toRet, symbols.size());
   }
 
   // If a query is alpha-only ([A-Za-z]+), return stocks for which:

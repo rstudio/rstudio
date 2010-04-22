@@ -71,18 +71,19 @@ body, table {
   background-color: rgb(56, 117, 215);
 }
 
-/* ss tree */
-.gwt-sstree {
+/** Applies to StandardTreeView **/
+.gwt-tree-selectedItem {
+  background-color: rgb(56, 117, 215);
+}
+
+
+/** Applies to SideBySideTreeView **/
+.gwt-SideBySideTreeView {
 }
 
 .gwt-sstree-column {
-  overflow-y: scroll;
-  overflow-x: auto;
-  position: relative;
-}
-
-.gwt-sstree-selectedItem {
-  background-color: rgb(56, 117, 215);
+  border-right: 1px solid #aaa;
+  border-left: 1px solid #aaa;
 }
 
 .gwt-sstree-evenRow {
@@ -91,6 +92,10 @@ body, table {
 
 .gwt-sstree-oddRow {
   background-color: rgb(220, 220, 220);
+}
+
+.gwt-sstree-selectedItem {
+  background-color: rgb(56, 117, 215);
 }
 
 /* date picker */

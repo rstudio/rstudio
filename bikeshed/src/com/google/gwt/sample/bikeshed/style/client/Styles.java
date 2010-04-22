@@ -20,8 +20,14 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.NotStrict;
 
+/**
+ * The Styles used in bikeshed.
+ */
 public class Styles {
 
+  /**
+   * Common styles.
+   */
   public interface Common extends CssResource {
     String box();
     String header();
@@ -31,6 +37,9 @@ public class Styles {
     String table();
   }
 
+  /**
+   * Shared resources.
+   */
   public interface Resources extends ClientBundle {
     @NotStrict
     @Source("common.css")

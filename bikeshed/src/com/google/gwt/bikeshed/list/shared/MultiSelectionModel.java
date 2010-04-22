@@ -1,47 +1,55 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.sample.bikeshed.cookbook.client;
+package com.google.gwt.bikeshed.list.shared;
 
 import com.google.gwt.bikeshed.list.shared.SelectionModel.AbstractSelectionModel;
 
+import java.util.Set;
+import java.util.TreeSet;
+
 /**
- * A simple selection model that allows only one object to be selected a a time.
- *
+ * A simple selection model that allows multiple objects to be selected.
+ * 
  * @param <T> the record data type
  */
-public final class SingleSelectionModel<T> extends AbstractSelectionModel<T> {
+public class MultiSelectionModel<T> extends AbstractSelectionModel<T> {
 
-  private T curSelection;
+  private Set<T> selectedSet = new TreeSet<T>();
+  private Set<Object> selectedKeys = new TreeSet<Object>();
 
   /**
-   * Gets the currently-selected object.
+   * Get the set of selected items.
+   * 
+   * @return the set of selected items
    */
-  public T getSelectedObject() {
-    return curSelection;
+  public Set<T> getSelectedSet() {
+    return selectedSet;
   }
 
   public boolean isSelected(T object) {
-    return object.equals(curSelection);
+    return selectedKeys.contains(getKeyProvider().getKey(object));
   }
 
   public void setSelected(T object, boolean selected) {
     if (selected) {
-      curSelection = object;
-    } else if (object.equals(curSelection)) {
-      curSelection = null;
+      selectedSet.add(object);
+      selectedKeys.add(getKeyProvider().getKey(object));
+    } else {
+      selectedSet.remove(object);
+      selectedKeys.remove(getKeyProvider().getKey(object));
     }
     scheduleSelectionChangeEvent();
   }

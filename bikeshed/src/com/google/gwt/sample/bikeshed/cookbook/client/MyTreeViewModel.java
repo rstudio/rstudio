@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,13 +18,13 @@ package com.google.gwt.sample.bikeshed.cookbook.client;
 import com.google.gwt.bikeshed.cells.client.ButtonCell;
 import com.google.gwt.bikeshed.cells.client.Cell;
 import com.google.gwt.bikeshed.cells.client.CheckboxCell;
+import com.google.gwt.bikeshed.cells.client.CompositeCell;
 import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.cells.client.ValueUpdater;
 import com.google.gwt.bikeshed.list.client.HasCell;
 import com.google.gwt.bikeshed.list.client.ListView;
 import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter;
 import com.google.gwt.bikeshed.list.shared.SelectionModel;
-import com.google.gwt.bikeshed.tree.client.TreeNode;
 import com.google.gwt.bikeshed.tree.client.TreeViewModel;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
@@ -39,7 +39,8 @@ import java.util.List;
  */
 public class MyTreeViewModel implements TreeViewModel {
 
-  private static class IntegerListViewAdapter extends AbstractListViewAdapter<Integer> {
+  private static class IntegerListViewAdapter extends
+      AbstractListViewAdapter<Integer> {
     int wordLength;
 
     public IntegerListViewAdapter(int wordLength) {
@@ -55,7 +56,8 @@ public class MyTreeViewModel implements TreeViewModel {
     }
   }
 
-  private static class StringListViewAdapter extends AbstractListViewAdapter<String> {
+  private static class StringListViewAdapter extends
+      AbstractListViewAdapter<String> {
     String value;
 
     public StringListViewAdapter(final String value) {
@@ -103,17 +105,19 @@ public class MyTreeViewModel implements TreeViewModel {
     }
   };
 
-  private List<HasCell<String, ?, Void>> hasCells =
-    new ArrayList<HasCell<String, ?, Void>>();
+  private CompositeCell<String, Void> compositeCell = new CompositeCell<String, Void>();
+  private SelectionModel<String> selectionModel;
 
-  public MyTreeViewModel(final SelectionModel<Object> selectionModel) {
-    hasCells.add(new HasCell<String, Boolean, Void>() {
-      public boolean dependsOnSelection() {
-        return true;
-      }
-
+  public MyTreeViewModel(final SelectionModel<String> selectionModel) {
+    this.selectionModel = selectionModel;
+    compositeCell.addHasCell(new HasCell<String, Boolean, Void>() {
       public Cell<Boolean, Void> getCell() {
-        return new CheckboxCell();
+        return new CheckboxCell() {
+          @Override
+          public boolean dependsOnSelection() {
+            return true;
+          }
+        };
       }
 
       public FieldUpdater<String, Boolean, Void> getFieldUpdater() {
@@ -129,11 +133,7 @@ public class MyTreeViewModel implements TreeViewModel {
         return selectionModel.isSelected(object);
       }
     });
-    hasCells.add(new HasCell<String, String, Void>() {
-      public boolean dependsOnSelection() {
-        return false;
-      }
-
+    compositeCell.addHasCell(new HasCell<String, String, Void>() {
       public Cell<String, Void> getCell() {
         return ButtonCell.getInstance();
       }
@@ -153,7 +153,7 @@ public class MyTreeViewModel implements TreeViewModel {
     });
   }
 
-  public <T> NodeInfo<?> getNodeInfo(T value, TreeNode<T> treeNode) {
+  public <T> NodeInfo<?> getNodeInfo(T value) {
     if (value instanceof String) {
       return getNodeInfoHelper((String) value);
     }
@@ -163,17 +163,20 @@ public class MyTreeViewModel implements TreeViewModel {
     throw new IllegalArgumentException("Unsupported object type: " + type);
   }
 
-  public boolean isLeaf(Object value, TreeNode<?> parentNode) {
+  public boolean isLeaf(Object value) {
     return value instanceof Integer;
   }
 
   private NodeInfo<?> getNodeInfoHelper(final String value) {
     if (value.endsWith("...")) {
-      AbstractListViewAdapter<String> adapter = new StringListViewAdapter(value.toString());
-      return new DefaultNodeInfo<String>(adapter, hasCells);
+      AbstractListViewAdapter<String> adapter = new StringListViewAdapter(
+          value.toString());
+      return new DefaultNodeInfo<String>(adapter, compositeCell,
+          selectionModel, null);
     } else {
-      AbstractListViewAdapter<Integer> adapter = new IntegerListViewAdapter(value.length());
-      return new DefaultNodeInfo<Integer>(adapter, INTEGER_CELL, false,
+      AbstractListViewAdapter<Integer> adapter = new IntegerListViewAdapter(
+          value.length());
+      return new DefaultNodeInfo<Integer>(adapter, INTEGER_CELL, null,
           new ValueUpdater<Integer, Void>() {
             public void update(Integer value, Void viewData) {
               Window.alert("Integer = " + value);

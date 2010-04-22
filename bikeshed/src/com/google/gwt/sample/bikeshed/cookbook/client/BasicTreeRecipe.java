@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.bikeshed.cookbook.client;
 
+import com.google.gwt.bikeshed.list.shared.MultiSelectionModel;
 import com.google.gwt.bikeshed.list.shared.SelectionModel;
 import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionChangeEvent;
 import com.google.gwt.bikeshed.tree.client.StandardTreeView;
@@ -37,17 +38,15 @@ public class BasicTreeRecipe extends Recipe {
     FlowPanel p = new FlowPanel();
 
     final Label label = new Label();
-    final MultiSelectionModel<Object> selectionModel = new MultiSelectionModel<Object>();
+    final MultiSelectionModel<String> selectionModel = new MultiSelectionModel<String>();
     selectionModel.addSelectionChangeHandler(new SelectionModel.SelectionChangeHandler() {
       public void onSelectionChange(SelectionChangeEvent event) {
-        label.setText("Selected "
-            + selectionModel.getSelectedSet().toString());
+        label.setText("Selected " + selectionModel.getSelectedSet().toString());
       }
     });
 
     StandardTreeView stree = new StandardTreeView(new MyTreeViewModel(
         selectionModel), "...");
-    stree.setSelectionModel(selectionModel);
     stree.setAnimationEnabled(true);
 
     p.add(stree);
