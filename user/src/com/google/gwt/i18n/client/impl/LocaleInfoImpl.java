@@ -85,4 +85,11 @@ public class LocaleInfoImpl {
   public NumberConstants getNumberConstants() {
     return GWT.create(NumberConstantsImpl.class);
   }
+  
+  /**
+   * @return true if any locale supported by this build of the app is RTL.
+   */
+  public boolean hasAnyRTL() {
+    return false;
+  }
 }

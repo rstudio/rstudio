@@ -19,5 +19,6 @@
 	<!-- Include client-side source for the test cases -->
 	<source path="client"/>
 	<extend-property name="locale" values="en_US"/>
+        <extend-property name="locale" values="ar"/>
 	<set-property name = "locale" value = "en_US"/>
 </module>

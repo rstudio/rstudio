@@ -85,7 +85,14 @@ public class LocaleInfo {
      */
     return instance.infoImpl.getLocaleNativeDisplayName(localeName);
   }
-  
+
+  /**
+   * @return true if any locale supported by this build of the app is RTL.
+   */
+  public static boolean hasAnyRTL() {
+    return instance.infoImpl.hasAnyRTL();
+  }
+
   private final LocaleInfoImpl infoImpl;
 
   private final CldrImpl cldrImpl;

@@ -67,6 +67,20 @@ public class LocaleInfoGenerator extends Generator {
   private static final String OVERRIDE_LOCALE_NATIVE_DISPLAY_NAMES = "com/google/gwt/i18n/client/impl/cldr/LocaleNativeDisplayNames-override.properties";
 
   /**
+   * Set of canonical language codes which are RTL.
+   */
+  private static final Set<String> RTL_LOCALES = new HashSet<String>();
+
+  static {
+    // TODO(jat): get this from CLDR data.
+    RTL_LOCALES.add("ar");
+    RTL_LOCALES.add("fa");
+    RTL_LOCALES.add("he");
+    RTL_LOCALES.add("ps");
+    RTL_LOCALES.add("ur");
+  }
+
+  /**
    * Generate an implementation for the given type.
    * 
    * @param logger error logger
@@ -114,9 +128,14 @@ public class LocaleInfoGenerator extends Generator {
       writer.println("@Override");
       writer.println("public String[] getAvailableLocaleNames() {");
       writer.println("  return new String[] {");
+      boolean hasAnyRtl = false;
       for (GwtLocaleImpl possibleLocale : allLocales) {
         writer.println("    \""
             + possibleLocale.toString().replaceAll("\"", "\\\"") + "\",");
+        if (RTL_LOCALES.contains(
+            possibleLocale.getCanonicalForm().getLanguage())) {
+          hasAnyRtl = true;
+        }
       }
       writer.println("  };");
       writer.println("}");
@@ -127,6 +146,11 @@ public class LocaleInfoGenerator extends Generator {
       writer.println("  return this.@" + qualName
           + "::nativeDisplayNames[localeName];");
       writer.println("}-*/;");
+      writer.println();
+      writer.println("@Override");
+      writer.println("public boolean hasAnyRTL() {");
+      writer.println("  return " + hasAnyRtl + ";");
+      writer.println("}");
       writer.println();
       writer.println("private native void ensureNativeDisplayNames() /*-{");
       writer.println("  if (this.@" + qualName

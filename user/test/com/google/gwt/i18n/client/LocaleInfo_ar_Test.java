@@ -52,5 +52,7 @@ public class LocaleInfo_ar_Test extends GWTTestCase {
   public void testRTL() {
     boolean isRTL = LocaleInfo.getCurrentLocale().isRTL();
     assertTrue(isRTL);
+    boolean hasRTL = LocaleInfo.hasAnyRTL();
+    assertTrue(hasRTL);
   }
 }
