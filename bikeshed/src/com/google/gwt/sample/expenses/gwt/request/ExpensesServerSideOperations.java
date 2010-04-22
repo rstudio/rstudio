@@ -17,10 +17,13 @@ package com.google.gwt.sample.expenses.gwt.request;
 
 import com.google.gwt.requestfactory.shared.RequestFactory.Config;
 import com.google.gwt.requestfactory.shared.RequestFactory.RequestDefinition;
+import com.google.gwt.valuestore.shared.Record;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * "API Generated" configuration class for
@@ -45,6 +48,13 @@ public class ExpensesServerSideOperations implements Config {
     putAll(EmployeeRequest.ServerOperations.values(), newMap);
     putAll(ReportRequest.ServerOperations.values(), newMap);
     map = Collections.unmodifiableMap(newMap);
+  }
+
+  public Set<Class<? extends Record>> recordTypes() {
+    Set<Class<? extends Record>> records = new HashSet<Class<? extends Record>>();
+    records.add(EmployeeRecord.class);
+    records.add(ReportRecord.class);
+    return records;
   }
 
   public Map<String, RequestDefinition> requestDefinitions() {

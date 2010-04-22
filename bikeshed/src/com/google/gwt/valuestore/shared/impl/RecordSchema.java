@@ -15,6 +15,7 @@
  */
 package com.google.gwt.valuestore.shared.impl;
 
+import com.google.gwt.requestfactory.shared.RequestFactory.WriteOperation;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.RecordChangedEvent;
@@ -47,10 +48,15 @@ public abstract class RecordSchema<R extends Record> {
 
   public abstract R create(RecordJsoImpl jso);
 
-  public abstract RecordChangedEvent<?, ?> createChangeEvent(Record record);
+  public abstract RecordChangedEvent<?, ?> createChangeEvent(Record record,
+      WriteOperation writeOperation);
 
-  public RecordChangedEvent<?, ?> createChangeEvent(RecordJsoImpl jsoRecord) {
+  public RecordChangedEvent<?, ?> createChangeEvent(RecordJsoImpl jsoRecord,
+      WriteOperation writeOperation) {
     R record = create(jsoRecord);
-    return createChangeEvent(record);
+    return createChangeEvent(record, writeOperation);
   }
+
+  public abstract String getToken();
+
 }

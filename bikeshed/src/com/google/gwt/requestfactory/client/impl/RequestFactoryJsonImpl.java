@@ -98,10 +98,9 @@ public class RequestFactoryJsonImpl implements RequestFactory {
 
           public void onResponseReceived(Request request, Response response) {
             if (200 == response.getStatusCode()) {
-              // String text = response.getText();
               // parse the return value.
 
-              jsonDeltas.commit();
+              jsonDeltas.commit(response.getText());
             } else {
               // shell.error.setInnerText(SERVER_ERROR + " ("
               // + response.getStatusText() + ")");

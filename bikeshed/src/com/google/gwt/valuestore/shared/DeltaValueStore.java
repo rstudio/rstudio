@@ -19,6 +19,15 @@ package com.google.gwt.valuestore.shared;
  * Set of changes to a ValueStore.
  */
 public interface DeltaValueStore extends ValueStore {
+  Record create(Record existingRecord);
+
+  void delete(Record record);
+
+  /**
+   * Return true if there are outstanding changes that have not been
+   * communicated to the server yet. Note that it is illegal to call this method
+   * after a request using it has been fired.
+   */
   boolean isChanged();
 
   <V> void set(Property<V> property, Record record, V value);

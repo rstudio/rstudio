@@ -18,7 +18,9 @@ package com.google.gwt.requestfactory.server;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.RequestFactory.Config;
 import com.google.gwt.requestfactory.shared.RequestFactory.RequestDefinition;
+import com.google.gwt.requestfactory.shared.RequestFactory.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
+import com.google.gwt.sample.expenses.gwt.request.ServerType;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 
@@ -63,24 +65,41 @@ import javax.servlet.http.HttpServletResponse;
 @SuppressWarnings("serial")
 public class RequestFactoryServlet extends HttpServlet {
 
-  private static final String SERVER_OPERATION_CONTEXT_PARAM = "servlet.serverOperation";
+  /**
+   * A class representing the pair of a domain entity and its corresponding
+   * record class on the client side.
+   */
+  protected static class EntityRecordPair {
+    public final Class<?> entity;
+    public final Class<? extends Record> record;
 
+    EntityRecordPair(Class<?> entity, Class<? extends Record> record) {
+      this.entity = entity;
+      this.record = record;
+    }
+  }
+
+  private static final String SERVER_OPERATION_CONTEXT_PARAM = "servlet.serverOperation";
   // TODO: Remove this hack
   private static final Set<String> PROPERTY_SET = new HashSet<String>();
+
   static {
-    for (String str : new String[]{
+    for (String str : new String[] {
         "id", "version", "displayName", "userName", "purpose", "created"}) {
       PROPERTY_SET.add(str);
     }
   }
 
-  private Config config;
+  private Config config = null;
+
+  protected Map<String, EntityRecordPair> tokenToEntityRecord;
 
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
 
     initDb(); // temporary place-holder
+    ensureConfig();
 
     RequestDefinition operation = null;
     try {
@@ -128,6 +147,8 @@ public class RequestFactoryServlet extends HttpServlet {
       throw new IllegalArgumentException(e);
     } catch (IllegalArgumentException e) {
       throw new RuntimeException(e);
+    } catch (InstantiationException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -138,15 +159,60 @@ public class RequestFactoryServlet extends HttpServlet {
   }
 
   /**
-   * Allows subclass to provide hack implementation.
+   * Persist a recordObject of token "recordToken" and return useful information
+   * as a JSONObject to return back.
    * <p>
-   * TODO real reflection based implementation.
-   *
-   * @param content
-   * @param writer
+   * Example: recordToken = "Employee", entity = Employee.class, record =
+   * EmployeeRecord.class
+   *<p>
+   * Steps:
+   * <ol>
+   * <li>assert that each property is present in "EmployeeRecord"
+   * <li>invoke "findEmployee (id)" OR new Employee()
+   * <li>set various fields on the attached entity and persist OR remove()
+   * <li>return data
+   * </ol>
    */
-  protected void sync(String content, PrintWriter writer) {
-    return;
+  JSONObject updateRecordInDataStore(String recordToken,
+      JSONObject recordObject, WriteOperation writeOperation)
+      throws SecurityException, NoSuchMethodException, IllegalAccessException,
+      InvocationTargetException, JSONException, InstantiationException {
+
+    Class<?> entity = tokenToEntityRecord.get(recordToken).entity;
+    Class<? extends Record> record = tokenToEntityRecord.get(recordToken).record;
+    Map<String, Class<?>> propertiesInRecord = getPropertiesFromRecord(record);
+    validateKeys(recordObject, propertiesInRecord);
+
+    // get entityInstance
+    Object entityInstance = getEntityInstance(writeOperation, entity,
+        recordObject.getString("id"), propertiesInRecord.get("id"));
+
+    // persist
+    if (writeOperation == WriteOperation.DELETE) {
+      entity.getMethod("remove").invoke(entityInstance);
+    } else {
+      Iterator<?> keys = recordObject.keys();
+      while (keys.hasNext()) {
+        String key = (String) keys.next();
+        Object value = recordObject.getString(key);
+        Class<?> propertyType = propertiesInRecord.get(key);
+        // TODO: hack to work around the GAE integer bug.
+        if ("version".equals(key)) {
+          propertyType = Long.class;
+          value = new Long(value.toString());
+        }
+        if (writeOperation == WriteOperation.CREATE && ("id".equals(key))) {
+          // ignored. id is assigned by default.
+        } else {
+          entity.getMethod(getMethodNameFromPropertyName(key, "set"),
+              propertyType).invoke(entityInstance, value);
+        }
+      }
+      entity.getMethod("persist").invoke(entityInstance);
+    }
+
+    // return data back.
+    return getReturnRecord(writeOperation, entity, entityInstance, recordObject);
   }
 
   private Collection<Property<?>> allProperties(Class<? extends Record> clazz) {
@@ -180,6 +246,18 @@ public class RequestFactoryServlet extends HttpServlet {
           Class<?> clazz = Class.forName(serverOperation);
           if (Config.class.isAssignableFrom(clazz)) {
             config = ((Class<? extends Config>) clazz).newInstance();
+
+            // initialize tokenToEntity map
+            tokenToEntityRecord = new HashMap<String, EntityRecordPair>();
+            for (Class<? extends Record> recordClass : config.recordTypes()) {
+              ServerType serverType = recordClass.getAnnotation(ServerType.class);
+              String token = serverType.token();
+              if ("[UNASSIGNED]".equals(token)) {
+                token = recordClass.getSimpleName();
+              }
+              tokenToEntityRecord.put(token, new EntityRecordPair(
+                  serverType.type(), recordClass));
+            }
           }
 
         } catch (ClassNotFoundException e) {
@@ -225,6 +303,20 @@ public class RequestFactoryServlet extends HttpServlet {
     }
   }
 
+  private Object getEntityInstance(WriteOperation writeOperation,
+      Class<?> entity, String idValue, Class<?> idType)
+      throws SecurityException, InstantiationException, IllegalAccessException,
+      InvocationTargetException, NoSuchMethodException {
+
+    if (writeOperation == WriteOperation.CREATE) {
+      return entity.getConstructor().newInstance();
+    }
+
+    // TODO: check "version" validity.
+    return entity.getMethod("find" + entity.getSimpleName(), idType).invoke(
+        null, idValue);
+  }
+
   /**
    * Converts the returnValue of a 'get' method to a JSONArray.
    *
@@ -260,14 +352,16 @@ public class RequestFactoryServlet extends HttpServlet {
    * Returns methodName corresponding to the propertyName that can be invoked on
    * an entity.
    *
-   * Example: "userName" returns "getUserName". "version" returns "getVersion"
+   * Example: "userName" returns prefix + "UserName". "version" returns prefix +
+   * "Version"
    */
-  private String getMethodNameFromPropertyName(String propertyName) {
+  private String getMethodNameFromPropertyName(String propertyName,
+      String prefix) {
     if (propertyName == null) {
       throw new NullPointerException("propertyName must not be null");
     }
 
-    StringBuffer methodName = new StringBuffer("get");
+    StringBuffer methodName = new StringBuffer(prefix);
     methodName.append(propertyName.substring(0, 1).toUpperCase());
     methodName.append(propertyName.substring(1));
     return methodName.toString();
@@ -275,7 +369,6 @@ public class RequestFactoryServlet extends HttpServlet {
 
   private RequestDefinition getOperation(String operationName) {
     RequestDefinition operation;
-    ensureConfig();
     operation = config.requestDefinitions().get(operationName);
     if (null == operation) {
       throw new IllegalArgumentException("Unknown operation " + operationName);
@@ -302,6 +395,23 @@ public class RequestFactoryServlet extends HttpServlet {
   }
 
   /**
+   * Returns the property fields (name => type) for a record.
+   */
+  private Map<String, Class<?>> getPropertiesFromRecord(
+      Class<? extends Record> record) throws SecurityException,
+      IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+    Map<String, Class<?>> properties = new HashMap<String, Class<?>>();
+    for (Field f : record.getFields()) {
+      if (Property.class.isAssignableFrom(f.getType())) {
+        Class<?> propertyType = (Class<?>) f.getType().getMethod("getType").invoke(
+            f.get(null));
+        properties.put(f.getName(), propertyType);
+      }
+    }
+    return properties;
+  }
+
+  /**
    * @param entityElement
    * @param property
    * @return
@@ -309,7 +419,7 @@ public class RequestFactoryServlet extends HttpServlet {
   private Object getPropertyValue(Object entityElement, String propertyName)
       throws SecurityException, NoSuchMethodException, IllegalAccessException,
       InvocationTargetException {
-    String methodName = getMethodNameFromPropertyName(propertyName);
+    String methodName = getMethodNameFromPropertyName(propertyName, "get");
     Method method = entityElement.getClass().getMethod(methodName);
     Object returnValue = method.invoke(entityElement);
     /*
@@ -325,6 +435,21 @@ public class RequestFactoryServlet extends HttpServlet {
     return returnValue;
   }
 
+  private JSONObject getReturnRecord(WriteOperation writeOperation,
+      Class<?> entity, Object entityInstance, JSONObject recordObject)
+      throws SecurityException, JSONException, IllegalAccessException,
+      InvocationTargetException, NoSuchMethodException {
+
+    JSONObject returnObject = new JSONObject();
+    returnObject.put("id", entity.getMethod("getId").invoke(entityInstance));
+    returnObject.put("version", entity.getMethod("getVersion").invoke(
+        entityInstance));
+    if (writeOperation == WriteOperation.CREATE) {
+      returnObject.put("futureId", recordObject.getString("id"));
+    }
+    return returnObject;
+  }
+
   /**
    * returns true if the property has been requested. TODO: fix this hack.
    *
@@ -333,5 +458,60 @@ public class RequestFactoryServlet extends HttpServlet {
    */
   private boolean requestedProperty(Property<?> p) {
     return PROPERTY_SET.contains(p.getName());
+  }
+
+  private void sync(String content, PrintWriter writer)
+      throws SecurityException, NoSuchMethodException, IllegalAccessException,
+      InvocationTargetException, InstantiationException {
+
+    try {
+      JSONObject jsonObject = new JSONObject(content);
+      JSONObject returnJsonObject = new JSONObject();
+      for (WriteOperation writeOperation : WriteOperation.values()) {
+        if (!jsonObject.has(writeOperation.name())) {
+          continue;
+        }
+        JSONArray reportArray = new JSONArray(
+            jsonObject.getString(writeOperation.name()));
+        JSONArray returnArray = new JSONArray();
+
+        int length = reportArray.length();
+        if (length == 0) {
+          throw new IllegalArgumentException("No json array for "
+              + writeOperation.name() + " should have been sent");
+        }
+        for (int i = 0; i < length; i++) {
+          JSONObject recordWithSchema = reportArray.getJSONObject(i);
+          // iterator has just one element.
+          Iterator<?> iterator = recordWithSchema.keys();
+          iterator.hasNext();
+          String recordToken = (String) iterator.next();
+          JSONObject recordObject = recordWithSchema.getJSONObject(recordToken);
+          JSONObject returnObject = updateRecordInDataStore(recordToken,
+              recordObject, writeOperation);
+          returnArray.put(returnObject);
+          if (iterator.hasNext()) {
+            throw new IllegalArgumentException(
+                "There cannot be more than one record token");
+          }
+        }
+        returnJsonObject.put(writeOperation.name(), returnArray);
+      }
+      writer.print(returnJsonObject.toString());
+    } catch (JSONException e) {
+      throw new IllegalArgumentException("sync failed: ", e);
+    }
+  }
+
+  private void validateKeys(JSONObject recordObject,
+      Map<String, Class<?>> declaredProperties) {
+    Iterator<?> keys = recordObject.keys();
+    while (keys.hasNext()) {
+      String key = (String) keys.next();
+      if (declaredProperties.get(key) == null) {
+        throw new IllegalArgumentException("key " + key
+            + " is not permitted to be set");
+      }
+    }
   }
 }

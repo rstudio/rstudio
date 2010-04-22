@@ -16,16 +16,9 @@
 package com.google.gwt.sample.expenses.server;
 
 import com.google.gwt.requestfactory.server.RequestFactoryServlet;
-import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
-import com.google.gwt.sample.expenses.server.domain.Report;
 import com.google.gwt.sample.expenses.server.domain.Employee;
-import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.sample.expenses.server.domain.Report;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.PrintWriter;
 import java.util.Date;
 
 /**
@@ -86,29 +79,5 @@ public class ExpensesDataServlet extends RequestFactoryServlet {
       report.setPurpose(purpose);
       report.persist();
     }
-  }
-
-  @Override
-  protected void sync(String content, PrintWriter writer) {
-
-    try {
-      JSONArray reportArray = new JSONArray(content);
-      int length = reportArray.length();
-      if (length > 0) {
-        JSONObject report = reportArray.getJSONObject(0);
-        Report r = Report.findReport(report.getString(Record.id.getName()));
-        r.setPurpose(report.getString(ReportRecord.purpose.getName()));
-        r.persist();
-        report.put(Record.version.getName(), r.getVersion());
-        JSONArray returnArray = new JSONArray();
-        // TODO: don't echo back everything.
-        returnArray.put(report);
-        writer.print(returnArray.toString());
-      }
-    } catch (JSONException e) {
-      e.printStackTrace();
-      // TODO: return an error.
-    }
-    return;
   }
 }

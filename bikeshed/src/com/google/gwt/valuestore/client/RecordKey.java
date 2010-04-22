@@ -35,7 +35,7 @@ class RecordKey {
     this(record.getId(), record.getSchema());
   }
 
-  private RecordKey(Object id, RecordSchema<?> schema) {
+  protected RecordKey(Object id, RecordSchema<?> schema) {
     assert id != null;
     assert schema != null;
 

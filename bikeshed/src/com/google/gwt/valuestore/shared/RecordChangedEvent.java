@@ -17,6 +17,7 @@ package com.google.gwt.valuestore.shared;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.requestfactory.shared.RequestFactory.WriteOperation;
 
 /**
  * Abstract base class for an event announcing changes to a {@link Record}.
@@ -29,12 +30,18 @@ import com.google.gwt.event.shared.GwtEvent;
 public abstract class RecordChangedEvent<R extends Record, H extends EventHandler>
     extends GwtEvent<H> {
   R record;
+  WriteOperation writeOperation;
 
-  public RecordChangedEvent(R record) {
+  public RecordChangedEvent(R record, WriteOperation writeOperation) {
     this.record = record;
+    this.writeOperation = writeOperation;
   }
 
   public R getRecord() {
     return record;
+  }
+
+  public WriteOperation writeOperation() {
+    return writeOperation;
   }
 }

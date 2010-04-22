@@ -42,6 +42,15 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
     return copy;
   }
 
+  public static RecordJsoImpl newCopy(RecordSchema<?> schema, String id,
+      String version) {
+    RecordJsoImpl newCopy = create();
+    newCopy.setSchema(schema);
+    newCopy.set(Record.id, id);
+    newCopy.set(Record.version, version);
+    return newCopy;
+  }
+
   private static native RecordJsoImpl create() /*-{
     return {};
   }-*/;
@@ -154,6 +163,22 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
         return;
       }
       return value;
+    }
+    return JSON.stringify(this, replacer);
+  }-*/;
+
+  /**
+   * Return JSON representation of just id and version fields, using org.json
+   * library.
+   *
+   * @return returned string.
+   */
+  public final native String toJsonIdVersion() /*-{
+    var replacer = function(key, value) {
+      if (key == 'id' || key == 'version') {
+        return value;
+      }
+      return;
     }
     return JSON.stringify(this, replacer);
   }-*/;

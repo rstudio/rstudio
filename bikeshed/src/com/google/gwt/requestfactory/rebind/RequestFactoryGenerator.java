@@ -31,7 +31,9 @@ import com.google.gwt.requestfactory.client.gen.ClientRequestObject;
 import com.google.gwt.requestfactory.client.impl.AbstractListJsonRequestObject;
 import com.google.gwt.requestfactory.client.impl.RequestFactoryJsonImpl;
 import com.google.gwt.requestfactory.shared.ServerOperation;
+import com.google.gwt.requestfactory.shared.RequestFactory.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
+import com.google.gwt.sample.expenses.gwt.request.ServerType;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.PrintWriterManager;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -126,6 +128,7 @@ public class RequestFactoryGenerator extends Generator {
       f.addImport(RecordImpl.class.getName());
       f.addImport(RecordJsoImpl.class.getName());
       f.addImport(RecordSchema.class.getName());
+      f.addImport(WriteOperation.class.getName().replace("$", "."));
 
       f.addImport(Collections.class.getName());
       f.addImport(HashSet.class.getName());
@@ -183,11 +186,23 @@ public class RequestFactoryGenerator extends Generator {
 
       sw.println();
       sw.println("@Override");
-      sw.println(String.format("public %s createChangeEvent(Record record) {",
+      sw.println(String.format("public %s createChangeEvent(Record record, WriteOperation writeOperation) {",
           eventType.getName()));
       sw.indent();
-      sw.println(String.format("return new %s((%s) record);",
+      sw.println(String.format("return new %s((%s) record, writeOperation);",
           eventType.getName(), publicRecordType.getName()));
+      sw.outdent();
+      sw.println("}");
+
+      sw.println();
+      sw.println("public String getToken() {");
+      sw.indent();
+      ServerType serverType = publicRecordType.getAnnotation(ServerType.class);
+      String token = serverType.token();
+      if ("[UNASSIGNED]".equals(token)) {
+        token = publicRecordType.getName();
+      }
+      sw.println("return \"" + token + "\";");
       sw.outdent();
       sw.println("}");
 

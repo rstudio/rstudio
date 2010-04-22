@@ -21,6 +21,7 @@ import com.google.gwt.valuestore.shared.Record;
 import com.google.gwt.valuestore.shared.ValueStore;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Marker interface for the RequestFactory code generator.
@@ -34,6 +35,7 @@ public interface RequestFactory {
    */
   interface Config {
     Map<String, RequestDefinition> requestDefinitions();
+    Set<Class<? extends Record>> recordTypes();
   }
 
   /**
@@ -91,4 +93,11 @@ public interface RequestFactory {
   void init(HandlerManager handlerManager);
 
   SyncRequest syncRequest(DeltaValueStore deltaValueStore);
+
+  /**
+   * The write operation enum used in DeltaValueStore.
+   */
+  enum WriteOperation {
+    CREATE, UPDATE, DELETE
+  }
 }

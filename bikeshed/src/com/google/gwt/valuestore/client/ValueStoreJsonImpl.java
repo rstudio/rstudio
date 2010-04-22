@@ -17,6 +17,7 @@ package com.google.gwt.valuestore.client;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.requestfactory.shared.RequestFactory.WriteOperation;
 import com.google.gwt.valuestore.shared.ValueStore;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 
@@ -55,7 +56,8 @@ public class ValueStoreJsonImpl implements ValueStore {
         newRecord = oldRecord.cast();
         newRecords.set(i, newRecord);
         if (changed) {
-          eventBus.fireEvent(newRecord.getSchema().createChangeEvent(newRecord));
+          eventBus.fireEvent(newRecord.getSchema().createChangeEvent(newRecord,
+              WriteOperation.UPDATE));
         }
       }
     }
