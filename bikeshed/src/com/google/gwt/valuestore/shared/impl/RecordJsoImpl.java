@@ -55,8 +55,9 @@ public class RecordJsoImpl extends JavaScriptObject implements Record {
 
   @SuppressWarnings("unchecked")
   public final <V> V get(Property<V> property) {
-    assert isDefined(property.getName()) : "Cannot ask for a property before setting it: "
-        + property.getName();
+    // TODO lax for the moment b/c client code can't yet reasonably make the request
+//     assert isDefined(property.getName()) : "Cannot ask for a property before setting it: "
+//         + property.getName();
 
     if (Integer.class.equals(property.getType())) {
       return (V) Integer.valueOf(getInt(property.getName()));
