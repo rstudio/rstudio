@@ -31,7 +31,7 @@ final class Util {
     return o.@java.lang.Object::typeMarker;
   }-*/;
 
-  static native int setTypeId(Object o, int typeId) /*-{
+  static native void setTypeId(Object o, int typeId) /*-{
     o.@java.lang.Object::typeId = typeId;
   }-*/;
 
