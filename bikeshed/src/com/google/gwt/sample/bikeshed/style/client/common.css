@@ -1,0 +1,197 @@
+/* global */
+body {
+  background-color: #eee;
+  color: black;
+  margin: 8px;
+  margin-top: 3px;
+}
+
+body, table {
+  font-family: Arial, sans-serif;
+  font-weight: light;
+  font-size: 12px;
+}
+
+/* odds and ends */
+.box {
+  border: 1px solid #ccc;
+  background-color: white;
+  margin: 0.25em;
+  padding: 0.5em;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+}
+
+.padded {
+  padding: 5px;
+}
+
+.header {
+  font-weight: bold;
+  font-size: 12pt;
+  margin: 0.5em;
+}
+
+.headerLeft {
+  font-weight: light;
+  font-size: 12pt;
+  margin-bottom: 0.5em;
+}
+
+.headerMain {
+  font-weight: light;
+  font-size: 18pt;
+}
+
+/* tables */
+.table {
+  width: 100%;
+  font-size: 8pt;
+  border-spacing: 0px 0px;
+  border-collapse: collapse;
+}
+
+.table th {
+  border-bottom: 1px solid #ccc;
+}
+
+.table td {
+  border-bottom: 1px solid #ccc;
+}
+
+.table tfoot th {
+  border-width: 0px;
+}
+
+.table tr.hover {
+  background-color: lightblue;
+}
+
+.table tr.selected {
+  background-color: rgb(56, 117, 215);
+}
+
+/* ss tree */
+.gwt-sstree {
+}
+
+.gwt-sstree-column {
+  overflow-y: scroll;
+  overflow-x: auto;
+  position: relative;
+}
+
+.gwt-sstree-selectedItem {
+  background-color: rgb(56, 117, 215);
+}
+
+.gwt-sstree-evenRow {
+  background-color: rgb(255, 255, 255);
+}
+
+.gwt-sstree-oddRow {
+  background-color: rgb(220, 220, 220);
+}
+
+/* date picker */
+.gwt-DatePicker {
+  border: 1px solid #A2BBDD;
+  cursor: default;
+}
+.gwt-DatePicker td,
+.datePickerMonthSelector td:focus {
+  outline: none
+}
+.datePickerDays {
+  width: 100%;
+  background: white;
+}
+.datePickerDay,
+.datePickerWeekdayLabel,
+.datePickerWeekendLabel {
+  font-size: 75%;
+  text-align: center;
+  padding: 4px;
+  outline: none;
+}
+.datePickerWeekdayLabel,
+.datePickerWeekendLabel {
+  background: #C3D9FF;
+  padding: 0px 4px 2px;
+  cursor: default;
+}
+.datePickerDay {
+  padding: 4px;
+  cursor: hand;
+  cursor: pointer;
+}
+.datePickerDayIsToday {
+  border: 1px solid black;
+  padding: 3px;
+}
+.datePickerDayIsWeekend {
+  background: #EEEEEE;
+}
+.datePickerDayIsFiller {
+  color: #888888;
+}
+.datePickerDayIsValue {
+  background: #aaccee;
+}
+.datePickerDayIsDisabled {
+  color: #AAAAAA;
+  font-style: italic;
+}
+.datePickerDayIsHighlighted {
+  background: #F0E68C;
+}
+.datePickerDayIsValueAndHighlighted {
+  background: #bbddd9;
+}
+.datePickerMonthSelector {
+  background: #C3D9FF;
+  width: 100%;
+}
+td.datePickerMonth {
+  text-align: center;
+  vertical-align: center;
+  white-space: nowrap;
+  font-size: 70%;
+  font-weight: bold;
+  color: blue;
+}
+.datePickerPreviousButton,
+.datePickerNextButton {
+  font-size: 120%;
+  line-height: 1em;
+  color: blue;
+  cursor: hand;
+  cursor: pointer;
+  padding: 0px 4px;
+}
+
+/* dialog box */
+.gwt-DialogBox {
+  border: 8px solid white;
+  border-right: 11px solid white;
+  border-bottom: 11px solid white;
+  -webkit-border-image: url(blueborder.png) 8 11 11 8 round round;
+  -moz-border-image: url(blueborder.png) 8 11 11 8 round round;
+}
+
+.gwt-DialogBox .Caption {
+  font-weight: light;
+  font-size: 12pt;
+  text-align: center;
+  margin-bottom: 0.5em;
+  border-bottom: 1px solid #ccc;
+}
+
+/* splitters */
+.gwt-SplitLayoutPanel-HDragger {
+  background: transparent url(hsplitter-grip.png) center center no-repeat;
+}
+
+.gwt-SplitLayoutPanel-VDragger {
+  background: transparent url(vsplitter-grip.png) center center no-repeat;
+}

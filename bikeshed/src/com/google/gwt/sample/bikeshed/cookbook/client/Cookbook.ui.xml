@@ -3,14 +3,18 @@
 	xmlns:l='urn:import:com.google.gwt.bikeshed.list.client'
 	xmlns:t='urn:import:com.google.gwt.bikeshed.tree.client'>
 
-	<ui:style field='common' src='common.css' />
+  <ui:with field='styles'
+    type='com.google.gwt.sample.bikeshed.style.client.Styles'/>
 
 	<g:DockLayoutPanel unit='EM' ui:field='dock'>
-		<g:north size="2">
-			<g:HTML>Table Sample</g:HTML>
+		<g:north size="3.5">
+			<g:HTML styleName='{styles.common.header}'>Google Web Toolkit Cookbook</g:HTML>
 		</g:north>
 		<g:west size="16">
-			<t:StandardTreeView ui:field='recipeTree'/>
+			<t:StandardTreeView styleName='{styles.common.box}' ui:field='recipeTree'/>
 		</g:west>
+		<g:center>
+		  <g:LayoutPanel styleName='{styles.common.box}' ui:field='container'/>
+		</g:center>
 	</g:DockLayoutPanel>
 </ui:UiBinder>

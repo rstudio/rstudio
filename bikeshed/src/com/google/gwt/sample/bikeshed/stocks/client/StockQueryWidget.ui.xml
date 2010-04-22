@@ -5,19 +5,20 @@
   xmlns:t='urn:import:com.google.gwt.bikeshed.tree.client'
   xmlns:s='urn:import:com.google.gwt.sample.bikeshed.stocks.client'>
 
-  <ui:style field='common' src='common.css'/>
+  <ui:with field='styles'
+    type='com.google.gwt.sample.bikeshed.style.client.Styles'/>
 
   <g:DockLayoutPanel unit='EM'>
     <g:north size='2'>
       <g:HTMLPanel>
-        <span class='{common.header-left}'>Enter query:</span>
+        <span class='{styles.common.headerLeft}'>Enter query:</span>
         <g:TextBox ui:field='queryField'/>
       </g:HTMLPanel>
     </g:north>
 
     <g:center>
       <g:ScrollPanel>
-        <l:PagingTableListView ui:field='listView' styleName='{common.table}'/>
+        <l:PagingTableListView ui:field='listView' styleName='{styles.common.table}'/>
       </g:ScrollPanel>
     </g:center>
   </g:DockLayoutPanel>

@@ -5,18 +5,19 @@
   xmlns:t='urn:import:com.google.gwt.bikeshed.tree.client'
   xmlns:s='urn:import:com.google.gwt.sample.bikeshed.stocks.client'>
 
-  <ui:style field='common' src='common.css'/>
+  <ui:with field='styles'
+    type='com.google.gwt.sample.bikeshed.style.client.Styles'/>
 
   <g:DockLayoutPanel unit='EM'>
     <g:north size='4'>
-      <g:HTML styleName='{common.bg} {common.header-main}'>Day Trader</g:HTML>
+      <g:HTML styleName='{styles.common.headerMain}'>Day Trader</g:HTML>
     </g:north>
 
     <g:west size='16'>
       <g:DockLayoutPanel unit='EM'>
         <g:north size='12'>
-          <g:HTMLPanel styleName='{common.bg}'>
-            <div class='{common.header}'>Your Stats</div>
+          <g:HTMLPanel styleName='{styles.common.box}'>
+            <div class='{styles.common.header}'>Your Stats</div>
             <table>
               <tr><td>Available cash:</td><td><g:InlineLabel ui:field='cashLabel'/></td></tr>
               <tr><td>Net worth:</td><td><g:InlineLabel ui:field='netWorthLabel'/></td></tr>
@@ -25,13 +26,13 @@
         </g:north>
 
         <g:center>
-          <s:PlayerScoresWidget styleName='{common.bg}' ui:field='playerScoresWidget'/>
+          <s:PlayerScoresWidget styleName='{styles.common.box}' ui:field='playerScoresWidget'/>
         </g:center>
       </g:DockLayoutPanel>
     </g:west>
 
     <g:north size="18">
-      <g:LayoutPanel styleName='{common.bg}'>
+      <g:LayoutPanel styleName='{styles.common.box}'>
         <g:layer>
           <t:SideBySideTreeView ui:field='transactionTree'/>
         </g:layer>
@@ -41,11 +42,11 @@
     <g:center>
       <g:DockLayoutPanel unit='PCT'>
         <g:west size="50">
-          <s:StockQueryWidget styleName='{common.bg}' ui:field='queryWidget'/>
+          <s:StockQueryWidget styleName='{styles.common.box}' ui:field='queryWidget'/>
         </g:west>
 
         <g:center>
-          <s:FavoritesWidget styleName='{common.bg}' ui:field='favoritesWidget'/>
+          <s:FavoritesWidget styleName='{styles.common.box}' ui:field='favoritesWidget'/>
         </g:center>
       </g:DockLayoutPanel>
     </g:center>

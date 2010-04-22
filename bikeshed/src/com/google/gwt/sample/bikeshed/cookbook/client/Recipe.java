@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.bikeshed.cookbook.client;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -35,7 +36,12 @@ public abstract class Recipe {
   public final Widget getWidget() {
     if (widget == null) {
       widget = createWidget();
+
+      // Minor style hack: we need to give a little margin to all recipes,
+      // so we just do it here instead of on all the individual recipes.
+      widget.getElement().getStyle().setMargin(0.5, Unit.EM);
     }
+
     return widget;
   }
 

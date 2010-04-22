@@ -1,0 +1,4 @@
+<module>
+  <inherits name="com.google.gwt.resources.Resources"/>
+  <source path='client'/>
+</module>

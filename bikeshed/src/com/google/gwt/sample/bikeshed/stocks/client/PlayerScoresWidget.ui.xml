@@ -5,15 +5,16 @@
   xmlns:t='urn:import:com.google.gwt.bikeshed.tree.client'
   xmlns:s='urn:import:com.google.gwt.sample.bikeshed.stocks.client'>
 
-  <ui:style field='common' src='common.css'/>
+  <ui:with field='styles'
+    type='com.google.gwt.sample.bikeshed.style.client.Styles'/>
 
   <g:DockLayoutPanel unit='EM'>
     <g:north size='2'>
-      <g:Label styleName='{common.header}'>Player Status</g:Label>
+      <g:Label styleName='{styles.common.header}'>Player Status</g:Label>
     </g:north>
 
     <g:center>
-      <g:ScrollPanel styleName="{common.padded}">
+      <g:ScrollPanel styleName="{styles.common.padded}">
         <l:SimpleCellList ui:field='listView'/>
       </g:ScrollPanel>
     </g:center>

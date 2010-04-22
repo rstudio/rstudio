@@ -5,10 +5,11 @@
   xmlns:t='urn:import:com.google.gwt.bikeshed.tree.client'
   xmlns:s='urn:import:com.google.gwt.sample.bikeshed.stocks.client'>
 
-  <ui:style field='common' src='common.css'/>
+  <ui:with field='styles'
+    type='com.google.gwt.sample.bikeshed.style.client.Styles'/>
 
   <g:HTMLPanel>
-    <div styleName='{common.header-left}'>Portfolio / Favorites</div>
-    <l:PagingTableListView ui:field='listView' styleName='{common.table}'/>
+    <div styleName='{styles.common.headerLeft}'>Portfolio / Favorites</div>
+    <l:PagingTableListView ui:field='listView' styleName='{styles.common.table}'/>
   </g:HTMLPanel>
 </ui:UiBinder>

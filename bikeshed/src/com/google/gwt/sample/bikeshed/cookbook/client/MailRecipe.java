@@ -34,6 +34,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.sample.bikeshed.style.client.Styles;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -341,6 +342,7 @@ public class MailRecipe extends Recipe implements ClickHandler {
     sortMessages(idComparator, true);
 
     table = new PagingTableListView<Message>(10);
+    table.setStyleName(Styles.common().table());
     table.setSelectionModel(selectionModel);
     adapter.addView(table);
 

@@ -52,7 +52,8 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
     }
   }
 
-  protected int curPage;
+  private static final int DEFAULT_SIZE = 10;
+
   private List<Column<T, ?, ?>> columns = new ArrayList<Column<T, ?, ?>>();
   private ArrayList<Boolean> dataSelected = new ArrayList<Boolean>();
   private ArrayList<T> dataValues = new ArrayList<T>();
@@ -60,8 +61,8 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
   private List<Header<?>> footers = new ArrayList<Header<?>>();
   private List<Header<?>> headers = new ArrayList<Header<?>>();
   private TableRowElement hoveringRow;
-  private int numPages;
-  private int pageSize;
+  private int pageSize = -1;
+  private int pageStart = 0;
 
   /**
    * If null, each T will be used as its own key.
@@ -74,20 +75,28 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
   private TableSectionElement tbody;
   private TableSectionElement tfoot;
   private TableSectionElement thead;
-  private int totalSize;
+  private int size = 0;
+
+  /**
+   * Constructs a table with a default page size of 10.
+   */
+  public PagingTableListView() {
+    this(DEFAULT_SIZE);
+  }
 
   /**
    * Constructs a table with the given page size.
-
+   *
    * @param pageSize the page size
    */
   public PagingTableListView(final int pageSize) {
-    this.pageSize = pageSize;
     setElement(table = Document.get().createTableElement());
+    table.setCellSpacing(0);
     thead = table.createTHead();
     table.appendChild(tbody = Document.get().createTBodyElement());
     tfoot = table.createTFoot();
-    createRows();
+
+    setPageSize(pageSize);
 
     // TODO: Total hack. It would almost definitely be preferable to sink only
     // those events actually needed by cells.
@@ -118,7 +127,8 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
     createHeadersAndFooters(); // TODO: defer header recreation
     columns.add(col);
     createRows();
-    setPage(curPage); // TODO: better way to refresh?
+
+    refresh();
   }
 
   /**
@@ -128,9 +138,24 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
     addColumn(col, new TextHeader(headerString), null);
   }
 
+  /**
+   * Returns true if it there is enough data to allow a given number of
+   * additional rows to be displayed.
+   */
+  public boolean canAddRows(int rows) {
+    return size - pageSize >= rows;
+  }
+
+  /**
+   * Returns true if the page size is sufficient to allow a given number of rows
+   * to be removed.
+   */
+  public boolean canRemoveRows(int rows) {
+    return pageSize > rows;
+  }
+
   // TODO: remove(Column)
 
-  // TODO - bounds check
   public T getDisplayedItem(int indexOnPage) {
     if (indexOnPage < 0 || indexOnPage >= getNumDisplayedItems()) {
       throw new IndexOutOfBoundsException("indexOnPage = " + indexOnPage);
@@ -143,20 +168,15 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
   }
 
   public int getNumDisplayedItems() {
-    return Math.min(getPageSize(), totalSize - curPage * pageSize);
-  }
-
-  /**
-   * Get the current page.
-   *
-   * @return the current page
-   */
-  public int getPage() {
-    return curPage;
+    return Math.min(getPageSize(), size - pageStart);
   }
 
   public int getPageSize() {
     return pageSize;
+  }
+
+  public int getPageStart() {
+    return pageStart;
   }
 
   public ProvidesKey<T> getProvidesKey() {
@@ -164,11 +184,36 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
   }
 
   public Range getRange() {
-    return new DefaultRange(curPage * pageSize, pageSize);
+    return new DefaultRange(pageStart, pageSize);
   }
 
+  public int getSize() {
+    return size;
+  }
+
+  /**
+   * Returns true if there is enough data such that a call to
+   * {@link #nextPage()} will succeed in moving the starting point of the table
+   * forward.
+   */
+  public boolean hasNextPage() {
+    return pageStart + pageSize < size;
+  }
+
+  /**
+   * Returns true if there is enough data such that a call to
+   * {@link #previousPage()} will succeed in moving the starting point of the
+   * table backward.
+   */
+  public boolean hasPreviousPage() {
+    return pageStart > 0 && size > 0;
+  }
+
+  /**
+   * Advance the starting row by {@link #getPageSize()} rows.
+   */
   public void nextPage() {
-    setPage(curPage + 1);
+    setPageStart(Math.min(getSize() - 1, getPageStart() + getPageSize()));
   }
 
   @Override
@@ -210,15 +255,20 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
       T value = dataValues.get(row);
       Column<T, ?, ?> column = columns.get(col);
 
-      column.onBrowserEvent(cell, curPage * pageSize + row, value, event,
-          providesKey);
+      column.onBrowserEvent(cell, pageStart + row, value, event, providesKey);
     }
   }
 
+  /**
+   * Move the starting row back by {@link #getPageSize()} rows.
+   */
   public void previousPage() {
-    setPage(curPage - 1);
+    setPageStart(Math.max(0, getPageStart() - getPageSize()));
   }
 
+  /**
+   * Redraw the table, requesting data from the delegate.
+   */
   public void refresh() {
     if (delegate != null) {
       delegate.onRangeChanged(this);
@@ -226,6 +276,10 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
     updateRowVisibility();
   }
 
+  /**
+   * Refresh those portions of the table that depend on the state of the
+   * {@link SelectionModel}.
+   */
   public void refreshSelection() {
     // Refresh headers
     Element th = thead.getFirstChild().getFirstChild().cast();
@@ -276,102 +330,7 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
   }
 
   public void setData(int start, int length, List<T> values) {
-    render(start, length, values);
-  }
-
-  public void setDataSize(int size, boolean isExact) {
-    totalSize = size;
-    if (totalSize <= 0) {
-      numPages = 0;
-    } else {
-      numPages = 1 + (totalSize - 1) / pageSize;
-    }
-    setPage(curPage);
-  }
-
-  public void setDelegate(Delegate<T> delegate) {
-    this.delegate = delegate;
-  }
-
-  /**
-   * Set the current visible page.
-   *
-   * @param page the page index
-   */
-  public void setPage(int page) {
-    int newPage = Math.min(page, numPages - 1);
-    newPage = Math.max(0, newPage);
-
-    // Update the text showing the page number.
-    updatePageText(newPage);
-
-    // Early exit if we are already on the right page.
-    if (curPage != newPage) {
-      curPage = newPage;
-      if (delegate != null) {
-        delegate.onRangeChanged(this);
-      }
-    }
-
-    updateRowVisibility();
-  }
-
-  /**
-   * Set the number of rows per page.
-   *
-   * @param pageSize the page size
-   */
-  public void setPageSize(int pageSize) {
-    if (this.pageSize == pageSize) {
-      return;
-    }
-    this.pageSize = pageSize;
-    curPage = -1;
-    setPage(curPage);
-  }
-
-  /**
-   * Sets the {@link ProvidesKey} instance that will be used to generate keys
-   * for each record object as needed.
-   *
-   * @param providesKey an instance of {@link ProvidesKey<T>} used to generate
-   *          keys for record objects.
-   */
-  public void setProvidesKey(ProvidesKey<T> providesKey) {
-    this.providesKey = providesKey;
-  }
-
-  public void setSelectionModel(SelectionModel<T> selectionModel) {
-    if (selectionHandler != null) {
-      selectionHandler.removeHandler();
-      selectionHandler = null;
-    }
-    this.selectionModel = selectionModel;
-    if (selectionModel != null && isAttached()) {
-      selectionHandler = selectionModel.addSelectionChangeHandler(new TableSelectionHandler());
-    }
-  }
-
-  @Override
-  protected void onLoad() {
-    // Attach a selection handler.
-    if (selectionModel != null) {
-      selectionHandler = selectionModel.addSelectionChangeHandler(new TableSelectionHandler());
-    }
-  }
-
-  @Override
-  protected void onUnload() {
-    // Detach the selection handler.
-    if (selectionHandler != null) {
-      selectionHandler.removeHandler();
-      selectionHandler = null;
-    }
-  }
-
-  protected void render(int start, int length, List<T> values) {
     int numCols = columns.size();
-    int pageStart = curPage * pageSize;
 
     NodeList<TableRowElement> rows = tbody.getRows();
     for (int r = start; r < start + length; ++r) {
@@ -398,6 +357,98 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
           Event.sinkEvents(child, Event.ONFOCUS | Event.ONBLUR);
         }
       }
+    }
+  }
+
+  public void setDataSize(int size, boolean isExact) {
+    this.size = size;
+    refresh();
+  }
+
+  public void setDelegate(Delegate<T> delegate) {
+    this.delegate = delegate;
+  }
+
+  /**
+   * Set the number of rows per page and refresh the table.
+   *
+   * @param pageSize the page size
+   *
+   * @throw {@link IllegalArgumentException} if pageSize is negative or 0
+   */
+  public void setPageSize(int pageSize) {
+    if (pageSize <= 0) {
+      throw new IllegalArgumentException("pageSize = " + pageSize);
+    }
+    if (this.pageSize == pageSize) {
+      return;
+    }
+    this.pageSize = pageSize;
+
+    // If on last page and page size increases, move the page start upwards
+    if (pageStart + pageSize > size) {
+      pageStart = Math.max(0, size - pageSize);
+    }
+
+    // TODO - avoid requesting data if the page size has decreased
+    createRows();
+    refresh();
+  }
+
+  /**
+   * Set the starting index of the current visible page.  The actual page
+   * start will be clamped in the range [0, getSize() - 1].
+   *
+   * @param pageStart the index of the row that should appear at the start of
+   *          the page
+   */
+  public void setPageStart(int pageStart) {
+    this.pageStart = Math.max(Math.min(pageStart, size - 1), 0);
+    refresh();
+  }
+
+  /**
+   * Sets the {@link ProvidesKey} instance that will be used to generate keys
+   * for each record object as needed.
+   *
+   * @param providesKey an instance of {@link ProvidesKey<T>} used to generate
+   *          keys for record objects.
+   */
+  // TODO - when is this valid?  Do we rehash column view data if it changes?
+  public void setProvidesKey(ProvidesKey<T> providesKey) {
+    this.providesKey = providesKey;
+  }
+
+  /**
+   * Sets the selection model.
+   */
+  public void setSelectionModel(SelectionModel<T> selectionModel) {
+    if (selectionHandler != null) {
+      selectionHandler.removeHandler();
+      selectionHandler = null;
+    }
+    this.selectionModel = selectionModel;
+    if (selectionModel != null && isAttached()) {
+      selectionHandler = selectionModel.addSelectionChangeHandler(new TableSelectionHandler());
+    }
+
+    refreshSelection();
+  }
+
+  @Override
+  protected void onLoad() {
+    // Attach a selection handler.
+    if (selectionModel != null) {
+      selectionHandler = selectionModel.addSelectionChangeHandler(new TableSelectionHandler());
+    }
+  }
+
+  @Override
+  protected void onUnload() {
+    // Detach the selection handler.
+    if (selectionHandler != null) {
+      selectionHandler.removeHandler();
+      selectionHandler = null;
     }
   }
 
@@ -468,17 +519,8 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
     return null;
   }
 
-  /**
-   * Update the text that shows the current page.
-   *
-   * @param page the current page
-   */
-  private void updatePageText(int page) {
-    // TODO: Update external paging widget.
-  }
-
   private void updateRowVisibility() {
-    int visible = Math.min(pageSize, totalSize - curPage * pageSize);
+    int visible = Math.min(pageSize, size - pageStart);
 
     for (int r = 0; r < pageSize; ++r) {
       Style rowStyle = tbody.getRows().getItem(r).getStyle();

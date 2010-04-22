@@ -116,7 +116,12 @@ public class ValidationRecipe extends Recipe {
           public void run() {
             String pendingValue = viewData.getValue();
 
-            int zip = Integer.parseInt(pendingValue);
+            int zip;
+            try {
+              zip = Integer.parseInt(pendingValue);
+            } catch (NumberFormatException e) {
+              zip = -1;
+            }
             boolean zipInvalid = ValidationRecipe.zipInvalid(zip);
 
             final Address newValue = new Address(object);

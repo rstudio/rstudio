@@ -28,6 +28,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -86,6 +87,7 @@ public class Cookbook implements EntryPoint {
 
   @UiField DockLayoutPanel dock;
   @UiField StandardTreeView recipeTree;
+  @UiField LayoutPanel container;
 
   private RecipeTreeModel recipeTreeModel = new RecipeTreeModel();
   private SingleSelectionModel<Object> treeSelection;
@@ -137,9 +139,9 @@ public class Cookbook implements EntryPoint {
 
   private void showRecipe(Recipe recipe) {
     if (curRecipe != null) {
-      dock.remove(curRecipe.getWidget());
+      container.remove(curRecipe.getWidget());
     }
-    dock.add(recipe.getWidget());
+    container.add(recipe.getWidget());
     curRecipe = recipe;
   }
 }
