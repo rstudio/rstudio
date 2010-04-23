@@ -111,10 +111,11 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
   public InitialResponse getTestBlock(int blockIndex, ClientInfo clientInfo)
       throws TimeoutException {
     ClientInfoExt clientInfoExt;
+    HttpServletRequest request = getThreadLocalRequest();
     if (clientInfo.getSessionId() < 0) {
-      clientInfoExt = createNewClientInfo(clientInfo.getUserAgent());
+      clientInfoExt = createNewClientInfo(clientInfo.getUserAgent(), request);
     } else {
-      clientInfoExt = createClientInfo(clientInfo);
+      clientInfoExt = createClientInfo(clientInfo, request);
     }
     TestBlock initialTestBlock = getHost().getTestBlock(clientInfoExt,
         blockIndex, TIME_TO_WAIT_FOR_TESTNAME);
@@ -131,7 +132,8 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
       result.setException(deserialize(ew));
     }
     JUnitMessageQueue host = getHost();
-    ClientInfoExt clientInfoExt = createClientInfo(clientInfo);
+    ClientInfoExt clientInfoExt = createClientInfo(clientInfo,
+        getThreadLocalRequest());
     host.reportResults(clientInfoExt, results);
     return host.getTestBlock(clientInfoExt, testBlock,
         TIME_TO_WAIT_FOR_TESTNAME);
@@ -146,21 +148,23 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
       JUnitResult result = new JUnitResult();
       initResult(request, result);
       result.setException(new JUnitFatalLaunchException(requestPayload));
-      getHost().reportFatalLaunch(createNewClientInfo(null), result);
+      getHost().reportFatalLaunch(createNewClientInfo(null, request), result);
     } else {
       super.service(request, response);
     }
   }
 
-  private ClientInfoExt createClientInfo(ClientInfo clientInfo) {
+  private ClientInfoExt createClientInfo(ClientInfo clientInfo,
+      HttpServletRequest request) {
     assert (clientInfo.getSessionId() >= 0);
     return new ClientInfoExt(clientInfo.getSessionId(),
-        clientInfo.getUserAgent(), getClientDesc(getThreadLocalRequest()));
+        clientInfo.getUserAgent(), getClientDesc(request));
   }
 
-  private ClientInfoExt createNewClientInfo(String userAgent) {
+  private ClientInfoExt createNewClientInfo(String userAgent,
+      HttpServletRequest request) {
     return new ClientInfoExt(createSessionId(), userAgent,
-        getClientDesc(getThreadLocalRequest()));
+        getClientDesc(request));
   }
 
   private int createSessionId() {
@@ -346,12 +350,12 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
 
       JsniRef ref = JsniRef.parse(parts[0].substring(0,
           parts[0].lastIndexOf(')') + 1));
-      toReturn = new Object[] {
+      toReturn = new Object[]{
           ref.className(), ref.memberName(), stw.fileName, stw.lineNumber};
 
     } else {
       // Use the raw data from the client
-      toReturn = new Object[] {
+      toReturn = new Object[]{
           stw.className, stw.methodName, stw.fileName, stw.lineNumber};
     }
     return toReturn;

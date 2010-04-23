@@ -165,6 +165,16 @@ public class Compiler {
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
+    ModuleDef[] modules = new ModuleDef[options.getModuleNames().size()];
+    int i = 0;
+    for (String moduleName : options.getModuleNames()) {
+      modules[i++] = ModuleDefLoader.loadFromClassPath(logger, moduleName, true);
+    }
+    return run(logger, modules);
+  }
+
+  public boolean run(TreeLogger logger, ModuleDef... modules)
+      throws UnableToCompleteException {
     PerfLogger.start("compile");
     boolean tempWorkDir = false;
     try {
@@ -176,10 +186,8 @@ public class Compiler {
         options.setExtraDir(new File("extras"));
       }
 
-      for (String moduleName : options.getModuleNames()) {
-        ModuleDef module = ModuleDefLoader.loadFromClassPath(logger,
-            moduleName, true);
-
+      for (ModuleDef module : modules) {
+        String moduleName = module.getCanonicalName();
         if (options.isValidateOnly()) {
           if (!Precompile.validate(logger, options, module,
               options.getGenDir(), options.getDumpSignatureFile())) {
