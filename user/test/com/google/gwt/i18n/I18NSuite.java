@@ -44,9 +44,12 @@ import com.google.gwt.i18n.client.TimeZoneTest;
 import com.google.gwt.i18n.rebind.MessageFormatParserTest;
 import com.google.gwt.i18n.server.GwtLocaleTest;
 import com.google.gwt.i18n.server.RegionInheritanceTest;
+import com.google.gwt.i18n.shared.AnyRtlDirectionEstimatorTest;
 import com.google.gwt.i18n.shared.BidiFormatterTest;
 import com.google.gwt.i18n.shared.BidiUtilsTest;
+import com.google.gwt.i18n.shared.FirstStrongDirectionEstimatorTest;
 import com.google.gwt.i18n.shared.GwtBidiUtilsTest;
+import com.google.gwt.i18n.shared.WordCountDirectionEstimatorTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -61,6 +64,7 @@ public class I18NSuite {
     // $JUnit-BEGIN$
     suite.addTestSuite(ArabicPluralsTest.class);
     suite.addTestSuite(AnnotationsTest.class);
+    suite.addTestSuite(AnyRtlDirectionEstimatorTest.class);
     suite.addTestSuite(BidiFormatterTest.class);
     suite.addTestSuite(BidiUtilsTest.class);
     suite.addTestSuite(ConstantMapTest.class);
@@ -72,6 +76,7 @@ public class I18NSuite {
     suite.addTestSuite(DateTimeFormat_pl_Test.class);
     suite.addTestSuite(DateTimeParse_en_Test.class);
     suite.addTestSuite(DateTimeParse_zh_CN_Test.class);
+    suite.addTestSuite(FirstStrongDirectionEstimatorTest.class);
     suite.addTestSuite(GwtBidiUtilsTest.class);
     suite.addTestSuite(GwtLocaleTest.class);
     suite.addTestSuite(I18NTest.class);
@@ -92,6 +97,7 @@ public class I18NSuite {
     suite.addTestSuite(RuntimeLocalesTest.class);
     suite.addTestSuite(TimeZoneInfoTest.class);
     suite.addTestSuite(TimeZoneTest.class);
+    suite.addTestSuite(WordCountDirectionEstimatorTest.class);
     // $JUnit-END$
 
     return suite;
