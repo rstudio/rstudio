@@ -211,6 +211,27 @@ public class ConstantsAnalysisTest extends CfgAnalysisTestBase<ConstantsAssumpti
         );
   }
 
+  /**
+   * Parameters should have an initial assumption of non-constant.
+   */
+  public void testParamNonConstant() throws Exception {
+    analyzeWithParams("void", "int i, int j", "if (j == 0) { i = 0; } j=i; j=0;").into(
+        "BLOCK -> [* {i = T, j = T}]",
+        "STMT -> [* {i = T, j = T}]",
+        "READ(j) -> [* {i = T, j = T}]",
+        "COND (j == 0) -> [THEN=* {i = T, j = 0}, ELSE=1 {i = T, j = T}]",
+        "BLOCK -> [* {i = T, j = 0}]",
+        "STMT -> [* {i = T, j = 0}]",
+        "WRITE(i, 0) -> [* {i = 0, j = 0}]",
+        "1: STMT -> [* {i = T, j = T}]",
+        "READ(i) -> [* {i = T, j = T}]",
+        "WRITE(j, i) -> [* {i = T, j = T}]",
+        "STMT -> [* {i = T, j = T}]",
+        "WRITE(j, 0) -> [* {i = T, j = 0}]",
+        "END"
+      );
+  }
+
   @Override
   protected Analysis<CfgNode<?>, CfgEdge, Cfg, ConstantsAssumption> createAnalysis() {
     return new ConstantsAnalysis();

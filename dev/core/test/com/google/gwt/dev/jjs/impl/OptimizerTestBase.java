@@ -188,6 +188,21 @@ public abstract class OptimizerTestBase extends TestCase {
    */
   protected JProgram compileSnippet(final String returnType,
       final String codeSnippet) throws UnableToCompleteException {
+    return compileSnippet(returnType, "", codeSnippet);
+  }
+
+  /**
+   * Returns the program that results from compiling the specified code snippet
+   * as the body of an entry point method.
+   * 
+   * @param returnType the return type of the method to compile; use "void" if
+   *          the code snippet has no return statement
+   * @param params the parameter list of the method to compile
+   * @param codeSnippet the body of the entry method
+   */
+  protected JProgram compileSnippet(final String returnType,
+      final String params, final String codeSnippet)
+      throws UnableToCompleteException {
     sourceOracle.addOrReplace(new MockJavaResource("test.EntryPoint") {
       @Override
       protected CharSequence getContent() {
@@ -200,7 +215,8 @@ public abstract class OptimizerTestBase extends TestCase {
         for (String snippetClassDecl : snippetClassDecls) {
           code.append(snippetClassDecl + ";\n");
         }
-        code.append("  public static " + returnType + " onModuleLoad() {\n");
+        code.append("  public static " + returnType + " onModuleLoad(" + params
+            + ") {\n");
         code.append(codeSnippet);
         code.append("  }\n");
         code.append("}\n");

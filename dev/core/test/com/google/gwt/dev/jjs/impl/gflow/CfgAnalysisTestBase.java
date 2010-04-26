@@ -16,11 +16,16 @@ import java.util.Map;
 public abstract class CfgAnalysisTestBase<A extends Assumption<A>> 
     extends OptimizerTestBase {
   protected boolean forward = true;
-  
+
   protected AnalysisResult analyze(String returnType, String... codeSnippet)
       throws UnableToCompleteException {
-    JProgram program = compileSnippet(returnType, Strings.join(codeSnippet,
-        "\n"));
+    return analyzeWithParams(returnType, "", codeSnippet);
+  }
+
+  protected AnalysisResult analyzeWithParams(String returnType, String params,
+      String... codeSnippet) throws UnableToCompleteException {
+    JProgram program = compileSnippet(returnType, params, Strings.join(
+        codeSnippet, "\n"));
     JMethodBody body = (JMethodBody) findMainMethod(program).getBody();
     Cfg cfgGraph = CfgBuilder.build(program, body.getBlock());
 
