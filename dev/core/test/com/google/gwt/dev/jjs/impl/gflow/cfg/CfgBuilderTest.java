@@ -1109,7 +1109,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
             "STMT -> [*]",
             "COND (EntryPoint.i == 1) -> [THEN=*, ELSE=1]",
             "STMT -> [*]",
-            "GOTO -> [6]",
+            "GOTO -> [7]",
             "1: STMT -> [*]",
             "COND (EntryPoint.i == 2) -> [ELSE=*, THEN=2]",
             "STMT -> [*]",
@@ -1117,24 +1117,54 @@ public class CfgBuilderTest extends OptimizerTestBase {
             "2: STMT -> [*]",
             "WRITE(j, 1) -> [*]",
             "STMT -> [*]",
-            "GOTO -> [6]",
+            "GOTO -> [7]",
             "3: STMT -> [*]",
             "COND (EntryPoint.i == 4) -> [THEN=*, ELSE=5]",
             "STMT -> [*]",
             "WRITE(j, 2) -> [*]",
             "4: STMT -> [*]",
             "STMT -> [*]",
-            "WRITE(j, 4) -> [*]",
+            "WRITE(j, 4) -> [6]",
             "5: STMT -> [*]",
             "COND (EntryPoint.i == 5) -> [THEN=*, ELSE=4]",
-            "STMT -> [*]",
+            "6: STMT -> [*]",
             "WRITE(j, 3) -> [*]",
             "STMT -> [*]",
             "GOTO -> [*]",
-            "6: END"
+            "7: END"
     );
   }
 
+  public void testSwitch_FallThrough() throws Exception {
+    assertCfg("void",
+        "switch(i) {",
+        "  case 1: ",
+        "    j = 1;",
+        "  case 2: ",
+        "    j = 2;",
+        "  case 3: ",
+        "    j = 3;",
+        "}"
+        ).is(
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "READ(i) -> [*]",
+            "GOTO -> [*]",
+            "STMT -> [*]",
+            "COND (EntryPoint.i == 1) -> [THEN=*, ELSE=1]",
+            "STMT -> [*]",
+            "WRITE(j, 1) -> [2]",
+            "1: STMT -> [*]",
+            "COND (EntryPoint.i == 2) -> [THEN=*, ELSE=3]",
+            "2: STMT -> [*]",
+            "WRITE(j, 2) -> [4]",
+            "3: STMT -> [*]",
+            "COND (EntryPoint.i == 3) -> [THEN=*, ELSE=5]",
+            "4: STMT -> [*]",
+            "WRITE(j, 3) -> [*]",
+            "5: END");
+  }
+  
   public void testSwitch_FirstDefault() throws Exception {
     assertCfg("void",
         "switch(i) {",

@@ -622,6 +622,7 @@ public class CfgBuilder {
       int defaultPos = -1;
       
       List<Exit> breakExits = new ArrayList<Exit>();
+      List<Exit> fallThroughExits = new ArrayList<Exit>();
 
       List<JStatement> statements = x.getBody().getStatements();
       
@@ -629,6 +630,8 @@ public class CfgBuilder {
         if (s instanceof JCaseStatement) {
           if (((JCaseStatement) s).getExpr() != null) {
             // case label
+
+            fallThroughExits.addAll(removeExits(Exit.Reason.NORMAL));
             if (gotoExit != null) {
               // This is first non-default case.
               addExit(gotoExit);
@@ -646,6 +649,12 @@ public class CfgBuilder {
           List<Exit> thenExits = removeExits(Exit.Reason.CASE_THEN);
           for (Exit e : thenExits) {
             addNormalExit(e.getNode(), e.role);
+          }
+          if (!fallThroughExits.isEmpty()) {
+            for (Exit e : fallThroughExits) {
+              addExit(e);
+            }
+            fallThroughExits.clear();
           }
         }
         accept(s);
