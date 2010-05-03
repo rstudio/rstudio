@@ -133,7 +133,11 @@ public class ExpressionEvaluator {
         case SUB:
           return new JIntLiteral(x.getSourceInfo(), a - b); 
         case DIV:
-          return new JIntLiteral(x.getSourceInfo(), a / b); 
+          if (b != 0) { 
+            return new JIntLiteral(x.getSourceInfo(), a / b);
+          } else {
+            return null;
+          }
         case EQ:
           return JBooleanLiteral.get(a == b); 
         case NEQ:

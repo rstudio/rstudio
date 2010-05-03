@@ -69,6 +69,9 @@ public class ExpressionEvaluatorTest extends OptimizerTestBase {
     assertThat("1 + i", "int", "int i; i = 1;").evaluatesInto("<null>");
     assertThat("2 + i", "int", "int i = 1;").evaluatesInto("3");
     assertThat("i + 3", "int", "int i = 1;").evaluatesInto("4");
+    assertThat("i / 2", "int", "int i = 6;").evaluatesInto("3");
+    assertThat("i / 0", "int", "int i = 1;").evaluatesInto("<null>");
+    assertThat("4 / 0", "int", "int i = 0;").evaluatesInto("<null>");
   }
   
   private static class Result {
