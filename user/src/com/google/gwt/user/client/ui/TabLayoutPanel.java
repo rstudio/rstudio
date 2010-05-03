@@ -76,7 +76,7 @@ import java.util.Iterator;
  * object, and so cannot have a <code>ui:field</code> attribute.) 
  * <p>
  * For example:<pre>
- * &lt;g:TabLayoutPanel barUnit='PX' barHeight='3'>
+ * &lt;g:TabLayoutPanel barUnit='EM' barHeight='3'>
  *  &lt;g:tab>
  *    &lt;g:header size='7'>&lt;b>HTML&lt;/b> header&lt;/g:header>
  *    &lt;g:Label>able&lt;/g:Label>
