@@ -21,14 +21,21 @@ import com.google.gwt.dev.jjs.ast.JFloatLiteral;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.impl.gflow.Assumption;
+import com.google.gwt.dev.util.Preconditions;
 
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Assumptions for ConstantsAnalysis.
+ * 
+ * Is a map from variable into it's constant value. If variable is not present
+ * in the map, then it's not a constant. 
+ * 
+ * Empty ConstantsAssumption is a top of the lattice, and is not equals to 
+ * null assumption (which is the bottom of every lattice).
  */
 public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
   /**
@@ -59,12 +66,8 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
     }
 
     public ConstantsAssumption unwrap() {
-      return assumption;
-    }
-
-    public ConstantsAssumption unwrapToNotNull() {
-      if (assumption == null) {
-        return new ConstantsAssumption();
+      if (assumption != null && assumption.isEmpty()) {
+        return TOP;
       }
       return assumption;
     }
@@ -76,114 +79,56 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
       }
     }
   }
-
-  /**
-   * Contains individual assumptions about variables. If variable isn't in the
-   * map, then variable assumption is _|_ (bottom), if variable's value is
-   * null, then variable assumption is T - variable has non-constant value.
-   */
-  private final Map<JVariable, JValueLiteral> values;
-
-  public ConstantsAssumption() {
-    values = new IdentityHashMap<JVariable, JValueLiteral>();
-  }
-
-  public ConstantsAssumption(ConstantsAssumption a) {
-    if (a != null) {
-      values = new IdentityHashMap<JVariable, JValueLiteral>(a.values);
-    } else {
-      values = new IdentityHashMap<JVariable, JValueLiteral>();
-    }
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == this) {
-      return true;
-    }
-    if (obj == null) {
-      return values.isEmpty();
-    }
-    ConstantsAssumption other = (ConstantsAssumption) obj;
-    return values.equals(other.values);
-  }
-
-  /**
-   * Get variable constant assumption. <code>null</code> if there's no constant
-   * assumption for this variable. 
-   */
-  public JValueLiteral get(JVariable variable) {
-    return values.get(variable);
-  }
   
   /**
-   * Check if we have constant (i.e. not top and not bottom) assumption about 
-   * the variable.
+   * A wrapper around JValueLiteral to give it equals() method.
    */
-  public boolean hasAssumption(JVariable variable) {
-    return get(variable) != null;
-  }
-
-  @Override
-  public int hashCode() {
-    return values.hashCode();
-  }
-
-  public ConstantsAssumption join(ConstantsAssumption other) {
-    if (other == null || other.values.isEmpty()) {
-      return this;
+  private static class LiteralWrapper {
+    private final JValueLiteral literal;
+    
+    LiteralWrapper(JValueLiteral literal) {
+      Preconditions.checkNotNull(literal);
+      this.literal = literal;
     }
-    
-    if (values.isEmpty()) {
-      return other;
-    }
-    
-    ConstantsAssumption result = new ConstantsAssumption(this);
-    
-    for (JVariable var : other.values.keySet()) {
-      if (values.containsKey(var)) {
-        // Var is present in both assumptions. Join their values.
-        result.values.put(var, join(values.get(var), other.values.get(var)));
-      } else {
-        result.values.put(var, other.values.get(var));
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null) {
+        return false;
       }
-    }
-    
-    return result;
-  }
-  
-  public String toDebugString() {
-    StringBuffer result = new StringBuffer();
-    
-    result.append("{");
-    List<JVariable> variables = new ArrayList<JVariable>(values.keySet());
-    HasName.Util.sortByName(variables);
-    for (JVariable variable : variables) {
-      if (result.length() > 1) {
-        result.append(", ");
+      
+      if (obj == this) {
+        return true;
       }
-      result.append(variable.getName());
-      result.append(" = ");
-      if (values.get(variable) == null) {
-        result.append("T");
-      } else {
-        result.append(values.get(variable));
-      }
+      
+      LiteralWrapper other = (LiteralWrapper) obj;
+      return equal(this.literal, other.literal);
     }
-    result.append("}");
-    
-    return result.toString();
+
+    @Override
+    public int hashCode() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toString() {
+      return literal.toString();
+    }
   }
 
-  @Override
-  public String toString() {
-    return toDebugString();
-  }
+  /**
+   * A TOP for the lattice. Means that all variables are not constant.
+   */
+  public static ConstantsAssumption TOP = new ConstantsAssumption();
 
-  private boolean equal(JValueLiteral literal1, JValueLiteral literal2) {
+  private static boolean equal(JValueLiteral literal1, JValueLiteral literal2) {
     if (literal1 == null || literal2 == null) {
       return literal1 == literal2;
     } 
+    
+    if (literal1 == literal2) {
+      return true;
+    }
 
     if (literal1.getClass() != literal2.getClass()) {
       // these are different literal types. 
@@ -215,7 +160,7 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
     return valueObj1.equals(valueObj2);
   }
   
-  private JValueLiteral join(JValueLiteral value1, JValueLiteral value2) {
+  private static JValueLiteral join(JValueLiteral value1, JValueLiteral value2) {
     if (!equal(value1, value2)) {
       return null;
     }
@@ -223,7 +168,136 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
     return value1;
   }
   
-  private void set(JVariable variable, JValueLiteral literal) {
-    values.put(variable, literal);
+  private static JValueLiteral join(LiteralWrapper wrapper1, 
+      LiteralWrapper wrapper2) {
+    if (wrapper1 == null || wrapper2 == null) {
+      return null;
+    }
+    
+    return join(wrapper1.literal, wrapper2.literal);
+  }
+
+  /**
+   * Contains individual assumptions about variables. If variable isn't in the
+   * map, then variable assumption is _|_ (bottom), if variable's value is
+   * null, then variable assumption is T - variable has non-constant value.
+   */
+  private final Map<JVariable, LiteralWrapper> values;
+
+  public ConstantsAssumption() {
+    values = new HashMap<JVariable, LiteralWrapper>();
+  }
+
+  public ConstantsAssumption(ConstantsAssumption a) {
+    if (a != null) {
+      values = new HashMap<JVariable, LiteralWrapper>(a.values);
+    } else {
+      values = new HashMap<JVariable, LiteralWrapper>();
+    }
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    ConstantsAssumption other = (ConstantsAssumption) obj;
+    return values.equals(other.values);
+  }
+  
+  /**
+   * Get variable constant assumption. <code>null</code> if there's no constant
+   * assumption for this variable. 
+   */
+  public JValueLiteral get(JVariable variable) {
+    LiteralWrapper wrapper = values.get(variable);
+    return wrapper != null ? wrapper.literal : null;
+  }
+
+  /**
+   * Check if we have constant (i.e. not top and not bottom) assumption about 
+   * the variable.
+   */
+  public boolean hasAssumption(JVariable variable) {
+    return get(variable) != null;
+  }
+
+  @Override
+  public int hashCode() {
+    return values.hashCode();
+  }
+  
+  public boolean isEmpty() {
+    return values.isEmpty();
+  }
+
+  public ConstantsAssumption join(ConstantsAssumption other) {
+    if (other == null) {
+      return this;
+    }
+    
+    if (other == TOP || this == TOP || isEmpty() || other.isEmpty()) {
+      return TOP;
+    }
+    
+    ConstantsAssumption result = new ConstantsAssumption();
+    
+    for (JVariable var : other.values.keySet()) {
+      if (values.containsKey(var)) {
+        // Var is present in both assumptions. Join their values.
+        JValueLiteral value = join(values.get(var), other.values.get(var));
+        if (value != null) {
+          result.values.put(var, new LiteralWrapper(value));
+        }
+      } 
+    }
+    
+    if (result.isEmpty()) {
+      return TOP;
+    }
+    
+    return result;
+  }
+
+  public String toDebugString() {
+    if (this == TOP || isEmpty()) {
+      return "T";
+    }
+    StringBuffer result = new StringBuffer();
+    
+    result.append("{");
+    List<JVariable> variables = new ArrayList<JVariable>(values.keySet());
+    HasName.Util.sortByName(variables);
+    for (JVariable variable : variables) {
+      if (result.length() > 1) {
+        result.append(", ");
+      }
+      result.append(variable.getName());
+      result.append(" = ");
+      if (values.get(variable) == null) {
+        result.append("T");
+      } else {
+        result.append(values.get(variable));
+      }
+    }
+    result.append("}");
+    
+    return result.toString();
+  }
+  
+  @Override
+  public String toString() {
+    return toDebugString();
+  }
+  
+  void set(JVariable variable, JValueLiteral literal) {
+    if (literal != null) {
+      values.put(variable, new LiteralWrapper(literal));
+    } else {
+      values.remove(variable);
+    }
   }
 }

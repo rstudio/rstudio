@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.constants;
 
-import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.impl.gflow.Analysis;
 import com.google.gwt.dev.jjs.impl.gflow.AssumptionMap;
 import com.google.gwt.dev.jjs.impl.gflow.AssumptionUtil;
@@ -46,18 +45,7 @@ public class ConstantsAnalysis implements
 
   public void setInitialGraphAssumptions(Cfg graph,
       AssumptionMap<CfgEdge, ConstantsAssumption> assumptionMap) {
-    // Set all parameter assumptions to T
-
-    ConstantsAssumption.Updater updater = new ConstantsAssumption.Updater(null);
-    for (CfgNode<?> node : graph.getNodes()) {
-      Object jnode = node.getJNode();
-      if (jnode instanceof JParameterRef) {
-        updater.set(((JParameterRef) jnode).getParameter(), null);
-      }
-    }
-    ConstantsAssumption assumptions = updater.unwrap();
-
-    AssumptionUtil.setAssumptions(graph.getGraphInEdges(), assumptions,
-        assumptionMap);
+    AssumptionUtil.setAssumptions(graph.getGraphInEdges(), 
+        ConstantsAssumption.TOP, assumptionMap);
   }
 }

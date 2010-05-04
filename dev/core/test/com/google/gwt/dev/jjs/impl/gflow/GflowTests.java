@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl.gflow;
 
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgBuilderTest;
+import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAssumptionTest;
 import com.google.gwt.dev.jjs.impl.gflow.constants.ExpressionEvaluatorTest;
 import com.google.gwt.dev.jjs.impl.gflow.constants.AssumptionsDeducerTest;
 import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAnalysisTest;
@@ -36,6 +37,7 @@ public class GflowTests {
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(CfgBuilderTest.class);
+    suite.addTestSuite(ConstantsAssumptionTest.class);
     suite.addTestSuite(AssumptionsDeducerTest.class);
     suite.addTestSuite(ExpressionEvaluatorTest.class);
     suite.addTestSuite(ConstantsAnalysisTest.class);
