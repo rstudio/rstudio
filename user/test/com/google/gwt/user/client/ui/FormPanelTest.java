@@ -19,6 +19,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler;
@@ -237,7 +239,9 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
 
   /**
    * Tests submitting an alternate frame.
+   * TODO: Investigate intermittent failures with HtmlUnit.
    */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testSubmitFrame() {
     final NamedFrame frame = new NamedFrame("myFrame");
     FormPanel form = new FormPanel(frame);
