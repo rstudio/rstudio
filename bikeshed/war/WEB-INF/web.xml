@@ -27,6 +27,11 @@
     <servlet-class>com.google.gwt.sample.bikeshed.cookbook.server.TreeServiceImpl</servlet-class>
   </servlet>
 
+  <servlet>
+    <servlet-name>remoteApi</servlet-name>
+    <servlet-class>com.google.apphosting.utils.remoteapi.RemoteApiServlet</servlet-class>
+  </servlet>
+
   <servlet-mapping>
     <servlet-name>expensesData</servlet-name>
     <url-pattern>/expenses/data</url-pattern>
@@ -45,6 +50,11 @@
   <servlet-mapping>
     <servlet-name>treeServlet</servlet-name>
     <url-pattern>/cookbook/tree</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>remoteApi</servlet-name>
+    <url-pattern>/remote_api</url-pattern>
   </servlet-mapping>
 
   <!-- Require login. -->
