@@ -60,6 +60,18 @@ public class CrossSiteLoadingStrategy implements LoadingStrategy {
       "Code download terminated");
 
   /**
+   * Clear callbacks on script objects. This is important on IE 6 and 7 to
+   * prevent a memory leak. If the callbacks aren't cleared, there is a cyclical
+   * chain of references between the script tag and the function callback, and
+   * IE 6/7 can't garbage collect them.
+   */
+  @SuppressWarnings("unused")
+  private static native void clearCallbacks(JavaScriptObject script) /*-{
+    var nop = new Function('');
+    script.onerror = script.onload = script.onreadystatechange = nop;
+  }-*/;
+
+  /**
    * Clear the success callback for fragment <code>fragment</code>.
    */
   @SuppressWarnings("unused")
@@ -88,8 +100,9 @@ public class CrossSiteLoadingStrategy implements LoadingStrategy {
          return;
        }
        var head = document.getElementsByTagName('head').item(0);
-       head.removeChild(tag);
        @com.google.gwt.core.client.impl.CrossSiteLoadingStrategy::clearOnSuccess(*)(fragment);
+       @com.google.gwt.core.client.impl.CrossSiteLoadingStrategy::clearCallbacks(*)(tag);
+       head.removeChild(tag);
        loadFinishedHandler.@com.google.gwt.core.client.impl.AsyncFragmentLoader.LoadTerminatedHandler::loadTerminated(*)(
          exception);
      }
@@ -99,8 +112,9 @@ public class CrossSiteLoadingStrategy implements LoadingStrategy {
       JavaScriptObject tag) /*-{
      return function(code) {
        var head = document.getElementsByTagName('head').item(0);
-       head.removeChild(tag);
        @com.google.gwt.core.client.impl.CrossSiteLoadingStrategy::clearOnSuccess(*)(fragment);
+       @com.google.gwt.core.client.impl.CrossSiteLoadingStrategy::clearCallbacks(*)(tag);
+       head.removeChild(tag);
        __gwtModuleFunction.installCode(code);
      }
    }-*/;
