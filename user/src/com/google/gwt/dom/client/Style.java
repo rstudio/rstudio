@@ -124,6 +124,7 @@ public class Style extends JavaScriptObject {
         return BORDER_STYLE_SOLID;
       }
     };
+    public abstract String getCssName();
   }
 
   /**
@@ -220,6 +221,7 @@ public class Style extends JavaScriptObject {
         return CURSOR_ROW_RESIZE;
       }
     };
+    public abstract String getCssName();
   }
 
   /**
@@ -246,6 +248,7 @@ public class Style extends JavaScriptObject {
         return DISPLAY_INLINE_BLOCK;
       }
     };
+    public abstract String getCssName();
   }
 
   /**
@@ -266,7 +269,8 @@ public class Style extends JavaScriptObject {
       public String getCssName() {
         return FLOAT_NONE;
       }
-    },
+    };
+    public abstract String getCssName();
   }
 
   /**
@@ -288,6 +292,7 @@ public class Style extends JavaScriptObject {
         return FONT_STYLE_OBLIQUE;
       }
     };
+    public abstract String getCssName();
   }
 
   /**
@@ -314,6 +319,7 @@ public class Style extends JavaScriptObject {
         return FONT_WEIGHT_LIGHTER;
       }
     };
+    public abstract String getCssName();
   }
 
   /**
@@ -365,6 +371,7 @@ public class Style extends JavaScriptObject {
         return LIST_STYLE_TYPE_UPPER_ROMAN;
       }
     };
+    public abstract String getCssName();
   }
 
   /**
@@ -391,6 +398,7 @@ public class Style extends JavaScriptObject {
         return OVERFLOW_AUTO;
       }
     };
+    public abstract String getCssName();
   }
 
   /**
@@ -417,6 +425,7 @@ public class Style extends JavaScriptObject {
         return POSITION_FIXED;
       }
     };
+    public abstract String getCssName();
   }
 
   /**
@@ -443,6 +452,7 @@ public class Style extends JavaScriptObject {
         return TEXT_DECORATION_LINE_THROUGH;
       }
     };
+    public abstract String getCssName();
   }
 
   /**
@@ -488,7 +498,8 @@ public class Style extends JavaScriptObject {
       public String getCssName() {
         return VERTICAL_ALIGN_TEXT_BOTTOM;
       }
-    },
+    };
+    public abstract String getCssName();
   }
 
   /**
@@ -505,6 +516,7 @@ public class Style extends JavaScriptObject {
         return VISIBILITY_HIDDEN;
       }
     };
+    public abstract String getCssName();
   }
 
   private static final String BORDER_STYLE_SOLID = "solid";
