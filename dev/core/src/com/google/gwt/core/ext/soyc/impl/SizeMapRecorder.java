@@ -17,6 +17,7 @@ package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
@@ -200,6 +201,15 @@ public class SizeMapRecorder {
       sb.append(method.getOriginalReturnType().getJsniSignatureName());
       String desc = sb.toString();
       return new TypedProgramReference("method", desc);
+    }
+
+    JField field = jjsmap.nameToField(name);
+    if ((field != null) && (field.getEnclosingType() != null)) {
+      StringBuilder sb = new StringBuilder();
+      sb.append(field.getEnclosingType().getName());
+      sb.append("::");
+      sb.append(field.getName());
+      return new TypedProgramReference("field", sb.toString());
     }
 
     JClassType type = jjsmap.nameToType(name);

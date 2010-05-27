@@ -497,13 +497,13 @@ public class SoycDashboard {
           // Nothing to record, because no breakdown is provided for random
           // variables
         } else {
-          if (!refType.equals("type") && !refType.equals("method")) {
+          if (!refType.equals("type") && !refType.equals("method") && !refType.equals("field")) {
             throw new FormatException();
           }
           String className = ref;
           if (className.contains("::")) {
             /*
-             * It's a method reference. Discard the method part.
+             * It's a method or field reference. Discard the method/field part.
              */
             int idx = className.indexOf(':');
             className = className.substring(0, idx);

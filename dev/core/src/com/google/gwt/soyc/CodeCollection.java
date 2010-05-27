@@ -25,17 +25,16 @@ import java.util.TreeSet;
 public class CodeCollection {
 
   public TreeSet<String> classes = new TreeSet<String>();
-  public float cumPartialSize = 0f;
   public int cumSize = 0;
   public TreeSet<String> stories = new TreeSet<String>();
 
-  public float getCumPartialSize(SizeBreakdown breakdown) {
-    cumPartialSize = 0f;
+  public int getCumSize(SizeBreakdown breakdown) {
+    cumSize = 0;
     for (String className : classes) {
       if (breakdown.classToSize.containsKey(className)) {
-        cumPartialSize += breakdown.classToSize.get(className);
+        cumSize += breakdown.classToSize.get(className);
       }
     }
-    return cumPartialSize;
+    return cumSize;
   }
 }

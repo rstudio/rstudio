@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -37,7 +38,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A utility to make the top level HTTML file for one permutation.
+ * A utility to make all the HTML files for one permutation.
  */
 public class MakeTopLevelHtmlForPerm {
   /**
@@ -172,6 +173,18 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
     outFile.println("<html>");
     outFile.println("<head>");
+    outFile.println("<script type=\"text/javascript\">");    
+    outFile.println("function show(elementName)");
+    outFile.println("{");
+    outFile.println("hp = document.getElementById(elementName);");
+    outFile.println("hp.style.visibility = \"Visible\";");
+    outFile.println("}");
+    outFile.println("function hide(elementName)");
+    outFile.println("{");
+    outFile.println("hp = document.getElementById(elementName);");
+    outFile.println("hp.style.visibility = \"Hidden\";");
+    outFile.println("}");    
+    outFile.println("</script>");
     outFile.println("<title>");
     outFile.println(title);
     outFile.println("</title>");
@@ -255,13 +268,30 @@ public class MakeTopLevelHtmlForPerm {
         getPermutationId())));
 
     addStandardHtmlProlog(outFile, "Application breakdown analysis",
-        "Application breakdown analysis", "");
+      "Application breakdown analysis", "");
 
-    outFile.println("<div id=\"bd\">  ");
-    outFile.println("<h2>Package breakdown</h2>");
+    outFile.println("<div id=\"bd\"><h2><a style=\"cursor:default;\" onMouseOver=\"show('packageBreakdownPopup');\" " +
+        "onMouseOut=\"hide('packageBreakdownPopup');\">Package breakdown</a></h2></div>");
+    outFile.println("<div id=\"packageBreakdownPopup\" style=\"visibility:hidden; position:absolute;\">");
+    outFile.println("<table bgcolor=\"#c5d7ef\" width=\"200\">");
+    outFile.println("<tr><td><b>Package breakdown</b></td></tr>");
+    outFile.println("<tr><td bgcolor=\"#e5ecf9\">The package breakdown blames pieces of JavaScript " +
+        "code on Java packages wherever possible.  Note that this is not possible for all code, so the sizes " +
+        "of the packages here will not normally add up to the full code size.  More specifically, the sum will " +
+        "exclude strings, whitespace, and a few pieces of JavaScript code that are produced during compilation " +
+        "but cannot be attributed to any Java package.</td></tr></table></div>");
     outFile.println("<iframe class='soyc-iframe-package' src=\""
         + packageBreakdownFileName + "\" scrolling=auto></iframe>");
-    outFile.println("<h2>Code type breakdown</h2>");
+
+    outFile.println("<h2><a style=\"cursor:default;\" onMouseOver=\"show('codeTypeBreakdownPopup');\" " +
+        "onMouseOut=\"hide('codeTypeBreakdownPopup');\">Code type breakdown</a></h2>");
+    outFile.println("<div id=\"codeTypeBreakdownPopup\" style=\"visibility:hidden; position:absolute;\">");
+    outFile.println("<table bgcolor=\"#c5d7ef\" width=\"200\">");
+    outFile.println("<tr><td><b>Code type breakdown</b></td></tr>");
+    outFile.println("<tr><td bgcolor=\"#e5ecf9\">The code type breakdown breaks down the JavaScript code according to its " +
+        "type or function.  For example, it tells you how much of your code can be attributed to JRE, GWT-RPC, etc.  As " +
+        "above, strings and some other JavaScript snippets are not included in the breakdown.</td></tr></table></div>");
+
     outFile.println("<iframe class='soyc-iframe-code' src=\""
         + codeTypeBreakdownFileName + "\" scrolling=auto></iframe>");
     outFile.println("</div>");
@@ -281,17 +311,26 @@ public class MakeTopLevelHtmlForPerm {
           + getPermutationId() + "Classes.html";
 
       float sumSize = 0f;
-      TreeMap<Float, String> sortedClasses = new TreeMap<Float, String>(
+      TreeMap<Integer, Set<String>> sortedClasses = new TreeMap<Integer, Set<String>>(
           Collections.reverseOrder());
 
       for (String className : nameToCodeColl.get(codeType).classes) {
         if (breakdown.classToSize.containsKey(className)) {
-          float curSize = 0f;
+          int curSize = 0;
           if (breakdown.classToSize.containsKey(className)) {
             curSize = breakdown.classToSize.get(className);
           }
-          if (curSize != 0f) {
-            sortedClasses.put(curSize, className);
+          if (curSize != 0) {
+            if (sortedClasses.containsKey(curSize)) {
+              Set<String> existingSet = sortedClasses.get(curSize);
+              existingSet.add(className);
+              sortedClasses.put(curSize, existingSet);
+            }
+            else {
+              Set<String> newSet = new TreeSet<String>();
+              newSet.add(className);
+              sortedClasses.put(curSize, newSet);
+            }
             sumSize += curSize;
           }
         }
@@ -307,24 +346,26 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("</colgroup>");
       outFile.println("<thead>");
       outFile.println("<th>Code type</th>");
-      outFile.println("<th>Size <span class=\"soyc-th-units\">Bytes (% All Code)</span></th>");
+      outFile.println("<th>Size <span class=\"soyc-th-units\">(Bytes)</span></th>");
       outFile.println("</thead>");
 
-      for (Float size : sortedClasses.keySet()) {
-        String className = sortedClasses.get(size);
-        float perc = (size / sumSize) * 100;
-        outFile.println("<tr>");
-        outFile.println("<td>" + className + "</a></td>");
-        outFile.println("<td>");
-        outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
-        // CHECKSTYLE_OFF
-        outFile.println("<div style=\"width:" + perc
-            + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
-        // CHECKSTYLE_ON
-        outFile.println("</div>");
-        outFile.println(size + " (" + formatNumber(perc) + "%)");
-        outFile.println("</td>");
-        outFile.println("</tr>");
+      for (Integer size : sortedClasses.keySet()) {
+        Set<String> classNames = sortedClasses.get(size);
+        for (String className : classNames) {
+          float perc = ((float)size / (float)sumSize) * 100;
+          outFile.println("<tr>");
+          outFile.println("<td>" + className + "</a></td>");
+          outFile.println("<td>");
+          outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
+          // CHECKSTYLE_OFF
+          outFile.println("<div style=\"width:" + perc
+              + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
+          // CHECKSTYLE_ON
+          outFile.println("</div>");
+          outFile.println(size + " (" + formatNumber(perc) + "%)");
+          outFile.println("</td>");
+          outFile.println("</tr>");
+        }
       }
       addStandardHtmlEnding(outFile);
       outFile.close();
@@ -376,20 +417,29 @@ public class MakeTopLevelHtmlForPerm {
   public void makePackageClassesHtmls(SizeBreakdown breakdown,
       DependencyLinker depLinker) throws IOException {
     for (String packageName : globalInformation.getPackageToClasses().keySet()) {
-      TreeMap<Float, String> sortedClasses = new TreeMap<Float, String>(
+      TreeMap<Integer, Set<String> > sortedClasses = new TreeMap<Integer, Set<String> >(
           Collections.reverseOrder());
-      float sumSize = 0f;
+      int sumSize = 0;
       for (String className : globalInformation.getPackageToClasses().get(
           packageName)) {
-        float curSize = 0f;
+        int curSize = 0;
         if (!breakdown.classToSize.containsKey(className)) {
           // This class not present in this code collection
         } else {
           curSize = breakdown.classToSize.get(className);
         }
         if (curSize != 0f) {
+          if (sortedClasses.containsKey(curSize)) {
+            Set<String> existingSet = sortedClasses.get(curSize);
+            existingSet.add(className);
+            sortedClasses.put(curSize, existingSet);
+          }
+          else {
+            Set<String> newSet = new TreeSet<String>();
+            newSet.add(className);
+            sortedClasses.put(curSize, newSet);
+          }
           sumSize += curSize;
-          sortedClasses.put(curSize, className);
         }
       }
 
@@ -407,30 +457,32 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("</colgroup>");
       outFile.println("<thead>");
       outFile.println("<th>Package</th>");
-      outFile.println("<th>Size <span class=\"soyc-th-units\">Bytes (% All Code)</span></th>");
+      outFile.println("<th>Size <span class=\"soyc-th-units\">(Bytes)</span></th>");
       outFile.println("</thead>");
 
-      for (Float size : sortedClasses.keySet()) {
-        String className = sortedClasses.get(size);
-        String drillDownFileName = depLinker.dependencyLinkForClass(className);
-        float perc = (size / sumSize) * 100;
-        outFile.println("<tr>");
-        if (drillDownFileName == null) {
-          outFile.println("<td>" + className + "</td>");
-        } else {
-          outFile.println("<td><a href=\"" + drillDownFileName
-              + "\" target=\"_top\">" + className + "</a></td>");
+      for (Integer size : sortedClasses.keySet()) {
+        Set<String> classNames = sortedClasses.get(size);
+        for (String className : classNames) {
+          String drillDownFileName = depLinker.dependencyLinkForClass(className);
+          float perc = ((float)size / (float)sumSize) * 100;
+          outFile.println("<tr>");
+          if (drillDownFileName == null) {
+            outFile.println("<td>" + className + "</td>");
+          } else {
+            outFile.println("<td><a href=\"" + drillDownFileName
+                + "\" target=\"_top\">" + className + "</a></td>");
+          }
+          outFile.println("<td>");
+          outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
+          // CHECKSTYLE_OFF
+          outFile.println("<div style=\"width:" + perc
+              + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
+          // CHECKSTYLE_ON
+          outFile.println("</div>");
+          outFile.println(size + " (" + formatNumber(perc) + "%)");
+          outFile.println("</td>");
+          outFile.println("</tr>");
         }
-        outFile.println("<td>");
-        outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
-        // CHECKSTYLE_OFF
-        outFile.println("<div style=\"width:" + perc
-            + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
-        // CHECKSTYLE_ON
-        outFile.println("</div>");
-        outFile.println(size + " (" + formatNumber(perc) + "%)");
-        outFile.println("</td>");
-        outFile.println("</tr>");
       }
 
       outFile.println("</table>");
@@ -496,14 +548,14 @@ public class MakeTopLevelHtmlForPerm {
 
     outFile.println("<th>#</th>");
     outFile.println("<th>Location</th>");
-    outFile.println("<th>Size</th>");
+    outFile.println("<th>Size <span class=\"soyc-th-units\">(Bytes)</span></th>");
     outFile.println("</thead>");
     outFile.println("<tbody>");
 
     if (globalInformation.getSplitPointToLocation().size() >= 1) {
 
       int numSplitPoints = globalInformation.getSplitPointToLocation().size();
-      float maxSize = globalInformation.getTotalCodeBreakdown().sizeAllCode;
+      int maxSize = globalInformation.getTotalCodeBreakdown().sizeAllCode;
 
       for (int i = FRAGMENT_NUMBER_TOTAL_PROGRAM; i <= numSplitPoints + 1; i++) {
         SizeBreakdown breakdown;
@@ -521,9 +573,9 @@ public class MakeTopLevelHtmlForPerm {
         String splitPointDescription = globalInformation.getSplitPointToLocation().get(
             i);
 
-        float size = breakdown.sizeAllCode;
-        float ratio;
-        ratio = (size / maxSize) * 100;
+        int size = breakdown.sizeAllCode;
+        float perc;
+        perc = ((float)size / (float)maxSize) * 100;
 
         outFile.println("<tr>");
         outFile.println("<td>" + i + "</td>");
@@ -532,11 +584,11 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("<td>");
         outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
         // CHECKSTYLE_OFF
-        outFile.println("<div style=\"width:" + ratio
+        outFile.println("<div style=\"width:" + perc
             + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
         // CHECKSTYLE_ON
         outFile.println("</div>");
-        outFile.println((int) size + " Bytes (" + formatNumber(ratio) + "%)");
+        outFile.println(size + " Bytes (" + formatNumber(perc) + "%)");
         outFile.println("</td>");
         outFile.println("</tr>");
       }
@@ -662,15 +714,24 @@ public class MakeTopLevelHtmlForPerm {
       Map<String, LiteralsCollection> nameToLitColl) throws IOException {
     String outFileName = breakdown.getId() + "-" + getPermutationId()
         + "-codeTypeBreakdown.html";
-    float sumSize = 0f;
-    TreeMap<Float, String> sortedCodeTypes = new TreeMap<Float, String>(
+    int sumSize = 0;
+    TreeMap<Integer, Set<String> > sortedCodeTypes = new TreeMap<Integer, Set<String> >(
         Collections.reverseOrder());
 
     for (String codeType : nameToCodeColl.keySet()) {
-      float curSize = nameToCodeColl.get(codeType).getCumPartialSize(breakdown);
+      int curSize = nameToCodeColl.get(codeType).getCumSize(breakdown);
       sumSize += curSize;
-      if (curSize != 0f) {
-        sortedCodeTypes.put(curSize, codeType);
+      if (curSize != 0) {
+        if (sortedCodeTypes.containsKey(curSize)) {
+          Set<String> existingSet = sortedCodeTypes.get(curSize);
+          existingSet.add(codeType);
+          sortedCodeTypes.put(curSize, existingSet);
+        }
+        else {
+          Set<String> newSet = new TreeSet<String>();
+          newSet.add(codeType);
+          sortedCodeTypes.put(curSize, newSet);
+        }
       }
     }
 
@@ -686,45 +747,39 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("</colgroup>");
     outFile.println("<thead>");
     outFile.println("<th>Type</th>");
-    outFile.println("<th>Size</th>");
+    outFile.println("<th>Size <span class=\"soyc-th-units\">(Bytes)</span></th>");
     outFile.println("</thead>");
 
-    for (Float size : sortedCodeTypes.keySet()) {
-      String codeType = sortedCodeTypes.get(size);
-      String drillDownFileName = breakdown.getId() + "_" + codeType + "-"
-          + getPermutationId() + "Classes.html";
-      float perc = (size / sumSize) * 100;
-      outFile.println("<tr>");
-      outFile.println("<td><a href=\"" + drillDownFileName
-          + "\" target=\"_top\">" + codeType + "</a></td>");
-      outFile.println("<td>");
-      outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
-      // CHECKSTYLE_OFF
-      outFile.println("<div style=\"width:" + perc
-          + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
-      // CHECKSTYLE_ON
-      outFile.println("</div>");
-      outFile.println(size + " (" + formatNumber(perc) + "%)");
-      outFile.println("</td>");
-      outFile.println("</tr>");
+    for (Integer size : sortedCodeTypes.keySet()) {
+      Set<String> codeTypes = sortedCodeTypes.get(size);
+      for (String codeType : codeTypes) {
+        String drillDownFileName = breakdown.getId() + "_" + codeType + "-"
+            + getPermutationId() + "Classes.html";
+        float perc = ((float)size / (float)sumSize) * 100;
+        outFile.println("<tr>");
+        outFile.println("<td><a href=\"" + drillDownFileName
+            + "\" target=\"_top\">" + codeType + "</a></td>");
+        outFile.println("<td>");
+        outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
+        // CHECKSTYLE_OFF
+        outFile.println("<div style=\"width:" + perc
+            + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
+        // CHECKSTYLE_ON
+        outFile.println("</div>");
+        outFile.println(size + " (" + formatNumber(perc) + "%)");
+        outFile.println("</td>");
+        outFile.println("</tr>");
+      }
     }
     outFile.println("</table>");
 
-    TreeMap<Float, String> sortedLitTypes = new TreeMap<Float, String>(
-        Collections.reverseOrder());
-    float curSize = nameToLitColl.get("string").size;
-    sumSize += curSize;
-    if (curSize != 0f) {
-      sortedLitTypes.put(curSize, "string");
-    }
-    for (Float size : sortedLitTypes.keySet()) {
-      String literal = sortedLitTypes.get(size);
-      String drillDownFileName = breakdown.getId() + "_" + literal + "-"
-          + getPermutationId() + "Lits.html";
-      outFile.println("<p class=\"soyc-breakdown-strings\"><a href=\""
-          + drillDownFileName + "\" target=\"_top\">Strings</a> occupy " + size
-          + " bytes</p>");
-    }
+    int stringSize = nameToLitColl.get("string").size;
+    String drillDownFileName = breakdown.getId() + "_string-"
+        + getPermutationId() + "Lits.html";
+    outFile.println("<p class=\"soyc-breakdown-strings\">" + stringSize + " bytes occupied by <a href=\""
+        + drillDownFileName + "\" target=\"_top\">Strings</a></p>");
+    int unaccountedForSize = breakdown.sizeAllCode - sumSize - stringSize;
+    outFile.println("<p class=\"soyc-breakdown-strings\">" + unaccountedForSize + " bytes of the JavaScript output cannot be attributed to any package or code type.</p>");
     addStandardHtmlEnding(outFile);
     outFile.close();
     return outFileName;
@@ -833,12 +888,22 @@ public class MakeTopLevelHtmlForPerm {
     String outFileName = breakdown.getId() + "-" + getPermutationId() + "-"
         + "packageBreakdown.html";
     Map<String, Integer> packageToPartialSize = breakdown.packageToSize;
-    TreeMap<Integer, String> sortedPackages = new TreeMap<Integer, String>(
+    TreeMap<Integer, Set<String>> sortedPackages = new TreeMap<Integer, Set<String>>(
         Collections.reverseOrder());
     float sumSize = 0f;
     for (String packageName : packageToPartialSize.keySet()) {
-      sortedPackages.put(packageToPartialSize.get(packageName), packageName);
-      sumSize += packageToPartialSize.get(packageName);
+      Integer curSize = packageToPartialSize.get(packageName);
+      if (sortedPackages.containsKey(curSize)) {
+        Set<String> existingSet = sortedPackages.get(curSize);
+        existingSet.add(packageName);
+        sortedPackages.put(curSize, existingSet);
+      }
+      else {
+        Set<String> newSet = new TreeSet<String>();
+        newSet.add(packageName);
+        sortedPackages.put(curSize, newSet);
+      }
+      sumSize += curSize;
     }
 
     final PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
@@ -853,27 +918,29 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("</colgroup>");
     outFile.println("<thead>");
     outFile.println("<th>Package</th>");
-    outFile.println("<th>Size <span class=\"soyc-th-units\">Bytes (% All Code)</span></th>");
+    outFile.println("<th>Size <span class=\"soyc-th-units\">(Bytes)</span></th>");
     outFile.println("</thead>");
 
     for (int size : sortedPackages.keySet()) {
-      String packageName = sortedPackages.get(size);
-      String drillDownFileName = classesInPackageFileName(breakdown,
-          packageName, getPermutationId());
-      float perc = (size / sumSize) * 100;
-      outFile.println("<tr>");
-      outFile.println("<td><a href=\"" + drillDownFileName
-          + "\" target=\"_top\">" + packageName + "</a></td>");
-      outFile.println("<td>");
-      outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
-      // CHECKSTYLE_OFF
-      outFile.println("<div style=\"width:" + perc
-          + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
-      // CHECKSTYLE_ON
-      outFile.println("</div>");
-      outFile.println(size + " (" + formatNumber(perc) + "%)");
-      outFile.println("</td>");
-      outFile.println("</tr>");
+      Set<String> packageNames = sortedPackages.get(size);
+      for (String packageName : packageNames) {
+        String drillDownFileName = classesInPackageFileName(breakdown,
+            packageName, getPermutationId());
+        float perc = ((float)size / (float)sumSize) * 100;
+        outFile.println("<tr>");
+        outFile.println("<td><a href=\"" + drillDownFileName
+            + "\" target=\"_top\">" + packageName + "</a></td>");
+        outFile.println("<td>");
+        outFile.println("<div class=\"soyc-bar-graph goog-inline-block\">");
+        // CHECKSTYLE_OFF
+        outFile.println("<div style=\"width:" + perc
+            + "%;\" class=\"soyc-bar-graph-fill goog-inline-block\"></div>");
+        // CHECKSTYLE_ON
+        outFile.println("</div>");
+        outFile.println(size + " (" + formatNumber(perc) + "%)");
+        outFile.println("</td>");
+        outFile.println("</tr>");
+      }
     }
 
     outFile.println("</table>");

@@ -36,7 +36,7 @@ public class GlobalInformation {
   private SizeBreakdown initialCodeBreakdown = new SizeBreakdown(
       "Initially downloaded code", "initial");
   private SizeBreakdown leftoversBreakdown = new SizeBreakdown(
-      "Leftovers code, code not in any other category", "leftovers");
+      "Leftovers code, code not in any other split point", "leftovers");
   private int numSplitPoints = 0;
   private Map<String, TreeSet<String>> packageToClasses = new TreeMap<String, TreeSet<String>>();
   private final String permutationId;
@@ -208,5 +208,4 @@ public class GlobalInformation {
       }
     }
   }
-
 }
