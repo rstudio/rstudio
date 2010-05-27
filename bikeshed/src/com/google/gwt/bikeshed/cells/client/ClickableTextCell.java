@@ -40,7 +40,6 @@ public class ClickableTextCell extends Cell<String, Void> {
   public Void onBrowserEvent(Element parent, String value, Void viewData,
       NativeEvent event, ValueUpdater<String, Void> valueUpdater) {
     String type = event.getType();
-    System.out.println(type);
     if (type.equals("click")) {
       valueUpdater.update(value, null);
     }

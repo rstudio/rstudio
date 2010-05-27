@@ -96,12 +96,12 @@ public class EditableTableRecipe extends Recipe {
     FlowPanel nextPrevPanel = new FlowPanel();
     Button prevBtn = new Button("<", new ClickHandler() {
       public void onClick(ClickEvent event) {
-        table.previousPage();
+        table.setPageStart(table.getPageStart() - table.getPageSize());
       }
     });
     Button nextBtn = new Button(">", new ClickHandler() {
       public void onClick(ClickEvent event) {
-        table.nextPage();
+        table.setPageStart(table.getPageStart() + table.getPageSize());
       }
     });
     nextPrevPanel.add(prevBtn);

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,11 +34,9 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.sample.bikeshed.style.client.Styles;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -235,6 +233,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
     }
   }
 
+  private static Label messageIdsLabel = new Label("");
+
   private static Label selectionLabel = new Label("Selected NONE");
 
   private static final String[] senders = {
@@ -252,19 +252,33 @@ public class MailRecipe extends Recipe implements ClickHandler {
       "Impress your colleagues with bling-bling", "Degree available",
       "Rolex Watches", "Re: Re: yo bud", "Important notice"};
 
-  private Button add1Button;
+  private final Comparator<Message> dateComparator = new Comparator<Message>() {
+    public int compare(Message o1, Message o2) {
+      long cmp = o1.date.getTime() - o2.date.getTime();
+      if (cmp < 0) {
+        return -1;
+      } else if (cmp > 0) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+  };
 
-  private FocusWidget add5Button;
+  private final Comparator<Message> idComparator = new Comparator<Message>() {
+    public int compare(Message o1, Message o2) {
+      // Integer comparison
+      return o1.id - o2.id;
+    }
+  };
+
+  private Comparator<Message> lastComparator = idComparator;
+
+  private boolean lastSortUp = true;
+
+  private int messageId = 10000;
 
   private List<Message> messages;
-
-  private Button nextPageButton;
-
-  private Button prevPageButton;
-
-  private Button remove1Button;
-
-  private Button remove5Button;
 
   private MailSelectionModel selectionModel = new MailSelectionModel();
 
@@ -284,18 +298,10 @@ public class MailRecipe extends Recipe implements ClickHandler {
       for (Message item : selectedItems) {
         selectionModel.setSelected(item, true);
       }
-    } else if ("NEXT".equals(id)) {
-      table.nextPage();
-      updatePagingButtons();
-    } else if ("PREV".equals(id)) {
-      table.previousPage();
-      updatePagingButtons();
     } else if (id.startsWith("ADD")) {
-      table.setPageSize(table.getPageSize() + Integer.parseInt(id.substring(3)));
-      updatePagingButtons();
+      addMessages(Integer.parseInt(id.substring(3)));
     } else if (id.startsWith("REM")) {
-      table.setPageSize(Math.max(table.getPageSize() - Integer.parseInt(id.substring(3)), 0));
-      updatePagingButtons();
+      removeMessages(Integer.parseInt(id.substring(3)));
     } else {
       selectionModel.setType(id);
     }
@@ -306,43 +312,9 @@ public class MailRecipe extends Recipe implements ClickHandler {
     ListViewAdapter<Message> adapter = new ListViewAdapter<Message>();
     messages = adapter.getList();
 
-    Date now = new Date();
-    Random rand = new Random();
-    for (int i = 0; i < 25; i++) {
-      // Go back up to 90 days from the current date
-      long dateOffset = rand.nextInt(60 * 60 * 24 * 90) * 1000L;
-      Message message = new Message(10000 + i,
-          senders[rand.nextInt(senders.length)],
-          subjects[rand.nextInt(subjects.length)], new Date(now.getTime()
-              - dateOffset));
-      message.isRead = rand.nextBoolean();
-      messages.add(message);
-    }
-
-    final Comparator<Message> idComparator = new Comparator<Message>() {
-      public int compare(Message o1, Message o2) {
-        // Integer comparison
-        return o1.id - o2.id;
-      }
-    };
-
-    final Comparator<Message> dateComparator = new Comparator<Message>() {
-      public int compare(Message o1, Message o2) {
-        long cmp = o1.date.getTime() - o2.date.getTime();
-        if (cmp < 0) {
-          return -1;
-        } else if (cmp > 0) {
-          return 1;
-        } else {
-          return 0;
-        }
-      }
-    };
-
-    sortMessages(idComparator, true);
+    addMessages(10);
 
     table = new PagingTableListView<Message>(10);
-    table.setStyleName(Styles.common().table());
     table.setSelectionModel(selectionModel);
     adapter.addView(table);
 
@@ -425,6 +397,8 @@ public class MailRecipe extends Recipe implements ClickHandler {
     });
     table.addColumn(toggleColumn, "Toggle Read/Unread");
 
+    ScrollbarPager<Message> pager = new ScrollbarPager<Message>(table);
+
     Label searchLabel = new Label("Search Sender or Subject:");
     final TextBox searchBox = new TextBox();
     searchBox.addKeyUpHandler(new KeyUpHandler() {
@@ -442,27 +416,21 @@ public class MailRecipe extends Recipe implements ClickHandler {
     p.add(makeButton("Search Subject", "SUBJECT"));
     p.add(makeButton("Search Senders", "SENDER"));
     p.add(new HTML("<br>"));
-    p.add(table);
-    p.add(prevPageButton = makeButton("Previous Page", "PREV"));
-    prevPageButton.setEnabled(false);
-    p.add(nextPageButton = makeButton("Next Page", "NEXT"));
-    nextPageButton.setEnabled(true);
-    p.add(remove1Button = makeButton("Remove row", "REM1"));
-    remove1Button.setEnabled(true);
-    p.add(add1Button = makeButton("Add row", "ADD1"));
-    add1Button.setEnabled(true);
-    p.add(remove5Button = makeButton("Remove 5 rows", "REM5"));
-    remove5Button.setEnabled(true);
-    p.add(add5Button = makeButton("Add 5 rows", "ADD5"));
-    add5Button.setEnabled(true);
-    p.add(new HTML("<br>"));
+    HorizontalPanel hp = new HorizontalPanel();
+    hp.add(pager);
+    hp.add(table);
+    p.add(hp);
+    p.add(new HTML("<hr>"));
     p.add(makeButton("Select None", "NONE"));
     p.add(makeButton("Select All On This Page", "PAGE"));
     p.add(makeButton("Select All", "ALL"));
     p.add(makeButton("Select Read", "READ"));
     p.add(makeButton("Select Unread", "UNREAD"));
-    p.add(new HTML("<hr>"));
     p.add(selectionLabel);
+    p.add(new HTML("<hr>"));
+    p.add(makeButton("Add 5 messages", "ADD5"));
+    p.add(makeButton("Remove 5 messages", "REM5"));
+    p.add(messageIdsLabel);
     return p;
   }
 
@@ -508,6 +476,24 @@ public class MailRecipe extends Recipe implements ClickHandler {
     return addColumn(table, text, TextCell.getInstance(), getter, null);
   }
 
+  private void addMessages(int count) {
+    Date now = new Date();
+    Random rand = new Random();
+    for (int i = 0; i < count; i++) {
+      // Go back up to 90 days from the current date
+      long dateOffset = rand.nextInt(60 * 60 * 24 * 90) * 1000L;
+      Message message = new Message(messageId++,
+          senders[rand.nextInt(senders.length)],
+          subjects[rand.nextInt(subjects.length)], new Date(now.getTime()
+              - dateOffset));
+      message.isRead = rand.nextBoolean();
+      messages.add(message);
+    }
+    sortMessages(lastComparator, lastSortUp);
+
+    messageIdsLabel.setText("Maximum message ID = " + (messageId - 1));
+  }
+
   private Button makeButton(String label, String id) {
     Button button = new Button(label);
     button.getElement().setId(id);
@@ -515,7 +501,16 @@ public class MailRecipe extends Recipe implements ClickHandler {
     return button;
   }
 
+  private void removeMessages(int count) {
+    count = Math.min(count, messages.size());
+    for (int i = 0; i < count; i++) {
+      messages.remove(0);
+    }
+  }
+
   private void sortMessages(final Comparator<Message> comparator, boolean sortUp) {
+    lastComparator = comparator;
+    lastSortUp = sortUp;
     if (sortUp) {
       Collections.sort(messages, comparator);
     } else {
@@ -525,14 +520,5 @@ public class MailRecipe extends Recipe implements ClickHandler {
         }
       });
     }
-  }
-
-  private void updatePagingButtons() {
-    add1Button.setEnabled(table.canAddRows(1));
-    remove1Button.setEnabled(table.canRemoveRows(1));
-    add5Button.setEnabled(table.canAddRows(5));
-    remove5Button.setEnabled(table.canRemoveRows(5));
-    prevPageButton.setEnabled(table.hasPreviousPage());
-    nextPageButton.setEnabled(table.hasNextPage());
   }
 }

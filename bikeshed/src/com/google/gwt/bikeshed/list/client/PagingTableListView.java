@@ -44,7 +44,7 @@ import java.util.List;
  * 
  * @param <T> the data type of each row
  */
-public class PagingTableListView<T> extends Widget implements ListView<T> {
+public class PagingTableListView<T> extends Widget implements PagingListView<T> {
 
   private class TableSelectionHandler implements SelectionChangeHandler {
     public void onSelectionChange(SelectionChangeEvent event) {
@@ -61,22 +61,24 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
   private List<Header<?>> footers = new ArrayList<Header<?>>();
   private List<Header<?>> headers = new ArrayList<Header<?>>();
   private TableRowElement hoveringRow;
+  private Pager<T> pager;
   private int pageSize = -1;
+
   private int pageStart = 0;
 
   /**
    * If null, each T will be used as its own key.
    */
   private ProvidesKey<T> providesKey;
-
   private HandlerRegistration selectionHandler;
-  private SelectionModel<? super T> selectionModel;
 
+  private SelectionModel<? super T> selectionModel;
+  private int size = 0;
   private TableElement table;
   private TableSectionElement tbody;
   private TableSectionElement tfoot;
+
   private TableSectionElement thead;
-  private int size = 0;
 
   /**
    * Constructs a table with a default page size of 10.
@@ -139,23 +141,16 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
     addColumn(col, new TextHeader(headerString), null);
   }
 
-  /**
-   * Returns true if it there is enough data to allow a given number of
-   * additional rows to be displayed.
-   */
-  public boolean canAddRows(int rows) {
-    return size - pageSize >= rows;
-  }
-
-  /**
-   * Returns true if the page size is sufficient to allow a given number of rows
-   * to be removed.
-   */
-  public boolean canRemoveRows(int rows) {
-    return pageSize > rows;
-  }
-
   // TODO: remove(Column)
+
+  public int getBodyHeight() {
+    int height = getClientHeight(tbody);
+    return height;
+  }
+
+  public int getDataSize() {
+    return size;
+  }
 
   public T getDisplayedItem(int indexOnPage) {
     if (indexOnPage < 0 || indexOnPage >= getNumDisplayedItems()) {
@@ -166,6 +161,11 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
 
   public List<T> getDisplayedItems() {
     return new ArrayList<T>(dataValues);
+  }
+
+  public int getHeaderHeight() {
+    int height = getClientHeight(thead);
+    return height;
   }
 
   public int getNumDisplayedItems() {
@@ -190,31 +190,6 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
 
   public int getSize() {
     return size;
-  }
-
-  /**
-   * Returns true if there is enough data such that a call to
-   * {@link #nextPage()} will succeed in moving the starting point of the table
-   * forward.
-   */
-  public boolean hasNextPage() {
-    return pageStart + pageSize < size;
-  }
-
-  /**
-   * Returns true if there is enough data such that a call to
-   * {@link #previousPage()} will succeed in moving the starting point of the
-   * table backward.
-   */
-  public boolean hasPreviousPage() {
-    return pageStart > 0 && size > 0;
-  }
-
-  /**
-   * Advance the starting row by {@link #getPageSize()} rows.
-   */
-  public void nextPage() {
-    setPageStart(Math.min(getSize() - 1, getPageStart() + getPageSize()));
   }
 
   @Override
@@ -258,13 +233,6 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
 
       column.onBrowserEvent(cell, pageStart + row, value, event, providesKey);
     }
-  }
-
-  /**
-   * Move the starting row back by {@link #getPageSize()} rows.
-   */
-  public void previousPage() {
-    setPageStart(Math.max(0, getPageStart() - getPageSize()));
   }
 
   /**
@@ -365,11 +333,21 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
 
   public void setDataSize(int size, boolean isExact) {
     this.size = size;
-    updateRowVisibility();
+    if (size == 0) {
+      pageStart = 0;
+    } else if (pageStart > size - 1) {
+      pageStart = size - 1;
+    }
+    refresh();
+    updatePager();
   }
 
   public void setDelegate(Delegate<T> delegate) {
     this.delegate = delegate;
+  }
+
+  public void setPager(PagingListView.Pager<T> pager) {
+    this.pager = pager;
   }
 
   /**
@@ -392,6 +370,7 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
     if (pageStart + pageSize > size) {
       pageStart = Math.max(0, size - pageSize);
     }
+    updatePager();
 
     // TODO - avoid requesting data if the page size has decreased
     createRows();
@@ -407,6 +386,7 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
    */
   public void setPageStart(int pageStart) {
     this.pageStart = Math.max(Math.min(pageStart, size - 1), 0);
+    updatePager();
     refresh();
   }
 
@@ -519,6 +499,17 @@ public class PagingTableListView<T> extends Widget implements ListView<T> {
     return null;
   }
 
+  private native int getClientHeight(Element element) /*-{
+    return element.clientHeight;
+  }-*/;
+
+  private void updatePager() {
+    // Inform the pager about a change in page start, page size, or data size
+    if (pager != null) {
+      pager.onRangeOrSizeChanged(this);
+    }
+  }
+  
   private void updateRowVisibility() {
     int visible = Math.min(pageSize, size - pageStart);
 
