@@ -58,7 +58,7 @@ public final class Math {
     return Math.atan2(y,x);
   }-*/;
 
-  public static double cbrt (double x) {
+  public static double cbrt(double x) {
     return Math.pow(x, 1.0 / 3.0);
   }
 
