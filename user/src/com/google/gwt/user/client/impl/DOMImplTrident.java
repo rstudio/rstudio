@@ -24,15 +24,14 @@ import com.google.gwt.user.client.Event;
  * {@link com.google.gwt.user.client.impl.DOMImpl}.
  */
 public abstract class DOMImplTrident extends DOMImpl {
+  @SuppressWarnings("unused")
+  private static JavaScriptObject callDispatchEvent;
 
   @SuppressWarnings("unused")
-  private static JavaScriptObject dispatchEvent;
+  private static JavaScriptObject callDispatchDblClickEvent;
 
   @SuppressWarnings("unused")
-  private static JavaScriptObject dispatchDblClickEvent;
-
-  @SuppressWarnings("unused")
-  private static JavaScriptObject dispatchUnhandledEvent;
+  private static JavaScriptObject callDispatchUnhandledEvent;
 
   /**
    * Let every GWT app on the page preview the current event. If any app cancels
@@ -106,7 +105,7 @@ public abstract class DOMImplTrident extends DOMImpl {
       return @com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)($wnd.event);
     });
 
-    @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent = $entry(function() {
+    var dispatchEvent = $entry(function() {
       // IE doesn't define event.currentTarget, so we squirrel it away here. It
       // also seems that IE won't allow you to add expandos to the event object,
       // so we have to store it in a global. This is ok because only one event
@@ -139,7 +138,7 @@ public abstract class DOMImplTrident extends DOMImpl {
       @com.google.gwt.dom.client.DOMImplTrident::currentEventTarget = oldEventTarget;
     });
 
-    @com.google.gwt.user.client.impl.DOMImplTrident::dispatchDblClickEvent = $entry(function() {
+    var dispatchDblClickEvent = $entry(function() {
       var newEvent = $doc.createEventObject();
       // Synthesize a click event if one hasn't already been synthesized.
       // Issue 4027: fireEvent is undefined on disabled input elements.
@@ -147,7 +146,7 @@ public abstract class DOMImplTrident extends DOMImpl {
         $wnd.event.srcElement.fireEvent('onclick', newEvent);
       }
       if (this.__eventBits & 2) {
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent.call(this);
+        dispatchEvent.call(this);
       } else if ($wnd.event.returnValue == null) {
         // Ensure that we preview the event even if we aren't handling it.
         $wnd.event.returnValue = true;
@@ -155,16 +154,34 @@ public abstract class DOMImplTrident extends DOMImpl {
       }
     });
 
-    @com.google.gwt.user.client.impl.DOMImplTrident::dispatchUnhandledEvent = $entry(function() {
+    var dispatchUnhandledEvent = $entry(function() {
       this.__gwtLastUnhandledEvent = $wnd.event.type;
-      @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent.call(this);
+      dispatchEvent.call(this);
     });
+
+    // Hook the above functions on the current window object, and
+    // create a caller function for each one that indirects via
+    // the global object. Make sure that the caller function has
+    // no direct reference to the GWT program.
+    var moduleName = @com.google.gwt.core.client.GWT::getModuleName()().replace(/\./g,'_');
+
+    $wnd['__gwt_dispatchEvent_' + moduleName] = dispatchEvent;
+    @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent = new Function('w',
+      'return function() { w.__gwt_dispatchEvent_' + moduleName + '.call(this) }')($wnd);
+ 
+    $wnd['__gwt_dispatchDblClickEvent_' + moduleName] = dispatchDblClickEvent;
+    @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchDblClickEvent = new Function('w',
+      'return function() { w.__gwt_dispatchDblClickEvent_' + moduleName + '.call(this)}')($wnd);
+ 
+    $wnd['__gwt_dispatchUnhandledEvent_' + moduleName] = dispatchUnhandledEvent;
+    @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchUnhandledEvent = new Function('w',
+      'return function() { w.__gwt_dispatchUnhandledEvent_' + moduleName + '.call(this)}')($wnd);
 
     // We need to create these delegate functions to fix up the 'this' context.
     // Normally, 'this' is the firing element, but this is only true for
     // 'onclick = ...' event handlers, not for handlers setup via attachEvent().
-    var bodyDispatcher = $entry(function() { @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent.call($doc.body); });
-    var bodyDblClickDispatcher = $entry(function() { @com.google.gwt.user.client.impl.DOMImplTrident::dispatchDblClickEvent.call($doc.body); });
+    var bodyDispatcher = $entry(function() { dispatchEvent.call($doc.body); });
+    var bodyDblClickDispatcher = $entry(function() { dispatchDblClickEvent.call($doc.body); });
 
     $doc.body.attachEvent('onclick', bodyDispatcher);
     $doc.body.attachEvent('onmousedown', bodyDispatcher);
@@ -218,48 +235,48 @@ public abstract class DOMImplTrident extends DOMImpl {
     var chMask = (elem.__eventBits || 0) ^ bits;
     elem.__eventBits = bits;
     if (!chMask) return;
-
+    
     if (chMask & 0x00001) elem.onclick       = (bits & 0x00001) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     // Add a ondblclick handler if onclick is desired to ensure that 
     // a user's double click will result in two onclick events.
     if (chMask & (0x00003)) elem.ondblclick  = (bits & (0x00003)) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchDblClickEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchDblClickEvent : null;
     if (chMask & 0x00004) elem.onmousedown   = (bits & 0x00004) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x00008) elem.onmouseup     = (bits & 0x00008) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x00010) elem.onmouseover   = (bits & 0x00010) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x00020) elem.onmouseout    = (bits & 0x00020) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x00040) elem.onmousemove   = (bits & 0x00040) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x00080) elem.onkeydown     = (bits & 0x00080) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x00100) elem.onkeypress    = (bits & 0x00100) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x00200) elem.onkeyup       = (bits & 0x00200) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x00400) elem.onchange      = (bits & 0x00400) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x00800) elem.onfocus       = (bits & 0x00800) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x01000) elem.onblur        = (bits & 0x01000) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x02000) elem.onlosecapture = (bits & 0x02000) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x04000) elem.onscroll      = (bits & 0x04000) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x08000) elem.onload        = (bits & 0x08000) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchUnhandledEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchUnhandledEvent : null;
     if (chMask & 0x10000) elem.onerror       = (bits & 0x10000) ?
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x20000) elem.onmousewheel  = (bits & 0x20000) ? 
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x40000) elem.oncontextmenu = (bits & 0x40000) ? 
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
     if (chMask & 0x80000) elem.onpaste       = (bits & 0x80000) ? 
-        @com.google.gwt.user.client.impl.DOMImplTrident::dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplTrident::callDispatchEvent : null;
   }-*/;
 }
