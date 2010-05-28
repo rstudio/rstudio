@@ -185,6 +185,9 @@ class ServletValidator {
       SAXParserFactory fac = SAXParserFactory.newInstance();
       fac.setValidating(false);
       fac.setNamespaceAware(false);
+      fac.setFeature(
+          "http://apache.org/xml/features/nonvalidating/load-external-dtd",
+          false);
       SAXParser parser = fac.newSAXParser();
       parser.getXMLReader().setFeature(
           "http://xml.org/sax/features/validation", false);
