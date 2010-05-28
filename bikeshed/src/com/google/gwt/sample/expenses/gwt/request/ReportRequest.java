@@ -34,6 +34,22 @@ public interface ReportRequest {
    * Defines the server operations that handle these requests.
    */
   public enum ServerOperations implements RequestFactory.RequestDefinition {
+    FIND_ALL_REPORTS {
+      public String getDomainMethodName() {
+        return "findAllReports";
+      }
+    },
+
+    FIND_REPORT {
+      public String getDomainMethodName() {
+        return "findListOfOneReport";
+      }
+
+      public Class<?>[] getParameterTypes() {
+        return new Class[] {java.lang.String.class};
+      }
+    },
+
     FIND_REPORTS_BY_EMPLOYEE {
       public String getDomainMethodName() {
         return "findReportsByEmployee";
@@ -41,20 +57,6 @@ public interface ReportRequest {
 
       public Class<?>[] getParameterTypes() {
         return new Class[] {java.lang.String.class};
-      }
-
-      public Class<? extends Record> getReturnType() {
-        return ReportRecord.class;
-      }
-    },
-
-    FIND_ALL_REPORTS {
-      public String getDomainMethodName() {
-        return "findAllReports";
-      }
-
-      public Class<? extends Record> getReturnType() {
-        return ReportRecord.class;
       }
     };
 
@@ -65,7 +67,23 @@ public interface ReportRequest {
     public Class<?>[] getParameterTypes() {
       return null;
     }
+
+    public Class<? extends Record> getReturnType() {
+      return ReportRecord.class;
+    }
   }
+
+  /**
+   * @return a request object
+   */
+  @ServerOperation("FIND_ALL_REPORTS")
+  EntityListRequest<ReportRecord> findAllReports();
+
+  /**
+   * @return a request object
+   */
+  @ServerOperation("FIND_REPORT")
+  EntityListRequest<ReportRecord> findReport(PropertyReference<String> id);
 
   /**
    * @return a request object
@@ -73,10 +91,4 @@ public interface ReportRequest {
   @ServerOperation("FIND_REPORTS_BY_EMPLOYEE")
   EntityListRequest<ReportRecord> findReportsByEmployee(
       PropertyReference<String> id);
-
-  /**
-   * @return a request object
-   */
-  @ServerOperation("FIND_ALL_REPORTS")
-  EntityListRequest<ReportRecord> findAllReports();
 }

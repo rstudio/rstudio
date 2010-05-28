@@ -21,7 +21,6 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.requestfactory.client.gen.ClientRequestObject;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.SyncRequest;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;

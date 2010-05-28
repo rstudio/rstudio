@@ -17,6 +17,7 @@ package com.google.gwt.sample.expenses.server.domain;
 
 import org.datanucleus.jpa.annotations.Extension;
 
+import java.util.Collections;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -84,6 +85,10 @@ public class Employee {
     }
   }
 
+  public static List<Employee> findListOfOneEmployee(String id) {
+    return Collections.singletonList(findEmployee(id));
+  }
+  
   private String userName;
 
   private String displayName;

@@ -19,5 +19,7 @@
   <inherits name='com.google.gwt.user.User'/>
 
   <source path="client"/>
+  <source path="shared"/>
+  <source path="ui"/>
   <source path="shared" excludes="ServerType" />
 </module>

@@ -31,12 +31,16 @@ public class PlaceController<P extends Place> {
     this.eventBus = eventBus;
   }
 
-  public  P getWhere() {
+  public P getWhere() {
     return where;
   }
 
   public void goTo(P newPlace) {
-    where = newPlace;
-    eventBus.fireEvent(new PlaceChanged(newPlace));
+    PlaceChangeRequestedEvent<P> willChange = new PlaceChangeRequestedEvent<P>(newPlace);
+    eventBus.fireEvent(willChange);
+    if (!willChange.isRejected()) {
+      where = newPlace;
+      eventBus.fireEvent(new PlaceChangeEvent<P>(newPlace));
+    }
   }
 }

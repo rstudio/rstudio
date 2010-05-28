@@ -31,8 +31,10 @@ appengine-generated/
   * Google > App Engine > Use Google App Engine
   * Google > App Engine > ORM
     * Remove src and test
-    * Add server and shared from src/com/google/gwt/sample/bikeshed/stocks
-    * Add com/google/gwt/sample/expenses/server/domain
+    * Add 
+      * src/com/google/gwt/sample/bikeshed/stocks/server
+      * src/com/google/gwt/sample/bikeshed/stocks/shared
+      * src/com/google/gwt/sample/expenses/server/domain
   * Java Build Path > Libraries > Add Variable > GWT_TOOLS, Extend > redist/json/r2_20080312/json.jar
 * Copy tools/redist/json/r2_20080312/json.jar to bikeshed/war/WEB_INF/lib
 * Right click on the bikeshed project and choose Run as > Web Application. Choose from the various .html files

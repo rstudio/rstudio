@@ -38,6 +38,7 @@
         <h2 class='{style.title}'>Expenses Entity Browser</h2>
       </g:HTML>
     </g:north>
+    
     <g:west size='15'>
       <a:ListBoxPlacePickerView width='90%' visibleItemCount='10' ui:field='placesBox'/>
     </g:west>

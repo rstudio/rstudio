@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,7 +15,8 @@
  */
 package com.google.gwt.sample.expenses.gwt.scaffold;
 
-import com.google.gwt.app.place.PlaceChanged;
+import com.google.gwt.app.place.ActivityManager;
+import com.google.gwt.app.place.ActivityMapper;
 import com.google.gwt.app.place.PlaceController;
 import com.google.gwt.app.place.PlacePicker;
 import com.google.gwt.core.client.EntryPoint;
@@ -23,15 +24,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.sample.expenses.gwt.place.ExpensesListPlace;
-import com.google.gwt.sample.expenses.gwt.place.ExpensesPlace;
-import com.google.gwt.sample.expenses.gwt.place.ExpensesPlaces;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesEntityTypesProcessor;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.gwt.ui.ExpensesKeyNameRenderer;
-import com.google.gwt.sample.expenses.gwt.ui.ListPlaceRenderer;
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.sample.expenses.gwt.scaffold.place.ListScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.scaffold.place.ScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.ui.ScaffoldListPlaceRenderer;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Record;
 
 import java.util.ArrayList;
@@ -45,53 +44,55 @@ public class Scaffold implements EntryPoint {
 
   public void onModuleLoad() {
 
-    // App controllers and services
+    /* App controllers and services */
+    
     final HandlerManager eventBus = new HandlerManager(null);
     final ExpensesRequestFactory requestFactory = GWT.create(ExpensesRequestFactory.class);
     requestFactory.init(eventBus);
-
-    final PlaceController<ExpensesPlace> placeController = new PlaceController<ExpensesPlace>(
+    final PlaceController<ScaffoldPlace> placeController = new PlaceController<ScaffoldPlace>(
         eventBus);
-    final ExpensesPlaces places = new ExpensesPlaces(placeController);
 
-    // Renderers
-    final ExpensesKeyNameRenderer entityNamer = new ExpensesKeyNameRenderer();
-    final ListPlaceRenderer listPlaceNamer = new ListPlaceRenderer();
+    /* Top level UI */
 
-    // Top level UI
     final ScaffoldShell shell = new ScaffoldShell();
 
-    // Left side
-    PlacePicker<ExpensesListPlace> placePicker = new PlacePicker<ExpensesListPlace>(
-        shell.getPlacesBox(), placeController, listPlaceNamer);
-    List<ExpensesListPlace> topPlaces = getTopPlaces();
-    placePicker.setPlaces(topPlaces);
+    /* Left side lets us pick from all the types of entities */
 
-    // Shows entity lists
-    eventBus.addHandler(PlaceChanged.TYPE, new ScaffoldListRequester(
-        shell.getBody(), new ScaffoldListViewBuilder(places, requestFactory,
-            listPlaceNamer)));
+    PlacePicker<ListScaffoldPlace> placePicker = new PlacePicker<ListScaffoldPlace>(
+        shell.getPlacesBox(), placeController, new ScaffoldListPlaceRenderer());
+    placePicker.setPlaces(getTopPlaces());
 
-    // Shared view for entity details.
-    final HTML detailsView = new HTML(); // TODO Real app should not share?
+    /*
+     * The body is run by an ActivitManager that listens for PlaceChange events
+     * and finds the corresponding Activity to run
+     */
 
-    // Shows entity details
-    eventBus.addHandler(PlaceChanged.TYPE, new ScaffoldDetailsRequester(
-        entityNamer, shell.getBody(), detailsView,
-        new ScaffoldDetailsViewBuilder()));
+    final ActivityMapper<ScaffoldPlace> mapper = new ScaffoldActivities(
+        requestFactory, placeController);
+    final ActivityManager<ScaffoldPlace> activityManager = new ActivityManager<ScaffoldPlace>(
+        mapper, eventBus);
 
-    // Hide the loading message
+    activityManager.setDisplay(new ActivityManager.View() {
+      public void setWidget(Widget widget) {
+        shell.getBody().setWidget(widget);
+      }
+    });
+
+    /* Hide the loading message */
+
     Element loading = Document.get().getElementById("loading");
     loading.getParentElement().removeChild(loading);
 
+    /* And show the user the shell */
+    
     RootLayoutPanel.get().add(shell);
   }
 
-  private List<ExpensesListPlace> getTopPlaces() {
-    final List<ExpensesListPlace> rtn = new ArrayList<ExpensesListPlace>();
+  private List<ListScaffoldPlace> getTopPlaces() {
+    final List<ListScaffoldPlace> rtn = new ArrayList<ListScaffoldPlace>();
     ExpensesEntityTypesProcessor.processAll(new ExpensesEntityTypesProcessor.EntityTypesProcessor() {
       public void processType(Class<? extends Record> recordType) {
-        rtn.add(new ExpensesListPlace(recordType));
+        rtn.add(new ListScaffoldPlace(recordType));
       }
     });
     return Collections.unmodifiableList(rtn);

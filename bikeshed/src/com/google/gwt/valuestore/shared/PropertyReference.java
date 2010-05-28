@@ -31,6 +31,11 @@ public class PropertyReference<V> {
     this.record = record;
     this.property = property;
   }
+  
+  protected PropertyReference() {
+    this.record = null;
+    this.property = null;
+  }
 
   public V get() {
     return record.get(property);

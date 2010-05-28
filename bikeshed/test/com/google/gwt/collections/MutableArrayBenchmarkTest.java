@@ -20,22 +20,24 @@ import com.google.gwt.benchmarks.client.IntRange;
 import com.google.gwt.benchmarks.client.Operator;
 import com.google.gwt.benchmarks.client.RangeField;
 
+import java.util.ArrayList;
+
 /**
  * Benchmarks the performance of various MutableArray methods.
  */
 public class MutableArrayBenchmarkTest extends Benchmark {
 
-  final IntRange elemRange = new IntRange(0, 5000, Operator.ADD, 100);
+  final IntRange elemRange = new IntRange(5, 30000, Operator.ADD, 500);
 
   @Override
   public String getModuleName() {
     return "com.google.gwt.collections.Collections";
   }
   
-  public void testAddGrowth() {    
+  public void testGwtCollectionsArrayAddGrowth() {    
   }
   
-  public void testAddGrowth(@RangeField("elemRange") Integer numElements) {
+  public void testGwtCollectionsArrayAddGrowth(@RangeField("elemRange") Integer numElements) {
     MutableArray<Integer> ma = CollectionFactory.createMutableArray();
     
     for (int i = 0; i < numElements; i++) {
@@ -43,16 +45,51 @@ public class MutableArrayBenchmarkTest extends Benchmark {
     }
   }
   
-  public void testSetSizeGrowth() {  
+  public void testGwtCollectionsArraySetSizeGrowth() {  
   }
   
-  public void testSetSizeGrowth(@RangeField("elemRange") Integer numElements) {
+  public void testGwtCollectionsArraySetSizeGrowth(@RangeField("elemRange") Integer numElements) {
     MutableArray<Integer> ma = CollectionFactory.createMutableArray();
     
     ma.setSize(numElements, null);
     for (int i = 0; i < numElements; i++) {
       ma.set(i, i);
     }    
+  }
+  
+  public void testGwtCollectionsArraySetSizeInitGrowth() {  
+  }
+  
+  public void testGwtCollectionsArraySetSizeInitGrowth(
+      @RangeField("elemRange") Integer numElements) {
+    MutableArray<Integer> ma = CollectionFactory.createMutableArray();
+    
+    ma.setSize(numElements, new Integer(0));
+    for (int i = 0; i < numElements; i++) {
+      ma.set(i, i);
+    }    
+  }
+  
+  public void testJavaArraySetGrowth() {
+  }
+  
+  public void testJavaArraySetGrowth(@RangeField("elemRange") Integer numElements) {
+    Integer[] ia = new Integer[numElements];
+    
+    for (int i = 0; i < numElements; i++) {
+      ia[i] = i;
+    }
+  }
+  
+  public void testJreArrayListAddGrowth() {
+  }
+  
+  public void testJreArrayListAddGrowth(@RangeField("elemRange") Integer numElements) {
+    ArrayList<Integer> al = new ArrayList<Integer>();
+    
+    for (int i = 0; i < numElements; i++) {
+      al.add(i);
+    }
   }
 
 }

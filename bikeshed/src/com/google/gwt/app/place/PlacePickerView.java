@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,21 +15,31 @@
  */
 package com.google.gwt.app.place;
 
+import com.google.gwt.app.util.IsWidget;
 import com.google.gwt.user.client.ui.HasValueMap;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * View for a {@link PlacePicker}.
- *
+ * 
  * @param <P> the type of place displayed
  */
-public interface PlacePickerView<P extends Place> extends HasValueMap<P> {
+public interface PlacePickerView<P extends Place> extends IsWidget,
+    HasValueMap<P> {
 
-   /**
-    * Implemented by the presenter currently using this view.
-    */
+  /**
+   * Implemented by the presenter currently using this view.
+   */
   interface Listener<P> {
     void placePicked(P place);
   }
 
   void setListener(Listener<P> listener);
+
+  /**
+   * May throw {@link UnsupportedOperationException}, or return null.
+   * 
+   * @return the receiver as a Widget
+   */
+  Widget asWidget();
 }

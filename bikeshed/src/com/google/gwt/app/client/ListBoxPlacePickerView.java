@@ -33,6 +33,13 @@ public class ListBoxPlacePickerView<P extends Place> extends ValueListBox<P>
   private HandlerRegistration handlerRegistration;
 
   /**
+   * @return this view
+   */
+  public ListBoxPlacePickerView<P> asWidget() {
+    return this;
+  }
+  
+  /**
    * Set the listener.
    */
   public void setListener(final PlacePickerView.Listener<P> listener) {

@@ -16,12 +16,12 @@
 package com.google.gwt.collections;
 
 /**
- * Re-run {@link ObjectArrayTest} tests under GWT.
+ * Re-run {@link MutableArrayTest} tests under GWT.
  */
-public class ClientMutableArrayTest extends ObjectArrayTest {
+public class ClientMutableArrayTest extends MutableArrayTest {
   @Override
   public String getModuleName() {
     return "com.google.gwt.collections.Collections";
   }
-
+  
 }

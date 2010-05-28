@@ -115,7 +115,6 @@ public class MutableArray<E> extends Array<E> {
     Assertions.assertNotFrozen(this);
     Assertions.assertIndexInRange(index, 0, size());
     if (elems != null && elems.length >= 1) {
-      // TODO: replace with splice using JSNI
       int oldLen = elems.length;
       E[] newElems = (E[]) new Object[oldLen - 1];
       System.arraycopy(elems, 0, newElems, 0, index);

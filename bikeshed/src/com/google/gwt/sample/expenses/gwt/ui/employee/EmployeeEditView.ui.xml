@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui' xmlns:b='urn:import:com.google.gwt.bikeshed.list.client'>
+  <g:HTMLPanel>
+    <h3><ui:msg>Edit Employee <span ui:field='idSpan' /></ui:msg></h3>
+
+    <span>Display Name:</span> <g:TextBox ui:field='displayName'></g:TextBox>
+    <span>User Name:</span> <g:TextBox ui:field='userName'></g:TextBox>
+
+    <g:Button ui:field='save'>Save</g:Button>
+  </g:HTMLPanel>
+</ui:UiBinder>

@@ -111,6 +111,7 @@ public class ImmutableArrayTest extends GWTTestCase {
     assertTrue(ia1.elems == ia2.elems);
   }
 
+  
   public void testModifyFrozenMutable() {    
     // Do not test undefined behavior with assertions disabled
     if (!assertionsEnabled) {

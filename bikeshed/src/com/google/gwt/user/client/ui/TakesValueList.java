@@ -18,7 +18,7 @@ package com.google.gwt.user.client.ui;
 import java.util.List;
 
 /**
- * Implemented by objects that want to be kept apprised of a list of values.
+ * Implemented by objects that display a list of values.
  *
  * @param <V> value type
  */

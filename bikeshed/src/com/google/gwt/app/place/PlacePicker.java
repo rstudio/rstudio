@@ -15,7 +15,7 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.user.client.ui.Renderer;
+import com.google.gwt.app.util.Renderer;
 
 import java.util.LinkedHashMap;
 import java.util.List;

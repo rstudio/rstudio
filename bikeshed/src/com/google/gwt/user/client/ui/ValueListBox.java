@@ -36,9 +36,6 @@ public class ValueListBox<T> extends Composite implements HasValue<T>,
   private ArrayList<T> indexToValue = new ArrayList<T>();
   private Map<T, Integer> valueToIndex = new HashMap<T, Integer>();
 
-  // TODO ValueSetListBox<T> extends Composite implements HasValue<Set<T>>,
-  // HasValueMap<T>
-
   public ValueListBox() {
     initWidget(new ListBox(false));
   }

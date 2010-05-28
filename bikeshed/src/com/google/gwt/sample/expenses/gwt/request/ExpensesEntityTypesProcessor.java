@@ -29,7 +29,7 @@ import java.util.Set;
 public class ExpensesEntityTypesProcessor {
 
   /**
-   * Implemented by objects interested in all {@link ExpensesKey} instances.
+   * Implemented by objects that need to process {@link Record} types.
    */
   public interface EntityTypesProcessor {
     void processType(Class<? extends Record> recordType);

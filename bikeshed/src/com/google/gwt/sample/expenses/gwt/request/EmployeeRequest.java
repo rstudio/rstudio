@@ -18,6 +18,7 @@ package com.google.gwt.sample.expenses.gwt.request;
 import com.google.gwt.requestfactory.shared.EntityListRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.ServerOperation;
+import com.google.gwt.valuestore.shared.PropertyReference;
 import com.google.gwt.valuestore.shared.Record;
 
 /**
@@ -37,11 +38,17 @@ public interface EmployeeRequest {
       public String getDomainMethodName() {
         return "findAllEmployees";
       }
+    },
 
-      public Class<? extends Record> getReturnType() {
-        return EmployeeRecord.class;
+    FIND_EMPLOYEE {
+      public String getDomainMethodName() {
+        return "findListOfOneEmployee";
       }
-    };
+
+      public Class<?>[] getParameterTypes() {
+        return new Class[] {java.lang.String.class};
+      }
+   };
 
     public String getDomainClassName() {
       return "com.google.gwt.sample.expenses.server.domain.Employee";
@@ -50,6 +57,10 @@ public interface EmployeeRequest {
     public Class<?>[] getParameterTypes() {
       return null;
     }
+
+    public Class<? extends Record> getReturnType() {
+      return EmployeeRecord.class;
+    }
   }
 
   /**
@@ -57,4 +68,10 @@ public interface EmployeeRequest {
    */
   @ServerOperation("FIND_ALL_EMPLOYEES")
   EntityListRequest<EmployeeRecord> findAllEmployees();
+
+  /**
+   * @return a request object
+   */
+  @ServerOperation("FIND_EMPLOYEE")
+  EntityListRequest<EmployeeRecord> findEmployee(PropertyReference<String> id);
 }

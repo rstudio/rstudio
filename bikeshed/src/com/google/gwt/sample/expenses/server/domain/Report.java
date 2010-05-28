@@ -17,6 +17,7 @@ package com.google.gwt.sample.expenses.server.domain;
 
 import org.datanucleus.jpa.annotations.Extension;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -62,6 +63,10 @@ public class Report {
     }
   }
 
+  public static List<Report> findListOfOneReport(String id) {
+    return Collections.singletonList(findReport(id));
+  }
+  
   public static Report findReport(String id) {
     if (id == null) {
       return null;
@@ -73,7 +78,7 @@ public class Report {
       em.close();
     }
   }
-
+  
   @SuppressWarnings("unchecked")
   public static List<Report> findReportEntries(int firstResult, int maxResults) {
     EntityManager em = entityManager();

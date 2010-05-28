@@ -22,7 +22,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 /**
  * Tests mutable arrays.
  */
-public class ObjectArrayTest extends GWTTestCase {
+public class MutableArrayTest extends GWTTestCase {
 
   boolean assertionsEnabled;
 
@@ -181,9 +181,8 @@ public class ObjectArrayTest extends GWTTestCase {
 
     b.setSize(0, null);
     assertEquals(0, b.size());
-    assertEquals(null, b.elems);
   }
-
+  
   public void testSingleElementAddAndRemove() {
       MutableArray<String> a = createMutableArray();
 

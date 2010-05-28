@@ -5,6 +5,7 @@
   <inherits name='com.google.gwt.user.User'/>
   <inherits name='com.google.gwt.valuestore.ValueStore'/>
 
+  <source path="misc"/>
   <source path="place"/>
   <source path="client"/>
 </module>
