@@ -33,12 +33,6 @@ public class PostOptimizationCompoundAssignmentNormalizer extends
   }
 
   protected PostOptimizationCompoundAssignmentNormalizer() {
-    super(true);
-  }
-
-  @Override
-  protected String getTempPrefix() {
-    return "$t";
   }
 
   @Override

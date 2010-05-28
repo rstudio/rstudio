@@ -26,24 +26,15 @@ import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
-import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JThisRef;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
-
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
 
 /**
  * <p>
@@ -75,7 +66,80 @@ public abstract class CompoundAssignmentNormalizer {
   /**
    * Breaks apart certain complex assignments.
    */
-  private class BreakupAssignOpsVisitor extends JModVisitor {
+  private class BreakupAssignOpsVisitor extends TempLocalVisitor {
+
+    /**
+     * Replaces side effects in lvalue.
+     */
+    private class ReplaceSideEffectsInLvalue extends JModVisitor {
+
+      private final JMultiExpression multi;
+
+      ReplaceSideEffectsInLvalue(JMultiExpression multi) {
+        this.multi = multi;
+      }
+
+      public JMultiExpression getMultiExpr() {
+        return multi;
+      }
+
+      @Override
+      public boolean visit(JArrayRef x, Context ctx) {
+        JExpression newInstance = possiblyReplace(x.getInstance());
+        JExpression newIndexExpr = possiblyReplace(x.getIndexExpr());
+        if (newInstance != x.getInstance() || newIndexExpr != x.getIndexExpr()) {
+          JArrayRef newExpr = new JArrayRef(x.getSourceInfo(), newInstance,
+              newIndexExpr);
+          ctx.replaceMe(newExpr);
+        }
+        return false;
+      }
+
+      @Override
+      public boolean visit(JFieldRef x, Context ctx) {
+        if (x.getInstance() != null) {
+          JExpression newInstance = possiblyReplace(x.getInstance());
+          if (newInstance != x.getInstance()) {
+            JFieldRef newExpr = new JFieldRef(x.getSourceInfo(), newInstance,
+                x.getField(), x.getEnclosingType());
+            ctx.replaceMe(newExpr);
+          }
+        }
+        return false;
+      }
+
+      @Override
+      public boolean visit(JLocalRef x, Context ctx) {
+        return false;
+      }
+
+      @Override
+      public boolean visit(JParameterRef x, Context ctx) {
+        return false;
+      }
+
+      @Override
+      public boolean visit(JThisRef x, Context ctx) {
+        return false;
+      }
+
+      private JExpression possiblyReplace(JExpression x) {
+        if (!x.hasSideEffects()) {
+          return x;
+        }
+
+        // Create a temp local
+        JLocal tempLocal = createTempLocal(x.getSourceInfo(), x.getType());
+
+        // Create an assignment for this temp and add it to multi.
+        JLocalRef tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
+        JBinaryOperation asg = new JBinaryOperation(x.getSourceInfo(),
+            x.getType(), JBinaryOperator.ASG, tempRef, x);
+        multi.exprs.add(asg);
+        // Update me with the temp
+        return cloner.cloneExpression(tempRef);
+      }
+    }
 
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
@@ -93,11 +157,9 @@ public abstract class CompoundAssignmentNormalizer {
        * expressions that could have side effects with temporaries, so that they
        * are only run once.
        */
-      enterTempUsageScope();
       ReplaceSideEffectsInLvalue replacer = new ReplaceSideEffectsInLvalue(
           new JMultiExpression(x.getSourceInfo()));
       JExpression newLhs = replacer.accept(x.getLhs());
-      exitTempUsageScope();
 
       JBinaryOperation operation = new JBinaryOperation(x.getSourceInfo(),
           newLhs.getType(), op.getNonAssignmentOf(), newLhs, x.getRhs());
@@ -118,12 +180,6 @@ public abstract class CompoundAssignmentNormalizer {
     }
 
     @Override
-    public void endVisit(JMethodBody x, Context ctx) {
-      clearLocals();
-      currentMethodBody = null;
-    }
-
-    @Override
     public void endVisit(JPostfixOperation x, Context ctx) {
       JUnaryOperator op = x.getOp();
       if (!op.isModifying()) {
@@ -137,7 +193,6 @@ public abstract class CompoundAssignmentNormalizer {
       // (t = x, x += 1, t)
 
       // First, replace the arg with a non-side-effect causing one.
-      enterTempUsageScope();
       JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
       ReplaceSideEffectsInLvalue replacer = new ReplaceSideEffectsInLvalue(
           multi);
@@ -146,7 +201,8 @@ public abstract class CompoundAssignmentNormalizer {
       JExpression expressionReturn = expressionToReturn(newArg);
 
       // Now generate the appropriate expressions.
-      JLocal tempLocal = getTempLocal(expressionReturn.getType());
+      JLocal tempLocal = createTempLocal(x.getSourceInfo(),
+          expressionReturn.getType());
 
       // t = x
       JLocalRef tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
@@ -164,7 +220,6 @@ public abstract class CompoundAssignmentNormalizer {
       multi.exprs.add(tempRef);
 
       ctx.replaceMe(multi);
-      exitTempUsageScope();
     }
 
     @Override
@@ -183,13 +238,6 @@ public abstract class CompoundAssignmentNormalizer {
 
       // Visit the result to break it up even more.
       ctx.replaceMe(accept(asg));
-    }
-
-    @Override
-    public boolean visit(JMethodBody x, Context ctx) {
-      currentMethodBody = x;
-      clearLocals();
-      return true;
     }
 
     private JBinaryOperation createAsgOpFromUnary(JExpression arg,
@@ -221,165 +269,7 @@ public abstract class CompoundAssignmentNormalizer {
     }
   }
 
-  /**
-   * Replaces side effects in lvalue.
-   */
-  private class ReplaceSideEffectsInLvalue extends JModVisitor {
-
-    private final JMultiExpression multi;
-
-    ReplaceSideEffectsInLvalue(JMultiExpression multi) {
-      this.multi = multi;
-    }
-
-    public JMultiExpression getMultiExpr() {
-      return multi;
-    }
-
-    @Override
-    public boolean visit(JArrayRef x, Context ctx) {
-      JExpression newInstance = possiblyReplace(x.getInstance());
-      JExpression newIndexExpr = possiblyReplace(x.getIndexExpr());
-      if (newInstance != x.getInstance() || newIndexExpr != x.getIndexExpr()) {
-        JArrayRef newExpr = new JArrayRef(x.getSourceInfo(), newInstance,
-            newIndexExpr);
-        ctx.replaceMe(newExpr);
-      }
-      return false;
-    }
-
-    @Override
-    public boolean visit(JFieldRef x, Context ctx) {
-      if (x.getInstance() != null) {
-        JExpression newInstance = possiblyReplace(x.getInstance());
-        if (newInstance != x.getInstance()) {
-          JFieldRef newExpr = new JFieldRef(x.getSourceInfo(), newInstance,
-              x.getField(), x.getEnclosingType());
-          ctx.replaceMe(newExpr);
-        }
-      }
-      return false;
-    }
-
-    @Override
-    public boolean visit(JLocalRef x, Context ctx) {
-      return false;
-    }
-
-    @Override
-    public boolean visit(JParameterRef x, Context ctx) {
-      return false;
-    }
-
-    @Override
-    public boolean visit(JThisRef x, Context ctx) {
-      return false;
-    }
-
-    private JExpression possiblyReplace(JExpression x) {
-      if (!x.hasSideEffects()) {
-        return x;
-      }
-
-      // Create a temp local
-      JLocal tempLocal = getTempLocal(x.getType());
-
-      // Create an assignment for this temp and add it to multi.
-      JLocalRef tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
-      JBinaryOperation asg = new JBinaryOperation(x.getSourceInfo(), x.getType(),
-          JBinaryOperator.ASG, tempRef, x);
-      multi.exprs.add(asg);
-      // Update me with the temp
-      return cloner.cloneExpression(tempRef);
-    }
-  }
-
-  /**
-   * For some particular type, tracks all usage of temporary local variables of
-   * that type within the current method.
-   */
-  private static class TempLocalTracker {
-    /**
-     * Temps previously created in nested usage scopes that are now available
-     * for reuse by subsequent code.
-     */
-    private List<JLocal> reusable = new ArrayList<JLocal>();
-
-    /**
-     * Temps in use in active scopes. They cannot currently be reused; however,
-     * any time a scope is exited, the set of locals at the top of stack is
-     * popped off and all contained locals become reusable. The top of stack
-     * correlates to the current scope.
-     */
-    private Stack<List<JLocal>> usageStack = new Stack<List<JLocal>>();
-
-    public TempLocalTracker() {
-      /*
-       * Due to the lazy-creation nature, we must assume upon creation that
-       * we're already in a valid scope (and thus create the initial empty scope
-       * ourselves).
-       */
-      enterScope();
-    }
-
-    public void enterScope() {
-      usageStack.push(new ArrayList<JLocal>());
-    }
-
-    public void exitScope() {
-      /*
-       * Due to the lazy-creation nature, the program flow might be several
-       * levels deep already when this object is created. Since we don't know
-       * how many exitScope() calls to accept, we must be empty-tolerant. In
-       * other words, this isn't naively defensive programming. :)
-       */
-      if (!usageStack.isEmpty()) {
-        List<JLocal> freed = usageStack.pop();
-        reusable.addAll(freed);
-      }
-    }
-
-    public JLocal tryGetReusableLocal() {
-      if (!reusable.isEmpty()) {
-        return reusable.remove(reusable.size() - 1);
-      }
-      return null;
-    }
-
-    public void useLocal(JLocal local) {
-      usageStack.peek().add(local);
-    }
-  }
-
-  private final CloneExpressionVisitor cloner;
-
-  private JMethodBody currentMethodBody;
-
-  /**
-   * Counter to generate a unique name for each temporary within the current
-   * method.
-   */
-  private int localCounter;
-
-  /**
-   * Map of type onto lazily-created local tracker.
-   */
-  private Map<JType, TempLocalTracker> localTrackers = new IdentityHashMap<JType, TempLocalTracker>();
-
-  /**
-   * If <code>true</code>, reuse temps. The pre-optimization subclass does
-   * not reuse temps because doing so can defeat optimizations because different
-   * uses impact each other and we do nothing to disambiguate usage. After
-   * optimizations, it makes sense to reuse temps to reduce code size and memory
-   * consumption of the output.
-   */
-  private final boolean reuseTemps;
-
-  protected CompoundAssignmentNormalizer(boolean reuseTemps) {
-    this.reuseTemps = reuseTemps;
-    cloner = new CloneExpressionVisitor();
-    clearLocals();
-  }
+  private final CloneExpressionVisitor cloner = new CloneExpressionVisitor();
 
   public void accept(JNode node) {
     BreakupAssignOpsVisitor breaker = new BreakupAssignOpsVisitor();
@@ -395,55 +285,9 @@ public abstract class CompoundAssignmentNormalizer {
     return lhs;
   }
 
-  protected abstract String getTempPrefix();
-
   protected abstract boolean shouldBreakUp(JBinaryOperation x);
 
   protected abstract boolean shouldBreakUp(JPostfixOperation x);
 
   protected abstract boolean shouldBreakUp(JPrefixOperation x);
-
-  private void clearLocals() {
-    localCounter = 0;
-    localTrackers.clear();
-  }
-
-  private void enterTempUsageScope() {
-    for (TempLocalTracker tracker : localTrackers.values()) {
-      tracker.enterScope();
-    }
-  }
-
-  private void exitTempUsageScope() {
-    for (TempLocalTracker tracker : localTrackers.values()) {
-      tracker.exitScope();
-    }
-  }
-
-  /**
-   * Allocate a temporary local variable.
-   */
-  private JLocal getTempLocal(JType type) {
-    TempLocalTracker tracker = localTrackers.get(type);
-    if (tracker == null) {
-      tracker = new TempLocalTracker();
-      localTrackers.put(type, tracker);
-    }
-
-    JLocal temp = null;
-    if (reuseTemps) {
-      /*
-       * If the return is non-null, we now "own" the returned JLocal; it's
-       * important to call tracker.useLocal() on the returned value (below).
-       */
-      temp = tracker.tryGetReusableLocal();
-    }
-
-    if (temp == null) {
-      temp = JProgram.createLocal(currentMethodBody.getSourceInfo(),
-          getTempPrefix() + localCounter++, type, false, currentMethodBody);
-    }
-    tracker.useLocal(temp);
-    return temp;
-  }
 }

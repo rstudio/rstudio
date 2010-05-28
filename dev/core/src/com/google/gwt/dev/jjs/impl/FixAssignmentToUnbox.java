@@ -52,7 +52,6 @@ public class FixAssignmentToUnbox extends JModVisitor {
     private final AutoboxUtils autoboxUtils;
 
     protected CompoundAssignmentToUnboxNormalizer(JProgram program) {
-      super(false);
       autoboxUtils = new AutoboxUtils(program);
     }
 
@@ -67,11 +66,6 @@ public class FixAssignmentToUnbox extends JModVisitor {
         return boxed;
       }
       return lhs;
-    }
-
-    @Override
-    protected String getTempPrefix() {
-      return "$tunbox";
     }
 
     @Override
