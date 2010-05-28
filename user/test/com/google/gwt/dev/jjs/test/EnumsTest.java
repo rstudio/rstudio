@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.test;
 
+import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -222,6 +223,7 @@ public class EnumsTest extends GWTTestCase {
       Enum.valueOf(nullEnumClass, "foo");
       fail("Passed a null enum class to Enum.valueOf; expected "
           + "NullPointerException");
+    } catch (JavaScriptException e) {
     } catch (NullPointerException e) {
     }
       

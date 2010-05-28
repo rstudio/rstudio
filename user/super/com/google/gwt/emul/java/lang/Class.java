@@ -67,13 +67,14 @@ public final class Class<T> {
    */
   static <T> Class<T> createForEnum(String packageName, String className,
       String seedName, Class<? super T> superclass,
-      JavaScriptObject enumConstantsFunc) {
+      JavaScriptObject enumConstantsFunc, JavaScriptObject enumValueOfFunc) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
     setName(clazz, packageName, className, seedName);
     clazz.modifiers = (enumConstantsFunc != null) ? ENUM : 0;
     clazz.superclass = clazz.enumSuperclass = superclass;
     clazz.enumConstantsFunc = enumConstantsFunc;
+    clazz.enumValueOfFunc = enumValueOfFunc;
     return clazz;
   }
 
@@ -124,6 +125,8 @@ public final class Class<T> {
     }
   }
 
+  JavaScriptObject enumValueOfFunc;
+
   int modifiers;
 
   private Class<?> componentType;
@@ -133,9 +136,9 @@ public final class Class<T> {
 
   private Class<? super T> enumSuperclass;
 
-  private String typeName;
-
   private Class<? super T> superclass;
+
+  private String typeName;
 
   /**
    * Not publicly instantiable.
@@ -159,13 +162,6 @@ public final class Class<T> {
     return this.@java.lang.Class::enumConstantsFunc
         && (this.@java.lang.Class::enumConstantsFunc)();
   }-*/;
-
-  /**
-   * Used by Enum to allow getSuperclass() to be pruned.
-   */
-  public Class<? super T> getEnumSuperclass() {
-    return enumSuperclass;
-  }
 
   public String getName() {
     return typeName;
@@ -198,5 +194,12 @@ public final class Class<T> {
   public String toString() {
     return (isInterface() ? "interface " : (isPrimitive() ? "" : "class "))
         + getName();
+  }
+
+  /**
+   * Used by Enum to allow getSuperclass() to be pruned.
+   */
+  Class<? super T> getEnumSuperclass() {
+    return enumSuperclass;
   }
 }

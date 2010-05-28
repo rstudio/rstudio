@@ -95,7 +95,6 @@ import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
-import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsModVisitor;
@@ -342,10 +341,8 @@ public class GenerateJavaAST {
     }
 
     public void processEnumType(JEnumType type) {
-      // Create a JSNI map for string-based lookup.
-      JField mapField = createEnumValueMap(type);
-
       // Generate the synthetic values() and valueOf() methods.
+      JField valuesField = null;
       for (JMethod method : type.getMethods()) {
         currentMethod = method;
         if ("values".equals(method.getName())) {
@@ -353,8 +350,15 @@ public class GenerateJavaAST {
             continue;
           }
           currentMethodBody = (JMethodBody) method.getBody();
-          writeEnumValuesMethod(type);
-        } else if ("valueOf".equals(method.getName())) {
+          valuesField = writeEnumValuesMethod(type);
+        }
+        currentMethodBody = null;
+        currentMethod = null;
+      }
+      // Generate the synthetic values() and valueOf() methods.
+      for (JMethod method : type.getMethods()) {
+        currentMethod = method;
+        if ("valueOf".equals(method.getName())) {
           if (method.getParams().size() != 1) {
             continue;
           }
@@ -362,7 +366,7 @@ public class GenerateJavaAST {
             continue;
           }
           currentMethodBody = (JMethodBody) method.getBody();
-          writeEnumValueOfMethod(type, mapField);
+          writeEnumValueOfMethod(type, valuesField);
         }
         currentMethodBody = null;
         currentMethod = null;
@@ -2091,28 +2095,6 @@ public class GenerateJavaAST {
       return new JDeclarationStatement(info, new JLocalRef(info, local), value);
     }
 
-    private JField createEnumValueMap(JEnumType type) {
-      SourceInfo sourceInfo = type.getSourceInfo().makeChild(
-          JavaASTGenerationVisitor.class, "enum value lookup map");
-      JsonObject map = new JsonObject(sourceInfo, program.getJavaScriptObject());
-      for (JEnumField field : type.getEnumList()) {
-        // JSON maps require leading underscores to prevent collisions.
-        JStringLiteral key = program.getLiteralString(field.getSourceInfo(),
-            "_" + field.getName());
-        JFieldRef value = new JFieldRef(sourceInfo, null, field, type);
-        map.propInits.add(new JsonObject.JsonPropInit(sourceInfo, key, value));
-      }
-      JField mapField = program.createField(sourceInfo, "enum$map", type,
-          map.getType(), true, Disposition.FINAL);
-
-      // Initialize in clinit.
-      JMethodBody clinitBody = (JMethodBody) type.getMethods().get(0).getBody();
-      JExpressionStatement assignment = JProgram.createAssignmentStmt(
-          sourceInfo, createVariableRef(sourceInfo, mapField), map);
-      clinitBody.getBlock().addStmt(assignment);
-      return mapField;
-    }
-
     /**
      * Helper to create a qualified "this" ref (really a synthetic this field
      * access) of the appropriate type. Always use this method instead of
@@ -2755,33 +2737,84 @@ public class GenerateJavaAST {
       return unboxCall;
     }
 
-    private void writeEnumValueOfMethod(JEnumType type, JField mapField) {
-      // return Enum.valueOf(map, name);
-      SourceInfo sourceInfo = mapField.getSourceInfo().makeChild(
-          JavaASTGenerationVisitor.class, "enum accessor method");
-      JFieldRef mapRef = new JFieldRef(sourceInfo, null, mapField, type);
-      JVariableRef nameRef = createVariableRef(sourceInfo,
-          currentMethod.getParams().get(0));
-      JMethod delegateTo = program.getIndexedMethod("Enum.valueOf");
-      JMethodCall call = new JMethodCall(sourceInfo, null, delegateTo);
-      call.addArgs(mapRef, nameRef);
-      currentMethodBody.getBlock().addStmt(
-          new JReturnStatement(sourceInfo, call));
+    private void writeEnumValueOfMethod(JEnumType type, JField valuesField) {
+      JField mapField;
+      {
+        /*
+         * Make an inner class to hold a lazy-init name-value map. We use a
+         * class to take advantage of its clinit.
+         * 
+         * class Map { $MAP = Enum.createValueOfMap($VALUES); }
+         */
+        SourceInfo sourceInfo = type.getSourceInfo().makeChild(
+            JavaASTGenerationVisitor.class, "Enum$Map");
+        JClassType mapClass = program.createClass(sourceInfo, type.getName()
+            + "$Map", false, true);
+        mapField = program.createField(sourceInfo, "$MAP", mapClass,
+            program.getJavaScriptObject(), true, Disposition.FINAL);
+
+        JMethodCall call = new JMethodCall(sourceInfo, null,
+            program.getIndexedMethod("Enum.createValueOfMap"));
+        call.addArg(new JFieldRef(sourceInfo, null, valuesField, type));
+        JFieldRef mapRef = new JFieldRef(sourceInfo, null, mapField, type);
+        JDeclarationStatement declStmt = new JDeclarationStatement(sourceInfo,
+            mapRef, call);
+        JMethod clinit = program.createMethod(sourceInfo, "$clinit", mapClass,
+            program.getTypeVoid(), false, true, true, true, false);
+        clinit.freezeParamTypes();
+        JBlock clinitBlock = ((JMethodBody) clinit.getBody()).getBlock();
+        clinitBlock.addStmt(declStmt);
+        mapField.setInitializer(declStmt);
+      }
+
+      /*
+       * return Enum.valueOf(Enum$Map.Map.$MAP, name);
+       */
+      {
+        SourceInfo sourceInfo = currentMethodBody.getSourceInfo();
+        JFieldRef mapRef = new JFieldRef(sourceInfo, null, mapField, type);
+        JVariableRef nameRef = createVariableRef(sourceInfo,
+            currentMethod.getParams().get(0));
+        JMethod delegateTo = program.getIndexedMethod("Enum.valueOf");
+        JMethodCall call = new JMethodCall(sourceInfo, null, delegateTo);
+        call.addArgs(mapRef, nameRef);
+
+        currentMethodBody.getBlock().addStmt(
+            new JReturnStatement(sourceInfo, call));
+      }
     }
 
-    private void writeEnumValuesMethod(JEnumType type) {
-      // return new E[]{A,B,C};
-      SourceInfo sourceInfo = type.getSourceInfo().makeChild(
-          JavaASTGenerationVisitor.class, "enum values method");
-      List<JExpression> initializers = new ArrayList<JExpression>();
-      for (JEnumField field : type.getEnumList()) {
-        JFieldRef fieldRef = new JFieldRef(sourceInfo, null, field, type);
-        initializers.add(fieldRef);
+    private JField writeEnumValuesMethod(JEnumType type) {
+      JField valuesField;
+      {
+        // $VALUES = new E[]{A,B,B};
+        SourceInfo sourceInfo = type.getSourceInfo().makeChild(
+            JavaASTGenerationVisitor.class, "$VALUES");
+        JArrayType enumArrayType = program.getTypeArray(type, 1);
+        valuesField = program.createField(sourceInfo, "$VALUES", type,
+            enumArrayType, true, Disposition.FINAL);
+        List<JExpression> initializers = new ArrayList<JExpression>();
+        for (JEnumField field : type.getEnumList()) {
+          JFieldRef fieldRef = new JFieldRef(sourceInfo, null, field, type);
+          initializers.add(fieldRef);
+        }
+        JNewArray newExpr = JNewArray.createInitializers(program, sourceInfo,
+            enumArrayType, initializers);
+        JFieldRef valuesRef = new JFieldRef(sourceInfo, null, valuesField, type);
+        JDeclarationStatement declStmt = new JDeclarationStatement(sourceInfo,
+            valuesRef, newExpr);
+        JBlock clinitBlock = ((JMethodBody) type.getMethods().get(0).getBody()).getBlock();
+        clinitBlock.addStmt(declStmt);
+        valuesField.setInitializer(declStmt);
       }
-      JNewArray newExpr = JNewArray.createInitializers(program, sourceInfo,
-          program.getTypeArray(type, 1), initializers);
-      currentMethodBody.getBlock().addStmt(
-          new JReturnStatement(sourceInfo, newExpr));
+      {
+        // return $VALUES;
+        SourceInfo sourceInfo = currentMethod.getSourceInfo();
+        JFieldRef valuesRef = new JFieldRef(sourceInfo, null, valuesField, type);
+        currentMethodBody.getBlock().addStmt(
+            new JReturnStatement(sourceInfo, valuesRef));
+      }
+      return valuesField;
     }
   }
 

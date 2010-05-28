@@ -94,24 +94,36 @@ public class JClassLiteral extends JLiteral implements JAnnotationArgument {
       if (classType instanceof JEnumType) {
         JEnumType enumType = (JEnumType) classType;
         JMethod valuesMethod = null;
+        JMethod valueOfMethod = null;
         for (JMethod methodIt : enumType.getMethods()) {
           if ("values".equals(methodIt.getName())) {
             if (methodIt.getParams().size() != 0) {
               continue;
             }
             valuesMethod = methodIt;
-            break;
+          }
+          if ("valueOf".equals(methodIt.getName())) {
+            if (methodIt.getParams().size() != 1) {
+              continue;
+            }
+            valueOfMethod = methodIt;
           }
         }
         if (valuesMethod == null) {
           throw new InternalCompilerException(
               "Could not find enum values() method");
         }
-        JsniMethodRef jsniMethodRef = new JsniMethodRef(info, null,
-            valuesMethod, program.getJavaScriptObject());
-        call.addArg(jsniMethodRef);
+        if (valueOfMethod == null) {
+          throw new InternalCompilerException(
+              "Could not find enum valueOf() method");
+        }
+        call.addArg(new JsniMethodRef(info, null, valuesMethod,
+            program.getJavaScriptObject()));
+        call.addArg(new JsniMethodRef(info, null, valueOfMethod,
+            program.getJavaScriptObject()));
       } else if (isEnumOrSubclass) {
         // A subclass of an enum class
+        call.addArg(program.getLiteralNull());
         call.addArg(program.getLiteralNull());
       }
     } else if (type instanceof JArrayType) {
