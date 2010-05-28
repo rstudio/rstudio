@@ -4,6 +4,6 @@
   xmlns:b='urn:import:com.google.gwt.bikeshed.list.client'>
   <g:HTMLPanel>
     <h3><ui:msg>Employees</ui:msg></h3>
-    <b:PagingTableListView ui:field='table'/>
+    <b:CellTable ui:field='table'/>
   </g:HTMLPanel>
 </ui:UiBinder>

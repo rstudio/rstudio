@@ -15,16 +15,16 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.client;
 
-import com.google.gwt.bikeshed.cells.client.Cell;
+import com.google.gwt.cell.client.AbstractCell;
 
 /**
  * A cell that represents a
  * {@link com.google.gwt.sample.bikeshed.stocks.shared.StockQuote StockQuote}.
  */
-public class ChangeCell extends Cell<String, Void> {
+public class ChangeCell extends AbstractCell<String> {
 
   @Override
-  public void render(String value, Void viewData, StringBuilder sb) {
+  public void render(String value, Object viewData, StringBuilder sb) {
     if (value == null || value.length() == 0) {
       return;
     }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -28,6 +28,8 @@ import java.util.Set;
  */
 public interface RequestFactory {
 
+  // TODO all these inner interfaces are clutter, move them to their own files
+
   /**
    * Implemented by the configuration class used by
    * {@link com.google.gwt.requestfactory.server.RequestFactoryServlet
@@ -35,11 +37,12 @@ public interface RequestFactory {
    */
   interface Config {
     Map<String, RequestDefinition> requestDefinitions();
+
     Set<Class<? extends Record>> recordTypes();
   }
 
   /**
-   * Implemented by enums that defines the mapping between request objects and
+   * Implemented by enums that define the mapping between request objects and
    * service methods.
    */
   interface RequestDefinition {
@@ -62,7 +65,13 @@ public interface RequestFactory {
     /**
      * Returns the return type of the method to be invoked on the server.
      */
-    Class<? extends Record> getReturnType();
+    Class<?> getReturnType();
+
+    /**
+     * Returns true if the request returns Lists of {@link #getReturnType},
+     * false for single instances.
+     */
+    boolean isReturnTypeList();
 
     /**
      * Returns the name.
@@ -73,24 +82,24 @@ public interface RequestFactory {
   /**
    * Implemented by the request objects created by this factory.
    */
-  interface RequestObject {
+  interface RequestObject<T> {
     void fire();
 
     String getRequestData();
 
     void handleResponseText(String responseText);
+
+    RequestObject<T> to(Receiver<T> receiver);
   }
 
+  // TODO: this must be configurable
   String URL = "/expenses/data";
 
-  /*
-   * eventually, this will become an enum of update operations.
-   */
-  String UPDATE_STRING = "SYNC";
+  String SYNC = "SYNC";
 
   ValueStore getValueStore();
 
-  void init(HandlerManager handlerManager);
+  void init(HandlerManager eventBus);
 
   SyncRequest syncRequest(DeltaValueStore deltaValueStore);
 

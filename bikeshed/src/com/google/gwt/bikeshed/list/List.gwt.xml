@@ -15,7 +15,7 @@
 -->
 <module>
   <inherits name='com.google.gwt.user.User'/>
-  <inherits name='com.google.gwt.bikeshed.cells.Cells'/>
+  <inherits name='com.google.gwt.cell.Cell'/>
   <source path="shared" />
   <source path="client" />
 </module>

@@ -17,7 +17,7 @@ package com.google.gwt.sample.expenses.gwt.request;
 
 import com.google.gwt.valuestore.shared.Record;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -45,9 +45,9 @@ public class ExpensesEntityTypesProcessor {
 
   private static Set<Class<? extends Record>> get() {
     if (set == null) {
-      HashSet<Class<? extends Record>> newInstance = new HashSet<Class<? extends Record>>();
-      newInstance.add(ReportRecord.class);
+      Set<Class<? extends Record>> newInstance = new LinkedHashSet<Class<? extends Record>>();
       newInstance.add(EmployeeRecord.class);
+      newInstance.add(ReportRecord.class);
       set = newInstance;
     }
     return set;

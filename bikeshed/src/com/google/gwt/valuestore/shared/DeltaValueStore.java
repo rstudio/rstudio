@@ -19,7 +19,14 @@ package com.google.gwt.valuestore.shared;
  * Set of changes to a ValueStore.
  */
 public interface DeltaValueStore extends ValueStore {
-  Record create(Record existingRecord);
+
+  /**
+   * Enable a DeltaValueStore to be reused again. For example, when the edit
+   * fails on the server.
+   */
+  void clearUsed();
+
+  Record create(String token);
 
   void delete(Record record);
 

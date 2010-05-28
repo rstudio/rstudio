@@ -19,7 +19,6 @@ import com.google.gwt.valuestore.shared.impl.RecordImpl;
 import com.google.gwt.valuestore.shared.impl.RecordJsoImpl;
 import com.google.gwt.valuestore.shared.impl.RecordSchema;
 
-
 /**
  * The key used to store {@link com.google.gwt.valuestore.shared.Record Record}s
  * in {@link com.google.gwt.valuestore.shared.ValueStore ValueStore}.

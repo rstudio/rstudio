@@ -1,0 +1,137 @@
+<!DOCTYPE ui:UiBinder SYSTEM 'http://dl.google.com/gwt/DTD/xhtml.ent'>
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:l='urn:import:com.google.gwt.bikeshed.list.client'>
+
+  <ui:style>
+    .breadcrumb {
+      padding-left: 5px;
+      color: #4b4a4a;
+      font-size: 160%;
+      font-weight: bold;
+    }
+    
+    .reportsLink {
+      text-decoration: underline;
+      color: blue;
+      cursor: hand;
+      cursor: pointer;
+    }
+    
+    .details {
+      margin-left: 30px;
+      margin-top: 20px;
+    }
+    
+    .label {
+      font-weight: bold;
+    }
+    
+    .underline {
+      border-bottom: 1px solid black;
+    }
+    
+    .notes {
+      width: 400px;
+      border: 1px solid #5478af;
+      padding: 3px;
+    }
+    
+    .error {
+      color: red;
+    }
+    
+    .center {
+      border-top: 1px solid #88b0f2;
+    }
+    
+    .table {
+      border: 0px;
+    }
+  </ui:style>
+
+  <g:DockLayoutPanel
+    unit='PX'>
+    <g:north
+      size='150'>
+      <g:HTMLPanel>
+        <div
+          class='{style.breadcrumb}'>
+          <g:Anchor
+            styleName='{style.reportsLink}'
+            ui:field='reportsLink'>
+            Reports
+          </g:Anchor>
+          &gt;
+          <span ui:field='reportName' />
+        </div>
+
+        <table
+          class='{style.details}'
+          cellpadding='0'
+          cellspacing='0'>
+          <tr>
+            <td
+              class='{style.label} {style.underline}'>
+              Total Cost:
+            </td>
+            <td
+              width='150'
+              align='right'
+              class='{style.underline}'
+              ui:field='costLabel'>
+            </td>
+            <td width='150'>
+            </td>
+            <td
+              class='{style.label} {style.underline}'>
+              Approved So Far:
+            </td>
+            <td
+              width='150'
+              align='right'
+              class='{style.underline}'
+              ui:field='approvedLabel'>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div style='height:30px'/>
+            </td>
+          </tr>
+          <tr>
+            <td
+              class='{style.label}'>
+              Notes:
+            </td>
+            <td
+              colspan='3'>
+              <g:TextBox
+                styleName='{style.notes}'
+                ui:field='notesBox'></g:TextBox>
+            </td>
+          </tr>
+          <tr>
+            <td
+              class='{style.error}'
+              colspan='4'
+              ui:field='errorText'>
+            </td>
+          </tr>
+        </table>
+      </g:HTMLPanel>
+    </g:north>
+    
+    <g:center>
+      <g:ScrollPanel
+        styleName='{style.center}'>
+        <l:CellTable
+          addStyleNames='{style.table}'
+          width='100%'
+          ui:field='table' />
+        </g:ScrollPanel>
+    </g:center>
+  </g:DockLayoutPanel>
+
+</ui:UiBinder> 

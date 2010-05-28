@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.shared;
 
-import com.google.gwt.bikeshed.list.shared.Range;
+import com.google.gwt.view.client.Range;
 
 import java.io.Serializable;
 

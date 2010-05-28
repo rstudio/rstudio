@@ -47,6 +47,37 @@
     <url-pattern>/cookbook/tree</url-pattern>
   </servlet-mapping>
 
+  <!-- AppStats -->
+  <servlet>
+    <servlet-name>appstats</servlet-name>
+    <servlet-class>com.google.appengine.tools.appstats.AppstatsServlet</servlet-class>
+    <init-param>
+      <param-name>requireAdminAuthentication</param-name>
+      <param-value>false</param-value>
+    </init-param>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>appstats</servlet-name>
+    <url-pattern>/appstats/*</url-pattern>
+  </servlet-mapping>
+  <filter>
+    <filter-name>appstats</filter-name>
+    <filter-class>com.google.appengine.tools.appstats.AppstatsFilter</filter-class>
+    <init-param>
+      <param-name>logMessage</param-name>
+      <param-value>Appstats available: /appstats/details?time={ID}</param-value>
+    </init-param>
+    <init-param>
+      <param-name>basePath</param-name>
+      <param-value>/appstats/</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>appstats</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+
   <!-- Require login. -->
   <security-constraint>
     <web-resource-collection>

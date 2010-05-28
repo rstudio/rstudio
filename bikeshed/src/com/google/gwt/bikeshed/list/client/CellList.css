@@ -1,0 +1,15 @@
+.evenItem {
+  
+}
+
+.oddItem {
+  
+}
+
+@sprite .selectedItem {
+  gwt-image: 'cellListSelectedBackground';
+  background-color: #628cd5;
+  color: white;
+  height: auto;
+  overflow: auto;
+}

@@ -25,4 +25,10 @@ public interface TakesValue<V> {
    * @param value the new value
    */
   void setValue(V value);
+
+  /**
+   * return the current value.
+   */
+  V getValue();
+
 }

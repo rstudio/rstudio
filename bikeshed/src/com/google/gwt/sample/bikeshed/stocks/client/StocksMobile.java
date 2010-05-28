@@ -15,10 +15,7 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.client;
 
-import com.google.gwt.bikeshed.list.client.ListView;
-import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.shared.AsyncListViewAdapter;
-import com.google.gwt.bikeshed.list.shared.Range;
+import com.google.gwt.bikeshed.list.client.CellTable;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockQuote;
@@ -33,6 +30,9 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.AsyncListViewAdapter;
+import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.Range;
 
 /**
  * Mobile client for the stocks demo.
@@ -53,7 +53,7 @@ public class StocksMobile {
     return NumberFormat.getCurrencyFormat("USD").format(price / 100.0);
   }
 
-  @UiField PagingTableListView<StockQuote> listView;
+  @UiField CellTable<StockQuote> table;
   private final StockServiceAsync dataService = GWT.create(StockService.class);
   private AsyncListViewAdapter<StockQuote> favoritesListViewAdapter;
 
@@ -119,8 +119,8 @@ public class StocksMobile {
   }
 
   @UiFactory
-  PagingTableListView<StockQuote> createFavoritesWidget() {
-    PagingTableListView<StockQuote> favorite = new PagingTableListView<StockQuote>(10);
+  CellTable<StockQuote> createFavoritesWidget() {
+    CellTable<StockQuote> favorite = new CellTable<StockQuote>(10);
     favoritesListViewAdapter.addView(favorite);
 
     favorite.addColumn(Columns.tickerColumn, "ticker");

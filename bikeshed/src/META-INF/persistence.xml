@@ -7,6 +7,7 @@
     <persistence-unit name="transactions-optional">
         <provider>org.datanucleus.store.appengine.jpa.DatastorePersistenceProvider</provider>
         <class>com.google.gwt.sample.expenses.server.domain.Employee</class>
+        <class>com.google.gwt.sample.expenses.server.domain.Expense</class>
         <class>com.google.gwt.sample.expenses.server.domain.Report</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
         <properties>

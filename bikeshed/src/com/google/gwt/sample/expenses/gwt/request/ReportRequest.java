@@ -15,11 +15,11 @@
  */
 package com.google.gwt.sample.expenses.gwt.request;
 
-import com.google.gwt.requestfactory.shared.EntityListRequest;
+import com.google.gwt.requestfactory.shared.RecordListRequest;
+import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.ServerOperation;
 import com.google.gwt.valuestore.shared.PropertyReference;
-import com.google.gwt.valuestore.shared.Record;
 
 /**
  * "API Generated" request selector interface implemented by objects that give
@@ -34,6 +34,38 @@ public interface ReportRequest {
    * Defines the server operations that handle these requests.
    */
   public enum ServerOperations implements RequestFactory.RequestDefinition {
+    COUNT_REPORTS {
+      public String getDomainMethodName() {
+        return "countReports";
+      }
+
+      public Class<?> getReturnType() {
+        return long.class;
+      }
+
+      public boolean isReturnTypeList() {
+        return false;
+      }
+    },
+
+    COUNT_REPORTS_BY_SEARCH {
+      public String getDomainMethodName() {
+        return "countReportsBySearch";
+      }
+
+      public Class<?>[] getParameterTypes() {
+        return new Class[] {java.lang.Long.class, java.lang.String.class};
+      }
+
+      public Class<?> getReturnType() {
+        return long.class;
+      }
+
+      public boolean isReturnTypeList() {
+        return false;
+      }
+    },
+
     FIND_ALL_REPORTS {
       public String getDomainMethodName() {
         return "findAllReports";
@@ -42,11 +74,15 @@ public interface ReportRequest {
 
     FIND_REPORT {
       public String getDomainMethodName() {
-        return "findListOfOneReport";
+        return "findReport";
       }
 
       public Class<?>[] getParameterTypes() {
-        return new Class[] {java.lang.String.class};
+        return new Class[] {java.lang.Long.class};
+      }
+
+      public boolean isReturnTypeList() {
+        return false;
       }
     },
 
@@ -56,7 +92,29 @@ public interface ReportRequest {
       }
 
       public Class<?>[] getParameterTypes() {
-        return new Class[] {java.lang.String.class};
+        return new Class[] {java.lang.Long.class};
+      }
+    },
+
+    FIND_REPORT_ENTRIES {
+      public String getDomainMethodName() {
+        return "findReportEntries";
+      }
+
+      public Class<?>[] getParameterTypes() {
+        return new Class[] {int.class, int.class};
+      }
+    },
+
+    FIND_REPORT_ENTRIES_BY_SEARCH {
+      public String getDomainMethodName() {
+        return "findReportEntriesBySearch";
+      }
+
+      public Class<?>[] getParameterTypes() {
+        return new Class[]{
+            java.lang.Long.class, java.lang.String.class,
+            java.lang.String.class, int.class, int.class};
       }
     };
 
@@ -68,27 +126,58 @@ public interface ReportRequest {
       return null;
     }
 
-    public Class<? extends Record> getReturnType() {
+    public Class<?> getReturnType() {
       return ReportRecord.class;
+    }
+
+    public boolean isReturnTypeList() {
+      return true;
     }
   }
 
   /**
    * @return a request object
    */
+  @ServerOperation("COUNT_REPORTS")
+  RequestFactory.RequestObject<Long> countReports();
+
+  /**
+   * @return a request object
+   */
+  @ServerOperation("COUNT_REPORTS_BY_SEARCH")
+  RequestFactory.RequestObject<Long> countReportsBySearch(Long employeeId,
+      String startsWith);
+
+  /**
+   * @return a request object
+   */
   @ServerOperation("FIND_ALL_REPORTS")
-  EntityListRequest<ReportRecord> findAllReports();
+  RecordListRequest<ReportRecord> findAllReports();
 
   /**
    * @return a request object
    */
   @ServerOperation("FIND_REPORT")
-  EntityListRequest<ReportRecord> findReport(PropertyReference<String> id);
+  RecordRequest<ReportRecord> findReport(PropertyReference<String> id);
+
+  /**
+   * @return a request object
+   */
+  @ServerOperation("FIND_REPORT_ENTRIES")
+  RecordListRequest<ReportRecord> findReportEntries(int firstResult, int maxResults);
+
+  /**
+   * @return a request object
+   */
+  @ServerOperation("FIND_REPORT_ENTRIES_BY_SEARCH")
+  RecordListRequest<ReportRecord> findReportEntriesBySearch(Long employeeId,
+      String startsWith, String orderBy, int firstResult, int maxResults);
 
   /**
    * @return a request object
    */
   @ServerOperation("FIND_REPORTS_BY_EMPLOYEE")
-  EntityListRequest<ReportRecord> findReportsByEmployee(
+  RecordListRequest<ReportRecord> findReportsByEmployee(
       PropertyReference<String> id);
+
 }

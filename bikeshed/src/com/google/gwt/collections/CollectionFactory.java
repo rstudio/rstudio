@@ -29,5 +29,9 @@ public class CollectionFactory {
     r.setSize(size, fillValue);
     return r;
   }
+  
+  public static <V> MutableStringMap<V> createMutableStringMap() {
+    return new MutableStringMap<V>();
+  }
 
 }

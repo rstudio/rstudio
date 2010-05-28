@@ -1,0 +1,23 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:l='urn:import:com.google.gwt.bikeshed.list.client'
+  xmlns:c='urn:import:com.google.gwt.sample.expenses.gwt.client'>
+
+  <ui:with field='styles' type='com.google.gwt.sample.bikeshed.style.client.Styles' />
+
+  <ui:style>
+  </ui:style>
+
+  <g:HTMLPanel>
+    <div>Name: <g:TextBox ui:field='nameText'/></div>
+    <div>
+      Date: <g:ListBox ui:field='dateYear'/> /
+            <g:ListBox ui:field='dateMonth'/> /
+            <g:ListBox ui:field='dateDay'/>
+    </div>
+    <div>Category: <g:TextBox ui:field='categoryText'/></div>
+    <div>Price: <g:TextBox ui:field='priceText'/></div>
+  </g:HTMLPanel>
+</ui:UiBinder>

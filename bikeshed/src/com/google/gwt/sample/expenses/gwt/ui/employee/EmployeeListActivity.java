@@ -16,14 +16,19 @@
 package com.google.gwt.sample.expenses.gwt.ui.employee;
 
 import com.google.gwt.app.place.PlaceController;
-import com.google.gwt.requestfactory.shared.EntityListRequest;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RecordListRequest;
+import com.google.gwt.sample.expenses.gwt.client.place.EmployeeScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
+import com.google.gwt.sample.expenses.gwt.request.EmployeeRecordChanged;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.gwt.scaffold.place.EmployeeScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.scaffold.place.ScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.scaffold.place.ScaffoldRecordPlace.Operation;
 import com.google.gwt.valuestore.ui.AbstractRecordListActivity;
 import com.google.gwt.valuestore.ui.RecordListView;
+import com.google.gwt.view.client.Range;
 
 /**
  * Activity that requests and displays all {@EmployeeRecord}
@@ -43,35 +48,57 @@ public class EmployeeListActivity extends
 
   private final ExpensesRequestFactory requests;
   private final PlaceController<ScaffoldPlace> placeController;
+  private final HandlerManager eventBus;
+  private HandlerRegistration registration;
 
   /**
    * Creates an activity that uses the default singleton view instance.
    */
-  public EmployeeListActivity(ExpensesRequestFactory requests,
+  public EmployeeListActivity(HandlerManager eventBus,
+      ExpensesRequestFactory requests,
       PlaceController<ScaffoldPlace> placeController) {
-    this(requests, getDefaultView(), placeController);
+    this(eventBus, requests, getDefaultView(), placeController);
   }
 
   /**
    * Creates an activity that uses its own view instance.
    */
-  public EmployeeListActivity(ExpensesRequestFactory requests,
-      RecordListView<EmployeeRecord> view,
+  public EmployeeListActivity(HandlerManager eventBus,
+      ExpensesRequestFactory requests, RecordListView<EmployeeRecord> view,
       PlaceController<ScaffoldPlace> placeController) {
     super(view);
+    this.eventBus = eventBus;
     this.requests = requests;
     this.placeController = placeController;
   }
 
-  public void edit(EmployeeRecord record) {
-    placeController.goTo(new EmployeeScaffoldPlace(record, Operation.EDIT));
+  @Override
+  public void onStop() {
+    registration.removeHandler();
   }
 
   public void showDetails(EmployeeRecord record) {
     placeController.goTo(new EmployeeScaffoldPlace(record, Operation.DETAILS));
   }
 
-  protected EntityListRequest<EmployeeRecord> createRequest() {
-    return requests.employeeRequest().findAllEmployees();
+  @Override
+  public void start(Display display) {
+    this.registration = eventBus.addHandler(EmployeeRecordChanged.TYPE,
+        new EmployeeRecordChanged.Handler() {
+          public void onEmployeeChanged(EmployeeRecordChanged event) {
+            update(event.getRecord());
+          }
+        });
+    super.start(display);
+  }
+
+  protected RecordListRequest<EmployeeRecord> createRangeRequest(Range range) {
+    return requests.employeeRequest().findEmployeeEntries(range.getStart(),
+        range.getLength());
+  }
+
+  @Override
+  protected void fireCountRequest(Receiver<Long> callback) {
+    requests.employeeRequest().countEmployees().to(callback).fire();
   }
 }

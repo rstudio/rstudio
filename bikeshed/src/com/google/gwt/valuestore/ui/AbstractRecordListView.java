@@ -15,15 +15,14 @@
  */
 package com.google.gwt.valuestore.ui;
 
-import com.google.gwt.bikeshed.cells.client.ActionCell;
-import com.google.gwt.bikeshed.list.client.IdentityColumn;
-import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.shared.Range;
-import com.google.gwt.bikeshed.list.shared.SelectionModel;
+import com.google.gwt.bikeshed.list.client.CellTable;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.SelectionModel;
+import com.google.gwt.view.client.SingleSelectionModel;
 
 import java.util.HashSet;
 import java.util.List;
@@ -31,7 +30,7 @@ import java.util.Set;
 
 /**
  * Abstract implementation of RecordListView. Subclasses must call {@link #init}
- * with the root widget, its {@link PagingTableListView}, and a list of
+ * with the root widget, its {@link CellTable}, and a list of
  * {@link PropertyColumn}.
  * 
  * @param <R> the type of the records
@@ -39,8 +38,7 @@ import java.util.Set;
 public abstract class AbstractRecordListView<R extends Record> extends
     Composite implements RecordListView<R> {
 
-  private PagingTableListView<R> table;
-  private Delegate<R> delegate;
+  private CellTable<R> table;
   private Set<Property<?>> properties = new HashSet<Property<?>>();
 
   public AbstractRecordListView<R> asWidget() {
@@ -64,49 +62,43 @@ public abstract class AbstractRecordListView<R extends Record> extends
   }
   
   public void setDelegate(
-      com.google.gwt.bikeshed.list.client.ListView.Delegate<R> delegate) {
+      com.google.gwt.view.client.ListView.Delegate<R> delegate) {
     throw new UnsupportedOperationException(
         "A RecordListView requires a RecordListView.Delegate");
   }
 
-  public void setDelegate(Delegate<R> delegate) {
-    this.delegate = delegate;
+  public void setDelegate(final Delegate<R> delegate) {
     table.setDelegate(delegate);
+    
+    table.setSelectionModel(new SingleSelectionModel<R>() {
+      @Override
+      public void setSelected(R object, boolean selected) {
+        super.setSelected(object, selected);
+        delegate.showDetails(object);
+      }
+    });
   }
 
   public void setSelectionModel(SelectionModel<? super R> selectionModel) {
     table.setSelectionModel(selectionModel);
   }
 
-  protected void init(Widget root, PagingTableListView<R> table,
+  protected void init(Widget root, CellTable<R> table,
       List<PropertyColumn<R, ?>> columns) {
     super.initWidget(root);
     this.table = table;
-
+    table.setSelectionEnabled(true);
+    
     for (PropertyColumn<R, ?> column : columns) {
       table.addColumn(column, column.getProperty().getName());
       properties.add(column.getProperty());
     }
-
-    table.addColumn(new IdentityColumn<R>(new ActionCell<R>("Show",
-        new ActionCell.Delegate<R>() {
-          public void execute(R object) {
-            delegate.showDetails(object);
-          }
-        })));
-
-    table.addColumn(new IdentityColumn<R>(new ActionCell<R>("Edit",
-        new ActionCell.Delegate<R>() {
-          public void execute(R object) {
-            delegate.edit(object);
-          }
-        })));
   }
 
   @Override
   protected void initWidget(Widget widget) {
     throw new UnsupportedOperationException(
         "AbstractRecordListView must be initialized via "
-            + "init(Widget PagingTableListView<R> List<PropertyColumn<R, ?>> ) ");
+            + "init(Widget CellTable<R> List<PropertyColumn<R, ?>> ) ");
   }
 }

@@ -15,9 +15,8 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.client;
 
-import com.google.gwt.bikeshed.cells.client.Cell;
-import com.google.gwt.bikeshed.list.client.SimpleCellList;
-import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter;
+import com.google.gwt.bikeshed.list.client.CellList;
+import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.sample.bikeshed.stocks.shared.PlayerInfo;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -25,6 +24,7 @@ import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.AbstractListViewAdapter;
 
 import java.util.List;
 
@@ -39,11 +39,11 @@ public class PlayerScoresWidget extends Composite {
   private static final Binder binder = GWT.create(Binder.class);
 
   /**
-   * A {@link Cell} that displays the status of a single player.
+   * A {@link AbstractCell} that displays the status of a single player.
    */
-  private static final class PlayerInfoCell extends Cell<PlayerInfo, Void> {
+  private static final class PlayerInfoCell extends AbstractCell<PlayerInfo> {
     @Override
-    public void render(PlayerInfo value, Void viewData, StringBuilder sb) {
+    public void render(PlayerInfo value, Object viewData, StringBuilder sb) {
       sb.append("<div class='playerScoreBox'>");
       sb.append("<b>Name: </b>");
       sb.append(value.getDisplayName());
@@ -64,7 +64,7 @@ public class PlayerScoresWidget extends Composite {
   }
 
   @UiField
-  SimpleCellList<PlayerInfo> listView;
+  CellList<PlayerInfo> cellList;
 
   private final AbstractListViewAdapter<PlayerInfo> adapter;
 
@@ -74,8 +74,8 @@ public class PlayerScoresWidget extends Composite {
   }
 
   @UiFactory
-  SimpleCellList<PlayerInfo> createListView() {
-    SimpleCellList<PlayerInfo> view = new SimpleCellList<PlayerInfo>(new PlayerInfoCell(), 1, 1);
+  CellList<PlayerInfo> createCellList() {
+    CellList<PlayerInfo> view = new CellList<PlayerInfo>(new PlayerInfoCell());
     adapter.addView(view);
     return view;
   }

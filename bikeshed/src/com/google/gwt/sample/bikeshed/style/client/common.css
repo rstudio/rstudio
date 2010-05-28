@@ -1,15 +1,18 @@
 /* global */
 body {
-  background-color: #eee;
   color: black;
   margin: 8px;
   margin-top: 3px;
 }
 
-body, table {
+body, table, td {
   font-family: Arial, sans-serif;
   font-weight: light;
   font-size: 12px;
+}
+
+h1 {
+  color: #4b4a4a;
 }
 
 /* odds and ends */
@@ -43,6 +46,40 @@ body, table {
   font-size: 18pt;
 }
 
+.usernameTreeItem {
+  color: #999;
+  font-size: 90%;
+}
+
+.usernameTreeItemSelected {
+  color: white;
+  font-size: 90%;
+}
+
+@sprite .blankOption {
+  gwt-image: 'blankIcon';
+  padding-left: 20px;
+  width: auto;
+  height: auto;
+  overflow: auto;
+}
+
+@sprite .approvedOption {
+  gwt-image: 'approvedIcon';
+  padding-left: 20px;
+  width: auto;
+  height: auto;
+  overflow: auto;
+}
+
+@sprite .deniedOption {
+  gwt-image: 'deniedIcon';
+  padding-left: 20px;
+  width: auto;
+  height: auto;
+  overflow: auto;
+}
+
 /* tables */
 .table {
   width: 100%;
@@ -51,51 +88,8 @@ body, table {
   border-collapse: collapse;
 }
 
-.table th {
-  border-bottom: 1px solid #ccc;
-}
-
 .table td {
   border-bottom: 1px solid #ccc;
-}
-
-.table tfoot th {
-  border-width: 0px;
-}
-
-.table tr.hover {
-  background-color: lightblue;
-}
-
-.table tr.selected {
-  background-color: rgb(56, 117, 215);
-}
-
-/** Applies to StandardTreeView **/
-.gwt-tree-selectedItem {
-  background-color: rgb(56, 117, 215);
-}
-
-
-/** Applies to SideBySideTreeView **/
-.gwt-SideBySideTreeView {
-}
-
-.gwt-sstree-column {
-  border-right: 1px solid #aaa;
-  border-left: 1px solid #aaa;
-}
-
-.gwt-sstree-evenRow {
-  background-color: rgb(255, 255, 255);
-}
-
-.gwt-sstree-oddRow {
-  background-color: rgb(220, 220, 220);
-}
-
-.gwt-sstree-selectedItem {
-  background-color: rgb(56, 117, 215);
 }
 
 /* date picker */
@@ -194,9 +188,9 @@ td.datePickerMonth {
 
 /* splitters */
 .gwt-SplitLayoutPanel-HDragger {
-  background: transparent url(hsplitter-grip.png) center center no-repeat;
+  background: #b6cef3 url(hsplitter-grip.png) center center no-repeat;
 }
 
 .gwt-SplitLayoutPanel-VDragger {
-  background: transparent url(vsplitter-grip.png) center center no-repeat;
+  background: #b6cef3 url(vsplitter-grip.png) center center no-repeat;
 }

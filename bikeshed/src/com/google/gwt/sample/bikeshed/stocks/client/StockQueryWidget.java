@@ -15,8 +15,7 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.client;
 
-import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter;
+import com.google.gwt.bikeshed.list.client.CellTable;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
@@ -28,6 +27,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.AbstractListViewAdapter;
 
 /**
  * A widget containing a search box and a results table.
@@ -37,7 +37,7 @@ public class StockQueryWidget extends Composite {
   interface Binder extends UiBinder<Widget, StockQueryWidget> { }
   private static final Binder binder = GWT.create(Binder.class);
 
-  @UiField PagingTableListView<StockQuote> listView;
+  @UiField CellTable<StockQuote> table;
   @UiField TextBox queryField = new TextBox();
 
   private final AbstractListViewAdapter<StockQuote> adapter;
@@ -46,12 +46,12 @@ public class StockQueryWidget extends Composite {
     this.adapter = adapter;
     initWidget(binder.createAndBindUi(this));
 
-    listView.addColumn(Columns.favoriteColumn);
-    listView.addColumn(Columns.tickerColumn, "ticker");
-    listView.addColumn(Columns.nameColumn, "name");
-    listView.addColumn(Columns.changeColumn, "change");
-    listView.addColumn(Columns.priceColumn, "price");
-    listView.addColumn(Columns.buyColumn);
+    table.addColumn(Columns.favoriteColumn);
+    table.addColumn(Columns.tickerColumn, "ticker");
+    table.addColumn(Columns.nameColumn, "name");
+    table.addColumn(Columns.changeColumn, "change");
+    table.addColumn(Columns.priceColumn, "price");
+    table.addColumn(Columns.buyColumn);
 
     // Focus the cursor on the name field when the app loads
     queryField.setFocus(true);
@@ -79,8 +79,8 @@ public class StockQueryWidget extends Composite {
   }
 
   @UiFactory
-  PagingTableListView<StockQuote> createListView() {
-    PagingTableListView<StockQuote> view = new PagingTableListView<StockQuote>(10);
+  CellTable<StockQuote> createTable() {
+    CellTable<StockQuote> view = new CellTable<StockQuote>(10);
     adapter.addView(view);
     return view;
   }

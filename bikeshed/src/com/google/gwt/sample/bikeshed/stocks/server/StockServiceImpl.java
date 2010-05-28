@@ -18,8 +18,6 @@ package com.google.gwt.sample.bikeshed.stocks.server;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
-import com.google.gwt.bikeshed.list.shared.Range;
-import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter.DefaultRange;
 import com.google.gwt.sample.bikeshed.stocks.client.StockService;
 import com.google.gwt.sample.bikeshed.stocks.shared.PlayerInfo;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockQuote;
@@ -28,6 +26,8 @@ import com.google.gwt.sample.bikeshed.stocks.shared.StockRequest;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockResponse;
 import com.google.gwt.sample.bikeshed.stocks.shared.Transaction;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.google.gwt.view.client.Range;
+import com.google.gwt.view.client.AbstractListViewAdapter.DefaultRange;
 
 import java.util.ArrayList;
 import java.util.Collections;

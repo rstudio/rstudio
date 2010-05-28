@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui' >
+  <g:HTMLPanel>
+    <h3><ui:msg>Edit Report <g:InlineLabel ui:field='id' /> (v<g:InlineLabel ui:field='version'/>)</ui:msg></h3>
+    <div ui:field='errors' style='background-color: red; '></div>
+
+    <div><span>Purpose:</span> <g:TextBox ui:field='purpose'></g:TextBox></div>
+    <div><span>Notes:</span> <g:TextBox ui:field='notes'></g:TextBox></div>
+    <div><span>Created:</span> <g:InlineLabel ui:field='created'></g:InlineLabel></div>
+    <div><span>Reporter Key:</span> <g:TextBox ui:field='reporterKey'></g:TextBox></div>
+    <div><span>Approved Supervisor Key:</span> <g:TextBox ui:field='approvedSupervisorKey'></g:TextBox></div>
+
+    <g:Button ui:field='save'>Save</g:Button>
+    <g:Button ui:field='cancel'>Cancel</g:Button>
+  </g:HTMLPanel>
+</ui:UiBinder>

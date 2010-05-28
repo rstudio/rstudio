@@ -1,0 +1,27 @@
+.column {
+  
+}
+
+.firstColumn {
+  
+}
+
+.item {
+  padding: 8px;
+}
+
+@sprite .openItem {
+  gwt-image: 'cellBrowserOpenBackground';
+  background-color: #7b7b7b;
+  color: white;
+  height: auto;
+  overflow: auto;
+}
+
+@sprite .selectedItem {
+  gwt-image: 'cellBrowserSelectedBackground';
+  background-color: #628cd5;
+  color: white;
+  height: auto;
+  overflow: auto;
+}

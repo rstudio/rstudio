@@ -15,25 +15,61 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
-import com.google.gwt.app.place.AbstractActivity;
 import com.google.gwt.app.place.PlaceController;
+import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.sample.expenses.gwt.client.place.ReportScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.gwt.scaffold.place.ScaffoldPlace;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
+import com.google.gwt.valuestore.shared.Value;
+import com.google.gwt.valuestore.ui.AbstractRecordEditActivity;
+import com.google.gwt.valuestore.ui.RecordEditView;
 
 /**
  * An activity that requests all info on a report, allows the user to edit it,
  * and persists the results.
  */
-public class ReportEditActivity extends AbstractActivity {
+public class ReportEditActivity extends
+    AbstractRecordEditActivity<ReportRecord> {
+  private static RecordEditView<ReportRecord> defaultView;
 
+  private static RecordEditView<ReportRecord> getDefaultView() {
+    if (defaultView == null) {
+      defaultView = new ReportEditView();
+    }
+    return defaultView;
+  }
+
+  private final ExpensesRequestFactory requests;
+  private final PlaceController<ScaffoldPlace> placeController;
+
+  /**
+   * Creates an activity that uses the default singleton view instance.
+   */
   public ReportEditActivity(String id, ExpensesRequestFactory requests,
       PlaceController<ScaffoldPlace> placeController) {
-    // TODO Auto-generated constructor stub
+    this(id, getDefaultView(), requests, placeController);
   }
 
-  public void start(Callback callback) {
-    callback.onStarted(new Label("tbd"));
+  /**
+   * Creates an activity that uses its own view instance.
+   */
+  public ReportEditActivity(String id, RecordEditView<ReportRecord> view,
+      ExpensesRequestFactory requests,
+      PlaceController<ScaffoldPlace> placeController) {
+    super(view, id, requests);
+    this.requests = requests;
+    this.placeController = placeController;
   }
 
+  @Override
+  protected void fireFindRequest(Value<String> id,
+      Receiver<ReportRecord> callback) {
+    requests.reportRequest().findReport(id).to(callback).fire();
+  }
+
+  protected void exit() {
+    placeController.goTo(new ReportScaffoldPlace(getId(), Operation.DETAILS));
+  }
 }

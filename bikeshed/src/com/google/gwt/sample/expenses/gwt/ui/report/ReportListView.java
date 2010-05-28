@@ -16,7 +16,7 @@
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
 import com.google.gwt.app.util.DateTimeFormatRenderer;
-import com.google.gwt.bikeshed.list.client.PagingTableListView;
+import com.google.gwt.bikeshed.list.client.CellTable;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
@@ -41,12 +41,11 @@ public class ReportListView extends AbstractRecordListView<ReportRecord> {
 
   private static final Binder BINDER = GWT.create(Binder.class);
 
-  @UiField PagingTableListView<ReportRecord> table;
+  @UiField CellTable<ReportRecord> table;
 
   public ReportListView() {
     init(BINDER.createAndBindUi(this), table, getColumns());
   }
-
 
   protected List<PropertyColumn<ReportRecord, ?>> getColumns() {
     // TODO These should be <g:col> elements in a <g:table> in the ui.xml file
@@ -56,6 +55,8 @@ public class ReportListView extends AbstractRecordListView<ReportRecord> {
     columns.add(new PropertyColumn<ReportRecord, Date>(ReportRecord.created,
         new DateTimeFormatRenderer(DateTimeFormat.getShortDateFormat())));
     columns.add(PropertyColumn.<ReportRecord> getStringPropertyColumn(ReportRecord.purpose));
+    columns.add(PropertyColumn.<ReportRecord> getStringPropertyColumn(ReportRecord.reporterKey));
+    columns.add(PropertyColumn.<ReportRecord> getStringPropertyColumn(ReportRecord.approvedSupervisorKey));
 
     return columns;
   }

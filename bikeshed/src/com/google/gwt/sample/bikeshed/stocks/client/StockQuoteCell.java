@@ -15,16 +15,16 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.client;
 
-import com.google.gwt.bikeshed.cells.client.Cell;
+import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockQuote;
 
 /**
  * A cell that represents a {@link StockQuote}.
  */
-public class StockQuoteCell extends Cell<StockQuote, Void> {
+public class StockQuoteCell extends AbstractCell<StockQuote> {
 
   @Override
-  public void render(StockQuote value, Void viewData, StringBuilder sb) {
+  public void render(StockQuote value, Object viewData, StringBuilder sb) {
     sb.append(value.getTicker() + " (" + value.getName() + "): "
         + value.getDisplayPrice());
   }

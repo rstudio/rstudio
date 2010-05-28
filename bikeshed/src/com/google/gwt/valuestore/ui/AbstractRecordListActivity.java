@@ -16,12 +16,16 @@
 package com.google.gwt.valuestore.ui;
 
 import com.google.gwt.app.place.Activity;
-import com.google.gwt.bikeshed.list.client.ListView;
-import com.google.gwt.requestfactory.shared.EntityListRequest;
-import com.google.gwt.user.client.ui.TakesValueList;
+import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.requestfactory.shared.RecordListRequest;
 import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.Range;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract activity for requesting and displaying a list of {@Record}.
@@ -39,9 +43,11 @@ import java.util.List;
  * @param <R> the type of {@link Record} listed
  */
 public abstract class AbstractRecordListActivity<R extends Record> implements
-    Activity, RecordListView.Delegate<R>, TakesValueList<R> {
+    Activity, RecordListView.Delegate<R> {
+  private final Map<String, Integer> recordToRow = new HashMap<String, Integer>();
+
   private RecordListView<R> view;
-  private Callback callback;
+  private Display display;
 
   public AbstractRecordListActivity(RecordListView<R> view) {
     this.view = view;
@@ -60,41 +66,54 @@ public abstract class AbstractRecordListActivity<R extends Record> implements
    * Called by the table as it needs data.
    */
   public void onRangeChanged(ListView<R> listView) {
-    // TODO use listview.getRange()
-    getData();
+    final Range range = listView.getRange();
+
+    final Receiver<List<R>> callback = new Receiver<List<R>>() {
+      public void onSuccess(List<R> values) {
+        recordToRow.clear();
+        for (int i = 0, r = range.getStart(); i < values.size(); i++, r++) {
+          recordToRow.put(values.get(i).getId(), r);
+        }
+        getView().setData(range.getStart(), range.getLength(), values);
+        if (display != null) {
+          display.showActivityWidget(getView());
+        }
+      }
+    };
+
+    createRangeRequest(range).forProperties(getView().getProperties()).to(
+        callback).fire();
   }
 
   public void onStop() {
     view.setDelegate((RecordListView.Delegate<R>) null);
   }
 
-  /**
-   * When the request returns it calls this method.
-   * <p>
-   * TODO this was supposed to be a convenience but it's just confusing. Get
-   * real callbacks into request factory
-   */
-  public void setValueList(List<R> values) {
-    getView().setDataSize(values.size(), true);
-    getView().setData(0, values.size(), values);
-    if (callback != null) {
-      callback.onStarted(getView().asWidget());
-    }
+  public void start(Display display) {
+    this.display = display;
+    init();
   }
 
-  public void start(Callback callback) {
-    this.callback = callback;
-    getData();
+  public void update(R record) {
+    // TODO Must handle delete, new
+    Integer row = recordToRow.get(record.getId());
+    getView().setData(row, 1, Collections.singletonList(record));
   }
 
   public boolean willStop() {
     return true;
   }
 
-  protected abstract EntityListRequest<R> createRequest();
+  protected abstract RecordListRequest<R> createRangeRequest(Range range);
 
-  private void getData() {
-    createRequest().forProperties(getView().getProperties()).to(this).fire();
+  protected abstract void fireCountRequest(Receiver<Long> callback);
+
+  private void init() {
+    fireCountRequest(new Receiver<Long>() {
+      public void onSuccess(Long response) {
+        getView().setDataSize(response.intValue(), true);
+        onRangeChanged(view);
+      }
+    });
   }
-
 }

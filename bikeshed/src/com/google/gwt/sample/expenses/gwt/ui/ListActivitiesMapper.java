@@ -18,11 +18,12 @@ package com.google.gwt.sample.expenses.gwt.ui;
 import com.google.gwt.app.place.Activity;
 import com.google.gwt.app.place.ActivityMapper;
 import com.google.gwt.app.place.PlaceController;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.sample.expenses.gwt.client.place.ListScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
-import com.google.gwt.sample.expenses.gwt.scaffold.place.ListScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.scaffold.place.ScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.ui.employee.EmployeeListActivity;
 import com.google.gwt.sample.expenses.gwt.ui.report.ReportListActivity;
 
@@ -36,19 +37,22 @@ import com.google.gwt.sample.expenses.gwt.ui.report.ReportListActivity;
 public class ListActivitiesMapper implements ActivityMapper<ListScaffoldPlace> {
   private final ExpensesRequestFactory requests;
   private final PlaceController<ScaffoldPlace> placeController;
+  private HandlerManager eventBus;
 
-  public ListActivitiesMapper(ExpensesRequestFactory requests,
+  public ListActivitiesMapper(HandlerManager eventBus,
+      ExpensesRequestFactory requests,
       PlaceController<ScaffoldPlace> placeController) {
+    this.eventBus = eventBus;
     this.requests = requests;
     this.placeController = placeController;
   }
 
   public Activity getActivity(ListScaffoldPlace place) {
     if (place.getType().equals(EmployeeRecord.class)) {
-      return new EmployeeListActivity(requests, placeController);
+      return new EmployeeListActivity(eventBus, requests, placeController);
     }
     if (place.getType().equals(ReportRecord.class)) {
-      return new ReportListActivity(requests, placeController);
+      return new ReportListActivity(eventBus, requests, placeController);
     }
 
     throw new RuntimeException("Unable to locate a activity for " + place);

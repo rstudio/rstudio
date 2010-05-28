@@ -15,9 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
-import org.datanucleus.jpa.annotations.Extension;
-
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -27,7 +24,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.Query;
 import javax.persistence.Version;
 
@@ -40,7 +36,17 @@ public class Report {
   public static long countReports() {
     EntityManager em = entityManager();
     try {
-      return ((Integer) em.createQuery("select count(o) from Report o").getSingleResult()).intValue();
+      return ((Number) em.createQuery("select count(o) from Report o").getSingleResult()).longValue();
+    } finally {
+      em.close();
+    }
+  }
+
+  public static long countReportsBySearch(Long employeeId, String startsWith) {
+    EntityManager em = entityManager();
+    try {
+      Query query = queryReportsBySearch(em, employeeId, startsWith, null, true);
+      return ((Number) query.getSingleResult()).longValue();
     } finally {
       em.close();
     }
@@ -63,11 +69,7 @@ public class Report {
     }
   }
 
-  public static List<Report> findListOfOneReport(String id) {
-    return Collections.singletonList(findReport(id));
-  }
-  
-  public static Report findReport(String id) {
+  public static Report findReport(Long id) {
     if (id == null) {
       return null;
     }
@@ -94,7 +96,26 @@ public class Report {
   }
 
   @SuppressWarnings("unchecked")
-  public static List<Report> findReportsByEmployee(String employeeId) {
+  public static List<Report> findReportEntriesBySearch(Long employeeId,
+      String startsWith, String orderBy, int firstResult, int maxResults) {
+    EntityManager em = entityManager();
+    try {
+      Query query = queryReportsBySearch(em, employeeId, startsWith, orderBy,
+          false);
+      query.setFirstResult(firstResult);
+      query.setMaxResults(maxResults);
+      List<Report> reportList = query.getResultList();
+      // force it to materialize
+      reportList.size();
+
+      return reportList;
+    } finally {
+      em.close();
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public static List<Report> findReportsByEmployee(Long employeeId) {
     EntityManager em = entityManager();
     try {
       Query query = em.createQuery("select o from Report o where o.reporterKey =:reporterKey");
@@ -108,33 +129,85 @@ public class Report {
     }
   }
 
+  /**
+   * Query for reports based on the search parameters. If startsWith is
+   * specified, the results will not be ordered.
+   * 
+   * @param em the {@link EntityManager} to use
+   * @param employeeId the employee id
+   * @param startsWith the starting string
+   * @param orderBy the order of the results
+   * @param isCount true to query on the count only
+   * @return the query
+   */
+  private static Query queryReportsBySearch(EntityManager em, Long employeeId,
+      String startsWith, String orderBy, boolean isCount) {
+    // Construct a query string.
+    boolean isFirstStatement = true;
+    boolean hasEmployee = employeeId != null && employeeId >= 0;
+    boolean hasStartsWith = startsWith != null && startsWith.length() > 0;
+    String retValue = isCount ? "count(o)" : "o";
+    String queryString = "select " + retValue + " from Report o";
+    if (hasEmployee) {
+      queryString += isFirstStatement ? " WHERE" : " AND";
+      isFirstStatement = false;
+      queryString += " o.reporterKey =:reporterKey";
+    }
+    if (hasStartsWith) {
+      queryString += isFirstStatement ? " WHERE" : " AND";
+      isFirstStatement = false;
+      queryString += " o.purposeLowerCase >=:startsWith";
+      queryString += " AND o.purposeLowerCase <=:startsWithZ";
+    }
+    if (!hasStartsWith && orderBy != null && orderBy.length() >= 0) {
+      queryString += " ORDER BY " + orderBy;
+    }
+
+    // Construct the query;
+    Query query = em.createQuery(queryString);
+    if (hasEmployee) {
+      query.setParameter("reporterKey", employeeId);
+    }
+    if (hasStartsWith) {
+      query.setParameter("startsWith", startsWith);
+      query.setParameter("startsWithZ", startsWith + "zzzzzz");
+    }
+    return query;
+  }
+  
   @Id
   @Column(name = "id")
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Extension(vendorName = "datanucleus", key = "gae.encoded-pk", value = "true")
-  private String id;
+  private Long id;
 
   @Version
   @Column(name = "version")
-  private Long version;
+  private Integer version;
 
   private Date created;
+  
+  private String notes;
 
   private String purpose;
+
+  /**
+   * Store a lower case version of the purpose for searching.
+   */
+  @SuppressWarnings("unused")
+  private String purposeLowerCase;
 
   /**
    * Store reporter's key instead of reporter.  See:
    * http://code.google.com/appengine
    * /docs/java/datastore/relationships.html#Unowned_Relationships
    */
-  @JoinColumn
-  @Column(name = "reporter")
-  private String reporterKey;
+  // @JoinColumn
+  private Long reporterKey;
 
-  @JoinColumn
-  private String approvedSupervisorKey;
+  // @JoinColumn
+  private Long approvedSupervisorKey;
 
-  public String getApprovedSupervisorKey() {
+  public Long getApprovedSupervisorKey() {
     return approvedSupervisorKey;
   }
 
@@ -142,19 +215,23 @@ public class Report {
     return this.created;
   }
 
-  public String getId() {
+  public Long getId() {
     return this.id;
+  }
+  
+  public String getNotes() {
+    return this.notes;
   }
 
   public String getPurpose() {
     return this.purpose;
   }
 
-  public String getReporterKey() {
+  public Long getReporterKey() {
     return this.reporterKey;
   }
 
-  public Long getVersion() {
+  public Integer getVersion() {
     return this.version;
   }
 
@@ -177,7 +254,7 @@ public class Report {
     }
   }
 
-  public void setApprovedSupervisorKey(String approvedSupervisorKey) {
+  public void setApprovedSupervisorKey(Long approvedSupervisorKey) {
     this.approvedSupervisorKey = approvedSupervisorKey;
   }
 
@@ -185,19 +262,24 @@ public class Report {
     this.created = created;
   }
 
-  public void setId(String id) {
+  public void setId(Long id) {
     this.id = id;
+  }
+  
+  public void setNotes(String notes) {
+    this.notes = notes;
   }
 
   public void setPurpose(String purpose) {
     this.purpose = purpose;
+    this.purposeLowerCase = purpose == null ? "" : purpose.toLowerCase();
   }
 
-  public void setReporterKey(String reporter) {
+  public void setReporterKey(Long reporter) {
     this.reporterKey = reporter;
   }
 
-  public void setVersion(Long version) {
+  public void setVersion(Integer version) {
     this.version = version;
   }
 
@@ -206,8 +288,9 @@ public class Report {
     sb.append("Id: ").append(getId()).append(", ");
     sb.append("Version: ").append(getVersion()).append(", ");
     sb.append("Created: ").append(getCreated()).append(", ");
+    sb.append("Notes: ").append(getNotes()).append(", ");
     sb.append("Purpose: ").append(getPurpose()).append(", ");
-    sb.append("Reporter: ").append(getReporterKey());
+    sb.append("Reporter: ").append(getReporterKey()).append(", ");
     sb.append("ApprovedSupervisor: ").append(getApprovedSupervisorKey());
     return sb.toString();
   }

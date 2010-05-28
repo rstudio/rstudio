@@ -15,7 +15,7 @@
  */
 package com.google.gwt.bikeshed.list.client;
 
-import com.google.gwt.bikeshed.cells.client.TextCell;
+import com.google.gwt.cell.client.TextCell;
 
 /**
  * A Header containing String data rendered by a TextCell.
@@ -25,7 +25,7 @@ public class TextHeader extends Header<String> {
   private String text;
 
   public TextHeader(String text) {
-    super(TextCell.getInstance());
+    super(new TextCell());
     this.text = text;
   }
 

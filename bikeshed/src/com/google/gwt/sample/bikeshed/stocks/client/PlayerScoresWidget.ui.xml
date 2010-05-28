@@ -15,7 +15,7 @@
 
     <g:center>
       <g:ScrollPanel styleName="{styles.common.padded}">
-        <l:SimpleCellList ui:field='listView'/>
+        <l:CellList ui:field='cellList'/>
       </g:ScrollPanel>
     </g:center>
   </g:DockLayoutPanel>

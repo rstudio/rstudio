@@ -18,8 +18,8 @@ package com.google.gwt.uibinder.test.client;
 /**
  * A specific implementation of {@link Abstract}, used to test generics in
  * UiBinder. See {@link ParameterizedWidget}.
- *
- * @param <T>
+ * 
+ * @param <T> a param type
  */
 public class Specific<T> extends Abstract<T> {
 }

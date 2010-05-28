@@ -41,6 +41,9 @@
    -->
   <property name="gwt.i18n.test.InnerClassChar" value="dollar"/>
 
+  <!-- Platform shouldn't matter here, just picking one -->
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
+
   <!--
     Classpaths added for test cases
   -->
@@ -52,10 +55,8 @@
     <pathelement location="${gwt.tools.lib}/easymock/easymock.jar"/>
     <pathelement location="${gwt.tools.lib}/easymock/easymockclassextension.jar"/>
     <pathelement location="${gwt.tools.lib}/objectweb/asm-3.1.jar"/>
+    <pathelement location="${gwt.dev.jar}" />
   </path>
-
-  <!-- Platform shouldn't matter here, just picking one -->
-  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
 
   <target name="compile" description="Compile all class files"
       unless="compile.complete">
@@ -97,15 +98,9 @@
         destdir="${javac.junit.out}">
       <classpath>
         <pathelement location="${javac.out}" />
-        <pathelement location="${gwt.build}/out/dev/bin-test" />
-        <pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" />
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
-       <pathelement location="${gwt.tools.lib}/cglib/cglib-2.2.jar"/>
-       <pathelement location="${gwt.tools.lib}/easymock/easymock.jar"/>
-       <pathelement location="${gwt.tools.lib}/easymock/easymockclassextension.jar"/>
-       <pathelement location="${gwt.tools.lib}/objectweb/asm-3.1.jar"/>
-        <pathelement location="${gwt.dev.jar}" />
+        <path refid="test.extraclasspath" />
       </classpath>
     </gwt.javac>
   </target>
@@ -506,9 +501,7 @@
     <limit failonerror="true" hours="${test.timeout}">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
         threadCount="${gwt.threadCount}">
-      <!-- disable HtmlUnit until it is reliable
       <antcall target="test.dev.htmlunit"/>
-      -->
       <!-- no-op unless gwt.hosts.dev.remote is defined -->
       <antcall target="test.dev.remote"/>
       <!-- no-op unless gwt.hosts.dev.selenium is defined -->
@@ -527,9 +520,7 @@
     <limit failonerror="true" hours="${test.timeout}">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
         threadCount="${gwt.threadCount}">
-      <!-- disable HtmlUnit until it is reliable
       <antcall target="test.web.htmlunit"/>
-      -->
       <!-- no-op unless gwt.hosts.web.remote is defined -->
       <antcall target="test.web.remote"/>
       <!-- no-op unless gwt.hosts.web.selenium is defined -->
@@ -548,9 +539,7 @@
     <limit failonerror="true" hours="${test.timeout}">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
         threadCount="${gwt.threadCount}">
-      <!-- disable HtmlUnit until it is reliable
       <antcall target="test.emma.htmlunit"/>
-      -->
       <!-- no-op unless gwt.hosts.dev.remote is defined -->
       <antcall target="test.emma.remote"/>
       <!-- no-op unless gwt.hosts.dev.selenium is defined -->
@@ -569,9 +558,7 @@
     <limit failonerror="true" hours="${test.timeout}">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
         threadCount="${gwt.threadCount}">
-      <!-- disable HtmlUnit until it is reliable
       <antcall target="test.draft.htmlunit"/>
-      -->
       <!-- no-op unless gwt.hosts.web.remote is defined -->
       <antcall target="test.draft.remote"/>
       <!-- no-op unless gwt.hosts.web.selenium is defined -->
@@ -590,9 +577,7 @@
     <limit failonerror="true" hours="${test.timeout}">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}"
         threadCount="${gwt.threadCount}">
-      <!-- disable HtmlUnit until it is reliable
       <antcall target="test.web.htmlunit"/>
-      -->
       <!-- no-op unless gwt.hosts.web.remote is defined -->
       <antcall target="test.nometa.remote"/>
       <!-- no-op unless gwt.hosts.web.selenium is defined -->

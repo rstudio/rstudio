@@ -1,0 +1,51 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:l='urn:import:com.google.gwt.bikeshed.list.client'
+  xmlns:c='urn:import:com.google.gwt.sample.expenses.gwt.client'>
+
+  <ui:with field='styles' type='com.google.gwt.sample.bikeshed.style.client.Styles' />
+
+  <ui:style>
+    .title {
+      border-bottom: 1px solid #c3c3c3;
+    }
+
+    .titleText {
+      font-family: Times New Roman, sans-serif;
+      color: #7b8fae;
+      font-size: 18pt;
+      font-weight: bold;
+    }
+
+    .bar {
+      position: relative;
+      border-bottom: 1px solid #c3c3c3;
+    }
+
+    .backButton {
+    }
+    
+    .forwardButton {
+      position: absolute;
+      right: 0px;
+    }
+  </ui:style>
+
+  <g:HTMLPanel styleName='{style.title}'>
+    <div class='{style.title}'>Expenses Sample</div>
+
+    <div class='{style.bar}'>
+      <g:Button styleName='{style.backButton}' ui:field='backButton'>&lt;</g:Button>
+      <span ui:field='titleSpan'/>
+      <g:Button styleName='{style.forwardButton}' ui:field='forwardButton'>&gt;</g:Button>
+    </div>
+
+    <g:DeckPanel ui:field='deck'>
+      <c:MobileReportList ui:field='reportList'/>
+      <c:MobileExpenseList ui:field='expenseList'/>
+      <c:MobileExpenseDetails ui:field='expenseDetails'/>
+    </g:DeckPanel>
+  </g:HTMLPanel>
+</ui:UiBinder>

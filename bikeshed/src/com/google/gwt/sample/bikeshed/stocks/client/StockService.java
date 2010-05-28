@@ -15,12 +15,12 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.client;
 
-import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockRequest;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockResponse;
 import com.google.gwt.sample.bikeshed.stocks.shared.Transaction;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
+import com.google.gwt.view.client.Range;
 
 /**
  * The client side stub for the RPC service.

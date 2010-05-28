@@ -15,8 +15,8 @@
  */
 package com.google.gwt.bikeshed.list.client;
 
-import com.google.gwt.bikeshed.cells.client.Cell;
-import com.google.gwt.bikeshed.cells.client.ValueUpdater;
+import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
@@ -27,11 +27,11 @@ import com.google.gwt.dom.client.NativeEvent;
  */
 public abstract class Header<H> {
 
-  private final Cell<H, Void> cell;
+  private final Cell<H> cell;
 
-  private ValueUpdater<H, Void> updater;
+  private ValueUpdater<H> updater;
 
-  public Header(Cell<H, Void> cell) {
+  public Header(Cell<H> cell) {
     this.cell = cell;
   }
 
@@ -49,7 +49,7 @@ public abstract class Header<H> {
     cell.render(getValue(), null, sb);
   }
 
-  public void setUpdater(ValueUpdater<H, Void> updater) {
+  public void setUpdater(ValueUpdater<H> updater) {
     this.updater = updater;
   }
 }

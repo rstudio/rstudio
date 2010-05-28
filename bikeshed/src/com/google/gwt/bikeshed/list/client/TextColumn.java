@@ -15,7 +15,7 @@
  */
 package com.google.gwt.bikeshed.list.client;
 
-import com.google.gwt.bikeshed.cells.client.TextCell;
+import com.google.gwt.cell.client.TextCell;
 
 /**
  * A column that displays its contents with a {@link TextCell} and does not make
@@ -23,9 +23,9 @@ import com.google.gwt.bikeshed.cells.client.TextCell;
  *
  * @param <T> the row type
  */
-public abstract class TextColumn<T> extends Column<T, String, Void> {
+public abstract class TextColumn<T> extends Column<T, String> {
 
   public TextColumn() {
-    super(TextCell.getInstance());
+    super(new TextCell());
   }
 }

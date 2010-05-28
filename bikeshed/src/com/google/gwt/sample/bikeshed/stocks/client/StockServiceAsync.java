@@ -15,11 +15,11 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.client;
 
-import com.google.gwt.bikeshed.list.shared.Range;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockRequest;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockResponse;
 import com.google.gwt.sample.bikeshed.stocks.shared.Transaction;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.view.client.Range;
 
 /**
  * The async counterpart of <code>DataService</code>.

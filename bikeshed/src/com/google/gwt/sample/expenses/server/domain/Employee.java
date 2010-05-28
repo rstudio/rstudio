@@ -15,9 +15,6 @@
  */
 package com.google.gwt.sample.expenses.server.domain;
 
-import org.datanucleus.jpa.annotations.Extension;
-
-import java.util.Collections;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -26,8 +23,10 @@ import javax.persistence.EntityManager;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
+import javax.persistence.Query;
 import javax.persistence.Version;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * The Employee domain object.
@@ -38,7 +37,18 @@ public class Employee {
   public static long countEmployees() {
     EntityManager em = entityManager();
     try {
-      return ((Integer) em.createQuery("select count(o) from Employee o").getSingleResult()).intValue();
+      return ((Number) em.createQuery("select count(o) from Employee o").getSingleResult()).longValue();
+    } finally {
+      em.close();
+    }
+  }
+
+  public static long countEmployeesByDepartment(String department) {
+    EntityManager em = entityManager();
+    try {
+      Query query = em.createQuery("select count(o) from Employee o where o.department=:department");
+      query.setParameter("department", department);
+      return ((Number) query.getSingleResult()).longValue();
     } finally {
       em.close();
     }
@@ -61,7 +71,7 @@ public class Employee {
     }
   }
 
-  public static Employee findEmployee(String id) {
+  public static Employee findEmployee(Long id) {
     if (id == null) {
       return null;
     }
@@ -78,41 +88,65 @@ public class Employee {
       int maxResults) {
     EntityManager em = entityManager();
     try {
-      return em.createQuery("select o from Employee o").setFirstResult(
+      List resultList = em.createQuery("select o from Employee o").setFirstResult(
           firstResult).setMaxResults(maxResults).getResultList();
+      // force it to materialize
+      resultList.size();
+      return resultList;
     } finally {
       em.close();
     }
   }
 
-  public static List<Employee> findListOfOneEmployee(String id) {
-    return Collections.singletonList(findEmployee(id));
+  @SuppressWarnings("unchecked")
+  public static List<Employee> findEmployeeEntriesByDepartment(
+      String department, int firstResult, int maxResults) {
+    EntityManager em = entityManager();
+    try {
+      Query query = em.createQuery("select o from Employee o WHERE o.department =:department");
+      query.setFirstResult(firstResult);
+      query.setMaxResults(maxResults);
+      query.setParameter("department", department);
+      List resultList = query.getResultList();
+      // force it to materialize
+      resultList.size();
+      return resultList;
+    } finally {
+      em.close();
+    }
   }
-  
+
+  @Size(min = 3, max = 30)
   private String userName;
 
+  private String department;
+
+  @NotNull
   private String displayName;
 
   private String password;
 
-  @JoinColumn
-  private String supervisorKey;
+  // @JoinColumn
+  private Long supervisorKey;
 
   @Id
   @Column(name = "id")
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Extension(vendorName = "datanucleus", key = "gae.encoded-pk", value = "true")
-  private String id;
+  private Long id;
 
   @Version
   @Column(name = "version")
-  private Long version;
+  private Integer version;
+
+  public String getDepartment() {
+    return department;
+  }
 
   public String getDisplayName() {
     return this.displayName;
   }
 
-  public String getId() {
+  public Long getId() {
     return this.id;
   }
 
@@ -120,7 +154,7 @@ public class Employee {
     return this.password;
   }
 
-  public String getSupervisor() {
+  public Long getSupervisorKey() {
     return supervisorKey;
   }
 
@@ -128,7 +162,7 @@ public class Employee {
     return this.userName;
   }
 
-  public Long getVersion() {
+  public Integer getVersion() {
     return this.version;
   }
 
@@ -151,11 +185,15 @@ public class Employee {
     }
   }
 
+  public void setDepartment(String department) {
+    this.department = department;
+  }
+
   public void setDisplayName(String displayName) {
     this.displayName = displayName;
   }
 
-  public void setId(String id) {
+  public void setId(Long id) {
     this.id = id;
   }
 
@@ -163,7 +201,7 @@ public class Employee {
     this.password = password;
   }
 
-  public void setSupervisorKey(String supervisorKey) {
+  public void setSupervisorKey(Long supervisorKey) {
     this.supervisorKey = supervisorKey;
   }
 
@@ -171,7 +209,7 @@ public class Employee {
     this.userName = userName;
   }
 
-  public void setVersion(Long version) {
+  public void setVersion(Integer version) {
     this.version = version;
   }
 
@@ -184,5 +222,4 @@ public class Employee {
     sb.append("Password: ").append(getPassword()).append(", ");
     return sb.toString();
   }
-
 }

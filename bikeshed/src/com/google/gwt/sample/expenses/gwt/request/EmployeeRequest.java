@@ -15,11 +15,11 @@
  */
 package com.google.gwt.sample.expenses.gwt.request;
 
-import com.google.gwt.requestfactory.shared.EntityListRequest;
+import com.google.gwt.requestfactory.shared.RecordListRequest;
+import com.google.gwt.requestfactory.shared.RecordRequest;
 import com.google.gwt.requestfactory.shared.RequestFactory;
 import com.google.gwt.requestfactory.shared.ServerOperation;
 import com.google.gwt.valuestore.shared.PropertyReference;
-import com.google.gwt.valuestore.shared.Record;
 
 /**
  * "API Generated" request selector interface implemented by objects that give
@@ -34,6 +34,38 @@ public interface EmployeeRequest {
    * Defines the server operations that handle these requests.
    */
   public enum ServerOperations implements RequestFactory.RequestDefinition {
+    COUNT_EMPLOYEES {
+      public String getDomainMethodName() {
+        return "countEmployees";
+      }
+
+      public Class<?> getReturnType() {
+        return Long.class;
+      }
+
+      public boolean isReturnTypeList() {
+        return false;
+      }
+    },
+
+    COUNT_EMPLOYEES_BY_DEPARTMENT {
+      public String getDomainMethodName() {
+        return "countEmployeesByDepartment";
+      }
+
+      public Class<?>[] getParameterTypes() {
+        return new Class[]{java.lang.String.class};
+      }
+
+      public Class<?> getReturnType() {
+        return Long.class;
+      }
+
+      public boolean isReturnTypeList() {
+        return false;
+      }
+    },
+
     FIND_ALL_EMPLOYEES {
       public String getDomainMethodName() {
         return "findAllEmployees";
@@ -42,13 +74,37 @@ public interface EmployeeRequest {
 
     FIND_EMPLOYEE {
       public String getDomainMethodName() {
-        return "findListOfOneEmployee";
+        return "findEmployee";
       }
 
       public Class<?>[] getParameterTypes() {
-        return new Class[] {java.lang.String.class};
+        return new Class[] {Long.class};
       }
-   };
+
+      public boolean isReturnTypeList() {
+        return false;
+      }
+    },
+
+    FIND_EMPLOYEE_ENTRIES {
+      public String getDomainMethodName() {
+        return "findEmployeeEntries";
+      }
+
+      public Class<?>[] getParameterTypes() {
+        return new Class[]{int.class, int.class};
+      }
+    },
+
+    FIND_EMPLOYEE_ENTRIES_BY_DEPARTMENT {
+      public String getDomainMethodName() {
+        return "findEmployeeEntriesByDepartment";
+      }
+
+      public Class<?>[] getParameterTypes() {
+        return new Class[]{java.lang.String.class, int.class, int.class};
+      }
+    };
 
     public String getDomainClassName() {
       return "com.google.gwt.sample.expenses.server.domain.Employee";
@@ -58,20 +114,51 @@ public interface EmployeeRequest {
       return null;
     }
 
-    public Class<? extends Record> getReturnType() {
+    public Class<?> getReturnType() {
       return EmployeeRecord.class;
+    }
+
+    public boolean isReturnTypeList() {
+      return true;
     }
   }
 
   /**
    * @return a request object
    */
+  @ServerOperation("COUNT_EMPLOYEES")
+  RequestFactory.RequestObject<Long> countEmployees();
+
+  /**
+   * @return a request object
+   */
+  @ServerOperation("COUNT_EMPLOYEES_BY_DEPARTMENT")
+  RequestFactory.RequestObject<Long> countEmployeesByDepartment(
+      String department);
+
+  /**
+   * @return a request object
+   */
   @ServerOperation("FIND_ALL_EMPLOYEES")
-  EntityListRequest<EmployeeRecord> findAllEmployees();
+  RecordListRequest<EmployeeRecord> findAllEmployees();
 
   /**
    * @return a request object
    */
   @ServerOperation("FIND_EMPLOYEE")
-  EntityListRequest<EmployeeRecord> findEmployee(PropertyReference<String> id);
+  RecordRequest<EmployeeRecord> findEmployee(PropertyReference<String> id);
+
+  /**
+   * @return a request object
+   */
+  @ServerOperation("FIND_EMPLOYEE_ENTRIES")
+  RecordListRequest<EmployeeRecord> findEmployeeEntries(int firstResult,
+      int maxResults);
+
+  /**
+   * @return a request object
+   */
+  @ServerOperation("FIND_EMPLOYEE_ENTRIES_BY_DEPARTMENT")
+  RecordListRequest<EmployeeRecord> findEmployeeEntriesByDepartment(
+      String department, int firstResult, int maxResults);
 }

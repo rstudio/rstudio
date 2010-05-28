@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,11 +16,11 @@
 package com.google.gwt.requestfactory.server;
 
 import com.google.gwt.requestfactory.shared.RequestFactory;
+import com.google.gwt.requestfactory.shared.ServerType;
 import com.google.gwt.requestfactory.shared.RequestFactory.Config;
 import com.google.gwt.requestfactory.shared.RequestFactory.RequestDefinition;
 import com.google.gwt.requestfactory.shared.RequestFactory.WriteOperation;
 import com.google.gwt.requestfactory.shared.impl.RequestDataManager;
-import com.google.gwt.sample.expenses.gwt.request.ServerType;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 
@@ -36,6 +36,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -46,6 +48,10 @@ import java.util.Set;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 
 /**
  * Handles GWT RequestFactory JSON requests. Configured via servlet context
@@ -54,7 +60,7 @@ import javax.servlet.http.HttpServletResponse;
  * com.google.gwt.requestfactory.shared.RequestFactory.Config.
  * <p>
  * e.g.
- *
+ * 
  * <pre>  &lt;context-param>
     &lt;param-name>servlet.serverOperation&lt;/param-name>
     &lt;param-value>com.myco.myapp.MyAppServerSideOperations&lt;/param-value>
@@ -79,21 +85,23 @@ public class RequestFactoryServlet extends HttpServlet {
     }
   }
 
-  private static final String SERVER_OPERATION_CONTEXT_PARAM = "servlet.serverOperation";
-  // TODO: Remove this hack
-  private static final Set<String> PROPERTY_SET = new HashSet<String>();
+  private static final Set<String> BLACK_LIST = initBlackList();
 
-  static {
-    for (String str : new String[] {
-        "id", "version", "displayName", "userName", "purpose", "created"}) {
-      PROPERTY_SET.add(str);
+  private static final String SERVER_OPERATION_CONTEXT_PARAM = "servlet.serverOperation";
+
+  private static Set<String> initBlackList() {
+    Set<String> blackList = new HashSet<String>();
+    for (String str : new String[] {"password"}) {
+      blackList.add(str);
     }
+    return Collections.unmodifiableSet(blackList);
   }
 
   private Config config = null;
 
   protected Map<String, EntityRecordPair> tokenToEntityRecord;
 
+  @SuppressWarnings("unchecked")
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
@@ -107,7 +115,7 @@ public class RequestFactoryServlet extends HttpServlet {
       PrintWriter writer = response.getWriter();
       JSONObject topLevelJsonObject = new JSONObject(getContent(request));
       String operationName = topLevelJsonObject.getString(RequestDataManager.OPERATION_TOKEN);
-      if (operationName.equals(RequestFactory.UPDATE_STRING)) {
+      if (operationName.equals(RequestFactory.SYNC)) {
         sync(topLevelJsonObject.getString(RequestDataManager.CONTENT_TOKEN),
             writer);
       } else {
@@ -122,14 +130,27 @@ public class RequestFactoryServlet extends HttpServlet {
         Object args[] = RequestDataManager.getObjectsFromParameterMap(
             getParameterMap(topLevelJsonObject),
             domainMethod.getParameterTypes());
-        Object resultList = domainMethod.invoke(null, args);
-        if (!(resultList instanceof List<?>)) {
-          throw new IllegalArgumentException("return value not a list "
-              + resultList);
+        Object result = domainMethod.invoke(null, args);
+
+        if ((result instanceof List<?>) != operation.isReturnTypeList()) {
+          throw new IllegalArgumentException(String.format(
+              "Type mismatch, expected %s%s, but %s returns %s",
+              operation.isReturnTypeList() ? "list of " : "",
+              operation.getReturnType(), domainMethod,
+              domainMethod.getReturnType()));
         }
-        JSONArray jsonArray = getJsonArray((List<?>) resultList,
-            operation.getReturnType());
-        writer.print(jsonArray.toString());
+
+        if (result instanceof List<?>) {
+          JSONArray jsonArray = getJsonArray((List<?>) result,
+              (Class<? extends Record>) operation.getReturnType());
+          writer.print(jsonArray.toString());
+        } else if (result instanceof Number) {
+          writer.print(result.toString());
+        } else {
+          JSONObject jsonObject = getJsonObject(result,
+              (Class<? extends Record>) operation.getReturnType());
+          writer.print("(" + jsonObject.toString() + ")");
+        }
       }
       writer.flush();
       // TODO: clean exception handling code below.
@@ -181,38 +202,46 @@ public class RequestFactoryServlet extends HttpServlet {
     Class<?> entity = tokenToEntityRecord.get(recordToken).entity;
     Class<? extends Record> record = tokenToEntityRecord.get(recordToken).record;
     Map<String, Class<?>> propertiesInRecord = getPropertiesFromRecord(record);
-    validateKeys(recordObject, propertiesInRecord);
+    validateKeys(recordObject, propertiesInRecord.keySet());
+    updatePropertyTypes(propertiesInRecord, entity);
 
     // get entityInstance
     Object entityInstance = getEntityInstance(writeOperation, entity,
-        recordObject.getString("id"), propertiesInRecord.get("id"));
+        recordObject.get("id"), propertiesInRecord.get("id"));
 
     // persist
+    Set<ConstraintViolation<Object>> violations = null;
     if (writeOperation == WriteOperation.DELETE) {
       entity.getMethod("remove").invoke(entityInstance);
     } else {
       Iterator<?> keys = recordObject.keys();
       while (keys.hasNext()) {
         String key = (String) keys.next();
-        Object value = recordObject.getString(key);
         Class<?> propertyType = propertiesInRecord.get(key);
-        // TODO: hack to work around the GAE integer bug.
-        if ("version".equals(key)) {
-          propertyType = Long.class;
-          value = new Long(value.toString());
-        }
         if (writeOperation == WriteOperation.CREATE && ("id".equals(key))) {
           // ignored. id is assigned by default.
         } else {
+          Object propertyValue = getPropertyValueFromRequest(recordObject, key,
+              propertyType);
+          propertyValue = getSwizzledObject(propertyValue, propertyType);
           entity.getMethod(getMethodNameFromPropertyName(key, "set"),
-              propertyType).invoke(entityInstance, value);
+              propertyType).invoke(entityInstance, propertyValue);
         }
       }
-      entity.getMethod("persist").invoke(entityInstance);
+
+      // validations check..
+      ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
+      Validator validator = validatorFactory.getValidator();
+
+      violations = validator.validate(entityInstance);
+      if (violations.isEmpty()) {
+        entity.getMethod("persist").invoke(entityInstance);
+      }
     }
 
     // return data back.
-    return getReturnRecord(writeOperation, entity, entityInstance, recordObject);
+    return getReturnRecord(writeOperation, entityInstance, recordObject,
+        violations);
   }
 
   private Collection<Property<?>> allProperties(Class<? extends Record> clazz) {
@@ -251,9 +280,18 @@ public class RequestFactoryServlet extends HttpServlet {
             tokenToEntityRecord = new HashMap<String, EntityRecordPair>();
             for (Class<? extends Record> recordClass : config.recordTypes()) {
               ServerType serverType = recordClass.getAnnotation(ServerType.class);
-              String token = serverType.token();
-              if ("[UNASSIGNED]".equals(token)) {
-                token = recordClass.getSimpleName();
+              String token = (String) recordClass.getField("TOKEN").get(null);
+              if (token == null) {
+                throw new IllegalStateException("TOKEN field on "
+                    + recordClass.getName() + " can not be null");
+              }
+              EntityRecordPair previousValue = tokenToEntityRecord.get(token);
+              if (previousValue != null) {
+                throw new IllegalStateException(
+                    "TOKEN fields have to be unique. TOKEN fields for both "
+                        + recordClass.getName() + " and "
+                        + previousValue.record.getName()
+                        + " have the same value, value = " + token);
               }
               tokenToEntityRecord.put(token, new EntityRecordPair(
                   serverType.type(), recordClass));
@@ -269,6 +307,8 @@ public class RequestFactoryServlet extends HttpServlet {
         } catch (SecurityException e) {
           failConfig(e);
         } catch (ClassCastException e) {
+          failConfig(e);
+        } catch (NoSuchFieldException e) {
           failConfig(e);
         }
       }
@@ -304,22 +344,21 @@ public class RequestFactoryServlet extends HttpServlet {
   }
 
   private Object getEntityInstance(WriteOperation writeOperation,
-      Class<?> entity, String idValue, Class<?> idType)
+      Class<?> entity, Object idValue, Class<?> idType)
       throws SecurityException, InstantiationException, IllegalAccessException,
       InvocationTargetException, NoSuchMethodException {
 
     if (writeOperation == WriteOperation.CREATE) {
       return entity.getConstructor().newInstance();
     }
-
     // TODO: check "version" validity.
     return entity.getMethod("find" + entity.getSimpleName(), idType).invoke(
-        null, idValue);
+        null, getSwizzledObject(idValue, idType));
   }
 
   /**
    * Converts the returnValue of a 'get' method to a JSONArray.
-   *
+   * 
    * @param resultObject object returned by a 'get' method, must be of type
    *          List<?>
    * @return the JSONArray
@@ -334,24 +373,30 @@ public class RequestFactoryServlet extends HttpServlet {
     }
 
     for (Object entityElement : resultList) {
-      JSONObject jsonObject = new JSONObject();
-      for (Property<?> p : allProperties(entityKeyClass)) {
-
-        if (requestedProperty(p)) {
-          String propertyName = p.getName();
-          jsonObject.put(propertyName, getPropertyValue(entityElement,
-              propertyName));
-        }
-      }
-      jsonArray.put(jsonObject);
+      jsonArray.put(getJsonObject(entityElement, entityKeyClass));
     }
     return jsonArray;
+  }
+
+  private JSONObject getJsonObject(Object entityElement,
+      Class<? extends Record> entityKeyClass) throws JSONException,
+      NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    JSONObject jsonObject = new JSONObject();
+    for (Property<?> p : allProperties(entityKeyClass)) {
+
+      if (requestedProperty(p)) {
+        String propertyName = p.getName();
+        jsonObject.put(propertyName, getPropertyValueFromDataStore(
+            entityElement, propertyName));
+      }
+    }
+    return jsonObject;
   }
 
   /**
    * Returns methodName corresponding to the propertyName that can be invoked on
    * an entity.
-   *
+   * 
    * Example: "userName" returns prefix + "UserName". "version" returns prefix +
    * "Version"
    */
@@ -412,13 +457,12 @@ public class RequestFactoryServlet extends HttpServlet {
   }
 
   /**
-   * @param entityElement
-   * @param property
-   * @return
+   * Returns the propertyValue in the right type, from the DataStore. The value
+   * is sent into the response.
    */
-  private Object getPropertyValue(Object entityElement, String propertyName)
-      throws SecurityException, NoSuchMethodException, IllegalAccessException,
-      InvocationTargetException {
+  private Object getPropertyValueFromDataStore(Object entityElement,
+      String propertyName) throws SecurityException, NoSuchMethodException,
+      IllegalAccessException, InvocationTargetException {
     String methodName = getMethodNameFromPropertyName(propertyName, "get");
     Method method = entityElement.getClass().getMethod(methodName);
     Object returnValue = method.invoke(entityElement);
@@ -435,15 +479,47 @@ public class RequestFactoryServlet extends HttpServlet {
     return returnValue;
   }
 
+  /**
+   * Returns the property value, in the specified type, from the request object.
+   * The value is put in the DataStore.
+   */
+  private Object getPropertyValueFromRequest(JSONObject recordObject,
+      String key, Class<?> propertyType) throws JSONException {
+    if (propertyType == java.lang.Integer.class) {
+      return new Integer(recordObject.getInt(key));
+    }
+    /*
+     * 1. decode String to long. 2. decode Double to Date.
+     */
+    if (propertyType == java.lang.Long.class) {
+      return Long.valueOf(recordObject.getString(key));
+    }
+    if (propertyType == java.util.Date.class) {
+      return new Date((long) recordObject.getDouble(key));
+    }
+    return recordObject.get(key);
+  }
+
   private JSONObject getReturnRecord(WriteOperation writeOperation,
-      Class<?> entity, Object entityInstance, JSONObject recordObject)
-      throws SecurityException, JSONException, IllegalAccessException,
-      InvocationTargetException, NoSuchMethodException {
+      Object entityInstance, JSONObject recordObject,
+      Set<ConstraintViolation<Object>> violations) throws SecurityException,
+      JSONException, IllegalAccessException, InvocationTargetException,
+      NoSuchMethodException {
 
     JSONObject returnObject = new JSONObject();
-    returnObject.put("id", entity.getMethod("getId").invoke(entityInstance));
-    returnObject.put("version", entity.getMethod("getVersion").invoke(
-        entityInstance));
+    if (writeOperation != WriteOperation.CREATE || violations == null) {
+      // currently sending back only two properties.
+      for (String propertyName : new String[] {"id", "version"}) {
+        if ("version".equals(propertyName) && violations != null) {
+          continue;
+        }
+        returnObject.put(propertyName, getPropertyValueFromDataStore(
+            entityInstance, propertyName));
+      }
+    }
+    if (violations != null) {
+      returnObject.put("violations", getViolationsAsJson(violations));
+    }
     if (writeOperation == WriteOperation.CREATE) {
       returnObject.put("futureId", recordObject.getString("id"));
     }
@@ -451,13 +527,40 @@ public class RequestFactoryServlet extends HttpServlet {
   }
 
   /**
-   * returns true if the property has been requested. TODO: fix this hack.
-   *
+   * Swizzle an idValue received from the client to the type expected by the
+   * server. Return the object of the new type.
+   */
+  private Object getSwizzledObject(Object idValue, Class<?> idType) {
+    if (idValue.getClass() == idType) {
+      return idValue;
+    }
+    // swizzle from String to Long
+    if (idValue.getClass() == String.class && idType == Long.class) {
+      return new Long((String) idValue);
+    }
+    throw new IllegalArgumentException("id is of type: " + idValue.getClass()
+        + ",  expected type: " + idType);
+  }
+
+  private JSONObject getViolationsAsJson(
+      Set<ConstraintViolation<Object>> violations) throws JSONException {
+    JSONObject violationsAsJson = new JSONObject();
+    for (ConstraintViolation<Object> violation : violations) {
+      violationsAsJson.put(violation.getPropertyPath().toString(),
+          violation.getMessage());
+    }
+    return violationsAsJson;
+  }
+
+  /**
+   * returns true if the property has been requested. TODO: use the properties
+   * that should be coming with the request.
+   * 
    * @param p the field of entity ref
    * @return has the property value been requested
    */
   private boolean requestedProperty(Property<?> p) {
-    return PROPERTY_SET.contains(p.getName());
+    return !BLACK_LIST.contains(p.getName());
   }
 
   private void sync(String content, PrintWriter writer)
@@ -482,18 +585,16 @@ public class RequestFactoryServlet extends HttpServlet {
         }
         for (int i = 0; i < length; i++) {
           JSONObject recordWithSchema = reportArray.getJSONObject(i);
-          // iterator has just one element.
           Iterator<?> iterator = recordWithSchema.keys();
-          iterator.hasNext();
           String recordToken = (String) iterator.next();
-          JSONObject recordObject = recordWithSchema.getJSONObject(recordToken);
-          JSONObject returnObject = updateRecordInDataStore(recordToken,
-              recordObject, writeOperation);
-          returnArray.put(returnObject);
           if (iterator.hasNext()) {
             throw new IllegalArgumentException(
                 "There cannot be more than one record token");
           }
+          JSONObject recordObject = recordWithSchema.getJSONObject(recordToken);
+          JSONObject returnObject = updateRecordInDataStore(recordToken,
+              recordObject, writeOperation);
+          returnArray.put(returnObject);
         }
         returnJsonObject.put(writeOperation.name(), returnArray);
       }
@@ -503,12 +604,25 @@ public class RequestFactoryServlet extends HttpServlet {
     }
   }
 
+  /**
+   * Update propertiesInRecord based on the types of entity.
+   */
+  private void updatePropertyTypes(Map<String, Class<?>> propertiesInRecord,
+      Class<?> entity) {
+    for (Field field : entity.getDeclaredFields()) {
+      Class<?> fieldType = propertiesInRecord.get(field.getName());
+      if (fieldType != null) {
+        propertiesInRecord.put(field.getName(), field.getType());
+      }
+    }
+  }
+
   private void validateKeys(JSONObject recordObject,
-      Map<String, Class<?>> declaredProperties) {
+      Set<String> declaredProperties) {
     Iterator<?> keys = recordObject.keys();
     while (keys.hasNext()) {
       String key = (String) keys.next();
-      if (declaredProperties.get(key) == null) {
+      if (!declaredProperties.contains(key)) {
         throw new IllegalArgumentException("key " + key
             + " is not permitted to be set");
       }

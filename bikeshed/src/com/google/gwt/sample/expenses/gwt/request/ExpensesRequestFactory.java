@@ -35,6 +35,11 @@ public interface ExpensesRequestFactory extends RequestFactory {
   /**
    * @return a request selector
    */
+  ExpenseRequest expenseRequest();
+
+  /**
+   * @return a request selector
+   */
   ReportRequest reportRequest();
 
   // todo: probably will also need something like this to support custom service

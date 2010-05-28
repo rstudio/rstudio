@@ -15,10 +15,10 @@
  */
 package com.google.gwt.sample.bikeshed.cookbook.client;
 
-import com.google.gwt.bikeshed.cells.client.CheckboxCell;
-import com.google.gwt.bikeshed.cells.client.FieldUpdater;
-import com.google.gwt.bikeshed.list.client.SimpleColumn;
-import com.google.gwt.bikeshed.list.shared.SelectionModel;
+import com.google.gwt.bikeshed.list.client.Column;
+import com.google.gwt.cell.client.CheckboxCell;
+import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.view.client.SelectionModel;
 
 /**
  * A column that displays a checkbox that is synchronized with a given
@@ -26,14 +26,14 @@ import com.google.gwt.bikeshed.list.shared.SelectionModel;
  * 
  * @param <T> the record data type, used by the row and the selection model
  */
-public class SelectionColumn<T> extends SimpleColumn<T, Boolean> {
+public class SelectionColumn<T> extends Column<T, Boolean> {
   
   private final SelectionModel<T> selectionModel;
 
   public SelectionColumn(final SelectionModel<T> selectionModel) {
     super(new CheckboxCell());
-    setFieldUpdater(new FieldUpdater<T, Boolean, Void>() {
-      public void update(int index, T object, Boolean value, Void viewData) {
+    setFieldUpdater(new FieldUpdater<T, Boolean>() {
+      public void update(int index, T object, Boolean value) {
         selectionModel.setSelected(object, value);
       }
     });
@@ -47,6 +47,6 @@ public class SelectionColumn<T> extends SimpleColumn<T, Boolean> {
   
   @Override
   public Boolean getValue(T object) {
-    return selectionModel.isSelected(object);
+    return object != null && selectionModel.isSelected(object);
   }
 }

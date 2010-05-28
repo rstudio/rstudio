@@ -15,41 +15,43 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.app.util.IsWidget;
 
 /**
- * Implemented by objects that control a piece of user interface,
- * with a life cycle managed by an {@link ActivityManager}, in 
- * response to {@link PlaceChangeEvent} events as the user
- * navigates through the app. 
+ * Implemented by objects that control a piece of user interface, with a life
+ * cycle managed by an {@link ActivityManager}, in response to
+ * {@link PlaceChangeEvent} events as the user navigates through the app.
  */
 public interface Activity {
 
   /**
-   * Callback object used for asynchronous {@link Activity#start} requests,
-   * provides the widget this activity drives.
+   * Implemented by objects responsible for displaying the widgets that
+   * activities drive.
    */
-  public interface Callback {
-    void onStarted(Widget widget);
+  public interface Display {
+    void showActivityWidget(IsWidget widget);
   }
 
   /**
    * Called when {@link #start} has not yet replied to its callback, but the
    * user has lost interest.
    */
-  public void onCancel();
+  void onCancel();
 
   /**
    * Called when the Activity's widget has been removed from view.
    */
-  public void onStop();
+  void onStop();
 
   /**
-   * Called when the Activity should prepare its {@link Widget} to the user.
+   * Called when the Activity should prepare its {@link IsWidget} for the user.
+   * Once the widget is ready (typically after an RPC response has been
+   * received), receiver should present it via
+   * {@link Display#showActivityWidget(IsWidget)}.
    * 
-   * @param callback allows the widget to be presented asynchronously
+   * @param panel the panel to display this activity's widget when it is ready
    */
-  public void start(Callback callback);
+  void start(Display panel);
 
-  public boolean willStop();
+  boolean willStop();
 }

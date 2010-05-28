@@ -15,9 +15,9 @@
  */
 package com.google.gwt.app.place;
 
-import com.google.gwt.app.place.Activity.Callback;
+import com.google.gwt.app.place.Activity.Display;
+import com.google.gwt.app.util.IsWidget;
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Manages {@link Activity} objects that should be kicked off in response to
@@ -31,22 +31,30 @@ public class ActivityManager<P extends Place> implements
     PlaceChangeEvent.Handler<P>, PlaceChangeRequestedEvent.Handler<P> {
 
   /**
-   * Implemented by the view of an ActivityManager,
+   * Wraps our real display to prevent an Activity from taking it over if it is
+   * not the currentActivity.
    */
-  public interface View {
-    /**
-     * Displays widget, swapping out the previous.
-     * 
-     * @param widget the widget to display
-     */
-    void setWidget(Widget widget);
+  private class ProtectedDisplay implements Display {
+    private final Activity activity;
+
+    ProtectedDisplay(Activity activity) {
+      this.activity = activity;
+    }
+
+    public void showActivityWidget(IsWidget view) {
+      if (this.activity == ActivityManager.this.currentActivity) {
+        startingNext = false;
+        display.showActivityWidget(view);
+      }
+    }
   }
 
   private final ActivityMapper<P> mapper;
-  private final HandlerManager eventBus;
 
+  private final HandlerManager eventBus;
   private Activity currentActivity;
-  private View display;
+  private Activity.Display display;
+
   private boolean startingNext = false;
 
   /**
@@ -71,31 +79,34 @@ public class ActivityManager<P extends Place> implements
   public void onPlaceChange(PlaceChangeEvent<P> event) {
     Activity nextActivity = mapper.getActivity(event.getNewPlace());
 
-    if (currentActivity != null) {
-      display.setWidget(null);
-      currentActivity.onStop();
+    if (currentActivity == nextActivity) {
+      return;
     }
 
     if (startingNext) {
       currentActivity.onCancel();
       currentActivity = null;
       startingNext = false;
+    } else if (currentActivity != null) {
+      display.showActivityWidget(null);
+      currentActivity.onStop();
     }
 
     if (nextActivity == null) {
-      display.setWidget(null);
+      display.showActivityWidget(null);
       currentActivity = null;
       return;
     }
 
     currentActivity = nextActivity;
     startingNext = true;
-    currentActivity.start(new Callback() {
-      public void onStarted(Widget widget) {
-        startingNext = false;
-        display.setWidget(widget);
-      }
-    });
+
+    /*
+     * Now start the thing. Wrap the actual display with a per-call instance
+     * that protects the display from canceled or stopped activities, and which
+     * maintain our startingNext state.
+     */
+    currentActivity.start(new ProtectedDisplay(currentActivity));
   }
 
   /**
@@ -134,7 +145,7 @@ public class ActivityManager<P extends Place> implements
    * 
    * @param display
    */
-  public void setDisplay(View display) {
+  public void setDisplay(Activity.Display display) {
     boolean wasActive = (null != this.display);
     boolean willBeActive = (null != display);
     this.display = display;

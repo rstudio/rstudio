@@ -18,9 +18,9 @@ package com.google.gwt.sample.expenses.gwt.ui.report;
 import com.google.gwt.app.place.Activity;
 import com.google.gwt.app.place.ActivityMapper;
 import com.google.gwt.app.place.PlaceController;
+import com.google.gwt.sample.expenses.gwt.client.place.ReportScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.gwt.scaffold.place.ReportScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.scaffold.place.ScaffoldPlace;
 
 /**
  * Maps {@link ReportScaffoldPlace} instances to the {@link Activity} to run.
@@ -38,7 +38,7 @@ public class ReportActivitiesMapper implements
   public Activity getActivity(ReportScaffoldPlace place) {
     switch (place.getOperation()) {
       case DETAILS:
-        return new ReportDetailsActivity(place.getId(), requests);
+        return new ReportDetailsActivity(place.getId(), requests, placeController);
       case EDIT:
         return new ReportEditActivity(place.getId(), requests, placeController);
     }

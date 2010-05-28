@@ -15,7 +15,7 @@
  */
 package com.google.gwt.bikeshed.list.client;
 
-import com.google.gwt.bikeshed.cells.client.Cell;
+import com.google.gwt.cell.client.Cell;
 
 /**
  * A passthrough column, useful for giving cells access to the entire row
@@ -23,12 +23,12 @@ import com.google.gwt.bikeshed.cells.client.Cell;
  *
  * @param <T> the row type
  */
-public class IdentityColumn<T> extends SimpleColumn<T, T> {
+public class IdentityColumn<T> extends Column<T, T> {
 
   /**
    * @param cell
    */
-  public IdentityColumn(Cell<T, Void> cell) {
+  public IdentityColumn(Cell<T> cell) {
     super(cell);
   }
 

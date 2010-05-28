@@ -1,0 +1,28 @@
+.emptyMessage {
+  padding-left: 16px;
+  font-style: italic;
+}
+
+.item {
+  padding: 4px 3px;
+}
+
+.itemImage {
+  top: 2px !important;
+}
+
+.openItem {
+}
+
+@sprite .selectedItem {
+  gwt-image: 'cellTreeSelectedBackground';
+  background-color: #628cd5;
+  color: white;
+  height: auto;
+  overflow: auto;
+}
+
+.showMoreButton {
+  padding-left: 16px;
+  outline: none;
+}

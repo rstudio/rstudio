@@ -15,9 +15,13 @@
  */
 package com.google.gwt.requestfactory.shared;
 
+import java.util.Set;
+
 /**
  * Request to commit CRUD operations accumulated in a DeltaValueStore.
  */
 public interface SyncRequest {
   void fire();
+
+  SyncRequest to(Receiver<Set<SyncResult>> receiver);
 }

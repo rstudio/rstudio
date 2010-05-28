@@ -27,7 +27,7 @@ public class PlaceChangeRequestedEvent<P extends Place> extends
     GwtEvent<PlaceChangeRequestedEvent.Handler<P>> {
 
   /**
-   * Implemented by handlers of PlaceChangeRequestedEvent
+   * Implemented by handlers of PlaceChangeRequestedEvent.
    * @param <P> the type of the requested Place
    */
   public interface Handler<P extends Place> extends EventHandler {

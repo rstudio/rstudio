@@ -17,7 +17,7 @@ package com.google.gwt.app.place;
 
 /**
  * Simple Activity implementation that is always willing to stop,
- * and does nothing onStop and onCancel
+ * and does nothing onStop and onCancel.
  */
 public abstract class AbstractActivity implements Activity {
 

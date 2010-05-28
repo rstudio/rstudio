@@ -15,19 +15,20 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.client;
 
-import com.google.gwt.bikeshed.cells.client.ButtonCell;
-import com.google.gwt.bikeshed.cells.client.Cell;
-import com.google.gwt.bikeshed.cells.client.TextCell;
-import com.google.gwt.bikeshed.cells.client.ValueUpdater;
-import com.google.gwt.bikeshed.list.client.ListView;
-import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter;
-import com.google.gwt.bikeshed.list.shared.AsyncListViewAdapter;
-import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
-import com.google.gwt.bikeshed.list.shared.ProvidesKey;
-import com.google.gwt.bikeshed.list.shared.SingleSelectionModel;
-import com.google.gwt.bikeshed.tree.client.TreeViewModel;
+import com.google.gwt.cell.client.ButtonCell;
+import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockQuote;
 import com.google.gwt.sample.bikeshed.stocks.shared.Transaction;
+import com.google.gwt.view.client.AbstractListViewAdapter;
+import com.google.gwt.view.client.AsyncListViewAdapter;
+import com.google.gwt.view.client.TreeViewModel;
+import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.ListViewAdapter;
+import com.google.gwt.view.client.ProvidesKey;
+import com.google.gwt.view.client.SingleSelectionModel;
 
 import java.util.HashMap;
 import java.util.List;
@@ -59,21 +60,21 @@ class TransactionTreeViewModel implements TreeViewModel {
   }
 
   /**
-   * A {@link Cell} used to render a {@link StockQuote}.
+   * A {@link AbstractCell} used to render a {@link StockQuote}.
    */
-  private static final Cell<StockQuote, Void> STOCK_QUOTE_CELL = new Cell<StockQuote, Void>() {
+  private static final Cell<StockQuote> STOCK_QUOTE_CELL = new AbstractCell<StockQuote>() {
     @Override
-    public void render(StockQuote value, Void viewData, StringBuilder sb) {
+    public void render(StockQuote value, Object viewData, StringBuilder sb) {
       sb.append(value.getTicker() + " - " + value.getDisplayPrice());
     }
   };
 
   /**
-   * A {@link Cell} used to render a {@link Transaction}.
+   * A {@link AbstractCell} used to render a {@link Transaction}.
    */
-  private static final Cell<Transaction, Void> TRANSACTION_CELL = new Cell<Transaction, Void>() {
+  private static final Cell<Transaction> TRANSACTION_CELL = new AbstractCell<Transaction>() {
     @Override
-    public void render(Transaction value, Void viewData, StringBuilder sb) {
+    public void render(Transaction value, Object viewData, StringBuilder sb) {
       sb.append(value.toString());
     }
   };
@@ -125,7 +126,7 @@ class TransactionTreeViewModel implements TreeViewModel {
     if (value == null) {
       // Return list of sectors.
       return new TreeViewModel.DefaultNodeInfo<String>(topLevelListViewAdapter,
-          TextCell.getInstance(), selectionModel, null);
+          new TextCell(), selectionModel, null);
     } else if ("Favorites".equals(value)) {
       // Return favorites. 
       return new TreeViewModel.DefaultNodeInfo<StockQuote>(
@@ -147,9 +148,9 @@ class TransactionTreeViewModel implements TreeViewModel {
       list.add("Buy");
       list.add("Sell");
       return new TreeViewModel.DefaultNodeInfo<String>(adapter,
-          ButtonCell.getInstance(), selectionModel,
-          new ValueUpdater<String, Void>() {
-            public void update(String value, Void viewData) {
+          new ButtonCell(), selectionModel,
+          new ValueUpdater<String>() {
+            public void update(String value) {
               if ("Buy".equals(value)) {
                 updater.buy(lastStockQuote);
               } else {
@@ -172,7 +173,7 @@ class TransactionTreeViewModel implements TreeViewModel {
       list.add("Actions");
       list.add("History");
       return new TreeViewModel.DefaultNodeInfo<String>(adapter,
-          TextCell.getInstance(), selectionModel, null);
+          new TextCell(), selectionModel, null);
     }
 
     throw new IllegalArgumentException(value.toString());

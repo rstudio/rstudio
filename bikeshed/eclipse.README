@@ -13,28 +13,28 @@ build/
 classes/
 # Matches gwtc output in the war directory, e.g. war/com.google.gwt.bikeshed.tree.Tree/
 com.google.gwt.*
-bikeshed/war/expensesCustomized/
-bikeshed/war/expensesScaffold/
-bikeshed/war/mail/
-bikeshed/war/pagedExpenses/
-bikeshed/war/simplecelllist/
-bikeshed/war/stocksdesktop/
-bikeshed/war/stocksmobile/
-bikeshed/war/tree/
-bikeshed/war/validation/
-appengine-generated/
+bikeshed/war/cookbook/
+bikeshed/war/expenses/
+bikeshed/war/expensesMobile/
+bikeshed/war/scaffold/
+bikeshed/war/scaffoldMobile/
+bikeshed/war/stocks/
+bikeshed/war/stocksMobile/
 
 * Install the Google Plugin for Eclipse
 * Create a new Java project with trunk/bikeshed/ as its existing source
+  * exclude bikeshed/super and bikeshed/test-super
 * Bring up the project properties
   * Google > Web Toolkit > Use Google Web Toolkit
   * Google > App Engine > Use Google App Engine
   * Google > App Engine > ORM
-    * Remove src and test
+    * Remove all existing entries
     * Add 
       * src/com/google/gwt/sample/bikeshed/stocks/server
       * src/com/google/gwt/sample/bikeshed/stocks/shared
       * src/com/google/gwt/sample/expenses/server/domain
   * Java Build Path > Libraries > Add Variable > GWT_TOOLS, Extend > redist/json/r2_20080312/json.jar
 * Copy tools/redist/json/r2_20080312/json.jar to bikeshed/war/WEB_INF/lib
+* Copy all jars from  bikeshed/war/temp-lib to bikeshed/war/WEB-INF/lib
 * Right click on the bikeshed project and choose Run as > Web Application. Choose from the various .html files
+

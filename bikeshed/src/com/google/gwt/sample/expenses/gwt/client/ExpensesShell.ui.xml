@@ -1,0 +1,70 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:l='urn:import:com.google.gwt.bikeshed.list.client'
+  xmlns:c='urn:import:com.google.gwt.sample.expenses.gwt.client'>
+
+  <ui:with
+    field='styles'
+    type='com.google.gwt.sample.bikeshed.style.client.Styles' />
+
+  <ui:style>
+    .title {
+      border-bottom: 1px solid #c3c3c3;
+    }
+    
+    .titleText {
+      font-family: Times New Roman, sans-serif;
+      color: #7b8fae;
+      font-size: 18pt;
+      font-weight: bold;
+    }
+  </ui:style>
+
+  <g:DockLayoutPanel
+    unit='PX'>
+    <g:north
+      size='50'>
+      <g:HTMLPanel
+        styleName='{style.title}'>
+        <table
+          height='100%'>
+          <tr>
+            <td>
+              <img
+                height='40'
+                src='http://www.google.com/intl/en_ALL/images/logo.gif' />
+            </td>
+            <td
+              class='{style.titleText}'
+              valign='middle'>
+              Expenses Sample
+                </td>
+          </tr>
+        </table>
+      </g:HTMLPanel>
+    </g:north>
+
+    <g:center>
+      <g:SplitLayoutPanel
+        ui:field='splitLayout'>
+        <g:west
+          size='250'>
+          <c:ExpenseTree
+            ui:field='expenseTree' />
+        </g:west>
+        <g:center>
+          <g:LayoutPanel
+            ui:field='layoutPanel'>
+            <g:layer>
+              <c:ExpenseList
+                ui:field='expenseList' />
+            </g:layer>
+          </g:LayoutPanel>
+        </g:center>
+      </g:SplitLayoutPanel>
+    </g:center>
+  </g:DockLayoutPanel>
+
+</ui:UiBinder>

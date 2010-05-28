@@ -1,0 +1,15 @@
+/**
+ * The following overrides are used by CellBrowser to disable the styles used
+ * in CellList.
+ */
+.evenItem {
+  
+}
+
+.oddItem {
+  
+}
+
+.selectedItem {
+  
+}

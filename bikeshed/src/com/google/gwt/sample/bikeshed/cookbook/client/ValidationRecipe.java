@@ -15,14 +15,13 @@
  */
 package com.google.gwt.sample.bikeshed.cookbook.client;
 
-import com.google.gwt.bikeshed.cells.client.FieldUpdater;
 import com.google.gwt.bikeshed.list.client.Column;
-import com.google.gwt.bikeshed.list.client.PagingTableListView;
+import com.google.gwt.bikeshed.list.client.CellTable;
 import com.google.gwt.bikeshed.list.client.TextColumn;
-import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
-import com.google.gwt.bikeshed.list.shared.ProvidesKey;
+import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.ListViewAdapter;
 
 import java.util.List;
 
@@ -65,7 +64,7 @@ public class ValidationRecipe extends Recipe {
   }
 
   public static boolean zipInvalid(int zip) {
-    return zip % 3 == 0;
+    return (zip < 0) || (zip % 3 == 0);
   }
 
   public ValidationRecipe() {
@@ -85,12 +84,7 @@ public class ValidationRecipe extends Recipe {
       list.add(new Address("GA", zip));
     }
 
-    PagingTableListView<Address> table = new PagingTableListView<Address>(10);
-    table.setProvidesKey(new ProvidesKey<Address>() {
-      public Object getKey(Address object) {
-        return object.key;
-      }
-    });
+    CellTable<Address> table = new CellTable<Address>(10);
     adapter.addView(table);
     TextColumn<Address> stateColumn = new TextColumn<Address>() {
       @Override
@@ -99,41 +93,42 @@ public class ValidationRecipe extends Recipe {
       }
     };
 
-    Column<Address, String, ValidatableField<String>> zipColumn =
-      new Column<Address, String, ValidatableField<String>>(
-        new ValidatableInputCell()) {
+    final Column<Address, String> zipColumn =
+      new Column<Address, String>(new ValidatableInputCell()) {
       @Override
       public String getValue(Address object) {
         return object.zip;
       }
     };
-    zipColumn.setFieldUpdater(new FieldUpdater<Address, String, ValidatableField<String>>() {
-      public void update(final int index, final Address object,
-          final String value, final ValidatableField<String> viewData) {
+    zipColumn.setFieldUpdater(new FieldUpdater<Address, String>() {
+      public void update(final int index, final Address address,
+          final String value) {
         // Perform validation after a 2-second delay
         new Timer() {
           @Override
           public void run() {
-            String pendingValue = viewData.getValue();
-
+            // Determine whether we have a valid zip code.
             int zip;
             try {
-              zip = Integer.parseInt(pendingValue);
+              zip = Integer.parseInt(value);
             } catch (NumberFormatException e) {
               zip = -1;
             }
             boolean zipInvalid = ValidationRecipe.zipInvalid(zip);
 
-            final Address newValue = new Address(object);
-            newValue.zip = pendingValue == null ? value : pendingValue;
-            newValue.zipInvalid = zipInvalid;
+            // Update the value.
+            final Address newAddress = new Address(address);
+            newAddress.zip = value;
+            newAddress.zipInvalid = zipInvalid;
 
-            viewData.setInvalid(zipInvalid);
-            if (!zipInvalid) {
-              viewData.setValue(null);
+            if (zipInvalid) {
+              ValidatableInputCell.invalidate(zipColumn, newAddress,
+                  newAddress.zip);
+            } else {
+              ValidatableInputCell.validate(zipColumn, newAddress);
             }
 
-            list.set(index, newValue);
+            list.set(index, newAddress);
           }
         }.schedule(2000);
       }

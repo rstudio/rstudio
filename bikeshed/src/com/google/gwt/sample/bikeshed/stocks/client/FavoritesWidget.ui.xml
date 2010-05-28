@@ -15,7 +15,7 @@
 
     <g:center>
       <g:ScrollPanel>
-        <l:PagingTableListView ui:field='listView' styleName='{styles.common.table}'/>
+        <l:CellTable ui:field='table' styleName='{styles.common.table}'/>
       </g:ScrollPanel>
     </g:center>
   </g:DockLayoutPanel>

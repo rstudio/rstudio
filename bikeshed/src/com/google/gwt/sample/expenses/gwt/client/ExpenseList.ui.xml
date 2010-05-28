@@ -1,0 +1,146 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+  xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui"
+  xmlns:l='urn:import:com.google.gwt.bikeshed.list.client'>
+
+  <ui:with
+    field='styles'
+    type='com.google.gwt.sample.bikeshed.style.client.Styles.Resources' />
+
+  <ui:image
+    field='searchCenter'
+    src='../../../bikeshed/style/client/searchCenter.png'
+    repeatStyle="Horizontal" />
+  <ui:image
+    field='searchLeft'
+    src='../../../bikeshed/style/client/searchLeft.png' />
+
+  <ui:style>
+    .top {
+      padding-top: 4px;
+    }
+    
+    .breadcrumb {
+      padding-left: 5px;
+      color: #4b4a4a;
+      font-size: 160%;
+      font-weight: bold;
+    }
+    
+    .textBox {
+      width: 250px;
+      border: 0px;
+      padding: 0px;
+      height: 16px;
+      font-size: 12px;
+    }
+    
+    .searchButton {
+      cursor: pointer;
+      cursor: hand;
+    }
+    
+    @sprite .searchCenter {
+      gwt-image: 'searchCenter';
+      padding-top: 5px;
+    }
+    
+    @sprite .searchLeft {
+      gwt-image: 'searchLeft';
+    }
+    
+    .tableControls {
+      background: white;
+    }
+    
+    .center {
+      border-top: 1px solid #88b0f2;
+      border-bottom: 1px solid #88b0f2;
+    }
+    
+    .table {
+      border: 0px;
+    }
+  </ui:style>
+
+  <g:DockLayoutPanel
+    unit='PX'>
+
+    <g:north
+      size='40'>
+      <g:HTMLPanel
+        styleName='{style.top}'>
+        <table
+          class='{style.tableControls}'
+          width='100%'
+          cellspacing='0'
+          cellpadding='0'>
+          <tr>
+            <td
+              class='{style.breadcrumb}'
+              align='left'
+              colspan='3'
+              ui:field='breadcrumb'>
+              All Reports
+            </td>
+            <td
+              align='right'
+              valign='middle'>
+              <table
+                cellspacing='0'
+                cellpadding='0'>
+                <tr>
+                  <td
+                    valign='top'>
+                    <div
+                      class='{style.searchLeft}' />
+                  </td>
+                  <td
+                    valign='top'
+                    class='{style.searchCenter}'>
+                    <g:TextBox
+                      styleName='{style.textBox}'
+                      ui:field='searchBox' />
+                  </td>
+                  <td
+                    valign='top'>
+                    <g:Image
+                      addStyleNames='{style.searchButton}'
+                      ui:field='searchButton'
+                      resource='{styles.searchRight}' />
+                  </td>
+                  <td
+                    width='10'>
+                &nbsp;
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </g:HTMLPanel>
+    </g:north>
+
+    <g:center>
+      <g:ScrollPanel
+        styleName='{style.center}'>
+        <l:CellTable
+          addStyleNames='{style.table}'
+          width='100%'
+          ui:field='table' />
+      </g:ScrollPanel>
+    </g:center>
+
+    <g:south
+      size='30'>
+      <g:HTMLPanel>
+        <div
+          style='position:absolute;right:30px;'>
+          <l:SimplePager
+            ui:field='pager' />
+        </div>
+      </g:HTMLPanel>
+    </g:south>
+  </g:DockLayoutPanel>
+</ui:UiBinder> 

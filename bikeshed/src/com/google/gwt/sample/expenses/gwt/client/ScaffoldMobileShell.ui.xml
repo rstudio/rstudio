@@ -1,0 +1,39 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:a='urn:import:com.google.gwt.app.client'>
+
+  <ui:style>
+    .disabled {
+     color: gray;
+    }
+
+    .banner {
+       background-color: wheat;
+     }
+
+    .title {
+       text-align: left;
+       margin-left: 1em;
+     }
+
+    .error {
+     text-align: center;
+     background-color: red;
+    }
+
+    .users {
+    }
+  </ui:style>
+
+  <g:HTMLPanel>
+    <g:HTML styleName='{style.banner}'>
+      <div class='{style.error}' ui:field='error'></div>
+      <h2 class='{style.title}'>Expenses Entity Browser</h2>
+    </g:HTML>
+
+    <a:ListBoxPlacePickerView width='90%' visibleItemCount='10' ui:field='placesBox'/>
+
+    <g:SimplePanel ui:field='body'/>
+  </g:HTMLPanel>
+</ui:UiBinder>

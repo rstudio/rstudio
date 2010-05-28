@@ -11,7 +11,7 @@
 			<g:HTML styleName='{styles.common.header}'>Google Web Toolkit Cookbook</g:HTML>
 		</g:north>
 		<g:west size="16">
-			<t:StandardTreeView styleName='{styles.common.box}' ui:field='recipeTree'/>
+			<t:CellTree styleName='{styles.common.box}' ui:field='recipeTree'/>
 		</g:west>
 		<g:center>
 		  <g:LayoutPanel styleName='{styles.common.box}' ui:field='container'/>

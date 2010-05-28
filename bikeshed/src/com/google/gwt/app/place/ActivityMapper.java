@@ -17,7 +17,7 @@ package com.google.gwt.app.place;
 
 /**
  * Finds the activity to run for a given {@link Place}, used to configure
- * an {@link ActivityManager}
+ * an {@link ActivityManager}.
  * 
  * @param <P> the type of place that can be mapped
  */

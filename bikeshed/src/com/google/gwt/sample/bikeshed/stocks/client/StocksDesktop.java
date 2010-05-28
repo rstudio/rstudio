@@ -15,12 +15,8 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.client;
 
-import com.google.gwt.bikeshed.cells.client.FieldUpdater;
-import com.google.gwt.bikeshed.list.client.ListView;
-import com.google.gwt.bikeshed.list.shared.AsyncListViewAdapter;
-import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
-import com.google.gwt.bikeshed.list.shared.Range;
-import com.google.gwt.bikeshed.tree.client.SideBySideTreeView;
+import com.google.gwt.bikeshed.tree.client.CellBrowser;
+import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -43,6 +39,10 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.AsyncListViewAdapter;
+import com.google.gwt.view.client.ListView;
+import com.google.gwt.view.client.ListViewAdapter;
+import com.google.gwt.view.client.Range;
 
 import java.util.HashMap;
 import java.util.List;
@@ -79,7 +79,7 @@ public class StocksDesktop implements EntryPoint, Updater {
   @UiField
   StockQueryWidget queryWidget;
   @UiField
-  SideBySideTreeView transactionTree;
+  CellBrowser transactionTree;
 
   /**
    * The popup used to purchase stock.
@@ -149,23 +149,20 @@ public class StocksDesktop implements EntryPoint, Updater {
     RootLayoutPanel.get().add(binder.createAndBindUi(this));
 
     // Hook up handlers to columns and the buy/sell popup.
-    Columns.favoriteColumn.setFieldUpdater(new FieldUpdater<StockQuote, Boolean, Void>() {
-      public void update(int index, StockQuote object, Boolean value,
-          Void viewData) {
+    Columns.favoriteColumn.setFieldUpdater(new FieldUpdater<StockQuote, Boolean>() {
+      public void update(int index, StockQuote object, Boolean value) {
         setFavorite(object.getTicker(), value);
       }
     });
 
-    Columns.buyColumn.setFieldUpdater(new FieldUpdater<StockQuote, String, Void>() {
-      public void update(int index, StockQuote quote, String value,
-          Void viewData) {
+    Columns.buyColumn.setFieldUpdater(new FieldUpdater<StockQuote, String>() {
+      public void update(int index, StockQuote quote, String value) {
         buy(quote);
       }
     });
 
-    Columns.sellColumn.setFieldUpdater(new FieldUpdater<StockQuote, String, Void>() {
-      public void update(int index, StockQuote quote, String value,
-          Void viewData) {
+    Columns.sellColumn.setFieldUpdater(new FieldUpdater<StockQuote, String>() {
+      public void update(int index, StockQuote quote, String value) {
         sell(quote);
       }
     });
@@ -342,8 +339,8 @@ public class StocksDesktop implements EntryPoint, Updater {
   }
 
   @UiFactory
-  SideBySideTreeView createTransactionTree() {
-    SideBySideTreeView treeView = new SideBySideTreeView(treeModel, null);
+  CellBrowser createTransactionTree() {
+    CellBrowser treeView = new CellBrowser(treeModel, null);
     treeView.setAnimationEnabled(true);
     return treeView;
   }

@@ -16,8 +16,8 @@
 package com.google.gwt.valuestore.ui;
 
 import com.google.gwt.app.util.IsWidget;
-import com.google.gwt.bikeshed.list.client.ListView;
 import com.google.gwt.valuestore.shared.Record;
+import com.google.gwt.view.client.ListView;
 
 /**
  * A view of a list of {@link Records}, which declares which properties it is
@@ -38,11 +38,6 @@ public interface RecordListView<R extends Record> extends ListView<R>,
    */
   interface Delegate<R extends Record> extends ListView.Delegate<R> {
     /**
-     * @param record the record the user wants to edit
-     */
-    void edit(R record);
-
-    /**
      * @param record the record whose details the user wants to see
      */
     void showDetails(R record);
@@ -52,7 +47,7 @@ public interface RecordListView<R extends Record> extends ListView<R>,
    * A RecordListView requires a RecordListView.Delegate.
    */
   void setDelegate(
-      com.google.gwt.bikeshed.list.client.ListView.Delegate<R> delegate)
+      com.google.gwt.view.client.ListView.Delegate<R> delegate)
       throws UnsupportedOperationException;
 
   /**

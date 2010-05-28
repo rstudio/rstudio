@@ -15,8 +15,7 @@
  */
 package com.google.gwt.sample.bikeshed.stocks.client;
 
-import com.google.gwt.bikeshed.list.client.PagingTableListView;
-import com.google.gwt.bikeshed.list.shared.AbstractListViewAdapter;
+import com.google.gwt.bikeshed.list.client.CellTable;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.sample.bikeshed.stocks.shared.StockQuote;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -24,6 +23,7 @@ import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.AbstractListViewAdapter;
 
 /**
  * Widget for favorite stocks.
@@ -33,7 +33,7 @@ public class FavoritesWidget extends Composite {
   interface Binder extends UiBinder<Widget, FavoritesWidget> { }
   private static final Binder binder = GWT.create(Binder.class);
 
-  @UiField PagingTableListView<StockQuote> listView;
+  @UiField CellTable<StockQuote> table;
 
   private final AbstractListViewAdapter<StockQuote> adapter;
 
@@ -41,19 +41,19 @@ public class FavoritesWidget extends Composite {
     this.adapter = adapter;
     initWidget(binder.createAndBindUi(this));
 
-    listView.addColumn(Columns.tickerColumn, "ticker");
-    listView.addColumn(Columns.priceColumn, "price");
-    listView.addColumn(Columns.changeColumn, "change");
-    listView.addColumn(Columns.sharesColumn, "shares");
-    listView.addColumn(Columns.dollarsColumn, "value");
-    listView.addColumn(Columns.profitLossColumn, "profit/loss");
-    listView.addColumn(Columns.buyColumn);
-    listView.addColumn(Columns.sellColumn);
+    table.addColumn(Columns.tickerColumn, "ticker");
+    table.addColumn(Columns.priceColumn, "price");
+    table.addColumn(Columns.changeColumn, "change");
+    table.addColumn(Columns.sharesColumn, "shares");
+    table.addColumn(Columns.dollarsColumn, "value");
+    table.addColumn(Columns.profitLossColumn, "profit/loss");
+    table.addColumn(Columns.buyColumn);
+    table.addColumn(Columns.sellColumn);
   }
 
   @UiFactory
-  PagingTableListView<StockQuote> createListView() {
-    PagingTableListView<StockQuote> view = new PagingTableListView<StockQuote>(10);
+  CellTable<StockQuote> createTable() {
+    CellTable<StockQuote> view = new CellTable<StockQuote>(10);
     adapter.addView(view);
     return view;
   }

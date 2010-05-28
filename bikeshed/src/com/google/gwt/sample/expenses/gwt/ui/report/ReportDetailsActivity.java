@@ -16,55 +16,69 @@
 package com.google.gwt.sample.expenses.gwt.ui.report;
 
 import com.google.gwt.app.place.AbstractActivity;
+import com.google.gwt.app.place.PlaceController;
+import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.sample.expenses.gwt.client.place.ReportScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
 import com.google.gwt.sample.expenses.gwt.request.ReportRecord;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.TakesValueList;
 import com.google.gwt.valuestore.shared.Value;
-
-import java.util.List;
+import com.google.gwt.valuestore.ui.RecordDetailsView;
 
 /**
  * An {@link com.google.gwt.app.place.Activity Activity} that requests and
  * displays detailed information on a given report.
  */
-public class ReportDetailsActivity extends AbstractActivity {
-  class RequestCallBack implements TakesValueList<ReportRecord> {
-    public void setValueList(List<ReportRecord> listOfOne) {
-      ReportRecord record = listOfOne.get(0);
+public class ReportDetailsActivity extends AbstractActivity implements
+    RecordDetailsView.Delegate {
+  private static RecordDetailsView<ReportRecord> defaultView;
 
-      StringBuilder list = new StringBuilder("<h3>Employee " + record.getId()
-          + "</h3>");
-
-      String purpose = record.getPurpose();
-      list.append("<div>");
-      list.append("<label>").append("Purpose: ").append("</label>");
-      list.append("<span>").append(purpose).append("</span>");
-      list.append("</div>");
-
-      list.append("<div>");
-      String created = record.getCreated().toString();
-      list.append("<label>").append("Created: ").append("</label>");
-      list.append("<span>").append(created).append("</span>");
-      list.append("</div>");
-
-      callback.onStarted(new HTML(list.toString()));
+  private static RecordDetailsView<ReportRecord> getDefaultView() {
+    if (defaultView == null) {
+      defaultView = new ReportDetailsView();
     }
+    return defaultView;
   }
 
   private final ExpensesRequestFactory requests;
-
+  private final PlaceController<ScaffoldPlace> placeController;
+  private final RecordDetailsView<ReportRecord> view;
   private String id;
 
-  private Callback callback;
-
-  public ReportDetailsActivity(String id, ExpensesRequestFactory requests) {
-    this.requests = requests;
-    this.id = id;
+  /**
+   * Creates an activity that uses the default singleton view instance.
+   */
+  public ReportDetailsActivity(String id, ExpensesRequestFactory requests,
+      PlaceController<ScaffoldPlace> placeController) {
+    this(id, requests, placeController, getDefaultView());
   }
 
-  public void start(Callback callback) {
-    this.callback = callback;
-    requests.reportRequest().findReport(Value.of(id)).to(new RequestCallBack()).fire();
+  /**
+   * Creates an activity that uses its own view instance.
+   */
+  public ReportDetailsActivity(String id, ExpensesRequestFactory requests,
+      PlaceController<ScaffoldPlace> placeController,
+      RecordDetailsView<ReportRecord> view) {
+    this.placeController = placeController;
+    this.id = id;
+    this.requests = requests;
+    view.setDelegate(this);
+    this.view = view;
+  }
+
+  public void editClicked() {
+    placeController.goTo(new ReportScaffoldPlace(view.getValue(),
+        Operation.EDIT));
+  }
+
+  public void start(final Display display) {
+    Receiver<ReportRecord> callback = new Receiver<ReportRecord>() {
+      public void onSuccess(ReportRecord record) {
+        view.setValue(record);
+        display.showActivityWidget(view);
+      }
+    };
+    requests.reportRequest().findReport(Value.of(id)).to(callback).fire();
   }
 }

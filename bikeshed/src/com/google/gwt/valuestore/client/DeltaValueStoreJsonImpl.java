@@ -17,6 +17,7 @@ package com.google.gwt.valuestore.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.requestfactory.shared.SyncResult;
 import com.google.gwt.requestfactory.shared.RequestFactory.WriteOperation;
 import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.Property;
@@ -58,6 +59,14 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
     protected ReturnRecord() {
     }
 
+    public final native void fillViolations(HashMap<String, String> s) /*-{
+      for (key in this.violations) {
+        if (this.violations.hasOwnProperty(key)) {
+          s.@java.util.HashMap::put(Ljava/lang/Object;Ljava/lang/Object;)(key, this.violations[key]);
+        }
+      }
+    }-*/;
+
     public final native String getFutureId()/*-{
       return this.futureId;
     }-*/;
@@ -72,6 +81,14 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
 
     public final native boolean hasFutureId()/*-{
       return 'futureId' in this;
+    }-*/;
+
+    public final native boolean hasId()/*-{
+      return 'id' in this;
+    }-*/;
+
+    public final native boolean hasViolations()/*-{
+      return 'violations' in this;
     }-*/;
   }
 
@@ -93,7 +110,9 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
     }
   }
 
-  private static final String INITIAL_VERSION = "1";
+  private static final HashMap<String, String> NULL_VIOLATIONS = new HashMap<String, String>();
+
+  private static final Integer INITIAL_VERSION = 1;
 
   private boolean used = false;
   private final FutureIdGenerator futureIdGenerator = new FutureIdGenerator();
@@ -115,78 +134,125 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
     throw new UnsupportedOperationException("Auto-generated method stub");
   }
 
-  public void commit(String response) {
+  public void clearUsed() {
+    used = false;
+  }
+
+  public Set<SyncResult> commit(String response) {
+    Set<SyncResult> syncResults = new HashSet<SyncResult>();
     JavaScriptObject returnedJso = ReturnRecord.getJsoResponse(response);
     HashSet<String> keys = new HashSet<String>();
     ReturnRecord.fillKeys(returnedJso, keys);
 
+    Set<RecordKey> toRemove = new HashSet<RecordKey>();
     if (keys.contains(WriteOperation.CREATE.name())) {
       JsArray<ReturnRecord> newRecords = ReturnRecord.getRecords(returnedJso,
           WriteOperation.CREATE.name());
-      // construct a map from futureId to the datastore Id
+      /*
+       * construct 2 maps: (i) futureId to the datastore Id, (ii) futureId to
+       * violationsMap
+       */
       Map<Object, Object> futureToDatastoreId = new HashMap<Object, Object>();
+      Map<String, Map<String, String>> violationsMap = new HashMap<String, Map<String, String>>();
       int length = newRecords.length();
       for (int i = 0; i < length; i++) {
         ReturnRecord sync = newRecords.get(i);
-        futureToDatastoreId.put(sync.getFutureId(), sync.getId());
+        if (sync.hasViolations()) {
+          // does not have an id.
+          assert !sync.hasId();
+          HashMap<String, String> violations = new HashMap<String, String>();
+          sync.fillViolations(violations);
+          violationsMap.put(sync.getFutureId(), violations);
+        } else {
+          violationsMap.put(sync.getFutureId(), NULL_VIOLATIONS);
+          futureToDatastoreId.put(sync.getFutureId(), sync.getId());
+        }
       }
 
       for (Map.Entry<RecordKey, RecordJsoImpl> entry : creates.entrySet()) {
         final RecordKey futureKey = entry.getKey();
-        Object datastoreId = futureToDatastoreId.get(futureKey.id);
-        assert datastoreId != null;
-        futureIdGenerator.delete(futureKey.id.toString());
-
-        final RecordKey key = new RecordKey(datastoreId, futureKey.schema);
-        RecordJsoImpl value = entry.getValue();
-        value.set(Record.id, datastoreId.toString());
-        RecordJsoImpl masterRecord = master.records.get(key);
-        assert masterRecord == null;
-        master.records.put(key, value);
-        masterRecord = value;
-        master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
-            masterRecord, WriteOperation.CREATE));
+        Map<String, String> violations = violationsMap.get(futureKey.id);
+        assert violations != null;
+        if (violations == NULL_VIOLATIONS) {
+          Object datastoreId = futureToDatastoreId.get(futureKey.id);
+          assert datastoreId != null;
+          futureIdGenerator.delete(futureKey.id.toString());
+          final RecordKey key = new RecordKey(datastoreId, futureKey.schema);
+          RecordJsoImpl value = entry.getValue();
+          value.set(Record.id, datastoreId.toString());
+          RecordJsoImpl masterRecord = master.records.get(key);
+          assert masterRecord == null;
+          master.records.put(key, value);
+          masterRecord = value;
+          toRemove.add(key);
+          master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
+              masterRecord, WriteOperation.CREATE));
+          syncResults.add(new SyncResultImpl(masterRecord, null));
+        } else {
+          // do not change the masterRecord or fire event
+          syncResults.add(new SyncResultImpl(entry.getValue(), violations));
+        }
       }
     }
+    processToRemove(toRemove, WriteOperation.CREATE);
 
+    toRemove.clear();
     if (keys.contains(WriteOperation.DELETE.name())) {
       JsArray<ReturnRecord> deletedRecords = ReturnRecord.getRecords(
           returnedJso, WriteOperation.DELETE.name());
-      Set<String> returnedKeys = getKeySet(deletedRecords);
+      Map<String, Map<String, String>> violationsMap = getViolationsMap(deletedRecords);
       for (Map.Entry<RecordKey, RecordJsoImpl> entry : deletes.entrySet()) {
         final RecordKey key = entry.getKey();
-        assert returnedKeys.contains(key.id);
-        RecordJsoImpl masterRecord = master.records.get(key);
-        assert masterRecord != null;
-        master.records.remove(key);
-        master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
-            masterRecord, WriteOperation.DELETE));
+        Map<String, String> violations = violationsMap.get(key.id);
+        assert violations != null;
+        if (violations == NULL_VIOLATIONS) {
+          RecordJsoImpl masterRecord = master.records.get(key);
+          assert masterRecord != null;
+          master.records.remove(key);
+          toRemove.add(key);
+          master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
+              masterRecord, WriteOperation.DELETE));
+          syncResults.add(new SyncResultImpl(masterRecord, null));
+        } else {
+          // do not change the masterRecord or fire event
+          syncResults.add(new SyncResultImpl(entry.getValue(), violations));
+        }
       }
     }
+    processToRemove(toRemove, WriteOperation.DELETE);
 
+    toRemove.clear();
     if (keys.contains(WriteOperation.UPDATE.name())) {
       JsArray<ReturnRecord> updatedRecords = ReturnRecord.getRecords(
           returnedJso, WriteOperation.UPDATE.name());
-      Set<String> returnedKeys = getKeySet(updatedRecords);
+      Map<String, Map<String, String>> violationsMap = getViolationsMap(updatedRecords);
       for (Map.Entry<RecordKey, RecordJsoImpl> entry : updates.entrySet()) {
         final RecordKey key = entry.getKey();
-        assert returnedKeys.contains(key.id.toString());
-        RecordJsoImpl masterRecord = master.records.get(key);
-        assert masterRecord != null;
-        masterRecord.merge(entry.getValue());
-        master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
-            masterRecord, WriteOperation.UPDATE));
+        Map<String, String> violations = violationsMap.get(key.id);
+        assert violations != null;
+        if (violations == NULL_VIOLATIONS) {
+          RecordJsoImpl masterRecord = master.records.get(key);
+          assert masterRecord != null;
+          masterRecord.merge(entry.getValue());
+          toRemove.add(key);
+          master.eventBus.fireEvent(masterRecord.getSchema().createChangeEvent(
+              masterRecord, WriteOperation.UPDATE));
+          syncResults.add(new SyncResultImpl(masterRecord, null));
+        } else {
+          // do not change the masterRecord or fire event
+          syncResults.add(new SyncResultImpl(entry.getValue(), violations));
+        }
       }
     }
+    processToRemove(toRemove, WriteOperation.UPDATE);
+    return syncResults;
   }
 
-  // TODO: don't use RecordSchema
-  public Record create(Record record) {
+  public Record create(String token) {
     assert !used;
-    assert record instanceof RecordImpl;
-    RecordImpl recordImpl = (RecordImpl) record;
     String futureId = futureIdGenerator.getFutureId();
-    RecordJsoImpl newRecord = RecordJsoImpl.newCopy(recordImpl.getSchema(),
+    // TODO: get schema from token
+    RecordJsoImpl newRecord = RecordJsoImpl.newCopy(null,
         futureId, INITIAL_VERSION);
     RecordKey recordKey = new RecordKey(newRecord);
     assert operations.get(recordKey) == null;
@@ -299,6 +365,22 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
 
   public String toJson() {
     used = true;
+    if (operations.size() > 1) {
+      throw new UnsupportedOperationException(
+          "Currently, only one entity can be saved/persisted at a time");
+      /*
+       * TODO: Short-term todo is to allow multiple entities belonging to the
+       * same class to be persisted at the same time. The client side support
+       * for this operation is already in place. On the server side, this will
+       * entail persisting all entities as part of a single transaction. In
+       * particular, the transaction should fail if the validation check on any
+       * of the entities fail.
+       *
+       * Multiple entities belonging to different records can not be persisted
+       * at present due to the appEngine limitation of a transaction not being
+       * allowed to span multiple entity groups.
+       */
+    }
     StringBuffer jsonData = new StringBuffer("{");
     for (WriteOperation writeOperation : WriteOperation.values()) {
       String jsonDataForOperation = getJsonForOperation(writeOperation);
@@ -362,15 +444,6 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
     return requestData.toString();
   }
 
-  private Set<String> getKeySet(JsArray<ReturnRecord> records) {
-    Set<String> returnSet = new HashSet<String>();
-    int length = records.length();
-    for (int i = 0; i < length; i++) {
-      returnSet.add(records.get(i).getId());
-    }
-    return returnSet;
-  }
-
   private Map<RecordKey, RecordJsoImpl> getRecordsMap(
       WriteOperation writeOperation) {
     switch (writeOperation) {
@@ -384,6 +457,24 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
         throw new IllegalStateException("unknow writeOperation "
             + writeOperation.name());
     }
+  }
+
+  private Map<String, Map<String, String>> getViolationsMap(
+      JsArray<ReturnRecord> records) {
+    Map<String, Map<String, String>> violationsMap = new HashMap<String, Map<String, String>>();
+    int length = records.length();
+    for (int i = 0; i < length; i++) {
+      ReturnRecord record = records.get(i);
+      HashMap<String, String> violations = null;
+      if (record.hasViolations()) {
+        violations = new HashMap<String, String>();
+        record.fillViolations(violations);
+      } else {
+        violations = NULL_VIOLATIONS;
+      }
+      violationsMap.put(record.getId(), violations);
+    }
+    return violationsMap;
   }
 
   private <V> boolean isRealChange(Property<V> property, V value,
@@ -415,5 +506,23 @@ public class DeltaValueStoreJsonImpl implements DeltaValueStore {
 
   private RecordJsoImpl newChangeRecord(RecordImpl fromRecord) {
     return RecordJsoImpl.emptyCopy(fromRecord);
+  }
+
+  private void processToRemove(Set<RecordKey> toRemove,
+      WriteOperation writeOperation) {
+    for (RecordKey recordKey : toRemove) {
+      operations.remove(recordKey);
+      switch (writeOperation) {
+        case CREATE:
+          creates.remove(recordKey);
+          break;
+        case DELETE:
+          deletes.remove(recordKey);
+          break;
+        case UPDATE:
+          updates.remove(recordKey);
+          break;
+      }
+    }
   }
 }

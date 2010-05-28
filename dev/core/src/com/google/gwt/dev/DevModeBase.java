@@ -709,6 +709,19 @@ public abstract class DevModeBase implements DoneCallback {
     }
     return buf.toString();
   }
+  
+  /**
+   * Set up the system to use a DevModeLogManager, which will delegate to
+   * different LogManager instances for client and server code.
+   */
+  protected static void setLogManager() {
+    String oldLogManager = System.getProperty("java.util.logging.manager");
+    if (oldLogManager != null) {
+      System.setProperty("java.util.logging.oldLogManager", oldLogManager);
+    }
+    System.setProperty("java.util.logging.manager",
+        "com.google.gwt.dev.shell.DevModeLogManager");
+  }
 
   protected TreeLogger.Type baseLogLevelForUI = null;
 
@@ -784,6 +797,9 @@ public abstract class DevModeBase implements DoneCallback {
     try {
       // Eager AWT init for OS X to ensure safe coexistence with SWT.
       BootStrapPlatform.initGui();
+
+      // Ensure that client and server logging does not share a root logger
+      setLogManager();
 
       boolean success = startUp();
 
@@ -1133,7 +1149,7 @@ public abstract class DevModeBase implements DoneCallback {
         newlyGeneratedArtifacts);
     produceOutput(linkLogger, linkerContext, artifacts, module, true);
   }
-
+  
   /**
    * Set the set of startup URLs. This is done before launching to allow the UI
    * to better present the options to the user, but note that the UI should not

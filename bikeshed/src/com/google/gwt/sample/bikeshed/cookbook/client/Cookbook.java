@@ -15,13 +15,8 @@
  */
 package com.google.gwt.sample.bikeshed.cookbook.client;
 
-import com.google.gwt.bikeshed.cells.client.Cell;
-import com.google.gwt.bikeshed.list.shared.ListViewAdapter;
-import com.google.gwt.bikeshed.list.shared.SelectionModel;
-import com.google.gwt.bikeshed.list.shared.SingleSelectionModel;
-import com.google.gwt.bikeshed.list.shared.SelectionModel.SelectionChangeEvent;
-import com.google.gwt.bikeshed.tree.client.StandardTreeView;
-import com.google.gwt.bikeshed.tree.client.TreeViewModel;
+import com.google.gwt.bikeshed.tree.client.CellTree;
+import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -31,6 +26,11 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.TreeViewModel;
+import com.google.gwt.view.client.ListViewAdapter;
+import com.google.gwt.view.client.SelectionModel;
+import com.google.gwt.view.client.SingleSelectionModel;
+import com.google.gwt.view.client.SelectionModel.SelectionChangeEvent;
 
 import java.util.List;
 
@@ -42,16 +42,16 @@ public class Cookbook implements EntryPoint {
   interface Binder extends UiBinder<Widget, Cookbook> {
   }
 
-  static class CategoryCell extends Cell<Category, Void> {
+  static class CategoryCell extends AbstractCell<Category> {
     @Override
-    public void render(Category value, Void viewData, StringBuilder sb) {
+    public void render(Category value, Object viewData, StringBuilder sb) {
       sb.append(value.getTitle());
     }
   }
 
-  static class RecipeCell extends Cell<Recipe, Void> {
+  static class RecipeCell extends AbstractCell<Recipe> {
     @Override
-    public void render(Recipe value, Void viewData, StringBuilder sb) {
+    public void render(Recipe value, Object viewData, StringBuilder sb) {
       sb.append(value.getTitle());
     }
   }
@@ -92,11 +92,11 @@ public class Cookbook implements EntryPoint {
   private static final Binder binder = GWT.create(Binder.class);
 
   @UiField DockLayoutPanel dock;
-  @UiField StandardTreeView recipeTree;
+  @UiField CellTree recipeTree;
   @UiField LayoutPanel container;
 
   private RecipeTreeModel recipeTreeModel;
-  private SimpleCellListRecipe defaultRecipe;
+  private CellListRecipe defaultRecipe;
   private Recipe curRecipe;
 
   public void onModuleLoad() {
@@ -120,18 +120,18 @@ public class Cookbook implements EntryPoint {
   }
 
   @UiFactory
-  StandardTreeView createTreeView() {
-    return new StandardTreeView(recipeTreeModel, null);
+  CellTree createTreeView() {
+    return new CellTree(recipeTreeModel, null);
   }
 
   private void createRecipes(List<Category> cats) {
-    defaultRecipe = new SimpleCellListRecipe();
+    defaultRecipe = new CellListRecipe();
 
     cats.add(new Category("Lists", new Recipe[] {defaultRecipe}));
     cats.add(new Category("Tables", new Recipe[] {
         new BasicTableRecipe(), new EditableTableRecipe(),}));
     cats.add(new Category("Trees", new Recipe[] {
-        new BasicTreeRecipe(), new SideBySideTreeRecipe(),}));
+        new CellTreeRecipe(), new CellBrowserRecipe(),}));
     cats.add(new Category("Other", new Recipe[] {
         new ValidationRecipe(), new MailRecipe(),}));
   }

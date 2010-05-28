@@ -37,6 +37,16 @@ public class BrowserChannelServer extends BrowserChannel
     implements Runnable {
   
   /**
+   * Does not extend the Thread functionality in any way. We use instanceof
+   * checks elsewhere in the code to check for this particular thread.
+   */
+  public static class CodeServerThread extends Thread {
+    private CodeServerThread(BrowserChannelServer browserChannelServer) {
+      super(browserChannelServer);
+    }
+  }
+  
+  /**
    * Hook interface for responding to messages from the client.
    */
   public abstract static class SessionHandlerServer extends SessionHandler<BrowserChannelServer> {
@@ -670,7 +680,7 @@ public class BrowserChannelServer extends BrowserChannel
 
   private void init(TreeLogger initialLogger) {
     this.logger = initialLogger;
-    Thread thread = new Thread(this);
+    Thread thread = new CodeServerThread(this);
     thread.setDaemon(true);
     thread.setName("Code server (initializing)");
     thread.start();

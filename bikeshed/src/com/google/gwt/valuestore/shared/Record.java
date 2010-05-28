@@ -20,16 +20,12 @@ package com.google.gwt.valuestore.shared;
  */
 public interface Record {
   Property<String> id = new Property<String>("id", String.class);
-  /*
-   * TODO: because of possible appEngine/dataNucleus bug, the version has to be
-   * a long instead of an int on the server side. The choice results in version
-   * being string on the client side. Temporary workaround.
-   */
-  Property<String> version = new Property<String>("version", String.class);
+
+  Property<Integer> version = new Property<Integer>("version", Integer.class);
 
   /**
    * Get this record's value for the given property. Behavior is undefined if
-   * the record has no such property, or if the property have never been set. It
+   * the record has no such property, or if the property has never been set. It
    * is unusual to call this method directly. Rather it is expected to be called
    * by bean-style getter methods provided by implementing classes.
    * 
@@ -57,5 +53,5 @@ public interface Record {
   /**
    * @return the version of this Record
    */
-  String getVersion();
+  Integer getVersion();
 }

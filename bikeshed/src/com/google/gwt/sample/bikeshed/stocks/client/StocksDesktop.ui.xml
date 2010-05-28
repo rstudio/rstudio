@@ -34,7 +34,7 @@
     <g:north size="18">
       <g:LayoutPanel styleName='{styles.common.box}'>
         <g:layer>
-          <t:SideBySideTreeView ui:field='transactionTree'/>
+          <t:CellBrowser ui:field='transactionTree'/>
         </g:layer>
       </g:LayoutPanel>
     </g:north>

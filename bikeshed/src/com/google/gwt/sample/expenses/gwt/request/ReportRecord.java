@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.expenses.gwt.request;
 
+import com.google.gwt.requestfactory.shared.ServerType;
 import com.google.gwt.valuestore.shared.Property;
 import com.google.gwt.valuestore.shared.Record;
 
@@ -29,14 +30,27 @@ import java.util.Date;
 @ServerType(type = com.google.gwt.sample.expenses.server.domain.Report.class)
 public interface ReportRecord extends Record {
 
+  /**
+   * Used as input to {@link com.google.gwt.valuestore.shared.DeltaValueStore#create(Record)
+   * DeltaValueStore#create()} and in the wire format during sync requests.
+   */
+  String TOKEN = "ReportRecord";
+
+  Property<String> approvedSupervisorKey = new Property<String>("approvedSupervisorKey",
+      String.class);
   Property<Date> created = new Property<Date>("created", Date.class);
+  Property<String> notes = new Property<String>("notes", String.class);
   Property<String> purpose = new Property<String>("purpose", String.class);
-  Property<EmployeeRecord> reporter = new Property<EmployeeRecord>("reporter",
-      EmployeeRecord.class);
+  Property<String> reporterKey = new Property<String>("reporterKey",
+      String.class);
+
+  String getApprovedSupervisorKey();
 
   Date getCreated();
+  
+  String getNotes();
 
   String getPurpose();
-
-  EmployeeRecord getReporter();
+  
+  String getReporterKey();
 }

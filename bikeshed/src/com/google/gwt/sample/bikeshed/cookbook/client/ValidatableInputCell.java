@@ -15,18 +15,47 @@
  */
 package com.google.gwt.sample.bikeshed.cookbook.client;
 
-import com.google.gwt.bikeshed.cells.client.Cell;
-import com.google.gwt.bikeshed.cells.client.ValueUpdater;
+import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.sample.bikeshed.cookbook.client.ValidatableField.DefaultValidatableField;
+import com.google.gwt.view.client.HasViewData;
 
 /**
- * A String {@link Cell} that supports validation using a
+ * A String {@link AbstractCell} that supports validation using a
  * {@link ValidatableField}.
  */
-public class ValidatableInputCell extends Cell<String, ValidatableField<String>> {
+public class ValidatableInputCell extends AbstractCell<String> {
+
+  /**
+   * Marks the cell as invalid.
+   * 
+   * @param container the viewData provider (usually a column or list view)
+   * @param key the key identifying this item
+   * @param value the new, invalid value
+   */
+  @SuppressWarnings("unchecked") // cast to ValidatableField<String>
+  public static void invalidate(HasViewData container, Object key, String value) {
+    ValidatableField<String> vf = (ValidatableField<String>) container.getViewData(key);
+    if (vf == null) {
+      vf = new DefaultValidatableField<String>(value);
+    }
+
+    vf.setInvalid(true);
+    container.setViewData(key, vf);
+  }
+
+  /**
+   * Marks the cell as valid.
+   * 
+   * @param container the viewData provider (usually a column or list view)
+   * @param key the key identifying this item
+   */
+  public static void validate(HasViewData container, Object key) {
+    container.setViewData(key, null);
+  }
 
   @Override
   public boolean consumesEvents() {
@@ -34,9 +63,12 @@ public class ValidatableInputCell extends Cell<String, ValidatableField<String>>
   }
 
   @Override
-  public ValidatableField<String> onBrowserEvent(Element parent, String value,
-      ValidatableField<String> viewData, NativeEvent event,
-      ValueUpdater<String, ValidatableField<String>> valueUpdater) {
+  @SuppressWarnings("unchecked") // cast to ValidatableField<String>
+  public Object onBrowserEvent(Element parent, String value,
+      Object viewData, NativeEvent event,
+      ValueUpdater<String> valueUpdater) {
+    ValidatableField<String> vf = (ValidatableField<String>) viewData;
+
     if (event.getType().equals("change")) {
       InputElement input = parent.getFirstChild().cast();
 
@@ -44,25 +76,28 @@ public class ValidatableInputCell extends Cell<String, ValidatableField<String>>
       input.getStyle().setColor("blue");
 
       // Create a new ValidatableField if needed
-      if (viewData == null) {
-        viewData = new DefaultValidatableField<String>(input.getValue());
+      if (vf == null) {
+        vf = new DefaultValidatableField<String>(input.getValue());
       }
-      viewData.setValue(input.getValue());
-      valueUpdater.update(value, viewData);
+      vf.setValue(input.getValue());
+      valueUpdater.update(vf.getValue());
     }
 
-    return viewData;
+    return vf;
   }
 
   @Override
-  public void render(String value, ValidatableField<String> viewData, StringBuilder sb) {
+  @SuppressWarnings("unchecked") // cast to ValidatableField<String>
+  public void render(String value, Object viewData, StringBuilder sb) {
+    ValidatableField<String> vf = (ValidatableField<String>) viewData;
+
     /*
      * If viewData is null, just paint the contents black. If it is non-null,
      * show the pending value and paint the contents red if they are known to be
      * invalid.
      */
-    String pendingValue = viewData == null ? null : viewData.getValue();
-    boolean invalid = viewData == null ? false : viewData.isInvalid();
+    String pendingValue = vf == null ? null : vf.getValue();
+    boolean invalid = vf == null ? false : vf.isInvalid();
 
     sb.append("<input type=\"text\" value=\"");
     if (pendingValue != null) {

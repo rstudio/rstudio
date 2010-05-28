@@ -47,6 +47,7 @@ public class ExpensesServerSideOperations implements Config {
     Map<String, RequestDefinition> newMap = new HashMap<String, RequestDefinition>();
     putAll(EmployeeRequest.ServerOperations.values(), newMap);
     putAll(ReportRequest.ServerOperations.values(), newMap);
+    putAll(ExpenseRequest.ServerOperations.values(), newMap);
     map = Collections.unmodifiableMap(newMap);
   }
 
@@ -54,6 +55,7 @@ public class ExpensesServerSideOperations implements Config {
     Set<Class<? extends Record>> records = new HashSet<Class<? extends Record>>();
     records.add(EmployeeRecord.class);
     records.add(ReportRecord.class);
+    records.add(ExpenseRecord.class);
     return records;
   }
 

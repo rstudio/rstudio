@@ -15,35 +15,23 @@
  */
 package com.google.gwt.sample.expenses.gwt.ui.employee;
 
-import com.google.gwt.app.place.AbstractActivity;
 import com.google.gwt.app.place.PlaceController;
+import com.google.gwt.requestfactory.shared.Receiver;
+import com.google.gwt.sample.expenses.gwt.client.place.EmployeeScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldPlace;
+import com.google.gwt.sample.expenses.gwt.client.place.ScaffoldRecordPlace.Operation;
 import com.google.gwt.sample.expenses.gwt.request.EmployeeRecord;
 import com.google.gwt.sample.expenses.gwt.request.ExpensesRequestFactory;
-import com.google.gwt.sample.expenses.gwt.scaffold.place.ListScaffoldPlace;
-import com.google.gwt.sample.expenses.gwt.scaffold.place.ScaffoldPlace;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.TakesValueList;
-import com.google.gwt.valuestore.shared.DeltaValueStore;
 import com.google.gwt.valuestore.shared.Value;
+import com.google.gwt.valuestore.ui.AbstractRecordEditActivity;
 import com.google.gwt.valuestore.ui.RecordEditView;
 
-import java.util.List;
-
 /**
- * An activity that requests all info on an employee, allows the user to  edit it,
- * and persists the results. 
+ * An activity that requests all info on an employee, allows the user to edit
+ * it, and persists the results.
  */
-public class EmployeeEditActivity extends AbstractActivity implements
-    RecordEditView.Delegate {
-  class RequestCallBack implements TakesValueList<EmployeeRecord> {
-    public void setValueList(List<EmployeeRecord> listOfOne) {
-      view.setEnabled(true);
-      EmployeeRecord record = listOfOne.get(0);
-      view.setValue(record);
-      callback.onStarted(view.asWidget());
-    }
-  }
-
+public class EmployeeEditActivity extends
+    AbstractRecordEditActivity<EmployeeRecord> {
   private static RecordEditView<EmployeeRecord> defaultView;
 
   private static RecordEditView<EmployeeRecord> getDefaultView() {
@@ -54,12 +42,7 @@ public class EmployeeEditActivity extends AbstractActivity implements
   }
 
   private final ExpensesRequestFactory requests;
-  private final RecordEditView<EmployeeRecord> view;
-  private final String id;
   private final PlaceController<ScaffoldPlace> placeController;
-
-  private DeltaValueStore deltas;
-  private Callback callback;
 
   /**
    * Creates an activity that uses the default singleton view instance.
@@ -75,34 +58,19 @@ public class EmployeeEditActivity extends AbstractActivity implements
   public EmployeeEditActivity(String id, RecordEditView<EmployeeRecord> view,
       ExpensesRequestFactory requests,
       PlaceController<ScaffoldPlace> placeController) {
+    super(view, id, requests);
     this.requests = requests;
-    this.id = id;
-    this.view = view;
-    this.deltas = requests.getValueStore().spawnDeltaView();
     this.placeController = placeController;
-    view.setDelegate(this);
-    view.setDeltaValueStore(deltas);
-  }
-
-  public void saveClicked() {
-    if (deltas.isChanged()) {
-      view.setEnabled(false);
-      DeltaValueStore toCommit = deltas;
-      deltas = null;
-      requests.syncRequest(toCommit).fire(); // TODO Need callback, idiot
-      placeController.goTo(new ListScaffoldPlace(EmployeeRecord.class));
-    }
-  }
-
-  public void start(Callback callback) {
-    this.callback = callback;
-    requests.employeeRequest().findEmployee(Value.of(id)).to(
-        new RequestCallBack()).fire();
   }
 
   @Override
-  public boolean willStop() {
-    return deltas == null || !deltas.isChanged()
-        || Window.confirm("Dude! Really drop your edits?");
+  protected void fireFindRequest(Value<String> id,
+      Receiver<EmployeeRecord> callback) {
+    requests.employeeRequest().findEmployee(id).to(callback).fire();
+  }
+
+  @Override
+  protected void exit() {
+    placeController.goTo(new EmployeeScaffoldPlace(getId(), Operation.DETAILS));
   }
 }
