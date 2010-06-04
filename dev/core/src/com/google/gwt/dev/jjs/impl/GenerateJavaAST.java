@@ -2036,7 +2036,7 @@ public class GenerateJavaAST {
       JMethod bridgeMethod = program.createMethod(info,
           String.valueOf(jdtBridgeMethod.selector), clazz,
           (JType) typeMap.get(jdtBridgeMethod.returnType.erasure()), false,
-          false, true, false, false);
+          false, implmeth.isFinal(), false, false);
       bridgeMethod.setSynthetic();
       int paramIdx = 0;
       List<JParameter> implParams = implmeth.getParams();
@@ -2750,6 +2750,7 @@ public class GenerateJavaAST {
             JavaASTGenerationVisitor.class, "Enum$Map");
         JClassType mapClass = program.createClass(sourceInfo, type.getName()
             + "$Map", false, true);
+        mapClass.setSuperClass(program.getTypeJavaLangObject());
         mapField = program.createField(sourceInfo, "$MAP", mapClass,
             program.getJavaScriptObject(), true, Disposition.FINAL);
 
@@ -2804,7 +2805,16 @@ public class GenerateJavaAST {
         JDeclarationStatement declStmt = new JDeclarationStatement(sourceInfo,
             valuesRef, newExpr);
         JBlock clinitBlock = ((JMethodBody) type.getMethods().get(0).getBody()).getBlock();
-        clinitBlock.addStmt(declStmt);
+        
+        /*
+         * HACKY: the $VALUES array must be initialized immediately after all of
+         * the enum fields, but before any user initialization (which might rely
+         * on $VALUES). The "1 + " is the statement containing the call to
+         * Enum.$clinit().
+         */
+        int insertionPoint = 1 + initializers.size();
+        assert clinitBlock.getStatements().size() >= initializers.size() + 1;
+        clinitBlock.addStmt(insertionPoint, declStmt);
         valuesField.setInitializer(declStmt);
       }
       {
