@@ -57,6 +57,7 @@ public class JavaAstConstructor {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.lang;\n");
       code.append("public final class Array {\n");
+      code.append("  public int length;\n");
       code.append("}\n");
       return code;
     }

@@ -3,7 +3,7 @@ package com.google.gwt.dev.jjs.impl.gflow.cfg;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.impl.OptimizerTestBase;
+import com.google.gwt.dev.jjs.impl.JJSTestBase;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgBuilder;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgEdge;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Test class for CfgBuilfer.
  */
-public class CfgBuilderTest extends OptimizerTestBase {
+public class CfgBuilderTest extends JJSTestBase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -768,7 +768,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
             "READ(b) -> [*]",
             "COND (EntryPoint.b) -> [THEN=*, ELSE=1]",
             "STMT -> [*]",
-            "OPTTHROW(throwCheckedException()) -> [NOTHROW=*, 2, RE=4]",
+            "OPTTHROW(throwCheckedException()) -> [NOTHROW=*, 2, RE=4, E=4]",
             "CALL(throwCheckedException) -> [*]",
             "1: STMT -> [*]",
             "READWRITE(k, null) -> [3]",
@@ -799,7 +799,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
             "READ(b) -> [*]",
             "COND (EntryPoint.b) -> [THEN=*, ELSE=1]",
             "STMT -> [*]",
-            "OPTTHROW(throwCheckedException()) -> [NOTHROW=*, 2, RE=3]",
+            "OPTTHROW(throwCheckedException()) -> [NOTHROW=*, 2, RE=3, E=5]",
             "CALL(throwCheckedException) -> [*]",
             "1: STMT -> [*]",
             "READWRITE(k, null) -> [4]",
@@ -811,7 +811,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
             "READWRITE(l, null) -> [*]",
             "4: STMT -> [*]",
             "READWRITE(j, null) -> [*]",
-            "END"
+            "5: END"
         );
   }
 
@@ -833,7 +833,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
             "READ(b) -> [*]",
             "COND (EntryPoint.b) -> [THEN=*, ELSE=1]",
             "STMT -> [*]",
-            "OPTTHROW(throwUncheckedException()) -> [NOTHROW=*, RE=2, RE=3]",
+            "OPTTHROW(throwUncheckedException()) -> [NOTHROW=*, RE=2, RE=3, E=5]",
             "CALL(throwUncheckedException) -> [*]",
             "1: STMT -> [*]",
             "READWRITE(k, null) -> [4]",
@@ -845,7 +845,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
             "READWRITE(l, null) -> [*]",
             "4: STMT -> [*]",
             "READWRITE(j, null) -> [*]",
-            "END"
+            "5: END"
         );
   }
 
@@ -1017,7 +1017,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
         ).is(
         "BLOCK -> [*]",
         "STMT -> [*]",
-        "OPTTHROW(createFoo()) -> [NOTHROW=*, RE=1]",
+        "OPTTHROW(createFoo()) -> [NOTHROW=*, RE=1, E=1]",
         "CALL(createFoo) -> [*]",
         "WRITE(foo, EntryPoint.createFoo()) -> [*]",
         "STMT -> [*]",
@@ -1034,7 +1034,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
         ).is(
         "BLOCK -> [*]",
         "STMT -> [*]",
-        "OPTTHROW(createFoo()) -> [NOTHROW=*, RE=1]",
+        "OPTTHROW(createFoo()) -> [NOTHROW=*, RE=1, E=1]",
         "CALL(createFoo) -> [*]",
         "WRITE(foo, EntryPoint.createFoo()) -> [*]",
         "STMT -> [*]",
@@ -1309,6 +1309,7 @@ public class CfgBuilderTest extends OptimizerTestBase {
         "9: END"
     );
   }
+  
   public void testSwitchWithLoopAndBreak() throws Exception {
     assertCfg("void",
         "switch(i) {",
@@ -1345,7 +1346,89 @@ public class CfgBuilderTest extends OptimizerTestBase {
             "3: END"
     );
   }
+  
+  public void testBreakStatement1() throws Exception {
+    assertCfg("void",
+        "lbl: {",
+        "  break lbl;",
+        "}"
+        ).is(
+            "BLOCK -> [*]",
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "GOTO -> [*]",
+            "END");
+  }
 
+  public void testBreakStatement2() throws Exception {
+    assertCfg("void",
+        "lbl: break lbl;"
+        ).is(
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "GOTO -> [*]",
+            "END");
+  }
+
+  public void testBreakStatement3() throws Exception {
+    assertCfg("void",
+        "lbl: {",
+        "  i = 1;",
+        "  if (b) break lbl;",
+        "  i = 2;",
+        "}"
+        ).is(
+            "BLOCK -> [*]",
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "WRITE(i, 1) -> [*]",
+            "STMT -> [*]",
+            "READ(b) -> [*]",
+            "COND (EntryPoint.b) -> [THEN=*, ELSE=1]",
+            "STMT -> [*]",
+            "GOTO -> [2]",
+            "1: STMT -> [*]",
+            "WRITE(i, 2) -> [*]",
+            "2: END");
+  }
+
+  public void testBreakStatement4() throws Exception {
+    assertCfg("void",
+        "lbl1: {",
+        "  i = 1;",
+        "  lbl2: {",
+        "    j = 1;",
+        "    if (b) break lbl1;",
+        "    j = 2;",
+        "    if (b) break lbl2;",
+        "  }",
+        "  i = 2;",
+        "}"
+        ).is(
+            "BLOCK -> [*]",
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "WRITE(i, 1) -> [*]",
+            "BLOCK -> [*]",
+            "STMT -> [*]",
+            "WRITE(j, 1) -> [*]",
+            "STMT -> [*]",
+            "READ(b) -> [*]",
+            "COND (EntryPoint.b) -> [THEN=*, ELSE=1]",
+            "STMT -> [*]",
+            "GOTO -> [3]",
+            "1: STMT -> [*]",
+            "WRITE(j, 2) -> [*]",
+            "STMT -> [*]",
+            "READ(b) -> [*]",
+            "COND (EntryPoint.b) -> [THEN=*, ELSE=2]",
+            "STMT -> [*]",
+            "GOTO -> [*]",
+            "2: STMT -> [*]",
+            "WRITE(i, 2) -> [*]",
+            "3: END");
+  }
+  
   private CfgBuilderResult assertCfg(String returnType, String ...codeSnippet)
       throws UnableToCompleteException {
     JProgram program = compileSnippet(returnType, 

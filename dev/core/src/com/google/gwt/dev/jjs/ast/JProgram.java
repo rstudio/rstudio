@@ -74,7 +74,8 @@ public class JProgram extends JNode {
           "java.io.Serializable", "java.lang.Object", "java.lang.String",
           "java.lang.Class", "java.lang.CharSequence", "java.lang.Cloneable",
           "java.lang.Comparable", "java.lang.Enum", "java.lang.Iterable",
-          "java.util.Iterator", "com.google.gwt.core.client.GWT",
+          "java.util.Iterator", "java.lang.AssertionError",
+          "com.google.gwt.core.client.GWT",
           "com.google.gwt.core.client.JavaScriptObject",
           "com.google.gwt.lang.ClassLiteralHolder",
           "com.google.gwt.core.client.RunAsyncCallback",
@@ -459,8 +460,8 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JEnumType createEnum(SourceInfo info, String name) {
-    JEnumType x = new JEnumType(info, name);
+  public JEnumType createEnum(SourceInfo info, String name, boolean isAbstract) {
+    JEnumType x = new JEnumType(info, name, isAbstract);
     x.setSuperClass(getTypeJavaLangEnum());
 
     allTypes.add(x);
