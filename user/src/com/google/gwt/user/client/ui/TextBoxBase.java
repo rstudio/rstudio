@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,12 +23,6 @@ import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.i18n.client.AutoDirectionHandler;
-import com.google.gwt.i18n.client.BidiPolicy;
-import com.google.gwt.i18n.client.BidiUtils;
-import com.google.gwt.i18n.client.HasDirection;
-import com.google.gwt.i18n.shared.DirectionEstimator;
-import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.TextBoxImpl;
@@ -38,8 +32,7 @@ import com.google.gwt.user.client.ui.impl.TextBoxImpl;
  */
 @SuppressWarnings("deprecation")
 public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
-    HasChangeHandlers, HasText, HasName, HasDirection, HasDirectionEstimator,
-    HasValue<String>, AutoDirectionHandler.Target {
+    HasChangeHandlers, HasText, HasName, HasValue<String> {
 
   /**
    * Text alignment constant, used in
@@ -83,20 +76,17 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   private static TextBoxImpl impl = GWT.create(TextBoxImpl.class);
 
-  private AutoDirectionHandler autoDirHandler;
   private Event currentEvent;
   private boolean valueChangeHandlerInitialized;
 
   /**
    * Creates a text box that wraps the given browser element handle. This is
    * only used by subclasses.
-   *
+   * 
    * @param elem the browser element to wrap
    */
   protected TextBoxBase(Element elem) {
     super(elem);
-    autoDirHandler = AutoDirectionHandler.addTo(this,
-        BidiPolicy.isBidiEnabled());
   }
 
   public HandlerRegistration addChangeHandler(ChangeHandler handler) {
@@ -139,22 +129,11 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
   /**
    * Gets the current position of the cursor (this also serves as the beginning
    * of the text selection).
-   *
+   * 
    * @return the cursor's position
    */
   public int getCursorPos() {
     return impl.getCursorPos(getElement());
-  }
-
-  public Direction getDirection() {
-    return BidiUtils.getDirectionOnElement(getElement());
-  }
-
-  /**
-   * Gets the direction estimation model of the auto-dir handler.
-   */
-  public DirectionEstimator getDirectionEstimator() {
-    return autoDirHandler.getDirectionEstimator();
   }
 
   public String getName() {
@@ -163,7 +142,7 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Gets the text currently selected within this text box.
-   *
+   * 
    * @return the selected text, or an empty string if none is selected
    */
   public String getSelectedText() {
@@ -177,7 +156,7 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Gets the length of the current text selection.
-   *
+   * 
    * @return the text selection length
    */
   public int getSelectionLength() {
@@ -194,7 +173,7 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Determines whether or not the widget is read-only.
-   *
+   * 
    * @return <code>true</code> if the widget is currently read-only,
    *         <code>false</code> if the widget is currently editable
    */
@@ -220,7 +199,7 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
    * the object returned by {@link #addChangeHandler} instead
    */
   @Deprecated
@@ -230,7 +209,7 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Selects all of the text in the box.
-   *
+   * 
    * This will only work when the widget is attached to the document and not
    * hidden.
    */
@@ -243,39 +222,21 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Sets the cursor position.
-   *
+   * 
    * This will only work when the widget is attached to the document and not
    * hidden.
-   *
+   * 
    * @param pos the new cursor position
    */
   public void setCursorPos(int pos) {
     setSelectionRange(pos, 0);
   }
 
-  public void setDirection(Direction direction) {
-    BidiUtils.setDirectionOnElement(getElement(), direction);
-  }
-
-  /**
-   * Toggles on / off direction estimation.
-   */
-  public void setDirectionEstimator(boolean enabled) {
-    autoDirHandler.setDirectionEstimator(enabled);
-  }
-
-  /**
-   * Sets the direction estimation model of the auto-dir handler.
-   */
-  public void setDirectionEstimator(DirectionEstimator directionEstimator) {
-    autoDirHandler.setDirectionEstimator(directionEstimator);
-  }
-
   /**
    * If a keyboard event is currently being handled by the text box, this method
    * replaces the unicode character or key code associated with it. This allows
    * listeners to easily filter keyboard input.
-   *
+   * 
    * @param key the new key value
    * @deprecated this method only works in IE and should not have been added to
    *             the API
@@ -293,7 +254,7 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Turns read-only mode on or off.
-   *
+   * 
    * @param readOnly if <code>true</code>, the widget becomes read-only; if
    *          <code>false</code> the widget becomes editable
    */
@@ -309,10 +270,10 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Sets the range of text to be selected.
-   *
+   * 
    * This will only work when the widget is attached to the document and not
    * hidden.
-   *
+   * 
    * @param pos the position of the first character to be selected
    * @param length the number of characters to be selected
    */
@@ -339,17 +300,16 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
    * <code>\r</code> from the text, except IE which will add a <code>\r</code>
    * before each <code>\n</code>.  Use {@link #getText()} to get the text
    * directly from the widget.
-   *
+   * 
    * @param text the object's new text
    */
   public void setText(String text) {
     DOM.setElementProperty(getElement(), "value", text != null ? text : "");
-    autoDirHandler.refreshDirection();
   }
 
   /**
    * Sets the alignment of the text in the text box.
-   *
+   * 
    * @param align the text alignment (as specified by {@link #ALIGN_CENTER},
    *          {@link #ALIGN_JUSTIFY}, {@link #ALIGN_LEFT}, and
    *          {@link #ALIGN_RIGHT})
@@ -372,11 +332,5 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   protected TextBoxImpl getImpl() {
     return impl;
-  }
-
-  @Override
-  protected void onLoad() {
-    super.onLoad();
-    autoDirHandler.refreshDirection();
   }
 }
