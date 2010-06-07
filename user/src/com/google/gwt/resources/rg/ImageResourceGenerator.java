@@ -321,8 +321,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
       }
     }
 
-    public void setRtlImage(LocalizedImage image) {
-      if (this.image.equals(image)) {
+    public void setRtlImage(LocalizedImage localized) {
+      if (this.localized.equals(localized)) {
         isRtl = true;
       }
     }
