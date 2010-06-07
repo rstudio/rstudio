@@ -40,6 +40,7 @@ import com.google.gwt.resources.ext.ResourceGeneratorType;
 import com.google.gwt.resources.rg.BundleResourceGenerator;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
+import com.google.gwt.user.rebind.StringSourceWriter;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -53,6 +54,34 @@ import java.util.Set;
 
 /**
  * The base class for creating new ClientBundle implementations.
+ * <p>
+ * The general structure of the generated class is as follows:
+ * 
+ * <pre>
+ * public ResourceType resource() {
+ *   return resource;
+ * }
+ * private void _init0() {
+ *   resource = new Resource();
+ * }
+ * // Other ResourceGenerator-defined fields
+ * private static ResourceType resource;
+ * static {
+ *   new ClientBundle()._init0();
+ * }
+ * public ResourcePrototype[] getResources() {
+ *   return new ResourcePrototype[] { resource() };
+ * }
+ * public native ResourcePrototype getResource(String name) /-{
+ *   switch (name) {
+ *     case 'resource': return this.@...::resource()();
+ *   }
+ *   return null;
+ * }-/
+ * </pre>
+ * The instantiation of the individual ResourcePrototypes is done in the content
+ * of an instance of the ClientBundle type so that resources can refer to one
+ * another by simply emitting a call to <code>resource()</code>.
  */
 public abstract class AbstractClientBundleGenerator extends Generator {
 
@@ -82,6 +111,7 @@ public abstract class AbstractClientBundleGenerator extends Generator {
           + " is not a valid Java identifier";
 
       String ident = factory.createName(name);
+      factory.addName(ident);
 
       StringBuilder sb = new StringBuilder();
       sb.append("private ");
@@ -247,6 +277,12 @@ public abstract class AbstractClientBundleGenerator extends Generator {
       // Print the accumulated field definitions
       sw.println(fields.getCode());
 
+      // Print the static initializer after the fields
+      sw.println("static {");
+      sw.indentln("new " + resourceContext.getImplementationSimpleSourceName()
+          + "()._init0();");
+      sw.println("}");
+
       /*
        * The map-accessor methods use JSNI and need a fully-qualified class
        * name, but should not include any sub-bundles.
@@ -320,7 +356,8 @@ public abstract class AbstractClientBundleGenerator extends Generator {
    */
   private boolean createFieldsAndAssignments(TreeLogger logger,
       AbstractResourceContext resourceContext, ResourceGenerator rg,
-      List<JMethod> generatorMethods, SourceWriter sw, ClientBundleFields fields) {
+      List<JMethod> generatorMethods, SourceWriter sw, SourceWriter init,
+      ClientBundleFields fields) {
 
     // Defer failure until this phase has ended
     boolean fail = false;
@@ -349,21 +386,18 @@ public abstract class AbstractClientBundleGenerator extends Generator {
         continue;
       }
 
+      // Define a field that will hold the ResourcePrototype
       String ident = fields.define(m.getReturnType().isClassOrInterface(),
           m.getName(), null, true, false);
 
       // Strip off all but the access modifiers
       sw.print(m.getReadableDeclaration(false, true, true, true, true));
       sw.println(" {");
-      sw.indent();
-      sw.println("if (" + ident + " == null) {");
-      sw.indent();
-      sw.println(ident + " = " + rhs + ";");
-      sw.outdent();
+      sw.indentln("return " + ident + ";");
       sw.println("}");
-      sw.println("return " + ident + ";");
-      sw.outdent();
-      sw.println("}");
+
+      // Record the initialization statement for the one-shot init() method
+      init.println(ident + " = " + rhs + ";");
     }
 
     if (fail) {
@@ -383,12 +417,20 @@ public abstract class AbstractClientBundleGenerator extends Generator {
     // Try to provide as many errors as possible before failing.
     boolean success = true;
 
+    SourceWriter init = new StringSourceWriter();
+    init.println("private void _init0() {");
+    init.indent();
+
     // Run the ResourceGenerators to generate implementations of the methods
     for (Map.Entry<ResourceGenerator, List<JMethod>> entry : generators.entrySet()) {
-
       success &= createFieldsAndAssignments(logger, resourceContext,
-          entry.getKey(), entry.getValue(), sw, fields);
+          entry.getKey(), entry.getValue(), sw, init, fields);
     }
+
+    init.outdent();
+    init.println("}");
+
+    sw.println(init.toString());
 
     if (!success) {
       throw new UnableToCompleteException();
