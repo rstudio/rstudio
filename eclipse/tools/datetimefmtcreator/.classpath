@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="core/src"/>
+	<classpathentry kind="src" path="core/test"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/gwt-user"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/icu4j-4_4_1.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

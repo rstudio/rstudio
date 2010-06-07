@@ -16,10 +16,10 @@
 package com.google.gwt.i18n.client.impl;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.i18n.client.constants.DateTimeConstants;
-import com.google.gwt.i18n.client.constants.DateTimeConstantsImpl;
+import com.google.gwt.i18n.client.DateTimeFormatInfo;
 import com.google.gwt.i18n.client.constants.NumberConstants;
 import com.google.gwt.i18n.client.constants.NumberConstantsImpl;
+import com.google.gwt.i18n.client.impl.cldr.DateTimeFormatInfoImpl;
 
 /**
  * Implementation detail of LocaleInfo -- not a public API and subject to
@@ -48,15 +48,15 @@ public class LocaleInfoImpl {
   }
   
   /**
-   * Create a DateTimeConstants instance appropriate for this locale.
+   * Create a {@link DateTimeFormatInfo} instance appropriate for this locale.
    * 
    * Note that the caller takes care of any caching so subclasses need not
    * bother.
    * 
-   * @return a DateTimeConstants instance
+   * @return a {@link DateTimeFormatInfo} instance
    */
-  public DateTimeConstants getDateTimeConstants() {
-    return GWT.create(DateTimeConstantsImpl.class);
+  public DateTimeFormatInfo getDateTimeFormatInfo() {
+    return GWT.create(DateTimeFormatInfoImpl.class);
   }
 
   /**

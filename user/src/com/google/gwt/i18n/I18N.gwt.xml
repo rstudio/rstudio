@@ -86,6 +86,9 @@
   <generate-with class="com.google.gwt.i18n.rebind.CurrencyListGenerator">
     <when-type-is class="com.google.gwt.i18n.client.CurrencyList" />
   </generate-with>
+  <generate-with class="com.google.gwt.i18n.rebind.CustomDateTimeFormatGenerator">
+    <when-type-assignable class="com.google.gwt.i18n.client.CustomDateTimeFormat" />
+  </generate-with>
   
   <!--
       Set of locales to be selectable at runtime.  Only those which extend
