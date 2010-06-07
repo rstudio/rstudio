@@ -15,11 +15,15 @@
  */
 package com.google.gwt.resources.rg;
 
+import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.dev.util.StringKey;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.collect.Maps;
+import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.resources.client.impl.ImageResourcePrototype;
@@ -37,10 +41,7 @@ import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,72 +50,406 @@ import java.util.Set;
  */
 public final class ImageResourceGenerator extends AbstractResourceGenerator {
   /**
+   * Represents a file that contains multiple image regions.
+   */
+  static class BundledImage extends DisplayedImage {
+    private final ImageBundleBuilder builder;
+    private boolean dirty = false;
+    private Map<LocalizedImage, ImageRect> images;
+    private Set<LocalizedImage> rtlImages = Sets.create();
+    private Map<ImageResourceDeclaration, LocalizedImage> localizedByImageResource;
+    private String normalContentsUrlExpression;
+    private String rtlContentsUrlExpression;
+
+    public BundledImage() {
+      builder = new ImageBundleBuilder();
+      images = Maps.create();
+      localizedByImageResource = Maps.create();
+    }
+
+    public LocalizedImage addImage(TreeLogger logger, ResourceContext context,
+        ImageResourceDeclaration image) throws UnableToCompleteException,
+        CannotBundleImageException {
+
+      LocalizedImage localized = LocalizedImage.create(logger, context, image);
+      localizedByImageResource = Maps.put(localizedByImageResource, image,
+          localized);
+      if (images.containsKey(localized)) {
+        return localized;
+      }
+
+      dirty = true;
+      ImageRect rect = null;
+      try {
+        rect = builder.assimilate(logger, image.get(), localized.getUrl());
+        if (context.supportsDataUrls()) {
+          // Treat the image as though it were external
+          builder.removeMapping(image.get());
+          throw new CannotBundleImageException(localized, rect);
+        }
+        images = Maps.put(images, localized, rect);
+      } catch (UnsuitableForStripException e) {
+        rect = e.getImageRect();
+        throw new CannotBundleImageException(localized, rect);
+      } finally {
+        assert rect != null : "No ImageRect";
+        rect.setHeight(image.getScaleHeight());
+        rect.setWidth(image.getScaleWidth());
+      }
+      return localized;
+    }
+
+    public ImageBundleBuilder getImageBundleBuilder() {
+      return builder;
+    }
+
+    @Override
+    public ImageRect getImageRect(ImageResourceDeclaration image) {
+      return images.get(localizedByImageResource.get(image));
+    }
+
+    public void render(TreeLogger logger, ResourceContext context,
+        ClientBundleFields fields, RepeatStyle repeatStyle)
+        throws UnableToCompleteException {
+      if (builder.getImageCount() == 0) {
+        // No data
+        return;
+      }
+
+      if (dirty) {
+        Arranger arranger;
+        switch (repeatStyle) {
+          case None:
+            arranger = new ImageBundleBuilder.BestFitArranger();
+            break;
+          case Horizontal:
+            arranger = new ImageBundleBuilder.VerticalArranger();
+            break;
+          case Vertical:
+            arranger = new ImageBundleBuilder.HorizontalArranger();
+            break;
+          case Both:
+            arranger = new ImageBundleBuilder.IdentityArranger();
+            break;
+          default:
+            logger.log(TreeLogger.ERROR, "Unknown RepeatStyle " + repeatStyle);
+            throw new UnableToCompleteException();
+        }
+        URL normalContents = renderToTempFile(logger, builder, arranger);
+        normalContentsUrlExpression = context.deploy(normalContents, false);
+
+        if (!rtlImages.isEmpty()) {
+          for (LocalizedImage rtlImage : rtlImages) {
+            // Create a transformation to mirror about the Y-axis and translate
+            AffineTransform tx = new AffineTransform();
+            ImageRect imageRect = images.get(rtlImage);
+            tx.setTransform(-1, 0, 0, 1, imageRect.getWidth(), 0);
+            imageRect.setTransform(tx);
+          }
+          URL rtlContents = renderToTempFile(logger, builder,
+              new ImageBundleBuilder.IdentityArranger());
+          assert rtlContents != null;
+          rtlContentsUrlExpression = context.deploy(rtlContents, false);
+        }
+
+        dirty = false;
+        logger.log(TreeLogger.DEBUG, "Composited " + builder.getImageCount()
+            + " images");
+      }
+
+      JClassType stringType = context.getGeneratorContext().getTypeOracle().findType(
+          String.class.getCanonicalName());
+
+      // Create the field that holds the normal contents
+      assert normalContentsUrlExpression != null;
+      normalContentsFieldName = fields.define(stringType, "bundledImage_"
+          + repeatStyle.name(), normalContentsUrlExpression, true, true);
+
+      // Optionally create the field that holds the RTL contents
+      if (rtlContentsUrlExpression != null) {
+        rtlContentsFieldName = fields.define(stringType, "bundledImage_"
+            + repeatStyle.name() + "_rtl", rtlContentsUrlExpression, true, true);
+      }
+    }
+
+    @Override
+    public void setRtlImage(LocalizedImage image) {
+      rtlImages = Sets.add(rtlImages, image);
+    }
+  }
+
+  /**
+   * This key is used to determine which DisplayedImage a given set of image
+   * bytes should be associated with.
+   */
+  static class BundleKey extends StringKey {
+    private static String key(ResourceContext context,
+        ImageResourceDeclaration image) {
+      if (image.getRepeatStyle() == RepeatStyle.Both) {
+        return "Unbundled: " + image.get();
+      }
+      return "Arranged: " + image.getRepeatStyle().toString();
+    }
+
+    private final RepeatStyle repeatStyle;
+
+    public BundleKey(ImageResourceDeclaration image) {
+      super("External: " + image.get());
+      this.repeatStyle = image.getRepeatStyle();
+    }
+
+    public BundleKey(ResourceContext context, ImageResourceDeclaration image) {
+      super(key(context, image));
+      this.repeatStyle = image.getRepeatStyle();
+    }
+
+    public RepeatStyle getRepeatStyle() {
+      return repeatStyle;
+    }
+
+    public boolean isExternal() {
+      return get().startsWith("External: ");
+    }
+  }
+
+  /**
    * This is shared that can be shared across permutations for a given
-   * ClientBundle type.
+   * ClientBundle .
    */
   static class CachedState {
-    /**
-     * Associates an ImageRect with the ImageBundleBuilder that will emit its
-     * bytes.
-     */
-    public final Map<ImageRect, ImageBundleBuilder> buildersByImageRect = new IdentityHashMap<ImageRect, ImageBundleBuilder>();
-
-    /**
-     * Associates a layout constraint with an ImageBundleBuilder that can
-     * satisfy that constraint.
-     */
-    public final Map<RepeatStyle, ImageBundleBuilder> buildersByRepeatStyle = new EnumMap<RepeatStyle, ImageBundleBuilder>(
-        RepeatStyle.class);
-
-    /**
-     * Associates a method name with the ImageRect that contains the data for
-     * that method.
-     */
-    public final Map<String, ImageRect> imageRectsByName = new HashMap<String, ImageRect>();
-
-    /**
-     * Records that ImageRects that also need to provide an RTL-flipped version.
-     */
-    public final Set<ImageRect> rtlImages = new HashSet<ImageRect>();
-
-    public final Map<ImageBundleBuilder, URL[]> urlsByBuilder = new IdentityHashMap<ImageBundleBuilder, URL[]>();
-
-    /**
-     * Maps an ImageRect to two URLs that contain the normal and flipped
-     * contents.
-     */
-    public final Map<ImageRect, URL[]> urlsByExternalImageRect = new IdentityHashMap<ImageRect, URL[]>();
+    public final Map<BundleKey, BundledImage> bundledImages = new HashMap<BundleKey, BundledImage>();
+    public final Map<BundleKey, ExternalImage> externalImages = new HashMap<BundleKey, ExternalImage>();
   }
 
   /**
-   * This data is specific to a particular permutation.
+   * Associates an ImageRect and a LocalizedImage.
    */
-  static class LocalState {
-    /**
-     * Maps resource URLs to field names within the generated ClientBundle type.
-     * These fields will be statically initialized to an expression that can be
-     * used to access the contents of the resource URL.
-     * 
-     * @see ImageResourceGenerator#maybeDeploy
-     */
-    public final Map<URL, String> fieldNamesByUrl = new HashMap<URL, String>();
+  static class CannotBundleImageException extends Exception {
+    private final ImageRect imageRect;
+    private final LocalizedImage localized;
 
-    /**
-     * Maps an ImageRect to a pair of Java expressions. The first can be used to
-     * access the normal version of the resource, while the second, optional,
-     * field is used to access an RTL-flipped version.
-     */
-    public final Map<ImageRect, String[]> urlExpressionsByImageRect = new HashMap<ImageRect, String[]>();
+    public CannotBundleImageException(LocalizedImage localized,
+        ImageRect imageRect) {
+      this.localized = localized;
+      this.imageRect = imageRect;
+    }
+
+    public ImageRect getImageRect() {
+      return imageRect;
+    }
+
+    public LocalizedImage getLocalizedImage() {
+      return localized;
+    }
   }
 
   /**
-   * This is set to <code>true</code> by {@link #init} if {@link #shared} was
-   * initialized from cached data.
+   * Represents a file that contains image data.
+   */
+  abstract static class DisplayedImage {
+    protected String normalContentsFieldName;
+    protected String rtlContentsFieldName;
+
+    public abstract ImageRect getImageRect(ImageResourceDeclaration image);
+
+    /**
+     * Only valid after calling {@link #render}.
+     */
+    public String getNormalContentsFieldName() {
+      return normalContentsFieldName;
+    }
+
+    /**
+     * Only valid after calling {@link #render}, may be <code>null</code> if
+     * there is no RTL version of the image.
+     */
+    public String getRtlContentsFieldName() {
+      return rtlContentsFieldName;
+    }
+
+    public abstract void setRtlImage(LocalizedImage image);
+
+    abstract void render(TreeLogger logger, ResourceContext context,
+        ClientBundleFields fields, RepeatStyle repeatStyle)
+        throws UnableToCompleteException;
+  }
+
+  /**
+   * Represents a file that contains exactly one image.
+   */
+  static class ExternalImage extends DisplayedImage {
+    private final ImageResourceDeclaration image;
+    private boolean isRtl;
+    private final LocalizedImage localized;
+    private final ImageRect rect;
+
+    /**
+     * Create an unbundled image.
+     */
+    public ExternalImage(ImageResourceDeclaration image,
+        LocalizedImage localized, ImageRect rect) {
+      this.image = image;
+      this.localized = localized;
+      this.rect = rect;
+    }
+
+    public ImageRect getImageRect(ImageResourceDeclaration image) {
+      return this.image.equals(image) ? rect : null;
+    }
+
+    public void render(TreeLogger logger, ResourceContext context,
+        ClientBundleFields fields, RepeatStyle repeatStyle)
+        throws UnableToCompleteException {
+      JClassType stringType = context.getGeneratorContext().getTypeOracle().findType(
+          String.class.getCanonicalName());
+
+      String contentsExpression = context.deploy(localized.getUrl(), false);
+      normalContentsFieldName = fields.define(stringType, "externalImage",
+          contentsExpression, true, true);
+
+      if (isRtl) {
+        // Create a transformation to mirror about the Y-axis and translate
+        AffineTransform tx = new AffineTransform();
+        tx.setTransform(-1, 0, 0, 1, rect.getWidth(), 0);
+        rect.setTransform(tx);
+
+        byte[] rtlData = ImageBundleBuilder.toPng(logger, rect);
+        String rtlContentsUrlExpression = context.deploy(image.getName()
+            + "_rtl.png", "image/png", rtlData, false);
+        rtlContentsFieldName = fields.define(stringType, "externalImage_rtl",
+            rtlContentsUrlExpression, true, true);
+      }
+    }
+
+    public void setRtlImage(LocalizedImage image) {
+      if (this.image.equals(image)) {
+        isRtl = true;
+      }
+    }
+  }
+
+  /**
+   * This represent how the user described the image in the original Java
+   * source. Its identity is based on the ImageResource JMethod.
+   */
+  static class ImageResourceDeclaration extends StringKey {
+    private static String key(JMethod method) {
+      return method.getEnclosingType().getQualifiedSourceName() + "."
+          + method.getName();
+    }
+
+    private final String name;
+    private final JMethod method;
+    private final ImageOptions options;
+
+    public ImageResourceDeclaration(JMethod method) {
+      super(key(method));
+      this.name = method.getName();
+      this.method = method;
+      this.options = method.getAnnotation(ImageOptions.class);
+    }
+
+    public JMethod getMethod() {
+      return method;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public RepeatStyle getRepeatStyle() {
+      return options == null ? RepeatStyle.None : options.repeatStyle();
+    }
+
+    public int getScaleHeight() {
+      return options == null ? -1 : options.height();
+    }
+
+    public int getScaleWidth() {
+      return options == null ? -1 : options.width();
+    }
+
+    public boolean isFlipRtl() {
+      return options == null ? false : options.flipRtl();
+    }
+  }
+
+  /**
+   * This represents the particular collections of bits associated with a
+   * localized resource that a permutation will use. Its identity is based on
+   * the content hash of the resolved data and any transformations that will be
+   * applied to the data.
+   */
+  static class LocalizedImage extends StringKey {
+    public static LocalizedImage create(TreeLogger logger,
+        ResourceContext context, ImageResourceDeclaration image)
+        throws UnableToCompleteException {
+
+      URL[] resources = ResourceGeneratorUtil.findResources(logger, context,
+          image.getMethod());
+
+      if (resources.length != 1) {
+        logger.log(TreeLogger.ERROR, "Exactly one image may be specified", null);
+        throw new UnableToCompleteException();
+      }
+
+      URL resource = resources[0];
+
+      LocalizedImage toReturn = new LocalizedImage(image, resource);
+      return toReturn;
+    }
+
+    private static String key(ImageResourceDeclaration image, URL url) {
+      return Util.computeStrongName(Util.readURLAsBytes(url)) + ":"
+          + image.getScaleHeight() + ":" + image.getScaleWidth();
+    }
+
+    private final ImageResourceDeclaration image;
+    private final URL url;
+
+    public LocalizedImage(LocalizedImage other, URL alternateUrl) {
+      this(other.image, alternateUrl);
+    }
+
+    private LocalizedImage(ImageResourceDeclaration image, URL url) {
+      super(key(image, url));
+      this.image = image;
+      this.url = url;
+    }
+
+    public URL getUrl() {
+      return url;
+    }
+  }
+
+  /**
+   * Re-encode an image as a PNG to strip random header data.
+   */
+  private static URL renderToTempFile(TreeLogger logger,
+      ImageBundleBuilder builder, Arranger arranger)
+      throws UnableToCompleteException {
+    try {
+      byte[] imageBytes = builder.render(logger, arranger);
+      if (imageBytes == null) {
+        return null;
+      }
+
+      File file = File.createTempFile(
+          ImageResourceGenerator.class.getSimpleName(), ".png");
+      file.deleteOnExit();
+      Util.writeBytesToFile(logger, file, imageBytes);
+      return file.toURI().toURL();
+    } catch (IOException ex) {
+      logger.log(TreeLogger.ERROR, "Unable to write re-encoded PNG", ex);
+      throw new UnableToCompleteException();
+    }
+  }
+
+  /**
+   * This is used to short-circuit the {@link #prepare} method.
    */
   private boolean prepared;
   private CachedState shared;
-  private LocalState local;
-  private JType stringType;
 
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context,
@@ -126,12 +461,14 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
     sw.indent();
     sw.println('"' + name + "\",");
 
-    ImageRect rect = shared.imageRectsByName.get(name);
+    ImageResourceDeclaration image = new ImageResourceDeclaration(method);
+    DisplayedImage bundle = getImage(context, image);
+    ImageRect rect = bundle.getImageRect(image);
     assert rect != null : "No ImageRect ever computed for " + name;
 
-    String[] urlExpressions = local.urlExpressionsByImageRect.get(rect);
-    assert urlExpressions != null : "No URL expression for " + name;
-    assert urlExpressions.length == 2;
+    String[] urlExpressions = new String[] {
+        bundle.getNormalContentsFieldName(), bundle.getRtlContentsFieldName()};
+    assert urlExpressions[0] != null : "No primary URL expression for " + name;
 
     if (urlExpressions[1] == null) {
       sw.println(urlExpressions[0] + ",");
@@ -156,41 +493,13 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
   @Override
   public void createFields(TreeLogger logger, ResourceContext context,
       ClientBundleFields fields) throws UnableToCompleteException {
-    if (!prepared) {
-      finalizeArrangements(logger);
-    }
-
-    for (ImageRect rect : shared.imageRectsByName.values()) {
-      String[] urlExpressions;
-      {
-        URL[] contents;
-        ImageBundleBuilder builder = shared.buildersByImageRect.get(rect);
-        if (builder == null) {
-          contents = shared.urlsByExternalImageRect.get(rect);
-        } else {
-          contents = shared.urlsByBuilder.get(builder);
-        }
-        assert contents != null && contents.length == 2;
-
-        urlExpressions = new String[2];
-        urlExpressions[0] = maybeDeploy(context, fields, contents[0]);
-        urlExpressions[1] = maybeDeploy(context, fields, contents[1]);
-      }
-      local.urlExpressionsByImageRect.put(rect, urlExpressions);
-    }
-  }
-
-  @Override
-  public void finish(TreeLogger logger, ResourceContext context)
-      throws UnableToCompleteException {
-    local = null;
+    renderImageMap(logger, context, fields, shared.bundledImages);
+    renderImageMap(logger, context, fields, shared.externalImages);
   }
 
   @Override
   public void init(TreeLogger logger, ResourceContext context) {
-    // The images are bundled differently when data resources are supported
-    String key = context.getClientBundleType().getQualifiedSourceName() + ":"
-        + context.supportsDataUrls();
+    String key = createCacheKey(context);
     shared = context.getCachedData(key, CachedState.class);
     prepared = shared != null;
     if (prepared) {
@@ -199,11 +508,6 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
       shared = new CachedState();
       context.putCachedData(key, shared);
     }
-    local = new LocalState();
-
-    stringType = context.getGeneratorContext().getTypeOracle().findType(
-        String.class.getCanonicalName());
-    assert stringType != null : "No String type";
   }
 
   /**
@@ -215,162 +519,104 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
       ClientBundleRequirements requirements, JMethod method)
       throws UnableToCompleteException {
     if (prepared) {
+      logger.log(TreeLogger.DEBUG, "ImageResources already prepared");
       return;
     }
 
-    URL[] resources = ResourceGeneratorUtil.findResources(logger, context,
-        method);
+    ImageResourceDeclaration image = new ImageResourceDeclaration(method);
 
-    if (resources.length != 1) {
-      logger.log(TreeLogger.ERROR, "Exactly one image may be specified", null);
-      throw new UnableToCompleteException();
-    }
-
-    ImageBundleBuilder builder = getBuilder(method);
-    URL resource = resources[0];
-    String name = method.getName();
-
+    boolean cannotBundle = false;
+    DisplayedImage displayed = null;
+    LocalizedImage localizedImage;
     ImageRect rect;
     try {
-      rect = builder.assimilate(logger, name, resource);
-      if (context.supportsDataUrls()
-          || getRepeatStyle(method) == RepeatStyle.Both) {
-        // Just use the calculated meta-data
-        builder.removeMapping(name);
-        rect.setPosition(0, 0);
-        throw new UnsuitableForStripException(rect);
-      }
-      shared.buildersByImageRect.put(rect, builder);
-    } catch (UnsuitableForStripException e) {
-      // Add the image to the output as a separate resource
-      URL normalContents;
+      BundledImage bundledImage = (BundledImage) getImage(context, image);
+      localizedImage = bundledImage.addImage(logger, context, image);
+      rect = bundledImage.getImageRect(image);
+      displayed = bundledImage;
+    } catch (CannotBundleImageException e) {
+      cannotBundle = true;
+      localizedImage = e.getLocalizedImage();
       rect = e.getImageRect();
+    }
 
+    // Store the image externally
+    if (cannotBundle) {
       if (rect.isAnimated() || rect.isLossy()) {
-        // Can't re-encode animated or lossy images, so we emit it as-is
-        normalContents = resource;
+        // Don't re-encode
       } else {
-        normalContents = reencodeToTempFile(logger, rect);
-      }
-      shared.urlsByExternalImageRect.put(rect, new URL[] {normalContents, null});
-    }
+        /*
+         * Try to re-compress the image, but only use the re-compressed bytes if
+         * they actually offer a space-savings.
+         */
+        try {
+          URL contentLocation = localizedImage.getUrl();
+          int originalSize = contentLocation.openConnection().getContentLength();
 
-    shared.imageRectsByName.put(name, rect);
+          // Re-encode the data
+          URL reencodedContents = reencodeToTempFile(logger, rect);
+          int newSize = reencodedContents.openConnection().getContentLength();
 
-    if (getFlipRtl(method)) {
-      shared.rtlImages.add(rect);
-    }
-  }
-
-  private void finalizeArrangements(TreeLogger logger)
-      throws UnableToCompleteException {
-    for (Map.Entry<RepeatStyle, ImageBundleBuilder> entry : shared.buildersByRepeatStyle.entrySet()) {
-      RepeatStyle repeatStyle = entry.getKey();
-      ImageBundleBuilder builder = entry.getValue();
-      Arranger arranger;
-
-      switch (repeatStyle) {
-        case None:
-          arranger = new ImageBundleBuilder.BestFitArranger();
-          break;
-        case Horizontal:
-          arranger = new ImageBundleBuilder.VerticalArranger();
-          break;
-        case Vertical:
-          arranger = new ImageBundleBuilder.HorizontalArranger();
-          break;
-        case Both:
-          // This is taken care of when writing the external images;
-          continue;
-        default:
-          logger.log(TreeLogger.ERROR, "Unknown RepeatStyle" + repeatStyle);
-          throw new UnableToCompleteException();
-      }
-      URL normalContents = renderToTempFile(logger, builder, arranger);
-
-      shared.urlsByBuilder.put(builder, new URL[] {normalContents, null});
-    }
-
-    if (shared.rtlImages.size() > 0) {
-      Set<ImageBundleBuilder> rtlBuilders = new HashSet<ImageBundleBuilder>();
-
-      for (ImageRect rtlImage : shared.rtlImages) {
-        // Create a transformation to mirror about the Y-axis and translate
-        AffineTransform tx = new AffineTransform();
-        tx.setTransform(-1, 0, 0, 1, rtlImage.getWidth(), 0);
-        rtlImage.setTransform(tx);
-
-        if (shared.buildersByImageRect.containsKey(rtlImage)) {
-          /*
-           * This image is assigned to a builder, so we'll just remember to
-           * regenerate that builder.
-           */
-          rtlBuilders.add(shared.buildersByImageRect.get(rtlImage));
-        } else {
-          // Otherwise, emit the external version
-          URL[] contents = shared.urlsByExternalImageRect.get(rtlImage);
-          assert contents != null;
-          contents[1] = reencodeToTempFile(logger, rtlImage);
+          // But only use it if we did a better job on compression
+          if (newSize < originalSize) {
+            logger.log(TreeLogger.SPAM, "Reencoded image and saved "
+                + (originalSize - newSize) + " bytes");
+            localizedImage = new LocalizedImage(localizedImage,
+                reencodedContents);
+          }
+        } catch (IOException e2) {
+          // Non-fatal, but weird
+          logger.log(TreeLogger.WARN,
+              "Unable to determine before/after size when re-encoding image "
+                  + "data", e2);
         }
       }
-
-      for (ImageBundleBuilder builder : rtlBuilders) {
-        URL[] contents = shared.urlsByBuilder.get(builder);
-        assert contents != null && contents.length == 2;
-
-        contents[1] = renderToTempFile(logger, builder,
-            new ImageBundleBuilder.IdentityArranger());
-      }
+      ExternalImage externalImage = new ExternalImage(image, localizedImage,
+          rect);
+      shared.externalImages.put(new BundleKey(image), externalImage);
+      displayed = externalImage;
     }
-  }
 
-  private ImageBundleBuilder getBuilder(JMethod method) {
-    RepeatStyle repeatStyle = getRepeatStyle(method);
-    ImageBundleBuilder builder = shared.buildersByRepeatStyle.get(repeatStyle);
-    if (builder == null) {
-      builder = new ImageBundleBuilder();
-      shared.buildersByRepeatStyle.put(repeatStyle, builder);
-    }
-    return builder;
-  }
-
-  private boolean getFlipRtl(JMethod method) {
-    ImageOptions options = method.getAnnotation(ImageOptions.class);
-    if (options == null) {
-      return false;
-    } else {
-      return options.flipRtl();
-    }
-  }
-
-  private RepeatStyle getRepeatStyle(JMethod method) {
-    ImageOptions options = method.getAnnotation(ImageOptions.class);
-    if (options == null) {
-      return RepeatStyle.None;
-    } else {
-      return options.repeatStyle();
+    if (image.isFlipRtl()) {
+      displayed.setRtlImage(localizedImage);
     }
   }
 
   /**
-   * Create a field in the ClientBundle type that is used to intern the URL
-   * expressions that can be used to access the contents of the given resource.
-   * 
-   * @return the name of the field that was created
+   * Creates a cache key to be used with {@link ResourceContext#putCachedData}.
+   * The key is based on the ClientBundle type, support for data URLs, and the
+   * current locale.
    */
-  private String maybeDeploy(ResourceContext context,
-      ClientBundleFields fields, URL resource) throws UnableToCompleteException {
-    if (resource == null) {
-      return null;
+  private String createCacheKey(ResourceContext context) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(context.getClientBundleType().getQualifiedSourceName());
+    sb.append(":").append(context.supportsDataUrls());
+    try {
+      String locale = context.getGeneratorContext().getPropertyOracle().getSelectionProperty(
+          TreeLogger.NULL, "locale").getCurrentValue();
+      sb.append(locale);
+    } catch (BadPropertyValueException e) {
+      // OK, locale isn't defined
     }
 
-    String toReturn = local.fieldNamesByUrl.get(resource);
-    if (toReturn == null) {
-      String urlExpression = context.deploy(resource, false);
-      toReturn = fields.define(stringType, "internedUrl"
-          + local.fieldNamesByUrl.size(), urlExpression, true, true);
-      local.fieldNamesByUrl.put(resource, toReturn);
+    return sb.toString();
+  }
+
+  private DisplayedImage getImage(ResourceContext context,
+      ImageResourceDeclaration image) {
+    DisplayedImage toReturn = shared.externalImages.get(new BundleKey(image));
+    if (toReturn != null) {
+      return toReturn;
     }
+
+    BundleKey key = new BundleKey(context, image);
+    toReturn = shared.bundledImages.get(key);
+    if (toReturn == null) {
+      BundledImage bundled = new BundledImage();
+      shared.bundledImages.put(key, bundled);
+      toReturn = bundled;
+    }
+
     return toReturn;
   }
 
@@ -397,25 +643,12 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator {
     }
   }
 
-  /**
-   * Re-encode an image as a PNG to strip random header data.
-   */
-  private URL renderToTempFile(TreeLogger logger, ImageBundleBuilder builder,
-      Arranger arranger) throws UnableToCompleteException {
-    try {
-      byte[] imageBytes = builder.render(logger, arranger);
-      if (imageBytes == null) {
-        return null;
-      }
-
-      File file = File.createTempFile(
-          ImageResourceGenerator.class.getSimpleName(), ".png");
-      file.deleteOnExit();
-      Util.writeBytesToFile(logger, file, imageBytes);
-      return file.toURI().toURL();
-    } catch (IOException ex) {
-      logger.log(TreeLogger.ERROR, "Unable to write re-encoded PNG", ex);
-      throw new UnableToCompleteException();
+  private void renderImageMap(TreeLogger logger, ResourceContext context,
+      ClientBundleFields fields, Map<BundleKey, ? extends DisplayedImage> map)
+      throws UnableToCompleteException {
+    for (Map.Entry<BundleKey, ? extends DisplayedImage> entry : map.entrySet()) {
+      DisplayedImage bundle = entry.getValue();
+      bundle.render(logger, context, fields, entry.getKey().getRepeatStyle());
     }
   }
 }

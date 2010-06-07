@@ -78,6 +78,14 @@ public class ImageResourceTest extends GWTTestCase {
 
     // Test default filename lookup while we're at it
     ImageResource largeLossy();
+  
+    @Source("64x64.png")
+    @ImageOptions(width = 32)
+    ImageResource scaledDown();
+    
+    @Source("64x64.png")
+    @ImageOptions(width = 128)
+    ImageResource scaledUp();
   }
 
   @Override
@@ -113,8 +121,8 @@ public class ImageResourceTest extends GWTTestCase {
     assertEquals(a.getLeft(), b.getLeft());
     assertEquals(a.getLeft(), c.getLeft());
 
-    assertEquals(a.getLeft(), b.getTop());
-    assertEquals(a.getLeft(), c.getTop());
+    assertEquals(a.getTop(), b.getTop());
+    assertEquals(a.getTop(), c.getTop());
 
     delayTestFinish(10000);
     // See if the size of the image strip is what we expect
@@ -151,5 +159,11 @@ public class ImageResourceTest extends GWTTestCase {
 
     assertEquals(16, r.i16x16Horizontal().getWidth());
     assertEquals(16, r.i16x16Horizontal().getHeight());
+
+    // Check scaling and aspect ratio
+    assertEquals(32, r.scaledDown().getWidth());
+    assertEquals(32, r.scaledDown().getHeight());
+    assertEquals(128, r.scaledUp().getWidth());
+    assertEquals(128, r.scaledUp().getHeight());
   }
 }

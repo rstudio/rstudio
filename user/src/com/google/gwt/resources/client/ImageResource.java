@@ -48,6 +48,14 @@ public interface ImageResource extends ResourcePrototype {
     boolean flipRtl() default false;
 
     /**
+     * Set to a positive value to override the image's intrinsic height. The
+     * image bundling code will scale the image to the desired height. If only
+     * one of <code>width</code> or <code>height</code> are set, the aspect
+     * ratio of the image will be maintained.
+     */
+    int height() default -1;
+
+    /**
      * This option affects the image bundling optimization to allow the image to
      * be used with the {@link CssResource} {@code @sprite} rule where
      * repetition of the image is desired.
@@ -55,6 +63,14 @@ public interface ImageResource extends ResourcePrototype {
      * @see "CssResource documentation"
      */
     RepeatStyle repeatStyle() default RepeatStyle.None;
+
+    /**
+     * Set to a positive value to override the image's intrinsic width. The
+     * image bundling code will scale the image to the desired width. If only
+     * one of <code>width</code> or <code>height</code> are set, the aspect
+     * ratio of the image will be maintained.
+     */
+    int width() default -1;
   }
 
   /**
