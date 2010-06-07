@@ -177,6 +177,47 @@ public class TreeTest extends GWTTestCase {
     assertEquals(t, l.getParent());
   }
 
+  public void testRootInsert() {
+    Tree t = new Tree();
+    TreeItem b = t.addItem("b");
+
+    // Insert at zero.
+    TreeItem a = t.insertItem(0, "a");
+    assertEquals(a.getElement().getNextSiblingElement(), b.getElement());
+
+    // Insert at end.
+    TreeItem d = t.insertItem(2, new Label("d"));
+    assertEquals(b.getElement().getNextSiblingElement(), d.getElement());
+
+    // Insert in the middle.
+    TreeItem c = new TreeItem("c");
+    t.insertItem(2, c);
+    assertEquals(b.getElement().getNextSiblingElement(), c.getElement());
+  }
+
+  public void testRootInsertInvalidIndex() {
+    Tree t = new Tree();
+    t.addItem("a");
+    t.addItem("b");
+    t.addItem("c");
+
+    // Insert at -1.
+    try {
+      t.insertItem(-1, "illegal");
+      fail("Expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected.
+    }
+
+    // Insert past the end.
+    try {
+      t.insertItem(4, "illegal");
+      fail("Expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected.
+    }
+  }
+
   public void testSwap() {
     Tree t = new Tree();
 

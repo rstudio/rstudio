@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -304,34 +305,7 @@ public class TreeItem extends UIObject implements HasHTML {
    * @param item the item to be added
    */
   public void addItem(TreeItem item) {
-    // Detach item from existing parent.
-    if ((item.getParentItem() != null) || (item.getTree() != null)) {
-      item.remove();
-    }
-
-    if (children == null) {
-      initChildren();
-    }
-
-    // Logical attach.
-    item.setParentItem(this);
-    children.add(item);
-
-    // Physical attach.
-    if (LocaleInfo.getCurrentLocale().isRTL()) {
-      DOM.setStyleAttribute(item.getElement(), "marginRight", "16px");
-    } else {
-      DOM.setStyleAttribute(item.getElement(), "marginLeft", "16px");
-    }
-
-    DOM.appendChild(childSpanElem, item.getElement());
-
-    // Adopt.
-    item.setTree(tree);
-
-    if (children.size() == 1) {
-      updateState(false, false);
-    }
+    insertItem(getChildCount(), item);
   }
 
   /**
@@ -439,6 +413,89 @@ public class TreeItem extends UIObject implements HasHTML {
    */
   public Widget getWidget() {
     return widget;
+  }
+
+  /**
+   * Inserts a child tree item at the specified index containing the specified
+   * text.
+   * 
+   * @param beforeIndex the index where the item will be inserted
+   * @param itemText the text to be added
+   * @return the item that was added
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public TreeItem insertItem(int beforeIndex, String itemText)
+      throws IndexOutOfBoundsException {
+    TreeItem ret = new TreeItem(itemText);
+    insertItem(beforeIndex, ret);
+    return ret;
+  }
+
+  /**
+   * Inserts an item as a child to this one.
+   * 
+   * @param beforeIndex the index where the item will be inserted
+   * @param item the item to be added
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public void insertItem(int beforeIndex, TreeItem item)
+      throws IndexOutOfBoundsException {
+    // Detach item from existing parent.
+    if ((item.getParentItem() != null) || (item.getTree() != null)) {
+      item.remove();
+    }
+
+    // Check the index after detaching in case this item was already the parent.
+    int childCount = getChildCount();
+    if (beforeIndex < 0 || beforeIndex > childCount) {
+      throw new IndexOutOfBoundsException();
+    }
+
+    if (children == null) {
+      initChildren();
+    }
+
+    // Set the margin.
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      item.getElement().getStyle().setMarginRight(16.0, Unit.PX);
+    } else {
+      item.getElement().getStyle().setMarginLeft(16.0, Unit.PX);
+    }
+
+    // Physical attach.
+    if (beforeIndex == childCount) {
+      childSpanElem.appendChild(item.getElement());
+    } else {
+      Element beforeElem = getChild(beforeIndex).getElement();
+      childSpanElem.insertBefore(item.getElement(), beforeElem);
+    }
+
+    // Logical attach.
+    item.setParentItem(this);
+    children.add(item);
+
+    // Adopt.
+    item.setTree(tree);
+
+    if (children.size() == 1) {
+      updateState(false, false);
+    }
+  }
+
+  /**
+   * Inserts a child tree item at the specified index containing the specified
+   * widget.
+   * 
+   * @param beforeIndex the index where the item will be inserted
+   * @param widget the widget to be added
+   * @return the item that was added
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public TreeItem insertItem(int beforeIndex, Widget widget)
+      throws IndexOutOfBoundsException {
+    TreeItem ret = new TreeItem(widget);
+    insertItem(beforeIndex, ret);
+    return ret;
   }
 
   /**

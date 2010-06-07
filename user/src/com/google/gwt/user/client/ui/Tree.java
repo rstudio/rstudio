@@ -480,6 +480,43 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return FocusPanel.impl.getTabIndex(focusable);
   }
 
+  /**
+   * Inserts a child tree item at the specified index containing the specified
+   * text.
+   * 
+   * @param beforeIndex the index where the item will be inserted
+   * @param itemText the text to be added
+   * @return the item that was added
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public TreeItem insertItem(int beforeIndex, String itemText) {
+    return root.insertItem(beforeIndex, itemText);
+  }
+
+  /**
+   * Inserts an item into the root level of this tree.
+   * 
+   * @param beforeIndex the index where the item will be inserted
+   * @param item the item to be added
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public void insertItem(int beforeIndex, TreeItem item) {
+    root.insertItem(beforeIndex, item);
+  }
+
+  /**
+   * Inserts a child tree item at the specified index containing the specified
+   * widget.
+   * 
+   * @param beforeIndex the index where the item will be inserted
+   * @param widget the widget to be added
+   * @return the item that was added
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public TreeItem insertItem(int beforeIndex, Widget widget) {
+    return root.insertItem(beforeIndex, widget);
+  }
+
   public boolean isAnimationEnabled() {
     return isAnimationEnabled;
   }
@@ -964,13 +1001,29 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     // for all top-level items.
     root = new TreeItem() {
       @Override
-      public void addItem(TreeItem item) {
+      public void insertItem(int beforeIndex, TreeItem item)
+          throws IndexOutOfBoundsException {
+        // Check the index.
+        int childCount = getChildCount();
+        if (beforeIndex < 0 || beforeIndex > childCount) {
+          throw new IndexOutOfBoundsException();
+        }
+
         // If this element already belongs to a tree or tree item, remove it.
         if ((item.getParentItem() != null) || (item.getTree() != null)) {
           item.remove();
         }
-        DOM.appendChild(Tree.this.getElement(), item.getElement());
 
+        // Physical attach.
+        Element treeElem = Tree.this.getElement();
+        if (beforeIndex == childCount) {
+          treeElem.appendChild(item.getElement());
+        } else {
+          Element beforeElem = getChild(beforeIndex).getElement();
+          treeElem.insertBefore(item.getElement(), beforeElem);
+        }
+
+        // Logical attach.
         item.setTree(this.getTree());
 
         // Explicitly set top-level items' parents to null.
