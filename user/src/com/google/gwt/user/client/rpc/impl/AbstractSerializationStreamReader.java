@@ -27,6 +27,59 @@ import java.util.ArrayList;
  */
 public abstract class AbstractSerializationStreamReader extends
     AbstractSerializationStream implements SerializationStreamReader {
+  
+  private static final double TWO_PWR_15_DBL = 0x8000;
+  private static final double TWO_PWR_16_DBL = 0x10000;
+  private static final double TWO_PWR_22_DBL = 0x400000;
+  private static final double TWO_PWR_31_DBL = TWO_PWR_16_DBL * TWO_PWR_15_DBL;
+  private static final double TWO_PWR_32_DBL = TWO_PWR_16_DBL * TWO_PWR_16_DBL;
+  private static final double TWO_PWR_44_DBL = TWO_PWR_22_DBL * TWO_PWR_22_DBL;
+  private static final double TWO_PWR_63_DBL = TWO_PWR_32_DBL * TWO_PWR_31_DBL;
+
+  /**
+   * Return a long from a pair of doubles { low, high } such that the
+   * actual value is equal to high + low.
+   */
+  public static long fromDoubles(double lowDouble, double highDouble) {
+    long high = fromDouble(highDouble);
+    long low = fromDouble(lowDouble);
+    return high + low;
+  }
+
+  private static long fromDouble(double value) {
+    if (Double.isNaN(value)) {
+      return 0L;
+    }
+    if (value < -TWO_PWR_63_DBL) {
+      return Long.MIN_VALUE;
+    }
+    if (value >= TWO_PWR_63_DBL) {
+      return Long.MAX_VALUE;
+    }
+  
+    boolean negative = false;
+    if (value < 0) {
+      negative = true;
+      value = -value;
+    }
+    int a2 = 0;
+    if (value >= TWO_PWR_44_DBL) {
+      a2 = (int) (value / TWO_PWR_44_DBL);
+      value -= a2 * TWO_PWR_44_DBL;
+    }
+    int a1 = 0;
+    if (value >= TWO_PWR_22_DBL) {
+      a1 = (int) (value / TWO_PWR_22_DBL);
+      value -= a1 * TWO_PWR_22_DBL;
+    }
+    int a0 = (int) value;
+    
+    long result = ((long) a2 << 44) | ((long) a1 << 22) | a0;
+    if (negative) {
+      result = -result;
+    }
+    return result;
+  }
 
   private ArrayList<Object> seenArray = new ArrayList<Object>();
 
@@ -96,5 +149,4 @@ public abstract class AbstractSerializationStreamReader extends
     // index is 1-based
     return seenArray.size();
   }
-
 }

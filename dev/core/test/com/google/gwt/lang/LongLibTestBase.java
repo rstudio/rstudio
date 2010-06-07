@@ -25,36 +25,36 @@ import junit.framework.TestCase;
  */
 public class LongLibTestBase extends TestCase {
 
-  static void assertEquals(double[] expected, double[] actual) {
+  static void assertEquals(LongEmul expected, LongEmul actual) {
     assertTrue("expected=" + LongLib.toString(expected) + "  actual="
         + LongLib.toString(actual), LongLib.eq(expected, actual));
   }
 
   public void testAdditive() {
     {
-      final double[] n1 = LongLib.fromInt(1234);
-      final double[] n2 = LongLib.fromInt(9876);
+      final LongEmul n1 = LongLib.fromInt(1234);
+      final LongEmul n2 = LongLib.fromInt(9876);
       assertEquals(LongLib.fromInt(11110), LongLib.add(n1, n2));
       assertEquals(LongLib.fromInt(-8642), LongLib.sub(n1, n2));
     }
 
     {
-      final double[] n1 = LongLib.fromInt(-1234);
-      final double[] n2 = LongLib.fromInt(9876);
+      final LongEmul n1 = LongLib.fromInt(-1234);
+      final LongEmul n2 = LongLib.fromInt(9876);
       assertEquals(LongLib.fromInt(8642), LongLib.add(n1, n2));
       assertEquals(LongLib.fromInt(-11110), LongLib.sub(n1, n2));
     }
 
     {
-      final double[] n1 = LongLib.fromInt(-1234);
-      final double[] n2 = LongLib.fromInt(-9876);
+      final LongEmul n1 = LongLib.fromInt(-1234);
+      final LongEmul n2 = LongLib.fromInt(-9876);
       assertEquals(LongLib.fromInt(-11110), LongLib.add(n1, n2));
       assertEquals(LongLib.fromInt(8642), LongLib.sub(n1, n2));
     }
 
     {
-      final double[] n1 = longFromBits(0x12345678, 0xabcdabcd);
-      final double[] n2 = longFromBits(0x77773333, 0x22224444);
+      final LongEmul n1 = longFromBits(0x12345678, 0xabcdabcd);
+      final LongEmul n2 = longFromBits(0x77773333, 0x22224444);
       assertEquals(longFromBits(0x89ab89ab, 0xcdeff011), LongLib.add(n1, n2));
       assertEquals(longFromBits(0x9abd2345, 0x89ab6789), LongLib.sub(n1, n2));
     }
@@ -62,8 +62,8 @@ public class LongLibTestBase extends TestCase {
 
   public void testBitOps() {
     {
-      final double[] n1 = LongLib.fromInt(1234);
-      final double[] n2 = LongLib.fromInt(9876);
+      final LongEmul n1 = LongLib.fromInt(1234);
+      final LongEmul n2 = LongLib.fromInt(9876);
 
       assertEquals(LongLib.fromInt(1168), LongLib.and(n1, n2));
       assertEquals(LongLib.fromInt(9942), LongLib.or(n1, n2));
@@ -73,8 +73,8 @@ public class LongLibTestBase extends TestCase {
     }
 
     {
-      final double[] n1 = LongLib.fromInt(-1234);
-      final double[] n2 = LongLib.fromInt(9876);
+      final LongEmul n1 = LongLib.fromInt(-1234);
+      final LongEmul n2 = LongLib.fromInt(9876);
       assertEquals(LongLib.fromInt(8708), LongLib.and(n1, n2));
       assertEquals(LongLib.fromInt(-66), LongLib.or(n1, n2));
       assertEquals(LongLib.fromInt(-8774), LongLib.xor(n1, n2));
@@ -83,8 +83,8 @@ public class LongLibTestBase extends TestCase {
     }
 
     {
-      final double[] n1 = LongLib.shl(LongLib.fromInt(0x1234), 32);
-      final double[] n2 = LongLib.shl(LongLib.fromInt(0x9876), 32);
+      final LongEmul n1 = LongLib.shl(LongLib.fromInt(0x1234), 32);
+      final LongEmul n2 = LongLib.shl(LongLib.fromInt(0x9876), 32);
       assertEquals(LongLib.shl(LongLib.fromInt(0x1034), 32),
           LongLib.and(n1, n2));
       assertEquals(LongLib.shl(LongLib.fromInt(0x9a76), 32), LongLib.or(n1, n2));
@@ -113,17 +113,28 @@ public class LongLibTestBase extends TestCase {
     assertTrue(!LongLib.eq(LongLib.fromInt(12), LongLib.fromInt(11)));
     assertTrue(LongLib.gte(LongLib.fromInt(12), LongLib.fromInt(11)));
     assertTrue(LongLib.gt(LongLib.fromInt(12), LongLib.fromInt(11)));
+    
+    assertTrue(LongLib.gt(LongLib.fromInt(-10), LongLib.fromInt(-11)));
+    assertTrue(LongLib.gt(LongLib.fromInt(10), LongLib.fromInt(-11)));
+    assertTrue(!LongLib.gt(LongLib.fromInt(-10), LongLib.fromInt(11)));
+    assertTrue(LongLib.gte(LongLib.fromInt(-10), LongLib.fromInt(-11)));
+    assertTrue(LongLib.gte(LongLib.fromInt(-10), LongLib.fromInt(-10)));
+    assertTrue(!LongLib.lt(LongLib.fromInt(-10), LongLib.fromInt(-11)));
+    assertTrue(!LongLib.lte(LongLib.fromInt(-10), LongLib.fromInt(-11)));
+    assertTrue(LongLib.lte(LongLib.fromInt(-10), LongLib.fromInt(-10)));
+    assertTrue(LongLib.eq(LongLib.fromInt(-10), LongLib.fromInt(-10)));
+    assertTrue(!LongLib.neq(LongLib.fromInt(-10), LongLib.fromInt(-10)));
 
     // the following three comparisons cannot be implemented by
     // subtracting the arguments, because the subtraction causes an overflow
-    final double[] largeNeg = longFromBits(0x82341234, 0x0);
-    final double[] largePos = longFromBits(0x12341234, 0x0);
+    final LongEmul largeNeg = longFromBits(0x82341234, 0x0);
+    final LongEmul largePos = longFromBits(0x12341234, 0x0);
     assertTrue(LongLib.lt(largeNeg, largePos));
 
     assertTrue(LongLib.lt(Const.MIN_VALUE, LongLib.fromInt(0)));
     assertTrue(LongLib.gt(LongLib.fromInt(0), Const.MIN_VALUE));
 
-    final double[] largePosPlusOne = LongLib.add(largePos, LongLib.fromInt(1));
+    final LongEmul largePosPlusOne = LongLib.add(largePos, LongLib.fromInt(1));
 
     assertTrue(LongLib.lt(largePos, largePosPlusOne));
     assertTrue(LongLib.lte(largePos, largePosPlusOne));
@@ -152,22 +163,64 @@ public class LongLibTestBase extends TestCase {
   }
 
   public void testDiv() {
-    double[] deadBeef = LongLib.typeChange(0xdeadbeefdeadbeefL);
-    double[] ten = LongLib.fromInt(10);
-    assertEquals(LongLib.typeChange(-240105308887621659L), LongLib.div(
+    LongEmul deadBeef = longFromBits(0xdeadbeef, 0xdeadbeef);
+    LongEmul ten = LongLib.fromInt(10);
+    assertEquals(longFromBits(0xfcaaf97e, 0x63115fe5), LongLib.div(
         deadBeef, ten));
     assertEquals(Const.ZERO, LongLib.div(Const.ONE, Const.TWO));
-    assertEquals(LongLib.typeChange(4611686018427387903L), LongLib.div(
+    assertEquals(longFromBits(0x3fffffff, 0xffffffff), LongLib.div(
         Const.MAX_VALUE, Const.TWO));
+    
+    assertEquals(Const.ZERO, LongLib.div(Const.ZERO, LongLib.fromInt(1000)));
+    assertEquals(Const.ONE, LongLib.div(Const.MIN_VALUE, Const.MIN_VALUE));
+    assertEquals(Const.ZERO, LongLib.div(LongLib.fromInt(1000), Const.MIN_VALUE));
+    assertEquals("-1125899906842624", LongLib.toString(LongLib.div(Const.MIN_VALUE, LongLib.fromInt(8192))));
+    assertEquals("-1125762484664320", LongLib.toString(LongLib.div(Const.MIN_VALUE, LongLib.fromInt(8193))));
+    assertEquals(Const.ZERO, LongLib.div(LongLib.fromInt(-1000), LongLib.fromInt(8192)));
+    assertEquals(Const.ZERO, LongLib.div(LongLib.fromInt(-1000), LongLib.fromInt(8193)));
+    assertEquals(LongLib.fromInt(-122070), LongLib.div(LongLib.fromInt(-1000000000), LongLib.fromInt(8192)));
+    assertEquals(LongLib.fromInt(-122055), LongLib.div(LongLib.fromInt(-1000000000), LongLib.fromInt(8193)));
+    assertEquals(LongLib.fromInt(122070), LongLib.div(LongLib.fromInt(1000000000), LongLib.fromInt(8192)));
+    assertEquals(LongLib.fromInt(122055), LongLib.div(LongLib.fromInt(1000000000), LongLib.fromInt(8193)));
+    
+    assertEquals(longFromBits(0x1fffff, 0xffffffff), LongLib.div(Const.MAX_VALUE, longFromBits(0x00000000, 0x00000400)));
+    assertEquals(longFromBits(0x1fff, 0xffffffff), LongLib.div(Const.MAX_VALUE, longFromBits(0x00000000, 0x00040000)));
+    assertEquals(longFromBits(0x1f, 0xffffffff), LongLib.div(Const.MAX_VALUE, longFromBits(0x00000000, 0x04000000)));
+    assertEquals(LongLib.fromInt(536870911), LongLib.div(Const.MAX_VALUE, longFromBits(0x00000004, 0x00000000)));
+    assertEquals(LongLib.fromInt(2097151), LongLib.div(Const.MAX_VALUE, longFromBits(0x00000400, 0x00000000)));
+    assertEquals(LongLib.fromInt(8191), LongLib.div(Const.MAX_VALUE, longFromBits(0x00040000, 0x00000000)));
+    assertEquals(LongLib.fromInt(31), LongLib.div(Const.MAX_VALUE, longFromBits(0x04000000, 0x00000000)));
+    
+    LongLib.div(Const.MAX_VALUE, longFromBits(0x00000000, 0x00000300));
+    LongLib.div(Const.MAX_VALUE, longFromBits(0x00000000, 0x30000000));
+    LongLib.div(Const.MAX_VALUE, longFromBits(0x00300000, 0x00000000));
+    LongLib.div(Const.MAX_VALUE, longFromBits(0x00300000, 0x00000300));
+    LongLib.div(Const.MAX_VALUE, longFromBits(0x00300000, 0x30000000));
+    LongLib.div(Const.MAX_VALUE, longFromBits(0x00000000, 0x30000300));
+    LongLib.div(Const.MAX_VALUE, longFromBits(0x00300000, 0x30000300));
   }
 
   public void testFactorial() {
-    double[] fact18 = fact(LongLib.fromInt(18));
-    double[] fact17 = fact(LongLib.fromInt(17));
+    LongEmul fact18 = fact(LongLib.fromInt(18));
+    LongEmul fact17 = fact(LongLib.fromInt(17));
     assertEquals(LongLib.fromInt(18), LongLib.div(fact18, fact17));
   }
 
   public void testFromDouble() {
+    assertEquals("4611686018427387904", LongLib.toString(LongLib.fromDouble(Math.pow(2, 62))));
+    assertEquals("35184372088832", LongLib.toString(LongLib.fromDouble(Math.pow(2, 45))));
+    assertEquals("35184372088832", LongLib.toString(LongLib.fromDouble(Math.pow(2, 45))));
+    assertEquals("17592186044417", LongLib.toString(LongLib.fromDouble(Math.pow(2, 44) + 1)));
+    assertEquals("17592186044416", LongLib.toString(LongLib.fromDouble(Math.pow(2, 44))));
+    assertEquals("17592186044415", LongLib.toString(LongLib.fromDouble(Math.pow(2, 44) - 1)));
+    assertEquals("8796093022208", LongLib.toString(LongLib.fromDouble(Math.pow(2, 43))));
+    assertEquals(LongLib.fromInt(8388608), LongLib.fromDouble(Math.pow(2, 23)));
+    assertEquals(LongLib.fromInt(4194305), LongLib.fromDouble(Math.pow(2, 22) + 1));
+    assertEquals(LongLib.fromInt(4194304), LongLib.fromDouble(Math.pow(2, 22)));
+    assertEquals(LongLib.fromInt(4194303), LongLib.fromDouble(Math.pow(2, 22) - 1));
+    assertEquals(LongLib.fromInt(2097152), LongLib.fromDouble(Math.pow(2, 21)));
+    assertEquals(LongLib.fromInt(1048576), LongLib.fromDouble(Math.pow(2, 20)));
+    
     // these tests are based on JLS3, section 5.1.3
 
     assertEquals(LongLib.fromInt(10), LongLib.fromDouble(10.5));
@@ -189,6 +242,28 @@ public class LongLibTestBase extends TestCase {
     assertEquals(Const.MIN_VALUE, LongLib.shl(LongLib.fromInt(1), 63));
     assertEquals(Const.MAX_VALUE, LongLib.neg(LongLib.add(Const.MIN_VALUE,
         LongLib.fromInt(1))));
+  }
+  
+  public void testMod() {
+    assertEquals(LongLib.fromInt(0), LongLib.mod(Const.ZERO, LongLib.fromInt(1000)));
+    assertEquals(LongLib.fromInt(0), LongLib.mod(Const.MIN_VALUE, Const.MIN_VALUE));
+    assertEquals(LongLib.fromInt(1000), LongLib.mod(LongLib.fromInt(1000), Const.MIN_VALUE));
+    assertEquals(LongLib.fromInt(0), LongLib.mod(Const.MIN_VALUE, LongLib.fromInt(8192)));
+    assertEquals(LongLib.fromInt(-2048), LongLib.mod(Const.MIN_VALUE, LongLib.fromInt(8193)));
+    assertEquals(LongLib.fromInt(-1000), LongLib.mod(LongLib.fromInt(-1000), LongLib.fromInt(8192)));
+    assertEquals(LongLib.fromInt(-1000), LongLib.mod(LongLib.fromInt(-1000), LongLib.fromInt(8193)));
+    assertEquals(LongLib.fromInt(-2560), LongLib.mod(LongLib.fromInt(-1000000000), LongLib.fromInt(8192)));
+    assertEquals(LongLib.fromInt(-3385), LongLib.mod(LongLib.fromInt(-1000000000), LongLib.fromInt(8193)));
+    assertEquals(LongLib.fromInt(2560), LongLib.mod(LongLib.fromInt(1000000000), LongLib.fromInt(8192)));
+    assertEquals(LongLib.fromInt(3385), LongLib.mod(LongLib.fromInt(1000000000), LongLib.fromInt(8193)));
+    
+    assertEquals(longFromBits(0x0, 0x3ff), LongLib.mod(Const.MAX_VALUE, longFromBits(0x00000000, 0x00000400)));
+    assertEquals(longFromBits(0x0, 0x3ffff), LongLib.mod(Const.MAX_VALUE, longFromBits(0x00000000, 0x00040000)));
+    assertEquals(longFromBits(0x0, 0x3ffffff), LongLib.mod(Const.MAX_VALUE, longFromBits(0x00000000, 0x04000000)));
+    assertEquals(longFromBits(0x3, 0xffffffff), LongLib.mod(Const.MAX_VALUE, longFromBits(0x00000004, 0x00000000)));
+    assertEquals(longFromBits(0x3ff, 0xffffffff), LongLib.mod(Const.MAX_VALUE, longFromBits(0x00000400, 0x00000000)));
+    assertEquals(longFromBits(0x3ffff, 0xffffffff), LongLib.mod(Const.MAX_VALUE, longFromBits(0x00040000, 0x00000000)));
+    assertEquals(longFromBits(0x3ffffff, 0xffffffff), LongLib.mod(Const.MAX_VALUE, longFromBits(0x04000000, 0x00000000)));
   }
 
   public void testMultiplicative() {
@@ -282,7 +357,7 @@ public class LongLibTestBase extends TestCase {
 
     assertEquals(LongLib.fromInt(-1 << 5), LongLib.shl(LongLib.fromInt(-1), 5));
     assertEquals(LongLib.fromInt(-1), LongLib.shl(LongLib.fromInt(-1), 0));
-    assertEquals(LongLib.neg(LongLib.typeChange(0x4000000000000000L)),
+    assertEquals(LongLib.neg(longFromBits(0x40000000, 0x00000000)),
         LongLib.shr(LongLib.shl(LongLib.fromInt(1), 63), 1));
     assertEquals(LongLib.fromInt(0), LongLib.shl(LongLib.shl(
         LongLib.fromInt(-1), 32), 32));
@@ -292,12 +367,89 @@ public class LongLibTestBase extends TestCase {
         LongLib.neg(longFromBits(8, 0)), 1));
     assertEquals(longFromBits(0x7ffffffc, 0x0), LongLib.shru(
         LongLib.neg(longFromBits(8, 0)), 1));
+    
+    assertEquals(longFromBits(0x00723456, 0x789abcde), LongLib.shr(
+        longFromBits(0x72345678, 0x9abcdef0), 8));
+    assertEquals(longFromBits(0x00007234, 0x56789abc), LongLib.shr(
+        longFromBits(0x72345678, 0x9abcdef0), 16));
+    assertEquals(longFromBits(0x00000072, 0x3456789a), LongLib.shr(
+        longFromBits(0x72345678, 0x9abcdef0), 24));
+    assertEquals(longFromBits(0x00000007, 0x23456789), LongLib.shr(
+        longFromBits(0x72345678, 0x9abcdef0), 28));
+    assertEquals(longFromBits(0x00000000, 0x72345678), LongLib.shr(
+        longFromBits(0x72345678, 0x9abcdef0), 32));
+    assertEquals(longFromBits(0x00000000, 0x07234567), LongLib.shr(
+        longFromBits(0x72345678, 0x9abcdef0), 36));
+    assertEquals(longFromBits(0x00000000, 0x00723456), LongLib.shr(
+        longFromBits(0x72345678, 0x9abcdef0), 40));
+    assertEquals(longFromBits(0x00000000, 0x00072345), LongLib.shr(
+        longFromBits(0x72345678, 0x9abcde00), 44));
+    assertEquals(longFromBits(0x00000000, 0x00007234), LongLib.shr(
+        longFromBits(0x72345678, 0x9abcdef0), 48));
+    
+    assertEquals(longFromBits(0x00723456, 0x789abcde), LongLib.shru(
+        longFromBits(0x72345678, 0x9abcdef0), 8));
+    assertEquals(longFromBits(0x00007234, 0x56789abc), LongLib.shru(
+        longFromBits(0x72345678, 0x9abcdef0), 16));
+    assertEquals(longFromBits(0x00000072, 0x3456789a), LongLib.shru(
+        longFromBits(0x72345678, 0x9abcdef0), 24));
+    assertEquals(longFromBits(0x00000007, 0x23456789), LongLib.shru(
+        longFromBits(0x72345678, 0x9abcdef0), 28));
+    assertEquals(longFromBits(0x00000000, 0x72345678), LongLib.shru(
+        longFromBits(0x72345678, 0x9abcdef0), 32));
+    assertEquals(longFromBits(0x00000000, 0x07234567), LongLib.shru(
+        longFromBits(0x72345678, 0x9abcdef0), 36));
+    assertEquals(longFromBits(0x00000000, 0x00723456), LongLib.shru(
+        longFromBits(0x72345678, 0x9abcdef0), 40));
+    assertEquals(longFromBits(0x00000000, 0x00072345), LongLib.shru(
+        longFromBits(0x72345678, 0x9abcde00), 44));
+    assertEquals(longFromBits(0x00000000, 0x00007234), LongLib.shru(
+        longFromBits(0x72345678, 0x9abcdef0), 48));
+    
+    assertEquals(longFromBits(0xff923456, 0x789abcde), LongLib.shr(
+        longFromBits(0x92345678, 0x9abcdef0), 8));
+    assertEquals(longFromBits(0xffff9234, 0x56789abc), LongLib.shr(
+        longFromBits(0x92345678, 0x9abcdef0), 16));
+    assertEquals(longFromBits(0xffffff92, 0x3456789a), LongLib.shr(
+        longFromBits(0x92345678, 0x9abcdef0), 24));
+    assertEquals(longFromBits(0xfffffff9, 0x23456789), LongLib.shr(
+        longFromBits(0x92345678, 0x9abcdef0), 28));
+    assertEquals(longFromBits(0xffffffff, 0x92345678), LongLib.shr(
+        longFromBits(0x92345678, 0x9abcdef0), 32));
+    assertEquals(longFromBits(0xffffffff, 0xf9234567), LongLib.shr(
+        longFromBits(0x92345678, 0x9abcdef0), 36));
+    assertEquals(longFromBits(0xffffffff, 0xff923456), LongLib.shr(
+        longFromBits(0x92345678, 0x9abcdef0), 40));
+    assertEquals(longFromBits(0xffffffff, 0xfff92345), LongLib.shr(
+        longFromBits(0x92345678, 0x9abcdef0), 44));
+    assertEquals(longFromBits(0xffffffff, 0xffff9234), LongLib.shr(
+        longFromBits(0x92345678, 0x9abcdef0), 48));
+    
+    assertEquals(longFromBits(0x00923456, 0x789abcde), LongLib.shru(
+        longFromBits(0x92345678, 0x9abcdef0), 8));
+    assertEquals(longFromBits(0x00009234, 0x56789abc), LongLib.shru(
+        longFromBits(0x92345678, 0x9abcdef0), 16));
+    assertEquals(longFromBits(0x00000092, 0x3456789a), LongLib.shru(
+        longFromBits(0x92345678, 0x9abcdef0), 24));
+    assertEquals(longFromBits(0x00000009, 0x23456789), LongLib.shru(
+        longFromBits(0x92345678, 0x9abcdef0), 28));
+    assertEquals(longFromBits(0x00000000, 0x92345678), LongLib.shru(
+        longFromBits(0x92345678, 0x9abcdef0), 32));
+    assertEquals(longFromBits(0x00000000, 0x09234567), LongLib.shru(
+        longFromBits(0x92345678, 0x9abcdef0), 36));
+    assertEquals(longFromBits(0x00000000, 0x00923456), LongLib.shru(
+        longFromBits(0x92345678, 0x9abcdef0), 40));
+    assertEquals(longFromBits(0x00000000, 0x00092345), LongLib.shru(
+        longFromBits(0x92345678, 0x9abcdef0), 44));
+    assertEquals(longFromBits(0x00000000, 0x00009234), LongLib.shru(
+        longFromBits(0x92345678, 0x9abcdef0), 48));
   }
 
   // Issue 1198, and also a good exercise of several methods.
   public void testToHexString() {
-    double[] deadbeaf12341234 = longFromBits(0xdeadbeaf, 0x12341234);
+    LongEmul deadbeaf12341234 = longFromBits(0xdeadbeaf, 0x12341234);
 
+    assertEquals("0", toHexString(Const.ZERO));
     assertEquals("deadbeaf12341234", toHexString(deadbeaf12341234));
   }
 
@@ -310,14 +462,14 @@ public class LongLibTestBase extends TestCase {
 
     int top = 922337201;
     int bottom = 967490662;
-    double[] fullnum = LongLib.add(LongLib.mul(LongLib.fromInt(1000000000),
+    LongEmul fullnum = LongLib.add(LongLib.mul(LongLib.fromInt(1000000000),
         LongLib.fromInt(top)), LongLib.fromInt(bottom));
 
     assertEquals("922337201967490662", LongLib.toString(fullnum));
     assertEquals("-922337201967490662", LongLib.toString(LongLib.neg(fullnum)));
   }
 
-  private double[] fact(double[] n) {
+  private LongEmul fact(LongEmul n) {
     if (LongLib.eq(n, LongLib.fromInt(0))) {
       return LongLib.fromInt(1);
     } else {
@@ -325,19 +477,18 @@ public class LongLibTestBase extends TestCase {
     }
   }
 
-  private double[] longFromBits(int top, int bottom) {
-    double[] topHalf = LongLib.shl(LongLib.fromInt(top), 32);
-    double[] bottomHalf = LongLib.fromInt(bottom);
+  private LongEmul longFromBits(int top, int bottom) {
+    LongEmul topHalf = LongLib.shl(LongLib.fromInt(top), 32);
+    LongEmul bottomHalf = LongLib.fromInt(bottom);
     if (LongLib.lt(bottomHalf, Const.ZERO)) {
       bottomHalf = LongLib.add(bottomHalf, LongLib.shl(LongLib.fromInt(1), 32));
     }
-    double[] total = LongLib.add(topHalf, bottomHalf);
+    LongEmul total = LongLib.add(topHalf, bottomHalf);
     return total;
   }
 
-  private String toHexString(double[] x) {
-    // copied from the GWT Long class and modified for double[]
-    double[] zero = LongLib.fromInt(0);
+  private String toHexString(LongEmul x) {
+    LongEmul zero = LongLib.fromInt(0);
 
     if (LongLib.eq(x, zero)) {
       return "0";

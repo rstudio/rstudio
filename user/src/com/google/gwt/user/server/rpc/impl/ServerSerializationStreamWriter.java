@@ -555,16 +555,11 @@ public final class ServerSerializationStreamWriter extends
 
     return stream.toString();
   }
-
+  
   public void writeLong(long fieldValue) {
-    /*
-     * Client code represents longs internally as an array of two Numbers. In
-     * order to make serialization of longs faster, we'll send the component
-     * parts so that the value can be directly reconstituted on the client.
-     */
-    double[] parts = makeLongComponents((int) (fieldValue >> 32),
-        (int) fieldValue);
-    assert parts.length == 2;
+    // Write longs as a pair of doubles for backwards compatibility
+    double[] parts = getAsDoubleArray(fieldValue);
+    assert parts != null && parts.length == 2;
     writeDouble(parts[0]);
     writeDouble(parts[1]);
   }

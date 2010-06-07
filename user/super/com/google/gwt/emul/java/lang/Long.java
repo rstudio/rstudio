@@ -103,62 +103,11 @@ public final class Long extends Number implements Comparable<Long> {
   public static long parseLong(String s) throws NumberFormatException {
     return parseLong(s, 10);
   }
-
-  public static long parseLong(String orig, int intRadix)
-      throws NumberFormatException {
-    if (orig == null) {
-      throw new NumberFormatException("null");
-    }
-    if (orig.length() == 0) {
-      throw NumberFormatException.forInputString(orig);
-    }
-
-    if (intRadix < Character.MIN_RADIX || intRadix > Character.MAX_RADIX) {
-      throw new NumberFormatException("radix " + intRadix + " out of range");
-    }
-
-    boolean neg = false;
-    String s;
-    if (orig.charAt(0) == '-') {
-      neg = true;
-      s = orig.substring(1);
-      if (s.equals("")) { // orig = "-"
-        throw NumberFormatException.forInputString(orig);
-      }
-    } else {
-      s = orig;
-    }
-
-    long result = 0;
-    if (intRadix == 16) {
-      result = parseHex(s);
-    } else {
-      // Cache a converted version for performance (pure long ops are faster).
-      long radix = intRadix;
-      for (int i = 0, len = s.length(); i < len; ++i) {
-        if (result < 0) {
-          throw NumberFormatException.forInputString(s);
-        }
-        result *= radix;
-        char c = s.charAt(i);
-        int value = Character.digit(c, intRadix);
-        if (value < 0) {
-          throw NumberFormatException.forInputString(s);
-        }
-        result += value;
-      }
-    }
-
-    if (result < 0 && result != MIN_VALUE) {
-      throw NumberFormatException.forInputString(s);
-    }
-    if (neg) {
-      return -result;
-    } else {
-      return result;
-    }
+  
+  public static long parseLong(String s, int radix) throws NumberFormatException {
+    return __parseAndValidateLong(s, radix);
   }
-
+ 
   public static long reverse(long i) {
     int high = (int) (i >>> 32);
     int low = (int) i;
@@ -377,5 +326,4 @@ public final class Long extends Number implements Comparable<Long> {
   public String toString() {
     return toString(value);
   }
-
 }

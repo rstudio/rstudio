@@ -209,7 +209,8 @@ public final class Array {
   /**
    * Creates a primitive JSON array of a given seedType.
    * 
-   * @param seedType the primitive type of the array; 0: null; 1: zero; 2: false
+   * @param seedType the primitive type of the array; 0: null; 1: zero;
+   *     2: false; 3: (long) 0
    * @param length the requested length
    * @see #NULL_SEED_TYPE
    * @see #ZERO_SEED_TYPE
@@ -218,8 +219,15 @@ public final class Array {
    */
   private static native Array createFromSeed(int seedType, int length) /*-{
     var array = new Array(length);
-    if (seedType > 0) {
-      var value = [null, 0, false, [0, 0]][seedType];
+    if (seedType == 3) {
+      // Fill array with the type used by LongLib
+      for (var i = 0; i < length; ++i) {
+        var value = new Object();
+        value.l = value.m = value.h = 0;
+        array[i] = value;
+      }
+    } else if (seedType > 0) {
+      var value = [null, 0, false][seedType];
       for (var i = 0; i < length; ++i) {
         array[i] = value;
       }

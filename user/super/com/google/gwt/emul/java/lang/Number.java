@@ -53,6 +53,89 @@ public abstract class Number implements Serializable {
   }
 
   /**
+   * Use nested class to avoid clinit on outer.
+   */
+  static class __ParseLong {
+    /**
+     * The number of digits (excluding minus sign and leading zeros) to process
+     * at a time.  The largest value expressible in maxDigits digits as well as
+     * the factor radix^maxDigits must be strictly less than 2^31.
+     */
+    private static final int[] maxDigitsForRadix = {-1, -1, // unused
+      30, // base 2
+      19, // base 3
+      15, // base 4
+      13, // base 5
+      11, 11, // base 6-7
+      10, // base 8
+      9, 9, // base 9-10
+      8, 8, 8, 8, // base 11-14
+      7, 7, 7, 7, 7, 7, 7, // base 15-21
+      6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, // base 22-35
+      5 // base 36
+    };
+  
+    /**
+     * A table of values radix*maxDigitsForRadix[radix].
+     */
+    private static final int[] maxDigitsRadixPower = new int[37];
+  
+    /**
+     * The largest number of digits (excluding minus sign and leading zeros) that
+     * can fit into a long for a given radix between 2 and 36, inclusive.
+     */
+    private static final int[] maxLengthForRadix = {-1, -1, // unused
+      63, // base 2
+      40, // base 3
+      32, // base 4
+      28, // base 5
+      25, // base 6
+      23, // base 7
+      21, // base 8
+      20, // base 9
+      19, // base 10
+      19, // base 11
+      18, // base 12
+      18, // base 13
+      17, // base 14
+      17, // base 15
+      16, // base 16
+      16, // base 17
+      16, // base 18
+      15, // base 19
+      15, // base 20
+      15, // base 21
+      15, // base 22
+      14, // base 23
+      14, // base 24
+      14, // base 25
+      14, // base 26
+      14, // base 27
+      14, // base 28
+      13, // base 29
+      13, // base 30
+      13, // base 31
+      13, // base 32
+      13, // base 33
+      13, // base 34
+      13, // base 35
+      13  // base 36
+    };
+  
+    /**
+     * A table of floor(MAX_VALUE / maxDigitsRadixPower).
+     */
+    private static final long[] maxValueForRadix = new long[37];
+  
+    static {
+      for (int i = 2; i <= 36; i++) {
+        maxDigitsRadixPower[i] = (int) Math.pow(i, maxDigitsForRadix[i]);
+        maxValueForRadix[i] = Long.MAX_VALUE / maxDigitsRadixPower[i];
+      }
+    }
+  }
+
+  /**
    * @skip
    * 
    * This function will determine the radix that the string is expressed in
@@ -111,7 +194,7 @@ public abstract class Number implements Serializable {
 
     return toReturn;
   }
-
+  
   /**
    * @skip
    * 
@@ -146,7 +229,104 @@ public abstract class Number implements Serializable {
 
     return toReturn;
   }
+  
+  /**
+   * @skip
+   * 
+   * This function contains common logic for parsing a String in a given radix
+   * and validating the result.
+   */
+  protected static long __parseAndValidateLong(String s, int radix)
+      throws NumberFormatException {
+    
+    if (s == null) {
+      throw new NumberFormatException("null");
+    }
+    if (radix < Character.MIN_RADIX || radix > Character.MAX_RADIX) {
+      throw new NumberFormatException("radix " + radix + " out of range");
+    }
 
+    int length = s.length();
+    boolean negative = (length > 0) && (s.charAt(0) == '-');
+    if (negative) {
+      s = s.substring(1);
+      length--;
+    }
+    if (length == 0) {
+      throw NumberFormatException.forInputString(s);
+    }
+
+    // Strip leading zeros
+    while (s.length() > 0 && s.charAt(0) == '0') {
+      s = s.substring(1);
+      length--;
+    }
+    
+    // Immediately eject numbers that are too long -- this avoids more complex
+    // overflow handling below
+    if (length > __ParseLong.maxLengthForRadix[radix]) {
+      throw NumberFormatException.forInputString(s);
+    }
+    
+    // Validate the digits
+    int maxNumericDigit = '0' + Math.min(radix, 10);
+    int maxLowerCaseDigit = radix + 'a' - 10;
+    int maxUpperCaseDigit = radix + 'A' - 10;
+    for (int i = 0; i < length; i++) {
+      char c = s.charAt(i);
+      if (c >= '0' && c < maxNumericDigit) {
+        continue;
+      }
+      if (c >= 'a' && c < maxLowerCaseDigit) {
+        continue;
+      }
+      if (c >= 'A' && c < maxUpperCaseDigit) {
+        continue;
+      }
+      throw NumberFormatException.forInputString(s);
+    }
+
+    long toReturn = 0;
+    int maxDigits = __ParseLong.maxDigitsForRadix[radix];
+    long radixPower = __ParseLong.maxDigitsRadixPower[radix];
+    long maxValue = __ParseLong.maxValueForRadix[radix];
+    
+    boolean firstTime = true;
+    int head = length % maxDigits;
+    if (head > 0) {
+      toReturn = __parseInt(s.substring(0, head), radix);
+      s = s.substring(head);
+      length -= head;
+      firstTime = false;
+    }
+    
+    while (length >= maxDigits) {
+      head = __parseInt(s.substring(0, maxDigits), radix);
+      s = s.substring(maxDigits);
+      length -= maxDigits;
+      if (!firstTime) {
+        // Check whether multiplying by radixPower will overflow
+        if (toReturn > maxValue) {
+          throw new NumberFormatException(s);
+        }
+        toReturn *= radixPower;      
+      } else {
+        firstTime = false;
+      }
+      toReturn += head;
+    }
+    
+    // A negative value means we overflowed Long.MAX_VALUE
+    if (toReturn < 0) {
+      throw NumberFormatException.forInputString(s);
+    }
+    
+    if (negative) {
+      toReturn = -toReturn;
+    }
+    return toReturn;
+  }
+  
   /**
    * @skip
    */

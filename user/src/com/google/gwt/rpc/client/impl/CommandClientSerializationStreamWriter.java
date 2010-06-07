@@ -197,8 +197,7 @@ public class CommandClientSerializationStreamWriter extends
       value.valueOf && (value = value.valueOf());
 
       // See if the value is our web-mode representation of a long
-      if (!value.@java.lang.Object::typeMarker && value.length && 
-          value.length == 2 && (typeof value[0] == 'number') && (typeof value[1] == 'number')) {
+      if (value.hasOwnProperty('l') && value.hasOwnProperty('m') && value.hasOwnProperty('h')) {
         type = 'long';
       }
     }

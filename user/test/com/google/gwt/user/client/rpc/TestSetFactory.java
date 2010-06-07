@@ -493,9 +493,21 @@ public class TestSetFactory {
   }
 
   public static Long[] createLongArray() {
+    long a = 16123432898849345L;
+    long b = 78234569989880099L;
+    long c = -64289238928934943L;
+    
+    // Create values that are not compile-time constants
+    for (int i = 0; i < 10; i++) {
+      a ^= b;
+      b ^= c;
+      c ^= a;
+    }
+    
     return new Long[] {
         new Long(Long.MAX_VALUE), new Long(Long.MIN_VALUE),
-        new Long(Long.MAX_VALUE), new Long(Long.MIN_VALUE)};
+        new Long(Long.MAX_VALUE), new Long(Long.MIN_VALUE),
+        new Long(a), new Long(b), new Long(c)};
   }
 
   public static LinkedHashMap<String, MarkerTypeLinkedHashMap> createLRULinkedHashMap() {
@@ -541,8 +553,20 @@ public class TestSetFactory {
   }
 
   public static long[] createPrimitiveLongArray() {
+    long a = 16123432898849345L;
+    long b = 78234569989880099L;
+    long c = -64289238928934943L;
+    
+    // Create values that are not compile-time constants
+    for (int i = 0; i < 10; i++) {
+      a ^= b;
+      b ^= c;
+      c ^= a;
+    }
+    
     return new long[] {
-        Long.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE, Long.MIN_VALUE};
+        Long.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE, Long.MIN_VALUE,
+        a, b, c};
   }
 
   public static short[] createPrimitiveShortArray() {

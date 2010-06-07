@@ -15,21 +15,13 @@
  */
 package com.google.gwt.langtest;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.lang.LongLib;
 import com.google.gwt.lang.LongLibTestBase;
 
 /**
  * Test the LongLib class as a GWTTestCase.
  */
 public class LongLibGwtTest extends GWTTestCase {
-
-  static {
-    if (!GWT.isScript()) {
-      LongLib.RUN_IN_JVM = true;
-    }
-  }
 
   private LongLibTestBase impl = new LongLibTestBase();
 
@@ -68,6 +60,10 @@ public class LongLibGwtTest extends GWTTestCase {
 
   public void testMinMax() {
     impl.testMinMax();
+  }
+
+  public void testMod() {
+    impl.testMod();
   }
 
   public void testMultiplicative() {

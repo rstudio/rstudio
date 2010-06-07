@@ -43,7 +43,6 @@ import com.google.gwt.rpc.client.impl.EscapeUtil;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
-import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamWriter;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -167,21 +166,21 @@ public class WebModePayloadSink extends CommandSink {
 
     @Override
     public void endVisit(LongValueCommand x, Context ctx) {
+      // TODO (rice): use backwards-compatible wire format?
       long fieldValue = x.getValue();
-
+      
       /*
-       * Client code represents longs internally as an array of two Numbers. In
-       * order to make serialization of longs faster, we'll send the component
-       * parts so that the value can be directly reconstituted on the client.
+       * Client code represents longs internally as an Object with numeric
+       * properties l, m, and h. In order to make serialization of longs faster,
+       * we'll send the component parts so that the value can be directly
+       * reconstituted on the client.
        */
-      double[] parts = AbstractSerializationStreamWriter.makeLongComponents(
-          (int) (fieldValue >> 32), (int) fieldValue);
-      assert parts.length == 2;
-      lbracket();
-      push(String.valueOf(parts[0]));
-      comma();
-      push(String.valueOf(parts[1]));
-      rbracket();
+      int l = (int) (fieldValue & 0x3fffff);
+      int m = (int) ((fieldValue >> 22) & 0x3fffff);
+      int h = (int) ((fieldValue >> 44) & 0xfffff);
+      // CHECKSTYLE_OFF
+      push("{l:" + l + ",m:" + m + ",h:" + h + "}");
+      // CHECKSTYLE_ON
     }
 
     @Override

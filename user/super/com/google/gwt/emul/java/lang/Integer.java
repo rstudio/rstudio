@@ -88,12 +88,37 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static int numberOfLeadingZeros(int i) {
+    // Based on Henry S. Warren, Jr: "Hacker's Delight", p. 80.
     if (i < 0) {
       return 0;
     } else if (i == 0) {
       return SIZE;
     } else {
-      return SIZE - 1 - (int) Math.floor(Math.log(i) / Math.log(2.0d));
+      int y, m, n;
+
+      y = -(i >> 16);
+      m = (y >> 16) & 16;
+      n = 16 - m;
+      i = i >> m;
+
+      y = i - 0x100;
+      m = (y >> 16) & 8;
+      n += m;
+      i <<= m;
+
+      y = i - 0x1000;
+      m = (y >> 16) & 4;
+      n += m;
+      i <<= m;
+
+      y = i - 0x4000;
+      m = (y >> 16) & 2;
+      n += m; 
+      i <<= m;
+
+      y = i >> 14;
+      m = y & ~(y >> 1);
+      return n + 2 - m;
     }
   }
 

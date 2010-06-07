@@ -65,6 +65,7 @@ public class CommandClientSerializationStreamReader implements
 
   @UnsafeNativeLong
   private static native long readLong0(JavaScriptObject obj, int idx) /*-{
+    // TODO (rice): use backwards-compatible wire format?
     return obj[idx];
   }-*/;
 

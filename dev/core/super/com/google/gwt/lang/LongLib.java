@@ -15,687 +15,439 @@
  */
 package com.google.gwt.lang;
 
-import static com.google.gwt.lang.LongLib.Const.LN_2;
-import static com.google.gwt.lang.LongLib.Const.MAX_VALUE;
-import static com.google.gwt.lang.LongLib.Const.MIN_VALUE;
-import static com.google.gwt.lang.LongLib.Const.NEG_ONE;
-import static com.google.gwt.lang.LongLib.Const.ONE;
-import static com.google.gwt.lang.LongLib.Const.TWO;
-import static com.google.gwt.lang.LongLib.Const.TWO_PWR_24;
-import static com.google.gwt.lang.LongLib.Const.ZERO;
-
-import com.google.gwt.core.client.UnsafeNativeLong;
-
 /**
  * Implements a Java <code>long</code> in a way that can be translated to
  * JavaScript.
  */
-public class LongLib {
-  /*
-   * Implementation: An array of two doubles, low and high, such that high+low
-   * is mathematically equivalent to the original integer. Since a JavaScript
-   * Number does not hold enough bits to precisely calculate high+low, all
-   * operations must be implemented carefully. "low" is always between 0 and
-   * 2^32-1 inclusive. "high" is always between -2^63 and 2^63-2^32 inclusive
-   * and is a multiple of 2^32. The sign of the number is determined entirely by
-   * "high". Since low is always positive, small negative numbers are encoded
-   * with high=-2^32. For example, -1 is encoded as { high=-2^32, low=2^32-1 }.
-   * 
-   * Note that this class must be careful using type "long". Being the
-   * implementation of the long type for web mode, any place it uses a long is
-   * not usable in web mode. There are currently two such methods:
-   * {@link #toLong(double[])} and {@link #make(long)}.
-   * 
-   * The GWT RPC serialization code is dependent on the internal format of the
-   * long type; any changes made to this class should be reflected in the
-   * implementations of SerializationStreamReader and Writer.
-   */
-
-  /**
-   * Use nested class to avoid clinit on outer.
-   */
-  static class CachedInts {
-    // Between -128 and 127.
-    static double[][] boxedValues = new double[256][];
-  }
+public class LongLib extends LongLibBase {
 
   static class Const {
-    static final double LN_2 = Math.log(2);
-    static final double[] MAX_VALUE = typeChange(Long.MAX_VALUE);
-    static final double[] MIN_VALUE = typeChange(Long.MIN_VALUE);
-    static final double[] NEG_ONE = fromInt(-1);
-    static final double[] ONE = fromInt(1);
-    static final double[] TWO = fromInt(2);
+    static final LongEmul MAX_VALUE = create(MASK, MASK, MASK_2 >> 1);
+    static final LongEmul MIN_VALUE = create(0, 0, SIGN_BIT_VALUE);
+    static final LongEmul ONE = fromInt(1);
+    static final LongEmul TWO = fromInt(2);
+    static final LongEmul ZERO = fromInt(0);
+  }
+  
+  private static LongEmul[] boxedValues;
+  
+  public static LongEmul add(LongEmul a, LongEmul b) {
+    int sum0 = getL(a) + getL(b);
+    int sum1 = getM(a) + getM(b) + (sum0 >> BITS);
+    int sum2 = getH(a) + getH(b) + (sum1 >> BITS);
 
-    /**
-     * Half of the number of bits we expect to be precise.
-     * 
-     * @see LongLib#PRECISION_BITS
-     */
-    static final double[] TWO_PWR_24 = typeChange(0x1000000L);
+    return create(sum0 & MASK, sum1 & MASK, sum2 & MASK_2);
+  }
 
-    static final double[] ZERO = fromInt(0);
+  public static LongEmul and(LongEmul a, LongEmul b) {
+    return create(getL(a) & getL(b), getM(a) & getM(b), getH(a) & getH(b));
   }
 
   /**
-   * Set this to false before calling any methods when using this class outside
-   * of GWT!
-   */
-  public static boolean RUN_IN_JVM = false;
-
-  /**
-   * Number of bits we expect to be accurate for a double representing a large
-   * integer.
-   */
-  private static final int PRECISION_BITS = 48;
-
-  /**
-   * Index of the high bits in a 2-double array.
-   */
-  private static final int HIGH = 1;
-  private static final double HIGH_MAX = 9223372032559808512d;
-  private static final double HIGH_MIN = -9223372036854775808d;
-
-  /**
-   * Index of the low bits in a 2-double array.
-   */
-  private static final int LOW = 0;
-  private static final double LOW_MAX = 4294967295d;
-  private static final double LOW_MIN = 0;
-
-  private static final double TWO_PWR_15_DBL = 0x8000;
-  private static final double TWO_PWR_16_DBL = 0x10000;
-  private static final double TWO_PWR_31_DBL = TWO_PWR_16_DBL * TWO_PWR_15_DBL;
-  private static final double TWO_PWR_32_DBL = TWO_PWR_16_DBL * TWO_PWR_16_DBL;
-  private static final double TWO_PWR_48_DBL = TWO_PWR_32_DBL * TWO_PWR_16_DBL;
-  private static final double TWO_PWR_63_DBL = TWO_PWR_32_DBL * TWO_PWR_31_DBL;
-  private static final double TWO_PWR_64_DBL = TWO_PWR_32_DBL * TWO_PWR_32_DBL;
-
-  public static double[] add(double[] a, double[] b) {
-    double newHigh = a[HIGH] + b[HIGH];
-    double newLow = a[LOW] + b[LOW];
-    return create(newLow, newHigh);
-  }
-
-  public static double[] and(double[] a, double[] b) {
-    return makeFromBits(highBits(a) & highBits(b), lowBits(a) & lowBits(b));
-  }
-
-  /**
-   * Compare the receiver to the argument.
+   * Compare the receiver a to the argument b.
    * 
-   * @return 0 if they are the same, 1 if the receiver is greater, -1 if the
-   *         argument is greater.
+   * @return 0 if they are the same, a positive value if the receiver is
+   * greater, or a negative value if the argument is greater.
    */
-  public static int compare(double[] a, double[] b) {
-    if (eq(a, b)) {
-      return 0;
+  public static int compare(LongEmul a, LongEmul b) {
+    int signA = sign(a);
+    int signB = sign(b);
+    if (signA != signB) {
+      return signB - signA;
     }
 
-    boolean nega = isNegative(a);
-    boolean negb = isNegative(b);
-    if (nega && !negb) {
-      return -1;
-    }
-    if (!nega && negb) {
-      return 1;
+    int a2 = getH(a);
+    int b2 = getH(b);
+    if (a2 != b2) {
+      return a2 - b2;
     }
 
-    // at this point, the signs are the same, so subtraction will not overflow
-    assert (nega == negb);
-    if (isNegative(sub(a, b))) {
-      return -1;
-    } else {
-      return 1;
+    int a1 = getM(a);
+    int b1 = getM(b);
+    if (a1 != b1) {
+      return a1 - b1;
     }
+
+    int a0 = getL(a);
+    int b0 = getL(b);
+    return a0 - b0;
   }
 
-  public static double[] div(double[] a, double[] b) {
-    if (isZero(b)) {
-      throw new ArithmeticException("/ by zero");
+  public static LongEmul div(LongEmul a, LongEmul b) {
+    return divMod(a, b, false);
+  }
+  
+  public static boolean eq(LongEmul a, LongEmul b) {
+    return getL(a) == getL(b) && getM(a) == getM(b) && getH(a) == getH(b);
+  }
+
+  public static LongEmul fromDouble(double value) {
+    if (Double.isNaN(value)) {
+      return Const.ZERO;
     }
-    if (isZero(a)) {
-      return ZERO;
+    if (value < -TWO_PWR_63_DBL) {
+      return Const.MIN_VALUE;
+    }
+    if (value >= TWO_PWR_63_DBL) {
+      return Const.MAX_VALUE;
     }
 
-    if (eq(a, MIN_VALUE)) {
-      // handle a==MIN_VALUE carefully because of overflow issues
-      if (eq(b, ONE) || eq(b, NEG_ONE)) {
-        // this strange exception is described in JLS3 17.17.2
-        return MIN_VALUE;
-      }
-      // at this point, abs(b) >= 2, so |a/b| < -MIN_VALUE
-      double[] halfa = shr(a, 1);
-      double[] approx = shl(div(halfa, b), 1);
-      double[] rem = sub(a, mul(b, approx));
-      assert gt(rem, MIN_VALUE);
-      return add(approx, div(rem, b));
+    boolean negative = false;
+    if (value < 0) {
+      negative = true;
+      value = -value;
     }
-
-    if (eq(b, MIN_VALUE)) {
-      assert !eq(a, MIN_VALUE);
-      return ZERO;
+    int a2 = 0;
+    if (value >= TWO_PWR_44_DBL) {
+      a2 = (int) (value / TWO_PWR_44_DBL);
+      value -= a2 * TWO_PWR_44_DBL;
     }
-
-    // To keep the implementation compact, make a and be
-    // both be positive and swap the sign of the result
-    // if necessary.
-    if (isNegative(a)) {
-      if (isNegative(b)) {
-        return div(neg(a), neg(b));
-      } else {
-        return neg(div(neg(a), b));
-      }
+    int a1 = 0;
+    if (value >= TWO_PWR_22_DBL) {
+      a1 = (int) (value / TWO_PWR_22_DBL);
+      value -= a1 * TWO_PWR_22_DBL;
     }
-    assert (!isNegative(a));
-    if (isNegative(b)) {
-      return neg(div(a, neg(b)));
+    int a0 = (int) value;
+    LongEmul result = create(a0, a1, a2);
+    if (negative) {
+      negate(result);
     }
-    assert (!isNegative(b));
-
-    // Use float division to approximate the answer.
-    // Repeat until the remainder is less than b.
-    double[] result = ZERO;
-    double[] rem = a;
-    while (gte(rem, b)) {
-      // approximate using float division
-      double[] deltaResult = fromDouble(Math.floor(toDoubleRoundDown(rem)
-          / toDoubleRoundUp(b)));
-      if (isZero(deltaResult)) {
-        deltaResult = Const.ONE;
-      }
-      double[] deltaRem = mul(deltaResult, b);
-
-      assert gte(deltaResult, ONE);
-      assert lte(deltaRem, rem);
-      result = add(result, deltaResult);
-      rem = sub(rem, deltaRem);
-    }
-
     return result;
   }
 
-  public static boolean eq(double[] a, double[] b) {
-    return ((a[LOW] == b[LOW]) && (a[HIGH] == b[HIGH]));
-  }
-
-  public static double[] fromDouble(double value) {
-    if (Double.isNaN(value)) {
-      return ZERO;
-    }
-    if (value < -TWO_PWR_63_DBL) {
-      return MIN_VALUE;
-    }
-    if (value >= TWO_PWR_63_DBL) {
-      return MAX_VALUE;
-    }
-    if (value > 0) {
-      return create(Math.floor(value), 0.0);
-    } else {
-      return create(Math.ceil(value), 0.0);
-    }
-  }
-
-  public static double[] fromInt(int value) {
+  public static LongEmul fromInt(int value) {
     if (value > -129 && value < 128) {
       int rebase = value + 128;
-      double[] result = CachedInts.boxedValues[rebase];
+      if (boxedValues == null) {
+        boxedValues = new LongEmul[256];
+      }
+      LongEmul result = boxedValues[rebase];
       if (result == null) {
-        result = CachedInts.boxedValues[rebase] = internalFromInt(value);
+        result = boxedValues[rebase] = create(value);
       }
       return result;
     }
-    return internalFromInt(value);
+
+    return create(value);
   }
-
-  public static boolean gt(double[] a, double[] b) {
-    return compare(a, b) > 0;
+  
+  /**
+   * Return a triple of ints { low, middle, high } that concatenate bitwise to
+   * the given number.
+   */
+  public static int[] getAsIntArray(long l) {
+    int[] a = new int[3];
+    a[0] = (int) (l & MASK);
+    a[1] = (int) ((l >> BITS) & MASK);
+    a[2] = (int) ((l >> BITS01) & MASK_2);
+    return a;
   }
-
-  public static boolean gte(double[] a, double[] b) {
-    return compare(a, b) >= 0;
-  }
-
-  public static boolean lt(double[] a, double[] b) {
-    return compare(a, b) < 0;
-  }
-
-  public static boolean lte(double[] a, double[] b) {
-    return compare(a, b) <= 0;
-  }
-
-  public static double[] mod(double[] a, double[] b) {
-    return sub(a, mul(div(a, b), b));
-  }
-
-  public static double[] mul(double[] a, double[] b) {
-    if (isZero(a)) {
-      return ZERO;
-    }
-    if (isZero(b)) {
-      return ZERO;
-    }
-
-    // handle MIN_VALUE carefully, because neg(MIN_VALUE)==MIN_VALUE
-    if (eq(a, MIN_VALUE)) {
-      return multByMinValue(b);
-    }
-    if (eq(b, MIN_VALUE)) {
-      return multByMinValue(a);
-    }
-
-    // If either argument is negative, change it to positive, multiply,
-    // and then negate the result.
-    if (isNegative(a)) {
-      if (isNegative(b)) {
-        return mul(neg(a), neg(b));
+  
+  public static boolean gt(LongEmul a, LongEmul b) {
+    int signa = getH(a) >> (BITS2 - 1);
+    int signb = getH(b) >> (BITS2 - 1);
+    if (signa == 0) {
+      if (signb != 0 || getH(a) > getH(b)
+          || (getH(a) == getH(b) && getM(a) > getM(b))
+          || (getH(a) == getH(b) && getM(a) == getM(b) && getL(a) > getL(b))) {
+        return true;
       } else {
-        return neg(mul(neg(a), b));
+        return false;
+      }
+    } else {
+      if (signb == 0 || getH(a) < getH(b)
+          || (getH(a) == getH(b) && getM(a) < getM(b))
+          || (getH(a) == getH(b) && getM(a) == getM(b) && getL(a) <= getL(b))) {
+        return false;
+      } else {
+        return true;
       }
     }
-    assert (!isNegative(a));
-    if (isNegative(b)) {
-      return neg(mul(a, neg(b)));
-    }
-    assert (!isNegative(b));
-
-    // If both numbers are small, use float multiplication
-    if (lt(a, TWO_PWR_24) && lt(b, TWO_PWR_24)) {
-      return create(toDouble(a) * toDouble(b), 0.0);
-    }
-
-    // Divide each number into 4 chunks of 16 bits, and then add
-    // up 4x4 multiplies. Skip the six multiplies where the result
-    // mod 2^64 would be 0.
-    double a3 = a[HIGH] % TWO_PWR_48_DBL;
-    double a4 = a[HIGH] - a3;
-    double a1 = a[LOW] % TWO_PWR_16_DBL;
-    double a2 = a[LOW] - a1;
-
-    double b3 = b[HIGH] % TWO_PWR_48_DBL;
-    double b4 = b[HIGH] - b3;
-    double b1 = b[LOW] % TWO_PWR_16_DBL;
-    double b2 = b[LOW] - b1;
-
-    double[] res = ZERO;
-
-    res = addTimes(res, a4, b1);
-    res = addTimes(res, a3, b2);
-    res = addTimes(res, a3, b1);
-    res = addTimes(res, a2, b3);
-    res = addTimes(res, a2, b2);
-    res = addTimes(res, a2, b1);
-    res = addTimes(res, a1, b4);
-    res = addTimes(res, a1, b3);
-    res = addTimes(res, a1, b2);
-    res = addTimes(res, a1, b1);
-
-    return res;
   }
 
-  public static double[] neg(double[] a) {
-    if (eq(a, MIN_VALUE)) {
-      return MIN_VALUE;
-    }
-    double newHigh = -a[HIGH];
-    double newLow = -a[LOW];
-    if (newLow > LOW_MAX) {
-      newLow -= TWO_PWR_32_DBL;
-      newHigh += TWO_PWR_32_DBL;
-    }
-    if (newLow < LOW_MIN) {
-      newLow += TWO_PWR_32_DBL;
-      newHigh -= TWO_PWR_32_DBL;
-    }
-    return createNormalized(newLow, newHigh);
-  }
-
-  public static boolean neq(double[] a, double[] b) {
-    return ((a[LOW] != b[LOW]) || (a[HIGH] != b[HIGH]));
-  }
-
-  public static double[] not(double[] a) {
-    return makeFromBits(~highBits(a), ~lowBits(a));
-  }
-
-  public static double[] or(double[] a, double[] b) {
-    return makeFromBits(highBits(a) | highBits(b), lowBits(a) | lowBits(b));
-  }
-
-  public static double[] shl(double[] a, int n) {
-    n &= 63;
-
-    if (eq(a, MIN_VALUE)) {
-      if (n == 0) {
-        return a;
+  public static boolean gte(LongEmul a, LongEmul b) {
+    int signa = getH(a) >> (BITS2 - 1);
+    int signb = getH(b) >> (BITS2 - 1);
+    if (signa == 0) {
+      if (signb != 0 || getH(a) > getH(b)
+          || (getH(a) == getH(b) && getM(a) > getM(b))
+          || (getH(a) == getH(b) && getM(a) == getM(b) && getL(a) >= getL(b))) {
+        return true;
       } else {
-        return ZERO;
+        return false;
+      }
+    } else {
+      if (signb == 0 || getH(a) < getH(b)
+          || (getH(a) == getH(b) && getM(a) < getM(b))
+          || (getH(a) == getH(b) && getM(a) == getM(b) && getL(a) < getL(b))) {
+        return false;
+      } else {
+        return true;
       }
     }
-
-    if (isNegative(a)) {
-      return neg(shl(neg(a), n));
-    }
-
-    final double twoToN = pwrAsDouble(n);
-
-    double newHigh = a[HIGH] * twoToN % TWO_PWR_64_DBL;
-    double newLow = a[LOW] * twoToN;
-    double diff = newLow - (newLow % TWO_PWR_32_DBL);
-    newHigh += diff;
-    newLow -= diff;
-    if (newHigh >= TWO_PWR_63_DBL) {
-      newHigh -= TWO_PWR_64_DBL;
-    }
-
-    return createNormalized(newLow, newHigh);
   }
 
-  public static double[] shr(double[] a, int n) {
+  public static boolean lt(LongEmul a, LongEmul b) {
+    return !gte(a, b);
+  }
+
+  public static boolean lte(LongEmul a, LongEmul b) {
+    return !gt(a, b);
+  }
+
+  public static LongEmul mod(LongEmul a, LongEmul b) {
+    divMod(a, b, true);
+    return remainder;
+  }
+
+  // Assumes BITS == 22
+  public static LongEmul mul(LongEmul a, LongEmul b) {
+    // Grab 13-bit chunks
+    int a0 = getL(a) & 0x1fff;
+    int a1 = (getL(a) >> 13) | ((getM(a) & 0xf) << 9);
+    int a2 = (getM(a) >> 4) & 0x1fff;
+    int a3 = (getM(a) >> 17) | ((getH(a) & 0xff) << 5);
+    int a4 = (getH(a) & 0xfff00) >> 8;
+
+    int b0 = getL(b) & 0x1fff;
+    int b1 = (getL(b) >> 13) | ((getM(b) & 0xf) << 9);
+    int b2 = (getM(b) >> 4) & 0x1fff;
+    int b3 = (getM(b) >> 17) | ((getH(b) & 0xff) << 5);
+    int b4 = (getH(b) & 0xfff00) >> 8;
+
+    // Compute partial products
+    // Optimization: if b is small, avoid multiplying by parts that are 0
+    int p0 = a0 * b0; // << 0
+    int p1 = a1 * b0; // << 13
+    int p2 = a2 * b0; // << 26
+    int p3 = a3 * b0; // << 39
+    int p4 = a4 * b0; // << 52
+    
+    if (b1 != 0) {
+      p1 += a0 * b1;
+      p2 += a1 * b1;
+      p3 += a2 * b1;
+      p4 += a3 * b1;
+    }
+    if (b2 != 0) {
+      p2 += a0 * b2;
+      p3 += a1 * b2;
+      p4 += a2 * b2;
+    }
+    if (b3 != 0) {
+      p3 += a0 * b3;
+      p4 += a1 * b3;
+    }
+    if (b4 != 0) {
+      p4 += a0 * b4;
+    }
+
+    // Accumulate into 22-bit chunks:
+    // .........................................c10|...................c00|
+    // |....................|..................xxxx|xxxxxxxxxxxxxxxxxxxxxx| p0
+    // |....................|......................|......................|
+    // |....................|...................c11|......c01.............|
+    // |....................|....xxxxxxxxxxxxxxxxxx|xxxxxxxxx.............| p1
+    // |....................|......................|......................|
+    // |.................c22|...............c12....|......................|
+    // |..........xxxxxxxxxx|xxxxxxxxxxxxxxxxxx....|......................| p2
+    // |....................|......................|......................|
+    // |.................c23|..c13.................|......................|
+    // |xxxxxxxxxxxxxxxxxxxx|xxxxx.................|......................| p3
+    // |....................|......................|......................|
+    // |.........c24........|......................|......................|
+    // |xxxxxxxxxxxx........|......................|......................| p4
+
+    int c00 = p0 & 0x3fffff;
+    int c01 = (p1 & 0x1ff) << 13;
+    int c0 = c00 + c01;
+
+    int c10 = p0 >> 22;
+    int c11 = p1 >> 9;
+    int c12 = (p2 & 0x3ffff) << 4;
+    int c13 = (p3 & 0x1f) << 17;
+    int c1 = c10 + c11 + c12 + c13;
+
+    int c22 = p2 >> 18;
+    int c23 = p3 >> 5;
+    int c24 = (p4 & 0xfff) << 8;
+    int c2 = c22 + c23 + c24;
+
+    // Propagate high bits from c0 -> c1, c1 -> c2
+    c1 += c0 >> BITS;
+    c0 &= MASK;
+    c2 += c1 >> BITS;
+    c1 &= MASK;
+    c2 &= MASK_2;
+
+    return create(c0, c1, c2);
+  }
+
+  public static LongEmul neg(LongEmul a) {
+    int neg0 = (~getL(a) + 1) & MASK;
+    int neg1 = (~getM(a) + (neg0 == 0 ? 1 : 0)) & MASK;
+    int neg2 = (~getH(a) + ((neg0 == 0 && neg1 == 0) ? 1 : 0)) & MASK_2;
+
+    return create(neg0, neg1, neg2);
+  }
+
+  public static boolean neq(LongEmul a, LongEmul b) {
+    return getL(a) != getL(b) || getM(a) != getM(b) || getH(a) != getH(b);
+  }
+
+  public static LongEmul not(LongEmul a) {
+    return create((~getL(a)) & MASK, (~getM(a)) & MASK, (~getH(a)) & MASK_2);
+  }
+
+  public static LongEmul or(LongEmul a, LongEmul b) {
+    return create(getL(a) | getL(b), getM(a) | getM(b), getH(a) | getH(b));
+  }
+
+  public static LongEmul shl(LongEmul a, int n) {
     n &= 63;
-    double shiftFact = pwrAsDouble(n);
-    double newHigh = Math.floor(a[HIGH] / shiftFact);
-    double newLow = Math.floor(a[LOW] / shiftFact);
 
-    /*
-     * Doing the above floors separately on each component is safe. If n<32,
-     * a[HIGH]/shiftFact is guaranteed to be an integer already. For n>32,
-     * a[HIGH]/shiftFact will have fractional bits, but we need to discard them
-     * as they shift away. We will end up discarding all of a[LOW] in this case,
-     * as it divides out to entirely fractional.
-     */
+    int res0, res1, res2;
+    if (n < BITS) {
+      res0 = getL(a) << n;
+      res1 = (getM(a) << n) | (getL(a) >> (BITS - n));
+      res2 = (getH(a) << n) | (getM(a) >> (BITS - n));
+    } else if (n < BITS01) {
+      res0 = 0;
+      res1 = getL(a) << (n - BITS);
+      res2 = (getM(a) << (n - BITS)) | (getL(a) >> (BITS01 - n));
+    } else {
+      res0 = 0;
+      res1 = 0;
+      res2 = getL(a) << (n - BITS01);
+    }
 
-    return create(newLow, newHigh);
+    return create(res0 & MASK, res1 & MASK, res2 & MASK_2);
+  }
+
+  public static LongEmul shr(LongEmul a, int n) {
+    n &= 63;
+
+    int res0, res1, res2;
+
+    // Sign extend h(a)
+    int a2 = getH(a);
+    boolean negative = (a2 & SIGN_BIT_VALUE) != 0;
+    if (negative) {
+      a2 |= ~MASK_2;
+    }
+
+    if (n < BITS) {
+      res2 = a2 >> n;
+      res1 = (getM(a) >> n) | (a2 << (BITS - n));
+      res0 = (getL(a) >> n) | (getM(a) << (BITS - n));
+    } else if (n < BITS01) {
+      res2 = negative ? MASK_2 : 0;
+      res1 = a2 >> (n - BITS);
+      res0 = (getM(a) >> (n - BITS)) | (a2 << (BITS01 - n));
+    } else {
+      res2 = negative ? MASK_2 : 0;
+      res1 = negative ? MASK : 0;
+      res0 = a2 >> (n - BITS01);
+    }
+
+    return create(res0 & MASK, res1 & MASK, res2 & MASK_2);
   }
 
   /**
    * Logical right shift. It does not preserve the sign of the input.
    */
-  public static double[] shru(double[] a, int n) {
+  public static LongEmul shru(LongEmul a, int n) {
     n &= 63;
-    double[] sr = shr(a, n);
-    if (isNegative(a)) {
-      // the following changes the high bits to 0, using
-      // a formula from JLS3 section 15.19
-      sr = add(sr, shl(TWO, 63 - n));
+
+    int res0, res1, res2;
+    int a2 = getH(a) & MASK_2;
+    if (n < BITS) {
+      res2 = a2 >>> n;
+      res1 = (getM(a) >> n) | (a2 << (BITS - n));
+      res0 = (getL(a) >> n) | (getM(a) << (BITS - n));
+    } else if (n < BITS01) {
+      res2 = 0;
+      res1 = a2 >>> (n - BITS);
+      res0 = (getM(a) >> (n - BITS)) | (getH(a) << (BITS01 - n));
+    } else {
+      res2 = 0;
+      res1 = 0;
+      res0 = a2 >>> (n - BITS01);
     }
 
-    return sr;
+    return create(res0 & MASK, res1 & MASK, res2 & MASK_2);
   }
 
-  public static double[] sub(double[] a, double[] b) {
-    double newHigh = a[HIGH] - b[HIGH];
-    double newLow = a[LOW] - b[LOW];
-    return create(newLow, newHigh);
+  public static LongEmul sub(LongEmul a, LongEmul b) {
+    int sum0 = getL(a) - getL(b);
+    int sum1 = getM(a) - getM(b) + (sum0 >> BITS);
+    int sum2 = getH(a) - getH(b) + (sum1 >> BITS);
+
+    return create(sum0 & MASK, sum1 & MASK, sum2 & MASK_2);
   }
 
-  /**
-   * Cast from long to double or float.
-   */
-  public static double toDouble(double[] a) {
-    return a[HIGH] + a[LOW];
+  public static double toDouble(LongEmul a) {
+    if (LongLib.eq(a, Const.MIN_VALUE)) {
+      return -9223372036854775808.0;
+    }
+    if (LongLib.lt(a, Const.ZERO)) {
+      return -toDoubleHelper(LongLib.neg(a));
+    }
+    return toDoubleHelper(a);
   }
-
-  /**
-   * Cast from long to int.
-   */
-  public static int toInt(double[] a) {
-    return lowBits(a);
+  
+  // Assumes Integer.MIN_VALUE <= a <= Integer.MAX_VALUE
+  public static int toInt(LongEmul a) {
+    return getL(a) | (getM(a) << BITS);
   }
-
-  /**
-   * Implicit conversion from long to String.
-   */
-  public static String toString(double[] a) {
-    if (isZero(a)) {
+  
+  public static String toString(LongEmul a) {
+    if (LongLibBase.isZero(a)) {
       return "0";
     }
-
-    if (eq(a, MIN_VALUE)) {
-      // Special-case MIN_VALUE because neg(MIN_VALUE)==MIN_VALUE
+  
+    if (LongLibBase.isMinValue(a)) {
+      // Special-case MIN_VALUE because neg(MIN_VALUE) == MIN_VALUE
       return "-9223372036854775808";
     }
-
-    if (isNegative(a)) {
+  
+    if (LongLibBase.isNegative(a)) {
       return "-" + toString(neg(a));
     }
-
-    double[] rem = a;
+  
+    LongEmul rem = a;
     String res = "";
-
-    while (!isZero(rem)) {
+  
+    while (!LongLibBase.isZero(rem)) {
       // Do several digits each time through the loop, so as to
       // minimize the calls to the very expensive emulated div.
       final int tenPowerZeroes = 9;
       final int tenPower = 1000000000;
-      double[] tenPowerLong = fromInt(tenPower);
-
-      final double[] remDivTenPower = div(rem, tenPowerLong);
-      String digits = "" + toInt(sub(rem, mul(remDivTenPower, tenPowerLong)));
-      rem = remDivTenPower;
-
-      if (!isZero(rem)) {
+      LongEmul tenPowerLong = fromInt(tenPower);
+  
+      rem = LongLibBase.divMod(rem, tenPowerLong, true);
+      String digits = "" + toInt(LongLibBase.remainder);
+  
+      if (!LongLibBase.isZero(rem)) {
         int zeroesNeeded = tenPowerZeroes - digits.length();
         for (; zeroesNeeded > 0; zeroesNeeded--) {
           digits = "0" + digits;
         }
       }
-
+  
       res = digits + res;
     }
-
+  
     return res;
   }
-
-  public static double[] typeChange(long value) {
-    if (RUN_IN_JVM) {
-      return makeFromBits((int) (value >> 32), (int) value);
-    } else {
-      return typeChange0(value);
-    }
+  
+  public static LongEmul xor(LongEmul a, LongEmul b) {
+    return create(getL(a) ^ getL(b), getM(a) ^ getM(b), getH(a) ^ getH(b));
   }
-
-  public static double[] xor(double[] a, double[] b) {
-    return makeFromBits(highBits(a) ^ highBits(b), lowBits(a) ^ lowBits(b));
-  }
-
-  static long toLong(double[] a) {
-    return (long) a[HIGH] + (long) a[LOW];
-  }
-
-  private static double[] addTimes(double[] accum, double a, double b) {
-    if (a == 0.0) {
-      return accum;
-    }
-    if (b == 0.0) {
-      return accum;
-    }
-    return add(accum, create(a * b, 0.0));
-  }
-
-  /*
-   * Make a new instance equal to valueLow+valueHigh. The arguments do not need
-   * to be normalized, though by convention valueHigh and valueLow will hold the
-   * high and low bits, respectively.
-   */
-  private static double[] create(double valueLow, double valueHigh) {
-    assert (!Double.isNaN(valueHigh));
-    assert (!Double.isNaN(valueLow));
-    assert (!Double.isInfinite(valueHigh));
-    assert (!Double.isInfinite(valueLow));
-    assert (Math.floor(valueHigh) == valueHigh);
-    assert (Math.floor(valueLow) == valueLow);
-
-    // remove overly high bits
-    valueHigh %= TWO_PWR_64_DBL;
-    valueLow %= TWO_PWR_64_DBL;
-
-    // segregate high and low bits between high and low
-    {
-      double diffHigh = valueHigh % TWO_PWR_32_DBL;
-      double diffLow = Math.floor(valueLow / TWO_PWR_32_DBL) * TWO_PWR_32_DBL;
-
-      valueHigh = (valueHigh - diffHigh) + diffLow;
-      valueLow = (valueLow - diffLow) + diffHigh;
-    }
-
-    // Most or all of the while's in this implementation could probably be if's,
-    // but they are left as while's for now pending a careful review.
-
-    // make valueLow be positive
-    while (valueLow < LOW_MIN) {
-      valueLow += TWO_PWR_32_DBL;
-      valueHigh -= TWO_PWR_32_DBL;
-    }
-
-    // make valueLow not too large
-    while (valueLow > LOW_MAX) {
-      valueLow -= TWO_PWR_32_DBL;
-      valueHigh += TWO_PWR_32_DBL;
-    }
-
-    // make valueHigh within range
-    valueHigh = valueHigh % TWO_PWR_64_DBL;
-    while (valueHigh > HIGH_MAX) {
-      valueHigh -= TWO_PWR_64_DBL;
-    }
-    while (valueHigh < HIGH_MIN) {
-      valueHigh += TWO_PWR_64_DBL;
-    }
-
-    return createNormalized(valueLow, valueHigh);
-  }
-
-  /**
-   * Create an instance. The high and low parts must be normalized. Normal
-   * callers should use the factory method {@link #make(double, double) make}.
-   */
-  private static double[] createNormalized(double valueLow, double valueHigh) {
-    assert (valueHigh <= HIGH_MAX);
-    assert (valueHigh >= HIGH_MIN);
-    assert (valueLow >= 0);
-    assert (valueLow <= LOW_MAX);
-    assert (valueHigh % TWO_PWR_32_DBL == 0);
-    assert (Math.floor(valueLow) == valueLow); // no fractional bits allowed
-
-    if (RUN_IN_JVM) {
-      return new double[] {valueLow, valueHigh};
-    } else {
-      return newLong0(valueLow, valueHigh);
-    }
-  }
-
-  private static int highBits(double[] a) {
-    return (int) (a[HIGH] / TWO_PWR_32_DBL);
-  }
-
-  private static double[] internalFromInt(int value) {
-    if (value >= 0) {
-      return createNormalized(value, 0.0);
-    } else {
-      return createNormalized(value + TWO_PWR_32_DBL, -TWO_PWR_32_DBL);
-    }
-  }
-
-  private static boolean isNegative(double[] a) {
-    return a[HIGH] < 0;
-  }
-
-  private static boolean isOdd(double[] a) {
-    return (lowBits(a) & 1) == 1;
-  }
-
-  private static boolean isZero(double[] a) {
-    return a[LOW] == 0.0 && a[HIGH] == 0.0;
-  }
-
-  private static int lowBits(double[] a) {
-    if (a[LOW] >= TWO_PWR_31_DBL) {
-      return (int) (a[LOW] - TWO_PWR_32_DBL);
-    } else {
-      return (int) a[LOW];
-    }
-  }
-
-  /**
-   * Make an instance equivalent to stringing highBits next to lowBits, where
-   * highBits and lowBits are assumed to be in 32-bit twos-complement notation.
-   * As a result, for any double[] l, the following identity holds:
-   * 
-   * <blockquote> <code>l == makeFromBits(l.highBits(), l.lowBits())</code>
-   * </blockquote>
-   */
-  private static double[] makeFromBits(int highBits, int lowBits) {
-    double high = highBits * TWO_PWR_32_DBL;
-    double low = lowBits;
-    if (lowBits < 0) {
-      low += TWO_PWR_32_DBL;
-    }
-    return createNormalized(low, high);
-  }
-
-  private static double[] multByMinValue(double[] a) {
-    if (isOdd(a)) {
-      return MIN_VALUE;
-    } else {
-      return ZERO;
-    }
-  }
-
-  /**
-   * Faster web mode implementation doesn't need full type semantics.
-   */
-  private static native double[] newLong0(double valueLow, double valueHigh) /*-{
-    return [valueLow, valueHigh];
-  }-*/;
-
-  /**
-   * Return a power of two as a double.
-   * 
-   * @return 2 raised to the <code>n</code>
-   */
-  private static double pwrAsDouble(int n) {
-    if (n <= 30) {
-      return (1 << n);
-    } else {
-      return pwrAsDouble(30) * pwrAsDouble(n - 30);
-    }
-  }
-
-  private static double toDoubleRoundDown(double[] a) {
-    int magnitute = (int) (Math.log(a[HIGH]) / LN_2);
-    if (magnitute <= PRECISION_BITS) {
-      return toDouble(a);
-    } else {
-      int diff = magnitute - PRECISION_BITS;
-      int toSubtract = (1 << diff) - 1;
-      return a[HIGH] + (a[LOW] - toSubtract);
-    }
-  }
-
-  private static double toDoubleRoundUp(double[] a) {
-    int magnitute = (int) (Math.log(a[HIGH]) / LN_2);
-    if (magnitute <= PRECISION_BITS) {
-      return toDouble(a);
-    } else {
-      int diff = magnitute - PRECISION_BITS;
-      int toAdd = (1 << diff) - 1;
-      return a[HIGH] + (a[LOW] + toAdd);
-    }
-  }
-
-  /**
-   * Web mode implementation; the long is already the right object.
-   */
-  @UnsafeNativeLong
-  private static native double[] typeChange0(long value) /*-{
-    return value;
-  }-*/;
-
+  
   /**
    * Not instantiable.
    */
   private LongLib() {
   }
-
 }

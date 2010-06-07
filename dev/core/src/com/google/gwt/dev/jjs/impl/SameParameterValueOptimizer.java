@@ -44,6 +44,8 @@ import java.util.Set;
  * Detects when same literal is passed as parameter value, and uses literal
  * instead of parameter. The unused parameter will be removed by other analyses.
  */
+// TODO: this optimization can mistakenly act on methods such as LongLib.fromInt
+// since only one call is seen in LongLib itself.
 public class SameParameterValueOptimizer {
   /**
    * Fill parameterValues map.

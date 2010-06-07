@@ -15,9 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.user.client.rpc.SerializationException;
 
 import java.util.List;
@@ -102,12 +100,6 @@ public final class ClientSerializationStreamWriter extends
     }
   }-*/;
 
-  @UnsafeNativeLong
-  // Keep synchronized with LongLib
-  private static native double[] makeLongComponents0(long value) /*-{
-    return value;
-  }-*/;
-
   private StringBuffer encodeBuffer;
 
   private final String moduleBaseURL;
@@ -157,18 +149,9 @@ public final class ClientSerializationStreamWriter extends
 
   @Override
   public void writeLong(long fieldValue) {
-    /*
-     * Client code represents longs internally as an array of two Numbers. In
-     * order to make serialization of longs faster, we'll send the component
-     * parts so that the value can be directly reconstituted on the server.
-     */
-    double[] parts;
-    if (GWT.isScript()) {
-      parts = makeLongComponents0(fieldValue);
-    } else {
-      parts = makeLongComponents((int) (fieldValue >> 32), (int) fieldValue);
-    }
-    assert parts.length == 2;
+    // Write longs as a pair of doubles for backwards compatibility
+    double[] parts = getAsDoubleArray(fieldValue);
+    assert parts != null && parts.length == 2;
     writeDouble(parts[0]);
     writeDouble(parts[1]);
   }

@@ -18,14 +18,14 @@ package com.google.gwt.lang;
 import junit.framework.TestCase;
 
 /**
- * Test the LongLib class as a GWTTestCase.
+ * Test the LongLib class as a non-GWT TestCase.
  */
 public class LongLibJreTest extends TestCase {
-
+  
   static {
-    LongLib.RUN_IN_JVM = true;
+    LongLibBase.RUN_IN_JVM = true;
   }
-
+  
   private LongLibTestBase impl = new LongLibTestBase();
 
   public void testAAAA() {

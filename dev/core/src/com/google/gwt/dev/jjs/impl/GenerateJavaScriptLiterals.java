@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
@@ -25,8 +26,11 @@ import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.js.ast.JsArrayLiteral;
+import com.google.gwt.dev.js.ast.JsExpression;
+import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.lang.LongLib;
 
@@ -39,10 +43,6 @@ import java.util.Stack;
  * Translates Java literals into JavaScript literals.
  */
 public class GenerateJavaScriptLiterals extends JVisitor {
-
-  static {
-    LongLib.RUN_IN_JVM = true;
-  }
 
   private final JsProgram program;
   private final Stack<JsVisitable<?>> nodeStack = new Stack<JsVisitable<?>>();
@@ -78,13 +78,20 @@ public class GenerateJavaScriptLiterals extends JVisitor {
 
   @Override
   public void endVisit(JLongLiteral x, Context ctx) {
-    JsArrayLiteral arrayLit = new JsArrayLiteral(x.getSourceInfo());
-    double[] doubleArray = LongLib.typeChange(x.getValue());
-    arrayLit.getExpressions().add(
-        program.getNumberLiteral(x.getSourceInfo(), doubleArray[0]));
-    arrayLit.getExpressions().add(
-        program.getNumberLiteral(x.getSourceInfo(), doubleArray[1]));
-    push(arrayLit);
+    SourceInfo sourceInfo = x.getSourceInfo();
+    int[] intArray = LongLib.getAsIntArray(x.getValue());
+    JsObjectLiteral objectLit = new JsObjectLiteral(sourceInfo);
+    List<JsPropertyInitializer> inits = objectLit.getPropertyInitializers();
+    JsExpression label0 = new JsNameRef(sourceInfo, "l");
+    JsExpression label1 = new JsNameRef(sourceInfo, "m");
+    JsExpression label2 = new JsNameRef(sourceInfo, "h");
+    JsExpression value0 = program.getNumberLiteral(sourceInfo, intArray[0]);
+    JsExpression value1 = program.getNumberLiteral(sourceInfo, intArray[1]);
+    JsExpression value2 = program.getNumberLiteral(sourceInfo, intArray[2]);
+    inits.add(new JsPropertyInitializer(sourceInfo, label0, value0));
+    inits.add(new JsPropertyInitializer(sourceInfo, label1, value1));
+    inits.add(new JsPropertyInitializer(sourceInfo, label2, value2));
+    push(objectLit);
   }
 
   @Override
